@@ -179,20 +179,22 @@ func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage
 
 #### 3. Shared Filter Types and Query Builders
 
-**Shared types in `pkg/storage/v2/filter.go`** (pure data structs, no `SQLString()` methods):
+##### Option A: Wrapper Pattern with Separate Packages
+
+**Shared types in `pkg/storage/v2/database/filter.go`** (pure data structs, no `SQLString()` methods):
 
 - `ListOptions`, `FilterV2`, `InFilter`, `NullFilter`, `JSONFilter`, `SearchQuery`, `OrFilter`, `Order`
 - Constants: `Operator`, `JSONFilterFunc`, `OrderDirection`
 
 **Database-specific wrappers** use composition pattern:
 
-- `pkg/storage/v2/mysql/filter.go`: Embeds v2 structs, adds `SQLString()` with `?` placeholders and MySQL JSON functions
-- `pkg/storage/v2/postgres/filter.go`: Embeds v2 structs, adds `SQLString()` with `$N` placeholders and PostgreSQL JSONB operators
+- `pkg/storage/v2/mysql/filter.go`: Embeds filter structs, adds `SQLString()` with `?` placeholders and MySQL JSON functions
+- `pkg/storage/v2/postgres/filter.go`: Embeds filter structs, adds `SQLString()` with `$N` placeholders and PostgreSQL JSONB operators
 
 **Example:**
 
 ```go
-// pkg/storage/v2/filter.go - pure data
+// pkg/storage/v2/database/filter.go - pure data
 type FilterV2 struct {
     Column   string
     Operator Operator
@@ -201,7 +203,7 @@ type FilterV2 struct {
 
 // pkg/storage/v2/mysql/filter.go - wraps and adds SQLString()
 type FilterV2 struct {
-    v2.FilterV2
+    filter.FilterV2
 }
 func (f *FilterV2) SQLString() (string, []interface{}) {
     return fmt.Sprintf("%s %s ?", f.Column, f.Operator), []interface{}{f.Value}
@@ -209,7 +211,7 @@ func (f *FilterV2) SQLString() (string, []interface{}) {
 
 // pkg/storage/v2/postgres/filter.go - wraps and adds SQLString() with index
 type FilterV2 struct {
-    v2.FilterV2
+    filter.FilterV2
     index *int
 }
 func (f *FilterV2) SQLString() (string, []interface{}) {
@@ -218,7 +220,130 @@ func (f *FilterV2) SQLString() (string, []interface{}) {
 }
 ```
 
-**Output:**
+##### Option B: Unified Package with Placeholder Replacement
+
+Use a single `database` package with shared interfaces and placeholder replacement:
+
+1. **Shared interfaces** - Same `Client`, `QueryExecer`, `Queryer`, `Execer` for both databases
+2. **Two constructors** - `NewMySQLClient()` and `NewPostgresClient()` returning the same `Client` interface
+3. **Database-specific JSON filters** - `JSONMySQLFilter` and `JSONPgFilter` for different JSON syntax
+4. **Placeholder replacement** - Convert `?` to `$1, $2, ...` for PostgreSQL
+
+**Structure:**
+
+```
+pkg/storage/v2/database/
+├── client.go           # Shared interfaces (Client, QueryExecer, etc.)
+├── mysql.go            # NewMySQLClient() → Client
+├── postgres.go         # NewPostgresClient() → Client
+├── filter.go           # Shared filter types (FilterV2, InFilter, etc.)
+├── json_mysql.go       # JSONMySQLFilter with JSON_CONTAINS
+├── json_postgres.go    # JSONPgFilter with @> operator
+└── query.go            # Shared query builder with placeholder conversion
+```
+
+**Shared interfaces:**
+
+```go
+// pkg/storage/v2/database/client.go
+package database
+
+type Queryer interface {
+    QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error)
+    QueryRowContext(ctx context.Context, query string, args ...interface{}) Row
+}
+
+type Execer interface {
+    ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error)
+}
+
+type QueryExecer interface {
+    Queryer
+    Execer
+}
+
+type Client interface {
+    QueryExecer
+    Close() error
+    RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
+}
+```
+
+**Two constructors:**
+
+```go
+// pkg/storage/v2/database/mysql.go
+func NewMySQLClient(ctx context.Context, dbUser, dbPass, dbHost string, dbPort int, dbName string, opts ...Option) (Client, error)
+
+// pkg/storage/v2/database/postgres.go
+func NewPostgresClient(ctx context.Context, dbUser, dbPass, dbHost string, dbPort int, dbName string, opts ...Option) (Client, error)
+```
+
+**Database-specific JSON filters:**
+
+```go
+// pkg/storage/v2/database/json_mysql.go
+type JSONMySQLFilter struct {
+    Column string
+    Func   JSONFilterFunc
+    Values []interface{}
+}
+
+func (f *JSONMySQLFilter) SQLString() (string, []interface{}) {
+    // Uses JSON_CONTAINS(column, ?)
+    return fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column), []interface{}{formatJSON(f.Values)}
+}
+
+// pkg/storage/v2/database/json_postgres.go
+type JSONPgFilter struct {
+    Column string
+    Func   JSONFilterFunc
+    Values []interface{}
+}
+
+func (f *JSONPgFilter) SQLString() (string, []interface{}) {
+    // Uses column @> ?::jsonb (placeholder replaced later)
+    return fmt.Sprintf("%s @> ?::jsonb", f.Column), []interface{}{formatJSON(f.Values)}
+}
+```
+
+**Placeholder replacement for PostgreSQL:**
+
+```go
+// pkg/storage/v2/database/query.go
+
+// ReplacePlaceholders converts ? placeholders to $1, $2, $3... for PostgreSQL
+func ReplacePlaceholders(query string) string {
+    index := 0
+    var result strings.Builder
+    for _, ch := range query {
+        if ch == '?' {
+            index++
+            result.WriteString(fmt.Sprintf("$%d", index))
+        } else {
+            result.WriteRune(ch)
+        }
+    }
+    return result.String()
+}
+
+// Usage in PostgreSQL client:
+func (c *postgresClient) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
+    return c.db.QueryContext(ctx, ReplacePlaceholders(query), args...)
+}
+```
+
+##### Comparison
+
+| Aspect               | Option A (Wrapper Pattern)              | Option B (Unified Package)      |
+| -------------------- | --------------------------------------- | ------------------------------- |
+| Package structure    | Separate mysql/postgres/filter packages | Single database package         |
+| Filter types         | Wrapper types with embedding            | Shared types + DB-specific JSON |
+| Placeholder handling | Generated at filter level               | Replaced at query execution     |
+| Code duplication     | More (separate implementations)         | Less (shared code)              |
+| Complexity           | Higher (more abstraction)               | Lower (simpler)                 |
+
+**Output (both options):**
 
 ```sql
 -- MySQL
@@ -244,9 +369,7 @@ Create PostgreSQL schema migrations for all tables to match the existing MySQL s
 
 #### Phase 3: Implement Storage Layer and Refactor API Layer
 
-For each storage package, create PostgreSQL implementations and update the API layer:
-
-**Storage Layer:**
+**Storage Layer (Option A - Separate Implementations):**
 
 ```go
 // pkg/push/storage/v2/push.go - Interface definition
@@ -258,15 +381,68 @@ type PushStorage interface {
     DeletePush(ctx context.Context, id, environmentId string) error
 }
 
-// pkg/push/storage/v2/mysql_push.go - MySQL implementation (existing, rename from push.go)
+// pkg/push/storage/v2/mysql_push.go - MySQL implementation
 func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage
 
-// pkg/push/storage/v2/postgres_push.go - PostgreSQL implementation (new)
+// pkg/push/storage/v2/postgres_push.go - PostgreSQL implementation
 func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage
 ```
 
+**Storage Layer (Option B - Single Implementation with Placeholder Replacement):**
+
+With placeholder replacement at the client level, we can have a **single storage implementation**:
+
+```go
+// pkg/push/storage/v2/push.go - Single implementation for both MySQL and PostgreSQL
+type PushStorage interface {
+    CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
+    UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
+    GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
+    ListPushes(ctx context.Context, option *database.ListOptions) ([]*proto.Push, int, int64, error)
+    DeletePush(ctx context.Context, id, environmentId string) error
+}
+
+// Single constructor - works with both MySQL and PostgreSQL
+func NewPushStorage(qe database.QueryExecer) PushStorage
+
+// Usage:
+// - All SQL uses ? placeholders
+// - PostgreSQL client replaces ? → $1, $2, ... at execution time
+// - For JSON filters, use database-specific types (JSONMySQLFilter or JSONPgFilter)
+```
+
+**Example - Single implementation using ? placeholders:**
+
+```go
+func (s *pushStorage) CreatePush(ctx context.Context, push *domain.Push, envID string) error {
+    // Same SQL works for both MySQL and PostgreSQL
+    query := `INSERT INTO push (id, name, environment_id, created_at) VALUES (?, ?, ?, ?)`
+    _, err := s.qe.ExecContext(ctx, query, push.Id, push.Name, envID, push.CreatedAt)
+    return err
+}
+
+func (s *pushStorage) ListPushes(ctx context.Context, opts *database.ListOptions) ([]*proto.Push, error) {
+    query := `SELECT * FROM push`
+    // Query builder handles placeholder replacement internally
+    query, args := database.ConstructQueryAndWhereArgs(query, opts)
+    rows, err := s.qe.QueryContext(ctx, query, args...)
+    // ...
+}
+```
+
+**For JSON filters only, use database-specific types:**
+
+```go
+// When building ListOptions with JSON filters:
+if databaseType == "mysql" {
+    opts.JSONFilters = append(opts.JSONFilters, &database.JSONMySQLFilter{...})
+} else {
+    opts.JSONFilters = append(opts.JSONFilters, &database.JSONPgFilter{...})
+}
+```
+
 **API Layer:**
-Update API services to use `v2.Client` interface:
+API services receive `database.Client` interface (not `mysql.Client`). Database client initialization happens in `server.go` only:
 
 ```go
 // pkg/push/api/api.go
@@ -274,58 +450,23 @@ package api
 
 import (
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
     v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 )
 
 type PushService struct {
-    dbClient     database.Client    // Unified database client for transactions
-    pushStorage  v2ps.PushStorage
+    dbClient     database.Client    // Unified database client (MySQL or PostgreSQL)
+    pushStorage  v2ps.PushStorage   // Storage interface (MySQL or PostgreSQL implementation)
     // ... other fields
 }
 
+// NewPushService receives database.Client, not mysql.Client
+// The caller (server.go) decides which database to use
 func NewPushService(
-    mysqlClient mysql.Client,
+    dbClient database.Client,        // Changed from mysql.Client
+    pushStorage v2ps.PushStorage,    // Storage implementation injected
     // ... other params
     opts ...Option,
 ) *PushService {
-    dopts := &options{
-        logger: zap.NewNop(),
-        storageConfig: &StorageConfig{
-            Type: "mysql", // default
-        },
-    }
-    for _, opt := range opts {
-        opt(dopts)
-    }
-
-    var dbClient database.Client
-    var pushStorage v2ps.PushStorage
-
-    switch dopts.storageConfig.Type {
-    case "mysql":
-        dbClient = database.NewMySQLStorageClient(mysqlClient)
-        pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
-    case "postgres":
-        ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-        defer cancel()
-
-        pgClient, err := createPostgresClient(ctx, dopts.storageConfig.Postgres, dopts.logger)
-        if err != nil {
-            dopts.logger.Error("Failed to create Postgres client",
-                zap.Error(err),
-                zap.String("host", dopts.storageConfig.Postgres.Host),
-            )
-            return nil
-        }
-        dbClient = database.NewPostgresStorageClient(pgClient)
-        pushStorage = v2ps.NewPostgresPushStorage(pgClient)
-    default:
-        dbClient = database.NewMySQLStorageClient(mysqlClient)
-        pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
-    }
-
     return &PushService{
         dbClient:    dbClient,
         pushStorage: pushStorage,
@@ -336,17 +477,59 @@ func NewPushService(
 func (s *PushService) CreatePush(ctx context.Context, req *pushproto.CreatePushRequest) (*pushproto.CreatePushResponse, error) {
     // ... validation ...
 
-    var event *eventproto.Event
-
-    // No if-else needed - just use dbClient
+    // No database-specific code - just use dbClient
     err = s.dbClient.RunInTransactionV2(ctx, func(ctx context.Context) error {
         if err := s.pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
             return err
         }
-        // ... domain event handling ...
         return nil
     })
     // ...
+}
+```
+
+**Server Layer (initialization):**
+Database selection and client creation happens in `server.go`:
+
+```go
+// pkg/web/cmd/server/server.go (Option A - Separate storage implementations)
+func (s *server) createServices() {
+    var dbClient database.Client
+    var pushStorage v2ps.PushStorage
+
+    switch s.config.StorageType {
+    case "mysql":
+        mysqlClient, _ := mysql.NewClient(ctx, ...)
+        dbClient = mysql.NewStorageClient(mysqlClient)
+        pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
+    case "postgres":
+        pgClient, _ := postgres.NewClient(ctx, ...)
+        dbClient = postgres.NewStorageClient(pgClient)
+        pushStorage = v2ps.NewPostgresPushStorage(pgClient)
+    }
+
+    pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
+}
+```
+
+```go
+// pkg/web/cmd/server/server.go (Option B - Single storage implementation)
+func (s *server) createServices() {
+    var dbClient database.Client
+
+    switch s.config.StorageType {
+    case "mysql":
+        mysqlClient, _ := mysql.NewClient(ctx, ...)
+        dbClient = mysql.NewStorageClient(mysqlClient)
+    case "postgres":
+        pgClient, _ := postgres.NewClient(ctx, ...)
+        dbClient = postgres.NewStorageClient(pgClient)
+    }
+
+    // Single storage implementation works with both databases
+    pushStorage := v2ps.NewPushStorage(dbClient)
+
+    pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
 }
 ```
 
@@ -373,22 +556,22 @@ This is handled at the schema level, not in application code.
 
 Based on analysis, the following packages need refactoring:
 
-- [ ] `pkg/account/storage/v2`
-- [ ] `pkg/feature/storage/v2`
-- [ ] `pkg/experiment/storage/v2`
-- [ ] `pkg/environment/storage/v2`
-- [ ] `pkg/push/storage/v2`
-- [ ] `pkg/notification/storage/v2`
-- [ ] `pkg/autoops/storage/v2`
-- [ ] `pkg/auditlog/storage/v2`
-- [ ] `pkg/tag/storage`
-- [ ] `pkg/team/storage`
-- [ ] `pkg/mau/storage`
-- [ ] `pkg/opsevent/storage/v2`
-- [ ] `pkg/coderef/storage`
-- [ ] `pkg/subscriber/storage/v2`
-- [ ] `pkg/experimentcalculator/storage/v2`
-- [ ] `pkg/eventcounter/storage/v2`
+- `pkg/account/storage/v2`
+- `pkg/feature/storage/v2`
+- `pkg/experiment/storage/v2`
+- `pkg/environment/storage/v2`
+- `pkg/push/storage/v2`
+- `pkg/notification/storage/v2`
+- `pkg/autoops/storage/v2`
+- `pkg/auditlog/storage/v2`
+- `pkg/tag/storage`
+- `pkg/team/storage`
+- `pkg/mau/storage`
+- `pkg/opsevent/storage/v2`
+- `pkg/coderef/storage`
+- `pkg/subscriber/storage/v2`
+- `pkg/experimentcalculator/storage/v2`
+- `pkg/eventcounter/storage/v2`
 
 ### Testing Strategy
 
