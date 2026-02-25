@@ -10,9 +10,6 @@
 # Feature Stale Watcher - weekly on Monday at 1:00 AM
 0 1 * * MON /usr/local/bin/run-batch-job.sh FeatureStaleWatcher
 
-# MAU Count Watcher - monthly on 1st at 1:00 AM
-0 1 1 * * /usr/local/bin/run-batch-job.sh MauCountWatcher
-
 # Operations DateTime Watcher - every minute
 * * * * * /usr/local/bin/run-batch-job.sh DatetimeWatcher
 
@@ -27,15 +24,6 @@
 
 # Experiment Calculator - every minute (dev override)
 * * * * * /usr/local/bin/run-batch-job.sh ExperimentCalculator
-
-# MAU Summarizer - daily at 12:30 AM
-30 0 * * * /usr/local/bin/run-batch-job.sh MauSummarizer
-
-# MAU Partition Deleter - monthly on 1st at 2:00 AM
-0 2 1 * * /usr/local/bin/run-batch-job.sh MauPartitionDeleter
-
-# MAU Partition Creator - monthly on 2nd at 2:00 AM
-0 2 2 * * /usr/local/bin/run-batch-job.sh MauPartitionCreator
 
 # Feature Flag Cacher - every minute
 * * * * * /usr/local/bin/run-batch-job.sh FeatureFlagCacher
