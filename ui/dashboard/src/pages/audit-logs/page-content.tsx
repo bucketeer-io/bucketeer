@@ -141,12 +141,13 @@ const PageContent = () => {
         action={
           <>
             <EntityTypeDropdown
-              className="w-fit"
+              className="w-full sm:w-fit [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
             />
             <ReactDateRangePicker
+              className="!max-w-full w-full"
               from={filters?.from}
               to={filters?.to}
               isAllTime={[filters?.range, searchFilters?.range].includes(
@@ -162,6 +163,7 @@ const PageContent = () => {
             />
             <Button
               variant={'secondary'}
+              className="w-full sm:w-fit"
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
               <Icon

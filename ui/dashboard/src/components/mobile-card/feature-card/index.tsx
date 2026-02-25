@@ -1,21 +1,14 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
-import {
-  IconArchiveOutlined,
-  IconSaveAsFilled
-} from 'react-icons-material-design';
+import { IconMoreVertOutlined, MDIcon } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
-import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useScreen, useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { compact } from 'lodash';
-import { ArrowRight } from 'lucide-react';
-import { Account, AutoOpsRule, Feature, Rollout } from '@types';
+import { AutoOpsRule, Environment, Feature, Rollout } from '@types';
 import { truncateBySide } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
-import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconCopy, IconUserSettings, IconWatch } from '@icons';
 import {
@@ -41,10 +34,17 @@ import { Card } from '../elements';
 
 interface FeatureCardProps {
   data: Feature;
-  accounts: Account[];
   filterTags?: string[];
   rollouts: Rollout[];
   autoOpsRules: AutoOpsRule[];
+  popoverOptions: {
+    label: string;
+    icon: MDIcon;
+    value: string;
+  }[];
+  currentEnvironment: Environment;
+  editable: boolean;
+  handleGetMaintainerInfo: (email: string) => string;
   handleTagFilters: (tag: string) => void;
   onActions: (item: Feature, type: FlagActionType) => void;
 }
@@ -77,57 +77,23 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   data,
   rollouts,
   autoOpsRules,
-  accounts,
+  currentEnvironment,
+  popoverOptions,
+  handleGetMaintainerInfo,
+  editable,
   filterTags,
   handleTagFilters,
   onActions
 }) => {
   const { t } = useTranslation(['common', 'table']);
   const { fromXLScreen } = useScreen();
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { searchOptions } = useSearchParams();
   const formatDateTime = useFormatDateTime();
-  const editable = hasEditable(consoleAccount!);
-  const handleGetMaintainerInfo = useCallback(
-    (email: string) => {
-      const existedAccount = accounts?.find(account => account.email === email);
-      if (
-        !existedAccount ||
-        !existedAccount?.firstName ||
-        !existedAccount?.lastName
-      )
-        return email;
-      return `${existedAccount.firstName} ${existedAccount.lastName}`;
-    },
-    [accounts]
-  );
+
   const maintainer = useMemo(
     () => handleGetMaintainerInfo(data.maintainer),
     [data]
   );
-  const popoverOptions = useMemo(
-    () =>
-      compact([
-        searchOptions.tab === 'ARCHIVED'
-          ? {
-              label: `${t('unarchive-flag')}`,
-              icon: IconArchiveOutlined,
-              value: 'UNARCHIVE'
-            }
-          : {
-              label: `${t('archive-flag')}`,
-              icon: IconArchiveOutlined,
-              value: 'ARCHIVE'
-            },
-        {
-          label: `${t('clone-flag')}`,
-          icon: IconSaveAsFilled,
-          value: 'CLONE'
-        }
-      ]),
-    [searchOptions]
-  );
+
   return (
     <Card>
       <Card.Header
@@ -160,6 +126,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
       >
         <Card.Action>
           <DisabledPopoverTooltip
+            icon={IconMoreVertOutlined}
             onClick={value => onActions(data, value as FlagActionType)}
             options={popoverOptions}
           />
@@ -237,7 +204,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
             <Icon icon={IconWatch} size={'xxs'} />
             <DateTooltip
               trigger={
-                <div className="text-gray-700 typo-para-small whitespace-nowrap">
+                <div className="text-gray-500 typo-para-small whitespace-nowrap">
                   {Number(data.updatedAt) === 0 ? (
                     t('never')
                   ) : (
@@ -252,16 +219,6 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
               }
               date={Number(data.updatedAt) === 0 ? null : data.updatedAt}
             />
-          </div>
-        }
-        right={
-          <div className="flex items-center typo-para-tiny font-bold text-primary-500 gap-1">
-            <Link
-              to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${data.id}/targeting`}
-            >
-              {t('common:detail')}
-            </Link>
-            <Icon icon={ArrowRight} size="xxs" />
           </div>
         }
       />

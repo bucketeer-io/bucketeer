@@ -42,7 +42,7 @@ const FlagSwitch = ({
   );
 
   return (
-    <div className="flex items-center justify-between w-full px-5 h-[104px] rounded-lg shadow-card-secondary">
+    <div className="flex items-center justify-between w-full px-4 sm:px-5 h-[104px] rounded-lg shadow-card-secondary">
       <Form.Field
         control={control}
         name="enabled"

@@ -34,7 +34,7 @@ const DeleteUserSegmentModal = ({
 
   return (
     <DialogModal
-      className="w-[500px]"
+      className="max-w-[350px] sm:max-w-[500px]"
       title={t(`delete-user-segment`)}
       isOpen={isOpen}
       onClose={onClose}

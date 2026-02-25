@@ -63,7 +63,7 @@ const PageLayoutEmptyState = ({ children }: PropsWithChildren) => {
 };
 
 const PageLayoutHeader = ({ children }: PropsWithChildren) => {
-  return <div className="p-6 border-b border-gray-200">{children}</div>;
+  return <div className="p-3 sm:p-6 border-b border-gray-200">{children}</div>;
 };
 
 const PageLayoutContent = ({ children, className }: PageLayoutContentProps) => {

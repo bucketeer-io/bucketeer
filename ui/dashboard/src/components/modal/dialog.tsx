@@ -38,7 +38,7 @@ const DialogModal = ({
   }, []);
 
   return (
-    <div className="w-full px-6">
+    <div className="w-full px-3 sm:px-6">
       <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Overlay
@@ -73,7 +73,7 @@ const DialogModal = ({
                   )}
                 >
                   {title && (
-                    <Dialog.Title className="typo-head-bold-huge">
+                    <Dialog.Title className="typo-head-bold-small sm:typo-head-bold-huge">
                       {title}
                     </Dialog.Title>
                   )}

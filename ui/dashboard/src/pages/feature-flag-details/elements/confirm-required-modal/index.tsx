@@ -1,8 +1,25 @@
+import { ReactNode, useMemo } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Trans } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { IconInfo, IconToastWarning, IconWatch } from '@icons';
 import { useQueryRollouts } from '@queries/rollouts';
-import { Feature, FeatureRuleStrategy } from '@types';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import {
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
+import { useTranslation } from 'i18n';
+import { isNil } from 'lodash';
+import { Feature, FeatureRuleStrategy } from '@types';
+import { IconInfo, IconToastWarning, IconWatch } from '@icons';
+import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
+import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
+import {
+  checkDefaultRuleDiscardChanges,
+  handleCheckIndividualDiscardChanges,
+  handleCheckPrerequisiteDiscardChanges
+} from 'pages/feature-flag-details/targeting/utils';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -13,23 +30,6 @@ import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
-import {
-  PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_FEATURES
-} from 'constants/routing';
-import { useTranslation } from 'i18n';
-import { isNil } from 'lodash';
-import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
-import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
-import {
-  checkDefaultRuleDiscardChanges,
-  handleCheckIndividualDiscardChanges,
-  handleCheckPrerequisiteDiscardChanges
-} from 'pages/feature-flag-details/targeting/utils';
-import { ReactNode, useMemo } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import DiscardChangeItems from '../discard-change-items';
 import {
   CustomRuleDiscardItem,

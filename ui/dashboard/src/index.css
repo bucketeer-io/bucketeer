@@ -78,6 +78,7 @@
   }
   .small-scroll::-webkit-scrollbar {
     width: 5px; /* Thin scrollbar */
+    height: 5px;
   }
   .small-scroll::-webkit-scrollbar-thumb {
     @apply rounded-lg bg-gray-400;

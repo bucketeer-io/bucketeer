@@ -236,7 +236,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       <>
         <Button
           variant="secondary-2"
-          className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg !max-w-[200px] xxl:!max-w-fit"
+          className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg w-full !max-w-full sm:!max-w-[200px] xxl:!max-w-fit"
           onClick={onOpenRangePicker}
         >
           {!hasValue && (

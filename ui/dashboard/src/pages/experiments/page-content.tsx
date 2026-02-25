@@ -207,7 +207,7 @@ const PageContent = ({
         value={filters.status}
         onValueChange={status => onChangeTab(status as ExperimentTab)}
       >
-        <TabsList className={isHiddenTab ? 'hidden' : 'px-6'}>
+        <TabsList className={isHiddenTab ? 'hidden' : 'px-3 sm:px-6'}>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="FINISHED">{t(`finished`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>

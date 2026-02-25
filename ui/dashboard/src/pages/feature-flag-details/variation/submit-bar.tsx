@@ -33,7 +33,7 @@ const SubmitBar = ({
   );
 
   return (
-    <div className="flex items-center justify-between w-full gap-x-6">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-3 sm:gap-6">
       <div className="flex items-center gap-x-2">
         <h3 className="typo-head-bold-small text-gray-800">
           {t('table:feature-flags.variation')}
@@ -63,8 +63,9 @@ const SubmitBar = ({
           {currentOption?.label}
         </p>
       </div>
-      <div className="flex items-center gap-x-3">
+      <div className="flex w-full items-center gap-x-3">
         <Button
+          className="hidden sm:block"
           type="button"
           variant="text"
           onClick={() =>
@@ -78,6 +79,7 @@ const SubmitBar = ({
           hidden={editable}
           trigger={
             <Button
+              className="w-full"
               type="button"
               disabled={!isDirty || !isValid || !editable}
               onClick={onShowConfirmDialog}

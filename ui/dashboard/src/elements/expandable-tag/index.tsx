@@ -23,7 +23,7 @@ export const Tag = ({
     elementId={tagId || ''}
     content={value}
     maxSize={maxSize}
-    className={cn('!w-fit !z-50', tooltipCls)}
+    className={cn('!w-fit !z-10', tooltipCls)}
   >
     <div
       id={tagId}
@@ -75,7 +75,7 @@ const ExpandableTag = ({
   return (
     <div
       className={cn(
-        'flex items-center w-full gap-x-2',
+        'flex flex-wrap items-center w-full gap-x-2',
         {
           'items-start': isExpanded
         },

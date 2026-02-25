@@ -219,7 +219,7 @@ const OperationStatus = ({
   return (
     <div className="flex flex-col w-full gap-y-4">
       <div className="flex items-center w-full justify-between gap-x-4">
-        <p className="typo-head-bold-big text-gray-700">
+        <p className="typo-head-bold-medium sm:typo-head-bold-big text-gray-700">
           {t(`feature-flags.${titleKey}`)}
         </p>
         <div className="flex items-center gap-x-4">

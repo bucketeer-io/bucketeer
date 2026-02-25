@@ -51,7 +51,7 @@ const CreateTriggerForm = forwardRef(
           label: (
             <div className="flex items-center w-full gap-x-2">
               <Icon icon={IconWebhook} />
-              <p className="text-gray-600 typo-para-medium">{`${t('trigger.dropdown-desc')}`}</p>
+              <p className="text-gray-600 typo-para-medium truncate">{`${t('trigger.dropdown-desc')}`}</p>
             </div>
           ),
           value: TriggerType.WEBHOOK
@@ -168,6 +168,7 @@ const CreateTriggerForm = forwardRef(
                       options={triggerTypeOptions}
                       value={field.value}
                       onChange={field.onChange}
+                      contentClassName="max-w-[300px] sm:w-full"
                     />
                   </Form.Control>
                   <Form.Message />

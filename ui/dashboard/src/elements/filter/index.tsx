@@ -42,7 +42,7 @@ const Filter = ({
   return (
     <div
       className={cn(
-        'flex w-full lg:items-center justify-between flex-col lg:flex-row pl-6 pr-6 gap-x-6',
+        'flex w-full lg:items-center justify-between flex-col lg:flex-row px-3 sm:px-6 gap-x-6',
         { '!flex-row !justify-end': !onSearchChange },
         className
       )}

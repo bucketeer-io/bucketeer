@@ -200,7 +200,7 @@ export function PopupGlobal({
   const { t } = useTranslation(['message', 'form']);
   return (
     <DialogModal
-      className="w-[500px]"
+      className="max-w-[500px]"
       title={t(title)}
       isOpen={isOpen}
       onClose={() => onClose?.()}
