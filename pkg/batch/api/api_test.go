@@ -33,7 +33,6 @@ import (
 	cacher "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/cacher"
 	deleter "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
@@ -56,10 +55,6 @@ import (
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-)
-
-var (
-	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
 )
 
 type setupMockFunc func(
@@ -214,60 +209,6 @@ func TestFeatureStaleWatcher(t *testing.T) {
 	}, setupMock)
 }
 
-func TestMAUCountWatcher(t *testing.T) {
-	t.Parallel()
-	setupMock := func(
-		accountMockClient *acclient.MockClient,
-		environmentMockClient *environmentclient.MockClient,
-		autoOpsRulesMockClient *aoclientmock.MockClient,
-		experimentMockClient *experimentclient.MockClient,
-		featureMockClient *featureclientmock.MockClient,
-		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
-		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
-		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		mysqlMockClient *mysqlmock.MockClient,
-		mysqlMockRows *mysqlmock.MockRows,
-		redisMockClient *redismock.MockMultiGetCache,
-		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
-	) {
-		environmentMockClient.EXPECT().
-			ListProjects(gomock.Any(), gomock.Any()).
-			Times(1).
-			Return(
-				&environmentproto.ListProjectsResponse{
-					Projects: getProjects(t),
-				},
-				nil,
-			)
-		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
-			Times(1).
-			Return(
-				&environmentproto.ListEnvironmentsV2Response{
-					Environments: getEnvironments(t),
-				},
-				nil,
-			)
-		eventCounterMockClient.EXPECT().
-			GetMAUCount(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&ecproto.GetMAUCountResponse{
-					EventCount: 1,
-					UserCount:  1,
-				},
-				nil,
-			)
-		notificationMockSender.EXPECT().
-			Send(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(nil)
-	}
-	executeMockBatchJob(t, &batchproto.BatchJobRequest{
-		Job: batchproto.BatchJob_MauCountWatcher,
-	}, setupMock)
-}
 func TestDatetimeWatcher(t *testing.T) {
 	t.Parallel()
 	setupMock := func(
@@ -756,14 +697,6 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(1*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewMAUCountWatcher(
-			environmentMockClient,
-			eventCounterMockClient,
-			notificationMockSender,
-			jpLocation,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		opsevent.NewDatetimeWatcher(
 			environmentMockClient,
 			autoOpsRulesMockClient,
@@ -798,25 +731,6 @@ func newBatchService(t *testing.T,
 			jobs.WithLogger(logger),
 		),
 		nil,
-		mau.NewMAUSummarizer(
-			mysqlMockClient,
-			eventCounterMockClient,
-			jpLocation,
-			jobs.WithTimeout(30*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionDeleter(
-			mysqlMockClient,
-			jpLocation,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionCreator(
-			mysqlMockClient,
-			jpLocation,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		cacher.NewFeatureFlagCacher(
 			mysqlMockClient,
 			[]cache.MultiGetCache{redisMockClient},

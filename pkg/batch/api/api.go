@@ -35,15 +35,11 @@ type batchService struct {
 	experimentStatusUpdater     jobs.Job
 	experimentRunningWatcher    jobs.Job
 	featureStaleWatcher         jobs.Job
-	mauCountWatcher             jobs.Job
 	datetimeWatcher             jobs.Job
 	countWatcher                jobs.Job
 	progressiveRolloutWatcher   jobs.Job
 	redisCounterDeleter         jobs.Job
 	experimentCalculator        jobs.Job
-	mauSummarizer               jobs.Job
-	mauPartitionDeleter         jobs.Job
-	mauPartitionCreator         jobs.Job
 	featureFlagCacher           jobs.Job
 	segmentUserCacher           jobs.Job
 	apiKeyCacher                jobs.Job
@@ -57,10 +53,9 @@ type batchService struct {
 
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
-	featureStaleWatcher, mauCountWatcher, datetimeWatcher,
+	featureStaleWatcher, datetimeWatcher,
 	eventCountWatcher, progressiveRolloutWatcher,
 	redisCounterDeleter, experimentCalculator,
-	mauSummarizer, mauPartitionDeleter, mauPartitionCreator,
 	featureFlagCacher, segmentUserCacher, apiKeyCacher,
 	experimentCacher, autoOpsRulesCacher, tagDeleter,
 	featureAutoArchiver, scheduledFlagChangeExecutor jobs.Job,
@@ -70,15 +65,11 @@ func NewBatchService(
 		experimentStatusUpdater:     experimentStatusUpdater,
 		experimentRunningWatcher:    experimentRunningWatcher,
 		featureStaleWatcher:         featureStaleWatcher,
-		mauCountWatcher:             mauCountWatcher,
 		datetimeWatcher:             datetimeWatcher,
 		countWatcher:                eventCountWatcher,
 		progressiveRolloutWatcher:   progressiveRolloutWatcher,
 		redisCounterDeleter:         redisCounterDeleter,
 		experimentCalculator:        experimentCalculator,
-		mauSummarizer:               mauSummarizer,
-		mauPartitionDeleter:         mauPartitionDeleter,
-		mauPartitionCreator:         mauPartitionCreator,
 		featureFlagCacher:           featureFlagCacher,
 		segmentUserCacher:           segmentUserCacher,
 		apiKeyCacher:                apiKeyCacher,
@@ -101,8 +92,6 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.experimentRunningWatcher.Run(ctx)
 	case batch.BatchJob_FeatureStaleWatcher:
 		err = s.featureStaleWatcher.Run(ctx)
-	case batch.BatchJob_MauCountWatcher:
-		err = s.mauCountWatcher.Run(ctx)
 	case batch.BatchJob_DatetimeWatcher:
 		err = s.datetimeWatcher.Run(ctx)
 	case batch.BatchJob_EventCountWatcher:
@@ -113,12 +102,6 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.progressiveRolloutWatcher.Run(ctx)
 	case batch.BatchJob_ExperimentCalculator:
 		err = s.experimentCalculator.Run(ctx)
-	case batch.BatchJob_MauSummarizer:
-		err = s.mauSummarizer.Run(ctx)
-	case batch.BatchJob_MauPartitionDeleter:
-		err = s.mauPartitionDeleter.Run(ctx)
-	case batch.BatchJob_MauPartitionCreator:
-		err = s.mauPartitionCreator.Run(ctx)
 	case batch.BatchJob_FeatureFlagCacher:
 		err = s.featureFlagCacher.Run(ctx)
 	case batch.BatchJob_SegmentUserCacher:

@@ -9938,10 +9938,6 @@
                 "integer": 2
               },
               {
-                "name": "MauCountWatcher",
-                "integer": 3
-              },
-              {
                 "name": "DatetimeWatcher",
                 "integer": 4
               },
@@ -9964,18 +9960,6 @@
               {
                 "name": "ExperimentCalculator",
                 "integer": 9
-              },
-              {
-                "name": "MauSummarizer",
-                "integer": 10
-              },
-              {
-                "name": "MauPartitionDeleter",
-                "integer": 11
-              },
-              {
-                "name": "MauPartitionCreator",
-                "integer": 12
               },
               {
                 "name": "FeatureFlagCacher",
@@ -10009,6 +9993,18 @@
                 "name": "ScheduledFlagChangeExecutor",
                 "integer": 20
               }
+            ],
+            "reserved_ids": [
+              3,
+              10,
+              11,
+              12
+            ],
+            "reserved_names": [
+              "MauCountWatcher",
+              "MauSummarizer",
+              "MauPartitionDeleter",
+              "MauPartitionCreator"
             ]
           }
         ],
