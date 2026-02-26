@@ -184,18 +184,6 @@ var (
 			Subsystem: "gateway",
 			Name:      "api_evaluations_total",
 			Help:      "Total number of evaluations",
-			// TODO: Remove project_id.
-		}, []string{
-			"project_id", "project_url_code",
-			"environment_id", "environment_url_code", "tag", "evaluation_type",
-		})
-	// evaluationsCounterV2 exists for filtering by source_id.
-	evaluationsCounterV2 = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "gateway",
-			Name:      "api_evaluations_v2_total",
-			Help:      "Total number of evaluations with source_id label",
 		}, []string{"environment_id", "environment_url_code", "tag", "evaluation_type", "source_id"})
 	getFeatureFlagsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -347,7 +335,6 @@ func registerMetrics(r metrics.Registerer) {
 			sdkErrorCounter,
 			evaluationEventErrorReasonCounter,
 			handledSecondsHistogram,
-			evaluationsCounterV2,
 			apiErrorCounter,
 		)
 	})

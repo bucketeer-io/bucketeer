@@ -413,11 +413,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			)...,
 		)
 		evaluationsCounter.WithLabelValues(
-			projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest).Inc()
-		evaluationsCounterV2.WithLabelValues(
-			environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest, sourceID).Inc()
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest, sourceID).Inc()
 		return nil, err
 	}
 
@@ -429,11 +425,8 @@ func (s *grpcGatewayService) GetEvaluations(
 		},
 	)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
-		evaluationsCounterV2.WithLabelValues(
-			environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		return nil, err
 	}
@@ -442,10 +435,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	filteredByTag := s.filterByTag(features, req.Tag)
 
 	if len(features) == 0 {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures).Inc()
-		evaluationsCounterV2.WithLabelValues(environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures, sourceID).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures, sourceID).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       s.emptyUserEvaluations(),
@@ -454,9 +445,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone).Inc()
-		evaluationsCounterV2.WithLabelValues(
+		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone, sourceID).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
@@ -476,9 +465,7 @@ func (s *grpcGatewayService) GetEvaluations(
 
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
-		evaluationsCounterV2.WithLabelValues(
+		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		s.logger.Error(
@@ -497,10 +484,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	if req.UserEvaluationCondition == nil {
 		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-				envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest).Inc()
-			evaluationsCounterV2.WithLabelValues(environmentId, envAPIKey.Environment.UrlCode,
-				req.Tag, codeBadRequest, sourceID).Inc()
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest, sourceID).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
@@ -510,9 +495,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
-			evaluationsCounterV2.WithLabelValues(
+			evaluationsCounter.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
 			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 
@@ -540,9 +523,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			)
 			return nil, ErrInternal
 		}
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeOld).Inc()
-		evaluationsCounterV2.WithLabelValues(
+		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeOld, sourceID).Inc()
 	} else {
 		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
@@ -555,9 +536,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
-			evaluationsCounterV2.WithLabelValues(
+			evaluationsCounter.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
 			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 
@@ -589,14 +568,10 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeAll).Inc()
-			evaluationsCounterV2.WithLabelValues(
+			evaluationsCounter.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeAll, sourceID).Inc()
 		} else {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff).Inc()
-			evaluationsCounterV2.WithLabelValues(
+			evaluationsCounter.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff, sourceID).Inc()
 		}
 	}

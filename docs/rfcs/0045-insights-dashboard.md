@@ -153,13 +153,13 @@ CREATE TABLE `monthly_summary` (
 
 ### Prometheus Metrics
 
-Use 1 existing metric and add 3 new metrics.
+Use 2 existing metrics and add 2 new metrics.
 
 | Metric        | Name                                         | Status   | Note                                                                                                                                      |
 | ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Request count | `bucketeer_gateway_api_request_total`        | Existing | Has all required labels                                                                                                                   |
 | Latency       | `bucketeer_gateway_api_handling_seconds`     | New      | Existing `bucketeer_grpc_server_handling_seconds` lacks `environment_id` and `source_id` labels                                           |
-| Evaluations   | `bucketeer_gateway_api_evaluations_v2_total` | New      | Existing `bucketeer_gateway_api_evaluations_total` lacks `source_id` label                                                                |
+| Evaluations   | `bucketeer_gateway_api_evaluations_total` | Existing | Add `source_id` label, remove `project_id`/`project_url_code` labels                                                                      |
 | Error count   | `bucketeer_gateway_api_error_total`          | New      | Existing `bucketeer_grpc_server_handled_total` lacks `environment_id` and `source_id` labels.<br>Error rate = error_total / request_total |
 
 ## Tasks
