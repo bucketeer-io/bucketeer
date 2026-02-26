@@ -250,7 +250,7 @@ const Strategy = ({
                 <Form.Item className="flex flex-col flex-1 py-0 w-full">
                   <Form.Control>
                     <div>
-                      <div className="flex items-center w-full gap-x-2">
+                      <div className="flex flex-wrap items-center w-full gap-2">
                         {audienceTrafficOptions.map((item, index) => {
                           return (
                             <AudienceSelect

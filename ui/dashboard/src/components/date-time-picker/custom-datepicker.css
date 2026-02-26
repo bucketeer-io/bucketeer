@@ -51,7 +51,7 @@
 
 .react-datepicker__time-container,
 .react-datepicker__time-box {
-  @apply !w-[100px] border-gray-200;
+  @apply w-[100px] border-gray-200;
 }
 
 .react-datepicker__header.react-datepicker__header--time {
@@ -61,6 +61,7 @@
 .react-datepicker-time__header {
   @apply typo-para-medium font-medium text-gray-700;
 }
+
 
 .react-datepicker__time-list-item {
   @apply typo-para-small text-gray-600;
@@ -79,4 +80,28 @@
 }
 .react-datepicker__view-calendar-icon input{
   @apply w-full
+}
+
+@media (max-width: 772px) {
+  .react-datepicker{
+    @apply flex flex-col w-full;
+  }
+  .react-datepicker__month-container {
+    @apply w-full;
+  }
+  .react-datepicker__time-container {
+    @apply w-full border-l-0 border-t border-gray-200;
+  }
+  .react-datepicker__time{
+    @apply w-full;
+  }
+  .react-datepicker-popper{
+    @apply !left-[30px];
+  }
+  .react-datepicker__time-list {
+    @apply !h-[60px] flex;
+  }
+  .react-datepicker__time-box {
+    @apply !w-[350px];
+  }
 }

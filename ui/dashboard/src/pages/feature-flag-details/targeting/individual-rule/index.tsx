@@ -86,107 +86,111 @@ const IndividualRule = ({
           </div>
         )}
       </div>
-      {individualRules.map((item, index) => (
-        <div key={index} className="flex flex-col w-full gap-y-4">
-          <Form.Field
-            control={control}
-            name={`individualRules.${index}.users`}
-            render={({ field }) => {
-              return (
-                <Form.Item className="py-0">
-                  <Form.Label className="flex items-center gap-x-2 !mb-2">
-                    <p className="uppercase">{t('feature-flags.serve')}</p>
-                    <FlagVariationPolygon index={index} className="!z-0" />
-                    <p>{item?.name}</p>
-                  </Form.Label>
-                  <Form.Control>
-                    <div className="flex items-center w-full min-w-0 gap-x-2">
-                      <CreatableSelect
-                        value={field.value?.map((item: string) => ({
-                          label: item,
-                          value: item
-                        }))}
-                        placeholder={t('form:feature-flags.add-user-id')}
-                        onChange={(options: MultiValue<Option>) => {
-                          const newOption = options.find(o => o['__isNew__']);
-                          const alreadyTargetedVariation =
-                            getAlreadyTargetedVariation(
-                              individualRulesWatch,
-                              item.variationId,
-                              newOption?.label || ''
-                            );
-                          if (!alreadyTargetedVariation) {
-                            field.onChange(options.map(o => o.value));
-                          }
-                        }}
-                        className="w-full min-w-0 max-w-full"
-                        formatCreateLabel={v => {
-                          const isAlreadyExisted = getAlreadyTargetedVariation(
-                            individualRulesWatch,
-                            item.variationId,
-                            v
-                          );
+      {individualRules.map((item, index) => {
+        const userWatch = individualRulesWatch?.[index]?.users || [];
+        return (
+          <div key={index} className="flex flex-col w-full gap-y-4">
+            <Form.Field
+              control={control}
+              name={`individualRules.${index}.users`}
+              render={({ field }) => {
+                return (
+                  <Form.Item className="py-0">
+                    <Form.Label className="flex items-center gap-x-2 !mb-2">
+                      <p className="uppercase">{t('feature-flags.serve')}</p>
+                      <FlagVariationPolygon index={index} className="!z-0" />
+                      <p>{item?.name}</p>
+                    </Form.Label>
+                    <Form.Control>
+                      <div className="flex items-center w-full min-w-0 gap-x-2">
+                        <CreatableSelect
+                          value={userWatch.map((item: string) => ({
+                            label: item,
+                            value: item
+                          }))}
+                          placeholder={t('form:feature-flags.add-user-id')}
+                          onChange={(options: MultiValue<Option>) => {
+                            const newOption = options.find(o => o['__isNew__']);
+                            const alreadyTargetedVariation =
+                              getAlreadyTargetedVariation(
+                                individualRulesWatch,
+                                item.variationId,
+                                newOption?.label || ''
+                              );
+                            if (!alreadyTargetedVariation) {
+                              field.onChange(options.map(o => o.value));
+                            }
+                          }}
+                          className="w-full min-w-0 max-w-full"
+                          formatCreateLabel={v => {
+                            const isAlreadyExisted =
+                              getAlreadyTargetedVariation(
+                                individualRulesWatch,
+                                item.variationId,
+                                v
+                              );
 
-                          if (isAlreadyExisted) {
-                            const variationName = truncateBySide(
-                              isAlreadyExisted.name as string,
-                              50
-                            );
+                            if (isAlreadyExisted) {
+                              const variationName = truncateBySide(
+                                isAlreadyExisted.name as string,
+                                50
+                              );
+                              return (
+                                <UserMessage
+                                  message={
+                                    <Trans
+                                      i18nKey={
+                                        'form:feature-flags.value-already-targeted'
+                                      }
+                                      values={{
+                                        value: v,
+                                        targetedIn: variationName
+                                      }}
+                                    />
+                                  }
+                                />
+                              );
+                            }
                             return (
                               <UserMessage
-                                message={
-                                  <Trans
-                                    i18nKey={
-                                      'form:feature-flags.value-already-targeted'
-                                    }
-                                    values={{
-                                      value: v,
-                                      targetedIn: variationName
-                                    }}
-                                  />
-                                }
+                                message={t('form:feature-flags.add-user-id')}
                               />
                             );
+                          }}
+                          noOptionsMessage={({ inputValue }) => {
+                            return (
+                              <UserMessage
+                                message={t(
+                                  inputValue
+                                    ? `form:feature-flags.already-targeted`
+                                    : 'form:no-opts-type-to-create'
+                                )}
+                              />
+                            );
+                          }}
+                        />
+                        <Button
+                          disabled={!field.value?.length}
+                          variant={'secondary-2'}
+                          type="button"
+                          size={'icon'}
+                          tabIndex={-1}
+                          onClick={() =>
+                            handleCopyUserId(field.value?.join(', '))
                           }
-                          return (
-                            <UserMessage
-                              message={t('form:feature-flags.add-user-id')}
-                            />
-                          );
-                        }}
-                        noOptionsMessage={({ inputValue }) => {
-                          return (
-                            <UserMessage
-                              message={t(
-                                inputValue
-                                  ? `form:feature-flags.already-targeted`
-                                  : 'form:no-opts-type-to-create'
-                              )}
-                            />
-                          );
-                        }}
-                      />
-                      <Button
-                        disabled={!field.value?.length}
-                        variant={'secondary-2'}
-                        type="button"
-                        size={'icon'}
-                        tabIndex={-1}
-                        onClick={() =>
-                          handleCopyUserId(field.value?.join(', '))
-                        }
-                      >
-                        <Icon icon={IconCopy} />
-                      </Button>
-                    </div>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              );
-            }}
-          />
-        </div>
-      ))}
+                        >
+                          <Icon icon={IconCopy} />
+                        </Button>
+                      </div>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
+            />
+          </div>
+        );
+      })}
     </Card>
   );
 };
