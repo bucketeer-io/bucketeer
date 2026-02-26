@@ -226,7 +226,7 @@ A single `database` package with one client implementation that internally handl
 
 1. **Single client struct** with `dbType` field to track MySQL vs PostgreSQL
 2. **Automatic placeholder replacement** - `?` → `$1, $2, ...` for PostgreSQL at query execution time
-3. **Database-specific JSON filters** - `JSONFilter` (MySQL) and `JSONPgFilter` (PostgreSQL)
+3. **Unified JSON filter** - Single `JSONFilter` type with `DBType` field that generates MySQL or PostgreSQL syntax
 4. **Unified error handling** - Converts both MySQL and PostgreSQL errors to common types
 
 **Structure:**
@@ -235,7 +235,7 @@ A single `database` package with one client implementation that internally handl
 pkg/storage/v2/database/
 ├── client.go           # Single client with dbType field, NewClient/NewMySQLClient/NewPostgresClient
 ├── transaction.go      # Transaction with dbType for error conversion
-├── query.go            # Filters, query builder, ReplacePlaceholders(), JSONPgFilter
+├── query.go            # Filters, query builder, ReplacePlaceholders(), JSONFilter
 ├── result.go           # Result, Row, Rows interfaces
 ├── error.go            # Unified errors + MySQL/PostgreSQL error converters
 ├── metrics.go          # Database metrics
@@ -334,29 +334,35 @@ func ReplacePlaceholders(query string) string {
 }
 ```
 
-**Database-specific JSON filters:**
+**Unified JSON filter with DBType:**
 
 ```go
-// JSONFilter - MySQL version using JSON_CONTAINS
+// JSONFilter - Single type that handles both MySQL and PostgreSQL
 type JSONFilter struct {
     Column string
     Func   JSONFilterFunc
     Values []interface{}
+    DBType DBType
+}
+
+func NewJSONFilter(column string, f JSONFilterFunc, values []interface{}, dbType DBType) WherePart {
+    return &JSONFilter{Column: column, Func: f, Values: values, DBType: dbType}
 }
 
 func (f *JSONFilter) SQLString() (string, []interface{}) {
-    return fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column), []interface{}{formatJSON(f.Values)}
-}
-
-// JSONPgFilter - PostgreSQL version using @> operator
-type JSONPgFilter struct {
-    Column string
-    Func   JSONFilterFunc
-    Values []interface{}
-}
-
-func (f *JSONPgFilter) SQLString() (string, []interface{}) {
-    return fmt.Sprintf("%s @> ?::jsonb", f.Column), []interface{}{formatJSON(f.Values)}
+    switch f.Func {
+    case JSONContainsString:
+        if f.DBType == DBTypePostgres {
+            return fmt.Sprintf("%s @> ?::jsonb", f.Column), []interface{}{formatJSONArray(f.Values, true)}
+        }
+        return fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column), []interface{}{formatJSONArray(f.Values, true)}
+    case JSONLengthGreaterThan:
+        if f.DBType == DBTypePostgres {
+            return fmt.Sprintf("jsonb_array_length(%s) > %v", f.Column, f.Values[0]), nil
+        }
+        return fmt.Sprintf("JSON_LENGTH(%s) > %v", f.Column, f.Values[0]), nil
+    // ... other cases
+    }
 }
 ```
 
@@ -380,15 +386,15 @@ func (c *client) convertError(err error) error {
 
 ##### Comparison
 
-| Aspect                  | Option A (Wrapper Pattern)                | Option B (Unified Package)           |
-| ----------------------- | ----------------------------------------- | ------------------------------------ |
-| Package structure       | Separate mysql/postgres/filter packages   | Single `database` package            |
-| Client type             | Adapter wrapping native clients           | Single client with `dbType` field    |
-| Filter types            | Wrapper types with embedding              | Shared types + `JSONPgFilter` for PG |
-| Placeholder handling    | Generated at filter level with `$N`       | Auto-replaced at query execution     |
-| Storage implementations | Separate MySQL/PostgreSQL implementations | Single implementation for both       |
-| Code duplication        | More (separate implementations)           | Less (shared code)                   |
-| Complexity              | Higher (more abstraction)                 | Lower (simpler)                      |
+| Aspect                  | Option A (Wrapper Pattern)                | Option B (Unified Package)                        |
+| ----------------------- | ----------------------------------------- | ------------------------------------------------- |
+| Package structure       | Separate mysql/postgres/filter packages   | Single `database` package                         |
+| Client type             | Adapter wrapping native clients           | Single client with `dbType` field                 |
+| Filter types            | Wrapper types with embedding              | Shared types + Unified `JSONFilter` with `DBType` |
+| Placeholder handling    | Generated at filter level with `$N`       | Auto-replaced at query execution                  |
+| Storage implementations | Separate MySQL/PostgreSQL implementations | Single implementation for both                    |
+| Code duplication        | More (separate implementations)           | Less (shared code)                                |
+| Complexity              | Higher (more abstraction)                 | Lower (simpler)                                   |
 
 **Output (both options):**
 
@@ -403,6 +409,15 @@ SELECT * FROM push WHERE name = $1 AND tags @> $2::jsonb
 ### Implementation Strategy
 
 #### Phase 1: Implement Storage Package and Query Builder
+
+Option B - Unified `database` package:
+
+1. Single `client` struct with `dbType` field (`DBTypeMySQL`, `DBTypePostgres`)
+2. `NewClient(ctx, dbType, ...)`, `NewMySQLClient(...)`, `NewPostgresClient(...)`
+3. Automatic placeholder replacement (`?` → `$1, $2, ...`) for PostgreSQL
+4. Shared filter types (`FilterV2`, `InFilter`, `NullFilter`, `SearchQuery`, etc.)
+5. Unified error handling (`ErrNoRows`, `ErrDuplicateEntry`, `ErrTxDone`)
+6. Query builder functions (`ConstructQueryAndWhereArgs`, `ConstructCountQuery`)
 
 #### Phase 2: Create PostgreSQL Schema Migration
 
@@ -449,7 +464,7 @@ func NewPushStorage(qe database.QueryExecer) PushStorage
 // Usage:
 // - All SQL uses ? placeholders
 // - PostgreSQL client replaces ? → $1, $2, ... at execution time
-// - For JSON filters, use database-specific types (JSONMySQLFilter or JSONPgFilter)
+// - For JSON filters, use JSONFilter with DBType parameter
 ```
 
 **Example - Single implementation using ? placeholders:**
@@ -471,15 +486,13 @@ func (s *pushStorage) ListPushes(ctx context.Context, opts *database.ListOptions
 }
 ```
 
-**For JSON filters only, use database-specific types:**
+**For JSON filters, use JSONFilter with DBType:**
 
 ```go
-// When building ListOptions with JSON filters:
-if databaseType == "mysql" {
-    opts.JSONFilters = append(opts.JSONFilters, &database.JSONMySQLFilter{...})
-} else {
-    opts.JSONFilters = append(opts.JSONFilters, &database.JSONPgFilter{...})
-}
+// JSONFilter generates appropriate SQL based on DBType
+jsonFilter := database.NewJSONFilter("tags", database.JSONContainsString, []interface{}{"web"}, dbType)
+// MySQL output: JSON_CONTAINS(tags, ?)
+// PostgreSQL output: tags @> ?::jsonb
 ```
 
 **API Layer:**
