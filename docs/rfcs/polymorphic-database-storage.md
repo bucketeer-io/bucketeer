@@ -596,6 +596,66 @@ func (s *server) createServices() {
 - MySQL: `JSON_CONTAINS()`
 - PostgreSQL: `@>` JSONB operator
 
+#### Upsert (ON DUPLICATE KEY UPDATE)
+
+**Problem:** MySQL and PostgreSQL have different syntax for upsert operations (insert or update if exists).
+
+| Aspect | MySQL | PostgreSQL |
+|--------|-------|------------|
+| Clause | `ON DUPLICATE KEY UPDATE` | `ON CONFLICT (...) DO UPDATE SET` |
+| Conflict columns | Implicit (uses PRIMARY KEY/UNIQUE) | Explicit (must specify columns) |
+| Value reference | `VALUES(column)` | `EXCLUDED.column` |
+
+**Current MySQL SQL file:**
+
+```sql
+INSERT INTO ops_count (id, feature_id, environment_id, count)
+VALUES (?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+    feature_id = VALUES(feature_id),
+    count = VALUES(count)
+```
+
+**Solution:** SQL templates use `%s` placeholder for the upsert clause. An `OnDuplicateKeyUpdate` query builder generates database-specific syntax based on `DBType`:
+
+**Updated SQL template:**
+
+```sql
+INSERT INTO ops_count (id, feature_id, environment_id, count)
+VALUES (?, ?, ?, ?) %s
+```
+
+**Go usage:**
+
+```go
+// Build upsert clause based on database type
+onDuplicate := mysql.NewOnDuplicateKeyUpdate(
+    s.dbType,                              // DBTypeMySQL or DBTypePostgres
+    []string{"id", "environment_id"},      // conflict columns (required for PostgreSQL)
+    []string{"feature_id", "count"},       // columns to update
+)
+
+// Format query with generated clause
+query := fmt.Sprintf(insertOpsCountSQL, onDuplicate.SQLString())
+_, err := s.client.ExecContext(ctx, query, id, featureID, envID, count)
+```
+
+**Generated output:**
+
+```sql
+-- MySQL
+INSERT INTO ops_count (...) VALUES (?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+    feature_id = VALUES(feature_id),
+    count = VALUES(count)
+
+-- PostgreSQL
+INSERT INTO ops_count (...) VALUES ($1, $2, $3, $4)
+ON CONFLICT (id, environment_id) DO UPDATE SET
+    feature_id = EXCLUDED.feature_id,
+    count = EXCLUDED.count
+```
+
 #### Auto-increment vs Serial
 
 - MySQL: `AUTO_INCREMENT`
