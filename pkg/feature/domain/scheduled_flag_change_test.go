@@ -700,3 +700,385 @@ func TestGenerateChangeSummaries_EmptyPayload(t *testing.T) {
 
 	assert.Empty(t, summaries)
 }
+
+func TestGenerateChangeSummaries_RuleClauseLevelUpdates(t *testing.T) {
+	t.Parallel()
+
+	baseFlag := &proto.Feature{
+		Rules: []*proto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-a",
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+					{
+						Id:        "clause-b",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+		},
+		Variations: []*proto.Variation{
+			{Id: "var-a", Name: "Enabled", Value: "true"},
+		},
+	}
+
+	patterns := []struct {
+		desc         string
+		rule         *proto.Rule
+		expectedKeys []string
+		assertions   func(t *testing.T, summaries []*proto.ChangeSummary)
+	}{
+		{
+			desc: "add normal clause",
+			rule: &proto.Rule{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-a",
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+					{
+						Id:        "clause-b",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+					{
+						Id:        "clause-c",
+						Attribute: "country",
+						Operator:  proto.Clause_IN,
+						Values:    []string{"JP"},
+					},
+				},
+			},
+			expectedKeys: []string{MsgKeyAddClauseToRule},
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Equal(t, "rule #1", summaries[0].Values["rule"])
+				assert.Contains(t, summaries[0].Values["clause"], "country")
+			},
+		},
+		{
+			desc: "update normal clause",
+			rule: &proto.Rule{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-a",
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@new.example.com"},
+					},
+					{
+						Id:        "clause-b",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+			expectedKeys: []string{MsgKeyUpdateClauseInRule},
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Contains(t, summaries[0].Values["oldClause"], "@example.com")
+				assert.Contains(t, summaries[0].Values["newClause"], "@new.example.com")
+			},
+		},
+		{
+			desc: "remove normal clause",
+			rule: &proto.Rule{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-b",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+			expectedKeys: []string{MsgKeyRemoveClauseFromRule},
+		},
+		{
+			desc: "feature flag clause add update and remove",
+			rule: &proto.Rule{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-a",
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+					{
+						Id:        "clause-b",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-b"},
+					},
+					{
+						Id:        "clause-c",
+						Attribute: "other-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+			expectedKeys: []string{
+				MsgKeyUpdateFeatureFlagClause,
+				MsgKeyAddFeatureFlagClause,
+			},
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Contains(t, summaries[0].Values["oldClause"], "var-a")
+				assert.Contains(t, summaries[0].Values["newClause"], "var-b")
+				assert.NotContains(t, summaries[0].Values["oldClause"], "Enabled")
+				assert.NotContains(t, summaries[0].Values["newClause"], "Enabled")
+			},
+		},
+		{
+			desc: "remove feature flag clause",
+			rule: &proto.Rule{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-a",
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+				},
+			},
+			expectedKeys: []string{MsgKeyRemoveFeatureFlagClause},
+		},
+		{
+			desc: "fallback to update rule when no clause delta",
+			rule: &proto.Rule{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "clause-a",
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+					{
+						Id:        "clause-b",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+			expectedKeys: []string{MsgKeyUpdateRule},
+		},
+	}
+
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			sfc := &ScheduledFlagChange{
+				ScheduledFlagChange: &proto.ScheduledFlagChange{
+					Payload: &proto.ScheduledChangePayload{
+						RuleChanges: []*proto.RuleChange{
+							{
+								ChangeType: proto.ChangeType_UPDATE,
+								Rule:       p.rule,
+							},
+						},
+					},
+				},
+			}
+
+			summaries := sfc.GenerateChangeSummaries(baseFlag)
+			require.Len(t, summaries, len(p.expectedKeys))
+			for i, expectedKey := range p.expectedKeys {
+				assert.Equal(t, expectedKey, summaries[i].MessageKey)
+			}
+			if p.assertions != nil {
+				p.assertions(t, summaries)
+			}
+		})
+	}
+}
+
+func TestGenerateChangeSummaries_RuleClauseUpdateWithoutClauseIDs(t *testing.T) {
+	t.Parallel()
+
+	baseFlag := &proto.Feature{
+		Rules: []*proto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+				},
+			},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				RuleChanges: []*proto.RuleChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Rule: &proto.Rule{
+							Id: "rule-1",
+							Clauses: []*proto.Clause{
+								{
+									Attribute: "email",
+									Operator:  proto.Clause_ENDS_WITH,
+									Values:    []string{"@new.example.com"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(baseFlag)
+	require.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyUpdateClauseInRule, summaries[0].MessageKey)
+	assert.Contains(t, summaries[0].Values["oldClause"], "@example.com")
+	assert.Contains(t, summaries[0].Values["newClause"], "@new.example.com")
+}
+
+func TestSfcIsSameClause_OrderInsensitiveValues(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc      string
+		oldClause *proto.Clause
+		newClause *proto.Clause
+		expected  bool
+	}{
+		{
+			desc: "same values different order",
+			oldClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"JP", "US"},
+			},
+			newClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"US", "JP"},
+			},
+			expected: true,
+		},
+		{
+			desc: "different values",
+			oldClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"JP", "US"},
+			},
+			newClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"JP", "CA"},
+			},
+			expected: false,
+		},
+	}
+
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, sfcIsSameClause(p.oldClause, p.newClause))
+		})
+	}
+}
+
+func TestGenerateChangeSummaries_WithResolutionOptions(t *testing.T) {
+	t.Parallel()
+
+	baseFlag := &proto.Feature{
+		Rules: []*proto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "segment-clause",
+						Attribute: "segment",
+						Operator:  proto.Clause_SEGMENT,
+						Values:    []string{"seg-1"},
+					},
+					{
+						Id:        "feature-flag-clause",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				RuleChanges: []*proto.RuleChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Rule: &proto.Rule{
+							Id: "rule-1",
+							Clauses: []*proto.Clause{
+								{
+									Id:        "segment-clause",
+									Attribute: "segment",
+									Operator:  proto.Clause_SEGMENT,
+									Values:    []string{"seg-2"},
+								},
+								{
+									Id:        "feature-flag-clause",
+									Attribute: "ref-flag",
+									Operator:  proto.Clause_FEATURE_FLAG,
+									Values:    []string{"var-b"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	options := &ChangeSummaryOptions{
+		SegmentNames: map[string]string{
+			"seg-1": "Premium Users",
+			"seg-2": "Beta Users",
+		},
+		CrossFlagVariationNames: map[string]map[string]string{
+			"ref-flag": {
+				"var-a": "Control",
+				"var-b": "Enabled",
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummariesWithOptions(baseFlag, options)
+	require.Len(t, summaries, 2)
+
+	assert.Equal(t, MsgKeyUpdateClauseInRule, summaries[0].MessageKey)
+	assert.Contains(t, summaries[0].Values["oldClause"], "Premium Users")
+	assert.Contains(t, summaries[0].Values["newClause"], "Beta Users")
+
+	assert.Equal(t, MsgKeyUpdateFeatureFlagClause, summaries[1].MessageKey)
+	assert.Contains(t, summaries[1].Values["oldClause"], "Control (var-a)")
+	assert.Contains(t, summaries[1].Values["newClause"], "Enabled (var-b)")
+}

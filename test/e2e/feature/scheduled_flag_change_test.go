@@ -29,6 +29,7 @@ import (
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -397,6 +398,129 @@ func TestCreateScheduledFlagChangeWithMultipleChanges(t *testing.T) {
 	assert.GreaterOrEqual(t, len(resp.ScheduledFlagChange.ChangeSummaries), 3)
 }
 
+func TestCreateScheduledFlagChange_ResolvesRuleClauseSummaryNames(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	targetFlagID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(targetFlagID))
+	targetFeature := getFeature(t, targetFlagID, client)
+	require.GreaterOrEqual(t, len(targetFeature.Variations), 1)
+
+	referenceFlagID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(referenceFlagID))
+	referenceFeature := getFeature(t, referenceFlagID, client)
+	require.GreaterOrEqual(t, len(referenceFeature.Variations), 2)
+
+	oldSegment := createSegment(ctx, t, client)
+	newSegment := createSegment(ctx, t, client)
+	ruleID, err := uuid.NewUUID()
+	require.NoError(t, err)
+	segmentClauseID, err := uuid.NewUUID()
+	require.NoError(t, err)
+	featureFlagClauseID, err := uuid.NewUUID()
+	require.NoError(t, err)
+
+	// Create an existing rule first so the schedule can produce clause-level update summaries.
+	_, err = client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            targetFlagID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*featureproto.RuleChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Rule: &featureproto.Rule{
+					Id: ruleID.String(),
+					Clauses: []*featureproto.Clause{
+						{
+							Id:       segmentClauseID.String(),
+							Operator: featureproto.Clause_SEGMENT,
+							Values:   []string{oldSegment.Id},
+						},
+						{
+							Id:        featureFlagClauseID.String(),
+							Attribute: referenceFlagID,
+							Operator:  featureproto.Clause_FEATURE_FLAG,
+							Values:    []string{referenceFeature.Variations[0].Id},
+						},
+					},
+					Strategy: &featureproto.Strategy{
+						Type: featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{
+							Variation: targetFeature.Variations[0].Id,
+						},
+					},
+				},
+			},
+		},
+		Comment: "e2e setup - create rule for summary update checks",
+	})
+	require.NoError(t, err)
+
+	resp, err := client.CreateScheduledFlagChange(ctx, &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: *environmentID,
+		FeatureId:     targetFlagID,
+		ScheduledAt:   time.Now().Add(1 * time.Hour).Unix(),
+		Timezone:      "UTC",
+		Payload: &featureproto.ScheduledChangePayload{
+			RuleChanges: []*featureproto.RuleChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Rule: &featureproto.Rule{
+						Id: ruleID.String(),
+						Clauses: []*featureproto.Clause{
+							{
+								Id:       segmentClauseID.String(),
+								Operator: featureproto.Clause_SEGMENT,
+								Values:   []string{newSegment.Id},
+							},
+							{
+								Id:        featureFlagClauseID.String(),
+								Attribute: referenceFlagID,
+								Operator:  featureproto.Clause_FEATURE_FLAG,
+								Values:    []string{referenceFeature.Variations[1].Id},
+							},
+						},
+						Strategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: targetFeature.Variations[0].Id,
+							},
+						},
+					},
+				},
+			},
+		},
+		Comment: "e2e test - resolve segment and cross-flag variation names in summaries",
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, resp.ScheduledFlagChange.ChangeSummaries)
+
+	var segmentClauseSummary *featureproto.ChangeSummary
+	var featureFlagClauseSummary *featureproto.ChangeSummary
+	for _, summary := range resp.ScheduledFlagChange.ChangeSummaries {
+		switch summary.MessageKey {
+		case "ScheduledChange.UpdateClauseInRule":
+			segmentClauseSummary = summary
+		case "ScheduledChange.UpdateFeatureFlagClauseInRule":
+			featureFlagClauseSummary = summary
+		}
+	}
+
+	require.NotNil(t, segmentClauseSummary)
+	assert.Contains(t, segmentClauseSummary.Values["oldClause"], oldSegment.Name)
+	assert.Contains(t, segmentClauseSummary.Values["newClause"], newSegment.Name)
+
+	require.NotNil(t, featureFlagClauseSummary)
+	assert.Contains(t, featureFlagClauseSummary.Values["oldClause"], referenceFeature.Variations[0].Name)
+	assert.Contains(t, featureFlagClauseSummary.Values["newClause"], referenceFeature.Variations[1].Name)
+	assert.Contains(t, featureFlagClauseSummary.Values["oldClause"], referenceFeature.Variations[0].Id)
+	assert.Contains(t, featureFlagClauseSummary.Values["newClause"], referenceFeature.Variations[1].Id)
+}
+
 // TestArchiveFeatureCancelsPendingScheduledChanges verifies that when a feature is archived,
 // all pending and conflicting scheduled changes for that feature are automatically cancelled.
 // This prevents orphaned schedules from attempting to execute on archived flags.
@@ -617,6 +741,12 @@ func TestScheduledFlagChangeConflict_DependencyMissing(t *testing.T) {
 	scheduleBResp, err := client.CreateScheduledFlagChange(ctx, scheduleBReq)
 	require.NoError(t, err)
 	require.NotEmpty(t, scheduleBResp.ScheduledFlagChange.Id)
+	assert.Equal(
+		t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		scheduleBResp.ScheduledFlagChange.Status,
+		"Schedule should be stored as CONFLICT when create-time conflicts are detected",
+	)
 
 	// Verify DEPENDENCY_MISSING conflict is detected
 	require.NotEmpty(t, scheduleBResp.DetectedConflicts,
@@ -630,6 +760,14 @@ func TestScheduledFlagChangeConflict_DependencyMissing(t *testing.T) {
 		}
 	}
 	assert.True(t, foundDependencyMissing, "Expected at least one DEPENDENCY_MISSING conflict")
+
+	// Verify persisted status is CONFLICT
+	getResp := getScheduledFlagChange(t, client, scheduleBResp.ScheduledFlagChange.Id)
+	assert.Equal(
+		t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		getResp.ScheduledFlagChange.Status,
+	)
 }
 
 // TestScheduledFlagChangeConflict_InvalidReferenceOnFlagUpdate verifies that when

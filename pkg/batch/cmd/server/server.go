@@ -36,7 +36,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
@@ -471,14 +470,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(1*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewMAUCountWatcher(
-			environmentClient,
-			eventCounterClient,
-			notificationSender,
-			location,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		opsevent.NewDatetimeWatcher(
 			environmentClient,
 			autoOpsClient,
@@ -524,25 +515,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 			jobs.WithMetrics(registerer),
-		),
-		mau.NewMAUSummarizer(
-			mysqlClient,
-			eventCounterClient,
-			location,
-			jobs.WithTimeout(30*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionDeleter(
-			mysqlClient,
-			location,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionCreator(
-			mysqlClient,
-			location,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
 		),
 		cacher.NewFeatureFlagCacher(
 			mysqlClient,

@@ -1,5 +1,6 @@
 {
   "general-info": "General Information",
+  "serve": "Serve",
   "placeholder-name": "Enter name",
   "placeholder-desc": "Enter description",
   "placeholder-code": "Enter url code",
@@ -415,5 +416,25 @@
     "confirm-stop-title": "Audience traffic allocation will be updated",
     "current-variation-title": "Current Variation Allocation",
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
-  }
+  },
+  "custom-rule-strategy-discard-desc": "Update variation allocation:",
+  "custom-rule-audience-not-include-desc":"Not allocated — <b>{{percent}}%</b> <variantElement/>",
+  "custom-rule-audience-include-desc":"Allocated — <b>{{percent}}%</b> <variantElement/>",
+  "custom-rule-strategy-add-new-discard-desc": "<b>IF {{clauseLabel}}</b>, Serve:",
+  "custom-rule-default-audience-discard-desc": "Update audience traffic allocation:",
+  "discard-unsaved-changes": "Discard unsaved changes",
+  "add_prerequisite-discard-desc": "Add prerequisite: <b>{{flagName}}</b>, <variantElement/>",
+  "remove_prerequisite-discard-desc": "Remove prerequisite: <b>{{flagName}}</b>, <variantElement/>",
+  "update_prerequisite-discard-desc": "Update prerequisite: <b>{{flagName}}</b>, <variantElement/>",
+  "add_individual-discard-desc": "Add <labelElement/> {{conjection}} <variantElement/> ",
+  "remove_individual-discard-desc": "Remove <labelElement/> {{conjection}} <variantElement/> ",
+  "add-custom-rule-discard-desc": "Add clause: ",
+  "update-custom-rule-discard-desc": "Update clause: ",
+  "remove-custom-rule-discard-desc": "Remove clause: ",
+  "add-custom-rule-clause-value-discard-desc": "Add value <b>{{value}}</b> to ",
+  "remove-custom-rule-clause-value-discard-desc": "Remove value <b>{{value}}</b> from ",
+  "add-custom-rule-audience-discard-desc": "Add audience traffic allocation with:",
+  "update-custom-rule-audience-discard-desc": "Update audience traffic allocation:",
+  "add-new-rule": "<b>IF {{clauseLabel}}</b>, Serve: <variantElement/>",
+  "delete-rule": "<b>IF {{clauseLabel}}</b>, Serve: <variantElement/>"
 }
