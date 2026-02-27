@@ -5,9 +5,16 @@ For the database schema migration, we use the [Atlas tool](https://github.com/ar
 When you install the Bucketeer Helm application, the migration runs automatically before the Bucketeer application is installed.
 If the migration fails, it won't install the application.
 
+## Supported Databases
+
+- **MySQL** - Primary storage (production ready)
+- **PostgreSQL** - Primary storage (alternative option)
+
 ## Prerequisite
 
-Ensure that you have [started the Minikube](https://github.com/bucketeer-io/bucketeer/blob/main/DEVELOPMENT.md#set-up-minikube-and-services-that-bucketeer-depends-on) in the dev container and that the `localenv-mysql-0` pod is running without errors.
+Ensure that you have [started the Minikube](https://github.com/bucketeer-io/bucketeer/blob/main/DEVELOPMENT.md#set-up-minikube-and-services-that-bucketeer-depends-on) in the dev container and that the `localenv-mysql-0` or `localenv-postgres-0` pod is running without errors.
+
+# MySQL Migration
 
 ## 1- Connecting to MySQL
 
@@ -25,6 +32,7 @@ Once you are logged in, you can make your changes in the Database.
 ## 2- Creating Migration File
 
 ### 2.1 - Generate Migration File
+
 To create the migration file, you must port-forward the `localenv-mysql` service before creating it.
 
 ```shell
@@ -46,19 +54,44 @@ For the migration file name, please use one of the following prefixes.
 After creating it, ensure you see the new file in the `migration/mysql` directory.
 
 ### 2.2 - Create Migration File manually
+
 In case no structure changes are executed, you can create the migration file manually.
 
 Create a new migration file
+
 ```shell
 atlas migrate new <file_name> --dir "file://migration/mysql"
 ```
 
 Edit the migration file then update atlas migration files hash
+
 ```shell
 atlas migrate hash --dir "file://migration/mysql"
 ```
+
 If the migration sql statement changed again, rerun the above command to update the hash.
 
 ## 3- Pushing Migration File
 
 Create a Pull Request to push the file so that the Bucketeer helm chart can migrate it when installed.
+
+---
+
+# PostgreSQL Migration
+
+## Overview
+
+PostgreSQL migrations are provided as a consolidated initialization file that creates the complete schema in one step. This is the recommended approach for new PostgreSQL deployments.
+
+## 1- Connecting to PostgreSQL
+
+```shell
+kubectl exec -it localenv-postgres-0 -- /bin/sh
+psql -h localhost -U bucketeer -d bucketeer
+```
+
+## 2- Running the Migration
+
+In the Dockerfile, change COPY command to copy the PostgreSQL migration file instead of the MySQL one, and rebuild the image.
+
+When install Bucketeer, it will run the migration file and create the complete schema

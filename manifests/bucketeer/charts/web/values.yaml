@@ -18,11 +18,21 @@ env:
   pubSubRedisAddr:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
-  mysqlUser:
-  mysqlPass:
-  mysqlHost:
-  mysqlPort: 3306
-  mysqlDbName:
+  # Database configuration
+  database:
+    type: "mysql"
+    mysql:
+      user:
+      pass:
+      host:
+      port: 3306
+      name:
+    postgres:
+      user:
+      pass:
+      host:
+      port: 5432
+      name:
   persistentRedis:
     serverName:
     addr:
