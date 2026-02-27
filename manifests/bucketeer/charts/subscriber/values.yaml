@@ -60,6 +60,8 @@ affinity: {}
 
 nodeSelector: {}
 
+priorityClassName: ""
+
 pdb:
   enabled:
   maxUnavailable: 50%
