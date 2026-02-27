@@ -96,7 +96,7 @@
     @apply w-full;
   }
   .react-datepicker-popper{
-    @apply !left-[30px];
+    @apply !left-[30px] max-w-[350px];
   }
   .react-datepicker__time-list {
     @apply !h-[60px] flex;
