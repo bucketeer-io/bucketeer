@@ -1,0 +1,249 @@
+// Copyright 2025 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.insights;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/insights";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+import "proto/event/client/event.proto";
+
+message GetInsightsMonthlySummaryRequest {
+  repeated string environment_ids = 1;
+  repeated bucketeer.event.client.SourceId source_ids = 2;
+}
+
+message GetInsightsMonthlySummaryResponse {
+  repeated MonthlySummarySeries series = 1;
+}
+
+message MonthlySummarySeries {
+  string environment_id = 1;
+  bucketeer.event.client.SourceId source_id = 2;
+  string environment_name = 3;
+  string project_name = 4;
+  repeated MonthlySummaryDataPoint data = 5;  // Sorted by yearmonth ascending
+}
+
+message MonthlySummaryDataPoint {
+  string yearmonth = 1;  // "202601"
+  int64 mau = 2;
+  int64 requests = 3;
+}
+
+message GetInsightsTimeSeriesRequest {
+  repeated string environment_ids = 1;
+  repeated bucketeer.event.client.SourceId source_ids = 2;
+  repeated bucketeer.event.client.ApiId api_ids = 3;
+  int64 start_at = 4 [(google.api.field_behavior) = REQUIRED];
+  int64 end_at = 5 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetInsightsTimeSeriesResponse {
+  repeated InsightsTimeSeries timeseries = 1;
+}
+
+message InsightsTimeSeries {
+  string environment_id = 1;
+  bucketeer.event.client.SourceId source_id = 2;
+  bucketeer.event.client.ApiId api_id = 3;
+  repeated InsightsDataPoint data = 4;  // Sorted by timestamp ascending
+  map<string, string> labels = 5;       // e.g. evaluation_type=diff
+}
+
+message InsightsDataPoint {
+  int64 timestamp = 1;
+  double value = 2;
+}
+
+service InsightsService {
+  rpc GetInsightsMonthlySummary(GetInsightsMonthlySummaryRequest)
+      returns (GetInsightsMonthlySummaryResponse) {
+    option (google.api.http) = {
+      get: "/v1/insights/monthly_summary"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Insights Monthly Summary"
+      description: "Get MAU and monthly request counts"
+      tags: "insights"
+      operation_id: "web.v1.insights.monthly_summary.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetInsightsLatency(GetInsightsTimeSeriesRequest)
+      returns (GetInsightsTimeSeriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/insights/latency"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Insights Latency"
+      description: "Get latency time series data"
+      tags: "insights"
+      operation_id: "web.v1.insights.latency.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetInsightsRequests(GetInsightsTimeSeriesRequest)
+      returns (GetInsightsTimeSeriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/insights/requests"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Insights Request Counts"
+      description: "Get request count time series data"
+      tags: "insights"
+      operation_id: "web.v1.insights.requests.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetInsightsEvaluations(GetInsightsTimeSeriesRequest)
+      returns (GetInsightsTimeSeriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/insights/evaluations"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Insights Evaluations"
+      description: "Get evaluation count time series data by type"
+      tags: "insights"
+      operation_id: "web.v1.insights.evaluations.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetInsightsErrorRates(GetInsightsTimeSeriesRequest)
+      returns (GetInsightsTimeSeriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/insights/error_rates"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Insights Error Rates"
+      description: "Get error rate time series data"
+      tags: "insights"
+      operation_id: "web.v1.insights.error_rates.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+}

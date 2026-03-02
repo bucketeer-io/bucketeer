@@ -48,6 +48,8 @@ type eventEvaluationValidator struct {
 	oldestTimestampDuration   time.Duration
 	furthestTimestampDuration time.Duration
 	logger                    *zap.Logger
+	// lastUnmarshaledEvent is set on successful unmarshal for reuse (e.g., metric reporting).
+	lastUnmarshaledEvent *eventproto.EvaluationEvent
 }
 
 type eventGoalValidator struct {
@@ -157,6 +159,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 	if err != nil {
 		return codeUnmarshalFailed, errUnmarshalFailed
 	}
+	v.lastUnmarshaledEvent = ev
 
 	if err := uuid.ValidateUUID(v.event.Id); err != nil {
 		v.logger.Warn(
@@ -174,14 +177,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 		)
 		return codeEmptyField, errEmptyFeatureID
 	}
-	isErrorReason := ev.Reason != nil && (ev.Reason.Type == feature.Reason_ERROR_NO_EVALUATIONS ||
-		ev.Reason.Type == feature.Reason_ERROR_FLAG_NOT_FOUND ||
-		ev.Reason.Type == feature.Reason_ERROR_WRONG_TYPE ||
-		ev.Reason.Type == feature.Reason_ERROR_USER_ID_NOT_SPECIFIED ||
-		ev.Reason.Type == feature.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED ||
-		ev.Reason.Type == feature.Reason_ERROR_EXCEPTION ||
-		ev.Reason.Type == feature.Reason_ERROR_CACHE_NOT_FOUND ||
-		ev.Reason.Type == feature.Reason_CLIENT)
+	isErrorReason := isEvaluationEventErrorReason(ev.Reason)
 
 	if !isErrorReason && ev.VariationId == "" {
 		v.logger.Debug(
@@ -367,4 +363,22 @@ func (v *eventMetricsValidator) buildMetricsEventLogFields(
 		zap.String("sdk_version", ev.SdkVersion),
 		zap.Any("metadata", ev.Metadata),
 	)
+}
+
+// isEvaluationEventErrorReason returns true if the reason indicates the user
+// received the default value due to an error (e.g., flag not found, cache miss).
+// Returns false for nil reason (e.g., from old SDKs that omit the field).
+// Must stay in sync with featureproto.Reason_Type error variants.
+func isEvaluationEventErrorReason(reason *feature.Reason) bool {
+	if reason == nil {
+		return false
+	}
+	return reason.Type == feature.Reason_ERROR_NO_EVALUATIONS ||
+		reason.Type == feature.Reason_ERROR_FLAG_NOT_FOUND ||
+		reason.Type == feature.Reason_ERROR_WRONG_TYPE ||
+		reason.Type == feature.Reason_ERROR_USER_ID_NOT_SPECIFIED ||
+		reason.Type == feature.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED ||
+		reason.Type == feature.Reason_ERROR_EXCEPTION ||
+		reason.Type == feature.Reason_ERROR_CACHE_NOT_FOUND ||
+		reason.Type == feature.Reason_CLIENT
 }

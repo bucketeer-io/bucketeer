@@ -16,6 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -85,6 +86,36 @@ func (m *MockSegmentStorage) GetSegment(ctx context.Context, id, environmentId s
 func (mr *MockSegmentStorageMockRecorder) GetSegment(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegment", reflect.TypeOf((*MockSegmentStorage)(nil).GetSegment), ctx, id, environmentId)
+}
+
+// ListAllInUseSegments mocks base method.
+func (m *MockSegmentStorage) ListAllInUseSegments(ctx context.Context) ([]*v2.InUseSegment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllInUseSegments", ctx)
+	ret0, _ := ret[0].([]*v2.InUseSegment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllInUseSegments indicates an expected call of ListAllInUseSegments.
+func (mr *MockSegmentStorageMockRecorder) ListAllInUseSegments(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllInUseSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListAllInUseSegments), ctx)
+}
+
+// ListSegmentUsersBySegment mocks base method.
+func (m *MockSegmentStorage) ListSegmentUsersBySegment(ctx context.Context, segmentID, environmentID string) ([]*feature.SegmentUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSegmentUsersBySegment", ctx, segmentID, environmentID)
+	ret0, _ := ret[0].([]*feature.SegmentUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSegmentUsersBySegment indicates an expected call of ListSegmentUsersBySegment.
+func (mr *MockSegmentStorageMockRecorder) ListSegmentUsersBySegment(ctx, segmentID, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegmentUsersBySegment", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegmentUsersBySegment), ctx, segmentID, environmentID)
 }
 
 // ListSegments mocks base method.

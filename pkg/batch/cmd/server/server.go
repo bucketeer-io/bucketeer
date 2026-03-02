@@ -36,10 +36,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
+	scheduledflagchange "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/scheduledflagchange"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
@@ -47,6 +47,7 @@ import (
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
@@ -254,6 +255,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	registerer := metrics.DefaultRegisterer()
 	jobs.RegisterMetrics(registerer)
+	ftcacher.RegisterMetrics(registerer)
 
 	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthAudience)
 	if err != nil {
@@ -468,18 +470,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(1*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewMAUCountWatcher(
-			environmentClient,
-			eventCounterClient,
-			notificationSender,
-			location,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		opsevent.NewDatetimeWatcher(
 			environmentClient,
 			autoOpsClient,
 			autoOpsExecutor,
+			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -490,6 +485,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
+			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -497,6 +493,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			progressiveRolloutExecutor,
+			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -519,33 +516,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 			jobs.WithMetrics(registerer),
 		),
-		mau.NewMAUSummarizer(
-			mysqlClient,
-			eventCounterClient,
-			location,
-			jobs.WithTimeout(30*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionDeleter(
-			mysqlClient,
-			location,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionCreator(
-			mysqlClient,
-			location,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		cacher.NewFeatureFlagCacher(
 			mysqlClient,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
-			environmentClient,
-			featureClient,
+			mysqlClient,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
@@ -577,6 +554,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			mysqlClient,
 			featureClient,
 			jobs.WithTimeout(10*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		scheduledflagchange.NewScheduledFlagChangeExecutor(
+			mysqlClient,
+			featureClient,
+			jobs.WithTimeout(50*time.Second),
 			jobs.WithLogger(logger),
 		),
 		logger,

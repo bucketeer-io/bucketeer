@@ -134,6 +134,21 @@ func (mr *MockFeatureStorageMockRecorder) ListFeatures(ctx, options any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatures", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeatures), ctx, options)
 }
 
+// ListFeaturesByEnvironment mocks base method.
+func (m *MockFeatureStorage) ListFeaturesByEnvironment(ctx context.Context, environmentID string) ([]*feature.Feature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFeaturesByEnvironment", ctx, environmentID)
+	ret0, _ := ret[0].([]*feature.Feature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFeaturesByEnvironment indicates an expected call of ListFeaturesByEnvironment.
+func (mr *MockFeatureStorageMockRecorder) ListFeaturesByEnvironment(ctx, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeaturesByEnvironment", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeaturesByEnvironment), ctx, environmentID)
+}
+
 // ListFeaturesFilteredByExperiment mocks base method.
 func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Context, options *mysql.ListOptions) ([]*feature.Feature, int, int64, error) {
 	m.ctrl.T.Helper()

@@ -42,6 +42,8 @@ var (
 	updateFeatureSQLQuery string
 	//go:embed sql/feature/select_all_environment_features.sql
 	selectAllEnvironmentFeaturesSQLQuery string
+	//go:embed sql/feature/select_features_by_environment.sql
+	selectFeaturesByEnvironmentSQLQuery string
 	//go:embed sql/feature/select_features.sql
 	selectFeaturesSQLQuery string
 	//go:embed sql/feature/select_features_by_experiment.sql
@@ -69,6 +71,9 @@ type FeatureStorage interface {
 		environmentID string,
 	) (*proto.FeatureSummary, error)
 	ListFeaturesFilteredByExperiment(ctx context.Context, options *mysql.ListOptions) ([]*proto.Feature, int, int64, error)
+	// ListFeaturesByEnvironment lists all non-deleted features for a specific environment.
+	// This is more efficient than ListAllEnvironmentFeatures when only one environment is needed.
+	ListFeaturesByEnvironment(ctx context.Context, environmentID string) ([]*proto.Feature, error)
 	ListAllEnvironmentFeatures(
 		ctx context.Context,
 	) ([]*proto.EnvironmentFeature, error)
@@ -395,6 +400,50 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 		return nil, 0, 0, err
 	}
 	return features, nextOffset, totalCount, nil
+}
+
+func (s *featureStorage) ListFeaturesByEnvironment(
+	ctx context.Context,
+	environmentID string,
+) ([]*proto.Feature, error) {
+	rows, err := s.qe.QueryContext(ctx, selectFeaturesByEnvironmentSQLQuery, environmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	features := make([]*proto.Feature, 0)
+	for rows.Next() {
+		feature := proto.Feature{}
+		err := rows.Scan(
+			&feature.Id,
+			&feature.Name,
+			&feature.Description,
+			&feature.Enabled,
+			&feature.Archived,
+			&feature.Deleted,
+			&feature.Version,
+			&feature.CreatedAt,
+			&feature.UpdatedAt,
+			&feature.VariationType,
+			&mysql.JSONObject{Val: &feature.Variations},
+			&mysql.JSONObject{Val: &feature.Targets},
+			&mysql.JSONObject{Val: &feature.Rules},
+			&mysql.JSONObject{Val: &feature.DefaultStrategy},
+			&feature.OffVariation,
+			&mysql.JSONObject{Val: &feature.Tags},
+			&feature.Maintainer,
+			&feature.SamplingSeed,
+			&mysql.JSONObject{Val: &feature.Prerequisites},
+		)
+		if err != nil {
+			return nil, err
+		}
+		features = append(features, &feature)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return features, nil
 }
 
 func (s *featureStorage) ListAllEnvironmentFeatures(

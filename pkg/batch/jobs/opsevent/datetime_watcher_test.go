@@ -28,6 +28,7 @@ import (
 	aoclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	envclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	ftcachermock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -35,7 +36,7 @@ import (
 )
 
 func TestNewDatetimeWatcher(t *testing.T) {
-	w := NewDatetimeWatcher(nil, nil, nil)
+	w := NewDatetimeWatcher(nil, nil, nil, nil)
 	assert.IsType(t, &datetimeWatcher{}, w)
 }
 
@@ -46,6 +47,7 @@ func newNewDatetimeWatcherWithMock(t *testing.T, mockController *gomock.Controll
 		envClient:       envclientemock.NewMockClient(mockController),
 		aoClient:        aoclientemock.NewMockClient(mockController),
 		autoOpsExecutor: executormock.NewMockAutoOpsExecutor(mockController),
+		ftCacher:        ftcachermock.NewMockFeatureFlagCacher(mockController),
 		logger:          logger,
 		opts: &jobs.Options{
 			Timeout: time.Minute,
@@ -176,6 +178,9 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					EXPECT().Execute(gomock.Any(), "ns0", "id-0", "clause-id-0").Return(nil)
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
 					EXPECT().Execute(gomock.Any(), "ns0", "id-2", "clause-id-3").Return(nil)
+				// Cache should be refreshed after successful execution
+				w.ftCacher.(*ftcachermock.MockFeatureFlagCacher).
+					EXPECT().RefreshEnvironmentCache(gomock.Any(), "ns0").Return(nil)
 			},
 			expectedErr: nil,
 		},

@@ -80,53 +80,6 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 	}
 }
 
-func TestCreateAndListProgressiveRolloutNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-
-	featureID := createFeatureID(t)
-	createDisabledFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	schedules := createProgressiveRolloutSchedule()
-	createProgressiveRolloutNoCommand(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollout := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if len(progressiveRollout) != 1 {
-		t.Fatal("not enough rules")
-	}
-	actual := progressiveRollout[0]
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.FeatureId != featureID {
-		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
-	}
-	if actual.Type != autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE, actual.Type)
-	}
-	actualClause := unmarshalProgressiveRolloutManualClause(t, actual.Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
-	}
-	if len(actualClause.Schedules) != len(schedules) {
-		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
-	}
-}
-
 func TestGetProgressiveRollout(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -187,7 +140,7 @@ func TestCreateAndGetProgressiveRollout(t *testing.T) {
 	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
-	createProgressiveRolloutNoCommand(
+	createProgressiveRollout(
 		ctx,
 		t,
 		autoOpsClient,
@@ -336,80 +289,6 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	_, err := autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
 		EnvironmentId: *environmentID,
 		Id:            progressiveRollouts[0].Id,
-		ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
-			ScheduleId: clause.Schedules[0].ScheduleId,
-		},
-	})
-	if err != nil {
-		t.Fatalf("failed to execute progressive rollout: %s", err.Error())
-	}
-	feature = getFeature(t, featureClient, featureID)
-	expectedStrategy := &featureproto.RolloutStrategy{
-		Variations: []*featureproto.RolloutStrategy_Variation{
-			{
-				Variation: feature.Variations[0].Id,
-				Weight:    schedules[0].Weight,
-			},
-			{
-				Variation: feature.Variations[1].Id,
-				Weight:    totalVariationWeight - schedules[0].Weight,
-			},
-		},
-	}
-	if !feature.Enabled {
-		t.Fatalf("Flag shouldn't be disabled at this point")
-	}
-	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
-		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
-	}
-	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if actual[0].Status != autoopsproto.ProgressiveRollout_RUNNING {
-		t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_RUNNING)
-	}
-	actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
-	}
-	if len(actualClause.Schedules) != len(schedules) {
-		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
-	}
-	if actualClause.Schedules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at is empty")
-	}
-}
-
-func TestExecuteProgressiveRolloutNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-
-	featureID := createFeatureID(t)
-	createDisabledFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	schedules := createProgressiveRolloutSchedule()
-	createProgressiveRolloutNoCommand(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("not enough rules")
-	}
-	clause := unmarshalProgressiveRolloutManualClause(t, progressiveRollouts[0].Clause)
-	_, err := autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
-		EnvironmentId: *environmentID,
-		Id:            progressiveRollouts[0].Id,
 		ScheduleId:    clause.Schedules[0].ScheduleId,
 	})
 	if err != nil {
@@ -534,29 +413,6 @@ func createProgressiveRollout(
 	template *autoopsproto.ProgressiveRolloutTemplateScheduleClause,
 ) {
 	t.Helper()
-	cmd := &autoopsproto.CreateProgressiveRolloutCommand{
-		FeatureId:                                featureID,
-		ProgressiveRolloutManualScheduleClause:   manual,
-		ProgressiveRolloutTemplateScheduleClause: template,
-	}
-	_, err := client.CreateProgressiveRollout(ctx, &autoopsproto.CreateProgressiveRolloutRequest{
-		EnvironmentId: *environmentID,
-		Command:       cmd,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func createProgressiveRolloutNoCommand(
-	ctx context.Context,
-	t *testing.T,
-	client autoopsclient.Client,
-	featureID string,
-	manual *autoopsproto.ProgressiveRolloutManualScheduleClause,
-	template *autoopsproto.ProgressiveRolloutTemplateScheduleClause,
-) {
-	t.Helper()
 	_, err := client.CreateProgressiveRollout(ctx, &autoopsproto.CreateProgressiveRolloutRequest{
 		EnvironmentId:                            *environmentID,
 		FeatureId:                                featureID,
@@ -632,9 +488,7 @@ func stopProgressiveRollout(t *testing.T, client autoopsclient.Client, id string
 	_, err := client.StopProgressiveRollout(ctx, &autoopsproto.StopProgressiveRolloutRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command: &autoopsproto.StopProgressiveRolloutCommand{
-			StoppedBy: autoopsproto.ProgressiveRollout_USER,
-		},
+		StoppedBy:     autoopsproto.ProgressiveRollout_USER,
 	})
 	if err != nil {
 		t.Fatal("Failed to stop progressive rollout", err)

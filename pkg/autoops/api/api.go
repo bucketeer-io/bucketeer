@@ -28,7 +28,6 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -120,91 +119,9 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		return nil, err
 	}
 
-	if req.Command == nil {
-		return s.createAutoOpsRuleNoCommand(ctx, req, editor)
-	}
-
 	if err := s.validateCreateAutoOpsRuleRequest(ctx, req); err != nil {
 		return nil, err
 	}
-	autoOpsRule, err := domain.NewAutoOpsRule(
-		req.Command.FeatureId,
-		req.Command.OpsType,
-		req.Command.OpsEventRateClauses,
-		req.Command.DatetimeClauses,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create a new autoOpsRule",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	opsEventRateClauses, err := autoOpsRule.ExtractOpsEventRateClauses()
-	if err != nil {
-		s.logger.Error(
-			"Failed to extract opsEventRateClauses",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	for _, c := range opsEventRateClauses {
-		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
-		if err != nil {
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-		if !exist {
-			s.logger.Error(
-				"Goal does not exist",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
-			)
-			return nil, statusOpsEventRateClauseGoalNotFound.Err()
-		}
-	}
-
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.autoOpsStorage.CreateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrAutoOpsRuleAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create autoOps",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &autoopsproto.CreateAutoOpsRuleResponse{
-		AutoOpsRule: autoOpsRule.AutoOpsRule,
-	}, nil
-}
-
-func (s *AutoOpsService) createAutoOpsRuleNoCommand(
-	ctx context.Context,
-	req *autoopsproto.CreateAutoOpsRuleRequest,
-	editor *eventproto.Editor,
-) (*autoopsproto.CreateAutoOpsRuleResponse, error) {
-	if err := s.validateCreateAutoOpsRuleRequestNoCommand(ctx, req); err != nil {
-		return nil, err
-	}
-
 	autoOpsRule, err := domain.NewAutoOpsRule(
 		req.FeatureId,
 		req.OpsType,
@@ -245,6 +162,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 			return nil, statusOpsEventRateClauseGoalNotFound.Err()
 		}
 	}
+
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		e, err := domainevent.NewEvent(
 			editor,
@@ -290,45 +208,6 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 }
 
 func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
-	ctx context.Context,
-	req *autoopsproto.CreateAutoOpsRuleRequest,
-) error {
-	if req.Command.FeatureId == "" {
-		return statusFeatureIDRequired.Err()
-	}
-	if len(req.Command.OpsEventRateClauses) == 0 &&
-		len(req.Command.DatetimeClauses) == 0 {
-		return statusClauseRequired.Err()
-	}
-	if req.Command.OpsType == autoopsproto.OpsType_TYPE_UNKNOWN {
-		return statusIncompatibleOpsType.Err()
-	}
-	if req.Command.OpsType == autoopsproto.OpsType_EVENT_RATE {
-		if len(req.Command.OpsEventRateClauses) == 0 {
-			return statusClauseRequiredForEventRate.Err()
-		}
-		if len(req.Command.DatetimeClauses) > 0 {
-			return statusIncompatibleOpsType.Err()
-		}
-	}
-	if req.Command.OpsType == autoopsproto.OpsType_SCHEDULE {
-		if len(req.Command.DatetimeClauses) == 0 {
-			return statusClauseRequiredForDateTime.Err()
-		}
-		if len(req.Command.OpsEventRateClauses) > 0 {
-			return statusIncompatibleOpsType.Err()
-		}
-	}
-	if err := s.validateOpsEventRateClauses(req.Command.OpsEventRateClauses); err != nil {
-		return err
-	}
-	if err := s.validateDatetimeClauses(req.Command.DatetimeClauses); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateCreateAutoOpsRuleRequestNoCommand(
 	ctx context.Context,
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 ) error {
@@ -561,108 +440,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		return nil, err
 	}
 
-	if s.isNoUpdateAutoOpsRuleCommand(req) {
-		return s.updateAutoOpsRuleNoCommand(ctx, req, editor)
-	}
-
 	if err := s.validateUpdateAutoOpsRuleRequest(req); err != nil {
-		return nil, err
-	}
-	var opsEventRateClauses []*autoopsproto.OpsEventRateClause
-	for _, c := range req.AddOpsEventRateClauseCommands {
-		opsEventRateClauses = append(opsEventRateClauses, c.OpsEventRateClause)
-	}
-	for _, c := range req.ChangeOpsEventRateClauseCommands {
-		opsEventRateClauses = append(opsEventRateClauses, c.OpsEventRateClause)
-	}
-	for _, c := range opsEventRateClauses {
-		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
-		if err != nil {
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-		if !exist {
-			s.logger.Error(
-				"Goal does not exist",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
-			)
-			return nil, statusOpsEventRateClauseGoalNotFound.Err()
-		}
-	}
-	commands := s.createUpdateAutoOpsRuleCommands(req)
-
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-
-		if autoOpsRule.IsFinished() || autoOpsRule.IsStopped() {
-			return statusAutoOpsRuleCompleted.Err()
-		}
-		if autoOpsRule.OpsType == autoopsproto.OpsType_SCHEDULE {
-			if len(req.AddOpsEventRateClauseCommands) > 0 || len(req.ChangeOpsEventRateClauseCommands) > 0 {
-				return statusIncompatibleOpsType.Err()
-			}
-
-			// Delete a deletion schedule from the currently held schedules
-			extractDateTimeClauses, _ := autoOpsRule.ExtractDatetimeClauses()
-			for _, deleteClause := range req.DeleteClauseCommands {
-				delete(extractDateTimeClauses, deleteClause.Id)
-			}
-			checkTimes := make(map[int64]autoopsproto.ActionType)
-			for _, c := range extractDateTimeClauses {
-				checkTimes[c.Time] = c.ActionType
-			}
-
-			// Check if there is a schedule with the same date and time.
-			for _, c := range req.AddDatetimeClauseCommands {
-				actionType, hasSameTime := checkTimes[c.DatetimeClause.Time]
-				if hasSameTime && actionType == c.DatetimeClause.ActionType {
-					return statusDatetimeClauseDuplicateTime.Err()
-				}
-			}
-			for _, c := range req.ChangeDatetimeClauseCommands {
-				actionType, hasSameTime := checkTimes[c.DatetimeClause.Time]
-				if hasSameTime && actionType == c.DatetimeClause.ActionType {
-					return statusDatetimeClauseDuplicateTime.Err()
-				}
-			}
-		}
-		if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE {
-			if len(req.AddDatetimeClauseCommands) > 0 || len(req.ChangeDatetimeClauseCommands) > 0 {
-				return statusIncompatibleOpsType.Err()
-			}
-		}
-
-		if req.DeleteClauseCommands != nil && len(autoOpsRule.Clauses) == len(req.DeleteClauseCommands) &&
-			len(req.AddOpsEventRateClauseCommands) == 0 && len(req.AddDatetimeClauseCommands) == 0 {
-			// When deleting, at least one Clause must exist.
-			return statusShouldAddMoreClauses.Err()
-		}
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		for _, com := range commands {
-			if err := handler.Handle(ctx, com); err != nil {
-				return err
-			}
-		}
-		return s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
-	})
-	if err != nil {
-		return nil, s.returnUpdateAutoOpsRuleError(ctx, req, err)
-	}
-	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
-}
-
-func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
-	ctx context.Context,
-	req *autoopsproto.UpdateAutoOpsRuleRequest,
-	editor *eventproto.Editor,
-) (*autoopsproto.UpdateAutoOpsRuleResponse, error) {
-	err := s.validateUpdateAutoOpsRuleRequestNoCommand(req)
-	if err != nil {
 		return nil, err
 	}
 	for _, c := range req.OpsEventRateClauseChanges {
@@ -795,64 +573,6 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 	if req.Id == "" {
 		return statusAutoOpsRuleIDRequired.Err()
 	}
-	for _, c := range req.AddOpsEventRateClauseCommands {
-		if c.OpsEventRateClause == nil {
-			return statusOpsEventRateClauseRequired.Err()
-		}
-		if err := s.validateOpsEventRateClause(c.OpsEventRateClause); err != nil {
-			return err
-		}
-	}
-	for _, c := range req.ChangeOpsEventRateClauseCommands {
-		if c.Id == "" {
-			return statusClauseIDRequired.Err()
-		}
-		if c.OpsEventRateClause == nil {
-			return statusOpsEventRateClauseRequired.Err()
-		}
-		if err := s.validateOpsEventRateClause(c.OpsEventRateClause); err != nil {
-			return err
-		}
-	}
-	for _, c := range req.DeleteClauseCommands {
-		if c.Id == "" {
-			return statusClauseIDRequired.Err()
-		}
-	}
-
-	var checkDatetimeClauses []*autoopsproto.DatetimeClause
-	for _, c := range req.AddDatetimeClauseCommands {
-		if c.DatetimeClause == nil {
-			return statusDatetimeClauseRequired.Err()
-		}
-		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
-	}
-	if err := s.validateDatetimeClauses(checkDatetimeClauses); err != nil {
-		return err
-	}
-
-	for _, c := range req.ChangeDatetimeClauseCommands {
-		if c.Id == "" {
-			return statusClauseIDRequired.Err()
-		}
-		if c.DatetimeClause == nil {
-			return statusDatetimeClauseRequired.Err()
-		}
-		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
-	}
-	if err := s.validateDatetimeClauses(checkDatetimeClauses); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
-	req *autoopsproto.UpdateAutoOpsRuleRequest,
-) error {
-	if req.Id == "" {
-		return statusAutoOpsRuleIDRequired.Err()
-	}
 	for _, c := range req.OpsEventRateClauseChanges {
 		if c.Id == "" && c.ChangeType == autoopsproto.ChangeType_DELETE {
 			return statusClauseIDRequired.Err()
@@ -882,34 +602,6 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 	}
 
 	return nil
-}
-
-func (s *AutoOpsService) isNoUpdateAutoOpsRuleCommand(req *autoopsproto.UpdateAutoOpsRuleRequest) bool {
-	return len(req.AddOpsEventRateClauseCommands) == 0 &&
-		len(req.ChangeOpsEventRateClauseCommands) == 0 &&
-		len(req.DeleteClauseCommands) == 0 &&
-		len(req.AddDatetimeClauseCommands) == 0 &&
-		len(req.ChangeDatetimeClauseCommands) == 0
-}
-
-func (s *AutoOpsService) createUpdateAutoOpsRuleCommands(req *autoopsproto.UpdateAutoOpsRuleRequest) []command.Command {
-	commands := make([]command.Command, 0)
-	for _, c := range req.AddOpsEventRateClauseCommands {
-		commands = append(commands, c)
-	}
-	for _, c := range req.ChangeOpsEventRateClauseCommands {
-		commands = append(commands, c)
-	}
-	for _, c := range req.AddDatetimeClauseCommands {
-		commands = append(commands, c)
-	}
-	for _, c := range req.ChangeDatetimeClauseCommands {
-		commands = append(commands, c)
-	}
-	for _, c := range req.DeleteClauseCommands {
-		commands = append(commands, c)
-	}
-	return commands
 }
 
 func (s *AutoOpsService) GetAutoOpsRule(
@@ -1048,10 +740,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		return nil, err
 	}
 
-	if req.ExecuteAutoOpsRuleCommand == nil {
-		return s.executeAutoOpsNoCommand(ctx, req, editor)
-	}
-
 	if err := s.validateExecuteAutoOpsRequest(req); err != nil {
 		return nil, err
 	}
@@ -1071,7 +759,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 
 		var executeClause *autoopsproto.Clause
 		for _, c := range autoOpsRule.Clauses {
-			if c.Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
+			if c.Id == req.ClauseId {
 				executeClause = c
 				break
 			}
@@ -1125,135 +813,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		// Update the status if needed.
 		// When it executes the last clause, it will change to finished status.
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
-		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
-			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
-		}
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, &autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
-			return err
-		}
-
-		if err = s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId); err != nil {
-			if errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
-				s.logger.Warn(
-					"No rows were affected",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("id", req.Id),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return nil
-			}
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
-			s.logger.Warn(
-				"Auto Ops Rule not found",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return nil, statusAutoOpsRuleNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to execute autoOpsRule",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
-}
-
-func (s *AutoOpsService) executeAutoOpsNoCommand(
-	ctx context.Context,
-	req *autoopsproto.ExecuteAutoOpsRequest,
-	editor *eventproto.Editor,
-) (*autoopsproto.ExecuteAutoOpsResponse, error) {
-	if err := s.validateExecuteAutoOpsRequestNoCommand(req); err != nil {
-		return nil, err
-	}
-	triggered, err := s.checkIfHasAlreadyTriggered(ctx, req.Id, req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if triggered {
-		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
-		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-
-		var executeClause *autoopsproto.Clause = nil
-		for _, c := range autoOpsRule.Clauses {
-			if c.Id == req.ClauseId {
-				executeClause = c
-				break
-			}
-		}
-		// Check if the clause exists
-		if executeClause == nil {
-			return statusClauseNotFound.Err()
-		}
-		// Check if the clause is already executed
-		if executeClause.ExecutedAt != 0 {
-			return statusClauseAlreadyExecuted.Err()
-		}
-
-		ftStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		// Stop the running progressive rollout if the operation type is disable
-		if executeClause.ActionType == autoopsproto.ActionType_DISABLE {
-			if err := s.stopProgressiveRollout(
-				contextWithTx,
-				req.EnvironmentId,
-				autoOpsRule,
-			); err != nil {
-				return err
-			}
-		}
-		if err := executeAutoOpsRuleOperation(
-			contextWithTx,
-			ftStorage,
-			req.EnvironmentId,
-			executeClause.ActionType,
-			feature,
-			s.logger,
-			s.publisher,
-			editor,
-		); err != nil {
-			s.logger.Error(
-				"Failed to execute auto ops rule operation",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.String("autoOpsRuleId", autoOpsRule.Id),
-					zap.String("featureId", autoOpsRule.FeatureId),
-				)...,
-			)
-			return err
-		}
-		// Set the `executed_at`, so it won't be executd twice
-		executeClause.ExecutedAt = time.Now().Unix()
-		// Update the status if needed.
-		// When it executes the last clause, it will change to finished status.
-		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ClauseId {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
@@ -1261,6 +820,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 		if err != nil {
 			return err
 		}
+
 		event, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
@@ -1279,6 +839,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 		if err := s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
+
 		if err = s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, updated, req.EnvironmentId); err != nil {
 			if errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
 				s.logger.Warn(
@@ -1367,18 +928,6 @@ func (s *AutoOpsService) stopProgressiveRollout(
 }
 
 func (s *AutoOpsService) validateExecuteAutoOpsRequest(
-	req *autoopsproto.ExecuteAutoOpsRequest,
-) error {
-	if req.Id == "" {
-		return statusAutoOpsRuleIDRequired.Err()
-	}
-	if req.ExecuteAutoOpsRuleCommand != nil && req.ExecuteAutoOpsRuleCommand.ClauseId == "" {
-		return statusClauseIDRequired.Err()
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateExecuteAutoOpsRequestNoCommand(
 	req *autoopsproto.ExecuteAutoOpsRequest,
 ) error {
 	if req.Id == "" {

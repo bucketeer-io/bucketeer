@@ -27,7 +27,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -56,17 +55,13 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return nil, err
 	}
 
-	if req.Command == nil {
-		return s.createProgressiveRolloutNoCommand(ctx, req, editor)
-	}
-
 	if err := s.validateCreateProgressiveRolloutRequest(ctx, req); err != nil {
 		return nil, err
 	}
 	progressiveRollout, err := domain.NewProgressiveRollout(
-		req.Command.FeatureId,
-		req.Command.ProgressiveRolloutManualScheduleClause,
-		req.Command.ProgressiveRolloutTemplateScheduleClause,
+		req.FeatureId,
+		req.ProgressiveRolloutManualScheduleClause,
+		req.ProgressiveRolloutTemplateScheduleClause,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -77,55 +72,6 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewProgressiveRolloutCommandHandler(
-			editor,
-			progressiveRollout,
-			s.publisher,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.prStorage.CreateProgressiveRollout(contextWithTx, progressiveRollout, req.EnvironmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrProgressiveRolloutAlreadyExists) {
-			return nil, statusProgressiveRolloutAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create ProgressiveRollout",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &autoopsproto.CreateProgressiveRolloutResponse{
-		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
-	}, nil
-}
-
-func (s *AutoOpsService) createProgressiveRolloutNoCommand(
-	ctx context.Context,
-	req *autoopsproto.CreateProgressiveRolloutRequest,
-	editor *eventproto.Editor,
-) (*autoopsproto.CreateProgressiveRolloutResponse, error) {
-	if err := s.validateCreateProgressiveRolloutRequestNoCommand(ctx, req); err != nil {
-		return nil, err
-	}
-	progressiveRollout, err := domain.NewProgressiveRollout(
-		req.FeatureId,
-		req.ProgressiveRolloutManualScheduleClause,
-		req.ProgressiveRolloutTemplateScheduleClause,
-	)
-	if err != nil {
-		return nil, err
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		event, err := domainevent.NewEvent(
@@ -215,36 +161,11 @@ func (s *AutoOpsService) StopProgressiveRollout(
 		return nil, err
 	}
 
-	if req.Command == nil {
-		return s.stopProgressiveRolloutNoCommand(ctx, req, editor)
-	}
-
-	if err := s.validateStopProgressiveRolloutRequest(req); err != nil {
-		return nil, err
-	}
-	err = s.updateProgressiveRollout(
-		ctx,
-		req.Id,
-		req.EnvironmentId,
-		req.Command,
-		editor,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &autoopsproto.StopProgressiveRolloutResponse{}, nil
-}
-
-func (s *AutoOpsService) stopProgressiveRolloutNoCommand(
-	ctx context.Context,
-	req *autoopsproto.StopProgressiveRolloutRequest,
-	editor *eventproto.Editor,
-) (*autoopsproto.StopProgressiveRolloutResponse, error) {
 	if err := s.validateStopProgressiveRolloutRequest(req); err != nil {
 		return nil, err
 	}
 	var event *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -303,49 +224,6 @@ func (s *AutoOpsService) stopProgressiveRolloutNoCommand(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.StopProgressiveRolloutResponse{}, nil
-}
-
-func (s *AutoOpsService) updateProgressiveRollout(
-	ctx context.Context,
-	progressiveRolloutID, environmentId string,
-	cmd command.Command,
-	editor *eventproto.Editor,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, progressiveRolloutID, environmentId)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewProgressiveRolloutCommandHandler(
-			editor,
-			progressiveRollout,
-			s.publisher,
-			environmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, cmd); err != nil {
-			return err
-		}
-		return s.prStorage.UpdateProgressiveRollout(contextWithTx, progressiveRollout, environmentId)
-	})
-	if err != nil {
-		s.logger.Error(
-			"Failed to stop the progressive rollout",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", progressiveRolloutID),
-				zap.String("environmentId", environmentId),
-			)...,
-		)
-		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) ||
-			errors.Is(err, v2as.ErrProgressiveRolloutUnexpectedAffectedRows) {
-			return statusProgressiveRolloutNotFound.Err()
-		}
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
 }
 
 func (s *AutoOpsService) DeleteProgressiveRollout(
@@ -448,171 +326,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	if err != nil {
 		return nil, err
 	}
-	if req.ChangeProgressiveRolloutTriggeredAtCommand == nil {
-		return s.executeProgressiveRolloutNoCommand(ctx, req, editor)
-	}
-
-	if err := s.validateExecuteProgressiveRolloutRequest(req); err != nil {
-		return nil, err
-	}
-
-	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
-		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		if err := s.checkStopStatus(progressiveRollout); err != nil {
-			// If skip if it's already stopped
-			return nil
-		}
-		triggered, err := s.checkAlreadyTriggered(
-			req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId,
-			progressiveRollout,
-		)
-		if err != nil {
-			return err
-		}
-		if triggered {
-			s.logger.Warn(
-				"Progressive Rollout is already triggered",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("ruleID", req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return nil
-		}
-		// Enable the flag if it is disabled and it is the first rollout execution
-		var enabled *wrapperspb.BoolValue
-		if !feature.Enabled && progressiveRollout.IsWaiting() {
-			enabled = &wrapperspb.BoolValue{Value: true}
-		}
-		handler, err := command.NewProgressiveRolloutCommandHandler(
-			editor,
-			progressiveRollout,
-			s.publisher,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.ChangeProgressiveRolloutTriggeredAtCommand); err != nil {
-			return err
-		}
-		if err := s.prStorage.UpdateProgressiveRollout(contextWithTx, progressiveRollout, req.EnvironmentId); err != nil {
-			return err
-		}
-		defaultStrategy, err := ExecuteProgressiveRolloutOperation(
-			progressiveRollout,
-			feature,
-			req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId,
-		)
-		if err != nil {
-			return err
-		}
-		// Check if feature already has the target strategy to avoid unnecessary updates
-		if proto.Equal(feature.DefaultStrategy, defaultStrategy) && (enabled == nil || feature.Enabled == enabled.Value) {
-			s.logger.Warn(
-				"Feature already has target strategy, skipping update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("environmentId", req.EnvironmentId),
-					zap.String("id", progressiveRollout.Id),
-					zap.String("featureId", progressiveRollout.FeatureId),
-				)...,
-			)
-			return nil
-		}
-		updated, err := feature.Update(
-			nil, // name
-			nil, // description
-			nil, // tags
-			enabled,
-			nil, // archived
-			defaultStrategy,
-			nil,   // offVariation
-			false, // resetSamplingSeed
-			nil,   // prerequisiteChanges
-			nil,   // targetChanges
-			nil,   // ruleChanges
-			nil,   // variationChanges
-			nil,   // tagChanges
-			nil,   // maintainer
-		)
-		if err != nil {
-			return err
-		}
-		if err := s.featureStorage.UpdateFeature(contextWithTx, updated, req.EnvironmentId); err != nil {
-			s.logger.Error(
-				"Failed to update feature flag",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.String("id", progressiveRollout.Id),
-					zap.String("featureId", progressiveRollout.FeatureId),
-				)...,
-			)
-			return err
-		}
-		event, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_FEATURE,
-			updated.Id,
-			eventproto.Event_FEATURE_UPDATED,
-			&eventproto.FeatureUpdatedEvent{
-				Id: updated.Id,
-			},
-			req.EnvironmentId,
-			updated.Feature,
-			feature.Feature,
-			domainevent.WithComment("Progressive rollout executed"),
-			domainevent.WithNewVersion(updated.Version),
-		)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		s.logger.Error(
-			"Failed to execute progressiveRollout",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) ||
-			errors.Is(err, v2as.ErrProgressiveRolloutUnexpectedAffectedRows) {
-			return nil, statusProgressiveRolloutNotFound.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	if event != nil {
-		if errs := s.publisher.PublishMulti(ctx, []publisher.Message{event}); len(errs) > 0 {
-			s.logger.Error(
-				"Failed to publish events",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Any("errors", errs),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return nil, statusInternal.Err()
-		}
-	}
-	return &autoopsproto.ExecuteProgressiveRolloutResponse{}, nil
-}
-
-func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
-	ctx context.Context,
-	req *autoopsproto.ExecuteProgressiveRolloutRequest,
-	editor *eventproto.Editor,
-) (*autoopsproto.ExecuteProgressiveRolloutResponse, error) {
-	err := s.validateExecuteProgressiveRolloutRequestNoCommand(req)
+	err = s.validateExecuteProgressiveRolloutRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate execute progressive rollout request",
@@ -913,48 +627,6 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	ctx context.Context,
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 ) error {
-	if req.Command.FeatureId == "" {
-		return statusProgressiveRolloutFeatureIDRequired.Err()
-	}
-	// This operation is not the atomic. We may have the problem.
-	f, err := s.getFeature(ctx, req.EnvironmentId, req.Command.FeatureId)
-	if err != nil {
-		return api.NewGRPCStatus(err).Err()
-	}
-	if err := s.validateTargetFeature(ctx, f); err != nil {
-		return err
-	}
-	if req.Command.ProgressiveRolloutManualScheduleClause == nil &&
-		req.Command.ProgressiveRolloutTemplateScheduleClause == nil {
-		return statusProgressiveRolloutClauseRequired.Err()
-	}
-	if req.Command.ProgressiveRolloutManualScheduleClause != nil &&
-		req.Command.ProgressiveRolloutTemplateScheduleClause != nil {
-		return statusIncorrectProgressiveRolloutClause.Err()
-	}
-	if req.Command.ProgressiveRolloutManualScheduleClause != nil {
-		if err := s.validateProgressiveRolloutManualScheduleClause(
-			req.Command.ProgressiveRolloutManualScheduleClause,
-			f,
-		); err != nil {
-			return err
-		}
-	}
-	if req.Command.ProgressiveRolloutTemplateScheduleClause != nil {
-		if err := s.validateProgressiveRolloutTemplateScheduleClause(
-			req.Command.ProgressiveRolloutTemplateScheduleClause,
-			f,
-		); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateCreateProgressiveRolloutRequestNoCommand(
-	ctx context.Context,
-	req *autoopsproto.CreateProgressiveRolloutRequest,
-) error {
 	if req.FeatureId == "" {
 		return statusProgressiveRolloutFeatureIDRequired.Err()
 	}
@@ -1021,18 +693,6 @@ func (s *AutoOpsService) validateDeleteProgressiveRolloutRequest(
 }
 
 func (s *AutoOpsService) validateExecuteProgressiveRolloutRequest(
-	req *autoopsproto.ExecuteProgressiveRolloutRequest,
-) error {
-	if err := s.validateProgressiveRolloutID(req.Id); err != nil {
-		return err
-	}
-	if req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId == "" {
-		return statusProgressiveRolloutScheduleIDRequired.Err()
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateExecuteProgressiveRolloutRequestNoCommand(
 	req *autoopsproto.ExecuteProgressiveRolloutRequest,
 ) error {
 	if err := s.validateProgressiveRolloutID(req.Id); err != nil {

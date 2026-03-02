@@ -60,10 +60,6 @@ var (
 			pkgErr.AutoopsPackageName,
 			"ops type is incompatible with ops clause", "AutoOperationType",
 		))
-	statusShouldAddMoreClauses = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(
-			pkgErr.AutoopsPackageName, "if existing clauses are deleted all, should add one or more clauses.", "Clause"),
-	)
 	statusAutoOpsRuleCompleted = api.NewGRPCStatus(
 		pkgErr.NewErrorUnavailable(pkgErr.AutoopsPackageName, "auto ops rule is status of complete"),
 	)

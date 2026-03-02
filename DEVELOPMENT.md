@@ -39,13 +39,20 @@ Choose the method that best fits your development environment and requirements.
 
 The following command will set up the Minikube and services that Bucketeer depends on:
 
-* MySQL
-* Redis
-* Google Pub/Sub (Emulator)
-* Google Big Query (Emulator)
+- MySQL
+- PostgresQL (optional)
+- Redis
+- Google Pub/Sub (Emulator)
+- Google Big Query (Emulator)
+
+Postgres is optional in Minikube. By default it is disabled; enable it by passing a flag:
 
 ```shell
+# Default (Postgres disabled)
 make start-minikube
+
+# Enable Postgres
+make start-minikube POSTGRES_ENABLED=true
 ```
 
 **Note:** When you restart the Minikube cluster, you must use `make start-minikube` to start it. Do not use `minikube start` directly.
@@ -142,6 +149,7 @@ make docker-compose-create-mysql-event-tables
 The Docker Compose setup includes:
 
 - **MySQL**: Port 3306 (Database)
+- **PostgresQL**: Port 5432 (datawarehouse option)
 - **Redis**: Port 6379 (Cache and pub/sub)
 - **Nginx**: Ports 80 (HTTP) & 443 (HTTPS) for routing to:
   - **Web Service**: Admin UI and internal APIs via `web-gateway.bucketeer.io`

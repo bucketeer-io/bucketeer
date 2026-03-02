@@ -71,6 +71,7 @@ env:
   refreshTokenTTL: 168h
 affinity: {}
 nodeSelector: {}
+priorityClassName: ""
 pdb:
   enabled:
   maxUnavailable: 50%

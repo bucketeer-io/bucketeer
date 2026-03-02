@@ -1,6 +1,10 @@
 import { i18n } from 'i18n';
 import * as yup from 'yup';
 import { StrategyType } from '@types';
+import {
+  SCHEDULE_TYPE_SCHEDULE,
+  SCHEDULE_TYPE_UPDATE_NOW
+} from '../elements/confirm-required-modal/form-schema';
 import { RuleClauseType } from './types';
 
 export type RuleClauseSchema = yup.InferType<typeof ruleClauseSchema>;
@@ -197,10 +201,12 @@ export const formSchema = yup.object().shape({
     then: schema => schema.required(requiredMessage),
     otherwise: schema => schema
   }),
-  scheduleType: yup.string().oneOf(['ENABLE', 'DISABLE', 'SCHEDULE']),
+  scheduleType: yup
+    .string()
+    .oneOf([SCHEDULE_TYPE_UPDATE_NOW, SCHEDULE_TYPE_SCHEDULE]),
   scheduleAt: yup.string().test('test', function (value, context) {
     const scheduleType = context.from && context.from[0].value.scheduleType;
-    if (scheduleType === 'SCHEDULE') {
+    if (scheduleType === SCHEDULE_TYPE_SCHEDULE) {
       if (!value)
         return context.createError({
           message: requiredMessage,

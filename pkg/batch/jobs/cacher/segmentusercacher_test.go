@@ -16,6 +16,7 @@
 package cacher
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -23,85 +24,58 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
-	mockcachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	ftcachermock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-func TestSegmentUserPutCache(t *testing.T) {
+func TestSegmentUserCacherJobRun(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
-	envID := "env-id"
-	segUsers := &ftproto.SegmentUsers{
-		SegmentId: "seg-id-1",
-		Users: []*ftproto.SegmentUser{
-			{
-				Id: "seg-user-id-1",
-			},
-			{
-				Id: "seg-user-id-2",
-			},
-		},
-	}
+	internalErr := errors.New("internal error")
 
 	patterns := []struct {
-		desc     string
-		setup    func(*segmentUserCacher)
-		expected int
+		desc        string
+		setup       func(*segmentUserCacherJob)
+		expectedErr error
 	}{
 		{
-			desc: "err: error at index 0",
-			setup: func(fc *segmentUserCacher) {
-				fc.caches[0].(*mockcachev3.MockSegmentUsersCache).EXPECT().Put(segUsers, envID).
-					Return(errors.New("internal error"))
-				fc.caches[1].(*mockcachev3.MockSegmentUsersCache).EXPECT().Put(segUsers, envID).
-					Return(nil)
+			desc: "err: cacher fails",
+			setup: func(job *segmentUserCacherJob) {
+				job.cacher.(*ftcachermock.MockSegmentUserCacher).EXPECT().
+					RefreshAllEnvironmentCaches(gomock.Any()).
+					Return(internalErr)
 			},
-			expected: 1,
-		},
-		{
-			desc: "err: error at index 1",
-			setup: func(fc *segmentUserCacher) {
-				fc.caches[0].(*mockcachev3.MockSegmentUsersCache).EXPECT().Put(segUsers, envID).
-					Return(nil)
-				fc.caches[1].(*mockcachev3.MockSegmentUsersCache).EXPECT().Put(segUsers, envID).
-					Return(errors.New("internal error"))
-			},
-			expected: 1,
+			expectedErr: internalErr,
 		},
 		{
 			desc: "success",
-			setup: func(fc *segmentUserCacher) {
-				fc.caches[0].(*mockcachev3.MockSegmentUsersCache).EXPECT().Put(segUsers, envID).
-					Return(nil)
-				fc.caches[1].(*mockcachev3.MockSegmentUsersCache).EXPECT().Put(segUsers, envID).
+			setup: func(job *segmentUserCacherJob) {
+				job.cacher.(*ftcachermock.MockSegmentUserCacher).EXPECT().
+					RefreshAllEnvironmentCaches(gomock.Any()).
 					Return(nil)
 			},
-			expected: 2,
+			expectedErr: nil,
 		},
 	}
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			cacher := newSegmentUserFlagCacher(t, controller)
-			p.setup(cacher)
-			updatedInstances := cacher.putCache(segUsers, envID)
-			assert.Equal(t, p.expected, updatedInstances)
+			job := newSegmentUserCacherJobWithMock(t, controller)
+			p.setup(job)
+			err := job.Run(context.Background())
+			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func newSegmentUserFlagCacher(t *testing.T, controller *gomock.Controller) *segmentUserCacher {
+func newSegmentUserCacherJobWithMock(t *testing.T, controller *gomock.Controller) *segmentUserCacherJob {
+	t.Helper()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	return &segmentUserCacher{
-		caches: []cachev3.SegmentUsersCache{
-			mockcachev3.NewMockSegmentUsersCache(controller),
-			mockcachev3.NewMockSegmentUsersCache(controller),
-		},
+	return &segmentUserCacherJob{
+		cacher: ftcachermock.NewMockSegmentUserCacher(controller),
 		logger: logger,
 	}
 }

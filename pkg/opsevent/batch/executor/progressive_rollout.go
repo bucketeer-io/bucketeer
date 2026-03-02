@@ -56,9 +56,7 @@ func (e *progressiveRolloutExecutor) ExecuteProgressiveRollout(
 	_, err := e.autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
 		EnvironmentId: environmentId,
 		Id:            progressiveRolloutID,
-		ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
-			ScheduleId: scheduleID,
-		},
+		ScheduleId:    scheduleID,
 	})
 	if err != nil {
 		e.logger.Error("Failed to execute ProgressiveRollout", zap.Error(err),

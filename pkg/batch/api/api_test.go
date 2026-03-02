@@ -33,10 +33,10 @@ import (
 	cacher "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/cacher"
 	deleter "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
+	scheduledflagchange "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/scheduledflagchange"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
@@ -55,10 +55,6 @@ import (
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-)
-
-var (
-	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
 )
 
 type setupMockFunc func(
@@ -213,60 +209,6 @@ func TestFeatureStaleWatcher(t *testing.T) {
 	}, setupMock)
 }
 
-func TestMAUCountWatcher(t *testing.T) {
-	t.Parallel()
-	setupMock := func(
-		accountMockClient *acclient.MockClient,
-		environmentMockClient *environmentclient.MockClient,
-		autoOpsRulesMockClient *aoclientmock.MockClient,
-		experimentMockClient *experimentclient.MockClient,
-		featureMockClient *featureclientmock.MockClient,
-		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
-		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
-		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		mysqlMockClient *mysqlmock.MockClient,
-		mysqlMockRows *mysqlmock.MockRows,
-		redisMockClient *redismock.MockMultiGetCache,
-		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
-	) {
-		environmentMockClient.EXPECT().
-			ListProjects(gomock.Any(), gomock.Any()).
-			Times(1).
-			Return(
-				&environmentproto.ListProjectsResponse{
-					Projects: getProjects(t),
-				},
-				nil,
-			)
-		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
-			Times(1).
-			Return(
-				&environmentproto.ListEnvironmentsV2Response{
-					Environments: getEnvironments(t),
-				},
-				nil,
-			)
-		eventCounterMockClient.EXPECT().
-			GetMAUCount(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&ecproto.GetMAUCountResponse{
-					EventCount: 1,
-					UserCount:  1,
-				},
-				nil,
-			)
-		notificationMockSender.EXPECT().
-			Send(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(nil)
-	}
-	executeMockBatchJob(t, &batchproto.BatchJobRequest{
-		Job: batchproto.BatchJob_MauCountWatcher,
-	}, setupMock)
-}
 func TestDatetimeWatcher(t *testing.T) {
 	t.Parallel()
 	setupMock := func(
@@ -544,42 +486,17 @@ func TestSegmentUserCacher(t *testing.T) {
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 	) {
-		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
-			Return(
-				&environmentproto.ListEnvironmentsV2Response{
-					Environments: []*environmentproto.EnvironmentV2{
-						{Id: "env0", ProjectId: "pj0"},
-						{Id: "env1", ProjectId: "pj1"},
-					},
-				},
-				nil,
-			)
-		featureMockClient.EXPECT().
-			ListSegments(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&featureproto.ListSegmentsResponse{
-					Segments: []*featureproto.Segment{
-						{
-							Id: "segment-id",
-						},
-					},
-				},
-				nil,
-			)
-		featureMockClient.EXPECT().
-			ListSegmentUsers(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&featureproto.ListSegmentUsersResponse{
-					Users: []*featureproto.SegmentUser{},
-				},
-				nil,
-			)
+		// Mock for ListAllInUseSegments query - returns empty (no in-use segments)
+		mysqlMockRows.EXPECT().Close().Return(nil)
+		mysqlMockRows.EXPECT().Next().Return(false)
+		mysqlMockRows.EXPECT().Err().Return(nil)
+
+		mysqlMockClient.EXPECT().QueryContext(
+			gomock.Any(), gomock.Any(),
+		).Return(mysqlMockRows, nil)
 		redisMockClient.EXPECT().
 			Put(gomock.Any(), gomock.Any(), gomock.Any()).
-			Times(2).
+			AnyTimes().
 			Return(nil)
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
@@ -780,18 +697,11 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(1*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewMAUCountWatcher(
-			environmentMockClient,
-			eventCounterMockClient,
-			notificationMockSender,
-			jpLocation,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		opsevent.NewDatetimeWatcher(
 			environmentMockClient,
 			autoOpsRulesMockClient,
 			mockAutoOpsExecutor,
+			nil, // ftCacher - not needed for this test
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -802,6 +712,7 @@ func newBatchService(t *testing.T,
 			eventCounterMockClient,
 			featureMockClient,
 			mockAutoOpsExecutor,
+			nil, // ftCacher - not needed for this test
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -809,6 +720,7 @@ func newBatchService(t *testing.T,
 			environmentMockClient,
 			autoOpsRulesMockClient,
 			mockProgressiveRolloutExecutor,
+			nil, // ftCacher - not needed for this test
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -819,32 +731,12 @@ func newBatchService(t *testing.T,
 			jobs.WithLogger(logger),
 		),
 		nil,
-		mau.NewMAUSummarizer(
-			mysqlMockClient,
-			eventCounterMockClient,
-			jpLocation,
-			jobs.WithTimeout(30*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionDeleter(
-			mysqlMockClient,
-			jpLocation,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
-		mau.NewMAUPartitionCreator(
-			mysqlMockClient,
-			jpLocation,
-			jobs.WithTimeout(60*time.Minute),
-			jobs.WithLogger(logger),
-		),
 		cacher.NewFeatureFlagCacher(
 			mysqlMockClient,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewSegmentUserCacher(
-			environmentMockClient,
-			featureMockClient,
+			mysqlMockClient,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewAPIKeyCacher(
@@ -866,6 +758,12 @@ func newBatchService(t *testing.T,
 			mysqlMockClient,
 			featureMockClient,
 			jobs.WithTimeout(10*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		scheduledflagchange.NewScheduledFlagChangeExecutor(
+			mysqlMockClient,
+			featureMockClient,
+			jobs.WithTimeout(50*time.Second),
 			jobs.WithLogger(logger),
 		),
 		logger,

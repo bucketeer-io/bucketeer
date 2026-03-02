@@ -118,6 +118,22 @@ message ScheduledChangePayload {
 }
 
 // ============================================
+// Change Summary (i18n-ready)
+// ============================================
+
+// ChangeSummary represents a single change in a human-readable, translatable
+// format. The frontend uses message_key to look up the translation and
+// interpolates values. Example: message_key="ScheduledChange.AddVariation",
+// values={"name": "Premium", "value": "true"} Frontend translation: "Add
+// variation: {{name}} ({{value}})" -> "Add variation: Premium (true)"
+message ChangeSummary {
+  // Semantic key for translation lookup (e.g., "ScheduledChange.EnableFlag")
+  string message_key = 1;
+  // Key-value pairs for interpolation in the translated message
+  map<string, string> values = 2;
+}
+
+// ============================================
 // Conflict Information
 // ============================================
 
@@ -180,7 +196,7 @@ message ScheduledFlagChange {
 
   // Derived fields for display
   ScheduledChangeCategory category = 17;  // Computed from payload content
-  repeated string change_summaries = 18;  // Human-readable summaries
+  repeated ChangeSummary change_summaries = 18;  // i18n-ready change summaries
 }
 
 // Summary of scheduled changes for a flag (for display in UI)

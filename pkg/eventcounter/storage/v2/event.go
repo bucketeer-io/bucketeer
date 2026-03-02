@@ -45,12 +45,26 @@ var (
 	//go:embed sql/goal_count.sql
 	goalCountSQL string
 
-	ErrUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+	ErrBQUnexpectedMultipleResults = pkgErr.NewErrorInternal(
 		pkgErr.EventCounterPackageName,
 		"bigquery: unexpected multiple results")
-	ErrNoResultsFound = pkgErr.NewErrorInternal(
+	ErrBQNoResultsFound = pkgErr.NewErrorInternal(
 		pkgErr.EventCounterPackageName,
 		"bigquery: no results found")
+
+	ErrMySQLUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"MySQL: unexpected multiple results")
+	ErrMySQLNoResultsFound = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"MySQL: no results found")
+
+	ErrPostgresUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"Postgres: unexpected multiple results")
+	ErrPostgresNoResultsFound = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"Postgres: no results found")
 )
 
 type EventStorage interface {
@@ -76,7 +90,7 @@ type EventStorage interface {
 	) (*UserEvaluation, error)
 }
 
-type eventStorage struct {
+type bigQueryEventStorage struct {
 	querier bqquerier.Client
 	dataset string
 	logger  *zap.Logger
@@ -106,15 +120,15 @@ type UserEvaluation struct {
 	Timestamp      int64
 }
 
-func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
-	return &eventStorage{
+func NewBigQueryEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
+	return &bigQueryEventStorage{
 		querier: querier,
 		dataset: dataset,
 		logger:  logger.Named("storage"),
 	}
 }
 
-func (es *eventStorage) QueryEvaluationCount(
+func (es *bigQueryEventStorage) QueryEvaluationCount(
 	ctx context.Context,
 	environmentId string,
 	startAt, endAt time.Time,
@@ -184,7 +198,7 @@ func (es *eventStorage) QueryEvaluationCount(
 	return rows, nil
 }
 
-func (es *eventStorage) QueryGoalCount(
+func (es *bigQueryEventStorage) QueryGoalCount(
 	ctx context.Context,
 	environmentId string,
 	startAt, endAt time.Time,
@@ -258,7 +272,7 @@ func (es *eventStorage) QueryGoalCount(
 	return rows, nil
 }
 
-func (es *eventStorage) QueryUserEvaluation(
+func (es *bigQueryEventStorage) QueryUserEvaluation(
 	ctx context.Context,
 	environmentID, userID, featureID string,
 	featureVersion int32,
@@ -311,7 +325,7 @@ func (es *eventStorage) QueryUserEvaluation(
 
 	// Check if there are unexpected multiple rows
 	if iter.TotalRows > 1 {
-		return nil, ErrUnexpectedMultipleResults
+		return nil, ErrBQUnexpectedMultipleResults
 	}
 
 	// Retrieve the single expected row
@@ -326,7 +340,7 @@ func (es *eventStorage) QueryUserEvaluation(
 				zap.Any("params", params),
 			)...,
 		)
-		return nil, ErrNoResultsFound
+		return nil, ErrBQNoResultsFound
 	}
 	if err != nil {
 		es.logger.Error(

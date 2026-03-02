@@ -48,7 +48,10 @@ func UserEvaluationsID(userID string, userMetadata map[string]string, features [
 	sort.SliceStable(features, func(i, j int) bool {
 		return features[i].Id < features[j].Id
 	})
-	// TODO: consider about a better hash algorithm?
+	// FNV-1a 64-bit is sufficient for change detection:
+	// - Fast enough for SDK polling frequency
+	// - 64-bit provides negligible collision risk for feature flag counts
+	// - No cryptographic requirements
 	h := fnv.New64a()
 	h.Write([]byte(userID)) // nolint:errcheck
 	keys := sortMapKeys(userMetadata)
@@ -74,9 +77,13 @@ func GenerateFeaturesID(features []*ftproto.Feature) string {
 	sort.SliceStable(features, func(i, j int) bool {
 		return features[i].Id < features[j].Id
 	})
+	// FNV-1a 64-bit is sufficient for change detection:
+	// - Fast enough for SDK polling frequency
+	// - 64-bit provides negligible collision risk for feature flag counts
+	// - No cryptographic requirements
 	h := fnv.New64a()
 	for _, feature := range features {
-		fmt.Fprintf(h, "%s:%d", feature.Id, feature.Version)
+		fmt.Fprintf(h, "%s:%d", feature.Id, feature.UpdatedAt)
 	}
 	return strconv.FormatUint(h.Sum64(), 10)
 }

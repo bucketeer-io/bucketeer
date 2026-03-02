@@ -56,6 +56,8 @@ affinity: {}
 
 nodeSelector: {}
 
+priorityClassName: ""
+
 pdb:
   enabled:
   maxUnavailable: 50%
@@ -158,9 +160,6 @@ cronjob:
     - name: feature-stale-watcher
       jobId: FeatureStaleWatcher
       schedule: "0 1 * * MON"
-    - name: mau-count-watcher
-      jobId: MauCountWatcher
-      schedule: "0 1 1 * *"
     - name: ops-datetime-watcher
       jobId: DatetimeWatcher
       schedule: "* * * * *"
@@ -176,15 +175,6 @@ cronjob:
     - name: experiment-calculator
       jobId: ExperimentCalculator
       schedule: "*/30 * * * *"
-    - name: mau-summarizer
-      jobId: MauSummarizer
-      schedule: "30 0 * * *"
-    - name: mau-partition-deleter
-      jobId: MauPartitionDeleter
-      schedule: "0 2 1 * *"
-    - name: mau-partition-creator
-      jobId: MauPartitionCreator
-      schedule: "0 2 2 * *"
     - name: feature-flag-cacher
       jobId: FeatureFlagCacher
       schedule: "* * * * *"
@@ -206,4 +196,7 @@ cronjob:
     - name: feature-auto-archiver
       jobId: FeatureAutoArchiver
       schedule: "0 2 * * *"
+    - name: scheduled-flag-change-executor
+      jobId: ScheduledFlagChangeExecutor
+      schedule: "* * * * *"
 terminationGracePeriodSeconds: 60

@@ -17,6 +17,7 @@ declare global {
       DEMO_SIGN_IN_PASSWORD?: string;
       GOOGLE_TAG_MANAGER_ID?: string;
       API_ENDPOINT?: string;
+      SCHEDULED_FLAG_CHANGES_ENABLED?: boolean;
     };
   }
 }
@@ -58,3 +59,8 @@ export const DEMO_SIGN_IN_PASSWORD =
   releaseMode !== 'prod'
     ? import.meta.env.VITE_DEMO_SIGN_IN_PASSWORD
     : window.env?.DEMO_SIGN_IN_PASSWORD;
+
+export const SCHEDULED_FLAG_CHANGES_ENABLED =
+  releaseMode !== 'prod'
+    ? import.meta.env.VITE_SCHEDULED_FLAG_CHANGES_ENABLED === 'true'
+    : !!window.env?.SCHEDULED_FLAG_CHANGES_ENABLED;

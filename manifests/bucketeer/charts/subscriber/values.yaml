@@ -60,6 +60,8 @@ affinity: {}
 
 nodeSelector: {}
 
+priorityClassName: ""
+
 pdb:
   enabled:
   maxUnavailable: 50%
@@ -318,6 +320,12 @@ onDemandProcessors:
         user: ""
         password: ""
         database: ""
+      postgres:
+        host: ""
+        port: 0
+        user: ""
+        password: ""
+        database: ""
       bigquery:
         project: ""
         dataset: ""
@@ -343,6 +351,12 @@ onDemandProcessors:
       timezone: ""
       mysql:
         useMainConnection: false
+        host: ""
+        port: 0
+        user: ""
+        password: ""
+        database: ""
+      postgres:
         host: ""
         port: 0
         user: ""

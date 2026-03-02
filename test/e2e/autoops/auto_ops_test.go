@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
@@ -116,69 +117,6 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
 	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	actual := autoOpsRules[0]
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.FeatureId != featureID {
-		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
-	}
-	if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
-	}
-	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
-	}
-	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
-	if oerc.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
-	}
-	if oerc.GoalId != goalID {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.MinCount != int64(5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ThreadsholdRate != float64(0.5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
-		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
-	}
-}
-
-func TestCreateAndListAutoOpsRuleNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRuleNoCommand(
 		ctx,
 		t,
 		autoOpsClient,
@@ -398,45 +336,6 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 		Time:       time.Now().Unix() + 1000,
 		ActionType: autoopsproto.ActionType_DISABLE,
 	}
-	updateAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id, &addClause)
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-	})
-	if resp == nil {
-		t.Fatalf("failed to get AutoOpsRule, err %d", err)
-	}
-
-	odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[1])
-	if odc.Time != addClause.Time {
-		t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
-	}
-	if odc.ActionType != addClause.ActionType {
-		t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
-	}
-}
-
-func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 1)
-	createAutoOpsRuleNoCommand(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	addClause := autoopsproto.DatetimeClause{
-		Time:       time.Now().Unix() + 1000,
-		ActionType: autoopsproto.ActionType_DISABLE,
-	}
 	_, err := autoOpsClient.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
 		EnvironmentId: *environmentID,
 		Id:            autoOpsRules[0].Id,
@@ -472,56 +371,6 @@ func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
 }
 
 func TestExecuteAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
-			ClauseId: autoOpsRules[0].Clauses[0].Id,
-		},
-	})
-	if err != nil {
-		t.Fatalf("failed to execute auto ops: %s", err.Error())
-	}
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled == true {
-		t.Fatalf("feature is enabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	aor := autoOpsRules[0]
-	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
-		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
-	}
-}
-
-func TestExecuteAutoOpsRuleNoCommand(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -590,9 +439,7 @@ func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
 		EnvironmentId: *environmentID,
 		Id:            autoOpsRules[0].Id,
-		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
-			ClauseId: autoOpsRules[0].Clauses[0].Id,
-		},
+		ClauseId:      autoOpsRules[0].Clauses[0].Id,
 	})
 	if err != nil {
 		t.Fatalf("failed to execute auto ops: %s", err.Error())
@@ -1016,52 +863,6 @@ func createAutoOpsRule(
 	dcs []*autoopsproto.DatetimeClause,
 ) {
 	t.Helper()
-	cmd := &autoopsproto.CreateAutoOpsRuleCommand{
-		FeatureId:           featureID,
-		OpsType:             opsType,
-		OpsEventRateClauses: oercs,
-		DatetimeClauses:     dcs,
-	}
-	_, err := client.CreateAutoOpsRule(ctx, &autoopsproto.CreateAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Command:       cmd,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Update auto ops rules cache
-	batchClient := newBatchClient(t)
-	defer batchClient.Close()
-	numRetries := 5
-	for i := 0; i < numRetries; i++ {
-		_, err = batchClient.ExecuteBatchJob(
-			ctx,
-			&btproto.BatchJobRequest{Job: btproto.BatchJob_AutoOpsRulesCacher})
-		if err == nil {
-			break
-		}
-		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
-		}
-		fmt.Printf("Failed to execute auto ops rules cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
-		time.Sleep(5 * time.Second)
-	}
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func createAutoOpsRuleNoCommand(
-	ctx context.Context,
-	t *testing.T,
-	client autoopsclient.Client,
-	featureID string,
-	opsType autoopsproto.OpsType,
-	oercs []*autoopsproto.OpsEventRateClause,
-	dcs []*autoopsproto.DatetimeClause,
-) {
-	t.Helper()
 	_, err := client.CreateAutoOpsRule(ctx, &autoopsproto.CreateAutoOpsRuleRequest{
 		EnvironmentId:       *environmentID,
 		FeatureId:           featureID,
@@ -1133,12 +934,7 @@ func newWebhookName(t *testing.T) string {
 
 func createFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	cmd := newCreateFeatureCommand(featureID)
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
 		t.Fatal(err)
 	}
 	enableFeature(t, featureID, client)
@@ -1146,12 +942,7 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 
 func createDisabledFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	cmd := newCreateFeatureCommand(featureID)
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -1190,8 +981,8 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 	return featureClient
 }
 
-func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureCommand {
-	return &featureproto.CreateFeatureCommand{
+func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
+	return &featureproto.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        "e2e-test-gateway-feature-name",
 		Description: "e2e-test-gateway-feature-description",
@@ -1214,19 +1005,20 @@ func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureComman
 		},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
 }
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &featureproto.EnableFeatureRequest{
+	enableReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &featureproto.EnableFeatureCommand{},
+		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
@@ -1285,22 +1077,6 @@ func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
 	})
 	if err != nil {
 		t.Fatal("failed to stop auto ops rules", err)
-	}
-}
-
-func updateAutoOpsRules(t *testing.T, client autoopsclient.Client, id string, dateClause *autoopsproto.DatetimeClause) {
-	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	_, err := client.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-		AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{
-			{DatetimeClause: dateClause},
-		},
-	})
-	if err != nil {
-		t.Fatal("failed to update auto ops rules", err)
 	}
 }
 

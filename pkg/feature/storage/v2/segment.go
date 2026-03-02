@@ -49,6 +49,10 @@ var (
 	insertSegmentSQLQuery string
 	//go:embed sql/segment/delete_segment.sql
 	deleteSegmentSQLQuery string
+	//go:embed sql/segment/select_all_in_use_segments.sql
+	selectAllInUseSegmentsSQLQuery string
+	//go:embed sql/segment/select_segment_users_by_segment.sql
+	selectSegmentUsersBySegmentSQLQuery string
 )
 
 type SegmentStorage interface {
@@ -61,6 +65,19 @@ type SegmentStorage interface {
 		isInUseStatus *bool,
 	) ([]*proto.Segment, int, int64, map[string][]string, error)
 	DeleteSegment(ctx context.Context, id string) error
+	// ListAllInUseSegments lists all segments that are in use (referenced by feature flags).
+	// Returns lightweight segment info (id, environment_id, updated_at).
+	ListAllInUseSegments(ctx context.Context) ([]*InUseSegment, error)
+	// ListSegmentUsersBySegment lists all users for a specific segment.
+	// This is called per-segment to avoid loading all users in a single query.
+	ListSegmentUsersBySegment(ctx context.Context, segmentID, environmentID string) ([]*proto.SegmentUser, error)
+}
+
+// InUseSegment represents a segment that is in use by feature flags.
+type InUseSegment struct {
+	SegmentID     string
+	EnvironmentID string
+	UpdatedAt     int64
 }
 
 type segmentStorage struct {
@@ -279,4 +296,67 @@ func (s *segmentStorage) DeleteSegment(ctx context.Context, id string) error {
 		return ErrSegmentUnexpectedAffectedRows
 	}
 	return nil
+}
+
+// ListAllInUseSegments lists all segments that are in use (referenced by feature flags).
+func (s *segmentStorage) ListAllInUseSegments(
+	ctx context.Context,
+) ([]*InUseSegment, error) {
+	rows, err := s.qe.QueryContext(ctx, selectAllInUseSegmentsSQLQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	segments := make([]*InUseSegment, 0)
+	for rows.Next() {
+		var seg InUseSegment
+		err := rows.Scan(
+			&seg.SegmentID,
+			&seg.EnvironmentID,
+			&seg.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		segments = append(segments, &seg)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return segments, nil
+}
+
+// ListSegmentUsersBySegment lists all users for a specific segment.
+func (s *segmentStorage) ListSegmentUsersBySegment(
+	ctx context.Context,
+	segmentID, environmentID string,
+) ([]*proto.SegmentUser, error) {
+	rows, err := s.qe.QueryContext(ctx, selectSegmentUsersBySegmentSQLQuery, segmentID, environmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]*proto.SegmentUser, 0)
+	for rows.Next() {
+		var user proto.SegmentUser
+		var state int32
+		err := rows.Scan(
+			&user.Id,
+			&user.SegmentId,
+			&user.UserId,
+			&state,
+			&user.Deleted,
+		)
+		if err != nil {
+			return nil, err
+		}
+		user.State = proto.SegmentUser_State(state)
+		users = append(users, &user)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return users, nil
 }

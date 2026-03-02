@@ -71,6 +71,11 @@ data:
     {{- $_ := set $config.dataWarehouse.mysql "user" $.Values.global.dataWarehouse.mysql.user }}
     {{- $_ := set $config.dataWarehouse.mysql "password" $.Values.global.dataWarehouse.mysql.password }}
     {{- $_ := set $config.dataWarehouse.mysql "database" $.Values.global.dataWarehouse.mysql.database }}
+    {{- $_ := set $config.dataWarehouse.postgres "host" $.Values.global.dataWarehouse.postgres.host }}
+    {{- $_ := set $config.dataWarehouse.postgres "port" $.Values.global.dataWarehouse.postgres.port }}
+    {{- $_ := set $config.dataWarehouse.postgres "user" $.Values.global.dataWarehouse.postgres.user }}
+    {{- $_ := set $config.dataWarehouse.postgres "password" $.Values.global.dataWarehouse.postgres.password }}
+    {{- $_ := set $config.dataWarehouse.postgres "database" $.Values.global.dataWarehouse.postgres.database }}
     {{- $_ := set $config.dataWarehouse.bigquery "project" $.Values.global.dataWarehouse.bigquery.project }}
     {{- $_ := set $config.dataWarehouse.bigquery "dataset" $.Values.global.dataWarehouse.bigquery.dataset }}
     {{- $_ := set $config.dataWarehouse.bigquery "location" $.Values.global.dataWarehouse.bigquery.location }}

@@ -63,8 +63,14 @@ import (
 const (
 	listRequestSize         = 500
 	secondsToReturnAllFlags = 30 * 24 * 60 * 60 // 30 days
-	secondsForAdjustment    = 10                // 10 seconds
-	obfuscateAPIKeyLength   = 4
+	// secondsForAdjustment is a safety buffer subtracted from the SDK's requestedAt timestamp
+	// when filtering for updated items. This handles:
+	// - Minor clock skew between SDK and server
+	// - Race conditions where items are updated during the request window
+	// - Near-simultaneous updates that might otherwise be missed
+	// The value should be small enough to avoid excessive duplicate data in responses.
+	secondsForAdjustment  = 10
+	obfuscateAPIKeyLength = 4
 )
 
 var (
@@ -175,6 +181,7 @@ type grpcGatewayService struct {
 	featuresCache            cachev3.FeaturesCache
 	segmentUsersCache        cachev3.SegmentUsersCache
 	environmentAPIKeyCache   cachev3.EnvironmentAPIKeyCache
+	mauCache                 cachev3.MAUCache
 	apiKeyLastUsedInfoCacher sync.Map
 	flightgroup              singleflight.Group
 	opts                     *options
@@ -199,7 +206,7 @@ func NewGrpcGatewayService(
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
-	redisV3Cache cache.MultiGetCache,
+	redisV3Cache cache.MultiGetDeleteCountCache,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -230,6 +237,7 @@ func NewGrpcGatewayService(
 		featuresCache:            cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:        cachev3.NewSegmentUsersCache(redisV3Cache),
 		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
+		mauCache:                 cachev3.NewMAUCache(redisV3Cache),
 		apiKeyLastUsedInfoCacher: sync.Map{},
 		opts:                     &options,
 		logger:                   options.logger.Named("api_grpc"),
@@ -368,6 +376,7 @@ func (s *grpcGatewayService) GetEvaluations(
 ) (*gwproto.GetEvaluationsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations")
 	defer span.End()
+	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
@@ -385,8 +394,13 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
+	sourceID := req.SourceId.String()
 	requestTotal.WithLabelValues(envAPIKey.Environment.OrganizationId, projectID, envAPIKey.ProjectUrlCode,
-		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, req.SourceId.String()).Inc()
+		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, sourceID).Inc()
+	defer func() {
+		handledSecondsHistogram.WithLabelValues(environmentId, sourceID, methodGetEvaluations).
+			Observe(time.Since(startTime).Seconds())
+	}()
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluations request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -401,10 +415,23 @@ func (s *grpcGatewayService) GetEvaluations(
 			)...,
 		)
 		evaluationsCounter.WithLabelValues(
-			projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest).Inc()
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest, sourceID).Inc()
 		return nil, err
 	}
+
+	go func() {
+		envID := environmentId
+		srcID := req.SourceId.String()
+		userID := req.User.Id
+		if err := s.mauCache.RecordDAU(envID, srcID, userID, time.Now()); err != nil {
+			s.logger.Warn("Failed to record DAU",
+				zap.Error(err),
+				zap.String("environmentId", envID),
+				zap.String("sourceId", srcID),
+				zap.String("userId", userID),
+			)
+		}
+	}()
 
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
@@ -414,8 +441,9 @@ func (s *grpcGatewayService) GetEvaluations(
 		},
 	)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -423,8 +451,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	filteredByTag := s.filterByTag(features, req.Tag)
 
 	if len(features) == 0 {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures, sourceID).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       s.emptyUserEvaluations(),
@@ -433,8 +461,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone, sourceID).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -453,8 +481,9 @@ func (s *grpcGatewayService) GetEvaluations(
 
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -471,8 +500,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	if req.UserEvaluationCondition == nil {
 		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, envAPIKey.Environment.UrlCode,
-				environmentId, req.Tag, codeBadRequest).Inc()
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest, sourceID).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
@@ -482,8 +511,9 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 
 			// Extract feature IDs for debugging dependency issues
 			featureIDs := make([]string, len(features))
@@ -509,8 +539,8 @@ func (s *grpcGatewayService) GetEvaluations(
 			)
 			return nil, ErrInternal
 		}
-		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeOld).Inc()
+		evaluationsCounter.WithLabelValues(
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeOld, sourceID).Inc()
 	} else {
 		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
 			features,
@@ -522,8 +552,9 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 
 			// Extract feature IDs for debugging dependency issues
 			featureIDs := make([]string, len(features))
@@ -553,11 +584,11 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeAll).Inc()
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeAll, sourceID).Inc()
 		} else {
-			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff).Inc()
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff, sourceID).Inc()
 		}
 	}
 	s.logger.Debug(
@@ -594,6 +625,7 @@ func (s *grpcGatewayService) GetEvaluation(
 ) (*gwproto.GetEvaluationResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation")
 	defer span.End()
+	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
@@ -610,9 +642,14 @@ func (s *grpcGatewayService) GetEvaluation(
 		}
 		return nil, err
 	}
+	sourceID := req.SourceId.String()
+	defer func() {
+		handledSecondsHistogram.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodGetEvaluation).
+			Observe(time.Since(startTime).Seconds())
+	}()
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
-		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetEvaluation, req.SourceId.String()).Inc()
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetEvaluation, sourceID).Inc()
 	if err := s.validateGetEvaluationRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluation request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -629,6 +666,20 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 
+	userID := req.User.Id
+	go func() {
+		envID := envAPIKey.Environment.Id
+		srcID := req.SourceId.String()
+		if err := s.mauCache.RecordDAU(envID, srcID, userID, time.Now()); err != nil {
+			s.logger.Warn("Failed to record DAU",
+				zap.Error(err),
+				zap.String("environmentId", envID),
+				zap.String("sourceId", srcID),
+				zap.String("userId", userID),
+			)
+		}
+	}()
+
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		envAPIKey.Environment.Id,
@@ -637,6 +688,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		},
 	)
 	if err != nil {
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodGetEvaluation).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -654,20 +706,11 @@ func (s *grpcGatewayService) GetEvaluation(
 				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
 		)
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodGetEvaluation).Inc()
 		return nil, err
 	}
 	evaluator := evaluation.NewEvaluator()
 	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
-	if err != nil {
-		s.logger.Error(
-			"Failed to evaluate",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", envAPIKey.Environment.Id),
-			)...,
-		)
-		return nil, err
-	}
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -678,6 +721,7 @@ func (s *grpcGatewayService) GetEvaluation(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodGetEvaluation).Inc()
 		return nil, ErrInternal
 	}
 	eval, err := s.findEvaluation(evaluations.Evaluations, req.FeatureId)
@@ -707,6 +751,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 ) (*gwproto.GetFeatureFlagsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags")
 	defer span.End()
+	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
@@ -724,9 +769,14 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	}
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
+	sourceID := req.SourceId.String()
+	defer func() {
+		handledSecondsHistogram.WithLabelValues(environmentId, sourceID, methodGetFeatureFlags).
+			Observe(time.Since(startTime).Seconds())
+	}()
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
-		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, req.SourceId.String()).Inc()
+		environmentId, envAPIKey.Environment.UrlCode, methodGetFeatureFlags, sourceID).Inc()
 
 	if err := s.validateGetFeatureFlagsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetFeatureFlags request",
@@ -754,6 +804,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	if err != nil {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetFeatureFlags).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -820,7 +871,9 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ForceUpdate:            true,
 		}, nil
 	}
-	// Check and return only the updated feature flags
+	// Check and return only the updated feature flags.
+	// We subtract a small buffer (secondsForAdjustment) from the SDK's requestedAt
+	// to account for clock skew and ensure recently updated flags aren't missed.
 	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
 	updatedFeatures := make([]*featureproto.Feature, 0, len(targetFeatures))
 	archivedIDs := make([]string, 0)
@@ -867,6 +920,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 ) (*gwproto.GetSegmentUsersResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetSegmentUsers")
 	defer span.End()
+	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
@@ -883,9 +937,14 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	}
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
+	sourceID := req.SourceId.String()
+	defer func() {
+		handledSecondsHistogram.WithLabelValues(environmentId, sourceID, methodGetSegmentUsers).
+			Observe(time.Since(startTime).Seconds())
+	}()
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
-		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, req.SourceId.String()).Inc()
+		environmentId, envAPIKey.Environment.UrlCode, methodGetSegmentUsers, sourceID).Inc()
 
 	if err := s.validateGetSegmentUsersRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetSegmentUsers request",
@@ -901,7 +960,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			)...,
 		)
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeBadRequest).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeBadRequest).Inc()
 		return nil, err
 	}
 
@@ -916,7 +975,8 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	if err != nil {
 		getSegmentUsersCounter.WithLabelValues(
 			projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeInternalError).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetSegmentUsers).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -925,7 +985,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	targetFeatures := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	if len(targetFeatures) == 0 {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeNoFeatures).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeNoFeatures).Inc()
 		return s.emptyGetSegmentUsersResponse()
 	}
 
@@ -942,7 +1002,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Return an empty response when there is no segments
 	if len(targetSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeNoSegments).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeNoSegments).Inc()
 		return s.emptyGetSegmentUsersResponse()
 	}
 
@@ -959,7 +1019,8 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		if err != nil {
 			getSegmentUsersCounter.WithLabelValues(
 				projectID, envAPIKey.ProjectUrlCode, environmentId,
-				envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+				envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeInternalError).Inc()
+			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetSegmentUsers).Inc()
 			return nil, err
 		}
 		spanGetSegmentUsers.End()
@@ -970,7 +1031,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Return all the flags if the last request is older than 30 days
 	if req.RequestedAt < time.Now().Unix()-secondsToReturnAllFlags {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeAll).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeAll).Inc()
 		return &gwproto.GetSegmentUsersResponse{
 			SegmentUsers:      targetSegmentUsers,
 			DeletedSegmentIds: make([]string, 0),
@@ -987,7 +1048,9 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		}
 	}
 
-	// Filter the updated segments
+	// Filter the updated segments.
+	// We subtract a small buffer (secondsForAdjustment) from the SDK's requestedAt
+	// to account for clock skew and ensure recently updated segments aren't missed.
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
 	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
 	for _, su := range targetSegmentUsers {
@@ -999,10 +1062,10 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Check if there is a difference when compared to the last request
 	if len(updatedSegments) == 0 && len(deletedSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeNone).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeNone).Inc()
 	} else {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeDiff).Inc()
+			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeDiff).Inc()
 	}
 	return &gwproto.GetSegmentUsersResponse{
 		SegmentUsers:      updatedSegments,
@@ -1285,6 +1348,7 @@ func (s *grpcGatewayService) RegisterEvents(
 ) (*gwproto.RegisterEventsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.RegisterEvents")
 	defer span.End()
+	startTime := time.Now()
 	allowedRoles := []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT, accountproto.APIKey_SDK_SERVER}
 	envAPIKey, err := s.checkRequest(ctx, allowedRoles)
 	if err != nil {
@@ -1300,9 +1364,14 @@ func (s *grpcGatewayService) RegisterEvents(
 		}
 		return nil, err
 	}
+	sourceID := req.SourceId.String()
+	defer func() {
+		handledSecondsHistogram.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodRegisterEvents).
+			Observe(time.Since(startTime).Seconds())
+	}()
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
-		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodRegisterEvents, req.SourceId.String()).Inc()
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodRegisterEvents, sourceID).Inc()
 	if len(req.Events) == 0 {
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -1401,7 +1470,45 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
+
+			// Record DAU from RegisterEvents as well because
+			// server SDKs in local evaluation mode use GetFeatureFlags API instead,
+			// which doesn't include userID.
+			go func(evt *eventproto.Event, envID string) {
+				evalEvent := &eventproto.EvaluationEvent{}
+				if err := evt.Event.UnmarshalTo(evalEvent); err != nil {
+					s.logger.Warn("Unexpected error of unmarshalling event for DAU recording",
+						zap.Error(err),
+						zap.String("environmentId", envID),
+						zap.String("eventId", evt.Id),
+					)
+					return
+				}
+				if err := s.mauCache.RecordDAU(envID, evalEvent.SourceId.String(), evalEvent.UserId, time.Now()); err != nil {
+					s.logger.Warn("Failed to record DAU from RegisterEvents",
+						zap.Error(err),
+						zap.String("environmentId", envID),
+						zap.String("sourceId", evalEvent.SourceId.String()),
+						zap.String("userId", evalEvent.UserId),
+					)
+				}
+			}(event, envAPIKey.Environment.Id)
+
 			evaluationMessages = append(evaluationMessages, event)
+			// Report evaluation events with error reasons for monitoring.
+			if evValidator, ok := validator.(*eventEvaluationValidator); ok &&
+				evValidator.lastUnmarshaledEvent != nil &&
+				isEvaluationEventErrorReason(evValidator.lastUnmarshaledEvent.Reason) {
+				ev := evValidator.lastUnmarshaledEvent
+				evaluationEventErrorReasonCounter.WithLabelValues(
+					envAPIKey.ProjectId,
+					envAPIKey.Environment.UrlCode,
+					ev.Tag,
+					ev.Reason.Type.String(),
+					ev.SdkVersion,
+					ev.SourceId.String(),
+				).Inc()
+			}
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {

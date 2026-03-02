@@ -1708,3 +1708,29 @@ func unique[T comparable](slice []T) []T {
 	}
 	return result
 }
+
+// VariationExists checks if a variation with the given ID exists in the feature.
+func VariationExists(f *feature.Feature, variationID string) bool {
+	if f == nil {
+		return false
+	}
+	for _, v := range f.Variations {
+		if v.Id == variationID {
+			return true
+		}
+	}
+	return false
+}
+
+// RuleExists checks if a rule with the given ID exists in the feature.
+func RuleExists(f *feature.Feature, ruleID string) bool {
+	if f == nil {
+		return false
+	}
+	for _, r := range f.Rules {
+		if r.Id == ruleID {
+			return true
+		}
+	}
+	return false
+}

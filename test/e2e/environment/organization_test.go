@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/golang/protobuf/ptypes/wrappers"
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -442,9 +444,9 @@ func TestUpdateOrganization(t *testing.T) {
 	newDesc := fmt.Sprintf("This organization is for organization e2e tests (Updated at %d)", time.Now().Unix())
 	newName := fmt.Sprintf("E2E organization (Updated at %d)", time.Now().Unix())
 	_, err := c.UpdateOrganization(ctx, &environmentproto.UpdateOrganizationRequest{
-		Id:                       id,
-		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionOrganizationCommand{Description: newDesc},
-		RenameCommand:            &environmentproto.ChangeNameOrganizationCommand{Name: newName},
+		Id:          id,
+		Description: wrapperspb.String(newDesc),
+		Name:        wrapperspb.String(newName),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -471,8 +473,7 @@ func TestEnableAndDisableOrganization(t *testing.T) {
 	defer c.Close()
 	id := defaultOrganizationID
 	_, err := c.DisableOrganization(ctx, &environmentproto.DisableOrganizationRequest{
-		Id:      id,
-		Command: &environmentproto.DisableOrganizationCommand{},
+		Id: id,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -486,8 +487,7 @@ func TestEnableAndDisableOrganization(t *testing.T) {
 	}
 
 	_, err = c.EnableOrganization(ctx, &environmentproto.EnableOrganizationRequest{
-		Id:      id,
-		Command: &environmentproto.EnableOrganizationCommand{},
+		Id: id,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -508,8 +508,7 @@ func TestArchiveAndUnarchiveOrganization(t *testing.T) {
 	defer c.Close()
 	id := defaultOrganizationID
 	_, err := c.ArchiveOrganization(ctx, &environmentproto.ArchiveOrganizationRequest{
-		Id:      id,
-		Command: &environmentproto.ArchiveOrganizationCommand{},
+		Id: id,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -523,8 +522,7 @@ func TestArchiveAndUnarchiveOrganization(t *testing.T) {
 	}
 
 	_, err = c.UnarchiveOrganization(ctx, &environmentproto.UnarchiveOrganizationRequest{
-		Id:      id,
-		Command: &environmentproto.UnarchiveOrganizationCommand{},
+		Id: id,
 	})
 	if err != nil {
 		t.Fatal(err)

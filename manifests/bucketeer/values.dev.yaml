@@ -6,8 +6,8 @@ global:
   # Global data warehouse configuration for development
   dataWarehouse:
     # Data warehouse type configuration
-    # Supported types: bigquery, mysql
-    type: mysql # Options: bigquery, mysql
+    # Supported types: bigquery, mysql, postgres
+    type: mysql # Options: bigquery, mysql, postgres
     batchSize: 1000
     timezone: "UTC"
 
@@ -22,6 +22,14 @@ global:
       useMainConnection: true
       host: "localenv-mysql-headless.default.svc.cluster.local"
       port: 3306
+      user: "bucketeer"
+      password: "bucketeer"
+      database: "bucketeer"
+
+    # Postgres configuration (used when type: postgres)
+    postgres:
+      host: "localenv-postgresql-headless.default.svc.cluster.local"
+      port: 5432
       user: "bucketeer"
       password: "bucketeer"
       database: "bucketeer"
@@ -275,9 +283,6 @@ batch-server:
       - name: feature-stale-watcher
         jobId: FeatureStaleWatcher
         schedule: "0 1 * * MON"
-      - name: mau-count-watcher
-        jobId: MauCountWatcher
-        schedule: "0 1 1 * *"
       - name: ops-datetime-watcher
         jobId: DatetimeWatcher
         schedule: "* * * * *"
@@ -293,15 +298,6 @@ batch-server:
       - name: experiment-calculator
         jobId: ExperimentCalculator
         schedule: "* * * * *"
-      - name: mau-summarizer
-        jobId: MauSummarizer
-        schedule: "30 0 * * *"
-      - name: mau-partition-deleter
-        jobId: MauPartitionDeleter
-        schedule: "0 2 1 * *"
-      - name: mau-partition-creator
-        jobId: MauPartitionCreator
-        schedule: "0 2 2 * *"
       - name: feature-flag-cacher
         jobId: FeatureFlagCacher
         schedule: "* * * * *"
@@ -319,6 +315,9 @@ batch-server:
         schedule: "* * * * *"
       - name: tag-deleter
         jobId: TagDeleter
+        schedule: "* * * * *"
+      - name: scheduled-flag-change-executor
+        jobId: ScheduledFlagChangeExecutor
         schedule: "* * * * *"
 
 subscriber:
@@ -601,6 +600,12 @@ subscriber:
           user: ""
           password: ""
           database: ""
+        postgres:
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
         bigquery:
           project: ""
           dataset: ""
@@ -622,6 +627,12 @@ subscriber:
         timezone: ""
         mysql:
           useMainConnection: false
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
+        postgres:
           host: ""
           port: 0
           user: ""

@@ -259,6 +259,74 @@ update_go_deps() {
     print_success "Go dependencies updated"
 }
 
+# Function to dynamically discover and check hack tools
+check_hack_tools() {
+    print_status "Checking hack tools..."
+
+    local need_rebuild=false
+    declare -g -a HACK_TOOLS_TO_BUILD=()  # Global array to track what needs building
+
+    # Find all go.mod files in hack directory
+    while IFS= read -r gomod_path; do
+        if [ -z "$gomod_path" ]; then
+            continue
+        fi
+
+        local tool_dir=$(dirname "$gomod_path")
+        local tool_name=$(basename "$tool_dir")
+        local binary_path="$tool_dir/$tool_name"
+
+        # Check if binary exists and is up to date
+        if [ ! -f "$binary_path" ]; then
+            print_warning "Hack tool '$tool_name': binary not found"
+            HACK_TOOLS_TO_BUILD+=("$tool_dir|$tool_name")
+            need_rebuild=true
+        elif [ "$gomod_path" -nt "$binary_path" ] || \
+             { [ -f "${gomod_path%.mod}.sum" ] && [ "${gomod_path%.mod}.sum" -nt "$binary_path" ]; }; then
+            print_warning "Hack tool '$tool_name': go.mod/go.sum newer than binary"
+            HACK_TOOLS_TO_BUILD+=("$tool_dir|$tool_name")
+            need_rebuild=true
+        else
+            print_success "Hack tool '$tool_name': up to date"
+        fi
+    done < <(find hack -maxdepth 2 -name "go.mod" -type f 2>/dev/null)
+
+    if [ "$need_rebuild" = false ]; then
+        print_success "All hack tools are up to date"
+        return 0
+    fi
+
+    return 1
+}
+
+# Function to rebuild hack tools that need updating
+rebuild_hack_tools() {
+    if [ ${#HACK_TOOLS_TO_BUILD[@]} -eq 0 ]; then
+        return 0
+    fi
+
+    print_status "Rebuilding ${#HACK_TOOLS_TO_BUILD[@]} hack tool(s)..."
+
+    for tool_info in "${HACK_TOOLS_TO_BUILD[@]}"; do
+        IFS='|' read -r tool_dir tool_name <<< "$tool_info"
+
+        print_status "Syncing dependencies for $tool_name..."
+        (cd "$tool_dir" && go mod tidy) || {
+            print_error "Failed to sync dependencies for $tool_name"
+            continue
+        }
+
+        print_status "Building $tool_name..."
+        (cd "$tool_dir" && go build -o "$tool_name" .) || {
+            print_error "Failed to build $tool_name"
+            continue
+        }
+        print_success "Built $tool_name"
+    done
+
+    print_success "Hack tools rebuilt"
+}
+
 # Function to check if Node.js dependencies are up to date
 check_node_deps() {
     local dir=$1
@@ -357,6 +425,7 @@ main() {
     # Track what needs to be done
     local need_go_tools=false
     local need_go_deps=false
+    local need_hack_tools=false
 
     # Check Go tools
     if ! check_go_tools; then
@@ -366,6 +435,11 @@ main() {
     # Check Go dependencies
     if ! check_go_vendor; then
         need_go_deps=true
+    fi
+
+    # Check hack tools
+    if ! check_hack_tools; then
+        need_hack_tools=true
     fi
 
     # Check Node.js dependencies
@@ -382,6 +456,12 @@ main() {
     local tasks_to_run=()
     if [ "$need_go_tools" = true ]; then tasks_to_run+=("Go tools"); fi
     if [ "$need_go_deps" = true ]; then tasks_to_run+=("Go dependencies"); fi
+    if [ "$need_hack_tools" = true ]; then
+        for tool_info in "${HACK_TOOLS_TO_BUILD[@]}"; do
+            IFS='|' read -r _ tool_name <<< "$tool_info"
+            tasks_to_run+=("Hack tool: $tool_name")
+        done
+    fi
     for i in "${need_node_deps[@]}"; do
         local name="${NODE_PROJECTS_NAMES[$i]}"
         tasks_to_run+=("$name dependencies")
@@ -404,6 +484,10 @@ main() {
 
     if [ "$need_go_deps" = true ]; then
         update_go_deps
+    fi
+
+    if [ "$need_hack_tools" = true ]; then
+        rebuild_hack_tools
     fi
 
     for i in "${need_node_deps[@]}"; do
