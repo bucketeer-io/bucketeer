@@ -181,7 +181,6 @@ type grpcGatewayService struct {
 	featuresCache            cachev3.FeaturesCache
 	segmentUsersCache        cachev3.SegmentUsersCache
 	environmentAPIKeyCache   cachev3.EnvironmentAPIKeyCache
-	mauCache                 cachev3.MAUCache
 	apiKeyLastUsedInfoCacher sync.Map
 	flightgroup              singleflight.Group
 	opts                     *options
@@ -206,7 +205,7 @@ func NewGrpcGatewayService(
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
-	redisV3Cache cache.MultiGetDeleteCountCache,
+	redisV3Cache cache.MultiGetCache,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -237,7 +236,6 @@ func NewGrpcGatewayService(
 		featuresCache:            cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:        cachev3.NewSegmentUsersCache(redisV3Cache),
 		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
-		mauCache:                 cachev3.NewMAUCache(redisV3Cache),
 		apiKeyLastUsedInfoCacher: sync.Map{},
 		opts:                     &options,
 		logger:                   options.logger.Named("api_grpc"),
@@ -418,20 +416,6 @@ func (s *grpcGatewayService) GetEvaluations(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest, sourceID).Inc()
 		return nil, err
 	}
-
-	go func() {
-		envID := environmentId
-		srcID := req.SourceId.String()
-		userID := req.User.Id
-		if err := s.mauCache.RecordDAU(envID, srcID, userID, time.Now()); err != nil {
-			s.logger.Warn("Failed to record DAU",
-				zap.Error(err),
-				zap.String("environmentId", envID),
-				zap.String("sourceId", srcID),
-				zap.String("userId", userID),
-			)
-		}
-	}()
 
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
@@ -665,20 +649,6 @@ func (s *grpcGatewayService) GetEvaluation(
 		)
 		return nil, err
 	}
-
-	userID := req.User.Id
-	go func() {
-		envID := envAPIKey.Environment.Id
-		srcID := req.SourceId.String()
-		if err := s.mauCache.RecordDAU(envID, srcID, userID, time.Now()); err != nil {
-			s.logger.Warn("Failed to record DAU",
-				zap.Error(err),
-				zap.String("environmentId", envID),
-				zap.String("sourceId", srcID),
-				zap.String("userId", userID),
-			)
-		}
-	}()
 
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
@@ -1470,30 +1440,6 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
-
-			// Record DAU from RegisterEvents as well because
-			// server SDKs in local evaluation mode use GetFeatureFlags API instead,
-			// which doesn't include userID.
-			go func(evt *eventproto.Event, envID string) {
-				evalEvent := &eventproto.EvaluationEvent{}
-				if err := evt.Event.UnmarshalTo(evalEvent); err != nil {
-					s.logger.Warn("Unexpected error of unmarshalling event for DAU recording",
-						zap.Error(err),
-						zap.String("environmentId", envID),
-						zap.String("eventId", evt.Id),
-					)
-					return
-				}
-				if err := s.mauCache.RecordDAU(envID, evalEvent.SourceId.String(), evalEvent.UserId, time.Now()); err != nil {
-					s.logger.Warn("Failed to record DAU from RegisterEvents",
-						zap.Error(err),
-						zap.String("environmentId", envID),
-						zap.String("sourceId", evalEvent.SourceId.String()),
-						zap.String("userId", evalEvent.UserId),
-					)
-				}
-			}(event, envAPIKey.Environment.Id)
-
 			evaluationMessages = append(evaluationMessages, event)
 			// Report evaluation events with error reasons for monitoring.
 			if evValidator, ok := validator.(*eventEvaluationValidator); ok &&
