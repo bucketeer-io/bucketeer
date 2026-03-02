@@ -67,7 +67,7 @@ const SortBy = <T extends SortedState>({
       wrapTriggerStyle="w-fit"
       className="w-fit"
       contentClassName="!max-h-fit !divide-y"
-      addititonOptions={sortDirectionOptions}
+      additionalOptions={sortDirectionOptions}
       additionalValue={sortedState.orderDirection}
       onChangeAdditional={value =>
         handleSorting({ orderDirection: value as OrderDirection })

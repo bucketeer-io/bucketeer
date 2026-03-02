@@ -94,7 +94,6 @@ const Dropdown: React.FC<DropdownProps> = ({
   const inputSearchRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  // Stable debounce — useRef keeps the same timer instance across renders
   const debounceSetQuery = useRef(
     (() => {
       let timer: ReturnType<typeof setTimeout>;
@@ -110,7 +109,6 @@ const Dropdown: React.FC<DropdownProps> = ({
     [value]
   );
 
-  // Skip internal filtering when the consumer drives search via onSearch
   const filteredOptions = useMemo(() => {
     if (onSearch || !debouncedQuery) return options;
     const query = debouncedQuery.toLowerCase();
@@ -125,7 +123,6 @@ const Dropdown: React.FC<DropdownProps> = ({
     return options.find(o => o.value === selectedValues[0])?.label ?? '';
   }, [selectedValues, options, labelCustom]);
 
-  // Merge legacy additionalOptions into groups so the render path is unified
   const resolvedGroups = useMemo<DropdownOptionGroup[]>(() => {
     const base = groups ?? [];
     if (!isEmpty(additionalOptions)) {
@@ -173,7 +170,6 @@ const Dropdown: React.FC<DropdownProps> = ({
         if (isExpand) {
           setContentWidth(triggerRef.current?.offsetWidth);
         }
-        // rAF waits for Radix to finish mounting the portal before focusing
         requestAnimationFrame(() => inputSearchRef.current?.focus());
         return;
       }

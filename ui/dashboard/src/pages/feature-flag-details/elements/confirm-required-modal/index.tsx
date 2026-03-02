@@ -257,7 +257,7 @@ const ConfirmationRequiredModal = ({
     if (!items || !items?.length) return null;
     return (
       <DiscardChangeItems title={title}>
-        <div className="flex flex-col gap-2 pl-4">
+        <div className="flex flex-col gap-2 pl-2 sm:pl-4">
           {items.map((item, idx) => (
             <Renderer key={idx} {...item} />
           ))}
@@ -272,10 +272,10 @@ const ConfirmationRequiredModal = ({
     if (!showCustomRuleChange) return null;
     return (
       <DiscardChangeItems title={t('common:custom-rule')}>
-        <div className="flex flex-col gap-2 pl-4">
+        <div className="flex flex-col gap-2 pl-2 sm:pl-4">
           {segmentRulesChange.map(({ rule, changes, action }) => (
             <div key={rule}>
-              <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700">
+              <div className="flex pb-2 gap-1 items-center typo-para-small sm:typo-para-medium leading-[1px] my-2 text-gray-700">
                 <Trans
                   i18nKey={
                     action === 'new-rule'
@@ -300,7 +300,7 @@ const ConfirmationRequiredModal = ({
               {segmentRuleDeletedChanges.map((item, index) => (
                 <div key={index}>
                   {item.ruleIndex && (
-                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-accent-red-500">
+                    <div className="flex pb-2 gap-1 items-center typo-para-small sm:typo-para-medium leading-[1px] my-2 text-accent-red-500">
                       <Trans
                         i18nKey="common:delete-rule"
                         values={{ rule: item.ruleIndex }}
@@ -335,12 +335,12 @@ const ConfirmationRequiredModal = ({
     >
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(handleOnSubmit)}>
-          <div className="flex flex-col w-full max-h-[80vh] gap-y-5 items-start pt-5">
+          <div className="flex flex-col w-full max-h-[80vh] gap-y-3 sm:gap-y-5 items-start pt-3 sm:pt-5">
             <div className="relative overflow-auto w-full h-full small-scroll">
               {!!isShowChange && (
                 <>
-                  <div className="sticky top-0 z-20 bg-white typo-para-small text-gray-600 w-full px-5">
-                    <p className="typo-para-medium leading-4 text-gray-700 pb-5">
+                  <div className="sticky top-0 z-20 bg-white typo-para-small text-gray-600 w-full px-3 sm:px-5">
+                    <p className="typo-para-small sm:typo-para-medium leading-4 text-gray-700 pb-3 sm:pb-5">
                       <Trans
                         i18nKey="common:change-count-breakdown"
                         values={{
@@ -356,7 +356,7 @@ const ConfirmationRequiredModal = ({
                     </p>
                   </div>
 
-                  <div className="w-full flex flex-col px-5 pb-5 gap-6 ">
+                  <div className="w-full flex flex-col px-3 sm:px-5 pb-3 sm:pb-5 gap-4 sm:gap-6">
                     {renderDiscardSection({
                       title: t('form:feature-flags.prerequisites'),
                       items: prerequisiteChanges ? prerequisiteChanges : [],
@@ -379,7 +379,7 @@ const ConfirmationRequiredModal = ({
                   </div>
                 </>
               )}
-              <div className="flex flex-col w-full px-5 pb-5">
+              <div className="flex flex-col w-full px-3 sm:px-5 pb-3 sm:pb-5">
                 {!isShowSchedule && (
                   <>
                     <Form.Field
@@ -527,8 +527,8 @@ const ConfirmationRequiredModal = ({
                           return (
                             <Form.Item className="py-0 mt-5">
                               <Form.Control>
-                                <div className="flex gap-x-4">
-                                  <div>
+                                <div className="flex flex-wrap gap-4">
+                                  <div className="flex-1 min-w-[140px]">
                                     <Form.Label required>
                                       {t('form:feature-flags.update-date')}
                                     </Form.Label>
@@ -537,7 +537,7 @@ const ConfirmationRequiredModal = ({
                                       minDate={new Date()}
                                       selected={scheduleDate}
                                       showTimeSelect={false}
-                                      className="w-[186px]"
+                                      className="w-full"
                                       onChange={date => {
                                         if (date) {
                                           if (scheduleDate) {
@@ -557,7 +557,7 @@ const ConfirmationRequiredModal = ({
                                       }}
                                     />
                                   </div>
-                                  <div>
+                                  <div className="flex-1 min-w-[100px]">
                                     <Form.Label required>
                                       {t('form:feature-flags.update-time')}
                                     </Form.Label>
@@ -566,7 +566,7 @@ const ConfirmationRequiredModal = ({
                                       timeFormat="HH:mm"
                                       selected={scheduleDate}
                                       showTimeSelectOnly={true}
-                                      className="w-[124px]"
+                                      className="w-full"
                                       onChange={date => {
                                         if (date) {
                                           field.onChange(

@@ -79,12 +79,12 @@ export const PrerequisiteDiscardItem = ({
 }: DiscardChangesStateData) => {
   const isRemove = labelType === 'REMOVE';
   return (
-    <div className="flex flex-col w-full pl-4 gap-1">
+    <div className="flex flex-col w-full pl-2 sm:pl-4 gap-1">
       <div className="flex w-full gap-x-2">
         <div className="flex items-start mt-1">
           <ActionIcon labelType={labelType} />
         </div>
-        <div className="typo-para-medium text-gray-700">
+        <div className="typo-para-small sm:typo-para-medium text-gray-700">
           <Trans
             i18nKey={`form:${labelType.toLowerCase()}_prerequisite-discard-desc`}
             values={{
@@ -125,12 +125,12 @@ export const IndividualDiscardItem = ({
     </div>
   ));
   return (
-    <div className="flex flex-col w-full pl-4 gap-1">
+    <div className="flex flex-col w-full pl-2 sm:pl-4 gap-1">
       <div className="flex w-full gap-x-2">
         <div className="flex items-start mt-1">
           <ActionIcon labelType={labelType} />
         </div>
-        <div className="inline-flex flex-wrap gap-1 typo-para-medium text-gray-700">
+        <div className="inline-flex flex-wrap gap-1 typo-para-small sm:typo-para-medium text-gray-700">
           <Trans
             i18nKey={`form:${labelType.toLowerCase()}_individual-discard-desc`}
             values={{
@@ -178,7 +178,7 @@ const RuleHeader = ({
   if ((isNewRule || isDeleteRule) && clauseLabels && clauseLabels.length > 0) {
     return (
       <div className="flex w-full gap-x-2 mb-3">
-        <div className="typo-para-medium text-gray-700 flex flex-col gap-1">
+        <div className="typo-para-small sm:typo-para-medium text-gray-700 flex flex-col gap-1">
           {clauseLabels.map((clauseLabel, index) => (
             <div key={index} className={isDeleteRule ? 'line-through' : ''}>
               <strong>{index === 0 ? t('common:if') : t('common:and')}</strong>{' '}
@@ -203,7 +203,7 @@ const RuleHeader = ({
           <ActionIcon labelType={labelType} />
         </div>
       )}
-      <div className="typo-para-medium text-gray-700">
+      <div className="typo-para-small sm:typo-para-medium text-gray-700">
         {isNewRule || isDeleteRule ? (
           <div className="inline items-center">
             <div className="inline">
@@ -251,7 +251,7 @@ const AudienceChange = ({
 }) => {
   const { t } = useTranslation(['common', 'form']);
   return (
-    <div className="text-gray-700">
+    <div className="text-gray-700 typo-para-small sm:typo-para-medium">
       <div className="flex w-full gap-x-2 items-center">
         <div className="inline mt-2">
           <div className="inline">
@@ -272,7 +272,7 @@ const AudienceChange = ({
                         />
                       )}
                     </div>
-                    <p className="inline max-w-[300px] truncate">
+                    <p className="inline max-w-[150px] sm:max-w-[300px] truncate">
                       {audienceExcluded.variation}
                     </p>
                   </div>
@@ -307,7 +307,7 @@ const AudienceChange = ({
                           )}
                         </div>
                         <div className="inline-flex">
-                          <p className="max-w-[450px] truncate">
+                          <p className="max-w-[180px] sm:max-w-[450px] truncate">
                             {audience.variation}
                           </p>
                         </div>
@@ -326,14 +326,14 @@ const AudienceChange = ({
 
 const StrategyList = ({ variations }: { variations?: VariationPercent[] }) =>
   !!variations?.length && (
-    <div className="ml-2 grid grid-cols-[auto_max-content_1fr] items-center gap-x-2">
+    <div className="ml-2 grid grid-cols-[auto_1fr_auto] items-center gap-x-2">
       {variations.map((v, index) => (
         <div key={index} className="contents">
           <div className="flex-center size-fit">
             <FlagVariationPolygon index={v.variationIndex || 0} />
           </div>
 
-          <p className="truncate min-w-0 max-w-[350px]">{v.variation}</p>
+          <p className="truncate min-w-0">{v.variation}</p>
 
           {!isNil(v.weight) ? (
             <div className="flex items-center">
@@ -379,7 +379,7 @@ export const CustomRuleDiscardItem = ({
       changeType || ''
     ) && !!variationPercent?.length;
   return (
-    <div className={cn('flex flex-col w-full pl-4')}>
+    <div className={cn('flex flex-col w-full pl-2 sm:pl-4')}>
       <RuleHeader
         isAddNew={isAddNew}
         labelType={labelType}
@@ -439,13 +439,13 @@ const DiscardChangeModal = ({
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="flex flex-col w-full gap-y-4 p-5 max-h-[500px] overflow-auto small-scroll">
+      <div className="flex flex-col w-full gap-y-3 p-3 sm:gap-y-4 sm:p-5 max-h-[500px] overflow-auto small-scroll">
         <>
           {!isNil(ruleIndex) &&
             actionSegmentRule === 'edit-rule' &&
             ruleDiscardChange === DiscardChangesType.CUSTOM &&
             isEdit && (
-              <div className="flex gap-1 items-center typo-para-medium leading-4 text-gray-700 font-bold">
+              <div className="flex gap-1 items-center typo-para-small sm:typo-para-medium leading-4 text-gray-700 font-bold">
                 <Trans
                   i18nKey={'common:custom-segment-rule'}
                   values={{ rule: ruleIndex! + 1 }}
@@ -453,7 +453,7 @@ const DiscardChangeModal = ({
               </div>
             )}
           {ruleLabel && (
-            <div className="flex gap-1 items-center typo-para-medium leading-4 text-gray-700 font-bold">
+            <div className="flex gap-1 items-center typo-para-small sm:typo-para-medium leading-4 text-gray-700 font-bold">
               {typeof ruleLabel === 'string' ? (
                 <Trans i18nKey={ruleLabel} />
               ) : (
