@@ -98,6 +98,11 @@ var (
 			pkgErr.EnvironmentPackageName,
 			"cannot delete organization",
 		))
+	statusCannotDeleteEnvironment = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(
+			pkgErr.EnvironmentPackageName,
+			"cannot delete environment",
+		))
 	statusEnvironmentNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "environment not found", "Environment"))
 	statusProjectNotFound = api.NewGRPCStatus(

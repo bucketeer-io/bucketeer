@@ -543,7 +543,7 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 				return err
 			}
 			if isRunning {
-				return statusCannotDeleteOrganization.Err()
+				return statusCannotDeleteEnvironment.Err()
 			}
 		}
 
@@ -578,7 +578,7 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 			editor,
 			eventproto.Event_ENVIRONMENT,
 			summary.EnvironmentId,
-			eventproto.Event_ENVIRONMENT_V2_UPDATED,
+			eventproto.Event_ENVIRONMENT_V2_DELETED,
 			&eventproto.EnvironmentDeletedEvent{},
 			summary,
 			nil,

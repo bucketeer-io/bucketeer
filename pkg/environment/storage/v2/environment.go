@@ -64,7 +64,7 @@ var (
 		"segment": true, "goal": true, "experiment": true, "tag": true,
 		"ops_progressive_rollout": true, "flag_trigger": true,
 		"code_reference": true, "feature": true, "api_key": true,
-		"audit_log": true, "account_v2": true,
+		"audit_log": true, "account_v2": true, "feature_last_used_info": true,
 	}
 )
 

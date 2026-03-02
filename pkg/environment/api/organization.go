@@ -61,6 +61,7 @@ var (
 		"feature",
 		"api_key",
 		"audit_log",
+		"feature_last_used_info",
 	}
 	targetEntitiesInOrganization = []string{
 		"account_v2",
@@ -1269,7 +1270,7 @@ func (s *EnvironmentService) DeleteOrganizationData(
 			editor,
 			eventproto.Event_ORGANIZATION,
 			summary.OrganizationId,
-			eventproto.Event_DEMO_ORGANIZATION_CREATED,
+			eventproto.Event_ORGANIZATION_DELETED,
 			&eventproto.OrganizationDeletedEvent{
 				Summary: summary,
 				DryRun:  req.DryRun,
