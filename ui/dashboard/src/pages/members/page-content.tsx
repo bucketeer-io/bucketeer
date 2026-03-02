@@ -9,12 +9,12 @@ import pickBy from 'lodash/pickBy';
 import { Account } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
-import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterMemberModal from './member-modal/filter-member-modal';
@@ -66,9 +66,9 @@ const PageContent = ({
   );
 
   const onAddMember = useCallback(() => {
-    if (!envEditable || !isOrganizationAdmin) return undefined;
-    return onAdd;
-  }, [isOrganizationAdmin, envEditable]);
+    if (!envEditable || !isOrganizationAdmin) return;
+    onAdd();
+  }, [onAdd, isOrganizationAdmin, envEditable]);
 
   const onClearFilters = useCallback(() => {
     onChangeFilters({
@@ -79,7 +79,7 @@ const PageContent = ({
       teams: undefined
     });
     onCloseFilterModal();
-  }, [filters]);
+  }, [filters, onCloseFilterModal]);
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {

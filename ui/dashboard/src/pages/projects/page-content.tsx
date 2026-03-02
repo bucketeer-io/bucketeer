@@ -9,12 +9,12 @@ import pickBy from 'lodash/pickBy';
 import { Project } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
-import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterProjectModal from './project-modal/filter-project-modal';
@@ -61,9 +61,12 @@ const PageContent = ({
     [filters]
   );
 
-  const onActionHandler = useCallback((project: Project) => {
-    onEdit(project);
-  }, []);
+  const onActionHandler = useCallback(
+    (project: Project) => {
+      onEdit(project);
+    },
+    [onEdit]
+  );
 
   const onClearFilters = useCallback(
     () => setFilters({ searchQuery: '', disabled: undefined }),

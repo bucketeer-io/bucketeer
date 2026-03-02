@@ -16,11 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
 import Overview from './overview';
-import SortBy from './sort-by';
 import { FlagActionType, FlagFilters, StatusFilterType } from './types';
 
 const PageContent = ({

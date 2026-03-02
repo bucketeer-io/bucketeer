@@ -9,13 +9,13 @@ import { Experiment, ExperimentCollection, ExperimentStatus } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
-import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterExperimentModal from './experiments-modal/filter-experiment-modal';
@@ -105,7 +105,7 @@ const PageContent = ({
       maintainer: undefined
     });
     onCloseFilterModal();
-  }, []);
+  }, [onCloseFilterModal]);
 
   const onChangeTab = useCallback(
     (status: ExperimentTab) => {
