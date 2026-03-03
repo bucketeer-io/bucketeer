@@ -97,10 +97,13 @@ gen_proto: clean_proto
 	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
 	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
 	--js_out=import_style=commonjs,binary:$(SRC_DIR) \
-	--ts_out=service=grpc-web:$(SRC_DIR) \
+	--ts_out=$(SRC_DIR) \
 	-I $(ROOT_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
-	$(shell find $(PROTO_TARGETS) -type f -name "*.proto" -not -path "*/feature/service.proto")
+	$(shell find $(PROTO_TARGETS) -type f -name "*.proto" \
+		-not -path "*/**/*service*.proto" \
+		-not -path "*/**/*scheduled*.proto" \
+		-not -path "*/**/*trigger*.proto")
 
 .PHONY: clean_proto
 clean_proto:
