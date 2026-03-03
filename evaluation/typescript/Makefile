@@ -90,7 +90,7 @@ PROTO_TARGETS := \
 	$(ROOT_DIR)/proto/feature \
 	$(ROOT_DIR)/proto/user \
 	$(ROOT_DIR)/proto/event/client
-	
+
 .PHONY: gen_proto
 gen_proto: clean_proto
 	protoc \
@@ -101,9 +101,9 @@ gen_proto: clean_proto
 	-I $(ROOT_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	$(shell find $(PROTO_TARGETS) -type f -name "*.proto" \
-		-not -path "*/**/*service*.proto" \
-		-not -path "*/**/*scheduled*.proto" \
-		-not -path "*/**/*trigger*.proto")
+		-not -name "*service*.proto" \
+		-not -name "*scheduled*.proto" \
+		-not -name "*trigger*.proto")
 
 .PHONY: clean_proto
 clean_proto:
