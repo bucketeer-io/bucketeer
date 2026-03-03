@@ -66,6 +66,7 @@ type evaluationCountEventPersister struct {
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
 	userAttributesCacher                cachev3.UserAttributesCache
+	mauCache                            cachev3.MAUCache
 	userAttributesCache                 userAttributesCache
 	envLastUsedCacheMutex               sync.Mutex
 	userAttributesCacheMutex            sync.Mutex
@@ -78,6 +79,7 @@ func NewEvaluationCountEventPersister(
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	userAttributesCacher cachev3.UserAttributesCache,
+	mauCache cachev3.MAUCache,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -102,6 +104,7 @@ func NewEvaluationCountEventPersister(
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
 		userAttributesCacher:                userAttributesCacher,
+		mauCache:                            mauCache,
 		userAttributesCache:                 make(userAttributesCache),
 		envLastUsedCacheMutex:               sync.Mutex{},
 		userAttributesCacheMutex:            sync.Mutex{},
@@ -309,6 +312,18 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 			}
 			return err
 		}
+		// Record DAU (impression user) - best-effort, does not block evaluation count
+		dauDate := time.Unix(e.Timestamp, 0)
+		sourceID := e.SourceId.String()
+		if err := p.mauCache.RecordDAU(environmentId, sourceID, userID, dauDate); err != nil {
+			p.logger.Warn("Failed to record DAU",
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("sourceId", sourceID),
+				zap.String("userId", userID),
+			)
+		}
+
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countEvent(ecKey); err != nil {
 			if !strings.Contains(err.Error(), "client is closed") {
