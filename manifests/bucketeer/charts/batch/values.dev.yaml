@@ -8,7 +8,7 @@ env:
   profile: false
   gcpEnabled: false
   # Storage configuration
-  storage:
+  database:
     type: "mysql"
     mysql:
       user: bucketeer
