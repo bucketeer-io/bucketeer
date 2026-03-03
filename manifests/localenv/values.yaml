@@ -38,10 +38,10 @@ mysql:
     rootPassword: "bucketeer"
 
 postgresql:
-  # Using official Postgres image (aligned with docker-compose)
+  # Using official Postgres timescaledb image (aligned with docker-compose)
   image:
-    repository: postgres
-    tag: "18"
+    repository: timescale/timescaledb
+    tag: "latest-pg18"
     pullPolicy: IfNotPresent
   storage:
     size: "1Gi"
