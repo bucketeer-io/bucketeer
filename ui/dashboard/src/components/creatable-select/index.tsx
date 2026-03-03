@@ -50,9 +50,10 @@ const textColorDisabled = '#6B7280';
 const backgroundColor = 'white';
 const backgroundColorDisabled = '#F3F4F6';
 const borderColor = '#CBD5E1';
-const fontSize = '1rem';
-const lineHeight = '1.25rem';
-const minHeight = '3rem';
+
+const isMobile = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(max-width: 600px)').matches;
 
 export const optionStyle = (
   styles: CSSObjectWithLabel,
@@ -76,23 +77,34 @@ export const optionStyle = (
 };
 
 export const colorStyles: StylesConfig<Option, boolean> = {
-  control: (styles, { isDisabled }) => ({
-    ...styles,
-    backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
-    borderColor: borderColor,
-    '&:hover': {
-      borderColor: borderColor
-    },
-    fontSize: fontSize,
-    lineHeight: lineHeight,
-    minHeight: minHeight,
-    boxShadow: 'none !important',
-    borderRadius: '8px'
-  }),
+  control: (styles, { isDisabled }) => {
+    const mobile = isMobile();
+    return {
+      ...styles,
+      backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
+      borderColor: borderColor,
+      '&:hover': {
+        borderColor: borderColor
+      },
+      fontSize: mobile ? '0.875rem' : '1rem',
+      lineHeight: mobile ? '1.25rem' : '1.5rem',
+      minHeight: mobile ? '36px' : '3rem',
+      boxShadow: 'none !important',
+      borderRadius: '8px'
+    };
+  },
+  valueContainer: styles => {
+    const mobile = isMobile();
+    return {
+      ...styles,
+      paddingTop: mobile ? '6px' : styles.paddingTop,
+      paddingBottom: mobile ? '6px' : styles.paddingBottom
+    };
+  },
   menu: base => ({
     ...base,
-    fontSize: fontSize,
-    lineHeight: lineHeight,
+    fontSize: '1rem',
+    lineHeight: '1.5rem',
     color: textColor
   }),
   placeholder: styles => ({

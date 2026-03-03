@@ -56,7 +56,7 @@ export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
           calendarIconClassName
         )}
         className={cn(
-          '!py-[11px] !pl-4 !pr-10 w-full disabled:border-gray-400 disabled:bg-gray-100',
+          'typo-para-medium !py-[11px] !pl-4 !pr-10 w-full disabled:border-gray-400 disabled:bg-gray-100 max-[600px]:!py-2 max-[600px]:!text-sm',
           className
         )}
         timeIntervals={timeIntervals}

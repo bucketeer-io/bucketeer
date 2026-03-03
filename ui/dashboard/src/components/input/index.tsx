@@ -30,7 +30,7 @@ const inputVariants = cva(
       },
       size: {
         sm: 'px-4 py-2',
-        md: 'px-4 py-[11px]',
+        md: 'px-4 py-[11px] max-[600px]:py-2 max-[600px]:text-sm',
         lg: 'px-4 py-4'
       },
       addonSlot: {

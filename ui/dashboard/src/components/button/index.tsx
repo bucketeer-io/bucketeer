@@ -74,6 +74,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
+          'max-h-[42px] sm:max-h-full',
           buttonVariants({ variant, size }),
           { relative: loading },
           className

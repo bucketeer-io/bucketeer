@@ -38,7 +38,7 @@
 }
 
 .react-datepicker__day {
-  @apply flex-center typo-para-small mx-[3px] size-8 rounded-full text-gray-600;
+  @apply flex-center typo-para-small mx-[3px] min-w-[2rem] size-8 rounded-full text-gray-600;
 }
 
 .react-datepicker__day.react-datepicker__day--outside-month {
@@ -96,7 +96,7 @@
     @apply w-full;
   }
   .react-datepicker-popper{
-    @apply !left-[30px] max-w-[350px];
+    @apply max-w-[350px];
   }
   .react-datepicker__time-list {
     @apply !h-[60px] flex;

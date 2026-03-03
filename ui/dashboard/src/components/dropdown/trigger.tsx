@@ -16,7 +16,7 @@ import Spinner from 'components/spinner';
 
 const triggerVariants = cva(
   [
-    'flex items-center px-3 py-[11px] gap-x-3 w-fit border rounded-lg bg-white',
+    'flex items-center px-3 py-[11px] gap-x-3 w-fit border rounded-lg bg-white max-[600px]:py-2 max-[600px]:text-sm',
     'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 disabled:!shadow-none'
   ],
   {
