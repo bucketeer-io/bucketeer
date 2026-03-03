@@ -13,6 +13,7 @@ import { Variation } from './proto/feature/variation_pb';
 import { Prerequisite } from './proto/feature/prerequisite_pb';
 import { FeatureLastUsedInfo } from './proto/feature/feature_last_used_info_pb';
 import { SourceId } from './proto/event/client/event_pb';
+import { RolloutStrategy, FixedStrategy } from './proto/feature/strategy_pb';
 import {
   createClause,
   createFixedStrategy,
@@ -33,6 +34,7 @@ export { Evaluator, NewUserEvaluations, Evaluation, UserEvaluations, getFeatureI
 export { User, SegmentUser, SegmentUsers, Feature };
 export { Strategy, Clause, Reason, Rule, Target, Variation, Prerequisite, FeatureLastUsedInfo };
 export { SourceId };
+export { RolloutStrategy, FixedStrategy };
 export {
   createClause,
   createFixedStrategy,
