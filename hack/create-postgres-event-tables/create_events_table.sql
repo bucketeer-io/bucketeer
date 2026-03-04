@@ -36,7 +36,7 @@ ALTER TABLE evaluation_event SET (
 );
 
 -- Compress chunks older than 7 days (idempotent: skip if policy exists)
-SELECT add_compression_policy('evaluation_event', INTERVAL '7 days');
+SELECT add_compression_policy('evaluation_event', INTERVAL '7 days', if_not_exists => TRUE);
 
 -- Optional: retain raw data for 1 year (adjust or remove as needed)
 -- SELECT add_retention_policy('evaluation_event', INTERVAL '1 year');
@@ -80,7 +80,7 @@ ALTER TABLE goal_event SET (
     timescaledb.compress_orderby = '"timestamp" DESC'
 );
 
-SELECT add_compression_policy('goal_event', INTERVAL '7 days');
+SELECT add_compression_policy('goal_event', INTERVAL '7 days', if_not_exists => TRUE);
 
 -- Optional: SELECT add_retention_policy('goal_event', INTERVAL '1 year');
 
