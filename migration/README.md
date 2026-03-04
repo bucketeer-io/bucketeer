@@ -19,7 +19,7 @@ Ensure that you have [started the Minikube](https://github.com/bucketeer-io/buck
 ## 1- Connecting to MySQL
 
 To connect to MySQL, you must enter the `localenv-mysql-0` pod and then connect to MySQL.
-The password can be found in the [values.dev.yaml](https://github.com/bucketeer-io/bucketeer/blob/main/manifests/bucketeer/values.dev.yaml) in the field `mysqlPass`.<br />
+The password can be found in the [values.dev.yaml](https://github.com/bucketeer-io/bucketeer/blob/main/manifests/bucketeer/values.dev.yaml) in the field `global.database.mysql`.<br />
 In case you changed the default value, then use the password you set.
 
 ```shell
@@ -94,4 +94,4 @@ psql -h localhost -U bucketeer -d bucketeer
 
 In the Dockerfile, change COPY command to copy the PostgreSQL migration file instead of the MySQL one, and rebuild the image.
 
-When install Bucketeer, it will run the migration file and create the complete schema
+When installing Bucketeer, it will run the migration file and create the complete schema.

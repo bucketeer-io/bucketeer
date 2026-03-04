@@ -13,7 +13,7 @@ env:
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   project: bucketeer-dev
   # Storage configuration
-  storage:
+  database:
     type: "mysql"
     mysql:
       user: bucketeer
