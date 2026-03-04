@@ -312,16 +312,19 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 			}
 			return err
 		}
-		// Record DAU (impression user) - best-effort, does not block evaluation count
+		// Record DAU (impression user) - best-effort: errors are logged and ignored, but this call is synchronous
+		// and may add latency before incrementing the evaluation count.
 		dauDate := time.Unix(e.Timestamp, 0)
 		sourceID := e.SourceId.String()
 		if err := p.mauCache.RecordDAU(environmentId, sourceID, userID, dauDate); err != nil {
-			p.logger.Warn("Failed to record DAU",
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-				zap.String("sourceId", sourceID),
-				zap.String("userId", userID),
-			)
+			if !strings.Contains(err.Error(), "client is closed") {
+				p.logger.Warn("Failed to record DAU",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.String("sourceId", sourceID),
+					zap.String("userId", userID),
+				)
+			}
 		}
 
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
