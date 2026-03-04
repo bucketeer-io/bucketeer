@@ -45,7 +45,7 @@ The following command will set up the Minikube and services that Bucketeer depen
 - Google Pub/Sub (Emulator)
 - Google Big Query (Emulator - optional)
 
-Postgres and Big Query is optional in Minikube. By default it is disabled; enable it by setting `POSTGRES_ENABLED=true` or `BIGQUERY_ENABLED=true` when you start Minikube.
+Postgres and Big Query are optional in Minikube. By default they are disabled; enable them by setting `POSTGRES_ENABLED=true` and/or `BIGQUERY_ENABLED=true` when you start Minikube.
 
 ```shell
 # Default (Postgres & Big Query disabled)
@@ -81,6 +81,8 @@ If you need to deploy a single service, you can do as follows.
 # Deploy the backend service (in the project root directory)
 helm install backend manifests/bucketeer/charts/backend/ --values manifests/bucketeer/charts/backend/values.dev.yaml
 ```
+
+**Note:** You can switch between data warehouses (MySQL, PostgreSQL, BigQuery) but remember to update the `values.dev.yaml` file to match the data warehouse you are using as the events persister and web service must use same event store service.
 
 **Note:** We use the `values.dev.yaml` file to override the default values in `values.yaml` file.
 

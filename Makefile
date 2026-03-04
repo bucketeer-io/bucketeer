@@ -449,7 +449,7 @@ BIGQUERY_ENABLED ?= false
 setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
-	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) ||
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) || \
 	helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED)
 	@echo "Force restarting infrastructure pods to start fresh..."
 	kubectl delete pod -l app.kubernetes.io/name=bq --ignore-not-found=true
@@ -463,6 +463,7 @@ setup-localenv:
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
 	if [ "$(POSTGRES_ENABLED)" = "true" ]; then
 		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s
+	fi
 	if [ "$(BIGQUERY_ENABLED)" = "true" ]; then
 		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s
 	fi
