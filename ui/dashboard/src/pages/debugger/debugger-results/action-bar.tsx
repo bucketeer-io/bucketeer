@@ -55,7 +55,7 @@ const ActionBar = ({
               }}
             />
           }
-          wrapTriggerStyle="w-fit sm:w-full"
+          wrapTriggerStyle="w-fit"
           value={groupBy}
           options={groupByOptions}
           onChange={value => onChangeGroupBy(value as GroupByType)}

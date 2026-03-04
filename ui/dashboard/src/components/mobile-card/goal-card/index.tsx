@@ -1,3 +1,4 @@
+import { Trans } from 'react-i18next';
 import {
   IconArchiveOutlined,
   IconMoreVertOutlined
@@ -18,8 +19,7 @@ import {
   IconCopy,
   IconGoal,
   IconProton,
-  IconTrash,
-  IconWatch
+  IconTrash
 } from '@icons';
 import { GoalActions } from 'pages/goals/types';
 import Divider from 'components/divider';
@@ -185,14 +185,20 @@ export const GoalCard: React.FC<GoalCardProps> = ({ data, onActions }) => {
         left={
           <DateTooltip
             trigger={
-              <div className="flex items-center gap-1 text-gray-500 typo-para-small whitespace-nowrap">
-                <Icon icon={IconWatch} size={'xxs'} />
-                {Number(data.updatedAt) === 0
-                  ? t('never')
-                  : formatDateTime(data.updatedAt)}
+              <div className="text-gray-500 typo-para-small whitespace-nowrap">
+                {Number(data.updatedAt) === 0 ? (
+                  t('never')
+                ) : (
+                  <Trans
+                    i18nKey={'common:time-updated'}
+                    values={{
+                      time: formatDateTime(data.updatedAt)
+                    }}
+                  />
+                )}
               </div>
             }
-            date={data.updatedAt}
+            date={Number(data.updatedAt) === 0 ? null : data.updatedAt}
           />
         }
       />

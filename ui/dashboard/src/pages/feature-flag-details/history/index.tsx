@@ -149,7 +149,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
       <Filter
         link={DOCUMENTATION_LINKS.FLAG_HISTORY}
         placeholder={t('form:name-email-search-placeholder')}
-        actionClassName="flex-nowrap"
+        actionClassName="sm:flex-nowrap"
         action={
           <>
             <ReactDateRangePicker

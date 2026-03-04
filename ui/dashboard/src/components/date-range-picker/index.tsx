@@ -238,7 +238,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
     }, [from, to, isAllTime]);
 
     return (
-      <div className="w-fit">
+      <div className="w-fit max-w-[180px] sm:max-w-full">
         <Button
           variant="secondary-2"
           className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg w-full !max-w-full sm:!max-w-[200px] xxl:!max-w-fit"

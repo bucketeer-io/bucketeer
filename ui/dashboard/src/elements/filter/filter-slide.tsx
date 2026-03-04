@@ -59,36 +59,6 @@ const FilterSlide = ({
             const isHaveSearchingDropdown = isMaintainerFilter || isTagFilter;
             const valueOptions = getValueOptions(filterOption);
             return (
-              // <FilterSlideItem
-              //  key={filterIndex}
-              //   filterIndex={filterIndex}
-              //   label={label}
-              //   filterType={filterType}
-              //   valueOption={filterOption?.filterValue as DropdownValue}
-              //   isLoading={
-              //     (isTagFilter && isLoadingTags) ||
-              //     (isMaintainerFilter && isLoading)
-              //   }
-              //   disable={
-              //     (isTagFilter && isLoadingTags) ||
-              //     (isMaintainerFilter && isLoading) ||
-              //     !filterType
-              //   }
-              //   isLoadingTags={isLoadingTags}
-              //   valueOptions={valueOptions as DropdownOption[]}
-              //   isListItem={isHaveSearchingDropdown}
-              //   isMultiselect={isTagFilter}
-              //   filterOption={filterOption}
-              //   selectedFilters={selectedFilters}
-              //   optionFilter={remainingFilterOptions}
-              //   getValueOptions={getValueOptions}
-              //   handleChangeOption={handleChangeOption}
-              //   handleGetLabelFilterValue={handleGetLabelFilterValue}
-              //   setSelectedFilters={setSelectedFilters}
-              //   handleChangeFilterValue={handleChangeFilterValue}
-              //   onClose={onClose}
-
-              // />
               <div
                 className="flex items-start w-full h-[100px] gap-x-3"
                 key={filterIndex}

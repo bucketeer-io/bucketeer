@@ -52,6 +52,7 @@ const CustomizeNavigator = memo(
           <div className="w-[350px] sm:w-[570px] overflow-x-scroll flex items-center gap-x-3 ">
             {staticRanges.map(staticRange => (
               <div
+                key={staticRange.label}
                 onClick={() =>
                   handleStaticRangeClick(staticRange as StaticRangeOption)
                 }

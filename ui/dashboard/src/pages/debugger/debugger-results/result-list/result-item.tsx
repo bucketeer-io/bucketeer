@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useScreen } from 'hooks/use-screen';
 import { cn } from 'utils/style';
 import { IconChevronDown } from '@icons';
 import { GroupByType } from 'pages/debugger/page-content';
@@ -6,6 +7,7 @@ import { EvaluationFeature } from 'pages/debugger/types';
 import Icon from 'components/icon';
 import { DataTable } from 'elements/data-table';
 import { useColumns } from './data-collection';
+import ResultItemCard from './result-item-card';
 import ResultName from './result-name';
 
 interface Props {
@@ -24,6 +26,7 @@ const ResultItem = ({
   onToggleExpandItem
 }: Props) => {
   const isFlag = useMemo(() => groupBy === 'FLAG', [groupBy]);
+  const { fromMobileScreen } = useScreen();
 
   const columns = useColumns({
     isFlag,
@@ -67,14 +70,27 @@ const ResultItem = ({
         )}
       </div>
       <div
-        className={cn(
-          '[&>table]:m-0 [&>table]:border-collapse [&>table>tbody]:divide-y [&>table>tbody]:divide-gray-200 [&>table>tbody>tr]:rounded-none [&>table>tbody>tr]:shadow-none [&>table>tbody>tr>td]:rounded-none [&>table>tbody>tr:last-child]:rounded-b-lg [&>table>tbody>tr>td:first-child]:pl-0 [&>table>tbody>tr>td:last-child]:pr-0 [&>table>thead>tr>th:first-child]:pl-0 [&>table>thead>tr>th:last-child]:pr-0 h-0 opacity-0 transition-all duration-200 z-[-1] [&>table>tbody>tr>td]:py-4',
-          {
-            'h-fit opacity-100 z-0': isExpand
-          }
-        )}
+        className={cn('h-0 opacity-0 transition-all duration-200 z-[-1]', {
+          'h-fit opacity-100 z-0': isExpand
+        })}
       >
-        <DataTable columns={columns} data={group} manualSorting={false} />
+        {fromMobileScreen ? (
+          <div className="overflow-x-auto [&>table]:m-0 [&>table]:border-collapse [&>table>tbody]:divide-y [&>table>tbody]:divide-gray-200 [&>table>tbody>tr]:rounded-none [&>table>tbody>tr]:shadow-none [&>table>tbody>tr>td]:rounded-none [&>table>tbody>tr:last-child]:rounded-b-lg [&>table>tbody>tr>td:first-child]:pl-0 [&>table>tbody>tr>td:last-child]:pr-0 [&>table>thead>tr>th:first-child]:pl-0 [&>table>thead>tr>th:last-child]:pr-0 [&>table>tbody>tr>td]:py-4">
+            <DataTable columns={columns} data={group} manualSorting={false} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-y-3 pt-4">
+            {group.map((evaluation, index) => (
+              <ResultItemCard
+                key={evaluation.featureId + evaluation.userId + index}
+                evaluation={evaluation}
+                index={index}
+                isFlag={isFlag}
+                handleGetMaintainerInfo={handleGetMaintainerInfo}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
