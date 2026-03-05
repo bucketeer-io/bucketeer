@@ -60,6 +60,7 @@ env:
   traceSamplingProbability: 0.0001
 affinity: {}
 nodeSelector: {}
+priorityClassName: ""
 pdb:
   enabled:
   maxUnavailable: 20%
