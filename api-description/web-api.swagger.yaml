@@ -1227,6 +1227,75 @@ paths:
           format: int32
       tags:
         - audit_log
+  /v1/aichat/suggestions:
+    get:
+      summary: Get Suggestions
+      description: Get proactive AI suggestions based on page context.
+      operationId: web.v1.aichat.get_suggestions
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/aichatGetSuggestionsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: pageContext.pageType
+          in: query
+          required: false
+          type: string
+          enum:
+            - PAGE_TYPE_UNSPECIFIED
+            - PAGE_TYPE_FEATURE_FLAGS
+            - PAGE_TYPE_TARGETING
+            - PAGE_TYPE_EXPERIMENTS
+            - PAGE_TYPE_SEGMENTS
+            - PAGE_TYPE_AUTOOPS
+          default: PAGE_TYPE_UNSPECIFIED
+        - name: pageContext.featureId
+          in: query
+          required: false
+          type: string
+        - name: pageContext.metadata
+          description: This is a request variable of the map type. The query format is "map_name[key]=value", e.g. If the map name is Age, the key type is string, and the value type is integer, the query parameter is expressed as Age["bob"]=18
+          in: query
+          required: false
+          type: string
+      tags:
+        - AI Chat
   /v1/audit_log:
     get:
       summary: Get Audit Log
@@ -9166,6 +9235,16 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  PageContextPageType:
+    type: string
+    enum:
+      - PAGE_TYPE_UNSPECIFIED
+      - PAGE_TYPE_FEATURE_FLAGS
+      - PAGE_TYPE_TARGETING
+      - PAGE_TYPE_EXPERIMENTS
+      - PAGE_TYPE_SEGMENTS
+      - PAGE_TYPE_AUTOOPS
+    default: PAGE_TYPE_UNSPECIFIED
   ProgressiveRolloutStoppedBy:
     type: string
     enum:
@@ -9792,6 +9871,76 @@ definitions:
         $ref: '#/definitions/accountChangeDefaultSearchFilterCommand'
   accountUpdateSearchFilterResponse:
     type: object
+  aichatChatMessage:
+    type: object
+    properties:
+      role:
+        $ref: '#/definitions/aichatChatMessageRole'
+      content:
+        type: string
+    description: ChatMessage represents a single message in the conversation.
+  aichatChatMessageRole:
+    type: string
+    enum:
+      - ROLE_UNSPECIFIED
+      - ROLE_USER
+      - ROLE_ASSISTANT
+    default: ROLE_UNSPECIFIED
+  aichatChatStreamResponse:
+    type: object
+    properties:
+      content:
+        type: string
+      done:
+        type: boolean
+      finishReason:
+        type: string
+    description: ChatStreamResponse is a single chunk of the streaming response.
+  aichatGetSuggestionsResponse:
+    type: object
+    properties:
+      suggestions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/aichatSuggestion'
+    description: GetSuggestionsResponse contains the list of suggestions.
+  aichatPageContext:
+    type: object
+    properties:
+      pageType:
+        $ref: '#/definitions/PageContextPageType'
+      featureId:
+        type: string
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+    description: PageContext represents the current page context in the dashboard.
+  aichatSuggestion:
+    type: object
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+      description:
+        type: string
+      docUrl:
+        type: string
+      type:
+        $ref: '#/definitions/aichatSuggestionType'
+    description: Suggestion represents a proactive suggestion for the user.
+  aichatSuggestionType:
+    type: string
+    enum:
+      - SUGGESTION_TYPE_UNSPECIFIED
+      - SUGGESTION_TYPE_FEATURE_DISCOVERY
+      - SUGGESTION_TYPE_BEST_PRACTICE
+      - SUGGESTION_TYPE_OPTIMIZATION
+      - SUGGESTION_TYPE_WARNING
+    default: SUGGESTION_TYPE_UNSPECIFIED
+    description: SuggestionType represents the type of a proactive suggestion.
   auditlogAuditLog:
     type: object
     properties:
