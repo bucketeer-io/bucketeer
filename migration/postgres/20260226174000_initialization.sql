@@ -320,6 +320,18 @@ CREATE TABLE experiment_result (
     PRIMARY KEY (id, environment_id)
 );
 
+-- Create "monthly_summary" table
+CREATE TABLE monthly_summary (
+    environment_id VARCHAR(255) NOT NULL,
+    source_id VARCHAR(30) NOT NULL,
+    yearmonth VARCHAR(6) NOT NULL,
+    mau BIGINT NOT NULL DEFAULT 0,
+    request_count BIGINT NOT NULL DEFAULT 0,
+    created_at BIGINT NOT NULL,
+    updated_at BIGINT NOT NULL,
+    PRIMARY KEY (environment_id, yearmonth, source_id)
+);
+
 -- ============================================
 -- Segment Tables
 -- ============================================
