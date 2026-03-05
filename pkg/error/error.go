@@ -35,6 +35,7 @@ const (
 	TeamPackageName         = "team"
 	ExperimentPackageName   = "experiment"
 	AuthPackageName         = "auth"
+	AIChatPackageName       = "aichat"
 
 	invalidPrefix = "Invalid"
 )
