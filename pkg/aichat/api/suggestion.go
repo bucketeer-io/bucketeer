@@ -67,11 +67,12 @@ func getSuggestionsForPage(
 				Type:        aichatproto.SuggestionType_SUGGESTION_TYPE_BEST_PRACTICE,
 			},
 			{
-				Id:          "sug-ff-002",
-				Title:       "Archive unused flags",
-				Description: "Flags that have been fully rolled out or unused for a long time should be archived to reduce flag debt.",
-				DocUrl:      "https://docs.bucketeer.io/best-practices/feature-flag-lifecycle",
-				Type:        aichatproto.SuggestionType_SUGGESTION_TYPE_OPTIMIZATION,
+				Id:    "sug-ff-002",
+				Title: "Archive unused flags",
+				Description: "Flags that have been fully rolled out or unused for a long time " +
+					"should be archived to reduce flag debt.",
+				DocUrl: "https://docs.bucketeer.io/best-practices/feature-flag-lifecycle",
+				Type:   aichatproto.SuggestionType_SUGGESTION_TYPE_OPTIMIZATION,
 			},
 		}
 	case aichatproto.PageContext_PAGE_TYPE_TARGETING:
@@ -94,11 +95,12 @@ func getSuggestionsForPage(
 	case aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS:
 		return []*aichatproto.Suggestion{
 			{
-				Id:          "sug-exp-001",
-				Title:       "Set up Goals first",
-				Description: "Define what you want to measure before starting an experiment. Goals track user actions for statistical analysis.",
-				DocUrl:      "https://docs.bucketeer.io/feature-flags/testing-with-flags/experiments",
-				Type:        aichatproto.SuggestionType_SUGGESTION_TYPE_BEST_PRACTICE,
+				Id:    "sug-exp-001",
+				Title: "Set up Goals first",
+				Description: "Define what you want to measure before starting an experiment. " +
+					"Goals track user actions for statistical analysis.",
+				DocUrl: "https://docs.bucketeer.io/feature-flags/testing-with-flags/experiments",
+				Type:   aichatproto.SuggestionType_SUGGESTION_TYPE_BEST_PRACTICE,
 			},
 		}
 	case aichatproto.PageContext_PAGE_TYPE_AUTOOPS:

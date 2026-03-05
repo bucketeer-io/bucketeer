@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { debounce } from 'lodash';
-import { useTranslation } from 'i18n';
-import { getCurrentEnvIdStorage } from 'storage/environment';
 import { useQueryFeatures } from '@queries/features';
+import { useTranslation } from 'i18n';
+import { debounce } from 'lodash';
+import { getCurrentEnvIdStorage } from 'storage/environment';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 interface FlagSelectorProps {

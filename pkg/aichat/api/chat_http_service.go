@@ -137,7 +137,7 @@ func (h *chatHTTPService) Register(mux *http.ServeMux) {
 func writeJSONError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	json.NewEncoder(w).Encode(map[string]string{"error": message}) //nolint:errcheck
 }
 
 // ServeHTTP handles POST /v1/aichat/chat with SSE streaming.
@@ -254,7 +254,10 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Stream response using nil-channel pattern to avoid race conditions.
 	// Both channels are closed when the ChatService goroutine finishes,
 	// so we must drain responseChan fully before exiting.
-	responseChan, errChan := streamChat(r.Context(), h.llmClient, h.ragService, h.featureClient, h.chatConfig, protoReq, h.logger)
+	responseChan, errChan := streamChat(
+		r.Context(), h.llmClient, h.ragService, h.featureClient,
+		h.chatConfig, protoReq, h.logger,
+	)
 
 	for responseChan != nil || errChan != nil {
 		select {

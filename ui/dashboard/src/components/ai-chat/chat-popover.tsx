@@ -1,16 +1,23 @@
-import { FormEvent, memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  FormEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState
+} from 'react';
+import type { ChatErrorCode } from '@api/ai-chat';
 import { useTranslation } from 'i18n';
+import { AIChatMessage, Suggestion } from '@types';
+import { cn } from 'utils/style';
 import { IconClose } from '@icons';
+import Button from 'components/button';
 import Icon from 'components/icon';
 import { ScrollArea } from 'components/scroll-area';
-import Button from 'components/button';
-import { AIChatMessage, Suggestion } from '@types';
-import type { ChatErrorCode } from '@api/ai-chat';
-import { cn } from 'utils/style';
-import { MAX_INPUT_LENGTH } from './use-sse-chat';
-import SuggestionCard from './suggestion-card';
-import PresetQuestions from './preset-questions';
 import FlagSelector from './flag-selector';
+import PresetQuestions from './preset-questions';
+import SuggestionCard from './suggestion-card';
+import { MAX_INPUT_LENGTH } from './use-sse-chat';
 
 interface ChatPopoverProps {
   messages: AIChatMessage[];

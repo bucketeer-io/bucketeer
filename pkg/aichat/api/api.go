@@ -23,10 +23,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	pkgapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
+	pkgapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"

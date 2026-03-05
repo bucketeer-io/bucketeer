@@ -1,9 +1,9 @@
 import { memo, useCallback, useState } from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { useTranslation } from 'i18n';
 import { useAuth } from 'auth';
-import { cn } from 'utils/style';
+import { useTranslation } from 'i18n';
 import { Suggestion } from '@types';
+import { cn } from 'utils/style';
 import ChatPopoverContainer from './chat-popover-container';
 
 const EMPTY_SUGGESTIONS: Suggestion[] = [];

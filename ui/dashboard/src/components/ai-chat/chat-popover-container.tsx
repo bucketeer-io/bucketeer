@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Suggestion } from '@types';
-import { useSSEChat } from './use-sse-chat';
-import { usePageContext } from './use-page-context';
 import ChatPopover from './chat-popover';
+import { usePageContext } from './use-page-context';
+import { useSSEChat } from './use-sse-chat';
 
 interface ChatPopoverContainerProps {
   suggestions: Suggestion[];

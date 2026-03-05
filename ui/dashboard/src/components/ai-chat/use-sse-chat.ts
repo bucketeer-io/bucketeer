@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { chatStreamer, CHAT_ERROR, type ChatErrorCode } from '@api/ai-chat';
 import { getCurrentEnvIdStorage } from 'storage/environment';
-import {
-  chatStreamer,
-  CHAT_ERROR,
-  type ChatErrorCode
-} from '@api/ai-chat';
 import { AIChatMessage, PageContext } from '@types';
 
 export { type ChatErrorCode } from '@api/ai-chat';

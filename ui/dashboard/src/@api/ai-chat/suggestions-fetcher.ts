@@ -1,8 +1,8 @@
 import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
+import { PageContext, PageType, Suggestion } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
-import { PageContext, PageType, Suggestion } from '@types';
 
 export interface SuggestionsFetcherParams {
   environmentId: string;
