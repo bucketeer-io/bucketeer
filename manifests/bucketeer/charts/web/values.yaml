@@ -65,6 +65,16 @@ env:
   timezone: UTC
   emailFilter:
   logLevel: info
+  # AI Chat configuration (optional — leave openaiApiKey empty to disable)
+  aichat:
+    openaiApiKeySecret:
+      name: ""
+      key: ""
+    openaiBaseUrl: ""
+    model: gpt-4o-mini
+    embeddingModel: text-embedding-3-small
+    maxTokens: 1000
+    servicePort: 9108
   googleTagManagerId:
   apiEndpoint:
   accessTokenTTL: 10m
