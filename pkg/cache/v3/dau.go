@@ -26,18 +26,27 @@ const (
 	dauTTL = 35 * 24 * time.Hour // 35 days
 )
 
-// MAUCache provides DAU/MAU counting operations.
-type MAUCache interface {
-	// RecordDAU adds a user ID to the DAU HyperLogLog for the given date.
-	RecordDAU(envID, sourceID, userID string, date time.Time) error
+// DAURecord groups user IDs by date, environment, and source.
+type DAURecord struct {
+	Date     time.Time
+	EnvID    string
+	SourceID string
+	UserIDs  []string
 }
 
-type mauCache struct {
+// DAUCache provides DAU counting operations.
+type DAUCache interface {
+	// RecordDAUBatch adds user IDs to DAU HyperLogLog in
+	// a single Redis Pipeline (1 round-trip).
+	RecordDAUBatch(records []DAURecord) error
+}
+
+type dauCache struct {
 	cache cache.MultiGetDeleteCountCache
 }
 
-func NewMAUCache(c cache.MultiGetDeleteCountCache) MAUCache {
-	return &mauCache{cache: c}
+func NewDAUCache(c cache.MultiGetDeleteCountCache) DAUCache {
+	return &dauCache{cache: c}
 }
 
 // dauKey builds the Redis key for DAU HyperLogLog.
@@ -46,23 +55,29 @@ func NewMAUCache(c cache.MultiGetDeleteCountCache) MAUCache {
 // for the same env/source are in the same Redis Cluster slot,
 // enabling PFMERGE operations.
 // See: https://redis.io/topics/cluster-spec#keys-hash-tags
-func (*mauCache) dauKey(envID, sourceID string, date time.Time) string {
-	dateStr := date.Format("20060102")
-	return fmt.Sprintf("{%s:%s:au}:d:%s", envID, sourceID, dateStr)
+func dauKey(envID, sourceID string, date time.Time) string {
+	return fmt.Sprintf("{%s:%s:au}:d:%s", envID, sourceID, date.Format("20060102"))
 }
 
-// RecordDAU adds a user ID to the DAU HyperLogLog using PFADD.
-// If the userID is empty, it will be no-op and return nil.
-func (c *mauCache) RecordDAU(envID, sourceID, userID string, date time.Time) error {
-	if len(userID) == 0 {
+func (c *dauCache) RecordDAUBatch(records []DAURecord) error {
+	// Filter out empty records to avoid creating a Pipeline unnecessarily.
+	filtered := make([]DAURecord, 0, len(records))
+	for _, r := range records {
+		if len(r.UserIDs) > 0 {
+			filtered = append(filtered, r)
+		}
+	}
+	if len(filtered) == 0 {
 		return nil
 	}
-	key := c.dauKey(envID, sourceID, date)
 	pipe := c.cache.Pipeline(false)
-	pipe.PFAdd(key, userID)
-	pipe.Expire(key, dauTTL)
+	for _, r := range filtered {
+		key := dauKey(r.EnvID, r.SourceID, r.Date)
+		pipe.PFAdd(key, r.UserIDs...)
+		pipe.Expire(key, dauTTL)
+	}
 	if _, err := pipe.Exec(); err != nil {
-		return fmt.Errorf("failed to record DAU: %w", err)
+		return fmt.Errorf("failed to record DAU batch (%d keys): %w", len(filtered), err)
 	}
 	return nil
 }

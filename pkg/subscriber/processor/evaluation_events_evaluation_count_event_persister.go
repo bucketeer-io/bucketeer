@@ -53,6 +53,17 @@ type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
 type userAttributesCache map[string]*userproto.UserAttributes
 
+// dauBufferKey groups DAU entries by date, environment, and source.
+type dauBufferKey struct {
+	dateStr  string // "20060102"
+	envID    string
+	sourceID string
+}
+
+// dauBuffer accumulates user IDs per (date, env, source).
+// Duplicates are acceptable because PFADD is idempotent.
+type dauBuffer map[dauBufferKey][]string
+
 type EvaluationCountEventPersisterConfig struct {
 	FlushSize           int `json:"flushSize"`
 	FlushInterval       int `json:"flushInterval"`
@@ -66,10 +77,12 @@ type evaluationCountEventPersister struct {
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
 	userAttributesCacher                cachev3.UserAttributesCache
-	mauCache                            cachev3.MAUCache
+	dauCache                            cachev3.DAUCache
+	dauBuf                              dauBuffer
 	userAttributesCache                 userAttributesCache
 	envLastUsedCacheMutex               sync.Mutex
 	userAttributesCacheMutex            sync.Mutex
+	dauBufferMutex                      sync.Mutex
 	logger                              *zap.Logger
 }
 
@@ -79,7 +92,7 @@ func NewEvaluationCountEventPersister(
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	userAttributesCacher cachev3.UserAttributesCache,
-	mauCache cachev3.MAUCache,
+	dauCache cachev3.DAUCache,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -104,10 +117,12 @@ func NewEvaluationCountEventPersister(
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
 		userAttributesCacher:                userAttributesCacher,
-		mauCache:                            mauCache,
+		dauCache:                            dauCache,
+		dauBuf:                              make(dauBuffer),
 		userAttributesCache:                 make(userAttributesCache),
 		envLastUsedCacheMutex:               sync.Mutex{},
 		userAttributesCacheMutex:            sync.Mutex{},
+		dauBufferMutex:                      sync.Mutex{},
 		logger:                              logger,
 	}
 	// write flag last used info cache periodically
@@ -116,6 +131,9 @@ func NewEvaluationCountEventPersister(
 	// write user attributes cache periodically
 	//nolint:errcheck
 	go e.writeUserAttributesCache(ctx)
+	// write DAU cache periodically
+	//nolint:errcheck
+	go e.writeDAUCache(ctx)
 	return e, nil
 }
 
@@ -159,6 +177,8 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			// Update the user attributes cache
 			p.cacheUserAttributes(envEvents)
+			// Buffer DAU entries
+			p.bufferDAU(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ticker.C:
 			envEvents := p.extractEvents(batch)
@@ -166,6 +186,8 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			// Update the user attributes cache
 			p.cacheUserAttributes(envEvents)
+			// Buffer DAU entries
+			p.bufferDAU(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ctx.Done():
 			// Nack the messages to be redelivered
@@ -312,21 +334,6 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 			}
 			return err
 		}
-		// Record DAU (impression user) - best-effort: errors are logged and ignored, but this call is synchronous
-		// and may add latency before incrementing the evaluation count.
-		dauDate := time.Unix(e.Timestamp, 0)
-		sourceID := e.SourceId.String()
-		if err := p.mauCache.RecordDAU(environmentId, sourceID, userID, dauDate); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Warn("Failed to record DAU",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("sourceId", sourceID),
-					zap.String("userId", userID),
-				)
-			}
-		}
-
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countEvent(ecKey); err != nil {
 			if !strings.Contains(err.Error(), "client is closed") {
@@ -421,6 +428,75 @@ func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
 		environmentId,
 	)
+}
+
+// bufferDAU buffers DAU entries in memory grouped by date and (envID, sourceID).
+// This deduplicates across multiple batches because a single RegisterEvent request can contain
+// up to 50 evaluation events from the same user. The buffered entries are written to Redis
+// periodically by writeDAUCache.
+func (p *evaluationCountEventPersister) bufferDAU(envEvents environmentEventMap) {
+	p.dauBufferMutex.Lock()
+	defer p.dauBufferMutex.Unlock()
+	for environmentId, events := range envEvents {
+		for _, event := range events {
+			userID := getUserID(event.UserId, event.User)
+			if userID == "" {
+				continue
+			}
+			key := dauBufferKey{
+				dateStr:  time.Unix(event.Timestamp, 0).Format("20060102"),
+				envID:    environmentId,
+				sourceID: event.SourceId.String(),
+			}
+			p.dauBuf[key] = append(p.dauBuf[key], userID)
+		}
+	}
+}
+
+// writeDAUCache periodically flushes the in-memory DAU buffer to Redis.
+func (p *evaluationCountEventPersister) writeDAUCache(ctx context.Context) error {
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteCacheInterval) * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			p.logger.Debug("Write DAU cache timer triggered")
+			p.writeDAU()
+		}
+	}
+}
+
+func (p *evaluationCountEventPersister) writeDAU() {
+	p.dauBufferMutex.Lock()
+	buf := p.dauBuf
+	p.dauBuf = make(dauBuffer)
+	p.dauBufferMutex.Unlock()
+	records := make([]cachev3.DAURecord, 0, len(buf))
+	for key, userIDs := range buf {
+		date, err := time.Parse("20060102", key.dateStr)
+		if err != nil {
+			p.logger.Warn("Failed to parse DAU date",
+				zap.Error(err),
+				zap.String("date", key.dateStr),
+			)
+			continue
+		}
+		records = append(records, cachev3.DAURecord{
+			Date:     date,
+			EnvID:    key.envID,
+			SourceID: key.sourceID,
+			UserIDs:  userIDs,
+		})
+	}
+	if err := p.dauCache.RecordDAUBatch(records); err != nil {
+		if !strings.Contains(err.Error(), "client is closed") {
+			p.logger.Warn("Failed to record DAU batch",
+				zap.Error(err),
+				zap.Int("recordCount", len(records)),
+			)
+		}
+	}
 }
 
 func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {

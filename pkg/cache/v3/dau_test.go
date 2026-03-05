@@ -26,7 +26,7 @@ import (
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3/mock"
 )
 
-func TestMAUCache_DAUKey(t *testing.T) {
+func TestDAUKey(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc     string
@@ -39,36 +39,32 @@ func TestMAUCache_DAUKey(t *testing.T) {
 			desc:     "success: builds correct key format with hash tag",
 			envID:    "env-123",
 			sourceID: "ANDROID",
-			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			date:     time.Date(2026, 1, 28, 0, 0, 0, 0, time.UTC),
 			expected: "{env-123:ANDROID:au}:d:20260128",
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			c := &mauCache{}
-			actual := c.dauKey(p.envID, p.sourceID, p.date)
+			actual := dauKey(p.envID, p.sourceID, p.date)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
 }
 
-func TestMAUCache_RecordDAU(t *testing.T) {
+func TestDAUCache_RecordDAUBatch(t *testing.T) {
+	testDate := time.Date(2026, 1, 28, 0, 0, 0, 0, time.UTC)
 	t.Parallel()
 	patterns := []struct {
 		desc        string
-		envID       string
-		sourceID    string
-		userID      string
-		date        time.Time
+		records     []DAURecord
 		setup       func(*mock.MockMultiGetDeleteCountCache, *redismock.MockPipeClient)
 		expectedErr error
 	}{
 		{
-			desc:     "success",
-			envID:    "env-123",
-			sourceID: "ANDROID",
-			userID:   "user-456",
-			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			desc: "success: single record with one user",
+			records: []DAURecord{
+				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-456"}},
+			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
 				mc.EXPECT().Pipeline(false).Return(mp)
 				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456")
@@ -78,29 +74,66 @@ func TestMAUCache_RecordDAU(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "empty userID: skip recording",
-			envID:    "env-123",
-			sourceID: "ANDROID",
-			userID:   "",
-			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			desc: "success: multiple records in one pipeline",
+			records: []DAURecord{
+				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-1"}},
+				{Date: testDate, EnvID: "env-123", SourceID: "IOS", UserIDs: []string{"user-2"}},
+				{Date: testDate, EnvID: "env-456", SourceID: "WEB", UserIDs: []string{"user-3"}},
+			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
-				// No pipeline operations expected
+				mc.EXPECT().Pipeline(false).Return(mp)
+				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-1")
+				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().PFAdd("{env-123:IOS:au}:d:20260128", "user-2")
+				mp.EXPECT().Expire("{env-123:IOS:au}:d:20260128", dauTTL)
+				mp.EXPECT().PFAdd("{env-456:WEB:au}:d:20260128", "user-3")
+				mp.EXPECT().Expire("{env-456:WEB:au}:d:20260128", dauTTL)
+				mp.EXPECT().Exec().Return(nil, nil)
 			},
 			expectedErr: nil,
 		},
 		{
-			desc:     "pipeline error",
-			envID:    "env-123",
-			sourceID: "ANDROID",
-			userID:   "user-456",
-			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			desc:    "empty records: no-op",
+			records: []DAURecord{},
+			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "all empty userIDs: no-op",
+			records: []DAURecord{
+				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{}},
+				{Date: testDate, EnvID: "env-456", SourceID: "IOS", UserIDs: nil},
+			},
+			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "multiple users in single PFADD",
+			records: []DAURecord{
+				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-1", "user-2", "user-3"}},
+			},
+			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
+				mc.EXPECT().Pipeline(false).Return(mp)
+				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-1", "user-2", "user-3")
+				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().Exec().Return(nil, nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "pipeline error",
+			records: []DAURecord{
+				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-456"}},
+			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
 				mc.EXPECT().Pipeline(false).Return(mp)
 				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456")
 				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
 				mp.EXPECT().Exec().Return(nil, errors.New("redis connection error"))
 			},
-			expectedErr: errors.New("failed to record DAU"),
+			expectedErr: errors.New("failed to record DAU batch"),
 		},
 	}
 	for _, p := range patterns {
@@ -110,11 +143,11 @@ func TestMAUCache_RecordDAU(t *testing.T) {
 
 			mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
 			mockPipe := redismock.NewMockPipeClient(ctrl)
-			c := NewMAUCache(mockCache)
+			c := NewDAUCache(mockCache)
 
 			p.setup(mockCache, mockPipe)
 
-			err := c.RecordDAU(p.envID, p.sourceID, p.userID, p.date)
+			err := c.RecordDAUBatch(p.records)
 			if p.expectedErr != nil {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), p.expectedErr.Error())
