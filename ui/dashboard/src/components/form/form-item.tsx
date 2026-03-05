@@ -15,4 +15,6 @@ const FormItem = React.forwardRef<
   );
 });
 
+FormItem.displayName = 'FormItem';
+
 export default FormItem;

@@ -446,17 +446,20 @@ const EventRateOperationModal = ({
                     />
                   </div>
                   <div className="flex flex-col gap-y-0.5">
-                    {errors?.operator?.message && (
-                      <Form.Message>{errors.operator.message}</Form.Message>
-                    )}
-                    {errors?.threadsholdRate?.message && (
-                      <Form.Message>
-                        {errors.threadsholdRate.message}
-                      </Form.Message>
-                    )}
-                    {errors?.minCount?.message && (
-                      <Form.Message>{errors.minCount.message}</Form.Message>
-                    )}
+                    {[
+                      errors?.operator?.message,
+                      errors?.threadsholdRate?.message,
+                      errors?.minCount?.message
+                    ]
+                      .filter(Boolean)
+                      .map((msg, i) => (
+                        <p
+                          key={i}
+                          className="typo-para-small text-accent-red-500 mt-0.5"
+                        >
+                          {msg}
+                        </p>
+                      ))}
                   </div>
                 </div>
               </div>

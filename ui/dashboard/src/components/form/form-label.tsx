@@ -1,9 +1,9 @@
-import React, { HTMLAttributes, Ref } from 'react';
+import React, { LabelHTMLAttributes, Ref } from 'react';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
-import { useFormField } from 'components/form';
+import { FormFieldContext, FormItemContext } from 'components/form';
 
-interface FormLabelProps extends HTMLAttributes<HTMLDivElement> {
+interface FormLabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
   required?: boolean;
   optional?: boolean;
 }
@@ -11,16 +11,19 @@ interface FormLabelProps extends HTMLAttributes<HTMLDivElement> {
 const FormLabel = React.forwardRef(
   (
     { className, children, required, optional, ...props }: FormLabelProps,
-    ref: Ref<HTMLDivElement>
+    ref: Ref<HTMLLabelElement>
   ) => {
     const { t } = useTranslation(['form']);
-    const { formItemId } = useFormField();
+    const fieldContext = React.useContext(FormFieldContext);
+    const itemContext = React.useContext(FormItemContext);
+    const formItemId =
+      fieldContext && itemContext ? `${itemContext.id}-form-item` : undefined;
 
     return (
-      <div
+      <label
         ref={ref}
+        htmlFor={formItemId}
         className={cn('typo-para-small text-gray-600 mb-1', className)}
-        id={formItemId}
         {...props}
       >
         {children}
@@ -28,9 +31,11 @@ const FormLabel = React.forwardRef(
           <span className="text-gray-500 ml-2">({t(`optional`)})</span>
         )}
         {required && <span className="text-accent-red-500 ml-0.5">*</span>}
-      </div>
+      </label>
     );
   }
 );
+
+FormLabel.displayName = 'FormLabel';
 
 export default FormLabel;

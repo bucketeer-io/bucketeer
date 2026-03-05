@@ -19,4 +19,6 @@ const FormField = <
   );
 };
 
+FormField.displayName = 'FormField';
+
 export default FormField;

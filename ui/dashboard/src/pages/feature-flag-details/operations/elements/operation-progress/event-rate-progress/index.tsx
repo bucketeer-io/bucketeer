@@ -118,8 +118,8 @@ const EventRateProgress = ({
           />
         </div>
 
-        <div className="bg-gray-100 rounded px-12 pt-16 pb-10 relative">
-          <p className="absolute right-10 top-1.5 typo-para-medium text-accent-pink-500">
+        <div className="bg-gray-100 rounded px-6 sm:px-12 pt-10 sm:pt-16 pb-4 sm:pb-10 relative">
+          <p className="absolute right-10 top-1.5 typo-para-small sm:typo-para-medium text-accent-pink-500">
             {t('form:threshold')}
           </p>
           <div className="flex h-[4px] bg-gray-200 relative">

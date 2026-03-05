@@ -17,7 +17,7 @@ export const OperationDescription = ({
   useTranslation(['form']);
   return (
     <div className={cn('flex items-center gap-x-2', className)}>
-      <div className="flex items-center gap-1 typo-para-medium text-gray-600">
+      <div className="flex items-center gap-1 typo-para-small sm:typo-para-medium text-gray-600">
         <Trans
           i18nKey={titleKey}
           values={{
@@ -29,7 +29,11 @@ export const OperationDescription = ({
           }}
         />
       </div>
-      {!isLastItem && <p className="typo-para-medium text-gray-300 slash">|</p>}
+      {!isLastItem && (
+        <p className="typo-para-medium sm:typo-para-medium text-gray-300 slash">
+          |
+        </p>
+      )}
     </div>
   );
 };

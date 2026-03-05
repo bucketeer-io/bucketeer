@@ -816,7 +816,7 @@ const TargetingPage = ({
           targetingRule={getValues()}
           isOpen={isOpenConfirmModal}
           isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED}
-          onSegmentRuleChange={handleSegmentRuleChangeDiscard}
+          onSegmentRuleChannge={handleSegmentRuleChangeDiscard}
           onSegmentRuleDeleted={handleSegmentRuleDeleted}
           onClose={onCloseConfirmModal}
           onSubmit={additionalValues =>

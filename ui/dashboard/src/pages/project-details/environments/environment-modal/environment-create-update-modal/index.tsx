@@ -321,21 +321,18 @@ const EnvironmentCreateUpdateModal = ({
 
               <Form.Item>
                 <Form.Label required>{`${t(`project`)}`}</Form.Label>
-                <Form.Control>
-                  <InputGroup
-                    addon={isLoadingProject ? <Spinner size="sm" /> : null}
-                    addonSize="sm"
-                    addonSlot="right"
-                    className="w-full"
-                  >
-                    <Input
-                      value={project?.name || ''}
-                      placeholder={`${t(`project`)}`}
-                      disabled
-                    />
-                  </InputGroup>
-                </Form.Control>
-                <Form.Message />
+                <InputGroup
+                  addon={isLoadingProject ? <Spinner size="sm" /> : null}
+                  addonSize="sm"
+                  addonSlot="right"
+                  className="w-full"
+                >
+                  <Input
+                    value={project?.name || ''}
+                    placeholder={`${t(`project`)}`}
+                    disabled
+                  />
+                </InputGroup>
               </Form.Item>
 
               <Form.Field

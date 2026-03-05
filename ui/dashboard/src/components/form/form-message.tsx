@@ -1,15 +1,29 @@
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { cn } from 'utils/style';
-import { useFormField } from 'components/form';
+import { FormFieldContext, FormItemContext } from 'components/form';
 
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
-  const { error, formMessageId } = useFormField();
-  const body = error?.message ? String(error.message) : children;
+  const fieldContext = React.useContext(FormFieldContext);
+  const itemContext = React.useContext(FormItemContext);
+  const formContext = useFormContext();
 
-  if (!body) {
+  const error =
+    fieldContext && formContext
+      ? formContext.getFieldState(fieldContext.name, formContext.formState)
+          .error
+      : undefined;
+
+  const formMessageId = itemContext
+    ? `${itemContext.id}-form-item-message`
+    : undefined;
+
+  const errorMessage = error?.message ? String(error.message) : null;
+
+  if (!errorMessage && !children) {
     return null;
   }
 
@@ -17,12 +31,17 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn('typo-para-small text-accent-red-500 mt-0.5', className)}
+      className={cn('typo-para-small mt-0.5', className, {
+        'text-accent-red-500': !!errorMessage,
+        'text-gray-500': !errorMessage
+      })}
       {...props}
     >
-      {body}
+      {errorMessage ?? children}
     </p>
   );
 });
+
+FormMessage.displayName = 'FormMessage';
 
 export default FormMessage;

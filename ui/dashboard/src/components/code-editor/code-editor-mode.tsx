@@ -31,7 +31,7 @@ export default function ReactCodeEditorModal({
   return (
     <DialogModal
       className="w-full h-full sm:w-[60vw] sm:h-[80%] overflow-hidden"
-      overlayCls="bg-overlay-second"
+      overlayCls="bg-overlay-second !p-0"
       title={title}
       closeContent={
         <Button

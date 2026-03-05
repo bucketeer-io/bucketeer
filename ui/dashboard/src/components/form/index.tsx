@@ -11,8 +11,8 @@ type FormItemContextValue = {
   id: string;
 };
 
-export const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
+export const FormItemContext = React.createContext<FormItemContextValue | null>(
+  null
 );
 
 type FormFieldContextValue<
@@ -22,21 +22,23 @@ type FormFieldContextValue<
   name: TName;
 };
 
-export const FormFieldContext = React.createContext<FormFieldContextValue>(
-  {} as FormFieldContextValue
-);
+export const FormFieldContext =
+  React.createContext<FormFieldContextValue | null>(null);
 
 export const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext);
   const itemContext = React.useContext(FormItemContext);
-  const { getFieldState, formState } = useFormContext();
-
-  const fieldState = getFieldState(fieldContext.name, formState);
 
   if (!fieldContext) {
     throw new Error('useFormField should be used within <FormField>');
   }
 
+  if (!itemContext) {
+    throw new Error('useFormField should be used within <FormItem>');
+  }
+
+  const { getFieldState, formState } = useFormContext();
+  const fieldState = getFieldState(fieldContext.name, formState);
   const { id } = itemContext;
 
   return {
@@ -51,7 +53,7 @@ export const useFormField = () => {
 
 interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   children: React.ReactNode;
-  onSubmit: () => Promise<void>;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   className?: string;
 }
 
@@ -59,19 +61,27 @@ const Form = ({
   children,
   onSubmit,
   className,
-  autoComplete = 'on'
+  autoComplete = 'on',
+  ...props
 }: FormProps) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    onSubmit(e);
+  };
+
   return (
     <form
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       className={cn(className)}
       autoComplete={autoComplete}
+      {...props}
     >
       {children}
     </form>
   );
 };
 
+Form.displayName = 'Form';
 Form.Control = FormControl;
 Form.Label = FormLabel;
 Form.Item = FormItem;
