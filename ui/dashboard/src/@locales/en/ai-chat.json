@@ -1,0 +1,28 @@
+{
+  "title": "AI Assistant",
+  "welcome": "Hi! I'm Bucketeer's AI assistant. Ask me anything about feature flags, experiments, or platform features.",
+  "open-chat": "Open AI Chat",
+  "close": "Close chat",
+  "clear": "Clear",
+  "send": "Send",
+  "thinking": "Thinking...",
+  "input-placeholder": "Ask a question...",
+  "suggestions-title": "Suggestions for you",
+  "quick-questions": "Quick questions",
+  "presets": {
+    "what-are-feature-flags": "What are feature flags and how do I use them?",
+    "how-to-create-flag": "How do I create a new feature flag?",
+    "ab-testing": "How do I set up an A/B test?",
+    "progressive-rollout": "How do I use progressive rollout?"
+  },
+  "flag-selector": {
+    "placeholder": "Select a feature flag",
+    "search-placeholder": "Search flags..."
+  },
+  "errors": {
+    "not-authenticated": "You are not authenticated. Please log in.",
+    "rate-limit": "Rate limit exceeded. Please try again later.",
+    "network": "A network error occurred. Please try again.",
+    "unknown": "An error occurred. Please try again."
+  }
+}

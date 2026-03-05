@@ -1,3 +1,4 @@
+import aiChat from './ai-chat.json';
 import auth from './auth.json';
 import backend from './backend.json';
 import common from './common.json';
@@ -7,6 +8,7 @@ import scheduledChanges from './scheduled-changes.json';
 import table from './table.json';
 
 const enResources = {
+  'ai-chat': aiChat,
   auth,
   common,
   form,

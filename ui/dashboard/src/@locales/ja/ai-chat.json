@@ -1,0 +1,28 @@
+{
+  "title": "AIアシスタント",
+  "welcome": "こんにちは！Bucketeerのアシスタントです。フィーチャーフラグ、エクスペリメント、プラットフォーム機能について何でもお聞きください。",
+  "open-chat": "AIチャットを開く",
+  "close": "チャットを閉じる",
+  "clear": "クリア",
+  "send": "送信",
+  "thinking": "考え中...",
+  "input-placeholder": "質問を入力...",
+  "suggestions-title": "あなたへのおすすめ",
+  "quick-questions": "クイック質問",
+  "presets": {
+    "what-are-feature-flags": "フィーチャーフラグとは何ですか？使い方を教えてください。",
+    "how-to-create-flag": "新規フィーチャーフラグの作成方法は？",
+    "ab-testing": "エクスペリメントの設定方法を教えてください。",
+    "progressive-rollout": "段階的ロールアウトの使い方は？"
+  },
+  "flag-selector": {
+    "placeholder": "フィーチャーフラグを選択",
+    "search-placeholder": "フラグを検索..."
+  },
+  "errors": {
+    "not-authenticated": "認証されていません。ログインしてください。",
+    "rate-limit": "リクエスト数の上限を超えました。しばらくしてから再試行してください。",
+    "network": "ネットワークエラーが発生しました。再試行してください。",
+    "unknown": "エラーが発生しました。再試行してください。"
+  }
+}
