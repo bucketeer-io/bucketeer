@@ -60,9 +60,8 @@ type dauBufferKey struct {
 	sourceID string
 }
 
-// dauBuffer accumulates user IDs per (date, env, source).
-// Duplicates are acceptable because PFADD is idempotent.
-type dauBuffer map[dauBufferKey][]string
+// dauBuffer accumulates unique user IDs per (date, env, source).
+type dauBuffer map[dauBufferKey]map[string]struct{}
 
 type EvaluationCountEventPersisterConfig struct {
 	FlushSize           int `json:"flushSize"`
@@ -431,9 +430,10 @@ func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
 }
 
 // bufferDAU buffers DAU entries in memory grouped by date and (envID, sourceID).
-// This deduplicates across multiple batches because a single RegisterEvent request can contain
-// up to 50 evaluation events from the same user. The buffered entries are written to Redis
-// periodically by writeDAUCache.
+// User IDs are deduplicated in-memory using a set to reduce the PFADD payload
+// sent to Redis, since a single RegisterEvent request can contain multiple
+// evaluation events from the same user.
+// The buffered entries are flushed to Redis periodically by writeDAUCache.
 func (p *evaluationCountEventPersister) bufferDAU(envEvents environmentEventMap) {
 	p.dauBufferMutex.Lock()
 	defer p.dauBufferMutex.Unlock()
@@ -448,7 +448,10 @@ func (p *evaluationCountEventPersister) bufferDAU(envEvents environmentEventMap)
 				envID:    environmentId,
 				sourceID: event.SourceId.String(),
 			}
-			p.dauBuf[key] = append(p.dauBuf[key], userID)
+			if p.dauBuf[key] == nil {
+				p.dauBuf[key] = make(map[string]struct{})
+			}
+			p.dauBuf[key][userID] = struct{}{}
 		}
 	}
 }
@@ -473,7 +476,7 @@ func (p *evaluationCountEventPersister) writeDAU() {
 	p.dauBuf = make(dauBuffer)
 	p.dauBufferMutex.Unlock()
 	records := make([]cachev3.DAURecord, 0, len(buf))
-	for key, userIDs := range buf {
+	for key, userIDSet := range buf {
 		date, err := time.Parse("20060102", key.dateStr)
 		if err != nil {
 			p.logger.Warn("Failed to parse DAU date",
@@ -481,6 +484,10 @@ func (p *evaluationCountEventPersister) writeDAU() {
 				zap.String("date", key.dateStr),
 			)
 			continue
+		}
+		userIDs := make([]string, 0, len(userIDSet))
+		for uid := range userIDSet {
+			userIDs = append(userIDs, uid)
 		}
 		records = append(records, cachev3.DAURecord{
 			Date:     date,

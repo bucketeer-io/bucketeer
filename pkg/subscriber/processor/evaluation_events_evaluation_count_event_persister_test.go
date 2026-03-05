@@ -378,6 +378,14 @@ func TestCacheUserAttributes(t *testing.T) {
 	}
 }
 
+func toSet(ids ...string) map[string]struct{} {
+	s := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		s[id] = struct{}{}
+	}
+	return s
+}
+
 func TestBufferDAU(t *testing.T) {
 	day1 := int64(1772668800) // 2026-03-05 00:00:00 UTC
 	day2 := int64(1772755200) // 2026-03-06 00:00:00 UTC
@@ -401,7 +409,7 @@ func TestBufferDAU(t *testing.T) {
 				},
 			},
 			expectedBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-1"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
 			},
 		},
 		{
@@ -424,12 +432,12 @@ func TestBufferDAU(t *testing.T) {
 				},
 			},
 			expectedBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-1"},
-				{dateStr: "20260305", envID: "env-2", sourceID: "IOS"}:     {"user-2"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+				{dateStr: "20260305", envID: "env-2", sourceID: "IOS"}:     toSet("user-2"),
 			},
 		},
 		{
-			desc:        "Duplicate user IDs are kept (PFADD handles dedup)",
+			desc:        "Duplicate user IDs are deduplicated in buffer",
 			existingBuf: make(dauBuffer),
 			envEvents: environmentEventMap{
 				"env-1": eventMap{
@@ -446,7 +454,7 @@ func TestBufferDAU(t *testing.T) {
 				},
 			},
 			expectedBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-1", "user-1"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
 			},
 		},
 		{
@@ -467,14 +475,14 @@ func TestBufferDAU(t *testing.T) {
 				},
 			},
 			expectedBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-1"},
-				{dateStr: "20260306", envID: "env-1", sourceID: "ANDROID"}: {"user-1"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+				{dateStr: "20260306", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
 			},
 		},
 		{
 			desc: "Append to existing buffer entries",
 			existingBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-1"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
 			},
 			envEvents: environmentEventMap{
 				"env-1": eventMap{
@@ -486,7 +494,7 @@ func TestBufferDAU(t *testing.T) {
 				},
 			},
 			expectedBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-1", "user-2"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1", "user-2"),
 			},
 		},
 		{
@@ -518,7 +526,7 @@ func TestBufferDAU(t *testing.T) {
 				},
 			},
 			expectedBuf: dauBuffer{
-				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: {"user-from-user-id"},
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-from-user-id"),
 			},
 		},
 	}
@@ -535,7 +543,7 @@ func TestBufferDAU(t *testing.T) {
 			for key, expectedUsers := range tt.expectedBuf {
 				actualUsers, exists := persister.dauBuf[key]
 				assert.True(t, exists, "expected key %v not found in dauBuf", key)
-				assert.ElementsMatch(t, expectedUsers, actualUsers)
+				assert.Equal(t, expectedUsers, actualUsers)
 			}
 		})
 	}
