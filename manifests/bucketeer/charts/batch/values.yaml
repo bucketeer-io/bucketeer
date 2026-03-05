@@ -12,12 +12,23 @@ env:
   gcpEnabled: true
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
-  mysqlUser:
-  mysqlPass:
-  mysqlHost:
-  mysqlPort:
-  mysqlDbName:
-  mysqlDbOpenConns: 50
+  # Database configuration
+  database:
+    type: "mysql"
+    mysql:
+      user:
+      pass:
+      host:
+      port: 3306
+      name:
+      openConns: 50
+    postgres:
+      user:
+      pass:
+      host:
+      port: 5432
+      name:
+      openConns: 50
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
   accountService: localhost:9001
