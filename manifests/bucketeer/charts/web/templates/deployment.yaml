@@ -218,6 +218,25 @@ spec:
               value: "{{ .Values.env.accessTokenTTL }}"
             - name: BUCKETEER_WEB_REFRESH_TOKEN_TTL
               value: "{{ .Values.env.refreshTokenTTL }}"
+            {{- if .Values.env.aichat.openaiApiKeySecret.name }}
+            - name: BUCKETEER_WEB_OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.env.aichat.openaiApiKeySecret.name }}"
+                  key: "{{ .Values.env.aichat.openaiApiKeySecret.key }}"
+            {{- if .Values.env.aichat.openaiBaseUrl }}
+            - name: BUCKETEER_WEB_OPENAI_BASE_URL
+              value: "{{ .Values.env.aichat.openaiBaseUrl }}"
+            {{- end }}
+            - name: BUCKETEER_WEB_AICHAT_MODEL
+              value: "{{ .Values.env.aichat.model }}"
+            - name: BUCKETEER_WEB_AICHAT_EMBEDDING_MODEL
+              value: "{{ .Values.env.aichat.embeddingModel }}"
+            - name: BUCKETEER_WEB_AICHAT_MAX_TOKENS
+              value: "{{ .Values.env.aichat.maxTokens }}"
+            - name: BUCKETEER_WEB_AICHAT_SERVICE_PORT
+              value: "{{ .Values.env.aichat.servicePort }}"
+            {{- end }}
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

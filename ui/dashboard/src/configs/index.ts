@@ -18,6 +18,7 @@ declare global {
       GOOGLE_TAG_MANAGER_ID?: string;
       API_ENDPOINT?: string;
       SCHEDULED_FLAG_CHANGES_ENABLED?: boolean;
+      AI_CHAT_ENABLED?: boolean;
     };
   }
 }
@@ -64,3 +65,8 @@ export const SCHEDULED_FLAG_CHANGES_ENABLED =
   releaseMode !== 'prod'
     ? import.meta.env.VITE_SCHEDULED_FLAG_CHANGES_ENABLED === 'true'
     : !!window.env?.SCHEDULED_FLAG_CHANGES_ENABLED;
+
+export const AI_CHAT_ENABLED =
+  releaseMode !== 'prod'
+    ? import.meta.env.VITE_AI_CHAT_ENABLED === 'true'
+    : !!window.env?.AI_CHAT_ENABLED;
