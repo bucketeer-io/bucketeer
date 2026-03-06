@@ -121,10 +121,12 @@ type server struct {
 	persistentRedisAddr             *string
 	persistentRedisPoolMaxIdle      *int
 	persistentRedisPoolMaxActive    *int
+	persistentRedisMode             *string
 	nonPersistentRedisServerName    *string
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
+	nonPersistentRedisMode          *string
 	bigQueryDataSet                 *string
 	bigQueryDataLocation            *string
 	domainTopic                     *string
@@ -168,6 +170,7 @@ type server struct {
 	pubSubRedisPoolSize             *int
 	pubSubRedisMinIdle              *int
 	pubSubRedisPartitionCount       *int
+	pubSubRedisMode                 *string
 	dataWarehouseType               *string
 	dataWarehouseConfigPath         *string
 }
@@ -234,6 +237,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		persistentRedisMode: cmd.Flag("persistent-redis-mode",
+			"Persistent Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -250,6 +256,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
+			"Non-persistent Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
 		domainTopic: cmd.Flag(
@@ -408,6 +417,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
 			"Number of partitions for Redis Streams PubSub.",
 		).Default("16").Int(),
+		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
+			"PubSub Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -471,6 +483,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.persistentRedisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.persistentRedisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.persistentRedisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -484,6 +497,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -1024,6 +1038,7 @@ func (s *server) createPublisher(
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
+			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)

@@ -22,6 +22,7 @@ data:
     {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
     {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
     {{- $_ := set $config "redisIdleTime" $.Values.global.pubsub.redis.idleTime }}
+    {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
@@ -35,6 +36,7 @@ data:
     {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
     {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
     {{- $_ := set $config "redisIdleTime" $.Values.global.pubsub.redis.idleTime }}
+    {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
@@ -53,6 +55,7 @@ data:
     {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
     {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
     {{- $_ := set $config "redisIdleTime" $.Values.global.pubsub.redis.idleTime }}
+    {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
