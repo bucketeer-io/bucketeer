@@ -38,6 +38,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/monthlysummary"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
 	scheduledflagchange "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/scheduledflagchange"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -49,6 +50,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
@@ -560,6 +562,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			mysqlClient,
 			featureClient,
 			jobs.WithTimeout(50*time.Second),
+			jobs.WithLogger(logger),
+		),
+		monthlysummary.NewMonthlySummarizer(
+			environmentClient,
+			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
+			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
+			location,
 			jobs.WithLogger(logger),
 		),
 		logger,
