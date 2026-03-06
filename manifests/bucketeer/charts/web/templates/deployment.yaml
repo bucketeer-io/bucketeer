@@ -187,7 +187,7 @@ spec:
             - name: BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE
               value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_MODE
-              value: "{{ .Values.global.pubsub.redis.mode }}"
+              value: "{{ .Values.env.pubSubRedisMode }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT
               value: "{{ .Values.global.pubsub.redis.partitionCount }}"
             - name: BUCKETEER_WEB_PROJECT

@@ -60,8 +60,9 @@ const (
 )
 
 // RedisMode specifies how the Redis client should be created.
-// Use explicit modes (cluster/standalone) in production and auto for
-// development/staging environments with mismatch detection.
+// The default is RedisModeAuto, which detects the Redis deployment mode
+// with mismatch detection. For stricter production setups, you can
+// explicitly set RedisModeCluster or RedisModeStandalone.
 type RedisMode string
 
 const (
@@ -146,6 +147,7 @@ type client struct {
 	opts       *options
 	logger     *zap.Logger
 	clientType ClientType
+	done       chan struct{}
 }
 
 type PipeClient interface {
@@ -337,6 +339,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		opts:       options,
 		logger:     logger,
 		clientType: clientType,
+		done:       make(chan struct{}),
 	}
 	if options.metrics != nil {
 		redis.RegisterMetrics(options.metrics, clientVersion, options.serverName, c)
@@ -353,6 +356,9 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 
 // detectRedisMode tries to determine whether the Redis server is a cluster or standalone
 // by issuing CLUSTER INFO with a short timeout. Falls back to standalone if detection fails.
+// Note: if Redis is unreachable at startup and the actual topology is a cluster,
+// the standalone fallback will receive MOVED/ASK errors once the cluster recovers.
+// For cluster deployments, prefer setting RedisMode to "cluster" explicitly.
 func detectRedisMode(
 	addr string,
 	clusterOpts *goredis.ClusterOptions,
@@ -389,12 +395,18 @@ func probeClusterMode(ctx context.Context, c *goredis.Client) (bool, error) {
 }
 
 // runMismatchDetector periodically checks if the configured client type matches
-// the actual Redis topology. Logs a warning and emits a metric on mismatch.
+// the actual Redis topology. Logs a warning on mismatch.
 func (c *client) runMismatchDetector(addr string) {
 	ticker := time.NewTicker(mismatchCheckInterval)
 	defer ticker.Stop()
 
-	for range ticker.C {
+	for {
+		select {
+		case <-c.done:
+			return
+		case <-ticker.C:
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), detectionTimeout)
 		probe := goredis.NewClient(&goredis.Options{
 			Addr:        addr,
@@ -437,6 +449,7 @@ func clientTypeString(ct ClientType) string {
 }
 
 func (c *client) Close() error {
+	close(c.done)
 	return c.rc.Close()
 }
 
