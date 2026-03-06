@@ -19,6 +19,7 @@ dependencies:
 - name: bq
   version: "1.1.0"
   repository: "file://./dependencies/bq"
+  condition: bigquery.enabled
 - name: vault
   version: "0.23.0"
   repository: "https://helm.releases.hashicorp.com"
