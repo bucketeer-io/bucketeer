@@ -602,6 +602,7 @@ func (s *server) registerPubSubProcessorMap(
 			mysqlClient,
 			redisCache,
 			cachev3.NewUserAttributesCache(redisCache),
+			cachev3.NewDAUCache(redisCache),
 			logger,
 		)
 		if err != nil {

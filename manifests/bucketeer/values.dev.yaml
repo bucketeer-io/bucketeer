@@ -560,6 +560,7 @@ subscriber:
       flushSize: 1
       flushInterval: 1
       writeCacheInterval: 10
+      writeDAUInterval: 10
       userAttributeKeyTtl: 3600 # 1 hour
     segmentUserPersister:
       domainEventProject: bucketeer-dev

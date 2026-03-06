@@ -9,6 +9,7 @@
     "flushSize": 100,
     "flushInterval": 10,
     "writeCacheInterval": 1,
+    "writeDAUInterval": 1,
     "userAttributeKeyTtl": 3600
   },
   "segmentUserPersister": {
