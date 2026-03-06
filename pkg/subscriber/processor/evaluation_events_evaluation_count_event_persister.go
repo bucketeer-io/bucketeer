@@ -67,6 +67,7 @@ type EvaluationCountEventPersisterConfig struct {
 	FlushSize           int `json:"flushSize"`
 	FlushInterval       int `json:"flushInterval"`
 	WriteCacheInterval  int `json:"writeCacheInterval"`
+	WriteDAUInterval    int `json:"writeDAUInterval"`
 	UserAttributeKeyTTL int `json:"userAttributeKeyTtl"`
 }
 
@@ -458,7 +459,7 @@ func (p *evaluationCountEventPersister) bufferDAU(envEvents environmentEventMap)
 
 // writeDAUCache periodically flushes the in-memory DAU buffer to Redis.
 func (p *evaluationCountEventPersister) writeDAUCache(ctx context.Context) error {
-	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteCacheInterval) * time.Second)
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteDAUInterval) * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
