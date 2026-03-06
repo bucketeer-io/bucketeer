@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -732,8 +731,8 @@ func (s *AutoOpsService) validateTargetFeature(
 	ctx context.Context,
 	f *featureproto.Feature,
 ) error {
-	if len(f.Variations) != 2 {
-		return statusProgressiveRolloutInvalidVariationSize.Err()
+	if len(f.Variations) < 2 {
+		return statusProgressiveRolloutInsufficientVariations.Err()
 	}
 	if err := s.checkIfHasExperiment(ctx, f.Id); err != nil {
 		return err
@@ -766,8 +765,18 @@ func (s *AutoOpsService) validateProgressiveRolloutManualScheduleClause(
 	clause *autoopsproto.ProgressiveRolloutManualScheduleClause,
 	f *featureproto.Feature,
 ) error {
-	if err := s.validateProgressiveRolloutClauseVariationID(
-		clause.VariationId,
+	// Use new fields if available, otherwise fall back to old field for backward compatibility
+	controlVariationID := clause.ControlVariationId
+	targetVariationID := clause.TargetVariationId
+	if controlVariationID == "" && targetVariationID == "" && clause.VariationId != "" {
+		// Backward compatibility: old format only has variation_id (target)
+		// This will fail validation since control is required, prompting proper migration
+		targetVariationID = clause.VariationId
+	}
+
+	if err := s.validateProgressiveRolloutClauseVariations(
+		controlVariationID,
+		targetVariationID,
 		f,
 	); err != nil {
 		return err
@@ -784,8 +793,18 @@ func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 	clause *autoopsproto.ProgressiveRolloutTemplateScheduleClause,
 	f *featureproto.Feature,
 ) error {
-	if err := s.validateProgressiveRolloutClauseVariationID(
-		clause.VariationId,
+	// Use new fields if available, otherwise fall back to old field for backward compatibility
+	controlVariationID := clause.ControlVariationId
+	targetVariationID := clause.TargetVariationId
+	if controlVariationID == "" && targetVariationID == "" && clause.VariationId != "" {
+		// Backward compatibility: old format only has variation_id (target)
+		// This will fail validation since control is required, prompting proper migration
+		targetVariationID = clause.VariationId
+	}
+
+	if err := s.validateProgressiveRolloutClauseVariations(
+		controlVariationID,
+		targetVariationID,
 		f,
 	); err != nil {
 		return err
@@ -808,16 +827,36 @@ func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 	return nil
 }
 
-func (s *AutoOpsService) validateProgressiveRolloutClauseVariationID(
-	variationID string,
+func (s *AutoOpsService) validateProgressiveRolloutClauseVariations(
+	controlVariationID string,
+	targetVariationID string,
 	f *featureproto.Feature,
 ) error {
-	if variationID == "" {
-		return statusProgressiveRolloutClauseVariationIDRequired.Err()
+	// Check control variation
+	if controlVariationID == "" {
+		return statusProgressiveRolloutControlVariationRequired.Err()
 	}
-	if exist := s.existVariationID(f, variationID); !exist {
-		return statusProgressiveRolloutClauseInvalidVariationID.Err()
+
+	// Check target variation
+	if targetVariationID == "" {
+		return statusProgressiveRolloutTargetVariationRequired.Err()
 	}
+
+	// Check that they are different
+	if controlVariationID == targetVariationID {
+		return statusProgressiveRolloutVariationsMustBeDifferent.Err()
+	}
+
+	// Check control variation exists in feature
+	if exist := s.existVariationID(f, controlVariationID); !exist {
+		return statusProgressiveRolloutControlVariationNotFound.Err()
+	}
+
+	// Check target variation exists in feature
+	if exist := s.existVariationID(f, targetVariationID); !exist {
+		return statusProgressiveRolloutTargetVariationNotFound.Err()
+	}
+
 	return nil
 }
 
