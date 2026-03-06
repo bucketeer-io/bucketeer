@@ -301,6 +301,8 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		clientType = ClientTypeCluster
 		logger.Info("Creating Redis cluster client (explicit mode)",
 			zap.String("addr", addr),
+			zap.String("mode", string(options.redisMode)),
+			zap.String("clientType", clientTypeString(clientType)),
 		)
 
 	case RedisModeStandalone:
@@ -308,6 +310,8 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		clientType = ClientTypeStandard
 		logger.Info("Creating Redis standalone client (explicit mode)",
 			zap.String("addr", addr),
+			zap.String("mode", string(options.redisMode)),
+			zap.String("clientType", clientTypeString(clientType)),
 		)
 
 	default: // RedisModeAuto
@@ -325,12 +329,6 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 			zap.Error(err),
 			zap.String("addr", addr),
 			zap.String("mode", string(options.redisMode)),
-		)
-	} else {
-		logger.Info("Successfully connected to Redis",
-			zap.String("addr", addr),
-			zap.String("mode", string(options.redisMode)),
-			zap.String("clientType", clientTypeString(clientType)),
 		)
 	}
 
