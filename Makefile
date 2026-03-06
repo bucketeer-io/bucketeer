@@ -347,6 +347,53 @@ check-apply-migration:
 		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
 		--dry-run
 
+.PHONY: check-rollback-migration
+check-rollback-migration:
+	@# Example: make check-rollback-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	@# Example: make check-rollback-migration COUNT=3 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	@# Example: make check-rollback-migration VERSION=20240815043128 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	@if [ -n "${VERSION}" ]; then \
+		atlas migrate down \
+			--dir file://migration/mysql \
+			--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+			--dev-url docker://mysql/8/${DB} \
+			--to-version ${VERSION} \
+			--dry-run; \
+	else \
+		atlas migrate down $${COUNT:-1} \
+			--dir file://migration/mysql \
+			--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+			--dev-url docker://mysql/8/${DB} \
+			--dry-run; \
+	fi
+
+.PHONY: rollback-migration
+rollback-migration:
+	@# Example: make rollback-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	@# Example: make rollback-migration COUNT=3 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	@# Example: make rollback-migration VERSION=20240815043128 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	@if [ -n "${VERSION}" ]; then \
+		echo "Rolling back to version ${VERSION}..."; \
+		atlas migrate down \
+			--dir file://migration/mysql \
+			--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+			--dev-url docker://mysql/8/${DB} \
+			--to-version ${VERSION}; \
+	else \
+		echo "Rolling back last $${COUNT:-1} migration(s)..."; \
+		atlas migrate down $${COUNT:-1} \
+			--dir file://migration/mysql \
+			--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+			--dev-url docker://mysql/8/${DB}; \
+	fi
+
+.PHONY: migration-status
+migration-status:
+	@# Example: make migration-status USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate status \
+		--dir file://migration/mysql \
+		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB}
+
 #############################
 # dev container
 #############################
