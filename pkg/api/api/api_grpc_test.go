@@ -1819,6 +1819,11 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				"authorization": []string{apiKey},
 			})
 			actual, err := gs.GetFeatureFlags(ctx, p.input)
+			if actual != nil && p.expected != nil {
+				// RequestedAt uses time.Now() internally, so allow 1 second tolerance
+				assert.InDelta(t, p.expected.RequestedAt, actual.RequestedAt, 1, "%s: RequestedAt", p.desc)
+				p.expected.RequestedAt = actual.RequestedAt
+			}
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
