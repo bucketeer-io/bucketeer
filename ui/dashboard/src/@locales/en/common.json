@@ -295,7 +295,6 @@
   "docs": "Docs",
   "new": "New",
   "discard": "Discard changes",
-  "add-rule": "Add rule",
   "continue-editing": "Continue editing",
   "leave-page": "Leave page",
   "note": "Note",
@@ -314,5 +313,6 @@
   "change": "Change",
   "rule": "rule",
   "rules": "rules",
-  "rule-deleted": "({{count}}) {{tailTitle}} will be deleted:"
+  "rule-deleted": "({{count}}) {{tailTitle}} will be deleted:",
+  "load-more": "Load more"
 }

@@ -108,6 +108,7 @@ const RolloutProgress = ({
               titleKey={'form:target-variation-value'}
               value={
                 <VariationLabel
+                  asChild={false}
                   label={targetVariationHash.variation}
                   index={targetVariationHash.index}
                   className="max-w-[200px] mt-[2px]"
@@ -119,6 +120,7 @@ const RolloutProgress = ({
               titleKey={'form:control-variation-value'}
               value={
                 <VariationLabel
+                  asChild={false}
                   label={controlVariationHash.variation}
                   index={controlVariationHash.index}
                   className="max-w-[200px] mt-[2px]"
