@@ -1,19 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Suggestion } from '@types';
+import { useQuerySuggestions } from '@queries/suggestions';
+import { getCurrentEnvIdStorage } from 'storage/environment';
 import ChatPopover from './chat-popover';
 import { usePageContext } from './use-page-context';
 import { useSSEChat } from './use-sse-chat';
 
 interface ChatPopoverContainerProps {
-  suggestions: Suggestion[];
   onClose: () => void;
 }
 
-const ChatPopoverContainer = ({
-  suggestions,
-  onClose
-}: ChatPopoverContainerProps) => {
+const ChatPopoverContainer = ({ onClose }: ChatPopoverContainerProps) => {
   const pageContext = usePageContext();
+  const environmentId = getCurrentEnvIdStorage() || '';
 
   const isFeaturePage =
     pageContext.pageType === 'feature_flags' ||
@@ -36,13 +34,22 @@ const ChatPopoverContainer = ({
     [pageContext, selectedFlagId, isFeaturePage]
   );
 
+  const suggestionsParams = useMemo(
+    () => ({ environmentId, pageContext: effectivePageContext }),
+    [environmentId, effectivePageContext]
+  );
+
+  const { data } = useQuerySuggestions({
+    params: suggestionsParams
+  });
+
   const { messages, isStreaming, errorKey, sendMessage, clearMessages } =
     useSSEChat({ pageContext: effectivePageContext });
 
   return (
     <ChatPopover
       messages={messages}
-      suggestions={suggestions}
+      suggestions={data?.suggestions ?? []}
       isStreaming={isStreaming}
       errorKey={errorKey}
       selectedFlagId={selectedFlagId}

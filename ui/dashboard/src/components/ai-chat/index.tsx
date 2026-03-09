@@ -2,11 +2,8 @@ import { memo, useCallback, useState } from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { useAuth } from 'auth';
 import { useTranslation } from 'i18n';
-import { Suggestion } from '@types';
 import { cn } from 'utils/style';
 import ChatPopoverContainer from './chat-popover-container';
-
-const EMPTY_SUGGESTIONS: Suggestion[] = [];
 
 const ChatWidget = memo(() => {
   const { t } = useTranslation(['ai-chat']);
@@ -66,10 +63,7 @@ const ChatWidget = memo(() => {
               }, 0);
             }}
           >
-            <ChatPopoverContainer
-              suggestions={EMPTY_SUGGESTIONS}
-              onClose={handleClose}
-            />
+            <ChatPopoverContainer onClose={handleClose} />
           </PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>
       )}
