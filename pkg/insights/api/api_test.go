@@ -304,7 +304,7 @@ func TestGetInsightsLatency(t *testing.T) {
 			desc: "error: ErrQueryRangeTooLarge",
 			input: &insightsproto.GetInsightsTimeSeriesRequest{
 				EnvironmentIds: []string{"env1"},
-				StartAt:        now.Add(-31 * 24 * time.Hour).Unix(),
+				StartAt:        now.Add(-32 * 24 * time.Hour).Unix(),
 				EndAt:          now.Unix(),
 			},
 			expectedErr: statusQueryRangeTooLarge.Err(),
