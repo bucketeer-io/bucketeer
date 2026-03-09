@@ -1,11 +1,11 @@
 import {
-  ReactNode,
-  useState,
   createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
   useContext,
   useEffect,
-  Dispatch,
-  SetStateAction
+  useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
@@ -25,6 +25,7 @@ interface ConfirmOptions {
 interface ConfirmContextType {
   isShow: boolean;
   setIsShow: Dispatch<SetStateAction<boolean>>;
+  setOptions: Dispatch<SetStateAction<ConfirmOptions | null>>;
   confirm: (options: ConfirmOptions) => void;
   options: ConfirmOptions | null;
   handleCancel: () => void;
@@ -42,6 +43,12 @@ interface Props {
 
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
+let bypassNavigation = false;
+
+export function allowNavigation() {
+  bypassNavigation = true;
+}
+
 export function useUnsavedLeavePage({
   isShow,
   title = 'message:leave-page-unsaved-changes',
@@ -55,17 +62,25 @@ export function useUnsavedLeavePage({
   titleStay?: string;
   callBackCancel?: () => void;
 }) {
-  const { confirm } = useConfirm();
+  const { confirm, setIsShow: setIsShowGlobal, isShow: global } = useConfirm();
   const { t } = useTranslation(['form', 'common', 'table', 'message']);
   const navigator = useContext(NavigationContext).navigator;
 
   useEffect(() => {
-    if (!isShow) return;
+    setIsShowGlobal(isShow);
+  }, [isShow]);
+
+  useEffect(() => {
+    if (!global) return;
 
     const push = navigator.push;
     const replace = navigator.replace;
 
     navigator.push = (...args: Parameters<typeof push>) => {
+      if (bypassNavigation) {
+        bypassNavigation = false;
+        return push(...args);
+      }
       confirm({
         title: title,
         message: content,
@@ -73,12 +88,17 @@ export function useUnsavedLeavePage({
           if (callBackCancel) {
             callBackCancel();
           }
+          setIsShowGlobal(false);
           return push(...args);
         }
       });
     };
 
     navigator.replace = (...args: Parameters<typeof replace>) => {
+      if (bypassNavigation) {
+        bypassNavigation = false;
+        return replace(...args);
+      }
       confirm({
         title: title,
         message: content,
@@ -95,13 +115,17 @@ export function useUnsavedLeavePage({
       navigator.push = push;
       navigator.replace = replace;
     };
-  }, [isShow, title, content, navigator]);
+  }, [global, title, content, navigator]);
 
   useEffect(() => {
-    if (!isShow) return;
+    if (!global) return;
     history.pushState(null, '', window.location.href);
 
     const handlePopState = () => {
+      if (bypassNavigation) {
+        bypassNavigation = false;
+        return;
+      }
       confirm({
         title: t(title),
         message: t(content),
@@ -122,7 +146,7 @@ export function useUnsavedLeavePage({
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [isShow, title, content]);
+  }, [global, title, content]);
 
   useEffect(() => {
     if (!isShow) return;
@@ -156,6 +180,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       value={{
         confirm,
         options,
+        setOptions,
         isShow,
         setIsShow,
         handleCancel,
