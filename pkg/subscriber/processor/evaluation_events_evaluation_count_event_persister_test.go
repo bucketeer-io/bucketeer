@@ -1109,14 +1109,16 @@ func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
 			}
 
 			// Execute flush
-			err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			failedSlots, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
 
 			// Verify
 			if len(tt.eventCounts) == 0 && len(tt.userCounts) == 0 {
 				assert.NoError(t, err, "empty flush should succeed")
+				assert.Nil(t, failedSlots, "no failed slots for empty flush")
 				assert.Equal(t, 0, mockCache.execCount, "no pipelines should be executed for empty data")
 			} else {
 				assert.NoError(t, err, "flush should succeed")
+				assert.Nil(t, failedSlots, "no slots should fail on success")
 				assert.Equal(t, expectedExecs, mockCache.execCount,
 					"pipeline Exec() count should match number of unique slots: %s", tt.description)
 
@@ -1140,6 +1142,284 @@ func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
 	}
 }
 
+func TestFlushAggregatedCounts_GranularRetry(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                string
+		eventCounts         map[string]int64
+		userCounts          map[string]map[string]struct{}
+		failOnSlots         map[int]bool // Slots to simulate failure on
+		expectedFailedSlots int          // Expected number of failed slots
+		expectedSuccess     bool         // Whether flush should succeed overall
+		description         string
+	}{
+		{
+			name: "all slots succeed",
+			eventCounts: map[string]int64{
+				"ec:{slotA}:key1": 10,
+				"ec:{slotB}:key2": 20,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{slotA}:key1": {"user1": {}},
+				"uc:{slotB}:key2": {"user2": {}},
+			},
+			failOnSlots:         nil,
+			expectedFailedSlots: 0,
+			expectedSuccess:     true,
+			description:         "No failures, all slots flush successfully",
+		},
+		{
+			name: "one slot fails, others succeed",
+			eventCounts: map[string]int64{
+				"ec:{slotA}:key1": 10,
+				"ec:{slotB}:key2": 20,
+				"ec:{slotC}:key3": 30,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{slotA}:key1": {"user1": {}},
+				"uc:{slotB}:key2": {"user2": {}},
+				"uc:{slotC}:key3": {"user3": {}},
+			},
+			failOnSlots: map[int]bool{
+				redisv3.KeyHashSlot("slotB"): true, // Fail slotB
+			},
+			expectedFailedSlots: 1,
+			expectedSuccess:     false,
+			description:         "SlotB fails, but slotA and slotC succeed",
+		},
+		{
+			name: "multiple slots fail",
+			eventCounts: map[string]int64{
+				"ec:{slotA}:key1": 10,
+				"ec:{slotB}:key2": 20,
+				"ec:{slotC}:key3": 30,
+				"ec:{slotD}:key4": 40,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{slotA}:key1": {"user1": {}},
+				"uc:{slotB}:key2": {"user2": {}},
+				"uc:{slotC}:key3": {"user3": {}},
+				"uc:{slotD}:key4": {"user4": {}},
+			},
+			failOnSlots: map[int]bool{
+				redisv3.KeyHashSlot("slotB"): true,
+				redisv3.KeyHashSlot("slotD"): true,
+			},
+			expectedFailedSlots: 2,
+			expectedSuccess:     false,
+			description:         "SlotB and slotD fail, slotA and slotC succeed",
+		},
+		{
+			name: "all slots fail",
+			eventCounts: map[string]int64{
+				"ec:{slotA}:key1": 10,
+				"ec:{slotB}:key2": 20,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{slotA}:key1": {"user1": {}},
+				"uc:{slotB}:key2": {"user2": {}},
+			},
+			failOnSlots: map[int]bool{
+				redisv3.KeyHashSlot("slotA"): true,
+				redisv3.KeyHashSlot("slotB"): true,
+			},
+			expectedFailedSlots: 2,
+			expectedSuccess:     false,
+			description:         "All slots fail",
+		},
+		{
+			name:                "empty data succeeds",
+			eventCounts:         map[string]int64{},
+			userCounts:          map[string]map[string]struct{}{},
+			failOnSlots:         nil,
+			expectedFailedSlots: 0,
+			expectedSuccess:     true,
+			description:         "Empty flush succeeds without creating pipelines",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockCache := &mockEvaluationCountCache{
+				failOnSlots: tt.failOnSlots,
+			}
+			persister := &evaluationCountEventPersister{
+				evaluationCountCacher: mockCache,
+				logger:                zap.NewNop(),
+			}
+
+			// Execute flush
+			failedSlots, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+
+			// Verify success/failure
+			if tt.expectedSuccess {
+				assert.NoError(t, err, tt.description)
+				assert.Nil(t, failedSlots, "no slots should fail")
+			} else {
+				assert.Error(t, err, tt.description)
+				assert.NotNil(t, failedSlots, "failed slots should be returned")
+				assert.Equal(t, tt.expectedFailedSlots, len(failedSlots),
+					"number of failed slots should match expected: %s", tt.description)
+			}
+
+			// Verify only successful slots had their data persisted
+			if !tt.expectedSuccess && len(tt.failOnSlots) > 0 {
+				for key := range mockCache.lastEventCounts {
+					slot := redisv3.KeyHashSlot(key)
+					assert.False(t, tt.failOnSlots[slot],
+						"key %s from failed slot %d should not be persisted", key, slot)
+				}
+				for key := range mockCache.lastUserCounts {
+					slot := redisv3.KeyHashSlot(key)
+					assert.False(t, tt.failOnSlots[slot],
+						"user count key %s from failed slot %d should not be persisted", key, slot)
+				}
+			}
+		})
+	}
+}
+
+func TestIncrementEnvEvents_GranularRetry(t *testing.T) {
+	t.Parallel()
+
+	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
+
+	tests := []struct {
+		name              string
+		envEvents         environmentEventMap
+		failOnSlots       map[int]bool
+		expectedFailCount int  // Number of events expected to fail
+		expectAllFailed   bool // Whether all events should fail
+		description       string
+	}{
+		{
+			name: "partial slot failure - only events in failed slot are retried",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-slotA-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-A",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-A1",
+						User:           &userproto.User{Id: "user-A1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-slotB-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-B",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-B1",
+						User:           &userproto.User{Id: "user-B1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			failOnSlots: nil, // Will be calculated dynamically based on feature-B's slot
+			// expectedFailCount will be calculated in test
+			expectAllFailed: false,
+			description:     "Only events mapping to failed slot should be marked for retry",
+		},
+		{
+			name: "all slots fail - all events retry",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-2",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-2",
+						User:           &userproto.User{Id: "user-2"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			failOnSlots:       map[int]bool{}, // Will fail all slots
+			expectedFailCount: 2,
+			expectAllFailed:   true,
+			description:       "All events should be marked for retry when all slots fail",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// For the partial failure test, calculate which slot to fail
+			var failOnSlots map[int]bool
+			if tt.name == "partial slot failure - only events in failed slot are retried" {
+				// Calculate the slot for feature-B
+				persisterTemp := &evaluationCountEventPersister{}
+				ecKeyB := persisterTemp.newEvaluationCountkeyV2(eventCountKey, "feature-B", "variation-B", "env-1", hour1)
+				slotB := redisv3.KeyHashSlot(ecKeyB)
+				failOnSlots = map[int]bool{slotB: true}
+			} else if tt.expectAllFailed {
+				// Calculate all slots for this test
+				persisterTemp := &evaluationCountEventPersister{}
+				failOnSlots = make(map[int]bool)
+				for _, events := range tt.envEvents {
+					for _, e := range events {
+						vID, _ := getVariationID(e.Reason, e.VariationId)
+						ecKey := persisterTemp.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, "env-1", e.Timestamp)
+						ucKey := persisterTemp.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, "env-1", e.Timestamp)
+						failOnSlots[redisv3.KeyHashSlot(ecKey)] = true
+						failOnSlots[redisv3.KeyHashSlot(ucKey)] = true
+					}
+				}
+			} else {
+				failOnSlots = tt.failOnSlots
+			}
+
+			mockCache := &mockEvaluationCountCache{
+				failOnSlots: failOnSlots,
+			}
+			persister := &evaluationCountEventPersister{
+				evaluationCountCacher: mockCache,
+				logger:                zap.NewNop(),
+			}
+
+			// Execute
+			fails := persister.incrementEnvEvents(tt.envEvents)
+
+			// Verify
+			if tt.expectAllFailed {
+				assert.Equal(t, tt.expectedFailCount, len(fails), tt.description)
+				// All events should be marked as failed (repeatable)
+				for _, repeatable := range fails {
+					assert.True(t, repeatable, "all failed events should be repeatable")
+				}
+			} else {
+				// For partial failures, verify only events in failed slots are marked
+				assert.Greater(t, len(fails), 0, "some events should fail")
+				assert.Less(t, len(fails), len(tt.envEvents["env-1"]), "not all events should fail")
+
+				// Verify that event-slotB-1 failed and event-slotA-1 succeeded
+				if fails["event-slotB-1"] {
+					assert.True(t, fails["event-slotB-1"], "event in failed slot should be marked for retry")
+				}
+				_, eventA1Failed := fails["event-slotA-1"]
+				assert.False(t, eventA1Failed, "event in successful slot should not be marked for retry")
+			}
+		})
+	}
+}
+
 // mockEvaluationCountCache mocks the cache interface for testing
 type mockEvaluationCountCache struct {
 	mu               sync.Mutex
@@ -1147,6 +1427,7 @@ type mockEvaluationCountCache struct {
 	lastEventCounts  map[string]int64
 	lastUserCounts   map[string]map[string]struct{}
 	shouldFailFlush  bool
+	failOnSlots      map[int]bool // Specific slots to fail on
 	pipelineExecuted bool
 	pipelineCount    int // Number of pipelines created
 	execCount        int // Number of times Exec() was called
@@ -1164,6 +1445,7 @@ func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
 		eventCounts:    make(map[string]int64),
 		userCounts:     make(map[string][]string),
 		shouldFailExec: m.shouldFailFlush,
+		failOnSlots:    m.failOnSlots,
 	}
 }
 
@@ -1211,6 +1493,7 @@ type mockPipeClient struct {
 	eventCounts    map[string]int64
 	userCounts     map[string][]string
 	shouldFailExec bool
+	failOnSlots    map[int]bool // Specific slots to fail on
 }
 
 func (m *mockPipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
@@ -1233,32 +1516,56 @@ func (m *mockPipeClient) Exec() ([]goredis.Cmder, error) {
 	m.cache.pipelineExecuted = true
 	m.cache.execCount++
 
-	// Accumulate across multiple pipeline calls (one per slot)
-	// Always track what was attempted, even if exec fails
-	if m.cache.lastEventCounts == nil {
-		m.cache.lastEventCounts = make(map[string]int64)
-	}
-	if m.cache.lastUserCounts == nil {
-		m.cache.lastUserCounts = make(map[string]map[string]struct{})
-	}
-
-	// Merge event counts
-	for key, count := range m.eventCounts {
-		m.cache.lastEventCounts[key] += count
-	}
-
-	// Merge user counts
-	for key, users := range m.userCounts {
-		if m.cache.lastUserCounts[key] == nil {
-			m.cache.lastUserCounts[key] = make(map[string]struct{})
+	// Check if this pipeline should fail based on slot-specific failures
+	shouldFail := m.shouldFailExec
+	if !shouldFail && len(m.failOnSlots) > 0 {
+		// Check if any key in this pipeline belongs to a failed slot
+		for key := range m.eventCounts {
+			slot := redisv3.KeyHashSlot(key)
+			if m.failOnSlots[slot] {
+				shouldFail = true
+				break
+			}
 		}
-		for _, user := range users {
-			m.cache.lastUserCounts[key][user] = struct{}{}
+		if !shouldFail {
+			for key := range m.userCounts {
+				slot := redisv3.KeyHashSlot(key)
+				if m.failOnSlots[slot] {
+					shouldFail = true
+					break
+				}
+			}
 		}
 	}
 
-	// Check for error after tracking (to verify what was attempted)
-	if m.shouldFailExec {
+	// For successful pipelines, accumulate the data
+	if !shouldFail {
+		// Accumulate across multiple pipeline calls (one per slot)
+		if m.cache.lastEventCounts == nil {
+			m.cache.lastEventCounts = make(map[string]int64)
+		}
+		if m.cache.lastUserCounts == nil {
+			m.cache.lastUserCounts = make(map[string]map[string]struct{})
+		}
+
+		// Merge event counts
+		for key, count := range m.eventCounts {
+			m.cache.lastEventCounts[key] += count
+		}
+
+		// Merge user counts
+		for key, users := range m.userCounts {
+			if m.cache.lastUserCounts[key] == nil {
+				m.cache.lastUserCounts[key] = make(map[string]struct{})
+			}
+			for _, user := range users {
+				m.cache.lastUserCounts[key][user] = struct{}{}
+			}
+		}
+	}
+
+	// Return error if this slot should fail
+	if shouldFail {
 		return nil, assert.AnError
 	}
 	return nil, nil
