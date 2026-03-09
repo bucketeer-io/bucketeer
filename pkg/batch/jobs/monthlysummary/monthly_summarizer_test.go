@@ -153,7 +153,6 @@ func newMockMonthlySummarizer(t *testing.T, c *gomock.Controller) *monthlySummar
 		envClient:             envclientmock.NewMockClient(c),
 		mauCache:              cachemock.NewMockMAUCache(c),
 		monthlySummaryStorage: insightsstoragemock.NewMockMonthlySummaryStorage(c),
-		location:              time.UTC,
 		opts: &jobs.Options{
 			Timeout: 30 * time.Second,
 		},

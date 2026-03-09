@@ -568,7 +568,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
 			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
-			location,
 			jobs.WithLogger(logger),
 		),
 		logger,

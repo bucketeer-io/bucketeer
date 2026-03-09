@@ -33,7 +33,6 @@ type monthlySummarizer struct {
 	envClient             envclient.Client
 	mauCache              cachev3.MAUCache
 	monthlySummaryStorage insightsstorage.MonthlySummaryStorage
-	location              *time.Location
 	opts                  *jobs.Options
 	logger                *zap.Logger
 }
@@ -42,7 +41,6 @@ func NewMonthlySummarizer(
 	envClient envclient.Client,
 	mauCache cachev3.MAUCache,
 	monthlySummaryStorage insightsstorage.MonthlySummaryStorage,
-	location *time.Location,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -56,7 +54,6 @@ func NewMonthlySummarizer(
 		envClient:             envClient,
 		mauCache:              mauCache,
 		monthlySummaryStorage: monthlySummaryStorage,
-		location:              location,
 		opts:                  dopts,
 		logger:                dopts.Logger.Named("monthly-summarizer"),
 	}
@@ -73,7 +70,7 @@ func (m *monthlySummarizer) Run(ctx context.Context) (lastErr error) {
 
 	m.logger.Info("MonthlySummarizer start running")
 
-	yesterday := time.Now().In(m.location).AddDate(0, 0, -1)
+	yesterday := time.Now().UTC().AddDate(0, 0, -1)
 	yearmonth := yesterday.Format("200601")
 
 	envs, err := m.listEnvironments(ctx)
