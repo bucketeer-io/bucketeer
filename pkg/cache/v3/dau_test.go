@@ -36,11 +36,11 @@ func TestDAUKey(t *testing.T) {
 		expected string
 	}{
 		{
-			desc:     "success: builds correct key format with hash tag",
+			desc:     "success: builds correct key format",
 			envID:    "env-123",
 			sourceID: "ANDROID",
 			date:     time.Date(2026, 1, 28, 0, 0, 0, 0, time.UTC),
-			expected: "{env-123:ANDROID:au}:d:20260128",
+			expected: "env-123:dau:ANDROID:20260128",
 		},
 	}
 	for _, p := range patterns {
@@ -67,8 +67,8 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
 				mc.EXPECT().Pipeline(false).Return(mp)
-				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456")
-				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-456")
+				mp.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL)
 				mp.EXPECT().Exec().Return(nil, nil)
 			},
 			expectedErr: nil,
@@ -82,12 +82,12 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
 				mc.EXPECT().Pipeline(false).Return(mp)
-				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-1")
-				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
-				mp.EXPECT().PFAdd("{env-123:IOS:au}:d:20260128", "user-2")
-				mp.EXPECT().Expire("{env-123:IOS:au}:d:20260128", dauTTL)
-				mp.EXPECT().PFAdd("{env-456:WEB:au}:d:20260128", "user-3")
-				mp.EXPECT().Expire("{env-456:WEB:au}:d:20260128", dauTTL)
+				mp.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-1")
+				mp.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL)
+				mp.EXPECT().PFAdd("env-123:dau:IOS:20260128", "user-2")
+				mp.EXPECT().Expire("env-123:dau:IOS:20260128", dauTTL)
+				mp.EXPECT().PFAdd("env-456:dau:WEB:20260128", "user-3")
+				mp.EXPECT().Expire("env-456:dau:WEB:20260128", dauTTL)
 				mp.EXPECT().Exec().Return(nil, nil)
 			},
 			expectedErr: nil,
@@ -116,8 +116,8 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
 				mc.EXPECT().Pipeline(false).Return(mp)
-				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-1", "user-2", "user-3")
-				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-1", "user-2", "user-3")
+				mp.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL)
 				mp.EXPECT().Exec().Return(nil, nil)
 			},
 			expectedErr: nil,
@@ -129,8 +129,8 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
 				mc.EXPECT().Pipeline(false).Return(mp)
-				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456")
-				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-456")
+				mp.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL)
 				mp.EXPECT().Exec().Return(nil, errors.New("redis connection error"))
 			},
 			expectedErr: errors.New("failed to record DAU batch"),
