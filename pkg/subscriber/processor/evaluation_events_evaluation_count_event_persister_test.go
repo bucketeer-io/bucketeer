@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -773,14 +774,13 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
 
 	tests := []struct {
-		name                      string
-		envEvents                 environmentEventMap
-		expectedEventCountKeys    int // number of unique event count keys
-		expectedUserCountKeys     int // number of unique user count keys
-		expectedFailCount         int // number of expected failures
-		expectFlushCalled         bool
-		simulateFlushError        bool
-		migrationTargetEnvEnabled bool
+		name                   string
+		envEvents              environmentEventMap
+		expectedEventCountKeys int // number of unique event count keys
+		expectedUserCountKeys  int // number of unique user count keys
+		expectedFailCount      int // number of expected failures
+		expectFlushCalled      bool
+		simulateFlushError     bool
 	}{
 		{
 			name: "single event creates one aggregated entry",
@@ -933,8 +933,10 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 					},
 				},
 			},
-			expectedEventCountKeys: 1,
-			expectedUserCountKeys:  1,
+			// Note: ec and uc keys may hash to different slots, so on error we might
+			// only attempt one slot before returning. Just verify flush was called.
+			expectedEventCountKeys: 0, // Don't verify exact keys when error occurs
+			expectedUserCountKeys:  0, // Don't verify exact keys when error occurs
 			expectedFailCount:      1,
 			expectFlushCalled:      true,
 			simulateFlushError:     true, // simulate Redis failure
@@ -964,8 +966,175 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 
 			if tt.expectFlushCalled {
 				assert.True(t, mockCache.flushCalled, "flush should be called")
-				assert.Equal(t, tt.expectedEventCountKeys, len(mockCache.lastEventCounts), "event count keys mismatch")
-				assert.Equal(t, tt.expectedUserCountKeys, len(mockCache.lastUserCounts), "user count keys mismatch")
+				// Only verify key counts when not simulating errors
+				// (errors may cause early return before all slots are attempted)
+				if !tt.simulateFlushError {
+					assert.Equal(t, tt.expectedEventCountKeys, len(mockCache.lastEventCounts), "event count keys mismatch")
+					assert.Equal(t, tt.expectedUserCountKeys, len(mockCache.lastUserCounts), "user count keys mismatch")
+				}
+			}
+		})
+	}
+}
+
+func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                 string
+		eventCounts          map[string]int64
+		userCounts           map[string]map[string]struct{}
+		expectedPipelineExec int // Expected number of pipeline Exec() calls (one per unique slot); -1 = calculate dynamically
+		description          string
+	}{
+		{
+			name: "keys with same hash tag in both ec and uc",
+			eventCounts: map[string]int64{
+				"ec:{shared}:hour1:feature1:varA:env1": 100,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{shared}:hour1:feature1:varA:env1": {"user1": {}, "user2": {}},
+			},
+			expectedPipelineExec: 1,
+			description:          "Hash tag forces both ec and uc keys to same slot",
+		},
+		{
+			name: "ec and uc keys without hash tags may hash to different slots",
+			eventCounts: map[string]int64{
+				"ec:hour1:feature1:varA:env1": 100,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:hour1:feature1:varA:env1": {"user1": {}, "user2": {}},
+			},
+			expectedPipelineExec: -1, // Calculate dynamically based on actual slot distribution
+			description:          "Without hash tags, ec and uc prefixes may cause different slots",
+		},
+		{
+			name: "keys with same hash tag execute in one pipeline",
+			eventCounts: map[string]int64{
+				"ec:{slot1}:key1": 10,
+				"ec:{slot1}:key2": 20,
+				"ec:{slot1}:key3": 30,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{slot1}:key1": {"user1": {}},
+				"uc:{slot1}:key2": {"user2": {}},
+				"uc:{slot1}:key3": {"user3": {}},
+			},
+			expectedPipelineExec: 1,
+			description:          "All keys use {slot1} hash tag, forcing same slot",
+		},
+		{
+			name: "keys with different hash tags execute in multiple pipelines",
+			eventCounts: map[string]int64{
+				"ec:{slotA}:key1": 10,
+				"ec:{slotB}:key2": 20,
+				"ec:{slotC}:key3": 30,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{slotA}:key1": {"user1": {}},
+				"uc:{slotB}:key2": {"user2": {}},
+				"uc:{slotC}:key3": {"user3": {}},
+			},
+			expectedPipelineExec: 3,
+			description:          "Different hash tags create different slots",
+		},
+		{
+			name: "mixed hash tags create appropriate number of pipelines",
+			eventCounts: map[string]int64{
+				"ec:{groupA}:key1": 10,
+				"ec:{groupA}:key2": 20,
+				"ec:{groupB}:key3": 30,
+				"ec:{groupB}:key4": 40,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:{groupA}:key1": {"user1": {}},
+				"uc:{groupA}:key2": {"user2": {}},
+				"uc:{groupB}:key3": {"user3": {}},
+				"uc:{groupB}:key4": {"user4": {}},
+			},
+			expectedPipelineExec: 2,
+			description:          "Two groups with same hash tags create 2 pipelines",
+		},
+		{
+			name:                 "empty aggregation creates no pipelines",
+			eventCounts:          map[string]int64{},
+			userCounts:           map[string]map[string]struct{}{},
+			expectedPipelineExec: 0,
+			description:          "No data to flush means no pipelines created",
+		},
+		{
+			name: "real-world keys may span multiple slots",
+			eventCounts: map[string]int64{
+				// These keys don't have hash tags, so they will hash based on full key
+				// They will likely hash to different slots
+				"ec:1709974800:feature-login:variant-A:env-prod":    500,
+				"ec:1709974800:feature-checkout:variant-B:env-prod": 300,
+				"ec:1709974800:feature-sidebar:variant-A:env-prod":  200,
+			},
+			userCounts: map[string]map[string]struct{}{
+				"uc:1709974800:feature-login:variant-A:env-prod":    {"user1": {}, "user2": {}},
+				"uc:1709974800:feature-checkout:variant-B:env-prod": {"user3": {}},
+				"uc:1709974800:feature-sidebar:variant-A:env-prod":  {"user4": {}},
+			},
+			// Don't hardcode expected count - calculate it dynamically
+			expectedPipelineExec: -1, // Special value: calculate based on actual slot distribution
+			description:          "Real keys distribute across slots based on CRC16",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Calculate expected pipeline count for real-world scenario
+			expectedExecs := tt.expectedPipelineExec
+			if expectedExecs == -1 {
+				// Calculate unique slots for this test case
+				slotSet := make(map[int]bool)
+				for key := range tt.eventCounts {
+					slotSet[redisv3.KeyHashSlot(key)] = true
+				}
+				for key := range tt.userCounts {
+					slotSet[redisv3.KeyHashSlot(key)] = true
+				}
+				expectedExecs = len(slotSet)
+			}
+
+			mockCache := &mockEvaluationCountCache{}
+			persister := &evaluationCountEventPersister{
+				evaluationCountCacher: mockCache,
+				logger:                zap.NewNop(),
+			}
+
+			// Execute flush
+			err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+
+			// Verify
+			if len(tt.eventCounts) == 0 && len(tt.userCounts) == 0 {
+				assert.NoError(t, err, "empty flush should succeed")
+				assert.Equal(t, 0, mockCache.execCount, "no pipelines should be executed for empty data")
+			} else {
+				assert.NoError(t, err, "flush should succeed")
+				assert.Equal(t, expectedExecs, mockCache.execCount,
+					"pipeline Exec() count should match number of unique slots: %s", tt.description)
+
+				// Verify all data was flushed
+				assert.Equal(t, len(tt.eventCounts), len(mockCache.lastEventCounts),
+					"all event count keys should be flushed")
+				assert.Equal(t, len(tt.userCounts), len(mockCache.lastUserCounts),
+					"all user count keys should be flushed")
+
+				// Verify data integrity
+				for key, expectedCount := range tt.eventCounts {
+					assert.Equal(t, expectedCount, mockCache.lastEventCounts[key],
+						"event count for key %s should match", key)
+				}
+				for key, expectedUsers := range tt.userCounts {
+					assert.Equal(t, len(expectedUsers), len(mockCache.lastUserCounts[key]),
+						"user count for key %s should match", key)
+				}
 			}
 		})
 	}
@@ -973,14 +1142,21 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 
 // mockEvaluationCountCache mocks the cache interface for testing
 type mockEvaluationCountCache struct {
+	mu               sync.Mutex
 	flushCalled      bool
 	lastEventCounts  map[string]int64
 	lastUserCounts   map[string]map[string]struct{}
 	shouldFailFlush  bool
 	pipelineExecuted bool
+	pipelineCount    int // Number of pipelines created
+	execCount        int // Number of times Exec() was called
 }
 
 func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
+	m.mu.Lock()
+	m.pipelineCount++
+	m.mu.Unlock()
+
 	return &mockPipeClient{
 		cache:          m,
 		transactional:  tx,
@@ -1050,19 +1226,38 @@ func (m *mockPipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
 }
 
 func (m *mockPipeClient) Exec() ([]goredis.Cmder, error) {
+	m.cache.mu.Lock()
+	defer m.cache.mu.Unlock()
+
 	m.cache.flushCalled = true
 	m.cache.pipelineExecuted = true
-	m.cache.lastEventCounts = m.eventCounts
-	// Convert userCounts to map[string]map[string]struct{}
-	userCountsMap := make(map[string]map[string]struct{})
+	m.cache.execCount++
+
+	// Accumulate across multiple pipeline calls (one per slot)
+	// Always track what was attempted, even if exec fails
+	if m.cache.lastEventCounts == nil {
+		m.cache.lastEventCounts = make(map[string]int64)
+	}
+	if m.cache.lastUserCounts == nil {
+		m.cache.lastUserCounts = make(map[string]map[string]struct{})
+	}
+
+	// Merge event counts
+	for key, count := range m.eventCounts {
+		m.cache.lastEventCounts[key] += count
+	}
+
+	// Merge user counts
 	for key, users := range m.userCounts {
-		userCountsMap[key] = make(map[string]struct{})
+		if m.cache.lastUserCounts[key] == nil {
+			m.cache.lastUserCounts[key] = make(map[string]struct{})
+		}
 		for _, user := range users {
-			userCountsMap[key][user] = struct{}{}
+			m.cache.lastUserCounts[key][user] = struct{}{}
 		}
 	}
-	m.cache.lastUserCounts = userCountsMap
 
+	// Check for error after tracking (to verify what was attempted)
 	if m.shouldFailExec {
 		return nil, assert.AnError
 	}

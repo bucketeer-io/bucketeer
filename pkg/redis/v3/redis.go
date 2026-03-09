@@ -524,7 +524,7 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 		// Use cluster-aware approach
 		slotMap := make(map[int][]string)
 		for _, key := range keys {
-			slot := keyHashSlot(key)
+			slot := KeyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
@@ -776,7 +776,7 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 		// Use cluster-aware approach
 		slotMap := make(map[int][]string)
 		for _, key := range keys {
-			slot := keyHashSlot(key)
+			slot := KeyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 

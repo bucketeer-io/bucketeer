@@ -33,6 +33,7 @@ import (
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -205,6 +206,16 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	fails := make(map[string]bool, len(envEvents))
 	aggregator := newEvaluationCountAggregator()
 
+	// Track event metadata for Prometheus metrics (only incremented after successful flush)
+	type eventMetrics struct {
+		environmentId string
+		sdkVersion    string
+		featureId     string
+		appVersion    string
+		variationId   string
+	}
+	var metricsToIncrement []eventMetrics
+
 	// Phase 1: Accumulate all events in memory
 	for environmentId, events := range envEvents {
 		for id, e := range events {
@@ -226,14 +237,14 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			// Accumulate in aggregator (deduplicates automatically)
 			aggregator.addEvent(ecKey, ucKey, userID)
 
-			// Update Prometheus metrics
-			evaluationEventCounter.WithLabelValues(
-				environmentId,
-				e.SdkVersion,
-				e.FeatureId,
-				e.Metadata[appVersion],
-				e.VariationId,
-			).Inc()
+			// Track metrics to increment only after successful flush
+			metricsToIncrement = append(metricsToIncrement, eventMetrics{
+				environmentId: environmentId,
+				sdkVersion:    e.SdkVersion,
+				featureId:     e.FeatureId,
+				appVersion:    e.Metadata[appVersion],
+				variationId:   e.VariationId,
+			})
 
 			// Migration: Also accumulate for target environment
 			if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
@@ -244,7 +255,7 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 		}
 	}
 
-	// Phase 2: Flush all accumulated counts to Redis in one pipeline
+	// Phase 2: Flush all accumulated counts to Redis in batches by slot
 	eventCounts, userCounts := aggregator.flush()
 	if err := p.flushAggregatedCounts(eventCounts, userCounts); err != nil {
 		// If Redis flush fails, mark all events as failed (repeatable error)
@@ -255,6 +266,18 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 				}
 			}
 		}
+		return fails
+	}
+
+	// Phase 3: Update Prometheus metrics only after successful Redis persistence
+	for _, m := range metricsToIncrement {
+		evaluationEventCounter.WithLabelValues(
+			m.environmentId,
+			m.sdkVersion,
+			m.featureId,
+			m.appVersion,
+			m.variationId,
+		).Inc()
 	}
 
 	return fails
@@ -346,9 +369,16 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-// flushAggregatedCounts writes all aggregated counts to Redis using pipelining with transactions.
-// Uses MULTI/EXEC to ensure atomicity: either all commands succeed or none are applied.
-// This prevents partial writes that could cause duplicates if messages are Nack'd and retried.
+// flushAggregatedCounts writes all aggregated counts to Redis grouped by hash slot.
+// Groups commands by Redis Cluster hash slot and executes each group in a separate
+// MULTI/EXEC transaction to avoid CROSSSLOT errors while maintaining atomicity per slot.
+//
+// Redis MULTI/EXEC provides:
+// - Atomicity: Commands in a transaction execute sequentially without interleaving
+// - Isolation: No other client commands execute between MULTI and EXEC
+// - No rollback: Failed commands don't rollback others (not like SQL transactions)
+//
+// Trade-off: Rare partial failures across slots may cause slight over-counting on retry.
 func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	eventCounts map[string]int64,
 	userCounts map[string]map[string]struct{},
@@ -357,18 +387,77 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		return nil
 	}
 
-	// Create a transactional pipeline (MULTI/EXEC) for atomic all-or-nothing execution
-	// If any command fails, Redis rolls back ALL commands in the transaction
+	// Group commands by hash slot for Redis Cluster compatibility
+	type slotCommands struct {
+		eventCounts map[string]int64
+		userCounts  map[string]map[string]struct{}
+	}
+	slotGroups := make(map[int]*slotCommands)
+
+	// Group event counts by slot
+	for key, count := range eventCounts {
+		slot := redisv3.KeyHashSlot(key)
+		if slotGroups[slot] == nil {
+			slotGroups[slot] = &slotCommands{
+				eventCounts: make(map[string]int64),
+				userCounts:  make(map[string]map[string]struct{}),
+			}
+		}
+		slotGroups[slot].eventCounts[key] = count
+	}
+
+	// Group user counts by slot
+	for key, users := range userCounts {
+		slot := redisv3.KeyHashSlot(key)
+		if slotGroups[slot] == nil {
+			slotGroups[slot] = &slotCommands{
+				eventCounts: make(map[string]int64),
+				userCounts:  make(map[string]map[string]struct{}),
+			}
+		}
+		slotGroups[slot].userCounts[key] = users
+	}
+
+	// Execute one transactional pipeline per slot
+	totalEventKeys := 0
+	totalUserKeys := 0
+	for slot, commands := range slotGroups {
+		if err := p.flushSlot(slot, commands.eventCounts, commands.userCounts); err != nil {
+			return err
+		}
+		totalEventKeys += len(commands.eventCounts)
+		totalUserKeys += len(commands.userCounts)
+	}
+
+	p.logger.Debug("Flushed aggregated counts to Redis",
+		zap.Int("eventCountKeys", totalEventKeys),
+		zap.Int("userCountKeys", totalUserKeys),
+		zap.Int("slots", len(slotGroups)),
+	)
+
+	return nil
+}
+
+// flushSlot executes a MULTI/EXEC transaction for a single hash slot
+func (p *evaluationCountEventPersister) flushSlot(
+	slot int,
+	eventCounts map[string]int64,
+	userCounts map[string]map[string]struct{},
+) error {
+	if len(eventCounts) == 0 && len(userCounts) == 0 {
+		return nil
+	}
+
+	// Create a transactional pipeline (MULTI/EXEC) for this slot
 	pipeline := p.evaluationCountCacher.Pipeline(true)
 
-	// Batch all INCRBY commands
+	// Batch all INCRBY commands for this slot
 	for key, count := range eventCounts {
 		pipeline.IncrBy(key, count)
 	}
 
-	// Batch all PFADD commands
+	// Batch all PFADD commands for this slot
 	for key, userIDSet := range userCounts {
-		// Convert set to slice
 		userIDs := make([]string, 0, len(userIDSet))
 		for userID := range userIDSet {
 			userIDs = append(userIDs, userID)
@@ -378,23 +467,19 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		}
 	}
 
-	// Execute all commands in one network round-trip
+	// Execute transaction for this slot
 	_, err := pipeline.Exec()
 	if err != nil {
 		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Error("Failed to flush aggregated counts to Redis",
+			p.logger.Error("Failed to flush slot to Redis",
 				zap.Error(err),
+				zap.Int("slot", slot),
 				zap.Int("eventCountKeys", len(eventCounts)),
 				zap.Int("userCountKeys", len(userCounts)),
 			)
 		}
 		return err
 	}
-
-	p.logger.Debug("Flushed aggregated counts to Redis",
-		zap.Int("eventCountKeys", len(eventCounts)),
-		zap.Int("userCountKeys", len(userCounts)),
-	)
 
 	return nil
 }
