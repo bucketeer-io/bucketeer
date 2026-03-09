@@ -52,40 +52,42 @@ var crc16tab = [256]uint16{
 	0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
 }
 
-// KeyHashSlot returns the Redis Cluster hash slot for key.
-// It follows Redis's hash tag rules:
+// KeyHashSlot returns the Redis Cluster hash slot for the given key.
 //
-//  1. Find the first '{'.
-//  2. Find the first '}' after that '{'.
-//  3. If there is at least one byte between them, hash only that substring.
-//  4. Otherwise, hash the whole key.
+// Redis Cluster uses CRC16(key) % 16384 to determine the slot.
+// If the key contains a non-empty substring inside the first valid
+// pair of curly braces, only that substring is hashed.
+//
+// Examples:
+//
+//	"user:1"        -> hash "user:1"
+//	"{user:1}"      -> hash "user:1"
+//	"foo{bar}zap"   -> hash "bar"
+//	"foo{}bar"      -> hash "foo{}bar" (empty hash tag is ignored)
 func KeyHashSlot(key string) int {
-	k := []byte(key)
-
-	for s := 0; s < len(k); s++ {
-		if k[s] != '{' {
-			continue
-		}
-
-		for e := s + 1; e < len(k); e++ {
-			if k[e] != '}' {
-				continue
-			}
-
-			// Non-empty hash tag: use bytes between { and }.
-			if e > s+1 {
-				return int(crc16(k[s+1:e]) % RedisClusterSlots)
-			}
-
-			// "{}" => invalid hash tag, hash whole key.
+	// Look for the first '{' and the first '}' that appears after it.
+	// Redis uses only the first valid brace pair when extracting a hash tag.
+	start, end := -1, -1
+	for i := 0; i < len(key); i++ {
+		if key[i] == '{' && start == -1 {
+			// Record only the first opening brace.
+			start = i
+		} else if key[i] == '}' && start >= 0 {
+			// Use the first closing brace that follows that opening brace.
+			end = i
 			break
 		}
-
-		// Found '{' but no valid non-empty {...} pair.
-		break
 	}
 
-	return int(crc16(k) % RedisClusterSlots)
+	// Use the substring between braces only when the hash tag is non-empty.
+	// For cases like "{}" or "foo{}bar", Redis ignores the braces and hashes
+	// the full key instead.
+	if start >= 0 && end > start+1 {
+		key = key[start+1 : end]
+	}
+
+	// Compute the Redis Cluster slot from the CRC16 checksum.
+	return int(crc16([]byte(key)) % RedisClusterSlots)
 }
 
 // crc16 calculates the CRC16 checksum using the Redis algorithm.
