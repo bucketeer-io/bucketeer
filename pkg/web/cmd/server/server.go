@@ -50,9 +50,12 @@ import (
 	featureapi "github.com/bucketeer-io/bucketeer/v2/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	insightsapi "github.com/bucketeer-io/bucketeer/v2/pkg/insights/api"
+	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushapi "github.com/bucketeer-io/bucketeer/v2/pkg/push/api"
@@ -75,6 +78,7 @@ import (
 	eventcounterproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
 	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -143,6 +147,8 @@ type server struct {
 	tagServicePort                  *int
 	codeReferenceServicePort        *int
 	teamServicePort                 *int
+	insightsServicePort             *int
+	prometheusURL                   *string
 	webGrpcGatewayPort              *int
 	accountService                  *string
 	authService                     *string
@@ -316,6 +322,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"team-service-port",
 			"Port to bind to team service.",
 		).Default("9107").Int(),
+		insightsServicePort: cmd.Flag(
+			"insights-service-port",
+			"Port to bind to insights service.",
+		).Default("9108").Int(),
+		prometheusURL: cmd.Flag(
+			"prometheus-url",
+			"URL of the Prometheus server. If empty, time-series APIs are disabled.",
+		).Default("").String(),
 		webGrpcGatewayPort: cmd.Flag(
 			"web-grpc-gateway-port",
 			"Port to bind to web gRPC gateway.",
@@ -843,6 +857,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go teamServer.Run()
 
+	// insightsService
+	var promClient prometheus.Client
+	if *s.prometheusURL != "" {
+		promClient, err = prometheus.NewClient(
+			*s.prometheusURL,
+			prometheus.WithLogger(logger),
+		)
+		if err != nil {
+			logger.Error("Failed to create Prometheus client", zap.Error(err))
+			return err
+		}
+	}
+	monthlySummaryStorage := insightsstorage.NewMonthlySummaryStorage(mysqlClient)
+	insightsService := insightsapi.NewInsightsService(
+		accountClient,
+		promClient,
+		monthlySummaryStorage,
+		insightsapi.WithLogger(logger),
+	)
+	insightsServer := rpc.NewServer(insightsService, *s.certPath, *s.keyPath,
+		"insights-server",
+		rpc.WithPort(*s.insightsServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go insightsServer.Run()
+
 	// Start the dashboard servers
 	dashboardServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -923,6 +965,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			tagServer,
 			codeReferenceServer,
 			teamServer,
+			insightsServer,
 		}
 
 		for _, server := range servers {
@@ -1222,6 +1265,10 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
 			return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			insightsGrpcAddr := fmt.Sprintf("localhost:%d", *s.insightsServicePort)
+			return insightsproto.RegisterInsightsServiceHandlerFromEndpoint(ctx, mux, insightsGrpcAddr, opts)
 		},
 	}
 }

@@ -140,7 +140,8 @@
         "CodeReferenceContentHash": "コードリファレンスのコンテンツハッシュ",
         "CodeReferenceRepositoryInfo": "コードリファレンスのリポジトリ情報",
         "CodeReferenceRepositoryType": "コードリファレンスのリポジトリタイプ",
-        "Team": "チーム"
+        "Team": "チーム",
+        "DataSource": "データソース"
     },
     "errors": {
         "RequiredField": "{{field_1}}は必須です",
@@ -152,7 +153,7 @@
         "InvalidArgumentNilError": "{{field}}はnullであってはなりません",
         "InvalidArgumentNotMatchFormatError": "{{field}}の形式が無効です",
         "InvalidArgumentUnknownError": "{{field}}が不明です",
-        "NotFoundError": "リクエストされた{{field_1}}が見つかりません",
+        "NotFoundError": "リクエストされた{{field}}が見つかりません",
         "InvalidArgumentError": "不正な{{field_1}}です",
         "UnauthenticatedError": "認証されていません",
         "PermissionDeniedError": "権限がありません",
