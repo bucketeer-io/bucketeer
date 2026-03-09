@@ -90,6 +90,7 @@ type Configuration struct {
 	RedisDB             int    `json:"redisDB,omitempty"`
 	RedisPartitionCount int    `json:"redisPartitionCount,omitempty"`
 	RedisIdleTime       int    `json:"redisIdleTime,omitempty"`
+	RedisMode           string `json:"redisMode,omitempty"`
 }
 
 type pubSubSubscriber struct {
@@ -270,12 +271,17 @@ func createRedisClient(ctx context.Context,
 		zap.String("pubSubType", pubSubType),
 	)
 
-	// Create Redis client
+	redisMode := redisv3.RedisModeAuto
+	if conf.RedisMode != "" {
+		redisMode = redisv3.RedisMode(conf.RedisMode)
+	}
+
 	return redisv3.NewClient(
 		redisAddr,
 		redisv3.WithPoolSize(redisPoolSize),
 		redisv3.WithMinIdleConns(redisMinIdle),
 		redisv3.WithServerName(conf.RedisServerName),
+		redisv3.WithRedisMode(redisMode),
 		redisv3.WithMetrics(metrics),
 		redisv3.WithLogger(logger),
 	)

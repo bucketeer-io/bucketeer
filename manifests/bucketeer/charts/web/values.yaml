@@ -18,6 +18,7 @@ env:
   pubSubRedisAddr:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
+  pubSubRedisMode: auto
   mysqlUser:
   mysqlPass:
   mysqlHost:
@@ -28,11 +29,13 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   bigQueryDataSet:
   bigQueryDataLocation:
   domainTopic:

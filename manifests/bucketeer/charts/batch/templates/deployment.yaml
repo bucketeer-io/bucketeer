@@ -159,6 +159,8 @@ spec:
               value: "{{ .Values.env.persistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_BATCH_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BATCH_PERSISTENT_REDIS_MODE
+              value: "{{ .Values.env.persistentRedis.mode }}"
             - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
             - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_ADDR
@@ -167,6 +169,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_MODE
+              value: "{{ .Values.env.nonPersistentRedis.mode }}"
             - name: BUCKETEER_BATCH_EXPERIMENT_LOCK_TTL
               value: "{{ .Values.env.experimentLockTTL }}"
             - name: BUCKETEER_BATCH_STAN_MODEL_ID

@@ -43,11 +43,13 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentChildRedis:
     addresses:
   experimentLockTTL: 10m
