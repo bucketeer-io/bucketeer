@@ -25,6 +25,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
@@ -33,6 +34,7 @@ type monthlySummarizer struct {
 	envClient             envclient.Client
 	mauCache              cachev3.MAUCache
 	monthlySummaryStorage insightsstorage.MonthlySummaryStorage
+	promClient            prometheus.Client
 	opts                  *jobs.Options
 	logger                *zap.Logger
 }
@@ -41,6 +43,7 @@ func NewMonthlySummarizer(
 	envClient envclient.Client,
 	mauCache cachev3.MAUCache,
 	monthlySummaryStorage insightsstorage.MonthlySummaryStorage,
+	promClient prometheus.Client,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -54,6 +57,7 @@ func NewMonthlySummarizer(
 		envClient:             envClient,
 		mauCache:              mauCache,
 		monthlySummaryStorage: monthlySummaryStorage,
+		promClient:            promClient,
 		opts:                  dopts,
 		logger:                dopts.Logger.Named("monthly-summarizer"),
 	}
@@ -81,6 +85,16 @@ func (m *monthlySummarizer) Run(ctx context.Context) (lastErr error) {
 
 	sourceIDs := listSourceIDs()
 
+	// Skip request count aggregation when promClient is not configured.
+	requestCounts := make(map[string]map[string]int64)
+	if m.promClient != nil {
+		requestCounts, err = m.queryRequestCounts(ctx, yesterday)
+		if err != nil {
+			m.logger.Error("Failed to query request counts from Prometheus", zap.Error(err))
+			return err
+		}
+	}
+
 	records := make([]insightsstorage.MonthlySummaryRecord, 0, len(envs)*len(sourceIDs))
 
 	for _, env := range envs {
@@ -99,18 +113,18 @@ func (m *monthlySummarizer) Run(ctx context.Context) (lastErr error) {
 				EnvironmentID: env.Id,
 				SourceID:      sourceID,
 				MAU:           mauCounts[sourceID],
-				Requests:      0, // TODO: Get from Prometheus
+				Requests:      requestCounts[env.Id][sourceID],
 			})
 		}
 	}
 
 	if len(records) == 0 {
-		m.logger.Info("No MAU records to upsert")
+		m.logger.Info("No monthly_summary records to upsert")
 		return lastErr
 	}
 
 	if err := m.monthlySummaryStorage.UpsertMonthlySummaryBatch(ctx, records); err != nil {
-		m.logger.Error("Failed to upsert MAU batch", zap.Error(err))
+		m.logger.Error("Failed to upsert monthly_summary batch", zap.Error(err))
 		return err
 	}
 
