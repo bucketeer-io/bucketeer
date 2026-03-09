@@ -44,6 +44,7 @@ const (
 	incrByFloatCmdName  = "INCR_BY_FLOAT"
 	delCmdName          = "DEL"
 	incrCmdName         = "INCR"
+	incrByCmdName       = "INCRBY"
 	expireCmdName       = "EXPIRE"
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
@@ -153,6 +154,7 @@ type client struct {
 type PipeClient interface {
 	PFAdd(key string, els ...string) *goredis.IntCmd
 	Incr(key string) *goredis.IntCmd
+	IncrBy(key string, value int64) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
 	SAdd(key string, members ...interface{}) *goredis.IntCmd
 	Expire(key string, expiration time.Duration) *goredis.BoolCmd
@@ -906,6 +908,11 @@ func (c *client) Pipeline(tx bool) PipeClient {
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
 	return c.pipe.Incr(c.ctx, key)
+}
+
+func (c *pipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
+	c.cmds = append(c.cmds, incrByCmdName)
+	return c.pipe.IncrBy(c.ctx, key, value)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {

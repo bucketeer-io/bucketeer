@@ -1,14 +1,18 @@
 package processor
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
+	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
@@ -761,4 +765,329 @@ func TestGetVariationID(t *testing.T) {
 			assert.Equal(t, tt.expectedVID, got, "getVariationID should return expected variation ID for default value counter")
 		})
 	}
+}
+
+func TestIncrementEnvEvents_Aggregation(t *testing.T) {
+	t.Parallel()
+
+	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
+
+	tests := []struct {
+		name                      string
+		envEvents                 environmentEventMap
+		expectedEventCountKeys    int // number of unique event count keys
+		expectedUserCountKeys     int // number of unique user count keys
+		expectedFailCount         int // number of expected failures
+		expectFlushCalled         bool
+		simulateFlushError        bool
+		migrationTargetEnvEnabled bool
+	}{
+		{
+			name: "single event creates one aggregated entry",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			expectedEventCountKeys: 1,
+			expectedUserCountKeys:  1,
+			expectedFailCount:      0,
+			expectFlushCalled:      true,
+		},
+		{
+			name: "multiple events same key aggregate",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-2",
+						User:           &userproto.User{Id: "user-2"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-3": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-3",
+						User:           &userproto.User{Id: "user-3"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			expectedEventCountKeys: 1, // all 3 events share same key
+			expectedUserCountKeys:  1, // all 3 events share same key
+			expectedFailCount:      0,
+			expectFlushCalled:      true,
+		},
+		{
+			name: "different variations create separate keys",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-2",
+						User:           &userproto.User{Id: "user-2"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			expectedEventCountKeys: 2, // different variations
+			expectedUserCountKeys:  2,
+			expectedFailCount:      0,
+			expectFlushCalled:      true,
+		},
+		{
+			name: "error reasons map to default variation",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_ERROR_FLAG_NOT_FOUND},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_ERROR_CACHE_NOT_FOUND},
+						UserId:         "user-2",
+						User:           &userproto.User{Id: "user-2"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			expectedEventCountKeys: 1, // both map to "default" variation
+			expectedUserCountKeys:  1,
+			expectedFailCount:      0,
+			expectFlushCalled:      true,
+		},
+		{
+			name: "nil reason events are marked as failed",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         nil, // nil reason
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			expectedEventCountKeys: 0, // not added to aggregator
+			expectedUserCountKeys:  0,
+			expectedFailCount:      1,     // marked as non-repeatable error
+			expectFlushCalled:      false, // flush not called when no events to aggregate
+		},
+		{
+			name: "flush error marks all events as failed",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			expectedEventCountKeys: 1,
+			expectedUserCountKeys:  1,
+			expectedFailCount:      1,
+			expectFlushCalled:      true,
+			simulateFlushError:     true, // simulate Redis failure
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Create mock cache
+			mockCache := &mockEvaluationCountCache{
+				shouldFailFlush: tt.simulateFlushError,
+			}
+
+			persister := &evaluationCountEventPersister{
+				evaluationCountCacher: mockCache,
+				logger:                zap.NewNop(),
+			}
+
+			// Execute
+			fails := persister.incrementEnvEvents(tt.envEvents)
+
+			// Verify
+			assert.Equal(t, tt.expectedFailCount, len(fails), "fail count mismatch")
+
+			if tt.expectFlushCalled {
+				assert.True(t, mockCache.flushCalled, "flush should be called")
+				assert.Equal(t, tt.expectedEventCountKeys, len(mockCache.lastEventCounts), "event count keys mismatch")
+				assert.Equal(t, tt.expectedUserCountKeys, len(mockCache.lastUserCounts), "user count keys mismatch")
+			}
+		})
+	}
+}
+
+// mockEvaluationCountCache mocks the cache interface for testing
+type mockEvaluationCountCache struct {
+	flushCalled      bool
+	lastEventCounts  map[string]int64
+	lastUserCounts   map[string]map[string]struct{}
+	shouldFailFlush  bool
+	pipelineExecuted bool
+}
+
+func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
+	return &mockPipeClient{
+		cache:          m,
+		transactional:  tx,
+		commands:       []string{},
+		eventCounts:    make(map[string]int64),
+		userCounts:     make(map[string][]string),
+		shouldFailExec: m.shouldFailFlush,
+	}
+}
+
+// Cache interface methods
+func (m *mockEvaluationCountCache) Get(key interface{}) (interface{}, error) { return nil, nil }
+func (m *mockEvaluationCountCache) Put(key interface{}, value interface{}, expiration time.Duration) error {
+	return nil
+}
+
+// MultiGetter interface methods
+func (m *mockEvaluationCountCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {
+	return nil, nil
+}
+func (m *mockEvaluationCountCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
+	return 0, nil, nil
+}
+func (m *mockEvaluationCountCache) SMembers(key string) ([]string, error) { return nil, nil }
+
+// Deleter interface methods
+func (m *mockEvaluationCountCache) Delete(key string) error { return nil }
+
+// Counter interface methods
+func (m *mockEvaluationCountCache) Increment(key string) (int64, error) { return 0, nil }
+func (m *mockEvaluationCountCache) PFAdd(key string, els ...string) (int64, error) {
+	return 0, nil
+}
+
+// PFGetter interface methods
+func (m *mockEvaluationCountCache) PFCount(keys ...string) (int64, error) { return 0, nil }
+
+// PFMerger interface methods
+func (m *mockEvaluationCountCache) PFMerge(dest string, expiration time.Duration, keys ...string) error {
+	return nil
+}
+
+// Expirer interface methods
+func (m *mockEvaluationCountCache) Expire(key string, expiration time.Duration) (bool, error) {
+	return false, nil
+}
+
+type mockPipeClient struct {
+	cache          *mockEvaluationCountCache
+	transactional  bool
+	commands       []string
+	eventCounts    map[string]int64
+	userCounts     map[string][]string
+	shouldFailExec bool
+}
+
+func (m *mockPipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
+	m.commands = append(m.commands, "INCRBY")
+	m.eventCounts[key] = value
+	return goredis.NewIntCmd(context.Background())
+}
+
+func (m *mockPipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
+	m.commands = append(m.commands, "PFADD")
+	m.userCounts[key] = els
+	return goredis.NewIntCmd(context.Background())
+}
+
+func (m *mockPipeClient) Exec() ([]goredis.Cmder, error) {
+	m.cache.flushCalled = true
+	m.cache.pipelineExecuted = true
+	m.cache.lastEventCounts = m.eventCounts
+	// Convert userCounts to map[string]map[string]struct{}
+	userCountsMap := make(map[string]map[string]struct{})
+	for key, users := range m.userCounts {
+		userCountsMap[key] = make(map[string]struct{})
+		for _, user := range users {
+			userCountsMap[key][user] = struct{}{}
+		}
+	}
+	m.cache.lastUserCounts = userCountsMap
+
+	if m.shouldFailExec {
+		return nil, assert.AnError
+	}
+	return nil, nil
+}
+
+// Unused pipeline methods
+func (m *mockPipeClient) Incr(key string) *goredis.IntCmd {
+	return goredis.NewIntCmd(context.Background())
+}
+func (m *mockPipeClient) TTL(key string) *goredis.DurationCmd {
+	return goredis.NewDurationCmd(context.Background(), 0)
+}
+func (m *mockPipeClient) SAdd(key string, members ...interface{}) *goredis.IntCmd {
+	return goredis.NewIntCmd(context.Background())
+}
+func (m *mockPipeClient) Expire(key string, expiration time.Duration) *goredis.BoolCmd {
+	return goredis.NewBoolCmd(context.Background())
+}
+func (m *mockPipeClient) PFCount(keys ...string) *goredis.IntCmd {
+	return goredis.NewIntCmd(context.Background())
+}
+func (m *mockPipeClient) Get(key string) *goredis.StringCmd {
+	return goredis.NewStringCmd(context.Background())
+}
+func (m *mockPipeClient) Del(keys string) *goredis.IntCmd {
+	return goredis.NewIntCmd(context.Background())
 }

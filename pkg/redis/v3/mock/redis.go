@@ -588,6 +588,20 @@ func (mr *MockPipeClientMockRecorder) Incr(key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Incr", reflect.TypeOf((*MockPipeClient)(nil).Incr), key)
 }
 
+// IncrBy mocks base method.
+func (m *MockPipeClient) IncrBy(key string, value int64) *redis0.IntCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrBy", key, value)
+	ret0, _ := ret[0].(*redis0.IntCmd)
+	return ret0
+}
+
+// IncrBy indicates an expected call of IncrBy.
+func (mr *MockPipeClientMockRecorder) IncrBy(key, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrBy", reflect.TypeOf((*MockPipeClient)(nil).IncrBy), key, value)
+}
+
 // PFAdd mocks base method.
 func (m *MockPipeClient) PFAdd(key string, els ...string) *redis0.IntCmd {
 	m.ctrl.T.Helper()

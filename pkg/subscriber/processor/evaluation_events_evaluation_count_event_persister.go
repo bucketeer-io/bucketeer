@@ -203,18 +203,60 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 
 func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
 	fails := make(map[string]bool, len(envEvents))
+	aggregator := newEvaluationCountAggregator()
+
+	// Phase 1: Accumulate all events in memory
 	for environmentId, events := range envEvents {
-		for id, event := range events {
-			// Increment the evaluation event count in the Redis
-			if err := p.incrementEvaluationCount(id, event, environmentId); err != nil {
+		for id, e := range events {
+			vID, err := getVariationID(e.Reason, e.VariationId)
+			if err != nil {
 				if errors.Is(err, ErrReasonNil) {
 					fails[id] = false
 				} else {
 					fails[id] = true
 				}
+				continue
+			}
+
+			// Generate Redis keys
+			ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+			ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+			userID := getUserID(e.UserId, e.User)
+
+			// Accumulate in aggregator (deduplicates automatically)
+			aggregator.addEvent(ecKey, ucKey, userID)
+
+			// Update Prometheus metrics
+			evaluationEventCounter.WithLabelValues(
+				environmentId,
+				e.SdkVersion,
+				e.FeatureId,
+				e.Metadata[appVersion],
+				e.VariationId,
+			).Inc()
+
+			// Migration: Also accumulate for target environment
+			if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+				ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
+				ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
+				aggregator.addEvent(ecKeyTarget, ucKeyTarget, userID)
 			}
 		}
 	}
+
+	// Phase 2: Flush all accumulated counts to Redis in one pipeline
+	eventCounts, userCounts := aggregator.flush()
+	if err := p.flushAggregatedCounts(eventCounts, userCounts); err != nil {
+		// If Redis flush fails, mark all events as failed (repeatable error)
+		for _, events := range envEvents {
+			for id := range events {
+				if _, alreadyFailed := fails[id]; !alreadyFailed {
+					fails[id] = true // Repeatable error - will Nack for retry
+				}
+			}
+		}
+	}
+
 	return fails
 }
 
@@ -304,116 +346,56 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-func (p *evaluationCountEventPersister) incrementEvaluationCount(
-	eventID string,
-	event proto.Message,
-	environmentId string,
+// flushAggregatedCounts writes all aggregated counts to Redis using pipelining with transactions.
+// Uses MULTI/EXEC to ensure atomicity: either all commands succeed or none are applied.
+// This prevents partial writes that could cause duplicates if messages are Nack'd and retried.
+func (p *evaluationCountEventPersister) flushAggregatedCounts(
+	eventCounts map[string]int64,
+	userCounts map[string]map[string]struct{},
 ) error {
-	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		vID, err := getVariationID(e.Reason, e.VariationId)
-		if err != nil {
-			return err
-		}
-		// To avoid duplication when the request fails, we increment the event count in the end
-		// because the user count is an unique count, and there is no problem adding the same event more than once
-		// We tried to use Pipeline and indeed it improves the response time,
-		// but it also increases the Pod CPU usage. It's a trade-off.
-		// Since this is a background service and it's not latency-sensitive, we split the requests.
-		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		userID := getUserID(e.UserId, e.User)
-		if err := p.countUser(ucKey, userID); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Error("Failed to increment the evaluation user event in the Redis",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("eventId", eventID),
-					zap.String("userId", userID),
-					zap.String("userCountKey", ucKey),
-					zap.Any("evaluationEvent", e),
-				)
-			}
-			return err
-		}
-		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countEvent(ecKey); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Error("Failed to increment the evaluation event in the Redis",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("eventId", eventID),
-					zap.String("userId", userID),
-					zap.String("eventCountKey", ecKey),
-					zap.Any("evaluationEvent", e),
-				)
-			}
-			return err
-		}
-		evaluationEventCounter.WithLabelValues(
-			environmentId,
-			e.SdkVersion,
-			e.FeatureId,
-			e.Metadata[appVersion],
-			e.VariationId,
-		).Inc()
+	if len(eventCounts) == 0 && len(userCounts) == 0 {
+		return nil
+	}
 
-		// Migration: Double-write to the target environment ID if migration is enabled
-		// This ensures data exists in both old and new key formats during the migration period
-		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
-			p.incrementEvaluationCountMigration(e, vID, userID, targetEnvID)
+	// Create a transactional pipeline (MULTI/EXEC) for atomic all-or-nothing execution
+	// If any command fails, Redis rolls back ALL commands in the transaction
+	pipeline := p.evaluationCountCacher.Pipeline(true)
+
+	// Batch all INCRBY commands
+	for key, count := range eventCounts {
+		pipeline.IncrBy(key, count)
+	}
+
+	// Batch all PFADD commands
+	for key, userIDSet := range userCounts {
+		// Convert set to slice
+		userIDs := make([]string, 0, len(userIDSet))
+		for userID := range userIDSet {
+			userIDs = append(userIDs, userID)
+		}
+		if len(userIDs) > 0 {
+			pipeline.PFAdd(key, userIDs...)
 		}
 	}
-	return nil
-}
 
-// incrementEvaluationCountMigration writes evaluation counts to the migration target environment.
-// This is a best-effort operation - errors are logged but not returned to avoid
-// blocking the main write path during migration.
-func (p *evaluationCountEventPersister) incrementEvaluationCountMigration(
-	e *eventproto.EvaluationEvent,
-	variationID string,
-	userID string,
-	targetEnvID string,
-) {
-	// Write user count to target environment
-	ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
-	if err := p.countUser(ucKeyTarget, userID); err != nil {
+	// Execute all commands in one network round-trip
+	_, err := pipeline.Exec()
+	if err != nil {
 		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Migration: Failed to increment evaluation user count for target environment",
+			p.logger.Error("Failed to flush aggregated counts to Redis",
 				zap.Error(err),
-				zap.String("targetEnvironmentId", targetEnvID),
-				zap.String("featureId", e.FeatureId),
-				zap.String("userCountKey", ucKeyTarget),
+				zap.Int("eventCountKeys", len(eventCounts)),
+				zap.Int("userCountKeys", len(userCounts)),
 			)
 		}
-	}
-
-	// Write event count to target environment
-	ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
-	if err := p.countEvent(ecKeyTarget); err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Migration: Failed to increment evaluation event count for target environment",
-				zap.Error(err),
-				zap.String("targetEnvironmentId", targetEnvID),
-				zap.String("featureId", e.FeatureId),
-				zap.String("eventCountKey", ecKeyTarget),
-			)
-		}
-	}
-}
-
-func (p *evaluationCountEventPersister) countEvent(key string) error {
-	_, err := p.evaluationCountCacher.Increment(key)
-	if err != nil {
 		return err
 	}
-	return nil
-}
 
-func (p *evaluationCountEventPersister) countUser(key, userID string) error {
-	_, err := p.evaluationCountCacher.PFAdd(key, userID)
-	if err != nil {
-		return err
-	}
+	p.logger.Debug("Flushed aggregated counts to Redis",
+		zap.Int("eventCountKeys", len(eventCounts)),
+		zap.Int("userCountKeys", len(userCounts)),
+	)
+
 	return nil
 }
 
