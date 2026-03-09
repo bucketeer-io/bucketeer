@@ -56,3 +56,17 @@ func (mr *MockClientMockRecorder) QueryInstant(ctx, query, ts any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryInstant", reflect.TypeOf((*MockClient)(nil).QueryInstant), ctx, query, ts)
 }
 
+// QueryRange mocks base method.
+func (m *MockClient) QueryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (model.Matrix, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryRange", ctx, query, start, end, step)
+	ret0, _ := ret[0].(model.Matrix)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryRange indicates an expected call of QueryRange.
+func (mr *MockClientMockRecorder) QueryRange(ctx, query, start, end, step any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryRange", reflect.TypeOf((*MockClient)(nil).QueryRange), ctx, query, start, end, step)
+}
