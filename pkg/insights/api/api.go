@@ -39,7 +39,7 @@ import (
 
 const (
 	defaultQueryStep  = 5 * time.Minute
-	maxQueryRangeDays = 30
+	maxQueryRangeDays = 31
 )
 
 type options struct {
