@@ -41,6 +41,21 @@ func (m *MockMonthlySummaryStorage) EXPECT() *MockMonthlySummaryStorageMockRecor
 	return m.recorder
 }
 
+// ListMonthlySummaries mocks base method.
+func (m *MockMonthlySummaryStorage) ListMonthlySummaries(ctx context.Context, environmentIDs, sourceIDs []string) ([]v2.ListMonthlySummaryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMonthlySummaries", ctx, environmentIDs, sourceIDs)
+	ret0, _ := ret[0].([]v2.ListMonthlySummaryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListMonthlySummaries indicates an expected call of ListMonthlySummaries.
+func (mr *MockMonthlySummaryStorageMockRecorder) ListMonthlySummaries(ctx, environmentIDs, sourceIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMonthlySummaries", reflect.TypeOf((*MockMonthlySummaryStorage)(nil).ListMonthlySummaries), ctx, environmentIDs, sourceIDs)
+}
+
 // UpsertMonthlySummaryBatch mocks base method.
 func (m *MockMonthlySummaryStorage) UpsertMonthlySummaryBatch(ctx context.Context, records []v2.MonthlySummaryRecord) error {
 	m.ctrl.T.Helper()

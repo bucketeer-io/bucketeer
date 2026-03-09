@@ -28,6 +28,8 @@ import (
 var (
 	//go:embed sql/upsert_monthly_summary.sql
 	upsertMonthlySummarySQL string
+	//go:embed sql/select_monthly_summary.sql
+	selectMonthlySummarySQL string
 )
 
 type MonthlySummaryRecord struct {
@@ -38,8 +40,19 @@ type MonthlySummaryRecord struct {
 	Requests      int64
 }
 
+type ListMonthlySummaryResult struct {
+	Yearmonth       string
+	EnvironmentID   string
+	EnvironmentName string
+	ProjectName     string
+	SourceID        string
+	MAU             int64
+	Requests        int64
+}
+
 type MonthlySummaryStorage interface {
 	UpsertMonthlySummaryBatch(ctx context.Context, records []MonthlySummaryRecord) error
+	ListMonthlySummaries(ctx context.Context, environmentIDs, sourceIDs []string) ([]ListMonthlySummaryResult, error)
 }
 
 type monthlySummaryStorage struct {
@@ -72,4 +85,59 @@ func (s *monthlySummaryStorage) UpsertMonthlySummaryBatch(
 
 	_, err := s.qe.ExecContext(ctx, query, args...)
 	return err
+}
+
+func (s *monthlySummaryStorage) ListMonthlySummaries(
+	ctx context.Context,
+	environmentIDs, sourceIDs []string,
+) ([]ListMonthlySummaryResult, error) {
+	if len(environmentIDs) == 0 || len(sourceIDs) == 0 {
+		return nil, nil
+	}
+
+	envPlaceholders := make([]string, len(environmentIDs))
+	srcPlaceholders := make([]string, len(sourceIDs))
+	args := make([]any, 0, len(environmentIDs)+len(sourceIDs))
+
+	for i, id := range environmentIDs {
+		envPlaceholders[i] = "?"
+		args = append(args, id)
+	}
+	for i, id := range sourceIDs {
+		srcPlaceholders[i] = "?"
+		args = append(args, id)
+	}
+
+	query := fmt.Sprintf(
+		selectMonthlySummarySQL,
+		strings.Join(envPlaceholders, ","),
+		strings.Join(srcPlaceholders, ","),
+	)
+
+	rows, err := s.qe.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []ListMonthlySummaryResult
+	for rows.Next() {
+		var row ListMonthlySummaryResult
+		if err := rows.Scan(
+			&row.EnvironmentID,
+			&row.EnvironmentName,
+			&row.ProjectName,
+			&row.SourceID,
+			&row.Yearmonth,
+			&row.MAU,
+			&row.Requests,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return results, nil
 }
