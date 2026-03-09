@@ -49,30 +49,26 @@ func mauKey(envID, sourceID string, month time.Time) string {
 	return fmt.Sprintf("%s:mau:%s:%s", envID, sourceID, monthStr)
 }
 
-// MergeIntoMAUBatch merges DAUs into MAUs for multiple source IDs using pipeline.
+// MergeIntoMAUBatch merges DAUs into MAUs for multiple source IDs.
 func (c *mauCache) MergeIntoMAUBatch(envID string, sourceIDs []string, date time.Time) (map[string]int64, error) {
 	if len(envID) == 0 || len(sourceIDs) == 0 {
 		return make(map[string]int64), nil
 	}
 
 	pipe := c.cache.Pipeline(false)
-
-	for _, sourceID := range sourceIDs {
-		mk := mauKey(envID, sourceID, date)
-		dk := dauKey(envID, sourceID, date)
-		pipe.PFMerge(mk, mk, dk)
-		pipe.Expire(mk, mauTTL)
-		pipe.Del(dk)
-	}
-
 	countCmds := make([]any, len(sourceIDs))
 	for i, sourceID := range sourceIDs {
 		mk := mauKey(envID, sourceID, date)
+		dk := dauKey(envID, sourceID, date)
+		// PFMerge must use client-level call for cluster compatibility.
+		if err := c.cache.PFMerge(mk, mauTTL, mk, dk); err != nil {
+			return nil, fmt.Errorf("failed to merge MAU for source %s: %w", sourceID, err)
+		}
 		countCmds[i] = pipe.PFCount(mk)
+		pipe.Del(dk)
 	}
-
 	if _, err := pipe.Exec(); err != nil {
-		return nil, fmt.Errorf("failed to execute merging MAU batch: %w", err)
+		return nil, fmt.Errorf("failed to execute pipeline for PFCount/Del: %w", err)
 	}
 
 	result := make(map[string]int64, len(sourceIDs))
