@@ -111,6 +111,7 @@ type Client interface {
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
+	IncrBy(key string, value int64) (int64, error)
 	SAdd(key string, members ...interface{}) (int64, error)
 	SMembers(key string) ([]string, error)
 	Pipeline(tx bool) PipeClient
@@ -847,6 +848,21 @@ func (c *client) Incr(key string) (int64, error) {
 	}
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return v, err
+}
+
+func (c *client) IncrBy(key string, value int64) (int64, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName).Inc()
+	v, err := c.rc.IncrBy(context.TODO(), key, value).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
 }

@@ -933,8 +933,8 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 					},
 				},
 			},
-			// Note: ec and uc keys may hash to different slots, so on error we might
-			// only attempt one slot before returning. Just verify flush was called.
+			// Note: With PFADD-first ordering, if PFADD fails, INCRBY never executes.
+			// We return immediately on first failure.
 			expectedEventCountKeys: 0, // Don't verify exact keys when error occurs
 			expectedUserCountKeys:  0, // Don't verify exact keys when error occurs
 			expectedFailCount:      1,
@@ -977,97 +977,56 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 	}
 }
 
-func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
+func TestFlushAggregatedCounts(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name                 string
-		eventCounts          map[string]int64
-		userCounts           map[string]map[string]struct{}
-		expectedPipelineExec int // Expected number of pipeline Exec() calls (one per unique slot); -1 = calculate dynamically
-		description          string
+		name            string
+		eventCounts     map[string]int64
+		userCounts      map[string]map[string]struct{}
+		expectedPFAdds  int // Expected number of direct PFAdd calls
+		expectedIncrBys int // Expected number of pipeline IncrBy calls
+		description     string
 	}{
 		{
-			name: "keys with same hash tag in both ec and uc",
-			eventCounts: map[string]int64{
-				"ec:{shared}:hour1:feature1:varA:env1": 100,
-			},
-			userCounts: map[string]map[string]struct{}{
-				"uc:{shared}:hour1:feature1:varA:env1": {"user1": {}, "user2": {}},
-			},
-			expectedPipelineExec: 1,
-			description:          "Hash tag forces both ec and uc keys to same slot",
-		},
-		{
-			name: "ec and uc keys without hash tags may hash to different slots",
+			name: "single key pair - PFADD before INCRBY",
 			eventCounts: map[string]int64{
 				"ec:hour1:feature1:varA:env1": 100,
 			},
 			userCounts: map[string]map[string]struct{}{
 				"uc:hour1:feature1:varA:env1": {"user1": {}, "user2": {}},
 			},
-			expectedPipelineExec: -1, // Calculate dynamically based on actual slot distribution
-			description:          "Without hash tags, ec and uc prefixes may cause different slots",
+			expectedPFAdds:  1,
+			expectedIncrBys: 1,
+			description:     "One ec/uc pair: PFADD first, then INCRBY",
 		},
 		{
-			name: "keys with same hash tag execute in one pipeline",
+			name: "multiple key pairs - PFADD before INCRBY for each",
 			eventCounts: map[string]int64{
-				"ec:{slot1}:key1": 10,
-				"ec:{slot1}:key2": 20,
-				"ec:{slot1}:key3": 30,
+				"ec:hour1:feature1:varA:env1": 10,
+				"ec:hour1:feature2:varB:env1": 20,
+				"ec:hour1:feature3:varC:env1": 30,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:{slot1}:key1": {"user1": {}},
-				"uc:{slot1}:key2": {"user2": {}},
-				"uc:{slot1}:key3": {"user3": {}},
+				"uc:hour1:feature1:varA:env1": {"user1": {}},
+				"uc:hour1:feature2:varB:env1": {"user2": {}},
+				"uc:hour1:feature3:varC:env1": {"user3": {}},
 			},
-			expectedPipelineExec: 1,
-			description:          "All keys use {slot1} hash tag, forcing same slot",
+			expectedPFAdds:  3,
+			expectedIncrBys: 3,
+			description:     "Three pairs: each gets PFADD then INCRBY",
 		},
 		{
-			name: "keys with different hash tags execute in multiple pipelines",
+			name:            "empty aggregation - no calls",
+			eventCounts:     map[string]int64{},
+			userCounts:      map[string]map[string]struct{}{},
+			expectedPFAdds:  0,
+			expectedIncrBys: 0,
+			description:     "No data to flush means no calls",
+		},
+		{
+			name: "real-world keys",
 			eventCounts: map[string]int64{
-				"ec:{slotA}:key1": 10,
-				"ec:{slotB}:key2": 20,
-				"ec:{slotC}:key3": 30,
-			},
-			userCounts: map[string]map[string]struct{}{
-				"uc:{slotA}:key1": {"user1": {}},
-				"uc:{slotB}:key2": {"user2": {}},
-				"uc:{slotC}:key3": {"user3": {}},
-			},
-			expectedPipelineExec: 3,
-			description:          "Different hash tags create different slots",
-		},
-		{
-			name: "mixed hash tags create appropriate number of pipelines",
-			eventCounts: map[string]int64{
-				"ec:{groupA}:key1": 10,
-				"ec:{groupA}:key2": 20,
-				"ec:{groupB}:key3": 30,
-				"ec:{groupB}:key4": 40,
-			},
-			userCounts: map[string]map[string]struct{}{
-				"uc:{groupA}:key1": {"user1": {}},
-				"uc:{groupA}:key2": {"user2": {}},
-				"uc:{groupB}:key3": {"user3": {}},
-				"uc:{groupB}:key4": {"user4": {}},
-			},
-			expectedPipelineExec: 2,
-			description:          "Two groups with same hash tags create 2 pipelines",
-		},
-		{
-			name:                 "empty aggregation creates no pipelines",
-			eventCounts:          map[string]int64{},
-			userCounts:           map[string]map[string]struct{}{},
-			expectedPipelineExec: 0,
-			description:          "No data to flush means no pipelines created",
-		},
-		{
-			name: "real-world keys may span multiple slots",
-			eventCounts: map[string]int64{
-				// These keys don't have hash tags, so they will hash based on full key
-				// They will likely hash to different slots
 				"ec:1709974800:feature-login:variant-A:env-prod":    500,
 				"ec:1709974800:feature-checkout:variant-B:env-prod": 300,
 				"ec:1709974800:feature-sidebar:variant-A:env-prod":  200,
@@ -1077,9 +1036,9 @@ func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
 				"uc:1709974800:feature-checkout:variant-B:env-prod": {"user3": {}},
 				"uc:1709974800:feature-sidebar:variant-A:env-prod":  {"user4": {}},
 			},
-			// Don't hardcode expected count - calculate it dynamically
-			expectedPipelineExec: -1, // Special value: calculate based on actual slot distribution
-			description:          "Real keys distribute across slots based on CRC16",
+			expectedPFAdds:  3,
+			expectedIncrBys: 3,
+			description:     "Three key pairs with realistic keys",
 		},
 	}
 
@@ -1088,20 +1047,6 @@ func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			// Calculate expected pipeline count for real-world scenario
-			expectedExecs := tt.expectedPipelineExec
-			if expectedExecs == -1 {
-				// Calculate unique slots for this test case
-				slotSet := make(map[int]bool)
-				for key := range tt.eventCounts {
-					slotSet[redisv3.KeyHashSlot(key)] = true
-				}
-				for key := range tt.userCounts {
-					slotSet[redisv3.KeyHashSlot(key)] = true
-				}
-				expectedExecs = len(slotSet)
-			}
-
 			mockCache := &mockEvaluationCountCache{}
 			persister := &evaluationCountEventPersister{
 				evaluationCountCacher: mockCache,
@@ -1109,26 +1054,51 @@ func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
 			}
 
 			// Execute flush
-			failedSlots, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
 
 			// Verify
-			if len(tt.eventCounts) == 0 && len(tt.userCounts) == 0 {
-				assert.NoError(t, err, "empty flush should succeed")
-				assert.Nil(t, failedSlots, "no failed slots for empty flush")
-				assert.Equal(t, 0, mockCache.execCount, "no pipelines should be executed for empty data")
-			} else {
-				assert.NoError(t, err, "flush should succeed")
-				assert.Nil(t, failedSlots, "no slots should fail on success")
-				assert.Equal(t, expectedExecs, mockCache.execCount,
-					"pipeline Exec() count should match number of unique slots: %s", tt.description)
+			assert.NoError(t, err, "flush should succeed")
 
-				// Verify all data was flushed
+			// Verify call counts
+			assert.Equal(t, tt.expectedPFAdds, mockCache.pfaddCallCount,
+				"PFAdd call count should match: %s", tt.description)
+			assert.Equal(t, tt.expectedIncrBys, mockCache.execCount,
+				"IncrBy (pipeline Exec) count should match: %s", tt.description)
+
+			// Verify PFADD-before-INCRBY ordering
+			if len(tt.userCounts) > 0 {
+				// For each key pair, PFADD must come before INCRBY
+				for i := 0; i < tt.expectedPFAdds; i++ {
+					pfaddIdx := -1
+					incrbyIdx := -1
+
+					// Find indices in call order
+					for idx, call := range mockCache.incrbyCallOrder {
+						if strings.HasPrefix(call, "PFADD:uc:") && pfaddIdx == -1 {
+							pfaddIdx = idx
+						}
+						if strings.HasPrefix(call, "INCRBY:ec:") && incrbyIdx == -1 {
+							incrbyIdx = idx
+						}
+						if pfaddIdx >= 0 && incrbyIdx >= 0 {
+							break
+						}
+					}
+
+					if pfaddIdx >= 0 && incrbyIdx >= 0 {
+						assert.Less(t, pfaddIdx, incrbyIdx,
+							"PFADD must come before INCRBY in call order")
+					}
+				}
+			}
+
+			// Verify data integrity
+			if len(tt.eventCounts) > 0 || len(tt.userCounts) > 0 {
 				assert.Equal(t, len(tt.eventCounts), len(mockCache.lastEventCounts),
 					"all event count keys should be flushed")
 				assert.Equal(t, len(tt.userCounts), len(mockCache.lastUserCounts),
 					"all user count keys should be flushed")
 
-				// Verify data integrity
 				for key, expectedCount := range tt.eventCounts {
 					assert.Equal(t, expectedCount, mockCache.lastEventCounts[key],
 						"event count for key %s should match", key)
@@ -1142,100 +1112,79 @@ func TestFlushAggregatedCounts_SlotGrouping(t *testing.T) {
 	}
 }
 
-func TestFlushAggregatedCounts_GranularRetry(t *testing.T) {
+func TestFlushAggregatedCounts_Failures(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name                string
 		eventCounts         map[string]int64
 		userCounts          map[string]map[string]struct{}
-		failOnSlots         map[int]bool // Slots to simulate failure on
-		expectedFailedSlots int          // Expected number of failed slots
-		expectedSuccess     bool         // Whether flush should succeed overall
+		shouldFailPFAdd     bool
+		shouldFailIncrBy    bool
+		expectedSuccess     bool
+		expectedPFAddCalls  int
+		expectedIncrByCalls int
 		description         string
 	}{
 		{
-			name: "all slots succeed",
+			name: "all operations succeed",
 			eventCounts: map[string]int64{
-				"ec:{slotA}:key1": 10,
-				"ec:{slotB}:key2": 20,
+				"ec:hour1:feature1:varA:env1": 10,
+				"ec:hour1:feature2:varB:env1": 20,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:{slotA}:key1": {"user1": {}},
-				"uc:{slotB}:key2": {"user2": {}},
+				"uc:hour1:feature1:varA:env1": {"user1": {}},
+				"uc:hour1:feature2:varB:env1": {"user2": {}},
 			},
-			failOnSlots:         nil,
-			expectedFailedSlots: 0,
+			shouldFailPFAdd:     false,
+			shouldFailIncrBy:    false,
 			expectedSuccess:     true,
-			description:         "No failures, all slots flush successfully",
+			expectedPFAddCalls:  2,
+			expectedIncrByCalls: 2,
+			description:         "No failures, all operations complete",
 		},
 		{
-			name: "one slot fails, others succeed",
+			name: "PFADD fails - INCRBY never executes (no over-count on retry)",
 			eventCounts: map[string]int64{
-				"ec:{slotA}:key1": 10,
-				"ec:{slotB}:key2": 20,
-				"ec:{slotC}:key3": 30,
+				"ec:hour1:feature1:varA:env1": 10,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:{slotA}:key1": {"user1": {}},
-				"uc:{slotB}:key2": {"user2": {}},
-				"uc:{slotC}:key3": {"user3": {}},
+				"uc:hour1:feature1:varA:env1": {"user1": {}},
 			},
-			failOnSlots: map[int]bool{
-				redisv3.KeyHashSlot("slotB"): true, // Fail slotB
-			},
-			expectedFailedSlots: 1,
+			shouldFailPFAdd:     true,
+			shouldFailIncrBy:    false,
 			expectedSuccess:     false,
-			description:         "SlotB fails, but slotA and slotC succeed",
+			expectedPFAddCalls:  1,
+			expectedIncrByCalls: 0, // INCRBY never called because PFADD failed
+			description: "PFADD failure prevents INCRBY execution; " +
+				"retry is safe",
 		},
 		{
-			name: "multiple slots fail",
+			name: "INCRBY fails after PFADD succeeds (safe retry due to idempotency)",
 			eventCounts: map[string]int64{
-				"ec:{slotA}:key1": 10,
-				"ec:{slotB}:key2": 20,
-				"ec:{slotC}:key3": 30,
-				"ec:{slotD}:key4": 40,
+				"ec:hour1:feature1:varA:env1": 10,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:{slotA}:key1": {"user1": {}},
-				"uc:{slotB}:key2": {"user2": {}},
-				"uc:{slotC}:key3": {"user3": {}},
-				"uc:{slotD}:key4": {"user4": {}},
+				"uc:hour1:feature1:varA:env1": {"user1": {}},
 			},
-			failOnSlots: map[int]bool{
-				redisv3.KeyHashSlot("slotB"): true,
-				redisv3.KeyHashSlot("slotD"): true,
-			},
-			expectedFailedSlots: 2,
+			shouldFailPFAdd:     false,
+			shouldFailIncrBy:    true,
 			expectedSuccess:     false,
-			description:         "SlotB and slotD fail, slotA and slotC succeed",
-		},
-		{
-			name: "all slots fail",
-			eventCounts: map[string]int64{
-				"ec:{slotA}:key1": 10,
-				"ec:{slotB}:key2": 20,
-			},
-			userCounts: map[string]map[string]struct{}{
-				"uc:{slotA}:key1": {"user1": {}},
-				"uc:{slotB}:key2": {"user2": {}},
-			},
-			failOnSlots: map[int]bool{
-				redisv3.KeyHashSlot("slotA"): true,
-				redisv3.KeyHashSlot("slotB"): true,
-			},
-			expectedFailedSlots: 2,
-			expectedSuccess:     false,
-			description:         "All slots fail",
+			expectedPFAddCalls:  1,
+			expectedIncrByCalls: 1, // INCRBY attempted but failed
+			description: "INCRBY fails but PFADD succeeded; " +
+				"retry safe (PFADD idempotent)",
 		},
 		{
 			name:                "empty data succeeds",
 			eventCounts:         map[string]int64{},
 			userCounts:          map[string]map[string]struct{}{},
-			failOnSlots:         nil,
-			expectedFailedSlots: 0,
+			shouldFailPFAdd:     false,
+			shouldFailIncrBy:    false,
 			expectedSuccess:     true,
-			description:         "Empty flush succeeds without creating pipelines",
+			expectedPFAddCalls:  0,
+			expectedIncrByCalls: 0,
+			description:         "Empty flush succeeds without any calls",
 		},
 	}
 
@@ -1245,7 +1194,8 @@ func TestFlushAggregatedCounts_GranularRetry(t *testing.T) {
 			t.Parallel()
 
 			mockCache := &mockEvaluationCountCache{
-				failOnSlots: tt.failOnSlots,
+				shouldFailPFAdd:  tt.shouldFailPFAdd,
+				shouldFailIncrBy: tt.shouldFailIncrBy,
 			}
 			persister := &evaluationCountEventPersister{
 				evaluationCountCacher: mockCache,
@@ -1253,37 +1203,41 @@ func TestFlushAggregatedCounts_GranularRetry(t *testing.T) {
 			}
 
 			// Execute flush
-			failedSlots, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
 
 			// Verify success/failure
 			if tt.expectedSuccess {
 				assert.NoError(t, err, tt.description)
-				assert.Nil(t, failedSlots, "no slots should fail")
 			} else {
 				assert.Error(t, err, tt.description)
-				assert.NotNil(t, failedSlots, "failed slots should be returned")
-				assert.Equal(t, tt.expectedFailedSlots, len(failedSlots),
-					"number of failed slots should match expected: %s", tt.description)
 			}
 
-			// Verify only successful slots had their data persisted
-			if !tt.expectedSuccess && len(tt.failOnSlots) > 0 {
-				for key := range mockCache.lastEventCounts {
-					slot := redisv3.KeyHashSlot(key)
-					assert.False(t, tt.failOnSlots[slot],
-						"key %s from failed slot %d should not be persisted", key, slot)
-				}
-				for key := range mockCache.lastUserCounts {
-					slot := redisv3.KeyHashSlot(key)
-					assert.False(t, tt.failOnSlots[slot],
-						"user count key %s from failed slot %d should not be persisted", key, slot)
+			// Verify call counts match expectations
+			assert.Equal(t, tt.expectedPFAddCalls, mockCache.pfaddCallCount,
+				"PFAdd call count: %s", tt.description)
+			assert.Equal(t, tt.expectedIncrByCalls, mockCache.execCount,
+				"IncrBy call count: %s", tt.description)
+
+			// Verify PFADD-before-INCRBY ordering when both are called
+			if tt.expectedPFAddCalls > 0 && tt.expectedIncrByCalls > 0 {
+				pfaddFound := false
+				for _, call := range mockCache.incrbyCallOrder {
+					if strings.HasPrefix(call, "PFADD:") {
+						pfaddFound = true
+					}
+					if strings.HasPrefix(call, "INCRBY:") {
+						// If we find INCRBY, PFADD must have been found first
+						assert.True(t, pfaddFound,
+							"PFADD must be called before INCRBY")
+						break
+					}
 				}
 			}
 		})
 	}
 }
 
-func TestIncrementEnvEvents_GranularRetry(t *testing.T) {
+func TestIncrementEnvEvents_Retry(t *testing.T) {
 	t.Parallel()
 
 	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
@@ -1291,42 +1245,12 @@ func TestIncrementEnvEvents_GranularRetry(t *testing.T) {
 	tests := []struct {
 		name              string
 		envEvents         environmentEventMap
-		failOnSlots       map[int]bool
-		expectedFailCount int  // Number of events expected to fail
-		expectAllFailed   bool // Whether all events should fail
+		shouldFail        bool
+		expectedFailCount int
 		description       string
 	}{
 		{
-			name: "partial slot failure - only events in failed slot are retried",
-			envEvents: environmentEventMap{
-				"env-1": eventMap{
-					"event-slotA-1": &eventproto.EvaluationEvent{
-						FeatureId:      "feature-A",
-						VariationId:    "variation-A",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
-						UserId:         "user-A1",
-						User:           &userproto.User{Id: "user-A1"},
-						Timestamp:      hour1,
-						FeatureVersion: 1,
-					},
-					"event-slotB-1": &eventproto.EvaluationEvent{
-						FeatureId:      "feature-B",
-						VariationId:    "variation-B",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
-						UserId:         "user-B1",
-						User:           &userproto.User{Id: "user-B1"},
-						Timestamp:      hour1,
-						FeatureVersion: 1,
-					},
-				},
-			},
-			failOnSlots: nil, // Will be calculated dynamically based on feature-B's slot
-			// expectedFailCount will be calculated in test
-			expectAllFailed: false,
-			description:     "Only events mapping to failed slot should be marked for retry",
-		},
-		{
-			name: "all slots fail - all events retry",
+			name: "all events succeed",
 			envEvents: environmentEventMap{
 				"env-1": eventMap{
 					"event-1": &eventproto.EvaluationEvent{
@@ -1349,10 +1273,37 @@ func TestIncrementEnvEvents_GranularRetry(t *testing.T) {
 					},
 				},
 			},
-			failOnSlots:       map[int]bool{}, // Will fail all slots
+			shouldFail:        false,
+			expectedFailCount: 0,
+			description:       "All events succeed, no failures",
+		},
+		{
+			name: "flush failure causes all events to retry",
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-1",
+						VariationId:    "variation-A",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-1",
+						User:           &userproto.User{Id: "user-1"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						FeatureId:      "feature-2",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+						UserId:         "user-2",
+						User:           &userproto.User{Id: "user-2"},
+						Timestamp:      hour1,
+						FeatureVersion: 1,
+					},
+				},
+			},
+			shouldFail:        true,
 			expectedFailCount: 2,
-			expectAllFailed:   true,
-			description:       "All events should be marked for retry when all slots fail",
+			description:       "All events marked for retry on flush failure",
 		},
 	}
 
@@ -1361,33 +1312,8 @@ func TestIncrementEnvEvents_GranularRetry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			// For the partial failure test, calculate which slot to fail
-			var failOnSlots map[int]bool
-			if tt.name == "partial slot failure - only events in failed slot are retried" {
-				// Calculate the slot for feature-B
-				persisterTemp := &evaluationCountEventPersister{}
-				ecKeyB := persisterTemp.newEvaluationCountkeyV2(eventCountKey, "feature-B", "variation-B", "env-1", hour1)
-				slotB := redisv3.KeyHashSlot(ecKeyB)
-				failOnSlots = map[int]bool{slotB: true}
-			} else if tt.expectAllFailed {
-				// Calculate all slots for this test
-				persisterTemp := &evaluationCountEventPersister{}
-				failOnSlots = make(map[int]bool)
-				for _, events := range tt.envEvents {
-					for _, e := range events {
-						vID, _ := getVariationID(e.Reason, e.VariationId)
-						ecKey := persisterTemp.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, "env-1", e.Timestamp)
-						ucKey := persisterTemp.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, "env-1", e.Timestamp)
-						failOnSlots[redisv3.KeyHashSlot(ecKey)] = true
-						failOnSlots[redisv3.KeyHashSlot(ucKey)] = true
-					}
-				}
-			} else {
-				failOnSlots = tt.failOnSlots
-			}
-
 			mockCache := &mockEvaluationCountCache{
-				failOnSlots: failOnSlots,
+				shouldFailFlush: tt.shouldFail,
 			}
 			persister := &evaluationCountEventPersister{
 				evaluationCountCacher: mockCache,
@@ -1398,26 +1324,22 @@ func TestIncrementEnvEvents_GranularRetry(t *testing.T) {
 			fails := persister.incrementEnvEvents(tt.envEvents)
 
 			// Verify
-			if tt.expectAllFailed {
-				assert.Equal(t, tt.expectedFailCount, len(fails), tt.description)
-				// All events should be marked as failed (repeatable)
+			assert.Equal(t, tt.expectedFailCount, len(fails), tt.description)
+			if tt.expectedFailCount > 0 {
+				// All failed events should be repeatable
 				for _, repeatable := range fails {
 					assert.True(t, repeatable, "all failed events should be repeatable")
 				}
-			} else {
-				// For partial failures, verify only events in failed slots are marked
-				assert.Greater(t, len(fails), 0, "some events should fail")
-				assert.Less(t, len(fails), len(tt.envEvents["env-1"]), "not all events should fail")
-
-				// Verify that event-slotB-1 failed and event-slotA-1 succeeded
-				if fails["event-slotB-1"] {
-					assert.True(t, fails["event-slotB-1"], "event in failed slot should be marked for retry")
-				}
-				_, eventA1Failed := fails["event-slotA-1"]
-				assert.False(t, eventA1Failed, "event in successful slot should not be marked for retry")
 			}
 		})
 	}
+}
+
+// pfaddCall records a PFAdd call for verification
+type pfaddCall struct {
+	key string
+	els []string
+	err error
 }
 
 // mockEvaluationCountCache mocks the cache interface for testing
@@ -1427,10 +1349,14 @@ type mockEvaluationCountCache struct {
 	lastEventCounts  map[string]int64
 	lastUserCounts   map[string]map[string]struct{}
 	shouldFailFlush  bool
-	failOnSlots      map[int]bool // Specific slots to fail on
+	shouldFailPFAdd  bool // Simulates PFADD failure
+	shouldFailIncrBy bool // Simulates INCRBY failure
 	pipelineExecuted bool
 	pipelineCount    int // Number of pipelines created
 	execCount        int // Number of times Exec() was called
+	pfaddCallCount   int // Number of direct PFAdd calls
+	pfaddCalls       []pfaddCall
+	incrbyCallOrder  []string // Track order of operations
 }
 
 func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
@@ -1445,7 +1371,6 @@ func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
 		eventCounts:    make(map[string]int64),
 		userCounts:     make(map[string][]string),
 		shouldFailExec: m.shouldFailFlush,
-		failOnSlots:    m.failOnSlots,
 	}
 }
 
@@ -1469,8 +1394,61 @@ func (m *mockEvaluationCountCache) Delete(key string) error { return nil }
 
 // Counter interface methods
 func (m *mockEvaluationCountCache) Increment(key string) (int64, error) { return 0, nil }
+
+func (m *mockEvaluationCountCache) IncrementBy(key string, value int64) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.flushCalled = true // Mark that flush operations are happening
+	m.execCount++        // Track as a call (similar to pipeline Exec)
+	m.incrbyCallOrder = append(m.incrbyCallOrder, "INCRBY:"+key)
+
+	if m.shouldFailIncrBy || m.shouldFailFlush {
+		return 0, assert.AnError
+	}
+
+	// Initialize event counts map
+	if m.lastEventCounts == nil {
+		m.lastEventCounts = make(map[string]int64)
+	}
+
+	// Increment event count
+	m.lastEventCounts[key] += value
+
+	return m.lastEventCounts[key], nil
+}
+
 func (m *mockEvaluationCountCache) PFAdd(key string, els ...string) (int64, error) {
-	return 0, nil
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.flushCalled = true // Mark that flush operations are happening
+	m.pfaddCallCount++
+	m.incrbyCallOrder = append(m.incrbyCallOrder, "PFADD:"+key)
+
+	if m.shouldFailPFAdd || m.shouldFailFlush {
+		err := assert.AnError
+		m.pfaddCalls = append(m.pfaddCalls, pfaddCall{key: key, els: els, err: err})
+		return 0, err
+	}
+
+	// Record successful call
+	m.pfaddCalls = append(m.pfaddCalls, pfaddCall{key: key, els: els, err: nil})
+
+	// Initialize user counts map
+	if m.lastUserCounts == nil {
+		m.lastUserCounts = make(map[string]map[string]struct{})
+	}
+	if m.lastUserCounts[key] == nil {
+		m.lastUserCounts[key] = make(map[string]struct{})
+	}
+
+	// Add users (simulating HyperLogLog idempotency)
+	for _, user := range els {
+		m.lastUserCounts[key][user] = struct{}{}
+	}
+
+	return int64(len(els)), nil
 }
 
 // PFGetter interface methods
@@ -1493,12 +1471,17 @@ type mockPipeClient struct {
 	eventCounts    map[string]int64
 	userCounts     map[string][]string
 	shouldFailExec bool
-	failOnSlots    map[int]bool // Specific slots to fail on
 }
 
 func (m *mockPipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
 	m.commands = append(m.commands, "INCRBY")
 	m.eventCounts[key] = value
+
+	// Record order in parent cache
+	m.cache.mu.Lock()
+	m.cache.incrbyCallOrder = append(m.cache.incrbyCallOrder, "INCRBY:"+key)
+	m.cache.mu.Unlock()
+
 	return goredis.NewIntCmd(context.Background())
 }
 
@@ -1516,58 +1499,33 @@ func (m *mockPipeClient) Exec() ([]goredis.Cmder, error) {
 	m.cache.pipelineExecuted = true
 	m.cache.execCount++
 
-	// Check if this pipeline should fail based on slot-specific failures
-	shouldFail := m.shouldFailExec
-	if !shouldFail && len(m.failOnSlots) > 0 {
-		// Check if any key in this pipeline belongs to a failed slot
-		for key := range m.eventCounts {
-			slot := redisv3.KeyHashSlot(key)
-			if m.failOnSlots[slot] {
-				shouldFail = true
-				break
-			}
+	// Check if this pipeline should fail
+	if m.shouldFailExec {
+		return nil, assert.AnError
+	}
+
+	// Check if IncrBy should fail (only if this pipeline contains INCRBY)
+	hasIncrBy := false
+	for _, cmd := range m.commands {
+		if cmd == "INCRBY" {
+			hasIncrBy = true
+			break
 		}
-		if !shouldFail {
-			for key := range m.userCounts {
-				slot := redisv3.KeyHashSlot(key)
-				if m.failOnSlots[slot] {
-					shouldFail = true
-					break
-				}
-			}
-		}
+	}
+	if hasIncrBy && m.cache.shouldFailIncrBy {
+		return nil, assert.AnError
 	}
 
 	// For successful pipelines, accumulate the data
-	if !shouldFail {
-		// Accumulate across multiple pipeline calls (one per slot)
-		if m.cache.lastEventCounts == nil {
-			m.cache.lastEventCounts = make(map[string]int64)
-		}
-		if m.cache.lastUserCounts == nil {
-			m.cache.lastUserCounts = make(map[string]map[string]struct{})
-		}
-
-		// Merge event counts
-		for key, count := range m.eventCounts {
-			m.cache.lastEventCounts[key] += count
-		}
-
-		// Merge user counts
-		for key, users := range m.userCounts {
-			if m.cache.lastUserCounts[key] == nil {
-				m.cache.lastUserCounts[key] = make(map[string]struct{})
-			}
-			for _, user := range users {
-				m.cache.lastUserCounts[key][user] = struct{}{}
-			}
-		}
+	if m.cache.lastEventCounts == nil {
+		m.cache.lastEventCounts = make(map[string]int64)
 	}
 
-	// Return error if this slot should fail
-	if shouldFail {
-		return nil, assert.AnError
+	// Merge event counts (only for INCRBY commands)
+	for key, count := range m.eventCounts {
+		m.cache.lastEventCounts[key] += count
 	}
+
 	return nil, nil
 }
 

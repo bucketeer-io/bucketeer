@@ -33,7 +33,6 @@ import (
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
-	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -206,21 +205,16 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	fails := make(map[string]bool, len(envEvents))
 	aggregator := newEvaluationCountAggregator()
 
-	// Track which events belong to which slots (for granular retry on slot failure)
-	eventIDsBySlot := make(map[int][]string) // slot -> event IDs
-	keyToSlot := make(map[string]int)        // Redis key -> slot
-
 	// Track event metadata for Prometheus metrics (only incremented after successful flush)
 	type eventMetrics struct {
 		environmentId string
-		sdkVersion    string
+		sourceId      string
 		featureId     string
-		appVersion    string
 		variationId   string
 	}
 	var metricsToIncrement []eventMetrics
 
-	// Accumulate all events in memory and track slot mappings
+	// Accumulate all events in memory
 	for environmentId, events := range envEvents {
 		for id, e := range events {
 			vID, err := getVariationID(e.Reason, e.VariationId)
@@ -238,18 +232,6 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 			userID := getUserID(e.UserId, e.User)
 
-			// Track which slots these keys belong to
-			ecSlot := redisv3.KeyHashSlot(ecKey)
-			ucSlot := redisv3.KeyHashSlot(ucKey)
-			keyToSlot[ecKey] = ecSlot
-			keyToSlot[ucKey] = ucSlot
-
-			// Map event ID to slots (event may span multiple slots if ec/uc hash differently)
-			eventIDsBySlot[ecSlot] = append(eventIDsBySlot[ecSlot], id)
-			if ucSlot != ecSlot {
-				eventIDsBySlot[ucSlot] = append(eventIDsBySlot[ucSlot], id)
-			}
-
 			// Accumulate in aggregator (deduplicates automatically)
 			aggregator.addEvent(ecKey, ucKey, userID)
 
@@ -257,9 +239,8 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			// Use vID (not e.VariationId) to align with Redis aggregation keys
 			metricsToIncrement = append(metricsToIncrement, eventMetrics{
 				environmentId: environmentId,
-				sdkVersion:    e.SdkVersion,
+				sourceId:      string(e.SourceId),
 				featureId:     e.FeatureId,
-				appVersion:    e.Metadata[appVersion],
 				variationId:   vID, // Use processed vID (maps error reasons to "default")
 			})
 
@@ -268,28 +249,17 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 				ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
 				ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
 
-				// Track target environment slots
-				ecSlotTarget := redisv3.KeyHashSlot(ecKeyTarget)
-				ucSlotTarget := redisv3.KeyHashSlot(ucKeyTarget)
-				keyToSlot[ecKeyTarget] = ecSlotTarget
-				keyToSlot[ucKeyTarget] = ucSlotTarget
-				eventIDsBySlot[ecSlotTarget] = append(eventIDsBySlot[ecSlotTarget], id)
-				if ucSlotTarget != ecSlotTarget {
-					eventIDsBySlot[ucSlotTarget] = append(eventIDsBySlot[ucSlotTarget], id)
-				}
-
 				aggregator.addEvent(ecKeyTarget, ucKeyTarget, userID)
 			}
 		}
 	}
 
-	// Flush all accumulated counts to Redis in batches by slot
+	// Flush all accumulated counts to Redis with individual calls
 	eventCounts, userCounts := aggregator.flush()
-	failedSlots, err := p.flushAggregatedCounts(eventCounts, userCounts)
+	err := p.flushAggregatedCounts(eventCounts, userCounts)
 
-	if err != nil && len(failedSlots) == 0 {
-		// Critical error before any slot execution (e.g., can't group by slot)
-		// Mark all events as failed
+	if err != nil {
+		// Mark all events as failed for retry
 		for _, events := range envEvents {
 			for id := range events {
 				if _, alreadyFailed := fails[id]; !alreadyFailed {
@@ -300,26 +270,12 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 		return fails
 	}
 
-	// Map failed slots back to event IDs (granular retry)
-	if len(failedSlots) > 0 {
-		for slot := range failedSlots {
-			for _, eventID := range eventIDsBySlot[slot] {
-				if _, alreadyFailed := fails[eventID]; !alreadyFailed {
-					fails[eventID] = true // Repeatable error - will Nack for retry
-				}
-			}
-		}
-		// Don't increment Prometheus metrics for failed events
-		return fails
-	}
-
 	// Update Prometheus metrics only after successful Redis persistence
 	for _, m := range metricsToIncrement {
 		evaluationEventCounter.WithLabelValues(
 			m.environmentId,
-			m.sdkVersion,
+			m.sourceId,
 			m.featureId,
-			m.appVersion,
 			m.variationId,
 		).Inc()
 	}
@@ -413,102 +369,16 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-// flushAggregatedCounts writes all aggregated counts to Redis grouped by hash slot.
-// Groups commands by Redis Cluster hash slot and executes each group in a separate
-// MULTI/EXEC transaction to avoid CROSSSLOT errors while maintaining atomicity per slot.
+// flushAggregatedCounts writes aggregated counts to Redis using individual calls
+// with PFADD-before-INCRBY ordering to prevent over-counting on retry.
 //
-// Returns:
-// - failedSlots: map of slots that failed to flush (for granular retry)
-// - error: non-nil if any slot failed or if there's a critical error
+// Why not pipelines? pipeline.Exec() doesn't reveal which command failed, making
+// safe retry impossible. With individual calls, we know exactly what failed.
 //
-// Redis MULTI/EXEC provides:
-// - Atomicity: Commands in a transaction execute sequentially without interleaving once EXEC runs
-// - No rollback: Failed commands don't rollback others (not like SQL transactions)
-//
-// Granular retry: Only events in failed slots are retried, preventing over-counting.
+// Retry safety:
+// - PFADD fails → INCRBY never runs → retry both safely
+// - INCRBY fails → PFADD already done (idempotent) → retry safe
 func (p *evaluationCountEventPersister) flushAggregatedCounts(
-	eventCounts map[string]int64,
-	userCounts map[string]map[string]struct{},
-) (map[int]bool, error) {
-	if len(eventCounts) == 0 && len(userCounts) == 0 {
-		return nil, nil
-	}
-
-	// Group commands by hash slot for Redis Cluster compatibility
-	type slotCommands struct {
-		eventCounts map[string]int64
-		userCounts  map[string]map[string]struct{}
-	}
-	slotGroups := make(map[int]*slotCommands)
-
-	// Group event counts by slot
-	for key, count := range eventCounts {
-		slot := redisv3.KeyHashSlot(key)
-		if slotGroups[slot] == nil {
-			slotGroups[slot] = &slotCommands{
-				eventCounts: make(map[string]int64),
-				userCounts:  make(map[string]map[string]struct{}),
-			}
-		}
-		slotGroups[slot].eventCounts[key] = count
-	}
-
-	// Group user counts by slot
-	for key, users := range userCounts {
-		slot := redisv3.KeyHashSlot(key)
-		if slotGroups[slot] == nil {
-			slotGroups[slot] = &slotCommands{
-				eventCounts: make(map[string]int64),
-				userCounts:  make(map[string]map[string]struct{}),
-			}
-		}
-		slotGroups[slot].userCounts[key] = users
-	}
-
-	// Execute one transactional pipeline per slot, tracking failures
-	failedSlots := make(map[int]bool)
-	totalEventKeys := 0
-	totalUserKeys := 0
-	var firstError error
-
-	for slot, commands := range slotGroups {
-		if err := p.flushSlot(slot, commands.eventCounts, commands.userCounts); err != nil {
-			failedSlots[slot] = true
-			if firstError == nil {
-				firstError = err
-			}
-			p.logger.Warn("Failed to flush slot",
-				zap.Int("slot", slot),
-				zap.Error(err),
-			)
-			// Continue to attempt other slots instead of returning immediately
-			continue
-		}
-		totalEventKeys += len(commands.eventCounts)
-		totalUserKeys += len(commands.userCounts)
-	}
-
-	if len(failedSlots) > 0 {
-		p.logger.Error("Failed to flush some slots",
-			zap.Int("failedSlots", len(failedSlots)),
-			zap.Int("totalSlots", len(slotGroups)),
-			zap.Error(firstError),
-		)
-		return failedSlots, firstError
-	}
-
-	p.logger.Debug("Flushed aggregated counts to Redis",
-		zap.Int("eventCountKeys", totalEventKeys),
-		zap.Int("userCountKeys", totalUserKeys),
-		zap.Int("slots", len(slotGroups)),
-	)
-
-	return nil, nil
-}
-
-// flushSlot executes a MULTI/EXEC transaction for a single hash slot
-func (p *evaluationCountEventPersister) flushSlot(
-	slot int,
 	eventCounts map[string]int64,
 	userCounts map[string]map[string]struct{},
 ) error {
@@ -516,38 +386,93 @@ func (p *evaluationCountEventPersister) flushSlot(
 		return nil
 	}
 
-	// Create a transactional pipeline (MULTI/EXEC) for this slot
-	pipeline := p.evaluationCountCacher.Pipeline(true)
-
-	// Batch all INCRBY commands for this slot
-	for key, count := range eventCounts {
-		pipeline.IncrBy(key, count)
+	// Match up ec and uc keys by extracting the common suffix
+	// Keys are formatted as: "ec:timestamp:featureID:variationID:environmentID"
+	// or "uc:timestamp:featureID:variationID:environmentID"
+	type keyPair struct {
+		ecKey    string
+		ecCount  int64
+		ucKey    string
+		ucUsers  []string
+		hasUsers bool
 	}
 
-	// Batch all PFADD commands for this slot
-	for key, userIDSet := range userCounts {
+	// Extract suffix (everything after "ec:" or "uc:")
+	keyPairs := make(map[string]*keyPair)
+
+	for ecKey, count := range eventCounts {
+		suffix := strings.TrimPrefix(ecKey, eventCountKey+":")
+		if pair, exists := keyPairs[suffix]; exists {
+			pair.ecKey = ecKey
+			pair.ecCount = count
+		} else {
+			keyPairs[suffix] = &keyPair{
+				ecKey:   ecKey,
+				ecCount: count,
+			}
+		}
+	}
+
+	for ucKey, userIDSet := range userCounts {
+		suffix := strings.TrimPrefix(ucKey, userCountKey+":")
 		userIDs := make([]string, 0, len(userIDSet))
 		for userID := range userIDSet {
 			userIDs = append(userIDs, userID)
 		}
-		if len(userIDs) > 0 {
-			pipeline.PFAdd(key, userIDs...)
+
+		if pair, exists := keyPairs[suffix]; exists {
+			pair.ucKey = ucKey
+			pair.ucUsers = userIDs
+			pair.hasUsers = len(userIDs) > 0
+		} else {
+			keyPairs[suffix] = &keyPair{
+				ucKey:    ucKey,
+				ucUsers:  userIDs,
+				hasUsers: len(userIDs) > 0,
+			}
 		}
 	}
 
-	// Execute transaction for this slot
-	_, err := pipeline.Exec()
-	if err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Error("Failed to flush slot to Redis",
-				zap.Error(err),
-				zap.Int("slot", slot),
-				zap.Int("eventCountKeys", len(eventCounts)),
-				zap.Int("userCountKeys", len(userCounts)),
-			)
+	// Execute with PFADD-first ordering: PFADD is idempotent, so INCRBY only
+	// runs if PFADD succeeds. This prevents over-counting on retry.
+	for _, pair := range keyPairs {
+		// Step 1: PFADD first (idempotent - safe to retry)
+		if pair.hasUsers && pair.ucKey != "" {
+			_, err := p.evaluationCountCacher.PFAdd(pair.ucKey, pair.ucUsers...)
+			if err != nil {
+				if !strings.Contains(err.Error(), "client is closed") {
+					p.logger.Error("Failed to add users to HyperLogLog",
+						zap.Error(err),
+						zap.String("ucKey", pair.ucKey),
+					)
+				}
+				// PFADD failed - don't execute INCRBY
+				// On retry, both PFADD and INCRBY will execute (no over-count)
+				return err
+			}
 		}
-		return err
+
+		// Step 2: INCRBY only if PFADD succeeded
+		if pair.ecKey != "" {
+			_, err := p.evaluationCountCacher.IncrementBy(pair.ecKey, pair.ecCount)
+			if err != nil {
+				if !strings.Contains(err.Error(), "client is closed") {
+					p.logger.Error("Failed to increment event count",
+						zap.Error(err),
+						zap.String("ecKey", pair.ecKey),
+						zap.Int64("count", pair.ecCount),
+					)
+				}
+				// INCRBY failed but PFADD already succeeded (idempotent)
+				// On retry, PFADD is safe (no change), INCRBY executes once
+				return err
+			}
+		}
 	}
+
+	p.logger.Debug("Flushed aggregated counts to Redis",
+		zap.Int("keyPairs", len(keyPairs)),
+	)
 
 	return nil
 }
