@@ -7,6 +7,7 @@ import {
   useState
 } from 'react';
 import type { ChatErrorCode } from '@api/ai-chat';
+import Markdown from 'react-markdown';
 import { useTranslation } from 'i18n';
 import { AIChatMessage, Suggestion } from '@types';
 import { cn } from 'utils/style';
@@ -154,18 +155,24 @@ const ChatPopover = memo(
                       : 'mr-auto bg-gray-100 text-gray-700'
                   )}
                 >
-                  <p className="typo-para-small whitespace-pre-wrap">
-                    {msg.content ||
-                      (isStreaming &&
-                      msg.role === 'assistant' &&
-                      msg === messages[messages.length - 1] ? (
+                  {msg.role === 'user' ? (
+                    <p className="typo-para-small whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
+                  ) : msg.content ? (
+                    <div className="typo-para-small prose-sm prose-gray max-w-none [&_a]:text-primary-500 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4 [&_p]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:my-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:my-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:my-1 [&_code]:rounded [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:text-xs [&_pre]:rounded [&_pre]:bg-gray-200 [&_pre]:p-2 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2 [&_blockquote]:italic">
+                      <Markdown>{msg.content}</Markdown>
+                    </div>
+                  ) : (
+                    isStreaming &&
+                    msg === messages[messages.length - 1] && (
+                      <p className="typo-para-small">
                         <span className="animate-pulse motion-reduce:animate-none">
                           {t('ai-chat:thinking')}
                         </span>
-                      ) : (
-                        ''
-                      ))}
-                  </p>
+                      </p>
+                    )
+                  )}
                 </div>
               ))}
               <div ref={bottomRef} />
