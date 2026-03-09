@@ -14,40 +14,7 @@
 
 package v3
 
-const (
-	RedisClusterSlots = 16384
-)
-
-// crc16 calculates the CRC16 checksum using the Redis algorithm
-func crc16(data []byte) uint16 {
-	crc := uint16(0)
-	for _, b := range data {
-		crc = (crc << 8) ^ crc16tab[((crc>>8)^uint16(b))&0x00FF]
-	}
-	return crc
-}
-
-// keyHashSlot calculates the hash slot for a given key
-func keyHashSlot(key string) int {
-	// Find start and end of {...} if it exists
-	start, end := -1, -1
-	for i := 0; i < len(key); i++ {
-		if key[i] == '{' && start == -1 {
-			start = i
-		} else if key[i] == '}' && start >= 0 {
-			end = i
-			break
-		}
-	}
-
-	// If {...} is found, use only the part between braces
-	if start >= 0 && end > start {
-		key = key[start+1 : end]
-	}
-
-	// Calculate CRC16 and return the slot
-	return int(crc16([]byte(key)) % RedisClusterSlots)
-}
+const RedisClusterSlots = 16384
 
 // crc16tab is a precomputed table for CRC16 calculation
 var crc16tab = [256]uint16{
@@ -83,4 +50,49 @@ var crc16tab = [256]uint16{
 	0x7c26, 0x6c07, 0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1,
 	0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8,
 	0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
+}
+
+// KeyHashSlot returns the Redis Cluster hash slot for key.
+// It follows Redis's hash tag rules:
+//
+//  1. Find the first '{'.
+//  2. Find the first '}' after that '{'.
+//  3. If there is at least one byte between them, hash only that substring.
+//  4. Otherwise, hash the whole key.
+func KeyHashSlot(key string) int {
+	k := []byte(key)
+
+	for s := 0; s < len(k); s++ {
+		if k[s] != '{' {
+			continue
+		}
+
+		for e := s + 1; e < len(k); e++ {
+			if k[e] != '}' {
+				continue
+			}
+
+			// Non-empty hash tag: use bytes between { and }.
+			if e > s+1 {
+				return int(crc16(k[s+1:e]) % RedisClusterSlots)
+			}
+
+			// "{}" => invalid hash tag, hash whole key.
+			break
+		}
+
+		// Found '{' but no valid non-empty {...} pair.
+		break
+	}
+
+	return int(crc16(k) % RedisClusterSlots)
+}
+
+// crc16 calculates the CRC16 checksum using the Redis algorithm.
+func crc16(data []byte) uint16 {
+	crc := uint16(0)
+	for _, b := range data {
+		crc = (crc << 8) ^ crc16tab[((crc>>8)^uint16(b))&0x00FF]
+	}
+	return crc
 }
