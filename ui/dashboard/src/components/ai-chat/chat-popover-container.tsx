@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuerySuggestions } from '@queries/suggestions';
+import { useTranslation } from 'i18n';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import ChatPopover from './chat-popover';
 import { usePageContext } from './use-page-context';
@@ -10,6 +11,7 @@ interface ChatPopoverContainerProps {
 }
 
 const ChatPopoverContainer = ({ onClose }: ChatPopoverContainerProps) => {
+  const { i18n } = useTranslation(['ai-chat']);
   const pageContext = usePageContext();
   const environmentId = getCurrentEnvIdStorage() || '';
 
@@ -27,16 +29,29 @@ const ChatPopoverContainer = ({ onClose }: ChatPopoverContainerProps) => {
   }, [pageContext.featureId]);
 
   const effectivePageContext = useMemo(
-    () =>
-      isFeaturePage
+    () => ({
+      ...(isFeaturePage
         ? { ...pageContext, featureId: selectedFlagId }
-        : pageContext,
-    [pageContext, selectedFlagId, isFeaturePage]
+        : pageContext),
+      metadata: {
+        ...pageContext.metadata,
+        language: i18n.language
+      }
+    }),
+    [pageContext, selectedFlagId, isFeaturePage, i18n.language]
   );
 
+  // Exclude metadata from suggestions params to avoid unnecessary re-fetches
+  // on language change (suggestions are localized on the frontend via i18n)
   const suggestionsParams = useMemo(
-    () => ({ environmentId, pageContext: effectivePageContext }),
-    [environmentId, effectivePageContext]
+    () => ({
+      environmentId,
+      pageContext: {
+        pageType: effectivePageContext.pageType,
+        featureId: effectivePageContext.featureId
+      }
+    }),
+    [environmentId, effectivePageContext.pageType, effectivePageContext.featureId]
   );
 
   const { data } = useQuerySuggestions({

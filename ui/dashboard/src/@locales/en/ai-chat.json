@@ -19,6 +19,40 @@
     "placeholder": "Select a feature flag",
     "search-placeholder": "Search flags..."
   },
+  "suggestions": {
+    "sug-ff-001": {
+      "title": "Organize flags with tags",
+      "description": "Tags help organize flags and optimize SDK performance by fetching only needed flags."
+    },
+    "sug-ff-002": {
+      "title": "Archive unused flags",
+      "description": "Flags that have been fully rolled out or unused for a long time should be archived to reduce flag debt."
+    },
+    "sug-tgt-001": {
+      "title": "Simplify with Segments",
+      "description": "If you use the same targeting conditions across multiple flags, create a Segment to reuse them."
+    },
+    "sug-tgt-002": {
+      "title": "Use Prerequisite Rules",
+      "description": "Set up dependencies between flags to coordinate feature releases across microservices."
+    },
+    "sug-exp-001": {
+      "title": "Set up Goals first",
+      "description": "Define what you want to measure before starting an experiment. Goals track user actions for statistical analysis."
+    },
+    "sug-ao-001": {
+      "title": "Try Progressive Rollout",
+      "description": "Gradually increase the percentage of users seeing a feature to minimize risk during deployment."
+    },
+    "sug-ao-002": {
+      "title": "Automate with Flag Triggers",
+      "description": "Use webhooks to control flags from CI/CD pipelines or external monitoring systems."
+    },
+    "sug-gen-001": {
+      "title": "Explore Bucketeer's features",
+      "description": "Bucketeer offers feature flags, A/B testing, segments, progressive rollout, and more."
+    }
+  },
   "errors": {
     "not-authenticated": "You are not authenticated. Please log in.",
     "rate-limit": "Rate limit exceeded. Please try again later.",

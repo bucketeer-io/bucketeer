@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'i18n';
 import { Suggestion } from '@types';
 import { cn } from 'utils/style';
 
@@ -8,6 +9,14 @@ interface SuggestionCardProps {
 }
 
 const SuggestionCard = memo(({ suggestion, onClick }: SuggestionCardProps) => {
+  const { t } = useTranslation(['ai-chat']);
+  const title = t(`ai-chat:suggestions.${suggestion.id}.title`, {
+    defaultValue: suggestion.title
+  });
+  const description = t(`ai-chat:suggestions.${suggestion.id}.description`, {
+    defaultValue: suggestion.description
+  });
+
   return (
     <button
       type="button"
@@ -17,14 +26,10 @@ const SuggestionCard = memo(({ suggestion, onClick }: SuggestionCardProps) => {
         'motion-reduce:transition-none',
         'focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2'
       )}
-      onClick={() => onClick(suggestion.title)}
+      onClick={() => onClick(title)}
     >
-      <p className="typo-para-small font-medium text-gray-700">
-        {suggestion.title}
-      </p>
-      <p className="typo-para-tiny mt-1 text-gray-500">
-        {suggestion.description}
-      </p>
+      <p className="typo-para-small font-medium text-gray-700">{title}</p>
+      <p className="typo-para-tiny mt-1 text-gray-500">{description}</p>
     </button>
   );
 });
