@@ -61,7 +61,7 @@ func (s *monthlySummaryStorage) UpsertMonthlySummaryBatch(
 	now := time.Now().Unix()
 
 	placeholders := make([]string, len(records))
-	args := make([]any, 0, len(records)*6)
+	args := make([]any, 0, len(records)*7)
 
 	for i, rec := range records {
 		placeholders[i] = "(?, ?, ?, ?, ?, ?, ?)"

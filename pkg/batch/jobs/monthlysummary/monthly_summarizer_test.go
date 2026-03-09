@@ -54,7 +54,7 @@ func TestMonthlySummarizerRun(t *testing.T) {
 			expected: errors.New("list error"),
 		},
 		{
-			desc: "success: no records when all merge fail",
+			desc: "fail: all merge fail",
 			setup: func(m *monthlySummarizer) {
 				m.envClient.(*envclientmock.MockClient).EXPECT().
 					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -67,7 +67,7 @@ func TestMonthlySummarizerRun(t *testing.T) {
 					MergeIntoMAUBatch(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil, errors.New("merge error"))
 			},
-			expected: nil,
+			expected: errors.New("merge error"),
 		},
 		{
 			desc: "fail: upsert error",

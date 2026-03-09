@@ -93,6 +93,7 @@ func (m *monthlySummarizer) Run(ctx context.Context) (lastErr error) {
 				zap.String("environmentId", env.Id),
 				zap.Error(err),
 			)
+			lastErr = err
 			continue
 		}
 		for _, sourceID := range sourceIDs {
@@ -108,7 +109,7 @@ func (m *monthlySummarizer) Run(ctx context.Context) (lastErr error) {
 
 	if len(records) == 0 {
 		m.logger.Info("No MAU records to upsert")
-		return nil
+		return lastErr
 	}
 
 	if err := m.monthlySummaryStorage.UpsertMonthlySummaryBatch(ctx, records); err != nil {
