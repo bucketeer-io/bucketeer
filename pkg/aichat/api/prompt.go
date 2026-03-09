@@ -35,7 +35,7 @@ Bucketeer is a feature flag management and A/B testing platform.
 - Suggest specific actions
 - Include relevant documentation URLs
 - Add brief explanations for technical terms
-- Respond in the same language as the user's message
+- Respond in the language specified in the Language section below
 
 ## Bucketeer Features
 1. Feature Flags: ON/OFF flag control
@@ -63,6 +63,17 @@ func buildSystemPrompt(
 	var sb strings.Builder
 
 	sb.WriteString(baseSystemPrompt)
+
+	// Add explicit language instruction from metadata
+	lang := ""
+	if ctx != nil && ctx.Metadata != nil {
+		lang = ctx.Metadata["language"]
+	}
+	if lang == "ja" {
+		sb.WriteString("\n## Language\nYou MUST respond in Japanese (日本語で回答してください).\n")
+	} else {
+		sb.WriteString("\n## Language\nYou MUST respond in English.\n")
+	}
 
 	// Add page context
 	if ctx != nil {
