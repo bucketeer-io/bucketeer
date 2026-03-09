@@ -29,6 +29,7 @@ const (
 // MAUCache provides MAU counting operations.
 type MAUCache interface {
 	// MergeIntoMAUBatch merges DAUs into MAUs for multiple source IDs using pipeline.
+	// After merging, the source DAU keys are deleted to free memory.
 	// Returns a map of sourceID to MAU count.
 	MergeIntoMAUBatch(envID string, sourceIDs []string, date time.Time) (map[string]int64, error)
 }
@@ -61,6 +62,7 @@ func (c *mauCache) MergeIntoMAUBatch(envID string, sourceIDs []string, date time
 		dk := dauKey(envID, sourceID, date)
 		pipe.PFMerge(mk, mk, dk)
 		pipe.Expire(mk, mauTTL)
+		pipe.Del(dk)
 	}
 
 	countCmds := make([]any, len(sourceIDs))

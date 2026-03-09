@@ -53,8 +53,10 @@ func TestMAUCache_MergeIntoMAUBatch_Success(t *testing.T) {
 	// PFMERGE and Expire for each sourceID
 	mockPipe.EXPECT().PFMerge("env-123:mau:ANDROID:202601", "env-123:mau:ANDROID:202601", "{env-123:ANDROID:au}:d:20260115")
 	mockPipe.EXPECT().Expire("env-123:mau:ANDROID:202601", mauTTL)
+	mockPipe.EXPECT().Del("{env-123:ANDROID:au}:d:20260115")
 	mockPipe.EXPECT().PFMerge("env-123:mau:IOS:202601", "env-123:mau:IOS:202601", "{env-123:IOS:au}:d:20260115")
 	mockPipe.EXPECT().Expire("env-123:mau:IOS:202601", mauTTL)
+	mockPipe.EXPECT().Del("{env-123:IOS:au}:d:20260115")
 
 	// PFCount for each sourceID - use real goredis.IntCmd with SetVal
 	androidCmd := goredis.NewIntCmd(context.Background())
@@ -102,6 +104,7 @@ func TestMAUCache_MergeIntoMAUBatch_PipelineError(t *testing.T) {
 	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
 	mockPipe.EXPECT().PFMerge(gomock.Any(), gomock.Any(), gomock.Any())
 	mockPipe.EXPECT().Expire(gomock.Any(), gomock.Any())
+	mockPipe.EXPECT().Del(gomock.Any())
 	dummyCmd := goredis.NewIntCmd(context.Background())
 	mockPipe.EXPECT().PFCount(gomock.Any()).Return(dummyCmd)
 	mockPipe.EXPECT().Exec().Return(nil, expectedErr)
