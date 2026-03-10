@@ -217,8 +217,9 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	// Migration ecKeys are excluded so migration-only failures don't cause retries.
 	ecKeyToEventIDs := make(map[string]map[string]struct{})
 
-	// Tracks which metricsKey each ecKey maps to, so we can skip metrics for failed keys.
-	ecKeyToMetricsKey := make(map[string]metricsKey)
+	// Tracks per-metricsKey event counts for each ecKey, so we can correctly
+	// subtract failed counts across multiple sourceIds that share an ecKey.
+	ecKeyToMetricsCounts := make(map[string]map[metricsKey]int64)
 
 	for environmentId, events := range envEvents {
 		for id, e := range events {
@@ -251,7 +252,10 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 				variationId:   vID,
 			}
 			metricsAgg[mKey]++
-			ecKeyToMetricsKey[ecKey] = mKey
+			if ecKeyToMetricsCounts[ecKey] == nil {
+				ecKeyToMetricsCounts[ecKey] = make(map[metricsKey]int64)
+			}
+			ecKeyToMetricsCounts[ecKey][mKey]++
 
 			// Migration: best-effort double-write, not tracked in reverse mapping
 			if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
@@ -279,8 +283,8 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 
 	failedMetricsCounts := make(map[metricsKey]int64)
 	for ecKey := range failedECKeys {
-		if mKey, ok := ecKeyToMetricsKey[ecKey]; ok {
-			failedMetricsCounts[mKey] += int64(len(ecKeyToEventIDs[ecKey]))
+		for mKey, count := range ecKeyToMetricsCounts[ecKey] {
+			failedMetricsCounts[mKey] += count
 		}
 	}
 

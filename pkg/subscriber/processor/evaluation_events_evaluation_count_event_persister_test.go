@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1472,6 +1474,83 @@ func TestIncrementEnvEvents_SharedKeyPairFailure(t *testing.T) {
 	assert.Contains(t, fails, "event-B")
 	assert.True(t, fails["event-A"], "should be repeatable")
 	assert.True(t, fails["event-B"], "should be repeatable")
+}
+
+func TestIncrementEnvEvents_MultiSourceMetricsAttribution(t *testing.T) {
+	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
+
+	origCounter := evaluationEventCounter
+	evaluationEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "subscriber",
+			Name:      "evaluation_event_total_multisource_test",
+		}, []string{"environment_id", "source_id", "feature_id", "variation_id"})
+	defer func() { evaluationEventCounter = origCounter }()
+
+	envEvents := environmentEventMap{
+		"env-1": eventMap{
+			"event-android": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-X",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-1",
+				User:           &userproto.User{Id: "user-1"},
+				SourceId:       eventproto.SourceId_ANDROID,
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+			"event-ios": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-X",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-2",
+				User:           &userproto.User{Id: "user-2"},
+				SourceId:       eventproto.SourceId_IOS,
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+		},
+	}
+
+	tTime := time.Unix(hour1, 0)
+	date := time.Date(tTime.Year(), tTime.Month(), tTime.Day(), tTime.Hour(), 0, 0, 0, time.UTC)
+	failECKey := fmt.Sprintf("env-1:%s:%d:%s:%s", eventCountKey, date.Unix(), "feature-X", "variation-A")
+
+	mockCache := &mockEvaluationCountCache{
+		failOnECKey: failECKey,
+	}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	fails := persister.incrementEnvEvents(envEvents)
+
+	assert.Contains(t, fails, "event-android")
+	assert.Contains(t, fails, "event-ios")
+	assert.True(t, fails["event-android"])
+	assert.True(t, fails["event-ios"])
+
+	// Both sources must show zero: succeeded = total(1) - failed(1) = 0 for each.
+	// Before the fix, ecKeyToMetricsKey only kept the last-written sourceId,
+	// so one source would incorrectly report succeeded > 0.
+	androidCounter, err := evaluationEventCounter.GetMetricWithLabelValues(
+		"env-1", eventproto.SourceId_ANDROID.String(), "feature-X", "variation-A")
+	require.NoError(t, err)
+	iosCounter, err := evaluationEventCounter.GetMetricWithLabelValues(
+		"env-1", eventproto.SourceId_IOS.String(), "feature-X", "variation-A")
+	require.NoError(t, err)
+
+	var androidMetric dto.Metric
+	require.NoError(t, androidCounter.Write(&androidMetric))
+	var iosMetric dto.Metric
+	require.NoError(t, iosCounter.Write(&iosMetric))
+
+	assert.Equal(t, float64(0), androidMetric.GetCounter().GetValue(),
+		"ANDROID counter must be 0: all events for this source failed")
+	assert.Equal(t, float64(0), iosMetric.GetCounter().GetValue(),
+		"IOS counter must be 0: all events for this source failed")
 }
 
 func TestFlushAggregatedCounts_AllPairsFail(t *testing.T) {
