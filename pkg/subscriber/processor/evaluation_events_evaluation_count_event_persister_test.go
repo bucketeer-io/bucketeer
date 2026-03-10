@@ -1073,11 +1073,12 @@ func TestFlushAggregatedCounts(t *testing.T) {
 					incrbyIdx := -1
 
 					// Find indices in call order
+					// Match ":uc:" and ":ec:" to work with both admin and non-admin key formats
 					for idx, call := range mockCache.incrbyCallOrder {
-						if strings.HasPrefix(call, "PFADD:uc:") && pfaddIdx == -1 {
+						if strings.HasPrefix(call, "PFADD:") && strings.Contains(call, ":uc:") && pfaddIdx == -1 {
 							pfaddIdx = idx
 						}
-						if strings.HasPrefix(call, "INCRBY:ec:") && incrbyIdx == -1 {
+						if strings.HasPrefix(call, "INCRBY:") && strings.Contains(call, ":ec:") && incrbyIdx == -1 {
 							incrbyIdx = idx
 						}
 						if pfaddIdx >= 0 && incrbyIdx >= 0 {
@@ -1353,7 +1354,7 @@ type mockEvaluationCountCache struct {
 	shouldFailIncrBy bool // Simulates INCRBY failure
 	pipelineExecuted bool
 	pipelineCount    int // Number of pipelines created
-	execCount        int // Number of times Exec() was called
+	execCount        int // Number of IncrementBy calls (direct INCRBY operations)
 	pfaddCallCount   int // Number of direct PFAdd calls
 	pfaddCalls       []pfaddCall
 	incrbyCallOrder  []string // Track order of operations
@@ -1399,8 +1400,8 @@ func (m *mockEvaluationCountCache) IncrementBy(key string, value int64) (int64, 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.flushCalled = true // Mark that flush operations are happening
-	m.execCount++        // Track as a call (similar to pipeline Exec)
+	m.flushCalled = true
+	m.execCount++ // Count this IncrementBy call
 	m.incrbyCallOrder = append(m.incrbyCallOrder, "INCRBY:"+key)
 
 	if m.shouldFailIncrBy || m.shouldFailFlush {

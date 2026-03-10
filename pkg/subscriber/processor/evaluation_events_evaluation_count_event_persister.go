@@ -403,19 +403,25 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	// We extract the common suffix after the kind to pair them correctly
 	keyPairs := make(map[string]*keyPair)
 
-	extractSuffix := func(key, kind string) string {
-		// Try non-admin format first: "envID:kind:suffix"
+	extractKey := func(key, kind string) string {
+		// Extract a pairing key that includes environment ID to prevent collisions during migration.
+		// Non-admin: "envID:kind:suffix" → "envID:suffix"
+		// Admin: "kind:suffix" → "suffix"
 		pattern := ":" + kind + ":"
 		idx := strings.Index(key, pattern)
 		if idx >= 0 {
-			return key[idx+len(pattern):]
+			envPrefix := key[:idx]
+			suffix := key[idx+len(pattern):]
+			return envPrefix + ":" + suffix
 		}
 		// Admin format: "kind:suffix"
 		return strings.TrimPrefix(key, kind+":")
 	}
 
+	// Build ec side of key pairs: extract pairing key and populate ecKey/ecCount.
+	// If uc was already processed, add to existing pair; otherwise create new pair.
 	for ecKey, count := range eventCounts {
-		suffix := extractSuffix(ecKey, eventCountKey)
+		suffix := extractKey(ecKey, eventCountKey)
 		if pair, exists := keyPairs[suffix]; exists {
 			pair.ecKey = ecKey
 			pair.ecCount = count
@@ -427,8 +433,10 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		}
 	}
 
+	// Build uc side of key pairs: extract pairing key and populate ucKey/ucUsers.
+	// If ec was already processed, add to existing pair; otherwise create new pair.
 	for ucKey, userIDSet := range userCounts {
-		suffix := extractSuffix(ucKey, userCountKey)
+		suffix := extractKey(ucKey, userCountKey)
 		userIDs := make([]string, 0, len(userIDSet))
 		for userID := range userIDSet {
 			userIDs = append(userIDs, userID)

@@ -94,9 +94,9 @@ func (c *inMemoryCache) IncrementBy(key string, value int64) (int64, error) {
 			c.data[key] = intVal
 			return intVal, nil
 		}
-	} else {
-		c.data[key] = value
+		return 0, cache.ErrInvalidType
 	}
+	c.data[key] = value
 	return value, nil
 }
 
