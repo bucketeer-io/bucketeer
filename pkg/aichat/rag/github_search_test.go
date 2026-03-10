@@ -436,6 +436,28 @@ func TestExtractCategory(t *testing.T) {
 	}
 }
 
+func TestDocsSiteURL(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		path     string
+		expected string
+	}{
+		{"docs/feature-flags/segments.mdx", "https://docs.bucketeer.io/feature-flags/segments"},
+		{"docs/sdk/server-side/go/index.md", "https://docs.bucketeer.io/sdk/server-side/go"},
+		{"docs/index.mdx", "https://docs.bucketeer.io"},
+		{"docs/getting-started/quickstart.mdx", "https://docs.bucketeer.io/getting-started/quickstart"},
+		{"docs/best-practices/optimize-bucketeer-with-tags.mdx", "https://docs.bucketeer.io/best-practices/optimize-bucketeer-with-tags"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.expected, docsSiteURL(tt.path))
+		})
+	}
+}
+
 func TestIsValidDocPath(t *testing.T) {
 	t.Parallel()
 

@@ -90,8 +90,8 @@ func TestBuildFeatureContext(t *testing.T) {
 				OffVariation: "var-off",
 			},
 			contains: []string{
-				"Name: Dark Mode",
-				"Description: Enable dark mode for users",
+				`Name: "Dark Mode"`,
+				`Description: "Enable dark mode for users"`,
 				"Enabled: true",
 				"Variation Type: BOOLEAN",
 				"ON",
@@ -104,7 +104,7 @@ func TestBuildFeatureContext(t *testing.T) {
 				"Conditions: 1",
 				"Operator: ENDS_WITH",
 				"Default Strategy: ROLLOUT",
-				"Depends on flag: base-flag",
+				`Depends on flag: "base-flag"`,
 			},
 			excludes: []string{
 				// Privacy: variation values must NOT appear
@@ -130,7 +130,7 @@ func TestBuildFeatureContext(t *testing.T) {
 				VariationType: featureproto.Feature_STRING,
 			},
 			contains: []string{
-				"Name: Simple Flag",
+				`Name: "Simple Flag"`,
 				"Enabled: false",
 				"Variation Type: STRING",
 			},

@@ -27,9 +27,9 @@ import (
 // Per RFC 0045, we include: flag name, description, variation names/descriptions,
 // tag names, rule structure (operator, strategy type).
 // We exclude: attribute values, user IDs, variation values, clause values.
-// maxFeatureContextLength is the maximum byte length for the feature context text
-// to avoid excessive LLM token consumption.
+// All user-controlled fields are sanitized to mitigate prompt injection.
 const maxFeatureContextLength = 2000
+const maxFieldLength = 200
 
 func buildFeatureContext(f *featureproto.Feature) string {
 	if f == nil {
@@ -38,9 +38,9 @@ func buildFeatureContext(f *featureproto.Feature) string {
 
 	var sb strings.Builder
 
-	fmt.Fprintf(&sb, "Name: %s\n", f.Name)
+	fmt.Fprintf(&sb, "Name: %q\n", sanitizePromptField(f.Name))
 	if f.Description != "" {
-		fmt.Fprintf(&sb, "Description: %s\n", f.Description)
+		fmt.Fprintf(&sb, "Description: %q\n", sanitizePromptField(f.Description))
 	}
 	fmt.Fprintf(&sb, "Enabled: %t\n", f.Enabled)
 	fmt.Fprintf(&sb, "Variation Type: %s\n", f.VariationType.String())
@@ -53,9 +53,9 @@ func buildFeatureContext(f *featureproto.Feature) string {
 			if name == "" {
 				name = v.Id
 			}
-			sb.WriteString("  - " + name)
+			fmt.Fprintf(&sb, "  - %q", sanitizePromptField(name))
 			if v.Description != "" {
-				fmt.Fprintf(&sb, " (%s)", v.Description)
+				fmt.Fprintf(&sb, " (%q)", sanitizePromptField(v.Description))
 			}
 			sb.WriteString("\n")
 		}
@@ -63,10 +63,14 @@ func buildFeatureContext(f *featureproto.Feature) string {
 
 	// Tags
 	if len(f.Tags) > 0 {
-		fmt.Fprintf(&sb, "Tags: %s\n", strings.Join(f.Tags, ", "))
+		sanitized := make([]string, len(f.Tags))
+		for i, t := range f.Tags {
+			sanitized[i] = sanitizePromptField(t)
+		}
+		fmt.Fprintf(&sb, "Tags: %s\n", strings.Join(sanitized, ", "))
 	}
 
-	// Rules — structure only; clause values and attribute names are excluded for privacy.
+	// Rules — structure only; clause values and attribute names are excluded.
 	if len(f.Rules) > 0 {
 		fmt.Fprintf(&sb, "Targeting Rules: %d rule(s)\n", len(f.Rules))
 		for i, rule := range f.Rules {
@@ -90,7 +94,8 @@ func buildFeatureContext(f *featureproto.Feature) string {
 	if len(f.Prerequisites) > 0 {
 		sb.WriteString("Prerequisites:\n")
 		for _, p := range f.Prerequisites {
-			fmt.Fprintf(&sb, "  - Depends on flag: %s\n", p.FeatureId)
+			featureID := sanitizePromptField(p.FeatureId)
+			fmt.Fprintf(&sb, "  - Depends on flag: %q\n", featureID)
 		}
 	}
 
@@ -100,4 +105,25 @@ func buildFeatureContext(f *featureproto.Feature) string {
 		result = string(runes[:maxFeatureContextLength]) + "\n... (truncated)\n"
 	}
 	return result
+}
+
+// sanitizePromptField sanitizes a user-controlled string before embedding
+// it in the system prompt. It removes control characters and newlines,
+// collapses whitespace, and truncates to maxFieldLength runes.
+func sanitizePromptField(s string) string {
+	// Remove control characters (including \n, \r, \t)
+	cleaned := strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return ' '
+		}
+		return r
+	}, s)
+	// Collapse multiple spaces
+	parts := strings.Fields(cleaned)
+	cleaned = strings.Join(parts, " ")
+	// Truncate
+	if utf8.RuneCountInString(cleaned) > maxFieldLength {
+		cleaned = string([]rune(cleaned)[:maxFieldLength])
+	}
+	return cleaned
 }

@@ -363,7 +363,7 @@ func (g *GitHubSearcher) fetchRawDoc(ctx context.Context, docPath string) (index
 		content = string([]rune(content)[:maxIndexContent])
 	}
 
-	htmlURL := fmt.Sprintf("https://github.com/%s/blob/main/%s", docsRepo, docPath)
+	htmlURL := docsSiteURL(docPath)
 
 	return indexedDoc{
 		path:         docPath,
@@ -534,6 +534,25 @@ func isValidDocPath(p string) bool {
 		return false
 	}
 	return strings.HasPrefix(p, "docs/") && (strings.HasSuffix(p, ".mdx") || strings.HasSuffix(p, ".md"))
+}
+
+// docsSiteURL converts a repository doc path to a published documentation URL.
+// e.g. "docs/feature-flags/segments.mdx" -> "https://docs.bucketeer.io/feature-flags/segments"
+// e.g. "docs/sdk/server-side/go/index.md" -> "https://docs.bucketeer.io/sdk/server-side/go"
+func docsSiteURL(docPath string) string {
+	const docsBaseURL = "https://docs.bucketeer.io"
+	trimmed := strings.TrimPrefix(docPath, "docs/")
+	// Remove file extension (.md / .mdx)
+	if idx := strings.LastIndex(trimmed, "."); idx >= 0 {
+		trimmed = trimmed[:idx]
+	}
+	// Remove trailing /index (directory index pages)
+	trimmed = strings.TrimSuffix(trimmed, "/index")
+	// Handle root index
+	if trimmed == "index" {
+		return docsBaseURL
+	}
+	return docsBaseURL + "/" + trimmed
 }
 
 // extractCategory extracts the category from a docs path like "docs/feature-flags/segments.mdx".
