@@ -184,6 +184,7 @@ type server struct {
 	openAIBaseURL        *string
 	aichatModel          *string
 	aichatEmbeddingModel *string
+	aichatGitHubToken    *string
 	aichatMaxTokens      *int
 	aichatServicePort    *int
 }
@@ -450,6 +451,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"aichat-embedding-model",
 			"Embedding model name for AI Chat RAG.",
 		).Default("text-embedding-3-small").String(),
+		aichatGitHubToken: cmd.Flag(
+			"aichat-github-token",
+			"GitHub token for AI Chat RAG documentation search. Optional but increases rate limit.",
+		).Default("").String(),
 		aichatMaxTokens: cmd.Flag(
 			"aichat-max-tokens",
 			"Maximum tokens for AI Chat responses.",
@@ -905,11 +910,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	if *s.openAIAPIKey != "" {
 		llmClient := aichatllm.NewOpenAIClient(*s.openAIAPIKey, *s.openAIBaseURL)
-		ragService, ragErr := aichatrag.NewService(llmClient, *s.aichatEmbeddingModel, logger)
-		if ragErr != nil {
-			logger.Warn("Failed to initialize RAG service, AI Chat will work without RAG", zap.Error(ragErr))
-			ragService = nil
-		}
+		ragSearcher := aichatrag.NewGitHubSearcher(logger)
 		chatCfg := aichatapi.ChatConfig{
 			Model:       *s.aichatModel,
 			MaxTokens:   *s.aichatMaxTokens,
@@ -918,7 +919,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rateLimiter := aichatratelimit.NewLimiter(aichatratelimit.DefaultConfig())
 		aichatGRPCService := aichatapi.NewAIChatService(
 			llmClient,
-			ragService,
+			ragSearcher,
 			chatCfg,
 			accountClient,
 			featureClient,
@@ -935,7 +936,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go aichatServer.Run()
 		// Chat HTTP service for dashboard REST server (SSE streaming)
 		chatHTTPSvc := aichatapi.NewChatHTTPService(
-			llmClient, ragService, chatCfg,
+			llmClient, ragSearcher, chatCfg,
 			verifier, accountClient, featureClient,
 			logger,
 			aichatapi.WithRateLimiter(rateLimiter),

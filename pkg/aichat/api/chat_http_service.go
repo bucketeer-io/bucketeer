@@ -58,7 +58,7 @@ type sseErrorEvent struct {
 // This is needed because gRPC-Gateway does not support server streaming as SSE.
 type chatHTTPService struct {
 	llmClient     llm.Client
-	ragService    *rag.Service
+	ragSearcher   rag.Searcher
 	chatConfig    ChatConfig
 	verifier      token.Verifier
 	accountClient accountclient.Client
@@ -84,7 +84,7 @@ func WithRateLimiter(l *ratelimit.Limiter) ChatHTTPServiceOption {
 // NewChatHTTPService creates a new chat HTTP service for SSE streaming.
 func NewChatHTTPService(
 	llmClient llm.Client,
-	ragService *rag.Service,
+	ragSearcher rag.Searcher,
 	chatConfig ChatConfig,
 	verifier token.Verifier,
 	accountClient accountclient.Client,
@@ -98,7 +98,7 @@ func NewChatHTTPService(
 	}
 	return &chatHTTPService{
 		llmClient:     llmClient,
-		ragService:    ragService,
+		ragSearcher:   ragSearcher,
 		chatConfig:    defaultChatConfig(chatConfig),
 		verifier:      verifier,
 		accountClient: accountClient,
@@ -255,7 +255,7 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Both channels are closed when the ChatService goroutine finishes,
 	// so we must drain responseChan fully before exiting.
 	responseChan, errChan := streamChat(
-		r.Context(), h.llmClient, h.ragService, h.featureClient,
+		r.Context(), h.llmClient, h.ragSearcher, h.featureClient,
 		h.chatConfig, protoReq, h.logger,
 	)
 

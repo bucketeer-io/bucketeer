@@ -59,7 +59,7 @@ func (s *AIChatService) Chat(
 	}
 
 	// Stream chat
-	responseChan, errChan := streamChat(ctx, s.llmClient, s.ragService, s.featureClient, s.chatConfig, req, s.logger)
+	responseChan, errChan := streamChat(ctx, s.llmClient, s.ragSearcher, s.featureClient, s.chatConfig, req, s.logger)
 
 	for responseChan != nil || errChan != nil {
 		select {

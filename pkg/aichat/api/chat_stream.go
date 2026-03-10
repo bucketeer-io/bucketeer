@@ -55,7 +55,7 @@ func defaultChatConfig(cfg ChatConfig) ChatConfig {
 func streamChat(
 	ctx context.Context,
 	llmClient llm.Client,
-	ragSvc *rag.Service,
+	ragSearcher rag.Searcher,
 	featureClient featureclient.Client,
 	cfg ChatConfig,
 	req *aichatproto.ChatRequest,
@@ -91,9 +91,9 @@ func streamChat(
 		var relevantDocs []rag.DocChunk
 		var featureContext string
 		g, gCtx := errgroup.WithContext(ctx)
-		if ragSvc != nil && lastUserMessage != "" {
+		if ragSearcher != nil && lastUserMessage != "" {
 			g.Go(func() error {
-				docs, err := ragSvc.Search(gCtx, lastUserMessage, 3)
+				docs, err := ragSearcher.Search(gCtx, lastUserMessage, 3)
 				if err != nil {
 					logger.Warn("RAG search failed, continuing without context", zap.Error(err))
 				} else {

@@ -15,7 +15,6 @@
 package api
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,8 +30,9 @@ func TestBuildSystemPrompt(t *testing.T) {
 		t.Parallel()
 		result := buildSystemPrompt(nil, nil, "")
 		assert.Contains(t, result, "Bucketeer expert assistant")
-		assert.Contains(t, result, "Feature Flags")
 		assert.Contains(t, result, "Restrictions")
+		assert.Contains(t, result, "Do NOT fabricate product information")
+		assert.Contains(t, result, "docs.bucketeer.io")
 	})
 
 	t.Run("includes page context", func(t *testing.T) {
@@ -124,11 +124,11 @@ func TestPageTypeToString(t *testing.T) {
 	}
 }
 
-// Ensure base prompt doesn't contain Japanese-only text (should be bilingual)
 func TestBasePromptIsEnglish(t *testing.T) {
 	t.Parallel()
-	assert.True(t, strings.Contains(baseSystemPrompt, "Bucketeer"))
-	assert.True(t, strings.Contains(baseSystemPrompt, "Restrictions"))
+	assert.Contains(t, baseSystemPrompt, "Bucketeer")
+	assert.Contains(t, baseSystemPrompt, "Restrictions")
+	assert.Contains(t, baseSystemPrompt, "Reference Documents")
 }
 
 func TestBuildSystemPromptLanguage(t *testing.T) {

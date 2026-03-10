@@ -53,7 +53,7 @@ func WithGRPCRateLimiter(l *ratelimit.Limiter) Option {
 type AIChatService struct {
 	aichatproto.UnimplementedAIChatServiceServer
 	llmClient     llm.Client
-	ragService    *rag.Service
+	ragSearcher   rag.Searcher
 	chatConfig    ChatConfig
 	accountClient accountclient.Client
 	featureClient featureclient.Client
@@ -64,7 +64,7 @@ type AIChatService struct {
 // NewAIChatService creates a new AIChatService.
 func NewAIChatService(
 	llmClient llm.Client,
-	ragService *rag.Service,
+	ragSearcher rag.Searcher,
 	chatConfig ChatConfig,
 	accountClient accountclient.Client,
 	featureClient featureclient.Client,
@@ -77,7 +77,7 @@ func NewAIChatService(
 	}
 	return &AIChatService{
 		llmClient:     llmClient,
-		ragService:    ragService,
+		ragSearcher:   ragSearcher,
 		chatConfig:    defaultChatConfig(chatConfig),
 		accountClient: accountClient,
 		featureClient: featureClient,

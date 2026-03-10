@@ -45,6 +45,11 @@ type DocMeta struct {
 	Category string `json:"category"`
 }
 
+// Searcher defines the interface for document search.
+type Searcher interface {
+	Search(ctx context.Context, query string, topK int) ([]DocChunk, error)
+}
+
 // Service provides RAG (Retrieval-Augmented Generation) capabilities.
 type Service struct {
 	llmClient      llm.Client
