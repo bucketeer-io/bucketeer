@@ -28,7 +28,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	llmmock "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -41,12 +40,6 @@ func TestStreamChat(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
 		mockClient := llmmock.NewMockClient(ctrl)
-
-		// Mock embedding for RAG
-		mockClient.EXPECT().
-			CreateEmbeddings(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return([][]float32{{0.1, 0.2}}, nil).
-			AnyTimes()
 
 		// Mock streaming chat
 		mockClient.EXPECT().
@@ -64,9 +57,6 @@ func TestStreamChat(t *testing.T) {
 				return ch, ech
 			})
 
-		// RAG service with minimal docs
-		ragSvc := createTestRAGService(t, mockClient)
-
 		cfg := ChatConfig{Model: "test-model", MaxTokens: 100, Temperature: 0.5}
 
 		req := &aichatproto.ChatRequest{
@@ -76,7 +66,7 @@ func TestStreamChat(t *testing.T) {
 			EnvironmentId: "env-1",
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, ragSvc, nil, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, nil, cfg, req, zap.NewNop())
 
 		var chunks []*aichatproto.ChatStreamResponse
 		for chunk := range respChan {
@@ -323,13 +313,6 @@ func TestStreamChat(t *testing.T) {
 		}
 		<-chatErrChan
 	})
-}
-
-func createTestRAGService(t *testing.T, client llm.Client) *rag.Service {
-	t.Helper()
-	ragSvc, err := rag.NewService(client, "test-model", zap.NewNop())
-	require.NoError(t, err)
-	return ragSvc
 }
 
 func TestSanitizeUserInput(t *testing.T) {

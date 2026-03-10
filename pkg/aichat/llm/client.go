@@ -53,7 +53,4 @@ type Client interface {
 	// StreamChat sends messages to the LLM and returns channels for
 	// streaming response chunks and errors.
 	StreamChat(ctx context.Context, messages []Message, opts StreamOptions) (<-chan Chunk, <-chan error)
-
-	// CreateEmbeddings generates embedding vectors for the given inputs.
-	CreateEmbeddings(ctx context.Context, model string, input []string) ([][]float32, error)
 }

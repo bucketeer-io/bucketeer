@@ -13,9 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	llm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockClient is a mock of Client interface.
@@ -39,21 +38,6 @@ func NewMockClient(ctrl *gomock.Controller) *MockClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
-}
-
-// CreateEmbeddings mocks base method.
-func (m *MockClient) CreateEmbeddings(ctx context.Context, model string, input []string) ([][]float32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateEmbeddings", ctx, model, input)
-	ret0, _ := ret[0].([][]float32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateEmbeddings indicates an expected call of CreateEmbeddings.
-func (mr *MockClientMockRecorder) CreateEmbeddings(ctx, model, input any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEmbeddings", reflect.TypeOf((*MockClient)(nil).CreateEmbeddings), ctx, model, input)
 }
 
 // StreamChat mocks base method.

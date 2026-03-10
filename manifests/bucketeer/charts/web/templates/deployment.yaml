@@ -236,8 +236,6 @@ spec:
             {{- end }}
             - name: BUCKETEER_WEB_AICHAT_MODEL
               value: "{{ .Values.env.aichat.model }}"
-            - name: BUCKETEER_WEB_AICHAT_EMBEDDING_MODEL
-              value: "{{ .Values.env.aichat.embeddingModel }}"
             - name: BUCKETEER_WEB_AICHAT_MAX_TOKENS
               value: "{{ .Values.env.aichat.maxTokens }}"
             - name: BUCKETEER_WEB_AICHAT_SERVICE_PORT

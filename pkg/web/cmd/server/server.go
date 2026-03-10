@@ -180,13 +180,12 @@ type server struct {
 	dataWarehouseType               *string
 	dataWarehouseConfigPath         *string
 	// AI Chat configuration
-	openAIAPIKey         *string
-	openAIBaseURL        *string
-	aichatModel          *string
-	aichatEmbeddingModel *string
-	aichatGitHubToken    *string
-	aichatMaxTokens      *int
-	aichatServicePort    *int
+	openAIAPIKey      *string
+	openAIBaseURL     *string
+	aichatModel       *string
+	aichatGitHubToken *string
+	aichatMaxTokens   *int
+	aichatServicePort *int
 }
 
 type DataWarehouseConfig struct {
@@ -447,10 +446,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"aichat-model",
 			"LLM model name for AI Chat.",
 		).Default("gpt-4o-mini").String(),
-		aichatEmbeddingModel: cmd.Flag(
-			"aichat-embedding-model",
-			"Embedding model name for AI Chat RAG.",
-		).Default("text-embedding-3-small").String(),
 		aichatGitHubToken: cmd.Flag(
 			"aichat-github-token",
 			"GitHub token for AI Chat RAG documentation search. Optional but increases rate limit.",

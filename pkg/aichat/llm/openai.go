@@ -104,23 +104,3 @@ func (c *openaiClient) StreamChat(
 
 	return responseChan, errChan
 }
-
-func (c *openaiClient) CreateEmbeddings(
-	ctx context.Context,
-	model string,
-	input []string,
-) ([][]float32, error) {
-	resp, err := c.client.CreateEmbeddings(ctx, openai.EmbeddingRequest{
-		Input: input,
-		Model: openai.EmbeddingModel(model),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([][]float32, len(resp.Data))
-	for i, d := range resp.Data {
-		result[i] = d.Embedding
-	}
-	return result, nil
-}
