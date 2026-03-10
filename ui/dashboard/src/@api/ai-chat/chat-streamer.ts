@@ -73,7 +73,7 @@ function processSSEData(
   }
 
   if (isSSEError(parsed)) {
-    onChunk({ error: parsed.error.slice(0, 500), done: true });
+    onChunk({ error: CHAT_ERROR.UNKNOWN, done: true });
     return 'done';
   }
 

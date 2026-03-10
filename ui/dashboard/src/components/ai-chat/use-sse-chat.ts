@@ -89,7 +89,12 @@ export const useSSEChat = ({
         chunk => {
           if (abortController.signal.aborted) return;
           if (chunk.error) {
-            setErrorKey(chunk.error as ChatErrorCode);
+            const knownErrors = Object.values(CHAT_ERROR) as string[];
+            setErrorKey(
+              knownErrors.includes(chunk.error)
+                ? (chunk.error as ChatErrorCode)
+                : CHAT_ERROR.UNKNOWN
+            );
             return;
           }
           if (chunk.content) {

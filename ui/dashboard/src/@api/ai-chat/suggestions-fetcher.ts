@@ -26,11 +26,11 @@ export const suggestionsFetcher = async (
 ): Promise<SuggestionsFetcherResponse> => {
   const queryParams = pickBy(
     {
-      environment_id: params.environmentId,
-      'page_context.page_type': params.pageContext?.pageType
+      environmentId: params.environmentId,
+      'pageContext.pageType': params.pageContext?.pageType
         ? protoPageTypeMap[params.pageContext.pageType]
         : undefined,
-      'page_context.feature_id': params.pageContext?.featureId
+      'pageContext.featureId': params.pageContext?.featureId
     },
     v => isNotEmpty(v)
   );
