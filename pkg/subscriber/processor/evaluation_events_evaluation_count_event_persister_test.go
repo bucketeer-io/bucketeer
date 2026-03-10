@@ -2,7 +2,6 @@ package processor
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -1402,19 +1401,12 @@ func TestIncrementEnvEvents_PartialFlushFailure(t *testing.T) {
 		},
 	}
 
-	// Build the ecKey that will fail so we can set failOnECKey.
-	// Replicates newEvaluationCountkeyV2 logic.
-	tTime := time.Unix(hour1, 0)
-	date := time.Date(tTime.Year(), tTime.Month(), tTime.Day(), tTime.Hour(), 0, 0, 0, time.UTC)
-	failECKey := fmt.Sprintf("env-1:%s:%d:%s:%s", eventCountKey, date.Unix(), "feature-bad", "variation-B")
-
-	mockCache := &mockEvaluationCountCache{
-		failOnECKey: failECKey,
-	}
 	persister := &evaluationCountEventPersister{
-		evaluationCountCacher: mockCache,
+		evaluationCountCacher: &mockEvaluationCountCache{},
 		logger:                zap.NewNop(),
 	}
+	failECKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-bad", "variation-B", "env-1", hour1)
+	persister.evaluationCountCacher.(*mockEvaluationCountCache).failOnECKey = failECKey
 
 	fails := persister.incrementEnvEvents(envEvents)
 
@@ -1455,17 +1447,12 @@ func TestIncrementEnvEvents_SharedKeyPairFailure(t *testing.T) {
 		},
 	}
 
-	tTime := time.Unix(hour1, 0)
-	date := time.Date(tTime.Year(), tTime.Month(), tTime.Day(), tTime.Hour(), 0, 0, 0, time.UTC)
-	failECKey := fmt.Sprintf("env-1:%s:%d:%s:%s", eventCountKey, date.Unix(), "feature-shared", "variation-A")
-
-	mockCache := &mockEvaluationCountCache{
-		failOnECKey: failECKey,
-	}
 	persister := &evaluationCountEventPersister{
-		evaluationCountCacher: mockCache,
+		evaluationCountCacher: &mockEvaluationCountCache{},
 		logger:                zap.NewNop(),
 	}
+	failECKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-shared", "variation-A", "env-1", hour1)
+	persister.evaluationCountCacher.(*mockEvaluationCountCache).failOnECKey = failECKey
 
 	fails := persister.incrementEnvEvents(envEvents)
 
@@ -1513,17 +1500,12 @@ func TestIncrementEnvEvents_MultiSourceMetricsAttribution(t *testing.T) {
 		},
 	}
 
-	tTime := time.Unix(hour1, 0)
-	date := time.Date(tTime.Year(), tTime.Month(), tTime.Day(), tTime.Hour(), 0, 0, 0, time.UTC)
-	failECKey := fmt.Sprintf("env-1:%s:%d:%s:%s", eventCountKey, date.Unix(), "feature-X", "variation-A")
-
-	mockCache := &mockEvaluationCountCache{
-		failOnECKey: failECKey,
-	}
 	persister := &evaluationCountEventPersister{
-		evaluationCountCacher: mockCache,
+		evaluationCountCacher: &mockEvaluationCountCache{},
 		logger:                zap.NewNop(),
 	}
+	failECKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-X", "variation-A", "env-1", hour1)
+	persister.evaluationCountCacher.(*mockEvaluationCountCache).failOnECKey = failECKey
 
 	fails := persister.incrementEnvEvents(envEvents)
 
