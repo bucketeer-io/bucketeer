@@ -44,6 +44,7 @@ const (
 	incrByFloatCmdName  = "INCR_BY_FLOAT"
 	delCmdName          = "DEL"
 	incrCmdName         = "INCR"
+	incrByCmdName       = "INCRBY"
 	expireCmdName       = "EXPIRE"
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
@@ -110,6 +111,7 @@ type Client interface {
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
+	IncrBy(key string, value int64) (int64, error)
 	SAdd(key string, members ...interface{}) (int64, error)
 	SMembers(key string) ([]string, error)
 	Pipeline(tx bool) PipeClient
@@ -153,6 +155,7 @@ type client struct {
 type PipeClient interface {
 	PFAdd(key string, els ...string) *goredis.IntCmd
 	Incr(key string) *goredis.IntCmd
+	IncrBy(key string, value int64) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
 	SAdd(key string, members ...interface{}) *goredis.IntCmd
 	Expire(key string, expiration time.Duration) *goredis.BoolCmd
@@ -849,6 +852,21 @@ func (c *client) Incr(key string) (int64, error) {
 	return v, err
 }
 
+func (c *client) IncrBy(key string, value int64) (int64, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName).Inc()
+	v, err := c.rc.IncrBy(context.TODO(), key, value).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return v, err
+}
+
 func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName).Inc()
@@ -906,6 +924,11 @@ func (c *client) Pipeline(tx bool) PipeClient {
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
 	return c.pipe.Incr(c.ctx, key)
+}
+
+func (c *pipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
+	c.cmds = append(c.cmds, incrByCmdName)
+	return c.pipe.IncrBy(c.ctx, key, value)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {

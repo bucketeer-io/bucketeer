@@ -203,18 +203,103 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 
 func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
 	fails := make(map[string]bool, len(envEvents))
+	aggregator := newEvaluationCountAggregator()
+
+	type metricsKey struct {
+		environmentId string
+		sourceId      string
+		featureId     string
+		variationId   string
+	}
+	metricsAgg := make(map[metricsKey]int64)
+
+	// Reverse mapping: ecKey → set of event IDs that contributed to it.
+	// Migration ecKeys are excluded so migration-only failures don't cause retries.
+	ecKeyToEventIDs := make(map[string]map[string]struct{})
+
+	// Tracks per-metricsKey event counts for each ecKey, so we can correctly
+	// subtract failed counts across multiple sourceIds that share an ecKey.
+	ecKeyToMetricsCounts := make(map[string]map[metricsKey]int64)
+
 	for environmentId, events := range envEvents {
-		for id, event := range events {
-			// Increment the evaluation event count in the Redis
-			if err := p.incrementEvaluationCount(id, event, environmentId); err != nil {
+		for id, e := range events {
+			vID, err := getVariationID(e.Reason, e.VariationId)
+			if err != nil {
 				if errors.Is(err, ErrReasonNil) {
 					fails[id] = false
 				} else {
 					fails[id] = true
 				}
+				continue
+			}
+
+			ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+			ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+			userID := getUserID(e.UserId, e.User)
+
+			aggregator.addEvent(ecKey, ucKey, userID)
+
+			// Build reverse mapping (primary ecKeys only, not migration)
+			if ecKeyToEventIDs[ecKey] == nil {
+				ecKeyToEventIDs[ecKey] = make(map[string]struct{})
+			}
+			ecKeyToEventIDs[ecKey][id] = struct{}{}
+
+			mKey := metricsKey{
+				environmentId: environmentId,
+				sourceId:      e.SourceId.String(),
+				featureId:     e.FeatureId,
+				variationId:   vID,
+			}
+			metricsAgg[mKey]++
+			if ecKeyToMetricsCounts[ecKey] == nil {
+				ecKeyToMetricsCounts[ecKey] = make(map[metricsKey]int64)
+			}
+			ecKeyToMetricsCounts[ecKey][mKey]++
+
+			// Migration: best-effort double-write, not tracked in reverse mapping
+			if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+				ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
+				ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
+
+				aggregator.addEvent(ecKeyTarget, ucKeyTarget, userID)
 			}
 		}
 	}
+
+	eventCounts, userCounts := aggregator.flush()
+	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts)
+
+	if err != nil {
+		// Only mark events whose primary ecKey failed
+		for ecKey := range failedECKeys {
+			for eventID := range ecKeyToEventIDs[ecKey] {
+				if _, alreadyFailed := fails[eventID]; !alreadyFailed {
+					fails[eventID] = true
+				}
+			}
+		}
+	}
+
+	failedMetricsCounts := make(map[metricsKey]int64)
+	for ecKey := range failedECKeys {
+		for mKey, count := range ecKeyToMetricsCounts[ecKey] {
+			failedMetricsCounts[mKey] += count
+		}
+	}
+
+	for key, count := range metricsAgg {
+		succeeded := count - failedMetricsCounts[key]
+		if succeeded > 0 {
+			evaluationEventCounter.WithLabelValues(
+				key.environmentId,
+				key.sourceId,
+				key.featureId,
+				key.variationId,
+			).Add(float64(succeeded))
+		}
+	}
+
 	return fails
 }
 
@@ -304,117 +389,148 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-func (p *evaluationCountEventPersister) incrementEvaluationCount(
-	eventID string,
-	event proto.Message,
-	environmentId string,
-) error {
-	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		vID, err := getVariationID(e.Reason, e.VariationId)
-		if err != nil {
-			return err
+// flushAggregatedCounts writes aggregated counts to Redis using individual calls
+// with PFADD-before-INCRBY ordering per key pair.
+//
+// Why not pipelines? While go-redis pipelines do expose per-command errors via
+// each Cmder's .Err() method after Exec(), individual calls were chosen as the
+// simpler correctness-first approach. Pipeline optimization (batching all PFADDs
+// then all INCRBYs with per-command error inspection) is planned as a follow-up.
+//
+// Within each key pair:
+//   - PFADD runs first (idempotent). If it fails, INCRBY is skipped.
+//   - INCRBY runs only after PFADD succeeds. If INCRBY fails, PFADD is
+//     already done (idempotent) so retry is safe.
+//
+// Across key pairs: all pairs are attempted even if some fail. The caller
+// receives the set of failed ecKeys so it can Nack only the affected events,
+// preventing over-counting of already-succeeded key pairs on retry.
+func (p *evaluationCountEventPersister) flushAggregatedCounts(
+	eventCounts map[string]int64,
+	userCounts map[string]map[string]struct{},
+) (map[string]struct{}, error) {
+	if len(eventCounts) == 0 && len(userCounts) == 0 {
+		return nil, nil
+	}
+
+	// Match up ec and uc keys by extracting the common suffix
+	// Admin keys: "ec:timestamp:featureID:variationID" / "uc:timestamp:featureID:variationID"
+	// Non-admin keys: "envID:ec:timestamp:featureID:variationID" / "envID:uc:timestamp:featureID:variationID"
+	type keyPair struct {
+		ecKey    string
+		ecCount  int64
+		ucKey    string
+		ucUsers  []string
+		hasUsers bool
+	}
+
+	// Extract suffix to pair ec/uc keys
+	// Keys format: Admin: "ec:timestamp:feat:var", Non-admin: "envID:ec:timestamp:feat:var"
+	// We extract the common suffix after the kind to pair them correctly
+	keyPairs := make(map[string]*keyPair)
+
+	extractKey := func(key, kind string) string {
+		// Extract a pairing key that includes environment ID to prevent collisions during migration.
+		// Non-admin: "envID:kind:suffix" → "envID:suffix"
+		// Admin: "kind:suffix" → "suffix"
+		pattern := ":" + kind + ":"
+		idx := strings.Index(key, pattern)
+		if idx >= 0 {
+			envPrefix := key[:idx]
+			suffix := key[idx+len(pattern):]
+			return envPrefix + ":" + suffix
 		}
-		// To avoid duplication when the request fails, we increment the event count in the end
-		// because the user count is an unique count, and there is no problem adding the same event more than once
-		// We tried to use Pipeline and indeed it improves the response time,
-		// but it also increases the Pod CPU usage. It's a trade-off.
-		// Since this is a background service and it's not latency-sensitive, we split the requests.
-		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		userID := getUserID(e.UserId, e.User)
-		if err := p.countUser(ucKey, userID); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Error("Failed to increment the evaluation user event in the Redis",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("eventId", eventID),
-					zap.String("userId", userID),
-					zap.String("userCountKey", ucKey),
-					zap.Any("evaluationEvent", e),
-				)
+		// Admin format: "kind:suffix"
+		return strings.TrimPrefix(key, kind+":")
+	}
+
+	// Build ec side of key pairs: extract pairing key and populate ecKey/ecCount.
+	// If uc was already processed, add to existing pair; otherwise create new pair.
+	for ecKey, count := range eventCounts {
+		suffix := extractKey(ecKey, eventCountKey)
+		if pair, exists := keyPairs[suffix]; exists {
+			pair.ecKey = ecKey
+			pair.ecCount = count
+		} else {
+			keyPairs[suffix] = &keyPair{
+				ecKey:   ecKey,
+				ecCount: count,
 			}
-			return err
 		}
-		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countEvent(ecKey); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Error("Failed to increment the evaluation event in the Redis",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("eventId", eventID),
-					zap.String("userId", userID),
-					zap.String("eventCountKey", ecKey),
-					zap.Any("evaluationEvent", e),
-				)
+	}
+
+	// Build uc side of key pairs: extract pairing key and populate ucKey/ucUsers.
+	// If ec was already processed, add to existing pair; otherwise create new pair.
+	for ucKey, userIDSet := range userCounts {
+		suffix := extractKey(ucKey, userCountKey)
+		userIDs := make([]string, 0, len(userIDSet))
+		for userID := range userIDSet {
+			userIDs = append(userIDs, userID)
+		}
+
+		if pair, exists := keyPairs[suffix]; exists {
+			pair.ucKey = ucKey
+			pair.ucUsers = userIDs
+			pair.hasUsers = len(userIDs) > 0
+		} else {
+			keyPairs[suffix] = &keyPair{
+				ucKey:    ucKey,
+				ucUsers:  userIDs,
+				hasUsers: len(userIDs) > 0,
 			}
-			return err
-		}
-		evaluationEventCounter.WithLabelValues(
-			environmentId,
-			e.SdkVersion,
-			e.FeatureId,
-			e.Metadata[appVersion],
-			e.VariationId,
-		).Inc()
-
-		// Migration: Double-write to the target environment ID if migration is enabled
-		// This ensures data exists in both old and new key formats during the migration period
-		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
-			p.incrementEvaluationCountMigration(e, vID, userID, targetEnvID)
-		}
-	}
-	return nil
-}
-
-// incrementEvaluationCountMigration writes evaluation counts to the migration target environment.
-// This is a best-effort operation - errors are logged but not returned to avoid
-// blocking the main write path during migration.
-func (p *evaluationCountEventPersister) incrementEvaluationCountMigration(
-	e *eventproto.EvaluationEvent,
-	variationID string,
-	userID string,
-	targetEnvID string,
-) {
-	// Write user count to target environment
-	ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
-	if err := p.countUser(ucKeyTarget, userID); err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Migration: Failed to increment evaluation user count for target environment",
-				zap.Error(err),
-				zap.String("targetEnvironmentId", targetEnvID),
-				zap.String("featureId", e.FeatureId),
-				zap.String("userCountKey", ucKeyTarget),
-			)
 		}
 	}
 
-	// Write event count to target environment
-	ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
-	if err := p.countEvent(ecKeyTarget); err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Migration: Failed to increment evaluation event count for target environment",
-				zap.Error(err),
-				zap.String("targetEnvironmentId", targetEnvID),
-				zap.String("featureId", e.FeatureId),
-				zap.String("eventCountKey", ecKeyTarget),
-			)
+	failedECKeys := make(map[string]struct{})
+
+	for _, pair := range keyPairs {
+		// Step 1: PFADD first (idempotent - safe to retry)
+		if pair.hasUsers && pair.ucKey != "" {
+			_, err := p.evaluationCountCacher.PFAdd(pair.ucKey, pair.ucUsers...)
+			if err != nil {
+				if !strings.Contains(err.Error(), "client is closed") {
+					p.logger.Error("Failed to add users to HyperLogLog",
+						zap.Error(err),
+						zap.String("ucKey", pair.ucKey),
+					)
+				}
+				if pair.ecKey != "" {
+					failedECKeys[pair.ecKey] = struct{}{}
+				}
+				continue
+			}
+		}
+
+		// Step 2: INCRBY only if PFADD succeeded
+		if pair.ecKey != "" {
+			_, err := p.evaluationCountCacher.IncrementBy(pair.ecKey, pair.ecCount)
+			if err != nil {
+				if !strings.Contains(err.Error(), "client is closed") {
+					p.logger.Error("Failed to increment event count",
+						zap.Error(err),
+						zap.String("ecKey", pair.ecKey),
+						zap.Int64("count", pair.ecCount),
+					)
+				}
+				failedECKeys[pair.ecKey] = struct{}{}
+				continue
+			}
 		}
 	}
-}
 
-func (p *evaluationCountEventPersister) countEvent(key string) error {
-	_, err := p.evaluationCountCacher.Increment(key)
-	if err != nil {
-		return err
+	if len(failedECKeys) > 0 {
+		p.logger.Error("Partial flush failure",
+			zap.Int("failedKeyPairs", len(failedECKeys)),
+			zap.Int("totalKeyPairs", len(keyPairs)),
+		)
+		return failedECKeys, fmt.Errorf("flush: %d/%d key pairs failed", len(failedECKeys), len(keyPairs))
 	}
-	return nil
-}
 
-func (p *evaluationCountEventPersister) countUser(key, userID string) error {
-	_, err := p.evaluationCountCacher.PFAdd(key, userID)
-	if err != nil {
-		return err
-	}
-	return nil
+	p.logger.Debug("Flushed aggregated counts to Redis",
+		zap.Int("keyPairs", len(keyPairs)),
+	)
+
+	return nil, nil
 }
 
 func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
