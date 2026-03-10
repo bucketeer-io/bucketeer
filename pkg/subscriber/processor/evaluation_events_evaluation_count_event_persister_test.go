@@ -991,10 +991,10 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		{
 			name: "single key pair - PFADD before INCRBY",
 			eventCounts: map[string]int64{
-				"ec:hour1:feature1:varA:env1": 100,
+				"env1:ec:hour1:feature1:varA": 100,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:hour1:feature1:varA:env1": {"user1": {}, "user2": {}},
+				"env1:uc:hour1:feature1:varA": {"user1": {}, "user2": {}},
 			},
 			expectedPFAdds:  1,
 			expectedIncrBys: 1,
@@ -1003,14 +1003,14 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		{
 			name: "multiple key pairs - PFADD before INCRBY for each",
 			eventCounts: map[string]int64{
-				"ec:hour1:feature1:varA:env1": 10,
-				"ec:hour1:feature2:varB:env1": 20,
-				"ec:hour1:feature3:varC:env1": 30,
+				"env1:ec:hour1:feature1:varA": 10,
+				"env1:ec:hour1:feature2:varB": 20,
+				"env1:ec:hour1:feature3:varC": 30,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:hour1:feature1:varA:env1": {"user1": {}},
-				"uc:hour1:feature2:varB:env1": {"user2": {}},
-				"uc:hour1:feature3:varC:env1": {"user3": {}},
+				"env1:uc:hour1:feature1:varA": {"user1": {}},
+				"env1:uc:hour1:feature2:varB": {"user2": {}},
+				"env1:uc:hour1:feature3:varC": {"user3": {}},
 			},
 			expectedPFAdds:  3,
 			expectedIncrBys: 3,
@@ -1027,14 +1027,14 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		{
 			name: "real-world keys",
 			eventCounts: map[string]int64{
-				"ec:1709974800:feature-login:variant-A:env-prod":    500,
-				"ec:1709974800:feature-checkout:variant-B:env-prod": 300,
-				"ec:1709974800:feature-sidebar:variant-A:env-prod":  200,
+				"env-prod:ec:1709974800:feature-login:variant-A":    500,
+				"env-prod:ec:1709974800:feature-checkout:variant-B": 300,
+				"env-prod:ec:1709974800:feature-sidebar:variant-A":  200,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:1709974800:feature-login:variant-A:env-prod":    {"user1": {}, "user2": {}},
-				"uc:1709974800:feature-checkout:variant-B:env-prod": {"user3": {}},
-				"uc:1709974800:feature-sidebar:variant-A:env-prod":  {"user4": {}},
+				"env-prod:uc:1709974800:feature-login:variant-A":    {"user1": {}, "user2": {}},
+				"env-prod:uc:1709974800:feature-checkout:variant-B": {"user3": {}},
+				"env-prod:uc:1709974800:feature-sidebar:variant-A":  {"user4": {}},
 			},
 			expectedPFAdds:  3,
 			expectedIncrBys: 3,
@@ -1129,12 +1129,12 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 		{
 			name: "all operations succeed",
 			eventCounts: map[string]int64{
-				"ec:hour1:feature1:varA:env1": 10,
-				"ec:hour1:feature2:varB:env1": 20,
+				"env1:ec:hour1:feature1:varA": 10,
+				"env1:ec:hour1:feature2:varB": 20,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:hour1:feature1:varA:env1": {"user1": {}},
-				"uc:hour1:feature2:varB:env1": {"user2": {}},
+				"env1:uc:hour1:feature1:varA": {"user1": {}},
+				"env1:uc:hour1:feature2:varB": {"user2": {}},
 			},
 			shouldFailPFAdd:     false,
 			shouldFailIncrBy:    false,
@@ -1146,10 +1146,10 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 		{
 			name: "PFADD fails - INCRBY never executes (no over-count on retry)",
 			eventCounts: map[string]int64{
-				"ec:hour1:feature1:varA:env1": 10,
+				"env1:ec:hour1:feature1:varA": 10,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:hour1:feature1:varA:env1": {"user1": {}},
+				"env1:uc:hour1:feature1:varA": {"user1": {}},
 			},
 			shouldFailPFAdd:     true,
 			shouldFailIncrBy:    false,
@@ -1162,10 +1162,10 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 		{
 			name: "INCRBY fails after PFADD succeeds (safe retry due to idempotency)",
 			eventCounts: map[string]int64{
-				"ec:hour1:feature1:varA:env1": 10,
+				"env1:ec:hour1:feature1:varA": 10,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"uc:hour1:feature1:varA:env1": {"user1": {}},
+				"env1:uc:hour1:feature1:varA": {"user1": {}},
 			},
 			shouldFailPFAdd:     false,
 			shouldFailIncrBy:    true,

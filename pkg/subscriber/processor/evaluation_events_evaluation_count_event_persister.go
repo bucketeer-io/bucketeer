@@ -205,14 +205,14 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	fails := make(map[string]bool, len(envEvents))
 	aggregator := newEvaluationCountAggregator()
 
-	// Track event metadata for Prometheus metrics (only incremented after successful flush)
-	type eventMetrics struct {
+	// Aggregate metrics by label set (only incremented after successful flush)
+	type metricsKey struct {
 		environmentId string
 		sourceId      string
 		featureId     string
 		variationId   string
 	}
-	var metricsToIncrement []eventMetrics
+	metricsAgg := make(map[metricsKey]int64)
 
 	// Accumulate all events in memory
 	for environmentId, events := range envEvents {
@@ -235,14 +235,14 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			// Accumulate in aggregator (deduplicates automatically)
 			aggregator.addEvent(ecKey, ucKey, userID)
 
-			// Track metrics to increment only after successful flush
-			// Use vID (not e.VariationId) to align with Redis aggregation keys
-			metricsToIncrement = append(metricsToIncrement, eventMetrics{
+			// Aggregate metrics by label set
+			key := metricsKey{
 				environmentId: environmentId,
-				sourceId:      string(e.SourceId),
+				sourceId:      e.SourceId.String(),
 				featureId:     e.FeatureId,
-				variationId:   vID, // Use processed vID (maps error reasons to "default")
-			})
+				variationId:   vID,
+			}
+			metricsAgg[key]++
 
 			// Migration: Also accumulate for target environment
 			if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
@@ -271,13 +271,14 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	}
 
 	// Update Prometheus metrics only after successful Redis persistence
-	for _, m := range metricsToIncrement {
+	// Call Add() once per unique label set instead of Inc() per event
+	for key, count := range metricsAgg {
 		evaluationEventCounter.WithLabelValues(
-			m.environmentId,
-			m.sourceId,
-			m.featureId,
-			m.variationId,
-		).Inc()
+			key.environmentId,
+			key.sourceId,
+			key.featureId,
+			key.variationId,
+		).Add(float64(count))
 	}
 
 	return fails
@@ -387,8 +388,8 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	}
 
 	// Match up ec and uc keys by extracting the common suffix
-	// Keys are formatted as: "ec:timestamp:featureID:variationID:environmentID"
-	// or "uc:timestamp:featureID:variationID:environmentID"
+	// Admin keys: "ec:timestamp:featureID:variationID" / "uc:timestamp:featureID:variationID"
+	// Non-admin keys: "envID:ec:timestamp:featureID:variationID" / "envID:uc:timestamp:featureID:variationID"
 	type keyPair struct {
 		ecKey    string
 		ecCount  int64
@@ -397,11 +398,24 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		hasUsers bool
 	}
 
-	// Extract suffix (everything after "ec:" or "uc:")
+	// Extract suffix to pair ec/uc keys
+	// Keys format: Admin: "ec:timestamp:feat:var", Non-admin: "envID:ec:timestamp:feat:var"
+	// We extract the common suffix after the kind to pair them correctly
 	keyPairs := make(map[string]*keyPair)
 
+	extractSuffix := func(key, kind string) string {
+		// Try non-admin format first: "envID:kind:suffix"
+		pattern := ":" + kind + ":"
+		idx := strings.Index(key, pattern)
+		if idx >= 0 {
+			return key[idx+len(pattern):]
+		}
+		// Admin format: "kind:suffix"
+		return strings.TrimPrefix(key, kind+":")
+	}
+
 	for ecKey, count := range eventCounts {
-		suffix := strings.TrimPrefix(ecKey, eventCountKey+":")
+		suffix := extractSuffix(ecKey, eventCountKey)
 		if pair, exists := keyPairs[suffix]; exists {
 			pair.ecKey = ecKey
 			pair.ecCount = count
@@ -414,7 +428,7 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	}
 
 	for ucKey, userIDSet := range userCounts {
-		suffix := strings.TrimPrefix(ucKey, userCountKey+":")
+		suffix := extractSuffix(ucKey, userCountKey)
 		userIDs := make([]string, 0, len(userIDSet))
 		for userID := range userIDSet {
 			userIDs = append(userIDs, userID)
