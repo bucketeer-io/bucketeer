@@ -392,8 +392,10 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 // flushAggregatedCounts writes aggregated counts to Redis using individual calls
 // with PFADD-before-INCRBY ordering per key pair.
 //
-// Why not pipelines? pipeline.Exec() doesn't reveal which command failed, making
-// safe retry impossible. With individual calls, we know exactly what failed.
+// Why not pipelines? While go-redis pipelines do expose per-command errors via
+// each Cmder's .Err() method after Exec(), individual calls were chosen as the
+// simpler correctness-first approach. Pipeline optimization (batching all PFADDs
+// then all INCRBYs with per-command error inspection) is planned as a follow-up.
 //
 // Within each key pair:
 //   - PFADD runs first (idempotent). If it fails, INCRBY is skipped.
