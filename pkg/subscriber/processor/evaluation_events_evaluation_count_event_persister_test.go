@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -985,7 +986,7 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		eventCounts     map[string]int64
 		userCounts      map[string]map[string]struct{}
 		expectedPFAdds  int // Expected number of direct PFAdd calls
-		expectedIncrBys int // Expected number of pipeline IncrBy calls
+		expectedIncrBys int // Expected number of direct IncrementBy calls
 		description     string
 	}{
 		{
@@ -1054,41 +1055,51 @@ func TestFlushAggregatedCounts(t *testing.T) {
 			}
 
 			// Execute flush
-			err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			failedKeys, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
 
 			// Verify
 			assert.NoError(t, err, "flush should succeed")
+			assert.Empty(t, failedKeys, "no keys should fail")
 
 			// Verify call counts
 			assert.Equal(t, tt.expectedPFAdds, mockCache.pfaddCallCount,
 				"PFAdd call count should match: %s", tt.description)
 			assert.Equal(t, tt.expectedIncrBys, mockCache.execCount,
-				"IncrBy (pipeline Exec) count should match: %s", tt.description)
+				"IncrBy call count should match: %s", tt.description)
 
-			// Verify PFADD-before-INCRBY ordering
+			// Verify PFADD-before-INCRBY ordering per key pair
 			if len(tt.userCounts) > 0 {
-				// For each key pair, PFADD must come before INCRBY
-				for i := 0; i < tt.expectedPFAdds; i++ {
-					pfaddIdx := -1
-					incrbyIdx := -1
+				extractSuffix := func(call string) string {
+					s := call
+					if strings.HasPrefix(s, "PFADD:") {
+						s = strings.TrimPrefix(s, "PFADD:")
+						s = strings.Replace(s, ":uc:", ":", 1)
+					} else if strings.HasPrefix(s, "INCRBY:") {
+						s = strings.TrimPrefix(s, "INCRBY:")
+						s = strings.Replace(s, ":ec:", ":", 1)
+					}
+					return s
+				}
 
-					// Find indices in call order
-					// Match ":uc:" and ":ec:" to work with both admin and non-admin key formats
-					for idx, call := range mockCache.incrbyCallOrder {
-						if strings.HasPrefix(call, "PFADD:") && strings.Contains(call, ":uc:") && pfaddIdx == -1 {
-							pfaddIdx = idx
+				pfaddIdxBySuffix := make(map[string]int)
+				incrbyIdxBySuffix := make(map[string]int)
+				for idx, call := range mockCache.incrbyCallOrder {
+					suffix := extractSuffix(call)
+					if strings.HasPrefix(call, "PFADD:") {
+						if _, seen := pfaddIdxBySuffix[suffix]; !seen {
+							pfaddIdxBySuffix[suffix] = idx
 						}
-						if strings.HasPrefix(call, "INCRBY:") && strings.Contains(call, ":ec:") && incrbyIdx == -1 {
-							incrbyIdx = idx
-						}
-						if pfaddIdx >= 0 && incrbyIdx >= 0 {
-							break
+					} else if strings.HasPrefix(call, "INCRBY:") {
+						if _, seen := incrbyIdxBySuffix[suffix]; !seen {
+							incrbyIdxBySuffix[suffix] = idx
 						}
 					}
+				}
 
-					if pfaddIdx >= 0 && incrbyIdx >= 0 {
-						assert.Less(t, pfaddIdx, incrbyIdx,
-							"PFADD must come before INCRBY in call order")
+				for suffix, pfIdx := range pfaddIdxBySuffix {
+					if inIdx, ok := incrbyIdxBySuffix[suffix]; ok {
+						assert.Less(t, pfIdx, inIdx,
+							"PFADD must come before INCRBY for key pair suffix %s", suffix)
 					}
 				}
 			}
@@ -1204,13 +1215,15 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 			}
 
 			// Execute flush
-			err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			failedKeys, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
 
 			// Verify success/failure
 			if tt.expectedSuccess {
 				assert.NoError(t, err, tt.description)
+				assert.Empty(t, failedKeys, tt.description)
 			} else {
 				assert.Error(t, err, tt.description)
+				assert.NotEmpty(t, failedKeys, tt.description)
 			}
 
 			// Verify call counts match expectations
@@ -1219,18 +1232,39 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 			assert.Equal(t, tt.expectedIncrByCalls, mockCache.execCount,
 				"IncrBy call count: %s", tt.description)
 
-			// Verify PFADD-before-INCRBY ordering when both are called
+			// Verify PFADD-before-INCRBY ordering per key pair when both are called
 			if tt.expectedPFAddCalls > 0 && tt.expectedIncrByCalls > 0 {
-				pfaddFound := false
-				for _, call := range mockCache.incrbyCallOrder {
-					if strings.HasPrefix(call, "PFADD:") {
-						pfaddFound = true
+				extractSuffix := func(call string) string {
+					s := call
+					if strings.HasPrefix(s, "PFADD:") {
+						s = strings.TrimPrefix(s, "PFADD:")
+						s = strings.Replace(s, ":uc:", ":", 1)
+					} else if strings.HasPrefix(s, "INCRBY:") {
+						s = strings.TrimPrefix(s, "INCRBY:")
+						s = strings.Replace(s, ":ec:", ":", 1)
 					}
-					if strings.HasPrefix(call, "INCRBY:") {
-						// If we find INCRBY, PFADD must have been found first
-						assert.True(t, pfaddFound,
-							"PFADD must be called before INCRBY")
-						break
+					return s
+				}
+
+				pfaddIdxBySuffix := make(map[string]int)
+				incrbyIdxBySuffix := make(map[string]int)
+				for idx, call := range mockCache.incrbyCallOrder {
+					suffix := extractSuffix(call)
+					if strings.HasPrefix(call, "PFADD:") {
+						if _, seen := pfaddIdxBySuffix[suffix]; !seen {
+							pfaddIdxBySuffix[suffix] = idx
+						}
+					} else if strings.HasPrefix(call, "INCRBY:") {
+						if _, seen := incrbyIdxBySuffix[suffix]; !seen {
+							incrbyIdxBySuffix[suffix] = idx
+						}
+					}
+				}
+
+				for suffix, pfIdx := range pfaddIdxBySuffix {
+					if inIdx, ok := incrbyIdxBySuffix[suffix]; ok {
+						assert.Less(t, pfIdx, inIdx,
+							"PFADD must come before INCRBY for key pair suffix %s", suffix)
 					}
 				}
 			}
@@ -1336,6 +1370,183 @@ func TestIncrementEnvEvents_Retry(t *testing.T) {
 	}
 }
 
+func TestIncrementEnvEvents_PartialFlushFailure(t *testing.T) {
+	t.Parallel()
+
+	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
+
+	// Two events mapping to different key pairs (different features).
+	// Only one key pair's INCRBY will fail. The other event should NOT be retried.
+	envEvents := environmentEventMap{
+		"env-1": eventMap{
+			"event-success": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-ok",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-1",
+				User:           &userproto.User{Id: "user-1"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+			"event-fail": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-bad",
+				VariationId:    "variation-B",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-2",
+				User:           &userproto.User{Id: "user-2"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+		},
+	}
+
+	// Build the ecKey that will fail so we can set failOnECKey.
+	// Replicates newEvaluationCountkeyV2 logic.
+	tTime := time.Unix(hour1, 0)
+	date := time.Date(tTime.Year(), tTime.Month(), tTime.Day(), tTime.Hour(), 0, 0, 0, time.UTC)
+	failECKey := fmt.Sprintf("env-1:%s:%d:%s:%s", eventCountKey, date.Unix(), "feature-bad", "variation-B")
+
+	mockCache := &mockEvaluationCountCache{
+		failOnECKey: failECKey,
+	}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	fails := persister.incrementEnvEvents(envEvents)
+
+	// Only the event that maps to the failed ecKey should be retried
+	assert.Contains(t, fails, "event-fail", "event mapping to failed ecKey must be retried")
+	assert.True(t, fails["event-fail"], "failed event must be repeatable")
+	assert.NotContains(t, fails, "event-success",
+		"event mapping to succeeded ecKey must NOT be retried (would cause over-count)")
+}
+
+func TestIncrementEnvEvents_SharedKeyPairFailure(t *testing.T) {
+	t.Parallel()
+
+	hour1 := int64(1709974800)
+
+	// Two events that map to the SAME key pair (same feature/variation/env/hour).
+	// When that shared key pair fails, both events should be retried.
+	envEvents := environmentEventMap{
+		"env-1": eventMap{
+			"event-A": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-shared",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-1",
+				User:           &userproto.User{Id: "user-1"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+			"event-B": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-shared",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-2",
+				User:           &userproto.User{Id: "user-2"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+		},
+	}
+
+	tTime := time.Unix(hour1, 0)
+	date := time.Date(tTime.Year(), tTime.Month(), tTime.Day(), tTime.Hour(), 0, 0, 0, time.UTC)
+	failECKey := fmt.Sprintf("env-1:%s:%d:%s:%s", eventCountKey, date.Unix(), "feature-shared", "variation-A")
+
+	mockCache := &mockEvaluationCountCache{
+		failOnECKey: failECKey,
+	}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	fails := persister.incrementEnvEvents(envEvents)
+
+	assert.Equal(t, 2, len(fails), "both events sharing the failed key pair must be retried")
+	assert.Contains(t, fails, "event-A")
+	assert.Contains(t, fails, "event-B")
+	assert.True(t, fails["event-A"], "should be repeatable")
+	assert.True(t, fails["event-B"], "should be repeatable")
+}
+
+func TestFlushAggregatedCounts_AllPairsFail(t *testing.T) {
+	t.Parallel()
+
+	eventCounts := map[string]int64{
+		"env1:ec:hour1:feature1:varA": 10,
+		"env1:ec:hour1:feature2:varB": 20,
+	}
+	userCounts := map[string]map[string]struct{}{
+		"env1:uc:hour1:feature1:varA": {"user1": {}},
+		"env1:uc:hour1:feature2:varB": {"user2": {}},
+	}
+
+	mockCache := &mockEvaluationCountCache{
+		shouldFailIncrBy: true,
+	}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts)
+
+	assert.Error(t, err)
+	assert.Equal(t, 2, len(failedKeys), "all ecKeys must be in failedKeys when all pairs fail")
+	assert.Contains(t, failedKeys, "env1:ec:hour1:feature1:varA")
+	assert.Contains(t, failedKeys, "env1:ec:hour1:feature2:varB")
+
+	// Both PFAdds should still have been attempted (no early return)
+	assert.Equal(t, 2, mockCache.pfaddCallCount, "all PFAdds should be attempted even when INCRBY fails")
+	// Both INCRBYs were attempted (both failed)
+	assert.Equal(t, 2, mockCache.execCount, "all INCRBYs should be attempted")
+}
+
+func TestFlushAggregatedCounts_PartialFailure(t *testing.T) {
+	t.Parallel()
+
+	// Two key pairs: one will succeed, one will fail via failOnECKey
+	eventCounts := map[string]int64{
+		"env1:ec:hour1:feature-ok:varA":  50,
+		"env1:ec:hour1:feature-bad:varB": 30,
+	}
+	userCounts := map[string]map[string]struct{}{
+		"env1:uc:hour1:feature-ok:varA":  {"user1": {}},
+		"env1:uc:hour1:feature-bad:varB": {"user2": {}},
+	}
+
+	mockCache := &mockEvaluationCountCache{
+		failOnECKey: "env1:ec:hour1:feature-bad:varB",
+	}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts)
+
+	// Should return error for partial failure
+	assert.Error(t, err)
+	assert.Contains(t, failedKeys, "env1:ec:hour1:feature-bad:varB",
+		"failed ecKey must be in failedKeys")
+	assert.NotContains(t, failedKeys, "env1:ec:hour1:feature-ok:varA",
+		"succeeded ecKey must NOT be in failedKeys")
+
+	// Both PFAdds should have been attempted (no early return)
+	assert.Equal(t, 2, mockCache.pfaddCallCount, "all PFAdds should be attempted")
+
+	// The succeeded key pair's data should be persisted
+	assert.Equal(t, int64(50), mockCache.lastEventCounts["env1:ec:hour1:feature-ok:varA"],
+		"succeeded key pair's count should be persisted")
+	assert.NotContains(t, mockCache.lastEventCounts, "env1:ec:hour1:feature-bad:varB",
+		"failed key pair's count should NOT be persisted")
+}
+
 // pfaddCall records a PFAdd call for verification
 type pfaddCall struct {
 	key string
@@ -1350,8 +1561,9 @@ type mockEvaluationCountCache struct {
 	lastEventCounts  map[string]int64
 	lastUserCounts   map[string]map[string]struct{}
 	shouldFailFlush  bool
-	shouldFailPFAdd  bool // Simulates PFADD failure
-	shouldFailIncrBy bool // Simulates INCRBY failure
+	shouldFailPFAdd  bool   // Simulates PFADD failure for all keys
+	shouldFailIncrBy bool   // Simulates INCRBY failure for all keys
+	failOnECKey      string // If set, IncrementBy fails only for this specific key
 	pipelineExecuted bool
 	pipelineCount    int // Number of pipelines created
 	execCount        int // Number of IncrementBy calls (direct INCRBY operations)
@@ -1401,19 +1613,20 @@ func (m *mockEvaluationCountCache) IncrementBy(key string, value int64) (int64, 
 	defer m.mu.Unlock()
 
 	m.flushCalled = true
-	m.execCount++ // Count this IncrementBy call
+	m.execCount++
 	m.incrbyCallOrder = append(m.incrbyCallOrder, "INCRBY:"+key)
 
 	if m.shouldFailIncrBy || m.shouldFailFlush {
 		return 0, assert.AnError
 	}
+	if m.failOnECKey != "" && m.failOnECKey == key {
+		return 0, assert.AnError
+	}
 
-	// Initialize event counts map
 	if m.lastEventCounts == nil {
 		m.lastEventCounts = make(map[string]int64)
 	}
 
-	// Increment event count
 	m.lastEventCounts[key] += value
 
 	return m.lastEventCounts[key], nil

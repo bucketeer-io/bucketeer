@@ -205,7 +205,6 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	fails := make(map[string]bool, len(envEvents))
 	aggregator := newEvaluationCountAggregator()
 
-	// Aggregate metrics by label set (only incremented after successful flush)
 	type metricsKey struct {
 		environmentId string
 		sourceId      string
@@ -214,7 +213,13 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	}
 	metricsAgg := make(map[metricsKey]int64)
 
-	// Accumulate all events in memory
+	// Reverse mapping: ecKey → set of event IDs that contributed to it.
+	// Migration ecKeys are excluded so migration-only failures don't cause retries.
+	ecKeyToEventIDs := make(map[string]map[string]struct{})
+
+	// Tracks which metricsKey each ecKey maps to, so we can skip metrics for failed keys.
+	ecKeyToMetricsKey := make(map[string]metricsKey)
+
 	for environmentId, events := range envEvents {
 		for id, e := range events {
 			vID, err := getVariationID(e.Reason, e.VariationId)
@@ -227,24 +232,28 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 				continue
 			}
 
-			// Generate Redis keys
 			ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 			ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 			userID := getUserID(e.UserId, e.User)
 
-			// Accumulate in aggregator (deduplicates automatically)
 			aggregator.addEvent(ecKey, ucKey, userID)
 
-			// Aggregate metrics by label set
-			key := metricsKey{
+			// Build reverse mapping (primary ecKeys only, not migration)
+			if ecKeyToEventIDs[ecKey] == nil {
+				ecKeyToEventIDs[ecKey] = make(map[string]struct{})
+			}
+			ecKeyToEventIDs[ecKey][id] = struct{}{}
+
+			mKey := metricsKey{
 				environmentId: environmentId,
 				sourceId:      e.SourceId.String(),
 				featureId:     e.FeatureId,
 				variationId:   vID,
 			}
-			metricsAgg[key]++
+			metricsAgg[mKey]++
+			ecKeyToMetricsKey[ecKey] = mKey
 
-			// Migration: Also accumulate for target environment
+			// Migration: best-effort double-write, not tracked in reverse mapping
 			if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
 				ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
 				ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, targetEnvID, e.Timestamp)
@@ -254,31 +263,37 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 		}
 	}
 
-	// Flush all accumulated counts to Redis with individual calls
 	eventCounts, userCounts := aggregator.flush()
-	err := p.flushAggregatedCounts(eventCounts, userCounts)
+	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts)
 
 	if err != nil {
-		// Mark all events as failed for retry
-		for _, events := range envEvents {
-			for id := range events {
-				if _, alreadyFailed := fails[id]; !alreadyFailed {
-					fails[id] = true
+		// Only mark events whose primary ecKey failed
+		for ecKey := range failedECKeys {
+			for eventID := range ecKeyToEventIDs[ecKey] {
+				if _, alreadyFailed := fails[eventID]; !alreadyFailed {
+					fails[eventID] = true
 				}
 			}
 		}
-		return fails
 	}
 
-	// Update Prometheus metrics only after successful Redis persistence
-	// Call Add() once per unique label set instead of Inc() per event
+	failedMetricsCounts := make(map[metricsKey]int64)
+	for ecKey := range failedECKeys {
+		if mKey, ok := ecKeyToMetricsKey[ecKey]; ok {
+			failedMetricsCounts[mKey] += int64(len(ecKeyToEventIDs[ecKey]))
+		}
+	}
+
 	for key, count := range metricsAgg {
-		evaluationEventCounter.WithLabelValues(
-			key.environmentId,
-			key.sourceId,
-			key.featureId,
-			key.variationId,
-		).Add(float64(count))
+		succeeded := count - failedMetricsCounts[key]
+		if succeeded > 0 {
+			evaluationEventCounter.WithLabelValues(
+				key.environmentId,
+				key.sourceId,
+				key.featureId,
+				key.variationId,
+			).Add(float64(succeeded))
+		}
 	}
 
 	return fails
@@ -371,20 +386,25 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 }
 
 // flushAggregatedCounts writes aggregated counts to Redis using individual calls
-// with PFADD-before-INCRBY ordering to prevent over-counting on retry.
+// with PFADD-before-INCRBY ordering per key pair.
 //
 // Why not pipelines? pipeline.Exec() doesn't reveal which command failed, making
 // safe retry impossible. With individual calls, we know exactly what failed.
 //
-// Retry safety:
-// - PFADD fails → INCRBY never runs → retry both safely
-// - INCRBY fails → PFADD already done (idempotent) → retry safe
+// Within each key pair:
+//   - PFADD runs first (idempotent). If it fails, INCRBY is skipped.
+//   - INCRBY runs only after PFADD succeeds. If INCRBY fails, PFADD is
+//     already done (idempotent) so retry is safe.
+//
+// Across key pairs: all pairs are attempted even if some fail. The caller
+// receives the set of failed ecKeys so it can Nack only the affected events,
+// preventing over-counting of already-succeeded key pairs on retry.
 func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	eventCounts map[string]int64,
 	userCounts map[string]map[string]struct{},
-) error {
+) (map[string]struct{}, error) {
 	if len(eventCounts) == 0 && len(userCounts) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// Match up ec and uc keys by extracting the common suffix
@@ -455,8 +475,8 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		}
 	}
 
-	// Execute with PFADD-first ordering: PFADD is idempotent, so INCRBY only
-	// runs if PFADD succeeds. This prevents over-counting on retry.
+	failedECKeys := make(map[string]struct{})
+
 	for _, pair := range keyPairs {
 		// Step 1: PFADD first (idempotent - safe to retry)
 		if pair.hasUsers && pair.ucKey != "" {
@@ -468,9 +488,10 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 						zap.String("ucKey", pair.ucKey),
 					)
 				}
-				// PFADD failed - don't execute INCRBY
-				// On retry, both PFADD and INCRBY will execute (no over-count)
-				return err
+				if pair.ecKey != "" {
+					failedECKeys[pair.ecKey] = struct{}{}
+				}
+				continue
 			}
 		}
 
@@ -485,18 +506,25 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 						zap.Int64("count", pair.ecCount),
 					)
 				}
-				// INCRBY failed but PFADD already succeeded (idempotent)
-				// On retry, PFADD is safe (no change), INCRBY executes once
-				return err
+				failedECKeys[pair.ecKey] = struct{}{}
+				continue
 			}
 		}
+	}
+
+	if len(failedECKeys) > 0 {
+		p.logger.Error("Partial flush failure",
+			zap.Int("failedKeyPairs", len(failedECKeys)),
+			zap.Int("totalKeyPairs", len(keyPairs)),
+		)
+		return failedECKeys, fmt.Errorf("flush: %d/%d key pairs failed", len(failedECKeys), len(keyPairs))
 	}
 
 	p.logger.Debug("Flushed aggregated counts to Redis",
 		zap.Int("keyPairs", len(keyPairs)),
 	)
 
-	return nil
+	return nil, nil
 }
 
 func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
