@@ -6,8 +6,8 @@ import {
   useRef,
   useState
 } from 'react';
-import type { ChatErrorCode } from '@api/ai-chat';
 import Markdown from 'react-markdown';
+import type { ChatErrorCode } from '@api/ai-chat';
 import { useTranslation } from 'i18n';
 import { AIChatMessage, Suggestion } from '@types';
 import { cn } from 'utils/style';

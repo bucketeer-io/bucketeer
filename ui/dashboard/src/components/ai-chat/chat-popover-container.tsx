@@ -51,7 +51,11 @@ const ChatPopoverContainer = ({ onClose }: ChatPopoverContainerProps) => {
         featureId: effectivePageContext.featureId
       }
     }),
-    [environmentId, effectivePageContext.pageType, effectivePageContext.featureId]
+    [
+      environmentId,
+      effectivePageContext.pageType,
+      effectivePageContext.featureId
+    ]
   );
 
   const { data } = useQuerySuggestions({

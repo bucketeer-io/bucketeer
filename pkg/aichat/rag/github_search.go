@@ -35,50 +35,50 @@ import (
 )
 
 const (
-	defaultAPIBaseURL = "https://api.github.com"
-	defaultRawBaseURL = "https://raw.githubusercontent.com"
-	docsRepo          = "bucketeer-io/bucketeer-docs"
-	maxContentLength  = 2000
-	maxIndexContent   = 5000 // content stored in index for scoring (longer than output)
-	maxRawBodyBytes   = 512 * 1024
-	maxTopK           = 10
+	defaultAPIBaseURL  = "https://api.github.com"
+	defaultRawBaseURL  = "https://raw.githubusercontent.com"
+	docsRepo           = "bucketeer-io/bucketeer-docs"
+	maxContentLength   = 2000
+	maxIndexContent    = 5000 // content stored in index for scoring (longer than output)
+	maxRawBodyBytes    = 512 * 1024
+	maxTopK            = 10
 	maxConcurrentFetch = 5
-	defaultCacheTTL   = 24 * time.Hour
+	defaultCacheTTL    = 24 * time.Hour
 )
 
 // katakanaToEnglish maps common Katakana loanwords to their English equivalents
 // for cross-language search matching against English documentation.
 var katakanaToEnglish = map[string]string{
-	"タグ":          "tag",
-	"フラグ":         "flag",
-	"セグメント":       "segment",
-	"ターゲティング":     "targeting",
-	"ターゲット":       "target",
-	"エクスペリメント":    "experiment",
-	"テスト":         "test",
-	"ロールアウト":      "rollout",
-	"ユーザー":        "user",
-	"バケット":        "bucket",
-	"バリエーション":     "variation",
-	"プッシュ":        "push",
-	"イベント":        "event",
-	"ゴール":         "goal",
-	"ダッシュボード":     "dashboard",
-	"オートオプス":      "autoops",
-	"トリガー":        "trigger",
-	"ウェブフック":      "webhook",
-	"クイックスタート":    "quickstart",
-	"インストール":      "install",
-	"コンソール":       "console",
-	"プロジェクト":      "project",
-	"エンバイロメント":    "environment",
-	"オペレーション":     "operation",
-	"オペレーションズ":    "operations",
-	"パフォーマンス":     "performance",
-	"アナリティクス":     "analytics",
-	"メトリクス":       "metrics",
-	"チェンジログ":      "changelog",
-	"ドキュメント":      "documentation",
+	"タグ":       "tag",
+	"フラグ":      "flag",
+	"セグメント":    "segment",
+	"ターゲティング":  "targeting",
+	"ターゲット":    "target",
+	"エクスペリメント": "experiment",
+	"テスト":      "test",
+	"ロールアウト":   "rollout",
+	"ユーザー":     "user",
+	"バケット":     "bucket",
+	"バリエーション":  "variation",
+	"プッシュ":     "push",
+	"イベント":     "event",
+	"ゴール":      "goal",
+	"ダッシュボード":  "dashboard",
+	"オートオプス":   "autoops",
+	"トリガー":     "trigger",
+	"ウェブフック":   "webhook",
+	"クイックスタート": "quickstart",
+	"インストール":   "install",
+	"コンソール":    "console",
+	"プロジェクト":   "project",
+	"エンバイロメント": "environment",
+	"オペレーション":  "operation",
+	"オペレーションズ": "operations",
+	"パフォーマンス":  "performance",
+	"アナリティクス":  "analytics",
+	"メトリクス":    "metrics",
+	"チェンジログ":   "changelog",
+	"ドキュメント":   "documentation",
 }
 
 // stopWords are common words excluded from search scoring.

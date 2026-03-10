@@ -409,7 +409,7 @@ func TestScoreDoc(t *testing.T) {
 
 	t.Run("title match scores higher than content-only match", func(t *testing.T) {
 		t.Parallel()
-		titleScore := scoreDoc(doc, []string{"segments"})    // matches path + title + content
+		titleScore := scoreDoc(doc, []string{"segments"})     // matches path + title + content
 		contentScore := scoreDoc(doc, []string{"attributes"}) // matches content only
 		assert.Greater(t, titleScore, contentScore)
 	})
