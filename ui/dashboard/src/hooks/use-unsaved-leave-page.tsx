@@ -45,8 +45,21 @@ const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
 let bypassNavigation = false;
 
-export function allowNavigation() {
+export function allowNavigation(action?: () => void) {
   bypassNavigation = true;
+  if (action) {
+    try {
+      action();
+    } finally {
+      bypassNavigation = false;
+    }
+  } else {
+    // Fallback for existing call sites that do not pass a callback:
+    // ensure the bypass is short-lived and does not leak indefinitely.
+    setTimeout(() => {
+      bypassNavigation = false;
+    }, 0);
+  }
 }
 
 export function useUnsavedLeavePage({
@@ -63,7 +76,6 @@ export function useUnsavedLeavePage({
   callBackCancel?: () => void;
 }) {
   const { confirm, setIsShow: setIsShowGlobal, isShow: global } = useConfirm();
-  const { t } = useTranslation(['form', 'common', 'table', 'message']);
   const navigator = useContext(NavigationContext).navigator;
 
   useEffect(() => {
@@ -106,6 +118,7 @@ export function useUnsavedLeavePage({
           if (callBackCancel) {
             callBackCancel();
           }
+          setIsShowGlobal(false);
           return replace(...args);
         }
       });
@@ -127,12 +140,13 @@ export function useUnsavedLeavePage({
         return;
       }
       confirm({
-        title: t(title),
-        message: t(content),
+        title: title,
+        message: content,
         onConfirm: () => {
           if (callBackCancel) {
             callBackCancel();
           }
+          setIsShowGlobal(false);
           history.back();
         },
         onCancel: () => {

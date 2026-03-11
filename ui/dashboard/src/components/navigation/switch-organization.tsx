@@ -107,7 +107,7 @@ const SwitchOrganization = ({
             await onMeFetcher({ organizationId });
             onCloseSwitchOrg();
             onCloseSetting();
-            navigate(PAGE_PATH_ROOT);
+            allowNavigation(() => navigate(PAGE_PATH_ROOT));
           }
         }
       } catch (error) {
@@ -126,7 +126,6 @@ const SwitchOrganization = ({
           title: 'message:leave-page-unsaved-changes',
           message: 'message:leave-page-unsaved-changes-content',
           onConfirm: () => {
-            allowNavigation();
             setIsShow(false);
             onChangeOrganization(organizationId);
             setCurrentOrganization(organizationId);

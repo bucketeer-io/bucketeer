@@ -38,7 +38,7 @@ const MyProjects = () => {
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
   const { errorNotify } = useToast();
-  const { isShow: showConfirm, confirm } = useConfirm();
+  const { isShow: showConfirm, confirm, setIsShow } = useConfirm();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [projects, setProjects] = useState<Project[]>();
@@ -121,16 +121,18 @@ const MyProjects = () => {
         environmentId: value.id || ENVIRONMENT_WITH_EMPTY_ID,
         projectId: value.projectId
       });
-      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
-        replace: false,
-        state: {
-          clearFilters: true
-        }
-      });
+      allowNavigation(() =>
+        navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
+          replace: false,
+          state: {
+            clearFilters: true
+          }
+        })
+      );
       setIsShowProjectsList(false);
       onClearSearch();
     },
-    [setSelectedEnvironment, showConfirm, consoleAccount, selectedEnvironment]
+    [setSelectedEnvironment, selectedEnvironment, onClearSearch, navigate]
   );
 
   const onChangeProjectWithConfirm = useCallback(
@@ -141,7 +143,7 @@ const MyProjects = () => {
           title: 'message:leave-page-unsaved-changes',
           message: 'message:leave-page-unsaved-changes-content',
           onConfirm: () => {
-            allowNavigation();
+            setIsShow(false);
             onHandleChange(environment);
           }
         });
