@@ -22,17 +22,34 @@ import (
 	"math"
 	"net/http"
 	"path"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-	"unicode"
 	"unicode/utf8"
 
 	"go.uber.org/zap"
 )
+
+// DocChunk represents a document chunk returned by a search.
+type DocChunk struct {
+	ID       string  `json:"id"`
+	Content  string  `json:"content"`
+	Metadata DocMeta `json:"metadata"`
+}
+
+// DocMeta contains metadata about a document chunk.
+type DocMeta struct {
+	Title    string `json:"title"`
+	URL      string `json:"url"`
+	Category string `json:"category"`
+}
+
+// Searcher defines the interface for document search.
+type Searcher interface {
+	Search(ctx context.Context, query string, topK int) ([]DocChunk, error)
+}
 
 const (
 	defaultAPIBaseURL  = "https://api.github.com"
@@ -45,57 +62,6 @@ const (
 	maxConcurrentFetch = 5
 	defaultCacheTTL    = 24 * time.Hour
 )
-
-// katakanaToEnglish maps common Katakana loanwords to their English equivalents
-// for cross-language search matching against English documentation.
-var katakanaToEnglish = map[string]string{
-	"タグ":       "tag",
-	"フラグ":      "flag",
-	"セグメント":    "segment",
-	"ターゲティング":  "targeting",
-	"ターゲット":    "target",
-	"エクスペリメント": "experiment",
-	"テスト":      "test",
-	"ロールアウト":   "rollout",
-	"ユーザー":     "user",
-	"バケット":     "bucket",
-	"バリエーション":  "variation",
-	"プッシュ":     "push",
-	"イベント":     "event",
-	"ゴール":      "goal",
-	"ダッシュボード":  "dashboard",
-	"オートオプス":   "autoops",
-	"トリガー":     "trigger",
-	"ウェブフック":   "webhook",
-	"クイックスタート": "quickstart",
-	"インストール":   "install",
-	"コンソール":    "console",
-	"プロジェクト":   "project",
-	"エンバイロメント": "environment",
-	"オペレーション":  "operation",
-	"オペレーションズ": "operations",
-	"パフォーマンス":  "performance",
-	"アナリティクス":  "analytics",
-	"メトリクス":    "metrics",
-	"チェンジログ":   "changelog",
-	"ドキュメント":   "documentation",
-}
-
-// stopWords are common words excluded from search scoring.
-var stopWords = map[string]bool{
-	"a": true, "an": true, "the": true, "is": true, "are": true,
-	"was": true, "were": true, "be": true, "been": true, "being": true,
-	"have": true, "has": true, "had": true, "do": true, "does": true,
-	"did": true, "will": true, "would": true, "could": true, "should": true,
-	"may": true, "might": true, "can": true, "shall": true,
-	"to": true, "of": true, "in": true, "for": true, "on": true,
-	"with": true, "at": true, "by": true, "from": true, "as": true,
-	"into": true, "about": true, "between": true, "through": true,
-	"and": true, "but": true, "or": true, "nor": true, "not": true,
-	"it": true, "its": true, "this": true, "that": true, "these": true,
-	"i": true, "me": true, "my": true, "we": true, "our": true, "you": true, "your": true,
-	"how": true, "what": true, "which": true, "who": true, "where": true, "when": true, "why": true,
-}
 
 // gitTreeResponse is the GitHub Trees API response.
 type gitTreeResponse struct {
@@ -377,109 +343,22 @@ func (g *GitHubSearcher) fetchRawDoc(ctx context.Context, docPath string) (index
 	}, nil
 }
 
-// reASCIIWord matches sequences of ASCII alphanumeric characters (including hyphens).
-var reASCIIWord = regexp.MustCompile(`[a-zA-Z0-9][\w-]*`)
-
-// tokenizeQuery splits a query into lowercase tokens, removing stop words.
-// It handles both space-delimited languages (English) and non-space-delimited
-// languages (Japanese, Chinese) by extracting ASCII words from mixed text
-// and splitting CJK characters into individual tokens.
+// tokenizeQuery splits a query into unique lowercase tokens.
+// The query is expected to be pre-processed into English keywords
+// by the LLM keyword extraction step in chat_stream.go.
 func tokenizeQuery(query string) []string {
-	lower := strings.ToLower(query)
 	seen := make(map[string]bool)
-	tokens := make([]string, 0)
-
-	addToken := func(t string) {
-		if t != "" && !stopWords[t] && !seen[t] {
-			seen[t] = true
-			tokens = append(tokens, t)
+	var tokens []string
+	for _, w := range strings.Fields(strings.ToLower(query)) {
+		if w != "" && !seen[w] {
+			seen[w] = true
+			tokens = append(tokens, w)
 		}
 	}
-
-	// First pass: extract space-delimited words (handles English and mixed text)
-	for _, w := range strings.Fields(lower) {
-		// Extract ASCII words from mixed tokens like "sdkについて"
-		asciiWords := reASCIIWord.FindAllString(w, -1)
-		if len(asciiWords) > 0 {
-			for _, aw := range asciiWords {
-				addToken(aw)
-			}
-		}
-		// Extract CJK character runs as individual tokens
-		cjkRun := extractCJKRuns(w)
-		for _, run := range cjkRun {
-			addToken(run)
-			// Translate known Katakana loanwords to English equivalents
-			if eng, ok := katakanaToEnglish[run]; ok {
-				addToken(eng)
-			}
-		}
-	}
-
 	if len(tokens) == 0 {
 		return nil
 	}
 	return tokens
-}
-
-// extractCJKRuns extracts CJK tokens from a string by isolating Katakana runs
-// (which typically represent loanwords like タグ, フラグ, セグメント) as separate
-// tokens. Non-Katakana CJK sequences (Hiragana + Kanji) are kept together.
-// This yields: "タグでフラグを整理する" → ["タグ", "フラグ", "整理する"].
-func extractCJKRuns(s string) []string {
-	var runs []string
-	var current []rune
-	var isKatakana bool // true if current run is katakana
-
-	flush := func() {
-		if len(current) > 0 {
-			runs = append(runs, string(current))
-			current = current[:0]
-		}
-	}
-
-	for _, r := range s {
-		if !isCJK(r) {
-			flush()
-			continue
-		}
-		kata := unicode.Is(unicode.Katakana, r)
-		if len(current) > 0 && kata != isKatakana {
-			flush()
-		}
-		isKatakana = kata
-		current = append(current, r)
-	}
-	flush()
-
-	// Filter out short hiragana-only tokens (likely particles like で, を, の)
-	filtered := runs[:0]
-	for _, run := range runs {
-		if isHiraganaOnly(run) && len([]rune(run)) <= 2 {
-			continue
-		}
-		filtered = append(filtered, run)
-	}
-	return filtered
-}
-
-// isHiraganaOnly returns true if every rune in the string is Hiragana.
-func isHiraganaOnly(s string) bool {
-	for _, r := range s {
-		if !unicode.Is(unicode.Hiragana, r) {
-			return false
-		}
-	}
-	return true
-}
-
-// isCJK returns true if the rune is a CJK character (Chinese, Japanese, Korean)
-// including Hiragana, Katakana, CJK Unified Ideographs, and Hangul.
-func isCJK(r rune) bool {
-	return unicode.Is(unicode.Han, r) ||
-		unicode.Is(unicode.Hiragana, r) ||
-		unicode.Is(unicode.Katakana, r) ||
-		unicode.Is(unicode.Hangul, r)
 }
 
 // scoreDoc computes a relevance score for a document against query tokens.

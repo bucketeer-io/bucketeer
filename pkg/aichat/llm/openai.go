@@ -40,6 +40,17 @@ func NewOpenAIClient(apiKey, baseURL string) Client {
 	}
 }
 
+func toOpenAIMessages(messages []Message) []openai.ChatCompletionMessage {
+	oaiMessages := make([]openai.ChatCompletionMessage, len(messages))
+	for i, m := range messages {
+		oaiMessages[i] = openai.ChatCompletionMessage{
+			Role:    m.Role,
+			Content: m.Content,
+		}
+	}
+	return oaiMessages
+}
+
 func (c *openaiClient) StreamChat(
 	ctx context.Context,
 	messages []Message,
@@ -52,17 +63,9 @@ func (c *openaiClient) StreamChat(
 		defer close(responseChan)
 		defer close(errChan)
 
-		oaiMessages := make([]openai.ChatCompletionMessage, len(messages))
-		for i, m := range messages {
-			oaiMessages[i] = openai.ChatCompletionMessage{
-				Role:    m.Role,
-				Content: m.Content,
-			}
-		}
-
 		req := openai.ChatCompletionRequest{
 			Model:       opts.Model,
-			Messages:    oaiMessages,
+			Messages:    toOpenAIMessages(messages),
 			MaxTokens:   opts.MaxTokens,
 			Temperature: opts.Temperature,
 			Stream:      true,
@@ -103,4 +106,25 @@ func (c *openaiClient) StreamChat(
 	}()
 
 	return responseChan, errChan
+}
+
+func (c *openaiClient) Chat(
+	ctx context.Context,
+	messages []Message,
+	opts StreamOptions,
+) (string, error) {
+	resp, err := c.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model:       opts.Model,
+		Messages:    toOpenAIMessages(messages),
+		MaxTokens:   opts.MaxTokens,
+		Temperature: opts.Temperature,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if len(resp.Choices) == 0 {
+		return "", nil
+	}
+	return resp.Choices[0].Message.Content, nil
 }

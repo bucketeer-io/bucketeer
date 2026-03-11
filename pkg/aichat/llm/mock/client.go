@@ -40,6 +40,21 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// Chat mocks base method.
+func (m *MockClient) Chat(ctx context.Context, messages []llm.Message, opts llm.StreamOptions) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Chat", ctx, messages, opts)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Chat indicates an expected call of Chat.
+func (mr *MockClientMockRecorder) Chat(ctx, messages, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chat", reflect.TypeOf((*MockClient)(nil).Chat), ctx, messages, opts)
+}
+
 // StreamChat mocks base method.
 func (m *MockClient) StreamChat(ctx context.Context, messages []llm.Message, opts llm.StreamOptions) (<-chan llm.Chunk, <-chan error) {
 	m.ctrl.T.Helper()

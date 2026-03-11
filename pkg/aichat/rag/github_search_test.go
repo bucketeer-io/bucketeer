@@ -315,11 +315,6 @@ func TestTokenizeQuery(t *testing.T) {
 			expected: []string{"feature", "flags"},
 		},
 		{
-			name:     "removes stop words",
-			query:    "how to use the sdk",
-			expected: []string{"use", "sdk"},
-		},
-		{
 			name:     "lowercases",
 			query:    "Go SDK Android",
 			expected: []string{"go", "sdk", "android"},
@@ -330,39 +325,14 @@ func TestTokenizeQuery(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "all stop words returns empty",
-			query:    "how is the",
-			expected: nil,
-		},
-		{
-			name:     "japanese katakana separated and translated",
-			query:    "セグメント 使い方",
-			expected: []string{"セグメント", "segment", "使い方"},
-		},
-		{
-			name:     "extracts ASCII and splits katakana from Japanese",
-			query:    "SDKについて調べて",
-			expected: []string{"sdk", "について調べて"},
-		},
-		{
-			name:     "mixed English and Japanese with spaces",
-			query:    "Go SDKの使い方",
-			expected: []string{"go", "sdk", "の使い方"},
-		},
-		{
-			name:     "katakana loanwords translated to English",
-			query:    "タグでフラグを整理する",
-			expected: []string{"タグ", "tag", "フラグ", "flag", "を整理する"},
-		},
-		{
-			name:     "katakana segment translated",
-			query:    "セグメントの使い方",
-			expected: []string{"セグメント", "segment", "の使い方"},
-		},
-		{
 			name:     "deduplicates tokens",
 			query:    "sdk SDK",
 			expected: []string{"sdk"},
+		},
+		{
+			name:     "whitespace only",
+			query:    "   ",
+			expected: nil,
 		},
 	}
 

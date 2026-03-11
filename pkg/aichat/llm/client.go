@@ -53,4 +53,8 @@ type Client interface {
 	// StreamChat sends messages to the LLM and returns channels for
 	// streaming response chunks and errors.
 	StreamChat(ctx context.Context, messages []Message, opts StreamOptions) (<-chan Chunk, <-chan error)
+
+	// Chat sends messages to the LLM and returns the complete response.
+	// Use this for short, non-streaming tasks like keyword extraction.
+	Chat(ctx context.Context, messages []Message, opts StreamOptions) (string, error)
 }

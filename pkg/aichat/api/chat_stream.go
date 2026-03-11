@@ -18,6 +18,7 @@ import (
 	"context"
 	"html"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"go.uber.org/zap"
@@ -93,9 +94,20 @@ func streamChat(
 		g, gCtx := errgroup.WithContext(ctx)
 		if ragSearcher != nil && lastUserMessage != "" {
 			g.Go(func() error {
-				docs, err := ragSearcher.Search(gCtx, lastUserMessage, 3)
+				// Extract English search keywords via LLM, then search
+				searchQuery := lastUserMessage
+				if extracted, err := extractSearchQuery(
+					gCtx, llmClient, lastUserMessage, cfg.Model,
+				); err != nil {
+					logger.Warn("Keyword extraction failed, using raw query",
+						zap.Error(err))
+				} else {
+					searchQuery = extracted
+				}
+				docs, err := ragSearcher.Search(gCtx, searchQuery, 3)
 				if err != nil {
-					logger.Warn("RAG search failed, continuing without context", zap.Error(err))
+					logger.Warn("RAG search failed, continuing without context",
+						zap.Error(err))
 				} else {
 					relevantDocs = docs
 				}
@@ -185,4 +197,40 @@ func sanitizeUserInput(input string) string {
 // Used for assistant messages and RAG queries.
 func limitInputLength(input string) string {
 	return normalizeInput(input)
+}
+
+const keywordExtractionPrompt = `Extract 3-5 English search keywords from the user query.
+Return only lowercase keywords separated by spaces. No explanation.`
+
+// extractSearchQuery uses the LLM to convert a user query (which may be in
+// any language) into English search keywords for RAG document scoring.
+func extractSearchQuery(
+	ctx context.Context,
+	client llm.Client,
+	query string,
+	model string,
+) (string, error) {
+	if client == nil || query == "" {
+		return query, nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	messages := []llm.Message{
+		{Role: llm.RoleSystem, Content: keywordExtractionPrompt},
+		{Role: llm.RoleUser, Content: query},
+	}
+	opts := llm.StreamOptions{
+		Model:       model,
+		MaxTokens:   50,
+		Temperature: 0,
+	}
+	result, err := client.Chat(ctx, messages, opts)
+	if err != nil {
+		return "", err
+	}
+	result = strings.TrimSpace(result)
+	if result == "" {
+		return query, nil
+	}
+	return result, nil
 }
