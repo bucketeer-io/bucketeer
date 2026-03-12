@@ -12,7 +12,14 @@ metadata:
     envoy: "true"
     metrics: "true"
 spec:
+  {{- if eq (.Values.service.clusterIP | toString) "None" }}
+  {{- if ne .Values.service.type "ClusterIP" }}
+  {{- fail "Invalid configuration: when service.clusterIP is 'None', service.type must be 'ClusterIP'" }}
+  {{- end }}
+  type: ClusterIP
+  {{- else }}
   type: {{ .Values.service.type }}
+  {{- end }}
   clusterIP: {{ .Values.service.clusterIP }}
   ports:
     - name: service
