@@ -15,6 +15,7 @@
 package ratelimit
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -25,7 +26,7 @@ import (
 
 func TestNewLimiter_DefaultValues(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{})
+	l := NewLimiter(context.Background(), Config{})
 	assert.NotNil(t, l)
 	assert.Equal(t, 20, l.config.RequestsPerMinute)
 	assert.Equal(t, 5, l.config.BurstSize)
@@ -33,14 +34,14 @@ func TestNewLimiter_DefaultValues(t *testing.T) {
 
 func TestNewLimiter_CustomValues(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 60, BurstSize: 10})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 10})
 	assert.Equal(t, 60, l.config.RequestsPerMinute)
 	assert.Equal(t, 10, l.config.BurstSize)
 }
 
 func TestAllow_WithinBurst(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 60, BurstSize: 5})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 5})
 
 	// First 5 requests should be allowed (burst)
 	for i := 0; i < 5; i++ {
@@ -50,7 +51,7 @@ func TestAllow_WithinBurst(t *testing.T) {
 
 func TestAllow_ExceedsBurst(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 60, BurstSize: 3})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 3})
 
 	// First 3 requests should be allowed (burst)
 	for i := 0; i < 3; i++ {
@@ -63,7 +64,7 @@ func TestAllow_ExceedsBurst(t *testing.T) {
 
 func TestAllow_DifferentKeys(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 60, BurstSize: 2})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 2})
 
 	// Exhaust user1 burst
 	assert.True(t, l.Allow("user1"))
@@ -78,7 +79,7 @@ func TestAllow_DifferentKeys(t *testing.T) {
 
 func TestAllow_ConcurrentAccess(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 600, BurstSize: 50})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 600, BurstSize: 50})
 
 	var wg sync.WaitGroup
 	for i := 0; i < 10; i++ {
@@ -96,7 +97,7 @@ func TestAllow_ConcurrentAccess(t *testing.T) {
 
 func TestCleanup_PreservesActiveEntries(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 60, BurstSize: 1})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 1})
 
 	// Exhaust limiter
 	assert.True(t, l.Allow("user1"))
@@ -111,7 +112,7 @@ func TestCleanup_PreservesActiveEntries(t *testing.T) {
 
 func TestCleanup_RemovesIdleEntries(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(Config{RequestsPerMinute: 60, BurstSize: 1})
+	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 1})
 
 	// Exhaust limiter
 	assert.True(t, l.Allow("user1"))

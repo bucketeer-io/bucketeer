@@ -313,10 +313,14 @@ func TestBuildFeatureContext_TruncatesLongOutput(t *testing.T) {
 	}
 	result := buildFeatureContext(f)
 	assert.Contains(t, result, "... (truncated)")
+	assert.Contains(t, result, "<feature_data>")
+	assert.Contains(t, result, "</feature_data>")
 	// Rune count of the truncated portion must not exceed the limit
+	// (plus XML wrapper tags and truncation suffix)
 	runes := []rune(result)
 	truncSuffix := []rune("\n... (truncated)\n")
-	assert.LessOrEqual(t, len(runes), maxFeatureContextLength+len(truncSuffix))
+	xmlWrapper := []rune("<feature_data>\n</feature_data>")
+	assert.LessOrEqual(t, len(runes), maxFeatureContextLength+len(truncSuffix)+len(xmlWrapper))
 }
 
 func TestBuildFeatureContext_OutputIsNonEmpty(t *testing.T) {

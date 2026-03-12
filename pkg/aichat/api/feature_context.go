@@ -104,7 +104,7 @@ func buildFeatureContext(f *featureproto.Feature) string {
 		runes := []rune(result)
 		result = string(runes[:maxFeatureContextLength]) + "\n... (truncated)\n"
 	}
-	return result
+	return "<feature_data>\n" + result + "</feature_data>"
 }
 
 // sanitizePromptField sanitizes a user-controlled string before embedding

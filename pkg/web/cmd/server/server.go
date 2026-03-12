@@ -911,7 +911,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			MaxTokens:   *s.aichatMaxTokens,
 			Temperature: 0.7,
 		}
-		rateLimiter := aichatratelimit.NewLimiter(aichatratelimit.DefaultConfig())
+		rateLimiter := aichatratelimit.NewLimiter(ctx, aichatratelimit.DefaultConfig())
 		aichatGRPCService := aichatapi.NewAIChatService(
 			llmClient,
 			ragSearcher,
@@ -937,19 +937,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			aichatapi.WithRateLimiter(rateLimiter),
 		)
 		dashboardRestOpts = append(dashboardRestOpts, rest.WithService(chatHTTPSvc))
-		// Periodically clean up rate limiter entries to prevent unbounded memory growth
-		go func() {
-			ticker := time.NewTicker(10 * time.Minute)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-ticker.C:
-					rateLimiter.Cleanup()
-				}
-			}
-		}()
 		logger.Info("AI Chat service enabled",
 			zap.String("model", *s.aichatModel),
 			zap.Int("port", *s.aichatServicePort),

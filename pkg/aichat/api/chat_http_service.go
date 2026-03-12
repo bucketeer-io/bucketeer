@@ -15,6 +15,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,11 +23,16 @@ import (
 
 	"go.uber.org/zap"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
@@ -195,43 +201,57 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Authorization check (Viewer role minimum)
+	// Authorization check (Viewer role minimum) using the same role.CheckEnvironmentRole
+	// utility as the gRPC path for consistency.
 	if h.accountClient == nil {
 		h.logger.Error("accountClient is not configured")
 		writeJSONError(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	resp, err := h.accountClient.GetAccountV2ByEnvironmentID(
-		r.Context(),
-		&accountproto.GetAccountV2ByEnvironmentIDRequest{
-			Email:         accessToken.Email,
-			EnvironmentId: req.EnvironmentID,
+	// Inject the access token into the context so role.CheckEnvironmentRole can retrieve it.
+	ctx := context.WithValue(r.Context(), rpc.AccessTokenKey, accessToken)
+	_, err = role.CheckEnvironmentRole(
+		ctx,
+		accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentID,
+		func(email string) (*accountproto.AccountV2, error) {
+			resp, err := h.accountClient.GetAccountV2ByEnvironmentID(
+				ctx,
+				&accountproto.GetAccountV2ByEnvironmentIDRequest{
+					Email:         email,
+					EnvironmentId: req.EnvironmentID,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			return resp.Account, nil
 		},
 	)
 	if err != nil {
-		h.logger.Error("authorization failed",
-			zap.Error(err),
-			zap.String("email", accessToken.Email),
-			zap.String("environmentId", req.EnvironmentID),
-		)
-		writeJSONError(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-	if resp.Account.Disabled {
-		h.logger.Warn("disabled account attempted access",
-			zap.String("email", accessToken.Email),
-		)
-		writeJSONError(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-	envRole := getEnvironmentRole(resp.Account.EnvironmentRoles, req.EnvironmentID)
-	if resp.Account.OrganizationRole < accountproto.AccountV2_Role_Organization_ADMIN &&
-		envRole < accountproto.AccountV2_Role_Environment_VIEWER {
-		h.logger.Warn("insufficient environment role",
-			zap.String("email", accessToken.Email),
-			zap.String("environmentId", req.EnvironmentID),
-		)
-		writeJSONError(w, "Forbidden", http.StatusForbidden)
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			h.logger.Warn("authentication failed during role check",
+				zap.Error(err),
+				zap.String("email", accessToken.Email),
+				zap.String("environmentId", req.EnvironmentID),
+			)
+			writeJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		case codes.PermissionDenied:
+			h.logger.Warn("insufficient environment role",
+				zap.Error(err),
+				zap.String("email", accessToken.Email),
+				zap.String("environmentId", req.EnvironmentID),
+			)
+			writeJSONError(w, "Forbidden", http.StatusForbidden)
+		default:
+			h.logger.Error("authorization failed",
+				zap.Error(err),
+				zap.String("email", accessToken.Email),
+				zap.String("environmentId", req.EnvironmentID),
+			)
+			writeJSONError(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -255,13 +275,13 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Both channels are closed when the ChatService goroutine finishes,
 	// so we must drain responseChan fully before exiting.
 	responseChan, errChan := streamChat(
-		r.Context(), h.llmClient, h.ragSearcher, h.featureClient,
+		ctx, h.llmClient, h.ragSearcher, h.featureClient,
 		h.chatConfig, protoReq, h.logger,
 	)
 
 	for responseChan != nil || errChan != nil {
 		select {
-		case <-r.Context().Done():
+		case <-ctx.Done():
 			return
 		case err, ok := <-errChan:
 			if !ok {
@@ -318,19 +338,6 @@ func (h *chatHTTPService) writeSSEError(w http.ResponseWriter, f http.Flusher, s
 	}
 	fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
 	f.Flush()
-}
-
-// getEnvironmentRole returns the role for a given environment ID from the account's roles.
-func getEnvironmentRole(
-	roles []*accountproto.AccountV2_EnvironmentRole,
-	envID string,
-) accountproto.AccountV2_Role_Environment {
-	for _, r := range roles {
-		if r.EnvironmentId == envID {
-			return r.Role
-		}
-	}
-	return accountproto.AccountV2_Role_Environment_UNASSIGNED
 }
 
 func (h *chatHTTPService) toProtoRequest(req *ChatHTTPRequest) *aichatproto.ChatRequest {

@@ -26,6 +26,11 @@ export const CHAT_ERROR = {
 
 export type ChatErrorCode = (typeof CHAT_ERROR)[keyof typeof CHAT_ERROR];
 
+/** Type guard that checks if a string is a known ChatErrorCode. */
+export function isChatErrorCode(value: string): value is ChatErrorCode {
+  return (Object.values(CHAT_ERROR) as string[]).includes(value);
+}
+
 interface SSEErrorPayload {
   error: string;
 }
@@ -73,7 +78,10 @@ function processSSEData(
   }
 
   if (isSSEError(parsed)) {
-    onChunk({ error: CHAT_ERROR.UNKNOWN, done: true });
+    const errorCode = isChatErrorCode(parsed.error)
+      ? parsed.error
+      : CHAT_ERROR.UNKNOWN;
+    onChunk({ error: errorCode, done: true });
     return 'done';
   }
 

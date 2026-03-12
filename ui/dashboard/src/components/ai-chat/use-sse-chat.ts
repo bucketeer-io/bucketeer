@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { chatStreamer, CHAT_ERROR, type ChatErrorCode } from '@api/ai-chat';
+import {
+  chatStreamer,
+  CHAT_ERROR,
+  isChatErrorCode,
+  type ChatErrorCode
+} from '@api/ai-chat';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import { AIChatMessage, PageContext } from '@types';
 
@@ -86,40 +91,73 @@ export const useSSEChat = ({
           pageContext: pageContextRef.current,
           environmentId: getCurrentEnvIdStorage() || ''
         },
-        chunk => {
-          if (abortController.signal.aborted) return;
-          if (chunk.error) {
-            const knownErrors = Object.values(CHAT_ERROR) as string[];
-            setErrorKey(
-              knownErrors.includes(chunk.error)
-                ? (chunk.error as ChatErrorCode)
-                : CHAT_ERROR.UNKNOWN
-            );
-            return;
-          }
-          if (chunk.content) {
-            setMessages(prev => {
-              const updated = [...prev];
-              const last = updated[updated.length - 1];
-              if (last?.role === 'assistant') {
-                updated[updated.length - 1] = {
-                  ...last,
-                  content: last.content + chunk.content
-                };
+        (() => {
+          let pendingContent = '';
+          let rafId: number | null = null;
+
+          const flushContent = () => {
+            if (pendingContent) {
+              const flushed = pendingContent;
+              pendingContent = '';
+              setMessages(prev => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === 'assistant') {
+                  updated[updated.length - 1] = {
+                    ...last,
+                    content: last.content + flushed
+                  };
+                }
+                return updated;
+              });
+            }
+            rafId = null;
+          };
+
+          return (chunk: { content?: string; error?: string; done: boolean }) => {
+            if (abortController.signal.aborted) {
+              if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
               }
-              return updated;
-            });
-          }
-        },
+              return;
+            }
+            if (chunk.error) {
+              if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+              }
+              flushContent();
+              setErrorKey(
+                isChatErrorCode(chunk.error)
+                  ? chunk.error
+                  : CHAT_ERROR.UNKNOWN
+              );
+              return;
+            }
+            if (chunk.content) {
+              pendingContent += chunk.content;
+              if (!rafId) {
+                rafId = requestAnimationFrame(flushContent);
+              }
+            }
+            if (chunk.done) {
+              if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+              }
+              flushContent();
+            }
+          };
+        })(),
         abortController.signal
       );
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         const msg = (err as Error).message;
-        const knownErrors = Object.values(CHAT_ERROR) as string[];
         setErrorKey(
-          knownErrors.includes(msg)
-            ? (msg as ChatErrorCode)
+          isChatErrorCode(msg)
+            ? msg
             : CHAT_ERROR.UNKNOWN
         );
       }
@@ -137,6 +175,7 @@ export const useSSEChat = ({
     setMessages([]);
     setErrorKey(null);
     setIsStreaming(false);
+    isStreamingRef.current = false;
   }, []);
 
   return { messages, isStreaming, errorKey, sendMessage, clearMessages };

@@ -31,7 +31,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-const maxInputLength = 500
+const maxInputLength = 2000
 const maxMessages = 50
 
 var newlineReplacer = strings.NewReplacer("\n", " ", "\r", " ")

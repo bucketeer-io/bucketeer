@@ -40,6 +40,14 @@ func (s *AIChatService) Chat(
 		return statusTooManyMessages.Err()
 	}
 
+	// Rate limit check (before auth to avoid unnecessary RPC on hot path)
+	if s.rateLimiter != nil {
+		token, ok := rpc.GetAccessToken(ctx)
+		if ok && !s.rateLimiter.Allow(token.Email) {
+			return statusRateLimitExceeded.Err()
+		}
+	}
+
 	// Authorization check (Viewer role minimum)
 	_, err := s.checkEnvironmentRole(
 		ctx,
@@ -48,14 +56,6 @@ func (s *AIChatService) Chat(
 	)
 	if err != nil {
 		return err
-	}
-
-	// Rate limit check
-	if s.rateLimiter != nil {
-		token, ok := rpc.GetAccessToken(ctx)
-		if ok && !s.rateLimiter.Allow(token.Email) {
-			return statusRateLimitExceeded.Err()
-		}
 	}
 
 	// Stream chat

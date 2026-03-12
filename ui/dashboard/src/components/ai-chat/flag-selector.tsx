@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryFeatures } from '@queries/features';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
@@ -19,7 +20,7 @@ const FlagSelector = ({ selectedFlagId, onSelectFlag }: FlagSelectorProps) => {
   const { data: flagCollection, isLoading } = useQueryFeatures({
     params: {
       cursor: String(0),
-      pageSize: 0,
+      pageSize: LIST_PAGE_SIZE,
       searchKeyword: searchQuery,
       environmentId,
       archived: false

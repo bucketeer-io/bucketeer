@@ -322,7 +322,7 @@ func TestChatHTTPService_RateLimited(t *testing.T) {
 		token: &token.AccessToken{Email: "test@example.com"},
 	}
 
-	limiter := ratelimit.NewLimiter(ratelimit.Config{
+	limiter := ratelimit.NewLimiter(context.Background(), ratelimit.Config{
 		RequestsPerMinute: 60,
 		BurstSize:         1, // Only allow 1 request
 	})
@@ -350,31 +350,6 @@ func TestChatHTTPService_RateLimited(t *testing.T) {
 	assert.Equal(t, http.StatusTooManyRequests, rec2.Code)
 }
 
-func TestGetEnvironmentRole(t *testing.T) {
-	t.Parallel()
-
-	roles := []*accountproto.AccountV2_EnvironmentRole{
-		{EnvironmentId: "env-1", Role: accountproto.AccountV2_Role_Environment_VIEWER},
-		{EnvironmentId: "env-2", Role: accountproto.AccountV2_Role_Environment_EDITOR},
-	}
-
-	t.Run("returns matching role", func(t *testing.T) {
-		t.Parallel()
-		assert.Equal(t, accountproto.AccountV2_Role_Environment_VIEWER, getEnvironmentRole(roles, "env-1"))
-		assert.Equal(t, accountproto.AccountV2_Role_Environment_EDITOR, getEnvironmentRole(roles, "env-2"))
-	})
-
-	t.Run("returns UNASSIGNED for unknown env", func(t *testing.T) {
-		t.Parallel()
-		assert.Equal(t, accountproto.AccountV2_Role_Environment_UNASSIGNED, getEnvironmentRole(roles, "env-unknown"))
-	})
-
-	t.Run("returns UNASSIGNED for nil roles", func(t *testing.T) {
-		t.Parallel()
-		assert.Equal(t, accountproto.AccountV2_Role_Environment_UNASSIGNED, getEnvironmentRole(nil, "env-1"))
-	})
-}
-
 func TestChatHTTPService_BadRequest_TooManyMessages(t *testing.T) {
 	t.Parallel()
 	v := &mockVerifier{
@@ -400,6 +375,126 @@ func TestChatHTTPService_BadRequest_TooManyMessages(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestChatHTTPService_AccountClientNil(t *testing.T) {
+	t.Parallel()
+	v := &mockVerifier{
+		token: &token.AccessToken{Email: "test@example.com"},
+	}
+	// accountClient is nil → should return 500
+	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
+
+	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Internal server error")
+}
+
+func TestChatHTTPService_GetAccountReturnsError(t *testing.T) {
+	t.Parallel()
+	v := &mockVerifier{
+		token: &token.AccessToken{Email: "test@example.com"},
+	}
+	ctrl := gomock.NewController(t)
+	mc := accountclientmock.NewMockClient(ctrl)
+	mc.EXPECT().
+		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("account not found")).
+		Times(1)
+
+	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
+
+	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	// role.CheckEnvironmentRole returns codes.Internal for generic errors
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Internal server error")
+}
+
+func TestChatHTTPService_DisabledAccount(t *testing.T) {
+	t.Parallel()
+	v := &mockVerifier{
+		token: &token.AccessToken{Email: "test@example.com"},
+	}
+	ctrl := gomock.NewController(t)
+	mc := accountclientmock.NewMockClient(ctrl)
+	mc.EXPECT().
+		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
+			Account: &accountproto.AccountV2{
+				Email:    "test@example.com",
+				Disabled: true,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "env-1",
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					},
+				},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			},
+		}, nil).
+		Times(1)
+
+	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
+
+	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	// role.CheckEnvironmentRole returns codes.Unauthenticated for disabled accounts
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Unauthorized")
+}
+
+func TestChatHTTPService_InsufficientEnvironmentRole(t *testing.T) {
+	t.Parallel()
+	v := &mockVerifier{
+		token: &token.AccessToken{Email: "test@example.com"},
+	}
+	ctrl := gomock.NewController(t)
+	mc := accountclientmock.NewMockClient(ctrl)
+	mc.EXPECT().
+		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
+			Account: &accountproto.AccountV2{
+				Email:    "test@example.com",
+				Disabled: false,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "env-1",
+						Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+					},
+				},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			},
+		}, nil).
+		Times(1)
+
+	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
+
+	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Forbidden")
 }
 
 // createMockLLMClient creates a gomock LLM client that returns the given

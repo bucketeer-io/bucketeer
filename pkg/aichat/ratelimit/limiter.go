@@ -15,6 +15,7 @@
 package ratelimit
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -50,17 +51,32 @@ type Limiter struct {
 }
 
 // NewLimiter creates a new rate limiter with the given configuration.
-func NewLimiter(cfg Config) *Limiter {
+// It starts a background goroutine that periodically calls Cleanup to
+// remove idle entries. The goroutine stops when ctx is cancelled.
+func NewLimiter(ctx context.Context, cfg Config) *Limiter {
 	if cfg.RequestsPerMinute <= 0 {
 		cfg.RequestsPerMinute = 20
 	}
 	if cfg.BurstSize <= 0 {
 		cfg.BurstSize = 5
 	}
-	return &Limiter{
+	l := &Limiter{
 		limiters: make(map[string]*limiterEntry),
 		config:   cfg,
 	}
+	go func() {
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				l.Cleanup()
+			}
+		}
+	}()
+	return l
 }
 
 // Allow checks whether a request from the given key is allowed.

@@ -432,6 +432,83 @@ func TestLimitInputLength(t *testing.T) {
 	}
 }
 
+func TestExtractSearchQuery(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil client returns original query", func(t *testing.T) {
+		t.Parallel()
+		result, err := extractSearchQuery(context.Background(), nil, "some query", "test-model")
+		assert.NoError(t, err)
+		assert.Equal(t, "some query", result)
+	})
+
+	t.Run("empty query returns empty query", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockClient := llmmock.NewMockClient(ctrl)
+		// Chat should NOT be called for empty query
+		result, err := extractSearchQuery(context.Background(), mockClient, "", "test-model")
+		assert.NoError(t, err)
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("successful extraction", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockClient := llmmock.NewMockClient(ctrl)
+		mockClient.EXPECT().
+			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return("feature flags sdk", nil)
+
+		result, err := extractSearchQuery(context.Background(), mockClient, "フィーチャーフラグのSDKについて教えて", "test-model")
+		assert.NoError(t, err)
+		assert.Equal(t, "feature flags sdk", result)
+	})
+
+	t.Run("LLM returns empty string falls back to original query", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockClient := llmmock.NewMockClient(ctrl)
+		mockClient.EXPECT().
+			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return("", nil)
+
+		result, err := extractSearchQuery(context.Background(), mockClient, "original query", "test-model")
+		assert.NoError(t, err)
+		assert.Equal(t, "original query", result)
+	})
+
+	t.Run("LLM returns error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockClient := llmmock.NewMockClient(ctrl)
+		mockClient.EXPECT().
+			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return("", assert.AnError)
+
+		result, err := extractSearchQuery(context.Background(), mockClient, "some query", "test-model")
+		assert.Error(t, err)
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("context cancellation", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockClient := llmmock.NewMockClient(ctrl)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // cancel immediately
+
+		mockClient.EXPECT().
+			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return("", context.Canceled)
+
+		result, err := extractSearchQuery(ctx, mockClient, "some query", "test-model")
+		assert.Error(t, err)
+		assert.Equal(t, "", result)
+	})
+}
+
 func TestDefaultChatConfig(t *testing.T) {
 	t.Parallel()
 

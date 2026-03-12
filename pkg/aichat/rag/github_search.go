@@ -57,8 +57,9 @@ const (
 	docsRepo           = "bucketeer-io/bucketeer-docs"
 	maxContentLength   = 2000
 	maxIndexContent    = 5000 // content stored in index for scoring (longer than output)
-	maxRawBodyBytes    = 512 * 1024
-	maxTopK            = 10
+	maxRawBodyBytes      = 512 * 1024
+	maxTreeResponseBytes = 10 * 1024 * 1024
+	maxTopK              = 10
 	maxConcurrentFetch = 5
 	defaultCacheTTL    = 24 * time.Hour
 )
@@ -242,7 +243,7 @@ func (g *GitHubSearcher) fetchTree(ctx context.Context) ([]string, error) {
 	}
 
 	var treeResp gitTreeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&treeResp); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxTreeResponseBytes)).Decode(&treeResp); err != nil {
 		return nil, err
 	}
 
