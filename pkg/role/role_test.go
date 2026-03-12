@@ -520,9 +520,8 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return nil, status.Error(codes.Internal, "something broke")
 			},
-			expected: nil,
-			expectedErr: fmt.Errorf("wrapped: %w",
-				status.Error(codes.Internal, "Internal")),
+			expected:         nil,
+			expectedErr:      fmt.Errorf("wrapped: %w", ErrInternal),
 			expectedLogCount: 1,
 			expectedLogMsg:   "Failed to check role",
 			expectedEmail:    "test@example.com",
