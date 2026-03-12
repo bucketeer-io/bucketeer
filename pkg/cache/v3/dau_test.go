@@ -35,11 +35,11 @@ func TestDAUKey(t *testing.T) {
 		expected string
 	}{
 		{
-			desc:     "success: builds correct key format with hash tag",
+			desc:     "success: builds correct key format",
 			envID:    "env-123",
 			sourceID: "ANDROID",
 			date:     time.Date(2026, 1, 28, 0, 0, 0, 0, time.UTC),
-			expected: "{env-123:ANDROID:au}:d:20260128",
+			expected: "env-123:dau:ANDROID:20260128",
 		},
 	}
 	for _, p := range patterns {
@@ -65,8 +65,8 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-456"}},
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache) {
-				mc.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456").Return(int64(1), nil)
-				mc.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL).Return(true, nil)
+				mc.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-456").Return(int64(1), nil)
+				mc.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL).Return(true, nil)
 			},
 			expectedErr: nil,
 		},
@@ -79,12 +79,12 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache) {
 				gomock.InOrder(
-					mc.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-1").Return(int64(1), nil),
-					mc.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL).Return(true, nil),
-					mc.EXPECT().PFAdd("{env-123:IOS:au}:d:20260128", "user-2").Return(int64(1), nil),
-					mc.EXPECT().Expire("{env-123:IOS:au}:d:20260128", dauTTL).Return(true, nil),
-					mc.EXPECT().PFAdd("{env-456:WEB:au}:d:20260128", "user-3").Return(int64(1), nil),
-					mc.EXPECT().Expire("{env-456:WEB:au}:d:20260128", dauTTL).Return(true, nil),
+					mc.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-1").Return(int64(1), nil),
+					mc.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL).Return(true, nil),
+					mc.EXPECT().PFAdd("env-123:dau:IOS:20260128", "user-2").Return(int64(1), nil),
+					mc.EXPECT().Expire("env-123:dau:IOS:20260128", dauTTL).Return(true, nil),
+					mc.EXPECT().PFAdd("env-456:dau:WEB:20260128", "user-3").Return(int64(1), nil),
+					mc.EXPECT().Expire("env-456:dau:WEB:20260128", dauTTL).Return(true, nil),
 				)
 			},
 			expectedErr: nil,
@@ -112,8 +112,8 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-1", "user-2", "user-3"}},
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache) {
-				mc.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-1", "user-2", "user-3").Return(int64(1), nil)
-				mc.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL).Return(true, nil)
+				mc.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-1", "user-2", "user-3").Return(int64(1), nil)
+				mc.EXPECT().Expire("env-123:dau:ANDROID:20260128", dauTTL).Return(true, nil)
 			},
 			expectedErr: nil,
 		},
@@ -123,7 +123,7 @@ func TestDAUCache_RecordDAUBatch(t *testing.T) {
 				{Date: testDate, EnvID: "env-123", SourceID: "ANDROID", UserIDs: []string{"user-456"}},
 			},
 			setup: func(mc *mock.MockMultiGetDeleteCountCache) {
-				mc.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456").Return(int64(0), errors.New("redis connection error"))
+				mc.EXPECT().PFAdd("env-123:dau:ANDROID:20260128", "user-456").Return(int64(0), errors.New("redis connection error"))
 			},
 			expectedErr: errors.New("failed to PFAdd DAU"),
 		},

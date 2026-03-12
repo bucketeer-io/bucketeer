@@ -124,12 +124,14 @@ type server struct {
 	persistentRedisAddr          *string
 	persistentRedisPoolMaxIdle   *int
 	persistentRedisPoolMaxActive *int
+	persistentRedisMode          *string
 	// Non Persistent Redis
 	nonPersistentRedisServerName     *string
 	nonPersistentRedisAddr           *string
 	nonPersistentChildRedisAddresses *[]string
 	nonPersistentRedisPoolMaxIdle    *int
 	nonPersistentRedisPoolMaxActive  *int
+	nonPersistentRedisMode           *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -222,6 +224,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		persistentRedisMode: cmd.Flag("persistent-redis-mode",
+			"Persistent Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -238,6 +243,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
+			"Non-persistent Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		nonPersistentChildRedisAddresses: cmd.Flag(
 			"non-persistent-child-redis-addresses",
 			"A list of non-persistent child Redis addresses.",
@@ -391,6 +399,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.persistentRedisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.persistentRedisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.persistentRedisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -403,6 +412,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -430,6 +440,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
 			redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 			redisv3.WithServerName(s.getRedisHostname(address)),
+			redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)

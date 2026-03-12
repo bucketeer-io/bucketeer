@@ -49,13 +49,12 @@ func NewDAUCache(c cache.MultiGetDeleteCountCache) DAUCache {
 }
 
 // dauKey builds the Redis key for DAU HyperLogLog.
-// Format: {envId:sourceId:au}:d:yyyyMMdd
-// The {envId:sourceId:au} hash tag ensures DAU and MAU keys
-// for the same env/source are in the same Redis Cluster slot,
-// enabling PFMERGE operations.
-// See: https://redis.io/topics/cluster-spec#keys-hash-tags
+// Format: envId:dau:sourceId:yyyyMMdd
+//
+// Hash tags ({}) are not required in the key because pkg/redis/v3/redis.go
+// PFMerge handles cross-slot merging transparently.
 func dauKey(envID, sourceID string, date time.Time) string {
-	return fmt.Sprintf("{%s:%s:au}:d:%s", envID, sourceID, date.Format("20060102"))
+	return fmt.Sprintf("%s:dau:%s:%s", envID, sourceID, date.Format("20060102"))
 }
 
 func (c *dauCache) RecordDAUBatch(records []DAURecord) error {

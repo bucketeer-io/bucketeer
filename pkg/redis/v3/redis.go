@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,6 +57,21 @@ const (
 	xPendingCmdName     = "XPENDING"
 	xClaimCmdName       = "XCLAIM"
 	xInfoGroupsCmdName  = "XINFO_GROUPS"
+)
+
+// RedisMode specifies how the Redis client should be created.
+// The default is RedisModeAuto, which detects the Redis deployment mode
+// with mismatch detection. For stricter production setups, you can
+// explicitly set RedisModeCluster or RedisModeStandalone.
+type RedisMode string
+
+const (
+	RedisModeCluster    RedisMode = "cluster"
+	RedisModeStandalone RedisMode = "standalone"
+	RedisModeAuto       RedisMode = "auto"
+
+	mismatchCheckInterval = 5 * time.Minute
+	detectionTimeout      = 3 * time.Second
 )
 
 var (
@@ -131,6 +147,7 @@ type client struct {
 	opts       *options
 	logger     *zap.Logger
 	clientType ClientType
+	done       chan struct{}
 }
 
 type PipeClient interface {
@@ -162,6 +179,7 @@ type options struct {
 	minIdleConns int
 	poolTimeout  time.Duration
 	serverName   string
+	redisMode    RedisMode
 	metrics      metrics.Registerer
 	logger       *zap.Logger
 }
@@ -173,6 +191,7 @@ func defaultOptions() *options {
 		poolSize:     10,
 		minIdleConns: 5,
 		poolTimeout:  30 * time.Second,
+		redisMode:    RedisModeAuto,
 		logger:       zap.NewNop(),
 	}
 }
@@ -233,6 +252,21 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+// WithRedisMode sets the Redis client creation mode.
+// "cluster" always creates a ClusterClient, "standalone" always creates a standard Client,
+// "auto" (default) tries detection and runs background mismatch checking.
+func WithRedisMode(mode RedisMode) Option {
+	return func(opts *options) {
+		m := RedisMode(strings.ToLower(string(mode)))
+		switch m {
+		case RedisModeCluster, RedisModeStandalone, RedisModeAuto:
+			opts.redisMode = m
+		default:
+			opts.redisMode = RedisModeAuto
+		}
+	}
+}
+
 func NewClient(addr string, opts ...Option) (Client, error) {
 	options := defaultOptions()
 	for _, opt := range opts {
@@ -240,7 +274,16 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 	}
 	logger := options.logger.Named("redis-v3")
 
-	standardClientOpts := &goredis.Options{
+	clusterOpts := &goredis.ClusterOptions{
+		Addrs:        []string{addr},
+		Password:     options.password,
+		MaxRetries:   options.maxRetries,
+		DialTimeout:  options.dialTimeout,
+		PoolSize:     options.poolSize,
+		MinIdleConns: options.minIdleConns,
+		PoolTimeout:  options.poolTimeout,
+	}
+	standardOpts := &goredis.Options{
 		Addr:         addr,
 		Password:     options.password,
 		MaxRetries:   options.maxRetries,
@@ -250,60 +293,162 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		PoolTimeout:  options.poolTimeout,
 	}
 
-	tmpClient := goredis.NewClient(standardClientOpts)
-	defer tmpClient.Close()
-
 	var rc goredis.UniversalClient
 	var clientType ClientType
-	if _, err := tmpClient.ClusterInfo(context.TODO()).Result(); err == nil {
-		logger.Debug("Redis cluster detected, creating cluster client",
-			zap.String("addr", addr),
-			zap.Int("maxRetries", options.maxRetries),
-			zap.Duration("dialTimeout", options.dialTimeout),
-			zap.Int("poolSize", options.poolSize),
-			zap.Int("minIdleConns", options.minIdleConns),
-			zap.Duration("poolTimeout", options.poolTimeout),
-		)
-		rc = goredis.NewClusterClient(&goredis.ClusterOptions{
-			Addrs:        []string{addr},
-			Password:     options.password,
-			MaxRetries:   options.maxRetries,
-			DialTimeout:  options.dialTimeout,
-			PoolSize:     options.poolSize,
-			MinIdleConns: options.minIdleConns,
-			PoolTimeout:  options.poolTimeout,
-		})
+
+	switch options.redisMode {
+	case RedisModeCluster:
+		rc = goredis.NewClusterClient(clusterOpts)
 		clientType = ClientTypeCluster
-	} else {
-		logger.Debug("Redis standalone detected, creating standard client",
+		logger.Info("Creating Redis cluster client (explicit mode)",
 			zap.String("addr", addr),
-			zap.Int("maxRetries", options.maxRetries),
-			zap.Duration("dialTimeout", options.dialTimeout),
-			zap.Int("poolSize", options.poolSize),
-			zap.Int("minIdleConns", options.minIdleConns),
-			zap.Duration("poolTimeout", options.poolTimeout),
+			zap.String("mode", string(options.redisMode)),
+			zap.String("clientType", clientTypeString(clientType)),
 		)
-		rc = goredis.NewClient(standardClientOpts)
+
+	case RedisModeStandalone:
+		rc = goredis.NewClient(standardOpts)
 		clientType = ClientTypeStandard
+		logger.Info("Creating Redis standalone client (explicit mode)",
+			zap.String("addr", addr),
+			zap.String("mode", string(options.redisMode)),
+			zap.String("clientType", clientTypeString(clientType)),
+		)
+
+	default: // RedisModeAuto
+		clientType, rc = detectRedisMode(addr, clusterOpts, standardOpts, logger)
 	}
-	_, err := rc.Ping(context.TODO()).Result()
-	if err != nil {
-		logger.Error("Failed to ping", zap.Error(err))
-		return nil, err
+
+	// Non-blocking startup: try to ping but don't fail if Redis is unavailable.
+	// This allows the service to start in degraded mode using database fallback,
+	// while automatically reconnecting when Redis becomes available.
+	ctx, cancel := context.WithTimeout(context.Background(), detectionTimeout)
+	defer cancel()
+
+	if _, err := rc.Ping(ctx).Result(); err != nil {
+		logger.Warn("Redis not available at startup, service will retry on first use",
+			zap.Error(err),
+			zap.String("addr", addr),
+			zap.String("mode", string(options.redisMode)),
+		)
 	}
-	client := &client{
+
+	c := &client{
 		rc:         rc,
 		opts:       options,
 		logger:     logger,
 		clientType: clientType,
+		done:       make(chan struct{}),
 	}
 	if options.metrics != nil {
-		redis.RegisterMetrics(options.metrics, clientVersion, options.serverName, client)
+		redis.RegisterMetrics(options.metrics, clientVersion, options.serverName, c)
 	}
-	return client, nil
+
+	// In auto mode, run a background goroutine that periodically checks
+	// whether the detected mode matches the actual Redis topology.
+	if options.redisMode == RedisModeAuto {
+		go c.runMismatchDetector(addr)
+	}
+
+	return c, nil
+}
+
+// detectRedisMode tries to determine whether the Redis server is a cluster or standalone
+// by issuing CLUSTER INFO with a short timeout. Falls back to standalone if detection fails.
+// Note: if Redis is unreachable at startup and the actual topology is a cluster,
+// the standalone fallback will receive MOVED/ASK errors once the cluster recovers.
+// For cluster deployments, prefer setting RedisMode to "cluster" explicitly.
+func detectRedisMode(
+	addr string,
+	clusterOpts *goredis.ClusterOptions,
+	standardOpts *goredis.Options,
+	logger *zap.Logger,
+) (ClientType, goredis.UniversalClient) {
+	probe := goredis.NewClient(standardOpts)
+	defer probe.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), detectionTimeout)
+	defer cancel()
+
+	if isCluster, _ := probeClusterMode(ctx, probe); isCluster {
+		logger.Info("Redis cluster detected (auto mode)",
+			zap.String("addr", addr),
+		)
+		return ClientTypeCluster, goredis.NewClusterClient(clusterOpts)
+	}
+
+	logger.Info("Redis standalone detected or unavailable, defaulting to standalone (auto mode)",
+		zap.String("addr", addr),
+	)
+	return ClientTypeStandard, goredis.NewClient(standardOpts)
+}
+
+// probeClusterMode checks CLUSTER INFO output to determine if the server is in cluster mode.
+// Returns (true, nil) for cluster, (false, nil) for standalone, (false, err) on failure.
+func probeClusterMode(ctx context.Context, c *goredis.Client) (bool, error) {
+	info, err := c.ClusterInfo(ctx).Result()
+	if err != nil {
+		return false, err
+	}
+	return strings.Contains(info, "cluster_enabled:1"), nil
+}
+
+// runMismatchDetector periodically checks if the configured client type matches
+// the actual Redis topology. Logs a warning on mismatch.
+func (c *client) runMismatchDetector(addr string) {
+	ticker := time.NewTicker(mismatchCheckInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.done:
+			return
+		case <-ticker.C:
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), detectionTimeout)
+		probe := goredis.NewClient(&goredis.Options{
+			Addr:        addr,
+			Password:    c.opts.password,
+			DialTimeout: c.opts.dialTimeout,
+		})
+
+		actualCluster := false
+		if isCluster, err := probeClusterMode(ctx, probe); err == nil {
+			actualCluster = isCluster
+		} else {
+			probe.Close()
+			cancel()
+			continue
+		}
+		probe.Close()
+		cancel()
+
+		configuredCluster := c.clientType == ClientTypeCluster
+		if actualCluster != configuredCluster {
+			expected := clientTypeString(c.clientType)
+			actual := "standalone"
+			if actualCluster {
+				actual = "cluster"
+			}
+			c.logger.Warn("Redis mode mismatch detected",
+				zap.String("addr", addr),
+				zap.String("configured", expected),
+				zap.String("actual", actual),
+			)
+		}
+	}
+}
+
+func clientTypeString(ct ClientType) string {
+	if ct == ClientTypeCluster {
+		return "cluster"
+	}
+	return "standalone"
 }
 
 func (c *client) Close() error {
+	close(c.done)
 	return c.rc.Close()
 }
 
