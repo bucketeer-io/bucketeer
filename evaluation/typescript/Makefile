@@ -16,7 +16,7 @@ clean:
 	rm -rf $(CURDIR)/__test $(CURDIR)/__lib
 
 .PHONY: build
-build: clean-build tsc copy-proto-external-api-files-to-lib rename-js
+build: clean-build tsc rename-js
 
 .PHONY: clean-build
 clean-build:
@@ -55,11 +55,6 @@ lint:
 fixLintErrors:
 	$(NPM_BIN_DIR)/eslint . --fix
 
-.PHONY: copy-proto-external-api-files-to-lib
-copy-proto-external-api-files-to-lib:
-	$(NPM_BIN_DIR)/cpx '$(SRC_DIR)/protoc-gen-openapiv2/**/*.{js,d.ts}' $(GENFILES_DIR)/protoc-gen-openapiv2
-	$(NPM_BIN_DIR)/cpx '$(SRC_DIR)/google/**/*.{js,d.ts}' $(GENFILES_DIR)/google
-
 .PHONY: copy-genfiles
 copy-genfiles:
 	@rm -rf $(CURDIR)/lib # Clear cache
@@ -89,48 +84,27 @@ endif
 ROOT_DIR := $(CURDIR)/../..
 SRC_DIR := $(CURDIR)/src
 PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v23.4
-GOOGLEAPIS := $(ROOT_DIR)/proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
-OPENAPI := $(ROOT_DIR)/proto/external/openapiv2
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
-PROTO_EXCLUDE_PATHS := \
-	-not -path "**/external/*.proto" \
-	-not -path "**/test/*.proto" \
-	-not -path "**/eventpersisterdwh/*.proto" \
-	-not -path "**/batch/*.proto" \
-	-not -path "**/openapi/web_default_settings.proto" \
-	-not -path "**/google/protobuf/*.proto" \
-	-not -path "**/google/api/*.proto" \
-	-not -path "**/protoc-gen-openapiv2/options/*.proto"
+PROTO_TARGETS := \
+	$(ROOT_DIR)/proto/feature \
+	$(ROOT_DIR)/proto/user \
+	$(ROOT_DIR)/proto/event/client
 
 .PHONY: gen_proto
-gen_proto: clean_proto gen_proto_external_api
+gen_proto: clean_proto
 	protoc \
 	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
 	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
 	--js_out=import_style=commonjs,binary:$(SRC_DIR) \
-	--ts_out=service=grpc-web:$(SRC_DIR) \
+	--ts_out=$(SRC_DIR) \
 	-I $(ROOT_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
-	-I $(GOOGLEAPIS) \
-	-I $(OPENAPI) \
-	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" $(PROTO_EXCLUDE_PATHS))
-
-
-.PHONY: gen_proto_external_api
-gen_proto_external_api:
-	protoc \
-	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
-	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
-	--js_out=import_style=commonjs,binary:$(SRC_DIR) \
-	--ts_out=service=grpc-web:$(SRC_DIR) \
-	-I $(PROTOBUF_INCLUDE_DIR) \
-	-I $(GOOGLEAPIS) \
-	-I $(OPENAPI) \
-	$(shell find $(GOOGLEAPIS) -type f -name "*.proto") $(shell find $(OPENAPI) -type f -name "*.proto")
+	$(shell find $(PROTO_TARGETS) -type f -name "*.proto" \
+		-not -name "*service*.proto" \
+		-not -name "*scheduled*.proto" \
+		-not -name "*trigger*.proto")
 
 .PHONY: clean_proto
 clean_proto:
 	rm -rf $(SRC_DIR)/proto/
-	rm -rf $(SRC_DIR)/google/
-	rm -rf $(SRC_DIR)/protoc-gen-openapiv2/
