@@ -19,12 +19,9 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -83,7 +80,7 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentID string,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckEnvironmentRole(
+	return role.CheckEnvironmentRoleWithLog(
 		ctx,
 		requiredRole,
 		environmentID,
@@ -97,30 +94,9 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 			}
 			return resp.Account, nil
 		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Info(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentID),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Info(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentID),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
 }
