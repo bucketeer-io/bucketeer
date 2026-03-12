@@ -29,19 +29,21 @@ const TimeSeriesLineChart = ({
   const datasets = useMemo(
     () =>
       timeseries.map((series, i) => {
-        const labelParts = [
-          environmentNameMap?.[series.environmentId] ?? series.environmentId,
-          series.sourceId
-        ];
-        if (series.apiId && series.apiId !== 'UNKNOWN_API')
-          labelParts.push(series.apiId);
-        if (series.labels) {
-          Object.entries(series.labels).forEach(([k, v]) =>
-            labelParts.push(`${k}:${v}`)
-          );
+        const labelValues = series.labels ? Object.values(series.labels) : [];
+        let label: string;
+        if (labelValues.length > 0) {
+          label = labelValues.join(' / ');
+        } else {
+          const labelParts = [
+            environmentNameMap?.[series.environmentId] ?? series.environmentId,
+            series.sourceId
+          ];
+          if (series.apiId && series.apiId !== 'UNKNOWN_API')
+            labelParts.push(series.apiId);
+          label = labelParts.join(' / ');
         }
         return {
-          label: labelParts.join(' / '),
+          label,
           data: series.data.map(d => ({
             x: Number(d.timestamp) * 1000,
             y: d.value
@@ -95,6 +97,7 @@ const TimeSeriesLineChart = ({
                     },
                     grid: { display: false },
                     border: { display: false },
+
                     ticks: {
                       color: '#94A3B8',
                       font: { size: 12 },
