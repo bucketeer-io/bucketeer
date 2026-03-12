@@ -45,12 +45,12 @@ func TestMAUCache_MergeIntoMAUBatch_Success(t *testing.T) {
 	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
 	gomock.InOrder(
-		mockCache.EXPECT().PFMerge("env-123:mau:ANDROID:202601", mauTTL, "env-123:mau:ANDROID:202601", "{env-123:ANDROID:au}:d:20260115").Return(nil),
+		mockCache.EXPECT().PFMerge("env-123:mau:ANDROID:202601", mauTTL, "env-123:mau:ANDROID:202601", "env-123:dau:ANDROID:20260115").Return(nil),
 		mockCache.EXPECT().PFCount("env-123:mau:ANDROID:202601").Return(int64(100), nil),
-		mockCache.EXPECT().Delete("{env-123:ANDROID:au}:d:20260115").Return(nil),
-		mockCache.EXPECT().PFMerge("env-123:mau:IOS:202601", mauTTL, "env-123:mau:IOS:202601", "{env-123:IOS:au}:d:20260115").Return(nil),
+		mockCache.EXPECT().Delete("env-123:dau:ANDROID:20260115").Return(nil),
+		mockCache.EXPECT().PFMerge("env-123:mau:IOS:202601", mauTTL, "env-123:mau:IOS:202601", "env-123:dau:IOS:20260115").Return(nil),
 		mockCache.EXPECT().PFCount("env-123:mau:IOS:202601").Return(int64(200), nil),
-		mockCache.EXPECT().Delete("{env-123:IOS:au}:d:20260115").Return(nil),
+		mockCache.EXPECT().Delete("env-123:dau:IOS:20260115").Return(nil),
 	)
 
 	result, err := c.MergeIntoMAUBatch(envID, sourceIDs, date)
