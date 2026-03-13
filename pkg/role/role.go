@@ -251,11 +251,55 @@ func CheckOrganizationRoleWithLog(
 	permissionDeniedErr error,
 	defaultErrFunc func(error) error,
 ) (*eventproto.Editor, error) {
+	return checkOrganizationRoleWithLog(
+		ctx,
+		requiredRole,
+		zap.String("organizationID", organizationID),
+		getAccountFunc,
+		logger,
+		unauthenticatedErr,
+		permissionDeniedErr,
+		defaultErrFunc,
+	)
+}
+
+func CheckOrganizationRoleByEnvironmentIDWithLog(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	environmentID string,
+	getAccountFunc func(email string) (*accountproto.GetAccountV2Response, error),
+	logger *zap.Logger,
+	unauthenticatedErr error,
+	permissionDeniedErr error,
+	defaultErrFunc func(error) error,
+) (*eventproto.Editor, error) {
+	return checkOrganizationRoleWithLog(
+		ctx,
+		requiredRole,
+		zap.String("environmentID", environmentID),
+		getAccountFunc,
+		logger,
+		unauthenticatedErr,
+		permissionDeniedErr,
+		defaultErrFunc,
+	)
+}
+
+func checkOrganizationRoleWithLog(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	resourceField zap.Field,
+	getAccountFunc func(email string) (*accountproto.GetAccountV2Response, error),
+	logger *zap.Logger,
+	unauthenticatedErr error,
+	permissionDeniedErr error,
+	defaultErrFunc func(error) error,
+) (*eventproto.Editor, error) {
 	editor, err := CheckOrganizationRole(ctx, requiredRole, getAccountFunc)
 	if err != nil {
 		logFields := []zap.Field{
 			zap.Error(err),
-			zap.String("organizationID", organizationID),
+			resourceField,
 			zap.String("requiredRole", requiredRole.String()),
 		}
 		if token, ok := rpc.GetAccessToken(ctx); ok {

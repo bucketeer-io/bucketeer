@@ -799,3 +799,46 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckOrganizationRoleByEnvironmentIDWithLog(t *testing.T) {
+	t.Parallel()
+
+	var (
+		errCustomUnauthenticated = errors.New("custom unauthenticated")
+		defaultErrFunc           = func(err error) error { return err }
+	)
+
+	t.Run("unauthenticated logs environmentID field", func(t *testing.T) {
+		var buf bytes.Buffer
+		core := zapcore.NewCore(
+			zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+			zapcore.AddSync(&buf),
+			zapcore.ErrorLevel,
+		)
+		logger := zap.New(core)
+
+		editor, err := CheckOrganizationRoleByEnvironmentIDWithLog(
+			context.Background(),
+			accountproto.AccountV2_Role_Organization_MEMBER,
+			"env0",
+			func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			logger,
+			errCustomUnauthenticated,
+			ErrPermissionDenied,
+			defaultErrFunc,
+		)
+		assert.Nil(t, editor)
+		assert.Equal(t, errCustomUnauthenticated, err)
+
+		require.NotEmpty(t, buf.String(), "expected log output")
+		var logEntry map[string]interface{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), &logEntry),
+			"log output should be valid JSON")
+		assert.Equal(t, "Unauthenticated", logEntry["msg"])
+		assert.Equal(t, "env0", logEntry["environmentID"])
+		_, hasOrganizationID := logEntry["organizationID"]
+		assert.False(t, hasOrganizationID)
+	})
+}
