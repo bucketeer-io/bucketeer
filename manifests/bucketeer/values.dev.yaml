@@ -63,6 +63,7 @@ global:
       minIdle: 25
       partitionCount: 16 # Must match between publisher (API) and subscriber
       idleTime: 60
+      mode: auto
     emulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     # Google Cloud project ID when type is google
     project: bucketeer-dev
@@ -127,6 +128,7 @@ web:
     pubSubRedisAddr: ${global.pubsub.redis.addr}
     pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
     pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
+    pubSubRedisMode: ${global.pubsub.redis.mode}
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     database:
       type: mysql
@@ -147,11 +149,13 @@ web:
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+      mode: auto
     nonPersistentRedis:
       serverName: backend
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+      mode: auto
     bigQueryDataSet: bucketeer
     bigQueryDataLocation: US
     domainTopic: domain
@@ -231,11 +235,13 @@ api:
     pubSubRedisAddr: ${global.pubsub.redis.addr}
     pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
     pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
+    pubSubRedisMode: ${global.pubsub.redis.mode}
     redis:
       serverName: api-gateway
       poolMaxIdle: 25
       poolMaxActive: 25
       addr: localenv-redis-headless.default.svc.cluster.local:6379
+      mode: auto
   tls:
     bucketeerJP:
       secrets:
@@ -298,11 +304,13 @@ batch-server:
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+      mode: auto
     nonPersistentRedis:
       serverName: batch-non-peristent-redis
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+      mode: auto
     nonPersistentChildRedis:
       addresses:
         - localenv-redis-headless.default.svc.cluster.local:6379
@@ -416,11 +424,13 @@ subscriber:
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+      mode: auto
     nonPersistentRedis:
       serverName: batch-non-peristent-redis
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+      mode: auto
 
   tls:
     service:
@@ -437,6 +447,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
       subscription: auditlog-persister
@@ -450,6 +461,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
       subscription: domain-subscription
@@ -463,6 +475,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: evaluation
       subscription: evaluation-count-sub
@@ -476,6 +489,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: metrics
       subscription: metrics-sub
@@ -489,6 +503,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
       subscription: push-sender-domain-sub
@@ -502,6 +517,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: bulk-segment-users-received
       subscription: bulk-segment-users-received-subscription
@@ -515,6 +531,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: user
       subscription: user-sub
@@ -528,6 +545,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
       subscription: demo-organization-creation-notifier
@@ -541,6 +559,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
       subscription: email-sender
@@ -556,6 +575,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: evaluation
@@ -571,6 +591,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: evaluation
@@ -586,6 +607,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: goal
@@ -601,6 +623,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
       redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: goal
@@ -624,6 +647,7 @@ subscriber:
       flushSize: 1
       flushInterval: 1
       writeCacheInterval: 10
+      writeDAUInterval: 10
       userAttributeKeyTtl: 3600 # 1 hour
     segmentUserPersister:
       domainEventProject: bucketeer-dev
@@ -637,6 +661,7 @@ subscriber:
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
       redisPartitionCount: ${global.pubsub.redis.partitionCount}
+      redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
     userEventPersister:
       flushSize: 10

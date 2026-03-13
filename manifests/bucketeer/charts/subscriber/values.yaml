@@ -61,11 +61,13 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
 
 affinity: {}
 
@@ -291,6 +293,7 @@ processors:
     flushSize: 100
     flushInterval: 10
     writeCacheInterval: 10
+    writeDAUInterval: 10
     userAttributeKeyTtl: 604800 # 7 days
   segmentUserPersister:
     domainEventProject:
@@ -304,6 +307,7 @@ processors:
     redisPoolSize: 25
     redisMinIdle: 25
     redisPartitionCount: 16
+    redisMode: auto
     project: ""
   userEventPersister:
     flushSize: 200

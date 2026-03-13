@@ -54,11 +54,13 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentChildRedis:
     addresses:
   experimentLockTTL: 10m
@@ -210,4 +212,7 @@ cronjob:
     - name: scheduled-flag-change-executor
       jobId: ScheduledFlagChangeExecutor
       schedule: "* * * * *"
+    - name: monthly-summarizer
+      jobId: MonthlySummarizer
+      schedule: "2 0 * * *"
 terminationGracePeriodSeconds: 60

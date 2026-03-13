@@ -51,7 +51,7 @@ graph TD
     BK -->|Get: MAU,<br>monthly requests|RDB[(RDB<br>monthly_summary)]
 
     PROM-.->|batch:<br>monthly requests|RDB
-    REDIS[("Redis")]-.->|batch:<br>MAU|RDB
+    REDIS[("Redis<br>(persistent)")]-.->|batch:<br>MAU|RDB
 ```
 
 ### API
@@ -77,11 +77,11 @@ Reasons:
 
 Usage:
 
-| Data Source | Purpose                                               |
-| ----------- | ----------------------------------------------------- |
-| Prometheus  | Request count, Latency, Evaluation types, Error rates |
-| Redis       | MAU calculation                                       |
-| RDB         | Historical MAU, Request count                         |
+| Data Source        | Purpose                                               |
+| ------------------ | ----------------------------------------------------- |
+| Prometheus         | Request count, Latency, Evaluation types, Error rates |
+| Redis (persistent) | MAU calculation (written by Persister, not API)       |
+| RDB                | Historical MAU, Request count                         |
 
 Note: If the bucketeer server does not depend on Prometheus, then the UI only shows an unavailable message and the batch processing will be skipped.
 
@@ -97,9 +97,10 @@ By running daily, current month data is also available (up to previous day).
 flowchart TB
     subgraph Realtime["Realtime Writes"]
         CLIENT[Client SDK] -->|GetEvaluations etc.| API[API Server]
+        API -->|PubSub| PERSISTER[EvaluationCountEvent<br>Persister]
     end
 
-    API -->|PFADD dau| Redis[(Redis)]
+    PERSISTER -->|PFADD dau| Redis[("Redis<br>(persistent)")]
 
     Redis -->|Daily Batch<br>PFMERGE mau dau,<br>UPSERT| RDB[(RDB: monthly_summary)]
 
@@ -110,24 +111,25 @@ flowchart TB
     IS --> RDB
 ```
 
+Note: We use the persistent Redis cluster to avoid heavy load on the cache Redis cluster.
+
 #### Redis Keys
 
-| Key Pattern                      | Data Type   | Purpose                      | TTL    |
-| -------------------------------- | ----------- | ---------------------------- | ------ |
-| `{envId:sourceId:au}:d:yyyyMMdd` | HyperLogLog | Daily DAU                    | 35days |
-| `{envId:sourceId:au}:m:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) | 65days |
+| Key Pattern                   | Data Type   | Purpose                      | TTL    |
+| ----------------------------- | ----------- | ---------------------------- | ------ |
+| `envId:dau:sourceId:yyyyMMdd` | HyperLogLog | Daily DAU                    | 35days |
+| `envId:mau:sourceId:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) | 65days |
 
-Using the hash tag `{envId:sourceId:au}` to ensure that multiple keys are allocated in the same hash slot.
-See https://redis.io/topics/cluster-spec#keys-hash-tags.
+Hash tags (`{}`) are not needed because `pkg/redis/v3/redis.go` PFMerge handles cross-slot merging transparently.
 
 
 #### Processing Flow
 
-| Timing       | Process                         | Command                                                                       |
-| ------------ | ------------------------------- | ----------------------------------------------------------------------------- |
-| Realtime     | Add user ID to DAU              | `PFADD {envId:sourceId:au}:d:yyyyMMdd {user_id}`                              |
-| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE {envId:sourceId:au}:m:yyyyMM {envId:sourceId:au}:d:yyyyMMdd`         |
-| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT {envId:sourceId:au}:m:yyyyMM`<br>2. `UPSERT INTO monthly_summary` |
+| Timing        | Process                         | Command                                                                    |
+| ------------- | ------------------------------- | -------------------------------------------------------------------------- |
+| Near-Realtime | Add user ID to DAU              | `PFADD envId:dau:sourceId:yyyyMMdd {user_id}`                              |
+| Daily (0:00)  | Merge previous day's DAU to MAU | `PFMERGE envId:mau:sourceId:yyyyMM envId:dau:sourceId:yyyyMMdd`            |
+| Daily (0:00)  | UPSERT MAU to RDB               | 1. `PFCOUNT envId:mau:sourceId:yyyyMM`<br>2. `UPSERT INTO monthly_summary` |
 
 
 ## Details
@@ -167,7 +169,7 @@ Use 2 existing metrics and add 2 new metrics.
 - Data Definition / Generation:
   - Create `monthly_summary` table
   - Add Prometheus Metrics
-  - Add Redis PFADD processing to Backend (DAU counting)
+  - Add Redis PFADD processing to EvaluationCountEventPersister (DAU counting)
 - Daily Batch:
   - MAU: PFMERGE->PFCOUNT->UPSERT
   - Requests: UPSERT

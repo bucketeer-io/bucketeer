@@ -4,14 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
 import {
   getCurrentEnvironment,
-  getEnvironmentsByProjectId,
   getCurrentProject,
+  getEnvironmentsByProjectId,
   getUniqueProjects,
   useAuth
 } from 'auth';
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToast } from 'hooks';
+import { allowNavigation, useConfirm } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import {
   clearCurrentEnvIdStorage,
@@ -37,6 +38,7 @@ const MyProjects = () => {
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
   const { errorNotify } = useToast();
+  const { isShow: showConfirm, confirm, setIsShow } = useConfirm();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [projects, setProjects] = useState<Project[]>();
@@ -119,16 +121,37 @@ const MyProjects = () => {
         environmentId: value.id || ENVIRONMENT_WITH_EMPTY_ID,
         projectId: value.projectId
       });
-      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
-        replace: false,
-        state: {
-          clearFilters: true
-        }
-      });
+      allowNavigation(() =>
+        navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
+          replace: false,
+          state: {
+            clearFilters: true
+          }
+        })
+      );
       setIsShowProjectsList(false);
       onClearSearch();
     },
-    [setSelectedEnvironment, consoleAccount, selectedEnvironment]
+    [setSelectedEnvironment, selectedEnvironment, onClearSearch, navigate]
+  );
+
+  const onChangeProjectWithConfirm = useCallback(
+    (environment: Environment) => {
+      if (selectedEnvironment?.id === environment.id) return;
+      if (showConfirm) {
+        confirm({
+          title: 'message:leave-page-unsaved-changes',
+          message: 'message:leave-page-unsaved-changes-content',
+          onConfirm: () => {
+            setIsShow(false);
+            onHandleChange(environment);
+          }
+        });
+      } else {
+        onHandleChange(environment);
+      }
+    },
+    [showConfirm, consoleAccount, selectedEnvironment, onHandleChange]
   );
 
   const handleOpenSelectMenu = useCallback(
@@ -225,7 +248,7 @@ const MyProjects = () => {
                             urlCode: item.urlCode,
                             selected: item.id === selectedEnvironment?.id,
                             icon: IconChecked,
-                            onSelect: () => onHandleChange(item)
+                            onSelect: () => onChangeProjectWithConfirm(item)
                           })) || []
                         }
                       />

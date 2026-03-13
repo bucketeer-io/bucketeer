@@ -337,39 +337,21 @@ func (s *EnvironmentService) checkOrganizationRole(
 	organizationID string,
 	requiredRole accproto.AccountV2_Role_Organization,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(
+	return role.CheckOrganizationRoleWithLog(
 		ctx,
 		requiredRole,
+		organizationID,
 		func(email string) (*accproto.GetAccountV2Response, error) {
 			return s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
 				Email:          email,
 				OrganizationId: organizationID,
 			})
 		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
 }
 
 func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
@@ -377,49 +359,22 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 	requiredRole accproto.AccountV2_Role_Organization,
 	environmentID string,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(
+	return role.CheckOrganizationRoleByEnvironmentIDWithLog(
 		ctx,
 		requiredRole,
-		func(email string,
-		) (*accproto.GetAccountV2Response, error) {
+		environmentID,
+		func(email string) (*accproto.GetAccountV2Response, error) {
 			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentID)
 			if err != nil {
 				return nil, err
 			}
 			return &accproto.GetAccountV2Response{Account: account.AccountV2}, nil
-		})
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", environmentID),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", environmentID),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", environmentID),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
 }
 
 func (s *EnvironmentService) getAccountV2ByEnvironmentID(

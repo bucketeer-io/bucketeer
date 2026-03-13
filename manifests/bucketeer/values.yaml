@@ -60,6 +60,8 @@ global:
       poolSize: 25
       # Minimum number of idle connections
       minIdle: 25
+      # Redis client mode: cluster, standalone, or auto
+      mode: auto
       # Redis stream partition count
       partitionCount: 16
       # Idle time in seconds for pending message reclaim

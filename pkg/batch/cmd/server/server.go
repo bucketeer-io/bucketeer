@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/monthlysummary"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
@@ -50,6 +51,7 @@ import (
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
@@ -122,12 +124,14 @@ type server struct {
 	persistentRedisAddr          *string
 	persistentRedisPoolMaxIdle   *int
 	persistentRedisPoolMaxActive *int
+	persistentRedisMode          *string
 	// Non Persistent Redis
 	nonPersistentRedisServerName     *string
 	nonPersistentRedisAddr           *string
 	nonPersistentChildRedisAddresses *[]string
 	nonPersistentRedisPoolMaxIdle    *int
 	nonPersistentRedisPoolMaxActive  *int
+	nonPersistentRedisMode           *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -220,6 +224,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		persistentRedisMode: cmd.Flag("persistent-redis-mode",
+			"Persistent Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -236,6 +243,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
+			"Non-persistent Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		nonPersistentChildRedisAddresses: cmd.Flag(
 			"non-persistent-child-redis-addresses",
 			"A list of non-persistent child Redis addresses.",
@@ -389,6 +399,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.persistentRedisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.persistentRedisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.persistentRedisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -401,6 +412,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -428,6 +440,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
 			redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 			redisv3.WithServerName(s.getRedisHostname(address)),
+			redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
@@ -560,6 +573,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			mysqlClient,
 			featureClient,
 			jobs.WithTimeout(50*time.Second),
+			jobs.WithLogger(logger),
+		),
+		monthlysummary.NewMonthlySummarizer(
+			environmentClient,
+			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
+			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
 			jobs.WithLogger(logger),
 		),
 		logger,

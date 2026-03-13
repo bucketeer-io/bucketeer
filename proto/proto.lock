@@ -9992,6 +9992,10 @@
               {
                 "name": "ScheduledFlagChangeExecutor",
                 "integer": 20
+              },
+              {
+                "name": "MonthlySummarizer",
+                "integer": 21
               }
             ],
             "reserved_ids": [

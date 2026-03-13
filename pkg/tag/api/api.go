@@ -24,8 +24,6 @@ import (
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -458,7 +456,7 @@ func (s *TagService) checkEnvironmentRole(
 	requiredRole accproto.AccountV2_Role_Environment,
 	environmentId string,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckEnvironmentRole(
+	return role.CheckEnvironmentRoleWithLog(
 		ctx,
 		requiredRole,
 		environmentId,
@@ -471,39 +469,12 @@ func (s *TagService) checkEnvironmentRole(
 				return nil, err
 			}
 			return resp.Account, nil
-		})
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
 }
 
 func (s *TagService) checkOrganizationRole(
@@ -511,50 +482,25 @@ func (s *TagService) checkOrganizationRole(
 	requiredRole accproto.AccountV2_Role_Organization,
 	organizationID string,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(
-		email string,
-	) (*accproto.GetAccountV2Response, error) {
-		resp, err := s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
-			Email:          email,
-			OrganizationId: organizationID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return resp, nil
-	})
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", organizationID),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", organizationID),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", organizationID),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
+	return role.CheckOrganizationRoleWithLog(
+		ctx,
+		requiredRole,
+		organizationID,
+		func(email string) (*accproto.GetAccountV2Response, error) {
+			resp, err := s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
+				Email:          email,
+				OrganizationId: organizationID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
 }
 
 func (s *TagService) getAllowedEnvironments(

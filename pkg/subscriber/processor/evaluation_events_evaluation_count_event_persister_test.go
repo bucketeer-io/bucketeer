@@ -378,6 +378,177 @@ func TestCacheUserAttributes(t *testing.T) {
 	}
 }
 
+func toSet(ids ...string) map[string]struct{} {
+	s := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		s[id] = struct{}{}
+	}
+	return s
+}
+
+func TestBufferDAU(t *testing.T) {
+	day1 := int64(1772668800) // 2026-03-05 00:00:00 UTC
+	day2 := int64(1772755200) // 2026-03-06 00:00:00 UTC
+
+	tests := []struct {
+		desc        string
+		existingBuf dauBuffer
+		envEvents   environmentEventMap
+		expectedBuf dauBuffer
+	}{
+		{
+			desc:        "Add a new entry to an empty buffer",
+			existingBuf: make(dauBuffer),
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "user-1",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+				},
+			},
+			expectedBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+			},
+		},
+		{
+			desc:        "Process events from multiple environments",
+			existingBuf: make(dauBuffer),
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "user-1",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+				},
+				"env-2": eventMap{
+					"event-2": &eventproto.EvaluationEvent{
+						UserId:    "user-2",
+						SourceId:  eventproto.SourceId_IOS,
+						Timestamp: day1,
+					},
+				},
+			},
+			expectedBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+				{dateStr: "20260305", envID: "env-2", sourceID: "IOS"}:     toSet("user-2"),
+			},
+		},
+		{
+			desc:        "Duplicate user IDs are deduplicated in buffer",
+			existingBuf: make(dauBuffer),
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "user-1",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						UserId:    "user-1",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1 + 3600, // same day, different hour
+					},
+				},
+			},
+			expectedBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+			},
+		},
+		{
+			desc:        "Different dates produce separate entries",
+			existingBuf: make(dauBuffer),
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "user-1",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+					"event-2": &eventproto.EvaluationEvent{
+						UserId:    "user-1",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day2,
+					},
+				},
+			},
+			expectedBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+				{dateStr: "20260306", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+			},
+		},
+		{
+			desc: "Append to existing buffer entries",
+			existingBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1"),
+			},
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "user-2",
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+				},
+			},
+			expectedBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-1", "user-2"),
+			},
+		},
+		{
+			desc:        "Skip when userID is empty and User is nil",
+			existingBuf: make(dauBuffer),
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "",
+						User:      &userproto.User{Id: ""},
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+				},
+			},
+			expectedBuf: dauBuffer{},
+		},
+		{
+			desc:        "Use User.Id when UserId is empty",
+			existingBuf: make(dauBuffer),
+			envEvents: environmentEventMap{
+				"env-1": eventMap{
+					"event-1": &eventproto.EvaluationEvent{
+						UserId:    "",
+						User:      &userproto.User{Id: "user-from-user-id"},
+						SourceId:  eventproto.SourceId_ANDROID,
+						Timestamp: day1,
+					},
+				},
+			},
+			expectedBuf: dauBuffer{
+				{dateStr: "20260305", envID: "env-1", sourceID: "ANDROID"}: toSet("user-from-user-id"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			persister := &evaluationCountEventPersister{
+				dauBuf: tt.existingBuf,
+				logger: zap.NewNop(),
+			}
+			persister.bufferDAU(tt.envEvents)
+
+			assert.Equal(t, len(tt.expectedBuf), len(persister.dauBuf))
+			for key, expectedUsers := range tt.expectedBuf {
+				actualUsers, exists := persister.dauBuf[key]
+				assert.True(t, exists, "expected key %v not found in dauBuf", key)
+				assert.Equal(t, expectedUsers, actualUsers)
+			}
+		})
+	}
+}
+
 func TestIsErrorReason(t *testing.T) {
 	tests := []struct {
 		name       string
