@@ -82,4 +82,3 @@ func (c *client) QueryInstant(ctx context.Context, query string, ts time.Time) (
 	}
 	return vector, nil
 }
-

@@ -45,7 +45,9 @@ func calculateTimeParams(targetDate time.Time) (duration time.Duration, evaluati
 	// Month start: first day of targetDate's month at 00:00
 	monthStart := time.Date(targetDate.Year(), targetDate.Month(), 1, 0, 0, 0, 0, targetDate.Location())
 	// Evaluation time: start of the day after targetDate
-	evaluationTime = time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day()+1, 0, 0, 0, 0, targetDate.Location())
+	nextDay := targetDate.Day() + 1
+	loc := targetDate.Location()
+	evaluationTime = time.Date(targetDate.Year(), targetDate.Month(), nextDay, 0, 0, 0, 0, loc)
 	duration = evaluationTime.Sub(monthStart)
 	return
 }
