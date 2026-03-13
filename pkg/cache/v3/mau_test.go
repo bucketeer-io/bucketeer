@@ -15,17 +15,14 @@
 package v3
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
 
-	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
-	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3/mock"
 )
 
 func TestMAUCache_MAUKey(t *testing.T) {
@@ -41,33 +38,20 @@ func TestMAUCache_MergeIntoMAUBatch_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
-	mockPipe := redismock.NewMockPipeClient(ctrl)
 	c := NewMAUCache(mockCache)
 
 	envID := "env-123"
 	sourceIDs := []string{"ANDROID", "IOS"}
 	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
-	// PFMerge via client (cluster-aware)
 	gomock.InOrder(
-		mockCache.EXPECT().PFMerge("env-123:mau:ANDROID:202601", mauTTL, "env-123:mau:ANDROID:202601", "{env-123:ANDROID:au}:d:20260115").Return(nil),
-		mockCache.EXPECT().PFMerge("env-123:mau:IOS:202601", mauTTL, "env-123:mau:IOS:202601", "{env-123:IOS:au}:d:20260115").Return(nil),
+		mockCache.EXPECT().PFMerge("env-123:mau:ANDROID:202601", mauTTL, "env-123:mau:ANDROID:202601", "env-123:dau:ANDROID:20260115").Return(nil),
+		mockCache.EXPECT().PFCount("env-123:mau:ANDROID:202601").Return(int64(100), nil),
+		mockCache.EXPECT().Delete("env-123:dau:ANDROID:20260115").Return(nil),
+		mockCache.EXPECT().PFMerge("env-123:mau:IOS:202601", mauTTL, "env-123:mau:IOS:202601", "env-123:dau:IOS:20260115").Return(nil),
+		mockCache.EXPECT().PFCount("env-123:mau:IOS:202601").Return(int64(200), nil),
+		mockCache.EXPECT().Delete("env-123:dau:IOS:20260115").Return(nil),
 	)
-
-	// Del and PFCount via pipeline
-	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
-	mockPipe.EXPECT().Del("{env-123:ANDROID:au}:d:20260115")
-	mockPipe.EXPECT().Del("{env-123:IOS:au}:d:20260115")
-
-	androidCmd := goredis.NewIntCmd(context.Background())
-	androidCmd.SetVal(100)
-	mockPipe.EXPECT().PFCount("env-123:mau:ANDROID:202601").Return(androidCmd)
-
-	iosCmd := goredis.NewIntCmd(context.Background())
-	iosCmd.SetVal(200)
-	mockPipe.EXPECT().PFCount("env-123:mau:IOS:202601").Return(iosCmd)
-
-	mockPipe.EXPECT().Exec().Return(nil, nil)
 
 	result, err := c.MergeIntoMAUBatch(envID, sourceIDs, date)
 	assert.NoError(t, err)
@@ -93,7 +77,6 @@ func TestMAUCache_MergeIntoMAUBatch_PFMergeError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
-	mockPipe := redismock.NewMockPipeClient(ctrl)
 	c := NewMAUCache(mockCache)
 
 	envID := "env-123"
@@ -101,7 +84,6 @@ func TestMAUCache_MergeIntoMAUBatch_PFMergeError(t *testing.T) {
 	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 	expectedErr := errors.New("merge error")
 
-	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
 	mockCache.EXPECT().PFMerge(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedErr)
 
 	result, err := c.MergeIntoMAUBatch(envID, sourceIDs, date)
@@ -110,29 +92,51 @@ func TestMAUCache_MergeIntoMAUBatch_PFMergeError(t *testing.T) {
 	assert.Nil(t, result)
 }
 
-func TestMAUCache_MergeIntoMAUBatch_PipelineError(t *testing.T) {
+func TestMAUCache_MergeIntoMAUBatch_PFCountError(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
-	mockPipe := redismock.NewMockPipeClient(ctrl)
 	c := NewMAUCache(mockCache)
 
 	envID := "env-123"
 	sourceIDs := []string{"ANDROID"}
 	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
-	expectedErr := errors.New("pipeline error")
+	expectedErr := errors.New("count error")
 
-	mockCache.EXPECT().PFMerge(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
-	mockPipe.EXPECT().Del(gomock.Any())
-	dummyCmd := goredis.NewIntCmd(context.Background())
-	mockPipe.EXPECT().PFCount(gomock.Any()).Return(dummyCmd)
-	mockPipe.EXPECT().Exec().Return(nil, expectedErr)
+	gomock.InOrder(
+		mockCache.EXPECT().PFMerge(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil),
+		mockCache.EXPECT().PFCount(gomock.Any()).Return(int64(0), expectedErr),
+	)
 
 	result, err := c.MergeIntoMAUBatch(envID, sourceIDs, date)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to execute pipeline for PFCount/Del")
+	assert.Contains(t, err.Error(), "failed to count MAU for source ANDROID")
+	assert.Nil(t, result)
+}
+
+func TestMAUCache_MergeIntoMAUBatch_DeleteError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+	c := NewMAUCache(mockCache)
+
+	envID := "env-123"
+	sourceIDs := []string{"ANDROID"}
+	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
+	expectedErr := errors.New("delete error")
+
+	gomock.InOrder(
+		mockCache.EXPECT().PFMerge(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil),
+		mockCache.EXPECT().PFCount(gomock.Any()).Return(int64(100), nil),
+		mockCache.EXPECT().Delete(gomock.Any()).Return(expectedErr),
+	)
+
+	result, err := c.MergeIntoMAUBatch(envID, sourceIDs, date)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to delete DAU key for source ANDROID")
 	assert.Nil(t, result)
 }

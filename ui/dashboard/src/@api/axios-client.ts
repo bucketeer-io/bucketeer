@@ -29,18 +29,21 @@ axiosClient.interceptors.response.use(
     const authToken = getTokenStorage();
     const originalRequest = error.config;
     if (!authToken && error.response?.status === 401) {
-      return document.dispatchEvent(
+      document.dispatchEvent(
         new CustomEvent('unauthenticated', {
           bubbles: true
         })
       );
+      return Promise.reject(error);
     }
     if (
       authToken?.refreshToken &&
       error.response?.status === 401 &&
-      !isRefreshing
+      !isRefreshing &&
+      !originalRequest._retry
     ) {
       isRefreshing = true;
+      originalRequest._retry = true;
       return refreshTokenFetcher(authToken?.refreshToken)
         .then(response => {
           const newAccessToken = response.token.accessToken;
@@ -63,6 +66,13 @@ axiosClient.interceptors.response.use(
           );
           return Promise.reject(err);
         });
+    }
+    if (error.response?.status === 401 && originalRequest._retry) {
+      document.dispatchEvent(
+        new CustomEvent('unauthenticated', {
+          bubbles: true
+        })
+      );
     }
     return Promise.reject(error);
   }

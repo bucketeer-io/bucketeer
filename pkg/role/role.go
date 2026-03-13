@@ -17,11 +17,13 @@ package role
 import (
 	"context"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -109,6 +111,42 @@ func CheckEnvironmentRole(
 		account.EnvironmentRoles,
 		account.OrganizationRole,
 		false)
+}
+
+func CheckEnvironmentRoleWithLog(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Environment,
+	environmentID string,
+	getAccountFunc func(email string) (*accountproto.AccountV2, error),
+	logger *zap.Logger,
+	unauthenticatedErr error,
+	permissionDeniedErr error,
+	defaultErrFunc func(error) error,
+) (*eventproto.Editor, error) {
+	editor, err := CheckEnvironmentRole(ctx, requiredRole, environmentID, getAccountFunc)
+	if err != nil {
+		logFields := []zap.Field{
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+			zap.String("requiredRole", requiredRole.String()),
+		}
+		if token, ok := rpc.GetAccessToken(ctx); ok {
+			logFields = append(logFields, zap.String("email", token.Email))
+		}
+		fields := log.FieldsFromIncomingContext(ctx).AddFields(logFields...)
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			logger.Error("Unauthenticated", fields...)
+			return nil, unauthenticatedErr
+		case codes.PermissionDenied:
+			logger.Error("Permission denied", fields...)
+			return nil, permissionDeniedErr
+		default:
+			logger.Error("Failed to check role", fields...)
+			return nil, defaultErrFunc(err)
+		}
+	}
+	return editor, nil
 }
 
 func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {

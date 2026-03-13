@@ -97,6 +97,7 @@ type server struct {
 	eventCounterService    *string
 	redisServerName        *string
 	redisAddr              *string
+	redisMode              *string
 	certPath               *string
 	keyPath                *string
 	serviceTokenPath       *string
@@ -111,6 +112,7 @@ type server struct {
 	pubSubRedisPoolSize       *int
 	pubSubRedisMinIdle        *int
 	pubSubRedisPartitionCount *int
+	pubSubRedisMode           *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -193,8 +195,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"event-counter-service",
 			"bucketeer-event-counter-service address.",
 		).Default("event-counter:9090").String(),
-		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
-		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisMode: cmd.Flag("redis-mode",
+			"Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -233,6 +238,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
 			"Number of partitions for Redis Streams PubSub.",
 		).Default("16").Int(),
+		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
+			"PubSub Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -259,6 +267,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
+			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
@@ -461,6 +470,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
 		redisv3.WithServerName(*s.redisServerName),
+		redisv3.WithRedisMode(redisv3.RedisMode(*s.redisMode)),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)

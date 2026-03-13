@@ -28,7 +28,7 @@ const (
 
 // MAUCache provides MAU counting operations.
 type MAUCache interface {
-	// MergeIntoMAUBatch merges DAUs into MAUs for multiple source IDs using pipeline.
+	// MergeIntoMAUBatch merges DAUs into MAUs for multiple source IDs.
 	// After merging, the source DAU keys are deleted to free memory.
 	// Returns a map of sourceID to MAU count.
 	MergeIntoMAUBatch(envID string, sourceIDs []string, date time.Time) (map[string]int64, error)
@@ -55,26 +55,21 @@ func (c *mauCache) MergeIntoMAUBatch(envID string, sourceIDs []string, date time
 		return make(map[string]int64), nil
 	}
 
-	pipe := c.cache.Pipeline(false)
-	countCmds := make([]any, len(sourceIDs))
-	for i, sourceID := range sourceIDs {
+	result := make(map[string]int64, len(sourceIDs))
+	for _, sourceID := range sourceIDs {
 		mk := mauKey(envID, sourceID, date)
 		dk := dauKey(envID, sourceID, date)
-		// PFMerge must use client-level call for cluster compatibility.
 		if err := c.cache.PFMerge(mk, mauTTL, mk, dk); err != nil {
 			return nil, fmt.Errorf("failed to merge MAU for source %s: %w", sourceID, err)
 		}
-		countCmds[i] = pipe.PFCount(mk)
-		pipe.Del(dk)
-	}
-	if _, err := pipe.Exec(); err != nil {
-		return nil, fmt.Errorf("failed to execute pipeline for PFCount/Del: %w", err)
-	}
-
-	result := make(map[string]int64, len(sourceIDs))
-	for i, sourceID := range sourceIDs {
-		cmd := countCmds[i].(interface{ Val() int64 })
-		result[sourceID] = cmd.Val()
+		count, err := c.cache.PFCount(mk)
+		if err != nil {
+			return nil, fmt.Errorf("failed to count MAU for source %s: %w", sourceID, err)
+		}
+		result[sourceID] = count
+		if err := c.cache.Delete(dk); err != nil {
+			return nil, fmt.Errorf("failed to delete DAU key for source %s: %w", sourceID, err)
+		}
 	}
 	return result, nil
 }

@@ -12,3 +12,5 @@ dist
 src/google/
 src/protoc-gen-openapiv2/ 
 src/proto/
+.yarn/cache/
+.yarn/install-state.gz
