@@ -241,6 +241,42 @@ func CheckOrganizationRole(
 	}, nil
 }
 
+func CheckOrganizationRoleWithLog(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	organizationID string,
+	getAccountFunc func(email string) (*accountproto.GetAccountV2Response, error),
+	logger *zap.Logger,
+	unauthenticatedErr error,
+	permissionDeniedErr error,
+	defaultErrFunc func(error) error,
+) (*eventproto.Editor, error) {
+	editor, err := CheckOrganizationRole(ctx, requiredRole, getAccountFunc)
+	if err != nil {
+		logFields := []zap.Field{
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+			zap.String("requiredRole", requiredRole.String()),
+		}
+		if token, ok := rpc.GetAccessToken(ctx); ok {
+			logFields = append(logFields, zap.String("email", token.Email))
+		}
+		fields := log.FieldsFromIncomingContext(ctx).AddFields(logFields...)
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			logger.Error("Unauthenticated", fields...)
+			return nil, unauthenticatedErr
+		case codes.PermissionDenied:
+			logger.Error("Permission denied", fields...)
+			return nil, permissionDeniedErr
+		default:
+			logger.Error("Failed to check role", fields...)
+			return nil, defaultErrFunc(err)
+		}
+	}
+	return editor, nil
+}
+
 func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_PublicAPIEditor {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
