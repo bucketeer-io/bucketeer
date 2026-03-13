@@ -36,8 +36,7 @@ type DAURecord struct {
 
 // DAUCache provides DAU counting operations.
 type DAUCache interface {
-	// RecordDAUBatch adds user IDs to DAU HyperLogLog in
-	// a single Redis Pipeline (1 round-trip).
+	// RecordDAUBatch adds user IDs to DAU HyperLogLog.
 	RecordDAUBatch(records []DAURecord) error
 }
 
@@ -59,24 +58,17 @@ func dauKey(envID, sourceID string, date time.Time) string {
 }
 
 func (c *dauCache) RecordDAUBatch(records []DAURecord) error {
-	// Filter out empty records to avoid creating a Pipeline unnecessarily.
-	filtered := make([]DAURecord, 0, len(records))
 	for _, r := range records {
-		if len(r.UserIDs) > 0 {
-			filtered = append(filtered, r)
+		if len(r.UserIDs) == 0 {
+			continue
 		}
-	}
-	if len(filtered) == 0 {
-		return nil
-	}
-	pipe := c.cache.Pipeline(false)
-	for _, r := range filtered {
 		key := dauKey(r.EnvID, r.SourceID, r.Date)
-		pipe.PFAdd(key, r.UserIDs...)
-		pipe.Expire(key, dauTTL)
-	}
-	if _, err := pipe.Exec(); err != nil {
-		return fmt.Errorf("failed to record DAU batch (%d keys): %w", len(filtered), err)
+		if _, err := c.cache.PFAdd(key, r.UserIDs...); err != nil {
+			return fmt.Errorf("failed to PFAdd DAU for key %s: %w", key, err)
+		}
+		if _, err := c.cache.Expire(key, dauTTL); err != nil {
+			return fmt.Errorf("failed to set TTL for key %s: %w", key, err)
+		}
 	}
 	return nil
 }

@@ -48,6 +48,7 @@ type batchService struct {
 	tagDeleter                  jobs.Job
 	featureAutoArchiver         jobs.Job
 	scheduledFlagChangeExecutor jobs.Job
+	monthlySummarizer           jobs.Job
 	logger                      *zap.Logger
 }
 
@@ -58,7 +59,8 @@ func NewBatchService(
 	redisCounterDeleter, experimentCalculator,
 	featureFlagCacher, segmentUserCacher, apiKeyCacher,
 	experimentCacher, autoOpsRulesCacher, tagDeleter,
-	featureAutoArchiver, scheduledFlagChangeExecutor jobs.Job,
+	featureAutoArchiver, scheduledFlagChangeExecutor,
+	monthlySummarizer jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -78,6 +80,7 @@ func NewBatchService(
 		tagDeleter:                  tagDeleter,
 		featureAutoArchiver:         featureAutoArchiver,
 		scheduledFlagChangeExecutor: scheduledFlagChangeExecutor,
+		monthlySummarizer:           monthlySummarizer,
 		logger:                      logger.Named("batch-service"),
 	}
 }
@@ -118,6 +121,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.featureAutoArchiver.Run(ctx)
 	case batch.BatchJob_ScheduledFlagChangeExecutor:
 		err = s.scheduledFlagChangeExecutor.Run(ctx)
+	case batch.BatchJob_MonthlySummarizer:
+		err = s.monthlySummarizer.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromIncomingContext(ctx).AddFields(

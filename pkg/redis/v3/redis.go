@@ -152,6 +152,7 @@ type client struct {
 
 type PipeClient interface {
 	PFAdd(key string, els ...string) *goredis.IntCmd
+	PFMerge(dest string, keys ...string) *goredis.StatusCmd
 	Incr(key string) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
 	SAdd(key string, members ...interface{}) *goredis.IntCmd
@@ -911,6 +912,11 @@ func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfAddCmdName)
 	return c.pipe.PFAdd(c.ctx, key, els)
+}
+
+func (c *pipeClient) PFMerge(dest string, keys ...string) *goredis.StatusCmd {
+	c.cmds = append(c.cmds, pfMergeCmdName)
+	return c.pipe.PFMerge(c.ctx, dest, keys...)
 }
 
 func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
