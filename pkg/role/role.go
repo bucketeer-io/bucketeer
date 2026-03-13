@@ -254,7 +254,7 @@ func CheckOrganizationRoleWithLog(
 	return checkOrganizationRoleWithLog(
 		ctx,
 		requiredRole,
-		zap.String("organizationID", organizationID),
+		zap.String("organizationId", organizationID),
 		getAccountFunc,
 		logger,
 		unauthenticatedErr,
@@ -276,7 +276,7 @@ func CheckOrganizationRoleByEnvironmentIDWithLog(
 	return checkOrganizationRoleWithLog(
 		ctx,
 		requiredRole,
-		zap.String("environmentID", environmentID),
+		zap.String("environmentId", environmentID),
 		getAccountFunc,
 		logger,
 		unauthenticatedErr,

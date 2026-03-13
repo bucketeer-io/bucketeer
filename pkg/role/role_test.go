@@ -787,7 +787,7 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 				"log output should be valid JSON")
 
 			assert.Equal(t, p.expectedLogMsg, logEntry["msg"])
-			assert.Equal(t, p.organizationID, logEntry["organizationID"])
+			assert.Equal(t, p.organizationID, logEntry["organizationId"])
 			assert.Equal(t, p.requiredRole.String(), logEntry["requiredRole"])
 			if p.expectedEmail != "" {
 				assert.Equal(t, p.expectedEmail, logEntry["email"])
@@ -837,8 +837,8 @@ func TestCheckOrganizationRoleByEnvironmentIDWithLog(t *testing.T) {
 		require.NoError(t, json.Unmarshal(buf.Bytes(), &logEntry),
 			"log output should be valid JSON")
 		assert.Equal(t, "Unauthenticated", logEntry["msg"])
-		assert.Equal(t, "env0", logEntry["environmentID"])
-		_, hasOrganizationID := logEntry["organizationID"]
+		assert.Equal(t, "env0", logEntry["environmentId"])
+		_, hasOrganizationID := logEntry["organizationId"]
 		assert.False(t, hasOrganizationID)
 	})
 }
