@@ -55,4 +55,3 @@ func (mr *MockClientMockRecorder) QueryInstant(ctx, query, ts any) *gomock.Call 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryInstant", reflect.TypeOf((*MockClient)(nil).QueryInstant), ctx, query, ts)
 }
-
