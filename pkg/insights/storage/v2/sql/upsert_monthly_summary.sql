@@ -9,5 +9,5 @@ INSERT INTO monthly_summary (
 ) VALUES %s
 ON DUPLICATE KEY UPDATE
     mau = VALUES(mau),
-    request_count = VALUES(request_count),
+    request_count = IF(VALUES(request_count) = 0, request_count, VALUES(request_count)),
     updated_at = VALUES(updated_at)

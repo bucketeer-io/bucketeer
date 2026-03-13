@@ -17,6 +17,7 @@ package monthlysummary
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -71,10 +72,14 @@ func parseRequestCountVector(vector model.Vector) map[string]map[string]int64 {
 		if envID == "" || sourceID == "" {
 			continue
 		}
+		v := float64(sample.Value)
+		if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+			continue
+		}
 		if result[envID] == nil {
 			result[envID] = make(map[string]int64)
 		}
-		result[envID][sourceID] = int64(sample.Value)
+		result[envID][sourceID] = int64(math.Round(v))
 	}
 	return result
 }

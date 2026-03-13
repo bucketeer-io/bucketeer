@@ -15,6 +15,7 @@
 package monthlysummary
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -237,7 +238,7 @@ func Test_parseRequestCountVector(t *testing.T) {
 			},
 		},
 		{
-			desc: "float value truncated to int64",
+			desc: "float value rounded to int64",
 			vector: model.Vector{
 				&model.Sample{
 					Metric: model.Metric{
@@ -248,8 +249,56 @@ func Test_parseRequestCountVector(t *testing.T) {
 				},
 			},
 			expected: map[string]map[string]int64{
-				"env1": {"ANDROID": 123},
+				"env1": {"ANDROID": 124},
 			},
+		},
+		{
+			desc: "skip NaN value",
+			vector: model.Vector{
+				&model.Sample{
+					Metric: model.Metric{
+						"environment_id": "env1",
+						"source_id":      "ANDROID",
+					},
+					Value: model.SampleValue(math.NaN()),
+				},
+				&model.Sample{
+					Metric: model.Metric{
+						"environment_id": "env1",
+						"source_id":      "IOS",
+					},
+					Value: 100,
+				},
+			},
+			expected: map[string]map[string]int64{
+				"env1": {"IOS": 100},
+			},
+		},
+		{
+			desc: "skip Inf value",
+			vector: model.Vector{
+				&model.Sample{
+					Metric: model.Metric{
+						"environment_id": "env1",
+						"source_id":      "ANDROID",
+					},
+					Value: model.SampleValue(math.Inf(1)),
+				},
+			},
+			expected: map[string]map[string]int64{},
+		},
+		{
+			desc: "skip negative value",
+			vector: model.Vector{
+				&model.Sample{
+					Metric: model.Metric{
+						"environment_id": "env1",
+						"source_id":      "ANDROID",
+					},
+					Value: -10,
+				},
+			},
+			expected: map[string]map[string]int64{},
 		},
 	}
 
