@@ -52,16 +52,16 @@ type Searcher interface {
 }
 
 const (
-	defaultAPIBaseURL  = "https://api.github.com"
-	defaultRawBaseURL  = "https://raw.githubusercontent.com"
-	docsRepo           = "bucketeer-io/bucketeer-docs"
-	maxContentLength   = 2000
-	maxIndexContent    = 5000 // content stored in index for scoring (longer than output)
+	defaultAPIBaseURL    = "https://api.github.com"
+	defaultRawBaseURL    = "https://raw.githubusercontent.com"
+	docsRepo             = "bucketeer-io/bucketeer-docs"
+	maxContentLength     = 2000
+	maxIndexContent      = 5000 // content stored in index for scoring (longer than output)
 	maxRawBodyBytes      = 512 * 1024
 	maxTreeResponseBytes = 10 * 1024 * 1024
 	maxTopK              = 10
-	maxConcurrentFetch = 5
-	defaultCacheTTL    = 24 * time.Hour
+	maxConcurrentFetch   = 5
+	defaultCacheTTL      = 24 * time.Hour
 )
 
 // gitTreeResponse is the GitHub Trees API response.

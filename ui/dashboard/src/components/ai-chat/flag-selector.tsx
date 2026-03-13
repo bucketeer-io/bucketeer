@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryFeatures } from '@queries/features';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 

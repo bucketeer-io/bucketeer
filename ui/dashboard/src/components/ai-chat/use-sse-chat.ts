@@ -114,7 +114,11 @@ export const useSSEChat = ({
             rafId = null;
           };
 
-          return (chunk: { content?: string; error?: string; done: boolean }) => {
+          return (chunk: {
+            content?: string;
+            error?: string;
+            done: boolean;
+          }) => {
             if (abortController.signal.aborted) {
               if (rafId) {
                 cancelAnimationFrame(rafId);
@@ -129,9 +133,7 @@ export const useSSEChat = ({
               }
               flushContent();
               setErrorKey(
-                isChatErrorCode(chunk.error)
-                  ? chunk.error
-                  : CHAT_ERROR.UNKNOWN
+                isChatErrorCode(chunk.error) ? chunk.error : CHAT_ERROR.UNKNOWN
               );
               return;
             }
@@ -155,11 +157,7 @@ export const useSSEChat = ({
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         const msg = (err as Error).message;
-        setErrorKey(
-          isChatErrorCode(msg)
-            ? msg
-            : CHAT_ERROR.UNKNOWN
-        );
+        setErrorKey(isChatErrorCode(msg) ? msg : CHAT_ERROR.UNKNOWN);
       }
     } finally {
       isStreamingRef.current = false;
