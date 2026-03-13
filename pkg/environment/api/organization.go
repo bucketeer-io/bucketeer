@@ -607,6 +607,7 @@ func (s *EnvironmentService) UpdateOrganization(
 			return err
 		}
 		prevOwnerEmail = organization.OwnerEmail
+
 		updated, err := organization.Update(
 			req.Name,
 			req.Description,
