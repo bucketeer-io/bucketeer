@@ -34,7 +34,7 @@ services:
       - bucketeer
 
   postgres:
-    image: postgres:${POSTGRES_VERSION:-18}
+    image: timescale/timescaledb:${POSTGRES_VERSION:-2.16.1-pg18}
     container_name: bucketeer-postgres
     restart: unless-stopped
     environment:
