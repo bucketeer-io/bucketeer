@@ -162,14 +162,6 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.nonPersistentRedis.mode }}"
-            # Migration environment variables for environment ID migration
-            # These enable double-write to both old and new key formats during migration
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_ENABLED
-              value: "{{ .Values.env.migration.environmentId.enabled }}"
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_FROM
-              value: "{{ .Values.env.migration.environmentId.from }}"
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_TO
-              value: "{{ .Values.env.migration.environmentId.to }}"
 
           volumeMounts:
             - name: service-cert-secret
