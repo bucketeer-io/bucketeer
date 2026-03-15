@@ -94,6 +94,7 @@ web:
     cloudService: hcv
     profile: false
     enablePprof: false
+    maintenanceModeEnabled: false
     pprofAddr: 127.0.0.1:6060
     bucketeerTestEnabled: true
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050

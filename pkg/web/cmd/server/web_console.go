@@ -15,7 +15,9 @@
 package server
 
 import (
+	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -104,17 +106,50 @@ func dashboardHandler() http.Handler {
 	return http.FileServer(&spaFileSystem{root: fs})
 }
 
-type DashboardService struct {
-	consoleEnvJSPath string
+// maintenancePageHandler returns the embedded dashboard maintenance page
+func maintenancePageHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		w.Header().Set("Retry-After", "3600") // Suggest retry after 1 hour
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(http.StatusServiceUnavailable)
+
+		// Serve the embedded maintenance.html from dashboard
+		file, err := dashboard.FS.Open("maintenance.html")
+		if err != nil {
+			log.Printf("[maintenance] failed to open maintenance.html: %v", err)
+			// Fallback to minimal valid HTML if file not found
+			fallback := `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Maintenance</title></head>` +
+				`<body><h1>Maintenance Mode</h1><p>System is temporarily unavailable.</p></body></html>`
+			_, _ = w.Write([]byte(fallback))
+			return
+		}
+		defer file.Close()
+
+		if _, err := io.Copy(w, file); err != nil {
+			log.Printf("[maintenance] failed to write maintenance page: %v", err)
+		}
+	})
 }
 
-func NewDashboardService(consoleEnvJSPath string) DashboardService {
-	return DashboardService{consoleEnvJSPath: consoleEnvJSPath}
+type DashboardService struct {
+	consoleEnvJSPath       string
+	maintenanceModeEnabled bool
+}
+
+func NewDashboardService(consoleEnvJSPath string, maintenanceModeEnabled bool) DashboardService {
+	return DashboardService{
+		consoleEnvJSPath:       consoleEnvJSPath,
+		maintenanceModeEnabled: maintenanceModeEnabled,
+	}
 }
 
 // Register sets up handlers for assets, fonts, the SPA, and env-JS.
 func (d DashboardService) Register(mux *http.ServeMux) {
-	// Subtree for embedded assets
+	// Subtree for embedded assets (bundled JS/CSS)
 	embedded := dashboard.FS
 	assetsSub, err := fs.Sub(embedded, "assets")
 	if err != nil {
@@ -122,13 +157,29 @@ func (d DashboardService) Register(mux *http.ServeMux) {
 	}
 	assetsFS := http.FS(assetsSub)
 
-	// Serve pre-compressed static assets (JS/CSS/images/fonts) with font caching
+	// Serve bundled assets (JS/CSS) with caching and compression
 	mux.Handle("/assets/", http.StripPrefix(
 		"/assets/",
 		cacheHandler(
 			compressedFileServer(assetsFS),
 		),
 	))
+
+	// If maintenance mode is enabled, serve maintenance page and its static resources
+	if d.maintenanceModeEnabled {
+		// Serve static images and fonts for maintenance page
+		embeddedFS := http.FS(embedded)
+		mux.Handle("/images/", http.StripPrefix("/", http.FileServer(embeddedFS)))
+		mux.Handle("/fonts/", http.StripPrefix("/", http.FileServer(embeddedFS)))
+		mux.Handle("/favicon.ico", http.FileServer(embeddedFS))
+
+		// Serve maintenance page for all other routes
+		// Note: If you need to allow admin bypass, you can check for a special
+		// header (X-Admin-Bypass) or query parameter here and conditionally
+		// serve the normal dashboard instead
+		mux.Handle("/", maintenancePageHandler())
+		return
+	}
 
 	// Serve dynamic env JS with compression
 	mux.Handle("/static/js/", http.StripPrefix(
