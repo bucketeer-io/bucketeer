@@ -31,6 +31,11 @@ import (
 
 	accountapi "github.com/bucketeer-io/bucketeer/v2/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	aichatapi "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/api"
+	aichatllm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
+	aichatrag "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
+	aichatratelimit "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
+
 	auditlogapi "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
@@ -67,6 +72,7 @@ import (
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
 	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -173,6 +179,13 @@ type server struct {
 	pubSubRedisMode                 *string
 	dataWarehouseType               *string
 	dataWarehouseConfigPath         *string
+	// AI Chat configuration
+	openAIAPIKey      *string
+	openAIBaseURL     *string
+	aichatModel       *string
+	aichatGitHubToken *string
+	aichatMaxTokens   *int
+	aichatServicePort *int
 }
 
 type DataWarehouseConfig struct {
@@ -420,6 +433,31 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		// AI Chat configuration (optional — disabled when openai-api-key is empty)
+		openAIAPIKey: cmd.Flag(
+			"openai-api-key",
+			"OpenAI API key for AI Chat feature. Leave empty to disable AI Chat.",
+		).Default("").String(),
+		openAIBaseURL: cmd.Flag(
+			"openai-base-url",
+			"Base URL for the OpenAI-compatible API endpoint. Leave empty for default OpenAI endpoint.",
+		).Default("").String(),
+		aichatModel: cmd.Flag(
+			"aichat-model",
+			"LLM model name for AI Chat.",
+		).Default("gpt-4o-mini").String(),
+		aichatGitHubToken: cmd.Flag(
+			"aichat-github-token",
+			"GitHub token for AI Chat RAG documentation search. Optional but increases rate limit.",
+		).Default("").String(),
+		aichatMaxTokens: cmd.Flag(
+			"aichat-max-tokens",
+			"Maximum tokens for AI Chat responses.",
+		).Default("1000").Int(),
+		aichatServicePort: cmd.Flag(
+			"aichat-service-port",
+			"Port to bind to AI Chat service.",
+		).Default("9108").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -857,13 +895,60 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go teamServer.Run()
 
-	// Start the dashboard servers
-	dashboardServer := rest.NewServer(
-		*s.certPath, *s.keyPath,
+	// aichatService (optional — enabled when OpenAI API key is provided)
+	var aichatServer *rpc.Server
+	dashboardRestOpts := []rest.Option{
 		rest.WithLogger(logger),
 		rest.WithPort(*s.dashboardServicePort),
 		rest.WithService(NewDashboardService(*s.webConsoleEnvJSPath)),
 		rest.WithMetrics(registerer),
+	}
+	if *s.openAIAPIKey != "" {
+		llmClient := aichatllm.NewOpenAIClient(*s.openAIAPIKey, *s.openAIBaseURL)
+		ragSearcher := aichatrag.NewGitHubSearcher(logger)
+		chatCfg := aichatapi.ChatConfig{
+			Model:       *s.aichatModel,
+			MaxTokens:   *s.aichatMaxTokens,
+			Temperature: 0.7,
+		}
+		rateLimiter := aichatratelimit.NewLimiter(ctx, aichatratelimit.DefaultConfig())
+		aichatGRPCService := aichatapi.NewAIChatService(
+			llmClient,
+			ragSearcher,
+			chatCfg,
+			accountClient,
+			featureClient,
+			logger,
+			aichatapi.WithGRPCRateLimiter(rateLimiter),
+		)
+		aichatServer = rpc.NewServer(aichatGRPCService, *s.certPath, *s.keyPath,
+			"aichat-server",
+			rpc.WithPort(*s.aichatServicePort),
+			rpc.WithVerifier(verifier),
+			rpc.WithMetrics(registerer),
+			rpc.WithLogger(logger),
+		)
+		go aichatServer.Run()
+		// Chat HTTP service for dashboard REST server (SSE streaming)
+		chatHTTPSvc := aichatapi.NewChatHTTPService(
+			llmClient, ragSearcher, chatCfg,
+			verifier, accountClient, featureClient,
+			logger,
+			aichatapi.WithRateLimiter(rateLimiter),
+		)
+		dashboardRestOpts = append(dashboardRestOpts, rest.WithService(chatHTTPSvc))
+		logger.Info("AI Chat service enabled",
+			zap.String("model", *s.aichatModel),
+			zap.Int("port", *s.aichatServicePort),
+		)
+	} else {
+		logger.Info("AI Chat service disabled (no OpenAI API key configured)")
+	}
+
+	// Start the dashboard servers
+	dashboardServer := rest.NewServer(
+		*s.certPath, *s.keyPath,
+		dashboardRestOpts...,
 	)
 	go dashboardServer.Run()
 
@@ -881,7 +966,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create web gRPC gateway: %v", err)
 	}
 
-	if err := webGrpcGateway.Start(ctx, s.createGatewayHandlers()...); err != nil {
+	gatewayHandlers := s.createGatewayHandlers()
+	if aichatServer != nil {
+		gatewayHandlers = append(gatewayHandlers,
+			func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+				aichatGrpcAddr := fmt.Sprintf("localhost:%d", *s.aichatServicePort)
+				return aichatproto.RegisterAIChatServiceHandlerFromEndpoint(ctx, mux, aichatGrpcAddr, opts)
+			},
+		)
+	}
+	if err := webGrpcGateway.Start(ctx, gatewayHandlers...); err != nil {
 		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
 	}
 
@@ -937,6 +1031,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			tagServer,
 			codeReferenceServer,
 			teamServer,
+		}
+		if aichatServer != nil {
+			servers = append(servers, aichatServer)
 		}
 
 		for _, server := range servers {

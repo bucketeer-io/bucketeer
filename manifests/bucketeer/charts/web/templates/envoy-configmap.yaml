@@ -931,6 +931,14 @@ data:
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
+                            # AI Chat SSE endpoint (routed to dashboard REST server)
+                            # /v1/aichat/suggestions is handled by the /v1/ prefix below
+                            # which routes to the gRPC Gateway
+                            - match:
+                                path: /v1/aichat/chat
+                              route:
+                                cluster: dashboard
+                                timeout: 120s
                             - match:
                                 prefix: /v1/
                               route:

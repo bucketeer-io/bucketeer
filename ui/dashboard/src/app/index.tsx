@@ -17,6 +17,7 @@ import {
   hasEditable,
   AuthDemoCallbackPage
 } from 'auth';
+import { AI_CHAT_ENABLED } from 'configs';
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import {
   PAGE_PATH_APIKEYS,
@@ -72,6 +73,7 @@ import SignInEmailPage from 'pages/signin/email';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
+import ChatWidget from 'components/ai-chat';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
 import {
@@ -176,6 +178,7 @@ export const Root = memo(() => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
+        {AI_CHAT_ENABLED && <ChatWidget />}
       </div>
     );
   }

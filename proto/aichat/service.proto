@@ -1,0 +1,135 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.aichat;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/aichat";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// PageContext represents the current page context in the dashboard.
+message PageContext {
+  enum PageType {
+    PAGE_TYPE_UNSPECIFIED = 0;
+    PAGE_TYPE_FEATURE_FLAGS = 1;
+    PAGE_TYPE_TARGETING = 2;
+    PAGE_TYPE_EXPERIMENTS = 3;
+    PAGE_TYPE_SEGMENTS = 4;
+    PAGE_TYPE_AUTOOPS = 5;
+  }
+  PageType page_type = 1;
+  string feature_id = 2;
+  map<string, string> metadata = 3;
+}
+
+// ChatMessage represents a single message in the conversation.
+message ChatMessage {
+  enum Role {
+    ROLE_UNSPECIFIED = 0;
+    ROLE_USER = 1;
+    ROLE_ASSISTANT = 2;
+  }
+  Role role = 1;
+  string content = 2;
+}
+
+// ChatRequest is sent by the client to initiate a chat.
+message ChatRequest {
+  repeated ChatMessage messages = 1 [(google.api.field_behavior) = REQUIRED];
+  PageContext page_context = 2;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// ChatStreamResponse is a single chunk of the streaming response.
+message ChatStreamResponse {
+  string content = 1;
+  bool done = 2;
+  string finish_reason = 3;
+}
+
+// SuggestionType represents the type of a proactive suggestion.
+enum SuggestionType {
+  SUGGESTION_TYPE_UNSPECIFIED = 0;
+  SUGGESTION_TYPE_FEATURE_DISCOVERY = 1;
+  SUGGESTION_TYPE_BEST_PRACTICE = 2;
+  SUGGESTION_TYPE_OPTIMIZATION = 3;
+  SUGGESTION_TYPE_WARNING = 4;
+}
+
+// Suggestion represents a proactive suggestion for the user.
+message Suggestion {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string doc_url = 4;
+  SuggestionType type = 5;
+}
+
+// GetSuggestionsRequest is sent to retrieve context-based suggestions.
+message GetSuggestionsRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  PageContext page_context = 2;
+}
+
+// GetSuggestionsResponse contains the list of suggestions.
+message GetSuggestionsResponse {
+  repeated Suggestion suggestions = 1;
+}
+
+// AIChatService provides AI-powered chat and suggestions.
+service AIChatService {
+  // Chat streams AI-generated responses.
+  // Note: The HTTP endpoint is implemented as a custom SSE handler
+  // because gRPC-Gateway does not natively support server streaming as SSE.
+  rpc Chat(ChatRequest) returns (stream ChatStreamResponse);
+
+  // GetSuggestions returns proactive suggestions based on page context.
+  // This is rule-based and does not require LLM calls.
+  rpc GetSuggestions(GetSuggestionsRequest) returns (GetSuggestionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/aichat/suggestions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Suggestions",
+      description: "Get proactive AI suggestions based on page context."
+      tags: "AI Chat"
+      operation_id: "web.v1.aichat.get_suggestions"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+}

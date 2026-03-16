@@ -59,6 +59,14 @@ func (rr *responseRecorder) Write(b []byte) (int, error) {
 	return rr.ResponseWriter.Write(b)
 }
 
+// Flush implements http.Flusher by delegating to the underlying ResponseWriter
+// if it supports flushing. This is required for SSE (Server-Sent Events) streaming.
+func (rr *responseRecorder) Flush() {
+	if f, ok := rr.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 func splitURLPath(path string) (string, string, string) {
 	// format: /api_version/service_name/api_name
 	parts := strings.Split(path, "/")

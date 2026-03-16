@@ -173,6 +173,13 @@ services:
       - BUCKETEER_WEB_AUTOOPS_SERVICE=nginx:443
       - BUCKETEER_WEB_CODE_REFERENCE_SERVICE=nginx:443
       - BUCKETEER_WEB_DATA_WAREHOUSE_CONFIG_PATH=/usr/local/datawarehouse-config/datawarehouse.yaml
+      # AI Chat (optional — leave OPENAI_API_KEY empty to disable)
+      - BUCKETEER_WEB_OPENAI_API_KEY=${BUCKETEER_WEB_OPENAI_API_KEY:-}
+      - BUCKETEER_WEB_OPENAI_BASE_URL=${BUCKETEER_WEB_OPENAI_BASE_URL:-}
+      - BUCKETEER_WEB_AICHAT_MODEL=${BUCKETEER_WEB_AICHAT_MODEL:-gpt-4o-mini}
+      - BUCKETEER_WEB_AICHAT_GITHUB_TOKEN=${BUCKETEER_WEB_AICHAT_GITHUB_TOKEN:-}
+      - BUCKETEER_WEB_AICHAT_MAX_TOKENS=${BUCKETEER_WEB_AICHAT_MAX_TOKENS:-1000}
+      - BUCKETEER_WEB_AICHAT_SERVICE_PORT=${BUCKETEER_WEB_AICHAT_SERVICE_PORT:-9108}
       # pprof settings
       - BUCKETEER_WEB_ENABLE_PPROF=${BUCKETEER_WEB_ENABLE_PPROF:-false}
       - BUCKETEER_WEB_PPROF_ADDR=${BUCKETEER_WEB_PPROF_ADDR:-127.0.0.1:6060}
@@ -408,7 +415,7 @@ services:
     image: ghcr.io/bucketeer-io/bucketeer-httpstan:${HTTPSTAN_VERSION:-0.0.1}
     container_name: bucketeer-httpstan
     ports:
-      - "8080:8080"
+      - "${HTTPSTAN_HOST_PORT:-8080}:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/v1/health"]
       timeout: 5s
