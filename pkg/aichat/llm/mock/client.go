@@ -13,8 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	llm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	gomock "go.uber.org/mock/gomock"
+
+	llm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 )
 
 // MockClient is a mock of Client interface.
