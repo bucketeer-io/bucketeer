@@ -1,7 +1,7 @@
 -- Add auto-archive configuration columns to environment_v2 table
 ALTER TABLE `environment_v2` ADD COLUMN `auto_archive_enabled` tinyint(1) NOT NULL DEFAULT '0';
 
-ALTER TABLE `environment_v2` ADD COLUMN `auto_archive_unused_days` INT NOT NULL DEFAULT 60;
+ALTER TABLE `environment_v2` ADD COLUMN `auto_archive_unused_days` INT NOT NULL DEFAULT 90;
 
 ALTER TABLE `environment_v2` ADD COLUMN `auto_archive_check_code_refs` tinyint(1) NOT NULL DEFAULT '1';
 

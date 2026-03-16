@@ -198,7 +198,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
 						createTestEnvironment("env-1", 60, false),
-						createTestEnvironment("env-2", 60, false),
+						createTestEnvironment("env-2", 30, false),
 					}, nil)
 				// First environment
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
