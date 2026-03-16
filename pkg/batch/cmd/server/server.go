@@ -473,6 +473,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if *s.prometheusURL != "" {
 		promClient, err = prometheus.NewClient(*s.prometheusURL, prometheus.WithLogger(logger))
 		if err != nil {
+			logger.Error("Failed to create Prometheus client",
+				zap.String("url", *s.prometheusURL),
+				zap.Error(err),
+			)
 			return err
 		}
 	}

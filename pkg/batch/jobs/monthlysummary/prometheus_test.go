@@ -42,6 +42,16 @@ func Test_requestCountIncreaseQuery(t *testing.T) {
 			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2678400s]))`,
 		},
 		{
+			desc:     "30 days (April)",
+			duration: 30 * 24 * time.Hour,
+			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2592000s]))`,
+		},
+		{
+			desc:     "29 days (February, leap year)",
+			duration: 29 * 24 * time.Hour,
+			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2505600s]))`,
+		},
+		{
 			desc:     "28 days (February)",
 			duration: 28 * 24 * time.Hour,
 			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2419200s]))`,
@@ -77,6 +87,12 @@ func Test_calculateTimeParams(t *testing.T) {
 			targetDate:         time.Date(2024, 2, 29, 0, 0, 0, 0, time.UTC),
 			expectedDuration:   29 * 24 * time.Hour,
 			expectedEvaluation: time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			desc:               "full April (30 days)",
+			targetDate:         time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
+			expectedDuration:   30 * 24 * time.Hour,
+			expectedEvaluation: time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			desc:               "mid-month (Jan 15)",
