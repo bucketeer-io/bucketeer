@@ -1,0 +1,135 @@
+{{- if .Values.rollback.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "bucketeer-migration.fullname" . }}-rollback
+  annotations: {{ toYaml .Values.annotations | nindent 4 }}
+spec:
+  backoffLimit: {{ .Values.backoffLimit }}
+  {{- with .Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
+  template:
+    spec:
+      {{- with .Values.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "bucketeer-migration.fullname" . }}-rollback
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: ROLLBACK_COUNT
+              value: "{{ .Values.rollback.count }}"
+            - name: ROLLBACK_VERSION
+              value: "{{ .Values.rollback.version }}"
+            - name: DB_URL
+              value: "{{ .Values.dbUrl }}"
+            - name: DRY_RUN
+              value: "{{ .Values.rollback.dryRun }}"
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+
+              echo "==================================================="
+              echo "Database Migration Rollback Job"
+              echo "==================================================="
+              echo ""
+
+              # Check if this is a dry-run only
+              if [ "${DRY_RUN}" = "true" ]; then
+                echo "🔍 DRY-RUN MODE: No changes will be applied"
+                echo ""
+              fi
+
+              # Pre-flight check: Show current migration status
+              echo "---------------------------------------------------"
+              echo "Current Migration Status:"
+              echo "---------------------------------------------------"
+              atlas migrate status \
+                --url ${DB_URL} || {
+                echo "❌ Failed to get migration status"
+                exit 1
+              }
+              echo ""
+
+              # Show rollback plan
+              echo "---------------------------------------------------"
+              echo "Rollback Preview:"
+              echo "---------------------------------------------------"
+
+              if [ -n "${ROLLBACK_VERSION}" ]; then
+                echo "Will rollback to version: ${ROLLBACK_VERSION}"
+                echo ""
+                atlas migrate down \
+                  --url ${DB_URL} \
+                  --dev-url docker://mysql/8/bucketeer \
+                  --to-version ${ROLLBACK_VERSION} \
+                  --dry-run || {
+                  echo "❌ Rollback preview failed"
+                  exit 1
+                }
+              else
+                echo "Will rollback last ${ROLLBACK_COUNT:-1} migration(s)"
+                echo ""
+                atlas migrate down ${ROLLBACK_COUNT:-1} \
+                  --url ${DB_URL} \
+                  --dev-url docker://mysql/8/bucketeer \
+                  --dry-run || {
+                  echo "❌ Rollback preview failed"
+                  exit 1
+                }
+              fi
+
+              # If dry-run mode, exit here
+              if [ "${DRY_RUN}" = "true" ]; then
+                echo ""
+                echo "==================================================="
+                echo "✅ Dry-run completed successfully"
+                echo "==================================================="
+                echo ""
+                echo "To execute rollback, set: rollback.dryRun=false"
+                exit 0
+              fi
+
+              echo ""
+              echo "---------------------------------------------------"
+              echo "Executing Rollback..."
+              echo "---------------------------------------------------"
+
+              # Execute rollback
+              if [ -n "${ROLLBACK_VERSION}" ]; then
+                echo "Rolling back to version: ${ROLLBACK_VERSION}"
+                atlas migrate down \
+                  --url ${DB_URL} \
+                  --dev-url docker://mysql/8/bucketeer \
+                  --to-version ${ROLLBACK_VERSION} || {
+                  echo "❌ Rollback failed"
+                  exit 1
+                }
+              else
+                echo "Rolling back last ${ROLLBACK_COUNT:-1} migration(s)"
+                atlas migrate down ${ROLLBACK_COUNT:-1} \
+                  --url ${DB_URL} \
+                  --dev-url docker://mysql/8/bucketeer || {
+                  echo "❌ Rollback failed"
+                  exit 1
+                }
+              fi
+
+              echo ""
+              echo "---------------------------------------------------"
+              echo "Final Migration Status:"
+              echo "---------------------------------------------------"
+              atlas migrate status \
+                --url ${DB_URL}
+
+              echo ""
+              echo "==================================================="
+              echo "✅ Rollback completed successfully"
+              echo "==================================================="
+      restartPolicy: Never
+{{- end }}
