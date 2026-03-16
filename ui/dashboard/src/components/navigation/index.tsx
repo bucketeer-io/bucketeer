@@ -92,6 +92,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_USER_SEGMENTS}`
         },
         {
+          label: t(`navigation.insights`),
+          icon: IconSystem.IconUsage,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INSIGHTS}`
+        },
+        {
           label: t(`navigation.debugger`),
           icon: IconSystem.IconDebugger,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_DEBUGGER}`
