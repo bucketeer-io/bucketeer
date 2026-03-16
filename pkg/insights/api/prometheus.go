@@ -22,8 +22,9 @@ import (
 const (
 	recordingRuleLatencyAvg       = "environment_id:source_id:method:bucketeer_gateway_api_handling_seconds:avg:rate5m"
 	recordingRuleRequestTotal     = "environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m"
-	recordingRuleEvaluationsTotal = "environment_id:pod:evaluation_type:source_id:bucketeer_api_gateway_evaluations_total:rate5m"
-	recordingRuleErrorRate        = "environment_id:source_id:method:bucketeer_gateway_api_error_rate:rate5m"
+	recordingRuleEvaluationsTotal = "environment_id:pod:evaluation_type:source_id:" +
+		"bucketeer_api_gateway_evaluations_total:rate5m"
+	recordingRuleErrorRate = "environment_id:source_id:method:bucketeer_gateway_api_error_rate:rate5m"
 )
 
 func latencyQuery(envIDs, sourceIDs, apiIDs []string) string {
