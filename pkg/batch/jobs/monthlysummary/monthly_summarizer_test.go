@@ -15,7 +15,6 @@
 package monthlysummary
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -144,7 +143,7 @@ func TestMonthlySummarizerRun(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			summarizer := newMockMonthlySummarizer(t, ctrl)
 			p.setup(summarizer)
-			err := summarizer.Run(context.Background())
+			err := summarizer.Run(t.Context())
 			if p.expected != nil {
 				assert.Error(t, err)
 			} else {

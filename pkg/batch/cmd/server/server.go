@@ -133,8 +133,7 @@ type server struct {
 	nonPersistentRedisPoolMaxIdle    *int
 	nonPersistentRedisPoolMaxActive  *int
 	nonPersistentRedisMode           *string
-	// Prometheus
-	prometheusURL *string
+	prometheusURL                    *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
