@@ -41,7 +41,7 @@ postgresql:
   # Using official Postgres timescaledb image (aligned with docker-compose)
   image:
     repository: timescale/timescaledb
-    tag: "2.16.1-pg18"
+    tag: "2.25.2-pg18"
     pullPolicy: IfNotPresent
   storage:
     size: "1Gi"

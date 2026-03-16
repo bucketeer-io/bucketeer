@@ -1,5 +1,9 @@
 -- TimescaleDB Event Tables
 
+-- Drop existing tables if you want to start fresh
+-- DROP TABLE IF EXISTS evaluation_event;
+-- DROP TABLE IF EXISTS goal_event;
+
 -- Enable TimescaleDB extension (run as superuser if not already enabled)
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 
