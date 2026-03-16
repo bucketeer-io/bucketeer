@@ -47,7 +47,7 @@ Add three columns to the existing `environment_v2` table to store auto-archive c
 ```sql
 ALTER TABLE environment_v2
   ADD COLUMN auto_archive_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-  ADD COLUMN auto_archive_unused_days INT NOT NULL DEFAULT 90,
+  ADD COLUMN auto_archive_unused_days INT NOT NULL DEFAULT 60,
   ADD COLUMN auto_archive_check_code_refs BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE INDEX idx_environment_auto_archive_enabled
@@ -392,6 +392,3 @@ spec:
                 memory: 512Mi
 ```
 
-## Changelog
-
-- **2026-03-16**: Changed the default value of `auto_archive_unused_days` from 90 to 60 days. A shorter default better balances timely cleanup of unused flags with giving teams sufficient time to notice before archiving occurs.
