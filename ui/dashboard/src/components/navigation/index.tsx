@@ -353,6 +353,7 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
           onCloseSwitchOrg={onCloseSwitchOrg}
           onCloseSetting={onCloseSetting}
         />
+
       ) : (
         <DialogModal
           className="w-full max-w-[350px]"
