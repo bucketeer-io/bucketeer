@@ -346,7 +346,7 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
           </div>
         </div>
       </div>
-      {fromMobileScreen && isOpenSetting ? (
+      {fromMobileScreen && isOpenSwitchOrg ? (
         <SwitchOrganization
           isExpanded={isExpanded}
           isOpen={isOpenSwitchOrg}
@@ -356,7 +356,7 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
 
       ) : (
         <DialogModal
-          className="w-full max-w-[350px]"
+          className="w-[350px]"
           title=""
           isOpen={isOpenSwitchOrg}
           onClose={onCloseSwitchOrg}
