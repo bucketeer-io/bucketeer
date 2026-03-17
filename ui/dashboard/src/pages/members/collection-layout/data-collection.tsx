@@ -67,7 +67,7 @@ export const useColumns = ({
     {
       accessorKey: 'email',
       header: `${t('name')}`,
-      size: 350,
+      size: 280,
       cell: ({ row }) => {
         const account = row.original;
         const isPendingInvite = Number(account.lastSeen) < 1;
@@ -95,7 +95,7 @@ export const useColumns = ({
                       id={email}
                       name={accountName}
                       maxLines={1}
-                      className="min-w-[300px]"
+                      className="min-w-[230px]"
                       onClick={() =>
                         onActions(account, onGetActionsType(account))
                       }
@@ -112,7 +112,7 @@ export const useColumns = ({
                     id={email}
                     name={email}
                     maxLines={1}
-                    className="min-w-[300px]"
+                    className="min-w-[200px]"
                     haveAction={false}
                   />
                 }

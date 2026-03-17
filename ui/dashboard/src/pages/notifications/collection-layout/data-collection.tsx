@@ -27,7 +27,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 250,
       cell: ({ row }) => {
         const notification = row.original;
         const { id, name } = notification;
@@ -43,7 +43,7 @@ export const useColumns = ({
                   onActions(notification, 'EDIT');
                 }}
                 maxLines={1}
-                className="min-w-[200px]"
+                className="min-w-[230px]"
               />
             }
             maxLines={1}

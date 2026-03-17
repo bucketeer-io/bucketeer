@@ -2,12 +2,14 @@ import { memo } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { APIKey } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { APIKeyActionsType, APIKeysFilters } from '../types';
@@ -30,6 +32,7 @@ const CollectionLoader = memo(
     const columns = useColumns({ onActions });
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const { fromMobileScreen } = useScreen();
 
     const {
       data: collection,
@@ -69,14 +72,23 @@ const CollectionLoader = memo(
     return isError ? (
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
-      <div className="flex flex-col min-w-[900px]">
-        <DataTable
-          isLoading={isLoading}
-          data={apiKeys}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
-        />
+      <div className="flex flex-col">
+        {fromMobileScreen ? (
+          <DataTable
+            isLoading={isLoading}
+            data={apiKeys}
+            columns={columns}
+            onSortingChange={onSortingChangeHandler}
+            emptyCollection={emptyState}
+          />
+        ) : (
+          <CardCollection
+            isLoading={isLoading}
+            emptyCollection={emptyState}
+            data={apiKeys}
+            onActions={onActions}
+          />
+        )}
         {!isLoading && (
           <Pagination
             page={filters.page}
