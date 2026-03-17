@@ -23,8 +23,6 @@ import (
 	"github.com/prometheus/common/model"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
@@ -303,7 +301,7 @@ func (s *insightsService) validateTimeSeriesRequest(
 
 func (s *insightsService) checkEnvironmentRoles(ctx context.Context, envIDs []string) error {
 	for _, envID := range envIDs {
-		_, err := role.CheckEnvironmentRole(
+		_, err := role.CheckEnvironmentRoleWithLog(
 			ctx,
 			accountproto.AccountV2_Role_Environment_VIEWER,
 			envID,
@@ -320,34 +318,13 @@ func (s *insightsService) checkEnvironmentRoles(ctx context.Context, envIDs []st
 				}
 				return resp.Account, nil
 			},
+			s.logger,
+			statusUnauthenticated.Err(),
+			statusPermissionDenied.Err(),
+			func(_ error) error { return statusInternal.Err() },
 		)
 		if err != nil {
-			switch status.Code(err) {
-			case codes.Unauthenticated:
-				s.logger.Info("Unauthenticated",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", envID),
-					)...,
-				)
-				return statusUnauthenticated.Err()
-			case codes.PermissionDenied:
-				s.logger.Info("Permission denied",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", envID),
-					)...,
-				)
-				return statusPermissionDenied.Err()
-			default:
-				s.logger.Error("Failed to check role",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", envID),
-					)...,
-				)
-				return statusInternal.Err()
-			}
+			return err
 		}
 	}
 	return nil

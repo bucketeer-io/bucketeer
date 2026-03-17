@@ -234,7 +234,7 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 			actual, err := s.GetInsightsMonthlySummary(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 			if p.expected != nil && actual != nil {
-				assert.Len(t, actual.Series, len(p.expected.Series))
+				assert.ElementsMatch(t, p.expected.Series, actual.Series)
 			}
 		})
 	}
@@ -390,6 +390,199 @@ func TestGetInsightsLatency(t *testing.T) {
 				p.setup(s)
 			}
 			actual, err := s.GetInsightsLatency(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expected != nil {
+				assert.Equal(t, p.expected, actual)
+			}
+		})
+	}
+}
+
+func TestGetInsightsRequests(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	now := time.Now()
+	startAt := now.Add(-24 * time.Hour).Unix()
+	endAt := now.Unix()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*insightsService)
+		noProm      bool
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
+		input       *insightsproto.GetInsightsTimeSeriesRequest
+		expected    *insightsproto.GetInsightsTimeSeriesResponse
+		expectedErr error
+	}{
+		{
+			desc:        "error: data source not configured",
+			noProm:      true,
+			input:       &insightsproto.GetInsightsTimeSeriesRequest{EnvironmentIds: []string{"env1"}, StartAt: startAt, EndAt: endAt},
+			expectedErr: statusDataSourceNotConfigured.Err(),
+		},
+		{
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &insightsproto.GetInsightsTimeSeriesRequest{
+				EnvironmentIds: []string{"env1"},
+				StartAt:        startAt,
+				EndAt:          endAt,
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *insightsService) {
+				s.promClient.(*prometheusmock.MockClient).EXPECT().
+					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(model.Matrix{
+						&model.SampleStream{
+							Metric: model.Metric{
+								"environment_id": "env1",
+								"source_id":      "ANDROID",
+								"method":         "GetEvaluations",
+							},
+							Values: []model.SamplePair{
+								{Timestamp: 1704067200000, Value: 100},
+								{Timestamp: 1704070800000, Value: 120},
+							},
+						},
+					}, nil)
+			},
+			input: &insightsproto.GetInsightsTimeSeriesRequest{
+				EnvironmentIds: []string{"env1"},
+				StartAt:        startAt,
+				EndAt:          endAt,
+			},
+			expected: &insightsproto.GetInsightsTimeSeriesResponse{
+				Timeseries: []*insightsproto.InsightsTimeSeries{
+					{
+						EnvironmentId: "env1",
+						SourceId:      clientproto.SourceId_ANDROID,
+						ApiId:         clientproto.ApiId_GET_EVALUATIONS,
+						Data: []*insightsproto.InsightsDataPoint{
+							{Timestamp: 1704067200, Value: 100},
+							{Timestamp: 1704070800, Value: 120},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			var s *insightsService
+			if p.noProm {
+				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+			} else {
+				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+			}
+			if p.setup != nil {
+				p.setup(s)
+			}
+			actual, err := s.GetInsightsRequests(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expected != nil {
+				assert.Equal(t, p.expected, actual)
+			}
+		})
+	}
+}
+
+func TestGetInsightsEvaluations(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	now := time.Now()
+	startAt := now.Add(-24 * time.Hour).Unix()
+	endAt := now.Unix()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*insightsService)
+		noProm      bool
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
+		input       *insightsproto.GetInsightsTimeSeriesRequest
+		expected    *insightsproto.GetInsightsTimeSeriesResponse
+		expectedErr error
+	}{
+		{
+			desc:        "error: data source not configured",
+			noProm:      true,
+			input:       &insightsproto.GetInsightsTimeSeriesRequest{EnvironmentIds: []string{"env1"}, StartAt: startAt, EndAt: endAt},
+			expectedErr: statusDataSourceNotConfigured.Err(),
+		},
+		{
+			desc:    "success: with evaluation_type label",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *insightsService) {
+				s.promClient.(*prometheusmock.MockClient).EXPECT().
+					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(model.Matrix{
+						&model.SampleStream{
+							Metric: model.Metric{
+								"environment_id":  "env1",
+								"source_id":       "ANDROID",
+								"evaluation_type": "diff",
+							},
+							Values: []model.SamplePair{
+								{Timestamp: 1704067200000, Value: 500},
+							},
+						},
+					}, nil)
+			},
+			input: &insightsproto.GetInsightsTimeSeriesRequest{
+				EnvironmentIds: []string{"env1"},
+				StartAt:        startAt,
+				EndAt:          endAt,
+			},
+			expected: &insightsproto.GetInsightsTimeSeriesResponse{
+				Timeseries: []*insightsproto.InsightsTimeSeries{
+					{
+						EnvironmentId: "env1",
+						SourceId:      clientproto.SourceId_ANDROID,
+						Data: []*insightsproto.InsightsDataPoint{
+							{Timestamp: 1704067200, Value: 500},
+						},
+						Labels: map[string]string{"evaluation_type": "diff"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			var s *insightsService
+			if p.noProm {
+				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+			} else {
+				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+			}
+			if p.setup != nil {
+				p.setup(s)
+			}
+			actual, err := s.GetInsightsEvaluations(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if p.expected != nil {
 				assert.Equal(t, p.expected, actual)
