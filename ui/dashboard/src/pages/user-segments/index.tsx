@@ -1,3 +1,4 @@
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
@@ -11,6 +12,7 @@ const UserSegmentsPage = () => {
       <PageHeader
         title={t('user-segments')}
         description={t('user-segments-subtitle')}
+        link={DOCUMENTATION_LINKS.SEGMENT}
       />
       <PageLoader />
     </PageLayout.Root>

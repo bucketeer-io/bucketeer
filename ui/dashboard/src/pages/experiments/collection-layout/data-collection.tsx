@@ -89,12 +89,12 @@ export const useColumns = ({
       id: 'name',
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 300,
       cell: ({ row }) => {
         const experiment = row.original;
         const { id, name } = experiment;
         return (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0.5 relative z-[999]">
             <NameWithTooltip
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}

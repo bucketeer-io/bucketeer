@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { UserSegment } from '@types';
@@ -13,6 +14,7 @@ import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import { UserSegmentsActionsType, UserSegmentsFilters } from './types';
@@ -33,6 +35,8 @@ const PageContent = ({
   ) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
+  const { userSegmentSortByOptions, flagSortDirectionOptions } = useOptions();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const organizationIds = useMemo(
@@ -45,7 +49,7 @@ const PageContent = ({
 
   const defaultFilters = {
     page: 1,
-    orderBy: 'CREATED_AT',
+    orderBy: 'NAME',
     orderDirection: 'DESC',
     ...searchFilters
   } as UserSegmentsFilters;
@@ -70,6 +74,14 @@ const PageContent = ({
     setFilters({ searchQuery: '', isInUseStatus: undefined });
   }, []);
 
+  const getUploadingStatus = useCallback(
+    (segment: UserSegment) => {
+      if (segment.status === 'UPLOADING') return true;
+      if (segmentUploading?.id === segment.id) return true;
+    },
+    [segmentUploading]
+  );
+
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
       setFilters({ ...defaultFilters });
@@ -84,20 +96,30 @@ const PageContent = ({
         name="segment-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            align="end"
-            hidden={editable}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!editable}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-user-segment`)}
-              </Button>
-            }
-          />
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={userSegmentSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              align="end"
+              hidden={editable}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!editable}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-user-segment`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery as string}
         filterCount={
@@ -122,7 +144,7 @@ const PageContent = ({
       )}
       <TableListContainer>
         <CollectionLoader
-          segmentUploading={segmentUploading}
+          getUploadingStatus={getUploadingStatus}
           organizationIds={organizationIds}
           filters={filters}
           onAdd={onAdd}
