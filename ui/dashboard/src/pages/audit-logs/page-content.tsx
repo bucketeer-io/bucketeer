@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import dayjs from 'dayjs';
-import { usePartialState } from 'hooks';
+import { usePartialState, useScreen } from 'hooks';
 import pickBy from 'lodash/pickBy';
 import { AuditLog } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
@@ -72,7 +72,7 @@ const PageContent = () => {
   >(undefined);
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
+  const { fromMobileScreen } = useScreen();
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
@@ -141,7 +141,7 @@ const PageContent = () => {
         action={
           <>
             <EntityTypeDropdown
-              className="w-fit"
+              className="w-fit [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
@@ -152,6 +152,8 @@ const PageContent = () => {
               isAllTime={[filters?.range, searchFilters?.range].includes(
                 'all-time'
               )}
+              direction={fromMobileScreen ? 'horizontal' : 'vertical'}
+              className="w-fit"
               onChange={(startDate, endDate) => {
                 onChangeFilters({
                   from: startDate ? startDate?.toString() : undefined,
@@ -162,6 +164,7 @@ const PageContent = () => {
             />
             <Button
               variant={'secondary'}
+              className="w-fit px-[10px]"
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
               <Icon
