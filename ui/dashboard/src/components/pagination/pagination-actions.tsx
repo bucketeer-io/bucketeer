@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useScreen } from 'hooks/use-screen';
 import PaginationCell from './pagination-cell';
 import PaginationGroup from './pagination-group';
 
@@ -15,9 +16,10 @@ const PaginationActions = ({
   pageIndex,
   onPageChange
 }: PaginationActionsProps) => {
+  const { fromMobileScreen } = useScreen();
   const [currentPage, setCurrentPage] = useState(pageIndex);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const maxVisibleButtons = 5;
+  const maxVisibleButtons = fromMobileScreen ? 5 : 3;
 
   const cells = () => {
     let startPage, endPage;
