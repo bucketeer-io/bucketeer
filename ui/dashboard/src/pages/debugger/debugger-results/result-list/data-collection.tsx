@@ -18,7 +18,7 @@ export const useColumns = ({
     {
       accessorKey: !isFlag ? 'featureId' : 'userId',
       header: `${t(!isFlag ? 'name' : 'form:user-id')}`,
-      size: 400,
+      size: 150,
       cell: ({ row }) => {
         const evaluation = row.original;
         const { featureId, userId, feature } = evaluation;
@@ -61,7 +61,7 @@ export const useColumns = ({
     {
       accessorKey: 'reason',
       header: `${t('table:reason')}`,
-      size: 200,
+      size: 150,
       cell: ({ row }) => {
         const evaluationFeature = row.original;
         return <ReasonTooltip reason={evaluationFeature.reason} />;
