@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { IconCancelFilled } from 'react-icons-material-design';
 import { cn } from 'utils/style';
+import { IconClose } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 
@@ -86,7 +87,9 @@ export const Drawer = ({
         )}
         onClick={onClose}
       />
-
+      <button className="absolute top-3 right-3 text-white " onClick={onClose}>
+        <Icon icon={IconClose} />
+      </button>
       <div
         ref={drawerRef}
         className={cn(
