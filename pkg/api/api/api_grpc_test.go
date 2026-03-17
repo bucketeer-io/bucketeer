@@ -1321,7 +1321,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			expected: &gwproto.GetSegmentUsersResponse{
 				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
 				DeletedSegmentIds: make([]string, 0),
-				RequestedAt:       timeNow.Unix(),
+				RequestedAt:       timeNow.Add(-20 * time.Minute).Unix(),
 				ForceUpdate:       false,
 			},
 			expectedErr: nil,
@@ -1632,6 +1632,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            "",
 				FeatureFlagsId: multiFeaturesID,
+				RequestedAt:    timeNow.Add(-5 * time.Minute).Unix(),
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
@@ -1639,7 +1640,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         multiFeaturesID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
+				RequestedAt:            timeNow.Add(-5 * time.Minute).Unix(),
 				ForceUpdate:            false,
 			},
 			expectedErr: nil,
@@ -1664,7 +1665,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            "",
 				FeatureFlagsId: "random-id",
-				RequestedAt:    timeNow.Add(-20 * time.Minute).Unix(),
+				RequestedAt:    timeNow.Add(-21 * time.Minute).Unix(),
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
@@ -1733,6 +1734,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            tag,
 				FeatureFlagsId: singleFeatureID,
+				RequestedAt:    timeNow.Add(-5 * time.Minute).Unix(),
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
@@ -1740,7 +1742,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
+				RequestedAt:            timeNow.Add(-5 * time.Minute).Unix(),
 				ForceUpdate:            false,
 			},
 			expectedErr: nil,

@@ -116,7 +116,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+	time.Sleep(15 * time.Second) // Wait for cache propagation
 
 	// Find feature with no tag and no features ID
 	response := grpcGetFeatureFlags(t, "", "", 0)
@@ -139,13 +139,15 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
 	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
-	// Find feature with tag, with the same features ID, and requested at
+	// Find feature with tag, with the same features ID, and requested at.
+	// "None" response: RequestedAt should be preserved (not advanced).
 	ffid := response.FeatureFlagsId
+	prevRequestedAt := response.RequestedAt
 	response = grpcGetFeatureFlags(t, tag, response.FeatureFlagsId, response.RequestedAt)
 	assert.Equal(t, ffid, response.FeatureFlagsId)
 	assert.Equal(t, 0, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.Equal(t, prevRequestedAt, response.RequestedAt)
 	assert.False(t, response.ForceUpdate)
 
 	// Find feature with tag, with the different features ID, and requested at
@@ -177,7 +179,7 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+	time.Sleep(15 * time.Second) // Wait for cache propagation
 
 	// Find feature by tag with tag and no features ID
 	requestFFID := ""
@@ -196,7 +198,7 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
 
-	// Find the archived flag
+	// Find the archived flag (Diff response)
 	requestFFID = response.FeatureFlagsId
 	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
 	assert.True(t, requestFFID != response.FeatureFlagsId)
@@ -227,7 +229,7 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+	time.Sleep(15 * time.Second) // Wait for cache propagation
 
 	// Find feature by tag with tag and no features ID
 	requestFFID := ""
@@ -246,7 +248,7 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	featureID4 := newFeatureID(t, uuid)
 	req4 := createFeatureWithTag(t, tag, featureID4)
 
-	// Find the flag 4
+	// Find the flag 4 (Diff response)
 	requestFFID = response.FeatureFlagsId
 	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
 	assert.True(t, requestFFID != response.FeatureFlagsId)
@@ -422,7 +424,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
+	time.Sleep(10 * time.Second) // Wait for cache propagation
 	featureID2 := newFeatureID(t, newUUID(t))
 	req := createFeatureWithTag(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
@@ -477,7 +479,7 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	addTag(t, tag, featureID, fc)
 	enableFeature(t, featureID, fc)
 	archiveFeature(t, featureID, fc)
-	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
+	time.Sleep(10 * time.Second) // Wait for cache propagation
 
 	uuid2 := newUUID(t)
 	featureID2 := newFeatureID(t, uuid2)
@@ -528,7 +530,7 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
+	time.Sleep(10 * time.Second) // Wait for cache propagation
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithRule(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
