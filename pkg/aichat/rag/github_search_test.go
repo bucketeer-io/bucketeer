@@ -77,7 +77,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		})
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -102,7 +102,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		})
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -127,7 +127,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		})
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -138,7 +138,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 
 	t.Run("returns nil for empty query", func(t *testing.T) {
 		t.Parallel()
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		docs, err := searcher.Search(context.Background(), "", 3)
 		assert.NoError(t, err)
 		assert.Nil(t, docs)
@@ -146,7 +146,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 
 	t.Run("returns nil for zero topK", func(t *testing.T) {
 		t.Parallel()
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		docs, err := searcher.Search(context.Background(), "test", 0)
 		assert.NoError(t, err)
 		assert.Nil(t, docs)
@@ -160,7 +160,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		}))
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 
 		docs, err := searcher.Search(context.Background(), "test", 3)
@@ -176,7 +176,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		})
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -206,7 +206,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		server := httptest.NewServer(mux)
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -236,7 +236,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		server := httptest.NewServer(mux)
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -259,7 +259,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		})
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
@@ -290,7 +290,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		server := httptest.NewServer(mux)
 		defer server.Close()
 
-		searcher := NewGitHubSearcher(zap.NewNop())
+		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 

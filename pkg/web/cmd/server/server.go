@@ -905,7 +905,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	if *s.openAIAPIKey != "" {
 		llmClient := aichatllm.NewOpenAIClient(*s.openAIAPIKey, *s.openAIBaseURL)
-		ragSearcher := aichatrag.NewGitHubSearcher(logger)
+		ragSearcher := aichatrag.NewGitHubSearcher(logger, *s.aichatGitHubToken)
 		chatCfg := aichatapi.ChatConfig{
 			Model:       *s.aichatModel,
 			MaxTokens:   *s.aichatMaxTokens,

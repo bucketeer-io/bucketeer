@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"path"
 	"sort"
@@ -93,11 +92,12 @@ type indexedDoc struct {
 // from the GitHub Trees API and scoring them locally against the query.
 // No authentication is required for public repositories.
 type GitHubSearcher struct {
-	httpClient *http.Client
-	apiBaseURL string // GitHub API base URL (for Trees API)
-	rawBaseURL string // raw.githubusercontent.com base URL
-	logger     *zap.Logger
-	cacheTTL   time.Duration
+	httpClient  *http.Client
+	apiBaseURL  string // GitHub API base URL (for Trees API)
+	rawBaseURL  string // raw.githubusercontent.com base URL
+	githubToken string // optional GitHub token to increase rate limits
+	logger      *zap.Logger
+	cacheTTL    time.Duration
 
 	mu          sync.RWMutex
 	docIndex    []indexedDoc
@@ -106,15 +106,23 @@ type GitHubSearcher struct {
 }
 
 // NewGitHubSearcher creates a new GitHubSearcher.
-func NewGitHubSearcher(logger *zap.Logger) *GitHubSearcher {
+func NewGitHubSearcher(logger *zap.Logger, githubToken string) *GitHubSearcher {
 	return &GitHubSearcher{
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		apiBaseURL: defaultAPIBaseURL,
-		rawBaseURL: defaultRawBaseURL,
-		cacheTTL:   defaultCacheTTL,
-		logger:     logger.Named("github-searcher"),
+		apiBaseURL:  defaultAPIBaseURL,
+		rawBaseURL:  defaultRawBaseURL,
+		githubToken: githubToken,
+		cacheTTL:    defaultCacheTTL,
+		logger:      logger.Named("github-searcher"),
+	}
+}
+
+// setAuthHeader adds an Authorization header if a GitHub token is configured.
+func (g *GitHubSearcher) setAuthHeader(req *http.Request) {
+	if g.githubToken != "" {
+		req.Header.Set("Authorization", "Bearer "+g.githubToken)
 	}
 }
 
@@ -231,6 +239,7 @@ func (g *GitHubSearcher) fetchTree(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	g.setAuthHeader(req)
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
@@ -305,6 +314,7 @@ func (g *GitHubSearcher) fetchRawDoc(ctx context.Context, docPath string) (index
 	if err != nil {
 		return indexedDoc{}, err
 	}
+	g.setAuthHeader(req)
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
@@ -344,13 +354,14 @@ func (g *GitHubSearcher) fetchRawDoc(ctx context.Context, docPath string) (index
 	}, nil
 }
 
-// tokenizeQuery splits a query into unique lowercase tokens.
-// The query is expected to be pre-processed into English keywords
-// by the LLM keyword extraction step in chat_stream.go.
+// tokenizeQuery splits a query into unique lowercase tokens,
+// stripping punctuation from each token.
 func tokenizeQuery(query string) []string {
 	seen := make(map[string]bool)
 	var tokens []string
 	for _, w := range strings.Fields(strings.ToLower(query)) {
+		// Strip leading/trailing punctuation
+		w = strings.Trim(w, ".,;:!?\"'()[]{}/*-+=#@&")
 		if w != "" && !seen[w] {
 			seen[w] = true
 			tokens = append(tokens, w)
@@ -368,22 +379,26 @@ func scoreDoc(doc indexedDoc, queryTokens []string) float64 {
 	var score float64
 
 	for _, token := range queryTokens {
-		// Path segment match (highest weight)
+		// Skip single-character tokens to reduce noise
+		if utf8.RuneCountInString(token) <= 1 {
+			continue
+		}
+		// Path segment match (highest weight — structural relevance)
+		// Use HasSuffix for reverse direction to handle plurals (e.g. "sdks" has suffix "sdk")
 		for _, seg := range doc.pathSegments {
 			if seg == token {
-				score += 3.0
-			} else if strings.Contains(seg, token) {
-				score += 2.0
+				score += 10.0
+			} else if strings.Contains(seg, token) || strings.HasSuffix(token, seg) {
+				score += 5.0
 			}
 		}
 		// Title match
 		if strings.Contains(doc.lowerTitle, token) {
-			score += 2.5
+			score += 3.0
 		}
-		// Content match (normalized, capped)
-		count := strings.Count(doc.lowerContent, token)
-		if count > 0 {
-			score += math.Min(float64(count), 5.0) / 5.0
+		// Content match (low weight — presence only, not frequency)
+		if strings.Contains(doc.lowerContent, token) {
+			score += 0.5
 		}
 	}
 	return score
