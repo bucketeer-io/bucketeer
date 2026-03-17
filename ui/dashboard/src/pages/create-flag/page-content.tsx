@@ -3,7 +3,7 @@ import FlagForm from './flag-form';
 
 const PageContent = () => {
   return (
-    <PageLayout.Content className="p-6 min-w-[900px]">
+    <PageLayout.Content className="p-3 sm:p-6">
       <FlagForm />
     </PageLayout.Content>
   );
