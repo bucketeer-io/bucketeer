@@ -43,8 +43,8 @@ func Test_latencyQuery(t *testing.T) {
 			desc:      "all filters",
 			envIDs:    []string{"env1"},
 			sourceIDs: []string{"GO_SERVER"},
-			apiIDs:    []string{"GET_EVALUATIONS", "GET_FEATURE_FLAGS"},
-			expected:  `environment_id:source_id:method:bucketeer_gateway_api_handling_seconds:avg:rate5m{environment_id=~"^env1$",source_id=~"^GO_SERVER$",method=~"^(GET_EVALUATIONS|GET_FEATURE_FLAGS)$"}`,
+			apiIDs:    []string{"GetEvaluations", "GetFeatureFlags"},
+			expected:  `environment_id:source_id:method:bucketeer_gateway_api_handling_seconds:avg:rate5m{environment_id=~"^env1$",source_id=~"^GO_SERVER$",method=~"^(GetEvaluations|GetFeatureFlags)$"}`,
 		},
 	}
 
@@ -75,8 +75,8 @@ func Test_requestCountQuery(t *testing.T) {
 			desc:      "with filters",
 			envIDs:    []string{"env1", "env2"},
 			sourceIDs: []string{"GO_SERVER"},
-			apiIDs:    []string{"GET_EVALUATIONS", "GET_FEATURE_FLAGS"},
-			expected:  `environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m{environment_id=~"^(env1|env2)$",source_id=~"^GO_SERVER$",method=~"^(GET_EVALUATIONS|GET_FEATURE_FLAGS)$"}`,
+			apiIDs:    []string{"GetEvaluations", "GetFeatureFlags"},
+			expected:  `environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m{environment_id=~"^(env1|env2)$",source_id=~"^GO_SERVER$",method=~"^(GetEvaluations|GetFeatureFlags)$"}`,
 		},
 	}
 
@@ -137,8 +137,8 @@ func Test_errorRatesQuery(t *testing.T) {
 			desc:      "with filters",
 			envIDs:    []string{"env1"},
 			sourceIDs: []string{"ANDROID"},
-			apiIDs:    []string{"GET_EVALUATIONS"},
-			expected:  `environment_id:source_id:method:bucketeer_gateway_api_error_rate:rate5m{environment_id=~"^env1$",source_id=~"^ANDROID$",method=~"^GET_EVALUATIONS$"}`,
+			apiIDs:    []string{"GetEvaluations"},
+			expected:  `environment_id:source_id:method:bucketeer_gateway_api_error_rate:rate5m{environment_id=~"^env1$",source_id=~"^ANDROID$",method=~"^GetEvaluations$"}`,
 		},
 	}
 
