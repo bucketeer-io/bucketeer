@@ -1,20 +1,21 @@
-import { useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import * as IconSystem from '@icons';
 import logoIcon from 'assets/logos/logo-icon.svg';
 import logo from 'assets/logos/logo-white.svg';
-import { useAuth, getCurrentEnvironment } from 'auth';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import Divider from 'components/divider';
+import Icon from 'components/icon';
+import DialogModal from 'components/modal/dialog';
+import { Tooltip } from 'components/tooltip';
 import * as ROUTING from 'constants/routing';
 import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
-import { useToggleOpen } from 'hooks';
+import { useScreen, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
+import { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { setNavigationCollapsedStorage } from 'storage/navigation';
 import { cn } from 'utils/style';
-import * as IconSystem from '@icons';
-import Divider from 'components/divider';
-import Icon from 'components/icon';
-import { Tooltip } from 'components/tooltip';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
 import NotificationBell from './notification-bell';
@@ -43,6 +44,7 @@ const Navigation = ({
     onToggleCollapsed(next);
   };
 
+  const { fromTabletScreen, fromMobileScreen } = useScreen();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
 
@@ -179,6 +181,16 @@ const Navigation = ({
   const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
     useToggleOpen(false);
 
+  const [isExpanded, setIsExpanded, setIsCloseExpand] = useToggleOpen(false);
+
+  useEffect(() => {
+    if (fromTabletScreen) {
+      setIsCloseExpand();
+    }
+    if (!fromMobileScreen) {
+      setIsExpanded();
+    }
+  }, [fromTabletScreen, fromMobileScreen, setIsCloseExpand]);
   return (
     <div
       className={cn(
@@ -270,6 +282,7 @@ const Navigation = ({
             {settingMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
+                isExpanded={isExpanded}
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
@@ -293,6 +306,7 @@ const Navigation = ({
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
+                isExpanded={isExpanded}
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
@@ -341,12 +355,28 @@ const Navigation = ({
           </div>
         </div>
       </div>
-      <SwitchOrganization
-        isOpen={isOpenSwitchOrg}
-        onCloseSwitchOrg={onCloseSwitchOrg}
-        onCloseSetting={onCloseSetting}
-        isCollapsed={isCollapsed}
-      />
+      {fromMobileScreen && isOpenSetting ? (
+        <SwitchOrganization
+          isExpanded={isExpanded}
+          isOpen={isOpenSwitchOrg}
+          onCloseSwitchOrg={onCloseSwitchOrg}
+          onCloseSetting={onCloseSetting}
+        />
+      ) : (
+        <DialogModal
+          className="w-full max-w-[350px]"
+          title=""
+          isOpen={isOpenSwitchOrg}
+          onClose={onCloseSwitchOrg}
+        >
+          <SwitchOrganization
+            isExpanded={isExpanded}
+            isOpen={isOpenSwitchOrg}
+            onCloseSwitchOrg={onCloseSwitchOrg}
+            onCloseSetting={onCloseSetting}
+          />
+        </DialogModal>
+      )}
     </div>
   );
 };
