@@ -29,6 +29,7 @@ import (
 	"unicode/utf8"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 // DocChunk represents a document chunk returned by a search.
@@ -266,43 +267,28 @@ func (g *GitHubSearcher) fetchTree(ctx context.Context) ([]string, error) {
 	return paths, nil
 }
 
-// fetchAllDocs fetches raw content for all paths concurrently with a semaphore.
+// fetchAllDocs fetches raw content for all paths concurrently.
 func (g *GitHubSearcher) fetchAllDocs(ctx context.Context, paths []string) []indexedDoc {
-	type result struct {
-		index int
-		doc   indexedDoc
-		err   error
-	}
-
-	results := make(chan result, len(paths))
-	sem := make(chan struct{}, maxConcurrentFetch)
-	var wg sync.WaitGroup
-
-	for i, p := range paths {
-		wg.Add(1)
-		go func(idx int, docPath string) {
-			defer wg.Done()
-			sem <- struct{}{}        // acquire
-			defer func() { <-sem }() // release
-
-			doc, err := g.fetchRawDoc(ctx, docPath)
-			results <- result{index: idx, doc: doc, err: err}
-		}(i, p)
-	}
-
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
+	var mu sync.Mutex
 	docs := make([]indexedDoc, 0, len(paths))
-	for r := range results {
-		if r.err != nil {
-			g.logger.Warn("Failed to fetch doc", zap.Error(r.err))
-			continue
-		}
-		docs = append(docs, r.doc)
+
+	eg, gCtx := errgroup.WithContext(ctx)
+	eg.SetLimit(maxConcurrentFetch)
+
+	for _, p := range paths {
+		eg.Go(func() error {
+			doc, err := g.fetchRawDoc(gCtx, p)
+			if err != nil {
+				g.logger.Warn("Failed to fetch doc", zap.Error(err))
+				return nil // graceful degradation
+			}
+			mu.Lock()
+			docs = append(docs, doc)
+			mu.Unlock()
+			return nil
+		})
 	}
+	_ = eg.Wait()
 	return docs
 }
 
