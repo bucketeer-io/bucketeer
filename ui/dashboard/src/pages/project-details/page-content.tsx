@@ -40,7 +40,7 @@ const PageContent = ({
   return (
     <PageLayout.Content className="pt-4">
       <Tabs>
-        <TabsList className="px-6">
+        <TabsList className="px-3 sm:px-6">
           {projectTabs.map((item, index) => (
             <TabsLink
               key={index}

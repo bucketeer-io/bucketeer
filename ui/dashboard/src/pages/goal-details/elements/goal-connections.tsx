@@ -23,7 +23,7 @@ const GoalConnections = ({ goal }: { goal: Goal }) => {
   const isExperimentType = goal.connectionType === 'EXPERIMENT';
 
   return (
-    <div className="flex flex-col w-full min-w-[780px] p-5 gap-y-5 shadow-card rounded-lg bg-white">
+    <div className="flex flex-col w-full p-5 gap-y-5 shadow-card rounded-lg bg-white">
       <p className="text-gray-800 typo-head-bold-small">
         {t('goal-connections')}
       </p>
