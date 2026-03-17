@@ -13,13 +13,14 @@ import {
   useRoutes
 } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
+import logo from 'assets/logos/logo-white.svg';
 import {
   AuthCallbackPage,
+  AuthDemoCallbackPage,
   AuthProvider,
-  useAuth,
   getCurrentEnvironment,
   hasEditable,
-  AuthDemoCallbackPage
+  useAuth
 } from 'auth';
 import { AI_CHAT_ENABLED } from 'configs';
 import { queryClient } from 'configs/query-client';
@@ -48,6 +49,7 @@ import {
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
 import { WalkthroughProvider } from 'contexts/walkthrough-context';
+import { useScreen } from 'hooks';
 import { ConfirmProvider } from 'hooks/use-unsaved-leave-page';
 import { i18n } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -67,6 +69,7 @@ import { isNotEmpty } from 'utils/data-type';
 import { checkEnvironmentEmptyId } from 'utils/function';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
+import { IconMenu } from '@icons';
 import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
@@ -84,16 +87,19 @@ import SignInEmailPage from 'pages/signin/email';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
 import ChatWidget from 'components/ai-chat';
+import Button from 'components/button';
+import Drawer from 'components/drawer';
+import Icon from 'components/icon';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
 import {
   ExperimentsRoot,
-  OrganizationsRoot,
-  ProjectsRoot,
-  GoalsRoot,
   FeatureFlagsRoot,
+  UserSegmentsRoot,
+  GoalsRoot,
   MemberRoot,
-  UserSegmentsRoot
+  OrganizationsRoot,
+  ProjectsRoot
 } from './routers';
 
 export const AppLoading = () => (
@@ -128,6 +134,8 @@ export const Root = memo(() => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(
     getNavigationCollapsedStorage
   );
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const { fromMobileScreen } = useScreen();
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -162,12 +170,35 @@ export const Root = memo(() => {
     }
     return (
       <WalkthroughProvider>
-        <div className="flex flex-row w-full h-full">
+        <div className="flex flex-col sm:flex-row w-full h-full">
+          <div className="flex sticky z-20 top-0 left-0 gap-3 items-center justify-between sm:hidden w-full h-[50px] px-4 bg-primary-400">
+            <img src={logo} alt="Bucketer" />
+            <Button
+              className="bg-transparent hover:bg-transparent"
+              onClick={() => setShowMenu(true)}
+            >
+              <Icon icon={IconMenu} />
+            </Button>
+          </div>
+          {fromMobileScreen ? (
+          <Navigation
+          isCollapsed={isNavCollapsed}
+          onToggleCollapsed={setIsNavCollapsed}
+        />
+          ) : (
+            <Drawer
+              side="left"
+              open={showMenu}
+              onClose={() => setShowMenu(false)}
+            >
           <Navigation
             isCollapsed={isNavCollapsed}
             onToggleCollapsed={setIsNavCollapsed}
           />
-          <div
+            </Drawer>
+          )}
+
+<div
             className={cn(
               'w-full shadow-lg overflow-y-auto transition-all duration-300 ease-in-out',
               isNavCollapsed ? 'ml-[60px]' : 'ml-[248px]'
