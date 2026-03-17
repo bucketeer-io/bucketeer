@@ -2,6 +2,7 @@ import { cn } from 'utils/style';
 import MenuItemComponent, { MenuItem } from './menu-item';
 
 export type MenuProps = {
+  isExpanded?: boolean;
   className?: string;
   title: string;
   items: MenuItem[];
