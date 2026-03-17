@@ -31,7 +31,7 @@ func TestBuildSystemPrompt(t *testing.T) {
 		result := buildSystemPrompt(nil, nil, "")
 		assert.Contains(t, result, "Bucketeer expert assistant")
 		assert.Contains(t, result, "Restrictions")
-		assert.Contains(t, result, "Do NOT fabricate product information")
+		assert.Contains(t, result, "NEVER add information that is not explicitly stated")
 		assert.Contains(t, result, "docs.bucketeer.io")
 	})
 
