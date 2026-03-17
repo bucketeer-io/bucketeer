@@ -248,6 +248,11 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
       }
     }, [from, to, range, staticRanges, staticRangeSelected]);
 
+    const handleStaticRangeClick = useCallback((range: StaticRangeOption) => {
+      setStaticRangeSelected(range);
+      setRange({ ...range.range(), key: 'selection' });
+    }, []);
+
     useEffect(() => {
       handleSetRange();
     }, [from, to, isAllTime]);
@@ -255,10 +260,10 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
       getTriggerLabel?.(triggerLabel ?? '');
     }, [triggerLabel]);
     return (
-      <>
+      <div className="w-fit max-w-[180px] sm:max-w-full">
         <Button
           variant="secondary-2"
-          className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg !max-w-[200px] xxl:!max-w-fit"
+          className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg w-full !max-w-full sm:!max-w-[200px] xxl:!max-w-fit"
           onClick={onOpenRangePicker}
         >
           {!hasValue && (
@@ -282,7 +287,7 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
             onCloseRangePicker();
             onClose?.();
           }}
-          className="w-fit max-w-[820px] p-0 rounded-lg overflow-y-auto"
+          className="!w-fit lg:w-[820px] p-4 sm:p-0 rounded-lg overflow-y-auto"
         >
           <ReactDateRangePickerComp
             {...props}
@@ -305,9 +310,12 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
                 onClick={() =>
                   setStaticRangeSelected(staticRange as StaticRangeOption)
                 }
-                className={cn('flex items-center size-full pl-3', {
-                  'range-selected': staticRange.isSelected(range)
-                })}
+                className={cn(
+                  'hidden md:flex items-center size-0 md:size-full pl-3',
+                  {
+                    'range-selected': staticRange.isSelected(range)
+                  }
+                )}
               >
                 {staticRange.label}
               </div>
@@ -329,6 +337,8 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
             )}
             navigatorRenderer={(currFocusedDate, changeShownDate) => (
               <CustomizeNavigator
+                staticRanges={staticRanges as StaticRangeOption[]}
+                handleStaticRangeClick={handleStaticRangeClick}
                 currFocusedDate={currFocusedDate}
                 changeShownDate={changeShownDate}
               />
@@ -359,7 +369,7 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
             />
           )}
         </DialogModal>
-      </>
+      </div>
     );
   }
 );
