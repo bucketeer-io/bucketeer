@@ -176,7 +176,7 @@ const CodeReferencesPage = ({ feature }: { feature: Feature }) => {
     );
 
   return (
-    <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
+    <PageLayout.Content className="p-3 sm:p-6 pt-0 gap-y-6 min-w-full">
       <FiltersBar
         repositoryOptions={repositoryOptions}
         branchOptions={branchOptions}
