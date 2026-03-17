@@ -74,7 +74,7 @@ env:
       name: ""
       key: ""
     openaiBaseUrl: ""
-    model: gpt-4o-mini
+    model: ""
     maxTokens: 1000
     servicePort: 9108
   googleTagManagerId:

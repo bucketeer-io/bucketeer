@@ -445,7 +445,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		aichatModel: cmd.Flag(
 			"aichat-model",
 			"LLM model name for AI Chat.",
-		).Default("gpt-4o-mini").String(),
+		).Default("").String(),
 		aichatGitHubToken: cmd.Flag(
 			"aichat-github-token",
 			"GitHub token for AI Chat RAG documentation search. Optional but increases rate limit.",

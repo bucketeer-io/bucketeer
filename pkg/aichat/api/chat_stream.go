@@ -41,9 +41,6 @@ var newlineReplacer = strings.NewReplacer("\n", " ", "\r", " ")
 type ChatConfig = llm.StreamOptions
 
 func defaultChatConfig(cfg ChatConfig) ChatConfig {
-	if cfg.Model == "" {
-		cfg.Model = "gpt-4o-mini"
-	}
 	if cfg.MaxTokens == 0 {
 		cfg.MaxTokens = 1000
 	}

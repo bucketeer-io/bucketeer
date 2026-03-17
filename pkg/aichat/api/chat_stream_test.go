@@ -515,7 +515,7 @@ func TestDefaultChatConfig(t *testing.T) {
 	t.Run("fills empty fields with defaults", func(t *testing.T) {
 		t.Parallel()
 		cfg := defaultChatConfig(ChatConfig{})
-		assert.Equal(t, "gpt-4o-mini", cfg.Model)
+		assert.Equal(t, "", cfg.Model)
 		assert.Equal(t, 1000, cfg.MaxTokens)
 	})
 
