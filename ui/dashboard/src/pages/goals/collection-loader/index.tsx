@@ -1,12 +1,14 @@
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { Goal } from '@types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { GoalActions, GoalFilters } from '../types';
@@ -26,7 +28,7 @@ const CollectionLoader = ({
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
+  const { fromMobileScreen } = useScreen();
   const {
     data: collection,
     isLoading,
@@ -66,13 +68,22 @@ const CollectionLoader = ({
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <TableListContent>
-      <DataTable
-        isLoading={isLoading}
-        data={goals}
-        columns={columns}
-        onSortingChange={onSortingChangeHandler}
-        emptyCollection={emptyState}
-      />
+      {fromMobileScreen ? (
+        <DataTable
+          isLoading={isLoading}
+          data={goals}
+          columns={columns}
+          onSortingChange={onSortingChangeHandler}
+          emptyCollection={emptyState}
+        />
+      ) : (
+        <CardCollection
+          isLoading={isLoading}
+          emptyCollection={emptyState}
+          data={goals}
+          onActions={onActions}
+        />
+      )}
       {!isLoading && (
         <Pagination
           page={filters.page}

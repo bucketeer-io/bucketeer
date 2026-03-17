@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import {
   IconCloudDownloadOutlined,
   IconDeleteOutlined,
@@ -17,28 +16,20 @@ import NameWithTooltip from 'elements/name-with-tooltip';
 import { UserSegmentsActionsType } from '../types';
 
 export const useColumns = ({
-  segmentUploading,
+  getUploadingStatus,
   onActionHandler
 }: {
-  segmentUploading: UserSegment | null;
+  getUploadingStatus: (segment: UserSegment) => boolean | undefined;
   onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
 }): ColumnDef<UserSegment>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
-  const getUploadingStatus = useCallback(
-    (segment: UserSegment) => {
-      if (segment.status === 'UPLOADING') return true;
-      if (segmentUploading?.id === segment.id) return true;
-    },
-    [segmentUploading]
-  );
-
   return [
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 350,
+      size: 250,
       cell: ({ row }) => {
         const segment = row.original;
         const { id, name } = segment;
@@ -49,7 +40,7 @@ export const useColumns = ({
             onClick={() =>
               onActionHandler(segment, isUploading ? 'UPLOADING' : 'EDIT')
             }
-            className="flex items-center gap-x-2 cursor-pointer min-w-[300px]"
+            className="flex items-center gap-x-2 cursor-pointer min-w-[230px]"
           >
             <NameWithTooltip
               id={id}

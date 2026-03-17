@@ -28,7 +28,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 200,
       cell: ({ row }) => {
         const organization = row.original;
         const { id, name } = organization;
