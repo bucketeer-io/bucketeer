@@ -3,6 +3,7 @@ import { useQueryTeams } from '@queries/teams';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { Account } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
@@ -10,6 +11,7 @@ import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { MemberActionsType, MembersFilters } from '../types';
@@ -33,7 +35,7 @@ const CollectionLoader = memo(
   }) => {
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
+    const { fromMobileScreen } = useScreen();
     const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
       params: {
         cursor: String(0),
@@ -88,14 +90,26 @@ const CollectionLoader = memo(
     return isError ? (
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
-      <TableListContent className="min-w-[1000px]">
-        <DataTable
-          isLoading={isLoading || isLoadingTeams}
-          data={accounts}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
-        />
+      <TableListContent>
+        {fromMobileScreen ? (
+          <DataTable
+            isLoading={isLoading || isLoadingTeams}
+            data={accounts}
+            columns={columns}
+            onSortingChange={onSortingChangeHandler}
+            emptyCollection={emptyState}
+          />
+        ) : (
+          <CardCollection
+            isLoading={isLoading}
+            emptyCollection={emptyState}
+            data={accounts}
+            filters={filters}
+            setFilters={setFilters}
+            teams={teamList}
+            onActions={onActions}
+          />
+        )}
         {!isLoading && (
           <Pagination
             page={filters.page}
