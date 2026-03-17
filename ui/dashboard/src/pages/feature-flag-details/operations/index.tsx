@@ -310,9 +310,9 @@ const Operations = ({
   }, [searchOptions]);
 
   return (
-    <div className="flex flex-col w-full gap-y-4 min-w-[900px]">
-      <div className="flex flex-wrap items-center justify-between w-full gap-6 px-6">
-        <p className="flex flex-1 typo-head-bold-big text-gray-800 xl:whitespace-nowrap">
+    <div className="flex flex-col w-full gap-y-4">
+      <div className="flex flex-wrap flex-col md:flex-row items-start md:items-center justify-between w-full gap-3 md:gap-6 px-3 sm:px-6">
+        <p className="flex flex-1 typo-head-bold-medium sm:typo-head-bold-big text-gray-800 sm:text-nowrap lg:text-wrap xl:whitespace-nowrap">
           {t('table:feature-flags:operations-desc')}
         </p>
         <Filter
@@ -322,7 +322,7 @@ const Operations = ({
               onOperationActions={onOperationActions}
             />
           }
-          className="justify-end w-fit px-0"
+          className="justify-end w-fit px-0 sm:px-0 lg:px-6"
           link={DOCUMENTATION_LINKS.FLAG_OPERATION}
         />
       </div>
@@ -347,14 +347,14 @@ const Operations = ({
             onChangSearchParams({ tab });
           }}
         >
-          <TabsList className="px-6">
+          <TabsList className="px-3 sm:px-6">
             <TabsTrigger value={OperationTab.ACTIVE}>{t(`active`)}</TabsTrigger>
             <TabsTrigger value={OperationTab.FINISHED}>
               {t(`finished`)}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={currentTab} className="px-6">
+          <TabsContent value={currentTab} className="px-3 sm:px-6">
             <CollectionLayout
               rolloutStrategyCount={
                 rolloutStrategyCount as RuleStrategyVariation[]

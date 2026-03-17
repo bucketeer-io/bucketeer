@@ -13,12 +13,14 @@ const DiscardChangeItems = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   return (
-    <div className={cn('flex flex-col w-full bg-white  min-w-fit')}>
+    <div className={cn('flex flex-col w-full bg-white overflow-hidden')}>
       <div
         className=" flex gap-1 pb-2 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <p className="typo-para-medium leading-4 text-gray-700">{title}</p>
+        <p className="typo-para-small sm:typo-para-medium leading-4 text-gray-700">
+          {title}
+        </p>
         <Icon
           icon={IconChevronDown}
           className={cn('rotate-0 transition-all duration-100', {
