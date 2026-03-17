@@ -24,57 +24,87 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewLimiter_DefaultValues(t *testing.T) {
+func TestNewLimiter(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(context.Background(), Config{})
-	assert.NotNil(t, l)
-	assert.Equal(t, 20, l.config.RequestsPerMinute)
-	assert.Equal(t, 5, l.config.BurstSize)
-}
 
-func TestNewLimiter_CustomValues(t *testing.T) {
-	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 10})
-	assert.Equal(t, 60, l.config.RequestsPerMinute)
-	assert.Equal(t, 10, l.config.BurstSize)
-}
-
-func TestAllow_WithinBurst(t *testing.T) {
-	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 5})
-
-	// First 5 requests should be allowed (burst)
-	for i := 0; i < 5; i++ {
-		assert.True(t, l.Allow("user1"), "request %d should be allowed within burst", i)
+	patterns := []struct {
+		desc                   string
+		config                 Config
+		expectedRequestsPerMin int
+		expectedBurstSize      int
+	}{
+		{
+			desc:                   "default values",
+			config:                 Config{},
+			expectedRequestsPerMin: 20,
+			expectedBurstSize:      5,
+		},
+		{
+			desc:                   "custom values",
+			config:                 Config{RequestsPerMinute: 60, BurstSize: 10},
+			expectedRequestsPerMin: 60,
+			expectedBurstSize:      10,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			l := NewLimiter(context.Background(), p.config)
+			assert.NotNil(t, l)
+			assert.Equal(t, p.expectedRequestsPerMin, l.config.RequestsPerMinute)
+			assert.Equal(t, p.expectedBurstSize, l.config.BurstSize)
+		})
 	}
 }
 
-func TestAllow_ExceedsBurst(t *testing.T) {
+func TestAllow(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 3})
 
-	// First 3 requests should be allowed (burst)
-	for i := 0; i < 3; i++ {
-		assert.True(t, l.Allow("user1"))
+	patterns := []struct {
+		desc      string
+		burstSize int
+		setup     func(l *Limiter)
+		key       string
+		expected  bool
+	}{
+		{
+			desc:      "within burst",
+			burstSize: 5,
+			setup:     func(l *Limiter) {},
+			key:       "user1",
+			expected:  true,
+		},
+		{
+			desc:      "exceeds burst",
+			burstSize: 3,
+			setup: func(l *Limiter) {
+				for i := 0; i < 3; i++ {
+					l.Allow("user1")
+				}
+			},
+			key:      "user1",
+			expected: false,
+		},
+		{
+			desc:      "different keys are independent",
+			burstSize: 2,
+			setup: func(l *Limiter) {
+				// Exhaust user1
+				l.Allow("user1")
+				l.Allow("user1")
+			},
+			key:      "user2",
+			expected: true,
+		},
 	}
-
-	// Next request should be rate limited
-	assert.False(t, l.Allow("user1"))
-}
-
-func TestAllow_DifferentKeys(t *testing.T) {
-	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 2})
-
-	// Exhaust user1 burst
-	assert.True(t, l.Allow("user1"))
-	assert.True(t, l.Allow("user1"))
-	assert.False(t, l.Allow("user1"))
-
-	// user2 should still have full burst
-	assert.True(t, l.Allow("user2"))
-	assert.True(t, l.Allow("user2"))
-	assert.False(t, l.Allow("user2"))
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: p.burstSize})
+			p.setup(l)
+			assert.Equal(t, p.expected, l.Allow(p.key))
+		})
+	}
 }
 
 func TestAllow_ConcurrentAccess(t *testing.T) {
@@ -95,38 +125,43 @@ func TestAllow_ConcurrentAccess(t *testing.T) {
 	wg.Wait()
 }
 
-func TestCleanup_PreservesActiveEntries(t *testing.T) {
+func TestCleanup(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 1})
 
-	// Exhaust limiter
-	assert.True(t, l.Allow("user1"))
-	assert.False(t, l.Allow("user1"))
-
-	// Cleanup should preserve active entries (lastSeen is recent)
-	l.Cleanup()
-
-	// After cleanup, user1 is still rate limited (entry was preserved)
-	assert.False(t, l.Allow("user1"))
-}
-
-func TestCleanup_RemovesIdleEntries(t *testing.T) {
-	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 1})
-
-	// Exhaust limiter
-	assert.True(t, l.Allow("user1"))
-	assert.False(t, l.Allow("user1"))
-
-	// Simulate idle entry by setting lastSeen to the past
-	l.mu.Lock()
-	l.limiters["user1"].lastSeen = time.Now().Add(-15 * time.Minute)
-	l.mu.Unlock()
-
-	l.Cleanup()
-
-	// After cleanup, user1 entry was removed so burst is available again
-	assert.True(t, l.Allow("user1"))
+	patterns := []struct {
+		desc     string
+		setup    func(l *Limiter)
+		expected bool
+	}{
+		{
+			desc: "preserves active entries",
+			setup: func(l *Limiter) {
+				l.Allow("user1")
+				l.Cleanup()
+			},
+			expected: false, // burst=1, already used, still rate limited after cleanup
+		},
+		{
+			desc: "removes idle entries",
+			setup: func(l *Limiter) {
+				l.Allow("user1")
+				// Simulate idle entry by setting lastSeen to the past
+				l.mu.Lock()
+				l.limiters["user1"].lastSeen = time.Now().Add(-15 * time.Minute)
+				l.mu.Unlock()
+				l.Cleanup()
+			},
+			expected: true, // entry was removed, burst is available again
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 1})
+			p.setup(l)
+			assert.Equal(t, p.expected, l.Allow("user1"))
+		})
+	}
 }
 
 func TestDefaultConfig(t *testing.T) {

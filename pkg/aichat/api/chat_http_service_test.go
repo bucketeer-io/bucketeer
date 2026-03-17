@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,6 +30,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	llmmock "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm/mock"
@@ -56,107 +58,234 @@ func (m *mockVerifier) VerifyDemoCreationToken(string) (*token.DemoCreationToken
 	return nil, nil
 }
 
-func TestChatHTTPService_MethodNotAllowed(t *testing.T) {
+func TestChatHTTPServiceValidation(t *testing.T) {
 	t.Parallel()
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, nil, nil, nil, zap.NewNop())
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/aichat/chat", nil)
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
-}
-
-func TestChatHTTPService_Unauthorized_NoHeader(t *testing.T) {
-	t.Parallel()
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, nil, nil, nil, zap.NewNop())
-
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", nil)
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-}
-
-func TestChatHTTPService_Unauthorized_InvalidFormat(t *testing.T) {
-	t.Parallel()
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, nil, nil, nil, zap.NewNop())
-
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", nil)
-	req.Header.Set("Authorization", "InvalidFormat")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-}
-
-func TestChatHTTPService_Unauthorized_InvalidToken(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		err: fmt.Errorf("invalid token"),
+	patterns := []struct {
+		desc           string
+		method         string
+		authHeader     string
+		body           string
+		verifier       *mockVerifier
+		expectedStatus int
+	}{
+		{
+			desc:           "error: method not allowed",
+			method:         http.MethodGet,
+			authHeader:     "",
+			body:           "",
+			verifier:       nil,
+			expectedStatus: http.StatusMethodNotAllowed,
+		},
+		{
+			desc:           "error: unauthorized no header",
+			method:         http.MethodPost,
+			authHeader:     "",
+			body:           "",
+			verifier:       nil,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			desc:           "error: unauthorized invalid format",
+			method:         http.MethodPost,
+			authHeader:     "InvalidFormat",
+			body:           "",
+			verifier:       nil,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			desc:       "error: unauthorized invalid token",
+			method:     http.MethodPost,
+			authHeader: "Bearer invalid-token",
+			body:       "",
+			verifier: &mockVerifier{
+				err: fmt.Errorf("invalid token"),
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			desc:       "error: bad request invalid JSON",
+			method:     http.MethodPost,
+			authHeader: "Bearer valid-token",
+			body:       "{invalid",
+			verifier: &mockVerifier{
+				token: &token.AccessToken{Email: "test@example.com"},
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:       "error: bad request empty messages",
+			method:     http.MethodPost,
+			authHeader: "Bearer valid-token",
+			body:       `{"messages":[],"environmentId":"env-1"}`,
+			verifier: &mockVerifier{
+				token: &token.AccessToken{Email: "test@example.com"},
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:       "error: bad request empty environment ID",
+			method:     http.MethodPost,
+			authHeader: "Bearer valid-token",
+			body:       `{"messages":[{"role":"user","content":"hello"}],"environmentId":""}`,
+			verifier: &mockVerifier{
+				token: &token.AccessToken{Email: "test@example.com"},
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:       "error: bad request too many messages",
+			method:     http.MethodPost,
+			authHeader: "Bearer valid-token",
+			body:       buildTooManyMessagesBody(),
+			verifier: &mockVerifier{
+				token: &token.AccessToken{Email: "test@example.com"},
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			var v token.Verifier
+			if p.verifier != nil {
+				v = p.verifier
+			}
+			handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", nil)
-	req.Header.Set("Authorization", "Bearer invalid-token")
-	rec := httptest.NewRecorder()
+			var bodyReader io.Reader
+			if p.body != "" {
+				bodyReader = strings.NewReader(p.body)
+			}
+			req := httptest.NewRequest(p.method, "/v1/aichat/chat", bodyReader)
+			if p.authHeader != "" {
+				req.Header.Set("Authorization", p.authHeader)
+			}
+			rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+			handler.ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+			assert.Equal(t, p.expectedStatus, rec.Code)
+		})
+	}
 }
 
-func TestChatHTTPService_BadRequest_InvalidJSON(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
+// buildTooManyMessagesBody builds a JSON body with maxMessages+1 messages.
+func buildTooManyMessagesBody() string {
+	var msgs strings.Builder
+	msgs.WriteString("[")
+	for i := 0; i < maxMessages+1; i++ {
+		if i > 0 {
+			msgs.WriteString(",")
+		}
+		msgs.WriteString(`{"role":"user","content":"hi"}`)
 	}
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
-
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader("{invalid"))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	msgs.WriteString("]")
+	return fmt.Sprintf(`{"messages":%s,"environmentId":"env-1"}`, msgs.String())
 }
 
-func TestChatHTTPService_BadRequest_EmptyMessages(t *testing.T) {
+func TestChatHTTPServiceAuthorization(t *testing.T) {
 	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
+
+	patterns := []struct {
+		desc           string
+		setupMock      func(ctrl *gomock.Controller) accountclient.Client
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			desc: "error: account client nil",
+			setupMock: func(_ *gomock.Controller) accountclient.Client {
+				return nil
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Internal server error",
+		},
+		{
+			desc: "error: get account returns error",
+			setupMock: func(ctrl *gomock.Controller) accountclient.Client {
+				mc := accountclientmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, fmt.Errorf("account not found")).
+					Times(1)
+				return mc
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Internal server error",
+		},
+		{
+			desc: "error: disabled account",
+			setupMock: func(ctrl *gomock.Controller) accountclient.Client {
+				mc := accountclientmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
+						Account: &accountproto.AccountV2{
+							Email:    "test@example.com",
+							Disabled: true,
+							EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+								{
+									EnvironmentId: "env-1",
+									Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+								},
+							},
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						},
+					}, nil).
+					Times(1)
+				return mc
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Unauthorized",
+		},
+		{
+			desc: "error: insufficient environment role",
+			setupMock: func(ctrl *gomock.Controller) accountclient.Client {
+				mc := accountclientmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
+						Account: &accountproto.AccountV2{
+							Email:    "test@example.com",
+							Disabled: false,
+							EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+								{
+									EnvironmentId: "env-1",
+									Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+								},
+							},
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						},
+					}, nil).
+					Times(1)
+				return mc
+			},
+			expectedStatus: http.StatusForbidden,
+			expectedBody:   "Forbidden",
+		},
 	}
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			v := &mockVerifier{
+				token: &token.AccessToken{Email: "test@example.com"},
+			}
+			mc := p.setupMock(ctrl)
+			handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
 
-	body := `{"messages":[],"environmentId":"env-1"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
+			body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
+			req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
+			req.Header.Set("Authorization", "Bearer valid-token")
+			rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+			handler.ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
-}
-
-func TestChatHTTPService_BadRequest_EmptyEnvironmentID(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
+			assert.Equal(t, p.expectedStatus, rec.Code)
+			assert.Contains(t, rec.Body.String(), p.expectedBody)
+		})
 	}
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
-
-	body := `{"messages":[{"role":"user","content":"hello"}],"environmentId":""}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestChatHTTPService_StreamSuccess(t *testing.T) {
@@ -274,28 +403,30 @@ func TestChatHTTPService_ToProtoRequest_AllPageTypes(t *testing.T) {
 	t.Parallel()
 	handler := NewChatHTTPService(nil, nil, ChatConfig{}, nil, nil, nil, zap.NewNop())
 
-	tests := []struct {
+	patterns := []struct {
+		desc     string
 		pageType string
 		expected aichatproto.PageContext_PageType
 	}{
-		{"feature_flags", aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS},
-		{"targeting", aichatproto.PageContext_PAGE_TYPE_TARGETING},
-		{"experiments", aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS},
-		{"segments", aichatproto.PageContext_PAGE_TYPE_SEGMENTS},
-		{"autoops", aichatproto.PageContext_PAGE_TYPE_AUTOOPS},
-		{"unknown", aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED},
-		{"", aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED},
+		{"feature_flags", "feature_flags", aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS},
+		{"targeting", "targeting", aichatproto.PageContext_PAGE_TYPE_TARGETING},
+		{"experiments", "experiments", aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS},
+		{"segments", "segments", aichatproto.PageContext_PAGE_TYPE_SEGMENTS},
+		{"autoops", "autoops", aichatproto.PageContext_PAGE_TYPE_AUTOOPS},
+		{"unknown", "unknown", aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED},
+		{"empty", "", aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.pageType, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			req := &ChatHTTPRequest{
 				Messages:      []ChatMessageHTTP{{Role: "user", Content: "test"}},
-				PageContext:   &PageContextHTTP{PageType: tt.pageType},
+				PageContext:   &PageContextHTTP{PageType: p.pageType},
 				EnvironmentID: "env-1",
 			}
 			proto := handler.toProtoRequest(req)
-			assert.Equal(t, tt.expected, proto.PageContext.PageType)
+			assert.Equal(t, p.expected, proto.PageContext.PageType)
 		})
 	}
 }
@@ -348,153 +479,6 @@ func TestChatHTTPService_RateLimited(t *testing.T) {
 	rec2 := httptest.NewRecorder()
 	handler.ServeHTTP(rec2, req2)
 	assert.Equal(t, http.StatusTooManyRequests, rec2.Code)
-}
-
-func TestChatHTTPService_BadRequest_TooManyMessages(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
-	}
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
-
-	// Build JSON array with maxMessages+1 messages
-	var msgs strings.Builder
-	msgs.WriteString("[")
-	for i := 0; i < maxMessages+1; i++ {
-		if i > 0 {
-			msgs.WriteString(",")
-		}
-		msgs.WriteString(`{"role":"user","content":"hi"}`)
-	}
-	msgs.WriteString("]")
-	body := fmt.Sprintf(`{"messages":%s,"environmentId":"env-1"}`, msgs.String())
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
-}
-
-func TestChatHTTPService_AccountClientNil(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
-	}
-	// accountClient is nil → should return 500
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, nil, nil, zap.NewNop())
-
-	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	assert.Contains(t, rec.Body.String(), "Internal server error")
-}
-
-func TestChatHTTPService_GetAccountReturnsError(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
-	}
-	ctrl := gomock.NewController(t)
-	mc := accountclientmock.NewMockClient(ctrl)
-	mc.EXPECT().
-		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, fmt.Errorf("account not found")).
-		Times(1)
-
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
-
-	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	// role.CheckEnvironmentRole returns codes.Internal for generic errors
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	assert.Contains(t, rec.Body.String(), "Internal server error")
-}
-
-func TestChatHTTPService_DisabledAccount(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
-	}
-	ctrl := gomock.NewController(t)
-	mc := accountclientmock.NewMockClient(ctrl)
-	mc.EXPECT().
-		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
-			Account: &accountproto.AccountV2{
-				Email:    "test@example.com",
-				Disabled: true,
-				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-					{
-						EnvironmentId: "env-1",
-						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					},
-				},
-				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			},
-		}, nil).
-		Times(1)
-
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
-
-	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	// role.CheckEnvironmentRole returns codes.Unauthenticated for disabled accounts
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-	assert.Contains(t, rec.Body.String(), "Unauthorized")
-}
-
-func TestChatHTTPService_InsufficientEnvironmentRole(t *testing.T) {
-	t.Parallel()
-	v := &mockVerifier{
-		token: &token.AccessToken{Email: "test@example.com"},
-	}
-	ctrl := gomock.NewController(t)
-	mc := accountclientmock.NewMockClient(ctrl)
-	mc.EXPECT().
-		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
-			Account: &accountproto.AccountV2{
-				Email:    "test@example.com",
-				Disabled: false,
-				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-					{
-						EnvironmentId: "env-1",
-						Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
-					},
-				},
-				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			},
-		}, nil).
-		Times(1)
-
-	handler := NewChatHTTPService(nil, nil, ChatConfig{}, v, mc, nil, zap.NewNop())
-
-	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
-	req.Header.Set("Authorization", "Bearer valid-token")
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusForbidden, rec.Code)
-	assert.Contains(t, rec.Body.String(), "Forbidden")
 }
 
 // createMockLLMClient creates a gomock LLM client that returns the given

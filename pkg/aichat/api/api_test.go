@@ -104,52 +104,6 @@ func createAIChatServiceForTest(
 	)
 }
 
-func TestGetSuggestions_Unauthenticated(t *testing.T) {
-	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	// No token in context
-	ctx := context.Background()
-	_, err := svc.GetSuggestions(ctx, &aichatproto.GetSuggestionsRequest{
-		EnvironmentId: "env-1",
-	})
-
-	assert.Error(t, err)
-	st, _ := gstatus.FromError(err)
-	assert.Equal(t, codes.Unauthenticated, st.Code())
-}
-
-func TestGetSuggestions_Success(t *testing.T) {
-	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	ctx := createContextWithToken(t)
-	resp, err := svc.GetSuggestions(ctx, &aichatproto.GetSuggestionsRequest{
-		EnvironmentId: "env-1",
-		PageContext: &aichatproto.PageContext{
-			PageType: aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS,
-		},
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	assert.NotEmpty(t, resp.Suggestions)
-}
-
 // mockChatStream implements aichatproto.AIChatService_ChatServer for testing.
 type mockChatStream struct {
 	ctx       context.Context
@@ -163,140 +117,158 @@ func (m *mockChatStream) Send(resp *aichatproto.ChatStreamResponse) error {
 	return nil
 }
 
-func TestChat_EmptyEnvironmentID(t *testing.T) {
+func TestGetSuggestions(t *testing.T) {
 	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
 
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	stream := &mockChatStream{ctx: createContextWithToken(t)}
-	err := svc.Chat(&aichatproto.ChatRequest{EnvironmentId: ""}, stream)
-
-	assert.Error(t, err)
-	st, _ := gstatus.FromError(err)
-	assert.Equal(t, codes.InvalidArgument, st.Code())
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		req         *aichatproto.GetSuggestionsRequest
+		expectedErr codes.Code
+	}{
+		{
+			desc: "error: unauthenticated",
+			ctx:  context.Background(),
+			req: &aichatproto.GetSuggestionsRequest{
+				EnvironmentId: "env-1",
+			},
+			expectedErr: codes.Unauthenticated,
+		},
+		{
+			desc: "error: empty environment id",
+			ctx:  createContextWithToken(t),
+			req: &aichatproto.GetSuggestionsRequest{
+				EnvironmentId: "",
+			},
+			expectedErr: codes.InvalidArgument,
+		},
+		{
+			desc: "success",
+			ctx:  createContextWithToken(t),
+			req: &aichatproto.GetSuggestionsRequest{
+				EnvironmentId: "env-1",
+				PageContext: &aichatproto.PageContext{
+					PageType: aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS,
+				},
+			},
+			expectedErr: codes.OK,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			svc := createAIChatServiceForTest(
+				t, mockController,
+				accountproto.AccountV2_Role_Organization_ADMIN,
+				accountproto.AccountV2_Role_Environment_VIEWER,
+			)
+			resp, err := svc.GetSuggestions(p.ctx, p.req)
+			if p.expectedErr == codes.OK {
+				assert.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.NotEmpty(t, resp.Suggestions)
+			} else {
+				assert.Error(t, err)
+				st, _ := gstatus.FromError(err)
+				assert.Equal(t, p.expectedErr, st.Code())
+			}
+		})
+	}
 }
 
-func TestChat_EmptyMessages(t *testing.T) {
+func TestChat(t *testing.T) {
 	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
 
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	stream := &mockChatStream{ctx: createContextWithToken(t)}
-	err := svc.Chat(&aichatproto.ChatRequest{
-		EnvironmentId: "env-1",
-		Messages:      []*aichatproto.ChatMessage{},
-	}, stream)
-
-	assert.Error(t, err)
-	st, _ := gstatus.FromError(err)
-	assert.Equal(t, codes.InvalidArgument, st.Code())
-}
-
-func TestChat_TooManyMessages(t *testing.T) {
-	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	msgs := make([]*aichatproto.ChatMessage, maxMessages+1)
-	for i := range msgs {
-		msgs[i] = &aichatproto.ChatMessage{
+	tooManyMessages := make([]*aichatproto.ChatMessage, maxMessages+1)
+	for i := range tooManyMessages {
+		tooManyMessages[i] = &aichatproto.ChatMessage{
 			Role:    aichatproto.ChatMessage_ROLE_USER,
 			Content: "test",
 		}
 	}
 
-	stream := &mockChatStream{ctx: createContextWithToken(t)}
-	err := svc.Chat(&aichatproto.ChatRequest{
-		EnvironmentId: "env-1",
-		Messages:      msgs,
-	}, stream)
-
-	assert.Error(t, err)
-}
-
-func TestChat_Unauthenticated(t *testing.T) {
-	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	stream := &mockChatStream{ctx: context.Background()}
-	err := svc.Chat(&aichatproto.ChatRequest{
-		EnvironmentId: "env-1",
-		Messages:      []*aichatproto.ChatMessage{{Role: aichatproto.ChatMessage_ROLE_USER, Content: "hi"}},
-	}, stream)
-
-	assert.Error(t, err)
-	st, _ := gstatus.FromError(err)
-	assert.Equal(t, codes.Unauthenticated, st.Code())
-}
-
-func TestChat_Success(t *testing.T) {
-	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	stream := &mockChatStream{ctx: createContextWithToken(t)}
-	err := svc.Chat(&aichatproto.ChatRequest{
-		EnvironmentId: "env-1",
-		Messages: []*aichatproto.ChatMessage{
-			{Role: aichatproto.ChatMessage_ROLE_USER, Content: "hello"},
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		req         *aichatproto.ChatRequest
+		expectedErr codes.Code
+		checkResp   bool
+	}{
+		{
+			desc: "error: unauthenticated",
+			ctx:  context.Background(),
+			req: &aichatproto.ChatRequest{
+				EnvironmentId: "env-1",
+				Messages: []*aichatproto.ChatMessage{
+					{Role: aichatproto.ChatMessage_ROLE_USER, Content: "hi"},
+				},
+			},
+			expectedErr: codes.Unauthenticated,
 		},
-	}, stream)
-
-	assert.NoError(t, err)
-	require.NotEmpty(t, stream.responses)
-	// The mock LLM returns a single "test response" chunk with Done=true
-	last := stream.responses[len(stream.responses)-1]
-	assert.True(t, last.Done)
-}
-
-func TestGetSuggestions_EmptyEnvironmentID(t *testing.T) {
-	t.Parallel()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	svc := createAIChatServiceForTest(
-		t, mockCtrl,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
-
-	ctx := createContextWithToken(t)
-	_, err := svc.GetSuggestions(ctx, &aichatproto.GetSuggestionsRequest{
-		EnvironmentId: "",
-	})
-
-	assert.Error(t, err)
-	st, _ := gstatus.FromError(err)
-	assert.Equal(t, codes.InvalidArgument, st.Code())
+		{
+			desc: "error: empty environment id",
+			ctx:  createContextWithToken(t),
+			req: &aichatproto.ChatRequest{
+				EnvironmentId: "",
+			},
+			expectedErr: codes.InvalidArgument,
+		},
+		{
+			desc: "error: empty messages",
+			ctx:  createContextWithToken(t),
+			req: &aichatproto.ChatRequest{
+				EnvironmentId: "env-1",
+				Messages:      []*aichatproto.ChatMessage{},
+			},
+			expectedErr: codes.InvalidArgument,
+		},
+		{
+			desc: "error: too many messages",
+			ctx:  createContextWithToken(t),
+			req: &aichatproto.ChatRequest{
+				EnvironmentId: "env-1",
+				Messages:      tooManyMessages,
+			},
+			// ErrorTypeExceededMax maps to codes.Unknown via convertStatusCode
+			expectedErr: codes.Unknown,
+		},
+		{
+			desc: "success",
+			ctx:  createContextWithToken(t),
+			req: &aichatproto.ChatRequest{
+				EnvironmentId: "env-1",
+				Messages: []*aichatproto.ChatMessage{
+					{Role: aichatproto.ChatMessage_ROLE_USER, Content: "hello"},
+				},
+			},
+			expectedErr: codes.OK,
+			checkResp:   true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			svc := createAIChatServiceForTest(
+				t, mockController,
+				accountproto.AccountV2_Role_Organization_ADMIN,
+				accountproto.AccountV2_Role_Environment_VIEWER,
+			)
+			stream := &mockChatStream{ctx: p.ctx}
+			err := svc.Chat(p.req, stream)
+			if p.expectedErr == codes.OK {
+				assert.NoError(t, err)
+				if p.checkResp {
+					require.NotEmpty(t, stream.responses)
+					last := stream.responses[len(stream.responses)-1]
+					assert.True(t, last.Done)
+				}
+			} else {
+				assert.Error(t, err)
+				st, _ := gstatus.FromError(err)
+				assert.Equal(t, p.expectedErr, st.Code())
+			}
+		})
+	}
 }

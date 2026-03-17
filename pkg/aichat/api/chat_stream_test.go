@@ -19,7 +19,6 @@ import (
 	"html"
 	"strings"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -318,116 +317,107 @@ func TestStreamChat(t *testing.T) {
 func TestSanitizeUserInput(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
+	patterns := []struct {
+		desc     string
 		input    string
 		expected string
 	}{
 		{
-			name:     "normal input",
+			desc:     "normal input",
 			input:    "How do I use feature flags?",
 			expected: "How do I use feature flags?",
 		},
 		{
-			name:     "removes newlines",
+			desc:     "removes newlines",
 			input:    "line1\nline2\rline3",
 			expected: "line1 line2 line3",
 		},
 		{
-			name:     "escapes HTML",
+			desc:     "escapes HTML",
 			input:    "<script>alert('xss')</script>",
 			expected: "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;",
 		},
 		{
-			name:     "trims whitespace",
+			desc:     "trims whitespace",
 			input:    "  hello  ",
 			expected: "hello",
 		},
 		{
-			name:     "truncates long input",
+			desc:     "truncates long input",
 			input:    strings.Repeat("あ", maxInputLength+100),
 			expected: html.EscapeString(strings.Repeat("あ", maxInputLength)),
 		},
 		{
-			name:     "empty input",
+			desc:     "empty input",
 			input:    "",
 			expected: "",
 		},
 		{
-			name:     "whitespace only",
+			desc:     "whitespace only",
 			input:    "   \n\r  ",
 			expected: "",
 		},
 		{
-			name:     "japanese text",
+			desc:     "japanese text",
 			input:    "フラグの使い方を教えてください",
 			expected: "フラグの使い方を教えてください",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			result := sanitizeUserInput(tt.input)
-			assert.Equal(t, tt.expected, result)
+			result := sanitizeUserInput(p.input)
+			assert.Equal(t, p.expected, result)
 		})
 	}
-}
-
-func TestSanitizeUserInput_MaxLength(t *testing.T) {
-	t.Parallel()
-
-	// Create input longer than maxInputLength
-	longInput := strings.Repeat("a", maxInputLength+100)
-	result := sanitizeUserInput(longInput)
-	assert.Equal(t, maxInputLength, utf8.RuneCountInString(result))
 }
 
 func TestLimitInputLength(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
+	patterns := []struct {
+		desc     string
 		input    string
 		expected string
 	}{
 		{
-			name:     "short input unchanged",
+			desc:     "short input unchanged",
 			input:    "Hello world",
 			expected: "Hello world",
 		},
 		{
-			name:     "replaces newlines",
+			desc:     "replaces newlines",
 			input:    "line1\nline2\rline3",
 			expected: "line1 line2 line3",
 		},
 		{
-			name:     "truncates long input",
+			desc:     "truncates long input",
 			input:    strings.Repeat("a", maxInputLength+50),
 			expected: strings.Repeat("a", maxInputLength),
 		},
 		{
-			name:     "does not HTML escape",
+			desc:     "does not HTML escape",
 			input:    "<b>bold</b>",
 			expected: "<b>bold</b>",
 		},
 		{
-			name:     "trims whitespace",
+			desc:     "trims whitespace",
 			input:    "  hello  ",
 			expected: "hello",
 		},
 		{
-			name:     "handles multibyte truncation",
+			desc:     "handles multibyte truncation",
 			input:    strings.Repeat("あ", maxInputLength+10),
 			expected: strings.Repeat("あ", maxInputLength),
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			result := limitInputLength(tt.input)
-			assert.Equal(t, tt.expected, result)
+			result := limitInputLength(p.input)
+			assert.Equal(t, p.expected, result)
 		})
 	}
 }
@@ -435,109 +425,151 @@ func TestLimitInputLength(t *testing.T) {
 func TestExtractSearchQuery(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil client returns original query", func(t *testing.T) {
-		t.Parallel()
-		result, err := extractSearchQuery(context.Background(), nil, "some query", "test-model")
-		assert.NoError(t, err)
-		assert.Equal(t, "some query", result)
-	})
-
-	t.Run("empty query returns empty query", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		mockClient := llmmock.NewMockClient(ctrl)
-		// Chat should NOT be called for empty query
-		result, err := extractSearchQuery(context.Background(), mockClient, "", "test-model")
-		assert.NoError(t, err)
-		assert.Equal(t, "", result)
-	})
-
-	t.Run("successful extraction", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		mockClient := llmmock.NewMockClient(ctrl)
-		mockClient.EXPECT().
-			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return("feature flags sdk", nil)
-
-		result, err := extractSearchQuery(context.Background(), mockClient, "フィーチャーフラグのSDKについて教えて", "test-model")
-		assert.NoError(t, err)
-		assert.Equal(t, "feature flags sdk", result)
-	})
-
-	t.Run("LLM returns empty string falls back to original query", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		mockClient := llmmock.NewMockClient(ctrl)
-		mockClient.EXPECT().
-			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return("", nil)
-
-		result, err := extractSearchQuery(context.Background(), mockClient, "original query", "test-model")
-		assert.NoError(t, err)
-		assert.Equal(t, "original query", result)
-	})
-
-	t.Run("LLM returns error", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		mockClient := llmmock.NewMockClient(ctrl)
-		mockClient.EXPECT().
-			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return("", assert.AnError)
-
-		result, err := extractSearchQuery(context.Background(), mockClient, "some query", "test-model")
-		assert.Error(t, err)
-		assert.Equal(t, "", result)
-	})
-
-	t.Run("context cancellation", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		mockClient := llmmock.NewMockClient(ctrl)
-
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel() // cancel immediately
-
-		mockClient.EXPECT().
-			Chat(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return("", context.Canceled)
-
-		result, err := extractSearchQuery(ctx, mockClient, "some query", "test-model")
-		assert.Error(t, err)
-		assert.Equal(t, "", result)
-	})
+	patterns := []struct {
+		desc        string
+		setupClient func(ctrl *gomock.Controller) *llmmock.MockClient
+		query       string
+		expected    string
+		expectErr   bool
+	}{
+		{
+			desc:        "nil client returns original query",
+			setupClient: nil,
+			query:       "some query",
+			expected:    "some query",
+		},
+		{
+			desc: "empty query returns empty query",
+			setupClient: func(ctrl *gomock.Controller) *llmmock.MockClient {
+				return llmmock.NewMockClient(ctrl)
+			},
+			query:    "",
+			expected: "",
+		},
+		{
+			desc: "successful extraction",
+			setupClient: func(ctrl *gomock.Controller) *llmmock.MockClient {
+				mc := llmmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("feature flags sdk", nil)
+				return mc
+			},
+			query:    "フィーチャーフラグのSDKについて教えて",
+			expected: "feature flags sdk",
+		},
+		{
+			desc: "LLM returns empty string falls back to original query",
+			setupClient: func(ctrl *gomock.Controller) *llmmock.MockClient {
+				mc := llmmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", nil)
+				return mc
+			},
+			query:    "original query",
+			expected: "original query",
+		},
+		{
+			desc: "LLM returns error",
+			setupClient: func(ctrl *gomock.Controller) *llmmock.MockClient {
+				mc := llmmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", assert.AnError)
+				return mc
+			},
+			query:     "some query",
+			expected:  "",
+			expectErr: true,
+		},
+		{
+			desc: "context cancellation",
+			setupClient: func(ctrl *gomock.Controller) *llmmock.MockClient {
+				mc := llmmock.NewMockClient(ctrl)
+				mc.EXPECT().
+					Chat(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", context.Canceled)
+				return mc
+			},
+			query:     "some query",
+			expected:  "",
+			expectErr: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			var client llm.Client
+			if p.setupClient != nil {
+				client = p.setupClient(ctrl)
+			}
+			result, err := extractSearchQuery(context.Background(), client, p.query, "test-model")
+			if p.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, p.expected, result)
+		})
+	}
 }
 
 func TestDefaultChatConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("fills empty fields with defaults", func(t *testing.T) {
-		t.Parallel()
-		cfg := defaultChatConfig(ChatConfig{})
-		assert.Equal(t, "", cfg.Model)
-		assert.Equal(t, 1000, cfg.MaxTokens)
-	})
-
-	t.Run("preserves explicit values", func(t *testing.T) {
-		t.Parallel()
-		cfg := defaultChatConfig(ChatConfig{
-			Model:       "gpt-4",
-			MaxTokens:   500,
-			Temperature: 0.3,
+	patterns := []struct {
+		desc        string
+		input       ChatConfig
+		checkModel  string
+		checkTokens int
+		checkTemp   *float64
+	}{
+		{
+			desc:        "fills empty fields with defaults",
+			input:       ChatConfig{},
+			checkModel:  "",
+			checkTokens: 1000,
+		},
+		{
+			desc: "preserves explicit values",
+			input: ChatConfig{
+				Model:       "gpt-4",
+				MaxTokens:   500,
+				Temperature: 0.3,
+			},
+			checkModel:  "gpt-4",
+			checkTokens: 500,
+			checkTemp:   float64Ptr(0.3),
+		},
+		{
+			desc: "preserves zero temperature",
+			input: ChatConfig{
+				Model:       "gpt-4",
+				MaxTokens:   500,
+				Temperature: 0.0,
+			},
+			checkTemp: float64Ptr(0.0),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			cfg := defaultChatConfig(p.input)
+			if p.checkModel != "" {
+				assert.Equal(t, p.checkModel, cfg.Model)
+			}
+			if p.checkTokens != 0 {
+				assert.Equal(t, p.checkTokens, cfg.MaxTokens)
+			}
+			if p.checkTemp != nil {
+				assert.InDelta(t, *p.checkTemp, cfg.Temperature, 0.001)
+			}
 		})
-		assert.Equal(t, "gpt-4", cfg.Model)
-		assert.Equal(t, 500, cfg.MaxTokens)
-		assert.InDelta(t, 0.3, cfg.Temperature, 0.001)
-	})
+	}
+}
 
-	t.Run("preserves zero temperature", func(t *testing.T) {
-		t.Parallel()
-		cfg := defaultChatConfig(ChatConfig{
-			Model:       "gpt-4",
-			MaxTokens:   500,
-			Temperature: 0.0,
-		})
-		assert.InDelta(t, 0.0, cfg.Temperature, 0.001)
-	})
+func float64Ptr(v float64) *float64 {
+	return &v
 }

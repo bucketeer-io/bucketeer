@@ -27,7 +27,7 @@ import (
 func TestBuildFeatureContext(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
+	patterns := []struct {
 		desc     string
 		feature  *featureproto.Feature
 		contains []string
@@ -219,72 +219,75 @@ func TestBuildFeatureContext(t *testing.T) {
 				"segment-id",
 			},
 		},
+		{
+			desc: "variation value never leaks",
+			feature: &featureproto.Feature{
+				Name:          "Value Leak Test",
+				VariationType: featureproto.Feature_JSON,
+				Variations: []*featureproto.Variation{
+					{
+						Id:    "v1",
+						Value: "super-secret-config-json-{\"key\":\"val\"}",
+						Name:  "Config A",
+					},
+				},
+			},
+			contains: []string{"Config A"},
+			excludes: []string{"super-secret-config-json", "super-secret"},
+		},
+		{
+			desc: "clause values never leak",
+			feature: &featureproto.Feature{
+				Name:          "Clause Leak Test",
+				VariationType: featureproto.Feature_BOOLEAN,
+				Rules: []*featureproto.Rule{
+					{
+						Strategy: &featureproto.Strategy{Type: featureproto.Strategy_FIXED},
+						Clauses: []*featureproto.Clause{
+							{
+								Attribute: "user.plan",
+								Operator:  featureproto.Clause_EQUALS,
+								Values:    []string{"enterprise", "pro"},
+							},
+						},
+					},
+				},
+			},
+			contains: []string{"EQUALS"},
+			excludes: []string{"enterprise", "pro", "user.plan"},
+		},
+		{
+			desc:    "nil feature",
+			feature: nil,
+		},
+		{
+			desc: "output is non-empty",
+			feature: &featureproto.Feature{
+				Name: "Test",
+			},
+		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			result := buildFeatureContext(tt.feature)
-			for _, want := range tt.contains {
+			result := buildFeatureContext(p.feature)
+			if p.feature == nil {
+				assert.Empty(t, result)
+				return
+			}
+			if p.feature.Name == "Test" && len(p.contains) == 0 {
+				assert.True(t, len(strings.TrimSpace(result)) > 0)
+				return
+			}
+			for _, want := range p.contains {
 				assert.Contains(t, result, want, "expected to contain: %s", want)
 			}
-			for _, notWant := range tt.excludes {
+			for _, notWant := range p.excludes {
 				assert.NotContains(t, result, notWant, "must NOT contain (privacy): %s", notWant)
 			}
 		})
 	}
-}
-
-func TestBuildFeatureContext_VariationValueNeverLeaks(t *testing.T) {
-	t.Parallel()
-	// Exhaustive check: variation Value field must never appear in output
-	secretValue := "super-secret-config-json-{\"key\":\"val\"}"
-	f := &featureproto.Feature{
-		Name:          "Value Leak Test",
-		VariationType: featureproto.Feature_JSON,
-		Variations: []*featureproto.Variation{
-			{
-				Id:    "v1",
-				Value: secretValue,
-				Name:  "Config A",
-			},
-		},
-	}
-	result := buildFeatureContext(f)
-	assert.NotContains(t, result, secretValue)
-	assert.NotContains(t, result, "super-secret")
-	assert.Contains(t, result, "Config A")
-}
-
-func TestBuildFeatureContext_ClauseValuesNeverLeak(t *testing.T) {
-	t.Parallel()
-	f := &featureproto.Feature{
-		Name:          "Clause Leak Test",
-		VariationType: featureproto.Feature_BOOLEAN,
-		Rules: []*featureproto.Rule{
-			{
-				Strategy: &featureproto.Strategy{Type: featureproto.Strategy_FIXED},
-				Clauses: []*featureproto.Clause{
-					{
-						Attribute: "user.plan",
-						Operator:  featureproto.Clause_EQUALS,
-						Values:    []string{"enterprise", "pro"},
-					},
-				},
-			},
-		},
-	}
-	result := buildFeatureContext(f)
-	assert.NotContains(t, result, "enterprise")
-	assert.NotContains(t, result, "pro")
-	assert.NotContains(t, result, "user.plan")
-	assert.Contains(t, result, "EQUALS")
-}
-
-func TestBuildFeatureContext_NilFeature(t *testing.T) {
-	t.Parallel()
-	result := buildFeatureContext(nil)
-	assert.Empty(t, result)
 }
 
 func TestBuildFeatureContext_TruncatesLongOutput(t *testing.T) {
@@ -321,13 +324,4 @@ func TestBuildFeatureContext_TruncatesLongOutput(t *testing.T) {
 	truncSuffix := []rune("\n... (truncated)\n")
 	xmlWrapper := []rune("<feature_data>\n</feature_data>")
 	assert.LessOrEqual(t, len(runes), maxFeatureContextLength+len(truncSuffix)+len(xmlWrapper))
-}
-
-func TestBuildFeatureContext_OutputIsNonEmpty(t *testing.T) {
-	t.Parallel()
-	f := &featureproto.Feature{
-		Name: "Test",
-	}
-	result := buildFeatureContext(f)
-	assert.True(t, len(strings.TrimSpace(result)) > 0)
 }

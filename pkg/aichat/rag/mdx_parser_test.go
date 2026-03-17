@@ -23,106 +23,112 @@ import (
 func TestStripMDX(t *testing.T) {
 	t.Parallel()
 
-	t.Run("removes import statements", func(t *testing.T) {
-		t.Parallel()
-		input := "import Tabs from '@theme/Tabs';\nimport TabItem from '@theme/TabItem';\n\n# Hello\nContent here."
-		result := StripMDX(input)
-		assert.NotContains(t, result, "import")
-		assert.Contains(t, result, "# Hello")
-		assert.Contains(t, result, "Content here.")
-	})
-
-	t.Run("removes JSX self-closing tags", func(t *testing.T) {
-		t.Parallel()
-		input := "Some text\n<CustomComponent prop=\"value\" />\nMore text"
-		result := StripMDX(input)
-		assert.NotContains(t, result, "CustomComponent")
-		assert.Contains(t, result, "Some text")
-		assert.Contains(t, result, "More text")
-	})
-
-	t.Run("removes JSX block tags", func(t *testing.T) {
-		t.Parallel()
-		input := "Before\n<Tabs>\n<TabItem value=\"go\" label=\"Go\">\n\n```go\nfmt.Println(\"hello\")\n```\n\n</TabItem>\n</Tabs>\nAfter"
-		result := StripMDX(input)
-		assert.NotContains(t, result, "<Tabs>")
-		assert.NotContains(t, result, "<TabItem")
-		assert.NotContains(t, result, "</TabItem>")
-		assert.NotContains(t, result, "</Tabs>")
-		assert.Contains(t, result, "fmt.Println")
-		assert.Contains(t, result, "After")
-	})
-
-	t.Run("removes export statements", func(t *testing.T) {
-		t.Parallel()
-		input := "export const meta = { title: 'Test' };\n\n# Title\nContent"
-		result := StripMDX(input)
-		assert.NotContains(t, result, "export")
-		assert.Contains(t, result, "# Title")
-	})
-
-	t.Run("removes HTML comments", func(t *testing.T) {
-		t.Parallel()
-		input := "Text before\n<!-- This is a comment -->\nText after"
-		result := StripMDX(input)
-		assert.NotContains(t, result, "comment")
-		assert.Contains(t, result, "Text before")
-		assert.Contains(t, result, "Text after")
-	})
-
-	t.Run("preserves code blocks", func(t *testing.T) {
-		t.Parallel()
-		input := "# Example\n\n```go\npackage main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"hello\")\n}\n```\n\nEnd."
-		result := StripMDX(input)
-		assert.Contains(t, result, "package main")
-		assert.Contains(t, result, "fmt.Println")
-	})
-
-	t.Run("collapses multiple blank lines", func(t *testing.T) {
-		t.Parallel()
-		input := "Line 1\n\n\n\n\nLine 2"
-		result := StripMDX(input)
-		assert.NotContains(t, result, "\n\n\n")
-	})
-
-	t.Run("handles empty input", func(t *testing.T) {
-		t.Parallel()
-		assert.Equal(t, "", StripMDX(""))
-	})
-
-	t.Run("preserves import inside code block", func(t *testing.T) {
-		t.Parallel()
-		input := "import Tabs from '@theme/Tabs';\n\n# Example\n\n```javascript\nimport React from 'react';\nconsole.log('hello');\n```\n\nEnd."
-		result := StripMDX(input)
-		// MDX import should be removed
-		assert.NotContains(t, result, "@theme/Tabs")
-		// Code block import should be preserved
-		assert.Contains(t, result, "import React from 'react';")
-		assert.Contains(t, result, "console.log")
-	})
+	patterns := []struct {
+		desc        string
+		input       string
+		contains    []string
+		notContains []string
+		exact       string
+	}{
+		{
+			desc:        "removes import statements",
+			input:       "import Tabs from '@theme/Tabs';\nimport TabItem from '@theme/TabItem';\n\n# Hello\nContent here.",
+			contains:    []string{"# Hello", "Content here."},
+			notContains: []string{"import"},
+		},
+		{
+			desc:        "removes JSX self-closing tags",
+			input:       "Some text\n<CustomComponent prop=\"value\" />\nMore text",
+			contains:    []string{"Some text", "More text"},
+			notContains: []string{"CustomComponent"},
+		},
+		{
+			desc:        "removes JSX block tags",
+			input:       "Before\n<Tabs>\n<TabItem value=\"go\" label=\"Go\">\n\n```go\nfmt.Println(\"hello\")\n```\n\n</TabItem>\n</Tabs>\nAfter",
+			contains:    []string{"fmt.Println", "After"},
+			notContains: []string{"<Tabs>", "<TabItem", "</TabItem>", "</Tabs>"},
+		},
+		{
+			desc:        "removes export statements",
+			input:       "export const meta = { title: 'Test' };\n\n# Title\nContent",
+			contains:    []string{"# Title"},
+			notContains: []string{"export"},
+		},
+		{
+			desc:        "removes HTML comments",
+			input:       "Text before\n<!-- This is a comment -->\nText after",
+			contains:    []string{"Text before", "Text after"},
+			notContains: []string{"comment"},
+		},
+		{
+			desc:     "preserves code blocks",
+			input:    "# Example\n\n```go\npackage main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"hello\")\n}\n```\n\nEnd.",
+			contains: []string{"package main", "fmt.Println"},
+		},
+		{
+			desc:        "collapses multiple blank lines",
+			input:       "Line 1\n\n\n\n\nLine 2",
+			notContains: []string{"\n\n\n"},
+		},
+		{
+			desc:  "handles empty input",
+			input: "",
+			exact: "",
+		},
+		{
+			desc:        "preserves import inside code block",
+			input:       "import Tabs from '@theme/Tabs';\n\n# Example\n\n```javascript\nimport React from 'react';\nconsole.log('hello');\n```\n\nEnd.",
+			contains:    []string{"import React from 'react';", "console.log"},
+			notContains: []string{"@theme/Tabs"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			result := StripMDX(p.input)
+			if p.exact != "" || (p.input == "" && len(p.contains) == 0) {
+				assert.Equal(t, p.exact, result)
+				return
+			}
+			for _, s := range p.contains {
+				assert.Contains(t, result, s)
+			}
+			for _, s := range p.notContains {
+				assert.NotContains(t, result, s)
+			}
+		})
+	}
 }
 
 func TestExtractTitle(t *testing.T) {
 	t.Parallel()
 
-	t.Run("extracts from frontmatter", func(t *testing.T) {
-		t.Parallel()
-		input := "---\ntitle: Feature Flags\nslug: /feature-flags\n---\n\n# Feature Flags\nContent"
-		title := ExtractTitle(input)
-		assert.Equal(t, "Feature Flags", title)
-	})
-
-	t.Run("extracts from first h1 when no frontmatter", func(t *testing.T) {
-		t.Parallel()
-		input := "# Getting Started\n\nWelcome to Bucketeer."
-		title := ExtractTitle(input)
-		assert.Equal(t, "Getting Started", title)
-	})
-
-	t.Run("returns empty when no title found", func(t *testing.T) {
-		t.Parallel()
-		input := "Just some text without headers."
-		title := ExtractTitle(input)
-		assert.Equal(t, "", title)
-	})
+	patterns := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		{
+			desc:     "extracts from frontmatter",
+			input:    "---\ntitle: Feature Flags\nslug: /feature-flags\n---\n\n# Feature Flags\nContent",
+			expected: "Feature Flags",
+		},
+		{
+			desc:     "extracts from first h1 when no frontmatter",
+			input:    "# Getting Started\n\nWelcome to Bucketeer.",
+			expected: "Getting Started",
+		},
+		{
+			desc:     "returns empty when no title found",
+			input:    "Just some text without headers.",
+			expected: "",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			title := ExtractTitle(p.input)
+			assert.Equal(t, p.expected, title)
+		})
+	}
 }

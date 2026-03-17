@@ -26,54 +26,75 @@ import (
 func TestGetSuggestionsForPage(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns suggestions for feature flags page", func(t *testing.T) {
-		t.Parallel()
-		suggestions := getSuggestionsForPage(&aichatproto.PageContext{
-			PageType: aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS,
+	patterns := []struct {
+		desc            string
+		pageContext     *aichatproto.PageContext
+		expectedLen     int
+		expectedNil     bool
+		checkFirstTitle string
+		checkFirstType  aichatproto.SuggestionType
+	}{
+		{
+			desc: "returns suggestions for feature flags page",
+			pageContext: &aichatproto.PageContext{
+				PageType: aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS,
+			},
+			expectedLen:     2,
+			checkFirstTitle: "Organize flags with tags",
+			checkFirstType:  aichatproto.SuggestionType_SUGGESTION_TYPE_BEST_PRACTICE,
+		},
+		{
+			desc: "returns suggestions for targeting page",
+			pageContext: &aichatproto.PageContext{
+				PageType: aichatproto.PageContext_PAGE_TYPE_TARGETING,
+			},
+			expectedLen:    2,
+			checkFirstType: aichatproto.SuggestionType_SUGGESTION_TYPE_FEATURE_DISCOVERY,
+		},
+		{
+			desc: "returns suggestions for experiments page",
+			pageContext: &aichatproto.PageContext{
+				PageType: aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS,
+			},
+			expectedLen: 1,
+		},
+		{
+			desc: "returns suggestions for autoops page",
+			pageContext: &aichatproto.PageContext{
+				PageType: aichatproto.PageContext_PAGE_TYPE_AUTOOPS,
+			},
+			expectedLen: 2,
+		},
+		{
+			desc: "returns default suggestions for unspecified page",
+			pageContext: &aichatproto.PageContext{
+				PageType: aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED,
+			},
+			expectedLen: 1,
+		},
+		{
+			desc:        "returns nil for nil page context",
+			pageContext:  nil,
+			expectedNil: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			suggestions := getSuggestionsForPage(p.pageContext)
+			if p.expectedNil {
+				assert.Nil(t, suggestions)
+				return
+			}
+			require.Len(t, suggestions, p.expectedLen)
+			if p.checkFirstTitle != "" {
+				assert.Equal(t, p.checkFirstTitle, suggestions[0].Title)
+			}
+			if p.checkFirstType != 0 {
+				assert.Equal(t, p.checkFirstType, suggestions[0].Type)
+			}
 		})
-		require.Len(t, suggestions, 2)
-		assert.Equal(t, "Organize flags with tags", suggestions[0].Title)
-		assert.Equal(t, aichatproto.SuggestionType_SUGGESTION_TYPE_BEST_PRACTICE, suggestions[0].Type)
-	})
-
-	t.Run("returns suggestions for targeting page", func(t *testing.T) {
-		t.Parallel()
-		suggestions := getSuggestionsForPage(&aichatproto.PageContext{
-			PageType: aichatproto.PageContext_PAGE_TYPE_TARGETING,
-		})
-		require.Len(t, suggestions, 2)
-		assert.Equal(t, aichatproto.SuggestionType_SUGGESTION_TYPE_FEATURE_DISCOVERY, suggestions[0].Type)
-	})
-
-	t.Run("returns suggestions for experiments page", func(t *testing.T) {
-		t.Parallel()
-		suggestions := getSuggestionsForPage(&aichatproto.PageContext{
-			PageType: aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS,
-		})
-		require.Len(t, suggestions, 1)
-	})
-
-	t.Run("returns suggestions for autoops page", func(t *testing.T) {
-		t.Parallel()
-		suggestions := getSuggestionsForPage(&aichatproto.PageContext{
-			PageType: aichatproto.PageContext_PAGE_TYPE_AUTOOPS,
-		})
-		require.Len(t, suggestions, 2)
-	})
-
-	t.Run("returns default suggestions for unspecified page", func(t *testing.T) {
-		t.Parallel()
-		suggestions := getSuggestionsForPage(&aichatproto.PageContext{
-			PageType: aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED,
-		})
-		require.Len(t, suggestions, 1)
-	})
-
-	t.Run("returns nil for nil page context", func(t *testing.T) {
-		t.Parallel()
-		suggestions := getSuggestionsForPage(nil)
-		assert.Nil(t, suggestions)
-	})
+	}
 
 	t.Run("all suggestions have required fields", func(t *testing.T) {
 		t.Parallel()

@@ -304,43 +304,43 @@ func TestGitHubSearcherSearch(t *testing.T) {
 func TestTokenizeQuery(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
+	patterns := []struct {
+		desc     string
 		query    string
 		expected []string
 	}{
 		{
-			name:     "simple words",
+			desc:     "simple words",
 			query:    "feature flags",
 			expected: []string{"feature", "flags"},
 		},
 		{
-			name:     "lowercases",
+			desc:     "lowercases",
 			query:    "Go SDK Android",
 			expected: []string{"go", "sdk", "android"},
 		},
 		{
-			name:     "handles empty",
+			desc:     "handles empty",
 			query:    "",
 			expected: nil,
 		},
 		{
-			name:     "deduplicates tokens",
+			desc:     "deduplicates tokens",
 			query:    "sdk SDK",
 			expected: []string{"sdk"},
 		},
 		{
-			name:     "whitespace only",
+			desc:     "whitespace only",
 			query:    "   ",
 			expected: nil,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			result := tokenizeQuery(tt.query)
-			assert.Equal(t, tt.expected, result)
+			result := tokenizeQuery(p.query)
+			assert.Equal(t, p.expected, result)
 		})
 	}
 }
@@ -358,50 +358,69 @@ func TestScoreDoc(t *testing.T) {
 		pathSegments: extractPathSegments("docs/feature-flags/segments.mdx"),
 	}
 
-	t.Run("high score for path match", func(t *testing.T) {
-		t.Parallel()
-		score := scoreDoc(doc, []string{"segments"})
-		assert.Greater(t, score, 0.0)
-	})
-
-	t.Run("higher score for multiple matches", func(t *testing.T) {
-		t.Parallel()
-		singleScore := scoreDoc(doc, []string{"segments"})
-		multiScore := scoreDoc(doc, []string{"segments", "targeting"})
-		assert.Greater(t, multiScore, singleScore)
-	})
-
-	t.Run("zero score for no match", func(t *testing.T) {
-		t.Parallel()
-		score := scoreDoc(doc, []string{"zzzznonexistent"})
-		assert.Equal(t, 0.0, score)
-	})
-
-	t.Run("title match scores higher than content-only match", func(t *testing.T) {
-		t.Parallel()
-		titleScore := scoreDoc(doc, []string{"segments"})     // matches path + title + content
-		contentScore := scoreDoc(doc, []string{"attributes"}) // matches content only
-		assert.Greater(t, titleScore, contentScore)
-	})
+	patterns := []struct {
+		desc      string
+		tokens    []string
+		checkFunc func(t *testing.T, score float64)
+	}{
+		{
+			desc:   "high score for path match",
+			tokens: []string{"segments"},
+			checkFunc: func(t *testing.T, score float64) {
+				assert.Greater(t, score, 0.0)
+			},
+		},
+		{
+			desc:   "zero score for no match",
+			tokens: []string{"zzzznonexistent"},
+			checkFunc: func(t *testing.T, score float64) {
+				assert.Equal(t, 0.0, score)
+			},
+		},
+		{
+			desc:   "higher score for multiple matches",
+			tokens: []string{"segments", "targeting"},
+			checkFunc: func(t *testing.T, score float64) {
+				singleScore := scoreDoc(doc, []string{"segments"})
+				assert.Greater(t, score, singleScore)
+			},
+		},
+		{
+			desc:   "title match scores higher than content-only match",
+			tokens: []string{"segments"},
+			checkFunc: func(t *testing.T, score float64) {
+				contentScore := scoreDoc(doc, []string{"attributes"})
+				assert.Greater(t, score, contentScore)
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			score := scoreDoc(doc, p.tokens)
+			p.checkFunc(t, score)
+		})
+	}
 }
 
 func TestExtractCategory(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
+	patterns := []struct {
+		desc     string
 		path     string
 		expected string
 	}{
-		{"docs/feature-flags/segments.mdx", "feature-flags"},
-		{"docs/sdk/server-side/go/index.md", "sdk/server-side/go"},
-		{"docs/index.mdx", ""},
-		{"docs/getting-started/quickstart.mdx", "getting-started"},
+		{"feature-flags", "docs/feature-flags/segments.mdx", "feature-flags"},
+		{"sdk/server-side/go", "docs/sdk/server-side/go/index.md", "sdk/server-side/go"},
+		{"empty for docs root", "docs/index.mdx", ""},
+		{"getting-started", "docs/getting-started/quickstart.mdx", "getting-started"},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.expected, extractCategory(tt.path))
+			assert.Equal(t, p.expected, extractCategory(p.path))
 		})
 	}
 }
@@ -409,21 +428,22 @@ func TestExtractCategory(t *testing.T) {
 func TestDocsSiteURL(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
+	patterns := []struct {
+		desc     string
 		path     string
 		expected string
 	}{
-		{"docs/feature-flags/segments.mdx", "https://docs.bucketeer.io/feature-flags/segments"},
-		{"docs/sdk/server-side/go/index.md", "https://docs.bucketeer.io/sdk/server-side/go"},
-		{"docs/index.mdx", "https://docs.bucketeer.io"},
-		{"docs/getting-started/quickstart.mdx", "https://docs.bucketeer.io/getting-started/quickstart"},
-		{"docs/best-practices/optimize-bucketeer-with-tags.mdx", "https://docs.bucketeer.io/best-practices/optimize-bucketeer-with-tags"},
+		{"segments", "docs/feature-flags/segments.mdx", "https://docs.bucketeer.io/feature-flags/segments"},
+		{"go sdk", "docs/sdk/server-side/go/index.md", "https://docs.bucketeer.io/sdk/server-side/go"},
+		{"root index", "docs/index.mdx", "https://docs.bucketeer.io"},
+		{"quickstart", "docs/getting-started/quickstart.mdx", "https://docs.bucketeer.io/getting-started/quickstart"},
+		{"best practices", "docs/best-practices/optimize-bucketeer-with-tags.mdx", "https://docs.bucketeer.io/best-practices/optimize-bucketeer-with-tags"},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.expected, docsSiteURL(tt.path))
+			assert.Equal(t, p.expected, docsSiteURL(p.path))
 		})
 	}
 }
@@ -431,22 +451,23 @@ func TestDocsSiteURL(t *testing.T) {
 func TestIsValidDocPath(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
+	patterns := []struct {
+		desc  string
 		path  string
 		valid bool
 	}{
-		{"docs/feature-flags/segments.mdx", true},
-		{"docs/sdk/go/index.md", true},
-		{"docs/../etc/passwd", false},
-		{"not-docs/file.mdx", false},
-		{"docs/file.txt", false},
-		{"docs/file.json", false},
+		{"valid mdx", "docs/feature-flags/segments.mdx", true},
+		{"valid md", "docs/sdk/go/index.md", true},
+		{"path traversal", "docs/../etc/passwd", false},
+		{"not docs dir", "not-docs/file.mdx", false},
+		{"txt file", "docs/file.txt", false},
+		{"json file", "docs/file.json", false},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.valid, isValidDocPath(tt.path))
+			assert.Equal(t, p.valid, isValidDocPath(p.path))
 		})
 	}
 }
