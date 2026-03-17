@@ -62,7 +62,7 @@ const RowWithData = ({
       style={style}
       isSelectedItem={itemSelected === currentItem?.value}
       isSelected={selectedOptions?.includes(
-        currentItem[selectedFieldValue] as string
+        currentItem[selectedFieldValue as keyof DropdownOption] as string
       )}
       isMultiselect={isMultiselect}
       value={currentItem?.value}
@@ -72,7 +72,9 @@ const RowWithData = ({
       disabled={currentItem?.disabled}
       additionalElement={additionalElement && additionalElement(currentItem)}
       onSelectOption={() =>
-        onSelectOption(currentItem[selectedFieldValue] as string)
+        onSelectOption(
+          currentItem[selectedFieldValue as keyof DropdownOption] as string
+        )
       }
       onPointerMove={event => {
         if (

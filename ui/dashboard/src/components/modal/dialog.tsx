@@ -44,12 +44,13 @@ const DialogModal = ({
           className={cn(
             'fixed inset-0 grid h-full w-full animate-fade z-50',
             'place-items-center overflow-y-auto bg-overlay',
+            'p-6',
             overlayCls
           )}
         >
           <Dialog.Content
             className={cn(
-              'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
+              'relative w-full mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
               className
             )}
             onEscapeKeyDown={
@@ -67,10 +68,12 @@ const DialogModal = ({
               <div
                 className={cn('flex items-center justify-between px-4 py-3.5')}
               >
-                {title && (
-                  <Dialog.Title className="typo-head-bold-huge">
+                {title ? (
+                  <Dialog.Title className="typo-head-bold-small sm:typo-head-bold-huge">
                     {title}
                   </Dialog.Title>
+                ) : (
+                  <Dialog.Title className="sr-only" />
                 )}
                 <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>
