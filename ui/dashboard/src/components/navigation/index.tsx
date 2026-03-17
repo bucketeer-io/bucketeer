@@ -161,9 +161,9 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
       className={cn(
         'fixed h-screen bg-primary-500 z-50 transition-transform duration-200 ',
         !fromTabletScreen && isExpanded
-          ? 'w-[248px] px-6 py-4'
+          ? 'w-[248px] px-3 sm:px-6 py-4'
           : !fromMobileScreen
-            ? 'w-[248px] px-6 py-4'
+            ? 'w-[248px] px-3 sm:px-6 py-4'
             : 'w-[60px] md:w-[248px] py-4 px-2 md:px-6 md:py-8'
       )}
     >
@@ -295,7 +295,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </button>
         </div>
       </div>
-      {fromMobileScreen && isOpenSetting ? (
+      {fromMobileScreen && isOpenSwitchOrg ? (
         <SwitchOrganization
           isExpanded={isExpanded}
           isOpen={isOpenSwitchOrg}
@@ -304,7 +304,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         />
       ) : (
         <DialogModal
-          className="w-full max-w-[350px]"
+          className="w-[350px]"
           title=""
           isOpen={isOpenSwitchOrg}
           onClose={onCloseSwitchOrg}
