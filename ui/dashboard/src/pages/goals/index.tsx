@@ -1,3 +1,4 @@
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
@@ -8,7 +9,11 @@ const GoalsPage = () => {
 
   return (
     <PageLayout.Root title={t('goals')}>
-      <PageHeader title={t('goals')} description={t('goals-subtitle')} />
+      <PageHeader
+        title={t('goals')}
+        description={t('goals-subtitle')}
+        link={DOCUMENTATION_LINKS.GOALS}
+      />
       <PageLoader />
     </PageLayout.Root>
   );

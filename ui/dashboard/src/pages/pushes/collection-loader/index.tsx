@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { Push } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -10,6 +11,7 @@ import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { PushActionsType, PushFilters } from '../types';
@@ -32,6 +34,7 @@ const CollectionLoader = memo(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { editorEnvironmentIDs } = getEditorEnvironments(consoleAccount!);
+    const { fromMobileScreen } = useScreen();
 
     const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
       organizationId: currentEnvironment.organizationId,
@@ -80,14 +83,24 @@ const CollectionLoader = memo(
     return isError ? (
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
-      <TableListContent className="min-w-[1000px]">
-        <DataTable
-          isLoading={isLoading || isLoadingTags}
-          data={pushes}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
-        />
+      <TableListContent>
+        {fromMobileScreen ? (
+          <DataTable
+            isLoading={isLoading || isLoadingTags}
+            data={pushes}
+            columns={columns}
+            onSortingChange={onSortingChangeHandler}
+            emptyCollection={emptyState}
+          />
+        ) : (
+          <CardCollection
+            tags={tagList}
+            isLoading={isLoading || isLoadingTags}
+            emptyCollection={emptyState}
+            data={pushes}
+            onActions={onActions}
+          />
+        )}
         {!isLoading && (
           <Pagination
             page={filters.page}
