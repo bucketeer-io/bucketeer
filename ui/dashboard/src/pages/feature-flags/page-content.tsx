@@ -4,6 +4,7 @@ import { useLocation } from 'react-router';
 import { hasEditable, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, Feature, FeatureCountByStatus } from '@types';
@@ -15,11 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
 import Overview from './overview';
-import SortBy from './sort-by';
 import { FlagActionType, FlagFilters, StatusFilterType } from './types';
 
 const booleanFilterKeys = [
@@ -60,8 +61,8 @@ const PageContent = ({
   const { t } = useTranslation(['common', 'form']);
   const location = useLocation();
   const { consoleAccount } = useAuth();
-
   const editable = hasEditable(consoleAccount!);
+  const { flagSortByOptions, flagSortDirectionOptions } = useOptions();
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
@@ -183,7 +184,12 @@ const PageContent = ({
         name="flag-list-search"
         action={
           <>
-            <SortBy filters={filters} setFilters={setFilters} />
+            <SortBy
+              filters={filters}
+              setFilters={setFilters}
+              sortByOptions={flagSortByOptions}
+              sortDirectionOptions={flagSortDirectionOptions}
+            />
             <DisabledButtonTooltip
               hidden={editable}
               trigger={
@@ -229,7 +235,7 @@ const PageContent = ({
         }}
       >
         {!isHiddenTab && (
-          <TabsList className="px-6">
+          <TabsList className="px-3 sm:px-6">
             <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
             <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
           </TabsList>
