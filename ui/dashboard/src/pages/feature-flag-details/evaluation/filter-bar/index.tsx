@@ -32,7 +32,7 @@ const FilterBar = ({
   const { t } = useTranslation(['common', 'table']);
 
   return (
-    <div className="flex items-center w-full justify-between">
+    <div className="flex flex-wrap items-center w-full justify-between">
       <div className="flex items-center gap-x-2">
         <p className="typo-head-bold-small text-gray-800">{t('evaluation')}</p>
         <Tooltip
@@ -47,9 +47,10 @@ const FilterBar = ({
           className="max-w-[310px]"
         />
       </div>
-      <div className="flex items-center gap-x-3">
+      <div className="flex items-center gap-x-3 ">
         <Button
           variant="text"
+          className="hidden sm:inline-flex"
           onClick={() =>
             window.open(DOCUMENTATION_LINKS.FLAG_EVALUATIONS, '_blank')
           }
