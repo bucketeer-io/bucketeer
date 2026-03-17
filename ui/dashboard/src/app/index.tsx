@@ -4,18 +4,19 @@ import {
   BrowserRouter,
   Route,
   Routes,
-  useParams,
+  useLocation,
   useNavigate,
-  useLocation
+  useParams
 } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
+import logo from 'assets/logos/logo-white.svg';
 import {
   AuthCallbackPage,
+  AuthDemoCallbackPage,
   AuthProvider,
-  useAuth,
   getCurrentEnvironment,
   hasEditable,
-  AuthDemoCallbackPage
+  useAuth
 } from 'auth';
 import { AI_CHAT_ENABLED } from 'configs';
 import { queryClient } from 'configs/query-client';
@@ -43,6 +44,7 @@ import {
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
 import { WalkthroughProvider } from 'contexts/walkthrough-context';
+import { useScreen } from 'hooks';
 import { ConfirmProvider } from 'hooks/use-unsaved-leave-page';
 import { i18n } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -61,6 +63,7 @@ import { ConsoleAccount, EnvironmentRole } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { checkEnvironmentEmptyId } from 'utils/function';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
+import { IconMenu } from '@icons';
 import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
@@ -77,16 +80,19 @@ import SignInEmailPage from 'pages/signin/email';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
 import ChatWidget from 'components/ai-chat';
+import Button from 'components/button';
+import Drawer from 'components/drawer';
+import Icon from 'components/icon';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
 import {
   ExperimentsRoot,
-  OrganizationsRoot,
-  ProjectsRoot,
-  GoalsRoot,
   FeatureFlagsRoot,
+  UserSegmentsRoot,
+  GoalsRoot,
   MemberRoot,
-  UserSegmentsRoot
+  OrganizationsRoot,
+  ProjectsRoot
 } from './routers';
 
 export const AppLoading = () => (
@@ -139,6 +145,8 @@ function App() {
 export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const { fromMobileScreen } = useScreen();
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -157,9 +165,29 @@ export const Root = memo(() => {
     }
     return (
       <WalkthroughProvider>
-        <div className="flex flex-row w-full h-full">
-          <Navigation onClickNavLink={handleChangePageKey} />
-          <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
+        <div className="flex flex-col sm:flex-row w-full h-full">
+          <div className="flex sticky z-20 top-0 left-0 gap-3 items-center justify-between sm:hidden w-full h-[50px] px-4 bg-primary-400">
+            <img src={logo} alt="Bucketer" />
+            <Button
+              className="bg-transparent hover:bg-transparent"
+              onClick={() => setShowMenu(true)}
+            >
+              <Icon icon={IconMenu} />
+            </Button>
+          </div>
+          {fromMobileScreen ? (
+            <Navigation onClickNavLink={handleChangePageKey} />
+          ) : (
+            <Drawer
+              side="left"
+              open={showMenu}
+              onClose={() => setShowMenu(false)}
+            >
+              <Navigation onClickNavLink={handleChangePageKey} />
+            </Drawer>
+          )}
+
+          <div className="w-full ml-0 sm:ml-[60px] md:ml-[248px] shadow-lg overflow-y-auto">
             <Routes>
               {consoleAccount.isSystemAdmin && (
                 <Route
