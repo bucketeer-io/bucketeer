@@ -468,7 +468,7 @@ const VariationsSwitch = () => {
   }, [currentVariationType, handleSwitchVariation, currentSwitchVariation]);
 
   return (
-    <div className="flex items-center w-full justify-between">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center w-full justify-between gap-y-1">
       <p className="typo-para-medium text-gray-700">
         {t('feature-flags.flag-variations')}
       </p>
