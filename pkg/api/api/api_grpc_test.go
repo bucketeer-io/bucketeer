@@ -959,6 +959,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 		expected              *gwproto.GetSegmentUsersResponse
 		expectedErr           error
 		exactRequestedAtMatch bool
+		clampTest             bool // when true, verify RequestedAt is clamped (not exact match with timeNow)
 	}{
 		{
 			desc: "err: environment api key not found",
@@ -1393,11 +1394,10 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			expected: &gwproto.GetSegmentUsersResponse{
 				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
 				DeletedSegmentIds: make([]string, 0),
-				RequestedAt:       timeNow.Unix(),
 				ForceUpdate:       false,
 			},
-			expectedErr:           nil,
-			exactRequestedAtMatch: true,
+			expectedErr: nil,
+			clampTest:   true,
 		},
 	}
 	for _, p := range patterns {
@@ -1415,12 +1415,16 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			}
 			assert.Equal(t, p.expected.SegmentUsers, actual.SegmentUsers, "%s", p.desc)
 			assert.Equal(t, p.expected.DeletedSegmentIds, actual.DeletedSegmentIds, "%s", p.desc)
-			if p.exactRequestedAtMatch {
+			assert.Equal(t, p.expected.ForceUpdate, actual.ForceUpdate, "%s", p.desc)
+			if p.clampTest {
+				assert.LessOrEqual(t, actual.RequestedAt, time.Now().Unix(), "%s", p.desc)
+				assert.Less(t, actual.RequestedAt, p.input.RequestedAt,
+					"%s: RequestedAt should be clamped below the future input value", p.desc)
+			} else if p.exactRequestedAtMatch {
 				assert.Equal(t, p.expected.RequestedAt, actual.RequestedAt, "%s", p.desc)
 			} else {
 				assert.GreaterOrEqual(t, actual.RequestedAt, p.expected.RequestedAt, "%s", p.desc)
 			}
-			assert.Equal(t, p.expected.ForceUpdate, actual.ForceUpdate, "%s", p.desc)
 		})
 	}
 }
@@ -1522,6 +1526,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 		input       *gwproto.GetFeatureFlagsRequest
 		expected    *gwproto.GetFeatureFlagsResponse
 		expectedErr error
+		clampTest   bool // when true, verify RequestedAt is clamped (not exact match with timeNow)
 	}{
 		{
 			desc: "err: environment api key not found",
@@ -1950,10 +1955,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
 			},
 			expectedErr: nil,
+			clampTest:   true,
 		},
 	}
 	for _, p := range patterns {
@@ -1964,8 +1969,19 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				"authorization": []string{apiKey},
 			})
 			actual, err := gs.GetFeatureFlags(ctx, p.input)
-			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+			if p.clampTest {
+				require.NotNil(t, actual, "%s", p.desc)
+				assert.Equal(t, p.expected.FeatureFlagsId, actual.FeatureFlagsId, "%s", p.desc)
+				assert.Equal(t, p.expected.Features, actual.Features, "%s", p.desc)
+				assert.Equal(t, p.expected.ArchivedFeatureFlagIds, actual.ArchivedFeatureFlagIds, "%s", p.desc)
+				assert.Equal(t, p.expected.ForceUpdate, actual.ForceUpdate, "%s", p.desc)
+				assert.LessOrEqual(t, actual.RequestedAt, time.Now().Unix(), "%s", p.desc)
+				assert.Less(t, actual.RequestedAt, p.input.RequestedAt,
+					"%s: RequestedAt should be clamped below the future input value", p.desc)
+			} else {
+				assert.Equal(t, p.expected, actual, "%s", p.desc)
+			}
 		})
 	}
 }

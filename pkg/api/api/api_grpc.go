@@ -997,14 +997,19 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		targetSegmentUsers = append(targetSegmentUsers, segmentUsers)
 	}
 
+	now := time.Now().Unix()
+	// Clamp requestedAt to prevent future timestamps (e.g. from cross-server clock skew)
+	// from permanently excluding all updates in the Diff filter.
+	requestedAt := min(req.RequestedAt, now)
+
 	// Return all the flags if the last request is older than 30 days
-	if req.RequestedAt < time.Now().Unix()-secondsToReturnAllFlags {
+	if requestedAt < now-secondsToReturnAllFlags {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeAll).Inc()
 		return &gwproto.GetSegmentUsersResponse{
 			SegmentUsers:      targetSegmentUsers,
 			DeletedSegmentIds: make([]string, 0),
-			RequestedAt:       time.Now().Unix(),
+			RequestedAt:       now,
 			ForceUpdate:       true,
 		}, nil
 	}
@@ -1016,10 +1021,6 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			deletedSegmentIDs = append(deletedSegmentIDs, id)
 		}
 	}
-
-	// Clamp requestedAt to prevent future timestamps (e.g. from cross-server clock skew)
-	// from permanently excluding all updates in the Diff filter.
-	requestedAt := min(req.RequestedAt, time.Now().Unix())
 	// Filter the updated segments.
 	// Since "None" responses no longer advance requestedAt, the SDK's requestedAt
 	// accurately reflects the last time it received data; we only clamp future values.
@@ -1047,7 +1048,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	return &gwproto.GetSegmentUsersResponse{
 		SegmentUsers:      updatedSegments,
 		DeletedSegmentIds: deletedSegmentIDs,
-		RequestedAt:       time.Now().Unix(),
+		RequestedAt:       now,
 		ForceUpdate:       false,
 	}, nil
 }
