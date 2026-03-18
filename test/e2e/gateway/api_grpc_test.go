@@ -270,7 +270,9 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.Features) > 0
 	}, 30*time.Second, 2*time.Second, "feature flag 4 should appear in the diff response")
 
-	assert.Equal(t, 1, len(diffResp.Features))
+	// With >= filter, features created in the same second as the previous
+	// response's RequestedAt may also be included (harmless re-send).
+	assert.True(t, len(diffResp.Features) >= 1, "at least feature 4 should be in the diff")
 	assert.Equal(t, 0, len(diffResp.ArchivedFeatureFlagIds))
 	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.False(t, diffResp.ForceUpdate)

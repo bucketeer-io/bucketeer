@@ -736,7 +736,7 @@ func TestGetSegmentUsersNoneResponsePreservesRequestedAt(t *testing.T) {
 
 // TestGetFeatureFlagsSameSecondUpdate verifies that a feature updated in the
 // exact same Unix second as the previous response's RequestedAt is included
-// in the diff (>= comparison), not missed (> comparison).
+// in the diff (>= comparison).
 func TestGetFeatureFlagsSameSecondUpdate(t *testing.T) {
 	t.Parallel()
 
@@ -748,74 +748,31 @@ func TestGetFeatureFlagsSameSecondUpdate(t *testing.T) {
 		Enabled:   true,
 		UpdatedAt: baseTime - 3600,
 	}
-	// flag-2 is updated at exactly baseTime (same second as the "All" response's RequestedAt)
-	flagV1SameSecond := &featureproto.Feature{
+	flagSameSecond := &featureproto.Feature{
 		Id:        "flag-2",
 		Version:   1,
 		Enabled:   false,
 		UpdatedAt: baseTime, // same second as RequestedAt from the "All" response
 	}
 
-	patterns := []struct {
-		desc     string
-		serverFn featureFlagsServerFunc
-		wantHit  bool
-	}{
-		{
-			desc:     "buggy: strict > misses same-second update",
-			serverFn: simulateGetFeatureFlagsBuggy,
-			wantHit:  false,
-		},
-		{
-			desc:     "fixed: >= includes same-second update",
-			serverFn: simulateGetFeatureFlagsFixed,
-			wantHit:  true,
-		},
-	}
+	serverFeatures := []*featureproto.Feature{flagV1}
+	sdk := &featureFlagsSDKCache{features: make(map[string]*featureproto.Feature)}
 
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			serverFeatures := []*featureproto.Feature{flagV1}
-			sdk := &featureFlagsSDKCache{features: make(map[string]*featureproto.Feature)}
+	// Initial sync at T=baseTime → requestedAt = baseTime
+	resp := simulateGetFeatureFlagsFixed(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime)
+	require.Equal(t, "all", resp.ResponseType)
+	sdk.applyResponse(resp)
+	require.Equal(t, baseTime, sdk.requestedAt)
 
-			// Initial sync at T=baseTime → requestedAt = baseTime
-			resp := p.serverFn(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime)
-			require.Equal(t, "all", resp.ResponseType)
-			sdk.applyResponse(resp)
-			require.Equal(t, baseTime, sdk.requestedAt)
+	// flag-2 is added at exactly baseTime (same second as requestedAt)
+	serverFeatures = []*featureproto.Feature{flagV1, flagSameSecond}
 
-			// flag-2 is added at exactly baseTime (same second)
-			// Redis refreshes, ffID changes
-			serverFeatures = []*featureproto.Feature{flagV1, flagV1SameSecond}
-
-			// SDK polls at T=baseTime+60 → ffID mismatch → Diff
-			resp = p.serverFn(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+60)
-			require.Equal(t, "diff", resp.ResponseType)
-
-			if p.wantHit {
-				assert.Len(t, resp.Features, 1,
-					"fixed: flag-2 (UpdatedAt == RequestedAt) is included")
-				assert.Equal(t, "flag-2", resp.Features[0].Id)
-			} else {
-				// Buggy uses adjustedRequestedAt = requestedAt - 10
-				// Since the buggy code advanced requestedAt to baseTime+0 (from "All"),
-				// adjustedRequestedAt = baseTime - 10
-				// flag-2.UpdatedAt = baseTime > baseTime - 10 → included
-				// Actually in the buggy case, the "All" sets requestedAt = baseTime,
-				// and there were no "None" polls to advance it further.
-				// So adjustedRequestedAt = baseTime - 10.
-				// flag-2.UpdatedAt = baseTime > baseTime - 10 → true (included!)
-				// The buggy > would also catch this because of the -10 buffer.
-				// Let me adjust: the buggy case only misses when requestedAt has
-				// been advanced by "None" polls. For a pure same-second test without
-				// "None" advancement, the buggy code's -10 buffer catches it.
-				// So this sub-test actually passes for buggy too. That's fine —
-				// the key point is the fixed code handles it without needing the buffer.
-				assert.Len(t, resp.Features, 1,
-					"buggy: catches it via the -10 buffer (but only by coincidence)")
-			}
-		})
-	}
+	// SDK polls at T=baseTime+60 → ffID mismatch → Diff
+	resp = simulateGetFeatureFlagsFixed(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+60)
+	require.Equal(t, "diff", resp.ResponseType)
+	assert.Len(t, resp.Features, 1,
+		fmt.Sprintf("flag-2 (UpdatedAt == RequestedAt) is included with >= comparison"))
+	assert.Equal(t, "flag-2", resp.Features[0].Id)
 }
 
 // TestGetFeatureFlagsSameSecondAfterDiff verifies the same-second edge case
