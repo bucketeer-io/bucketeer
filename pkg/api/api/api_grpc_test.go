@@ -1365,7 +1365,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: future requestedAt is clamped to now in None response",
+			desc: "success: future requestedAt forces full resync",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1392,12 +1392,11 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 				SdkVersion:  "v0.0.1",
 			},
 			expected: &gwproto.GetSegmentUsersResponse{
-				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
+				SegmentUsers:      []*featureproto.SegmentUsers{multiSegmentUsers[0], multiSegmentUsers[2]},
 				DeletedSegmentIds: make([]string, 0),
-				ForceUpdate:       false,
+				ForceUpdate:       true,
 			},
 			expectedErr: nil,
-			clampTest:   true,
 		},
 	}
 	for _, p := range patterns {
@@ -1959,6 +1958,39 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			},
 			expectedErr: nil,
 			clampTest:   true,
+		},
+		{
+			desc: "success: future requestedAt with different ffID forces full resync",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: singleFeature,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            tag,
+				FeatureFlagsId: "random-id",
+				RequestedAt:    timeNow.Add(1 * time.Hour).Unix(),
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         singleFeatureID,
+				Features:               singleFeature,
+				ArchivedFeatureFlagIds: make([]string, 0),
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            true,
+			},
+			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {

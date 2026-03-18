@@ -109,8 +109,8 @@ func simulateGetFeatureFlagsBuggy(
 	}
 }
 
-// simulateGetFeatureFlagsFixed replicates the FIXED logic where "None"
-// responses preserve requestedAt and "Diff" uses req.RequestedAt directly.
+// simulateGetFeatureFlagsFixed replicates the production logic from
+// grpcGatewayService.GetFeatureFlags after the fix.
 func simulateGetFeatureFlagsFixed(
 	serverFeatures []*featureproto.Feature,
 	reqFeatureFlagsId string,
@@ -128,17 +128,21 @@ func simulateGetFeatureFlagsFixed(
 
 	ffID := evaluation.GenerateFeaturesID(serverFeatures)
 
+	// None: preserve requestedAt (clamped to now for future values)
 	if reqFeatureFlagsId == ffID {
 		return featureFlagsResponse{
 			FeatureFlagsId:         ffID,
 			Features:               []*featureproto.Feature{},
 			ArchivedFeatureFlagIds: []string{},
-			RequestedAt:            reqRequestedAt, // FIX: preserve requestedAt
+			RequestedAt:            min(reqRequestedAt, now),
 			ResponseType:           "none",
 		}
 	}
 
-	if reqFeatureFlagsId == "" || reqRequestedAt < now-secondsToReturnAllFlags {
+	// All: first request, very old cache, or future requestedAt (clock skew)
+	if reqFeatureFlagsId == "" ||
+		reqRequestedAt < now-secondsToReturnAllFlags ||
+		reqRequestedAt > now {
 		return featureFlagsResponse{
 			FeatureFlagsId:         ffID,
 			Features:               serverFeatures,
@@ -149,9 +153,10 @@ func simulateGetFeatureFlagsFixed(
 		}
 	}
 
+	// Diff: reqRequestedAt is guaranteed within [now-30days, now]
 	updatedFeatures := make([]*featureproto.Feature, 0)
 	for _, feature := range serverFeatures {
-		if feature.UpdatedAt >= reqRequestedAt { // FIX: >= to catch same-second updates
+		if feature.UpdatedAt >= reqRequestedAt {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
@@ -258,15 +263,16 @@ func simulateGetSegmentUsersBuggy(
 	}
 }
 
-// simulateGetSegmentUsersFixed replicates the FIXED GetSegmentUsers logic
-// where "None" responses preserve requestedAt and no adjustment is used.
+// simulateGetSegmentUsersFixed replicates the production logic from
+// grpcGatewayService.GetSegmentUsers after the fix.
 func simulateGetSegmentUsersFixed(
 	serverSegments []*featureproto.SegmentUsers,
 	reqSegmentIds []string,
 	reqRequestedAt int64,
 	now int64,
 ) segmentUsersResponse {
-	if reqRequestedAt < now-secondsToReturnAllFlags {
+	// All: very old cache or future requestedAt (clock skew)
+	if reqRequestedAt < now-secondsToReturnAllFlags || reqRequestedAt > now {
 		return segmentUsersResponse{
 			SegmentUsers:      serverSegments,
 			DeletedSegmentIds: []string{},
@@ -287,14 +293,15 @@ func simulateGetSegmentUsersFixed(
 		}
 	}
 
+	// Diff: reqRequestedAt is guaranteed within [now-30days, now]
 	updated := make([]*featureproto.SegmentUsers, 0)
 	for _, su := range serverSegments {
-		if su.UpdatedAt >= reqRequestedAt { // FIX: >= to catch same-second updates
+		if su.UpdatedAt >= reqRequestedAt {
 			updated = append(updated, su)
 		}
 	}
 
-	// FIX: preserve requestedAt when nothing changed
+	// None: preserve requestedAt when nothing changed
 	if len(updated) == 0 && len(deletedIDs) == 0 {
 		return segmentUsersResponse{
 			SegmentUsers:      updated,

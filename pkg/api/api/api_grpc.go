@@ -793,14 +793,10 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	// We don't include archived flags when generating the Feature Flag IDs
 	filteredArchivedFlags := s.filterOutArchivedFeatures(targetFeatures)
 	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags)
-	// Clamp requestedAt to prevent future timestamps (e.g. from cross-server clock skew)
-	// from permanently excluding all updates in the Diff filter.
-	requestedAt := min(req.RequestedAt, now.Unix())
 	// Return an empty response because nothing changed.
-	// We preserve requestedAt instead of advancing to now.Unix() so the SDK's
-	// time cursor stays anchored to when it last received actual data.
-	// This prevents the "Diff" path from missing updated features whose UpdatedAt
-	// falls behind an artificially advanced requestedAt.
+	// We preserve req.RequestedAt (clamped to now to handle clock skew)
+	// instead of advancing to now.Unix(), so the SDK's time cursor stays
+	// anchored to when it last received actual data.
 	if req.FeatureFlagsId == ffID {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone).Inc()
@@ -817,7 +813,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			FeatureFlagsId:         ffID,
 			Features:               []*featureproto.Feature{},
 			ArchivedFeatureFlagIds: make([]string, 0),
-			RequestedAt:            requestedAt,
+			RequestedAt:            min(req.RequestedAt, now.Unix()),
 		}, nil
 	}
 	s.logger.Debug(
@@ -829,8 +825,11 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			zap.Int("targetFeaturesLength", len(targetFeatures)),
 		)...,
 	)
-	// Return all the flags except archived flags
-	if req.FeatureFlagsId == "" || requestedAt < now.Unix()-secondsToReturnAllFlags {
+	// Return all flags when: first request, cache older than 30 days,
+	// or future requestedAt (clock skew) to avoid missing updates in the Diff filter.
+	if req.FeatureFlagsId == "" ||
+		req.RequestedAt < now.Unix()-secondsToReturnAllFlags ||
+		req.RequestedAt > now.Unix() {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeAll).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
@@ -841,19 +840,16 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ForceUpdate:            true,
 		}, nil
 	}
-	// Check and return only the updated feature flags.
-	// Since "None" responses no longer advance requestedAt, the SDK's requestedAt
-	// accurately reflects the last time it received data; we only clamp future values.
+	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
+	// so req.RequestedAt can be used directly without clamping.
 	updatedFeatures := make([]*featureproto.Feature, 0, len(targetFeatures))
 	archivedIDs := make([]string, 0)
 	for _, feature := range targetFeatures {
-		// Check for archived flags
 		if s.isArchivedBeforeLastThirtyDays(feature) {
 			archivedIDs = append(archivedIDs, feature.Id)
 			continue
 		}
-		// Check for updated flags
-		if feature.UpdatedAt >= requestedAt {
+		if feature.UpdatedAt >= req.RequestedAt {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
@@ -998,12 +994,9 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	}
 
 	now := time.Now().Unix()
-	// Clamp requestedAt to prevent future timestamps (e.g. from cross-server clock skew)
-	// from permanently excluding all updates in the Diff filter.
-	requestedAt := min(req.RequestedAt, now)
-
-	// Return all the flags if the last request is older than 30 days
-	if requestedAt < now-secondsToReturnAllFlags {
+	// Return all segments when: cache older than 30 days,
+	// or future requestedAt (clock skew) to avoid missing updates in the Diff filter.
+	if req.RequestedAt < now-secondsToReturnAllFlags || req.RequestedAt > now {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeAll).Inc()
 		return &gwproto.GetSegmentUsersResponse{
@@ -1021,12 +1014,11 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			deletedSegmentIDs = append(deletedSegmentIDs, id)
 		}
 	}
-	// Filter the updated segments.
-	// Since "None" responses no longer advance requestedAt, the SDK's requestedAt
-	// accurately reflects the last time it received data; we only clamp future values.
+	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
+	// so req.RequestedAt can be used directly without clamping.
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
 	for _, su := range targetSegmentUsers {
-		if su.UpdatedAt >= requestedAt {
+		if su.UpdatedAt >= req.RequestedAt {
 			updatedSegments = append(updatedSegments, su)
 		}
 	}
@@ -1039,7 +1031,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		return &gwproto.GetSegmentUsersResponse{
 			SegmentUsers:      updatedSegments,
 			DeletedSegmentIds: deletedSegmentIDs,
-			RequestedAt:       requestedAt,
+			RequestedAt:       req.RequestedAt,
 			ForceUpdate:       false,
 		}, nil
 	}
