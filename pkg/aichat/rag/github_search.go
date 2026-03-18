@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"sort"
 	"strings"
@@ -234,7 +235,11 @@ func (g *GitHubSearcher) refreshIndex(ctx context.Context) ([]indexedDoc, error)
 
 // fetchTree retrieves all doc file paths from the GitHub Trees API.
 func (g *GitHubSearcher) fetchTree(ctx context.Context) ([]string, error) {
-	u := fmt.Sprintf("%s/repos/%s/git/trees/main?recursive=1", g.apiBaseURL, docsRepo)
+	u, err := url.JoinPath(g.apiBaseURL, "repos", docsRepo, "git/trees/main")
+	if err != nil {
+		return nil, err
+	}
+	u += "?recursive=1"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
@@ -294,7 +299,10 @@ func (g *GitHubSearcher) fetchAllDocs(ctx context.Context, paths []string) []ind
 
 // fetchRawDoc fetches and processes a single document from raw.githubusercontent.com.
 func (g *GitHubSearcher) fetchRawDoc(ctx context.Context, docPath string) (indexedDoc, error) {
-	rawURL := fmt.Sprintf("%s/%s/main/%s", g.rawBaseURL, docsRepo, docPath)
+	rawURL, err := url.JoinPath(g.rawBaseURL, docsRepo, "main", docPath)
+	if err != nil {
+		return indexedDoc{}, err
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
