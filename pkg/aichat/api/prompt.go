@@ -83,4 +83,3 @@ func buildSystemPrompt(
 
 	return sb.String()
 }
-

@@ -78,7 +78,7 @@ func streamChat(
 				content = normalizeInput(content)
 			} else {
 				lastUserMessage = normalizeInput(content) // clean text for RAG (no HTML escape)
-				content = sanitizeUserInput(content)        // sanitized for LLM
+				content = sanitizeUserInput(content)      // sanitized for LLM
 			}
 			llmMessages = append(llmMessages, llm.Message{
 				Role:    role,

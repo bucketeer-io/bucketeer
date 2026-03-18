@@ -319,7 +319,11 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.writeSSEDone(w, rc)
 }
 
-func (h *chatHTTPService) writeSSEData(w http.ResponseWriter, rc *http.ResponseController, resp *aichatproto.ChatStreamResponse) {
+func (h *chatHTTPService) writeSSEData(
+	w http.ResponseWriter,
+	rc *http.ResponseController,
+	resp *aichatproto.ChatStreamResponse,
+) {
 	data, err := json.Marshal(sseDataEvent{
 		Content:      resp.Content,
 		Done:         resp.Done,
