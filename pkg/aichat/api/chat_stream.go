@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	_ "embed"
 	"html"
 	"strings"
 	"time"
@@ -189,8 +190,8 @@ func sanitizeUserInput(input string) string {
 	return html.EscapeString(normalizeInput(input))
 }
 
-const keywordExtractionPrompt = `Extract 3-5 English search keywords from the user query.
-Return only lowercase keywords separated by spaces. No explanation.`
+//go:embed prompt_keyword_extraction.txt
+var keywordExtractionPrompt string
 
 // extractSearchQuery uses the LLM to convert a user query (which may be in
 // any language) into English search keywords for RAG document scoring.
