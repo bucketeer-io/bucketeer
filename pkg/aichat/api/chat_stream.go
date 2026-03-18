@@ -74,9 +74,9 @@ func streamChat(
 			content := m.Content
 			if m.Role == aichatproto.ChatMessage_ROLE_ASSISTANT {
 				role = llm.RoleAssistant
-				content = limitInputLength(content)
+				content = normalizeInput(content)
 			} else {
-				lastUserMessage = limitInputLength(content) // clean text for RAG (no HTML escape)
+				lastUserMessage = normalizeInput(content) // clean text for RAG (no HTML escape)
 				content = sanitizeUserInput(content)        // sanitized for LLM
 			}
 			llmMessages = append(llmMessages, llm.Message{
@@ -179,21 +179,14 @@ func streamChat(
 func normalizeInput(input string) string {
 	input = newlineReplacer.Replace(input)
 	if utf8.RuneCountInString(input) > maxInputLength {
-		runes := []rune(input)
-		input = string(runes[:maxInputLength])
+		input = string([]rune(input)[:maxInputLength])
 	}
 	return strings.TrimSpace(input)
 }
 
-// sanitizeUserInput cleans user input for safety (normalize + HTML escape).
+// sanitizeUserInput normalizes and HTML-escapes user input for safe LLM injection.
 func sanitizeUserInput(input string) string {
 	return html.EscapeString(normalizeInput(input))
-}
-
-// limitInputLength applies normalization without HTML escaping.
-// Used for assistant messages and RAG queries.
-func limitInputLength(input string) string {
-	return normalizeInput(input)
 }
 
 const keywordExtractionPrompt = `Extract 3-5 English search keywords from the user query.

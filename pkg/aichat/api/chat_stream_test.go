@@ -373,7 +373,7 @@ func TestSanitizeUserInput(t *testing.T) {
 	}
 }
 
-func TestLimitInputLength(t *testing.T) {
+func TestNormalizeInput(t *testing.T) {
 	t.Parallel()
 
 	patterns := []struct {
@@ -416,7 +416,7 @@ func TestLimitInputLength(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			result := limitInputLength(p.input)
+			result := normalizeInput(p.input)
 			assert.Equal(t, p.expected, result)
 		})
 	}
