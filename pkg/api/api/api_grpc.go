@@ -850,7 +850,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			continue
 		}
 		// Check for updated flags
-		if feature.UpdatedAt > req.RequestedAt {
+		if feature.UpdatedAt >= req.RequestedAt {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
@@ -1019,7 +1019,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// accurately reflects the last time it received data, so no adjustment is needed.
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
 	for _, su := range targetSegmentUsers {
-		if su.UpdatedAt > req.RequestedAt {
+		if su.UpdatedAt >= req.RequestedAt {
 			updatedSegments = append(updatedSegments, su)
 		}
 	}

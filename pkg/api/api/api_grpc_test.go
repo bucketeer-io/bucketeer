@@ -1326,6 +1326,41 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: diff includes segments with UpdatedAt equal to RequestedAt",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					multiSegmentUsers[0], nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-5", envID).Return(
+					multiSegmentUsers[2], nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{"segment-id-2"},
+				RequestedAt: timeNow.Add(-30 * time.Minute).Unix(),
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers:      []*featureproto.SegmentUsers{multiSegmentUsers[0]},
+				DeletedSegmentIds: make([]string, 0),
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       false,
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -1807,6 +1842,39 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               make([]*featureproto.Feature, 0),
 				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            false,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: diff includes features with UpdatedAt equal to RequestedAt",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: singleFeature,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            tag,
+				FeatureFlagsId: "random-id",
+				RequestedAt:    timeNow.Add(-20 * time.Minute).Unix(),
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         singleFeatureID,
+				Features:               singleFeature,
+				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
 			},

@@ -27,6 +27,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -116,28 +117,33 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // Wait for cache propagation
+	// Poll until all 3 features are visible (no tag)
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, "", "", 0)
+		return findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req2.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "all 3 features should be visible")
 
-	// Find feature with no tag and no features ID
-	response := grpcGetFeatureFlags(t, "", "", 0)
 	assert.NotEmpty(t, response.FeatureFlagsId)
 	assert.True(t, len(response.Features) >= 3)
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req2.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
-	// Find feature with tag and no features ID
-	response = grpcGetFeatureFlags(t, tag, "", 0)
+	// Poll until both tagged features are visible
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, "", 0)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible")
+
 	assert.NotEmpty(t, response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Find feature with tag, with the same features ID, and requested at.
 	// "None" response: RequestedAt should be preserved (not advanced).
@@ -179,18 +185,19 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // Wait for cache propagation
+	// Poll until both tagged features are visible
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, "", 0)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible")
 
-	// Find feature by tag with tag and no features ID
-	requestFFID := ""
-	response := grpcGetFeatureFlags(t, tag, requestFFID, 0)
 	assert.NotEmpty(t, response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Archive feature
 	archiveFeature(t, req1.Id, client)
@@ -198,15 +205,20 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
 
-	// Find the archived flag (Diff response)
-	requestFFID = response.FeatureFlagsId
-	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
-	assert.True(t, requestFFID != response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 1, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
-	assert.Equal(t, req1.Id, response.ArchivedFeatureFlagIds[0])
+	// Poll until the archived flag appears in the Diff response
+	requestFFID := response.FeatureFlagsId
+	prevRequestedAt := response.RequestedAt
+	var diffResp *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		diffResp = grpcGetFeatureFlags(t, tag, requestFFID, prevRequestedAt)
+		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.ArchivedFeatureFlagIds) > 0
+	}, 30*time.Second, 2*time.Second, "archived flag should appear in the diff response")
+
+	assert.Equal(t, 0, len(diffResp.Features))
+	assert.Equal(t, 1, len(diffResp.ArchivedFeatureFlagIds))
+	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResp.ForceUpdate)
+	assert.Equal(t, req1.Id, diffResp.ArchivedFeatureFlagIds[0])
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
@@ -229,18 +241,19 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // Wait for cache propagation
+	// Poll until both tagged features are visible
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, "", 0)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible")
 
-	// Find feature by tag with tag and no features ID
-	requestFFID := ""
-	response := grpcGetFeatureFlags(t, tag, requestFFID, 0)
 	assert.NotEmpty(t, response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Create another Flag
 	// Feature 4
@@ -248,15 +261,20 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	featureID4 := newFeatureID(t, uuid)
 	req4 := createFeatureWithTag(t, tag, featureID4)
 
-	// Find the flag 4 (Diff response)
-	requestFFID = response.FeatureFlagsId
-	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
-	assert.True(t, requestFFID != response.FeatureFlagsId)
-	assert.Equal(t, 1, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req4.Id, response.Features))
+	// Poll until the cache has propagated and the new feature appears in the Diff response.
+	requestFFID := response.FeatureFlagsId
+	prevRequestedAt := response.RequestedAt
+	var diffResp *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		diffResp = grpcGetFeatureFlags(t, tag, requestFFID, prevRequestedAt)
+		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.Features) > 0
+	}, 30*time.Second, 2*time.Second, "feature flag 4 should appear in the diff response")
+
+	assert.Equal(t, 1, len(diffResp.Features))
+	assert.Equal(t, 0, len(diffResp.ArchivedFeatureFlagIds))
+	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResp.ForceUpdate)
+	assert.True(t, findFeatureByID(t, req4.Id, diffResp.Features))
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
@@ -279,17 +297,21 @@ func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	// Find feature by tag with tag with random id, and old requested at
+	// Poll until both tagged features are visible with random id and old requested at (31 days ago → "All")
 	requestFFID := "random-id"
 	requestedAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
-	response := grpcGetFeatureFlags(t, tag, requestFFID, requestedAt)
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, requestFFID, requestedAt)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible with old requested at")
+
 	assert.True(t, requestFFID != response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 }
 
 func findFeatureByID(t *testing.T, id string, features []*featureproto.Feature) bool {
