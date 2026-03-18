@@ -50,7 +50,7 @@ func buildSystemPrompt(
 	// Add page context
 	if ctx != nil {
 		sb.WriteString("\n## Current Context\n")
-		fmt.Fprintf(&sb, "Page: %s\n", pageTypeToString(ctx.PageType))
+		fmt.Fprintf(&sb, "Page: %s\n", ctx.PageType.String())
 		if ctx.FeatureId != "" {
 			featureId := strings.NewReplacer("\n", "", "\r", "").Replace(ctx.FeatureId)
 			if len([]rune(featureId)) > 100 {
@@ -84,20 +84,3 @@ func buildSystemPrompt(
 	return sb.String()
 }
 
-// pageTypeToString converts a PageType enum to a human-readable string.
-func pageTypeToString(pt aichatproto.PageContext_PageType) string {
-	switch pt {
-	case aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS:
-		return "Feature Flags"
-	case aichatproto.PageContext_PAGE_TYPE_TARGETING:
-		return "Targeting"
-	case aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS:
-		return "Experiments"
-	case aichatproto.PageContext_PAGE_TYPE_SEGMENTS:
-		return "Segments"
-	case aichatproto.PageContext_PAGE_TYPE_AUTOOPS:
-		return "Auto Ops"
-	default:
-		return "Dashboard"
-	}
-}

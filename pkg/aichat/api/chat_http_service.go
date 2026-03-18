@@ -41,13 +41,15 @@ import (
 
 const maxRequestBodyBytes = 64 * 1024 // 64KB
 
-const (
-	httpPageTypeFeatureFlags = "feature_flags"
-	httpPageTypeTargeting    = "targeting"
-	httpPageTypeExperiments  = "experiments"
-	httpPageTypeSegments     = "segments"
-	httpPageTypeAutoops      = "autoops"
-)
+// httpPageTypeMap maps HTTP page type strings from the frontend
+// to proto PageType enum values.
+var httpPageTypeMap = map[string]aichatproto.PageContext_PageType{
+	"feature_flags": aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS,
+	"targeting":     aichatproto.PageContext_PAGE_TYPE_TARGETING,
+	"experiments":   aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS,
+	"segments":      aichatproto.PageContext_PAGE_TYPE_SEGMENTS,
+	"autoops":       aichatproto.PageContext_PAGE_TYPE_AUTOOPS,
+}
 
 // sseDataEvent represents the data payload for an SSE data event.
 type sseDataEvent struct {
@@ -371,18 +373,9 @@ func (h *chatHTTPService) toProtoRequest(req *ChatHTTPRequest) *aichatproto.Chat
 
 	var pageContext *aichatproto.PageContext
 	if req.PageContext != nil {
-		pageType := aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED
-		switch req.PageContext.PageType {
-		case httpPageTypeFeatureFlags:
-			pageType = aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS
-		case httpPageTypeTargeting:
-			pageType = aichatproto.PageContext_PAGE_TYPE_TARGETING
-		case httpPageTypeExperiments:
-			pageType = aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS
-		case httpPageTypeSegments:
-			pageType = aichatproto.PageContext_PAGE_TYPE_SEGMENTS
-		case httpPageTypeAutoops:
-			pageType = aichatproto.PageContext_PAGE_TYPE_AUTOOPS
+		pageType, ok := httpPageTypeMap[req.PageContext.PageType]
+		if !ok {
+			pageType = aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED
 		}
 		pageContext = &aichatproto.PageContext{
 			PageType:  pageType,

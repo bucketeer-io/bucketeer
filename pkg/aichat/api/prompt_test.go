@@ -51,7 +51,7 @@ func TestBuildSystemPrompt(t *testing.T) {
 				FeatureId: "my-flag",
 			},
 			contains: []string{
-				"Page: Targeting",
+				"Page: PAGE_TYPE_TARGETING",
 				"Flag ID: my-flag",
 			},
 		},
@@ -121,30 +121,6 @@ func TestBuildSystemPrompt(t *testing.T) {
 	}
 }
 
-func TestPageTypeToString(t *testing.T) {
-	t.Parallel()
-
-	patterns := []struct {
-		desc     string
-		pageType aichatproto.PageContext_PageType
-		expected string
-	}{
-		{"Feature Flags", aichatproto.PageContext_PAGE_TYPE_FEATURE_FLAGS, "Feature Flags"},
-		{"Targeting", aichatproto.PageContext_PAGE_TYPE_TARGETING, "Targeting"},
-		{"Experiments", aichatproto.PageContext_PAGE_TYPE_EXPERIMENTS, "Experiments"},
-		{"Segments", aichatproto.PageContext_PAGE_TYPE_SEGMENTS, "Segments"},
-		{"Auto Ops", aichatproto.PageContext_PAGE_TYPE_AUTOOPS, "Auto Ops"},
-		{"Dashboard", aichatproto.PageContext_PAGE_TYPE_UNSPECIFIED, "Dashboard"},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
-			result := pageTypeToString(p.pageType)
-			assert.Equal(t, p.expected, result)
-		})
-	}
-}
 
 func TestBuildSystemPromptLanguage(t *testing.T) {
 	t.Parallel()
