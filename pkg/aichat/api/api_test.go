@@ -46,7 +46,7 @@ func createContextWithToken(t *testing.T) context.Context {
 		Email:         "test@example.com",
 		IsSystemAdmin: true,
 	}
-	return context.WithValue(context.TODO(), rpc.AccessTokenKey, tk)
+	return context.WithValue(t.Context(), rpc.AccessTokenKey, tk)
 }
 
 func createAIChatServiceForTest(
@@ -130,7 +130,7 @@ func TestGetSuggestions(t *testing.T) {
 	}{
 		{
 			desc: "error: unauthenticated",
-			ctx:  context.Background(),
+			ctx:  t.Context(),
 			req: &aichatproto.GetSuggestionsRequest{
 				EnvironmentId: "env-1",
 			},
@@ -199,7 +199,7 @@ func TestChat(t *testing.T) {
 	}{
 		{
 			desc: "error: unauthenticated",
-			ctx:  context.Background(),
+			ctx:  t.Context(),
 			req: &aichatproto.ChatRequest{
 				EnvironmentId: "env-1",
 				Messages: []*aichatproto.ChatMessage{

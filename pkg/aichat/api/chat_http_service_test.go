@@ -453,7 +453,7 @@ func TestChatHTTPService_RateLimited(t *testing.T) {
 		token: &token.AccessToken{Email: "test@example.com"},
 	}
 
-	limiter := ratelimit.NewLimiter(context.Background(), ratelimit.Config{
+	limiter := ratelimit.NewLimiter(t.Context(), ratelimit.Config{
 		RequestsPerMinute: 60,
 		BurstSize:         1, // Only allow 1 request
 	})

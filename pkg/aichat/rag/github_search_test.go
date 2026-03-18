@@ -15,7 +15,6 @@
 package rag
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -81,7 +80,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "segments", 2)
+		docs, err := searcher.Search(t.Context(), "segments", 2)
 		require.NoError(t, err)
 		require.NotEmpty(t, docs)
 
@@ -106,7 +105,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "SDK", 3)
+		docs, err := searcher.Search(t.Context(), "SDK", 3)
 		require.NoError(t, err)
 		require.NotEmpty(t, docs)
 
@@ -131,7 +130,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "testing", 2)
+		docs, err := searcher.Search(t.Context(), "testing", 2)
 		require.NoError(t, err)
 		assert.Len(t, docs, 2)
 	})
@@ -139,7 +138,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 	t.Run("returns nil for empty query", func(t *testing.T) {
 		t.Parallel()
 		searcher := NewGitHubSearcher(zap.NewNop(), "")
-		docs, err := searcher.Search(context.Background(), "", 3)
+		docs, err := searcher.Search(t.Context(), "", 3)
 		assert.NoError(t, err)
 		assert.Nil(t, docs)
 	})
@@ -147,7 +146,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 	t.Run("returns nil for zero topK", func(t *testing.T) {
 		t.Parallel()
 		searcher := NewGitHubSearcher(zap.NewNop(), "")
-		docs, err := searcher.Search(context.Background(), "test", 0)
+		docs, err := searcher.Search(t.Context(), "test", 0)
 		assert.NoError(t, err)
 		assert.Nil(t, docs)
 	})
@@ -163,7 +162,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher := NewGitHubSearcher(zap.NewNop(), "")
 		searcher.apiBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "test", 3)
+		docs, err := searcher.Search(t.Context(), "test", 3)
 		assert.Error(t, err)
 		assert.Nil(t, docs)
 	})
@@ -180,7 +179,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "go sdk", 1)
+		docs, err := searcher.Search(t.Context(), "go sdk", 1)
 		require.NoError(t, err)
 		require.Len(t, docs, 1)
 		assert.Equal(t, "sdk/server-side/go", docs[0].Metadata.Category)
@@ -210,7 +209,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "valid", 10)
+		docs, err := searcher.Search(t.Context(), "valid", 10)
 		require.NoError(t, err)
 		// Only docs/valid.mdx should be indexed
 		assert.Len(t, docs, 1)
@@ -241,12 +240,12 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.rawBaseURL = server.URL
 
 		// First call should fetch the tree
-		_, err := searcher.Search(context.Background(), "test", 1)
+		_, err := searcher.Search(t.Context(), "test", 1)
 		require.NoError(t, err)
 		assert.Equal(t, 1, treeCallCount)
 
 		// Second call should use cache
-		_, err = searcher.Search(context.Background(), "test", 1)
+		_, err = searcher.Search(t.Context(), "test", 1)
 		require.NoError(t, err)
 		assert.Equal(t, 1, treeCallCount)
 	})
@@ -263,7 +262,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "zzzznonexistent", 3)
+		docs, err := searcher.Search(t.Context(), "zzzznonexistent", 3)
 		require.NoError(t, err)
 		assert.Empty(t, docs)
 	})
@@ -294,7 +293,7 @@ func TestGitHubSearcherSearch(t *testing.T) {
 		searcher.apiBaseURL = server.URL
 		searcher.rawBaseURL = server.URL
 
-		docs, err := searcher.Search(context.Background(), "successfully", 3)
+		docs, err := searcher.Search(t.Context(), "successfully", 3)
 		require.NoError(t, err)
 		assert.Len(t, docs, 1)
 		assert.Equal(t, "OK", docs[0].Metadata.Title)

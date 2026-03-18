@@ -15,7 +15,6 @@
 package ratelimit
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -49,7 +48,7 @@ func TestNewLimiter(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			l := NewLimiter(context.Background(), p.config)
+			l := NewLimiter(t.Context(), p.config)
 			assert.NotNil(t, l)
 			assert.Equal(t, p.expectedRequestsPerMin, l.config.RequestsPerMinute)
 			assert.Equal(t, p.expectedBurstSize, l.config.BurstSize)
@@ -100,7 +99,7 @@ func TestAllow(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: p.burstSize})
+			l := NewLimiter(t.Context(), Config{RequestsPerMinute: 60, BurstSize: p.burstSize})
 			p.setup(l)
 			assert.Equal(t, p.expected, l.Allow(p.key))
 		})
@@ -109,7 +108,7 @@ func TestAllow(t *testing.T) {
 
 func TestAllow_ConcurrentAccess(t *testing.T) {
 	t.Parallel()
-	l := NewLimiter(context.Background(), Config{RequestsPerMinute: 600, BurstSize: 50})
+	l := NewLimiter(t.Context(), Config{RequestsPerMinute: 600, BurstSize: 50})
 
 	var wg sync.WaitGroup
 	for i := 0; i < 10; i++ {
@@ -157,7 +156,7 @@ func TestCleanup(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			l := NewLimiter(context.Background(), Config{RequestsPerMinute: 60, BurstSize: 1})
+			l := NewLimiter(t.Context(), Config{RequestsPerMinute: 60, BurstSize: 1})
 			p.setup(l)
 			assert.Equal(t, p.expected, l.Allow("user1"))
 		})

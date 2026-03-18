@@ -65,7 +65,7 @@ func TestStreamChat(t *testing.T) {
 			EnvironmentId: "env-1",
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, nil, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(t.Context(), mockClient, nil, nil, cfg, req, zap.NewNop())
 
 		var chunks []*aichatproto.ChatStreamResponse
 		for chunk := range respChan {
@@ -107,7 +107,7 @@ func TestStreamChat(t *testing.T) {
 			EnvironmentId: "env-1",
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, nil, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(t.Context(), mockClient, nil, nil, cfg, req, zap.NewNop())
 
 		// Drain response channel
 		for range respChan {
@@ -168,7 +168,7 @@ func TestStreamChat(t *testing.T) {
 			},
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, mockFeatureClient, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(t.Context(), mockClient, nil, mockFeatureClient, cfg, req, zap.NewNop())
 		for range respChan {
 		}
 		<-chatErrChan
@@ -219,7 +219,7 @@ func TestStreamChat(t *testing.T) {
 			},
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, mockFeatureClient, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(t.Context(), mockClient, nil, mockFeatureClient, cfg, req, zap.NewNop())
 
 		var chunks []*aichatproto.ChatStreamResponse
 		for chunk := range respChan {
@@ -267,7 +267,7 @@ func TestStreamChat(t *testing.T) {
 			},
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, mockFeatureClient, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(t.Context(), mockClient, nil, mockFeatureClient, cfg, req, zap.NewNop())
 		for range respChan {
 		}
 		<-chatErrChan
@@ -307,7 +307,7 @@ func TestStreamChat(t *testing.T) {
 			EnvironmentId: "env-1",
 		}
 
-		respChan, chatErrChan := streamChat(context.Background(), mockClient, nil, nil, cfg, req, zap.NewNop())
+		respChan, chatErrChan := streamChat(t.Context(), mockClient, nil, nil, cfg, req, zap.NewNop())
 		for range respChan {
 		}
 		<-chatErrChan
@@ -505,7 +505,7 @@ func TestExtractSearchQuery(t *testing.T) {
 			if p.setupClient != nil {
 				client = p.setupClient(ctrl)
 			}
-			result, err := extractSearchQuery(context.Background(), client, p.query, "test-model")
+			result, err := extractSearchQuery(t.Context(), client, p.query, "test-model")
 			if p.expectErr {
 				assert.Error(t, err)
 			} else {
