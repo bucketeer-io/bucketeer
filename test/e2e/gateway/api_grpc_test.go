@@ -214,11 +214,18 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.ArchivedFeatureFlagIds) > 0
 	}, 30*time.Second, 2*time.Second, "archived flag should appear in the diff response")
 
-	assert.Equal(t, 0, len(diffResp.Features))
-	assert.Equal(t, 1, len(diffResp.ArchivedFeatureFlagIds))
+	// With >= filter, features created in the same second as the previous
+	// response's RequestedAt may also be included (harmless re-send).
+	assert.True(t, len(diffResp.ArchivedFeatureFlagIds) >= 1, "at least the archived flag should be present")
 	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.False(t, diffResp.ForceUpdate)
-	assert.Equal(t, req1.Id, diffResp.ArchivedFeatureFlagIds[0])
+	foundArchived := false
+	for _, id := range diffResp.ArchivedFeatureFlagIds {
+		if id == req1.Id {
+			foundArchived = true
+		}
+	}
+	assert.True(t, foundArchived, "archived feature should be in ArchivedFeatureFlagIds")
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
