@@ -121,11 +121,12 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc           string
-		context        context.Context
-		setup          func(*AccountService)
-		req            *accountproto.GetAPIKeyRequest
-		getExpectedErr func() error
+		desc                  string
+		context               context.Context
+		setup                 func(*AccountService)
+		req                   *accountproto.GetAPIKeyRequest
+		getExpectedErr        func() error
+		expectedObfuscatedKey string // if set, response API key string must match (obfuscation check)
 	}{
 		{
 			desc:    "errMissingAPIKeyID",
@@ -164,6 +165,44 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			getExpectedErr: func() error {
 				return nil
 			},
+		},
+		{
+			desc:    "success obfuscates API key",
+			context: createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.APIKey{
+					APIKey: &accountproto.APIKey{
+						Id:     "id",
+						ApiKey: "abcdefghijklmnop",
+					},
+				}, nil)
+			},
+			req: &accountproto.GetAPIKeyRequest{Id: "id"},
+			getExpectedErr: func() error {
+				return nil
+			},
+			expectedObfuscatedKey: "abcd....mnop",
+		},
+		{
+			desc:    "success short API key returned as-is",
+			context: createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.APIKey{
+					APIKey: &accountproto.APIKey{
+						Id:     "id",
+						ApiKey: "short",
+					},
+				}, nil)
+			},
+			req: &accountproto.GetAPIKeyRequest{Id: "id"},
+			getExpectedErr: func() error {
+				return nil
+			},
+			expectedObfuscatedKey: "short",
 		},
 		{
 			desc:    "success with viewer account",
@@ -236,6 +275,104 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			assert.Equal(t, p.getExpectedErr(), err)
 			if err == nil {
 				assert.NotNil(t, res)
+				if p.expectedObfuscatedKey != "" {
+					assert.Equal(t, p.expectedObfuscatedKey, res.ApiKey.ApiKey, "obfuscated API key should match first 4 + .... + last 4")
+				}
+			}
+		})
+	}
+}
+
+func TestGetEnvironmentAPIKeyMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc                  string
+		setup                 func(*AccountService)
+		req                   *accountproto.GetEnvironmentAPIKeyRequest
+		getExpectedErr        func() error
+		expectedObfuscatedKey string
+	}{
+		{
+			desc: "errMissingAPIKeyID",
+			req:  &accountproto.GetEnvironmentAPIKeyRequest{ApiKey: ""},
+			getExpectedErr: func() error {
+				return statusMissingAPIKeyID.Err()
+			},
+		},
+		{
+			desc: "errNotFound",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAPIKeyNotFound)
+			},
+			req: &accountproto.GetEnvironmentAPIKeyRequest{ApiKey: "key"},
+			getExpectedErr: func() error {
+				return statusAPIKeyNotFound.Err()
+			},
+		},
+		{
+			desc: "success obfuscates API key",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentAPIKey{
+					EnvironmentAPIKey: &accountproto.EnvironmentAPIKey{
+						ApiKey: &accountproto.APIKey{
+							Id:     "id",
+							ApiKey: "abcdefghijklmnop",
+						},
+					},
+				}, nil)
+			},
+			req: &accountproto.GetEnvironmentAPIKeyRequest{ApiKey: "abcdefghijklmnop"},
+			getExpectedErr: func() error {
+				return nil
+			},
+			expectedObfuscatedKey: "abcd....mnop",
+		},
+		{
+			desc: "success short API key returned as-is",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentAPIKey{
+					EnvironmentAPIKey: &accountproto.EnvironmentAPIKey{
+						ApiKey: &accountproto.APIKey{
+							Id:     "id",
+							ApiKey: "short",
+						},
+					},
+				}, nil)
+			},
+			req: &accountproto.GetEnvironmentAPIKeyRequest{ApiKey: "short"},
+			getExpectedErr: func() error {
+				return nil
+			},
+			expectedObfuscatedKey: "short",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx := context.Background()
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			ctx = setToken(ctx, true)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			res, err := service.GetEnvironmentAPIKey(ctx, p.req)
+			assert.Equal(t, p.getExpectedErr(), err, p.desc)
+			if err == nil {
+				require.NotNil(t, res)
+				if p.expectedObfuscatedKey != "" {
+					assert.Equal(t, p.expectedObfuscatedKey, res.EnvironmentApiKey.ApiKey.ApiKey, "obfuscated API key should match")
+				}
 			}
 		})
 	}
@@ -357,6 +494,40 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			expected: &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
+			getExpectedErr: func() error {
+				return nil
+			},
+		},
+		{
+			desc:    "success obfuscates API keys in list",
+			context: createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.APIKey{
+					{
+						Id:     "id1",
+						Name:   "key1",
+						ApiKey: "1234567890abcdef",
+					},
+				}, 1, int64(1), nil)
+			},
+			input: &accountproto.ListAPIKeysRequest{
+				OrganizationId: "org0",
+				PageSize:       10,
+				Cursor:         "0",
+			},
+			expected: &accountproto.ListAPIKeysResponse{
+				ApiKeys: []*accountproto.APIKey{
+					{
+						Id:     "id1",
+						Name:   "key1",
+						ApiKey: "1234....cdef",
+					},
+				},
+				Cursor:     "1",
+				TotalCount: 1,
+			},
 			getExpectedErr: func() error {
 				return nil
 			},

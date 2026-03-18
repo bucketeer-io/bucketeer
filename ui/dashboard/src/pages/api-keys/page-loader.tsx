@@ -20,7 +20,7 @@ import { APIKey } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import ConfirmModal from 'elements/confirm-modal';
 import APIKeyCreateUpdateModal from './api-key-modal/api-key-create-update-modal';
-import ApiKeyCreatedSecretModal from './api-key-modal/api-key-created-secret-modal';
+import APIKeyCreatedSecretModal from './api-key-modal/api-key-created-secret-modal';
 import PageContent from './page-content';
 import { APIKeyActionsType } from './types';
 
@@ -175,7 +175,7 @@ const PageLoader = () => {
           onCreatedWithSecret={setCreatedApiKeySecret}
         />
       )}
-      <ApiKeyCreatedSecretModal
+      <APIKeyCreatedSecretModal
         apiKeySecret={createdApiKeySecret}
         onClose={() => setCreatedApiKeySecret(null)}
       />

@@ -6,15 +6,15 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 
-type ApiKeyCreatedSecretModalProps = {
+type APIKeyCreatedSecretModalProps = {
   apiKeySecret: string | null;
   onClose: () => void;
 };
 
-const ApiKeyCreatedSecretModal = ({
+const APIKeyCreatedSecretModal = ({
   apiKeySecret,
   onClose
-}: ApiKeyCreatedSecretModalProps) => {
+}: APIKeyCreatedSecretModalProps) => {
   const { t } = useTranslation(['message']);
   const { notify } = useToast();
 
@@ -69,4 +69,4 @@ const ApiKeyCreatedSecretModal = ({
   );
 };
 
-export default ApiKeyCreatedSecretModal;
+export default APIKeyCreatedSecretModal;
