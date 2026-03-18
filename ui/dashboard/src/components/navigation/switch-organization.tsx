@@ -4,6 +4,7 @@ import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
+import { allowNavigation, useConfirm } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { clearCurrentEnvIdStorage } from 'storage/environment';
 import {
@@ -66,6 +67,7 @@ const SwitchOrganization = ({
   const { t } = useTranslation(['common', 'form']);
   const { myOrganizations, onMeFetcher } = useAuth();
   const { errorNotify } = useToast();
+  const { isShow: showConfirm, setIsShow, confirm, options } = useConfirm();
   const organizationId = getOrgIdStorage();
   const [searchValue, setSearchValue] = useState('');
   const [currentOrganization, setCurrentOrganization] = useState(
@@ -105,7 +107,7 @@ const SwitchOrganization = ({
             await onMeFetcher({ organizationId });
             onCloseSwitchOrg();
             onCloseSetting();
-            navigate(PAGE_PATH_ROOT);
+            allowNavigation(() => navigate(PAGE_PATH_ROOT));
           }
         }
       } catch (error) {
@@ -117,8 +119,32 @@ const SwitchOrganization = ({
     [currentOrganization]
   );
 
+  const onChangeOrganizationWithConfirm = useCallback(
+    (organizationId: string) => {
+      if (showConfirm) {
+        confirm({
+          title: 'message:leave-page-unsaved-changes',
+          message: 'message:leave-page-unsaved-changes-content',
+          onConfirm: () => {
+            setIsShow(false);
+            onChangeOrganization(organizationId);
+            setCurrentOrganization(organizationId);
+          },
+          onCancel: () => {
+            onCloseSwitchOrg();
+          }
+        });
+      } else {
+        setCurrentOrganization(organizationId);
+        onChangeOrganization(organizationId);
+      }
+    },
+    [showConfirm, onChangeOrganization]
+  );
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      if (options) return;
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         onCloseSwitchOrg();
       }
@@ -128,7 +154,7 @@ const SwitchOrganization = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [options]);
 
   useEffect(() => {
     if (!isOpen) setSearchValue('');
@@ -179,8 +205,7 @@ const SwitchOrganization = ({
                   active={currentOrganization === item.id}
                   onClick={() => {
                     if (currentOrganization === item.id) return;
-                    onChangeOrganization(item.id);
-                    setCurrentOrganization(item.id);
+                    onChangeOrganizationWithConfirm(item.id);
                   }}
                 />
               ))}

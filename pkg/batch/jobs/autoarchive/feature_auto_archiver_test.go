@@ -69,7 +69,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, true),
+						createTestEnvironment("env-1", 60, true),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).
@@ -83,7 +83,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, true),
+						createTestEnvironment("env-1", 60, true),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).
@@ -98,7 +98,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, false),
+						createTestEnvironment("env-1", 60, false),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).
@@ -117,7 +117,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, false),
+						createTestEnvironment("env-1", 60, false),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).
@@ -141,7 +141,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, true),
+						createTestEnvironment("env-1", 60, true),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).
@@ -170,7 +170,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, false),
+						createTestEnvironment("env-1", 60, false),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).
@@ -197,8 +197,8 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, false),
-						createTestEnvironment("env-2", 60, false),
+						createTestEnvironment("env-1", 60, false),
+						createTestEnvironment("env-2", 30, false),
 					}, nil)
 				// First environment
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
@@ -229,7 +229,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
 					ListAutoArchiveEnabledEnvironments(gomock.Any()).
 					Return([]*environmentdomain.EnvironmentV2{
-						createTestEnvironment("env-1", 90, false),
+						createTestEnvironment("env-1", 60, false),
 					}, nil)
 				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
 					ListFeatures(gomock.Any(), gomock.Any()).

@@ -625,6 +625,25 @@ func (mr *MockPipeClientMockRecorder) PFCount(keys ...any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFCount", reflect.TypeOf((*MockPipeClient)(nil).PFCount), keys...)
 }
 
+// PFMerge mocks base method.
+func (m *MockPipeClient) PFMerge(dest string, keys ...string) *redis0.StatusCmd {
+	m.ctrl.T.Helper()
+	varargs := []any{dest}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFMerge", varargs...)
+	ret0, _ := ret[0].(*redis0.StatusCmd)
+	return ret0
+}
+
+// PFMerge indicates an expected call of PFMerge.
+func (mr *MockPipeClientMockRecorder) PFMerge(dest any, keys ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{dest}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFMerge", reflect.TypeOf((*MockPipeClient)(nil).PFMerge), varargs...)
+}
+
 // SAdd mocks base method.
 func (m *MockPipeClient) SAdd(key string, members ...any) *redis0.IntCmd {
 	m.ctrl.T.Helper()

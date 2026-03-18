@@ -115,22 +115,21 @@ Note: We use the persistent Redis cluster to avoid heavy load on the cache Redis
 
 #### Redis Keys
 
-| Key Pattern                      | Data Type   | Purpose                      | TTL    |
-| -------------------------------- | ----------- | ---------------------------- | ------ |
-| `{envId:sourceId:au}:d:yyyyMMdd` | HyperLogLog | Daily DAU                    | 35days |
-| `{envId:sourceId:au}:m:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) | 65days |
+| Key Pattern                   | Data Type   | Purpose                      | TTL    |
+| ----------------------------- | ----------- | ---------------------------- | ------ |
+| `envId:dau:sourceId:yyyyMMdd` | HyperLogLog | Daily DAU                    | 35days |
+| `envId:mau:sourceId:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) | 65days |
 
-Using the hash tag `{envId:sourceId:au}` to ensure that multiple keys are allocated in the same hash slot.
-See https://redis.io/topics/cluster-spec#keys-hash-tags.
+Hash tags (`{}`) are not needed because `pkg/redis/v3/redis.go` PFMerge handles cross-slot merging transparently.
 
 
 #### Processing Flow
 
-| Timing       | Process                         | Command                                                                       |
-| ------------ | ------------------------------- | ----------------------------------------------------------------------------- |
-| Near-Realtime     | Add user ID to DAU              | `PFADD {envId:sourceId:au}:d:yyyyMMdd {user_id}`                              |
-| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE {envId:sourceId:au}:m:yyyyMM {envId:sourceId:au}:d:yyyyMMdd`         |
-| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT {envId:sourceId:au}:m:yyyyMM`<br>2. `UPSERT INTO monthly_summary` |
+| Timing        | Process                         | Command                                                                    |
+| ------------- | ------------------------------- | -------------------------------------------------------------------------- |
+| Near-Realtime | Add user ID to DAU              | `PFADD envId:dau:sourceId:yyyyMMdd {user_id}`                              |
+| Daily (0:00)  | Merge previous day's DAU to MAU | `PFMERGE envId:mau:sourceId:yyyyMM envId:dau:sourceId:yyyyMMdd`            |
+| Daily (0:00)  | UPSERT MAU to RDB               | 1. `PFCOUNT envId:mau:sourceId:yyyyMM`<br>2. `UPSERT INTO monthly_summary` |
 
 
 ## Details

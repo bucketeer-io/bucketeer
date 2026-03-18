@@ -63,14 +63,7 @@ import (
 const (
 	listRequestSize         = 500
 	secondsToReturnAllFlags = 30 * 24 * 60 * 60 // 30 days
-	// secondsForAdjustment is a safety buffer subtracted from the SDK's requestedAt timestamp
-	// when filtering for updated items. This handles:
-	// - Minor clock skew between SDK and server
-	// - Race conditions where items are updated during the request window
-	// - Near-simultaneous updates that might otherwise be missed
-	// The value should be small enough to avoid excessive duplicate data in responses.
-	secondsForAdjustment  = 10
-	obfuscateAPIKeyLength = 4
+	obfuscateAPIKeyLength   = 4
 )
 
 var (
@@ -800,7 +793,10 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	// We don't include archived flags when generating the Feature Flag IDs
 	filteredArchivedFlags := s.filterOutArchivedFeatures(targetFeatures)
 	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags)
-	// Return an empty response because nothing changed
+	// Return an empty response because nothing changed.
+	// We preserve req.RequestedAt (clamped to now to handle clock skew)
+	// instead of advancing to now.Unix(), so the SDK's time cursor stays
+	// anchored to when it last received actual data.
 	if req.FeatureFlagsId == ffID {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone).Inc()
@@ -817,7 +813,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			FeatureFlagsId:         ffID,
 			Features:               []*featureproto.Feature{},
 			ArchivedFeatureFlagIds: make([]string, 0),
-			RequestedAt:            now.Unix(),
+			RequestedAt:            min(req.RequestedAt, now.Unix()),
 		}, nil
 	}
 	s.logger.Debug(
@@ -829,8 +825,11 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			zap.Int("targetFeaturesLength", len(targetFeatures)),
 		)...,
 	)
-	// Return all the flags except archived flags
-	if req.FeatureFlagsId == "" || req.RequestedAt < now.Unix()-secondsToReturnAllFlags {
+	// Return all flags when: first request, cache older than 30 days,
+	// or future requestedAt (clock skew) to avoid missing updates in the Diff filter.
+	if req.FeatureFlagsId == "" ||
+		req.RequestedAt < now.Unix()-secondsToReturnAllFlags ||
+		req.RequestedAt > now.Unix() {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeAll).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
@@ -841,20 +840,16 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ForceUpdate:            true,
 		}, nil
 	}
-	// Check and return only the updated feature flags.
-	// We subtract a small buffer (secondsForAdjustment) from the SDK's requestedAt
-	// to account for clock skew and ensure recently updated flags aren't missed.
-	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
+	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
+	// so req.RequestedAt can be used directly without clamping.
 	updatedFeatures := make([]*featureproto.Feature, 0, len(targetFeatures))
 	archivedIDs := make([]string, 0)
 	for _, feature := range targetFeatures {
-		// Check for archived flags
 		if s.isArchivedBeforeLastThirtyDays(feature) {
 			archivedIDs = append(archivedIDs, feature.Id)
 			continue
 		}
-		// Check for updated flags
-		if feature.UpdatedAt > adjustedRequestedAt {
+		if feature.UpdatedAt >= req.RequestedAt {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
@@ -998,14 +993,16 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		targetSegmentUsers = append(targetSegmentUsers, segmentUsers)
 	}
 
-	// Return all the flags if the last request is older than 30 days
-	if req.RequestedAt < time.Now().Unix()-secondsToReturnAllFlags {
+	now := time.Now().Unix()
+	// Return all segments when: cache older than 30 days,
+	// or future requestedAt (clock skew) to avoid missing updates in the Diff filter.
+	if req.RequestedAt < now-secondsToReturnAllFlags || req.RequestedAt > now {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeAll).Inc()
 		return &gwproto.GetSegmentUsersResponse{
 			SegmentUsers:      targetSegmentUsers,
 			DeletedSegmentIds: make([]string, 0),
-			RequestedAt:       time.Now().Unix(),
+			RequestedAt:       now,
 			ForceUpdate:       true,
 		}, nil
 	}
@@ -1017,30 +1014,33 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			deletedSegmentIDs = append(deletedSegmentIDs, id)
 		}
 	}
-
-	// Filter the updated segments.
-	// We subtract a small buffer (secondsForAdjustment) from the SDK's requestedAt
-	// to account for clock skew and ensure recently updated segments aren't missed.
+	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
+	// so req.RequestedAt can be used directly without clamping.
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
-	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
 	for _, su := range targetSegmentUsers {
-		if su.UpdatedAt > adjustedRequestedAt {
+		if su.UpdatedAt >= req.RequestedAt {
 			updatedSegments = append(updatedSegments, su)
 		}
 	}
 
-	// Check if there is a difference when compared to the last request
+	// When nothing changed, preserve the SDK's requestedAt so its time cursor
+	// stays anchored to the last actual data sync.
 	if len(updatedSegments) == 0 && len(deletedSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeNone).Inc()
-	} else {
-		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
-			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeDiff).Inc()
+		return &gwproto.GetSegmentUsersResponse{
+			SegmentUsers:      updatedSegments,
+			DeletedSegmentIds: deletedSegmentIDs,
+			RequestedAt:       req.RequestedAt,
+			ForceUpdate:       false,
+		}, nil
 	}
+	getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
+		envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeDiff).Inc()
 	return &gwproto.GetSegmentUsersResponse{
 		SegmentUsers:      updatedSegments,
 		DeletedSegmentIds: deletedSegmentIDs,
-		RequestedAt:       time.Now().Unix(),
+		RequestedAt:       now,
 		ForceUpdate:       false,
 	}, nil
 }

@@ -53,6 +53,7 @@ env:
   nonPersistentChildRedis:
     addresses:
   experimentLockTTL: 10m
+  prometheusURL:
 
 affinity: {}
 
@@ -201,4 +202,7 @@ cronjob:
     - name: scheduled-flag-change-executor
       jobId: ScheduledFlagChangeExecutor
       schedule: "* * * * *"
+    - name: monthly-summarizer
+      jobId: MonthlySummarizer
+      schedule: "2 0 * * *"
 terminationGracePeriodSeconds: 60
