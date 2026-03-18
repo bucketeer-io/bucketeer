@@ -74,7 +74,7 @@ func TestGetSuggestionsForPage(t *testing.T) {
 		},
 		{
 			desc:        "returns nil for nil page context",
-			pageContext:  nil,
+			pageContext: nil,
 			expectedNil: true,
 		},
 	}

@@ -121,7 +121,6 @@ func TestBuildSystemPrompt(t *testing.T) {
 	}
 }
 
-
 func TestBuildSystemPromptLanguage(t *testing.T) {
 	t.Parallel()
 
