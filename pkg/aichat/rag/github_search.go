@@ -280,7 +280,7 @@ func (g *GitHubSearcher) fetchAllDocs(ctx context.Context, paths []string) []ind
 			doc, err := g.fetchRawDoc(gCtx, p)
 			if err != nil {
 				g.logger.Warn("Failed to fetch doc", zap.Error(err))
-				return nil // graceful degradation
+				return nil
 			}
 			mu.Lock()
 			docs = append(docs, doc)

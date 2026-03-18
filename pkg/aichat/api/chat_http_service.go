@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -258,9 +259,17 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Convert to proto request
 	protoReq := h.toProtoRequest(&req)
 
-	// Check for SSE support before setting headers
-	flusher, ok := w.(http.Flusher)
-	if !ok {
+	// Use ResponseController for explicit streaming control.
+	// Flush() returns an error so we can detect write failures.
+	rc := http.NewResponseController(w)
+	if _, ok := w.(http.Flusher); !ok {
+		writeJSONError(w, "Streaming not supported", http.StatusInternalServerError)
+		return
+	}
+	// Enable full duplex so we may read from Request.Body while writing the response.
+	// For HTTP/1 this is required for interleaved read/write; for HTTP/2 it is already allowed.
+	if err := rc.EnableFullDuplex(); err != nil && !errors.Is(err, http.ErrNotSupported) {
+		h.logger.Warn("EnableFullDuplex failed", zap.Error(err))
 		writeJSONError(w, "Streaming not supported", http.StatusInternalServerError)
 		return
 	}
@@ -289,8 +298,8 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			if err != nil {
-				h.writeSSEError(w, flusher, err)
-				h.writeSSEDone(w, flusher)
+				h.writeSSEError(w, rc, err)
+				h.writeSSEDone(w, rc)
 				return
 			}
 		case resp, ok := <-responseChan:
@@ -298,17 +307,17 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				responseChan = nil
 				continue
 			}
-			h.writeSSEData(w, flusher, resp)
+			h.writeSSEData(w, rc, resp)
 			if resp.Done {
-				h.writeSSEDone(w, flusher)
+				h.writeSSEDone(w, rc)
 				return
 			}
 		}
 	}
-	h.writeSSEDone(w, flusher)
+	h.writeSSEDone(w, rc)
 }
 
-func (h *chatHTTPService) writeSSEData(w http.ResponseWriter, f http.Flusher, resp *aichatproto.ChatStreamResponse) {
+func (h *chatHTTPService) writeSSEData(w http.ResponseWriter, rc *http.ResponseController, resp *aichatproto.ChatStreamResponse) {
 	data, err := json.Marshal(sseDataEvent{
 		Content:      resp.Content,
 		Done:         resp.Done,
@@ -319,15 +328,19 @@ func (h *chatHTTPService) writeSSEData(w http.ResponseWriter, f http.Flusher, re
 		return
 	}
 	fmt.Fprintf(w, "data: %s\n\n", data)
-	f.Flush()
+	if err := rc.Flush(); err != nil {
+		h.logger.Error("SSE flush failed", zap.Error(err))
+	}
 }
 
-func (h *chatHTTPService) writeSSEDone(w http.ResponseWriter, f http.Flusher) {
+func (h *chatHTTPService) writeSSEDone(w http.ResponseWriter, rc *http.ResponseController) {
 	fmt.Fprintf(w, "data: [DONE]\n\n")
-	f.Flush()
+	if err := rc.Flush(); err != nil {
+		h.logger.Error("SSE flush failed", zap.Error(err))
+	}
 }
 
-func (h *chatHTTPService) writeSSEError(w http.ResponseWriter, f http.Flusher, streamErr error) {
+func (h *chatHTTPService) writeSSEError(w http.ResponseWriter, rc *http.ResponseController, streamErr error) {
 	h.logger.Error("SSE stream error", zap.Error(streamErr))
 	data, err := json.Marshal(sseErrorEvent{
 		Error: "An error occurred while processing your request",
@@ -337,7 +350,9 @@ func (h *chatHTTPService) writeSSEError(w http.ResponseWriter, f http.Flusher, s
 		return
 	}
 	fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
-	f.Flush()
+	if err := rc.Flush(); err != nil {
+		h.logger.Error("SSE flush failed", zap.Error(err))
+	}
 }
 
 func (h *chatHTTPService) toProtoRequest(req *ChatHTTPRequest) *aichatproto.ChatRequest {
