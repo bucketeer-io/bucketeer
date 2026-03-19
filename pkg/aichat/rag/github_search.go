@@ -378,11 +378,11 @@ func scoreDoc(doc indexedDoc, queryTokens []string) float64 {
 			continue
 		}
 		// Path segment match (highest weight — structural relevance)
-		// Use HasSuffix for reverse direction to handle plurals (e.g. "sdks" has suffix "sdk")
+		// Use HasPrefix for reverse direction to handle plurals (e.g. "sdks" has prefix "sdk")
 		for _, seg := range doc.pathSegments {
 			if seg == token {
 				score += 10.0
-			} else if strings.Contains(seg, token) || strings.HasSuffix(token, seg) {
+			} else if strings.Contains(seg, token) || strings.HasPrefix(token, seg) {
 				score += 5.0
 			}
 		}
