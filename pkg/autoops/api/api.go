@@ -18,7 +18,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -279,6 +281,31 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 	return nil
 }
 
+// normalizedDaysOfWeekKey returns a canonical string for DaysOfWeek
+// by sorting and deduplicating so that [5,1] and [1,5] produce the same key.
+func normalizedDaysOfWeekKey(days []int32) string {
+	if len(days) == 0 {
+		return ""
+	}
+	sorted := make([]int, len(days))
+	for i, d := range days {
+		sorted[i] = int(d)
+	}
+	sort.Ints(sorted)
+	// Deduplicate consecutive equal days
+	deduped := sorted[:1]
+	for _, d := range sorted[1:] {
+		if d != deduped[len(deduped)-1] {
+			deduped = append(deduped, d)
+		}
+	}
+	strs := make([]string, len(deduped))
+	for i, d := range deduped {
+		strs[i] = strconv.Itoa(d)
+	}
+	return strings.Join(strs, ",")
+}
+
 func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 ) error {
@@ -300,7 +327,10 @@ func (s *AutoOpsService) validateDatetimeClauses(
 			key = clauseKey{
 				time:      clause.Time,
 				frequency: clause.Recurrence.Frequency,
-				daysKey:   fmt.Sprintf("%v-%d", clause.Recurrence.DaysOfWeek, clause.Recurrence.DayOfMonth),
+				daysKey: fmt.Sprintf("%s-%d",
+					normalizedDaysOfWeekKey(clause.Recurrence.DaysOfWeek),
+					clause.Recurrence.DayOfMonth,
+				),
 			}
 		} else {
 			key = clauseKey{time: clause.Time}
@@ -573,9 +603,9 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 					actionType: c.ActionType,
 				}
 				if domain.IsRecurring(c) {
-					k.daysKey = fmt.Sprintf("%d-%v-%d",
+					k.daysKey = fmt.Sprintf("%d-%s-%d",
 						c.Recurrence.Frequency,
-						c.Recurrence.DaysOfWeek,
+						normalizedDaysOfWeekKey(c.Recurrence.DaysOfWeek),
 						c.Recurrence.DayOfMonth,
 					)
 				}

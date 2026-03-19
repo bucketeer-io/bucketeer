@@ -394,7 +394,8 @@ func TestGetExecuteClauseId(t *testing.T) {
 			desc: "one-time clause: not ready (future time)",
 			rule: func() *autoopsproto.AutoOpsRule {
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().Add(24 * time.Hour).Unix()}
-				c, _ := anypb.New(dc)
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-1",
 					FeatureId: "feat-1",
@@ -409,7 +410,8 @@ func TestGetExecuteClauseId(t *testing.T) {
 			desc: "one-time clause: ready (past time)",
 			rule: func() *autoopsproto.AutoOpsRule {
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().Add(-1 * time.Hour).Unix()}
-				c, _ := anypb.New(dc)
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-1",
 					FeatureId: "feat-1",
@@ -424,7 +426,8 @@ func TestGetExecuteClauseId(t *testing.T) {
 			desc: "one-time clause: already executed",
 			rule: func() *autoopsproto.AutoOpsRule {
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().Add(-1 * time.Hour).Unix()}
-				c, _ := anypb.New(dc)
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-1",
 					FeatureId: "feat-1",
@@ -448,7 +451,8 @@ func TestGetExecuteClauseId(t *testing.T) {
 						Timezone:   "UTC",
 					},
 				}
-				c, _ := anypb.New(dc)
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-1",
 					FeatureId: "feat-1",
@@ -472,7 +476,8 @@ func TestGetExecuteClauseId(t *testing.T) {
 						Timezone:   "UTC",
 					},
 				}
-				c, _ := anypb.New(dc)
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-1",
 					FeatureId: "feat-1",
@@ -496,7 +501,8 @@ func TestGetExecuteClauseId(t *testing.T) {
 						Timezone:   "UTC",
 					},
 				}
-				c, _ := anypb.New(dc)
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-1",
 					FeatureId: "feat-1",
@@ -524,8 +530,10 @@ func TestGetExecuteClauseId(t *testing.T) {
 				oneTimeDC := &autoopsproto.DatetimeClause{
 					Time: earlierTime,
 				}
-				rc, _ := anypb.New(recurringDC)
-				oc, _ := anypb.New(oneTimeDC)
+				rc, err := anypb.New(recurringDC)
+				require.NoError(t, err)
+				oc, err := anypb.New(oneTimeDC)
+				require.NoError(t, err)
 
 				return &autoopsproto.AutoOpsRule{
 					Id:        "rule-mixed",
