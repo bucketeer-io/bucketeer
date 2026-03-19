@@ -16,10 +16,27 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+)
+
+const (
+	// SecondsPerDay is the number of seconds in a day (24 * 60 * 60).
+	// DatetimeClause.Time for recurring schedules must be in [0, SecondsPerDay).
+	SecondsPerDay int64 = 24 * 60 * 60
+
+	// MinDayOfWeek is the minimum valid day-of-week value (Sunday).
+	MinDayOfWeek int32 = 0
+	// MaxDayOfWeek is the maximum valid day-of-week value (Saturday).
+	MaxDayOfWeek int32 = 6
+
+	// MinDayOfMonth is the minimum valid day-of-month value.
+	MinDayOfMonth int32 = 1
+	// MaxDayOfMonth is the maximum valid day-of-month value.
+	MaxDayOfMonth int32 = 31
 )
 
 // CalculateNextExecution calculates the next execution time for a recurring clause.
@@ -39,7 +56,7 @@ func CalculateNextExecution(
 		return 0, false
 	}
 
-	if clause.Time < 0 || clause.Time >= 24*60*60 {
+	if clause.Time < 0 || clause.Time >= SecondsPerDay {
 		return 0, false
 	}
 
@@ -86,8 +103,8 @@ func InitializeRecurringClause(clause *proto.DatetimeClause) error {
 		return nil
 	}
 
-	if clause.Time < 0 || clause.Time >= 24*60*60 {
-		return errors.New("time must be seconds since midnight in range [0, 86399]")
+	if clause.Time < 0 || clause.Time >= SecondsPerDay {
+		return fmt.Errorf("time must be seconds since midnight in range [0, %d)", SecondsPerDay)
 	}
 
 	if clause.Recurrence.StartDate == 0 {
@@ -100,8 +117,8 @@ func InitializeRecurringClause(clause *proto.DatetimeClause) error {
 			return errors.New("days_of_week must be non-empty with values 0-6 for weekly recurrence")
 		}
 	case proto.RecurrenceRule_MONTHLY:
-		if clause.Recurrence.DayOfMonth < 1 || clause.Recurrence.DayOfMonth > 31 {
-			return errors.New("day_of_month must be 1-31 for monthly recurrence")
+		if clause.Recurrence.DayOfMonth < MinDayOfMonth || clause.Recurrence.DayOfMonth > MaxDayOfMonth {
+			return fmt.Errorf("day_of_month must be %d-%d for monthly recurrence", MinDayOfMonth, MaxDayOfMonth)
 		}
 	}
 
@@ -174,11 +191,10 @@ func validateDaysOfWeek(daysOfWeek []int32) ([]int, bool) {
 	}
 	sortedDays := make([]int, len(daysOfWeek))
 	for i, d := range daysOfWeek {
-		day := int(d)
-		if day < 0 || day > 6 {
+		if d < MinDayOfWeek || d > MaxDayOfWeek {
 			return nil, false
 		}
-		sortedDays[i] = day
+		sortedDays[i] = int(d)
 	}
 	sort.Ints(sortedDays)
 	return sortedDays, true
@@ -232,7 +248,7 @@ func calculateNextMonthly(
 	loc *time.Location,
 ) (time.Time, bool) {
 	dayOfMonth := clause.Recurrence.DayOfMonth
-	if dayOfMonth < 1 || dayOfMonth > 31 {
+	if dayOfMonth < MinDayOfMonth || dayOfMonth > MaxDayOfMonth {
 		return time.Time{}, false
 	}
 
@@ -313,7 +329,7 @@ func computeFirstExecution(
 
 	case proto.RecurrenceRule_MONTHLY:
 		dom := int(clause.Recurrence.DayOfMonth)
-		if dom < 1 || dom > 31 {
+		if clause.Recurrence.DayOfMonth < MinDayOfMonth || clause.Recurrence.DayOfMonth > MaxDayOfMonth {
 			return startTime
 		}
 		candidate := time.Date(

@@ -355,7 +355,7 @@ func (s *AutoOpsService) validateDatetimeClause(
 		if err := s.validateRecurrenceRule(clause.Recurrence); err != nil {
 			return err
 		}
-		if clause.Time < 0 || clause.Time >= 86400 {
+		if clause.Time < 0 || clause.Time >= domain.SecondsPerDay {
 			return statusDatetimeClauseInvalidTimeOfDay.Err()
 		}
 	} else {
@@ -409,12 +409,12 @@ func (s *AutoOpsService) validateRecurrenceRule(
 			return statusRecurrenceDaysOfWeekRequired.Err()
 		}
 		for _, day := range recurrence.DaysOfWeek {
-			if day < 0 || day > 6 {
+			if day < domain.MinDayOfWeek || day > domain.MaxDayOfWeek {
 				return statusRecurrenceDaysOfWeekInvalid.Err()
 			}
 		}
 	case autoopsproto.RecurrenceRule_MONTHLY:
-		if recurrence.DayOfMonth < 1 || recurrence.DayOfMonth > 31 {
+		if recurrence.DayOfMonth < domain.MinDayOfMonth || recurrence.DayOfMonth > domain.MaxDayOfMonth {
 			return statusRecurrenceDayOfMonthInvalid.Err()
 		}
 	case autoopsproto.RecurrenceRule_DAILY:

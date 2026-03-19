@@ -1554,16 +1554,19 @@ func TestValidateDatetimeClauses_RecurringDuplicates(t *testing.T) {
 		},
 		{
 			desc: "err: two one-time clauses same time",
-			clauses: []*autoopsproto.DatetimeClause{
-				{
-					Time:       time.Now().Add(24 * time.Hour).Unix(),
-					ActionType: autoopsproto.ActionType_ENABLE,
-				},
-				{
-					Time:       time.Now().Add(24 * time.Hour).Unix(),
-					ActionType: autoopsproto.ActionType_DISABLE,
-				},
-			},
+			clauses: func() []*autoopsproto.DatetimeClause {
+				sameTime := time.Date(2030, 6, 15, 12, 0, 0, 0, time.UTC).Unix()
+				return []*autoopsproto.DatetimeClause{
+					{
+						Time:       sameTime,
+						ActionType: autoopsproto.ActionType_ENABLE,
+					},
+					{
+						Time:       sameTime,
+						ActionType: autoopsproto.ActionType_DISABLE,
+					},
+				}
+			}(),
 			expectedErr: statusDatetimeClauseDuplicateTime.Err(),
 		},
 		{
