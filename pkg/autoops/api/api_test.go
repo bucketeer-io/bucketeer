@@ -402,6 +402,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
+	selfMatchTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -618,9 +619,8 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success: UPDATE clause with same time does not trigger self-duplicate",
 			setup: func(s *AutoOpsService) {
-				existingTime := time.Now().AddDate(0, 0, 3).Unix()
 				existingClause, _ := anypb.New(&autoopsproto.DatetimeClause{
-					Time:       existingTime,
+					Time:       selfMatchTime,
 					ActionType: autoopsproto.ActionType_ENABLE,
 				})
 				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
@@ -655,7 +655,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 						Id: "cid1",
 						Clause: &autoopsproto.DatetimeClause{
 							ActionType: autoopsproto.ActionType_DISABLE,
-							Time:       time.Now().AddDate(0, 0, 3).Unix(),
+							Time:       selfMatchTime,
 						},
 						ChangeType: autoopsproto.ChangeType_UPDATE,
 					},

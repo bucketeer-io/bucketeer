@@ -160,6 +160,12 @@ func (w *datetimeWatcher) getExecuteClauseId(
 	for _, clause := range a.Clauses {
 		dateClause := dateClauses[clause.Id]
 		if dateClause == nil {
+			w.logger.Warn("DatetimeClause missing for schedule clause; skipping execution candidate",
+				zap.String("environmentId", environmentId),
+				zap.String("featureId", a.FeatureId),
+				zap.String("autoOpsRuleId", a.Id),
+				zap.String("clauseId", clause.Id),
+			)
 			continue
 		}
 
@@ -189,8 +195,11 @@ func (w *datetimeWatcher) getExecuteClauseId(
 		return "", nil
 	}
 
-	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].executionTime < candidates[j].executionTime
+	sort.SliceStable(candidates, func(i, j int) bool {
+		if candidates[i].executionTime != candidates[j].executionTime {
+			return candidates[i].executionTime < candidates[j].executionTime
+		}
+		return candidates[i].id < candidates[j].id
 	})
 
 	chosen := candidates[0]
