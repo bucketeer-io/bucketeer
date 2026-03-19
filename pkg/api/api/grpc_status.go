@@ -127,7 +127,8 @@ func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 		pkgErr.ErrorTypeInvalidArgEmpty,
 		pkgErr.ErrorTypeInvalidArgNil,
 		pkgErr.ErrorTypeInvalidArgNotMatchFormat,
-		pkgErr.ErrorTypeInvalidArgDuplicated:
+		pkgErr.ErrorTypeInvalidArgDuplicated,
+		pkgErr.ErrorTypeExceededMax:
 		return codes.InvalidArgument
 	case pkgErr.ErrorTypeNotFound:
 		return codes.NotFound
