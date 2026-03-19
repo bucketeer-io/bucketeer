@@ -615,6 +615,55 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 			expected:    &autoopsproto.UpdateAutoOpsRuleResponse{},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: UPDATE clause with same time does not trigger self-duplicate",
+			setup: func(s *AutoOpsService) {
+				existingTime := time.Now().AddDate(0, 0, 3).Unix()
+				existingClause, _ := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       existingTime,
+					ActionType: autoopsproto.ActionType_ENABLE,
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.All(),
+				).Return(&domain.AutoOpsRule{
+					AutoOpsRule: &autoopsproto.AutoOpsRule{
+						Id:            "aid1",
+						OpsType:       autoopsproto.OpsType_SCHEDULE,
+						AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+						Deleted:       false,
+						Clauses: []*autoopsproto.Clause{
+							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, Clause: existingClause},
+						}},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).AnyTimes()
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
+					{
+						Id: "cid1",
+						Clause: &autoopsproto.DatetimeClause{
+							ActionType: autoopsproto.ActionType_DISABLE,
+							Time:       time.Now().AddDate(0, 0, 3).Unix(),
+						},
+						ChangeType: autoopsproto.ChangeType_UPDATE,
+					},
+				},
+			},
+			expected:    &autoopsproto.UpdateAutoOpsRuleResponse{},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -1420,6 +1469,15 @@ func TestValidateRecurrenceRule(t *testing.T) {
 				StartDate: time.Now().Add(24 * time.Hour).Unix(),
 			},
 			expectedErr: nil,
+		},
+		{
+			desc: "err: unsupported frequency value",
+			recurrence: &autoopsproto.RecurrenceRule{
+				Frequency: autoopsproto.RecurrenceRule_Frequency(99),
+				Timezone:  "UTC",
+				StartDate: time.Now().Add(24 * time.Hour).Unix(),
+			},
+			expectedErr: statusInvalidRecurrenceFrequency.Err(),
 		},
 	}
 

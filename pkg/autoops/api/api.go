@@ -417,6 +417,10 @@ func (s *AutoOpsService) validateRecurrenceRule(
 		if recurrence.DayOfMonth < 1 || recurrence.DayOfMonth > 31 {
 			return statusRecurrenceDayOfMonthInvalid.Err()
 		}
+	case autoopsproto.RecurrenceRule_DAILY:
+		// No additional fields to validate for daily.
+	default:
+		return statusInvalidRecurrenceFrequency.Err()
 	}
 
 	return nil
@@ -617,15 +621,18 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				return k
 			}
 
-			existingKeys := make(map[updateClauseKey]struct{})
-			for _, c := range extractDateTimeClauses {
-				existingKeys[buildKey(c)] = struct{}{}
+			existingKeys := make(map[updateClauseKey]string)
+			for id, c := range extractDateTimeClauses {
+				existingKeys[buildKey(c)] = id
 			}
 
 			for _, c := range req.DatetimeClauseChanges {
 				if c.Clause != nil && c.ChangeType != autoopsproto.ChangeType_DELETE {
 					k := buildKey(c.Clause)
-					if _, ok := existingKeys[k]; ok {
+					if existingID, ok := existingKeys[k]; ok {
+						if c.ChangeType == autoopsproto.ChangeType_UPDATE && existingID == c.Id {
+							continue
+						}
 						return statusDatetimeClauseDuplicateTime.Err()
 					}
 				}

@@ -1303,11 +1303,9 @@ func TestAdvanceRecurringClause(t *testing.T) {
 	tests := []struct {
 		desc                   string
 		clauseID               string
-		clauses                []*autoopsproto.Clause
 		datetimeClauses        []*autoopsproto.DatetimeClause
 		now                    time.Time
 		expectErr              bool
-		expectExecutedAt       int64
 		expectExecutionCount   int32
 		expectNextExecutionAt  func(t *testing.T, nextExec int64)
 		expectClauseExecutedAt int64
