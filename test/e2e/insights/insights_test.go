@@ -46,7 +46,6 @@ var (
 	environmentID    = flag.String("environment-id", "", "Environment id")
 	testID           = flag.String("test-id", "", "test ID")
 	organizationID   = flag.String("organization-id", "", "Organization ID")
-
 )
 
 func TestGetInsightsMonthlySummary(t *testing.T) {
