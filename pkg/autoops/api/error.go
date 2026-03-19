@@ -108,7 +108,7 @@ var (
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.AutoopsPackageName,
 			"time_of_day must be 0-86399 seconds for recurring schedules",
-			"TimeOfDay",
+			"Datetime",
 		))
 	statusInvalidRecurrenceFrequency = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(

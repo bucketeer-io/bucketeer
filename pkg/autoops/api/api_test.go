@@ -1547,6 +1547,86 @@ func TestValidateDatetimeClauses_RecurringDuplicates(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "err: weekly duplicates with reversed DaysOfWeek order",
+			clauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1, 5},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{5, 1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+			},
+			expectedErr: statusDatetimeClauseDuplicateTime.Err(),
+		},
+		{
+			desc: "err: weekly duplicates differing only in irrelevant DayOfMonth",
+			clauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						DayOfMonth: 0,
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						DayOfMonth: 15,
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+			},
+			expectedErr: statusDatetimeClauseDuplicateTime.Err(),
+		},
+		{
+			desc: "err: same time and pattern with different action types are duplicates",
+			clauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_DISABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+			},
+			expectedErr: statusDatetimeClauseDuplicateTime.Err(),
+		},
 	}
 
 	for _, p := range patterns {

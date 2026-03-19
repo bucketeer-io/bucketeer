@@ -324,13 +324,17 @@ func (s *AutoOpsService) validateDatetimeClauses(
 
 		var key clauseKey
 		if domain.IsRecurring(clause) {
+			var recurrenceKey string
+			switch clause.Recurrence.Frequency {
+			case autoopsproto.RecurrenceRule_WEEKLY:
+				recurrenceKey = normalizedDaysOfWeekKey(clause.Recurrence.DaysOfWeek)
+			case autoopsproto.RecurrenceRule_MONTHLY:
+				recurrenceKey = strconv.Itoa(int(clause.Recurrence.DayOfMonth))
+			}
 			key = clauseKey{
 				time:      clause.Time,
 				frequency: clause.Recurrence.Frequency,
-				daysKey: fmt.Sprintf("%s-%d",
-					normalizedDaysOfWeekKey(clause.Recurrence.DaysOfWeek),
-					clause.Recurrence.DayOfMonth,
-				),
+				daysKey:   recurrenceKey,
 			}
 		} else {
 			key = clauseKey{time: clause.Time}
@@ -593,21 +597,22 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			}
 
 			type updateClauseKey struct {
-				time       int64
-				actionType autoopsproto.ActionType
-				daysKey    string
+				time    int64
+				daysKey string
 			}
 			buildKey := func(c *autoopsproto.DatetimeClause) updateClauseKey {
 				k := updateClauseKey{
-					time:       c.Time,
-					actionType: c.ActionType,
+					time: c.Time,
 				}
 				if domain.IsRecurring(c) {
-					k.daysKey = fmt.Sprintf("%d-%s-%d",
-						c.Recurrence.Frequency,
-						normalizedDaysOfWeekKey(c.Recurrence.DaysOfWeek),
-						c.Recurrence.DayOfMonth,
-					)
+					var recurrenceKey string
+					switch c.Recurrence.Frequency {
+					case autoopsproto.RecurrenceRule_WEEKLY:
+						recurrenceKey = normalizedDaysOfWeekKey(c.Recurrence.DaysOfWeek)
+					case autoopsproto.RecurrenceRule_MONTHLY:
+						recurrenceKey = strconv.Itoa(int(c.Recurrence.DayOfMonth))
+					}
+					k.daysKey = fmt.Sprintf("%d-%s", c.Recurrence.Frequency, recurrenceKey)
 				}
 				return k
 			}
