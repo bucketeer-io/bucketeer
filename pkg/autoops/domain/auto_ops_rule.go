@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"math"
 	"sort"
 	"time"
 
@@ -31,9 +32,12 @@ import (
 )
 
 var (
-	errClauseNotFound   = err.NewErrorNotFound(err.AutoopsPackageName, "clause not found", "clause")
-	errClauseEmpty      = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "clause cannot be empty", "clause")
-	errClauseIDRequired = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "clause id is required", "clause_id")
+	errClauseNotFound         = err.NewErrorNotFound(err.AutoopsPackageName, "clause not found", "clause")
+	errClauseEmpty            = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "clause cannot be empty", "clause")
+	errClauseIDRequired       = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "clause id is required", "clause_id")
+	errInvalidScheduleOpsType = err.NewErrorFailedPrecondition(
+		err.AutoopsPackageName, "auto ops rule is not a schedule rule",
+	)
 
 	OpsEventRateClause = &proto.OpsEventRateClause{}
 	DatetimeClause     = &proto.DatetimeClause{}
@@ -203,14 +207,22 @@ func (a *AutoOpsRule) applyGranularChanges(
 	for _, c := range datetimeClauses {
 		switch c.ChangeType {
 		case proto.ChangeType_CREATE:
+			if IsRecurring(c.Clause) &&
+				c.Clause.NextExecutionAt == 0 &&
+				c.Clause.ExecutionCount == 0 {
+				if err := InitializeRecurringClause(c.Clause); err != nil {
+					return err
+				}
+			}
 			ac, err := anypb.New(c.Clause)
 			if err != nil {
 				return err
 			}
-			_, err = a.addClause(ac, c.Clause.ActionType)
+			newClause, err := a.addClause(ac, c.Clause.ActionType)
 			if err != nil {
 				return err
 			}
+			newClause.IsRecurring = IsRecurring(c.Clause)
 		case proto.ChangeType_UPDATE:
 			err := a.changeClause(c.Id, c.Clause, c.Clause.ActionType)
 			if err != nil {
@@ -270,6 +282,82 @@ func (a *AutoOpsRule) validateGranularChanges(
 	return nil
 }
 
+func (a *AutoOpsRule) IsRecurringSchedule() bool {
+	if a.OpsType != proto.OpsType_SCHEDULE {
+		return false
+	}
+	for _, clause := range a.Clauses {
+		if clause.IsRecurring {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *AutoOpsRule) GetNextExecutionTime() (int64, error) {
+	if a.OpsType != proto.OpsType_SCHEDULE {
+		return 0, errInvalidScheduleOpsType
+	}
+
+	datetimeClauses, e := a.ExtractDatetimeClauses()
+	if e != nil {
+		return 0, e
+	}
+
+	var earliestTime int64 = math.MaxInt64
+
+	for _, clause := range a.Clauses {
+		dtClause := datetimeClauses[clause.Id]
+		if dtClause == nil {
+			continue
+		}
+
+		if clause.IsRecurring {
+			if dtClause.NextExecutionAt <= 0 {
+				continue
+			}
+			if dtClause.NextExecutionAt < earliestTime {
+				earliestTime = dtClause.NextExecutionAt
+			}
+			continue
+		}
+
+		if clause.ExecutedAt != 0 {
+			continue
+		}
+		if dtClause.Time < earliestTime {
+			earliestTime = dtClause.Time
+		}
+	}
+
+	if earliestTime == math.MaxInt64 {
+		return 0, nil
+	}
+
+	return earliestTime, nil
+}
+
+func (a *AutoOpsRule) AllClausesFinished() bool {
+	datetimeClauses, e := a.ExtractDatetimeClauses()
+	if e != nil {
+		return false
+	}
+
+	for _, clause := range a.Clauses {
+		if clause.IsRecurring {
+			dtClause := datetimeClauses[clause.Id]
+			if dtClause != nil && dtClause.NextExecutionAt > 0 {
+				return false
+			}
+		} else {
+			if clause.ExecutedAt == 0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (a *AutoOpsRule) SetStopped() {
 	a.SetAutoOpsStatus(proto.AutoOpsStatus_STOPPED)
 }
@@ -311,16 +399,21 @@ func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*pr
 }
 
 func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause, error) {
-	ac, err := ptypes.MarshalAny(dc)
-	if err != nil {
-		return nil, err
+	if IsRecurring(dc) && dc.NextExecutionAt == 0 && dc.ExecutionCount == 0 {
+		if e := InitializeRecurringClause(dc); e != nil {
+			return nil, e
+		}
 	}
-	clause, err := a.addClause(ac, dc.ActionType)
+	ac, e := ptypes.MarshalAny(dc)
+	if e != nil {
+		return nil, e
+	}
+	clause, e := a.addClause(ac, dc.ActionType)
+	if e != nil {
+		return nil, e
+	}
+	clause.IsRecurring = IsRecurring(dc)
 	a.sortDatetimeClause()
-
-	if err != nil {
-		return nil, err
-	}
 	a.UpdatedAt = time.Now().Unix()
 	return clause, nil
 }
@@ -337,6 +430,19 @@ func (a *AutoOpsRule) addClause(ac *any.Any, actionType proto.ActionType) (*prot
 	}
 	a.Clauses = append(a.Clauses, clause)
 	return clause, nil
+}
+
+// datetimeClauseSortKey returns the sort key for ordering datetime clauses.
+// For recurring clauses the key is NextExecutionAt (the pre-calculated
+// UTC timestamp); for one-time clauses it is Time (the UTC timestamp).
+func datetimeClauseSortKey(dc *proto.DatetimeClause) int64 {
+	if IsRecurring(dc) {
+		if dc.NextExecutionAt > 0 {
+			return dc.NextExecutionAt
+		}
+		return math.MaxInt64
+	}
+	return dc.Time
 }
 
 func (a *AutoOpsRule) sortDatetimeClause() {
@@ -360,7 +466,8 @@ func (a *AutoOpsRule) sortDatetimeClause() {
 	}
 
 	sort.Slice(sortClauses, func(i, j int) bool {
-		return sortClauses[i].dataTimeClause.Time < sortClauses[j].dataTimeClause.Time
+		return datetimeClauseSortKey(sortClauses[i].dataTimeClause) <
+			datetimeClauseSortKey(sortClauses[j].dataTimeClause)
 	})
 
 	for _, c := range sortClauses {
@@ -391,9 +498,19 @@ func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) 
 func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.ActionType) error {
 	for _, c := range a.Clauses {
 		if c.Id == id {
-			clause, err := ptypes.MarshalAny(mc)
-			if err != nil {
-				return err
+			if dtClause, ok := mc.(*proto.DatetimeClause); ok {
+				if IsRecurring(dtClause) &&
+					dtClause.NextExecutionAt == 0 &&
+					dtClause.ExecutionCount == 0 {
+					if e := InitializeRecurringClause(dtClause); e != nil {
+						return e
+					}
+				}
+				c.IsRecurring = IsRecurring(dtClause)
+			}
+			clause, e := ptypes.MarshalAny(mc)
+			if e != nil {
+				return e
 			}
 			c.Clause = clause
 			c.ActionType = actionType

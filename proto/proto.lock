@@ -6622,6 +6622,30 @@
             ]
           },
           {
+            "name": "RecurrenceRule.Frequency",
+            "enum_fields": [
+              {
+                "name": "FREQUENCY_UNSPECIFIED"
+              },
+              {
+                "name": "ONCE",
+                "integer": 1
+              },
+              {
+                "name": "DAILY",
+                "integer": 2
+              },
+              {
+                "name": "WEEKLY",
+                "integer": 3
+              },
+              {
+                "name": "MONTHLY",
+                "integer": 4
+              }
+            ]
+          },
+          {
             "name": "ProgressiveRolloutTemplateScheduleClause.Interval",
             "enum_fields": [
               {
@@ -6665,6 +6689,11 @@
                 "id": 4,
                 "name": "executed_at",
                 "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "is_recurring",
+                "type": "bool"
               }
             ]
           },
@@ -6707,6 +6736,47 @@
             ]
           },
           {
+            "name": "RecurrenceRule",
+            "fields": [
+              {
+                "id": 1,
+                "name": "frequency",
+                "type": "Frequency"
+              },
+              {
+                "id": 2,
+                "name": "days_of_week",
+                "type": "int32",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "day_of_month",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "start_date",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "end_date",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "max_occurrences",
+                "type": "int32"
+              },
+              {
+                "id": 7,
+                "name": "timezone",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "DatetimeClause",
             "fields": [
               {
@@ -6718,6 +6788,26 @@
                 "id": 2,
                 "name": "action_type",
                 "type": "ActionType"
+              },
+              {
+                "id": 3,
+                "name": "recurrence",
+                "type": "RecurrenceRule"
+              },
+              {
+                "id": 4,
+                "name": "last_executed_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "next_execution_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "execution_count",
+                "type": "int32"
               }
             ]
           },
