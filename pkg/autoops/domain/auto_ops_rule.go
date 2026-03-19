@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -356,6 +357,45 @@ func (a *AutoOpsRule) AllClausesFinished() bool {
 		}
 	}
 	return true
+}
+
+// AdvanceRecurringClause advances a recurring clause after execution.
+// It increments ExecutionCount, updates LastExecutedAt and NextExecutionAt,
+// re-marshals the DatetimeClause back into the Clause.Clause Any field,
+// and sets Clause.ExecutedAt only when the recurrence is exhausted.
+func (a *AutoOpsRule) AdvanceRecurringClause(clauseID string, now time.Time) error {
+	for _, c := range a.Clauses {
+		if c.Id != clauseID || !c.IsRecurring {
+			continue
+		}
+		dtClause, e := a.unmarshalDatetimeClause(c)
+		if e != nil {
+			return fmt.Errorf("failed to unmarshal datetime clause %s: %w", clauseID, e)
+		}
+		if dtClause == nil {
+			return fmt.Errorf("datetime clause %s not found", clauseID)
+		}
+
+		dtClause.LastExecutedAt = now.Unix()
+		dtClause.ExecutionCount++
+
+		nextExecTime, shouldContinue := CalculateNextExecution(dtClause, now)
+		if shouldContinue {
+			dtClause.NextExecutionAt = nextExecTime
+		} else {
+			dtClause.NextExecutionAt = 0
+			c.ExecutedAt = now.Unix()
+		}
+
+		updatedAny, e := ptypes.MarshalAny(dtClause)
+		if e != nil {
+			return fmt.Errorf("failed to re-marshal datetime clause %s: %w", clauseID, e)
+		}
+		c.Clause = updatedAny
+		a.UpdatedAt = now.Unix()
+		return nil
+	}
+	return fmt.Errorf("recurring clause %s not found", clauseID)
 }
 
 func (a *AutoOpsRule) SetStopped() {

@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -281,15 +282,34 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 ) error {
-	checkTimes := make(map[int64]bool)
-	for _, c := range clauses {
-		if checkTimes[c.Time] {
-			return statusDatetimeClauseDuplicateTime.Err()
-		}
-		if err := s.validateDatetimeClause(c); err != nil {
+	type clauseKey struct {
+		time      int64
+		frequency autoopsproto.RecurrenceRule_Frequency
+		daysKey   string
+	}
+
+	seen := make(map[clauseKey]struct{})
+
+	for _, clause := range clauses {
+		if err := s.validateDatetimeClause(clause); err != nil {
 			return err
 		}
-		checkTimes[c.Time] = true
+
+		var key clauseKey
+		if domain.IsRecurring(clause) {
+			key = clauseKey{
+				time:      clause.Time,
+				frequency: clause.Recurrence.Frequency,
+				daysKey:   fmt.Sprintf("%v-%d", clause.Recurrence.DaysOfWeek, clause.Recurrence.DayOfMonth),
+			}
+		} else {
+			key = clauseKey{time: clause.Time}
+		}
+
+		if _, ok := seen[key]; ok {
+			return statusDatetimeClauseDuplicateTime.Err()
+		}
+		seen[key] = struct{}{}
 	}
 	return nil
 }
@@ -297,12 +317,74 @@ func (s *AutoOpsService) validateDatetimeClauses(
 func (s *AutoOpsService) validateDatetimeClause(
 	clause *autoopsproto.DatetimeClause,
 ) error {
-	if clause.Time <= time.Now().Unix() {
-		return statusDatetimeClauseInvalidTime.Err()
+	if domain.IsRecurring(clause) {
+		if err := s.validateRecurrenceRule(clause.Recurrence); err != nil {
+			return err
+		}
+		if clause.Time < 0 || clause.Time >= 86400 {
+			return statusDatetimeClauseInvalidTimeOfDay.Err()
+		}
+	} else {
+		if clause.Time <= time.Now().Unix() {
+			return statusDatetimeClauseInvalidTime.Err()
+		}
 	}
 	if clause.ActionType == autoopsproto.ActionType_UNKNOWN {
 		return statusIncompatibleOpsType.Err()
 	}
+	return nil
+}
+
+func (s *AutoOpsService) validateRecurrenceRule(
+	recurrence *autoopsproto.RecurrenceRule,
+) error {
+	if recurrence == nil {
+		return nil
+	}
+
+	if recurrence.Frequency == autoopsproto.RecurrenceRule_FREQUENCY_UNSPECIFIED {
+		return statusInvalidRecurrenceFrequency.Err()
+	}
+
+	if recurrence.Frequency == autoopsproto.RecurrenceRule_ONCE {
+		return nil
+	}
+
+	if recurrence.Timezone == "" {
+		return statusRecurrenceTimezoneRequired.Err()
+	}
+	if _, err := time.LoadLocation(recurrence.Timezone); err != nil {
+		return statusInvalidRecurrenceTimezone.Err()
+	}
+
+	if recurrence.StartDate == 0 {
+		return statusRecurrenceStartDateRequired.Err()
+	}
+
+	if recurrence.EndDate > 0 && recurrence.EndDate <= recurrence.StartDate {
+		return statusRecurrenceEndDateMustBeAfterStart.Err()
+	}
+
+	if recurrence.MaxOccurrences < 0 {
+		return statusRecurrenceMaxOccurrencesInvalid.Err()
+	}
+
+	switch recurrence.Frequency {
+	case autoopsproto.RecurrenceRule_WEEKLY:
+		if len(recurrence.DaysOfWeek) == 0 {
+			return statusRecurrenceDaysOfWeekRequired.Err()
+		}
+		for _, day := range recurrence.DaysOfWeek {
+			if day < 0 || day > 6 {
+				return statusRecurrenceDaysOfWeekInvalid.Err()
+			}
+		}
+	case autoopsproto.RecurrenceRule_MONTHLY:
+		if recurrence.DayOfMonth < 1 || recurrence.DayOfMonth > 31 {
+			return statusRecurrenceDayOfMonthInvalid.Err()
+		}
+	}
+
 	return nil
 }
 
@@ -473,23 +555,42 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			if len(req.OpsEventRateClauseChanges) > 0 {
 				return statusIncompatibleOpsType.Err()
 			}
-			// Delete a deletion schedule from the currently held schedules
 			extractDateTimeClauses, _ := autoOpsRule.ExtractDatetimeClauses()
 			for _, deleteClause := range req.DatetimeClauseChanges {
 				if deleteClause.ChangeType == autoopsproto.ChangeType_DELETE {
 					delete(extractDateTimeClauses, deleteClause.Id)
 				}
 			}
-			checkTimes := make(map[int64]autoopsproto.ActionType)
-			for _, c := range extractDateTimeClauses {
-				checkTimes[c.Time] = c.ActionType
+
+			type updateClauseKey struct {
+				time       int64
+				actionType autoopsproto.ActionType
+				daysKey    string
+			}
+			buildKey := func(c *autoopsproto.DatetimeClause) updateClauseKey {
+				k := updateClauseKey{
+					time:       c.Time,
+					actionType: c.ActionType,
+				}
+				if domain.IsRecurring(c) {
+					k.daysKey = fmt.Sprintf("%d-%v-%d",
+						c.Recurrence.Frequency,
+						c.Recurrence.DaysOfWeek,
+						c.Recurrence.DayOfMonth,
+					)
+				}
+				return k
 			}
 
-			// Check if there is a schedule with the same date and time.
+			existingKeys := make(map[updateClauseKey]struct{})
+			for _, c := range extractDateTimeClauses {
+				existingKeys[buildKey(c)] = struct{}{}
+			}
+
 			for _, c := range req.DatetimeClauseChanges {
 				if c.Clause != nil && c.ChangeType != autoopsproto.ChangeType_DELETE {
-					actionType, hasSameTime := checkTimes[c.Clause.Time]
-					if hasSameTime && actionType == c.Clause.ActionType {
+					k := buildKey(c.Clause)
+					if _, ok := existingKeys[k]; ok {
 						return statusDatetimeClauseDuplicateTime.Err()
 					}
 				}
@@ -808,12 +909,17 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			)
 			return err
 		}
-		// Set the `executed_at`, so it won't be executed twice
-		executeClause.ExecutedAt = time.Now().Unix()
-		// Update the status if needed.
-		// When it executes the last clause, it will change to finished status.
+		now := time.Now()
+		if executeClause.IsRecurring {
+			if err := autoOpsRule.AdvanceRecurringClause(req.ClauseId, now); err != nil {
+				return err
+			}
+		} else {
+			executeClause.ExecutedAt = now.Unix()
+		}
+
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
-		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ClauseId {
+		if autoOpsRule.AllClausesFinished() {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
 		updated, err := autoOpsRule.Update(&opsStatus, nil, nil)

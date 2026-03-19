@@ -1293,3 +1293,249 @@ func TestInitializeRecurringClause_InvalidTimeOfDay(t *testing.T) {
 		})
 	}
 }
+
+func TestAdvanceRecurringClause(t *testing.T) {
+	t.Parallel()
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	tests := []struct {
+		desc                   string
+		clauseID               string
+		clauses                []*autoopsproto.Clause
+		datetimeClauses        []*autoopsproto.DatetimeClause
+		now                    time.Time
+		expectErr              bool
+		expectExecutedAt       int64
+		expectExecutionCount   int32
+		expectNextExecutionAt  func(t *testing.T, nextExec int64)
+		expectClauseExecutedAt int64
+	}{
+		{
+			desc:     "success: advance weekly recurring clause",
+			clauseID: "clause-1",
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000, // 10:00 AM
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1}, // Monday
+						Timezone:   "Asia/Tokyo",
+						StartDate:  time.Date(2026, 2, 9, 0, 0, 0, 0, jst).Unix(),
+					},
+					NextExecutionAt: time.Date(2026, 2, 9, 10, 0, 0, 0, jst).Unix(),
+					ExecutionCount:  0,
+					LastExecutedAt:  0,
+				},
+			},
+			now:                  time.Date(2026, 2, 9, 10, 0, 1, 0, jst),
+			expectErr:            false,
+			expectExecutionCount: 1,
+			expectNextExecutionAt: func(t *testing.T, nextExec int64) {
+				expected := time.Date(2026, 2, 16, 10, 0, 0, 0, jst).Unix()
+				assert.Equal(t, expected, nextExec, "next execution should be next Monday")
+			},
+			expectClauseExecutedAt: 0, // Still active
+		},
+		{
+			desc:     "success: advance daily recurring clause",
+			clauseID: "clause-1",
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       32400, // 9:00 AM
+					ActionType: autoopsproto.ActionType_DISABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency: autoopsproto.RecurrenceRule_DAILY,
+						Timezone:  "UTC",
+						StartDate: time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC).Unix(),
+					},
+					NextExecutionAt: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC).Unix(),
+					ExecutionCount:  0,
+				},
+			},
+			now:                  time.Date(2026, 3, 1, 9, 0, 5, 0, time.UTC),
+			expectErr:            false,
+			expectExecutionCount: 1,
+			expectNextExecutionAt: func(t *testing.T, nextExec int64) {
+				expected := time.Date(2026, 3, 2, 9, 0, 0, 0, time.UTC).Unix()
+				assert.Equal(t, expected, nextExec)
+			},
+			expectClauseExecutedAt: 0,
+		},
+		{
+			desc:     "success: exhaust max occurrences",
+			clauseID: "clause-1",
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek:     []int32{1},
+						Timezone:       "UTC",
+						StartDate:      time.Date(2026, 1, 5, 0, 0, 0, 0, time.UTC).Unix(),
+						MaxOccurrences: 3,
+					},
+					NextExecutionAt: time.Date(2026, 1, 19, 10, 0, 0, 0, time.UTC).Unix(),
+					ExecutionCount:  2, // Will become 3, reaching max
+				},
+			},
+			now:                  time.Date(2026, 1, 19, 10, 0, 1, 0, time.UTC),
+			expectErr:            false,
+			expectExecutionCount: 3,
+			expectNextExecutionAt: func(t *testing.T, nextExec int64) {
+				assert.Equal(t, int64(0), nextExec, "should be exhausted")
+			},
+			expectClauseExecutedAt: time.Date(2026, 1, 19, 10, 0, 1, 0, time.UTC).Unix(),
+		},
+		{
+			desc:     "success: exhaust by end date",
+			clauseID: "clause-1",
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Date(2026, 1, 5, 0, 0, 0, 0, time.UTC).Unix(),
+						EndDate:    time.Date(2026, 1, 20, 0, 0, 0, 0, time.UTC).Unix(),
+					},
+					NextExecutionAt: time.Date(2026, 1, 19, 10, 0, 0, 0, time.UTC).Unix(),
+					ExecutionCount:  1,
+				},
+			},
+			now:                  time.Date(2026, 1, 19, 10, 0, 1, 0, time.UTC),
+			expectErr:            false,
+			expectExecutionCount: 2,
+			expectNextExecutionAt: func(t *testing.T, nextExec int64) {
+				assert.Equal(t, int64(0), nextExec, "should be exhausted past end date")
+			},
+			expectClauseExecutedAt: time.Date(2026, 1, 19, 10, 0, 1, 0, time.UTC).Unix(),
+		},
+		{
+			desc:     "error: clause not found",
+			clauseID: "nonexistent",
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Date(2026, 1, 5, 0, 0, 0, 0, time.UTC).Unix(),
+					},
+					NextExecutionAt: time.Now().Unix(),
+					ExecutionCount:  0,
+				},
+			},
+			now:       time.Now(),
+			expectErr: true,
+		},
+		{
+			desc:     "error: clause is not recurring",
+			clauseID: "clause-1",
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       time.Now().Add(24 * time.Hour).Unix(),
+					ActionType: autoopsproto.ActionType_ENABLE,
+				},
+			},
+			now:       time.Now(),
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			rule, e := NewAutoOpsRule(
+				"feature-1",
+				autoopsproto.OpsType_SCHEDULE,
+				nil,
+				tt.datetimeClauses,
+			)
+			require.NoError(t, e)
+
+			clauseID := tt.clauseID
+			if clauseID == "clause-1" && len(rule.Clauses) > 0 {
+				clauseID = rule.Clauses[0].Id
+			}
+
+			e = rule.AdvanceRecurringClause(clauseID, tt.now)
+
+			if tt.expectErr {
+				assert.Error(t, e)
+				return
+			}
+			require.NoError(t, e)
+
+			dateClauses, e := rule.ExtractDatetimeClauses()
+			require.NoError(t, e)
+
+			clause := rule.Clauses[0]
+			dtClause := dateClauses[clause.Id]
+
+			assert.Equal(t, tt.expectExecutionCount, dtClause.ExecutionCount)
+			assert.Equal(t, tt.now.Unix(), dtClause.LastExecutedAt)
+			assert.Equal(t, tt.expectClauseExecutedAt, clause.ExecutedAt)
+
+			if tt.expectNextExecutionAt != nil {
+				tt.expectNextExecutionAt(t, dtClause.NextExecutionAt)
+			}
+		})
+	}
+}
+
+func TestAdvanceRecurringClause_MultipleClauses(t *testing.T) {
+	t.Parallel()
+
+	enableClause := &autoopsproto.DatetimeClause{
+		Time:       36000,
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1},
+			Timezone:   "UTC",
+			StartDate:  time.Date(2026, 1, 5, 0, 0, 0, 0, time.UTC).Unix(),
+		},
+	}
+	disableClause := &autoopsproto.DatetimeClause{
+		Time:       64800,
+		ActionType: autoopsproto.ActionType_DISABLE,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1},
+			Timezone:   "UTC",
+			StartDate:  time.Date(2026, 1, 5, 0, 0, 0, 0, time.UTC).Unix(),
+		},
+	}
+
+	rule, err := NewAutoOpsRule(
+		"feature-1",
+		autoopsproto.OpsType_SCHEDULE,
+		nil,
+		[]*autoopsproto.DatetimeClause{enableClause, disableClause},
+	)
+	require.NoError(t, err)
+	require.Len(t, rule.Clauses, 2)
+
+	now := time.Date(2026, 1, 5, 10, 0, 1, 0, time.UTC)
+	err = rule.AdvanceRecurringClause(rule.Clauses[0].Id, now)
+	require.NoError(t, err)
+
+	assert.False(t, rule.AllClausesFinished(), "rule should still have active clauses")
+
+	dateClauses, err := rule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+
+	dtFirst := dateClauses[rule.Clauses[0].Id]
+	assert.Equal(t, int32(1), dtFirst.ExecutionCount)
+	assert.True(t, dtFirst.NextExecutionAt > 0, "should have a next execution")
+
+	dtSecond := dateClauses[rule.Clauses[1].Id]
+	assert.Equal(t, int32(0), dtSecond.ExecutionCount)
+}

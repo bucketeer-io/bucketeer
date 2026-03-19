@@ -104,6 +104,57 @@ var (
 			"datetime clause time must be unique",
 			"Datetime",
 		))
+	statusDatetimeClauseInvalidTimeOfDay = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"time_of_day must be 0-86399 seconds for recurring schedules",
+			"TimeOfDay",
+		))
+	statusInvalidRecurrenceFrequency = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"invalid recurrence frequency", "RecurrenceFrequency",
+		))
+	statusRecurrenceTimezoneRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"timezone is required for recurring schedules", "Timezone",
+		))
+	statusInvalidRecurrenceTimezone = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"invalid timezone", "Timezone",
+		))
+	statusRecurrenceStartDateRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"start_date is required for recurring schedules", "StartDate",
+		))
+	statusRecurrenceEndDateMustBeAfterStart = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"end_date must be after start_date", "EndDate",
+		))
+	statusRecurrenceMaxOccurrencesInvalid = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"max_occurrences cannot be negative", "MaxOccurrences",
+		))
+	statusRecurrenceDaysOfWeekRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"days_of_week is required for weekly recurrence", "DaysOfWeek",
+		))
+	statusRecurrenceDaysOfWeekInvalid = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"days_of_week must be 0-6 (Sunday-Saturday)", "DaysOfWeek",
+		))
+	statusRecurrenceDayOfMonthInvalid = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"day_of_month must be 1-31", "DayOfMonth",
+		))
 	statusAutoOpsRuleNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.AutoopsPackageName, "auto ops rule not found", "AutoOperation"))
 	statusAutoOpsRuleAlreadyDeleted = api.NewGRPCStatus(
