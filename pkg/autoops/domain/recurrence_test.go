@@ -577,9 +577,48 @@ func TestInitializeRecurringClause_Monthly_InvalidDayOfMonth(t *testing.T) {
 		},
 	}
 	err = InitializeRecurringClause(clause)
-	assert.NoError(t, err)
-	// With invalid day_of_month, falls back to startTime
-	assert.Equal(t, startDate.Unix(), clause.NextExecutionAt)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "day_of_month must be 1-31")
+}
+
+func TestInitializeRecurringClause_Weekly_EmptyDaysOfWeek(t *testing.T) {
+	t.Parallel()
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	startDate := time.Date(2026, 2, 1, 0, 0, 0, 0, jst)
+	clause := &autoopsproto.DatetimeClause{
+		Time: 36000,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{},
+			Timezone:   "Asia/Tokyo",
+			StartDate:  startDate.Unix(),
+		},
+	}
+	err = InitializeRecurringClause(clause)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "days_of_week must be non-empty")
+}
+
+func TestInitializeRecurringClause_Weekly_InvalidDayValue(t *testing.T) {
+	t.Parallel()
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	startDate := time.Date(2026, 2, 1, 0, 0, 0, 0, jst)
+	clause := &autoopsproto.DatetimeClause{
+		Time: 36000,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1, 8}, // 8 is invalid
+			Timezone:   "Asia/Tokyo",
+			StartDate:  startDate.Unix(),
+		},
+	}
+	err = InitializeRecurringClause(clause)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "days_of_week must be non-empty")
 }
 
 func TestInitializeRecurringClause_Monthly(t *testing.T) {

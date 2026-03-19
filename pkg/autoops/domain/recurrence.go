@@ -94,6 +94,17 @@ func InitializeRecurringClause(clause *proto.DatetimeClause) error {
 		return errors.New("start_date is required for recurring schedules")
 	}
 
+	switch clause.Recurrence.Frequency {
+	case proto.RecurrenceRule_WEEKLY:
+		if _, ok := validateDaysOfWeek(clause.Recurrence.DaysOfWeek); !ok {
+			return errors.New("days_of_week must be non-empty with values 0-6 for weekly recurrence")
+		}
+	case proto.RecurrenceRule_MONTHLY:
+		if clause.Recurrence.DayOfMonth < 1 || clause.Recurrence.DayOfMonth > 31 {
+			return errors.New("day_of_month must be 1-31 for monthly recurrence")
+		}
+	}
+
 	loc := loadTimezone(clause.Recurrence.Timezone)
 	startTime := time.Unix(clause.Recurrence.StartDate, 0).In(loc)
 
