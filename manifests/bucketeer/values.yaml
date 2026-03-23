@@ -31,7 +31,7 @@ global:
       database: ""
   # Global primary database configuration
   # Supported types: mysql, postgres
-  database:
+  operationalDatabase:
     type: mysql
     mysql:
       user: ""

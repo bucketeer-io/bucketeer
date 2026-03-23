@@ -8,7 +8,7 @@ env:
   gcpEnabled: true
   profile: true
   # Database configuration
-  database:
+  operationalDatabase:
     type: "mysql"
     mysql:
       user:

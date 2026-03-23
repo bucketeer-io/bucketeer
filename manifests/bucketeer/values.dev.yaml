@@ -37,6 +37,7 @@ global:
   # Global primary database configuration
   # Set type to "mysql" or "postgres"
   database:
+  operationalDatabase:
     type: mysql
     mysql:
       user: "bucketeer"

@@ -13,20 +13,20 @@ env:
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
   # Database configuration
-  database:
+  operationalDatabase:
     type: "mysql"
     mysql:
       user:
       pass:
       host:
-      port:
+      port: 3306
       name:
       openConns: 50
     postgres:
       user:
       pass:
       host:
-      port:
+      port: 5432
       name:
       openConns: 50
   # Migration settings for environment ID migration

@@ -8,7 +8,7 @@ env:
   profile: false
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   project: bucketeer-dev
-  database:
+  operationalDatabase:
     type: "mysql"
     mysql:
       user: bucketeer

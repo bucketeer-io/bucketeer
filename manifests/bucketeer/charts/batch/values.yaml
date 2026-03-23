@@ -13,7 +13,7 @@ env:
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
   # Database configuration
-  database:
+  operationalDatabase:
     type: "mysql"
     mysql:
       user:

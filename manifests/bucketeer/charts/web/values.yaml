@@ -20,7 +20,7 @@ env:
   pubSubRedisMinIdle:
   pubSubRedisMode: auto
   # Database configuration
-  database:
+  operationalDatabase:
     type: "mysql"
     mysql:
       user:
