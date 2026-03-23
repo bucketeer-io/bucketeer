@@ -15,11 +15,11 @@
 package monthlysummary
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -28,16 +28,12 @@ import (
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	insightsstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mock"
+	prommock "github.com/bucketeer-io/bucketeer/v2/pkg/prometheus/mock"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func TestMonthlySummarizerRun(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	patterns := []struct {
 		desc     string
@@ -54,6 +50,22 @@ func TestMonthlySummarizerRun(t *testing.T) {
 			expected: errors.New("list error"),
 		},
 		{
+			desc: "fail: prometheus query error",
+			setup: func(m *monthlySummarizer) {
+				m.envClient.(*envclientmock.MockClient).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return(&envproto.ListEnvironmentsV2Response{
+						Environments: []*envproto.EnvironmentV2{
+							{Id: "env1"},
+						},
+					}, nil)
+				m.promClient.(*prommock.MockClient).EXPECT().
+					QueryInstant(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("prometheus error"))
+			},
+			expected: errors.New("prometheus error"),
+		},
+		{
 			desc: "fail: all merge fail",
 			setup: func(m *monthlySummarizer) {
 				m.envClient.(*envclientmock.MockClient).EXPECT().
@@ -63,6 +75,9 @@ func TestMonthlySummarizerRun(t *testing.T) {
 							{Id: "env1"},
 						},
 					}, nil)
+				m.promClient.(*prommock.MockClient).EXPECT().
+					QueryInstant(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(model.Vector{}, nil)
 				m.mauCache.(*cachemock.MockMAUCache).EXPECT().
 					MergeIntoMAUBatch(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil, errors.New("merge error"))
@@ -79,6 +94,9 @@ func TestMonthlySummarizerRun(t *testing.T) {
 							{Id: "env1"},
 						},
 					}, nil)
+				m.promClient.(*prommock.MockClient).EXPECT().
+					QueryInstant(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(model.Vector{}, nil)
 				m.mauCache.(*cachemock.MockMAUCache).EXPECT().
 					MergeIntoMAUBatch(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(map[string]int64{"ANDROID": 100}, nil)
@@ -98,6 +116,17 @@ func TestMonthlySummarizerRun(t *testing.T) {
 							{Id: "env1"},
 						},
 					}, nil)
+				m.promClient.(*prommock.MockClient).EXPECT().
+					QueryInstant(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(model.Vector{
+						&model.Sample{
+							Metric: model.Metric{
+								"environment_id": "env1",
+								"source_id":      "ANDROID",
+							},
+							Value: 500,
+						},
+					}, nil)
 				m.mauCache.(*cachemock.MockMAUCache).EXPECT().
 					MergeIntoMAUBatch(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(map[string]int64{"ANDROID": 100}, nil)
@@ -111,9 +140,10 @@ func TestMonthlySummarizerRun(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			summarizer := newMockMonthlySummarizer(t, mockController)
+			ctrl := gomock.NewController(t)
+			summarizer := newMockMonthlySummarizer(t, ctrl)
 			p.setup(summarizer)
-			err := summarizer.Run(ctx)
+			err := summarizer.Run(t.Context())
 			if p.expected != nil {
 				assert.Error(t, err)
 			} else {
@@ -153,6 +183,7 @@ func newMockMonthlySummarizer(t *testing.T, c *gomock.Controller) *monthlySummar
 		envClient:             envclientmock.NewMockClient(c),
 		mauCache:              cachemock.NewMockMAUCache(c),
 		monthlySummaryStorage: insightsstoragemock.NewMockMonthlySummaryStorage(c),
+		promClient:            prommock.NewMockClient(c),
 		opts: &jobs.Options{
 			Timeout: 30 * time.Second,
 		},

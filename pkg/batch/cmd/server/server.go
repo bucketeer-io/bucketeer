@@ -58,6 +58,7 @@ import (
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -132,6 +133,7 @@ type server struct {
 	nonPersistentRedisPoolMaxIdle    *int
 	nonPersistentRedisPoolMaxActive  *int
 	nonPersistentRedisMode           *string
+	prometheusURL                    *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -253,6 +255,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
 			"The ttl for experiment calculator lock").
 			Default("10m").Duration(),
+		prometheusURL: cmd.Flag("prometheus-url",
+			"Prometheus server URL for querying metrics.").
+			Default("").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -463,6 +468,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	var promClient prometheus.Client
+	if *s.prometheusURL != "" {
+		promClient, err = prometheus.NewClient(*s.prometheusURL, prometheus.WithLogger(logger))
+		if err != nil {
+			logger.Error("Failed to create Prometheus client",
+				zap.String("url", *s.prometheusURL),
+				zap.Error(err),
+			)
+			return err
+		}
+	}
+
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
 			environmentClient,
@@ -579,6 +596,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
 			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
+			promClient,
 			jobs.WithLogger(logger),
 		),
 		logger,

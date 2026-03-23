@@ -39,7 +39,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
 	scheduledflagchange "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/scheduledflagchange"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
-	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	maucachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
@@ -658,7 +657,7 @@ func newBatchService(t *testing.T,
 	notificationMockSender := notificationsender.NewMockSender(mockController)
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	mockProgressiveRolloutExecutor := opsexecutor.NewMockProgressiveRolloutExecutor(mockController)
-	cacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	cacheMock := redismock.NewMockMultiGetDeleteCountCache(mockController)
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 	mysqlMockRows := mysqlmock.NewMockRows(mockController)
 	redisMockClient := redismock.NewMockMultiGetCache(mockController)
@@ -775,6 +774,7 @@ func newBatchService(t *testing.T,
 			environmentMockClient,
 			mauCacheMock,
 			monthlySummaryStorageMock,
+			nil,
 			jobs.WithLogger(logger),
 		),
 		logger,
