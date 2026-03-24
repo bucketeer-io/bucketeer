@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
@@ -1044,6 +1045,8 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		name            string
 		eventCounts     map[string]int64
 		userCounts      map[string]map[string]struct{}
+		// If set, builds eventCounts/userCounts via persister keys (e.g. admin MakeKey layout).
+		seed            func(*evaluationCountEventPersister) (map[string]int64, map[string]map[string]struct{})
 		expectedPFAdds  int // Expected number of direct PFAdd calls
 		expectedIncrBys int // Expected number of direct IncrementBy calls
 		description     string
@@ -1100,6 +1103,19 @@ func TestFlushAggregatedCounts(t *testing.T) {
 			expectedIncrBys: 3,
 			description:     "Three key pairs with realistic keys",
 		},
+		{
+			name: "admin format keys (MakeKey admin env)",
+			seed: func(p *evaluationCountEventPersister) (map[string]int64, map[string]map[string]struct{}) {
+				hour1 := int64(1709974800)
+				ecKey := p.newEvaluationCountkeyV2(eventCountKey, "feature-admin", "varA", storage.AdminEnvironmentID, hour1)
+				ucKey := p.newEvaluationCountkeyV2(userCountKey, "feature-admin", "varA", storage.AdminEnvironmentID, hour1)
+				return map[string]int64{ecKey: 77},
+					map[string]map[string]struct{}{ucKey: {"user-a": {}, "user-b": {}}}
+			},
+			expectedPFAdds:  1,
+			expectedIncrBys: 1,
+			description:     "ec:/uc: without env prefix — extractKey TrimPrefix path; PFADD before INCRBY",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1113,8 +1129,13 @@ func TestFlushAggregatedCounts(t *testing.T) {
 				logger:                zap.NewNop(),
 			}
 
+			eventCounts, userCounts := tt.eventCounts, tt.userCounts
+			if tt.seed != nil {
+				eventCounts, userCounts = tt.seed(persister)
+			}
+
 			// Execute flush
-			failedKeys, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts)
 
 			// Verify
 			assert.NoError(t, err, "flush should succeed")
@@ -1127,15 +1148,24 @@ func TestFlushAggregatedCounts(t *testing.T) {
 				"IncrBy call count should match: %s", tt.description)
 
 			// Verify PFADD-before-INCRBY ordering per key pair
-			if len(tt.userCounts) > 0 {
+			if len(userCounts) > 0 {
+				// Normalize env form ("env:ec:", "env:uc:") and admin form ("ec:", "uc:") to one suffix per pair.
 				extractSuffix := func(call string) string {
 					s := call
 					if strings.HasPrefix(s, "PFADD:") {
 						s = strings.TrimPrefix(s, "PFADD:")
-						s = strings.Replace(s, ":uc:", ":", 1)
+						if strings.Contains(s, ":"+userCountKey+":") {
+							s = strings.Replace(s, ":"+userCountKey+":", ":", 1)
+						} else if strings.HasPrefix(s, userCountKey+":") {
+							s = strings.TrimPrefix(s, userCountKey+":")
+						}
 					} else if strings.HasPrefix(s, "INCRBY:") {
 						s = strings.TrimPrefix(s, "INCRBY:")
-						s = strings.Replace(s, ":ec:", ":", 1)
+						if strings.Contains(s, ":"+eventCountKey+":") {
+							s = strings.Replace(s, ":"+eventCountKey+":", ":", 1)
+						} else if strings.HasPrefix(s, eventCountKey+":") {
+							s = strings.TrimPrefix(s, eventCountKey+":")
+						}
 					}
 					return s
 				}
@@ -1164,17 +1194,17 @@ func TestFlushAggregatedCounts(t *testing.T) {
 			}
 
 			// Verify data integrity
-			if len(tt.eventCounts) > 0 || len(tt.userCounts) > 0 {
-				assert.Equal(t, len(tt.eventCounts), len(mockCache.lastEventCounts),
+			if len(eventCounts) > 0 || len(userCounts) > 0 {
+				assert.Equal(t, len(eventCounts), len(mockCache.lastEventCounts),
 					"all event count keys should be flushed")
-				assert.Equal(t, len(tt.userCounts), len(mockCache.lastUserCounts),
+				assert.Equal(t, len(userCounts), len(mockCache.lastUserCounts),
 					"all user count keys should be flushed")
 
-				for key, expectedCount := range tt.eventCounts {
+				for key, expectedCount := range eventCounts {
 					assert.Equal(t, expectedCount, mockCache.lastEventCounts[key],
 						"event count for key %s should match", key)
 				}
-				for key, expectedUsers := range tt.userCounts {
+				for key, expectedUsers := range userCounts {
 					assert.Equal(t, len(expectedUsers), len(mockCache.lastUserCounts[key]),
 						"user count for key %s should match", key)
 				}
