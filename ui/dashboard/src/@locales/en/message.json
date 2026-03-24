@@ -28,10 +28,10 @@
   },
   "copied": "Copied",
   "api-key-created-title": "API key created",
-  "api-key-secret-warning": "This is the only time you can view this full API key. Copy it now and store it somewhere safe — you will not be able to see it again.",
+  "api-key-secret-warning": "Copy and store the API Key. Once you leave this page, the key will be hidden, and you will not be able to see it again.",
   "api-key-secret-label": "Your API key",
   "copy-api-key": "Copy API key",
-  "api-key-secret-done": "Done",
+  "api-key-secret-close": "Close",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
   "something-went-wrong": "Oops! Something went wrong.",
   "operation": {

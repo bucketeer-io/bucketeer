@@ -61,7 +61,7 @@ const APIKeyCreatedSecretModal = ({
             {t('message:copy-api-key')}
           </Button>
           <Button type="button" variant="primary" onClick={onClose}>
-            {t('message:api-key-secret-done')}
+            {t('message:api-key-secret-close')}
           </Button>
         </div>
       </div>

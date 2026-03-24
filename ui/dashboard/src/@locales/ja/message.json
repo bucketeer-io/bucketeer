@@ -28,10 +28,10 @@
   },
   "copied": "コピーしました",
   "api-key-created-title": "APIキーを作成しました",
-  "api-key-secret-warning": "完全なAPIキーを表示できるのは今回のみです。今すぐコピーし、安全な場所に保管してください。再度表示することはできません。",
+  "api-key-secret-warning": "APIキーをコピーして保管してください。このページを離れると、キーは非表示になり、再び表示することはできません。",
   "api-key-secret-label": "APIキー",
   "copy-api-key": "APIキーをコピー",
-  "api-key-secret-done": "閉じる",
+  "api-key-secret-close": "閉じる",
   "copy-trigger-url": "このURLをコピーして保存してください。このページを離れると、URLは非表示になります。",
   "something-went-wrong": "問題が発生しました。",
   "operation": {
