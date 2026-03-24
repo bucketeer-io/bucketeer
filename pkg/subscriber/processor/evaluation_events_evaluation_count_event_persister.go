@@ -202,7 +202,11 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 }
 
 func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
-	fails := make(map[string]bool, len(envEvents))
+	totalEvents := 0
+	for _, events := range envEvents {
+		totalEvents += len(events)
+	}
+	fails := make(map[string]bool, totalEvents)
 	aggregator := newEvaluationCountAggregator()
 
 	type metricsKey struct {
