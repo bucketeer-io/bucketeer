@@ -64,15 +64,15 @@ jobs:
             echo "Found merged PRs: ${MERGED_PRS}"
           fi
 
-      - name: Trigger AI docs update in bucketeer-docs
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: steps.find-prs.outputs.pr_numbers != ''
-        env:
-          GH_TOKEN: ${{ secrets.REPO_ACCESS_PAT }}
-          ISSUE_NUMBER: ${{ steps.find-prs.outputs.issue_number }}
-          PR_NUMBERS: ${{ steps.find-prs.outputs.pr_numbers }}
-        run: |
-          gh api "/repos/bucketeer-io/bucketeer-docs/actions/workflows/ai-docs-update.yaml/dispatches" \
-            -f ref=main \
-            -f "inputs[issue_number]=${ISSUE_NUMBER}" \
-            -f "inputs[pr_numbers]=${PR_NUMBERS}"
-          echo "Triggered ai-docs-update for issue #${ISSUE_NUMBER} with PRs: ${PR_NUMBERS}"
+
+      - name: Workflow Dispatch
+        if: steps.find-prs.outputs.pr_numbers != ''
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        with:
+          repo: bucketeer-io/bucketeer-docs
+          token: ${{ secrets.REPO_ACCESS_PAT }}
+          workflow: ai-docs-update.yaml
+          ref: main
+          inputs: '{"issue_number": "${{ steps.find-prs.outputs.issue_number }}", "pr_numbers": "${{ steps.find-prs.outputs.pr_numbers }}"}'
