@@ -979,6 +979,64 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 	}
 }
 
+func TestIncrementEnvEvents_AggregatedIncrementMagnitude(t *testing.T) {
+	t.Parallel()
+
+	hour1 := int64(1709974800) // 2024-03-09 09:00:00 UTC
+	const nEvents = 3
+
+	envEvents := environmentEventMap{
+		"env-1": eventMap{
+			"event-1": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-1",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-1",
+				User:           &userproto.User{Id: "user-1"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+			"event-2": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-1",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-2",
+				User:           &userproto.User{Id: "user-2"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+			"event-3": &eventproto.EvaluationEvent{
+				FeatureId:      "feature-1",
+				VariationId:    "variation-A",
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				UserId:         "user-3",
+				User:           &userproto.User{Id: "user-3"},
+				Timestamp:      hour1,
+				FeatureVersion: 1,
+			},
+		},
+	}
+
+	mockCache := &mockEvaluationCountCache{}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	fails := persister.incrementEnvEvents(envEvents)
+	assert.Empty(t, fails, "no failures expected for successful flush")
+
+	ecKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-1", "variation-A", "env-1", hour1)
+	ucKey := persister.newEvaluationCountkeyV2(userCountKey, "feature-1", "variation-A", "env-1", hour1)
+
+	assert.Equal(t, int64(nEvents), mockCache.lastEventCounts[ecKey],
+		"three events same bucket should produce a single IncrementBy with delta 3")
+	require.Contains(t, mockCache.lastUserCounts, ucKey)
+	assert.Len(t, mockCache.lastUserCounts[ucKey], nEvents, "three distinct users for PFADD set")
+	assert.Equal(t, 1, mockCache.execCount, "exactly one IncrementBy call for the single ec key")
+	assert.Equal(t, 1, mockCache.pfaddCallCount, "exactly one PFADD call for the single uc key")
+}
+
 func TestFlushAggregatedCounts(t *testing.T) {
 	t.Parallel()
 
