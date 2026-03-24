@@ -54,7 +54,7 @@ export type ConfirmationRequiredModalProps = {
   isShowScheduleSelect?: boolean;
   isShowRolloutWarning?: boolean;
   onSegmentRuleDeleted?: () => DiscardChangesStateData[];
-  onSegmentRuleChannge?: (
+  onSegmentRuleChange?: (
     index: number,
     isAction: boolean
   ) => DiscardChangesStateData[];
@@ -85,8 +85,8 @@ const ConfirmationRequiredModal = ({
   isShowScheduleSelect,
   isShowRolloutWarning,
   onSegmentRuleDeleted,
-  onSegmentRuleChannge,
   onSegmentRuleReorder,
+  onSegmentRuleChange,
   onClose,
   onSubmit
 }: ConfirmationRequiredModalProps) => {
@@ -152,9 +152,9 @@ const ConfirmationRequiredModal = ({
 
     if (!targetingRule) return [];
     for (let i = 0; i < targetingRule.segmentRules!.length; i++) {
-      if (!onSegmentRuleChannge) continue;
+      if (!onSegmentRuleChange) continue;
 
-      const changes = onSegmentRuleChannge(i, false);
+      const changes = onSegmentRuleChange(i, false);
       if (changes.length > 0) {
         // Detect action type from the first change item's changeType
         const action =
