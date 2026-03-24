@@ -643,13 +643,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithKeyPath(*s.keyPath),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create batch gateway: %v", err)
+		return fmt.Errorf("failed to create batch gateway: %w", err)
 	}
 
 	batchCtx, batchCancel := context.WithCancel(context.Background())
 	defer batchCancel()
 	if err := batchGateway.Start(batchCtx, batchHandler); err != nil {
-		return fmt.Errorf("failed to start batch gateway: %v", err)
+		return fmt.Errorf("failed to start batch gateway: %w", err)
 	}
 
 	defer func() {

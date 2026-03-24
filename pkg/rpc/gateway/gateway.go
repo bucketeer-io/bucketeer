@@ -248,7 +248,7 @@ func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 	if options.logger == nil {
 		logger, err := log.NewLogger()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create logger: %v", err)
+			return nil, fmt.Errorf("failed to create logger: %w", err)
 		}
 		options.logger = logger
 	}
@@ -342,7 +342,7 @@ func (g *Gateway) Start(ctx context.Context,
 	if g.opts.certPath != "" {
 		creds, err := credentials.NewClientTLSFromFile(g.opts.certPath, "")
 		if err != nil {
-			return fmt.Errorf("failed to create grpc-gateway TLS credentials: %v", err)
+			return fmt.Errorf("failed to create grpc-gateway TLS credentials: %w", err)
 		}
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 	} else {
@@ -369,7 +369,7 @@ func (g *Gateway) Start(ctx context.Context,
 	// connections will be closed automatically by the generated gateway code.
 	for _, registerFunc := range registerFuncs {
 		if err := registerFunc(ctx, mux, dialOpts); err != nil {
-			return fmt.Errorf("failed to register grpc-gateway handler: %v", err)
+			return fmt.Errorf("failed to register grpc-gateway handler: %w", err)
 		}
 	}
 
@@ -400,7 +400,7 @@ func (g *Gateway) Start(ctx context.Context,
 	// Check if there was an immediate error
 	select {
 	case err := <-errChan:
-		return fmt.Errorf("failed to start grpc-gateway: %v", err)
+		return fmt.Errorf("failed to start grpc-gateway: %w", err)
 	default:
 		// No immediate error, server is starting
 		g.logger.Debug("grpc-gateway started",

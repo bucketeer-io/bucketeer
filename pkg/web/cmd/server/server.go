@@ -878,11 +878,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithKeyPath(*s.keyPath),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create web gRPC gateway: %v", err)
+		return fmt.Errorf("failed to create web gRPC gateway: %w", err)
 	}
 
 	if err := webGrpcGateway.Start(ctx, s.createGatewayHandlers()...); err != nil {
-		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
+		return fmt.Errorf("failed to start web gRPC gateway: %w", err)
 	}
 
 	defer func() {
