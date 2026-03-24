@@ -159,7 +159,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   return (
     <div
       className={cn(
-        'fixed h-screen bg-primary-500 z-50 transition-transform duration-200 ',
+        'fixed h-screen bg-primary-500 z-50 transition-[width] duration-300 ease-in-out overflow-hidden',
         !fromTabletScreen && isExpanded
           ? 'w-[248px] px-3 sm:px-6 py-4'
           : !fromMobileScreen
@@ -172,10 +172,10 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           <button
             onClick={() => (!isExpanded ? setIsExpanded() : setIsCloseExpand())}
             className={cn(
-              'hidden sm:block hover:bg-gray-50 hover:rounded-full w-6 h-6',
+              'hidden sm:flex items-center justify-center hover:bg-primary-300 hover:rounded-full w-6 h-6',
               isExpanded
                 ? 'absolute right-0 top-4'
-                : 'absolute right-[8px] top-0'
+                : 'absolute left-1/2 -translate-x-1/2 top-0'
             )}
           >
             <Icon
