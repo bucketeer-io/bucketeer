@@ -1042,9 +1042,9 @@ func TestFlushAggregatedCounts(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name            string
-		eventCounts     map[string]int64
-		userCounts      map[string]map[string]struct{}
+		name        string
+		eventCounts map[string]int64
+		userCounts  map[string]map[string]struct{}
 		// If set, builds eventCounts/userCounts via persister keys (e.g. admin MakeKey layout).
 		seed            func(*evaluationCountEventPersister) (map[string]int64, map[string]map[string]struct{})
 		expectedPFAdds  int // Expected number of direct PFAdd calls
