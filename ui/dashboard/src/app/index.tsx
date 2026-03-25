@@ -151,6 +151,7 @@ export const Root = memo(() => {
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
+    setShowMenu(false);
   }, [setPageKey]);
 
   if (isInitialLoading) {
@@ -164,14 +165,16 @@ export const Root = memo(() => {
     }
     return (
       <div className="flex flex-col sm:flex-row w-full h-full">
-        <div className="flex sticky z-20 top-0 left-0 gap-3 items-center justify-between sm:hidden w-full h-[50px] px-4 bg-primary-400">
+        <div className="flex fixed z-20 top-0 left-0 gap-3 items-center justify-between sm:hidden w-full h-[50px] px-4 bg-primary-400">
           <img src={logo} alt="Bucketer" />
-          <Button
-            className="bg-transparent hover:bg-transparent p-0"
-            onClick={() => setShowMenu(true)}
-          >
-            <Icon icon={IconMenu} />
-          </Button>
+          {!showMenu && (
+            <Button
+              className="bg-transparent hover:bg-transparent p-0"
+              onClick={() => setShowMenu(true)}
+            >
+              <Icon icon={IconMenu} />
+            </Button>
+          )}
         </div>
         {fromMobileScreen ? (
           <Navigation onClickNavLink={handleChangePageKey} />
@@ -185,7 +188,7 @@ export const Root = memo(() => {
           </Drawer>
         )}
 
-        <div className="w-full ml-0 sm:ml-[60px] md:ml-[248px] shadow-lg overflow-y-auto">
+        <div className="w-full ml-0 mt-[50px] sm:mt-0 sm:ml-[60px] md:ml-[248px] shadow-lg overflow-y-auto">
           <Routes>
             {consoleAccount.isSystemAdmin && (
               <Route
