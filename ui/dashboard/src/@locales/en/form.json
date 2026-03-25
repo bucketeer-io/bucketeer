@@ -244,6 +244,12 @@
   "custom": "Custom",
   "release": "Release",
   "kill-switch": "Kill Switch",
+  "template-tooltip": {
+    "custom": "Start from scratch when you need full control over flag behavior, variations, and targeting.",
+    "release": "Use for staged rollouts. Starts with the feature off, then gradually enables it for more users until fully released.",
+    "kill-switch": "Use as an emergency off switch for optional features or external dependencies when something goes wrong.",
+    "experiment": "Use to run A/B tests and validate hypotheses. Compare results across test groups and use the findings to drive continuous improvement."
+  },
   "flag-id-tooltip": "Feature flag ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
   "goal-id-tooltip": "Goal ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
   "tags-tooltip": "Tags help optimize feature flag evaluations by limiting which flags are processed. Using specific tags improves response times and reduces network traffic. Tags are recommended for better performance as your system grows.",
@@ -418,8 +424,8 @@
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
   },
   "custom-rule-strategy-discard-desc": "Update variation allocation:",
-  "custom-rule-audience-not-include-desc":"Not allocated — <b>{{percent}}%</b> <variantElement/>",
-  "custom-rule-audience-include-desc":"Allocated — <b>{{percent}}%</b> <variantElement/>",
+  "custom-rule-audience-not-include-desc": "Not allocated — <b>{{percent}}%</b> <variantElement/>",
+  "custom-rule-audience-include-desc": "Allocated — <b>{{percent}}%</b> <variantElement/>",
   "custom-rule-strategy-add-new-discard-desc": "<b>IF {{clauseLabel}}</b>, Serve:",
   "custom-rule-default-audience-discard-desc": "Update audience traffic allocation:",
   "discard-unsaved-changes": "Discard unsaved changes",

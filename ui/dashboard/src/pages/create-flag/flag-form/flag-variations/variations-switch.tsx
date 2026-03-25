@@ -3,10 +3,13 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { cn } from 'utils/style';
+import { IconInfo } from '@icons';
 import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagSwitchVariationType } from 'pages/create-flag/types';
 import Button from 'components/button';
 import Form from 'components/form';
+import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 
 const buttonCls =
   'typo-para-medium !text-gray-600 !shadow-none border border-gray-200 hover:border-gray-400 disabled:pointer-events-none';
@@ -101,7 +104,19 @@ const VariationsSwitch = () => {
                     handleSwitchVariation(FlagSwitchVariationType.CUSTOM)
                   }
                 >
-                  {t(`custom`)}
+                  <div className="flex items-center gap-x-1">
+                    {t(`custom`)}
+                    <Tooltip
+                      align="start"
+                      trigger={
+                        <div className="flex-center">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('template-tooltip.custom')}
+                      className="!z-[100] max-w-[300px]"
+                    />
+                  </div>
                 </Button>
                 <Button
                   variant={'secondary-2'}
@@ -116,7 +131,19 @@ const VariationsSwitch = () => {
                     handleSwitchVariation(FlagSwitchVariationType.RELEASE)
                   }
                 >
-                  {t(`release`)}
+                  <div className="flex items-center gap-x-1">
+                    {t(`release`)}
+                    <Tooltip
+                      align="start"
+                      trigger={
+                        <div className="flex-center">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('template-tooltip.release')}
+                      className="!z-[100] max-w-[300px]"
+                    />
+                  </div>
                 </Button>
                 <Button
                   variant={'secondary-2'}
@@ -131,7 +158,19 @@ const VariationsSwitch = () => {
                     handleSwitchVariation(FlagSwitchVariationType.KILL_SWITCH)
                   }
                 >
-                  {t(`kill-switch`)}
+                  <div className="flex items-center gap-x-1">
+                    {t(`kill-switch`)}
+                    <Tooltip
+                      align="start"
+                      trigger={
+                        <div className="flex-center">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('template-tooltip.kill-switch')}
+                      className="!z-[100] max-w-[300px]"
+                    />
+                  </div>
                 </Button>
                 <Button
                   variant={'secondary-2'}
@@ -146,7 +185,19 @@ const VariationsSwitch = () => {
                     handleSwitchVariation(FlagSwitchVariationType.EXPERIMENT)
                   }
                 >
-                  {t(`common:source-type.experiment`)}
+                  <div className="flex items-center gap-x-1">
+                    {t(`common:source-type.experiment`)}
+                    <Tooltip
+                      align="start"
+                      trigger={
+                        <div className="flex-center">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('template-tooltip.experiment')}
+                      className="!z-[100] max-w-[300px]"
+                    />
+                  </div>
                 </Button>
               </div>
             </Form.Control>
