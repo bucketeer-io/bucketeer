@@ -47,7 +47,10 @@ const Pagination = ({
           pageIndex={cursor === 0 ? 1 : cursor / pageSize + 1}
           totalItems={totalCount}
           itemsPerPage={pageSize}
-          onPageChange={onChange}
+          onPageChange={page => {
+            onChange(page);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
       )}
     </div>

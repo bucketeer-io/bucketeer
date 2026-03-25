@@ -145,7 +145,7 @@ export const UserSegmentCard: React.FC<UserSegmentCardProps> = ({
       </Card.Meta>
       <Card.Footer
         left={
-          <div className="flex-center gap-2">
+          <div className="flex-center gap-2 mt-2">
             <Icon icon={IconWatch} size={'xxs'} />
             <DateTooltip
               trigger={

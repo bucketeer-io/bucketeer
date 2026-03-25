@@ -37,12 +37,12 @@ const AuditLogList = memo(
     }, []);
 
     return (
-      <div className="flex flex-col w-full gap-y-6">
+      <div className="flex flex-col w-full gap-y-3 sm:gap-y-6">
         {auditLogDates?.map((item, index) => {
           return (
             <div
               key={item}
-              className="flex flex-col items-center w-full gap-y-6"
+              className="flex flex-col items-center w-full gap-y-3 sm:gap-y-6"
             >
               <p className="typo-para-medium text-gray-600">
                 {getDateLabel(item)}

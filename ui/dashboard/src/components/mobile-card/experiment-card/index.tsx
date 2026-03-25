@@ -131,7 +131,7 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
       </Card.Header>
 
       <Card.Meta>
-        <div className="flex flex-wrap h-full w-full items-stretch justify-between gap-3 typo-para-medium pb-5">
+        <div className="flex h-full w-full items-stretch justify-between gap-3 typo-para-medium pb-2">
           <div className="flex-1 p-3 rounded-xl bg-gray-100">
             <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
               <span>{t('common:goal')}</span>
@@ -160,8 +160,8 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
           </div>
         </div>
         <Divider />
-        <div className="flex flex-wrap h-full w-full pt-3 items-stretch justify-between gap-3 typo-para-medium">
-          <div className="flex-1 p-3 rounded-xl text-gray-500">
+        <div className="flex h-full w-full items-stretch justify-between gap-3 typo-para-medium">
+          <div className="flex-1 p-3 pb-0 rounded-xl text-gray-500">
             <p className="flex items-center gap-2 uppercase typo-para-tiny">
               <span>{t('time-start')}</span>
             </p>
@@ -177,7 +177,7 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 p-3 rounded-xl text-gray-500">
+          <div className="flex-1 p-3 pb-0 rounded-xl text-gray-500">
             <div className="flex-1">
               <p className="flex items-center gap-2 uppercase typo-para-tiny">
                 <span>{t('common:time-stop')}</span>
