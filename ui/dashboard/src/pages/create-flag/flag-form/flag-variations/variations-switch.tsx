@@ -273,7 +273,7 @@ const VariationsSwitch = () => {
     ) {
       handleSwitchVariation(currentSwitchVariation);
     }
-  }, [currentVariationType, currentSwitchVariation, handleSwitchVariation]);
+  }, [currentVariationType, handleSwitchVariation]);
 
   return (
     <div className="flex items-center w-full justify-between">
@@ -304,13 +304,20 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
-                          className="flex-center"
+                        <span
+                          className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.custom')}
                       className="!z-[100] max-w-[300px]"
@@ -335,13 +342,20 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
-                          className="flex-center"
+                        <span
+                          className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.release')}
                       className="!z-[100] max-w-[300px]"
@@ -366,13 +380,20 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
-                          className="flex-center"
+                        <span
+                          className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.kill-switch')}
                       className="!z-[100] max-w-[300px]"
@@ -397,13 +418,20 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
-                          className="flex-center"
+                        <span
+                          className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.experiment')}
                       className="!z-[100] max-w-[300px]"
