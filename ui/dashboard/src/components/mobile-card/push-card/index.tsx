@@ -105,7 +105,7 @@ export const PushCard: React.FC<PushCardProps> = ({
             className="!max-w-[250px] truncate"
           />
         </div>
-        <div className="flex flex-wrap h-full w-full items-stretch justify-between gap-3 typo-para-medium">
+        <div className="flex h-full w-full items-stretch justify-between gap-3 typo-para-medium">
           <div className="flex-1 p-3 rounded-xl bg-gray-100 text-nowrap">
             <div className="flex-1">
               <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
