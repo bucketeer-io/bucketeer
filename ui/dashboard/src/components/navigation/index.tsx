@@ -280,6 +280,7 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
                 title={item.title}
                 items={item.menus}
                 isCollapsed={isCollapsed}
+                onClickNavLink={onClickNavLink}
               />
             ))}
           </div>

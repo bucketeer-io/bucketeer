@@ -7,7 +7,7 @@ import VariationsSwitch from './variations-switch';
 const FlagVariations = () => {
   return (
     <div
-      className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card"
+      className="flex flex-col w-full p-5 gap-y-3 sm:gap-y-6 bg-white rounded-lg shadow-card"
       data-tour={WALKTHROUGH_TARGETS.FLAG_VARIATIONS}
     >
       <VariationsSwitch />

@@ -183,23 +183,25 @@ export const GoalCard: React.FC<GoalCardProps> = ({ data, onActions }) => {
       </Card.Meta>
       <Card.Footer
         left={
-          <DateTooltip
-            trigger={
-              <div className="text-gray-500 typo-para-small whitespace-nowrap">
-                {Number(data.updatedAt) === 0 ? (
-                  t('never')
-                ) : (
-                  <Trans
-                    i18nKey={'common:time-updated'}
-                    values={{
-                      time: formatDateTime(data.updatedAt)
-                    }}
-                  />
-                )}
-              </div>
-            }
-            date={Number(data.updatedAt) === 0 ? null : data.updatedAt}
-          />
+          <div className="mt-1">
+            <DateTooltip
+              trigger={
+                <div className="text-gray-500 typo-para-small whitespace-nowrap">
+                  {Number(data.updatedAt) === 0 ? (
+                    t('never')
+                  ) : (
+                    <Trans
+                      i18nKey={'common:time-updated'}
+                      values={{
+                        time: formatDateTime(data.updatedAt)
+                      }}
+                    />
+                  )}
+                </div>
+              }
+              date={Number(data.updatedAt) === 0 ? null : data.updatedAt}
+            />
+          </div>
         }
       />
     </Card>

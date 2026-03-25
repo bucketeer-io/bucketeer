@@ -169,7 +169,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
             }
           />
         </div>
-        <div className="flex flex-col gap-2 rounded-lg bg-gray-100 p-3 mt-6">
+        <div className="flex flex-col gap-2 rounded-lg bg-gray-100 p-3 my-2">
           <div className="flex items-start justify-between bg-gray-100 rounded-lg">
             <div
               id="variations-wrapper"
@@ -178,7 +178,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
               <FlagVariationsElement variations={data.variations} />
             </div>
           </div>
-          <div className="flex items-center flex-wrap w-full gap-2 rounded-lg p-2">
+          <div className="flex items-center flex-wrap w-full gap-2 rounded-lg">
             <ExpandableTag
               tags={data.tags}
               filterTags={filterTags}
