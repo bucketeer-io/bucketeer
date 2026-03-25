@@ -43,7 +43,10 @@ const VariationsSwitch = () => {
         const thirdVariationId = uuid();
 
         // Set variationType to STRING when switching TO EXPERIMENT from another template
-        if (previousSwitchVariation !== FlagSwitchVariationType.EXPERIMENT || isInitial) {
+        if (
+          previousSwitchVariation !== FlagSwitchVariationType.EXPERIMENT ||
+          isInitial
+        ) {
           setValue('variationType', 'STRING', setValueOptions);
         }
 
@@ -52,114 +55,138 @@ const VariationsSwitch = () => {
         switch (variationTypeToUse) {
           case 'BOOLEAN':
             // For BOOLEAN, only show 2 variations
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('control'),
-                value: 'true'
-              },
-              {
-                id: offVariation,
-                name: `${t('treatment')} 1`,
-                value: 'false'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('control'),
+                  value: 'true'
+                },
+                {
+                  id: offVariation,
+                  name: `${t('treatment')} 1`,
+                  value: 'false'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'STRING':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('control'),
-                value: 'control'
-              },
-              {
-                id: offVariation,
-                name: `${t('treatment')} 1`,
-                value: 'treatment-1'
-              },
-              {
-                id: thirdVariationId,
-                name: `${t('treatment')} 2`,
-                value: 'treatment-2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('control'),
+                  value: 'control'
+                },
+                {
+                  id: offVariation,
+                  name: `${t('treatment')} 1`,
+                  value: 'treatment-1'
+                },
+                {
+                  id: thirdVariationId,
+                  name: `${t('treatment')} 2`,
+                  value: 'treatment-2'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'NUMBER':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('control'),
-                value: '0'
-              },
-              {
-                id: offVariation,
-                name: `${t('treatment')} 1`,
-                value: '1'
-              },
-              {
-                id: thirdVariationId,
-                name: `${t('treatment')} 2`,
-                value: '2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('control'),
+                  value: '0'
+                },
+                {
+                  id: offVariation,
+                  name: `${t('treatment')} 1`,
+                  value: '1'
+                },
+                {
+                  id: thirdVariationId,
+                  name: `${t('treatment')} 2`,
+                  value: '2'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'JSON':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('control'),
-                value: '{"group": "control"}'
-              },
-              {
-                id: offVariation,
-                name: `${t('treatment')} 1`,
-                value: '{"group": "treatment-1"}'
-              },
-              {
-                id: thirdVariationId,
-                name: `${t('treatment')} 2`,
-                value: '{"group": "treatment-2"}'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('control'),
+                  value: '{"group": "control"}'
+                },
+                {
+                  id: offVariation,
+                  name: `${t('treatment')} 1`,
+                  value: '{"group": "treatment-1"}'
+                },
+                {
+                  id: thirdVariationId,
+                  name: `${t('treatment')} 2`,
+                  value: '{"group": "treatment-2"}'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'YAML':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('control'),
-                value: 'group: control'
-              },
-              {
-                id: offVariation,
-                name: `${t('treatment')} 1`,
-                value: 'group: treatment-1'
-              },
-              {
-                id: thirdVariationId,
-                name: `${t('treatment')} 2`,
-                value: 'group: treatment-2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('control'),
+                  value: 'group: control'
+                },
+                {
+                  id: offVariation,
+                  name: `${t('treatment')} 1`,
+                  value: 'group: treatment-1'
+                },
+                {
+                  id: thirdVariationId,
+                  name: `${t('treatment')} 2`,
+                  value: 'group: treatment-2'
+                }
+              ],
+              setValueOptions
+            );
 
           default:
             // Fallback to string
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('control'),
-                value: 'control'
-              },
-              {
-                id: offVariation,
-                name: `${t('treatment')} 1`,
-                value: 'treatment-1'
-              },
-              {
-                id: thirdVariationId,
-                name: `${t('treatment')} 2`,
-                value: 'treatment-2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('control'),
+                  value: 'control'
+                },
+                {
+                  id: offVariation,
+                  name: `${t('treatment')} 1`,
+                  value: 'treatment-1'
+                },
+                {
+                  id: thirdVariationId,
+                  name: `${t('treatment')} 2`,
+                  value: 'treatment-2'
+                }
+              ],
+              setValueOptions
+            );
         }
       }
 
@@ -169,89 +196,113 @@ const VariationsSwitch = () => {
 
         switch (currentVariationType) {
           case 'BOOLEAN':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: 'true',
-                value: 'true'
-              },
-              {
-                id: offVariation,
-                name: 'false',
-                value: 'false'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: 'true',
+                  value: 'true'
+                },
+                {
+                  id: offVariation,
+                  name: 'false',
+                  value: 'false'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'STRING':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('variation-n', { number: 1 }),
-                value: 'variation-1'
-              },
-              {
-                id: offVariation,
-                name: t('variation-n', { number: 2 }),
-                value: 'variation-2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('variation-n', { number: 1 }),
+                  value: 'variation-1'
+                },
+                {
+                  id: offVariation,
+                  name: t('variation-n', { number: 2 }),
+                  value: 'variation-2'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'NUMBER':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('variation-n', { number: 1 }),
-                value: '1'
-              },
-              {
-                id: offVariation,
-                name: t('variation-n', { number: 2 }),
-                value: '2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('variation-n', { number: 1 }),
+                  value: '1'
+                },
+                {
+                  id: offVariation,
+                  name: t('variation-n', { number: 2 }),
+                  value: '2'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'JSON':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('variation-n', { number: 1 }),
-                value: '{"variation": "variation-1"}'
-              },
-              {
-                id: offVariation,
-                name: t('variation-n', { number: 2 }),
-                value: '{"variation": "variation-2"}'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('variation-n', { number: 1 }),
+                  value: '{"variation": "variation-1"}'
+                },
+                {
+                  id: offVariation,
+                  name: t('variation-n', { number: 2 }),
+                  value: '{"variation": "variation-2"}'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'YAML':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('variation-n', { number: 1 }),
-                value: 'variation: variation-1'
-              },
-              {
-                id: offVariation,
-                name: t('variation-n', { number: 2 }),
-                value: 'variation: variation-2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('variation-n', { number: 1 }),
+                  value: 'variation: variation-1'
+                },
+                {
+                  id: offVariation,
+                  name: t('variation-n', { number: 2 }),
+                  value: 'variation: variation-2'
+                }
+              ],
+              setValueOptions
+            );
 
           default:
             // Fallback to string if variationType is not set
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: t('variation-n', { number: 1 }),
-                value: 'variation-1'
-              },
-              {
-                id: offVariation,
-                name: t('variation-n', { number: 2 }),
-                value: 'variation-2'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: t('variation-n', { number: 1 }),
+                  value: 'variation-1'
+                },
+                {
+                  id: offVariation,
+                  name: t('variation-n', { number: 2 }),
+                  value: 'variation-2'
+                }
+              ],
+              setValueOptions
+            );
         }
       }
 
@@ -266,89 +317,113 @@ const VariationsSwitch = () => {
 
         switch (currentVariationType) {
           case 'BOOLEAN':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: onName,
-                value: 'true'
-              },
-              {
-                id: offVariation,
-                name: offName,
-                value: 'false'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: onName,
+                  value: 'true'
+                },
+                {
+                  id: offVariation,
+                  name: offName,
+                  value: 'false'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'STRING':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: onName,
-                value: 'true'
-              },
-              {
-                id: offVariation,
-                name: offName,
-                value: 'false'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: onName,
+                  value: 'true'
+                },
+                {
+                  id: offVariation,
+                  name: offName,
+                  value: 'false'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'NUMBER':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: onName,
-                value: '1'
-              },
-              {
-                id: offVariation,
-                name: offName,
-                value: '0'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: onName,
+                  value: '1'
+                },
+                {
+                  id: offVariation,
+                  name: offName,
+                  value: '0'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'JSON':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: onName,
-                value: '{"status": true}'
-              },
-              {
-                id: offVariation,
-                name: offName,
-                value: '{"status": false}'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: onName,
+                  value: '{"status": true}'
+                },
+                {
+                  id: offVariation,
+                  name: offName,
+                  value: '{"status": false}'
+                }
+              ],
+              setValueOptions
+            );
 
           case 'YAML':
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: onName,
-                value: 'status: true'
-              },
-              {
-                id: offVariation,
-                name: offName,
-                value: 'status: false'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: onName,
+                  value: 'status: true'
+                },
+                {
+                  id: offVariation,
+                  name: offName,
+                  value: 'status: false'
+                }
+              ],
+              setValueOptions
+            );
 
           default:
             // Fallback to boolean if variationType is not set
-            return setValue('variations', [
-              {
-                id: onVariationId,
-                name: onName,
-                value: 'true'
-              },
-              {
-                id: offVariation,
-                name: offName,
-                value: 'false'
-              }
-            ], setValueOptions);
+            return setValue(
+              'variations',
+              [
+                {
+                  id: onVariationId,
+                  name: onName,
+                  value: 'true'
+                },
+                {
+                  id: offVariation,
+                  name: offName,
+                  value: 'false'
+                }
+              ],
+              setValueOptions
+            );
         }
       }
     },
