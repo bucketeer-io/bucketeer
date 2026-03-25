@@ -31,6 +31,8 @@ const VariationsSwitch = () => {
       const offVariation = uuid();
       const setValueOptions = isInitial ? { shouldDirty: false } : {};
 
+      const previousSwitchVariation = watch('switchVariationType');
+
       resetField('variations');
       setValue('switchVariationType', value, setValueOptions);
       setValue('defaultOnVariation', onVariationId, setValueOptions);
@@ -38,29 +40,127 @@ const VariationsSwitch = () => {
 
       // Handle EXPERIMENT template
       if (value === FlagSwitchVariationType.EXPERIMENT) {
-        setValue('variationType', 'STRING', setValueOptions);
+        const thirdVariationId = uuid();
 
-        return setValue(
-          'variations',
-          [
-            {
-              id: onVariationId,
-              name: t('control'),
-              value: 'control'
-            },
-            {
-              id: offVariation,
-              name: `${t('treatment')} 1`,
-              value: 'treatment-1'
-            },
-            {
-              id: uuid(),
-              name: `${t('treatment')} 2`,
-              value: 'treatment-2'
-            }
-          ],
-          setValueOptions
-        );
+        // Set variationType to STRING when switching TO EXPERIMENT from another template
+        if (previousSwitchVariation !== FlagSwitchVariationType.EXPERIMENT || isInitial) {
+          setValue('variationType', 'STRING', setValueOptions);
+        }
+
+        const variationTypeToUse = watch('variationType');
+
+        switch (variationTypeToUse) {
+          case 'BOOLEAN':
+            // For BOOLEAN, only show 2 variations
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: t('control'),
+                value: 'true'
+              },
+              {
+                id: offVariation,
+                name: `${t('treatment')} 1`,
+                value: 'false'
+              }
+            ], setValueOptions);
+
+          case 'STRING':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: t('control'),
+                value: 'control'
+              },
+              {
+                id: offVariation,
+                name: `${t('treatment')} 1`,
+                value: 'treatment-1'
+              },
+              {
+                id: thirdVariationId,
+                name: `${t('treatment')} 2`,
+                value: 'treatment-2'
+              }
+            ], setValueOptions);
+
+          case 'NUMBER':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: t('control'),
+                value: '0'
+              },
+              {
+                id: offVariation,
+                name: `${t('treatment')} 1`,
+                value: '1'
+              },
+              {
+                id: thirdVariationId,
+                name: `${t('treatment')} 2`,
+                value: '2'
+              }
+            ], setValueOptions);
+
+          case 'JSON':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: t('control'),
+                value: '{"group": "control"}'
+              },
+              {
+                id: offVariation,
+                name: `${t('treatment')} 1`,
+                value: '{"group": "treatment-1"}'
+              },
+              {
+                id: thirdVariationId,
+                name: `${t('treatment')} 2`,
+                value: '{"group": "treatment-2"}'
+              }
+            ], setValueOptions);
+
+          case 'YAML':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: t('control'),
+                value: 'group: control'
+              },
+              {
+                id: offVariation,
+                name: `${t('treatment')} 1`,
+                value: 'group: treatment-1'
+              },
+              {
+                id: thirdVariationId,
+                name: `${t('treatment')} 2`,
+                value: 'group: treatment-2'
+              }
+            ], setValueOptions);
+
+          default:
+            // Fallback to string
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: t('control'),
+                value: 'control'
+              },
+              {
+                id: offVariation,
+                name: `${t('treatment')} 1`,
+                value: 'treatment-1'
+              },
+              {
+                id: thirdVariationId,
+                name: `${t('treatment')} 2`,
+                value: 'treatment-2'
+              }
+            ], setValueOptions);
+        }
       }
 
       // Handle CUSTOM template - set defaults based on current variationType
@@ -80,7 +180,7 @@ const VariationsSwitch = () => {
                 name: 'false',
                 value: 'false'
               }
-            ]);
+            ], setValueOptions);
 
           case 'STRING':
             return setValue('variations', [
@@ -94,7 +194,7 @@ const VariationsSwitch = () => {
                 name: t('variation-n', { number: 2 }),
                 value: 'variation-2'
               }
-            ]);
+            ], setValueOptions);
 
           case 'NUMBER':
             return setValue('variations', [
@@ -108,7 +208,7 @@ const VariationsSwitch = () => {
                 name: t('variation-n', { number: 2 }),
                 value: '2'
               }
-            ]);
+            ], setValueOptions);
 
           case 'JSON':
             return setValue('variations', [
@@ -122,7 +222,7 @@ const VariationsSwitch = () => {
                 name: t('variation-n', { number: 2 }),
                 value: '{"variation": "variation-2"}'
               }
-            ]);
+            ], setValueOptions);
 
           case 'YAML':
             return setValue('variations', [
@@ -136,7 +236,7 @@ const VariationsSwitch = () => {
                 name: t('variation-n', { number: 2 }),
                 value: 'variation: variation-2'
               }
-            ]);
+            ], setValueOptions);
 
           default:
             // Fallback to string if variationType is not set
@@ -151,7 +251,7 @@ const VariationsSwitch = () => {
                 name: t('variation-n', { number: 2 }),
                 value: 'variation-2'
               }
-            ]);
+            ], setValueOptions);
         }
       }
 
@@ -177,7 +277,7 @@ const VariationsSwitch = () => {
                 name: offName,
                 value: 'false'
               }
-            ]);
+            ], setValueOptions);
 
           case 'STRING':
             return setValue('variations', [
@@ -191,7 +291,7 @@ const VariationsSwitch = () => {
                 name: offName,
                 value: 'false'
               }
-            ]);
+            ], setValueOptions);
 
           case 'NUMBER':
             return setValue('variations', [
@@ -205,7 +305,7 @@ const VariationsSwitch = () => {
                 name: offName,
                 value: '0'
               }
-            ]);
+            ], setValueOptions);
 
           case 'JSON':
             return setValue('variations', [
@@ -219,7 +319,7 @@ const VariationsSwitch = () => {
                 name: offName,
                 value: '{"status": false}'
               }
-            ]);
+            ], setValueOptions);
 
           case 'YAML':
             return setValue('variations', [
@@ -233,7 +333,7 @@ const VariationsSwitch = () => {
                 name: offName,
                 value: 'status: false'
               }
-            ]);
+            ], setValueOptions);
 
           default:
             // Fallback to boolean if variationType is not set
@@ -248,7 +348,7 @@ const VariationsSwitch = () => {
                 name: offName,
                 value: 'false'
               }
-            ]);
+            ], setValueOptions);
         }
       }
     },
@@ -263,13 +363,14 @@ const VariationsSwitch = () => {
     }
   }, [handleSwitchVariation]);
 
-  // Watch for variationType changes and update variations when CUSTOM, RELEASE, or KILL_SWITCH template is active
+  // Watch for variationType changes and update variations when CUSTOM, RELEASE, KILL_SWITCH, or EXPERIMENT template is active
   useEffect(() => {
     if (
       !isInitialMount.current &&
       (currentSwitchVariation === FlagSwitchVariationType.CUSTOM ||
         currentSwitchVariation === FlagSwitchVariationType.RELEASE ||
-        currentSwitchVariation === FlagSwitchVariationType.KILL_SWITCH)
+        currentSwitchVariation === FlagSwitchVariationType.KILL_SWITCH ||
+        currentSwitchVariation === FlagSwitchVariationType.EXPERIMENT)
     ) {
       handleSwitchVariation(currentSwitchVariation);
     }
@@ -307,13 +408,6 @@ const VariationsSwitch = () => {
                         <span
                           className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.stopPropagation();
-                            }
-                          }}
-                          tabIndex={0}
-                          role="button"
                           aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
@@ -345,13 +439,6 @@ const VariationsSwitch = () => {
                         <span
                           className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.stopPropagation();
-                            }
-                          }}
-                          tabIndex={0}
-                          role="button"
                           aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
@@ -383,13 +470,6 @@ const VariationsSwitch = () => {
                         <span
                           className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.stopPropagation();
-                            }
-                          }}
-                          tabIndex={0}
-                          role="button"
                           aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
@@ -421,13 +501,6 @@ const VariationsSwitch = () => {
                         <span
                           className="flex-center cursor-pointer"
                           onClick={e => e.stopPropagation()}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.stopPropagation();
-                            }
-                          }}
-                          tabIndex={0}
-                          role="button"
                           aria-label="Show template information"
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
