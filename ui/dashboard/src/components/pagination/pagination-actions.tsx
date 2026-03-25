@@ -81,7 +81,7 @@ const PaginationActions = ({
   const renderCell = cells();
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-2 sm:gap-4">
       <PaginationGroup>
         <PaginationCell
           variant="first"

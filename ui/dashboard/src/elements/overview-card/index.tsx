@@ -155,7 +155,7 @@ const OverviewCard = ({
   return (
     <div
       className={cn(
-        'flex flex-1 items-center p-4 gap-x-4 w-full min-w-[268px] bg-white shadow-card-secondary rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300',
+        'flex flex-1 items-center p-2 sm:p-4 gap-x-4 w-full min-w-[268px] bg-white shadow-card-secondary rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300',
         className
       )}
       onClick={onClick}

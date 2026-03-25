@@ -239,6 +239,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
+                onClickNavLink={onClickNavLink}
               />
             ))}
           </div>

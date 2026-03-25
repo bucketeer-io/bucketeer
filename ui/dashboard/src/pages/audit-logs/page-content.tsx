@@ -133,7 +133,7 @@ const PageContent = () => {
   }, [searchOptions]);
 
   return (
-    <PageLayout.Content className="gap-y-6">
+    <PageLayout.Content className="gapy-3 sm:gap-y-6">
       <Filter
         link={DOCUMENTATION_LINKS.AUDIT_LOGS}
         isShowDocumentation={fromTabletScreen}
@@ -173,7 +173,8 @@ const PageContent = () => {
                 size="sm"
                 color="primary-500"
               />
-              {t(isExpandAll ? 'collapse-all' : 'expand-all')}
+              {fromMobileScreen &&
+                t(isExpandAll ? 'collapse-all' : 'expand-all')}
             </Button>
           </>
         }
