@@ -158,7 +158,7 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
       </Card.Header>
 
       <Card.Meta>
-        <div className="flex flex-wrap h-full w-full items-stretch justify-between gap-3 pb-5 typo-para-medium">
+        <div className="flex flex-wrap h-full w-full items-stretch justify-between gap-3 pb-3 typo-para-medium">
           <div className="flex-1 p-3 rounded-xl bg-gray-100">
             <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
               <span>{t('role')}</span>
@@ -207,8 +207,8 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
           </div>
         </div>
         <Divider />
-        <div className="flex flex-wrap h-full w-full pt-5 items-stretch justify-between gap-3 typo-para-medium">
-          <div className="flex-1 p-3 rounded-xl">
+        <div className="flex flex-wrap h-full w-full pt-3 items-stretch justify-between gap-3 typo-para-medium">
+          <div className="flex-1 px-3 rounded-xl">
             <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
               <span>{t('table:last-used-at')}</span>
             </p>
@@ -224,7 +224,7 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
             </div>
           </div>
 
-          <div className="flex-1 p-3 rounded-xl">
+          <div className="flex-1 px-3 rounded-xl">
             <div className="flex-1">
               <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
                 <span>{t('table:created-at')}</span>

@@ -287,6 +287,7 @@ const Navigation = ({
                 title={item.title}
                 items={item.menus}
                 isCollapsed={isCollapsed}
+                onClickNavLink={onClickNavLink}
               />
             ))}
           </div>

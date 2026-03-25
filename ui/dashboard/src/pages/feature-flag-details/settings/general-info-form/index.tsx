@@ -280,6 +280,7 @@ const GeneralInfoForm = ({
                     onHasMoreOptions={loadMore}
                     onSearchChange={onAccountSearchChange}
                     onSelectOption={field.onChange}
+                    isExpand
                   />
                 </Form.Control>
                 <Form.Message />
