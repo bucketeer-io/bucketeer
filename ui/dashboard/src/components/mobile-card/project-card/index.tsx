@@ -39,7 +39,7 @@ const ProjectAvatar = ({
         alt="member-avatar"
         className="min-w-[50px] h-[50px] rounded-full"
       />
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5 truncate">
         <NameWithTooltip
           id={creatorEmail}
           content={
@@ -54,7 +54,7 @@ const ProjectAvatar = ({
               id={creatorEmail}
               name={accountName}
               maxLines={1}
-              className="min-w-[300px]"
+              className="max-w-full"
               haveAction={false}
             />
           }
@@ -73,7 +73,7 @@ const ProjectAvatar = ({
               id={`maintainer-${project.id}`}
               name={creatorEmail}
               maxLines={1}
-              className="min-w-[300px]"
+              className="max-w-full"
               haveAction={false}
             />
           }
@@ -131,7 +131,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   id={data.id}
                   name={data.name}
                   maxLines={1}
-                  className="min-w-[230px]"
+                  className="max-w-full"
                 />
               </Link>
             }
@@ -182,17 +182,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       </Card.Meta>
       <Card.Footer
         left={
-          <DateTooltip
-            trigger={
-              <div className="text-gray-500 typo-para-medium flex items-center gap-1">
-                <Icon icon={ClockIcon} size="xs" />
-                {Number(data.updatedAt) === 0
-                  ? t('never')
-                  : formatDateTime(data.updatedAt)}
-              </div>
-            }
-            date={data.updatedAt}
-          />
+          <div className="mt-1">
+            <DateTooltip
+              trigger={
+                <div className="text-gray-500 typo-para-medium flex items-center gap-1">
+                  <Icon icon={ClockIcon} size="xs" />
+                  {Number(data.updatedAt) === 0
+                    ? t('never')
+                    : formatDateTime(data.updatedAt)}
+                </div>
+              }
+              date={data.updatedAt}
+            />
+          </div>
         }
       />
     </Card>

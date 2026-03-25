@@ -86,7 +86,7 @@ const PageContent = ({
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       <Tabs
-        className="flex-1 flex h-full flex-col mt-6"
+        className="flex-1 flex h-full flex-col mt-3 sm:mt-6"
         value={filters.status}
         onValueChange={value => {
           const status = value as CollectionStatusType;
