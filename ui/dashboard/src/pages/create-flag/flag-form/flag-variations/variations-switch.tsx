@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
@@ -22,6 +22,8 @@ const VariationsSwitch = () => {
   const { watch, setValue, resetField } = useFormContext<FlagFormSchema>();
 
   const currentSwitchVariation = watch('switchVariationType');
+  const currentVariationType = watch('variationType');
+  const isInitialMount = useRef(true);
 
   const handleSwitchVariation = useCallback(
     (value: FlagSwitchVariationType) => {
@@ -31,6 +33,8 @@ const VariationsSwitch = () => {
       setValue('switchVariationType', value);
       setValue('defaultOnVariation', onVariationId);
       setValue('defaultOffVariation', offVariation);
+
+      // Handle EXPERIMENT template
       if (value === FlagSwitchVariationType.EXPERIMENT) {
         setValue('variationType', 'STRING');
 
@@ -38,47 +42,232 @@ const VariationsSwitch = () => {
           {
             id: onVariationId,
             name: t('control'),
-            value: '',
-            description: ''
+            value: 'control'
           },
           {
             id: offVariation,
             name: `${t('treatment')} 1`,
-            value: '',
-            description: ''
+            value: 'treatment-1'
           },
           {
             id: uuid(),
             name: `${t('treatment')} 2`,
-            value: '',
-            description: ''
+            value: 'treatment-2'
           }
         ]);
       }
+
+      // Handle CUSTOM template - set defaults based on current variationType
+      if (value === FlagSwitchVariationType.CUSTOM) {
+        const currentVariationType = watch('variationType');
+
+        switch (currentVariationType) {
+          case 'BOOLEAN':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: 'true',
+                value: 'true'
+              },
+              {
+                id: offVariation,
+                name: 'false',
+                value: 'false'
+              }
+            ]);
+
+          case 'STRING':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: 'Variation 1',
+                value: 'variation-1'
+              },
+              {
+                id: offVariation,
+                name: 'Variation 2',
+                value: 'variation-2'
+              }
+            ]);
+
+          case 'NUMBER':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: 'Variation 1',
+                value: '1'
+              },
+              {
+                id: offVariation,
+                name: 'Variation 2',
+                value: '2'
+              }
+            ]);
+
+          case 'JSON':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: 'Variation 1',
+                value: '{"variation": "variation-1"}'
+              },
+              {
+                id: offVariation,
+                name: 'Variation 2',
+                value: '{"variation": "variation-2"}'
+              }
+            ]);
+
+          case 'YAML':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: 'Variation 1',
+                value: 'variation: variation-1'
+              },
+              {
+                id: offVariation,
+                name: 'Variation 2',
+                value: 'variation: variation-2'
+              }
+            ]);
+
+          default:
+            // Fallback to string if variationType is not set
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: 'Variation 1',
+                value: 'variation-1'
+              },
+              {
+                id: offVariation,
+                name: 'Variation 2',
+                value: 'variation-2'
+              }
+            ]);
+        }
+      }
+
+      // Handle RELEASE and KILL_SWITCH templates
       const isRelease = value === FlagSwitchVariationType.RELEASE;
       const isKillSwitch = value === FlagSwitchVariationType.KILL_SWITCH;
-      setValue('variationType', 'BOOLEAN');
-      return setValue('variations', [
-        {
-          id: onVariationId,
-          name: isRelease ? t('available') : isKillSwitch ? t('enabled') : '',
-          value: 'true',
-          description: ''
-        },
-        {
-          id: offVariation,
-          name: isRelease
-            ? t('unavailable')
-            : isKillSwitch
-              ? t('disabled')
-              : '',
-          value: 'false',
-          description: ''
+
+      if (isRelease || isKillSwitch) {
+        const currentVariationType = watch('variationType');
+        const onName = isRelease ? t('available') : t('enabled');
+        const offName = isRelease ? t('unavailable') : t('disabled');
+
+        switch (currentVariationType) {
+          case 'BOOLEAN':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: onName,
+                value: 'true'
+              },
+              {
+                id: offVariation,
+                name: offName,
+                value: 'false'
+              }
+            ]);
+
+          case 'STRING':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: onName,
+                value: 'true'
+              },
+              {
+                id: offVariation,
+                name: offName,
+                value: 'false'
+              }
+            ]);
+
+          case 'NUMBER':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: onName,
+                value: '1'
+              },
+              {
+                id: offVariation,
+                name: offName,
+                value: '0'
+              }
+            ]);
+
+          case 'JSON':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: onName,
+                value: '{"status": true}'
+              },
+              {
+                id: offVariation,
+                name: offName,
+                value: '{"status": false}'
+              }
+            ]);
+
+          case 'YAML':
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: onName,
+                value: 'status: true'
+              },
+              {
+                id: offVariation,
+                name: offName,
+                value: 'status: false'
+              }
+            ]);
+
+          default:
+            // Fallback to boolean if variationType is not set
+            return setValue('variations', [
+              {
+                id: onVariationId,
+                name: onName,
+                value: 'true'
+              },
+              {
+                id: offVariation,
+                name: offName,
+                value: 'false'
+              }
+            ]);
         }
-      ]);
+      }
     },
-    []
+    [watch, setValue, resetField, t]
   );
+
+  // Trigger CUSTOM template on initial mount
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      handleSwitchVariation(FlagSwitchVariationType.CUSTOM);
+    }
+  }, [handleSwitchVariation]);
+
+  // Watch for variationType changes and update variations when CUSTOM, RELEASE, or KILL_SWITCH template is active
+  useEffect(() => {
+    if (
+      !isInitialMount.current &&
+      (currentSwitchVariation === FlagSwitchVariationType.CUSTOM ||
+        currentSwitchVariation === FlagSwitchVariationType.RELEASE ||
+        currentSwitchVariation === FlagSwitchVariationType.KILL_SWITCH)
+    ) {
+      handleSwitchVariation(currentSwitchVariation);
+    }
+  }, [currentVariationType, currentSwitchVariation, handleSwitchVariation]);
 
   return (
     <div className="flex items-center w-full justify-between">
