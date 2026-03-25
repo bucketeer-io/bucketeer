@@ -26,21 +26,33 @@ const VariationsSwitch = () => {
   const isInitialMount = useRef(true);
 
   const handleSwitchVariation = useCallback(
-    (value: FlagSwitchVariationType, isInitial = false) => {
-      const onVariationId = uuid();
-      const offVariation = uuid();
+    (
+      value: FlagSwitchVariationType,
+      isInitial = false,
+      shouldRegenerateIds = true
+    ) => {
+      const currentOnVariationId = watch('defaultOnVariation');
+      const currentOffVariationId = watch('defaultOffVariation');
+      const onVariationId = shouldRegenerateIds ? uuid() : currentOnVariationId;
+      const offVariation = shouldRegenerateIds ? uuid() : currentOffVariationId;
       const setValueOptions = isInitial ? { shouldDirty: false } : {};
 
       const previousSwitchVariation = watch('switchVariationType');
 
       resetField('variations');
       setValue('switchVariationType', value, setValueOptions);
-      setValue('defaultOnVariation', onVariationId, setValueOptions);
-      setValue('defaultOffVariation', offVariation, setValueOptions);
+      if (shouldRegenerateIds) {
+        setValue('defaultOnVariation', onVariationId, setValueOptions);
+        setValue('defaultOffVariation', offVariation, setValueOptions);
+      }
 
       // Handle EXPERIMENT template
       if (value === FlagSwitchVariationType.EXPERIMENT) {
-        const thirdVariationId = uuid();
+        const currentVariations = watch('variations');
+        const thirdVariationId =
+          shouldRegenerateIds || !currentVariations?.[2]?.id
+            ? uuid()
+            : currentVariations[2].id;
 
         // Set variationType to STRING when switching TO EXPERIMENT from another template
         if (
@@ -447,9 +459,10 @@ const VariationsSwitch = () => {
         currentSwitchVariation === FlagSwitchVariationType.KILL_SWITCH ||
         currentSwitchVariation === FlagSwitchVariationType.EXPERIMENT)
     ) {
-      handleSwitchVariation(currentSwitchVariation);
+      // Don't regenerate IDs when only updating variation values
+      handleSwitchVariation(currentSwitchVariation, false, false);
     }
-  }, [currentVariationType, handleSwitchVariation]);
+  }, [currentVariationType, handleSwitchVariation, currentSwitchVariation]);
 
   return (
     <div className="flex items-center w-full justify-between">
@@ -480,13 +493,17 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <span
+                        <button
+                          type="button"
                           className="flex-center cursor-pointer"
-                          onClick={e => e.stopPropagation()}
-                          aria-label="Show template information"
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
+                        </button>
                       }
                       content={t('template-tooltip.custom')}
                       className="!z-[100] max-w-[300px]"
@@ -511,13 +528,17 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <span
+                        <button
+                          type="button"
                           className="flex-center cursor-pointer"
-                          onClick={e => e.stopPropagation()}
-                          aria-label="Show template information"
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
+                        </button>
                       }
                       content={t('template-tooltip.release')}
                       className="!z-[100] max-w-[300px]"
@@ -542,13 +563,17 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <span
+                        <button
+                          type="button"
                           className="flex-center cursor-pointer"
-                          onClick={e => e.stopPropagation()}
-                          aria-label="Show template information"
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
+                        </button>
                       }
                       content={t('template-tooltip.kill-switch')}
                       className="!z-[100] max-w-[300px]"
@@ -573,13 +598,17 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <span
+                        <button
+                          type="button"
                           className="flex-center cursor-pointer"
-                          onClick={e => e.stopPropagation()}
-                          aria-label="Show template information"
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
+                        </button>
                       }
                       content={t('template-tooltip.experiment')}
                       className="!z-[100] max-w-[300px]"

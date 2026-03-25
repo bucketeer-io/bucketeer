@@ -251,6 +251,7 @@
     "kill-switch": "Use as an emergency off switch for optional features or external dependencies when something goes wrong.",
     "experiment": "Use to run A/B tests and validate hypotheses. Compare results across test groups and use the findings to drive continuous improvement."
   },
+  "template-info-aria-label": "Show template information",
   "flag-id-tooltip": "Feature flag ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
   "goal-id-tooltip": "Goal ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
   "tags-tooltip": "Tags help optimize feature flag evaluations by limiting which flags are processed. Using specific tags improves response times and reduces network traffic. Tags are recommended for better performance as your system grows.",
