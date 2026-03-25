@@ -26,35 +26,41 @@ const VariationsSwitch = () => {
   const isInitialMount = useRef(true);
 
   const handleSwitchVariation = useCallback(
-    (value: FlagSwitchVariationType) => {
+    (value: FlagSwitchVariationType, isInitial = false) => {
       const onVariationId = uuid();
       const offVariation = uuid();
+      const setValueOptions = isInitial ? { shouldDirty: false } : {};
+
       resetField('variations');
-      setValue('switchVariationType', value);
-      setValue('defaultOnVariation', onVariationId);
-      setValue('defaultOffVariation', offVariation);
+      setValue('switchVariationType', value, setValueOptions);
+      setValue('defaultOnVariation', onVariationId, setValueOptions);
+      setValue('defaultOffVariation', offVariation, setValueOptions);
 
       // Handle EXPERIMENT template
       if (value === FlagSwitchVariationType.EXPERIMENT) {
-        setValue('variationType', 'STRING');
+        setValue('variationType', 'STRING', setValueOptions);
 
-        return setValue('variations', [
-          {
-            id: onVariationId,
-            name: t('control'),
-            value: 'control'
-          },
-          {
-            id: offVariation,
-            name: `${t('treatment')} 1`,
-            value: 'treatment-1'
-          },
-          {
-            id: uuid(),
-            name: `${t('treatment')} 2`,
-            value: 'treatment-2'
-          }
-        ]);
+        return setValue(
+          'variations',
+          [
+            {
+              id: onVariationId,
+              name: t('control'),
+              value: 'control'
+            },
+            {
+              id: offVariation,
+              name: `${t('treatment')} 1`,
+              value: 'treatment-1'
+            },
+            {
+              id: uuid(),
+              name: `${t('treatment')} 2`,
+              value: 'treatment-2'
+            }
+          ],
+          setValueOptions
+        );
       }
 
       // Handle CUSTOM template - set defaults based on current variationType
@@ -80,12 +86,12 @@ const VariationsSwitch = () => {
             return setValue('variations', [
               {
                 id: onVariationId,
-                name: 'Variation 1',
+                name: t('variation-n', { number: 1 }),
                 value: 'variation-1'
               },
               {
                 id: offVariation,
-                name: 'Variation 2',
+                name: t('variation-n', { number: 2 }),
                 value: 'variation-2'
               }
             ]);
@@ -94,12 +100,12 @@ const VariationsSwitch = () => {
             return setValue('variations', [
               {
                 id: onVariationId,
-                name: 'Variation 1',
+                name: t('variation-n', { number: 1 }),
                 value: '1'
               },
               {
                 id: offVariation,
-                name: 'Variation 2',
+                name: t('variation-n', { number: 2 }),
                 value: '2'
               }
             ]);
@@ -108,12 +114,12 @@ const VariationsSwitch = () => {
             return setValue('variations', [
               {
                 id: onVariationId,
-                name: 'Variation 1',
+                name: t('variation-n', { number: 1 }),
                 value: '{"variation": "variation-1"}'
               },
               {
                 id: offVariation,
-                name: 'Variation 2',
+                name: t('variation-n', { number: 2 }),
                 value: '{"variation": "variation-2"}'
               }
             ]);
@@ -122,12 +128,12 @@ const VariationsSwitch = () => {
             return setValue('variations', [
               {
                 id: onVariationId,
-                name: 'Variation 1',
+                name: t('variation-n', { number: 1 }),
                 value: 'variation: variation-1'
               },
               {
                 id: offVariation,
-                name: 'Variation 2',
+                name: t('variation-n', { number: 2 }),
                 value: 'variation: variation-2'
               }
             ]);
@@ -137,12 +143,12 @@ const VariationsSwitch = () => {
             return setValue('variations', [
               {
                 id: onVariationId,
-                name: 'Variation 1',
+                name: t('variation-n', { number: 1 }),
                 value: 'variation-1'
               },
               {
                 id: offVariation,
-                name: 'Variation 2',
+                name: t('variation-n', { number: 2 }),
                 value: 'variation-2'
               }
             ]);
@@ -253,7 +259,7 @@ const VariationsSwitch = () => {
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      handleSwitchVariation(FlagSwitchVariationType.CUSTOM);
+      handleSwitchVariation(FlagSwitchVariationType.CUSTOM, true);
     }
   }, [handleSwitchVariation]);
 
@@ -298,9 +304,13 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <div className="flex-center">
+                        <button
+                          type="button"
+                          className="flex-center"
+                          onClick={e => e.stopPropagation()}
+                        >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </div>
+                        </button>
                       }
                       content={t('template-tooltip.custom')}
                       className="!z-[100] max-w-[300px]"
@@ -325,9 +335,13 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <div className="flex-center">
+                        <button
+                          type="button"
+                          className="flex-center"
+                          onClick={e => e.stopPropagation()}
+                        >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </div>
+                        </button>
                       }
                       content={t('template-tooltip.release')}
                       className="!z-[100] max-w-[300px]"
@@ -352,9 +366,13 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <div className="flex-center">
+                        <button
+                          type="button"
+                          className="flex-center"
+                          onClick={e => e.stopPropagation()}
+                        >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </div>
+                        </button>
                       }
                       content={t('template-tooltip.kill-switch')}
                       className="!z-[100] max-w-[300px]"
@@ -379,9 +397,13 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <div className="flex-center">
+                        <button
+                          type="button"
+                          className="flex-center"
+                          onClick={e => e.stopPropagation()}
+                        >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </div>
+                        </button>
                       }
                       content={t('template-tooltip.experiment')}
                       className="!z-[100] max-w-[300px]"

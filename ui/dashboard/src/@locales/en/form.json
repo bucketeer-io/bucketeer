@@ -244,6 +244,7 @@
   "custom": "Custom",
   "release": "Release",
   "kill-switch": "Kill Switch",
+  "variation-n": "Variation {{number}}",
   "template-tooltip": {
     "custom": "Start from scratch when you need full control over flag behavior, variations, and targeting.",
     "release": "Use for staged rollouts. Starts with the feature off, then gradually enables it for more users until fully released.",
