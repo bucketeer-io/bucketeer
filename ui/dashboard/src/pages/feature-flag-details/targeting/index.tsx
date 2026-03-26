@@ -34,7 +34,6 @@ import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -83,8 +82,34 @@ import {
   handleSwapRuleFeature
 } from './utils';
 
-export const TargetingDivider = () => (
-  <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
+export const TargetingDivider = ({ muted = false }: { muted?: boolean }) => (
+  <div className="flex-center py-3 text-gray-400" role="separator">
+    <svg
+      width="12"
+      height="24"
+      viewBox="0 0 12 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      {muted ? (
+        <path
+          d="M6 2v20"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray="4 3"
+        />
+      ) : (
+        <path
+          d="M6 1v18M2 15l4 4 4-4"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  </div>
 );
 
 const TargetingPage = ({
@@ -679,21 +704,17 @@ const TargetingPage = ({
             setIsShowRules={setIsShowRules}
             editable={editable}
           />
-          {(!feature.enabled || !enabledWatch) && (
-            <>
-              <TargetingDivider />
-              <FlagOffDescription
-                isShowRules={isShowRules}
-                setIsShowRules={setIsShowRules}
-              />
-            </>
+          {!enabledWatch && (
+            <FlagOffDescription
+              isShowRules={isShowRules}
+              setIsShowRules={setIsShowRules}
+            />
           )}
           {isShowRules && (
             <>
-              {(prerequisites?.length > 0 ||
-                hasPrerequisiteFlags?.length > 0) && (
+              {prerequisites?.length > 0 && (
                 <>
-                  <TargetingDivider />
+                  <TargetingDivider muted={!enabledWatch} />
                   <PrerequisiteRule
                     isDisableAddPrerequisite={isDisableAddPrerequisite}
                     features={activeFeatures}
@@ -710,7 +731,7 @@ const TargetingPage = ({
               )}
               {(!prerequisitesWatch?.length || !individualRules?.length) && (
                 <>
-                  <TargetingDivider />
+                  <TargetingDivider muted={!enabledWatch} />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
@@ -722,13 +743,13 @@ const TargetingPage = ({
               )}
               {individualRules?.length > 0 && (
                 <>
-                  <TargetingDivider />
+                  <TargetingDivider muted={!enabledWatch} />
                   <IndividualRule
                     individualRules={individualRules}
                     handleDiscardChanges={handleDiscardChanges}
                     handleCheckEdit={checkEditRule}
                   />
-                  <TargetingDivider />
+                  <TargetingDivider muted={!enabledWatch} />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
@@ -740,7 +761,7 @@ const TargetingPage = ({
               )}
               {segmentRules.length > 0 && (
                 <>
-                  <TargetingDivider />
+                  <TargetingDivider muted={!enabledWatch} />
                   <TargetSegmentRule
                     feature={feature}
                     features={activeFeatures}
@@ -752,8 +773,9 @@ const TargetingPage = ({
                     segmentRulesSwap={handleSwapSegmentRule}
                     handleDiscardChanges={handleDiscardChanges}
                     handleCheckEdit={checkEditRule}
+                    isFlagOff={!enabledWatch}
                   />
-                  <TargetingDivider />
+                  <TargetingDivider muted={!enabledWatch} />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
@@ -765,15 +787,19 @@ const TargetingPage = ({
               )}
             </>
           )}
-          <TargetingDivider />
-          <DefaultRule
-            editable={editable}
-            urlCode={currentEnvironment.urlCode}
-            feature={feature}
-            waitingRunningRollouts={waitingRunningRollouts}
-            handleDiscardChanges={handleDiscardChanges}
-            handleCheckEdit={checkEditRule}
-          />
+          {isShowRules && (
+            <>
+              <TargetingDivider muted={!enabledWatch} />
+              <DefaultRule
+                editable={editable}
+                urlCode={currentEnvironment.urlCode}
+                feature={feature}
+                waitingRunningRollouts={waitingRunningRollouts}
+                handleDiscardChanges={handleDiscardChanges}
+                handleCheckEdit={checkEditRule}
+              />
+            </>
+          )}
           <ButtonBar
             primaryButton={
               <Tooltip

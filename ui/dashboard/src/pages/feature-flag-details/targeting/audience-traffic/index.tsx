@@ -18,7 +18,7 @@ const AudienceTraffic = () => {
             <Icon icon={IconInfo} size="xxs" color="gray-500" />
           </div>
         }
-        className="max-w-[450px]"
+        className="max-w-[450px] whitespace-pre-line"
       />
     </div>
   );

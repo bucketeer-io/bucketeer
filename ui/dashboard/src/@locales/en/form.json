@@ -333,7 +333,7 @@
   "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it.",
   "targeting": {
     "all-audience-traffic": "All Audience Traffic",
-    "flag-switch-on": "Flag is <switch></switch> serving variations based on rules",
+    "flag-switch-on": "Flag is <switch></switch> serving variations based on the rules below",
     "flag-switch-off": "Flag is <switch></switch> serving the off variation",
     "flag-off-desc": "The flag is off, and no audience traffic will evaluate the rules below.",
     "hide-rules": "Hide Rules",
@@ -370,7 +370,7 @@
       "attribute": "The user attribute used for targeting. This must match the attribute passed when initializing the client SDK (e.g., appVersion, genre, os).",
       "value": "One or more expected values for the selected attribute. If the user's attribute matches any of these values, the condition will evaluate as true.",
       "debugger": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.",
-      "audience": "All end-users will be evaluated against the targeting rules. If no rules match, the default rule will determine which variation they receive."
+      "audience": "When the flag is ON, all end-users are evaluated against the targeting rules from top to bottom. If no rules match, the default rule determines which variation they receive.\n\nWhen the flag is OFF, all end-users receive the off variation and no rules are evaluated."
     },
     "individual-target": "Individual Target"
   },
