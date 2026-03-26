@@ -16,6 +16,7 @@ import { getDependentFlags } from 'utils/feature-dependencies';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from 'pages/feature-flag-details/elements/confirm-required-modal';
+import { SCHEDULE_TYPE_SCHEDULE } from 'pages/feature-flag-details/elements/confirm-required-modal/form-schema';
 import { getFlagStatus } from './collection-layout/elements/utils';
 import AddFlagModal from './flags-modal/add-flag-modal';
 import ArchiveModal from './flags-modal/archive-modal';
@@ -131,15 +132,9 @@ const PageLoader = () => {
       try {
         if (selectedFlag) {
           const { scheduleType, comment, scheduleAt } = additionalValues || {};
+          const isSchedule = scheduleType === SCHEDULE_TYPE_SCHEDULE;
           let resp;
-          if (['ENABLE', 'DISABLE'].includes(scheduleType as string)) {
-            resp = await featureUpdater({
-              id: selectedFlag.id,
-              environmentId: currentEnvironment.id,
-              enabled: !selectedFlag.enabled,
-              comment
-            });
-          } else {
+          if (isSchedule) {
             resp = await autoOpsCreator({
               environmentId: currentEnvironment.id,
               featureId: selectedFlag.id,
@@ -150,6 +145,13 @@ const PageLoader = () => {
                   time: scheduleAt as string
                 }
               ]
+            });
+          } else {
+            resp = await featureUpdater({
+              id: selectedFlag.id,
+              environmentId: currentEnvironment.id,
+              enabled: !selectedFlag.enabled,
+              comment
             });
           }
           if (resp) {
