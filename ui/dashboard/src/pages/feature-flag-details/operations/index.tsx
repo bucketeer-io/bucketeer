@@ -102,21 +102,13 @@ const Operations = ({
   const isRolloutAction = useMemo(() => action === 'rollout', [action]);
 
   const isRolloutActive = useMemo(() => {
+    if (operationModalState.operationType !== OpsTypeMap.ROLLOUT) return false;
     const data = operationModalState.selectedData;
     if (!data) return false;
-    // Rollout has 'status', AutoOpsRule has 'autoOpsStatus'
     const status = 'status' in data ? data.status : data.autoOpsStatus;
     return status === 'RUNNING' || status === 'WAITING';
   }, [operationModalState]);
 
-  const isScheduleType = useMemo(
-    () => operationModalState.operationType === 'SCHEDULE',
-    [operationModalState]
-  );
-  const isRolloutType = useMemo(
-    () => operationModalState.operationType === 'ROLLOUT',
-    [operationModalState]
-  );
   const isOpenModalAction = useMemo(
     () => ['NEW', 'UPDATE', 'DETAILS'].includes(operationModalState.actionType),
     [operationModalState]
@@ -458,8 +450,7 @@ const Operations = ({
         <DeleteOperationModal
           isRunning={isRolloutActive}
           loading={isLoading}
-          isRolloutType={isRolloutType}
-          isScheduleType={isScheduleType}
+          operationType={operationModalState.operationType!}
           editable={editable}
           feature={feature}
           environment={currentEnvironment}

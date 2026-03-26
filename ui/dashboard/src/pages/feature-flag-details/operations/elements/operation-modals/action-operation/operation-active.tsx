@@ -15,6 +15,7 @@ import Icon from 'components/icon';
 
 export type StopOperationModalProps = {
   editable: boolean;
+  isDeleting?: boolean;
   environment: Environment;
   feature: Feature;
   loading?: boolean;
@@ -27,6 +28,7 @@ const CURRENT_PERCENTAGE = 'CURRENT_PERCENTAGE' as const;
 
 const OperationActiveModal = ({
   editable,
+  isDeleting = false,
   environment,
   feature,
   loading,
@@ -148,12 +150,16 @@ const OperationActiveModal = ({
               size="xxs"
               className="mt-[5px] text-primary-500"
             />
-            <div className="">
+            <div>
               <p className="font-bold text-primary-500">
                 {t('form:operation.confirm-stop-title')}
               </p>
               <p className="typo-para-medium text-gray-500 w-full mt-2">
-                {t('form:operation.confirm-stop-desc')}
+                {t(
+                  isDeleting
+                    ? 'form:operation.confirm-delete-rollout-desc'
+                    : 'form:operation.confirm-stop-rollout-desc'
+                )}
               </p>
             </div>
           </div>

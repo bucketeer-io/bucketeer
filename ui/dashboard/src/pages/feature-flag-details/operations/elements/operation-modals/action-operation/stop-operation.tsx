@@ -1,11 +1,10 @@
-import { ReactElement } from 'react';
-import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
-import { TFunction } from 'i18next';
+import { InfoIcon } from 'lucide-react';
 import { Environment, Feature } from '@types';
 import { OpsTypeMap } from 'pages/feature-flag-details/operations/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 import OperationActiveModal from './operation-active';
 
@@ -20,47 +19,6 @@ export type StopOperationModalProps = {
   refetchFeatures: () => void;
   onClose: () => void;
   onSubmit: () => void;
-};
-
-type StopOperationDefaultProps = {
-  editable: boolean;
-  loading?: boolean;
-  description: ReactElement;
-  trans: TFunction;
-  onClose: () => void;
-  onSubmit: () => void;
-};
-
-const StopOperationDefault = ({
-  description,
-  loading,
-  editable,
-  trans,
-  onSubmit,
-  onClose
-}: StopOperationDefaultProps) => {
-  return (
-    <>
-      <div className="flex flex-col w-full items-start px-5 py-8">
-        <div className="typo-para-medium text-accent-red-500 w-full">
-          {description}
-        </div>
-      </div>
-
-      <ButtonBar
-        secondaryButton={
-          <Button loading={loading} onClick={onSubmit} disabled={!editable}>
-            {trans(`stop`)}
-          </Button>
-        }
-        primaryButton={
-          <Button onClick={onClose} variant="secondary">
-            {trans(`cancel`)}
-          </Button>
-        }
-      />
-    </>
-  );
 };
 
 export const StopOperationModal = ({
@@ -83,9 +41,23 @@ export const StopOperationModal = ({
         ? 'kill-switch'
         : 'rollout';
 
+  const infoTitleKey =
+    operationType === OpsTypeMap.SCHEDULE
+      ? 'form:operation.confirm-stop-schedule-title'
+      : operationType === OpsTypeMap.EVENT_RATE
+        ? 'form:operation.confirm-stop-event-rate-title'
+        : 'form:operation.confirm-stop-title';
+
+  const infoDescKey =
+    operationType === OpsTypeMap.SCHEDULE
+      ? 'form:operation.confirm-stop-schedule-desc'
+      : operationType === OpsTypeMap.EVENT_RATE
+        ? 'form:operation.confirm-stop-event-rate-desc'
+        : 'form:operation.confirm-stop-rollout-desc';
+
   return (
     <DialogModal
-      className={isRunning ? 'max-w-[600px]' : 'max-w-[500px]'}
+      className="max-w-[600px]"
       title={t(`table:stop-${transKey}`)}
       isOpen={isOpen}
       onClose={onClose}
@@ -101,21 +73,39 @@ export const StopOperationModal = ({
           loading={loading}
         />
       ) : (
-        <StopOperationDefault
-          description={
-            <Trans
-              i18nKey={'table:stop-operation-type-desc'}
-              values={{
-                type: t(`form:feature-flags.${transKey}`)
-              }}
-            />
-          }
-          trans={t}
-          loading={loading}
-          editable={editable}
-          onSubmit={onSubmit}
-          onClose={onClose}
-        />
+        <>
+          <div className="flex flex-col w-full items-start px-5 py-4">
+            <div className="w-full rounded-lg border-l-[8px] border-primary-500 px-4 py-3 shadow-card">
+              <div className="flex items-start gap-4 typo-para-medium">
+                <Icon
+                  icon={InfoIcon}
+                  size="xxs"
+                  className="mt-[5px] text-primary-500"
+                />
+                <div>
+                  <p className="font-bold text-primary-500">
+                    {t(infoTitleKey)}
+                  </p>
+                  <p className="typo-para-medium text-gray-500 w-full mt-2">
+                    {t(infoDescKey)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ButtonBar
+            secondaryButton={
+              <Button loading={loading} onClick={onSubmit} disabled={!editable}>
+                {t(`stop`)}
+              </Button>
+            }
+            primaryButton={
+              <Button onClick={onClose} variant="secondary">
+                {t(`cancel`)}
+              </Button>
+            }
+          />
+        </>
       )}
     </DialogModal>
   );

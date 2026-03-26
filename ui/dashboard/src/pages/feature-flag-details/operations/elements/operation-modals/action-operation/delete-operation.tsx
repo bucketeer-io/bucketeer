@@ -1,16 +1,15 @@
-import { ReactElement } from 'react';
-import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
-import { TFunction } from 'i18next';
+import { InfoIcon } from 'lucide-react';
 import { Environment, Feature } from '@types';
+import { OpsTypeMap } from 'pages/feature-flag-details/operations/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 import OperationActiveModal from './operation-active';
 
 export type DeleteOperationModalProps = {
-  isRolloutType: boolean;
-  isScheduleType: boolean;
+  operationType: OpsTypeMap;
   editable: boolean;
   isRunning?: boolean;
   isOpen: boolean;
@@ -22,51 +21,9 @@ export type DeleteOperationModalProps = {
   onSubmit: () => void;
 };
 
-type DeleteOperationModalDefaultProps = {
-  editable: boolean;
-  loading?: boolean;
-  description: ReactElement;
-  trans: TFunction;
-  onClose: () => void;
-  onSubmit: () => void;
-};
-
-const DeleteOperationDefaultModal = ({
-  loading,
-  editable,
-  description,
-  trans,
-  onSubmit,
-  onClose
-}: DeleteOperationModalDefaultProps) => {
-  return (
-    <>
-      <div className="flex flex-col w-full items-start px-5 py-8">
-        <div className="typo-para-medium text-gray-700 w-full">
-          {description}
-        </div>
-      </div>
-
-      <ButtonBar
-        secondaryButton={
-          <Button loading={loading} onClick={onSubmit} disabled={!editable}>
-            {trans(`submit`)}
-          </Button>
-        }
-        primaryButton={
-          <Button onClick={onClose} variant="secondary">
-            {trans(`cancel`)}
-          </Button>
-        }
-      />
-    </>
-  );
-};
-
 export const DeleteOperationModal = ({
   editable,
-  isRolloutType,
-  isScheduleType,
+  operationType,
   feature,
   environment,
   isOpen,
@@ -77,16 +34,36 @@ export const DeleteOperationModal = ({
   onSubmit
 }: DeleteOperationModalProps) => {
   const { t } = useTranslation(['common', 'table', 'form']);
+
+  const isRolloutType = operationType === OpsTypeMap.ROLLOUT;
+  const isScheduleType = operationType === OpsTypeMap.SCHEDULE;
+
   const transKey = `table:popover.delete-${isRolloutType ? 'rollout' : isScheduleType ? 'operation' : 'kill-switch'}`;
+
+  const infoTitleKey =
+    operationType === OpsTypeMap.SCHEDULE
+      ? 'form:operation.confirm-delete-schedule-title'
+      : operationType === OpsTypeMap.EVENT_RATE
+        ? 'form:operation.confirm-delete-event-rate-title'
+        : 'form:operation.confirm-delete-rollout-title';
+
+  const infoDescKey =
+    operationType === OpsTypeMap.SCHEDULE
+      ? 'form:operation.confirm-delete-schedule-desc'
+      : operationType === OpsTypeMap.EVENT_RATE
+        ? 'form:operation.confirm-delete-event-rate-desc'
+        : 'form:operation.confirm-delete-rollout-desc';
+
   return (
     <DialogModal
-      className={isRunning ? 'max-w-[600px]' : 'max-w-[500px]'}
+      className="max-w-[600px]"
       title={t(transKey)}
       isOpen={isOpen}
       onClose={onClose}
     >
       {isRunning ? (
         <OperationActiveModal
+          isDeleting
           refetchFeature={refetchFeature}
           onClose={onClose}
           onActionOperation={onSubmit}
@@ -96,26 +73,39 @@ export const DeleteOperationModal = ({
           loading={loading}
         />
       ) : (
-        <DeleteOperationDefaultModal
-          description={
-            <Trans
-              i18nKey={'table:operations.confirm-delete-operation'}
-              values={{
-                type: t(
-                  `form:feature-flags.${isRolloutType ? 'rollout' : isScheduleType ? 'schedule' : 'kill-switch'}`
-                )
-              }}
-              components={{
-                bold: <strong />
-              }}
-            />
-          }
-          trans={t}
-          onClose={onClose}
-          onSubmit={onSubmit}
-          editable={editable}
-          loading={loading}
-        />
+        <>
+          <div className="flex flex-col w-full items-start px-5 py-4">
+            <div className="w-full rounded-lg border-l-[8px] border-primary-500 px-4 py-3 shadow-card">
+              <div className="flex items-start gap-4 typo-para-medium">
+                <Icon
+                  icon={InfoIcon}
+                  size="xxs"
+                  className="mt-[5px] text-primary-500"
+                />
+                <div>
+                  <p className="font-bold text-primary-500">
+                    {t(infoTitleKey)}
+                  </p>
+                  <p className="typo-para-medium text-gray-500 w-full mt-2">
+                    {t(infoDescKey)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ButtonBar
+            secondaryButton={
+              <Button loading={loading} onClick={onSubmit} disabled={!editable}>
+                {t(`submit`)}
+              </Button>
+            }
+            primaryButton={
+              <Button onClick={onClose} variant="secondary">
+                {t(`cancel`)}
+              </Button>
+            }
+          />
+        </>
       )}
     </DialogModal>
   );
