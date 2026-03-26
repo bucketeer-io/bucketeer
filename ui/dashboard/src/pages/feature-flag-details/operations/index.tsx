@@ -432,34 +432,38 @@ const Operations = ({
           />
         )}
 
-      {isStop && !!operationModalState?.selectedData && (
-        <StopOperationModal
-          environment={currentEnvironment}
-          isRunning={isRolloutActive}
-          feature={feature}
-          editable={editable}
-          loading={isLoading}
-          operationType={operationModalState.operationType!}
-          isOpen={isStop && !!operationModalState?.selectedData}
-          refetchFeatures={refetchFeature}
-          onClose={onResetModalState}
-          onSubmit={onStopOperation}
-        />
-      )}
-      {isDelete && !!operationModalState?.selectedData && (
-        <DeleteOperationModal
-          isRunning={isRolloutActive}
-          loading={isLoading}
-          operationType={operationModalState.operationType!}
-          editable={editable}
-          feature={feature}
-          environment={currentEnvironment}
-          isOpen={isDelete && !!operationModalState?.selectedData}
-          refetchFeature={refetchFeature}
-          onClose={onResetModalState}
-          onSubmit={onDeleteOperation}
-        />
-      )}
+      {isStop &&
+        !!operationModalState?.selectedData &&
+        !!operationModalState.operationType && (
+          <StopOperationModal
+            environment={currentEnvironment}
+            isRunning={isRolloutActive}
+            feature={feature}
+            editable={editable}
+            loading={isLoading}
+            operationType={operationModalState.operationType}
+            isOpen={isStop && !!operationModalState?.selectedData}
+            refetchFeatures={refetchFeature}
+            onClose={onResetModalState}
+            onSubmit={onStopOperation}
+          />
+        )}
+      {isDelete &&
+        !!operationModalState?.selectedData &&
+        !!operationModalState.operationType && (
+          <DeleteOperationModal
+            isRunning={isRolloutActive}
+            loading={isLoading}
+            operationType={operationModalState.operationType}
+            editable={editable}
+            feature={feature}
+            environment={currentEnvironment}
+            isOpen={isDelete && !!operationModalState?.selectedData}
+            refetchFeature={refetchFeature}
+            onClose={onResetModalState}
+            onSubmit={onDeleteOperation}
+          />
+        )}
     </div>
   );
 };
