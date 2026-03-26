@@ -168,8 +168,8 @@ const PageLoader = () => {
                   values={{
                     name: selectedFlag.name,
                     state: selectedFlag.enabled
-                      ? t('disabled')
-                      : t('enabled')
+                      ? t('form:disabled')
+                      : t('form:enabled')
                   }}
                 />
               )
