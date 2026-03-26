@@ -597,7 +597,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
 			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
 			promClient,
-			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		logger,
@@ -624,7 +623,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker), // Liveness probe
 		rpc.WithHandler("/ready", healthChecker),  // Readiness probe
-		rpc.WithTimeouts(30*time.Second, 3600*time.Second, 60*time.Second),
+		rpc.WithTimeouts(30*time.Second, time.Hour, 60*time.Second),
 	)
 	go server.Run()
 
