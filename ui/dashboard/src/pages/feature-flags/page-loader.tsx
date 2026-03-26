@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
@@ -16,7 +15,6 @@ import { getDependentFlags } from 'utils/feature-dependencies';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from 'pages/feature-flag-details/elements/confirm-required-modal';
-import { SCHEDULE_TYPE_SCHEDULE } from 'pages/feature-flag-details/elements/confirm-required-modal/form-schema';
 import { getFlagStatus } from './collection-layout/elements/utils';
 import AddFlagModal from './flags-modal/add-flag-modal';
 import ArchiveModal from './flags-modal/archive-modal';
@@ -46,7 +44,7 @@ const PageLoader = () => {
   const location = useLocation();
   const [selectedFlag, setSelectedFlag] = useState<Feature>();
   const [isArchiving, setIsArchiving] = useState(false);
-  const [isEnabling, setIsEnabling] = useState(false);
+
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -88,7 +86,6 @@ const PageLoader = () => {
         return onOpenConfirmModal();
       }
       if (['ACTIVE', 'INACTIVE'].includes(type)) {
-        setIsEnabling(type === 'ACTIVE');
         onOpenConfirmRequiredModal();
       }
     },
@@ -131,40 +128,19 @@ const PageLoader = () => {
     async (additionalValues?: ConfirmRequiredValues) => {
       try {
         if (selectedFlag) {
-          const { scheduleType, comment, resetSampling, scheduleAt } =
-            additionalValues || {};
-          const isSchedule = scheduleType === SCHEDULE_TYPE_SCHEDULE;
-          let resp;
-          if (isSchedule) {
-            resp = await autoOpsCreator({
-              environmentId: currentEnvironment.id,
-              featureId: selectedFlag.id,
-              opsType: 'SCHEDULE',
-              datetimeClauses: [
-                {
-                  actionType: selectedFlag.enabled ? 'DISABLE' : 'ENABLE',
-                  time: scheduleAt as string
-                }
-              ]
-            });
-          } else {
-            resp = await featureUpdater({
-              id: selectedFlag.id,
-              environmentId: currentEnvironment.id,
-              enabled: !selectedFlag.enabled,
-              comment,
-              resetSamplingSeed: resetSampling
-            });
-          }
+          const { comment, resetSampling } = additionalValues || {};
+          const resp = await featureUpdater({
+            id: selectedFlag.id,
+            environmentId: currentEnvironment.id,
+            enabled: !selectedFlag.enabled,
+            comment,
+            resetSamplingSeed: resetSampling
+          });
           if (resp) {
             notify({
               message: (
                 <Trans
-                  i18nKey={
-                    isSchedule
-                      ? 'form:feature-flags.schedule-configured'
-                      : 'form:feature-flags.flag-switch'
-                  }
+                  i18nKey={'form:feature-flags.flag-switch'}
                   values={{
                     name: selectedFlag.name,
                     state: selectedFlag.enabled
@@ -183,7 +159,7 @@ const PageLoader = () => {
         errorNotify(error);
       }
     },
-    [isEnabling, selectedFlag, currentEnvironment]
+    [selectedFlag, currentEnvironment]
   );
 
   return (
@@ -238,7 +214,6 @@ const PageLoader = () => {
         <ConfirmationRequiredModal
           isOpen={openConfirmRequiredModal}
           feature={selectedFlag}
-          isShowScheduleSelect={true}
           isShowRolloutWarning={selectedFlag.enabled}
           onClose={onCloseConfirmRequiredModal}
           onSubmit={handleToggleFeatureState}
