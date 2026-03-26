@@ -131,7 +131,8 @@ const PageLoader = () => {
     async (additionalValues?: ConfirmRequiredValues) => {
       try {
         if (selectedFlag) {
-          const { scheduleType, comment, scheduleAt } = additionalValues || {};
+          const { scheduleType, comment, resetSampling, scheduleAt } =
+            additionalValues || {};
           const isSchedule = scheduleType === SCHEDULE_TYPE_SCHEDULE;
           let resp;
           if (isSchedule) {
@@ -151,17 +152,30 @@ const PageLoader = () => {
               id: selectedFlag.id,
               environmentId: currentEnvironment.id,
               enabled: !selectedFlag.enabled,
-              comment
+              comment,
+              resetSamplingSeed: resetSampling
             });
           }
           if (resp) {
             notify({
-              message: t('message:collection-action-success', {
-                collection: t('source-type.feature-flag'),
-                action: t('updated')
-              })
+              message: (
+                <Trans
+                  i18nKey={
+                    isSchedule
+                      ? 'form:feature-flags.schedule-configured'
+                      : 'form:feature-flags.flag-switch'
+                  }
+                  values={{
+                    name: selectedFlag.name,
+                    state: selectedFlag.enabled
+                      ? t('disabled')
+                      : t('enabled')
+                  }}
+                />
+              )
             });
             invalidateFeatures(queryClient);
+            invalidateFeature(queryClient);
             onCloseConfirmRequiredModal();
           }
         }
