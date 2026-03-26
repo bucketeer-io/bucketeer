@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_requestCountIncreaseQuery(t *testing.T) {
+func Test_requestCountQuery(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -34,34 +34,34 @@ func Test_requestCountIncreaseQuery(t *testing.T) {
 		{
 			desc:     "1 hour",
 			duration: time.Hour,
-			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[3600s]))`,
+			expected: `sum by (environment_id,source_id) (sum_over_time(environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m[3300s:5m])) * 300`,
 		},
 		{
 			desc:     "31 days (January)",
 			duration: 31 * 24 * time.Hour,
-			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2678400s]))`,
+			expected: `sum by (environment_id,source_id) (sum_over_time(environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m[2678100s:5m])) * 300`,
 		},
 		{
 			desc:     "30 days (April)",
 			duration: 30 * 24 * time.Hour,
-			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2592000s]))`,
+			expected: `sum by (environment_id,source_id) (sum_over_time(environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m[2591700s:5m])) * 300`,
 		},
 		{
 			desc:     "29 days (February, leap year)",
 			duration: 29 * 24 * time.Hour,
-			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2505600s]))`,
+			expected: `sum by (environment_id,source_id) (sum_over_time(environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m[2505300s:5m])) * 300`,
 		},
 		{
 			desc:     "28 days (February)",
 			duration: 28 * 24 * time.Hour,
-			expected: `sum by (environment_id,source_id) (increase(bucketeer_gateway_api_request_total[2419200s]))`,
+			expected: `sum by (environment_id,source_id) (sum_over_time(environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m[2418900s:5m])) * 300`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			t.Parallel()
-			q := requestCountIncreaseQuery(tt.duration)
+			q := requestCountQuery(tt.duration)
 			assert.Equal(t, tt.expected, q)
 		})
 	}
