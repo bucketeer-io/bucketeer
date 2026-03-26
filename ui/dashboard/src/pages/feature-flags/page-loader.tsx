@@ -45,7 +45,6 @@ const PageLoader = () => {
   const [selectedFlag, setSelectedFlag] = useState<Feature>();
   const [isArchiving, setIsArchiving] = useState(false);
 
-
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
 

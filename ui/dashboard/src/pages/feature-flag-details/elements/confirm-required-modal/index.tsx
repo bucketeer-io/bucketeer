@@ -380,7 +380,7 @@ const ConfirmationRequiredModal = ({
                 </>
               )}
               <div className="flex flex-col w-full px-5 pb-5">
-                  <Form.Field
+                <Form.Field
                   control={control}
                   name="comment"
                   render={({ field }) => (
@@ -415,9 +415,7 @@ const ConfirmationRequiredModal = ({
                           <Checkbox
                             ref={field.ref}
                             checked={field.value}
-                            onCheckedChange={checked =>
-                              field.onChange(checked)
-                            }
+                            onCheckedChange={checked => field.onChange(checked)}
                             title={t('form:reset-sampling')}
                           />
                         </Form.Control>
