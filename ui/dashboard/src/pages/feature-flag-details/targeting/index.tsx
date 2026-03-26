@@ -82,32 +82,16 @@ import {
   handleSwapRuleFeature
 } from './utils';
 
-export const TargetingDivider = ({ muted = false }: { muted?: boolean }) => (
-  <div className="flex-center py-3 text-gray-400" role="separator">
-    <svg
-      width="12"
-      height="24"
-      viewBox="0 0 12 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      {muted ? (
-        <path
-          d="M6 2v20"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeDasharray="4 3"
-        />
-      ) : (
-        <path
-          d="M6 1v18M2 15l4 4 4-4"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
+export const TargetingDivider = () => (
+  <div className="flex-center py-3 text-gray-400" aria-hidden="true">
+    <svg width="12" height="24" viewBox="0 0 12 24" fill="none">
+      <path
+        d="M6 1v18M2 15l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   </div>
 );
@@ -714,7 +698,7 @@ const TargetingPage = ({
             <>
               {prerequisites?.length > 0 && (
                 <>
-                  <TargetingDivider muted={!enabledWatch} />
+                  <TargetingDivider />
                   <PrerequisiteRule
                     isDisableAddPrerequisite={isDisableAddPrerequisite}
                     features={activeFeatures}
@@ -731,7 +715,7 @@ const TargetingPage = ({
               )}
               {(!prerequisitesWatch?.length || !individualRules?.length) && (
                 <>
-                  <TargetingDivider muted={!enabledWatch} />
+                  <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
@@ -743,13 +727,13 @@ const TargetingPage = ({
               )}
               {individualRules?.length > 0 && (
                 <>
-                  <TargetingDivider muted={!enabledWatch} />
+                  <TargetingDivider />
                   <IndividualRule
                     individualRules={individualRules}
                     handleDiscardChanges={handleDiscardChanges}
                     handleCheckEdit={checkEditRule}
                   />
-                  <TargetingDivider muted={!enabledWatch} />
+                  <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
@@ -761,7 +745,7 @@ const TargetingPage = ({
               )}
               {segmentRules.length > 0 && (
                 <>
-                  <TargetingDivider muted={!enabledWatch} />
+                  <TargetingDivider />
                   <TargetSegmentRule
                     feature={feature}
                     features={activeFeatures}
@@ -773,9 +757,8 @@ const TargetingPage = ({
                     segmentRulesSwap={handleSwapSegmentRule}
                     handleDiscardChanges={handleDiscardChanges}
                     handleCheckEdit={checkEditRule}
-                    isFlagOff={!enabledWatch}
                   />
-                  <TargetingDivider muted={!enabledWatch} />
+                  <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
@@ -789,7 +772,7 @@ const TargetingPage = ({
           )}
           {isShowRules && (
             <>
-              <TargetingDivider muted={!enabledWatch} />
+              <TargetingDivider />
               <DefaultRule
                 editable={editable}
                 urlCode={currentEnvironment.urlCode}

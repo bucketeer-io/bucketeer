@@ -34,7 +34,6 @@ interface Props {
   segmentRules: RuleSchemaFields[];
   isDisableAddIndividualRules: boolean;
   isDisableAddPrerequisite: boolean;
-  isFlagOff?: boolean;
   onAddRule: (rule: RuleCategory, index?: number) => void;
   segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
@@ -48,7 +47,6 @@ const TargetSegmentRule = ({
   segmentRules,
   isDisableAddIndividualRules,
   isDisableAddPrerequisite,
-  isFlagOff,
   onAddRule,
   segmentRulesRemove,
   segmentRulesSwap,
@@ -100,7 +98,7 @@ const TargetSegmentRule = ({
           <div key={segment?.segmentId} className="flex flex-col w-full">
             {segmentIndex !== 0 && (
               <>
-                <TargetingDivider muted={isFlagOff} />
+                <TargetingDivider />
                 <AddRule
                   isDisableAddIndividualRules={isDisableAddIndividualRules}
                   isDisableAddPrerequisite={isDisableAddPrerequisite}
@@ -108,7 +106,7 @@ const TargetSegmentRule = ({
                   indexInsertSegmentRule={segmentIndex}
                   isInsertSegmentRule={true}
                 />
-                <TargetingDivider muted={isFlagOff} />
+                <TargetingDivider />
               </>
             )}
             <Card>
