@@ -152,7 +152,11 @@ const OperationActiveModal = ({
             />
             <div>
               <p className="font-bold text-primary-500">
-                {t('form:operation.confirm-stop-title')}
+                {t(
+                  isDeleting
+                    ? 'form:operation.confirm-delete-active-rollout-title'
+                    : 'form:operation.confirm-stop-title'
+                )}
               </p>
               <p className="typo-para-medium text-gray-500 w-full mt-2">
                 {t(

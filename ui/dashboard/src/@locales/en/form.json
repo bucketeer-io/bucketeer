@@ -422,6 +422,7 @@
   "operation": {
     "confirm-stop-title": "Audience traffic allocation will be updated",
     "confirm-stop-rollout-desc": "Stopping this rollout at its current stage will change how traffic is routed between variations. Traffic will be redistributed using the default rule percentage rollout settings. The operation will be moved to the finished tab for historical reference.",
+    "confirm-delete-active-rollout-title": "This action cannot be undone",
     "confirm-delete-active-rollout-desc": "Deleting this rollout will stop it and permanently remove it along with its history. Traffic will be redistributed using the default rule percentage rollout settings.",
     "confirm-delete-rollout-title": "This action cannot be undone",
     "confirm-delete-rollout-desc": "The rollout will be deleted permanently along with its history. This will not affect the current flag state or traffic allocation.",
