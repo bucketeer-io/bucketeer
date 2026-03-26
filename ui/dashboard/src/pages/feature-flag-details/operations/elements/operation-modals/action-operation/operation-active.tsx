@@ -156,8 +156,8 @@ const OperationActiveModal = ({
               </p>
               <p className="typo-para-medium text-gray-500 w-full mt-2">
                 {t(
-                  isDeleting
-                    ? 'form:operation.confirm-delete-rollout-desc'
+                    isDeleting
+                    ? 'form:operation.confirm-delete-active-rollout-desc'
                     : 'form:operation.confirm-stop-rollout-desc'
                 )}
               </p>
