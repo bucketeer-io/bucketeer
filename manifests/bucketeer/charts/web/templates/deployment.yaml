@@ -144,6 +144,8 @@ spec:
               value: "{{ .Values.env.tagServicePort }}"
             - name: BUCKETEER_WEB_TEAM_SERVICE_PORT
               value: "{{ .Values.env.teamServicePort }}"
+            - name: BUCKETEER_WEB_INSIGHTS_SERVICE_PORT
+              value: "{{ .Values.env.insightsServicePort }}"
             - name: BUCKETEER_WEB_DASHBOARD_SERVICE_PORT
               value: "{{ .Values.env.dashboardServicePort }}"
             - name: BUCKETEER_WEB_CODE_REFERENCE_SERVICE_PORT
