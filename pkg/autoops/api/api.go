@@ -306,14 +306,9 @@ func normalizedDaysOfWeekKey(days []int32) string {
 	return strings.Join(strs, ",")
 }
 
-func (s *AutoOpsService) validateDatetimeClauses(
-	clauses []*autoopsproto.DatetimeClause,
-) error {
+func checkScheduleTypeHomogeneity(clauses []*autoopsproto.DatetimeClause) error {
 	var hasRecurring, hasOneTime bool
 	for _, c := range clauses {
-		if c == nil {
-			return statusDatetimeClauseRequired.Err()
-		}
 		if domain.IsRecurring(c) {
 			hasRecurring = true
 		} else {
@@ -322,6 +317,20 @@ func (s *AutoOpsService) validateDatetimeClauses(
 	}
 	if hasRecurring && hasOneTime {
 		return statusCannotMixRecurringAndOneTime.Err()
+	}
+	return nil
+}
+
+func (s *AutoOpsService) validateDatetimeClauses(
+	clauses []*autoopsproto.DatetimeClause,
+) error {
+	for _, c := range clauses {
+		if c == nil {
+			return statusDatetimeClauseRequired.Err()
+		}
+	}
+	if err := checkScheduleTypeHomogeneity(clauses); err != nil {
+		return err
 	}
 
 	type clauseKey struct {
@@ -669,27 +678,17 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 					createdClauses = append(createdClauses, c.Clause)
 				}
 			}
-			var hasRecurring, hasOneTime bool
+			var allResultClauses []*autoopsproto.DatetimeClause
 			for id, c := range extractDateTimeClauses {
-				effective := c
 				if updated, ok := updatedIDs[id]; ok {
-					effective = updated
-				}
-				if domain.IsRecurring(effective) {
-					hasRecurring = true
+					allResultClauses = append(allResultClauses, updated)
 				} else {
-					hasOneTime = true
+					allResultClauses = append(allResultClauses, c)
 				}
 			}
-			for _, c := range createdClauses {
-				if domain.IsRecurring(c) {
-					hasRecurring = true
-				} else {
-					hasOneTime = true
-				}
-			}
-			if hasRecurring && hasOneTime {
-				return statusCannotMixRecurringAndOneTime.Err()
+			allResultClauses = append(allResultClauses, createdClauses...)
+			if err := checkScheduleTypeHomogeneity(allResultClauses); err != nil {
+				return err
 			}
 		}
 
