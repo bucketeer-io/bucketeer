@@ -155,6 +155,12 @@ var (
 			pkgErr.AutoopsPackageName,
 			"day_of_month must be 1-31", "DayOfMonth",
 		))
+	statusCannotMixRecurringAndOneTime = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"cannot mix recurring and one-time schedules in the same operation",
+			"Datetime",
+		))
 	statusAutoOpsRuleNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.AutoopsPackageName, "auto ops rule not found", "AutoOperation"))
 	statusAutoOpsRuleAlreadyDeleted = api.NewGRPCStatus(

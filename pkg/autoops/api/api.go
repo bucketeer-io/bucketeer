@@ -309,6 +309,18 @@ func normalizedDaysOfWeekKey(days []int32) string {
 func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 ) error {
+	var hasRecurring, hasOneTime bool
+	for _, c := range clauses {
+		if domain.IsRecurring(c) {
+			hasRecurring = true
+		} else {
+			hasOneTime = true
+		}
+	}
+	if hasRecurring && hasOneTime {
+		return statusCannotMixRecurringAndOneTime.Err()
+	}
+
 	type clauseKey struct {
 		time      int64
 		frequency autoopsproto.RecurrenceRule_Frequency
@@ -636,6 +648,36 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 						return statusDatetimeClauseDuplicateTime.Err()
 					}
 				}
+			}
+
+			// Build the resulting clause set and check for mixed types.
+			// Start with existing clauses (already has deletes removed),
+			// apply updates, then add creates.
+			resultClauses := make(map[string]*autoopsproto.DatetimeClause)
+			for id, c := range extractDateTimeClauses {
+				resultClauses[id] = c
+			}
+			for _, c := range req.DatetimeClauseChanges {
+				if c.Clause == nil {
+					continue
+				}
+				switch c.ChangeType {
+				case autoopsproto.ChangeType_UPDATE:
+					resultClauses[c.Id] = c.Clause
+				case autoopsproto.ChangeType_CREATE:
+					resultClauses[c.Id] = c.Clause
+				}
+			}
+			var hasRecurring, hasOneTime bool
+			for _, c := range resultClauses {
+				if domain.IsRecurring(c) {
+					hasRecurring = true
+				} else {
+					hasOneTime = true
+				}
+			}
+			if hasRecurring && hasOneTime {
+				return statusCannotMixRecurringAndOneTime.Err()
 			}
 		}
 
