@@ -642,6 +642,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
+		gateway.WithHTTPTimeouts(30*time.Second, time.Hour, 60*time.Second),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create batch gateway: %w", err)
