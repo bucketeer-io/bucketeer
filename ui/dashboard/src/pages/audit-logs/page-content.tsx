@@ -142,7 +142,7 @@ const PageContent = () => {
         action={
           <>
             <EntityTypeDropdown
-              className="w-fit [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
+              className="w-fit max-w-[120px] sm:max-w-full [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}

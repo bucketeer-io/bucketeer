@@ -223,12 +223,13 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                   <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control className="w-full">
                     <Dropdown
+                      isExpand
                       options={organizationRoles}
                       value={field.value}
                       placeholder={t('form:select-role')}
                       onChange={field.onChange}
                       className="w-full"
-                      contentClassName="w-[500px]"
+                      contentClassName="sm:w-[500px]"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -294,6 +295,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                             {currentItem?.label}
                           </div>
                         }
+                        isExpand
                         contentClassName="min-w-[500px]"
                         options={languageList.map(item => ({
                           label: item.label,

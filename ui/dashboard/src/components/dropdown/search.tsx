@@ -11,7 +11,7 @@ export const DropdownMenuSearch = forwardRef(
     { value, onChange, className, ...props }: DropdownMenuSearchProps,
     ref: Ref<HTMLInputElement>
   ) => (
-    <div className="sticky top-0 flex items-center w-full px-3 py-[11.5px] gap-x-2 border-b border-gray-200 bg-white z-50">
+    <div className="sticky top-0 flex items-center w-full px-3 py-0 sm:py-[11.5px] gap-x-2 border-b border-gray-200 bg-white z-50">
       <div className="flex-center size-5">
         <Icon icon={IconSearch} size="xs" color="gray-500" />
       </div>

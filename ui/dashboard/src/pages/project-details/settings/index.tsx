@@ -82,7 +82,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
   useUnsavedLeavePage({ isShow: isShowPopup });
 
   return (
-    <div className="flex flex-col w-full p-6">
+    <div className="flex flex-col w-full p-3 sm:p-6">
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex lg:items-center justify-between flex-col lg:flex-row">
