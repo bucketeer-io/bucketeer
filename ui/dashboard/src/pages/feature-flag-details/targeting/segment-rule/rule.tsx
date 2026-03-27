@@ -310,7 +310,7 @@ const RuleForm = ({
                                     onSelectOption={value => {
                                       field.onChange(value);
                                     }}
-                                    contentClassName="!w-[500px] !max-w-[500px]"
+                                    contentClassName="w-full sm:!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
                                   <AttributeKeySelect
@@ -462,6 +462,7 @@ const RuleForm = ({
                                   />
                                 ) : isFlag || isUserSegment ? (
                                   <Dropdown
+                                    isExpand
                                     options={
                                       isFlag ? variationOptions : segmentOptions
                                     }
