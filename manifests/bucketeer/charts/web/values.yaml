@@ -68,7 +68,7 @@ env:
   metricsPort: 9002
   timezone: UTC
   emailFilter:
-  prometheusURL: http://localenv-prometheus.default.svc.cluster.local:9090
+  prometheusURL: http://prometheus.observability.svc.cluster.local:80
   logLevel: info
   googleTagManagerId:
   apiEndpoint:
