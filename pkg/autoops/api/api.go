@@ -311,6 +311,9 @@ func (s *AutoOpsService) validateDatetimeClauses(
 ) error {
 	var hasRecurring, hasOneTime bool
 	for _, c := range clauses {
+		if c == nil {
+			return statusDatetimeClauseRequired.Err()
+		}
 		if domain.IsRecurring(c) {
 			hasRecurring = true
 		} else {
@@ -650,26 +653,35 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				}
 			}
 
-			// Build the resulting clause set and check for mixed types.
-			// Start with existing clauses (already has deletes removed),
-			// apply updates, then add creates.
-			resultClauses := make(map[string]*autoopsproto.DatetimeClause)
-			for id, c := range extractDateTimeClauses {
-				resultClauses[id] = c
-			}
+			// Collect the resulting clause set and check for mixed types.
+			// Start with existing clauses (deletes already removed),
+			// replace updated ones, then append creates.
+			updatedIDs := make(map[string]*autoopsproto.DatetimeClause)
+			var createdClauses []*autoopsproto.DatetimeClause
 			for _, c := range req.DatetimeClauseChanges {
 				if c.Clause == nil {
 					continue
 				}
 				switch c.ChangeType {
 				case autoopsproto.ChangeType_UPDATE:
-					resultClauses[c.Id] = c.Clause
+					updatedIDs[c.Id] = c.Clause
 				case autoopsproto.ChangeType_CREATE:
-					resultClauses[c.Id] = c.Clause
+					createdClauses = append(createdClauses, c.Clause)
 				}
 			}
 			var hasRecurring, hasOneTime bool
-			for _, c := range resultClauses {
+			for id, c := range extractDateTimeClauses {
+				effective := c
+				if updated, ok := updatedIDs[id]; ok {
+					effective = updated
+				}
+				if domain.IsRecurring(effective) {
+					hasRecurring = true
+				} else {
+					hasOneTime = true
+				}
+			}
+			for _, c := range createdClauses {
 				if domain.IsRecurring(c) {
 					hasRecurring = true
 				} else {
