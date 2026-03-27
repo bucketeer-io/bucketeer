@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -254,6 +255,9 @@ func TestCreateAutoOpsRule_RejectMixedRecurringAndOneTime(t *testing.T) {
 	}
 	if st.Code() != codes.InvalidArgument {
 		t.Fatalf("expected InvalidArgument, got: %s", st.Code())
+	}
+	if !strings.Contains(st.Message(), "cannot mix recurring and one-time") {
+		t.Fatalf("expected mixed-type error message, got: %s", st.Message())
 	}
 }
 

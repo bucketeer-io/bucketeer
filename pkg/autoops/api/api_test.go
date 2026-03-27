@@ -1490,7 +1490,7 @@ func TestValidateRecurrenceRule(t *testing.T) {
 	}
 }
 
-func TestValidateDatetimeClauses_RecurringSchedules(t *testing.T) {
+func TestValidateDatetimeClauses(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
