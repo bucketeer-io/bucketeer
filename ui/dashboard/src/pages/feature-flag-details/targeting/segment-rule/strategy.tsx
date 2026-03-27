@@ -211,7 +211,7 @@ const Strategy = ({
           name={`${rootName}.currentOption`}
           render={({ field }) => {
             return (
-              <Form.Item className="flex flex-col flex-1 py-0 w-full">
+              <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
                 <Form.Control>
                   <Dropdown
                     value={currentOption}
@@ -255,7 +255,7 @@ const Strategy = ({
             name={`${rootName}.${strategyName}.audience.percentage`}
             render={({ field }) => {
               return (
-                <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
                   <Form.Control>
                     <div>
                       <div className="flex flex-wrap items-center w-full gap-2">
@@ -350,7 +350,7 @@ const Strategy = ({
                       control={control}
                       name={`${rootName}.${strategyName}.audience.defaultVariation`}
                       render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                        <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
                           <Form.Control>
                             <Dropdown
                               options={options.slice(0, -1)}

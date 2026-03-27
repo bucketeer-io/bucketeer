@@ -128,6 +128,7 @@ const EnvironmentRoles = ({
                   <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control>
                     <Dropdown
+                      isExpand
                       placeholder={t(`form:select-role`)}
                       options={environmentRoleOptions}
                       value={environment.role}
