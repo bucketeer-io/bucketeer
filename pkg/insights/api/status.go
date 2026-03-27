@@ -37,7 +37,7 @@ var (
 	statusStartAtIsAfterEndAt = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(packageName, "startAt is after endAt", "StartAt"))
 	statusQueryRangeTooLarge = api.NewGRPCStatus(
-		pkgErr.NewErrorExceededMax(packageName, "query range exceeds the max days", "StartAt", maxQueryRangeDays))
+		pkgErr.NewErrorOutOfRange(packageName, "query range exceeds the allowed period", "Period", 0, maxQueryRangeDays))
 	statusDataSourceNotConfigured = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(packageName, "data source is not configured", "DataSource"))
 )
