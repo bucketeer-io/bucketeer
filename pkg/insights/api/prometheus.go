@@ -16,6 +16,7 @@ package api
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -65,8 +66,12 @@ func buildSelector(envIDs, sourceIDs, apiIDs []string) string {
 }
 
 func buildRegex(values []string) string {
-	if len(values) == 1 {
-		return "^" + values[0] + "$"
+	escaped := make([]string, len(values))
+	for i, v := range values {
+		escaped[i] = regexp.QuoteMeta(v)
 	}
-	return "^(" + strings.Join(values, "|") + ")$"
+	if len(escaped) == 1 {
+		return "^" + escaped[0] + "$"
+	}
+	return "^(" + strings.Join(escaped, "|") + ")$"
 }
