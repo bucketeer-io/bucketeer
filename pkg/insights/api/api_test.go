@@ -532,16 +532,6 @@ func TestGetInsightsEvaluations(t *testing.T) {
 			expectedErr: statusDataSourceNotConfigured.Err(),
 		},
 		{
-			desc: "error: api_ids not supported",
-			input: &insightsproto.GetInsightsTimeSeriesRequest{
-				EnvironmentIds: []string{"env1"},
-				StartAt:        startAt,
-				EndAt:          endAt,
-				ApiIds:         []clientproto.ApiId{clientproto.ApiId_GET_EVALUATIONS},
-			},
-			expectedErr: statusApiIdsNotSupported.Err(),
-		},
-		{
 			desc:    "success: with evaluation_type label",
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),

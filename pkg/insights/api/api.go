@@ -143,9 +143,6 @@ func (s *insightsService) GetInsightsEvaluations(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
-	if len(req.ApiIds) > 0 {
-		return nil, statusApiIdsNotSupported.Err()
-	}
 	query := evaluationsQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
