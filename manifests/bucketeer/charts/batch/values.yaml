@@ -54,6 +54,7 @@ env:
     addresses:
   experimentLockTTL: 10m
   prometheusURL:
+  writeTimeout: 1h
 
 affinity: {}
 

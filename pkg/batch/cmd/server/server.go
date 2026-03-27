@@ -134,6 +134,7 @@ type server struct {
 	nonPersistentRedisPoolMaxActive  *int
 	nonPersistentRedisMode           *string
 	prometheusURL                    *string
+	writeTimeout                     *time.Duration
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -258,6 +259,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		prometheusURL: cmd.Flag("prometheus-url",
 			"Prometheus server URL for querying metrics.").
 			Default("").String(),
+		writeTimeout: cmd.Flag("write-timeout",
+			"Write timeout for HTTP servers (rpc.Server and gRPC Gateway).").
+			Default("1h").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -623,7 +627,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker), // Liveness probe
 		rpc.WithHandler("/ready", healthChecker),  // Readiness probe
-		rpc.WithTimeouts(30*time.Second, time.Hour, 60*time.Second),
+		rpc.WithTimeouts(30*time.Second, *s.writeTimeout, 60*time.Second),
 	)
 	go server.Run()
 
@@ -642,7 +646,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
-		gateway.WithHTTPTimeouts(30*time.Second, time.Hour, 60*time.Second),
+		gateway.WithHTTPTimeouts(30*time.Second, *s.writeTimeout, 60*time.Second),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create batch gateway: %w", err)
