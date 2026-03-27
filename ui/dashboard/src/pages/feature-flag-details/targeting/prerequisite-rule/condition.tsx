@@ -113,7 +113,7 @@ const ConditionForm = forwardRef(
         ref={ref}
         className="flex items-start sm:items-center w-full gap-x-0 sm:gap-x-4"
       >
-        <div className="flex flex-col h-[210px] sm:h-full gap-2 items-center">
+        <div className="flex flex-col h-[200px] sm:h-full gap-2 items-center">
           <div
             className={cn(
               'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
