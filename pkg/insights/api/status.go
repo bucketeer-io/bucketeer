@@ -39,5 +39,7 @@ var (
 	statusQueryRangeTooLarge = api.NewGRPCStatus(
 		pkgErr.NewErrorOutOfRange(packageName, "query range exceeds the allowed period", "Period", 0, maxQueryRangeDays))
 	statusDataSourceNotConfigured = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(packageName, "data source is not configured", "DataSource"))
+		pkgErr.NewErrorFailedPrecondition(packageName, "data source is not configured"))
+	statusApiIdsNotSupported = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgUnknown(packageName, "api_ids filter is not supported for this endpoint", "ApiIds"))
 )
