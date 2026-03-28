@@ -22,14 +22,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -4017,7 +4017,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize evaluation event with error reason")
 	}
-	bInvalidEvent, err := proto.Marshal(&any.Any{})
+	bInvalidEvent, err := proto.Marshal(&anypb.Any{})
 	if err != nil {
 		t.Fatal("could not serialize experiment event")
 	}
@@ -4095,8 +4095,8 @@ func TestGrcpRegisterEvents(t *testing.T) {
 				Events: []*eventproto.Event{
 					{
 						Id: uuid0,
-						Event: &any.Any{
-							TypeUrl: "github.com/golang/protobuf/ptypes/any",
+						Event: &anypb.Any{
+							TypeUrl: "type.googleapis.com/invalid.type",
 							Value:   bInvalidEvent,
 						},
 					},
@@ -4133,21 +4133,21 @@ func TestGrcpRegisterEvents(t *testing.T) {
 				Events: []*eventproto.Event{
 					{
 						Id: uuid0,
-						Event: &any.Any{
+						Event: &anypb.Any{
 							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 							Value:   bGoalEvent,
 						},
 					},
 					{
 						Id: uuid1,
-						Event: &any.Any{
+						Event: &anypb.Any{
 							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 							Value:   bEvaluationEvent,
 						},
 					},
 					{
 						Id: uuid2,
-						Event: &any.Any{
+						Event: &anypb.Any{
 							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 							Value:   bMetricsEvent,
 						},
@@ -4182,7 +4182,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 				Events: []*eventproto.Event{
 					{
 						Id: newUUID(t),
-						Event: &any.Any{
+						Event: &anypb.Any{
 							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 							Value:   bEvaluationEventWithErrorReason,
 						},

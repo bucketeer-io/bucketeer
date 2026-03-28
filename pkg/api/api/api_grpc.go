@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
@@ -29,6 +28,7 @@ import (
 	"google.golang.org/grpc/codes"
 	gmetadata "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -303,7 +303,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		)
 		return nil, ErrInternal
 	}
-	goal, err := ptypes.MarshalAny(goalEvent)
+	goal, err := anypb.New(goalEvent)
 	if err != nil {
 		eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeNonRepeatableError)
 		s.logger.Error(
@@ -1417,7 +1417,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			)
 			continue
 		}
-		if ptypes.Is(event.Event, grpcGoalEvent) {
+		if event.Event.MessageIs(grpcGoalEvent) {
 			errorCode, err := validator.validate(ctx)
 			if err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeGoal, errorCode).Inc()
@@ -1430,7 +1430,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			goalMessages = append(goalMessages, event)
 			continue
 		}
-		if ptypes.Is(event.Event, grpcEvaluationEvent) {
+		if event.Event.MessageIs(grpcEvaluationEvent) {
 			errorCode, err := validator.validate(ctx)
 			if err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, errorCode).Inc()
@@ -1457,7 +1457,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			}
 			continue
 		}
-		if ptypes.Is(event.Event, grpcMetricsEvent) {
+		if event.Event.MessageIs(grpcMetricsEvent) {
 			errorCode, err := validator.validate(ctx)
 			if err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, errorCode).Inc()
@@ -1468,7 +1468,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 			m := &eventproto.MetricsEvent{}
-			if err := ptypes.UnmarshalAny(req.Events[i].Event, m); err != nil {
+			if err := req.Events[i].Event.UnmarshalTo(m); err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeUnmarshalFailed).Inc()
 				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
 					Retriable: false,
