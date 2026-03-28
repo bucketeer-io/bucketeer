@@ -42,7 +42,7 @@ local-deps:
 	go install golang.org/x/tools/cmd/goimports@v0.40.0; \
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2; \
 	go install go.uber.org/mock/mockgen@v0.4.0; \
-	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.20.0; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
