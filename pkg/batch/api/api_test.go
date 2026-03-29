@@ -20,10 +20,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	acclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	aoclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
@@ -872,7 +872,7 @@ func newProgressiveRollout(t *testing.T) *autoopsproto.ProgressiveRollout {
 			},
 		},
 	}
-	c, err := ptypes.MarshalAny(dc)
+	c, err := anypb.New(dc)
 	require.NoError(t, err)
 	return &autoopsproto.ProgressiveRollout{
 		Id:        "prID",
