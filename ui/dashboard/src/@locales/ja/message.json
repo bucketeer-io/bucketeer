@@ -16,6 +16,8 @@
       "date-increasing-order": "日付は昇順で指定してください。",
       "schedule-interval": "スケジュールの時間間隔は最低5分以上必要です。",
       "schedules-same-time": "同じ日時に複数のスケジュールを設定することはできません。",
+      "invalid-frequency": "有効な頻度を選択してください。",
+      "days-of-week-required": "少なくとも1日を選択してください。",
       "increments-greater-than": "増分は1以上である必要があります",
       "increments-less-than": "増分は100以下である必要があります"
     },

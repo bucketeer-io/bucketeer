@@ -138,7 +138,9 @@ const Operations = ({
 
   const { data: operationCollection, isLoading: isOperationLoading } =
     useQueryAutoOpsRules({
-      params: queryParams
+      params: queryParams,
+      refetchInterval: 30 * 1000,
+      refetchOnWindowFocus: true
     });
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
@@ -197,7 +199,8 @@ const Operations = ({
     searchOptions,
     navigate,
     getPathName,
-    queryClient
+    queryClient,
+    onCloseActionModal
   ]);
 
   const onOperationActions = useCallback(

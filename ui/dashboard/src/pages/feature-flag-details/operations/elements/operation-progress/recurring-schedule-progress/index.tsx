@@ -5,12 +5,12 @@ import { AutoOpsRuleClause, DatetimeClause } from '@types';
 import {
   ActionTypeMap,
   OperationCombinedType
-} from 'pages/feature-flag-details/operations/types';
+} from '../../../types';
 import OperationPagination from '../../operation-pagination';
 import { OperationDescription } from '../operation-description';
 import { ProgressDateTimePoint } from '../progress-date-time-point';
 
-const ScheduleProgress = ({
+const RecurringScheduleProgress = ({
   operation
 }: {
   operation: OperationCombinedType;
@@ -20,6 +20,37 @@ const ScheduleProgress = ({
   const [page, setPage] = useState(0);
 
   const { clauses, createdAt } = operation;
+
+  const firstClause = clauses[0]?.clause as DatetimeClause;
+  const recurrence = firstClause?.recurrence;
+
+  const frequencyLabel = useMemo(() => {
+    if (!recurrence?.frequency) return '';
+    return t(`form:${recurrence.frequency.toLowerCase()}`);
+  }, [recurrence, t]);
+
+  const startDate = useMemo(() => {
+    if (!recurrence?.startDate || Number(recurrence.startDate) === 0)
+      return '';
+    return dayjs(Number(recurrence.startDate) * 1000).format('YYYY/MM/DD');
+  }, [recurrence]);
+
+  const completedCycles = useMemo(
+    () =>
+      Math.min(
+        ...clauses.map(c => {
+          const dc = c.clause as DatetimeClause;
+          return dc.executionCount ?? 0;
+        })
+      ),
+    [clauses]
+  );
+
+  const maxOccurrences = useMemo(() => {
+    if (!recurrence?.maxOccurrences || recurrence.maxOccurrences <= 0)
+      return 0;
+    return recurrence.maxOccurrences;
+  }, [recurrence]);
 
   const count = useMemo(() => Math.ceil(clauses.length / 10), [clauses]);
 
@@ -42,19 +73,23 @@ const ScheduleProgress = ({
     []
   );
 
-  const getTimeClause = useCallback(
-    (dateTimeClause: AutoOpsRuleClause) =>
-      (dateTimeClause.clause as DatetimeClause).time,
-    []
-  );
+  const getDisplayTime = useCallback((clause: AutoOpsRuleClause) => {
+    const dc = clause.clause as DatetimeClause;
+    if (clause.isRecurring) {
+      if (dc.nextExecutionAt && Number(dc.nextExecutionAt) > 0) {
+        return dc.nextExecutionAt;
+      }
+      if (dc.lastExecutedAt && Number(dc.lastExecutedAt) > 0) {
+        return dc.lastExecutedAt;
+      }
+      if (clause.executedAt && Number(clause.executedAt) > 0) {
+        return clause.executedAt;
+      }
+    }
+    return dc.time;
+  }, []);
 
   const currentClause = useMemo(() => clauses[page * 10 - 1], [clauses, page]);
-
-  const startDate = useMemo(() => {
-    if (clauses.length === 0) return '';
-    const firstTime = (clauses[0].clause as DatetimeClause).time;
-    return dayjs(Number(firstTime) * 1000).format('YYYY/MM/DD');
-  }, [clauses]);
 
   const { displayTime, displayLabel } = useMemo(() => {
     if (page === 0) {
@@ -64,7 +99,7 @@ const ScheduleProgress = ({
       };
     }
     return {
-      displayTime: getTimeClause(currentClause),
+      displayTime: getDisplayTime(currentClause),
       displayLabel:
         stateOptions.find(o => o.value === currentClause?.actionType)?.label ||
         ''
@@ -75,20 +110,29 @@ const ScheduleProgress = ({
     setPage(page);
   };
 
+  const executedDisplay = useMemo(() => {
+    if (maxOccurrences > 0) return `${completedCycles} / ${maxOccurrences}`;
+    return String(completedCycles);
+  }, [completedCycles, maxOccurrences]);
+
   return (
     <div className="flex flex-col w-full gap-y-4">
       <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
         <OperationDescription
           titleKey={'form:frequency-value'}
-          value={t('form:feature-flags.one-time')}
+          value={frequencyLabel}
         />
         {startDate && (
           <OperationDescription
             titleKey={'form:start-date-value'}
             value={startDate}
-            isLastItem
           />
         )}
+        <OperationDescription
+          titleKey={'form:feature-flags.executed-value'}
+          value={executedDisplay}
+          isLastItem
+        />
       </div>
 
       <div>
@@ -99,11 +143,19 @@ const ScheduleProgress = ({
               displayTime={displayTime}
             />
             {paginatedClausesList.map((scheduleClause, index) => {
+              const dc = scheduleClause.clause as DatetimeClause;
+              const isExecuted =
+                scheduleClause.executedAt !== '0' ||
+                (dc.executionCount ?? 0) > 0;
               const isCurrentActive =
-                scheduleClause.executedAt !== '0' &&
-                (paginatedClausesList[index + 1]?.executedAt === '0' ||
-                  !paginatedClausesList[index + 1]);
-              const time = getTimeClause(scheduleClause);
+                isExecuted &&
+                (paginatedClausesList[index + 1]
+                  ? (
+                      paginatedClausesList[index + 1].clause as DatetimeClause
+                    ).executionCount === 0 &&
+                    paginatedClausesList[index + 1].executedAt === '0'
+                  : true);
+              const time = getDisplayTime(scheduleClause);
               return (
                 <ProgressDateTimePoint
                   key={scheduleClause.id}
@@ -130,4 +182,4 @@ const ScheduleProgress = ({
   );
 };
 
-export default ScheduleProgress;
+export default RecurringScheduleProgress;
