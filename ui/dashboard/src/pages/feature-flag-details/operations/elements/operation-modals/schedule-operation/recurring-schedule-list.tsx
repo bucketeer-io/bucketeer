@@ -9,7 +9,7 @@ import { ScheduleOperationFormType } from 'pages/feature-flag-details/operations
 import {
   ActionTypeMap,
   DAY_LABELS_FULL,
-  DAY_LABELS_SHORT,
+  DAY_LABELS_SHORT_KEYS,
   DAYS_OF_WEEK,
   EndConditionType,
   FREQUENCY_OPTIONS
@@ -188,7 +188,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                             : 'bg-white text-gray-700 border-gray-400 hover:border-gray-500'
                         )}
                       >
-                        {DAY_LABELS_SHORT[day]}
+                        {t(`form:${DAY_LABELS_SHORT_KEYS[day]}`)}
                       </button>
                     );
                   })}
@@ -209,6 +209,9 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
               <Form.Label required>
                 {t('feature-flags.day-of-month')}
               </Form.Label>
+              <p className="typo-para-small text-gray-500 mb-2">
+                {t('feature-flags.day-of-month-hint')}
+              </p>
               <Form.Control>
                 <Dropdown
                   value={String(field.value || 1)}

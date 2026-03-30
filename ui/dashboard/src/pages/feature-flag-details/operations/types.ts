@@ -59,7 +59,15 @@ export interface ScheduleItem {
 }
 
 export const DAYS_OF_WEEK = [0, 1, 2, 3, 4, 5, 6] as const;
-export const DAY_LABELS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
+export const DAY_LABELS_SHORT_KEYS = [
+  'feature-flags.day-short-sun',
+  'feature-flags.day-short-mon',
+  'feature-flags.day-short-tue',
+  'feature-flags.day-short-wed',
+  'feature-flags.day-short-thu',
+  'feature-flags.day-short-fri',
+  'feature-flags.day-short-sat'
+] as const;
 export const DAY_LABELS_FULL = [
   'sunday',
   'monday',

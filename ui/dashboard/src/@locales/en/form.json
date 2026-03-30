@@ -229,6 +229,7 @@
     "repeat": "Repeat",
     "days": "Days",
     "day-of-month": "Day of Month",
+    "day-of-month-hint": "If you select the 31st, it will skip months without that day.",
     "timezone": "Timezone",
     "end": "End",
     "end-never": "Never",
@@ -243,6 +244,13 @@
     "exhausted": "Completed",
     "started": "Started",
     "timezone-value": "Timezone: <b>{{value}}</b>",
+    "day-short-sun": "S",
+    "day-short-mon": "M",
+    "day-short-tue": "T",
+    "day-short-wed": "W",
+    "day-short-thu": "T",
+    "day-short-fri": "F",
+    "day-short-sat": "S",
     "recurring-tooltips": {
       "start-date": "The earliest date on which the schedule can start running. The first execution will occur on the first day that matches the repeat pattern on or after this date.",
       "end": "Choose when the recurring schedule should stop: set a specific end date, limit the number of executions, or let it continue indefinitely."

@@ -228,7 +228,8 @@
     "schedule-type": "スケジュールタイプ",
     "repeat": "繰り返し",
     "days": "曜日",
-    "day-of-month": "日",
+    "day-of-month": "日付",
+    "day-of-month-hint": "31日を選択した場合、その日が存在しない月は実行されません。",
     "timezone": "タイムゾーン",
     "end": "終了",
     "end-never": "なし",
@@ -243,6 +244,13 @@
     "exhausted": "完了",
     "started": "開始",
     "timezone-value": "タイムゾーン: <b>{{value}}</b>",
+    "day-short-sun": "日",
+    "day-short-mon": "月",
+    "day-short-tue": "火",
+    "day-short-wed": "水",
+    "day-short-thu": "木",
+    "day-short-fri": "金",
+    "day-short-sat": "土",
     "recurring-tooltips": {
       "start-date": "スケジュールを実行開始できる最も早い日付です。最初の実行は、この日付以降で繰り返しパターンに一致する最初の日に行われます。",
       "end": "繰り返しスケジュールをいつ終了するかを選択します。終了日を指定する、実行回数を制限する、または無期限で実行し続けるように設定できます。"
