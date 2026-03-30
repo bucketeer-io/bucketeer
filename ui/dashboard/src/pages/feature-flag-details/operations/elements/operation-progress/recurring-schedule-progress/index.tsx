@@ -23,8 +23,13 @@ const RecurringScheduleProgress = ({
 
   const frequencyLabel = useMemo(() => {
     if (!recurrence?.frequency) return '';
-    return t(`form:${recurrence.frequency.toLowerCase()}`);
-  }, [recurrence, t]);
+    const frequencyKeyMap: Record<string, string> = {
+      DAILY: 'form:daily',
+      WEEKLY: 'form:weekly',
+      MONTHLY: 'form:monthly'
+    };
+    return t(frequencyKeyMap[recurrence.frequency] ?? 'form:unknown');
+  }, [recurrence?.frequency, t]);
 
   const startDate = useMemo(() => {
     if (!recurrence?.startDate || Number(recurrence.startDate) === 0) return '';
@@ -68,21 +73,25 @@ const RecurringScheduleProgress = ({
     []
   );
 
-  const getDisplayTime = useCallback((clause: AutoOpsRuleClause) => {
-    const dc = clause.clause as DatetimeClause;
-    if (clause.isRecurring) {
-      if (dc.nextExecutionAt && Number(dc.nextExecutionAt) > 0) {
-        return dc.nextExecutionAt;
+  const getDisplayTime = useCallback(
+    (clause: AutoOpsRuleClause) => {
+      const dc = clause.clause as DatetimeClause;
+      if (clause.isRecurring) {
+        if (dc.nextExecutionAt && Number(dc.nextExecutionAt) > 0) {
+          return dc.nextExecutionAt;
+        }
+        if (dc.lastExecutedAt && Number(dc.lastExecutedAt) > 0) {
+          return dc.lastExecutedAt;
+        }
+        if (clause.executedAt && Number(clause.executedAt) > 0) {
+          return clause.executedAt;
+        }
+        return createdAt;
       }
-      if (dc.lastExecutedAt && Number(dc.lastExecutedAt) > 0) {
-        return dc.lastExecutedAt;
-      }
-      if (clause.executedAt && Number(clause.executedAt) > 0) {
-        return clause.executedAt;
-      }
-    }
-    return dc.time;
-  }, []);
+      return dc.time;
+    },
+    [createdAt]
+  );
 
   const currentClause = useMemo(() => clauses[page * 10 - 1], [clauses, page]);
 

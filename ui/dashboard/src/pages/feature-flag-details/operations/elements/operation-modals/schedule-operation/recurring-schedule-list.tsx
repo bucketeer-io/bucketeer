@@ -8,6 +8,7 @@ import { IconInfo, IconPlus, IconTrash, IconWatch } from '@icons';
 import { ScheduleOperationFormType } from 'pages/feature-flag-details/operations/form-schema';
 import {
   ActionTypeMap,
+  DAY_LABELS_FULL,
   DAY_LABELS_SHORT,
   DAYS_OF_WEEK,
   EndConditionType,
@@ -59,10 +60,16 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
     []
   );
 
+  const frequencyKeyMap: Record<string, string> = {
+    DAILY: 'form:daily',
+    WEEKLY: 'form:weekly',
+    MONTHLY: 'form:monthly'
+  };
+
   const frequencyOptions = useMemo(
     () =>
       FREQUENCY_OPTIONS.map(freq => ({
-        label: t(`form:${freq.toLowerCase()}`),
+        label: t(frequencyKeyMap[freq] ?? 'form:unknown'),
         value: freq
       })),
     []
@@ -112,9 +119,12 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                 alignOffset={-73}
                 content={t('feature-flags.recurring-tooltips.start-date')}
                 trigger={
-                  <div className="flex-center size-fit absolute top-0 -right-6">
+                  <button
+                    type="button"
+                    className="flex-center size-fit absolute top-0 -right-6"
+                  >
                     <Icon icon={IconInfo} size="xs" color="gray-500" />
-                  </div>
+                  </button>
                 }
                 className="max-w-[300px]"
               />
@@ -166,22 +176,27 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
               <Form.Label required>{t('feature-flags.days')}</Form.Label>
               <Form.Control>
                 <div className="flex gap-x-2">
-                  {DAYS_OF_WEEK.map(day => (
-                    <button
-                      key={day}
-                      type="button"
-                      disabled={isDisabled}
-                      onClick={() => handleToggleDay(day)}
-                      className={cn(
-                        'flex-center size-9 rounded-md border typo-para-medium transition-colors',
-                        daysOfWeek?.includes(day)
-                          ? 'bg-primary-500 text-white border-primary-500'
-                          : 'bg-white text-gray-700 border-gray-400 hover:border-gray-500'
-                      )}
-                    >
-                      {DAY_LABELS_SHORT[day]}
-                    </button>
-                  ))}
+                  {DAYS_OF_WEEK.map(day => {
+                    const isActive = daysOfWeek?.includes(day);
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => handleToggleDay(day)}
+                        aria-label={DAY_LABELS_FULL[day]}
+                        aria-pressed={isActive}
+                        className={cn(
+                          'flex-center size-9 rounded-md border typo-para-medium transition-colors',
+                          isActive
+                            ? 'bg-primary-500 text-white border-primary-500'
+                            : 'bg-white text-gray-700 border-gray-400 hover:border-gray-500'
+                        )}
+                      >
+                        {DAY_LABELS_SHORT[day]}
+                      </button>
+                    );
+                  })}
                 </div>
               </Form.Control>
               <Form.Message />
@@ -225,9 +240,12 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
             alignOffset={-73}
             content={t('feature-flags.recurring-tooltips.end')}
             trigger={
-              <div className="flex-center size-fit absolute top-0 -right-6">
+              <button
+                type="button"
+                className="flex-center size-fit absolute top-0 -right-6"
+              >
                 <Icon icon={IconInfo} size="xs" color="gray-500" />
-              </div>
+              </button>
             }
             className="max-w-[300px]"
           />

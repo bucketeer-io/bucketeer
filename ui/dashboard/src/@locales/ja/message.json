@@ -18,6 +18,7 @@
       "schedules-same-time": "同じ日時に複数のスケジュールを設定することはできません。",
       "invalid-frequency": "有効な頻度を選択してください。",
       "days-of-week-required": "少なくとも1日を選択してください。",
+      "end-date-on-after-start-date": "終了日は開始日以降の日付を指定してください。",
       "increments-greater-than": "増分は1以上である必要があります",
       "increments-less-than": "増分は100以下である必要があります"
     },

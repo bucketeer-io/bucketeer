@@ -297,7 +297,7 @@ export const recurringScheduleSchema = ({
                 .test(
                   'isAfterStartDate',
                   translation(
-                    'message:validation.operation.later-than-current-time'
+                    'message:validation.operation.end-date-on-after-start-date'
                   ),
                   (value, context) => {
                     const startDate = (context.parent as { startDate?: Date })
