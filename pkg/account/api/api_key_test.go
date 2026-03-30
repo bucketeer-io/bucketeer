@@ -391,7 +391,7 @@ func TestGetEnvironmentAPIKeyMySQL(t *testing.T) {
 				"accept-language": []string{"ja"},
 			})
 			ctx = setToken(ctx, true)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
