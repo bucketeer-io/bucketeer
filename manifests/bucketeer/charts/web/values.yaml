@@ -129,7 +129,6 @@ oauth:
     clientSecret:
     redirectUrls:
   password:
-    enabled:
     policy:
       minLength: 8
       requireUppercase: true
