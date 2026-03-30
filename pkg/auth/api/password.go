@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	authdomain "github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -37,12 +38,6 @@ func (s *authService) UpdatePassword(
 	if err != nil {
 		s.logger.Error("UpdatePassword request validation failed", zap.Error(err))
 		return nil, err
-	}
-
-	// Check if password authentication is enabled
-	if !s.config.Password.Enabled {
-		s.logger.Error("Password authentication not enabled")
-		return nil, statusInvalidEmailConfig.Err()
 	}
 
 	// Get email from context (user must be authenticated)
@@ -132,44 +127,42 @@ func (s *authService) InitiatePasswordSetup(
 		}, nil
 	}
 
-	// If password authentication is not enabled, send welcome email only
-	if !s.config.Password.Enabled {
-		s.logger.Info("Password authentication disabled, sending welcome email only", zap.String("email", email))
-		if s.emailService != nil {
-			err = s.emailService.SendWelcomeEmail(ctx, email, locale.En)
-			if err != nil {
-				s.logger.Error("Failed to send welcome email",
-					zap.Error(err),
-					zap.String("email", email),
-				)
-				// Don't return error to user for security reasons
-			} else {
-				s.logger.Info("Welcome email sent", zap.String("email", email))
-			}
+	// Check domain policy — only proceed if password is enabled for this domain.
+	// No policy or password.enabled=false both mean skip (password is off by default).
+	normalizedEmail, _ := authdomain.NormalizeEmail(email)
+	if domain, err := authdomain.ExtractDomain(normalizedEmail); err == nil {
+		policy, err := s.domainPolicyStorage.GetDomainPolicy(ctx, domain)
+		if err != nil || policy == nil || !policy.IsPasswordEnabled() {
+			s.logger.Info("Password not enabled for domain, skipping setup",
+				zap.String("email", email),
+				zap.String("domain", domain),
+			)
+			return &authproto.InitiatePasswordSetupResponse{
+				Message: "If an account with this email exists, a password setup email has been sent.",
+			}, nil
 		}
-		return &authproto.InitiatePasswordSetupResponse{
-			Message: "A welcome email has been sent.",
-		}, nil
 	}
 
-	// Check if credentials already exist (user already has a password)
+	// Check credentials state:
+	// - Password already set → silently return (don't reveal)
+	// - Row exists with empty hash → re-initiation or orphan from partial failure; reuse row, issue new token
+	// - No row → create one, then issue token
 	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
-	if err == nil && credentials.PasswordHash != "" {
-		// Password already exists, don't reveal this for security
-		s.logger.Warn("Password setup attempted for account with existing password", zap.String("email", email))
-		return &authproto.InitiatePasswordSetupResponse{
-			Message: "If an account with this email exists, a password setup email has been sent.",
-		}, nil
-	}
-	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
+	if err == nil {
+		if credentials.PasswordHash != "" {
+			s.logger.Warn("Password setup attempted for account with existing password", zap.String("email", email))
+			return &authproto.InitiatePasswordSetupResponse{
+				Message: "If an account with this email exists, a password setup email has been sent.",
+			}, nil
+		}
+		// Row exists with empty hash — fall through to issue a new setup token
+	} else if errors.Is(err, storage.ErrCredentialsNotFound) {
+		if err = s.credentialsStorage.CreateCredentials(ctx, email, ""); err != nil {
+			s.logger.Error("Failed to create credentials record for password setup", zap.Error(err))
+			return nil, auth.StatusInternal.Err()
+		}
+	} else {
 		s.logger.Error("Failed to check credentials for password setup", zap.Error(err))
-		return nil, auth.StatusInternal.Err()
-	}
-
-	// Create empty credentials record for password setup (no password hash yet)
-	err = s.credentialsStorage.CreateCredentials(ctx, email, "")
-	if err != nil {
-		s.logger.Error("Failed to create credentials record for password setup", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
 	}
 
@@ -227,12 +220,6 @@ func (s *authService) SetupPassword(
 	err := validateSetupPasswordRequest(request)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if password authentication is enabled
-	if !s.config.Password.Enabled {
-		s.logger.Error("Password authentication not enabled")
-		return nil, statusInvalidEmailConfig.Err()
 	}
 
 	// Get and validate setup token (reusing password reset token infrastructure)
@@ -365,8 +352,8 @@ func (s *authService) InitiatePasswordReset(
 		return nil, err
 	}
 
-	// Check if password authentication and email service are enabled
-	if !s.config.Password.Enabled || !s.emailConfig.Enabled {
+	// Check if email service is enabled
+	if !s.emailConfig.Enabled {
 		s.logger.Error("Password reset not available")
 		return nil, statusEmailServiceUnavailable.Err()
 	}
@@ -450,12 +437,6 @@ func (s *authService) ResetPassword(
 	err := validateResetPasswordRequest(request)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if password authentication is enabled
-	if !s.config.Password.Enabled {
-		s.logger.Error("Password authentication not enabled")
-		return nil, statusInvalidEmailConfig.Err()
 	}
 
 	// Get and validate reset token (reusing password reset token infrastructure)
