@@ -69,7 +69,7 @@ const ScheduleProgress = ({
         stateOptions.find(o => o.value === currentClause?.actionType)?.label ||
         ''
     };
-  }, [createdAt, page, currentClause]);
+  }, [createdAt, page, currentClause, t, getTimeClause, stateOptions]);
 
   const handlePageChange = (page: number) => {
     setPage(page);

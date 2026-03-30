@@ -36,16 +36,15 @@ const RecurringScheduleProgress = ({
     return dayjs(Number(recurrence.startDate) * 1000).format('YYYY/MM/DD');
   }, [recurrence]);
 
-  const completedCycles = useMemo(
-    () =>
-      Math.min(
-        ...clauses.map(c => {
-          const dc = c.clause as DatetimeClause;
-          return dc.executionCount ?? 0;
-        })
-      ),
-    [clauses]
-  );
+  const completedCycles = useMemo(() => {
+    if (!clauses.length) return 0;
+    return Math.min(
+      ...clauses.map(c => {
+        const dc = c.clause as DatetimeClause;
+        return dc.executionCount ?? 0;
+      })
+    );
+  }, [clauses]);
 
   const maxOccurrences = useMemo(() => {
     if (!recurrence?.maxOccurrences || recurrence.maxOccurrences <= 0) return 0;

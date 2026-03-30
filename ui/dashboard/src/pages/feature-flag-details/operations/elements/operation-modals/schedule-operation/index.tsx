@@ -157,7 +157,7 @@ const ScheduleOperationModal = ({
       frequency: 'WEEKLY' as RecurrenceFrequency,
       daysOfWeek: [1, 2, 3, 4, 5],
       dayOfMonth: 1,
-      endCondition: EndConditionType.ON_DATE,
+      endCondition: EndConditionType.NEVER,
       endDate: undefined,
       maxOccurrences: undefined,
       recurringClauses: [
