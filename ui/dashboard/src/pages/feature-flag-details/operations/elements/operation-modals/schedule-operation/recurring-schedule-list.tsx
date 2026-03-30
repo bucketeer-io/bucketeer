@@ -283,6 +283,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                                 }}
                               />
                             </Form.Control>
+                            <Form.Message />
                           </Form.Item>
                         )}
                       />

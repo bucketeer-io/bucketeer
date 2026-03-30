@@ -380,7 +380,15 @@ export const recurringScheduleSchema = ({
               if (value?.length) {
                 const times = value.map(item => {
                   if (!item.time) return 0;
-                  return item.time.getHours() * 60 + item.time.getMinutes();
+                  return new Date(
+                    1970,
+                    0,
+                    1,
+                    item.time.getHours(),
+                    item.time.getMinutes(),
+                    0,
+                    0
+                  ).getTime();
                 });
                 if (hasDuplicateTimestamps(times)) {
                   return context.createError({
