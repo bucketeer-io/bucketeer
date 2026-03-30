@@ -18,10 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -309,7 +308,7 @@ func TestExtractOpsEventRateClauses(t *testing.T) {
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 	}
-	c1, err := ptypes.MarshalAny(oerc1)
+	c1, err := anypb.New(oerc1)
 	require.NoError(t, err)
 	oerc2 := &autoopsproto.OpsEventRateClause{
 		VariationId:     "vid1",
@@ -318,12 +317,12 @@ func TestExtractOpsEventRateClauses(t *testing.T) {
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 	}
-	c2, err := ptypes.MarshalAny(oerc2)
+	c2, err := anypb.New(oerc2)
 	require.NoError(t, err)
 	dc1 := &autoopsproto.DatetimeClause{
 		Time: 1000000001,
 	}
-	c3, err := ptypes.MarshalAny(dc1)
+	c3, err := anypb.New(dc1)
 	require.NoError(t, err)
 	autoOpsRule := &AutoOpsRule{&autoopsproto.AutoOpsRule{
 		Id:        "id-0",
@@ -343,12 +342,12 @@ func TestExtractDatetimeClauses(t *testing.T) {
 	dc1 := &autoopsproto.DatetimeClause{
 		Time: 1000000001,
 	}
-	c1, err := ptypes.MarshalAny(dc1)
+	c1, err := anypb.New(dc1)
 	require.NoError(t, err)
 	dc2 := &autoopsproto.DatetimeClause{
 		Time: 1000000002,
 	}
-	c2, err := ptypes.MarshalAny(dc2)
+	c2, err := anypb.New(dc2)
 	require.NoError(t, err)
 	oerc1 := &autoopsproto.OpsEventRateClause{
 		VariationId:     "vid1",
@@ -357,7 +356,7 @@ func TestExtractDatetimeClauses(t *testing.T) {
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 	}
-	c3, err := ptypes.MarshalAny(oerc1)
+	c3, err := anypb.New(oerc1)
 	require.NoError(t, err)
 	autoOpsRule := &AutoOpsRule{&autoopsproto.AutoOpsRule{
 		Id:        "id-0",
@@ -425,12 +424,12 @@ func TestHasEventRateOps(t *testing.T) {
 	dc1 := &autoopsproto.DatetimeClause{
 		Time: 1000000001,
 	}
-	c1, err := ptypes.MarshalAny(dc1)
+	c1, err := anypb.New(dc1)
 	require.NoError(t, err)
 	dc2 := &autoopsproto.DatetimeClause{
 		Time: 1000000002,
 	}
-	c2, err := ptypes.MarshalAny(dc2)
+	c2, err := anypb.New(dc2)
 	require.NoError(t, err)
 
 	autoOpsRule := &AutoOpsRule{&autoopsproto.AutoOpsRule{
