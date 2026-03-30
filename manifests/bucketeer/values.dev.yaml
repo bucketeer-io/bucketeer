@@ -210,7 +210,6 @@ web:
   
     # Password authentication configuration for development
     password:
-      enabled: true
       policy:
         minLength: 8
         requireUppercase: true

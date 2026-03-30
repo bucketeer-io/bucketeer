@@ -14,7 +14,6 @@
     ]
   },
   "password": {
-    "enabled": true,
     "policy": {
       "minLength": 8,
       "requireUppercase": true,
