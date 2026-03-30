@@ -39,7 +39,8 @@ const ScheduleList = ({
     number[]
   >([]);
 
-  const { control, watch, trigger } = useFormContext<ScheduleOperationFormType>();
+  const { control, watch, trigger } =
+    useFormContext<ScheduleOperationFormType>();
 
   const {
     fields: scheduleData,

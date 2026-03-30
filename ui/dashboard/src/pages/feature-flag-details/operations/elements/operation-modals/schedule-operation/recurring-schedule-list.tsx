@@ -21,11 +21,7 @@ import Icon from 'components/icon';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import { Tooltip } from 'components/tooltip';
 
-const RecurringScheduleList = ({
-  isDisabled
-}: {
-  isDisabled: boolean;
-}) => {
+const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
   const { t } = useTranslation(['form', 'common']);
   const { control, watch, setValue, trigger } =
     useFormContext<ScheduleOperationFormType>();

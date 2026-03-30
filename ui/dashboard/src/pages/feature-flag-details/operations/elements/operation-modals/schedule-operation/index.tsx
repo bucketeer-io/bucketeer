@@ -14,7 +14,12 @@ import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
 import { v4 as uuid } from 'uuid';
-import { AutoOpsRule, DatetimeClause, RecurrenceFrequency, Rollout } from '@types';
+import {
+  AutoOpsRule,
+  DatetimeClause,
+  RecurrenceFrequency,
+  Rollout
+} from '@types';
 import { isSameOrBeforeDate } from 'utils/function';
 import { cn } from 'utils/style';
 import {
@@ -100,8 +105,7 @@ const ScheduleOperationModal = ({
 
   const handleCreateRecurringDefaults = () => {
     if (selectedData && isExistingRecurring) {
-      const firstClause = selectedData.clauses[0]
-        ?.clause as DatetimeClause;
+      const firstClause = selectedData.clauses[0]?.clause as DatetimeClause;
       const recurrence = firstClause?.recurrence;
 
       let endCondition = EndConditionType.NEVER;
@@ -251,7 +255,10 @@ const ScheduleOperationModal = ({
       let endDate = '0';
       let maxOccurrences = 0;
 
-      if (recurring.endCondition === EndConditionType.ON_DATE && recurring.endDate) {
+      if (
+        recurring.endCondition === EndConditionType.ON_DATE &&
+        recurring.endDate
+      ) {
         const endOfDay = new Date(recurring.endDate);
         endOfDay.setHours(23, 59, 59, 0);
         endDate = Math.trunc(endOfDay.getTime() / 1000).toString();
@@ -266,7 +273,8 @@ const ScheduleOperationModal = ({
         frequency: recurring.frequency,
         daysOfWeek:
           recurring.frequency === 'WEEKLY' ? recurring.daysOfWeek : [],
-        dayOfMonth: recurring.frequency === 'MONTHLY' ? recurring.dayOfMonth : 0,
+        dayOfMonth:
+          recurring.frequency === 'MONTHLY' ? recurring.dayOfMonth : 0,
         startDate,
         endDate,
         maxOccurrences,
@@ -295,13 +303,9 @@ const ScheduleOperationModal = ({
               const datetimeClauseChanges: ClauseUpdateType<DatetimeClause>[] =
                 [];
 
-              const existingIds = new Set(
-                selectedData.clauses.map(c => c.id)
-              );
+              const existingIds = new Set(selectedData.clauses.map(c => c.id));
               const formIds = new Set(
-                recurring.recurringClauses
-                  .map(c => c.id)
-                  .filter(Boolean)
+                recurring.recurringClauses.map(c => c.id).filter(Boolean)
               );
 
               selectedData.clauses.forEach(c => {
@@ -362,9 +366,7 @@ const ScheduleOperationModal = ({
               });
             } else {
               const datetimeClauses = datetimeClausesList.map(item => {
-                const time = Math.trunc(
-                  item.time.getTime() / 1000
-                )?.toString();
+                const time = Math.trunc(item.time.getTime() / 1000)?.toString();
                 return {
                   time,
                   actionType: item.actionType

@@ -540,12 +540,12 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 		if c.Id == id {
 			if dtClause, ok := mc.(*proto.DatetimeClause); ok {
 				// When updating an existing recurring clause, the UI sends
-			// DatetimeClause without execution tracking fields (they are
-			// server-managed), so NextExecutionAt and ExecutionCount arrive
-			// as zero. We must distinguish between a truly new clause
-			// (needs initialization) and an already-executed clause (needs
-			// its tracking fields preserved from the stored version).
-			if IsRecurring(dtClause) &&
+				// DatetimeClause without execution tracking fields (they are
+				// server-managed), so NextExecutionAt and ExecutionCount arrive
+				// as zero. We must distinguish between a truly new clause
+				// (needs initialization) and an already-executed clause (needs
+				// its tracking fields preserved from the stored version).
+				if IsRecurring(dtClause) &&
 					dtClause.NextExecutionAt == 0 &&
 					dtClause.ExecutionCount == 0 {
 					existingDt, _ := a.unmarshalDatetimeClause(c)

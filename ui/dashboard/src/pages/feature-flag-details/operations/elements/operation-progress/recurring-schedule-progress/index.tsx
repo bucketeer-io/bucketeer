@@ -2,10 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { AutoOpsRuleClause, DatetimeClause } from '@types';
-import {
-  ActionTypeMap,
-  OperationCombinedType
-} from '../../../types';
+import { ActionTypeMap, OperationCombinedType } from '../../../types';
 import OperationPagination from '../../operation-pagination';
 import { OperationDescription } from '../operation-description';
 import { ProgressDateTimePoint } from '../progress-date-time-point';
@@ -30,8 +27,7 @@ const RecurringScheduleProgress = ({
   }, [recurrence, t]);
 
   const startDate = useMemo(() => {
-    if (!recurrence?.startDate || Number(recurrence.startDate) === 0)
-      return '';
+    if (!recurrence?.startDate || Number(recurrence.startDate) === 0) return '';
     return dayjs(Number(recurrence.startDate) * 1000).format('YYYY/MM/DD');
   }, [recurrence]);
 
@@ -47,8 +43,7 @@ const RecurringScheduleProgress = ({
   );
 
   const maxOccurrences = useMemo(() => {
-    if (!recurrence?.maxOccurrences || recurrence.maxOccurrences <= 0)
-      return 0;
+    if (!recurrence?.maxOccurrences || recurrence.maxOccurrences <= 0) return 0;
     return recurrence.maxOccurrences;
   }, [recurrence]);
 
@@ -150,9 +145,8 @@ const RecurringScheduleProgress = ({
               const isCurrentActive =
                 isExecuted &&
                 (paginatedClausesList[index + 1]
-                  ? (
-                      paginatedClausesList[index + 1].clause as DatetimeClause
-                    ).executionCount === 0 &&
+                  ? (paginatedClausesList[index + 1].clause as DatetimeClause)
+                      .executionCount === 0 &&
                     paginatedClausesList[index + 1].executedAt === '0'
                   : true);
               const time = getDisplayTime(scheduleClause);

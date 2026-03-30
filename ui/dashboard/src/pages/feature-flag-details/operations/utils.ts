@@ -238,9 +238,7 @@ export const getFrequencyLabel = (frequency: RecurrenceFrequency): string => {
   }
 };
 
-export const isRecurringOperation = (
-  clauses: AutoOpsRuleClause[]
-): boolean => {
+export const isRecurringOperation = (clauses: AutoOpsRuleClause[]): boolean => {
   return clauses?.some(c => c.isRecurring) ?? false;
 };
 

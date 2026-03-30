@@ -250,7 +250,8 @@ export const recurringScheduleSchema = ({
     scheduleType: yup.mixed<ScheduleType>().required(),
     datetimeClausesList: yup.array().when('scheduleType', {
       is: ScheduleType.ONE_TIME,
-      then: schema =>
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      then: (schema: yup.AnySchema) =>
         dateTimeClauseListSchema({ requiredMessage, translation }).fields
           .datetimeClausesList as typeof schema,
       otherwise: schema => schema.optional()
@@ -282,13 +283,11 @@ export const recurringScheduleSchema = ({
                 ),
               otherwise: schema => schema.optional()
             }),
-          dayOfMonth: yup
-            .number()
-            .when('frequency', {
-              is: 'MONTHLY',
-              then: schema => schema.min(1).max(31).required(requiredMessage),
-              otherwise: schema => schema.optional()
-            }),
+          dayOfMonth: yup.number().when('frequency', {
+            is: 'MONTHLY',
+            then: schema => schema.min(1).max(31).required(requiredMessage),
+            otherwise: schema => schema.optional()
+          }),
           endCondition: yup.mixed<EndConditionType>().required(),
           endDate: yup.date().when('endCondition', {
             is: EndConditionType.ON_DATE,
@@ -361,8 +360,8 @@ export const recurringScheduleSchema = ({
                     if (startDay.getTime() > today.getTime()) return true;
                     if (
                       startDay.getTime() === today.getTime() &&
-                      (value.getHours() * 60 + value.getMinutes()) <=
-                        (now.getHours() * 60 + now.getMinutes())
+                      value.getHours() * 60 + value.getMinutes() <=
+                        now.getHours() * 60 + now.getMinutes()
                     ) {
                       return context.createError({
                         message: translation(
@@ -379,9 +378,7 @@ export const recurringScheduleSchema = ({
             .required(requiredMessage)
             .test('noDuplicateTimes', (value, context) => {
               if (value?.length) {
-                const times = value.map(
-                  item => item.time?.getTime() ?? 0
-                );
+                const times = value.map(item => item.time?.getTime() ?? 0);
                 if (hasDuplicateTimestamps(times)) {
                   return context.createError({
                     message: translation(
