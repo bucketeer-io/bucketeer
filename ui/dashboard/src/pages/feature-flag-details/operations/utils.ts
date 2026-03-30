@@ -2,10 +2,8 @@ import dayjs from 'dayjs';
 import { v4 as uuid } from 'uuid';
 import {
   AutoOpsRuleClause,
-  DatetimeClause,
   Feature,
   OpsEventRateClauseOperator,
-  RecurrenceFrequency,
   RuleStrategyVariation
 } from '@types';
 import { ActionTypeMap, ScheduleItem } from './types';
@@ -211,57 +209,6 @@ export const timeOfDayToSeconds = (date: Date): number => {
   return date.getHours() * 3600 + date.getMinutes() * 60;
 };
 
-export const secondsToTimeOfDay = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-};
-
-export const secondsToDate = (seconds: number): Date => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
-  return date;
-};
-
-export const getFrequencyLabel = (frequency: RecurrenceFrequency): string => {
-  switch (frequency) {
-    case 'DAILY':
-      return 'daily';
-    case 'WEEKLY':
-      return 'weekly';
-    case 'MONTHLY':
-      return 'monthly';
-    default:
-      return 'unknown';
-  }
-};
-
 export const isRecurringOperation = (clauses: AutoOpsRuleClause[]): boolean => {
   return clauses?.some(c => c.isRecurring) ?? false;
-};
-
-export const getRecurringClauseData = (clause: AutoOpsRuleClause) => {
-  const dtClause = clause.clause as DatetimeClause;
-  return {
-    timeOfDay: secondsToTimeOfDay(Number(dtClause.time)),
-    actionType: clause.actionType,
-    recurrence: dtClause.recurrence,
-    nextExecutionAt: dtClause.nextExecutionAt,
-    lastExecutedAt: dtClause.lastExecutedAt,
-    executionCount: dtClause.executionCount ?? 0,
-    isExhausted:
-      clause.isRecurring && Number(dtClause.nextExecutionAt || 0) === 0
-  };
-};
-
-export const createRecurringClauseDefaults = () => {
-  const now = new Date();
-  now.setHours(now.getHours() + 1, 0, 0, 0);
-  return {
-    id: uuid(),
-    actionType: ActionTypeMap.ENABLE,
-    time: now
-  };
 };

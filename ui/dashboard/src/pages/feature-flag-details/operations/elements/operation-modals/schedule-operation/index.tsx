@@ -395,7 +395,20 @@ const ScheduleOperationModal = ({
         errorNotify(error);
       }
     },
-    [isCreate, actionType, selectedData, editable]
+    [
+      isCreate,
+      actionType,
+      selectedData,
+      editable,
+      environmentId,
+      featureId,
+      buildRecurrenceRule,
+      handleCheckDateTimeClauses,
+      onSubmitOperationSuccess,
+      notify,
+      errorNotify,
+      t
+    ]
   );
 
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });

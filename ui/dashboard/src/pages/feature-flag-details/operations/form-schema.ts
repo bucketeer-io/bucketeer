@@ -378,7 +378,10 @@ export const recurringScheduleSchema = ({
             .required(requiredMessage)
             .test('noDuplicateOrUnsortedTimes', (value, context) => {
               if (value?.length) {
-                const times = value.map(item => item.time?.getTime() ?? 0);
+                const times = value.map(item => {
+                  if (!item.time) return 0;
+                  return item.time.getHours() * 60 + item.time.getMinutes();
+                });
                 if (hasDuplicateTimestamps(times)) {
                   return context.createError({
                     message: translation(

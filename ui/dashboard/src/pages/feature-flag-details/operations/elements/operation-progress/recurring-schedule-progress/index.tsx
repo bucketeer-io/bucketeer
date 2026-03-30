@@ -59,19 +59,16 @@ const RecurringScheduleProgress = ({
     [clauses, page]
   );
 
-  const stateOptions = useMemo(
-    () => [
-      {
-        label: t('form:experiments.on'),
-        value: ActionTypeMap.ENABLE
-      },
-      {
-        label: t('form:experiments.off'),
-        value: ActionTypeMap.DISABLE
-      }
-    ],
-    []
-  );
+  const stateOptions = [
+    {
+      label: t('form:experiments.on'),
+      value: ActionTypeMap.ENABLE
+    },
+    {
+      label: t('form:experiments.off'),
+      value: ActionTypeMap.DISABLE
+    }
+  ];
 
   const getDisplayTime = useCallback(
     (clause: AutoOpsRuleClause) => {
@@ -108,7 +105,7 @@ const RecurringScheduleProgress = ({
         stateOptions.find(o => o.value === currentClause?.actionType)?.label ||
         ''
     };
-  }, [createdAt, page, currentClause]);
+  }, [createdAt, page, currentClause, t, getDisplayTime, stateOptions]);
 
   const handlePageChange = (page: number) => {
     setPage(page);
@@ -146,18 +143,18 @@ const RecurringScheduleProgress = ({
               displayLabel={displayLabel}
               displayTime={displayTime}
             />
-            {paginatedClausesList.map((scheduleClause, index) => {
+            {paginatedClausesList.map(scheduleClause => {
               const dc = scheduleClause.clause as DatetimeClause;
-              const isExecuted =
-                scheduleClause.executedAt !== '0' ||
-                (dc.executionCount ?? 0) > 0;
+              const nextExec = Number(dc.nextExecutionAt || 0);
+              const smallestNextExec = Math.min(
+                ...paginatedClausesList
+                  .map(c =>
+                    Number((c.clause as DatetimeClause).nextExecutionAt || 0)
+                  )
+                  .filter(v => v > 0)
+              );
               const isCurrentActive =
-                isExecuted &&
-                (paginatedClausesList[index + 1]
-                  ? (paginatedClausesList[index + 1].clause as DatetimeClause)
-                      .executionCount === 0 &&
-                    paginatedClausesList[index + 1].executedAt === '0'
-                  : true);
+                nextExec > 0 && nextExec === smallestNextExec;
               const time = getDisplayTime(scheduleClause);
               return (
                 <ProgressDateTimePoint

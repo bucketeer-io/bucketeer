@@ -548,7 +548,10 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 				if IsRecurring(dtClause) &&
 					dtClause.NextExecutionAt == 0 &&
 					dtClause.ExecutionCount == 0 {
-					existingDt, _ := a.unmarshalDatetimeClause(c)
+					existingDt, unmarshalErr := a.unmarshalDatetimeClause(c)
+					if unmarshalErr != nil {
+						return unmarshalErr
+					}
 					if existingDt != nil && existingDt.ExecutionCount > 0 {
 						// Clause was already executed: preserve tracking fields.
 						dtClause.ExecutionCount = existingDt.ExecutionCount

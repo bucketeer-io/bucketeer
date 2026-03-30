@@ -67,16 +67,21 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
 
   const handleAddClause = useCallback(() => {
     const lastClause = watchClausesList.at(-1);
-    const lastTime = lastClause?.time?.getTime();
-    const nextTime = dayjs(lastTime ? new Date(lastTime) : new Date())
-      .set('second', 0)
-      .set('millisecond', 0)
-      .add(1, 'hour')
-      .toDate();
+    const baseTime = lastClause?.time ?? new Date();
+    const nextTime = dayjs(baseTime).add(1, 'hour');
+    const normalizedTime = new Date(
+      1970,
+      0,
+      1,
+      nextTime.hour(),
+      nextTime.minute(),
+      0,
+      0
+    );
     append({
       id: uuid(),
       actionType: ActionTypeMap.ENABLE,
-      time: nextTime
+      time: normalizedTime
     });
   }, [append, watchClausesList]);
 
