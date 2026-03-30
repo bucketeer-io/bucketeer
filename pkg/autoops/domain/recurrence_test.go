@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -1536,4 +1537,81 @@ func TestAdvanceRecurringClause_MultipleClauses(t *testing.T) {
 
 	dtSecond := dateClauses[rule.Clauses[1].Id]
 	assert.Equal(t, int32(0), dtSecond.ExecutionCount)
+}
+
+// TestAdvanceRecurringClause_UpdateAndJSONRoundTrip reproduces the exact
+// ExecuteAutoOps flow: AdvanceRecurringClause → Update() (copier.Copy) →
+// JSON marshal/unmarshal (storage layer). This identifies whether copier.Copy
+// or the JSON round-trip loses the re-marshaled Any bytes.
+func TestAdvanceRecurringClause_UpdateAndJSONRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	dc := &autoopsproto.DatetimeClause{
+		Time:       36000,
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency: autoopsproto.RecurrenceRule_DAILY,
+			Timezone:  "UTC",
+			StartDate: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		},
+	}
+	rule, err := NewAutoOpsRule(
+		"feature-1",
+		autoopsproto.OpsType_SCHEDULE,
+		nil,
+		[]*autoopsproto.DatetimeClause{dc},
+	)
+	require.NoError(t, err)
+	require.Len(t, rule.Clauses, 1)
+	assert.True(t, rule.Clauses[0].IsRecurring)
+
+	now := time.Date(2026, 1, 1, 10, 0, 1, 0, time.UTC)
+	err = rule.AdvanceRecurringClause(rule.Clauses[0].Id, now)
+	require.NoError(t, err)
+
+	// Step 1: Verify the in-memory state is correct after AdvanceRecurringClause
+	dtBefore, err := rule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	dtc := dtBefore[rule.Clauses[0].Id]
+	assert.Equal(t, int32(1), dtc.ExecutionCount, "in-memory: ExecutionCount should be 1")
+	assert.Equal(t, now.Unix(), dtc.LastExecutedAt, "in-memory: LastExecutedAt should be set")
+	assert.True(t, dtc.NextExecutionAt > 0, "in-memory: NextExecutionAt should be set")
+
+	// Step 2: Call Update() which uses copier.Copy — this is what ExecuteAutoOps does
+	opsStatus := autoopsproto.AutoOpsStatus_RUNNING
+	updated, err := rule.Update(&opsStatus, nil, nil)
+	require.NoError(t, err)
+
+	// Step 2a: Check the copier.Copy result
+	dtAfterCopy, err := updated.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	copiedDtc := dtAfterCopy[updated.Clauses[0].Id]
+	require.NotNil(t, copiedDtc, "copier.Copy: DatetimeClause should be extractable")
+	assert.Equal(t, int32(1), copiedDtc.ExecutionCount, "copier.Copy: ExecutionCount should be 1")
+	assert.Equal(t, now.Unix(), copiedDtc.LastExecutedAt, "copier.Copy: LastExecutedAt should be set")
+	assert.Equal(t, dtc.NextExecutionAt, copiedDtc.NextExecutionAt, "copier.Copy: NextExecutionAt should match")
+	assert.NotNil(t, copiedDtc.Recurrence, "copier.Copy: Recurrence should not be nil")
+	assert.True(t, updated.Clauses[0].IsRecurring, "copier.Copy: IsRecurring should be true")
+
+	// Step 3: JSON round-trip (what mysql.JSONObject does for storage)
+	jsonBytes, err := json.Marshal(updated.Clauses)
+	require.NoError(t, err)
+
+	var fromStorage []*autoopsproto.Clause
+	err = json.Unmarshal(jsonBytes, &fromStorage)
+	require.NoError(t, err)
+	require.Len(t, fromStorage, 1)
+
+	storageRule := &AutoOpsRule{AutoOpsRule: &autoopsproto.AutoOpsRule{
+		Clauses: fromStorage,
+	}}
+	dtAfterStorage, err := storageRule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	storedDtc := dtAfterStorage[fromStorage[0].Id]
+	require.NotNil(t, storedDtc, "storage: DatetimeClause should be extractable")
+	assert.Equal(t, int32(1), storedDtc.ExecutionCount, "storage: ExecutionCount should be 1")
+	assert.Equal(t, now.Unix(), storedDtc.LastExecutedAt, "storage: LastExecutedAt should be set")
+	assert.Equal(t, dtc.NextExecutionAt, storedDtc.NextExecutionAt, "storage: NextExecutionAt should match")
+	assert.NotNil(t, storedDtc.Recurrence, "storage: Recurrence should not be nil")
+	assert.True(t, fromStorage[0].IsRecurring, "storage: IsRecurring should be true")
 }

@@ -1017,6 +1017,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if autoOpsRule.AllClausesFinished() {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
+
 		updated, err := autoOpsRule.Update(&opsStatus, nil, nil)
 		if err != nil {
 			return err
