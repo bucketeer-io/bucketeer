@@ -376,13 +376,22 @@ export const recurringScheduleSchema = ({
             )
             .min(1, requiredMessage)
             .required(requiredMessage)
-            .test('noDuplicateTimes', (value, context) => {
+            .test('noDuplicateOrUnsortedTimes', (value, context) => {
               if (value?.length) {
                 const times = value.map(item => item.time?.getTime() ?? 0);
                 if (hasDuplicateTimestamps(times)) {
                   return context.createError({
                     message: translation(
                       'message:validation.operation.schedules-same-time'
+                    ),
+                    path: context.path
+                  });
+                }
+                const sortedState = isTimestampArraySorted(times);
+                if (!sortedState.isSorted) {
+                  return context.createError({
+                    message: translation(
+                      'message:validation.operation.date-increasing-order'
                     ),
                     path: context.path
                   });

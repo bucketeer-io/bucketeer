@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
@@ -41,24 +41,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
     keyName: 'clauseKey'
   });
 
-  const watchClausesList = useMemo(
-    () => watch('recurring.recurringClauses'),
-    [watch, recurringClauses.length]
-  );
-
-  const stateOptions = useMemo(
-    () => [
-      {
-        label: t('form:experiments.on'),
-        value: ActionTypeMap.ENABLE
-      },
-      {
-        label: t('form:experiments.off'),
-        value: ActionTypeMap.DISABLE
-      }
-    ],
-    []
-  );
+  const watchClausesList = watch('recurring.recurringClauses');
 
   const frequencyKeyMap: Record<string, string> = {
     DAILY: 'form:daily',
@@ -66,14 +49,21 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
     MONTHLY: 'form:monthly'
   };
 
-  const frequencyOptions = useMemo(
-    () =>
-      FREQUENCY_OPTIONS.map(freq => ({
-        label: t(frequencyKeyMap[freq] ?? 'form:unknown'),
-        value: freq
-      })),
-    []
-  );
+  const stateOptions = [
+    {
+      label: t('form:experiments.on'),
+      value: ActionTypeMap.ENABLE
+    },
+    {
+      label: t('form:experiments.off'),
+      value: ActionTypeMap.DISABLE
+    }
+  ];
+
+  const frequencyOptions = FREQUENCY_OPTIONS.map(freq => ({
+    label: t(frequencyKeyMap[freq] ?? 'form:unknown'),
+    value: freq
+  }));
 
   const handleAddClause = useCallback(() => {
     const lastClause = watchClausesList.at(-1);
