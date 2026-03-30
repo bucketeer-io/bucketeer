@@ -15,11 +15,10 @@
 package util
 
 import (
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
-func MarshalCommand(pb proto.Message) (*any.Any, error) {
-	return ptypes.MarshalAny(pb)
+func MarshalCommand(pb proto.Message) (*anypb.Any, error) {
+	return anypb.New(pb)
 }
