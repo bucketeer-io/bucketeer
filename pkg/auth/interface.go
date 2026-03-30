@@ -79,26 +79,23 @@ type PasswordURLsConfig struct {
 }
 
 type PasswordAuthConfig struct {
-	Enabled bool                 `json:"enabled"`
-	Policy  PasswordPolicyConfig `json:"policy"`
-	Tokens  PasswordTokensConfig `json:"tokens"`
-	URLs    PasswordURLsConfig   `json:"urls"`
+	Policy PasswordPolicyConfig `json:"policy"`
+	Tokens PasswordTokensConfig `json:"tokens"`
+	URLs   PasswordURLsConfig   `json:"urls"`
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling for PasswordAuthConfig
 // to handle duration strings like "1h", "24h" in the Tokens field
 func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
-	// Define a temporary struct with string duration fields in Tokens
 	type TokensAlias struct {
 		ResetTTL string `json:"resetTTL"`
 		SetupTTL string `json:"setupTTL"`
 	}
 
 	type Alias struct {
-		Enabled bool                 `json:"enabled"`
-		Policy  PasswordPolicyConfig `json:"policy"`
-		Tokens  TokensAlias          `json:"tokens"`
-		URLs    PasswordURLsConfig   `json:"urls"`
+		Policy PasswordPolicyConfig `json:"policy"`
+		Tokens TokensAlias          `json:"tokens"`
+		URLs   PasswordURLsConfig   `json:"urls"`
 	}
 
 	var aux Alias
@@ -106,24 +103,22 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Set non-duration values
-	c.Enabled = aux.Enabled
 	c.Policy = aux.Policy
 	c.URLs = aux.URLs
 
-	// Only parse TTL values if password auth is enabled
-	if aux.Enabled {
+	if aux.Tokens.ResetTTL != "" {
 		resetTTL, err := time.ParseDuration(aux.Tokens.ResetTTL)
 		if err != nil {
 			return fmt.Errorf("failed to parse resetTTL: %w", err)
 		}
+		c.Tokens.ResetTTL = resetTTL
+	}
 
+	if aux.Tokens.SetupTTL != "" {
 		setupTTL, err := time.ParseDuration(aux.Tokens.SetupTTL)
 		if err != nil {
 			return fmt.Errorf("failed to parse setupTTL: %w", err)
 		}
-
-		c.Tokens.ResetTTL = resetTTL
 		c.Tokens.SetupTTL = setupTTL
 	}
 

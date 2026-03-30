@@ -35,17 +35,7 @@ func (s *authService) SignIn(
 		return nil, err
 	}
 
-	// Then, try password authentication if enabled
-	if s.config.Password.Enabled {
-		return s.handlePasswordSignIn(ctx, request)
-	}
-
-	// If neither is enabled nor credentials don't match, deny access
-	s.logger.Error("Sign in failed - no valid authentication method",
-		zap.String("email", request.Email),
-		zap.Bool("passwordAuthEnabled", s.config.Password.Enabled),
-	)
-	return nil, statusAccessDenied.Err()
+	return s.handlePasswordSignIn(ctx, request)
 }
 
 func (s *authService) handlePasswordSignIn(
