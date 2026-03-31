@@ -283,13 +283,12 @@ func (s *authService) RefreshToken(
 	if err := validateRefreshTokenRequest(req); err != nil {
 		s.logger.Error("Failed to validate refresh token request",
 			zap.Error(err),
-			zap.String("refresh_token", req.RefreshToken),
 		)
 		return nil, err
 	}
 	refreshToken, err := s.verifier.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
-		s.logger.Error("Refresh token is invalid", zap.Any("refresh_token", refreshToken))
+		s.logger.Error("Refresh token is invalid", zap.Error(err))
 		return nil, statusUnauthenticated.Err()
 	}
 	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email)
@@ -297,7 +296,6 @@ func (s *authService) RefreshToken(
 		s.logger.Error("Failed to get organizations by email",
 			zap.Error(err),
 			zap.String("email", refreshToken.Email),
-			zap.String("refresh_token", req.RefreshToken),
 		)
 		return nil, err
 	}
@@ -322,7 +320,6 @@ func (s *authService) RefreshToken(
 			zap.Error(err),
 			zap.String("email", refreshToken.Email),
 			zap.Any("organizations", organizations),
-			zap.Any("refresh_token", refreshToken),
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}

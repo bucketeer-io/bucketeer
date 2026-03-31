@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -255,7 +254,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		s.logger.Error("Failed to validate Track request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", req.Apikey),
+				zap.String("apiKey", obfuscateString(req.Apikey, obfuscateAPIKeyLength)),
 				zap.String("tag", req.Tag),
 				zap.Any("userId", req.Userid),
 				zap.String("goalId", req.Goalid),
@@ -270,7 +269,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		s.logger.Error("Failed to check Track request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", req.Apikey),
+				zap.String("apiKey", obfuscateString(req.Apikey, obfuscateAPIKeyLength)),
 				zap.String("tag", req.Tag),
 				zap.Any("userId", req.Userid),
 				zap.String("goalId", req.Goalid),
@@ -748,7 +747,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
-				zap.String("apiKey", envAPIKey.ApiKey.Id),
+				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
@@ -918,7 +917,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
-				zap.String("apiKey", envAPIKey.ApiKey.Id),
+				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 				zap.Strings("segmentIds", req.SegmentIds),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
@@ -1347,7 +1346,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", envAPIKey.Environment.Id),
-				zap.String("apiKey", fmt.Sprintf("%s*****", envAPIKey.ApiKey.Id[:10])),
+				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
@@ -1408,7 +1407,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			}
 			eventCounter.WithLabelValues(callerGatewayService, typeUnknown, codeInvalidType).Inc()
 			s.logger.Warn("Received invalid type event",
-				zap.String("apiKey", envAPIKey.ApiKey.Id),
+				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 				zap.String("projectID", envAPIKey.ProjectId),
 				zap.String("eventID", event.Id),
 				zap.String("environmentId", event.EnvironmentId),
@@ -1531,7 +1530,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 		s.logger.Error("Failed to get environment API key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", apiKey),
+				zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
 			)...,
 		)
 		return nil, err
@@ -1540,7 +1539,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.Any("apikey", envAPIKey),
+				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 			)...,
 		)
 		return nil, err
@@ -1567,7 +1566,7 @@ func (s *grpcGatewayService) checkRequest(
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.Any("apikey", envAPIKey),
+				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 			)...,
 		)
 		return nil, err

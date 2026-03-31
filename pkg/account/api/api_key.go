@@ -367,7 +367,7 @@ func (s *AccountService) GetEnvironmentAPIKey(
 			"Failed to get environment api key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", req.ApiKey),
+				zap.String("apiKey", obfuscateAPIKey(req.ApiKey)),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
