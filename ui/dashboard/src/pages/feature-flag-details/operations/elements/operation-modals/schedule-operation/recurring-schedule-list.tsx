@@ -256,84 +256,98 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
               <Form.Control>
                 <RadioGroup
                   value={field.value}
-                  onValueChange={field.onChange}
+                  onValueChange={value => {
+                    field.onChange(value);
+                    if (value !== EndConditionType.ON_DATE) {
+                      setValue('recurring.endDate', undefined as never, {
+                        shouldValidate: true
+                      });
+                    }
+                    if (value !== EndConditionType.AFTER) {
+                      setValue('recurring.maxOccurrences', undefined as never, {
+                        shouldValidate: true
+                      });
+                    }
+                  }}
                   disabled={isDisabled}
                   className="flex flex-col gap-y-4"
                 >
-                  <div className="flex items-center h-9 gap-x-2">
-                    <RadioGroupItem value={EndConditionType.ON_DATE} />
-                    <span className="typo-para-medium text-gray-700">
-                      {t('feature-flags.end-on-date')}
-                    </span>
-                    {endCondition === EndConditionType.ON_DATE && (
-                      <Form.Field
-                        control={control}
-                        name="recurring.endDate"
-                        render={({ field: dateField }) => (
-                          <Form.Item className="py-0 relative">
-                            <Form.Control>
-                              <ReactDatePicker
-                                dateFormat={'yyyy/MM/dd'}
-                                selected={dateField.value ?? null}
-                                showTimeSelect={false}
-                                className="w-[160px]"
-                                disabled={isDisabled}
-                                onChange={date => {
-                                  if (date) dateField.onChange(date);
-                                }}
-                              />
-                            </Form.Control>
-                            <Form.Message className="absolute top-full left-0 whitespace-nowrap" />
-                          </Form.Item>
-                        )}
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex items-center h-9 gap-x-2">
-                    <RadioGroupItem value={EndConditionType.AFTER} />
-                    <span className="typo-para-medium text-gray-700">
-                      {t('feature-flags.end-after')}
-                    </span>
-                    {endCondition === EndConditionType.AFTER && (
-                      <Form.Field
-                        control={control}
-                        name="recurring.maxOccurrences"
-                        render={({ field: occField }) => (
-                          <Form.Item className="py-0 relative">
-                            <Form.Control>
-                              <div className="flex items-center gap-x-2">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={occField.value ?? ''}
-                                  onChange={e =>
-                                    occField.onChange(
-                                      e.target.value
-                                        ? Number(e.target.value)
-                                        : undefined
-                                    )
-                                  }
-                                  disabled={isDisabled}
-                                  className="w-[80px] h-9 px-3 rounded-lg border border-gray-400 typo-para-medium text-gray-700 focus:outline-none focus:border-primary-500"
-                                />
-                                <span className="typo-para-medium text-gray-700">
-                                  {t('feature-flags.occurrences')}
-                                </span>
-                              </div>
-                            </Form.Control>
-                            <Form.Message className="absolute top-full left-0 whitespace-nowrap" />
-                          </Form.Item>
-                        )}
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex items-center h-9 gap-x-2">
+                  <div className="flex items-center pb-5 gap-x-2">
                     <RadioGroupItem value={EndConditionType.NEVER} />
                     <span className="typo-para-medium text-gray-700">
                       {t('feature-flags.end-never')}
                     </span>
+                  </div>
+
+                  <div className="flex items-center pb-5 gap-x-2">
+                    <RadioGroupItem value={EndConditionType.ON_DATE} />
+                    <span className="typo-para-medium text-gray-700">
+                      {t('feature-flags.end-on-date')}
+                    </span>
+                    <Form.Field
+                      control={control}
+                      name="recurring.endDate"
+                      render={({ field: dateField }) => (
+                        <Form.Item className="py-0 relative">
+                          <Form.Control>
+                            <ReactDatePicker
+                              dateFormat={'yyyy/MM/dd'}
+                              selected={dateField.value ?? null}
+                              showTimeSelect={false}
+                              className="w-[160px]"
+                              disabled={
+                                isDisabled ||
+                                endCondition !== EndConditionType.ON_DATE
+                              }
+                              onChange={date => {
+                                if (date) dateField.onChange(date);
+                              }}
+                            />
+                          </Form.Control>
+                          <Form.Message className="absolute top-full left-0 whitespace-nowrap" />
+                        </Form.Item>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex items-center pb-5 gap-x-2">
+                    <RadioGroupItem value={EndConditionType.AFTER} />
+                    <span className="typo-para-medium text-gray-700">
+                      {t('feature-flags.end-after')}
+                    </span>
+                    <Form.Field
+                      control={control}
+                      name="recurring.maxOccurrences"
+                      render={({ field: occField }) => (
+                        <Form.Item className="py-0 relative">
+                          <Form.Control>
+                            <div className="flex items-center gap-x-2">
+                              <input
+                                type="number"
+                                min={1}
+                                value={occField.value ?? ''}
+                                onChange={e =>
+                                  occField.onChange(
+                                    e.target.value
+                                      ? Number(e.target.value)
+                                      : undefined
+                                  )
+                                }
+                                disabled={
+                                  isDisabled ||
+                                  endCondition !== EndConditionType.AFTER
+                                }
+                                className="w-[160px] py-[11px] px-4 rounded-lg border border-gray-400 typo-para-medium text-gray-700 focus:outline-none focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-400"
+                              />
+                              <span className="typo-para-medium text-gray-700">
+                                {t('feature-flags.occurrences')}
+                              </span>
+                            </div>
+                          </Form.Control>
+                          <Form.Message className="absolute top-full left-0 whitespace-nowrap" />
+                        </Form.Item>
+                      )}
+                    />
                   </div>
                 </RadioGroup>
               </Form.Control>

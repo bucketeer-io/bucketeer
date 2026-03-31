@@ -232,7 +232,7 @@
     "day-of-month-hint": "31日を選択した場合、その日が存在しない月は実行されません。",
     "timezone": "タイムゾーン",
     "end": "終了",
-    "end-never": "なし",
+    "end-never": "継続",
     "end-on-date": "日付指定",
     "end-after": "回数指定",
     "occurrences": "回",

@@ -232,7 +232,7 @@
     "day-of-month-hint": "If you select the 31st, it will skip months without that day.",
     "timezone": "Timezone",
     "end": "End",
-    "end-never": "Never",
+    "end-never": "Never (Continuous)",
     "end-on-date": "On date",
     "end-after": "After",
     "occurrences": "occurrences",
