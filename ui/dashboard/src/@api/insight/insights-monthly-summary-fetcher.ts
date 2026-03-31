@@ -22,8 +22,8 @@ export const insightsMonthlySummaryFetcher = async (
     if (response.data) {
       return response.data;
     }
-  } catch {
-    // fall through to mock
+  } catch (error) {
+    console.log('Response error::', error);
   }
 
   return mockData.monthlySummary as InsightsMonthlySummaryResponse;

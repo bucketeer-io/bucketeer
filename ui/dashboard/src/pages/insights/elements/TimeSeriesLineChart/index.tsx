@@ -56,7 +56,7 @@ const TimeSeriesLineChart = ({
           pointRadius: 0
         };
       }),
-    [timeseries]
+    [timeseries, environmentNameMap]
   );
 
   const legendData = useMemo(

@@ -2,10 +2,18 @@ import { COLORS } from 'constants/styles';
 import { useTranslation } from 'i18n';
 
 export const formatLargeNumber = (value: number): string => {
-  if (value >= 1e10) return `${(value / 1e10).toFixed(0)}B`;
-  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
-  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
-  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}k`;
+  if (value >= 1e9) {
+    const billions = value / 1e9;
+    return `${billions >= 10 ? billions.toFixed(0) : billions.toFixed(1)}B`;
+  }
+  if (value >= 1e6) {
+    const millions = value / 1e6;
+    return `${millions >= 10 ? millions.toFixed(0) : millions.toFixed(1)}M`;
+  }
+  if (value >= 1e3) {
+    const thousands = value / 1e3;
+    return `${thousands >= 10 ? thousands.toFixed(0) : thousands.toFixed(1)}K`;
+  }
   return String(value);
 };
 
@@ -35,7 +43,7 @@ export const ChartCard = ({
     <div className="bg-white">
       <h3 className="typo-para-small text-gray-600 mb-4">{title}</h3>
       <div className="flex items-center gap-x-5 min-w-0">
-        {!!currentMonth && (
+        {currentMonth != null && (
           <div className="flex-shrink-0">
             <p className="typo-para-small text-gray-500">
               {t('insights.current-month')}

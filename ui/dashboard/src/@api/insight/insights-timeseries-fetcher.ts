@@ -29,7 +29,7 @@ const withDynamicTimestamps = (
 
   // Choose step: <=24h → hourly (3600s), otherwise daily (86400s)
   const step = durationSecs <= 24 * 3600 ? 3600 : 86400;
-  const count = Math.round(durationSecs / step);
+  const count = Math.floor(durationSecs / step) + 1;
 
   return {
     timeseries: response.timeseries.map(series => {
@@ -59,8 +59,8 @@ const fetchTimeSeries = async (
     if (response.data) {
       return response.data;
     }
-  } catch {
-    // fall through to mock
+  } catch (error) {
+    console.log('Response error:: ', error);
   }
 
   return withDynamicTimestamps(mockFallback, params);

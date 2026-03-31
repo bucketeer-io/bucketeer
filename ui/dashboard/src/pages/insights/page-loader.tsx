@@ -57,6 +57,7 @@ const PageLoader = () => {
 
   const monthlySummaryParams = useMemo(() => {
     return {
+      projectIds: filters.projectId ? [filters.projectId] : undefined,
       environmentIds: filters.environmentId
         ? [filters.environmentId]
         : undefined,
@@ -70,6 +71,7 @@ const PageLoader = () => {
   const timeRangeParams = useMemo(() => {
     const { startAt, endAt } = computeTimeRange(filters.timeRange);
     return {
+      projectIds: filters.projectId ? [filters.projectId] : undefined,
       environmentIds: filters.environmentId
         ? [filters.environmentId]
         : undefined,
