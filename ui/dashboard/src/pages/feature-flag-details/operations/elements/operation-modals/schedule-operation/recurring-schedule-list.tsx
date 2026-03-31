@@ -258,7 +258,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                   value={field.value}
                   onValueChange={field.onChange}
                   disabled={isDisabled}
-                  className="flex flex-col gap-y-3"
+                  className="flex flex-col gap-y-4"
                 >
                   <div className="flex items-center h-9 gap-x-2">
                     <RadioGroupItem value={EndConditionType.ON_DATE} />
@@ -270,7 +270,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                         control={control}
                         name="recurring.endDate"
                         render={({ field: dateField }) => (
-                          <Form.Item className="py-0">
+                          <Form.Item className="py-0 relative">
                             <Form.Control>
                               <ReactDatePicker
                                 dateFormat={'yyyy/MM/dd'}
@@ -283,7 +283,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                                 }}
                               />
                             </Form.Control>
-                            <Form.Message />
+                            <Form.Message className="absolute top-full left-0 whitespace-nowrap" />
                           </Form.Item>
                         )}
                       />
@@ -300,7 +300,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                         control={control}
                         name="recurring.maxOccurrences"
                         render={({ field: occField }) => (
-                          <Form.Item className="py-0">
+                          <Form.Item className="py-0 relative">
                             <Form.Control>
                               <div className="flex items-center gap-x-2">
                                 <input
@@ -322,6 +322,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                                 </span>
                               </div>
                             </Form.Control>
+                            <Form.Message className="absolute top-full left-0 whitespace-nowrap" />
                           </Form.Item>
                         )}
                       />

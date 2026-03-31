@@ -325,7 +325,16 @@ export const recurringScheduleSchema = ({
             .transform(value => (isNaN(value) ? undefined : value))
             .when('endCondition', {
               is: EndConditionType.AFTER,
-              then: schema => schema.min(1).required(requiredMessage),
+              then: schema =>
+                schema
+                  .min(
+                    1,
+                    translation('message:operation.must-be-greater-value', {
+                      name: translation('form:feature-flags.occurrences'),
+                      value: 1
+                    })
+                  )
+                  .required(requiredMessage),
               otherwise: schema => schema.optional().nullable()
             }),
           recurringClauses: yup
