@@ -85,10 +85,10 @@ func (s *insightsService) GetInsightsMonthlySummary(
 	ctx context.Context,
 	req *insightsproto.GetInsightsMonthlySummaryRequest,
 ) (*insightsproto.GetInsightsMonthlySummaryResponse, error) {
-	if err := s.validateMonthlySummaryRequest(req); err != nil {
+	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
 		return nil, err
 	}
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
+	if err := s.validateMonthlySummaryRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -119,6 +119,9 @@ func (s *insightsService) GetInsightsLatency(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
+	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
+		return nil, err
+	}
 	query := latencyQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -131,6 +134,9 @@ func (s *insightsService) GetInsightsRequests(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
+	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
+		return nil, err
+	}
 	query := requestCountQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -143,6 +149,9 @@ func (s *insightsService) GetInsightsEvaluations(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
+	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
+		return nil, err
+	}
 	query := evaluationsQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -154,6 +163,9 @@ func (s *insightsService) GetInsightsErrorRates(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
+	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
+		return nil, err
+	}
 	query := errorRatesQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -172,9 +184,6 @@ func (s *insightsService) queryTimeSeries(
 		return nil, statusDataSourceNotConfigured.Err()
 	}
 	if err := s.validateTimeSeriesRequest(req); err != nil {
-		return nil, err
-	}
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
 		return nil, err
 	}
 
