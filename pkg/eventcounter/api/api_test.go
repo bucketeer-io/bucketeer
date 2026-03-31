@@ -22,11 +22,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -249,7 +249,7 @@ func TestListExperiments(t *testing.T) {
 		desc                string
 		setup               func(*eventCounterService)
 		inputFeatureID      string
-		inputFeatureVersion *wrappers.Int32Value
+		inputFeatureVersion *wrapperspb.Int32Value
 		expected            []*experimentproto.Experiment
 		environmentId       string
 		expectedErr         error
@@ -259,14 +259,14 @@ func TestListExperiments(t *testing.T) {
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
 					FeatureId:      "fid",
-					FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+					FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 					PageSize:       listRequestPageSize,
 					Cursor:         "",
 					EnvironmentId:  "ns0",
 				}).Return(&experimentproto.ListExperimentsResponse{}, nil)
 			},
 			inputFeatureID:      "fid",
-			inputFeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+			inputFeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 			environmentId:       "ns0",
 			expected:            []*experimentproto.Experiment{},
 			expectedErr:         nil,
@@ -276,14 +276,14 @@ func TestListExperiments(t *testing.T) {
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
 					FeatureId:      "fid",
-					FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+					FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 					PageSize:       listRequestPageSize,
 					Cursor:         "",
 					EnvironmentId:  "ns0",
 				}).Return(nil, errors.New("test"))
 			},
 			inputFeatureID:      "fid",
-			inputFeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+			inputFeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 			environmentId:       "ns0",
 			expected:            nil,
 			expectedErr:         errors.New("test"),
@@ -424,7 +424,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			},
 			input: &ecproto.ListExperimentResultsRequest{
 				FeatureId:      "fid",
-				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 				EnvironmentId:  "ns0",
 			},
 			expected:    nil,
@@ -436,7 +436,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.ListExperimentResultsRequest{
 				FeatureId:      "fid",
-				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 				EnvironmentId:  "ns0",
 			},
 			expected:    nil,
@@ -468,7 +468,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			},
 			input: &ecproto.ListExperimentResultsRequest{
 				FeatureId:      "fid",
-				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 				EnvironmentId:  "ns0",
 			},
 			expected: &ecproto.ListExperimentResultsResponse{
@@ -508,7 +508,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			},
 			input: &ecproto.ListExperimentResultsRequest{
 				FeatureId:      "fid",
-				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
 				EnvironmentId:  "ns0",
 			},
 			expected: &ecproto.ListExperimentResultsResponse{
