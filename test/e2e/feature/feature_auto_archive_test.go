@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -516,7 +516,7 @@ func registerEvaluationEventWithTimestamp(t *testing.T, f *feature.Feature, time
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      timestamp.Unix(),
 		FeatureId:      f.Id,
 		FeatureVersion: f.Version,

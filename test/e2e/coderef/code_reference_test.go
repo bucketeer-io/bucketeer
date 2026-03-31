@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -404,8 +404,8 @@ func createFeature(t *testing.T, client featureclient.Client, featureID string) 
 				Description: "this is a false variation",
 			},
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

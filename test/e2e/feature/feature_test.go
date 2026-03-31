@@ -24,12 +24,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
@@ -306,7 +305,7 @@ func TestListArchivedFeatures(t *testing.T) {
 	}
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
-		Archived:      &wrappers.BoolValue{Value: true},
+		Archived:      &wrapperspb.BoolValue{Value: true},
 		EnvironmentId: *environmentID,
 	}
 	response, err := client.ListFeatures(ctx, listReq)
@@ -569,7 +568,7 @@ func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 
 	listReq := &feature.ListFeaturesRequest{
 		EnvironmentId:        *environmentID,
-		HasFeatureFlagAsRule: &wrappers.BoolValue{Value: true},
+		HasFeatureFlagAsRule: &wrapperspb.BoolValue{Value: true},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2069,8 +2068,8 @@ func newCreateFeatureReq(featureID string) *feature.CreateFeatureRequest {
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 	}
 }
 
@@ -2096,8 +2095,8 @@ func newCreateFeatureWithTwoVariationsRequest(featureID string) *feature.CreateF
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 }

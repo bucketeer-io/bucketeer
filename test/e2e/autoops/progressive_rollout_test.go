@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -441,7 +440,7 @@ func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureI
 
 func unmarshalProgressiveRolloutManualClause(t *testing.T, clause *anypb.Any) *autoopsproto.ProgressiveRolloutManualScheduleClause {
 	c := &autoopsproto.ProgressiveRolloutManualScheduleClause{}
-	if err := ptypes.UnmarshalAny(clause, c); err != nil {
+	if err := clause.UnmarshalTo(c); err != nil {
 		t.Fatal(err)
 	}
 	return c
