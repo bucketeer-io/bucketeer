@@ -36,7 +36,6 @@ global:
 
   # Global primary database configuration
   # Set type to "mysql" or "postgres"
-  database:
   operationalDatabase:
     type: mysql
     mysql:
@@ -131,7 +130,7 @@ web:
     pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
     pubSubRedisMode: ${global.pubsub.redis.mode}
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
-    database:
+    operationalDatabase:
       type: mysql
       mysql:
         user: "bucketeer"
