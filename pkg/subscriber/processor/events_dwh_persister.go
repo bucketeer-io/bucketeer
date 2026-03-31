@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
@@ -412,16 +411,16 @@ func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) 
 			handleBadMessage(m, err)
 			continue
 		}
-		var innerEvent ptypes.DynamicAny
-		if err := ptypes.UnmarshalAny(event.Event, &innerEvent); err != nil {
+		innerEvent, err := event.Event.UnmarshalNew()
+		if err != nil {
 			handleBadMessage(m, err)
 			continue
 		}
 		if innerEvents, ok := envEvents[event.EnvironmentId]; ok {
-			innerEvents[event.Id] = innerEvent.Message
+			innerEvents[event.Id] = innerEvent
 			continue
 		}
-		envEvents[event.EnvironmentId] = eventDWHMap{event.Id: innerEvent.Message}
+		envEvents[event.EnvironmentId] = eventDWHMap{event.Id: innerEvent}
 	}
 	return envEvents
 }
