@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -358,6 +359,45 @@ func (a *AutoOpsRule) AllClausesFinished() bool {
 	return true
 }
 
+// AdvanceRecurringClause advances a recurring clause after execution.
+// It increments ExecutionCount, updates LastExecutedAt and NextExecutionAt,
+// re-marshals the DatetimeClause back into the Clause.Clause Any field,
+// and sets Clause.ExecutedAt only when the recurrence is exhausted.
+func (a *AutoOpsRule) AdvanceRecurringClause(clauseID string, now time.Time) error {
+	for _, c := range a.Clauses {
+		if c.Id != clauseID || !c.IsRecurring {
+			continue
+		}
+		dtClause, e := a.unmarshalDatetimeClause(c)
+		if e != nil {
+			return fmt.Errorf("failed to unmarshal datetime clause %s: %w", clauseID, e)
+		}
+		if dtClause == nil {
+			return fmt.Errorf("datetime clause %s not found", clauseID)
+		}
+
+		dtClause.LastExecutedAt = now.Unix()
+		dtClause.ExecutionCount++
+
+		nextExecTime, shouldContinue := CalculateNextExecution(dtClause, now)
+		if shouldContinue {
+			dtClause.NextExecutionAt = nextExecTime
+		} else {
+			dtClause.NextExecutionAt = 0
+			c.ExecutedAt = now.Unix()
+		}
+
+		updatedAny, e := ptypes.MarshalAny(dtClause)
+		if e != nil {
+			return fmt.Errorf("failed to re-marshal datetime clause %s: %w", clauseID, e)
+		}
+		c.Clause = updatedAny
+		a.UpdatedAt = now.Unix()
+		return nil
+	}
+	return fmt.Errorf("recurring clause %s not found", clauseID)
+}
+
 func (a *AutoOpsRule) SetStopped() {
 	a.SetAutoOpsStatus(proto.AutoOpsStatus_STOPPED)
 }
@@ -499,11 +539,29 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 	for _, c := range a.Clauses {
 		if c.Id == id {
 			if dtClause, ok := mc.(*proto.DatetimeClause); ok {
+				// When updating an existing recurring clause, the UI sends
+				// DatetimeClause without execution tracking fields (they are
+				// server-managed), so NextExecutionAt and ExecutionCount arrive
+				// as zero. We must distinguish between a truly new clause
+				// (needs initialization) and an already-executed clause (needs
+				// its tracking fields preserved from the stored version).
 				if IsRecurring(dtClause) &&
 					dtClause.NextExecutionAt == 0 &&
 					dtClause.ExecutionCount == 0 {
-					if e := InitializeRecurringClause(dtClause); e != nil {
-						return e
+					existingDt, unmarshalErr := a.unmarshalDatetimeClause(c)
+					if unmarshalErr != nil {
+						return unmarshalErr
+					}
+					if existingDt != nil && existingDt.ExecutionCount > 0 {
+						// Clause was already executed: preserve tracking fields.
+						dtClause.ExecutionCount = existingDt.ExecutionCount
+						dtClause.LastExecutedAt = existingDt.LastExecutedAt
+						dtClause.NextExecutionAt = existingDt.NextExecutionAt
+					} else {
+						// Truly new or never-executed clause: initialize recurrence.
+						if e := InitializeRecurringClause(dtClause); e != nil {
+							return e
+						}
 					}
 				}
 				c.IsRecurring = IsRecurring(dtClause)

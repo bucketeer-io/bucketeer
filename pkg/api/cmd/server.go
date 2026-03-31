@@ -552,13 +552,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithKeyPath(*s.keyPath),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create API gateway: %v", err)
+		return fmt.Errorf("failed to create API gateway: %w", err)
 	}
 
 	serverCtx, serverCtxCancel := context.WithCancel(context.Background())
 	defer serverCtxCancel()
 	if err := apiGateway.Start(serverCtx, gatewayHandler); err != nil {
-		return fmt.Errorf("failed to start API gateway: %v", err)
+		return fmt.Errorf("failed to start API gateway: %w", err)
 	}
 
 	restHealthChecker := health.NewRestChecker(

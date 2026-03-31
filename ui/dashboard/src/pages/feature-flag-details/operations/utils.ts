@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { v4 as uuid } from 'uuid';
 import {
+  AutoOpsRuleClause,
   Feature,
   OpsEventRateClauseOperator,
   RuleStrategyVariation
@@ -202,4 +203,12 @@ export const getVariationIndex = (
   variationId: string
 ) => {
   return variations.findIndex(v => v.variation === variationId);
+};
+
+export const timeOfDayToSeconds = (date: Date): number => {
+  return date.getHours() * 3600 + date.getMinutes() * 60;
+};
+
+export const isRecurringOperation = (clauses: AutoOpsRuleClause[]): boolean => {
+  return clauses?.some(c => c.isRecurring) ?? false;
 };

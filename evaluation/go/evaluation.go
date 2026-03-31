@@ -380,7 +380,7 @@ func (e *evaluator) convertVariationValue(
 func yamlToJSON(yamlStr string) (string, error) {
 	var data interface{}
 	if err := yaml.Unmarshal([]byte(yamlStr), &data); err != nil {
-		return "", fmt.Errorf("%w: %v", ErrYAMLToJSONConversion, err)
+		return "", fmt.Errorf("%w: %w", ErrYAMLToJSONConversion, err)
 	}
 
 	// Convert map[interface{}]interface{} to map[string]interface{} for JSON compatibility
@@ -388,7 +388,7 @@ func yamlToJSON(yamlStr string) (string, error) {
 
 	jsonBytes, err := json.Marshal(data)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrYAMLToJSONConversion, err)
+		return "", fmt.Errorf("%w: %w", ErrYAMLToJSONConversion, err)
 	}
 	return string(jsonBytes), nil
 }

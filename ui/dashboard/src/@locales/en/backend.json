@@ -115,7 +115,8 @@
         "WebhookURL": "Webhook URL",
         "WebhookRule": "Webhook rule",
         "FlagTrigger": "Flag trigger",
-        "CodeReference": "Code reference"
+        "CodeReference": "Code reference",
+        "DataSource": "Data source"
     },
     "errors": {
         "RequiredField": "{{field_1}} is required",
@@ -128,7 +129,7 @@
         "InvalidArgumentNilError": "{{field}} must not be nil",
         "InvalidArgumentNotMatchFormatError": "{{field}} format is invalid",
         "InvalidArgumentUnknownError": "{{field}} is unknown",
-        "NotFoundError": "The requested {{field_1}} cannot be found",
+        "NotFoundError": "The requested {{field}} cannot be found",
         "UnauthenticatedError": "Not authenticated",
         "PermissionDeniedError": "You are not authorized",
         "ExceededMaxError": "The maximum value ({{max}}) for {{field}} has been exceeded",

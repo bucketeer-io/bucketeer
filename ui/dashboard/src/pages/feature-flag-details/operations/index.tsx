@@ -102,21 +102,13 @@ const Operations = ({
   const isRolloutAction = useMemo(() => action === 'rollout', [action]);
 
   const isRolloutActive = useMemo(() => {
+    if (operationModalState.operationType !== OpsTypeMap.ROLLOUT) return false;
     const data = operationModalState.selectedData;
     if (!data) return false;
-    // Rollout has 'status', AutoOpsRule has 'autoOpsStatus'
     const status = 'status' in data ? data.status : data.autoOpsStatus;
     return status === 'RUNNING' || status === 'WAITING';
   }, [operationModalState]);
 
-  const isScheduleType = useMemo(
-    () => operationModalState.operationType === 'SCHEDULE',
-    [operationModalState]
-  );
-  const isRolloutType = useMemo(
-    () => operationModalState.operationType === 'ROLLOUT',
-    [operationModalState]
-  );
   const isOpenModalAction = useMemo(
     () => ['NEW', 'UPDATE', 'DETAILS'].includes(operationModalState.actionType),
     [operationModalState]
@@ -146,7 +138,9 @@ const Operations = ({
 
   const { data: operationCollection, isLoading: isOperationLoading } =
     useQueryAutoOpsRules({
-      params: queryParams
+      params: queryParams,
+      refetchInterval: 30 * 1000,
+      refetchOnWindowFocus: true
     });
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
@@ -205,7 +199,8 @@ const Operations = ({
     searchOptions,
     navigate,
     getPathName,
-    queryClient
+    queryClient,
+    onCloseActionModal
   ]);
 
   const onOperationActions = useCallback(
@@ -440,35 +435,38 @@ const Operations = ({
           />
         )}
 
-      {isStop && !!operationModalState?.selectedData && (
-        <StopOperationModal
-          environment={currentEnvironment}
-          isRunning={isRolloutActive}
-          feature={feature}
-          editable={editable}
-          loading={isLoading}
-          operationType={operationModalState.operationType!}
-          isOpen={isStop && !!operationModalState?.selectedData}
-          refetchFeatures={refetchFeature}
-          onClose={onResetModalState}
-          onSubmit={onStopOperation}
-        />
-      )}
-      {isDelete && !!operationModalState?.selectedData && (
-        <DeleteOperationModal
-          isRunning={isRolloutActive}
-          loading={isLoading}
-          isRolloutType={isRolloutType}
-          isScheduleType={isScheduleType}
-          editable={editable}
-          feature={feature}
-          environment={currentEnvironment}
-          isOpen={isDelete && !!operationModalState?.selectedData}
-          refetchFeature={refetchFeature}
-          onClose={onResetModalState}
-          onSubmit={onDeleteOperation}
-        />
-      )}
+      {isStop &&
+        !!operationModalState?.selectedData &&
+        !!operationModalState.operationType && (
+          <StopOperationModal
+            environment={currentEnvironment}
+            isRunning={isRolloutActive}
+            feature={feature}
+            editable={editable}
+            loading={isLoading}
+            operationType={operationModalState.operationType}
+            isOpen={isStop && !!operationModalState?.selectedData}
+            refetchFeatures={refetchFeature}
+            onClose={onResetModalState}
+            onSubmit={onStopOperation}
+          />
+        )}
+      {isDelete &&
+        !!operationModalState?.selectedData &&
+        !!operationModalState.operationType && (
+          <DeleteOperationModal
+            isRunning={isRolloutActive}
+            loading={isLoading}
+            operationType={operationModalState.operationType}
+            editable={editable}
+            feature={feature}
+            environment={currentEnvironment}
+            isOpen={isDelete && !!operationModalState?.selectedData}
+            refetchFeature={refetchFeature}
+            onClose={onResetModalState}
+            onSubmit={onDeleteOperation}
+          />
+        )}
     </div>
   );
 };

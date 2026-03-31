@@ -2,15 +2,11 @@ import { useCallback } from 'react';
 import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthAccess } from 'auth';
-import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { APIKey, APIKeyRole } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
-import { copyToClipBoard } from 'utils/function';
-import { IconCopy } from '@icons';
-import Icon from 'components/icon';
 import Switch from 'components/switch';
 import { Tooltip } from 'components/tooltip';
 import DateTooltip from 'elements/date-tooltip';
@@ -24,9 +20,8 @@ export const useColumns = ({
 }: {
   onActions: (item: APIKey, type: APIKeyActionsType) => void;
 }): ColumnDef<APIKey>[] => {
-  const { t } = useTranslation(['common', 'table', 'message']);
+  const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-  const { notify } = useToast();
 
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
@@ -70,13 +65,6 @@ export const useColumns = ({
     };
   }, []);
 
-  const handleCopyId = useCallback((id: string) => {
-    copyToClipBoard(id);
-    notify({
-      message: t('message:copied')
-    });
-  }, []);
-
   return [
     {
       accessorKey: 'name',
@@ -102,15 +90,8 @@ export const useColumns = ({
               maxLines={1}
             />
 
-            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
+            <div className="typo-para-tiny h-5 text-gray-500 select-none">
               {truncateTextCenter(apiKey)}
-              <div onClick={() => handleCopyId(apiKey)}>
-                <Icon
-                  icon={IconCopy}
-                  size={'sm'}
-                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                />
-              </div>
             </div>
           </div>
         );

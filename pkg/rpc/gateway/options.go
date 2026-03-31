@@ -45,6 +45,9 @@ type options struct {
 	initialConnWindowSize     int32
 	certPath                  string
 	keyPath                   string
+	httpReadTimeout           time.Duration
+	httpWriteTimeout          time.Duration
+	httpIdleTimeout           time.Duration
 }
 
 var defaultOptions = options{
@@ -66,6 +69,9 @@ var defaultOptions = options{
 	initialConnWindowSize:     1024 * 1024 * 2, // 2MB
 	certPath:                  "",
 	keyPath:                   "",
+	httpReadTimeout:           30 * time.Second,
+	httpWriteTimeout:          30 * time.Second,
+	httpIdleTimeout:           60 * time.Second,
 }
 
 func WithMetrics(metrics metrics.Registerer) Option {
@@ -149,5 +155,13 @@ func WithCertPath(certPath string) Option {
 func WithKeyPath(keyPath string) Option {
 	return func(o *options) {
 		o.keyPath = keyPath
+	}
+}
+
+func WithHTTPTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Option {
+	return func(o *options) {
+		o.httpReadTimeout = readTimeout
+		o.httpWriteTimeout = writeTimeout
+		o.httpIdleTimeout = idleTimeout
 	}
 }

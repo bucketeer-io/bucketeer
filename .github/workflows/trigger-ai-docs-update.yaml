@@ -1,0 +1,78 @@
+# This workflow triggers the AI Docs Update workflow in `bucketeer-io/bucketeer-docs`
+# when an issue is closed as completed. It finds all linked merged PRs and passes them along.
+name: trigger-ai-docs-update
+
+on:
+  issues:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+        type: string
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+    # Only trigger for issues closed as completed (not "not planned")
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.issue.state_reason == 'completed'
+    steps:
+      - name: Find linked merged PRs
+        id: find-prs
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_PAT }}
+          INPUT_ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Validate issue number
+          if ! [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid issue number: ${INPUT_ISSUE_NUMBER}"
+            exit 1
+          fi
+
+          echo "issue_number=${INPUT_ISSUE_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Finding merged PRs linked to issue #${INPUT_ISSUE_NUMBER}..."
+
+          # Get cross-referenced PRs from timeline events, filter to merged only
+          CANDIDATE_PRS=$(gh api "/repos/${REPO}/issues/${INPUT_ISSUE_NUMBER}/timeline" \
+            --paginate \
+            --jq '[.[] | select(.event? == "cross-referenced") | select(.source?.issue?.pull_request? != null) | .source.issue.number] | unique | .[]')
+
+          MERGED_PRS=""
+          for PR in $CANDIDATE_PRS; do
+            IS_MERGED=$(gh api "/repos/${REPO}/pulls/${PR}" --jq '.merged')
+            if [ "$IS_MERGED" = "true" ]; then
+              MERGED_PRS="${MERGED_PRS:+${MERGED_PRS},}${PR}"
+              echo "  PR #${PR}: merged"
+            else
+              echo "  PR #${PR}: not merged (skipped)"
+            fi
+          done
+
+          echo "pr_numbers=${MERGED_PRS}" >> $GITHUB_OUTPUT
+
+          if [ -z "$MERGED_PRS" ]; then
+            echo "No merged PRs found linked to issue #${INPUT_ISSUE_NUMBER}"
+          else
+            echo "Found merged PRs: ${MERGED_PRS}"
+          fi
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: steps.find-prs.outputs.pr_numbers != ''
+
+      - name: Trigger AI docs update in bucketeer-docs
+        if: steps.find-prs.outputs.pr_numbers != ''
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        with:
+          repo: bucketeer-io/bucketeer-docs
+          token: ${{ secrets.REPO_ACCESS_PAT }}
+          workflow: ai-docs-update.yaml
+          ref: main
+          inputs: '{"issue_number": "${{ steps.find-prs.outputs.issue_number }}", "pr_numbers": "${{ steps.find-prs.outputs.pr_numbers }}"}'

@@ -265,6 +265,21 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) Increment(key any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Increment", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Increment), key)
 }
 
+// IncrementBy mocks base method.
+func (m *MockMultiGetDeleteCountCache) IncrementBy(key string, value int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementBy", key, value)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IncrementBy indicates an expected call of IncrementBy.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) IncrementBy(key, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementBy", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).IncrementBy), key, value)
+}
+
 // PFAdd mocks base method.
 func (m *MockMultiGetDeleteCountCache) PFAdd(key string, els ...string) (int64, error) {
 	m.ctrl.T.Helper()
@@ -641,6 +656,21 @@ func (m *MockCounter) Increment(key string) (int64, error) {
 func (mr *MockCounterMockRecorder) Increment(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Increment", reflect.TypeOf((*MockCounter)(nil).Increment), key)
+}
+
+// IncrementBy mocks base method.
+func (m *MockCounter) IncrementBy(key string, value int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementBy", key, value)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IncrementBy indicates an expected call of IncrementBy.
+func (mr *MockCounterMockRecorder) IncrementBy(key, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementBy", reflect.TypeOf((*MockCounter)(nil).IncrementBy), key, value)
 }
 
 // PFAdd mocks base method.

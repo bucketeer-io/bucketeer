@@ -33,8 +33,12 @@ services:
     networks:
       - bucketeer
 
+  # NOTE: If you are switching from the official postgres image to timescaledb (or vice versa),
+  # you must remove the existing volume or reset the database before starting, otherwise the
+  # container will fail to initialize due to incompatible data directory formats.
+  # Run: docker compose down -v  (warning: this will delete all local data)
   postgres:
-    image: postgres:${POSTGRES_VERSION:-18}
+    image: timescale/timescaledb:${POSTGRES_VERSION:-2.25.2-pg18}
     container_name: bucketeer-postgres
     restart: unless-stopped
     environment:

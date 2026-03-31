@@ -23,7 +23,11 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-const metricRequestTotal = "bucketeer_gateway_api_request_total"
+const (
+	recordingRuleRequestTotal = "environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m"
+	// Step size must match the recording rule's rate window (5m).
+	recordingRuleStep = 5 * time.Minute
+)
 
 // queryRequestCounts retrieves request counts from Prometheus for all environment/sourceID combinations.
 // Returns map[environmentID]map[sourceID]count.
@@ -32,7 +36,7 @@ func (m *monthlySummarizer) queryRequestCounts(
 	targetDate time.Time,
 ) (map[string]map[string]int64, error) {
 	duration, evalTime := calculateTimeParams(targetDate)
-	query := requestCountIncreaseQuery(duration)
+	query := requestCountQuery(duration)
 
 	vector, err := m.promClient.QueryInstant(ctx, query, evalTime)
 	if err != nil {
@@ -53,14 +57,23 @@ func calculateTimeParams(targetDate time.Time) (duration time.Duration, evaluati
 	return
 }
 
-// requestCountIncreaseQuery builds an instant query for total request count over a duration.
-// Use with Instant Query at the end of the duration.
-func requestCountIncreaseQuery(duration time.Duration) string {
-	seconds := int(duration.Seconds())
+// requestCountQuery builds an instant query using the recording rule.
+// sum_over_time aggregates the rate5m values at 5m intervals,
+// then * 300 converts the sum of rates to total request count.
+// Subtract one step from the range because the subquery includes both ends.
+func requestCountQuery(duration time.Duration) string {
+	rangeDuration := duration - recordingRuleStep
+	if rangeDuration < time.Second {
+		rangeDuration = time.Second
+	}
+	seconds := int(rangeDuration.Seconds())
+	stepSeconds := int(recordingRuleStep / time.Second)
 	return fmt.Sprintf(
-		`sum by (environment_id,source_id) (increase(%s[%ds]))`,
-		metricRequestTotal,
+		`sum by (environment_id,source_id) (sum_over_time(%s[%ds:%dm])) * %d`,
+		recordingRuleRequestTotal,
 		seconds,
+		int(recordingRuleStep.Minutes()),
+		stepSeconds,
 	)
 }
 
