@@ -104,7 +104,7 @@ func (c *command) createTopic(ctx context.Context, client *pubsub.Client, topicN
 		defer existsCancel()
 		exists, existsErr := topic.Exists(existsCtx)
 		if existsErr != nil {
-			return fmt.Errorf("failed to check if topic exists: %w (create error: %v)", existsErr, err)
+			return fmt.Errorf("failed to check if topic exists: %w (create error: %w)", existsErr, err)
 		}
 		if exists {
 			logger.Info("Topic already exists", zap.String("topic", topicName))

@@ -33,6 +33,8 @@ interface APIKeyCreateUpdateModalProps {
   apiKey?: APIKey;
   resetApiKey: () => void;
   onClose: () => void;
+  /** Called with the full secret after create; only returned once by the API. */
+  onCreatedWithSecret?: (secret: string) => void;
 }
 
 export interface APIKeyCreateUpdateForm {
@@ -57,7 +59,8 @@ const APIKeyCreateUpdateModal = ({
   apiKey,
   environments,
   resetApiKey,
-  onClose
+  onClose,
+  onCreatedWithSecret
 }: APIKeyCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
@@ -119,6 +122,10 @@ const APIKeyCreateUpdateModal = ({
         });
       }
       if (resp) {
+        const isCreate = !isEditApiKey;
+        if (isCreate && resp.apiKey?.apiKey) {
+          onCreatedWithSecret?.(resp.apiKey.apiKey);
+        }
         notify({
           message: t('message:collection-action-success', {
             collection: t('source-type.api-key'),
@@ -129,7 +136,7 @@ const APIKeyCreateUpdateModal = ({
         handleClose(true);
       }
     },
-    [apiKey, isEditApiKey]
+    [apiKey, isEditApiKey, onCreatedWithSecret, queryClient, t, notify]
   );
 
   useUnsavedLeavePage({

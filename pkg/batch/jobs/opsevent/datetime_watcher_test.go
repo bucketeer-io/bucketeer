@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	autoopsdomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	envclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	ftcachermock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher/mock"
@@ -184,6 +185,189 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: recurring clause satisfies the time condition",
+			setup: func(w *datetimeWatcher) {
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
+					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
+				)
+				recurringClause, err := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       36000, // 10:00 AM (seconds since midnight)
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().AddDate(0, 0, -7).Unix(),
+					},
+					NextExecutionAt: time.Now().Add(-1 * time.Hour).Unix(), // Past
+					ExecutionCount:  1,
+				})
+				require.NoError(t, err)
+
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:      0,
+						EnvironmentId: "ns0",
+					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-recurring",
+								FeatureId: "fid-recurring",
+								Clauses: []*autoopsproto.Clause{{
+									Id:          "clause-recurring",
+									ExecutedAt:  0,
+									IsRecurring: true,
+									Clause:      recurringClause,
+								}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+							},
+						},
+					},
+					nil,
+				)
+				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
+					EXPECT().Execute(gomock.Any(), "ns0", "id-recurring", "clause-recurring").Return(nil)
+				w.ftCacher.(*ftcachermock.MockFeatureFlagCacher).
+					EXPECT().RefreshEnvironmentCache(gomock.Any(), "ns0").Return(nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: recurring clause with future NextExecutionAt is skipped",
+			setup: func(w *datetimeWatcher) {
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
+					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
+				)
+				recurringClause, err := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().AddDate(0, 0, -7).Unix(),
+					},
+					NextExecutionAt: time.Now().Add(48 * time.Hour).Unix(), // Future
+					ExecutionCount:  1,
+				})
+				require.NoError(t, err)
+
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:      0,
+						EnvironmentId: "ns0",
+					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-recurring",
+								FeatureId: "fid-recurring",
+								Clauses: []*autoopsproto.Clause{{
+									Id:          "clause-recurring",
+									ExecutedAt:  0,
+									IsRecurring: true,
+									Clause:      recurringClause,
+								}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+							},
+						},
+					},
+					nil,
+				)
+				// No Execute call expected — clause is not ready
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: exhausted recurring clause (NextExecutionAt=0) is skipped",
+			setup: func(w *datetimeWatcher) {
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
+					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
+				)
+				exhaustedClause, err := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().AddDate(0, 0, -30).Unix(),
+					},
+					NextExecutionAt: 0, // Exhausted
+					ExecutionCount:  5,
+				})
+				require.NoError(t, err)
+
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:      0,
+						EnvironmentId: "ns0",
+					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-exhausted",
+								FeatureId: "fid-exhausted",
+								Clauses: []*autoopsproto.Clause{{
+									Id:          "clause-exhausted",
+									ExecutedAt:  0,
+									IsRecurring: true,
+									Clause:      exhaustedClause,
+								}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+							},
+						},
+					},
+					nil,
+				)
+				// No Execute call expected — clause is exhausted
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -193,6 +377,194 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			}
 			err := w.Run(context.Background())
 			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestGetExecuteClauseId(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		desc       string
+		rule       *autoopsproto.AutoOpsRule
+		expectedID string
+		expectErr  bool
+	}{
+		{
+			desc: "one-time clause: not ready (future time)",
+			rule: func() *autoopsproto.AutoOpsRule {
+				dc := &autoopsproto.DatetimeClause{Time: time.Now().Add(24 * time.Hour).Unix()}
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-1",
+					FeatureId: "feat-1",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses:   []*autoopsproto.Clause{{Id: "c1", ExecutedAt: 0, Clause: c}},
+				}
+			}(),
+			expectedID: "",
+			expectErr:  false,
+		},
+		{
+			desc: "one-time clause: ready (past time)",
+			rule: func() *autoopsproto.AutoOpsRule {
+				dc := &autoopsproto.DatetimeClause{Time: time.Now().Add(-1 * time.Hour).Unix()}
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-1",
+					FeatureId: "feat-1",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses:   []*autoopsproto.Clause{{Id: "c1", ExecutedAt: 0, Clause: c}},
+				}
+			}(),
+			expectedID: "c1",
+			expectErr:  false,
+		},
+		{
+			desc: "one-time clause: already executed",
+			rule: func() *autoopsproto.AutoOpsRule {
+				dc := &autoopsproto.DatetimeClause{Time: time.Now().Add(-1 * time.Hour).Unix()}
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-1",
+					FeatureId: "feat-1",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses:   []*autoopsproto.Clause{{Id: "c1", ExecutedAt: 1, Clause: c}},
+				}
+			}(),
+			expectedID: "",
+			expectErr:  false,
+		},
+		{
+			desc: "recurring clause: ready (NextExecutionAt in past)",
+			rule: func() *autoopsproto.AutoOpsRule {
+				dc := &autoopsproto.DatetimeClause{
+					Time:            36000,
+					NextExecutionAt: time.Now().Add(-1 * time.Hour).Unix(),
+					ExecutionCount:  1,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+					},
+				}
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-1",
+					FeatureId: "feat-1",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses:   []*autoopsproto.Clause{{Id: "c1", ExecutedAt: 0, IsRecurring: true, Clause: c}},
+				}
+			}(),
+			expectedID: "c1",
+			expectErr:  false,
+		},
+		{
+			desc: "recurring clause: not ready (NextExecutionAt in future)",
+			rule: func() *autoopsproto.AutoOpsRule {
+				dc := &autoopsproto.DatetimeClause{
+					Time:            36000,
+					NextExecutionAt: time.Now().Add(48 * time.Hour).Unix(),
+					ExecutionCount:  1,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+					},
+				}
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-1",
+					FeatureId: "feat-1",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses:   []*autoopsproto.Clause{{Id: "c1", ExecutedAt: 0, IsRecurring: true, Clause: c}},
+				}
+			}(),
+			expectedID: "",
+			expectErr:  false,
+		},
+		{
+			desc: "recurring clause: exhausted (NextExecutionAt=0)",
+			rule: func() *autoopsproto.AutoOpsRule {
+				dc := &autoopsproto.DatetimeClause{
+					Time:            36000,
+					NextExecutionAt: 0,
+					ExecutionCount:  5,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+					},
+				}
+				c, err := anypb.New(dc)
+				require.NoError(t, err)
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-1",
+					FeatureId: "feat-1",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses:   []*autoopsproto.Clause{{Id: "c1", ExecutedAt: 0, IsRecurring: true, Clause: c}},
+				}
+			}(),
+			expectedID: "",
+			expectErr:  false,
+		},
+		{
+			desc: "mixed: recurring ready and one-time ready, returns earliest",
+			rule: func() *autoopsproto.AutoOpsRule {
+				earlierTime := time.Now().Add(-2 * time.Hour).Unix()
+				laterTime := time.Now().Add(-1 * time.Hour).Unix()
+
+				recurringDC := &autoopsproto.DatetimeClause{
+					Time:            36000,
+					NextExecutionAt: laterTime,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency: autoopsproto.RecurrenceRule_DAILY,
+						Timezone:  "UTC",
+					},
+				}
+				oneTimeDC := &autoopsproto.DatetimeClause{
+					Time: earlierTime,
+				}
+				rc, err := anypb.New(recurringDC)
+				require.NoError(t, err)
+				oc, err := anypb.New(oneTimeDC)
+				require.NoError(t, err)
+
+				return &autoopsproto.AutoOpsRule{
+					Id:        "rule-mixed",
+					FeatureId: "feat-mixed",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					Clauses: []*autoopsproto.Clause{
+						{Id: "recurring-c", ExecutedAt: 0, IsRecurring: true, Clause: rc},
+						{Id: "onetime-c", ExecutedAt: 0, IsRecurring: false, Clause: oc},
+					},
+				}
+			}(),
+			expectedID: "onetime-c", // earlier execution time
+			expectErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+			w := newNewDatetimeWatcherWithMock(t, mockController)
+
+			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: tt.rule}
+			id, err := w.getExecuteClauseId("env-test", aor)
+
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectedID, id)
 		})
 	}
 }

@@ -143,9 +143,10 @@ func (s *NotificationService) checkOrganizationRole(
 	requiredRole accountproto.AccountV2_Role_Organization,
 	organizationID string,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(
+	return role.CheckOrganizationRoleWithLog(
 		ctx,
 		requiredRole,
+		organizationID,
 		func(email string) (*accountproto.GetAccountV2Response, error) {
 			resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 				Email:          email,
@@ -155,39 +156,12 @@ func (s *NotificationService) checkOrganizationRole(
 				return nil, err
 			}
 			return resp, nil
-		})
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", organizationID),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", organizationID),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", organizationID),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
 }
 
 func (s *NotificationService) publishDomainEvents(ctx context.Context, events []*eventproto.Event) map[string]error {

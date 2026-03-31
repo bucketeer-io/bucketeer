@@ -50,6 +50,7 @@ const (
 	JobProgressiveRolloutWatcher   = "progressive_rollout_watcher"
 	JobFeatureAutoArchiver         = "feature_auto_archiver"
 	JobScheduledFlagChangeExecutor = "scheduled_flag_change_executor"
+	JobMonthlySummarizer           = "monthly_summarizer"
 
 	// Error types
 	ErrorTypeTimeout    = "Timeout"

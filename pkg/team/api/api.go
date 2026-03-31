@@ -24,8 +24,6 @@ import (
 	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
 
 	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -461,39 +459,21 @@ func (s *TeamService) checkOrganizationRole(
 	organizationID string,
 	requiredRole accountproto.AccountV2_Role_Organization,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(
+	return role.CheckOrganizationRoleWithLog(
 		ctx,
 		requiredRole,
+		organizationID,
 		func(email string) (*accountproto.GetAccountV2Response, error) {
 			return s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 				Email:          email,
 				OrganizationId: organizationID,
 			})
 		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
-	if err != nil {
-		switch gstatus.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
 }
 
 func (s *TeamService) reportInternalServerError(

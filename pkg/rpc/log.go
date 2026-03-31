@@ -99,7 +99,7 @@ zap json encoder calls json.Marshal when doing zap.Reflected()
 func (m *marshallable) MarshalJSON() ([]byte, error) {
 	b := &bytes.Buffer{}
 	if err := marshaler.Marshal(b, m.Message); err != nil {
-		return nil, fmt.Errorf("jsonpb serializer failed: %v", err)
+		return nil, fmt.Errorf("jsonpb serializer failed: %w", err)
 	}
 	return b.Bytes(), nil
 }

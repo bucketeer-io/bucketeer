@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -207,6 +208,116 @@ func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
 	oerc2 := unmarshalDatetimeClause(t, actualClause2)
 	if oerc2.ActionType != autoopsproto.ActionType_ENABLE {
 		t.Fatalf("different dateClause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
+	}
+}
+
+func TestCreateAutoOpsRule_RejectMixedRecurringAndOneTime(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+
+	mixedClauses := []*autoopsproto.DatetimeClause{
+		{
+			Time:       36000,
+			ActionType: autoopsproto.ActionType_ENABLE,
+			Recurrence: &autoopsproto.RecurrenceRule{
+				Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+				DaysOfWeek: []int32{1},
+				Timezone:   "Asia/Tokyo",
+				StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+			},
+		},
+		{
+			Time:       time.Now().Add(48 * time.Hour).Unix(),
+			ActionType: autoopsproto.ActionType_DISABLE,
+		},
+	}
+
+	_, err := autoOpsClient.CreateAutoOpsRule(ctx, &autoopsproto.CreateAutoOpsRuleRequest{
+		EnvironmentId:   *environmentID,
+		FeatureId:       featureID,
+		OpsType:         autoopsproto.OpsType_SCHEDULE,
+		DatetimeClauses: mixedClauses,
+	})
+	if err == nil {
+		t.Fatal("expected error when mixing recurring and one-time clauses, got nil")
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		t.Fatalf("expected gRPC status error, got: %v", err)
+	}
+	if st.Code() != codes.InvalidArgument {
+		t.Fatalf("expected InvalidArgument, got: %s", st.Code())
+	}
+	if !strings.Contains(st.Message(), "cannot mix recurring and one-time") {
+		t.Fatalf("expected mixed-type error message, got: %s", st.Message())
+	}
+}
+
+func TestCreateAutoOpsRule_RecurringSchedule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+
+	recurringClauses := []*autoopsproto.DatetimeClause{
+		{
+			Time:       36000, // 10:00 AM
+			ActionType: autoopsproto.ActionType_ENABLE,
+			Recurrence: &autoopsproto.RecurrenceRule{
+				Frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+				DaysOfWeek:     []int32{1, 5}, // Mon, Fri
+				Timezone:       "Asia/Tokyo",
+				StartDate:      time.Now().Add(24 * time.Hour).Unix(),
+				MaxOccurrences: 10,
+			},
+		},
+		{
+			Time:       64800, // 6:00 PM
+			ActionType: autoopsproto.ActionType_DISABLE,
+			Recurrence: &autoopsproto.RecurrenceRule{
+				Frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+				DaysOfWeek:     []int32{1, 5},
+				Timezone:       "Asia/Tokyo",
+				StartDate:      time.Now().Add(24 * time.Hour).Unix(),
+				MaxOccurrences: 10,
+			},
+		},
+	}
+
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, recurringClauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	actual := autoOpsRules[0]
+	if len(actual.Clauses) != 2 {
+		t.Fatalf("expected 2 clauses, got %d", len(actual.Clauses))
+	}
+	for _, c := range actual.Clauses {
+		if !c.IsRecurring {
+			t.Fatal("expected all clauses to be recurring")
+		}
+		dtc := unmarshalDatetimeClause(t, c)
+		if dtc.NextExecutionAt <= 0 {
+			t.Fatal("expected NextExecutionAt to be initialized")
+		}
+		if dtc.Recurrence == nil {
+			t.Fatal("expected Recurrence to be set")
+		}
 	}
 }
 

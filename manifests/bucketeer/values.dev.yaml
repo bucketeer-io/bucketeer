@@ -126,6 +126,7 @@ web:
     domainTopic: domain
     bulkSegmentUsersReceivedTopic: bulk-segment-users-received
     timezone: UTC
+    prometheusURL: http://localenv-prometheus.default.svc.cluster.local:9090
     logLevel: info
     googleTagManagerId:
     accessTokenTTL: 5m
@@ -170,6 +171,9 @@ web:
     kmsResourceName: vault
 api:
   env:
+    # Extended to 48h for E2E tests that send events with yesterday's timestamp
+    oldestEventTimestamp: 48h
+    furthestEventTimestamp: 48h
     gcpEnabled: false
     profile: false
     enablePprof: false
@@ -238,6 +242,7 @@ batch-server:
     port: 9090
     metricsPort: 9002
     timezone: UTC
+    prometheusURL: http://localenv-prometheus.default.svc.cluster.local:9090
     refreshInterval: 10m
     domainTopic: domain
     domainSubscription: domain-subscription
@@ -326,6 +331,9 @@ batch-server:
         schedule: "* * * * *"
       - name: scheduled-flag-change-executor
         jobId: ScheduledFlagChangeExecutor
+        schedule: "* * * * *"
+      - name: monthly-summarizer
+        jobId: MonthlySummarizer
         schedule: "* * * * *"
 
 subscriber:

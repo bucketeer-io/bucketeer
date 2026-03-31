@@ -59,15 +59,15 @@ func NewVerifier(keyPath, issuer, audience string) (Verifier, error) {
 func (v *verifier) VerifyAccessToken(rawAccessToken string) (*AccessToken, error) {
 	jws, err := jose.ParseSigned(rawAccessToken, []jose.SignatureAlgorithm{v.algorithm})
 	if err != nil {
-		return nil, fmt.Errorf("malformed jwt: %v", err)
+		return nil, fmt.Errorf("malformed jwt: %w", err)
 	}
 	payload, err := jws.Verify(v.pubKey)
 	if err != nil {
-		return nil, fmt.Errorf("invalid jwt: %v", err)
+		return nil, fmt.Errorf("invalid jwt: %w", err)
 	}
 	t := &AccessToken{}
 	if err := json.Unmarshal(payload, t); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("id token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
@@ -87,15 +87,15 @@ func (v *verifier) VerifyAccessToken(rawAccessToken string) (*AccessToken, error
 func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, error) {
 	jws, err := jose.ParseSigned(rawRefreshToken, []jose.SignatureAlgorithm{v.algorithm})
 	if err != nil {
-		return nil, fmt.Errorf("malformed jwt: %v", err)
+		return nil, fmt.Errorf("malformed jwt: %w", err)
 	}
 	payload, err := jws.Verify(v.pubKey)
 	if err != nil {
-		return nil, fmt.Errorf("invalid jwt: %v", err)
+		return nil, fmt.Errorf("invalid jwt: %w", err)
 	}
 	t := &RefreshToken{}
 	if err := json.Unmarshal(payload, t); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
@@ -109,15 +109,15 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationToken, error) {
 	jws, err := jose.ParseSigned(rawDemoToken, []jose.SignatureAlgorithm{v.algorithm})
 	if err != nil {
-		return nil, fmt.Errorf("malformed jwt: %v", err)
+		return nil, fmt.Errorf("malformed jwt: %w", err)
 	}
 	payload, err := jws.Verify(v.pubKey)
 	if err != nil {
-		return nil, fmt.Errorf("invalid jwt: %v", err)
+		return nil, fmt.Errorf("invalid jwt: %w", err)
 	}
 	t := &DemoCreationToken{}
 	if err := json.Unmarshal(payload, t); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("demo token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)

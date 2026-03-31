@@ -72,7 +72,7 @@ func makeUnmarshallable(msg interface{}) *unmarshallable {
 func (m *unmarshallable) MarshalJSON() ([]byte, error) {
 	b := &bytes.Buffer{}
 	if err := marshaler.Marshal(b, m); err != nil {
-		return nil, fmt.Errorf("jsonpb serializer failed: %v", err)
+		return nil, fmt.Errorf("jsonpb serializer failed: %w", err)
 	}
 	return b.Bytes(), nil
 }

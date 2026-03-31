@@ -4,6 +4,23 @@ export type AutoOpsType = 'TYPE_UNKNOWN' | 'SCHEDULE' | 'EVENT_RATE';
 export type ClauseActionType = 'UNKNOWN' | 'ENABLE' | 'DISABLE';
 export type OpsEventRateClauseOperator = 'GREATER_OR_EQUAL' | 'LESS_OR_EQUAL';
 export type AutoOpsChangeType = 'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
+export type RecurrenceFrequency =
+  | 'FREQUENCY_UNSPECIFIED'
+  | 'ONCE'
+  | 'DAILY'
+  | 'WEEKLY'
+  | 'MONTHLY';
+
+export interface RecurrenceRule {
+  frequency: RecurrenceFrequency;
+  daysOfWeek: number[];
+  dayOfMonth: number;
+  startDate: string;
+  endDate: string;
+  maxOccurrences: number;
+  timezone: string;
+}
+
 export interface AutoOpsRule {
   id: string;
   featureId: string;
@@ -26,6 +43,7 @@ export interface AutoOpsRuleClause {
   clause: OpsEventRateClause | DatetimeClause;
   actionType: ClauseActionType;
   executedAt: string;
+  isRecurring?: boolean;
 }
 
 export interface OpsEventRateClause {
@@ -40,6 +58,10 @@ export interface OpsEventRateClause {
 export interface DatetimeClause {
   time: string;
   actionType: ClauseActionType;
+  recurrence?: RecurrenceRule;
+  lastExecutedAt?: string;
+  nextExecutionAt?: string;
+  executionCount?: number;
 }
 
 export interface AutoOpsCountCollection {

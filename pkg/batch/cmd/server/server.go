@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/monthlysummary"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
@@ -50,12 +51,14 @@ import (
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -130,6 +133,10 @@ type server struct {
 	nonPersistentRedisPoolMaxIdle    *int
 	nonPersistentRedisPoolMaxActive  *int
 	nonPersistentRedisMode           *string
+	prometheusURL                    *string
+	httpReadTimeout                  *time.Duration
+	httpWriteTimeout                 *time.Duration
+	httpIdleTimeout                  *time.Duration
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -251,6 +258,18 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
 			"The ttl for experiment calculator lock").
 			Default("10m").Duration(),
+		prometheusURL: cmd.Flag("prometheus-url",
+			"Prometheus server URL for querying metrics.").
+			Default("").String(),
+		httpReadTimeout: cmd.Flag("http-read-timeout",
+			"Read timeout for HTTP servers (rpc.Server and gRPC Gateway).").
+			Default("30s").Duration(),
+		httpWriteTimeout: cmd.Flag("http-write-timeout",
+			"Write timeout for HTTP servers (rpc.Server and gRPC Gateway).").
+			Default("1h").Duration(),
+		httpIdleTimeout: cmd.Flag("http-idle-timeout",
+			"Idle timeout for HTTP servers (rpc.Server and gRPC Gateway).").
+			Default("60s").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -461,6 +480,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	var promClient prometheus.Client
+	if *s.prometheusURL != "" {
+		promClient, err = prometheus.NewClient(*s.prometheusURL, prometheus.WithLogger(logger))
+		if err != nil {
+			logger.Error("Failed to create Prometheus client",
+				zap.String("url", *s.prometheusURL),
+				zap.Error(err),
+			)
+			return err
+		}
+	}
+
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
 			environmentClient,
@@ -573,6 +604,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(50*time.Second),
 			jobs.WithLogger(logger),
 		),
+		monthlysummary.NewMonthlySummarizer(
+			environmentClient,
+			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
+			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
+			promClient,
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 
@@ -597,6 +635,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker), // Liveness probe
 		rpc.WithHandler("/ready", healthChecker),  // Readiness probe
+		rpc.WithTimeouts(*s.httpReadTimeout, *s.httpWriteTimeout, *s.httpIdleTimeout),
 	)
 	go server.Run()
 
@@ -615,15 +654,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
+		gateway.WithHTTPTimeouts(*s.httpReadTimeout, *s.httpWriteTimeout, *s.httpIdleTimeout),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create batch gateway: %v", err)
+		return fmt.Errorf("failed to create batch gateway: %w", err)
 	}
 
 	batchCtx, batchCancel := context.WithCancel(context.Background())
 	defer batchCancel()
 	if err := batchGateway.Start(batchCtx, batchHandler); err != nil {
-		return fmt.Errorf("failed to start batch gateway: %v", err)
+		return fmt.Errorf("failed to start batch gateway: %w", err)
 	}
 
 	defer func() {

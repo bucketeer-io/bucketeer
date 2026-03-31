@@ -49,8 +49,7 @@ const Variations = () => {
     append({
       id: uuid(),
       value: isJSON ? '{}' : '',
-      name: '',
-      description: ''
+      name: ''
     });
   };
 
@@ -169,21 +168,6 @@ const Variations = () => {
                   )}
                 />
               </div>
-              {!isJSON && (
-                <Form.Field
-                  control={control}
-                  name={`variations.${variationIndex}.description`}
-                  render={({ field }) => (
-                    <Form.Item className="py-0">
-                      <Form.Label>{t('description')}</Form.Label>
-                      <Form.Control>
-                        <Input {...field} placeholder={t('placeholder-desc')} />
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  )}
-                />
-              )}
             </div>
             <Button
               variant="grey"
