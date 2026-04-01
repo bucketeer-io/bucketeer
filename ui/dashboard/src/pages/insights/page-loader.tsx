@@ -16,6 +16,8 @@ export interface InsightsFilters {
   sourceId: InsightSourceId | '';
   apiId: InsightApiId | '';
   timeRange: TimeRangePreset;
+  customStartAt?: string;
+  customEndAt?: string;
 }
 
 const presetMap: Record<TimeRangePreset, (now: DateTime) => DateTime> = {
@@ -28,8 +30,16 @@ const presetMap: Record<TimeRangePreset, (now: DateTime) => DateTime> = {
 };
 
 const computeTimeRange = (
-  preset: TimeRangePreset
+  preset: TimeRangePreset,
+  customStartAt?: string,
+  customEndAt?: string
 ): { startAt: string; endAt: string } => {
+  if (customStartAt && customEndAt) {
+    return {
+      startAt: customStartAt,
+      endAt: customEndAt
+    };
+  }
   const now = DateTime.now();
   const startAt = presetMap[preset](now);
 
@@ -76,7 +86,7 @@ const PageLoader = () => {
   useEffect(() => {
     const firstEnvId = filters.projectId
       ? (filteredEnvironments[0]?.id ?? '')
-      : '';
+      : 'UNKNOWN';
 
     setFilters(prev => {
       if (prev.environmentId === firstEnvId) return prev;
@@ -111,7 +121,11 @@ const PageLoader = () => {
    * Params for time range based queries
    */
   const timeRangeParams = useMemo(() => {
-    const { startAt, endAt } = computeTimeRange(filters.timeRange);
+    const { startAt, endAt } = computeTimeRange(
+      filters.timeRange,
+      filters.customStartAt,
+      filters.customEndAt
+    );
 
     return {
       environmentIds: filters.environmentId
@@ -130,7 +144,9 @@ const PageLoader = () => {
     filters.environmentId,
     filters.sourceId,
     filters.apiId,
-    filters.timeRange
+    filters.timeRange,
+    filters.customEndAt,
+    filters.customStartAt
   ]);
 
   if (projectsLoading || environmentsLoading) {

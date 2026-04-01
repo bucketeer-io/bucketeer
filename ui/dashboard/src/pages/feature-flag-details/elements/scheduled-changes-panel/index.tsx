@@ -26,7 +26,7 @@ const ScheduledChangesPanel = ({
   isOpen,
   onClose
 }: ScheduledChangesPanelProps) => {
-  const { t } = useTranslation(['form']);
+  const { t } = useTranslation(['form', 'common']);
   const [activeDialog, setActiveDialog] = useState<{
     type: ScheduleCardAction;
     schedule: ScheduledFlagChange;
@@ -66,7 +66,7 @@ const ScheduledChangesPanel = ({
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <p className="typo-para-small text-gray-400">
-                {t('feature-flags.loading')}
+                {t('common:loading')}
               </p>
             </div>
           ) : schedules.length === 0 ? (

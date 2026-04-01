@@ -22,7 +22,6 @@ const fetchTimeSeries = async (
   const requestParams = Object.fromEntries(
     Object.entries(params).filter(([, v]) => isNotEmpty(v))
   );
-  console.log('check params', requestParams);
   const response = await axiosClient.get<InsightsTimeSeriesResponse>(
     `/v1/insights/${endpoint}?${stringifyParams(requestParams)}`
   );

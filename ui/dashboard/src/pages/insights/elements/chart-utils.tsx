@@ -1,5 +1,9 @@
+import { ReactNode } from 'react';
 import { COLORS } from 'constants/styles';
 import { useTranslation } from 'i18n';
+import { IconInfo } from '@icons';
+import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 
 export const formatLargeNumber = (value: number): string => {
   if (value >= 1e9) {
@@ -21,6 +25,7 @@ export const getColor = (i: number) => COLORS[i % COLORS.length];
 
 interface ChartCardProps {
   title: string;
+  description?: ReactNode;
   currentMonth?: number;
   lastMonth?: number;
   children: React.ReactNode;
@@ -28,6 +33,7 @@ interface ChartCardProps {
 
 export const ChartCard = ({
   title,
+  description,
   currentMonth,
   lastMonth,
   children
@@ -41,7 +47,21 @@ export const ChartCard = ({
 
   return (
     <div className="bg-white">
-      <h3 className="typo-para-small text-gray-600 mb-4">{title}</h3>
+      <div className="flex items-center gap-x-1 mb-4">
+        <h3 className="typo-para-small text-gray-600">{title}</h3>
+
+        {!!description && (
+          <Tooltip
+            content={description}
+            trigger={
+              <div className="flex-center size-fit ">
+                <Icon icon={IconInfo} size="xs" color="gray-500" />
+              </div>
+            }
+          />
+        )}
+      </div>
+
       <div className="flex items-center gap-x-5 min-w-0">
         {currentMonth != null && (
           <div className="flex-shrink-0">

@@ -330,6 +330,8 @@
     "last-7-days": "Last 7 days",
     "last-30-days": "Last 30 days",
     "this-month": "This Month",
+    "date-range": "Custom Range",
+    "date-range-limit": "Date range cannot exceed {{days}} days.",
     "average-latency": "Average Latency",
     "latency": "Latency",
     "request-per-minute": "Request/minute",
@@ -348,6 +350,36 @@
     "last": "Last",
     "current-month": "Current Month",
     "vs-last-month": "vs last month",
-    "subtitle": "Metrics overview"
-  }
+    "subtitle": "Metrics overview",
+    "description": {
+      "mau": {
+        "title": "Estimated number of unique users who sent requests to Bucketeer.",
+        "notes": {
+        "first": "The first month may have slight inaccuracies due to the data collection start date.",
+          "second": "Today's data is not included (aggregated up to the previous day).",
+          "third": "The number count is based on UTC.",
+          "fourth": "The number might have around 0.81% errors due to the algorithm."
+        }
+      },
+      "monthlyRequests": {
+        "title": "Total number of API requests from SDKs processed by Bucketeer.",
+        "notes": {
+          "first":"The first month may have slight inaccuracies due to the data collection start date.",
+          "second":"Today's data is not included (aggregated up to the previous day).",
+          "third": "The number count is based on UTC."
+        }
+      },
+      "latency": {
+        "title": "Time from receiving a request from the SDK to returning a response."
+      },
+      "evaluations": {
+        "title": "Breakdown by feature flag evaluation type.",
+        "types": {
+          "diff": "<b>diff:</b> Differential evaluation (only changes since the last evaluation).",
+          "none": "<b>none:</b> No change since the last evaluation.",
+          "all": "<b>all:</b>  Returns evaluations and renews all the SDK cache."
+        }
+      }
+    }
+    }
 }

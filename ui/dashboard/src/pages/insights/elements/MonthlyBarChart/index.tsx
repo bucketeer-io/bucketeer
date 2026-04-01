@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'i18n';
 import { InsightsMonthlySummaryResponse } from '@types';
@@ -7,6 +7,7 @@ import { ChartCard, formatLargeNumber, getColor } from '../chart-utils';
 
 interface MonthlyBarChartProps {
   title: string;
+  description?: ReactNode;
   summary?: InsightsMonthlySummaryResponse;
   isLoading: boolean;
   field: 'mau' | 'requests';
@@ -16,6 +17,7 @@ interface MonthlyBarChartProps {
 
 const MonthlyBarChart = ({
   title,
+  description,
   summary,
   isLoading,
   field,
@@ -51,7 +53,12 @@ const MonthlyBarChart = ({
   const lastMonth = totals.length > 1 ? totals[totals.length - 2] : undefined;
 
   return (
-    <ChartCard title={title} currentMonth={currentMonth} lastMonth={lastMonth}>
+    <ChartCard
+      title={title}
+      description={description}
+      currentMonth={currentMonth}
+      lastMonth={lastMonth}
+    >
       {isLoading ? (
         <div className="h-[300px] flex items-center justify-center">
           <Spinner />

@@ -78,7 +78,15 @@ interface ReactDateRangePickerProps extends Omit<
   from?: string | number;
   to?: string | number;
   isAllTime?: boolean;
+  isShowRange?: boolean;
+  getTriggerLabel?: (label: string) => void;
+  onClose?: () => void;
   onChange: (startDate?: number, endDate?: number) => void;
+  onRangeChange?: (range: Range) => void;
+  renderActionBar?: (params: {
+    onApply: () => void;
+    onCancel: () => void;
+  }) => React.ReactNode;
 }
 
 const defaultClassNames = {
@@ -107,6 +115,11 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
     from,
     to,
     isAllTime,
+    isShowRange,
+    getTriggerLabel,
+    onClose,
+    renderActionBar,
+    onRangeChange,
     months = 2,
     showPreview = true,
     moveRangeOnFirstSelection = false,
@@ -126,7 +139,6 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
     const staticRanges = useMemo(() => {
       const defaultRangesLabels = getDefaultRangesLabels(isLanguageJapanese);
-
       return defaultRangesLabels.map(({ label, type, value }) => {
         const rangeFn = () => ({
           startDate: ['all-time', 'today'].includes(type)
@@ -233,7 +245,9 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
     useEffect(() => {
       handleSetRange();
     }, [from, to, isAllTime]);
-
+    useEffect(() => {
+      getTriggerLabel?.(triggerLabel ?? '');
+    }, [triggerLabel]);
     return (
       <>
         <Button
@@ -256,16 +270,20 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
         <DialogModal
           title="Date Range Picker"
           isShowHeader={false}
-          isOpen={isOpenRangePicker}
+          isOpen={isOpenRangePicker || !!isShowRange}
           onClose={() => {
             handleSetRange();
             onCloseRangePicker();
+            onClose?.();
           }}
-          className="w-[820px] p-0 rounded-lg overflow-y-auto"
+          className="w-fit max-w-[820px] p-0 rounded-lg overflow-y-auto"
         >
           <ReactDateRangePickerComp
             {...props}
-            onChange={item => setRange(item.selection)}
+            onChange={item => {
+              setRange(item.selection);
+              onRangeChange?.(item.selection);
+            }}
             showPreview={showPreview}
             moveRangeOnFirstSelection={moveRangeOnFirstSelection}
             months={months}
@@ -316,13 +334,24 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
             }}
           />
 
-          <ActionBar
-            onCancel={() => {
-              handleSetRange();
-              onCloseRangePicker();
-            }}
-            onApply={handleApply}
-          />
+          {renderActionBar ? (
+            renderActionBar({
+              onApply: handleApply,
+              onCancel: () => {
+                handleSetRange();
+                onCloseRangePicker();
+                onClose?.();
+              }
+            })
+          ) : (
+            <ActionBar
+              onCancel={() => {
+                handleSetRange();
+                onCloseRangePicker();
+              }}
+              onApply={handleApply}
+            />
+          )}
         </DialogModal>
       </>
     );

@@ -1,4 +1,5 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Trans } from 'react-i18next';
 import { InsightsTimeSeriesFetcherParams } from '@api/insight';
 import {
   useQueryInsightsErrorRates,
@@ -20,6 +21,7 @@ import {
   Tooltip
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { DateTime } from 'luxon';
 import {
@@ -30,11 +32,13 @@ import {
   Project
 } from '@types';
 import { exportMonthlySummaryCSV } from 'utils/csv-export';
-import { IconInfo, IconUpload } from '@icons';
+import { IconDownload, IconWatch } from '@icons';
 import Button from 'components/button';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import DateCustom from './elements/DateCustom';
+import ChartDescription from './elements/DescriptionChart';
 import MonthlyBarChart from './elements/MonthlyBarChart';
 import TimeSeriesLineChart from './elements/TimeSeriesLineChart';
 import { InsightsFilters, TimeRangePreset } from './page-loader';
@@ -71,34 +75,6 @@ interface PageContentProps {
   onFiltersChange: (filters: InsightsFilters) => void;
 }
 
-const SDK_OPTION_VALUES = [
-  { label: 'Android', value: 'ANDROID' },
-  { label: 'iOS', value: 'IOS' },
-  { label: 'Web', value: 'WEB' },
-  { label: 'Go Server', value: 'GO_SERVER' },
-  { label: 'Node Server', value: 'NODE_SERVER' },
-  { label: 'JavaScript', value: 'JAVASCRIPT' },
-  { label: 'Flutter', value: 'FLUTTER' },
-  { label: 'React', value: 'REACT' },
-  { label: 'React Native', value: 'REACT_NATIVE' },
-  { label: 'OpenFeature Kotlin', value: 'OPEN_FEATURE_KOTLIN' },
-  { label: 'OpenFeature Swift', value: 'OPEN_FEATURE_SWIFT' },
-  { label: 'OpenFeature JavaScript', value: 'OPEN_FEATURE_JAVASCRIPT' },
-  { label: 'OpenFeature Go', value: 'OPEN_FEATURE_GO' },
-  { label: 'OpenFeature Node', value: 'OPEN_FEATURE_NODE' },
-  { label: 'OpenFeature React', value: 'OPEN_FEATURE_REACT' },
-  { label: 'OpenFeature React Native', value: 'OPEN_FEATURE_REACT_NATIVE' }
-];
-
-const API_OPTION_VALUES = [
-  { label: 'GetEvaluation', value: 'GET_EVALUATION' },
-  { label: 'GetEvaluations', value: 'GET_EVALUATIONS' },
-  { label: 'RegisterEvents', value: 'REGISTER_EVENTS' },
-  { label: 'GetFeatureFlags', value: 'GET_FEATURE_FLAGS' },
-  { label: 'GetSegmentUsers', value: 'GET_SEGMENT_USERS' },
-  { label: 'SdkGetVariation', value: 'SDK_GET_VARIATION' }
-];
-
 const PageContent = ({
   projects,
   environments,
@@ -109,16 +85,9 @@ const PageContent = ({
   onFiltersChange
 }: PageContentProps) => {
   const { t } = useTranslation(['common']);
-
-  const sourceIdOptions: DropdownOption[] = useMemo(
-    () => [{ label: t('insights.all-sdks'), value: '' }, ...SDK_OPTION_VALUES],
-    [t]
-  );
-
-  const apiIdOptions: DropdownOption[] = useMemo(
-    () => [{ label: t('insights.all-apis'), value: '' }, ...API_OPTION_VALUES],
-    [t]
-  );
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [dateRangeLabel, setDateRangeLabel] = useState<string>('');
+  const { sourceIdOptions, apiIdOptions } = useOptions();
 
   const timeRangeOptions: DropdownOption[] = useMemo(
     () => [
@@ -127,7 +96,8 @@ const PageContent = ({
       { label: t('insights.last-24-hours'), value: '24h' },
       { label: t('insights.last-7-days'), value: '7d' },
       { label: t('insights.last-30-days'), value: '30d' },
-      { label: t('insights.this-month'), value: 'this_month' }
+      { label: t('insights.this-month'), value: 'this_month' },
+      { label: t('insights.date-range'), value: 'date_range' }
     ],
     [t]
   );
@@ -203,10 +173,27 @@ const PageContent = ({
 
   const handleTimeRangeChange = useCallback(
     (value: string | string[]) => {
+      if (value === 'date_range') {
+        return setIsDatePickerOpen(true);
+      }
       const preset = (
         Array.isArray(value) ? value[0] : value
       ) as TimeRangePreset;
-      onFiltersChange({ ...filters, timeRange: preset || '24h' });
+
+      onFiltersChange({
+        ...filters,
+        timeRange: preset || '24h',
+        customStartAt: undefined,
+        customEndAt: undefined
+      });
+      setDateRangeLabel('');
+    },
+    [filters, onFiltersChange]
+  );
+  const handleDateRangeApply = useCallback(
+    (customStartAt: string, customEndAt: string) => {
+      setIsDatePickerOpen(false);
+      onFiltersChange({ ...filters, customStartAt, customEndAt });
     },
     [filters, onFiltersChange]
   );
@@ -216,28 +203,32 @@ const PageContent = ({
     exportMonthlySummaryCSV(monthlySummary, MONTHS);
   }, [monthlySummary]);
 
-  const timeUnit: 'minute' | 'day' | 'hour' = [
-    '7d',
-    '30d',
-    'this_month'
-  ].includes(filters.timeRange)
-    ? 'day'
-    : filters.timeRange === '1h'
-      ? 'minute'
-      : 'hour';
+  const timeUnit: 'minute' | 'day' | 'hour' = useMemo(() => {
+    if (filters.customStartAt && filters.customEndAt) {
+      const diffDays =
+        (Number(filters.customEndAt) - Number(filters.customStartAt)) / 86400;
+      return diffDays >= 2 ? 'day' : 'hour';
+    }
+    if (['7d', '30d', 'this_month'].includes(filters.timeRange)) return 'day';
+    if (filters.timeRange === '1h') return 'minute';
+    return 'hour';
+  }, [filters.timeRange, filters.customStartAt, filters.customEndAt]);
 
   const selectedProjectLabel = filters.projectId
     ? projectOptions.find(o => o.value === filters.projectId)?.label
-    : undefined;
-  const selectedEnvLabel = filters.environmentId
-    ? environmentOptions.find(o => o.value === filters.environmentId)?.label
-    : undefined;
+    : t('insights.all-projects');
+
+  const selectedEnvLabel =
+    filters.environmentId === 'UNKNOWN'
+      ? t('insights.all-environments')
+      : environmentOptions.find(o => o.value === filters.environmentId)?.label;
+
   const selectedSourceLabel = filters.sourceId
     ? sourceIdOptions.find(o => o.value === filters.sourceId)?.label
-    : undefined;
+    : t('insights.all-sdks');
   const selectedApiLabel = filters.apiId
     ? apiIdOptions.find(o => o.value === filters.apiId)?.label
-    : undefined;
+    : t('insights.all-apis');
 
   return (
     <div className="p-6 flex flex-col gap-6 min-w-[950px]">
@@ -293,21 +284,30 @@ const PageContent = ({
 
       <div className="shadow-card-secondary rounded-xl border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-x-1">
-            <p className="typo-head-bold-small">{t('insights.monthly-use')}</p>
-            <Icon icon={IconInfo} size="xs" />
-          </div>
+          <p className="typo-head-bold-small">{t('insights.monthly-use')}</p>
+
           <Button
             disabled={isDisableExportCSV}
             onClick={handleExportCSV}
             className="flex items-center gap-2 typo-para-medium"
           >
-            <Icon icon={IconUpload} size="sm" className="text-white" />
+            <Icon icon={IconDownload} size="sm" className="text-white" />
             {t('insights.export-csv')}
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-6">
           <MonthlyBarChart
+            description={
+              <ChartDescription
+                title={t('insights.description.mau.title')}
+                notes={[
+                  t('insights.description.mau.notes.first'),
+                  t('insights.description.mau.notes.second'),
+                  t('insights.description.mau.notes.third'),
+                  t('insights.description.mau.notes.fourd')
+                ]}
+              />
+            }
             title={t('insights.estimated-mau')}
             summary={monthlySummary}
             isLoading={monthlySummaryLoading}
@@ -316,6 +316,16 @@ const PageContent = ({
             labels={MONTH_LABELS}
           />
           <MonthlyBarChart
+            description={
+              <ChartDescription
+                title={t('insights.description.monthlyRequests.title')}
+                notes={[
+                  t('insights.description.monthlyRequests.notes.first'),
+                  t('insights.description.monthlyRequests.notes.second'),
+                  t('insights.description.monthlyRequests.notes.third')
+                ]}
+              />
+            }
             title={t('insights.requests')}
             summary={monthlySummary}
             isLoading={monthlySummaryLoading}
@@ -347,16 +357,36 @@ const PageContent = ({
           <div className="flex items-center gap-x-3 min-w-[180px]">
             <Dropdown
               options={timeRangeOptions}
-              value={filters.timeRange}
+              value={dateRangeLabel ? 'date_range' : filters.timeRange}
+              labelCustom={
+                <span className="flex items-center gap-1.5">
+                  <Icon icon={IconWatch} size="xs" />
+                  <span className="truncate">
+                    {dateRangeLabel ||
+                      timeRangeOptions.find(o => o.value === filters.timeRange)
+                        ?.label}
+                  </span>
+                </span>
+              }
               onChange={v => handleTimeRangeChange(v as string)}
               className="min-w-[180px]"
+              contentClassName="!max-h-[300px]"
             />
+            <div className="hidden">
+              <DateCustom
+                onApply={handleDateRangeApply}
+                onLabelChange={setDateRangeLabel}
+                isOpen={isDatePickerOpen}
+                onClose={() => setIsDatePickerOpen(false)}
+              />
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           <TimeSeriesLineChart
             title={t('insights.average-latency')}
+            description={t('insights.description.latency.title')}
             legendTitle={t('insights.latency')}
             timeseries={latencyData?.timeseries ?? []}
             isLoading={latencyLoading}
@@ -378,6 +408,31 @@ const PageContent = ({
           />
           <TimeSeriesLineChart
             title={t('insights.evaluations-second')}
+            description={
+              <ChartDescription
+                title={t('insights.description.evaluations.title')}
+                notes={[
+                  <Trans
+                    i18nKey="insights.description.evaluations.types.diff"
+                    components={{
+                      b: <b />
+                    }}
+                  />,
+                  <Trans
+                    i18nKey="insights.description.evaluations.types.none"
+                    components={{
+                      b: <b />
+                    }}
+                  />,
+                  <Trans
+                    i18nKey="insights.description.evaluations.types.all"
+                    components={{
+                      b: <b />
+                    }}
+                  />
+                ]}
+              />
+            }
             legendTitle={t('insights.evaluations-per-sec')}
             timeseries={evaluationsData?.timeseries ?? []}
             isLoading={evaluationsLoading}

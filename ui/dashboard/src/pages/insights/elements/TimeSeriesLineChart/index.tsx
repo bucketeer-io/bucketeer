@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { InsightsTimeSeries } from '@types';
 import Spinner from 'components/spinner';
@@ -7,6 +7,7 @@ import { ChartCard, getColor } from '../chart-utils';
 
 interface TimeSeriesLineChartProps {
   title: string;
+  description?: string | ReactNode;
   legendTitle?: string;
   timeseries: InsightsTimeSeries[];
   isLoading: boolean;
@@ -19,6 +20,7 @@ interface TimeSeriesLineChartProps {
 
 const TimeSeriesLineChart = ({
   title,
+  description,
   legendTitle,
   timeseries,
   isLoading,
@@ -67,14 +69,14 @@ const TimeSeriesLineChart = ({
   );
 
   return (
-    <ChartCard title={title}>
+    <ChartCard title={title} description={description}>
       {isLoading ? (
-        <div className="h-[300px] flex items-center justify-center">
+        <div className="h-[250px] flex items-center justify-center">
           <Spinner />
         </div>
       ) : (
         <div className="flex-1">
-          <div className="h-[300px]">
+          <div className="h-[250px]">
             <Line
               data={{ datasets }}
               options={{
