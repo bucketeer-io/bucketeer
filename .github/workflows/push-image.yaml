@@ -67,7 +67,7 @@ jobs:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: echo "value=$(echo "$COMMIT_MESSAGE" | head -n 1)" >> $GITHUB_OUTPUT
       - name: Store the migration_required value to output
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: changes
         with:
           filters: |
@@ -85,10 +85,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'go.mod'
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install go dependencies
@@ -101,7 +101,7 @@ jobs:
       - name: Add executable permission to go binary files
         run: chmod +x bin/*
       - name: Set up docker
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.6.1
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v3.6.1
         with:
           install: true
       - name: Create Dockerfile of go applications
@@ -121,7 +121,7 @@ jobs:
         if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: docker build migration/ -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} --load
       - name: Login to GHCR
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -164,7 +164,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
       - name: Login to GAR
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ${{ env.GAR_REGISTRY }}
           username: oauth2accesstoken
@@ -220,7 +220,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack notification
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -256,7 +256,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack notification
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}

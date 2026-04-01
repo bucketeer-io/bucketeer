@@ -49,14 +49,14 @@ jobs:
           else
             echo "BUCKETEER_VERSION=$(git describe --tags --always --abbrev=7)" >> $GITHUB_ENV
           fi
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: changes
         with:
           filters: |
             migration:
               - 'migration/**'
       - name: Install helm
-        uses: Azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Build helm chart
