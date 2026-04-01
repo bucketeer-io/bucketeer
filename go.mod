@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.69.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/go-resty/resty/v2 v2.17.2
