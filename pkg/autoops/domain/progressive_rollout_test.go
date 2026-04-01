@@ -499,15 +499,6 @@ func TestGetControlVariationID(t *testing.T) {
 			expectedErr: ErrProgressiveRolloutInvalidVariationCount,
 		},
 		{
-			desc:                   "manual: no variation IDs set",
-			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
-			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{},
-			},
-			feature:  createFeature("var-1", "var-2"),
-			expected: "",
-		},
-		{
 			desc:                   "template: new format with both control and target IDs",
 			progressiveRolloutType: autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
 			clause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
@@ -642,12 +633,6 @@ func TestInferControlVariationID(t *testing.T) {
 			targetVariationID: "var-1",
 			expectedControlID: "",
 			expectedErr:       ErrProgressiveRolloutInvalidVariationCount,
-		},
-		{
-			desc:              "empty targetVariationID - returns empty",
-			variations:        createFeature("var-1", "var-2").Variations,
-			targetVariationID: "",
-			expectedControlID: "",
 		},
 	}
 

@@ -194,9 +194,6 @@ func (p *ProgressiveRollout) ExtractSchedules() ([]*autoopsproto.ProgressiveRoll
 // the other variation (control) from the feature's variations.
 // Old rollouts only supported features with exactly 2 variations.
 func inferControlVariationID(variations []*featureproto.Variation, targetVariationID string) (string, error) {
-	if targetVariationID == "" {
-		return "", nil
-	}
 	if len(variations) != 2 {
 		return "", ErrProgressiveRolloutInvalidVariationCount
 	}
