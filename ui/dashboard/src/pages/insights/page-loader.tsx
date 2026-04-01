@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryEnvironments } from '@queries/environments';
 import { useQueryInsightsMonthlySummary } from '@queries/insights';
 import { useQueryProjects } from '@queries/projects';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { DateTime } from 'luxon';
 import { InsightSourceId, InsightApiId } from '@types';
 import PageLayout from 'elements/page-layout';
@@ -39,6 +40,8 @@ const computeTimeRange = (
 };
 
 const PageLoader = () => {
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const [filters, setFilters] = useState<InsightsFilters>({
     projectId: '',
     environmentId: '',
@@ -48,7 +51,7 @@ const PageLoader = () => {
   });
 
   const { data: projectsData, isLoading: projectsLoading } = useQueryProjects({
-    params: { cursor: '' }
+    params: { cursor: '', organizationId: currentEnvironment.organizationId }
   });
 
   const { data: environmentsData, isLoading: environmentsLoading } =

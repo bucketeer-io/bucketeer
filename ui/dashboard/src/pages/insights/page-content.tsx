@@ -29,7 +29,9 @@ import {
   InsightSourceId,
   Project
 } from '@types';
+import { exportMonthlySummaryCSV } from 'utils/csv-export';
 import { IconInfo, IconUpload } from '@icons';
+import Button from 'components/button';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
@@ -139,12 +141,9 @@ const PageContent = ({
   );
 
   const environmentOptions: DropdownOption[] = useMemo(() => {
-    const filtered = filters.projectId
-      ? environments.filter(e => e.projectId === filters.projectId)
-      : environments;
     return [
       { label: t('insights.all-environments'), value: '' },
-      ...filtered.map(e => ({ label: e.name, value: e.id }))
+      ...environments.map(e => ({ label: e.name, value: e.id }))
     ];
   }, [environments, filters.projectId, t]);
 
@@ -168,6 +167,11 @@ const PageContent = ({
 
   const { data: errorRatesData, isLoading: errorRatesLoading } =
     useQueryInsightsErrorRates({ params: timeRangeParams });
+
+  const isDisableExportCSV = useMemo(
+    () => !monthlySummary || monthlySummary.series.length <= 0,
+    [monthlySummary]
+  );
 
   const handleProjectChange = useCallback(
     (value: string) => {
@@ -208,47 +212,8 @@ const PageContent = ({
   );
 
   const handleExportCSV = useCallback(() => {
-    if (!monthlySummary?.series?.length) return;
-
-    const escape = (v: string | number) => {
-      const s = String(v);
-      return s.includes(',') || s.includes('"') || s.includes('\n')
-        ? `"${s.replace(/"/g, '""')}"`
-        : s;
-    };
-
-    const toRow = (fields: (string | number)[]) => fields.map(escape).join(',');
-
-    const rows: string[] = [
-      toRow(['Project', 'Environment', 'SDK', 'Month', 'MAU', 'Requests'])
-    ];
-
-    for (const series of monthlySummary.series) {
-      const dataMap = new Map(series.data.map(d => [d.yearmonth, d]));
-      for (const m of MONTHS) {
-        const dp = dataMap.get(m);
-        rows.push(
-          toRow([
-            series.projectName,
-            series.environmentName,
-            series.sourceId,
-            DateTime.fromFormat(m, 'yyyyMM').toFormat('yyyy-MM'),
-            dp?.mau ?? '0',
-            dp?.requests ?? '0'
-          ])
-        );
-      }
-    }
-
-    const blob = new Blob(['\uFEFF' + 'sep=,\n' + rows.join('\n')], {
-      type: 'text/csv;charset=utf-8;'
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `insights-monthly-${DateTime.now().toFormat('yyyyMMdd')}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!monthlySummary) return;
+    exportMonthlySummaryCSV(monthlySummary, MONTHS);
   }, [monthlySummary]);
 
   const timeUnit: 'day' | 'hour' = ['7d', '30d', 'this_month'].includes(
@@ -328,14 +293,14 @@ const PageContent = ({
             <p className="typo-head-bold-small">{t('insights.monthly-use')}</p>
             <Icon icon={IconInfo} size="xs" />
           </div>
-          <button
-            type="button"
+          <Button
+            disabled={isDisableExportCSV}
             onClick={handleExportCSV}
-            className="flex items-center gap-2 typo-para-medium text-gray-700 transition-colors"
+            className="flex items-center gap-2 typo-para-medium"
           >
-            <Icon icon={IconUpload} size="sm" color="gray-600" />
+            <Icon icon={IconUpload} size="sm" className="text-white" />
             {t('insights.export-csv')}
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-2 gap-6">
           <MonthlyBarChart
