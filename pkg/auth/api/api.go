@@ -894,6 +894,7 @@ func (s *authService) PrepareDemoUser() {
 	}
 	s.logger.Info("Demo environment prepared successfully")
 }
+
 const obfuscateTokenLength = 4
 
 func obfuscateString(input string, showLength int) string {
