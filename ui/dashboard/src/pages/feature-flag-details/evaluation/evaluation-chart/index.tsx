@@ -118,8 +118,8 @@ export const EvaluationChart = forwardRef(
             },
             label: context => {
               const displayValue = useSymlog
-                ? symlogInverse(context.parsed.y, 1, logBase)
-                : context.parsed.y;
+                ? symlogInverse(context.parsed.y ?? 0, 1, logBase)
+                : (context.parsed.y ?? 0);
               return `${context.dataset.label ?? ''} : ${displayValue.toLocaleString()}`;
             }
           }
