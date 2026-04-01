@@ -153,19 +153,16 @@ export const createVariationsSchema = ({
             .required(requiredMessage)
             .max(
               VARIATION_NAME_MAX_LENGTH,
-              translation('message:validation.variation-name-max-length', {
+              translation('message:validation.max-length-string', {
                 count: VARIATION_NAME_MAX_LENGTH
               })
             ),
-          description: yup
-            .string()
-            .max(
-              VARIATION_DESCRIPTION_MAX_LENGTH,
-              translation(
-                'message:validation.variation-description-max-length',
-                { count: VARIATION_DESCRIPTION_MAX_LENGTH }
-              )
-            )
+          description: yup.string().max(
+            VARIATION_DESCRIPTION_MAX_LENGTH,
+            translation('message:validation.max-length-string', {
+              count: VARIATION_DESCRIPTION_MAX_LENGTH
+            })
+          )
         })
         .required()
     );
