@@ -297,7 +297,6 @@
   "docs": "Docs",
   "new": "New",
   "discard": "Discard changes",
-  "add-rule": "Add rule",
   "continue-editing": "Continue editing",
   "leave-page": "Leave page",
   "note": "Note",
@@ -348,6 +347,7 @@
     "avg": "Avg",
     "last": "Last",
     "current-month": "Current Month",
-    "vs-last-month": "vs last month"
+    "vs-last-month": "vs last month",
+    "subtitle": "Metrics overview"
   }
 }

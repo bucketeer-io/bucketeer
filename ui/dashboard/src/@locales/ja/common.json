@@ -297,7 +297,6 @@
   "docs": "ドキュメント",
   "new": "新規",
   "discard": "変更を破棄",
-  "add-rule": "ルールを追加",
   "continue-editing": "編集を続ける",
   "leave-page": "ページを離れる",
   "note": "メモ",
@@ -348,6 +347,7 @@
     "avg": "平均",
     "last": "最新",
     "current-month": "今月",
-    "vs-last-month": "先月比"
+    "vs-last-month": "先月比",
+    "subtitle": "指標の概要"
   }
 }

@@ -58,7 +58,7 @@ const MONTHS = Array.from({ length: 12 }, (_, i) =>
   now.minus({ months: 11 - i }).toFormat('yyyyMM')
 );
 const MONTH_LABELS = MONTHS.map(m =>
-  DateTime.fromFormat(m, 'yyyyMM').toFormat('MMM yy')
+  DateTime.fromFormat(m, 'yyyyMM').toFormat('MMM')
 );
 
 interface PageContentProps {
@@ -216,11 +216,15 @@ const PageContent = ({
     exportMonthlySummaryCSV(monthlySummary, MONTHS);
   }, [monthlySummary]);
 
-  const timeUnit: 'day' | 'hour' = ['7d', '30d', 'this_month'].includes(
-    filters.timeRange
-  )
+  const timeUnit: 'minute' | 'day' | 'hour' = [
+    '7d',
+    '30d',
+    'this_month'
+  ].includes(filters.timeRange)
     ? 'day'
-    : 'hour';
+    : filters.timeRange === '1h'
+      ? 'minute'
+      : 'hour';
 
   const selectedProjectLabel = filters.projectId
     ? projectOptions.find(o => o.value === filters.projectId)?.label
@@ -357,6 +361,8 @@ const PageContent = ({
             timeseries={latencyData?.timeseries ?? []}
             isLoading={latencyLoading}
             timeUnit={timeUnit}
+            startAt={timeRangeParams.startAt}
+            endAt={timeRangeParams.endAt}
             yAxisFormatter={v => `${v.toFixed(1)}ms`}
             environmentNameMap={environmentNameMap}
           />
@@ -366,6 +372,8 @@ const PageContent = ({
             timeseries={requestsData?.timeseries ?? []}
             isLoading={requestsLoading}
             timeUnit={timeUnit}
+            startAt={timeRangeParams.startAt}
+            endAt={timeRangeParams.endAt}
             environmentNameMap={environmentNameMap}
           />
           <TimeSeriesLineChart
@@ -374,6 +382,8 @@ const PageContent = ({
             timeseries={evaluationsData?.timeseries ?? []}
             isLoading={evaluationsLoading}
             timeUnit={timeUnit}
+            startAt={timeRangeParams.startAt}
+            endAt={timeRangeParams.endAt}
             yAxisFormatter={v => v.toFixed(1)}
             environmentNameMap={environmentNameMap}
           />
@@ -383,6 +393,8 @@ const PageContent = ({
             timeseries={errorRatesData?.timeseries ?? []}
             isLoading={errorRatesLoading}
             timeUnit={timeUnit}
+            startAt={timeRangeParams.startAt}
+            endAt={timeRangeParams.endAt}
             yAxisFormatter={v => `${v.toFixed(2)}%`}
             environmentNameMap={environmentNameMap}
           />

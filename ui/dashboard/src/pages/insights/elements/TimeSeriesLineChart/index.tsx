@@ -10,7 +10,9 @@ interface TimeSeriesLineChartProps {
   legendTitle?: string;
   timeseries: InsightsTimeSeries[];
   isLoading: boolean;
-  timeUnit?: 'hour' | 'day';
+  timeUnit?: 'minute' | 'hour' | 'day';
+  startAt: string;
+  endAt: string;
   yAxisFormatter?: (value: number) => string;
   environmentNameMap?: Record<string, string>;
 }
@@ -21,6 +23,8 @@ const TimeSeriesLineChart = ({
   timeseries,
   isLoading,
   timeUnit,
+  startAt,
+  endAt,
   yAxisFormatter,
   environmentNameMap
 }: TimeSeriesLineChartProps) => {
@@ -80,15 +84,21 @@ const TimeSeriesLineChart = ({
                 scales: {
                   x: {
                     type: 'time',
+                    min: Number(startAt) * 1000,
+                    max: Number(endAt) * 1000,
                     time: {
                       unit: timeUnit,
-                      displayFormats: { hour: 'HH:mm' }
+                      displayFormats: {
+                        minute: 'HH:mm',
+                        hour: 'HH:mm',
+                        day: 'MMM d'
+                      }
                     },
                     grid: { display: false },
                     border: { display: false },
                     ticks: {
                       align: 'center',
-                      source: 'data',
+                      source: 'auto',
                       color: '#94A3B8',
                       font: { family: 'Sofia Pro', size: 14, weight: 400 }
                     }
