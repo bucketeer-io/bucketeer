@@ -285,6 +285,7 @@ const PageContent = ({
             placeholder={t('insights.all-projects')}
             onSelectOption={v => handleProjectChange(String(v))}
             triggerClassName="min-w-[180px]"
+            align="start"
           />
         </div>
         <div className="flex flex-col gap-1 min-w-[200px]">
@@ -301,6 +302,7 @@ const PageContent = ({
             placeholder={t('insights.all-environments')}
             onSelectOption={v => handleEnvironmentChange(String(v))}
             triggerClassName="min-w-[200px]"
+            align="start"
           />
         </div>
         <div className="flex flex-col gap-1 min-w-[160px]">
@@ -315,6 +317,7 @@ const PageContent = ({
             placeholder={t('insights.all-sdks')}
             onSelectOption={v => handleSourceChange(String(v))}
             triggerClassName="min-w-[160px]"
+            align="start"
           />
         </div>
       </div>
@@ -369,6 +372,7 @@ const PageContent = ({
               placeholder={t('insights.all-apis')}
               onSelectOption={v => handleApiChange(String(v))}
               triggerClassName="min-w-[160px]"
+              align="start"
             />
           </div>
           <div className="flex items-center gap-x-3 min-w-[180px]">

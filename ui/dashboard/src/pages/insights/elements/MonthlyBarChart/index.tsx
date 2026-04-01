@@ -3,7 +3,6 @@ import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'i18n';
 import { InsightsMonthlySummaryResponse } from '@types';
 import Spinner from 'components/spinner';
-import EmptyState from 'elements/empty-state';
 import { ChartCard, formatLargeNumber, getColor } from '../chart-utils';
 
 interface MonthlyBarChartProps {
@@ -56,15 +55,6 @@ const MonthlyBarChart = ({
       {isLoading ? (
         <div className="h-[300px] flex items-center justify-center">
           <Spinner />
-        </div>
-      ) : !datasets.length ? (
-        <div className="h-[300px] flex items-center justify-center">
-          <EmptyState.Root variant="no-data" size="sm">
-            <EmptyState.Illustration />
-            <EmptyState.Body>
-              <EmptyState.Title>{t('no-data')}</EmptyState.Title>
-            </EmptyState.Body>
-          </EmptyState.Root>
         </div>
       ) : (
         <div className="h-[300px]">

@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
-import { useTranslation } from 'i18n';
 import { InsightsTimeSeries } from '@types';
 import Spinner from 'components/spinner';
-import EmptyState from 'elements/empty-state';
 import { LegendTable } from '../LegendTable';
 import { ChartCard, getColor } from '../chart-utils';
 
@@ -26,7 +24,6 @@ const TimeSeriesLineChart = ({
   yAxisFormatter,
   environmentNameMap
 }: TimeSeriesLineChartProps) => {
-  const { t } = useTranslation(['common']);
   const datasets = useMemo(
     () =>
       timeseries.map((series, i) => {
@@ -70,15 +67,6 @@ const TimeSeriesLineChart = ({
       {isLoading ? (
         <div className="h-[300px] flex items-center justify-center">
           <Spinner />
-        </div>
-      ) : !datasets.length ? (
-        <div className="h-[300px] flex items-center justify-center">
-          <EmptyState.Root variant="no-data" size="sm">
-            <EmptyState.Illustration />
-            <EmptyState.Body>
-              <EmptyState.Title>{t('no-data')}</EmptyState.Title>
-            </EmptyState.Body>
-          </EmptyState.Root>
         </div>
       ) : (
         <div className="flex-1">

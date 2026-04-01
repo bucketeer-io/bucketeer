@@ -3,7 +3,6 @@ import pickBy from 'lodash/pickBy';
 import { InsightSourceId, InsightsMonthlySummaryResponse } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
-import mockData from './mock-data.json';
 
 export interface InsightsMonthlySummaryFetcherParams {
   environmentIds?: string[];
@@ -15,16 +14,8 @@ export const insightsMonthlySummaryFetcher = async (
 ): Promise<InsightsMonthlySummaryResponse> => {
   const params = pickBy(_params, v => isNotEmpty(v));
 
-  try {
-    const response = await axiosClient.get<InsightsMonthlySummaryResponse>(
-      `/v1/insights/monthly_summary?${stringifyParams(params)}`
-    );
-    if (response.data) {
-      return response.data;
-    }
-  } catch (error) {
-    console.log('Response error::', error);
-  }
-
-  return mockData.monthlySummary as InsightsMonthlySummaryResponse;
+  const response = await axiosClient.get<InsightsMonthlySummaryResponse>(
+    `/v1/insights/monthly_summary?${stringifyParams(params)}`
+  );
+  return response.data;
 };
