@@ -322,6 +322,8 @@
     "min-count": "The minimum number of events required before the condition is evaluated. Helps avoid false triggers from small sample sizes."
   },
   "flag-variation": "Flag Variation",
+  "target-variation": "Target Variation",
+  "control-variation": "Control Variation",
   "target-variation-value": "Target Variation: <comp/>",
   "control-variation-value": "Control Variation: <comp/>",
   "template": "Template",

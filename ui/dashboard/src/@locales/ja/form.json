@@ -322,6 +322,8 @@
     "min-count": "条件が評価される前に必要な最小イベント数。小さなサンプルサイズからの誤ったトリガーを回避するのに役立ちます。"
   },
   "flag-variation": "フラグバリエーション",
+  "target-variation": "ターゲットバリエーション",
+  "control-variation": "コントロールバリエーション",
   "target-variation-value": "ターゲットバリエーション：<comp/>",
   "control-variation-value": "コントロールバリエーション：<comp/>",
   "template": "テンプレート",
