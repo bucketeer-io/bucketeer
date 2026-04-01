@@ -24,8 +24,9 @@ const AvatarIconVariants = cva(['flex items-center justify-center'], {
   }
 });
 
-export interface AvatarIconProps
-  extends VariantProps<typeof AvatarIconVariants> {
+export interface AvatarIconProps extends VariantProps<
+  typeof AvatarIconVariants
+> {
   className?: string;
   icon: FunctionComponent;
   color?: Color;
@@ -71,7 +72,8 @@ const AvatarImageVariants = cva(['rounded-full object-cover'], {
 });
 
 export interface AvatarImageProps
-  extends ImgHTMLAttributes<HTMLImageElement>,
+  extends
+    ImgHTMLAttributes<HTMLImageElement>,
     VariantProps<typeof AvatarImageVariants> {
   image: string;
 }

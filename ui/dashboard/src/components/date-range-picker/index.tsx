@@ -71,8 +71,10 @@ export interface StaticRangeOption {
   range: () => Range;
 }
 
-interface ReactDateRangePickerProps
-  extends Omit<DateRangePickerProps, 'onChange'> {
+interface ReactDateRangePickerProps extends Omit<
+  DateRangePickerProps,
+  'onChange'
+> {
   from?: string | number;
   to?: string | number;
   isAllTime?: boolean;
