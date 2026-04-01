@@ -129,9 +129,7 @@ const VariationList = ({
                 trigger={
                   offVariationData.variation ? (
                     <div className="flex items-center gap-x-2 pl-0.5 w-0 flex-1 typo-para-medium text-gray-700">
-                      <FlagVariationPolygon
-                        index={offVariationData.index}
-                      />
+                      <FlagVariationPolygon index={offVariationData.index} />
                       <p className="truncate">
                         {offVariationData.variation.name ||
                           offVariationData.variation.value}
