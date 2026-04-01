@@ -77,9 +77,10 @@ const VariationList = ({
     value: item.id
   }));
 
-  const offVariationId = useMemo(() => {
-    const variation = variations.find(item => item.id === offVariation);
-    return variation?.id || '';
+  const offVariationData = useMemo(() => {
+    const index = variations.findIndex(item => item.id === offVariation);
+    const variation = index >= 0 ? variations[index] : null;
+    return { id: variation?.id || '', index, variation };
   }, [offVariation, [...variations]]);
 
   return (
@@ -126,16 +127,14 @@ const VariationList = ({
                 value={field.value}
                 onChange={field.onChange}
                 trigger={
-                  offVariationId ? (
+                  offVariationData.variation ? (
                     <div className="flex items-center gap-x-2 pl-0.5 w-0 flex-1 typo-para-medium text-gray-700">
                       <FlagVariationPolygon
-                        index={variations.findIndex(
-                          v => v.id === offVariationId
-                        )}
+                        index={offVariationData.index}
                       />
                       <p className="truncate">
-                        {variations.find(v => v.id === offVariationId)?.name ||
-                          variations.find(v => v.id === offVariationId)?.value}
+                        {offVariationData.variation.name ||
+                          offVariationData.variation.value}
                       </p>
                     </div>
                   ) : undefined
