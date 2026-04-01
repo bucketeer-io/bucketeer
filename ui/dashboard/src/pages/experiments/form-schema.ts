@@ -13,7 +13,12 @@ export const createExperimentFormSchema = ({
   translation
 }: FormSchemaProps) =>
   yup.object().shape({
-    id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),
+    id: yup.string().max(
+      EXPERIMENT_NAME_MAX_LENGTH,
+      translation('message:validation.max-length-string', {
+        count: EXPERIMENT_NAME_MAX_LENGTH
+      })
+    ),
     name: yup.string().required(requiredMessage),
     baseVariationId: yup.string().required(requiredMessage),
     startType: yup
@@ -70,7 +75,12 @@ export const createExperimentFormSchema = ({
 
         return true;
       }),
-    description: yup.string().max(EXPERIMENT_DESCRIPTION_MAX_LENGTH),
+    description: yup.string().max(
+      EXPERIMENT_DESCRIPTION_MAX_LENGTH,
+      translation('message:validation.max-length-string', {
+        count: EXPERIMENT_DESCRIPTION_MAX_LENGTH
+      })
+    ),
     audience: yup.mixed(),
     featureId: yup.string().required(requiredMessage),
     goalIds: yup
