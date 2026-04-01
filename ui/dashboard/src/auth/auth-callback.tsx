@@ -1,5 +1,5 @@
 import { FC, useEffect, memo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { exchangeToken, ExchangeTokenPayload } from '@api/auth';
 import { urls } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';

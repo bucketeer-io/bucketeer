@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';

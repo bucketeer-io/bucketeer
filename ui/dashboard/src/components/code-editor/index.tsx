@@ -18,7 +18,7 @@ interface ReactCodeEditorProps extends EditorProps {
   isResize?: boolean;
   isExpand?: boolean;
   lastLine?: number;
-  scrollParent?: RefObject<HTMLElement>;
+  scrollParent?: RefObject<HTMLElement | null>;
   onExpand?: () => void;
 }
 

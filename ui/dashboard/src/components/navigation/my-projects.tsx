@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import * as Popover from '@radix-ui/react-popover';
 import {
   getCurrentEnvironment,

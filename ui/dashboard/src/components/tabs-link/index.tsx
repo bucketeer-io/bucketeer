@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink, NavLinkProps } from 'react-router-dom';
+import { NavLink, NavLinkProps } from 'react-router';
 import { cn } from 'utils/style';
 
 const Tabs = React.forwardRef<
