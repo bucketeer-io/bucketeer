@@ -1344,7 +1344,7 @@ func (s *grpcGatewayService) RegisterEvents(
 	if len(req.Events) == 0 {
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
 			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
+				zap.Error(ErrMissingEvents),
 				zap.String("environmentId", envAPIKey.Environment.Id),
 				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
 				zap.Any("sourceId", req.SourceId),
