@@ -462,22 +462,13 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
-# Build localenv Helm chart dependencies from Chart.lock (populates manifests/localenv/charts/)
-# You do NOT need this when you only change:
-#   - Image tags in manifests/localenv/values.yaml (e.g. bq.image.tag, redis.image.tag)
-#   - Runtime values like replica counts, resource limits, node ports, or credentials
-.PHONY: localenv-dep-build
-localenv-dep-build:
-	@echo "Building localenv Helm chart dependencies from Chart.lock..."
-	helm dependency build manifests/localenv
-
-# Refresh localenv Helm chart dependencies and rewrite Chart.lock when versions need to change.
+# Update localenv Helm chart dependencies (populates manifests/localenv/charts/)
 .PHONY: localenv-dep-update
 localenv-dep-update:
-	@echo "Updating localenv Helm chart dependencies and refreshing Chart.lock..."
+	@echo "Updating localenv Helm chart dependencies..."
 	helm dependency update manifests/localenv
 
-setup-localenv: localenv-dep-build
+setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
 	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) || \
@@ -555,7 +546,7 @@ delete-bucketeer-from-minikube:
 	helm uninstall bucketeer --ignore-not-found
 
 # Bucketeer deployment
-deploy-bucketeer: delete-bucketeer-from-minikube localenv-dep-build
+deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
