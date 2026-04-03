@@ -125,7 +125,11 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range experiment.Variations {
@@ -261,7 +265,11 @@ func TestExperimentGoalCount(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range experiment.Variations {
@@ -403,7 +411,11 @@ func TestGrpcExperimentResult(t *testing.T) {
 	stopAt := time.Now().Add(2 * time.Hour)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	// Wait for the on-demand subscriber to create PubSub subscriptions.
 	time.Sleep(15 * time.Second)
@@ -576,7 +588,11 @@ func TestExperimentResult(t *testing.T) {
 	stopAt := time.Now().Add(2 * time.Hour)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	// Wait for the on-demand subscriber to create PubSub subscriptions.
 	time.Sleep(15 * time.Second)
@@ -747,7 +763,11 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -973,7 +993,11 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -1196,7 +1220,11 @@ func TestHTTPTrack(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestHTTPTrack", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -1337,7 +1365,11 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		f.Variations[0].Id,
 		startAt, stopAt,
 	)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	// Wait for the on-demand subscriber to create PubSub subscriptions.
 	time.Sleep(15 * time.Second)
@@ -1466,7 +1498,11 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		f.Variations[0].Id,
 		startAt, stopAt,
 	)
-	t.Cleanup(func() { stopExperiment(ctx, t, experimentClient, experiment.Id) })
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	// Wait for the on-demand subscriber to create PubSub subscriptions.
 	time.Sleep(15 * time.Second)
