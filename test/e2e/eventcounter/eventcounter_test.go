@@ -2220,7 +2220,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		if err == nil {
 			return
 		}
-		if i < deadlockRetryAttempts-1 {
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
 			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
 			time.Sleep(time.Duration(i+1) * time.Second)
 			continue
