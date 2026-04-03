@@ -174,9 +174,15 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       });
     }, [isLanguageJapanese]);
 
-    const [range, setRange] = useState<Range>({
-      ...staticRanges[0].range(),
-      key: 'selection'
+    const [range, setRange] = useState<Range>(() => {
+      if (from && to) {
+        return {
+          startDate: new Date(Number(from) * 1000),
+          endDate: new Date(Number(to) * 1000),
+          key: 'selection'
+        };
+      }
+      return { ...staticRanges[0].range(), key: 'selection' };
     });
     const [staticRangeSelected, setStaticRangeSelected] = useState<
       StaticRangeOption | undefined

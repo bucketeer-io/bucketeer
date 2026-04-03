@@ -73,6 +73,7 @@ interface PageContentProps {
   timeRangeParams: InsightsTimeSeriesFetcherParams;
   filters: InsightsFilters;
   onFiltersChange: (filters: InsightsFilters) => void;
+  queriesEnabled: boolean;
 }
 
 const PageContent = ({
@@ -82,7 +83,8 @@ const PageContent = ({
   monthlySummaryLoading,
   timeRangeParams,
   filters,
-  onFiltersChange
+  onFiltersChange,
+  queriesEnabled
 }: PageContentProps) => {
   const { t } = useTranslation(['common']);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -113,7 +115,11 @@ const PageContent = ({
   const environmentOptions: DropdownOption[] = useMemo(() => {
     return [
       { label: t('insights.all-environments'), value: '' },
-      ...environments.map(e => ({ label: e.name, value: e.id }))
+      ...environments.map(e =>
+        e.id === ''
+          ? { label: e.name, value: 'production' }
+          : { label: e.name, value: e.id }
+      )
     ];
   }, [environments, filters.projectId, t]);
 
@@ -127,16 +133,28 @@ const PageContent = ({
   );
 
   const { data: latencyData, isLoading: latencyLoading } =
-    useQueryInsightsLatency({ params: timeRangeParams });
+    useQueryInsightsLatency({
+      params: timeRangeParams,
+      enabled: queriesEnabled
+    });
 
   const { data: requestsData, isLoading: requestsLoading } =
-    useQueryInsightsRequests({ params: timeRangeParams });
+    useQueryInsightsRequests({
+      params: timeRangeParams,
+      enabled: queriesEnabled
+    });
 
   const { data: evaluationsData, isLoading: evaluationsLoading } =
-    useQueryInsightsEvaluations({ params: timeRangeParams });
+    useQueryInsightsEvaluations({
+      params: timeRangeParams,
+      enabled: queriesEnabled
+    });
 
   const { data: errorRatesData, isLoading: errorRatesLoading } =
-    useQueryInsightsErrorRates({ params: timeRangeParams });
+    useQueryInsightsErrorRates({
+      params: timeRangeParams,
+      enabled: queriesEnabled
+    });
 
   const isDisableExportCSV = useMemo(
     () => !monthlySummary || monthlySummary.series.length <= 0,
@@ -218,10 +236,9 @@ const PageContent = ({
     ? projectOptions.find(o => o.value === filters.projectId)?.label
     : t('insights.all-projects');
 
-  const selectedEnvLabel =
-    filters.environmentId === 'UNKNOWN'
-      ? t('insights.all-environments')
-      : environmentOptions.find(o => o.value === filters.environmentId)?.label;
+  const selectedEnvLabel = environmentOptions.find(
+    o => o.value === filters.environmentId
+  )?.label;
 
   const selectedSourceLabel = filters.sourceId
     ? sourceIdOptions.find(o => o.value === filters.sourceId)?.label
@@ -304,7 +321,7 @@ const PageContent = ({
                   t('insights.description.mau.notes.first'),
                   t('insights.description.mau.notes.second'),
                   t('insights.description.mau.notes.third'),
-                  t('insights.description.mau.notes.fourd')
+                  t('insights.description.mau.notes.fourth')
                 ]}
               />
             }
@@ -397,14 +414,15 @@ const PageContent = ({
             environmentNameMap={environmentNameMap}
           />
           <TimeSeriesLineChart
-            title={t('insights.request-per-minute')}
-            legendTitle={t('insights.request-per-min')}
+            title={t('insights.request-per-second')}
+            legendTitle={t('insights.request-per-sec')}
             timeseries={requestsData?.timeseries ?? []}
             isLoading={requestsLoading}
             timeUnit={timeUnit}
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
             environmentNameMap={environmentNameMap}
+            yAxisFormatter={v => `${v.toFixed(2)} req/s`}
           />
           <TimeSeriesLineChart
             title={t('insights.evaluations-second')}
@@ -439,7 +457,7 @@ const PageContent = ({
             timeUnit={timeUnit}
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
-            yAxisFormatter={v => v.toFixed(1)}
+            yAxisFormatter={v => v.toFixed(3)}
             environmentNameMap={environmentNameMap}
           />
           <TimeSeriesLineChart

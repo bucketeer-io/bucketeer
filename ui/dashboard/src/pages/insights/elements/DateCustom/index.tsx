@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Range } from 'react-date-range';
 import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
@@ -27,7 +27,10 @@ const InsightsDateRangePicker = ({
     () => ({
       from: truncNumber(
         new Date(
-          dayjs().subtract(1, 'month').toDate().setHours(0, 0, 0, 0)
+          dayjs()
+            .subtract(MAX_RANGE_DAYS - 1, 'day')
+            .toDate()
+            .setHours(0, 0, 0, 0)
         ).getTime() / 1000
       ),
       to: truncNumber(
@@ -45,17 +48,17 @@ const InsightsDateRangePicker = ({
 
   const [selectedRange, setSelectedRange] = useState(initRange);
   const [pendingRange, setPendingRange] = useState<Range | null>(null);
-  const hasApplied = useRef(false);
 
-  // diff is inclusive: Jan 1 → Jan 31 = 30 diff days = 31 days selected
+  const formatRangeLabel = (start: number, end: number) =>
+    `${dayjs(start * 1000).format('MMM D, YYYY')} - ${dayjs(end * 1000).format('MMM D, YYYY')}`;
+
   const rangeExceedsLimit = useMemo(() => {
-    if (!pendingRange?.startDate || !pendingRange?.endDate) return false;
-    const diffDays = dayjs(pendingRange.endDate).diff(
-      dayjs(pendingRange.startDate),
-      'day'
-    );
+    const start =
+      pendingRange?.startDate ?? new Date(selectedRange.from * 1000);
+    const end = pendingRange?.endDate ?? new Date(selectedRange.to * 1000);
+    const diffDays = dayjs(end).diff(dayjs(start), 'day');
     return diffDays > MAX_RANGE_DAYS - 1;
-  }, [pendingRange]);
+  }, [pendingRange, selectedRange]);
 
   return (
     <ReactDateRangePicker
@@ -63,9 +66,7 @@ const InsightsDateRangePicker = ({
       from={selectedRange.from}
       to={selectedRange.to}
       maxDate={maxDate}
-      getTriggerLabel={label => {
-        if (hasApplied.current) onLabelChange(label);
-      }}
+      getTriggerLabel={() => {}}
       isShowRange={isOpen}
       onClose={onClose}
       onChange={(startDate, endDate) => {
@@ -82,10 +83,9 @@ const InsightsDateRangePicker = ({
               )
             : endDate;
           setSelectedRange({ from: startDate, to: normalizedEnd });
-          hasApplied.current = true;
+          onLabelChange(formatRangeLabel(startDate, normalizedEnd));
           onApply(startDate.toString(), normalizedEnd.toString());
         } else {
-          hasApplied.current = true;
           onApply(
             startDate ? startDate.toString() : '',
             endDate ? endDate.toString() : ''

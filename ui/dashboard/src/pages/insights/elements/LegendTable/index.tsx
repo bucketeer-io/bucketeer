@@ -11,6 +11,7 @@ import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import { IconSorting, IconSortingDown, IconSortingUp } from '@icons';
 import Table from 'components/table';
+import { Tooltip } from 'components/tooltip';
 import EmptyState from 'elements/empty-state';
 import { getColor } from '../chart-utils';
 
@@ -31,7 +32,9 @@ interface LegendTableProps {
 export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
   const fmt = formatter ?? ((v: number) => v.toFixed(2));
   const { t } = useTranslation(['common']);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'avg', desc: true }
+  ]);
 
   const rows: LegendRow[] = useMemo(
     () =>
@@ -67,9 +70,15 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
               className="inline-block w-3 h-3 rounded-full flex-shrink-0"
               style={{ backgroundColor: getColor(row.original.index) }}
             />
-            <span className="text-gray-700 truncate typo-para-medium">
-              {row.original.label}
-            </span>
+            <Tooltip
+              content={row.original.label}
+              side="top"
+              trigger={
+                <span className="max-w-[250px] text-gray-700 truncate typo-para-medium">
+                  {row.original.label}
+                </span>
+              }
+            />
           </div>
         )
       },
@@ -112,74 +121,76 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
   });
 
   return (
-    <div className="overflow-y-auto max-h-[256px]">
-      <Table.Root>
-        <Table.Header className="sticky top-0 z-10 bg-white">
-          {table.getHeaderGroups().map(headerGroup => (
-            <Table.Row key={headerGroup.id}>
-              {headerGroup.headers.map((header, i) => (
-                <Table.Head
-                  key={header.id}
-                  align={i === 0 ? undefined : 'right'}
-                  onClick={header.column.getToggleSortingHandler()}
-                  className={cn('select-none', {
-                    'cursor-pointer': header.column.getCanSort()
-                  })}
-                >
-                  <div
-                    className={cn('flex items-center gap-1', {
-                      'justify-end': i !== 0
+    <div className="overflow-x-auto small-scroll h-[250px]">
+      <div className="min-w-full">
+        <Table.Root>
+          <Table.Header className="sticky top-0 z-10 bg-white">
+            {table.getHeaderGroups().map(headerGroup => (
+              <Table.Row key={headerGroup.id}>
+                {headerGroup.headers.map((header, i) => (
+                  <Table.Head
+                    key={header.id}
+                    align={i === 0 ? undefined : 'right'}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className={cn('select-none', {
+                      'cursor-pointer': header.column.getCanSort()
                     })}
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                    {header.column.getCanSort() &&
-                      {
-                        asc: <IconSortingUp />,
-                        desc: <IconSortingDown />,
-                        false: <IconSorting />
-                      }[header.column.getIsSorted() as string]}
-                  </div>
-                </Table.Head>
-              ))}
-            </Table.Row>
-          ))}
-        </Table.Header>
-        <Table.Body>
-          {!datasets.length ? (
-            <Table.Row>
-              <Table.Cell className="pt-3" colSpan={columns.length}>
-                <div className="w-full h-full flex items-center justify-center">
-                  <EmptyState.Root variant="no-data" size="sm">
-                    <EmptyState.Illustration />
-                  </EmptyState.Root>
-                </div>
-              </Table.Cell>
-            </Table.Row>
-          ) : (
-            <>
-              {table.getRowModel().rows.map(row => (
-                <Table.Row key={row.id}>
-                  {row.getVisibleCells().map((cell, i) => (
-                    <Table.Cell
-                      key={cell.id}
-                      align={i === 0 ? undefined : 'right'}
-                      className="typo-para-medium text-gray-700 pr-4"
+                    <div
+                      className={cn('flex items-center gap-1', {
+                        'justify-end': i !== 0
+                      })}
                     >
                       {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
+                        header.column.columnDef.header,
+                        header.getContext()
                       )}
-                    </Table.Cell>
-                  ))}
-                </Table.Row>
-              ))}
-            </>
-          )}
-        </Table.Body>
-      </Table.Root>
+                      {header.column.getCanSort() &&
+                        {
+                          asc: <IconSortingUp />,
+                          desc: <IconSortingDown />,
+                          false: <IconSorting />
+                        }[header.column.getIsSorted() as string]}
+                    </div>
+                  </Table.Head>
+                ))}
+              </Table.Row>
+            ))}
+          </Table.Header>
+          <Table.Body>
+            {!datasets.length ? (
+              <Table.Row>
+                <Table.Cell className="pt-3" colSpan={columns.length}>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <EmptyState.Root variant="no-data" size="sm">
+                      <EmptyState.Illustration />
+                    </EmptyState.Root>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            ) : (
+              <>
+                {table.getRowModel().rows.map(row => (
+                  <Table.Row key={row.id}>
+                    {row.getVisibleCells().map((cell, i) => (
+                      <Table.Cell
+                        key={cell.id}
+                        align={i === 0 ? undefined : 'right'}
+                        className="typo-para-medium text-gray-700 pr-4"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </Table.Cell>
+                    ))}
+                  </Table.Row>
+                ))}
+              </>
+            )}
+          </Table.Body>
+        </Table.Root>
+      </div>
     </div>
   );
 };

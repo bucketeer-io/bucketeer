@@ -54,9 +54,9 @@ export const ChartCard = ({
           <Tooltip
             content={description}
             trigger={
-              <div className="flex-center size-fit ">
+              <button type="button" className="flex-center size-fit ">
                 <Icon icon={IconInfo} size="xs" color="gray-500" />
-              </div>
+              </button>
             }
           />
         )}

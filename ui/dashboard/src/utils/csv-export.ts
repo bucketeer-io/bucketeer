@@ -19,7 +19,7 @@ export const exportCSV = (
 
   const csvContent = [toRow(header), ...rows.map(toRow)].join('\n');
 
-  const blob = new Blob(['\uFEFF' + 'sep=,\n' + csvContent], {
+  const blob = new Blob(['\uFEFF' + csvContent], {
     type: 'text/csv;charset=utf-8;'
   });
 
