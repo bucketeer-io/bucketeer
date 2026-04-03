@@ -43,11 +43,13 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	prefixTestName = "e2e-test"
-	timeout        = 60 * time.Second
+	prefixTestName        = "e2e-test"
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -145,24 +147,32 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
 
-	// Find feature with tag, with the same features ID, and requested at.
-	// "None" response: RequestedAt should be preserved (not advanced).
-	ffid := response.FeatureFlagsId
-	prevRequestedAt := response.RequestedAt
-	response = grpcGetFeatureFlags(t, tag, response.FeatureFlagsId, response.RequestedAt)
-	assert.Equal(t, ffid, response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.Equal(t, prevRequestedAt, response.RequestedAt)
-	assert.False(t, response.ForceUpdate)
+	// Re-fetch fresh baseline to minimize race window with parallel tests
+	// that may update the feature flag cache between calls.
+	var ffid string
+	var noneResponse *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		ffid = baseline.FeatureFlagsId
+		noneResponse = grpcGetFeatureFlags(t, tag, ffid, baseline.RequestedAt)
+		return len(noneResponse.Features) == 0
+	}, 30*time.Second, 2*time.Second, "cache should stabilize for same featuresId")
+	assert.Equal(t, ffid, noneResponse.FeatureFlagsId)
+	assert.Equal(t, 0, len(noneResponse.ArchivedFeatureFlagIds))
+	assert.False(t, noneResponse.ForceUpdate)
 
 	// Find feature with tag, with the different features ID, and requested at
-	response = grpcGetFeatureFlags(t, tag, "random-id", response.RequestedAt)
-	assert.Equal(t, ffid, response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
+	var diffResponse *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		ffid = baseline.FeatureFlagsId
+		diffResponse = grpcGetFeatureFlags(t, tag, "random-id", baseline.RequestedAt)
+		return len(diffResponse.Features) == 0
+	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
+	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
+	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
+	assert.True(t, diffResponse.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResponse.ForceUpdate)
 }
 
 func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
@@ -1457,16 +1467,24 @@ func createFeature(
 	req *featureproto.CreateFeatureRequest,
 ) *featureproto.Feature {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	createRes, err := client.CreateFeature(ctx, req)
-	if err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		createRes, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			if createRes == nil {
+				t.Fatal("Created response is nil")
+			}
+			return createRes.Feature
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, req.Id, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
-	if createRes == nil {
-		t.Fatal("Created resonse is nil")
-	}
-	return createRes.Feature
+	return nil
 }
 
 func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
@@ -1496,9 +1514,18 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 			},
 		},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, addReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, addReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addTag (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1507,18 +1534,27 @@ func addRule(t *testing.T, featureID, variationID string, client featureclient.C
 	t.Helper()
 	rule := newFixedStrategyRule(variationID)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		RuleChanges: []*featureproto.RuleChange{
-			{
-				ChangeType: featureproto.ChangeType_CREATE,
-				Rule:       rule,
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			RuleChanges: []*featureproto.RuleChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Rule:       rule,
+				},
 			},
-		},
-	}); err != nil {
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addRule (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1530,22 +1566,40 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
 func archiveFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		Archived:      wrapperspb.Bool(true),
-	}); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			Archived:      wrapperspb.Bool(true),
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying archiveFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }

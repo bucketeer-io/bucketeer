@@ -55,14 +55,15 @@ const (
 	goalEventType eventType = iota + 1 // eventType starts from 1 for validation.
 	evaluationEventType
 	metricsEventType
-	prefixTestName   = "e2e-test"
-	retryTimes       = 30
-	timeout          = 2 * time.Minute
-	prefixID         = "e2e-test"
-	version          = "/v1"
-	service          = "/gateway"
-	eventsAPI        = "/events"
-	authorizationKey = "authorization"
+	prefixTestName        = "e2e-test"
+	retryTimes            = 30
+	timeout               = 2 * time.Minute
+	prefixID              = "e2e-test"
+	version               = "/v1"
+	deadlockRetryAttempts = 3
+	service               = "/gateway"
+	eventsAPI             = "/events"
+	authorizationKey      = "authorization"
 )
 
 var (
@@ -597,10 +598,8 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -644,10 +643,8 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -713,10 +710,8 @@ func TestOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -778,10 +773,8 @@ func TestDatetimeBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 
@@ -834,10 +827,9 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
+
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 	// As a requirement, when disabling a flag using an auto operation,
 	// It must stop the progressive rollout if it is running
@@ -1045,7 +1037,16 @@ func newWebhookName(t *testing.T) string {
 
 func createFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		_, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID))
+		if err == nil {
+			break
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 	enableFeature(t, featureID, client)
@@ -1053,7 +1054,16 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 
 func createDisabledFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		_, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID))
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createDisabledFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1127,9 +1137,18 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
