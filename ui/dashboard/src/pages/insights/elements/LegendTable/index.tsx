@@ -13,7 +13,7 @@ import { IconSorting, IconSortingDown, IconSortingUp } from '@icons';
 import Table from 'components/table';
 import { Tooltip } from 'components/tooltip';
 import EmptyState from 'elements/empty-state';
-import { getColor } from '../chart-utils';
+import { formatYAxis, getColor } from '../chart-utils';
 
 interface LegendRow {
   index: number;
@@ -30,7 +30,7 @@ interface LegendTableProps {
 }
 
 export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
-  const fmt = formatter ?? ((v: number) => v.toFixed(2));
+  const fmt = formatter ?? formatYAxis;
   const { t } = useTranslation(['common']);
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'avg', desc: true }
@@ -40,8 +40,12 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
     () =>
       datasets.map((ds, i) => {
         const nums = ds.data.filter(v => typeof v === 'number' && !isNaN(v));
-        const min = nums.length ? Math.min(...nums) : 0;
-        const max = nums.length ? Math.max(...nums) : 0;
+        const min = nums.length
+          ? nums.reduce((a, b) => (b < a ? b : a), nums[0])
+          : 0;
+        const max = nums.length
+          ? nums.reduce((a, b) => (b > a ? b : a), nums[0])
+          : 0;
         const avg = nums.length
           ? nums.reduce((a, b) => a + b, 0) / nums.length
           : 0;
@@ -74,7 +78,7 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
               content={row.original.label}
               side="top"
               trigger={
-                <span className="max-w-[250px] text-gray-700 truncate typo-para-medium">
+                <span className="max-w-[300px] text-gray-700 truncate typo-para-medium">
                   {row.original.label}
                 </span>
               }

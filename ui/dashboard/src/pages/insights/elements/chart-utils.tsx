@@ -1,25 +1,13 @@
-import { ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 import { COLORS } from 'constants/styles';
 import { useTranslation } from 'i18n';
 import { IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import { formatYAxis } from '../utils';
 
-export const formatLargeNumber = (value: number): string => {
-  if (value >= 1e9) {
-    const billions = value / 1e9;
-    return `${billions >= 10 ? billions.toFixed(0) : billions.toFixed(1)}B`;
-  }
-  if (value >= 1e6) {
-    const millions = value / 1e6;
-    return `${millions >= 10 ? millions.toFixed(0) : millions.toFixed(1)}M`;
-  }
-  if (value >= 1e3) {
-    const thousands = value / 1e3;
-    return `${thousands >= 10 ? thousands.toFixed(0) : thousands.toFixed(1)}K`;
-  }
-  return String(value);
-};
+export { formatYAxis };
+export const formatLargeNumber = formatYAxis;
 
 export const getColor = (i: number) => COLORS[i % COLORS.length];
 
@@ -28,16 +16,18 @@ interface ChartCardProps {
   description?: ReactNode;
   currentMonth?: number;
   lastMonth?: number;
-  children: React.ReactNode;
+  children: ReactNode;
+  legendDatasets?: { label?: string; backgroundColor: string | string[] }[];
 }
 
-export const ChartCard = ({
+export const ChartCard = memo(function ChartCard({
   title,
   description,
   currentMonth,
   lastMonth,
-  children
-}: ChartCardProps) => {
+  children,
+  legendDatasets
+}: ChartCardProps) {
   const { t } = useTranslation(['common']);
 
   const pctChange =
@@ -81,8 +71,30 @@ export const ChartCard = ({
             )}
           </div>
         )}
-        <div className="flex-1 min-w-0">{children}</div>
+        <div className="flex-1 min-w-0">
+          {children}
+          {legendDatasets && legendDatasets.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3">
+              {legendDatasets.map((ds, i) => {
+                const color = Array.isArray(ds.backgroundColor)
+                  ? ds.backgroundColor[0]
+                  : ds.backgroundColor;
+                return (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block w-10 h-2.5 rounded-sm flex-shrink-0"
+                      style={{ backgroundColor: color as string }}
+                    />
+                    <span className="typo-para-small text-gray-500 truncate max-w-[120px]">
+                      {ds.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-};
+});

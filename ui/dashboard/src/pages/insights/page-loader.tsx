@@ -1,82 +1,39 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQueryInsightsMonthlySummary } from '@queries/insights';
 import { useQueryProjects } from '@queries/projects';
-import {
-  getCurrentEnvironment,
-  getCurrentProject,
-  getUniqueProjects,
-  useAuth
-} from 'auth';
+import { getUniqueProjects, useAuth } from 'auth';
 import { ALL_API_IDS, ALL_SOURCE_IDS } from 'constants/insight';
-import { DateTime } from 'luxon';
-import { InsightSourceId, InsightApiId } from '@types';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
-
-export type TimeRangePreset = '1h' | '6h' | '24h' | '7d' | '30d' | 'this_month';
-
-export interface InsightsFilters {
-  projectId: string;
-  environmentId: string;
-  sourceId: InsightSourceId | '';
-  apiId: InsightApiId | '';
-  timeRange: TimeRangePreset;
-  customStartAt?: string;
-  customEndAt?: string;
-}
-
-const presetMap: Record<TimeRangePreset, (now: DateTime) => DateTime> = {
-  '1h': now => now.minus({ hours: 1 }),
-  '6h': now => now.minus({ hours: 6 }),
-  '24h': now => now.minus({ hours: 24 }),
-  '7d': now => now.minus({ days: 7 }),
-  '30d': now => now.minus({ days: 30 }),
-  this_month: now => now.startOf('month')
-};
-
-const computeTimeRange = (
-  preset: TimeRangePreset,
-  customStartAt?: string,
-  customEndAt?: string
-): { startAt: string; endAt: string } => {
-  if (customStartAt && customEndAt) {
-    return {
-      startAt: customStartAt,
-      endAt: customEndAt
-    };
-  }
-  const now = DateTime.now();
-  const startAt = presetMap[preset](now);
-
-  return {
-    startAt: String(Math.floor(startAt.toSeconds())),
-    endAt: String(Math.floor(now.toSeconds()))
-  };
-};
+import { InsightsFilters, computeTimeRange, normalizeEnvId } from './utils';
 
 const PageLoader = () => {
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const currentProject = getCurrentProject(
-    consoleAccount!.environmentRoles,
-    currentEnvironment.id
+  const roles = consoleAccount!.environmentRoles;
+
+  const userProjects = useMemo(() => getUniqueProjects(roles), [roles]);
+  const userEnvironments = useMemo(
+    () => roles.map(r => r.environment),
+    [roles]
+  );
+
+  const initialProjectId = userProjects[0]?.id ?? '';
+  const initialEnvironmentId = normalizeEnvId(
+    userEnvironments.find(e => e.projectId === initialProjectId)?.id ?? ''
   );
 
   const [filters, setFilters] = useState<InsightsFilters>({
-    projectId: currentProject?.id ?? '',
-    environmentId: '',
+    projectId: initialProjectId,
+    environmentId: initialEnvironmentId,
     sourceId: '',
     apiId: '',
     timeRange: '24h'
   });
 
-  const userProjects = getUniqueProjects(consoleAccount!.environmentRoles);
-  const userEnvironments = consoleAccount!.environmentRoles.map(
-    r => r.environment
-  );
+  const organizationId = roles[0]?.environment.organizationId ?? '';
 
   const { data: projectsData, isLoading: projectsLoading } = useQueryProjects({
-    params: { cursor: '', organizationId: currentEnvironment.organizationId }
+    params: { cursor: '', organizationId }
   });
 
   const filteredEnvironments = useMemo(() => {
@@ -85,18 +42,21 @@ const PageLoader = () => {
       : userEnvironments;
   }, [userEnvironments, filters.projectId]);
 
-  const prevProjectIdRef = useRef(filters.projectId);
+  const handleProjectChange = useCallback(
+    (projectId: string) => {
+      const firstEnv = projectId
+        ? userEnvironments.find(env => env.projectId === projectId)
+        : userEnvironments[0];
+      setFilters(prev => ({
+        ...prev,
+        projectId,
+        environmentId: normalizeEnvId(firstEnv?.id ?? '')
+      }));
+    },
+    [userEnvironments]
+  );
 
-  useEffect(() => {
-    if (prevProjectIdRef.current === filters.projectId) return;
-    prevProjectIdRef.current = filters.projectId;
-
-    setFilters(prev => ({ ...prev, environmentId: '' }));
-  }, [filters.projectId]);
-
-  const hasEnvironments = filters.environmentId
-    ? true
-    : filteredEnvironments.length > 0;
+  const hasEnvironments = filteredEnvironments.length > 0;
 
   /**
    * Params for monthly summary
@@ -163,6 +123,7 @@ const PageLoader = () => {
       timeRangeParams={timeRangeParams}
       filters={filters}
       onFiltersChange={setFilters}
+      onProjectChange={handleProjectChange}
       queriesEnabled={hasEnvironments}
     />
   );

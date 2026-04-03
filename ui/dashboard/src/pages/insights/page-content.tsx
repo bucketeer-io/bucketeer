@@ -41,7 +41,8 @@ import DateCustom from './elements/DateCustom';
 import ChartDescription from './elements/DescriptionChart';
 import MonthlyBarChart from './elements/MonthlyBarChart';
 import TimeSeriesLineChart from './elements/TimeSeriesLineChart';
-import { InsightsFilters, TimeRangePreset } from './page-loader';
+import { formatYAxis } from './utils';
+import { InsightsFilters, TimeRangePreset } from './utils';
 
 ChartJS.register(
   CategoryScale,
@@ -73,6 +74,7 @@ interface PageContentProps {
   timeRangeParams: InsightsTimeSeriesFetcherParams;
   filters: InsightsFilters;
   onFiltersChange: (filters: InsightsFilters) => void;
+  onProjectChange: (projectId: string) => void;
   queriesEnabled: boolean;
 }
 
@@ -84,6 +86,7 @@ const PageContent = ({
   timeRangeParams,
   filters,
   onFiltersChange,
+  onProjectChange,
   queriesEnabled
 }: PageContentProps) => {
   const { t } = useTranslation(['common']);
@@ -115,13 +118,12 @@ const PageContent = ({
   const environmentOptions: DropdownOption[] = useMemo(() => {
     return [
       { label: t('insights.all-environments'), value: '' },
-      ...environments.map(e =>
-        e.id === ''
-          ? { label: e.name, value: 'production' }
-          : { label: e.name, value: e.id }
-      )
+      ...environments.map(e => ({
+        label: e.name,
+        value: e.id === '' ? 'production' : e.id
+      }))
     ];
-  }, [environments, filters.projectId, t]);
+  }, [environments, t]);
 
   const environmentNameMap = useMemo(
     () =>
@@ -159,13 +161,6 @@ const PageContent = ({
   const isDisableExportCSV = useMemo(
     () => !monthlySummary || monthlySummary.series.length <= 0,
     [monthlySummary]
-  );
-
-  const handleProjectChange = useCallback(
-    (value: string) => {
-      onFiltersChange({ ...filters, projectId: value, environmentId: '' });
-    },
-    [filters, onFiltersChange]
   );
 
   const handleEnvironmentChange = useCallback(
@@ -223,8 +218,9 @@ const PageContent = ({
 
   const timeUnit: 'minute' | 'day' | 'hour' = useMemo(() => {
     if (filters.customStartAt && filters.customEndAt) {
-      const diffDays =
-        (Number(filters.customEndAt) - Number(filters.customStartAt)) / 86400;
+      const diffDays = Math.floor(
+        (Number(filters.customEndAt) - Number(filters.customStartAt)) / 86400
+      );
       return diffDays >= 2 ? 'day' : 'hour';
     }
     if (['7d', '30d', 'this_month'].includes(filters.timeRange)) return 'day';
@@ -260,7 +256,7 @@ const PageContent = ({
             itemSelected={filters.projectId}
             selectedOptions={filters.projectId ? [filters.projectId] : []}
             placeholder={t('insights.all-projects')}
-            onSelectOption={v => handleProjectChange(String(v))}
+            onSelectOption={v => onProjectChange(String(v))}
             triggerClassName="min-w-[180px]"
             align="start"
           />
@@ -331,6 +327,7 @@ const PageContent = ({
             field="mau"
             months={MONTHS}
             labels={MONTH_LABELS}
+            environmentNameMap={environmentNameMap}
           />
           <MonthlyBarChart
             description={
@@ -349,6 +346,7 @@ const PageContent = ({
             field="requests"
             months={MONTHS}
             labels={MONTH_LABELS}
+            environmentNameMap={environmentNameMap}
           />
         </div>
       </div>
@@ -410,7 +408,7 @@ const PageContent = ({
             timeUnit={timeUnit}
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
-            yAxisFormatter={v => `${v.toFixed(1)}ms`}
+            yAxisFormatter={v => `${formatYAxis(v)}ms`}
             environmentNameMap={environmentNameMap}
           />
           <TimeSeriesLineChart
@@ -422,7 +420,6 @@ const PageContent = ({
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
             environmentNameMap={environmentNameMap}
-            yAxisFormatter={v => `${v.toFixed(2)} req/s`}
           />
           <TimeSeriesLineChart
             title={t('insights.evaluations-second')}
@@ -457,8 +454,14 @@ const PageContent = ({
             timeUnit={timeUnit}
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
-            yAxisFormatter={v => v.toFixed(3)}
             environmentNameMap={environmentNameMap}
+            labelBuilder={series => {
+              const labelValues = series.labels
+                ? Object.values(series.labels)
+                : [];
+              const parts = [...labelValues, series.sourceId];
+              return parts.filter(Boolean).join(' / ');
+            }}
           />
           <TimeSeriesLineChart
             title={t('insights.error-rate-title')}
@@ -468,7 +471,7 @@ const PageContent = ({
             timeUnit={timeUnit}
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
-            yAxisFormatter={v => `${v.toFixed(2)}%`}
+            yAxisFormatter={v => `${formatYAxis(v)}%`}
             environmentNameMap={environmentNameMap}
           />
         </div>

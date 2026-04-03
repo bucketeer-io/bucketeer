@@ -519,7 +519,6 @@ const useOptions = () => {
   const sourceIdOptions: DropdownOption[] = useMemo(
     () => [
       { label: translation('insights.all-sdks'), value: '' },
-      { label: 'Unknown', value: 'UNKNOWN' },
       { label: 'Android', value: 'ANDROID' },
       { label: 'iOS', value: 'IOS' },
       { label: 'Web', value: 'WEB' },
@@ -543,7 +542,6 @@ const useOptions = () => {
   const apiIdOptions: DropdownOption[] = useMemo(
     () => [
       { label: translation('insights.all-apis'), value: '' },
-      { label: 'Unknown Api', value: 'UNKNOWN_API' },
       { label: 'GetEvaluation', value: 'GET_EVALUATION' },
       { label: 'GetEvaluations', value: 'GET_EVALUATIONS' },
       { label: 'RegisterEvents', value: 'REGISTER_EVENTS' },
