@@ -294,6 +294,12 @@ func (w *goalEvtWriter) Write(
 		w.logger.Error("Failed to append rows to goal_event table",
 			zap.Error(err),
 		)
+		if len(fs) == 0 {
+			for _, ge := range goalEvents {
+				fails[ge.Id] = true
+			}
+			return fails
+		}
 	}
 	failedToAppendMap := make(map[string]*epproto.GoalEvent)
 	for id, f := range fs {
@@ -303,7 +309,6 @@ func (w *goalEvtWriter) Write(
 				failedToAppendMap[id] = ge
 			}
 		}
-		// Update the fails map
 		fails[id] = f
 	}
 	if len(failedToAppendMap) > 0 {

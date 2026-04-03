@@ -7,7 +7,7 @@ WITH grouped_by_user_evaluation AS (
     FROM
         `%s`
     WHERE
-        timestamp BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
+        timestamp BETWEEN @startAt AND @endAt
     AND environment_id = @environmentId
     AND goal_id = @goalID
     AND feature_id = @featureID
