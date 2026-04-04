@@ -89,8 +89,8 @@ func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) int {
 				// Log the error, but do not stop the other goroutines
 				c.logger.Error("Failed to cache environment api key",
 					zap.Error(err),
-					zap.String("apiKey", obfuscateAPIKey(envAPIKey.GetApiKey().GetId())),
-					zap.String("apiKeyName", envAPIKey.GetApiKey().GetName()),
+					zap.String("apiKeyId", obfuscateAPIKey(envAPIKey.GetApiKey().GetId())),
+					zap.String("apiKey", obfuscateAPIKey(envAPIKey.GetApiKey().GetApiKey())),
 					zap.String("environmentId", envAPIKey.GetEnvironment().GetId()),
 				)
 				return
