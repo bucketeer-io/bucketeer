@@ -747,7 +747,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
@@ -917,7 +917,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.Strings("segmentIds", req.SegmentIds),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
@@ -1346,7 +1346,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(ErrMissingEvents),
 				zap.String("environmentId", envAPIKey.Environment.Id),
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
@@ -1407,7 +1407,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			}
 			eventCounter.WithLabelValues(callerGatewayService, typeUnknown, codeInvalidType).Inc()
 			s.logger.Warn("Received invalid type event",
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.String("projectID", envAPIKey.ProjectId),
 				zap.String("eventID", event.Id),
 				zap.String("environmentId", event.EnvironmentId),
@@ -1539,7 +1539,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
 			)...,
 		)
 		return nil, err
@@ -1566,7 +1566,7 @@ func (s *grpcGatewayService) checkRequest(
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
 			)...,
 		)
 		return nil, err
