@@ -488,7 +488,6 @@ export const rolloutSchema = ({
   const notEqualVariation = (key: string) =>
     function (value: string, context: yup.TestContext) {
       const valueKey = context.parent?.[key];
-      console.log(value, valueKey);
       if (value && valueKey && value === valueKey) {
         return context.createError({
           message: variationNotEqualMessage,

@@ -38,13 +38,8 @@ const ManualSchedule = ({
   const { t } = useTranslation(['form']);
   const isLanguageJapanese = getLanguage() === 'ja';
 
-  const {
-    control,
-    formState: { errors },
-    trigger,
-    watch,
-    clearErrors
-  } = useFormContext<RolloutSchemaType>();
+  const { control, trigger, watch, clearErrors } =
+    useFormContext<RolloutSchemaType>();
   const watchScheduleList = [
     ...watch('progressiveRollout.manual.schedulesList')
   ];
@@ -122,13 +117,10 @@ const ManualSchedule = ({
   };
 
   const revalidateVariations = () => {
-    if (errors?.progressiveRollout?.manual?.controlVariationId) {
-      trigger('progressiveRollout.manual.controlVariationId');
-    }
-
-    if (errors?.progressiveRollout?.manual?.targetVariationId) {
-      trigger('progressiveRollout.manual.targetVariationId');
-    }
+    trigger([
+      'progressiveRollout.manual.controlVariationId',
+      'progressiveRollout.manual.targetVariationId'
+    ]);
   };
 
   return (

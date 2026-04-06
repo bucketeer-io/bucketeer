@@ -25,13 +25,8 @@ const TemplateSchedule = ({
   isDisableCreateRollout: boolean;
 }) => {
   const { t } = useTranslation(['form', 'table', 'common']);
-  const {
-    control,
-    formState: { errors },
-    trigger,
-    watch,
-    setValue
-  } = useFormContext<RolloutSchemaType>();
+  const { control, trigger, watch, setValue } =
+    useFormContext<RolloutSchemaType>();
 
   const scheduleList = watch('progressiveRollout.template.schedulesList');
 
@@ -105,12 +100,10 @@ const TemplateSchedule = ({
   };
 
   const revalidateVariations = () => {
-    if (errors?.progressiveRollout?.template?.controlVariationId) {
-      trigger('progressiveRollout.template.controlVariationId');
-    }
-    if (errors?.progressiveRollout?.template?.targetVariationId) {
-      trigger('progressiveRollout.template.targetVariationId');
-    }
+    trigger([
+      'progressiveRollout.template.controlVariationId',
+      'progressiveRollout.template.targetVariationId'
+    ]);
   };
 
   useEffect(() => {

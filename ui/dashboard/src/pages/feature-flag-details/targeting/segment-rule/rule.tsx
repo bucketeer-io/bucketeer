@@ -4,7 +4,6 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
-import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -80,11 +79,6 @@ const RuleForm = ({
   } = methods;
 
   const clausesWatch = watch(`segmentRules.${segmentIndex}.clauses`);
-  const flagsSelected = new Set(
-    clausesWatch
-      ?.filter(item => item.type === RuleClauseType.FEATURE_FLAG)
-      .map(item => item.attribute ?? '')
-  );
   const {
     fields: clauses,
     append,
@@ -95,26 +89,26 @@ const RuleForm = ({
     keyName: 'clauseId'
   });
 
-  const {
-    isLoadingMore,
-    isSearching: isSearchingFeature,
-    remainingFlagOptions,
-    hasMore,
-    loadMore,
-    onSearchChange,
-    isInitialLoading: isLoadingFeature
-  } = useFeatureFlagsLoader({
-    environmentId: currentEnvironment.id,
-    selectedFlagIds: Array.from(flagsSelected),
-    currentFeatureId: feature.id,
-    filterSelected: true
-  });
-
-  const formatClauses = clausesWatch?.map(item => ({
+  const formatClauses = (clausesWatch ?? []).map(item => ({
     ...item,
     clauseId: clauses.find(clause => clause.id === item.id)?.clauseId
   }));
 
+  const flagOptions = useMemo(() => {
+    const flagsSelected = (clausesWatch ?? [])
+      .filter(item => item.type === RuleClauseType.FEATURE_FLAG)
+      ?.map(item => item.attribute);
+
+    return features
+      ?.filter(
+        item => ![...(flagsSelected ?? []), feature.id]?.includes(item.id)
+      )
+      .map(item => ({
+        label: item.name,
+        value: item.id,
+        enabled: item.enabled
+      }));
+  }, [features, [...(clausesWatch ?? [])], feature]);
   const segmentOptions = userSegments?.map(item => ({
     label: `${item.name} (${item.includedUserCount} ${t(`common:${item.includedUserCount === '1' ? 'user' : 'users'}`).toLowerCase()})`,
     value: item.id
@@ -295,15 +289,9 @@ const RuleForm = ({
                                       )?.name || '',
                                       50
                                     )}
-                                    isLoading={isLoadingFeature}
-                                    isLoadingMore={isLoadingMore}
-                                    isSearching={isSearchingFeature}
-                                    onHasMoreOptions={loadMore}
-                                    onSearchChange={onSearchChange}
-                                    isHasMore={hasMore || isLoadingMore}
                                     placeholder={t('experiments.select-flag')}
                                     isExpand
-                                    options={remainingFlagOptions}
+                                    options={flagOptions}
                                     selectedOptions={field.value}
                                     additionalElement={item => (
                                       <FeatureFlagStatus
