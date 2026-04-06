@@ -32,42 +32,45 @@ const TimeSeriesLineChart = ({
   environmentNameMap,
   labelBuilder
 }: TimeSeriesLineChartProps) => {
-  const datasets = useMemo(
-    () =>
-      timeseries.map((series, i) => {
-        let label: string;
-        if (labelBuilder) {
-          label = labelBuilder(series);
+  const datasets = useMemo(() => {
+    const uniqueEnvIds = new Set(timeseries.map(s => s.environmentId));
+    const singleEnv = uniqueEnvIds.size <= 1;
+
+    return timeseries.map((series, i) => {
+      let label: string;
+      if (labelBuilder) {
+        label = labelBuilder(series);
+      } else {
+        const labelValues = series.labels ? Object.values(series.labels) : [];
+        if (labelValues.length > 0) {
+          label = labelValues.join(' / ');
         } else {
-          const labelValues = series.labels ? Object.values(series.labels) : [];
-          if (labelValues.length > 0) {
-            label = labelValues.join(' / ');
-          } else {
-            const labelParts = [
-              environmentNameMap?.[series.environmentId] ??
-                series.environmentId,
-              series.sourceId
-            ];
-            if (series.apiId && series.apiId !== 'UNKNOWN_API')
-              labelParts.push(series.apiId);
-            label = labelParts.join(' / ');
+          const labelParts: string[] = [];
+          if (!singleEnv) {
+            labelParts.push(
+              environmentNameMap?.[series.environmentId] ?? series.environmentId
+            );
           }
+          labelParts.push(series.sourceId);
+          if (series.apiId && series.apiId !== 'UNKNOWN_API')
+            labelParts.push(series.apiId);
+          label = labelParts.filter(Boolean).join(' / ');
         }
-        return {
-          label,
-          data: series.data.map(d => ({
-            x: Number(d.timestamp) * 1000,
-            y: d.value
-          })),
-          borderColor: getColor(i),
-          backgroundColor: getColor(i),
-          fill: false,
-          tension: 0.2,
-          pointRadius: 0
-        };
-      }),
-    [timeseries, environmentNameMap, labelBuilder]
-  );
+      }
+      return {
+        label,
+        data: series.data.map(d => ({
+          x: Number(d.timestamp) * 1000,
+          y: d.value
+        })),
+        borderColor: getColor(i),
+        backgroundColor: getColor(i),
+        fill: false,
+        tension: 0.2,
+        pointRadius: 0
+      };
+    });
+  }, [timeseries, environmentNameMap, labelBuilder]);
 
   const legendData = useMemo(
     () =>
