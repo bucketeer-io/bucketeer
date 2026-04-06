@@ -22,7 +22,8 @@ interface RowWithDataProps {
   onSelectOption: (value: DropdownValue) => void;
 }
 
-const List = FixedSizeList as unknown as React.FC<FixedSizeListProps>;
+const List =
+  FixedSizeList as unknown as React.ComponentType<FixedSizeListProps>;
 
 const RowWithData = ({
   index,

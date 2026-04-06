@@ -1,4 +1,4 @@
-import { FC, memo, ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 import {
   StylesConfig,
   ActionMeta,
@@ -146,7 +146,7 @@ export const CustomMenuList = ({
   );
 };
 
-export const CreatableSelect: FC<CreatableSelectProps> = memo(
+export const CreatableSelect = memo<CreatableSelectProps>(
   ({
     isMulti = true,
     loading = false,

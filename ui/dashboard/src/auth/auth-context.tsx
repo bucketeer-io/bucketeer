@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -61,9 +61,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children
-}) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation(['message']);
   const navigate = useNavigate();
   const authToken: AuthToken | null = getTokenStorage();

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, startTransition } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { userSegmentBulkUpload, userSegmentCreator } from '@api/user-segment';
 import { userSegmentUpdater } from '@api/user-segment/user-segment-updater';
@@ -65,8 +65,11 @@ const SegmentCreateUpdateModal = ({
   const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
 
+  const schema = useFormSchema(formSchema);
+  const resolver = useMemo(() => yupResolver(schema), [schema]);
+
   const form = useForm({
-    resolver: yupResolver(useFormSchema(formSchema)),
+    resolver,
     values: {
       id: userSegment?.id || '',
       name: userSegment?.name || '',
@@ -83,10 +86,10 @@ const SegmentCreateUpdateModal = ({
   } = form;
 
   const handleClose = () => {
-    if (!form.formState.isDirty) {
-      resetSegment();
-    }
     onClose();
+    if (!form.formState.isDirty) {
+      startTransition(() => resetSegment());
+    }
   };
 
   const updateSuccess = (isUpload = false) => {
