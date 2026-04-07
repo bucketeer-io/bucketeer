@@ -1,89 +1,125 @@
 # RFC: Polymorphic Database Storage Layer
 
-## Summary
+## Contents
 
-This RFC proposes implementing PostgreSQL as an alternative primary storage backend alongside MySQL, selected at runtime via configuration. A unified `database.Client` interface abstracts transaction handling, allowing the API layer to call `dbClient.RunInTransactionV2()` without database-specific conditionals. The database selection logic is consolidated in the service constructor.
+**Roman numerals** (I., II., …) apply only to top-level `##` sections. Subsections (`###`) use plain titles.
 
-## Background
+- [I. Summary](#i-summary)
+- [II. Background](#ii-background)
+- [III. Problem: API layer builds queries via filter types](#iii-problem-api-layer-builds-queries-via-filter-types)
+  - [Symptoms](#symptoms)
+  - [Why this matters](#why-this-matters)
+- [IV. Goals](#iv-goals)
+- [V. Design overview](#v-design-overview)
+  - [Architecture layers](#architecture-layers)
+  - [1. Unified database client (transactions)](#1-unified-database-client-transactions)
+  - [2. Split query packages and storage implementations](#2-split-query-packages-and-storage-implementations)
+  - [3. List query semantics live in storage](#3-list-query-semantics-live-in-storage)
+  - [4. Shared neutral types (optional, limited)](#4-shared-neutral-types-optional-limited)
+- [VI. Alternative considered: unified client and `?` → `$N` replacement (Option B)](#vi-alternative-considered-unified-client-and---n-replacement-option-b)
+  - [Problems with that approach](#problems-with-that-approach)
+  - [Why we chose split query + split storage paths](#why-we-chose-split-query--split-storage-paths)
+- [VII. SQL compatibility (reference)](#vii-sql-compatibility-reference)
+  - [Placeholders](#placeholders)
+  - [JSON](#json)
+  - [Upsert](#upsert)
+  - [Auto-increment vs serial](#auto-increment-vs-serial)
+  - [Transaction propagation](#transaction-propagation)
+- [VIII. Affected packages](#viii-affected-packages)
+- [IX. Implementation examples](#ix-implementation-examples)
+  - [Unified database client and transactions](#unified-database-client-and-transactions)
+  - [PostgreSQL filter package](#postgresql-filter-package)
+  - [API layer changes](#api-layer-changes)
+  - [Storage layer: queries in mysql and postgres packages](#storage-layer-queries-in-mysql-and-postgres-packages)
+- [X. Testing strategy](#x-testing-strategy)
+- [XI. Trade-offs](#xi-trade-offs)
+  - [Advantages](#advantages)
+  - [Disadvantages](#disadvantages)
+- [XII. Implementation timeline (indicative)](#xii-implementation-timeline-indicative)
+- [XIII. Appendix: Example SQL outputs (illustrative)](#xiii-appendix-example-sql-outputs-illustrative)
 
-Currently, Bucketeer services are tightly coupled to MySQL for primary storage:
+## I. Summary
 
-1. **API Layer Dependencies**: Services like `PushService` directly hold `mysql.Client` and use MySQL-specific types:
+This RFC proposes PostgreSQL as an alternative primary storage backend alongside MySQL, selected at runtime via configuration. The API layer depends on a unified `database.Client` for transactions and on **storage interfaces that use database-agnostic parameters**—not on MySQL query types. **Query construction stays split by dialect**: `pkg/storage/v2/mysql` and `pkg/storage/v2/postgres` each own placeholders, JSON predicates, and helpers; **domain storage packages** provide separate implementations (e.g. `mysql_feature.go`, `postgres_feature.go`) or factories that wire the correct implementation at startup. **List and filter semantics** (what the user asked for) live in the storage layer; the API passes structs and enums derived from RPC validation, not `mysql.ListOptions` or raw SQL fragments.
 
-   ```go
-   type PushService struct {
-       mysqlClient      mysql.Client
-       pushStorage      v2ps.PushStorage
-       // ...
-   }
-   ```
+## II. Background
 
-2. **Storage Layer Dependencies**: Storage implementations depend on MySQL-specific interfaces and types:
+Bucketeer services are tightly coupled to MySQL for primary storage:
 
-   ```go
-   type pushStorage struct {
-       qe mysql.QueryExecer  // MySQL-specific interface
-   }
-   ```
+1. **API layer holds MySQL clients and types**  
+   Services such as `PushService` use `mysql.Client` directly, and list endpoints often build `mysql.ListOptions`, `mysql.FilterV2`, `mysql.JSONFilter`, and `mysql.Order` in the API package.
 
-3. **MySQL-Specific Types Throughout**:
-   - `mysql.JSONObject` for JSON serialization
-   - `mysql.ErrDuplicateEntry`, `mysql.ErrNoRows` for error handling
-   - `mysql.ListOptions` for query construction
-   - MySQL placeholder syntax (`?` vs `$1`)
+2. **Storage implementations depend on MySQL**  
+   Storage structs use `mysql.QueryExecer`; interfaces expose methods that take `*mysql.ListOptions`, which pins every caller and mock to MySQL.
 
-We've successfully implemented PostgreSQL as an alternative for the data warehouse (eventcounter), but extending this to primary storage requires a more comprehensive abstraction.
+3. **MySQL-specific concerns leak upward**  
+   JSON serialization, duplicate-key and no-rows errors, placeholder style (`?` vs `$1`), and query-builder types are visible outside storage.
 
-## Goals
+PostgreSQL is already used for the data warehouse (eventcounter). Primary OLTP storage needs a clearer boundary: **transactions** can be abstracted once; **SQL shape** cannot be fully hidden without either fragile shortcuts or repeated `if postgres` branches.
 
-1. Enable PostgreSQL as an alternative primary storage backend alongside MySQL
-2. Achieve database selection through configuration only - no if-else in API layer business logic
-3. Maintain backward compatibility with existing MySQL deployments
-4. Provide a clean abstraction that can be extended to other databases in the future
-5. Minimize code duplication between MySQL and PostgreSQL implementations
+## III. Problem: API layer builds queries via filter types
 
-## Design Overview
+A major blocker for polymorphic storage is not only `mysql.Client` on services but **list and filter logic living in the API layer** using types that are really **query builder fragments**.
 
-### Architecture Layers
+### Symptoms
 
+- The API imports `pkg/storage/v2/mysql` to construct `[]*mysql.FilterV2`, `[]*mysql.JSONFilter`, `*mysql.SearchQuery`, `[]*mysql.Order`, and `*mysql.ListOptions`.
+- **`FilterV2.Column` is sometimes a full SQL expression**, not a column name. For example, listing features with “has feature flag as rule” uses MySQL-specific JSON functions in the column slot:
+
+  ```go
+  filters = append(filters, &mysql.FilterV2{
+      Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
+      Operator: mysql.OperatorEqual,
+      Value:    true,
+  })
+  ```
+
+  PostgreSQL would need a different predicate (`jsonb_path_exists`, `@>`, etc.). No amount of `?` → `$1` rewriting fixes that.
+
+- **Ordering** is mapped in the API with names like `newListFeaturesOrdersMySQL`, producing SQL-oriented values (qualified columns and expressions such as `(progressive_rollout_count + schedule_count + kill_switch_count)`).
+- **Storage interfaces** expose `ListFeatures(ctx, *mysql.ListOptions)`, so the API must speak MySQL to call storage—this contradicts the goal of database selection by configuration only.
+
+### Why this matters
+
+- Polymorphic backends require **dialect-specific predicates** for JSON, upsert, and some aggregates. If the API continues to assemble `mysql.ListOptions`, every new endpoint duplicates that coupling.
+- The RFC goal “no database-specific conditionals in the API layer” is violated as long as the API builds MySQL filters and embeds MySQL SQL in struct fields meant for columns.
+
+**Decision:** Treat list/filter **intent** as part of the storage contract. The API validates auth and request shape, then calls storage with **semantic parameters** (environment ID, tag list, enums for order and status, optional booleans, pagination). Each storage implementation maps those parameters to its own list options and SQL.
+
+## IV. Goals
+
+1. Enable PostgreSQL as an alternative primary storage backend alongside MySQL.
+2. Select the database via configuration; **API business logic does not branch on dialect** and does not import mysql/postgres query types for lists.
+3. Maintain backward compatibility for existing MySQL deployments.
+4. Keep a small unified surface for **transactions** (`database.Client`) where it reduces boilerplate.
+5. Accept **duplication across MySQL and PostgreSQL storage paths** where it keeps SQL explicit and avoids a single mega-implementation full of `if dbType`.
+
+## V. Design overview
+
+### Architecture layers
+
+```mermaid
+flowchart TB
+  subgraph API_Layer["API layer"]
+    direction TB
+    T1["Transactions: database.Client (dialect-agnostic)"]
+    T2["CRUD / lists: storage interfaces, semantic params only"]
+    T3["No mysql.ListOptions or SQL fragments in handlers"]
+  end
+
+  API_Layer --> Client["database.Client + adapters"]
+  API_Layer --> Impl["Storage implementation (chosen at server startup)"]
+
+  Impl --> M["mysql_*.go (uses mysql package)"]
+  Impl --> P["postgres_*.go (uses postgres package)"]
+
+  M --> MP["pkg/storage/v2/mysql: query builders, filters, ? placeholders"]
+  P --> PP["pkg/storage/v2/postgres: query builders, filters, $n placeholders"]
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        API Layer                                │
-│  (Holds database.Client for transactions)                       │
-│  (Holds Storage interface for CRUD operations)                  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-            ┌─────────────────┴─────────────────┐
-            ▼                                   ▼
-┌───────────────────────┐       ┌─────────────────────────────────┐
-│   database.Client     │       │      Storage Interface          │
-│   (for transactions)  │       │  (PushStorage, TagStorage, ...) │
-└───────────────────────┘       └─────────────────────────────────┘
-            │                                   │
-            │                   ┌───────────────┴───────────────┐
-            │                   ▼                               ▼
-            │       ┌─────────────────────┐       ┌──────────────────────────┐
-            │       │ MySQL Implementation│       │ PostgreSQL Implementation│
-            │       │ (mysql_push.go)     │       │ (postgres_push.go)       │
-            │       └─────────────────────┘       └──────────────────────────┘
-            │                   │                               │
-            ▼                   ▼                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    pkg/storage/v2/database                      │
-│  (database.Client interface + MySQL/Postgres adapters)          │
-└─────────────────────────────────────────────────────────────────┘
-            │                                   │
-            ▼                                   ▼
-┌─────────────────────────┐       ┌─────────────────────────┐
-│   pkg/storage/v2/mysql  │       │ pkg/storage/v2/postgres │
-└─────────────────────────┘       └─────────────────────────┘
-```
 
-### Key Components
+### 1. Unified database client (transactions)
 
-#### 1. Unified Database Client Interface
-
-Create a `database.Client` interface that both MySQL and PostgreSQL clients implement:
+`database.Client` wraps the existing MySQL and PostgreSQL clients for **`RunInTransactionV2` and `Close` only**. Storage continues to execute queries through a **`QueryExecer`** that respects the transactional context (same pattern as today: transaction attached to `context`, client methods dispatch to the active tx).
 
 ```go
 // pkg/storage/v2/database/client.go
@@ -91,581 +127,127 @@ package database
 
 import "context"
 
-// Client is the unified database client interface
 type Client interface {
     RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error
     Close() error
 }
 ```
 
-```go
-// pkg/storage/v2/database/mysql_client.go
-package database
+Adapters delegate to `mysql.Client` / `postgres.Client` and strip the unused `Transaction` argument from the callback while preserving context-based tx propagation inside the underlying client.
 
-import (
-    "context"
+### 2. Split query packages and storage implementations
 
-    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-)
+**MySQL** and **PostgreSQL** each keep their own:
 
-type mysqlClientAdapter struct {
-    mc mysql.Client
-}
+- Placeholder style (`?` vs numbered `$n`).
+- Filter / list helpers that implement a shared **conceptual** model (equality, IN, NULL, JSON contains, search, ORDER BY) with **different `SQLString()` (or equivalent) output**.
+- Any dialect-specific upsert, JSON, or locking syntax.
 
-func NewMySQLStorageClient(mc mysql.Client) Client {
-    return &mysqlClientAdapter{mc: mc}
-}
+Domain storage (e.g. `pkg/feature/storage/v2`) exposes:
 
-func (c *mysqlClientAdapter) RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error {
-    return c.mc.RunInTransactionV2(ctx, func(ctx context.Context, _ mysql.Transaction) error {
-        return f(ctx)
-    })
-}
+- A **storage interface** that uses **semantic list parameters**, not `*mysql.ListOptions`.
+- **`NewMySQLFeatureStorage(qe mysql.QueryExecer) FeatureStorage`** and **`NewPostgresFeatureStorage(qe postgres.QueryExecer) FeatureStorage`** (names illustrative), or a factory in `server` that picks one.
 
-func (c *mysqlClientAdapter) Close() error {
-    return c.mc.Close()
-}
-```
+Simple CRUD can remain one file per dialect or share scanning helpers; **list methods** translate semantic params → `mysql.ListOptions` or `postgres.ListOptions` **inside** the implementation file for that backend.
+
+### 3. List query semantics live in storage
+
+**Example direction for feature listing:**
 
 ```go
-// pkg/storage/v2/database/postgres_client.go
-package database
+// pkg/feature/storage/v2 — semantic, no mysql import required for callers
 
-import (
-    "context"
-
-    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
-)
-
-type postgresClientAdapter struct {
-    pc postgres.Client
+type ListFeaturesParams struct {
+    EnvironmentID         string
+    Tags                  []string
+    Maintainer            string
+    Enabled               *bool
+    Archived              *bool
+    HasPrerequisites      *bool
+    HasFeatureFlagAsRule  *bool
+    SearchKeyword         string
+    Status                featureproto.FeatureLastUsedInfo_Status
+    OrderBy               featureproto.ListFeaturesRequest_OrderBy
+    OrderDirection        featureproto.ListFeaturesRequest_OrderDirection
+    Limit                 int
+    Offset                int
 }
 
-func NewPostgresStorageClient(pc postgres.Client) Client {
-    return &postgresClientAdapter{pc: pc}
-}
-
-func (c *postgresClientAdapter) RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error {
-    return c.pc.RunInTransactionV2(ctx, func(ctx context.Context, _ postgres.Transaction) error {
-        return f(ctx)
-    })
-}
-
-func (c *postgresClientAdapter) Close() error {
-    return c.pc.Close()
+type FeatureStorage interface {
+    ListFeatures(ctx context.Context, p ListFeaturesParams) ([]*featureproto.Feature, int, int64, error)
+    ListFeaturesFilteredByExperiment(ctx context.Context, p ListFeaturesParams) ([]*featureproto.Feature, int, int64, error)
+    // ... other methods without *mysql.ListOptions in the public interface
 }
 ```
 
-#### 2. Storage Interface Pattern
-
-Each storage package defines an interface with separate MySQL and PostgreSQL implementations:
-
-```go
-// pkg/push/storage/v2/push.go - Interface
-type PushStorage interface {
-    CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
-    UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
-    GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
-    ListPushes(ctx context.Context, option *ListOptions) ([]*proto.Push, int, int64, error)
-    DeletePush(ctx context.Context, id, environmentId string) error
-}
-
-// pkg/push/storage/v2/mysql_push.go - MySQL implementation (existing)
-func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage
-
-// pkg/push/storage/v2/postgres_push.go - PostgreSQL implementation (new)
-func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage
-```
-
-#### 3. Shared Filter Types and Query Builders
-
-##### Option A: Wrapper Pattern with Separate Packages
-
-**Shared types in `pkg/storage/v2/database/filter.go`** (pure data structs, no `SQLString()` methods):
-
-- `ListOptions`, `FilterV2`, `InFilter`, `NullFilter`, `JSONFilter`, `SearchQuery`, `OrFilter`, `Order`
-- Constants: `Operator`, `JSONFilterFunc`, `OrderDirection`
-
-**Database-specific wrappers** use composition pattern:
-
-- `pkg/storage/v2/mysql/filter.go`: Embeds filter structs, adds `SQLString()` with `?` placeholders and MySQL JSON functions
-- `pkg/storage/v2/postgres/filter.go`: Embeds filter structs, adds `SQLString()` with `$N` placeholders and PostgreSQL JSONB operators
-
-**Example:**
-
-```go
-// pkg/storage/v2/database/filter.go - pure data
-type FilterV2 struct {
-    Column   string
-    Operator Operator
-    Value    interface{}
-}
-
-// pkg/storage/v2/mysql/filter.go - wraps and adds SQLString()
-type FilterV2 struct {
-    filter.FilterV2
-}
-func (f *FilterV2) SQLString() (string, []interface{}) {
-    return fmt.Sprintf("%s %s ?", f.Column, f.Operator), []interface{}{f.Value}
-}
-
-// pkg/storage/v2/postgres/filter.go - wraps and adds SQLString() with index
-type FilterV2 struct {
-    filter.FilterV2
-    index *int
-}
-func (f *FilterV2) SQLString() (string, []interface{}) {
-    *f.index++
-    return fmt.Sprintf("%s %s $%d", f.Column, f.Operator, *f.index), []interface{}{f.Value}
-}
-```
-
-##### Option B: Unified Package with Placeholder Replacement
-
-A single `database` package with one client implementation that internally handles database differences:
-
-1. **Single client struct** with `dbType` field to track MySQL vs PostgreSQL
-2. **Automatic placeholder replacement** - `?` → `$1, $2, ...` for PostgreSQL at query execution time
-3. **Unified JSON filter** - Single `JSONFilter` type with `DBType` field that generates MySQL or PostgreSQL syntax
-4. **Unified error handling** - Converts both MySQL and PostgreSQL errors to common types
-
-**Structure:**
-
-```
-pkg/storage/v2/database/
-├── client.go           # Single client with dbType field, NewClient/NewMySQLClient/NewPostgresClient
-├── transaction.go      # Transaction with dbType for error conversion
-├── query.go            # Filters, query builder, ReplacePlaceholders(), JSONFilter
-├── result.go           # Result, Row, Rows interfaces
-├── error.go            # Unified errors + MySQL/PostgreSQL error converters
-├── metrics.go          # Database metrics
-└── mock/               # Generated mocks
-```
-
-**Single client with dbType:**
-
-```go
-// pkg/storage/v2/database/client.go
-package database
-
-type DBType string
-
-const (
-    DBTypeMySQL    DBType = "mysql"
-    DBTypePostgres DBType = "postgres"
-)
-
-type client struct {
-    db     *sql.DB
-    dbType DBType  // Determines placeholder replacement and error conversion
-    opts   *options
-    logger *zap.Logger
-}
-
-// NewClient creates a database client based on dbType
-func NewClient(
-    ctx context.Context,
-    dbType DBType,
-    dbUser, dbPass, dbHost string,
-    dbPort int,
-    dbName string,
-    opts ...Option,
-) (Client, error) {
-    // Creates MySQL or PostgreSQL connection based on dbType
-}
-
-// Convenience functions
-func NewMySQLClient(ctx, user, pass, host string, port int, dbName string, opts ...Option) (Client, error) {
-    return NewClient(ctx, DBTypeMySQL, user, pass, host, port, dbName, opts...)
-}
-
-func NewPostgresClient(ctx, user, pass, host string, port int, dbName string, opts ...Option) (Client, error) {
-    return NewClient(ctx, DBTypePostgres, user, pass, host, port, dbName, opts...)
-}
-```
-
-**Automatic placeholder replacement in query methods:**
-
-```go
-func (c *client) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {
-    // Replace ? with $1, $2, ... for PostgreSQL
-    if c.dbType == DBTypePostgres {
-        query = ReplacePlaceholders(query)
-    }
-
-    // Execute query...
-    err = c.convertError(err)  // Convert DB-specific errors
-    return &result{sret}, err
-}
-
-func (c *client) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
-    if c.dbType == DBTypePostgres {
-        query = ReplacePlaceholders(query)
-    }
-    // ...
-}
-
-func (c *client) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
-    if c.dbType == DBTypePostgres {
-        query = ReplacePlaceholders(query)
-    }
-    // ...
-}
-```
-
-**ReplacePlaceholders function:**
-
-```go
-// pkg/storage/v2/database/query.go
-
-// ReplacePlaceholders converts ? placeholders to $1, $2, $3... for PostgreSQL
-func ReplacePlaceholders(query string) string {
-    var result strings.Builder
-    paramIndex := 1
-    for i := 0; i < len(query); i++ {
-        if query[i] == '?' {
-            result.WriteString(fmt.Sprintf("$%d", paramIndex))
-            paramIndex++
-        } else {
-            result.WriteByte(query[i])
-        }
-    }
-    return result.String()
-}
-```
-
-**Unified JSON filter with DBType:**
-
-```go
-// JSONFilter - Single type that handles both MySQL and PostgreSQL
-type JSONFilter struct {
-    Column string
-    Func   JSONFilterFunc
-    Values []interface{}
-    DBType DBType
-}
-
-func NewJSONFilter(column string, f JSONFilterFunc, values []interface{}, dbType DBType) WherePart {
-    return &JSONFilter{Column: column, Func: f, Values: values, DBType: dbType}
-}
-
-func (f *JSONFilter) SQLString() (string, []interface{}) {
-    switch f.Func {
-    case JSONContainsString:
-        if f.DBType == DBTypePostgres {
-            return fmt.Sprintf("%s @> ?::jsonb", f.Column), []interface{}{formatJSONArray(f.Values, true)}
-        }
-        return fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column), []interface{}{formatJSONArray(f.Values, true)}
-    case JSONLengthGreaterThan:
-        if f.DBType == DBTypePostgres {
-            return fmt.Sprintf("jsonb_array_length(%s) > %v", f.Column, f.Values[0]), nil
-        }
-        return fmt.Sprintf("JSON_LENGTH(%s) > %v", f.Column, f.Values[0]), nil
-    // ... other cases
-    }
-}
-```
-
-**Unified error conversion:**
-
-```go
-// pkg/storage/v2/database/error.go
-var (
-    ErrNoRows         = errors.New("database: no rows")
-    ErrTxDone         = errors.New("database: tx done")
-    ErrDuplicateEntry = errors.New("database: duplicate entry")
-)
-
-func (c *client) convertError(err error) error {
-    if c.dbType == DBTypePostgres {
-        return convertPostgresError(err)
-    }
-    return convertMySQLError(err)
-}
-```
-
-##### Comparison
-
-| Aspect                  | Option A (Wrapper Pattern)                | Option B (Unified Package)                        |
-| ----------------------- | ----------------------------------------- | ------------------------------------------------- |
-| Package structure       | Separate mysql/postgres/filter packages   | Single `database` package                         |
-| Client type             | Adapter wrapping native clients           | Single client with `dbType` field                 |
-| Filter types            | Wrapper types with embedding              | Shared types + Unified `JSONFilter` with `DBType` |
-| Placeholder handling    | Generated at filter level with `$N`       | Auto-replaced at query execution                  |
-| Storage implementations | Separate MySQL/PostgreSQL implementations | Single implementation for both                    |
-| Code duplication        | More (separate implementations)           | Less (shared code)                                |
-| Complexity              | Higher (more abstraction)                 | Lower (simpler)                                   |
-
-**Output (both options):**
-
-```sql
--- MySQL (uses ? placeholders natively)
-SELECT * FROM push WHERE name = ? AND JSON_CONTAINS(tags, ?)
-
--- PostgreSQL (? auto-converted to $1, $2, ... at execution time)
-SELECT * FROM push WHERE name = $1 AND tags @> $2::jsonb
-```
-
-### Implementation Strategy
-
-#### Phase 1: Implement Storage Package and Query Builder
-
-Option B - Unified `database` package:
-
-1. Single `client` struct with `dbType` field (`DBTypeMySQL`, `DBTypePostgres`)
-2. `NewClient(ctx, dbType, ...)`, `NewMySQLClient(...)`, `NewPostgresClient(...)`
-3. Automatic placeholder replacement (`?` → `$1, $2, ...`) for PostgreSQL
-4. Shared filter types (`FilterV2`, `InFilter`, `NullFilter`, `SearchQuery`, etc.)
-5. Unified error handling (`ErrNoRows`, `ErrDuplicateEntry`, `ErrTxDone`)
-6. Query builder functions (`ConstructQueryAndWhereArgs`, `ConstructCountQuery`)
-
-#### Phase 2: Create PostgreSQL Schema Migration
-
-Create PostgreSQL schema migrations for all tables to match the existing MySQL schema.
-
-#### Phase 3: Implement Storage Layer and Refactor API Layer
-
-**Storage Layer (Option A - Separate Implementations):**
-
-```go
-// pkg/push/storage/v2/push.go - Interface definition
-type PushStorage interface {
-    CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
-    UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
-    GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
-    ListPushes(ctx context.Context, option *ListOptions) ([]*proto.Push, int, int64, error)
-    DeletePush(ctx context.Context, id, environmentId string) error
-}
-
-// pkg/push/storage/v2/mysql_push.go - MySQL implementation
-func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage
-
-// pkg/push/storage/v2/postgres_push.go - PostgreSQL implementation
-func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage
-```
-
-**Storage Layer (Option B - Single Implementation with Placeholder Replacement):**
-
-With placeholder replacement at the client level, we can have a **single storage implementation**:
-
-```go
-// pkg/push/storage/v2/push.go - Single implementation for both MySQL and PostgreSQL
-type PushStorage interface {
-    CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
-    UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
-    GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
-    ListPushes(ctx context.Context, option *database.ListOptions) ([]*proto.Push, int, int64, error)
-    DeletePush(ctx context.Context, id, environmentId string) error
-}
-
-// Single constructor - works with both MySQL and PostgreSQL
-func NewPushStorage(qe database.QueryExecer) PushStorage
-
-// Usage:
-// - All SQL uses ? placeholders
-// - PostgreSQL client replaces ? → $1, $2, ... at execution time
-// - For JSON filters, use JSONFilter with DBType parameter
-```
-
-**Example - Single implementation using ? placeholders:**
-
-```go
-func (s *pushStorage) CreatePush(ctx context.Context, push *domain.Push, envID string) error {
-    // Same SQL works for both MySQL and PostgreSQL
-    query := `INSERT INTO push (id, name, environment_id, created_at) VALUES (?, ?, ?, ?)`
-    _, err := s.qe.ExecContext(ctx, query, push.Id, push.Name, envID, push.CreatedAt)
-    return err
-}
-
-func (s *pushStorage) ListPushes(ctx context.Context, opts *database.ListOptions) ([]*proto.Push, error) {
-    query := `SELECT * FROM push`
-    // Query builder handles placeholder replacement internally
-    query, args := database.ConstructQueryAndWhereArgs(query, opts)
-    rows, err := s.qe.QueryContext(ctx, query, args...)
-    // ...
-}
-```
-
-**For JSON filters, use JSONFilter with DBType:**
-
-```go
-// JSONFilter generates appropriate SQL based on DBType
-jsonFilter := database.NewJSONFilter("tags", database.JSONContainsString, []interface{}{"web"}, dbType)
-// MySQL output: JSON_CONTAINS(tags, ?)
-// PostgreSQL output: tags @> ?::jsonb
-```
-
-**API Layer:**
-API services receive `database.Client` interface (not `mysql.Client`). Database client initialization happens in `server.go` only:
-
-```go
-// pkg/push/api/api.go
-package api
-
-import (
-    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-    v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
-)
-
-type PushService struct {
-    dbClient     database.Client    // Unified database client (MySQL or PostgreSQL)
-    pushStorage  v2ps.PushStorage   // Storage interface (MySQL or PostgreSQL implementation)
-    // ... other fields
-}
-
-// NewPushService receives database.Client, not mysql.Client
-// The caller (server.go) decides which database to use
-func NewPushService(
-    dbClient database.Client,        // Changed from mysql.Client
-    pushStorage v2ps.PushStorage,    // Storage implementation injected
-    // ... other params
-    opts ...Option,
-) *PushService {
-    return &PushService{
-        dbClient:    dbClient,
-        pushStorage: pushStorage,
-        // ...
-    }
-}
-
-func (s *PushService) CreatePush(ctx context.Context, req *pushproto.CreatePushRequest) (*pushproto.CreatePushResponse, error) {
-    // ... validation ...
-
-    // No database-specific code - just use dbClient
-    err = s.dbClient.RunInTransactionV2(ctx, func(ctx context.Context) error {
-        if err := s.pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
-            return err
-        }
-        return nil
-    })
-    // ...
-}
-```
-
-**Server Layer (initialization):**
-Database selection and client creation happens in `server.go`:
-
-```go
-// pkg/web/cmd/server/server.go (Option A - Separate storage implementations)
-func (s *server) createServices() {
-    var dbClient database.Client
-    var pushStorage v2ps.PushStorage
-
-    switch s.config.StorageType {
-    case "mysql":
-        dbClient, _ = database.NewMySQLClient(ctx, user, pass, host, port, dbName)
-        pushStorage = v2ps.NewMySQLPushStorage(dbClient)
-    case "postgres":
-        dbClient, _ = database.NewPostgresClient(ctx, user, pass, host, port, dbName)
-        pushStorage = v2ps.NewPostgresPushStorage(dbClient)
-    }
-
-    pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
-}
-```
-
-```go
-// pkg/web/cmd/server/server.go (Option B - Single storage implementation)
-func (s *server) createServices() {
-    var dbClient database.Client
-
-    switch s.config.StorageType {
-    case "mysql":
-        dbClient, _ = database.NewMySQLClient(ctx, user, pass, host, port, dbName)
-    case "postgres":
-        dbClient, _ = database.NewPostgresClient(ctx, user, pass, host, port, dbName)
-    }
-
-    // Single storage implementation works with both databases
-    // All SQL uses ? placeholders - PostgreSQL client auto-converts to $1, $2, ...
-    pushStorage := v2ps.NewPushStorage(dbClient)
-
-    pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
-}
-```
-
-### SQL Compatibility Considerations
-
-#### Placeholder Syntax
-
-- MySQL: `?` for all parameters
-- PostgreSQL: `$1, $2, $3, ...`
-
-#### JSON Operations
-
-- MySQL: `JSON_CONTAINS()`
-- PostgreSQL: `@>` JSONB operator
-
-#### Upsert (ON DUPLICATE KEY UPDATE)
-
-**Problem:** MySQL and PostgreSQL have different syntax for upsert operations (insert or update if exists).
-
-| Aspect | MySQL | PostgreSQL |
-|--------|-------|------------|
-| Clause | `ON DUPLICATE KEY UPDATE` | `ON CONFLICT (...) DO UPDATE SET` |
-| Conflict columns | Implicit (uses PRIMARY KEY/UNIQUE) | Explicit (must specify columns) |
-| Value reference | `VALUES(column)` | `EXCLUDED.column` |
-
-**Current MySQL SQL file:**
-
-```sql
-INSERT INTO ops_count (id, feature_id, environment_id, count)
-VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE
-    feature_id = VALUES(feature_id),
-    count = VALUES(count)
-```
-
-**Solution:** SQL templates use `%s` placeholder for the upsert clause. An `OnDuplicateKeyUpdate` query builder generates database-specific syntax based on `DBType`:
-
-**Updated SQL template:**
-
-```sql
-INSERT INTO ops_count (id, feature_id, environment_id, count)
-VALUES (?, ?, ?, ?) %s
-```
-
-**Go usage:**
-
-```go
-// Build upsert clause based on database type
-onDuplicate := mysql.NewOnDuplicateKeyUpdate(
-    s.dbType,                              // DBTypeMySQL or DBTypePostgres
-    []string{"id", "environment_id"},      // conflict columns (required for PostgreSQL)
-    []string{"feature_id", "count"},       // columns to update
-)
-
-// Format query with generated clause
-query := fmt.Sprintf(insertOpsCountSQL, onDuplicate.SQLString())
-_, err := s.client.ExecContext(ctx, query, id, featureID, envID, count)
-```
-
-**Generated output:**
-
-```sql
--- MySQL
-INSERT INTO ops_count (...) VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE
-    feature_id = VALUES(feature_id),
-    count = VALUES(count)
-
--- PostgreSQL
-INSERT INTO ops_count (...) VALUES ($1, $2, $3, $4)
-ON CONFLICT (id, environment_id) DO UPDATE SET
-    feature_id = EXCLUDED.feature_id,
-    count = EXCLUDED.count
-```
-
-#### Auto-increment vs Serial
-
-- MySQL: `AUTO_INCREMENT`
-- PostgreSQL: `SERIAL` or `GENERATED ALWAYS AS IDENTITY`
-
-This is handled at the schema level, not in application code.
-
-### Affected Packages
-
-Based on analysis, the following packages need refactoring:
+- **`mysql` implementation**: maps `p` to `*mysql.ListOptions`, including translating `HasFeatureFlagAsRule` into `JSON_CONTAINS(JSON_EXTRACT(...))` (or a dedicated helper in `pkg/storage/v2/mysql`).
+- **`postgres` implementation**: maps the same `p` into postgres list options with JSONB predicates that express the same intent.
+
+The API calls `ListFeatures(ctx, ListFeaturesParams{...})` after unmarshalling and permission checks; it does not reference `mysql.JSONFilter` or SQL strings.
+
+### 4. Shared neutral types (optional, limited)
+
+Where several domains need the same **pure data** shape (e.g. operator enum, order direction as int), those can live in `pkg/storage/v2/database` **without** `SQLString()`. Dialect packages embed or convert them. This is optional; avoiding a heavy shared query DSL is fine as long as **SQL emission stays in mysql/postgres or in `*_mysql.go` / `*_postgres.go`**.
+
+## VI. Alternative considered: unified client and `?` → `$N` replacement (Option B)
+
+We considered a **single** `database` package with one `QueryExecer`, a `dbType` field, **automatic replacement** of `?` with `$1`, `$2`, … at execution time (similar in spirit to [sqlx `Rebind`](https://github.com/jmoiron/sqlx/blob/master/bind.go)), unified error translation, and optionally a single storage implementation for both databases.
+
+### Problems with that approach
+
+1. **Placeholder rewriting is not SQL-aware**  
+   Typical implementations scan the string for `?` and replace in order. That breaks if `?` appears inside a string literal or comment; sqlx documents this limitation explicitly. Safer approaches either restrict all SQL to fixed templates or emit `$n` at build time (as GORM does per dialect via `BindVarTo`).
+
+2. **Dialect differences are not only placeholders**  
+   JSON (`JSON_CONTAINS` vs `@>` / `jsonb_path_exists`), upsert (`ON DUPLICATE KEY UPDATE` vs `ON CONFLICT ... DO UPDATE`), some aggregates and full-text APIs differ. A unified implementation either **branches on `dbType` everywhere** (collapsing into one file of conditionals) or still needs separate SQL strings per dialect—so the “single implementation” win is small.
+
+3. **API-embedded SQL fragments make unified SQL untenable**  
+   Even with perfect placeholder replacement, expressions like `JSON_CONTAINS(JSON_EXTRACT(rules, ...))` in filter “columns” must become postgres-specific text. That logic cannot live in a generic `ReplacePlaceholders` pass; it belongs next to the backend that understands the schema.
+
+4. **Transaction path must rewrite consistently**  
+   Every execution path (`ExecContext`, `QueryContext`, on pooled `DB` and on `Tx`) must apply the same rules; a single bug duplicates subtle production errors.
+
+### Why we chose split query + split storage paths
+
+- **Explicit SQL per dialect** is easier to review and test than a large `if dbType` matrix.
+- **Placeholders** are correct by construction in each package (`?` vs `$n` indexing), matching how ORMs like GORM generate SQL.
+- **List intent** in the storage API prevents the feature (and other) API packages from becoming query builders.
+
+We keep the **unified client only where the abstraction is honest**: transactions and startup wiring, not “one string fits all databases.”
+
+## VII. SQL compatibility (reference)
+
+### Placeholders
+
+- MySQL: `?`
+- PostgreSQL: `$1`, `$2`, …
+
+### JSON
+
+- MySQL: `JSON_CONTAINS`, `JSON_EXTRACT`, etc.
+- PostgreSQL: JSONB operators and functions (`@>`, `jsonb_path_exists`, `jsonb_array_length`, …)
+
+### Upsert
+
+| Aspect          | MySQL                          | PostgreSQL                             |
+| --------------- | ------------------------------ | -------------------------------------- |
+| Clause          | `ON DUPLICATE KEY UPDATE`      | `ON CONFLICT (...) DO UPDATE SET`      |
+| Conflict target | Implicit from unique/PK        | Must match a unique index / constraint |
+| Updated values  | `VALUES(col)` (legacy) / alias | `EXCLUDED.col`                         |
+
+Per-dialect helpers (in `mysql` / `postgres` packages or next to the storage impl) should generate the appropriate clause; PostgreSQL requires schema-level unique constraints that align with the chosen conflict target.
+
+### Auto-increment vs serial
+
+Handled in migrations (MySQL `AUTO_INCREMENT`, PostgreSQL `SERIAL` / `IDENTITY`). Application code may need `RETURNING` for last-insert id on PostgreSQL where MySQL used `LastInsertId`.
+
+### Transaction propagation
+
+Today, transactional execution uses **context** (transaction value on context) and a **client** that implements `QueryExecer`. Any unified `database.Client` used only for `RunInTransactionV2` must not break that pattern: storage must still run queries through a `QueryExecer` that participates in the same transaction.
+
+## VIII. Affected packages
+
+Refactoring touches storage and APIs that currently import mysql list types or construct filters in the API layer, including but not limited to:
 
 - `pkg/account/storage/v2`
 - `pkg/feature/storage/v2`
@@ -684,31 +266,154 @@ Based on analysis, the following packages need refactoring:
 - `pkg/experimentcalculator/storage/v2`
 - `pkg/eventcounter/storage/v2`
 
-### Testing Strategy
+## IX. Implementation examples
 
-1. **Unit Tests API layer**: refactor API layer to use unit test for both MySQL and PostgreSQL implementations
-2. **Unit Tests postgresQL builder**: Create test cases for PostgreSQL query builder functions to ensure correct placeholder generation and SQL syntax
-3. **E2E Tests**: Existing E2E tests should pass with either database backend
+This section walks through one vertical slice (feature listing is a good reference) in the order code is wired: **client → postgres filters → API → storage** with dialect-specific query construction.
 
-## Trade-offs
+### Unified database client and transactions
+
+The API depends on `database.Client` only to run work inside a transaction. Adapters wrap the existing `mysql.Client` / `postgres.Client` and forward `RunInTransactionV2` while keeping **transaction propagation on `context`** (the underlying client attaches the active `Transaction` to context; `ExecContext` / `QueryContext` on that client use the tx when present).
+
+```go
+// pkg/storage/v2/database — narrow interface
+type Client interface {
+    RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error
+    Close() error
+}
+
+// Adapter example: delegate to mysql.Client, drop unused tx param in callback
+func (c *mysqlClientAdapter) RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error {
+    return c.mc.RunInTransactionV2(ctx, func(ctx context.Context, _ mysql.Transaction) error {
+        return f(ctx)
+    })
+}
+```
+
+**Storage** still receives a **`QueryExecer`** (`mysql.Client` or `postgres.Client` implementing `ExecContext` / `QueryContext` / `QueryRowContext`) so queries run on the pool or on the transactional connection via context. The unified `database.Client` does not replace `QueryExecer` for CRUD unless you explicitly design a facade that implements both.
+
+### PostgreSQL filter package
+
+`pkg/storage/v2/postgres` grows types analogous to `mysql` (e.g. `FilterV2`, `ListOptions`, `JSONFilter`, `Order`) but **`SQLString()` emits `$1`, `$2`, …** using a running index, and JSON helpers use **JSONB** (`@>`, `jsonb_array_length`, …). Helpers such as `WritePlaceHolder` (already present) can format grouped placeholders.
+
+Illustrative shape (not the full API):
+
+```go
+// pkg/storage/v2/postgres — placeholder index threaded through list construction
+type FilterV2 struct {
+    Column   string
+    Operator Operator
+    Value    interface{}
+    index    *int // shared counter across WHERE parts
+}
+
+func (f *FilterV2) SQLString() (string, []interface{}) {
+    *f.index++
+    op := "=" // same operator map idea as pkg/storage/v2/mysql
+    return fmt.Sprintf("%s %s $%d", f.Column, op, *f.index), []interface{}{f.Value}
+}
+
+// JSON contains tags — contrast with mysql.JSON_CONTAINS
+func (j *JSONFilter) SQLString() (string, []interface{}) {
+    *j.index++
+    return fmt.Sprintf("%s @> $%d::jsonb", j.Column, *j.index), []interface{}{formatJSONBArr(j.Values)}
+}
+```
+
+List assembly mirrors `mysql.ConstructQueryAndWhereArgs` / count helpers but never uses `?`.
+
+### API layer changes
+
+Services hold **`database.Client`** for transactions and **`FeatureStorage`** (or domain equivalent) for persistence. List RPC handlers **do not** import `mysql` or build `ListOptions`; they pass a **semantic struct** after auth and validation.
+
+**Before (problematic):**
+
+```go
+options := &mysql.ListOptions{
+    Filters: []*mysql.FilterV2{{Column: "feature.environment_id", Operator: mysql.OperatorEqual, Value: envID}},
+    // ...
+}
+features, _, _, err := s.featureStorage.ListFeatures(ctx, options)
+```
+
+**After:**
+
+```go
+params := v2fs.ListFeaturesParams{
+    EnvironmentID: req.EnvironmentId,
+    Tags:          req.Tags,
+    // ... enums, optional bools, pagination from req
+}
+features, cursor, total, err := s.featureStorage.ListFeatures(ctx, params)
+```
+
+`server` wiring selects `NewMySQLFeatureStorage(mysqlClient)` or `NewPostgresFeatureStorage(postgresClient)` from config; `FeatureService` only sees `FeatureStorage` + `database.Client`.
+
+### Storage layer: queries in mysql and postgres packages
+
+Each dialect implementation maps **`ListFeaturesParams` → native list options → SQL**.
+
+**MySQL** (`feature_mysql.go` or equivalent) builds `*mysql.ListOptions`, then uses existing helpers against embedded SQL templates:
+
+```go
+func (s *featureStorageMySQL) ListFeatures(ctx context.Context, p ListFeaturesParams) ([]*featureproto.Feature, int, int64, error) {
+    opts := buildMySQLListOptions(p) // FilterV2, JSONFilter, Order — may include JSON_CONTAINS / JSON_EXTRACT for rule filters
+    query, args := mysql.ConstructQueryAndWhereArgs(selectFeaturesSQLQuery, opts)
+    rows, err := s.qe.QueryContext(ctx, query, args...)
+    // scan...
+}
+```
+
+**PostgreSQL** (`feature_postgres.go`) builds `*postgres.ListOptions` with the same *intent* but different `SQLString()` output, then uses postgres `ConstructQueryAndWhereArgs` (or equivalent):
+
+```go
+func (s *featureStoragePostgres) ListFeatures(ctx context.Context, p ListFeaturesParams) ([]*featureproto.Feature, int, int64, error) {
+    opts := buildPostgresListOptions(p) // same p, different predicates e.g. jsonb_path_exists / @> for rules
+    query, args := postgres.ConstructQueryAndWhereArgs(selectFeaturesSQLQuery, opts)
+    rows, err := s.qe.QueryContext(ctx, query, args...)
+    // scan identical proto rows
+}
+```
+
+The **embedded base SELECT** (`select_features.sql`) can stay one file per dialect if fragments differ, or share a static `SELECT ... FROM feature ...` string with dialect-specific `WHERE` composition only—either way, **the strings that differ (JSON, upsert)** live next to `mysql` or `postgres` helpers, not in `pkg/feature/api`.
+
+## X. Testing strategy
+
+1. **Storage unit tests** per dialect for list-parameter mapping and query construction (including JSON and edge filters).
+2. **API unit tests** use the `FeatureStorage` (etc.) interface with mocks that accept **semantic params**, not `*mysql.ListOptions`.
+3. **Integration / E2E** run against MySQL and, as coverage grows, PostgreSQL.
+
+## XI. Trade-offs
 
 ### Advantages
 
-1. **Flexibility**: Users can choose their preferred database
-2. **Open Source Friendly**: PostgreSQL is fully open source
-3. **Cost Reduction**: No BigQuery dependency for analytics when using PostgreSQL with TimescaleDB
-4. **Simplified Operations**: Single database system for both OLTP and OLAP
+- Clear ownership: **API** = auth, validation, orchestration; **storage** = persistence and SQL shape.
+- PostgreSQL support without smuggling MySQL expressions through generic filter fields.
+- Easier code review than a single dialect-agnostic query interpreter.
 
 ### Disadvantages
 
-1. **Increased Complexity**: More code to maintain (two implementations)
-2. **Testing Overhead**: Need to test against both databases
-3. **SQL Differences**: Some queries may need database-specific versions
+- More files and some duplicated mapping logic between `*_mysql.go` and `*_postgres.go`.
+- Broader test matrix (both databases for behavior that differs).
 
-## Implementation Timeline
+## XII. Implementation timeline (indicative)
 
-| Phase | Description                                                     | Estimated Effort |
-| ----- | --------------------------------------------------------------- | ---------------- |
-| 1     | Implement storage package postgres and query builder            | 1-2 weeks        |
-| 2     | Create PostgreSQL schema migration                              | 1 week           |
-| 3     | Implement storage layer for each package and refactor API layer | 4-5 weeks        |
+| Phase | Description                                                                                                                                              |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Harden `pkg/storage/v2/postgres` query/list helpers to parity with mysql where needed; unified `database.Client` adapters if not already done.           |
+| 2     | Introduce semantic list params and refactor **feature** storage + API as the reference pattern; remove mysql filter construction from `pkg/feature/api`. |
+| 3     | PostgreSQL schema migrations aligned with MySQL semantics (types, uniques for upsert).                                                                   |
+| 4     | Repeat storage split + API decoupling for remaining packages in the affected list.                                                                       |
+
+---
+
+## XIII. Appendix: Example SQL outputs (illustrative)
+
+```sql
+-- MySQL list fragment
+SELECT * FROM feature WHERE environment_id = ? AND JSON_CONTAINS(tags, ?)
+
+-- PostgreSQL equivalent intent
+SELECT * FROM feature WHERE environment_id = $1 AND tags @> $2::jsonb
+```
+
+These strings are built inside dialect-specific code paths, not in the API layer.
