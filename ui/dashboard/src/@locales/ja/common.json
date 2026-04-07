@@ -72,8 +72,10 @@
     "logout": "ログアウト",
     "back-to-main": "メインに戻る",
     "no-projects": "プロジェクトが見つかりません",
-    "no-organizations": "組織が見つかりません"
+    "no-organizations": "組織が見つかりません",
+    "insights": "インサイト"
   },
+  "analytics": "アナリティクス",
   "submit": "送信",
   "type": "タイプ",
   "key-role": "キーロール",
@@ -263,6 +265,7 @@
   "need-admin-access-tooltip": "エントリーを作成または更新するには管理者アクセスが必要です。",
   "operation": "オペレーション",
   "uploading": "アップロード中",
+  "loading": "読み込み中...",
   "today": "今日",
   "yesterday": "昨日",
   "audit-log": "監査ログ",
@@ -295,7 +298,6 @@
   "docs": "ドキュメント",
   "new": "新規",
   "discard": "変更を破棄",
-  "add-rule": "ルールを追加",
   "continue-editing": "編集を続ける",
   "leave-page": "ページを離れる",
   "note": "メモ",
@@ -314,5 +316,70 @@
   "change": "変更する",
   "rule": "ルール",
   "rules": "ルール",
-  "rule-deleted": "({{count}}) {{tailTitle}} が削除されます："
+  "rule-deleted": "({{count}}) {{tailTitle}} が削除されます：",
+  "insights": {
+    "monthly-use": "月次利用状況",
+    "export-csv": "CSVエクスポート",
+    "estimated-mau": "推定MAU",
+    "all-sdks": "すべてのSDK",
+    "all-apis": "すべてのAPI",
+    "all-projects": "すべてのプロジェクト",
+    "all-environments": "すべての環境",
+    "last-1-hour": "過去1時間",
+    "last-6-hours": "過去6時間",
+    "last-24-hours": "過去24時間",
+    "last-7-days": "過去7日間",
+    "last-30-days": "過去30日間",
+    "this-month": "今月",
+    "date-range": "カスタム期間",
+    "date-range-limit": "日付範囲は{{days}}日以内で指定してください。",
+    "average-latency": "平均レイテンシ",
+    "latency": "レイテンシ",
+    "request-per-second": "リクエスト/秒",
+    "request-per-sec": "リクエスト/秒",
+    "evaluations-second": "評価数/秒",
+    "evaluations-per-sec": "評価数/秒",
+    "error-rate-title": "内部エラーの割合",
+    "error-rate-legend": "エラー率 (%)",
+    "mau": "MAU",
+    "requests": "リクエスト",
+    "series": "シリーズ",
+    "min": "最小",
+    "max": "最大",
+    "avg": "平均",
+    "last": "最新",
+    "current-month": "今月",
+    "vs-last-month": "先月比",
+    "subtitle": "指標の概要",
+    "description": {
+        "mau": {
+          "title": "Bucketeer にリクエストを送信したユニークユーザー数の推定値です。",
+          "notes": {
+            "first": "データ収集開始日の影響により、最初の月の値には若干の誤差が含まれる場合があります。",
+            "second": "本日のデータは含まれていません（前日までの集計結果です）。",
+            "third": "集計は UTC を基準に行われます。",
+            "fourth": "アルゴリズムの特性上、約 0.81% の誤差が生じる可能性があります。"
+          }
+        },
+        "monthlyRequests": {
+          "title": "Bucketeer が処理した SDK からの API リクエスト総数です。",
+          "notes": {
+            "first": "データ収集開始日の影響により、最初の月の値には若干の誤差が含まれる場合があります。",
+            "second": "本日のデータは含まれていません（前日までの集計結果です）。",
+            "third": "集計は UTC を基準に行われます。"
+          }
+        },
+        "latency": {
+          "title": "SDK からのリクエストを受信してからレスポンスを返すまでの時間です。"
+        },
+        "evaluations": {
+          "title": "フィーチャーフラグ評価結果の種類ごとの内訳です。",
+          "types": {
+            "diff": "<b>diff:</b> 差分評価（前回の評価以降に変更があった内容のみを返します）。",
+            "none": "<b>none:</b> 前回の評価以降、変更はありません。",
+            "all": "<b>all:</b> すべての評価結果を返し、SDK キャッシュ全体を更新します。"
+          }
+        }
+      }
+  }
 }

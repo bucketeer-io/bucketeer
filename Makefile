@@ -3,8 +3,10 @@
 #############################
 
 LOCAL_IMPORT_PATH := github.com/bucketeer-io/bucketeer
-POSTGRES_ENABLED ?= false
-BIGQUERY_ENABLED ?= false
+# Auto-detect data warehouse type from values.dev.yaml unless explicitly overridden
+DWH_TYPE := $(shell grep -A3 'dataWarehouse:' manifests/bucketeer/values.dev.yaml 2>/dev/null | grep 'type:' | head -1 | awk '{print $$2}')
+POSTGRES_ENABLED ?= $(if $(filter postgres,$(DWH_TYPE)),true,false)
+BIGQUERY_ENABLED ?= $(if $(filter bigquery,$(DWH_TYPE)),true,false)
 
 # go applications
 GO_APP_DIRS := $(wildcard cmd/*)
@@ -321,7 +323,7 @@ e2e:
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \
 		-organization-id=${ORGANIZATION_ID} \
-		-test-id=${TEST_ID}	
+		-test-id=${TEST_ID}
 
 .PHONY: delete-dev-container-mysql-data
 delete-dev-container-mysql-data:
@@ -460,6 +462,12 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+# Update localenv Helm chart dependencies (populates manifests/localenv/charts/)
+.PHONY: localenv-dep-update
+localenv-dep-update:
+	@echo "Updating localenv Helm chart dependencies..."
+	helm dependency update manifests/localenv
+
 setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
@@ -548,10 +556,24 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) || \
+	helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED)
 	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
 	if [ "$(BIGQUERY_ENABLED)" = "true" ]; then \
 		echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."; \
-		make -C ./ create-bigquery-emulator-tables; \
+		created=0; \
+		for i in 1 2 3 4 5; do \
+			if make -C ./ create-bigquery-emulator-tables; then \
+				created=1; \
+				break; \
+			fi; \
+			echo "BigQuery emulator not ready yet, retrying in 5s... ($$i/5)"; \
+			sleep 5; \
+		done; \
+		if [ "$$created" -ne 1 ]; then \
+			echo "Failed to create BigQuery emulator tables after 5 attempts."; \
+			exit 1; \
+		fi; \
 	fi
 	if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
 		echo "Ensuring PostgreSQL event tables exist..."; \

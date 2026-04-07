@@ -73,6 +73,17 @@ const RecurringScheduleProgress = ({
     (clause: AutoOpsRuleClause) => {
       const dc = clause.clause as DatetimeClause;
       if (clause.isRecurring) {
+        const thisCount = dc.executionCount ?? 0;
+        // When this clause has already advanced past the current cycle
+        // (executed more times than another clause in the same rule),
+        // show lastExecutedAt to keep the timeline within the same cycle.
+        if (
+          thisCount > completedCycles &&
+          dc.lastExecutedAt &&
+          Number(dc.lastExecutedAt) > 0
+        ) {
+          return dc.lastExecutedAt;
+        }
         if (dc.nextExecutionAt && Number(dc.nextExecutionAt) > 0) {
           return dc.nextExecutionAt;
         }
@@ -86,7 +97,7 @@ const RecurringScheduleProgress = ({
       }
       return dc.time;
     },
-    [createdAt]
+    [createdAt, completedCycles]
   );
 
   const currentClause = useMemo(() => clauses[page * 10 - 1], [clauses, page]);
@@ -144,6 +155,7 @@ const RecurringScheduleProgress = ({
             />
             {paginatedClausesList.map(scheduleClause => {
               const dc = scheduleClause.clause as DatetimeClause;
+              const thisCount = dc.executionCount ?? 0;
               const nextExec = Number(dc.nextExecutionAt || 0);
               const smallestNextExec = Math.min(
                 ...paginatedClausesList
@@ -153,7 +165,9 @@ const RecurringScheduleProgress = ({
                   .filter(v => v > 0)
               );
               const isCurrentActive =
-                nextExec > 0 && nextExec === smallestNextExec;
+                nextExec > 0 &&
+                nextExec === smallestNextExec &&
+                thisCount === completedCycles;
               const time = getDisplayTime(scheduleClause);
               return (
                 <ProgressDateTimePoint

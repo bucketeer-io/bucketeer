@@ -5,7 +5,7 @@ SELECT
 FROM
     `%s`
 WHERE
-    timestamp BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
+    timestamp BETWEEN @startAt AND @endAt
     AND environment_id = @environmentId
     AND feature_id = @featureID
     AND feature_version = @featureVersion

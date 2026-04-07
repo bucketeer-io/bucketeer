@@ -25,3 +25,4 @@ export * from './evaluation';
 export * from './code-refs';
 export * from './trigger';
 export * from './team';
+export * from './insight';
