@@ -141,6 +141,7 @@ func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {
 				nil,         // variationChanges
 				nil,         // tagChanges
 				nil,         // maintainer
+				nil,         // ruleOrder
 			)
 
 			require.NoError(t, err)
@@ -241,6 +242,7 @@ func TestUpdateWithIdenticalDefaultStrategy(t *testing.T) {
 		nil,                            // variationChanges
 		nil,                            // tagChanges
 		nil,                            // maintainer
+		nil,                            // ruleOrder
 	)
 
 	require.NoError(t, err)
@@ -521,6 +523,7 @@ func TestUpdateMaintainer(t *testing.T) {
 				nil,          // variationChanges
 				nil,          // tagChanges
 				p.maintainer, // maintainer
+				nil,          // ruleOrder
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -1835,6 +1838,7 @@ func TestUpdateCompleteNoChangesScenario(t *testing.T) {
 		nil, // variationChanges - no changes
 		nil, // tagChanges - no changes
 		nil, // maintainer - no changes
+		nil, // ruleOrder - no changes
 	)
 
 	require.NoError(t, err)
@@ -1899,7 +1903,7 @@ func TestUpdateWithActualChangesIncrementsVersionAndTimestamp(t *testing.T) {
 	// Make an actual change (different name)
 	updated, err := originalFeature.Update(
 		wrapperspb.String("Updated Name"), // CHANGED - different from original
-		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	require.NoError(t, err)
@@ -2240,6 +2244,90 @@ func TestUpdateRemoveVariationMultipleRulesCleanup(t *testing.T) {
 				if rule2HasVariation {
 					t.Fatalf("Rule 2 should NOT have variation after removal")
 				}
+			}
+		})
+	}
+}
+
+func TestUpdateRuleOrder(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		inputFunc   func() *Feature
+		ruleOrder   []string
+		expectedIDs []string
+		expectedErr error
+	}{
+		{
+			desc: "success - reverse order",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-2", "rule-1"},
+			expectedIDs: []string{"rule-2", "rule-1"},
+			expectedErr: nil,
+		},
+		{
+			desc: "success - same order (no-op)",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1", "rule-2"},
+			expectedIDs: []string{"rule-1", "rule-2"},
+			expectedErr: nil,
+		},
+		{
+			desc: "nil ruleOrder - no reordering applied",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   nil,
+			expectedIDs: []string{"rule-1", "rule-2"},
+			expectedErr: nil,
+		},
+		{
+			desc: "error - wrong count",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1"},
+			expectedErr: errRulesOrderSizeNotEqual,
+		},
+		{
+			desc: "error - duplicate IDs",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1", "rule-1"},
+			expectedErr: errRulesOrderDuplicateIDs,
+		},
+		{
+			desc: "error - unknown rule ID",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1", "does-not-exist"},
+			expectedErr: errRuleNotFound,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := p.inputFunc()
+			updated, err := actual.Update(
+				nil, nil, nil, nil, nil, nil, nil, false,
+				nil, nil, nil, nil, nil, nil,
+				p.ruleOrder,
+			)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, len(p.expectedIDs), len(updated.Rules))
+			for i, id := range p.expectedIDs {
+				assert.Equal(t, id, updated.Rules[i].Id)
 			}
 		})
 	}

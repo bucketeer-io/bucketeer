@@ -42,6 +42,7 @@ func (f *Feature) Update(
 	variationChanges []*feature.VariationChange,
 	tagChanges []*feature.TagChange,
 	maintainer *wrapperspb.StringValue,
+	ruleOrder []string,
 ) (*Feature, error) {
 	// Use copier.CopyWithOption with DeepCopy: true to standardize empty slices as []
 	// This ensures consistent JSON serialization in both API responses and audit logs
@@ -118,6 +119,7 @@ func (f *Feature) Update(
 		targetChanges,
 		ruleChanges,
 		tagChanges,
+		ruleOrder,
 	); err != nil {
 		return nil, err
 	}
@@ -279,6 +281,7 @@ func (f *Feature) applyGranularChanges(
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
 	tagChanges []*feature.TagChange,
+	ruleOrder []string,
 ) error {
 	// Prerequisites
 	for _, change := range prerequisiteChanges {
@@ -352,6 +355,36 @@ func (f *Feature) applyGranularChanges(
 		}
 	}
 
+	// Apply rule ordering after all CRUD operations so newly created/deleted rules are accounted for
+	if len(ruleOrder) > 0 {
+		if err := f.applyRuleOrder(ruleOrder); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// applyRuleOrder reorders f.Rules to match the given list of rule IDs.
+// Must be called after all rule CREATE/UPDATE/DELETE changes have been applied.
+func (f *Feature) applyRuleOrder(ruleIDs []string) error {
+	if len(ruleIDs) != len(f.Rules) {
+		return errRulesOrderSizeNotEqual
+	}
+	seen := make(map[string]bool, len(ruleIDs))
+	rules := make([]*feature.Rule, 0, len(ruleIDs))
+	for _, id := range ruleIDs {
+		if seen[id] {
+			return errRulesOrderDuplicateIDs
+		}
+		seen[id] = true
+		rule, err := f.getRule(id)
+		if err != nil {
+			return errRuleNotFound
+		}
+		rules = append(rules, rule)
+	}
+	f.Rules = rules
 	return nil
 }
 

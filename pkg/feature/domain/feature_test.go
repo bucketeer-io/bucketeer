@@ -3304,6 +3304,7 @@ func TestUpdate(t *testing.T) {
 				p.variationChanges,
 				p.tagChanges,
 				p.maintainer,
+				nil, // ruleOrder
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -3496,7 +3497,7 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				p.prerequisiteChanges, nil, nil, nil, nil, nil,
+				p.prerequisiteChanges, nil, nil, nil, nil, nil, nil,
 			)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if err == nil {
@@ -3597,7 +3598,7 @@ func TestUpdateTargetsGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				nil, p.targetChanges, nil, nil, nil, nil,
+				nil, p.targetChanges, nil, nil, nil, nil, nil,
 			)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if err == nil {
@@ -3893,7 +3894,7 @@ func TestUpdateRulesGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
-				nil, nil, p.ruleChanges, nil, nil, nil, // granular change lists
+				nil, nil, p.ruleChanges, nil, nil, nil, nil, // granular change lists
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4108,7 +4109,7 @@ func TestUpdateVariationsGranular(t *testing.T) {
 			t.Parallel()
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
-				nil, nil, nil, p.variationChanges, nil, nil, // granular change lists
+				nil, nil, nil, p.variationChanges, nil, nil, nil, // granular change lists
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4207,7 +4208,7 @@ func TestUpdateTagsGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				nil, nil, nil, nil, p.tagChanges, nil,
+				nil, nil, nil, nil, p.tagChanges, nil, nil,
 			)
 			if p.expectedErr != nil {
 				assert.Error(t, err, p.desc)

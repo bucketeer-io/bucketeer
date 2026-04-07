@@ -962,6 +962,17 @@ func (s *FeatureService) validateScheduledChangePayload(
 		}
 	}
 
+	// Validate rule_order: if provided, must have no duplicates
+	if len(payload.RuleOrder) > 0 {
+		seen := make(map[string]bool, len(payload.RuleOrder))
+		for _, id := range payload.RuleOrder {
+			if id == "" || seen[id] {
+				return statusInvalidRuleOrder.Err()
+			}
+			seen[id] = true
+		}
+	}
+
 	// Validate target references
 	for _, tc := range payload.TargetChanges {
 		if tc.Target == nil {
@@ -1112,6 +1123,7 @@ func convertPayloadToUpdateRequest(
 		Archived:            payload.Archived,
 		ResetSamplingSeed:   payload.ResetSamplingSeed,
 		Maintainer:          payload.Maintainer,
+		RuleOrder:           payload.RuleOrder,
 	}
 	return req
 }
