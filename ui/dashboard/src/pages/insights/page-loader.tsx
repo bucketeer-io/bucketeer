@@ -1,11 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueryInsightsMonthlySummary } from '@queries/insights';
 import { useQueryProjects } from '@queries/projects';
 import { getUniqueProjects, useAuth } from 'auth';
-import { ALL_API_IDS, ALL_SOURCE_IDS } from 'constants/insight';
+import { ALL, ALL_API_IDS, ALL_SOURCE_IDS } from 'constants/insight';
+import { InsightApiId, InsightSourceId } from '@types';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
-import { InsightsFilters, computeTimeRange, normalizeEnvId } from './utils';
+import { isAll, useInsightsFilters } from './use-insights-filters';
+import { computeTimeRange, normalizeEnvId } from './utils';
 
 const PageLoader = () => {
   const { consoleAccount } = useAuth();
@@ -22,13 +24,10 @@ const PageLoader = () => {
     userEnvironments.find(e => e.projectId === initialProjectId)?.id ?? ''
   );
 
-  const [filters, setFilters] = useState<InsightsFilters>({
-    projectId: initialProjectId,
-    environmentId: initialEnvironmentId,
-    sourceId: '',
-    apiId: '',
-    timeRange: '24h'
-  });
+  const { filters, setFilters } = useInsightsFilters(
+    initialProjectId,
+    initialEnvironmentId
+  );
 
   const organizationId = roles[0]?.environment.organizationId ?? '';
 
@@ -36,39 +35,47 @@ const PageLoader = () => {
     params: { cursor: '', organizationId }
   });
 
-  const filteredEnvironments = useMemo(() => {
-    return filters.projectId
-      ? userEnvironments.filter(env => env.projectId === filters.projectId)
-      : userEnvironments;
-  }, [userEnvironments, filters.projectId]);
+  const filteredEnvironments = useMemo(
+    () =>
+      !isAll(filters.projectId)
+        ? userEnvironments.filter(env => env.projectId === filters.projectId)
+        : userEnvironments,
+    [userEnvironments, filters.projectId]
+  );
 
   const handleProjectChange = useCallback(
     (projectId: string) => {
-      const firstEnv = projectId
+      const firstEnv = !isAll(projectId)
         ? userEnvironments.find(env => env.projectId === projectId)
         : userEnvironments[0];
-      setFilters(prev => ({
-        ...prev,
-        projectId,
+      setFilters({
+        ...filters,
+        projectId: projectId || ALL,
         environmentId: normalizeEnvId(firstEnv?.id ?? '')
-      }));
+      });
     },
-    [userEnvironments]
+    [userEnvironments, filters, setFilters]
   );
 
   const hasEnvironments = filteredEnvironments.length > 0;
 
-  /**
-   * Params for monthly summary
-   */
-  const monthlySummaryParams = useMemo(() => {
-    return {
-      environmentIds: filters.environmentId
+  const environmentIds = useMemo(
+    () =>
+      !isAll(filters.environmentId)
         ? [filters.environmentId]
         : filteredEnvironments.map(e => e.id),
-      sourceIds: filters.sourceId ? [filters.sourceId] : ALL_SOURCE_IDS
-    };
-  }, [filters.environmentId, filters.sourceId, filteredEnvironments]);
+    [filters.environmentId, filteredEnvironments]
+  );
+
+  const monthlySummaryParams = useMemo(
+    () => ({
+      environmentIds,
+      sourceIds: !isAll(filters.sourceId)
+        ? [filters.sourceId as InsightSourceId]
+        : ALL_SOURCE_IDS
+    }),
+    [environmentIds, filters.sourceId]
+  );
 
   const { data: monthlySummary, isLoading: monthlySummaryLoading } =
     useQueryInsightsMonthlySummary({
@@ -76,43 +83,40 @@ const PageLoader = () => {
       enabled: hasEnvironments
     });
 
-  /**
-   * Params for time range based queries
-   */
   const timeRangeParams = useMemo(() => {
     const { startAt, endAt } = computeTimeRange(
       filters.timeRange,
       filters.customStartAt,
       filters.customEndAt
     );
-
     return {
-      environmentIds: filters.environmentId
-        ? [filters.environmentId]
-        : filteredEnvironments.map(e => e.id),
-      sourceIds: filters.sourceId ? [filters.sourceId] : ALL_SOURCE_IDS,
-      apiIds: filters.apiId ? [filters.apiId] : ALL_API_IDS,
+      environmentIds,
+      sourceIds: !isAll(filters.sourceId)
+        ? [filters.sourceId as InsightSourceId]
+        : ALL_SOURCE_IDS,
+      apiIds: !isAll(filters.apiId)
+        ? [filters.apiId as InsightApiId]
+        : ALL_API_IDS,
       startAt,
       endAt
     };
   }, [
-    filters.environmentId,
+    environmentIds,
     filters.sourceId,
     filters.apiId,
     filters.timeRange,
-    filters.customEndAt,
     filters.customStartAt,
-    filteredEnvironments
+    filters.customEndAt
   ]);
+
+  const visibleProjects = useMemo(() => {
+    const userProjectIds = new Set(userProjects.map(p => p.id));
+    return (projectsData?.projects ?? []).filter(p => userProjectIds.has(p.id));
+  }, [userProjects, projectsData]);
 
   if (projectsLoading) {
     return <PageLayout.LoadingState />;
   }
-
-  const userProjectIds = new Set(userProjects.map(p => p.id));
-  const visibleProjects = (projectsData?.projects ?? []).filter(p =>
-    userProjectIds.has(p.id)
-  );
 
   return (
     <PageContent
