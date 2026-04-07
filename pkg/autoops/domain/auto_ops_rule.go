@@ -553,10 +553,18 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 						return unmarshalErr
 					}
 					if existingDt != nil && existingDt.ExecutionCount > 0 {
-						// Clause was already executed: preserve tracking fields.
 						dtClause.ExecutionCount = existingDt.ExecutionCount
 						dtClause.LastExecutedAt = existingDt.LastExecutedAt
-						dtClause.NextExecutionAt = existingDt.NextExecutionAt
+						if recurrenceScheduleChanged(existingDt, dtClause) {
+							nextExec, ok := CalculateNextExecution(dtClause, time.Now())
+							if ok {
+								dtClause.NextExecutionAt = nextExec
+							} else {
+								dtClause.NextExecutionAt = 0
+							}
+						} else {
+							dtClause.NextExecutionAt = existingDt.NextExecutionAt
+						}
 					} else {
 						// Truly new or never-executed clause: initialize recurrence.
 						if e := InitializeRecurringClause(dtClause); e != nil {
@@ -576,6 +584,49 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 		}
 	}
 	return errClauseNotFound
+}
+
+// recurrenceScheduleChanged returns true when any scheduling-relevant field
+// differs between the stored clause and the incoming update, which means
+// NextExecutionAt must be recalculated.
+func recurrenceScheduleChanged(existing, updated *proto.DatetimeClause) bool {
+	if existing.Time != updated.Time {
+		return true
+	}
+	er := existing.Recurrence
+	ur := updated.Recurrence
+	if er == nil && ur == nil {
+		return false
+	}
+	if er == nil || ur == nil {
+		return true
+	}
+	if er.Frequency != ur.Frequency ||
+		er.Timezone != ur.Timezone ||
+		er.DayOfMonth != ur.DayOfMonth ||
+		er.EndDate != ur.EndDate ||
+		er.MaxOccurrences != ur.MaxOccurrences {
+		return true
+	}
+	if len(er.DaysOfWeek) != len(ur.DaysOfWeek) {
+		return true
+	}
+	eSorted := make([]int, len(er.DaysOfWeek))
+	uSorted := make([]int, len(ur.DaysOfWeek))
+	for i, d := range er.DaysOfWeek {
+		eSorted[i] = int(d)
+	}
+	for i, d := range ur.DaysOfWeek {
+		uSorted[i] = int(d)
+	}
+	sort.Ints(eSorted)
+	sort.Ints(uSorted)
+	for i := range eSorted {
+		if eSorted[i] != uSorted[i] {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *AutoOpsRule) DeleteClause(id string) error {
