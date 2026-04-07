@@ -73,7 +73,7 @@ func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
 
 func (c *InMemoryCache) evictExpired(t time.Time) {
 	c.entries.Range(func(key, value interface{}) bool {
-		if e, ok := value.(*entry); ok && e.expiration.Before(t) {
+		if e, ok := value.(*entry); ok && !e.expiration.IsZero() && e.expiration.Before(t) {
 			c.entries.Delete(key)
 		}
 		return true
