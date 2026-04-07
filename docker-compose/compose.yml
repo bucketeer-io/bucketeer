@@ -450,6 +450,29 @@ services:
       - bucketeer
     restart: unless-stopped
 
+  # Prometheus for Insights metrics
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: bucketeer-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bucketeer
+
   # Nginx reverse proxy for routing
   nginx:
     image: nginx:${NGINX_VERSION:-1.25-alpine}
@@ -476,6 +499,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  prometheus_data:
     driver: local
 
 networks:
