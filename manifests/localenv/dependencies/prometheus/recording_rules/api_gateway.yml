@@ -1,0 +1,15 @@
+groups:
+  - name: api-gateway-recording-rules
+    rules:
+      - record: environment_id:pod:evaluation_type:source_id:bucketeer_api_gateway_evaluations_total:rate5m
+        expr: sum by (environment_id, pod, evaluation_type, source_id) (rate(bucketeer_gateway_api_evaluations_total[5m]))
+      - record: environment_id:source_id:method:bucketeer_gateway_api_handling_seconds:avg:rate5m
+        expr: sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_handling_seconds_sum[5m])) / sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_handling_seconds_count[5m]))
+      - record: environment_id:source_id:method:bucketeer_gateway_api_request_total:rate5m
+        expr: sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_request_total[5m]))
+      - record: environment_id:source_id:method:bucketeer_gateway_api_error_rate:rate5m
+        expr: >-
+          sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_error_total[5m]))
+          / sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_request_total[5m]))
+          or
+          sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_request_total[5m])) * 0

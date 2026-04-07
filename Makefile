@@ -471,10 +471,12 @@ setup-localenv:
 	kubectl delete pod -l app.kubernetes.io/name=vault --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=postgresql --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=prometheus --ignore-not-found=true
 	@echo "Waiting for infrastructure pods to be ready..."
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus --timeout=300s
 	@if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
 		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s; \
 	fi

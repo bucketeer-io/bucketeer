@@ -14,8 +14,11 @@ dependencies:
 - name: bq
   repository: file://./dependencies/bq
   version: 1.1.0
+- name: prometheus
+  repository: file://./dependencies/prometheus
+  version: 0.1.0
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:414f100711785705d6b36535390e7a95c38ef41d557693109154d50fe5655a97
-generated: "2025-12-22T19:24:11.003491+09:00"
+digest: sha256:b225c735a006210f8ff3a24b25d4ef44a4f05cbf7ed643d0eb7a145aee0398e7
+generated: "2026-04-03T18:10:43.435228+09:00"
