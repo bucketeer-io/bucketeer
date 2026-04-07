@@ -81,6 +81,9 @@ func NewGatewayService(
 	if options.metrics != nil {
 		registerMetrics(options.metrics)
 	}
+	inMemoryCache := cachev3.NewInMemoryCache(
+		cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
+	)
 	return &gatewayService{
 		featureClient:          featureClient,
 		accountClient:          accountClient,
@@ -91,7 +94,7 @@ func NewGatewayService(
 		metricsPublisher:       mp,
 		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
 		opts:                   &options,
 		logger:                 options.logger.Named("api"),
 	}
@@ -608,6 +611,7 @@ func (s *gatewayService) getEnvironmentAPIKey(
 		)
 		return nil, errInternal
 	}
+	putEnvironmentAPIKeyCache(ctx, resp.EnvironmentApiKey, environmentAPIKeyCache, logger)
 	return resp.EnvironmentApiKey, nil
 }
 

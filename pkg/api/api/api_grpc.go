@@ -208,6 +208,9 @@ func NewGrpcGatewayService(
 	if options.metrics != nil {
 		registerMetrics(options.metrics)
 	}
+	inMemoryCache := cachev3.NewInMemoryCache(
+		cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
+	)
 	s := &grpcGatewayService{
 		featureClient:            featureClient,
 		accountClient:            accountClient,
@@ -228,7 +231,7 @@ func NewGrpcGatewayService(
 		userPublisher:            up,
 		featuresCache:            cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:        cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
+		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
 		apiKeyLastUsedInfoCacher: sync.Map{},
 		opts:                     &options,
 		logger:                   options.logger.Named("api_grpc"),
@@ -1614,6 +1617,12 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			if err != nil {
 				return nil, err
 			}
+			putEnvironmentAPIKeyCache(
+				ctx,
+				envAPIKey,
+				s.environmentAPIKeyCache,
+				s.logger,
+			)
 			return envAPIKey, nil
 		},
 	)
@@ -1677,6 +1686,23 @@ func getEnvironmentAPIKeyFromCache(
 	}
 	cacheCounter.WithLabelValues(caller, typeAPIKey, layer, codeMiss).Inc()
 	return nil, err
+}
+
+func putEnvironmentAPIKeyCache(
+	ctx context.Context,
+	envAPIKey *accountproto.EnvironmentAPIKey,
+	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	logger *zap.Logger,
+) {
+	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
+		logger.Error(
+			"Failed to cache environment APIKey",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.Environment.Id),
+			)...,
+		)
+	}
 }
 
 func checkEnvironmentAPIKey(
