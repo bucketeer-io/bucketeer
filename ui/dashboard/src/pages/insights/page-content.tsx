@@ -42,7 +42,7 @@ import DateCustom from './elements/DateCustom';
 import ChartDescription from './elements/DescriptionChart';
 import MonthlyBarChart from './elements/MonthlyBarChart';
 import TimeSeriesLineChart from './elements/TimeSeriesLineChart';
-import { InsightsFilters, TimeRangePreset, formatYAxis } from './utils';
+import { InsightsFilters, TimeRangePreset, formatYAxis, formatLatency } from './utils';
 
 ChartJS.register(
   CategoryScale,
@@ -427,7 +427,7 @@ const PageContent = ({
             timeUnit={timeUnit}
             startAt={timeRangeParams.startAt}
             endAt={timeRangeParams.endAt}
-            yAxisFormatter={v => `${formatYAxis(v)}ms`}
+            yAxisFormatter={formatLatency}
             environmentNameMap={environmentNameMap}
           />
           <TimeSeriesLineChart

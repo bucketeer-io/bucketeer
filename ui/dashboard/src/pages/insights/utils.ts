@@ -1,6 +1,6 @@
 import { ALL } from 'constants/insight';
+import { InsightApiId, InsightSourceId } from '@types';
 import { DateTime } from 'luxon';
-import { InsightSourceId, InsightApiId } from '@types';
 
 export type TimeRangePreset =
   | '1h'
@@ -49,6 +49,17 @@ export const computeTimeRange = (
 };
 
 export const normalizeEnvId = (id: string) => (id === '' ? 'production' : id);
+
+// Format a latency value given in seconds.
+// Returns human-readable string with "ms" or "s" suffix.
+export const formatLatency = (seconds: number): string => {
+  if (seconds === 0) return '0ms';
+  if (seconds >= 10) return `${seconds.toFixed(0)}s`;
+  if (seconds >= 1) return `${seconds.toFixed(1)}s`;
+  const ms = seconds * 1000;
+  if (ms >= 10) return `${ms.toFixed(0)}ms`;
+  return `${ms.toFixed(1)}ms`;
+};
 
 export const formatYAxis = (value: number): string => {
   const abs = Math.abs(value);
