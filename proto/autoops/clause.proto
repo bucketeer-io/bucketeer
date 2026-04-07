@@ -24,6 +24,10 @@ message Clause {
   google.protobuf.Any clause = 2;
   ActionType action_type = 3;
   int64 executed_at = 4;
+  // Indicates if this is a recurring schedule.
+  // Only applicable when clause contains DatetimeClause with RecurrenceRule.
+  // This flag enables quick checks without deserializing the Any.
+  bool is_recurring = 5;
 }
 
 enum ActionType {
@@ -46,9 +50,45 @@ message OpsEventRateClause {
   ActionType action_type = 7;
 }
 
+message RecurrenceRule {
+  enum Frequency {
+    FREQUENCY_UNSPECIFIED = 0;
+    ONCE = 1;
+    DAILY = 2;
+    WEEKLY = 3;
+    MONTHLY = 4;
+  }
+  Frequency frequency = 1;
+  // For WEEKLY: 0=Sunday, 1=Monday, ..., 6=Saturday
+  repeated int32 days_of_week = 2;
+  // For MONTHLY: day of month (1-31)
+  int32 day_of_month = 3;
+  // When to start recurring (Unix timestamp in UTC)
+  int64 start_date = 4;
+  // When to stop recurring (Unix timestamp in UTC, 0 = no end)
+  int64 end_date = 5;
+  // Max times to execute (0 = unlimited)
+  int32 max_occurrences = 6;
+  // IANA timezone name (e.g., "Asia/Tokyo", "America/New_York")
+  string timezone = 7;
+}
+
 message DatetimeClause {
+  // Semantics depend on recurrence:
+  //   - One-time (recurrence is null or ONCE): Unix timestamp (UTC) of when to
+  //   execute.
+  //   - Recurring (DAILY/WEEKLY/MONTHLY): Time of day in seconds since midnight
+  //   (0-86399).
+  //     For recurring schedules, the actual execution timestamps are determined
+  //     by `next_execution_at` (pre-calculated) and the `recurrence` rule.
+  // IMPORTANT: Consumers MUST check `Clause.is_recurring` before interpreting
+  // this field.
   int64 time = 1;
   ActionType action_type = 2;
+  RecurrenceRule recurrence = 3;
+  int64 last_executed_at = 4;
+  int64 next_execution_at = 5;
+  int32 execution_count = 6;
 }
 
 message ProgressiveRolloutSchedule {

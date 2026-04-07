@@ -18,17 +18,6 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
-  # Migration settings for environment ID migration
-  # Set these when migrating an environment from an old ID (e.g., empty string) to a new UUID
-  # After 31 days of double-write, set enabled to false and run the MySQL migration
-  migration:
-    environmentId:
-      # Enable the migration double-write (must be explicitly set to "true")
-      enabled: "false"
-      # The old environment ID to migrate FROM (can be empty string "")
-      from: ""
-      # The new environment ID (UUID) to migrate TO
-      to: ""
   bigqueryQuerierEmulatorHost:
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
@@ -50,15 +39,19 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
 
 affinity: {}
 
 nodeSelector: {}
+
+priorityClassName: ""
 
 pdb:
   enabled:
@@ -278,6 +271,7 @@ processors:
     flushSize: 100
     flushInterval: 10
     writeCacheInterval: 10
+    writeDAUInterval: 10
     userAttributeKeyTtl: 604800 # 7 days
   segmentUserPersister:
     domainEventProject:
@@ -291,6 +285,7 @@ processors:
     redisPoolSize: 25
     redisMinIdle: 25
     redisPartitionCount: 16
+    redisMode: auto
     project: ""
   userEventPersister:
     flushSize: 200

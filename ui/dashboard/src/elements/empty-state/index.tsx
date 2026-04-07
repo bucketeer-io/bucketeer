@@ -16,8 +16,10 @@ export interface EmptyStateProps {
   className?: string;
 }
 
-export interface EmptyStateActionButtonProps
-  extends Omit<ButtonProps, 'size' | 'type'> {
+export interface EmptyStateActionButtonProps extends Omit<
+  ButtonProps,
+  'size' | 'type'
+> {
   type?: 'retry' | 'new';
   isNeedAdminAccess?: boolean;
 }

@@ -27,11 +27,13 @@ env:
   pubSubRedisAddr:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
+  pubSubRedisMode: auto
   redis:
     serverName:
     poolMaxIdle: 25
     poolMaxActive: 25
     addr:
+    mode: auto
   oldestEventTimestamp:
   furthestEventTimestamp:
   logLevel: info
@@ -52,6 +54,7 @@ env:
   traceSamplingProbability: 0.0001
 affinity: {}
 nodeSelector: {}
+priorityClassName: ""
 pdb:
   enabled:
   maxUnavailable: 20%

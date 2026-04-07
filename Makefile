@@ -3,6 +3,10 @@
 #############################
 
 LOCAL_IMPORT_PATH := github.com/bucketeer-io/bucketeer
+# Auto-detect data warehouse type from values.dev.yaml unless explicitly overridden
+DWH_TYPE := $(shell grep -A3 'dataWarehouse:' manifests/bucketeer/values.dev.yaml 2>/dev/null | grep 'type:' | head -1 | awk '{print $$2}')
+POSTGRES_ENABLED ?= $(if $(filter postgres,$(DWH_TYPE)),true,false)
+BIGQUERY_ENABLED ?= $(if $(filter bigquery,$(DWH_TYPE)),true,false)
 
 # go applications
 GO_APP_DIRS := $(wildcard cmd/*)
@@ -248,6 +252,20 @@ create-postgres-event-tables:
 		--no-gcp-trace-enabled \
 		--log-level=debug
 
+.PHONY: create-postgres-event-tables-minikube
+create-postgres-event-tables-minikube:
+	@echo "Creating Postgres event tables for minikube data warehouse..."
+	kubectl config use-context minikube
+	@echo "Waiting for PostgreSQL pod to be ready..."
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s
+	@echo "PostgreSQL pod is ready"
+	POSTGRES_USER=bucketeer \
+	POSTGRES_PASS=bucketeer \
+	POSTGRES_HOST=$$(minikube ip) \
+	POSTGRES_PORT=32100 \
+	POSTGRES_DB_NAME=bucketeer \
+	make create-postgres-event-tables
+
 .PHONY: generate-service-token
 generate-service-token:
 	go run ./hack/generate-service-token generate \
@@ -305,7 +323,7 @@ e2e:
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \
 		-organization-id=${ORGANIZATION_ID} \
-		-test-id=${TEST_ID}	
+		-test-id=${TEST_ID}
 
 .PHONY: delete-dev-container-mysql-data
 delete-dev-container-mysql-data:
@@ -444,11 +462,17 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
-POSTGRES_ENABLED ?= false
+# Update localenv Helm chart dependencies (populates manifests/localenv/charts/)
+.PHONY: localenv-dep-update
+localenv-dep-update:
+	@echo "Updating localenv Helm chart dependencies..."
+	helm dependency update manifests/localenv
+
 setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
-	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) || helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED)
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) || \
+	helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED)
 	@echo "Force restarting infrastructure pods to start fresh..."
 	kubectl delete pod -l app.kubernetes.io/name=bq --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=pubsub --ignore-not-found=true
@@ -456,16 +480,23 @@ setup-localenv:
 	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=postgresql --ignore-not-found=true
 	@echo "Waiting for infrastructure pods to be ready..."
-	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
-	if [ "$(POSTGRES_ENABLED)" = "true" ]; then
-		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s
+	@if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
+		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s; \
+	fi
+	@if [ "$(BIGQUERY_ENABLED)" = "true" ]; then \
+		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s; \
 	fi
 	@echo "Pods are ready"
 	@echo "Setting up data warehouse tables..."
-	make create-bigquery-emulator-tables
+	@if [ "$(BIGQUERY_ENABLED)" = "true" ]; then \
+		make create-bigquery-emulator-tables; \
+	fi
+	@if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
+		make create-postgres-event-tables-minikube; \
+	fi
 	make create-mysql-event-tables-minikube
 	make enable-vault-transit
 
@@ -523,9 +554,29 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) || \
+	helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED)
 	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
-	@echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."
-	make -C ./ create-bigquery-emulator-tables
+	if [ "$(BIGQUERY_ENABLED)" = "true" ]; then \
+		echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."; \
+		created=0; \
+		for i in 1 2 3 4 5; do \
+			if make -C ./ create-bigquery-emulator-tables; then \
+				created=1; \
+				break; \
+			fi; \
+			echo "BigQuery emulator not ready yet, retrying in 5s... ($$i/5)"; \
+			sleep 5; \
+		done; \
+		if [ "$$created" -ne 1 ]; then \
+			echo "Failed to create BigQuery emulator tables after 5 attempts."; \
+			exit 1; \
+		fi; \
+	fi
+	if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
+		echo "Ensuring PostgreSQL event tables exist..."; \
+		make -C ./ create-postgres-event-tables-minikube; \
+	fi
 	@echo "Installing Bucketeer services..."
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 

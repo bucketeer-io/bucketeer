@@ -53,10 +53,21 @@ type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
 type userAttributesCache map[string]*userproto.UserAttributes
 
+// dauBufferKey groups DAU entries by date, environment, and source.
+type dauBufferKey struct {
+	dateStr  string // "20060102"
+	envID    string
+	sourceID string
+}
+
+// dauBuffer accumulates unique user IDs per (date, env, source).
+type dauBuffer map[dauBufferKey]map[string]struct{}
+
 type EvaluationCountEventPersisterConfig struct {
 	FlushSize           int `json:"flushSize"`
 	FlushInterval       int `json:"flushInterval"`
 	WriteCacheInterval  int `json:"writeCacheInterval"`
+	WriteDAUInterval    int `json:"writeDAUInterval"`
 	UserAttributeKeyTTL int `json:"userAttributeKeyTtl"`
 }
 
@@ -66,9 +77,12 @@ type evaluationCountEventPersister struct {
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
 	userAttributesCacher                cachev3.UserAttributesCache
+	dauCache                            cachev3.DAUCache
+	dauBuf                              dauBuffer
 	userAttributesCache                 userAttributesCache
 	envLastUsedCacheMutex               sync.Mutex
 	userAttributesCacheMutex            sync.Mutex
+	dauBufferMutex                      sync.Mutex
 	logger                              *zap.Logger
 }
 
@@ -78,6 +92,7 @@ func NewEvaluationCountEventPersister(
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	userAttributesCacher cachev3.UserAttributesCache,
+	dauCache cachev3.DAUCache,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -102,9 +117,12 @@ func NewEvaluationCountEventPersister(
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
 		userAttributesCacher:                userAttributesCacher,
+		dauCache:                            dauCache,
+		dauBuf:                              make(dauBuffer),
 		userAttributesCache:                 make(userAttributesCache),
 		envLastUsedCacheMutex:               sync.Mutex{},
 		userAttributesCacheMutex:            sync.Mutex{},
+		dauBufferMutex:                      sync.Mutex{},
 		logger:                              logger,
 	}
 	// write flag last used info cache periodically
@@ -113,6 +131,9 @@ func NewEvaluationCountEventPersister(
 	// write user attributes cache periodically
 	//nolint:errcheck
 	go e.writeUserAttributesCache(ctx)
+	// write DAU cache periodically
+	//nolint:errcheck
+	go e.writeDAUCache(ctx)
 	return e, nil
 }
 
@@ -156,6 +177,8 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			// Update the user attributes cache
 			p.cacheUserAttributes(envEvents)
+			// Buffer DAU entries
+			p.bufferDAU(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ticker.C:
 			envEvents := p.extractEvents(batch)
@@ -163,6 +186,8 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			// Update the user attributes cache
 			p.cacheUserAttributes(envEvents)
+			// Buffer DAU entries
+			p.bufferDAU(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ctx.Done():
 			// Nack the messages to be redelivered
@@ -177,19 +202,98 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 }
 
 func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
-	fails := make(map[string]bool, len(envEvents))
+	totalEvents := 0
+	for _, events := range envEvents {
+		totalEvents += len(events)
+	}
+	fails := make(map[string]bool, totalEvents)
+	aggregator := newEvaluationCountAggregator()
+
+	type metricsKey struct {
+		environmentId string
+		sourceId      string
+		featureId     string
+		variationId   string
+	}
+	metricsAgg := make(map[metricsKey]int64)
+
+	// Reverse mapping: ecKey → set of event IDs that contributed to it.
+	ecKeyToEventIDs := make(map[string]map[string]struct{})
+
+	// Tracks per-metricsKey event counts for each ecKey, so we can correctly
+	// subtract failed counts across multiple sourceIds that share an ecKey.
+	ecKeyToMetricsCounts := make(map[string]map[metricsKey]int64)
+
 	for environmentId, events := range envEvents {
-		for id, event := range events {
-			// Increment the evaluation event count in the Redis
-			if err := p.incrementEvaluationCount(id, event, environmentId); err != nil {
+		for id, e := range events {
+			vID, err := getVariationID(e.Reason, e.VariationId)
+			if err != nil {
 				if errors.Is(err, ErrReasonNil) {
 					fails[id] = false
 				} else {
 					fails[id] = true
 				}
+				continue
+			}
+
+			ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+			ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+			userID := getUserID(e.UserId, e.User)
+
+			aggregator.addEvent(ecKey, ucKey, userID)
+
+			if ecKeyToEventIDs[ecKey] == nil {
+				ecKeyToEventIDs[ecKey] = make(map[string]struct{})
+			}
+			ecKeyToEventIDs[ecKey][id] = struct{}{}
+
+			mKey := metricsKey{
+				environmentId: environmentId,
+				sourceId:      e.SourceId.String(),
+				featureId:     e.FeatureId,
+				variationId:   vID,
+			}
+			metricsAgg[mKey]++
+			if ecKeyToMetricsCounts[ecKey] == nil {
+				ecKeyToMetricsCounts[ecKey] = make(map[metricsKey]int64)
+			}
+			ecKeyToMetricsCounts[ecKey][mKey]++
+		}
+	}
+
+	eventCounts, userCounts := aggregator.flush()
+	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts)
+
+	if err != nil {
+		// Only mark events whose ecKey failed in Redis
+		for ecKey := range failedECKeys {
+			for eventID := range ecKeyToEventIDs[ecKey] {
+				if _, alreadyFailed := fails[eventID]; !alreadyFailed {
+					fails[eventID] = true
+				}
 			}
 		}
 	}
+
+	failedMetricsCounts := make(map[metricsKey]int64)
+	for ecKey := range failedECKeys {
+		for mKey, count := range ecKeyToMetricsCounts[ecKey] {
+			failedMetricsCounts[mKey] += count
+		}
+	}
+
+	for key, count := range metricsAgg {
+		succeeded := count - failedMetricsCounts[key]
+		if succeeded > 0 {
+			evaluationEventCounter.WithLabelValues(
+				key.environmentId,
+				key.sourceId,
+				key.featureId,
+				key.variationId,
+			).Add(float64(succeeded))
+		}
+	}
+
 	return fails
 }
 
@@ -279,117 +383,148 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-func (p *evaluationCountEventPersister) incrementEvaluationCount(
-	eventID string,
-	event proto.Message,
-	environmentId string,
-) error {
-	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		vID, err := getVariationID(e.Reason, e.VariationId)
-		if err != nil {
-			return err
+// flushAggregatedCounts writes aggregated counts to Redis using individual calls
+// with PFADD-before-INCRBY ordering per key pair.
+//
+// Why not pipelines? While go-redis pipelines do expose per-command errors via
+// each Cmder's .Err() method after Exec(), individual calls were chosen as the
+// simpler correctness-first approach. Pipeline optimization (batching all PFADDs
+// then all INCRBYs with per-command error inspection) is planned as a follow-up.
+//
+// Within each key pair:
+//   - PFADD runs first (idempotent). If it fails, INCRBY is skipped.
+//   - INCRBY runs only after PFADD succeeds. If INCRBY fails, PFADD is
+//     already done (idempotent) so retry is safe.
+//
+// Across key pairs: all pairs are attempted even if some fail. The caller
+// receives the set of failed ecKeys so it can Nack only the affected events,
+// preventing over-counting of already-succeeded key pairs on retry.
+func (p *evaluationCountEventPersister) flushAggregatedCounts(
+	eventCounts map[string]int64,
+	userCounts map[string]map[string]struct{},
+) (map[string]struct{}, error) {
+	if len(eventCounts) == 0 && len(userCounts) == 0 {
+		return nil, nil
+	}
+
+	// Match up ec and uc keys by extracting the common suffix
+	// Admin keys: "ec:timestamp:featureID:variationID" / "uc:timestamp:featureID:variationID"
+	// Non-admin keys: "envID:ec:timestamp:featureID:variationID" / "envID:uc:timestamp:featureID:variationID"
+	type keyPair struct {
+		ecKey    string
+		ecCount  int64
+		ucKey    string
+		ucUsers  []string
+		hasUsers bool
+	}
+
+	// Extract suffix to pair ec/uc keys
+	// Keys format: Admin: "ec:timestamp:feat:var", Non-admin: "envID:ec:timestamp:feat:var"
+	// We extract the common suffix after the kind to pair them correctly
+	keyPairs := make(map[string]*keyPair)
+
+	extractKey := func(key, kind string) string {
+		// Extract a pairing key that includes environment ID so different envs never pair together.
+		// Non-admin: "envID:kind:suffix" → "envID:suffix"
+		// Admin: "kind:suffix" → "suffix"
+		pattern := ":" + kind + ":"
+		idx := strings.Index(key, pattern)
+		if idx >= 0 {
+			envPrefix := key[:idx]
+			suffix := key[idx+len(pattern):]
+			return envPrefix + ":" + suffix
 		}
-		// To avoid duplication when the request fails, we increment the event count in the end
-		// because the user count is an unique count, and there is no problem adding the same event more than once
-		// We tried to use Pipeline and indeed it improves the response time,
-		// but it also increases the Pod CPU usage. It's a trade-off.
-		// Since this is a background service and it's not latency-sensitive, we split the requests.
-		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		userID := getUserID(e.UserId, e.User)
-		if err := p.countUser(ucKey, userID); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Error("Failed to increment the evaluation user event in the Redis",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("eventId", eventID),
-					zap.String("userId", userID),
-					zap.String("userCountKey", ucKey),
-					zap.Any("evaluationEvent", e),
-				)
+		// Admin format: "kind:suffix"
+		return strings.TrimPrefix(key, kind+":")
+	}
+
+	// Build ec side of key pairs: extract pairing key and populate ecKey/ecCount.
+	// If uc was already processed, add to existing pair; otherwise create new pair.
+	for ecKey, count := range eventCounts {
+		suffix := extractKey(ecKey, eventCountKey)
+		if pair, exists := keyPairs[suffix]; exists {
+			pair.ecKey = ecKey
+			pair.ecCount = count
+		} else {
+			keyPairs[suffix] = &keyPair{
+				ecKey:   ecKey,
+				ecCount: count,
 			}
-			return err
 		}
-		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countEvent(ecKey); err != nil {
-			if !strings.Contains(err.Error(), "client is closed") {
-				p.logger.Error("Failed to increment the evaluation event in the Redis",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("eventId", eventID),
-					zap.String("userId", userID),
-					zap.String("eventCountKey", ecKey),
-					zap.Any("evaluationEvent", e),
-				)
+	}
+
+	// Build uc side of key pairs: extract pairing key and populate ucKey/ucUsers.
+	// If ec was already processed, add to existing pair; otherwise create new pair.
+	for ucKey, userIDSet := range userCounts {
+		suffix := extractKey(ucKey, userCountKey)
+		userIDs := make([]string, 0, len(userIDSet))
+		for userID := range userIDSet {
+			userIDs = append(userIDs, userID)
+		}
+
+		if pair, exists := keyPairs[suffix]; exists {
+			pair.ucKey = ucKey
+			pair.ucUsers = userIDs
+			pair.hasUsers = len(userIDs) > 0
+		} else {
+			keyPairs[suffix] = &keyPair{
+				ucKey:    ucKey,
+				ucUsers:  userIDs,
+				hasUsers: len(userIDs) > 0,
 			}
-			return err
-		}
-		evaluationEventCounter.WithLabelValues(
-			environmentId,
-			e.SdkVersion,
-			e.FeatureId,
-			e.Metadata[appVersion],
-			e.VariationId,
-		).Inc()
-
-		// Migration: Double-write to the target environment ID if migration is enabled
-		// This ensures data exists in both old and new key formats during the migration period
-		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
-			p.incrementEvaluationCountMigration(e, vID, userID, targetEnvID)
-		}
-	}
-	return nil
-}
-
-// incrementEvaluationCountMigration writes evaluation counts to the migration target environment.
-// This is a best-effort operation - errors are logged but not returned to avoid
-// blocking the main write path during migration.
-func (p *evaluationCountEventPersister) incrementEvaluationCountMigration(
-	e *eventproto.EvaluationEvent,
-	variationID string,
-	userID string,
-	targetEnvID string,
-) {
-	// Write user count to target environment
-	ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
-	if err := p.countUser(ucKeyTarget, userID); err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Migration: Failed to increment evaluation user count for target environment",
-				zap.Error(err),
-				zap.String("targetEnvironmentId", targetEnvID),
-				zap.String("featureId", e.FeatureId),
-				zap.String("userCountKey", ucKeyTarget),
-			)
 		}
 	}
 
-	// Write event count to target environment
-	ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
-	if err := p.countEvent(ecKeyTarget); err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Migration: Failed to increment evaluation event count for target environment",
-				zap.Error(err),
-				zap.String("targetEnvironmentId", targetEnvID),
-				zap.String("featureId", e.FeatureId),
-				zap.String("eventCountKey", ecKeyTarget),
-			)
+	failedECKeys := make(map[string]struct{})
+
+	for _, pair := range keyPairs {
+		// Step 1: PFADD first (idempotent - safe to retry)
+		if pair.hasUsers && pair.ucKey != "" {
+			_, err := p.evaluationCountCacher.PFAdd(pair.ucKey, pair.ucUsers...)
+			if err != nil {
+				if !strings.Contains(err.Error(), "client is closed") {
+					p.logger.Error("Failed to add users to HyperLogLog",
+						zap.Error(err),
+						zap.String("ucKey", pair.ucKey),
+					)
+				}
+				if pair.ecKey != "" {
+					failedECKeys[pair.ecKey] = struct{}{}
+				}
+				continue
+			}
+		}
+
+		// Step 2: INCRBY only if PFADD succeeded
+		if pair.ecKey != "" {
+			_, err := p.evaluationCountCacher.IncrementBy(pair.ecKey, pair.ecCount)
+			if err != nil {
+				if !strings.Contains(err.Error(), "client is closed") {
+					p.logger.Error("Failed to increment event count",
+						zap.Error(err),
+						zap.String("ecKey", pair.ecKey),
+						zap.Int64("count", pair.ecCount),
+					)
+				}
+				failedECKeys[pair.ecKey] = struct{}{}
+				continue
+			}
 		}
 	}
-}
 
-func (p *evaluationCountEventPersister) countEvent(key string) error {
-	_, err := p.evaluationCountCacher.Increment(key)
-	if err != nil {
-		return err
+	if len(failedECKeys) > 0 {
+		p.logger.Error("Partial flush failure",
+			zap.Int("failedKeyPairs", len(failedECKeys)),
+			zap.Int("totalKeyPairs", len(keyPairs)),
+		)
+		return failedECKeys, fmt.Errorf("flush: %d/%d key pairs failed", len(failedECKeys), len(keyPairs))
 	}
-	return nil
-}
 
-func (p *evaluationCountEventPersister) countUser(key, userID string) error {
-	_, err := p.evaluationCountCacher.PFAdd(key, userID)
-	if err != nil {
-		return err
-	}
-	return nil
+	p.logger.Debug("Flushed aggregated counts to Redis",
+		zap.Int("keyPairs", len(keyPairs)),
+	)
+
+	return nil, nil
 }
 
 func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
@@ -403,6 +538,83 @@ func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
 		environmentId,
 	)
+}
+
+// bufferDAU buffers DAU entries in memory grouped by date and (envID, sourceID).
+// User IDs are deduplicated in-memory using a set to reduce the PFADD payload
+// sent to Redis, since a single RegisterEvent request can contain multiple
+// evaluation events from the same user.
+// The buffered entries are flushed to Redis periodically by writeDAUCache.
+func (p *evaluationCountEventPersister) bufferDAU(envEvents environmentEventMap) {
+	p.dauBufferMutex.Lock()
+	defer p.dauBufferMutex.Unlock()
+	for environmentId, events := range envEvents {
+		for _, event := range events {
+			userID := getUserID(event.UserId, event.User)
+			if userID == "" {
+				continue
+			}
+			key := dauBufferKey{
+				dateStr:  time.Unix(event.Timestamp, 0).Format("20060102"),
+				envID:    environmentId,
+				sourceID: event.SourceId.String(),
+			}
+			if p.dauBuf[key] == nil {
+				p.dauBuf[key] = make(map[string]struct{})
+			}
+			p.dauBuf[key][userID] = struct{}{}
+		}
+	}
+}
+
+// writeDAUCache periodically flushes the in-memory DAU buffer to Redis.
+func (p *evaluationCountEventPersister) writeDAUCache(ctx context.Context) error {
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteDAUInterval) * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			p.logger.Debug("Write DAU cache timer triggered")
+			p.writeDAU()
+		}
+	}
+}
+
+func (p *evaluationCountEventPersister) writeDAU() {
+	p.dauBufferMutex.Lock()
+	buf := p.dauBuf
+	p.dauBuf = make(dauBuffer)
+	p.dauBufferMutex.Unlock()
+	records := make([]cachev3.DAURecord, 0, len(buf))
+	for key, userIDSet := range buf {
+		date, err := time.Parse("20060102", key.dateStr)
+		if err != nil {
+			p.logger.Warn("Failed to parse DAU date",
+				zap.Error(err),
+				zap.String("date", key.dateStr),
+			)
+			continue
+		}
+		userIDs := make([]string, 0, len(userIDSet))
+		for uid := range userIDSet {
+			userIDs = append(userIDs, uid)
+		}
+		records = append(records, cachev3.DAURecord{
+			Date:     date,
+			EnvID:    key.envID,
+			SourceID: key.sourceID,
+			UserIDs:  userIDs,
+		})
+	}
+	if err := p.dauCache.RecordDAUBatch(records); err != nil {
+		if !strings.Contains(err.Error(), "client is closed") {
+			p.logger.Warn("Failed to record DAU batch",
+				zap.Error(err),
+				zap.Int("recordCount", len(records)),
+			)
+		}
+	}
 }
 
 func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
@@ -673,21 +885,6 @@ func (p *evaluationCountEventPersister) upsertUserAttributes(
 			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
 		)
 		return err
-	}
-
-	// MIGRATION: Double-write to the target environment ID if configured
-	if targetEnvID := getMigrationTargetEnvironmentID(userAttributes.EnvironmentId); targetEnvID != "" {
-		migrationAttrs := &userproto.UserAttributes{
-			EnvironmentId:  targetEnvID,
-			UserAttributes: userAttributes.UserAttributes,
-		}
-		if err := p.userAttributesCacher.Put(migrationAttrs, ttl); err != nil {
-			p.logger.Error("Migration: Failed to save user attributes for target environment",
-				zap.Error(err),
-				zap.String("fromEnvironmentId", userAttributes.EnvironmentId),
-				zap.String("toEnvironmentId", targetEnvID),
-			)
-		}
 	}
 	return nil
 }

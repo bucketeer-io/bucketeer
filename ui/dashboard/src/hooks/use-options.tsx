@@ -10,6 +10,7 @@ import {
 } from '@icons';
 import { RuleClauseType } from 'pages/feature-flag-details/targeting/types';
 import { StatusFilterType } from 'pages/feature-flags/types';
+import { DropdownOption } from 'components/dropdown';
 
 export interface FilterOption {
   value: string | number | undefined;
@@ -515,6 +516,42 @@ const useOptions = () => {
     [language, filterEnabledOptions]
   );
 
+  const sourceIdOptions: DropdownOption[] = useMemo(
+    () => [
+      { label: translation('insights.all-sdks'), value: '' },
+      { label: 'Android', value: 'ANDROID' },
+      { label: 'iOS', value: 'IOS' },
+      { label: 'Web', value: 'WEB' },
+      { label: 'Go Server', value: 'GO_SERVER' },
+      { label: 'Node Server', value: 'NODE_SERVER' },
+      { label: 'JavaScript', value: 'JAVASCRIPT' },
+      { label: 'Flutter', value: 'FLUTTER' },
+      { label: 'React', value: 'REACT' },
+      { label: 'React Native', value: 'REACT_NATIVE' },
+      { label: 'OpenFeature Kotlin', value: 'OPEN_FEATURE_KOTLIN' },
+      { label: 'OpenFeature Swift', value: 'OPEN_FEATURE_SWIFT' },
+      { label: 'OpenFeature JavaScript', value: 'OPEN_FEATURE_JAVASCRIPT' },
+      { label: 'OpenFeature Go', value: 'OPEN_FEATURE_GO' },
+      { label: 'OpenFeature Node', value: 'OPEN_FEATURE_NODE' },
+      { label: 'OpenFeature React', value: 'OPEN_FEATURE_REACT' },
+      { label: 'OpenFeature React Native', value: 'OPEN_FEATURE_REACT_NATIVE' }
+    ],
+    [language]
+  );
+
+  const apiIdOptions: DropdownOption[] = useMemo(
+    () => [
+      { label: translation('insights.all-apis'), value: '' },
+      { label: 'GetEvaluation', value: 'GET_EVALUATION' },
+      { label: 'GetEvaluations', value: 'GET_EVALUATIONS' },
+      { label: 'RegisterEvents', value: 'REGISTER_EVENTS' },
+      { label: 'GetFeatureFlags', value: 'GET_FEATURE_FLAGS' },
+      { label: 'GetSegmentUsers', value: 'GET_SEGMENT_USERS' },
+      { label: 'SdkGetVariation', value: 'SDK_GET_VARIATION' }
+    ],
+    [language]
+  );
+
   return {
     filterEnabledOptions,
     filterStatusOptions,
@@ -538,7 +575,9 @@ const useOptions = () => {
     apiKeyOptions,
     environmentEnabledFilterOptions,
     splitExperimentOptions,
-    audienceTrafficOptions
+    audienceTrafficOptions,
+    apiIdOptions,
+    sourceIdOptions
   };
 };
 

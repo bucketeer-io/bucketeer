@@ -90,13 +90,13 @@ const RuleForm = ({
     keyName: 'clauseId'
   });
 
-  const formatClauses = clausesWatch.map(item => ({
+  const formatClauses = (clausesWatch ?? []).map(item => ({
     ...item,
     clauseId: clauses.find(clause => clause.id === item.id)?.clauseId
   }));
 
   const flagOptions = useMemo(() => {
-    const flagsSelected = clausesWatch
+    const flagsSelected = (clausesWatch ?? [])
       .filter(item => item.type === RuleClauseType.FEATURE_FLAG)
       ?.map(item => item.attribute);
 
@@ -107,7 +107,7 @@ const RuleForm = ({
         value: item.id,
         enabled: item.enabled
       }));
-  }, [features, [...clausesWatch], feature]);
+  }, [features, [...(clausesWatch ?? [])], feature]);
 
   const segmentOptions = userSegments?.map(item => ({
     label: `${item.name} (${item.includedUserCount} ${t(`common:${item.includedUserCount === '1' ? 'user' : 'users'}`).toLowerCase()})`,

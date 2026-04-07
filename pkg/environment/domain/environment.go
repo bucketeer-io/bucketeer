@@ -36,7 +36,7 @@ type EnvironmentV2 struct {
 }
 
 const (
-	defaultAutoArchiveUnusedDays    int32 = 90
+	defaultAutoArchiveUnusedDays    int32 = 60
 	defaultAutoArchiveCheckCodeRefs       = true
 )
 

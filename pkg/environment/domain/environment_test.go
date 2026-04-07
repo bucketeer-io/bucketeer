@@ -255,7 +255,7 @@ func TestUpdateEnvironmentV2_AutoArchiveValidation(t *testing.T) {
 			// Set existing auto-archive state
 			env.AutoArchiveEnabled = tt.existingAutoArchiveEnabled
 			if tt.existingAutoArchiveEnabled {
-				env.AutoArchiveUnusedDays = 90
+				env.AutoArchiveUnusedDays = 60
 				env.AutoArchiveCheckCodeRefs = true
 			}
 

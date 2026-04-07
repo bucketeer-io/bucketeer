@@ -32,9 +32,19 @@ import (
 )
 
 const (
-	// TODO: after implement the obfuscation on the console, set to 0.75 to mask most of the key
-	apiKeyShadowPercentage = 0 // hide a part of the api key
+	// apiKeyVisibleChars is the number of leading and trailing characters shown when returning API keys (get/list).
+	// The middle is replaced with dots.
+	apiKeyVisibleChars = 4
 )
+
+// obfuscateAPIKey obfuscates the API key by showing the first and last apiKeyVisibleChars characters,
+// with dots in the middle (same pattern as pkg/api/api/api_grpc.go obfuscateString).
+func obfuscateAPIKey(input string) string {
+	if len(input) > apiKeyVisibleChars*2 {
+		return input[:apiKeyVisibleChars] + "...." + input[len(input)-apiKeyVisibleChars:]
+	}
+	return input
+}
 
 func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
@@ -168,9 +178,8 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		return nil, statusAPIKeyNotFound.Err()
 	}
 
-	// for security, obfuscate the returned key
-	shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
-	apiKey.ApiKey = apiKey.ApiKey[shadowLen:]
+	// for security, obfuscate the returned key: show first and last N characters
+	apiKey.ApiKey = obfuscateAPIKey(apiKey.ApiKey)
 
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
@@ -267,10 +276,9 @@ func (s *AccountService) ListAPIKeys(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	// for security, obfuscate the returned key
+	// for security, obfuscate the returned key: show first and last N characters
 	for i := 0; i < len(apiKeys); i++ {
-		shadowLen := int(float64(len(apiKeys[i].ApiKey)) * apiKeyShadowPercentage)
-		apiKeys[i].ApiKey = apiKeys[i].ApiKey[shadowLen:]
+		apiKeys[i].ApiKey = obfuscateAPIKey(apiKeys[i].ApiKey)
 	}
 
 	return &proto.ListAPIKeysResponse{
@@ -364,9 +372,8 @@ func (s *AccountService) GetEnvironmentAPIKey(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	// for security, obfuscate the returned key
-	shadowLen := int(float64(len(envAPIKey.ApiKey.ApiKey)) * apiKeyShadowPercentage)
-	envAPIKey.ApiKey.ApiKey = envAPIKey.ApiKey.ApiKey[shadowLen:]
+	// for security, obfuscate the returned key: show first and last N characters
+	envAPIKey.ApiKey.ApiKey = obfuscateAPIKey(envAPIKey.ApiKey.ApiKey)
 
 	return &proto.GetEnvironmentAPIKeyResponse{
 		EnvironmentApiKey: envAPIKey.EnvironmentAPIKey,

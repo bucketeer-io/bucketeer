@@ -75,14 +75,31 @@ func (c *inMemoryCache) Increment(key string) (int64, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	if val, ok := c.data[key]; ok {
-		if intVal, ok := val.(int64); ok {
-			intVal += 1
-			c.data[key] = intVal
+		intVal, ok := val.(int64)
+		if !ok {
+			return 0, cache.ErrInvalidType
 		}
-	} else {
-		c.data[key] = 1
+		intVal++
+		c.data[key] = intVal
+		return intVal, nil
 	}
-	return 0, nil
+	c.data[key] = int64(1)
+	return 1, nil
+}
+
+func (c *inMemoryCache) IncrementBy(key string, value int64) (int64, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if val, ok := c.data[key]; ok {
+		if intVal, ok := val.(int64); ok {
+			intVal += value
+			c.data[key] = intVal
+			return intVal, nil
+		}
+		return 0, cache.ErrInvalidType
+	}
+	c.data[key] = value
+	return value, nil
 }
 
 func (c *inMemoryCache) PFAdd(key string, els ...string) (int64, error) {

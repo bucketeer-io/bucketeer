@@ -61,6 +61,7 @@ type segmentUserPersisterConfig struct {
 	RedisPoolSize       int    `json:"redisPoolSize"`       // Redis pool size
 	RedisMinIdle        int    `json:"redisMinIdle"`        // Redis min idle connections
 	RedisPartitionCount int    `json:"redisPartitionCount"` // Redis partition count
+	RedisMode           string `json:"redisMode"`           // Redis client mode: cluster, standalone, or auto
 	Project             string `json:"project"`             // Google Cloud project ID
 }
 
@@ -187,12 +188,17 @@ func createRedisClientForSegmentPersister(
 		zap.String("pubSubType", conf.PubSubType),
 	)
 
-	// Create Redis client
+	redisMode := v3.RedisModeAuto
+	if conf.RedisMode != "" {
+		redisMode = v3.RedisMode(conf.RedisMode)
+	}
+
 	return v3.NewClient(
 		redisAddr,
 		v3.WithPoolSize(redisPoolSize),
 		v3.WithMinIdleConns(redisMinIdle),
 		v3.WithServerName(conf.RedisServerName),
+		v3.WithRedisMode(redisMode),
 		v3.WithMetrics(registerer),
 		v3.WithLogger(logger),
 	)

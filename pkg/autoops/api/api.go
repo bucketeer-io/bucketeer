@@ -17,7 +17,10 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -278,18 +281,93 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 	return nil
 }
 
+// normalizedDaysOfWeekKey returns a canonical string for DaysOfWeek
+// by sorting and deduplicating so that [5,1] and [1,5] produce the same key.
+func normalizedDaysOfWeekKey(days []int32) string {
+	if len(days) == 0 {
+		return ""
+	}
+	sorted := make([]int, len(days))
+	for i, d := range days {
+		sorted[i] = int(d)
+	}
+	sort.Ints(sorted)
+	// Deduplicate consecutive equal days
+	deduped := sorted[:1]
+	for _, d := range sorted[1:] {
+		if d != deduped[len(deduped)-1] {
+			deduped = append(deduped, d)
+		}
+	}
+	strs := make([]string, len(deduped))
+	for i, d := range deduped {
+		strs[i] = strconv.Itoa(d)
+	}
+	return strings.Join(strs, ",")
+}
+
+func checkScheduleTypeHomogeneity(clauses []*autoopsproto.DatetimeClause) error {
+	var hasRecurring, hasOneTime bool
+	for _, c := range clauses {
+		if domain.IsRecurring(c) {
+			hasRecurring = true
+		} else {
+			hasOneTime = true
+		}
+	}
+	if hasRecurring && hasOneTime {
+		return statusCannotMixRecurringAndOneTime.Err()
+	}
+	return nil
+}
+
 func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 ) error {
-	checkTimes := make(map[int64]bool)
 	for _, c := range clauses {
-		if checkTimes[c.Time] {
-			return statusDatetimeClauseDuplicateTime.Err()
+		if c == nil {
+			return statusDatetimeClauseRequired.Err()
 		}
-		if err := s.validateDatetimeClause(c); err != nil {
+	}
+	if err := checkScheduleTypeHomogeneity(clauses); err != nil {
+		return err
+	}
+
+	type clauseKey struct {
+		time      int64
+		frequency autoopsproto.RecurrenceRule_Frequency
+		daysKey   string
+	}
+
+	seen := make(map[clauseKey]struct{})
+
+	for _, clause := range clauses {
+		if err := s.validateDatetimeClause(clause); err != nil {
 			return err
 		}
-		checkTimes[c.Time] = true
+
+		var key clauseKey
+		if domain.IsRecurring(clause) {
+			var recurrenceKey string
+			switch clause.Recurrence.Frequency {
+			case autoopsproto.RecurrenceRule_WEEKLY:
+				recurrenceKey = normalizedDaysOfWeekKey(clause.Recurrence.DaysOfWeek)
+			case autoopsproto.RecurrenceRule_MONTHLY:
+				recurrenceKey = strconv.Itoa(int(clause.Recurrence.DayOfMonth))
+			}
+			key = clauseKey{
+				time:      clause.Time,
+				frequency: clause.Recurrence.Frequency,
+				daysKey:   recurrenceKey,
+			}
+		} else {
+			key = clauseKey{time: clause.Time}
+		}
+
+		if _, ok := seen[key]; ok {
+			return statusDatetimeClauseDuplicateTime.Err()
+		}
+		seen[key] = struct{}{}
 	}
 	return nil
 }
@@ -297,12 +375,78 @@ func (s *AutoOpsService) validateDatetimeClauses(
 func (s *AutoOpsService) validateDatetimeClause(
 	clause *autoopsproto.DatetimeClause,
 ) error {
-	if clause.Time <= time.Now().Unix() {
-		return statusDatetimeClauseInvalidTime.Err()
+	if domain.IsRecurring(clause) {
+		if err := s.validateRecurrenceRule(clause.Recurrence); err != nil {
+			return err
+		}
+		if clause.Time < 0 || clause.Time >= domain.SecondsPerDay {
+			return statusDatetimeClauseInvalidTimeOfDay.Err()
+		}
+	} else {
+		if clause.Time <= time.Now().Unix() {
+			return statusDatetimeClauseInvalidTime.Err()
+		}
 	}
 	if clause.ActionType == autoopsproto.ActionType_UNKNOWN {
 		return statusIncompatibleOpsType.Err()
 	}
+	return nil
+}
+
+func (s *AutoOpsService) validateRecurrenceRule(
+	recurrence *autoopsproto.RecurrenceRule,
+) error {
+	if recurrence == nil {
+		return nil
+	}
+
+	if recurrence.Frequency == autoopsproto.RecurrenceRule_FREQUENCY_UNSPECIFIED {
+		return statusInvalidRecurrenceFrequency.Err()
+	}
+
+	if recurrence.Frequency == autoopsproto.RecurrenceRule_ONCE {
+		return nil
+	}
+
+	if recurrence.Timezone == "" {
+		return statusRecurrenceTimezoneRequired.Err()
+	}
+	if _, err := time.LoadLocation(recurrence.Timezone); err != nil {
+		return statusInvalidRecurrenceTimezone.Err()
+	}
+
+	if recurrence.StartDate == 0 {
+		return statusRecurrenceStartDateRequired.Err()
+	}
+
+	if recurrence.EndDate > 0 && recurrence.EndDate <= recurrence.StartDate {
+		return statusRecurrenceEndDateMustBeAfterStart.Err()
+	}
+
+	if recurrence.MaxOccurrences < 0 {
+		return statusRecurrenceMaxOccurrencesInvalid.Err()
+	}
+
+	switch recurrence.Frequency {
+	case autoopsproto.RecurrenceRule_WEEKLY:
+		if len(recurrence.DaysOfWeek) == 0 {
+			return statusRecurrenceDaysOfWeekRequired.Err()
+		}
+		for _, day := range recurrence.DaysOfWeek {
+			if day < domain.MinDayOfWeek || day > domain.MaxDayOfWeek {
+				return statusRecurrenceDaysOfWeekInvalid.Err()
+			}
+		}
+	case autoopsproto.RecurrenceRule_MONTHLY:
+		if recurrence.DayOfMonth < domain.MinDayOfMonth || recurrence.DayOfMonth > domain.MaxDayOfMonth {
+			return statusRecurrenceDayOfMonthInvalid.Err()
+		}
+	case autoopsproto.RecurrenceRule_DAILY:
+		// No additional fields to validate for daily.
+	default:
+		return statusInvalidRecurrenceFrequency.Err()
+	}
+
 	return nil
 }
 
@@ -473,26 +617,78 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			if len(req.OpsEventRateClauseChanges) > 0 {
 				return statusIncompatibleOpsType.Err()
 			}
-			// Delete a deletion schedule from the currently held schedules
 			extractDateTimeClauses, _ := autoOpsRule.ExtractDatetimeClauses()
 			for _, deleteClause := range req.DatetimeClauseChanges {
 				if deleteClause.ChangeType == autoopsproto.ChangeType_DELETE {
 					delete(extractDateTimeClauses, deleteClause.Id)
 				}
 			}
-			checkTimes := make(map[int64]autoopsproto.ActionType)
-			for _, c := range extractDateTimeClauses {
-				checkTimes[c.Time] = c.ActionType
+
+			type updateClauseKey struct {
+				time    int64
+				daysKey string
+			}
+			buildKey := func(c *autoopsproto.DatetimeClause) updateClauseKey {
+				k := updateClauseKey{
+					time: c.Time,
+				}
+				if domain.IsRecurring(c) {
+					var recurrenceKey string
+					switch c.Recurrence.Frequency {
+					case autoopsproto.RecurrenceRule_WEEKLY:
+						recurrenceKey = normalizedDaysOfWeekKey(c.Recurrence.DaysOfWeek)
+					case autoopsproto.RecurrenceRule_MONTHLY:
+						recurrenceKey = strconv.Itoa(int(c.Recurrence.DayOfMonth))
+					}
+					k.daysKey = fmt.Sprintf("%d-%s", c.Recurrence.Frequency, recurrenceKey)
+				}
+				return k
 			}
 
-			// Check if there is a schedule with the same date and time.
+			existingKeys := make(map[updateClauseKey]string)
+			for id, c := range extractDateTimeClauses {
+				existingKeys[buildKey(c)] = id
+			}
+
 			for _, c := range req.DatetimeClauseChanges {
 				if c.Clause != nil && c.ChangeType != autoopsproto.ChangeType_DELETE {
-					actionType, hasSameTime := checkTimes[c.Clause.Time]
-					if hasSameTime && actionType == c.Clause.ActionType {
+					k := buildKey(c.Clause)
+					if existingID, ok := existingKeys[k]; ok {
+						if c.ChangeType == autoopsproto.ChangeType_UPDATE && existingID == c.Id {
+							continue
+						}
 						return statusDatetimeClauseDuplicateTime.Err()
 					}
 				}
+			}
+
+			// Collect the resulting clause set and check for mixed types.
+			// Start with existing clauses (deletes already removed),
+			// replace updated ones, then append creates.
+			updatedIDs := make(map[string]*autoopsproto.DatetimeClause)
+			var createdClauses []*autoopsproto.DatetimeClause
+			for _, c := range req.DatetimeClauseChanges {
+				if c.Clause == nil {
+					continue
+				}
+				switch c.ChangeType {
+				case autoopsproto.ChangeType_UPDATE:
+					updatedIDs[c.Id] = c.Clause
+				case autoopsproto.ChangeType_CREATE:
+					createdClauses = append(createdClauses, c.Clause)
+				}
+			}
+			var allResultClauses []*autoopsproto.DatetimeClause
+			for id, c := range extractDateTimeClauses {
+				if updated, ok := updatedIDs[id]; ok {
+					allResultClauses = append(allResultClauses, updated)
+				} else {
+					allResultClauses = append(allResultClauses, c)
+				}
+			}
+			allResultClauses = append(allResultClauses, createdClauses...)
+			if err := checkScheduleTypeHomogeneity(allResultClauses); err != nil {
+				return err
 			}
 		}
 
@@ -808,14 +1004,20 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			)
 			return err
 		}
-		// Set the `executed_at`, so it won't be executed twice
-		executeClause.ExecutedAt = time.Now().Unix()
-		// Update the status if needed.
-		// When it executes the last clause, it will change to finished status.
+		now := time.Now()
+		if executeClause.IsRecurring {
+			if err := autoOpsRule.AdvanceRecurringClause(req.ClauseId, now); err != nil {
+				return err
+			}
+		} else {
+			executeClause.ExecutedAt = now.Unix()
+		}
+
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
-		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ClauseId {
+		if autoOpsRule.AllClausesFinished() {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
+
 		updated, err := autoOpsRule.Update(&opsStatus, nil, nil)
 		if err != nil {
 			return err
@@ -1115,7 +1317,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentId string,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckEnvironmentRole(
+	return role.CheckEnvironmentRoleWithLog(
 		ctx,
 		requiredRole,
 		environmentId,
@@ -1128,37 +1330,10 @@ func (s *AutoOpsService) checkEnvironmentRole(
 				return nil, err
 			}
 			return resp.Account, nil
-		})
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
 }

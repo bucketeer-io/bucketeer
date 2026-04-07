@@ -37,7 +37,7 @@ env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
   GAR_REGISTRY: asia-docker.pkg.dev
   GO_BUILD_CONCURRENCY: 4 # Set the same number of apps to build.
-  NODE_VERSION: "22.12.0"
+  NODE_VERSION: "22.18.0"
 
 
 jobs:
@@ -67,7 +67,7 @@ jobs:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: echo "value=$(echo "$COMMIT_MESSAGE" | head -n 1)" >> $GITHUB_OUTPUT
       - name: Store the migration_required value to output
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
         id: changes
         with:
           filters: |
@@ -85,10 +85,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'go.mod'
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install go dependencies
@@ -206,7 +206,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Workflow Dispatch
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: ${{ secrets.CONFIG_REPO }}
           token: ${{ secrets.REPO_ACCESS_PAT }}

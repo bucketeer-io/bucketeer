@@ -12,8 +12,8 @@ WHERE
     AND feature_id = @featureId
     AND feature_version = @featureVersion
     AND user_id = @userId
-    AND timestamp BETWEEN TIMESTAMP(@experimentStartAt)
-    AND TIMESTAMP(@experimentEndAt)
+    AND timestamp BETWEEN @experimentStartAt
+    AND @experimentEndAt
 ORDER BY
     timestamp DESC
 LIMIT 1;

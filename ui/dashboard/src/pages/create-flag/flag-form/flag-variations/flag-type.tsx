@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { getDefaultYamlValue } from 'constants/feature-flag';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
@@ -17,14 +16,12 @@ const defaultVariations: FeatureVariation[] = [
   {
     id: uuid(),
     value: 'true',
-    name: '',
-    description: ''
+    name: ''
   },
   {
     id: uuid(),
     value: 'false',
-    name: '',
-    description: ''
+    name: ''
   }
 ];
 
@@ -44,6 +41,11 @@ const FlagType = () => {
       value: FeatureVariationType,
       onChange: (value: FeatureVariationType) => void
     ) => {
+      // Don't reset if the same type is selected again
+      if (value === variationType) {
+        return;
+      }
+
       const isBoolean = value === 'BOOLEAN';
       const isJSON = value === 'JSON';
       const isYAML = value === 'YAML';
@@ -52,7 +54,11 @@ const FlagType = () => {
         ? cloneVariations
         : cloneVariations.map((item, index) => ({
             ...item,
-            value: isJSON ? '{}' : isYAML ? getDefaultYamlValue(index) : ''
+            value: isJSON
+              ? '{}'
+              : isYAML
+                ? `variation: variation-${index + 1}`
+                : ''
           }));
 
       resetField('variations');
@@ -65,7 +71,7 @@ const FlagType = () => {
       if (timerId) clearTimeout(timerId);
       timerId = setTimeout(() => setFocus('variations.0.value'), 100);
     },
-    [defaultVariations]
+    [variationType, defaultVariations]
   );
 
   return (

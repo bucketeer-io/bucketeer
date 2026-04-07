@@ -5057,6 +5057,15 @@ definitions:
       - ENGLISH
       - JAPANESE
     default: ENGLISH
+  RecurrenceRuleFrequency:
+    type: string
+    enum:
+      - FREQUENCY_UNSPECIFIED
+      - ONCE
+      - DAILY
+      - WEEKLY
+      - MONTHLY
+    default: FREQUENCY_UNSPECIFIED
   RegisterEventsResponseError:
     type: object
     properties:
@@ -5382,8 +5391,29 @@ definitions:
       time:
         type: string
         format: int64
+        description: |-
+          Semantics depend on recurrence:
+            - One-time (recurrence is null or ONCE): Unix timestamp (UTC) of when to
+            execute.
+            - Recurring (DAILY/WEEKLY/MONTHLY): Time of day in seconds since midnight
+            (0-86399).
+              For recurring schedules, the actual execution timestamps are determined
+              by `next_execution_at` (pre-calculated) and the `recurrence` rule.
+          IMPORTANT: Consumers MUST check `Clause.is_recurring` before interpreting
+          this field.
       actionType:
         $ref: '#/definitions/autoopsActionType'
+      recurrence:
+        $ref: '#/definitions/autoopsRecurrenceRule'
+      lastExecutedAt:
+        type: string
+        format: int64
+      nextExecutionAt:
+        type: string
+        format: int64
+      executionCount:
+        type: integer
+        format: int32
   autoopsDatetimeClauseChange:
     type: object
     properties:
@@ -5531,6 +5561,36 @@ definitions:
       - MANUAL_SCHEDULE
       - TEMPLATE_SCHEDULE
     default: MANUAL_SCHEDULE
+  autoopsRecurrenceRule:
+    type: object
+    properties:
+      frequency:
+        $ref: '#/definitions/RecurrenceRuleFrequency'
+      daysOfWeek:
+        type: array
+        items:
+          type: integer
+          format: int32
+        title: 'For WEEKLY: 0=Sunday, 1=Monday, ..., 6=Saturday'
+      dayOfMonth:
+        type: integer
+        format: int32
+        title: 'For MONTHLY: day of month (1-31)'
+      startDate:
+        type: string
+        format: int64
+        title: When to start recurring (Unix timestamp in UTC)
+      endDate:
+        type: string
+        format: int64
+        title: When to stop recurring (Unix timestamp in UTC, 0 = no end)
+      maxOccurrences:
+        type: integer
+        format: int32
+        title: Max times to execute (0 = unlimited)
+      timezone:
+        type: string
+        title: IANA timezone name (e.g., "Asia/Tokyo", "America/New_York")
   bucketeerautoopsChangeType:
     type: string
     enum:
@@ -5551,6 +5611,12 @@ definitions:
       executedAt:
         type: string
         format: int64
+      isRecurring:
+        type: boolean
+        description: |-
+          Indicates if this is a recurring schedule.
+          Only applicable when clause contains DatetimeClause with RecurrenceRule.
+          This flag enables quick checks without deserializing the Any.
   bucketeerenvironmentOrganization:
     type: object
     properties:

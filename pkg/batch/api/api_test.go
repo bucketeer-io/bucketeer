@@ -33,18 +33,20 @@ import (
 	cacher "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/cacher"
 	deleter "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/monthlysummary"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
 	scheduledflagchange "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/scheduledflagchange"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
-	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	maucachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	insightsstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
@@ -655,11 +657,13 @@ func newBatchService(t *testing.T,
 	notificationMockSender := notificationsender.NewMockSender(mockController)
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	mockProgressiveRolloutExecutor := opsexecutor.NewMockProgressiveRolloutExecutor(mockController)
-	cacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	cacheMock := redismock.NewMockMultiGetDeleteCountCache(mockController)
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 	mysqlMockRows := mysqlmock.NewMockRows(mockController)
 	redisMockClient := redismock.NewMockMultiGetCache(mockController)
 	mysqlMockQueryExecer := mysqlmock.NewMockQueryExecer(mockController)
+	mauCacheMock := maucachemock.NewMockMAUCache(mockController)
+	monthlySummaryStorageMock := insightsstoragemock.NewMockMonthlySummaryStorage(mockController)
 
 	setupMock(
 		accountMockClient,
@@ -764,6 +768,13 @@ func newBatchService(t *testing.T,
 			mysqlMockClient,
 			featureMockClient,
 			jobs.WithTimeout(50*time.Second),
+			jobs.WithLogger(logger),
+		),
+		monthlysummary.NewMonthlySummarizer(
+			environmentMockClient,
+			mauCacheMock,
+			monthlySummaryStorageMock,
+			nil,
 			jobs.WithLogger(logger),
 		),
 		logger,

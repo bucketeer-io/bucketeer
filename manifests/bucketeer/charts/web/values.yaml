@@ -18,6 +18,7 @@ env:
   pubSubRedisAddr:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
+  pubSubRedisMode: auto
   mysqlUser:
   mysqlPass:
   mysqlHost:
@@ -28,11 +29,13 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    mode: auto
   bigQueryDataSet:
   bigQueryDataLocation:
   domainTopic:
@@ -60,10 +63,12 @@ env:
   dashboardServicePort: 9103
   tagServicePort: 9104
   coderefServicePort: 9105
+  insightsServicePort: 9108
   unifiedGatewayPort: 9106
   metricsPort: 9002
   timezone: UTC
   emailFilter:
+  prometheusURL: http://prometheus.observability.svc.cluster.local:80
   logLevel: info
   googleTagManagerId:
   apiEndpoint:
@@ -71,6 +76,7 @@ env:
   refreshTokenTTL: 168h
 affinity: {}
 nodeSelector: {}
+priorityClassName: ""
 pdb:
   enabled:
   maxUnavailable: 50%

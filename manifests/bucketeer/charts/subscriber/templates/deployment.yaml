@@ -30,6 +30,9 @@ spec:
 {{ toYaml .Values.affinity | indent 8 }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
       volumes:
         - name: envoy-config
           configMap:
@@ -147,6 +150,8 @@ spec:
               value: "{{ .Values.env.persistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_MODE
+              value: "{{ .Values.env.persistentRedis.mode }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_ADDR
@@ -155,14 +160,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
-            # Migration environment variables for environment ID migration
-            # These enable double-write to both old and new key formats during migration
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_ENABLED
-              value: "{{ .Values.env.migration.environmentId.enabled }}"
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_FROM
-              value: "{{ .Values.env.migration.environmentId.from }}"
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_TO
-              value: "{{ .Values.env.migration.environmentId.to }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_MODE
+              value: "{{ .Values.env.nonPersistentRedis.mode }}"
 
           volumeMounts:
             - name: service-cert-secret

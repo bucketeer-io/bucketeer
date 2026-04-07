@@ -16,7 +16,7 @@ package opsevent
 
 import (
 	"context"
-	"fmt"
+	"sort"
 	"time"
 
 	"go.uber.org/zap"
@@ -143,42 +143,75 @@ func (w *datetimeWatcher) getExecuteClauseId(
 	environmentId string,
 	a *autoopsdomain.AutoOpsRule,
 ) (string, error) {
-	var nextClauseID string
-	for _, clause := range a.Clauses {
-		// Skip clauses that were executed
-		if clause.ExecutedAt != 0 {
-			continue
-		}
-		// Set the next scheduled clause
-		nextClauseID = clause.Id
-		break
-	}
 	dateClauses, err := a.ExtractDatetimeClauses()
 	if err != nil {
 		return "", err
 	}
-	dateClause := dateClauses[nextClauseID]
-	if dateClause == nil {
-		w.logger.Error("Datetime clause is nil",
-			zap.String("environmentId", environmentId),
-			zap.String("featureId", a.FeatureId),
-			zap.String("autoOpsRuleId", a.Id),
-			zap.String("clauseId", nextClauseID),
-		)
-		return "", fmt.Errorf("datetime clause not found")
+
+	type candidateClause struct {
+		id            string
+		executionTime int64
+		isRecurring   bool
 	}
-	// Check if the scheduled time is older than now
-	if dateClause.Time <= time.Now().Unix() {
-		w.logger.Info("Scheduled operation satisfies the time condition",
-			zap.String("environmentId", environmentId),
-			zap.String("featureId", a.FeatureId),
-			zap.String("autoOpsRuleId", a.Id),
-			zap.String("clauseId", nextClauseID),
-			zap.Int64("clauseTime", dateClause.Time),
-			zap.Any("dateClauses", dateClause),
-		)
-		return nextClauseID, nil
+	var candidates []candidateClause
+
+	now := time.Now().Unix()
+
+	for _, clause := range a.Clauses {
+		dateClause := dateClauses[clause.Id]
+		if dateClause == nil {
+			w.logger.Warn("DatetimeClause missing for schedule clause; skipping execution candidate",
+				zap.String("environmentId", environmentId),
+				zap.String("featureId", a.FeatureId),
+				zap.String("autoOpsRuleId", a.Id),
+				zap.String("clauseId", clause.Id),
+			)
+			continue
+		}
+
+		if clause.IsRecurring {
+			// Recurring: ready when NextExecutionAt is set and in the past.
+			// NextExecutionAt == 0 means the recurrence is exhausted.
+			if dateClause.NextExecutionAt > 0 && dateClause.NextExecutionAt <= now {
+				candidates = append(candidates, candidateClause{
+					id:            clause.Id,
+					executionTime: dateClause.NextExecutionAt,
+					isRecurring:   true,
+				})
+			}
+		} else {
+			// One-time: ready when not yet executed and time is in the past.
+			if clause.ExecutedAt == 0 && dateClause.Time <= now {
+				candidates = append(candidates, candidateClause{
+					id:            clause.Id,
+					executionTime: dateClause.Time,
+					isRecurring:   false,
+				})
+			}
+		}
 	}
-	// Nothing to execute
-	return "", nil
+
+	if len(candidates) == 0 {
+		return "", nil
+	}
+
+	sort.SliceStable(candidates, func(i, j int) bool {
+		if candidates[i].executionTime != candidates[j].executionTime {
+			return candidates[i].executionTime < candidates[j].executionTime
+		}
+		return candidates[i].id < candidates[j].id
+	})
+
+	chosen := candidates[0]
+
+	w.logger.Info("Scheduled operation satisfies the time condition",
+		zap.String("environmentId", environmentId),
+		zap.String("featureId", a.FeatureId),
+		zap.String("autoOpsRuleId", a.Id),
+		zap.String("clauseId", chosen.id),
+		zap.Int64("executionTime", chosen.executionTime),
+		zap.Bool("isRecurring", chosen.isRecurring),
+	)
+
+	return chosen.id, nil
 }

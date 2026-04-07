@@ -27,6 +27,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -42,11 +43,13 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	prefixTestName = "e2e-test"
-	timeout        = 60 * time.Second
+	prefixTestName        = "e2e-test"
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -116,45 +119,60 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+	// Poll until all 3 features are visible (no tag)
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, "", "", 0)
+		return findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req2.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "all 3 features should be visible")
 
-	// Find feature with no tag and no features ID
-	response := grpcGetFeatureFlags(t, "", "", 0)
 	assert.NotEmpty(t, response.FeatureFlagsId)
 	assert.True(t, len(response.Features) >= 3)
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req2.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
-	// Find feature with tag and no features ID
-	response = grpcGetFeatureFlags(t, tag, "", 0)
+	// Poll until both tagged features are visible
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, "", 0)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible")
+
 	assert.NotEmpty(t, response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
-	// Find feature with tag, with the same features ID, and requested at
-	ffid := response.FeatureFlagsId
-	response = grpcGetFeatureFlags(t, tag, response.FeatureFlagsId, response.RequestedAt)
-	assert.Equal(t, ffid, response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
+	// Re-fetch fresh baseline to minimize race window with parallel tests
+	// that may update the feature flag cache between calls.
+	var ffid string
+	var noneResponse *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		ffid = baseline.FeatureFlagsId
+		noneResponse = grpcGetFeatureFlags(t, tag, ffid, baseline.RequestedAt)
+		return len(noneResponse.Features) == 0
+	}, 30*time.Second, 2*time.Second, "cache should stabilize for same featuresId")
+	assert.Equal(t, ffid, noneResponse.FeatureFlagsId)
+	assert.Equal(t, 0, len(noneResponse.ArchivedFeatureFlagIds))
+	assert.False(t, noneResponse.ForceUpdate)
 
 	// Find feature with tag, with the different features ID, and requested at
-	response = grpcGetFeatureFlags(t, tag, "random-id", response.RequestedAt)
-	assert.Equal(t, ffid, response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
+	var diffResponse *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		ffid = baseline.FeatureFlagsId
+		diffResponse = grpcGetFeatureFlags(t, tag, "random-id", baseline.RequestedAt)
+		return len(diffResponse.Features) == 0
+	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
+	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
+	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
+	assert.True(t, diffResponse.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResponse.ForceUpdate)
 }
 
 func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
@@ -177,18 +195,19 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+	// Poll until both tagged features are visible
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, "", 0)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible")
 
-	// Find feature by tag with tag and no features ID
-	requestFFID := ""
-	response := grpcGetFeatureFlags(t, tag, requestFFID, 0)
 	assert.NotEmpty(t, response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Archive feature
 	archiveFeature(t, req1.Id, client)
@@ -196,15 +215,27 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
 
-	// Find the archived flag
-	requestFFID = response.FeatureFlagsId
-	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
-	assert.True(t, requestFFID != response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 1, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
-	assert.Equal(t, req1.Id, response.ArchivedFeatureFlagIds[0])
+	// Poll until the archived flag appears in the Diff response
+	requestFFID := response.FeatureFlagsId
+	prevRequestedAt := response.RequestedAt
+	var diffResp *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		diffResp = grpcGetFeatureFlags(t, tag, requestFFID, prevRequestedAt)
+		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.ArchivedFeatureFlagIds) > 0
+	}, 30*time.Second, 2*time.Second, "archived flag should appear in the diff response")
+
+	// With >= filter, features created in the same second as the previous
+	// response's RequestedAt may also be included (harmless re-send).
+	assert.True(t, len(diffResp.ArchivedFeatureFlagIds) >= 1, "at least the archived flag should be present")
+	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResp.ForceUpdate)
+	foundArchived := false
+	for _, id := range diffResp.ArchivedFeatureFlagIds {
+		if id == req1.Id {
+			foundArchived = true
+		}
+	}
+	assert.True(t, foundArchived, "archived feature should be in ArchivedFeatureFlagIds")
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
@@ -227,18 +258,19 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+	// Poll until both tagged features are visible
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, "", 0)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible")
 
-	// Find feature by tag with tag and no features ID
-	requestFFID := ""
-	response := grpcGetFeatureFlags(t, tag, requestFFID, 0)
 	assert.NotEmpty(t, response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Create another Flag
 	// Feature 4
@@ -246,15 +278,22 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	featureID4 := newFeatureID(t, uuid)
 	req4 := createFeatureWithTag(t, tag, featureID4)
 
-	// Find the flag 4
-	requestFFID = response.FeatureFlagsId
-	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
-	assert.True(t, requestFFID != response.FeatureFlagsId)
-	assert.Equal(t, 1, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req4.Id, response.Features))
+	// Poll until the cache has propagated and the new feature appears in the Diff response.
+	requestFFID := response.FeatureFlagsId
+	prevRequestedAt := response.RequestedAt
+	var diffResp *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		diffResp = grpcGetFeatureFlags(t, tag, requestFFID, prevRequestedAt)
+		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.Features) > 0
+	}, 30*time.Second, 2*time.Second, "feature flag 4 should appear in the diff response")
+
+	// With >= filter, features created in the same second as the previous
+	// response's RequestedAt may also be included (harmless re-send).
+	assert.True(t, len(diffResp.Features) >= 1, "at least feature 4 should be in the diff")
+	assert.Equal(t, 0, len(diffResp.ArchivedFeatureFlagIds))
+	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResp.ForceUpdate)
+	assert.True(t, findFeatureByID(t, req4.Id, diffResp.Features))
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
@@ -277,17 +316,21 @@ func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	req3 := createFeatureWithTag(t, tag, featureID3)
 
-	// Find feature by tag with tag with random id, and old requested at
+	// Poll until both tagged features are visible with random id and old requested at (31 days ago → "All")
 	requestFFID := "random-id"
 	requestedAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
-	response := grpcGetFeatureFlags(t, tag, requestFFID, requestedAt)
+	var response *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		response = grpcGetFeatureFlags(t, tag, requestFFID, requestedAt)
+		return len(response.Features) == 2 &&
+			findFeatureByID(t, req1.Id, response.Features) &&
+			findFeatureByID(t, req3.Id, response.Features)
+	}, 30*time.Second, 2*time.Second, "both tagged features should be visible with old requested at")
+
 	assert.True(t, requestFFID != response.FeatureFlagsId)
-	assert.Equal(t, 2, len(response.Features))
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 }
 
 func findFeatureByID(t *testing.T, id string, features []*featureproto.Feature) bool {
@@ -422,7 +465,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
+	time.Sleep(10 * time.Second) // Wait for cache propagation
 	featureID2 := newFeatureID(t, newUUID(t))
 	req := createFeatureWithTag(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
@@ -477,7 +520,7 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	addTag(t, tag, featureID, fc)
 	enableFeature(t, featureID, fc)
 	archiveFeature(t, featureID, fc)
-	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
+	time.Sleep(10 * time.Second) // Wait for cache propagation
 
 	uuid2 := newUUID(t)
 	featureID2 := newFeatureID(t, uuid2)
@@ -528,7 +571,7 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
+	time.Sleep(10 * time.Second) // Wait for cache propagation
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithRule(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
@@ -1424,16 +1467,24 @@ func createFeature(
 	req *featureproto.CreateFeatureRequest,
 ) *featureproto.Feature {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	createRes, err := client.CreateFeature(ctx, req)
-	if err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		createRes, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			if createRes == nil {
+				t.Fatal("Created response is nil")
+			}
+			return createRes.Feature
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, req.Id, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
-	if createRes == nil {
-		t.Fatal("Created resonse is nil")
-	}
-	return createRes.Feature
+	return nil
 }
 
 func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
@@ -1463,9 +1514,18 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 			},
 		},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, addReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, addReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addTag (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1474,18 +1534,27 @@ func addRule(t *testing.T, featureID, variationID string, client featureclient.C
 	t.Helper()
 	rule := newFixedStrategyRule(variationID)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		RuleChanges: []*featureproto.RuleChange{
-			{
-				ChangeType: featureproto.ChangeType_CREATE,
-				Rule:       rule,
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			RuleChanges: []*featureproto.RuleChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Rule:       rule,
+				},
 			},
-		},
-	}); err != nil {
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addRule (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1497,22 +1566,40 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
 func archiveFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		Archived:      wrapperspb.Bool(true),
-	}); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			Archived:      wrapperspb.Bool(true),
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying archiveFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }

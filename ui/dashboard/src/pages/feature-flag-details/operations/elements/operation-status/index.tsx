@@ -25,6 +25,7 @@ import {
   OperationCombinedType,
   OpsTypeMap
 } from '../../types';
+import { isRecurringOperation } from '../../utils';
 
 const statusVariants = cva(
   'flex-center px-2 py-1.5 rounded-[3px] typo-para-small',
@@ -137,6 +138,13 @@ const OperationStatus = ({
     [operation, isRollout]
   );
 
+  const isRecurring = useMemo(
+    () =>
+      operation.opsType === OpsTypeMap.SCHEDULE &&
+      isRecurringOperation(operation.clauses),
+    [operation]
+  );
+
   const isKillSwitch = useMemo(
     () => operation.opsType === OpsTypeMap.EVENT_RATE,
     [operation]
@@ -149,6 +157,13 @@ const OperationStatus = ({
   }, [operation]);
 
   const completedOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
+    const deleteKey = isKillSwitch
+      ? 'kill-switch'
+      : isRollout
+        ? 'rollout'
+        : isRecurring
+          ? 'recurring'
+          : 'schedule';
     return [
       {
         label: t('feature-flags.operation-details'),
@@ -158,9 +173,7 @@ const OperationStatus = ({
       {
         label: (
           <p className={editable ? 'text-accent-red-500' : ''}>
-            {t(
-              `feature-flags.delete-${isKillSwitch ? 'kill-switch' : isRollout ? 'rollout' : 'schedule'}`
-            )}
+            {t(`feature-flags.delete-${deleteKey}`)}
           </p>
         ),
         icon: IconTrash,
@@ -168,14 +181,16 @@ const OperationStatus = ({
         color: editable ? 'accent-red-500' : undefined
       }
     ];
-  }, [isRollout, isKillSwitch, editable]);
+  }, [isRollout, isKillSwitch, isRecurring, editable]);
 
   const operationOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
     const translationKey = isRollout
       ? 'rollout'
       : isKillSwitch
         ? 'kill-switch'
-        : 'schedule';
+        : isRecurring
+          ? 'recurring'
+          : 'schedule';
     return [
       ...(isRollout
         ? []
@@ -203,7 +218,7 @@ const OperationStatus = ({
         color: editable ? 'accent-red-500' : undefined
       }
     ];
-  }, [isKillSwitch, isRollout, editable]);
+  }, [isKillSwitch, isRollout, isRecurring, editable]);
 
   const popoverOptions = useMemo(
     () => (isFinished ? completedOptions : operationOptions),

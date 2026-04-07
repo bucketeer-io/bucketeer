@@ -13,6 +13,9 @@ updates:
       dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -26,6 +29,25 @@ updates:
       dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: "gomod"
+    directory: "/hack"
+    schedule:
+      interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "npm"
     directory: "/ui/dashboard"
     schedule:
@@ -39,3 +61,6 @@ updates:
       dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
