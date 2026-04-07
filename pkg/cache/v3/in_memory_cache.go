@@ -89,13 +89,21 @@ func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
 	if !ok {
 		return nil, cache.ErrInvalidType
 	}
+	if !e.expiration.IsZero() && time.Now().After(e.expiration) {
+		c.entries.Delete(key)
+		return nil, cache.ErrNotFound
+	}
 	return e.value, nil
 }
 
 func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) error {
+	var exp time.Time
+	if expiration > 0 {
+		exp = time.Now().Add(expiration)
+	}
 	c.entries.Store(key, &entry{
 		value:      value,
-		expiration: time.Now().Add(expiration),
+		expiration: exp,
 	})
 	return nil
 }

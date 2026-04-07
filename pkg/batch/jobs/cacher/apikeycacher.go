@@ -50,7 +50,7 @@ func NewAPIKeyCacher(
 	}
 	caches := make([]cachev3.EnvironmentAPIKeyCache, 0, len(multiCaches))
 	for _, cache := range multiCaches {
-		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache))
+		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache, 0))
 	}
 	return &apiKeyCacher{
 		accStorage: accstorage.NewAccountStorage(mysqlClient),

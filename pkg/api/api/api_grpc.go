@@ -105,7 +105,7 @@ type options struct {
 }
 
 var defaultOptions = options{
-	apiKeyMemoryCacheTTL:              5 * time.Minute,
+	apiKeyMemoryCacheTTL:              1 * time.Minute,
 	apiKeyMemoryCacheEvictionInterval: 30 * time.Second,
 	pubsubTimeout:                     20 * time.Second,
 	// 31 days - aligns with 30-day DB retention + 1 day buffer
@@ -231,7 +231,7 @@ func NewGrpcGatewayService(
 		userPublisher:            up,
 		featuresCache:            cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:        cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
+		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		apiKeyLastUsedInfoCacher: sync.Map{},
 		opts:                     &options,
 		logger:                   options.logger.Named("api_grpc"),

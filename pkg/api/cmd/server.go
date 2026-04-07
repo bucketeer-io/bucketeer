@@ -68,43 +68,45 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	port                   *int
-	grpcGatewayPort        *int
-	project                *string
-	mysqlUser              *string
-	mysqlPass              *string
-	mysqlHost              *string
-	mysqlPort              *int
-	mysqlDBName            *string
-	goalTopic              *string
-	goalTopicProject       *string
-	evaluationTopic        *string
-	evaluationTopicProject *string
-	userTopic              *string
-	metricsTopic           *string
-	publishNumGoroutines   *int
-	publishTimeout         *time.Duration
-	featureService         *string
-	accountService         *string
-	codeRefService         *string
-	pushService            *string
-	auditLogService        *string
-	tagService             *string
-	teamService            *string
-	notificationService    *string
-	experimentService      *string
-	environmentService     *string
-	eventCounterService    *string
-	redisServerName        *string
-	redisAddr              *string
-	redisMode              *string
-	certPath               *string
-	keyPath                *string
-	serviceTokenPath       *string
-	redisPoolMaxIdle       *int
-	redisPoolMaxActive     *int
-	oldestEventTimestamp   *time.Duration
-	furthestEventTimestamp *time.Duration
+	port                              *int
+	grpcGatewayPort                   *int
+	project                           *string
+	mysqlUser                         *string
+	mysqlPass                         *string
+	mysqlHost                         *string
+	mysqlPort                         *int
+	mysqlDBName                       *string
+	goalTopic                         *string
+	goalTopicProject                  *string
+	evaluationTopic                   *string
+	evaluationTopicProject            *string
+	userTopic                         *string
+	metricsTopic                      *string
+	publishNumGoroutines              *int
+	publishTimeout                    *time.Duration
+	featureService                    *string
+	accountService                    *string
+	codeRefService                    *string
+	pushService                       *string
+	auditLogService                   *string
+	tagService                        *string
+	teamService                       *string
+	notificationService               *string
+	experimentService                 *string
+	environmentService                *string
+	eventCounterService               *string
+	redisServerName                   *string
+	redisAddr                         *string
+	redisMode                         *string
+	certPath                          *string
+	keyPath                           *string
+	serviceTokenPath                  *string
+	redisPoolMaxIdle                  *int
+	redisPoolMaxActive                *int
+	oldestEventTimestamp              *time.Duration
+	furthestEventTimestamp            *time.Duration
+	apiKeyMemoryCacheTTL              *time.Duration
+	apiKeyMemoryCacheEvictionInterval *time.Duration
 	// PubSub configurations
 	pubSubType                *string
 	pubSubRedisServerName     *string
@@ -219,6 +221,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"furthest-event-timestamp",
 			"The duration of furthest event timestamp from processing time to allow.",
 		).Default("1h").Duration(),
+		apiKeyMemoryCacheTTL: cmd.Flag(
+			"api-key-memory-cache-ttl",
+			"TTL for the in-memory API key cache.",
+		).Default("1m").Duration(),
+		apiKeyMemoryCacheEvictionInterval: cmd.Flag(
+			"api-key-memory-cache-eviction-interval",
+			"Eviction interval for the in-memory API key cache.",
+		).Default("30s").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis-stream).",
@@ -503,6 +513,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		redisV3Cache,
+		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
+		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -577,6 +589,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		userPublisher,
 		metricsPublisher,
 		redisV3Cache,
+		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
+		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),

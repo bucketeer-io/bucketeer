@@ -94,7 +94,7 @@ func NewGatewayService(
 		metricsPublisher:       mp,
 		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		opts:                   &options,
 		logger:                 options.logger.Named("api"),
 	}
