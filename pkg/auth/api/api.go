@@ -283,6 +283,7 @@ func (s *authService) RefreshToken(
 	if err := validateRefreshTokenRequest(req); err != nil {
 		s.logger.Error("Failed to validate refresh token request",
 			zap.Error(err),
+			zap.String("refresh_token", obfuscateString(req.RefreshToken)),
 		)
 		return nil, err
 	}
@@ -837,4 +838,15 @@ func (s *authService) PrepareDemoUser() {
 		}
 	}
 	s.logger.Info("Demo environment prepared successfully")
+}
+
+const obfuscateVisibleChars = 4
+
+// obfuscateString obfuscates the input string by showing the first and last
+// obfuscateVisibleChars characters, replacing the middle with dots.
+func obfuscateString(input string) string {
+	if len(input) > obfuscateVisibleChars*2 {
+		return input[:obfuscateVisibleChars] + "...." + input[len(input)-obfuscateVisibleChars:]
+	}
+	return input
 }
