@@ -183,9 +183,32 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc: "exists in Redis cache",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey:      &accountproto.APIKey{Id: "id-0"},
+					}, nil)
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put(gomock.Any()).Return(nil)
+			},
+			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			}),
+			expected: &accountproto.EnvironmentAPIKey{
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+				ApiKey:      &accountproto.APIKey{Id: "id-0"},
+			},
+			expectedErr: nil,
+		},
+		{
 			desc: "ErrInvalidAPIKey",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.NotFound, "test"))
@@ -201,6 +224,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
+				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Unknown, "test"))
 			},
@@ -211,9 +236,11 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			expectedErr: ErrInternal,
 		},
 		{
-			desc: "success",
+			desc: "success from DB",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
 					&accountproto.GetEnvironmentAPIKeyResponse{EnvironmentApiKey: &accountproto.EnvironmentAPIKey{
@@ -234,6 +261,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 	}
 	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
+		redisMock := cachev3mock.NewMockEnvironmentAPIKeyCache(mockController)
+		gs.environmentAPIKeyRedisCache = redisMock
 		p.setup(gs)
 		id, err := gs.extractAPIKey(p.ctx)
 		assert.NoError(t, err)
@@ -4251,28 +4280,31 @@ func TestGrpcContainsInvalidTimestampError(t *testing.T) {
 func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) *grpcGatewayService {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
+	redisAPIKeyCache := cachev3mock.NewMockEnvironmentAPIKeyCache(mockController)
+	redisAPIKeyCache.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
 	return &grpcGatewayService{
-		featureClient:            featureclientmock.NewMockClient(mockController),
-		accountClient:            accountclientmock.NewMockClient(mockController),
-		pushClient:               pushclientmock.NewMockClient(mockController),
-		codeRefClient:            coderefclientmock.NewMockClient(mockController),
-		auditLogClient:           auditlogclientmock.NewMockClient(mockController),
-		autoOpsClient:            autoopsclientmock.NewMockClient(mockController),
-		goalPublisher:            publishermock.NewMockPublisher(mockController),
-		tagClient:                tagclientmock.NewMockClient(mockController),
-		teamClient:               teamclientmock.NewMockClient(mockController),
-		notificationClient:       notificationclientmock.NewMockClient(mockController),
-		experimentClient:         experimentclientmock.NewMockClient(mockController),
-		eventCounterClient:       eventcounterclientmock.NewMockClient(mockController),
-		environmentClient:        environmentclientmock.NewMockClient(mockController),
-		userPublisher:            publishermock.NewMockPublisher(mockController),
-		evaluationPublisher:      publishermock.NewMockPublisher(mockController),
-		featuresCache:            cachev3mock.NewMockFeaturesCache(mockController),
-		segmentUsersCache:        cachev3mock.NewMockSegmentUsersCache(mockController),
-		environmentAPIKeyCache:   cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
-		apiKeyLastUsedInfoCacher: sync.Map{},
-		opts:                     &defaultOptions,
-		logger:                   logger,
+		featureClient:               featureclientmock.NewMockClient(mockController),
+		accountClient:               accountclientmock.NewMockClient(mockController),
+		pushClient:                  pushclientmock.NewMockClient(mockController),
+		codeRefClient:               coderefclientmock.NewMockClient(mockController),
+		auditLogClient:              auditlogclientmock.NewMockClient(mockController),
+		autoOpsClient:               autoopsclientmock.NewMockClient(mockController),
+		goalPublisher:               publishermock.NewMockPublisher(mockController),
+		tagClient:                   tagclientmock.NewMockClient(mockController),
+		teamClient:                  teamclientmock.NewMockClient(mockController),
+		notificationClient:          notificationclientmock.NewMockClient(mockController),
+		experimentClient:            experimentclientmock.NewMockClient(mockController),
+		eventCounterClient:          eventcounterclientmock.NewMockClient(mockController),
+		environmentClient:           environmentclientmock.NewMockClient(mockController),
+		userPublisher:               publishermock.NewMockPublisher(mockController),
+		evaluationPublisher:         publishermock.NewMockPublisher(mockController),
+		featuresCache:               cachev3mock.NewMockFeaturesCache(mockController),
+		segmentUsersCache:           cachev3mock.NewMockSegmentUsersCache(mockController),
+		environmentAPIKeyCache:      cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
+		environmentAPIKeyRedisCache: redisAPIKeyCache,
+		apiKeyLastUsedInfoCacher:    sync.Map{},
+		opts:                        &defaultOptions,
+		logger:                      logger,
 	}
 }
 
