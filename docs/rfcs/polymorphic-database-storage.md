@@ -323,19 +323,47 @@ List assembly mirrors `mysql.ConstructQueryAndWhereArgs` / count helpers but nev
 
 ### API layer changes
 
-Services hold **`database.Client`** for transactions and **`FeatureStorage`** (or domain equivalent) for persistence. List RPC handlers **do not** import `mysql` or build `ListOptions`; they pass a **semantic struct** after auth and validation.
+**Transactions only:** the API layer replaces **`mysql.Client`** with **`database.Client`** for `RunInTransactionV2` / `Close`. It does **not** open connections or choose a dialect—that stays in `server`. Storage implementations still receive a concrete **`mysql.Client`** or **`postgres.Client`** as `QueryExecer` where needed, but **service structs** depend on the narrow `database.Client` interface plus **`PushStorage` / `FeatureStorage`** (etc.).
 
-**Before (problematic):**
+**Before:**
 
 ```go
-options := &mysql.ListOptions{
-    Filters: []*mysql.FilterV2{{Column: "feature.environment_id", Operator: mysql.OperatorEqual, Value: envID}},
-    // ...
+type PushService struct {
+    mysqlClient mysql.Client
+    pushStorage v2ps.PushStorage
 }
-features, _, _, err := s.featureStorage.ListFeatures(ctx, options)
+
+func NewPushService(mysqlClient mysql.Client, pushStorage v2ps.PushStorage, ...) *PushService {
+    return &PushService{mysqlClient: mysqlClient, pushStorage: pushStorage, ...}
+}
+
+func (s *PushService) CreatePush(...) error {
+    return s.mysqlClient.RunInTransactionV2(ctx, func(ctx context.Context, _ mysql.Transaction) error {
+        return s.pushStorage.CreatePush(ctx, ...)
+    })
+}
 ```
 
 **After:**
+
+```go
+type PushService struct {
+    dbClient    database.Client
+    pushStorage v2ps.PushStorage
+}
+
+func NewPushService(dbClient database.Client, pushStorage v2ps.PushStorage, ...) *PushService {
+    return &PushService{dbClient: dbClient, pushStorage: pushStorage, ...}
+}
+
+func (s *PushService) CreatePush(...) error {
+    return s.dbClient.RunInTransactionV2(ctx, func(ctx context.Context) error {
+        return s.pushStorage.CreatePush(ctx, ...)
+    })
+}
+```
+
+**List / filter paths** stay behind storage: handlers pass **semantic params** (e.g. `ListFeaturesParams`), not `mysql.ListOptions`.
 
 ```go
 params := v2fs.ListFeaturesParams{
@@ -346,7 +374,33 @@ params := v2fs.ListFeaturesParams{
 features, cursor, total, err := s.featureStorage.ListFeatures(ctx, params)
 ```
 
-`server` wiring selects `NewMySQLFeatureStorage(mysqlClient)` or `NewPostgresFeatureStorage(postgresClient)` from config; `FeatureService` only sees `FeatureStorage` + `database.Client`.
+#### Wiring in `pkg/web/cmd/server` (config-driven clients)
+
+Only the server (or equivalent composition root) reads **`StorageType`** (or env / flags), constructs **`mysql.Client`** or **`postgres.Client`**, wraps the transactional surface as **`database.Client`**, and picks **`NewMySQLPushStorage`** vs **`NewPostgresPushStorage`**. Adapters such as **`database.NewMySQLStorageClient` / `database.NewPostgresStorageClient`** live in `pkg/storage/v2/database` (names illustrative).
+
+```go
+func (s *server) createServices() {
+    ctx := context.Background() // or server-held root context
+    var dbClient database.Client
+    var pushStorage v2ps.PushStorage
+
+    switch s.config.StorageType {
+    case "mysql":
+        mysqlClient, _ := mysql.NewClient(ctx, user, pass, host, port, dbName)
+        dbClient = database.NewMySQLStorageClient(mysqlClient)
+        pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
+    case "postgres":
+        pgClient, _ := postgres.NewClient(ctx, user, pass, host, port, dbName)
+        dbClient = database.NewPostgresStorageClient(pgClient)
+        pushStorage = v2ps.NewPostgresPushStorage(pgClient)
+    }
+
+    pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
+    _ = pushService
+}
+```
+
+`PushService` never imports `mysql` or `postgres`; it only sees `database.Client` and `PushStorage`. The same pattern applies to `FeatureService`, `TagService`, and other APIs after their storage constructors are split by dialect.
 
 ### Storage layer: queries in mysql and postgres packages
 
@@ -363,7 +417,7 @@ func (s *featureStorageMySQL) ListFeatures(ctx context.Context, p ListFeaturesPa
 }
 ```
 
-**PostgreSQL** (`feature_postgres.go`) builds `*postgres.ListOptions` with the same *intent* but different `SQLString()` output, then uses postgres `ConstructQueryAndWhereArgs` (or equivalent):
+**PostgreSQL** (`feature_postgres.go`) builds `*postgres.ListOptions` with the same _intent_ but different `SQLString()` output, then uses postgres `ConstructQueryAndWhereArgs` (or equivalent):
 
 ```go
 func (s *featureStoragePostgres) ListFeatures(ctx context.Context, p ListFeaturesParams) ([]*featureproto.Feature, int, int64, error) {
@@ -397,12 +451,12 @@ The **embedded base SELECT** (`select_features.sql`) can stay one file per diale
 
 ## XII. Implementation timeline (indicative)
 
-| Phase | Description                                                                                                                                              |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Harden `pkg/storage/v2/postgres` query/list helpers to parity with mysql where needed; unified `database.Client` adapters if not already done.           |
-| 2     | Introduce semantic list params and refactor **feature** storage + API as the reference pattern; remove mysql filter construction from `pkg/feature/api`. |
-| 3     | PostgreSQL schema migrations aligned with MySQL semantics (types, uniques for upsert).                                                                   |
-| 4     | Repeat storage split + API decoupling for remaining packages in the affected list.                                                                       |
+| Phase | Description                                                                                                                                                                                                                                                      |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | **Helm + Atlas prep:** chart values / config for PostgreSQL (DSN, secrets, `StorageType`); add an **Atlas** migration **folder** (or dialect target) for PostgreSQL next to the existing MySQL migration layout (e.g. under `migration/`, migration job charts). |
+| 2     | Harden `pkg/storage/v2/postgres` query/list helpers to parity with mysql where needed; unified `database.Client` adapters if not already done.                                                                                                                   |
+| 3     | Introduce semantic list params and refactor **feature** storage + API as the reference pattern; remove mysql filter construction from `pkg/feature/api`.                                                                                                         |
+| 4     | Repeat storage split + API decoupling for remaining packages in the affected list.                                                                                                                                                                               |
 
 ---
 
