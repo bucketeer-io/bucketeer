@@ -35,7 +35,7 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
@@ -111,7 +111,7 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, accountstotage.ErrAPIKeyNotFound)
+					nil, accstorage.ErrAPIKeyNotFound)
 			},
 			auth:        "test-key",
 			expected:    nil,

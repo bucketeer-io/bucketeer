@@ -32,7 +32,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -167,7 +167,7 @@ type grpcGatewayService struct {
 	eventCounterClient          eventcounterclient.Client
 	environmentClient           environmentclient.Client
 	mysqlClient                 mysql.Client
-	accountStorage              accountstotage.AccountStorage
+	accountStorage              accstorage.AccountStorage
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
 	userPublisher               publisher.Publisher
@@ -226,7 +226,7 @@ func NewGrpcGatewayService(
 		eventCounterClient:          eventCounterClient,
 		environmentClient:           environmentClient,
 		mysqlClient:                 mysqlClient,
-		accountStorage:              accountstotage.NewAccountStorage(mysqlClient),
+		accountStorage:              accstorage.NewAccountStorage(mysqlClient),
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
 		userPublisher:               up,
@@ -1628,7 +1628,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			// we need to directly query the database.
 			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apiKey)
 			if err != nil {
-				if errors.Is(err, accountstotage.ErrAPIKeyNotFound) {
+				if errors.Is(err, accstorage.ErrAPIKeyNotFound) {
 					return nil, ErrInvalidAPIKey
 				}
 				s.logger.Error(

@@ -31,7 +31,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -50,7 +50,7 @@ import (
 type gatewayService struct {
 	featureClient               featureclient.Client
 	accountClient               accountclient.Client
-	accountStorage              accountstotage.AccountStorage
+	accountStorage              accstorage.AccountStorage
 	pushClient                  pushclient.Client
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
@@ -90,7 +90,7 @@ func NewGatewayService(
 	return &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,
-		accountStorage:              accountstotage.NewAccountStorage(mysqlClient),
+		accountStorage:              accstorage.NewAccountStorage(mysqlClient),
 		pushClient:                  pushClient,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
@@ -595,7 +595,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 			// we need to directly query the database.
 			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apikey)
 			if err != nil {
-				if errors.Is(err, accountstotage.ErrAPIKeyNotFound) {
+				if errors.Is(err, accstorage.ErrAPIKeyNotFound) {
 					return nil, errInvalidAPIKey
 				}
 				s.logger.Error(
