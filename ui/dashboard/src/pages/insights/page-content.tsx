@@ -42,7 +42,12 @@ import DateCustom from './elements/DateCustom';
 import ChartDescription from './elements/DescriptionChart';
 import MonthlyBarChart from './elements/MonthlyBarChart';
 import TimeSeriesLineChart from './elements/TimeSeriesLineChart';
-import { InsightsFilters, TimeRangePreset, formatYAxis, formatLatency } from './utils';
+import {
+  formatLatency,
+  formatYAxis,
+  InsightsFilters,
+  TimeRangePreset
+} from './utils';
 
 ChartJS.register(
   CategoryScale,
