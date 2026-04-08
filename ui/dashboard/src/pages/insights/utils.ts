@@ -1,6 +1,6 @@
 import { ALL } from 'constants/insight';
-import { InsightApiId, InsightSourceId } from '@types';
 import { DateTime } from 'luxon';
+import { InsightApiId, InsightSourceId } from '@types';
 
 export type TimeRangePreset =
   | '1h'
