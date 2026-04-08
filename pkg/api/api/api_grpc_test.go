@@ -303,7 +303,7 @@ func TestGrpcGetEnvironmentAPIKeyFromCache(t *testing.T) {
 	for _, p := range patterns {
 		mock := cachev3mock.NewMockEnvironmentAPIKeyCache(mockController)
 		p.setup(mock)
-		actual, err := getEnvironmentAPIKeyFromCache(context.Background(), "id", mock, "caller", "layer")
+		actual, err := getEnvironmentAPIKeyFromCache("id", mock, "caller", "layer")
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
