@@ -133,6 +133,22 @@ var (
 		pkgErr.FeaturePackageName, "feature: variation weights must sum to 100%", "variation")
 	errMaintainerCannotBeEmpty = pkgErr.NewErrorInvalidArgEmpty(
 		pkgErr.FeaturePackageName, "feature: maintainer cannot be empty", "maintainer")
+	errPrerequisiteRequired = pkgErr.NewErrorInvalidArgNil(
+		pkgErr.FeaturePackageName, "feature: prerequisite required", "prerequisite")
+
+	errTargetRequired = pkgErr.NewErrorInvalidArgNil(
+		pkgErr.FeaturePackageName, "feature: target required", "target")
+
+	errTagRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: tag required", "tag")
+
+	errUnknownChangeType = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: unknown change type", "change_type")
+	errPrerequisiteFeatureIDRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: prerequisite feature id required", "feature_id")
+
+	errTargetVariationRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: target variation required", "variation")
 )
 
 const (
