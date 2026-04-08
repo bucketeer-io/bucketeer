@@ -1,7 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryInsightsMonthlySummary } from '@queries/insights';
 import { useQueryProjects } from '@queries/projects';
-import { getUniqueProjects, useAuth } from 'auth';
+import {
+  getCurrentEnvironment,
+  getCurrentProject,
+  getUniqueProjects,
+  useAuth
+} from 'auth';
 import { ALL_API_IDS, ALL_SOURCE_IDS } from 'constants/insight';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
@@ -17,10 +22,10 @@ const PageLoader = () => {
     [roles]
   );
 
-  const initialProjectId = userProjects[0]?.id ?? '';
-  const initialEnvironmentId = normalizeEnvId(
-    userEnvironments.find(e => e.projectId === initialProjectId)?.id ?? ''
-  );
+  const currentEnv = getCurrentEnvironment(consoleAccount!);
+  const currentProject = getCurrentProject(roles, currentEnv.id);
+  const initialProjectId = currentProject?.id ?? userProjects[0]?.id ?? '';
+  const initialEnvironmentId = normalizeEnvId(currentEnv.id);
 
   const [filters, setFilters] = useState<InsightsFilters>({
     projectId: initialProjectId,
