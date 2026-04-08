@@ -102,6 +102,7 @@ const TimeSeriesLineChart = ({
           }
         },
         y: {
+          min: 0,
           grid: { color: '#E2E8F0', drawTicks: false },
           title: {
             display: true,
