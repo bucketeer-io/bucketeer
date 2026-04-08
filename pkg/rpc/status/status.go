@@ -15,12 +15,18 @@
 package status
 
 import (
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/protoadapt"
 )
 
 func MustWithDetails(s *status.Status, details ...proto.Message) error {
-	dt, err := s.WithDetails(details...)
+	v1Messages := make([]protoadapt.MessageV1, 0, 10)
+	for _, v2Message := range details {
+		v1Messages = append(v1Messages, protoadapt.MessageV1Of(v2Message))
+	}
+
+	dt, err := s.WithDetails(v1Messages...)
 	if err != nil {
 		panic(err)
 	}
