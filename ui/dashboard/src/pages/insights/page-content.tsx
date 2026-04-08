@@ -21,6 +21,7 @@ import {
   Tooltip
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
+import { ALL } from 'constants/insight';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { DateTime } from 'luxon';
@@ -41,8 +42,7 @@ import DateCustom from './elements/DateCustom';
 import ChartDescription from './elements/DescriptionChart';
 import MonthlyBarChart from './elements/MonthlyBarChart';
 import TimeSeriesLineChart from './elements/TimeSeriesLineChart';
-import { formatYAxis } from './utils';
-import { InsightsFilters, TimeRangePreset } from './utils';
+import { InsightsFilters, TimeRangePreset, formatYAxis } from './utils';
 
 ChartJS.register(
   CategoryScale,
@@ -91,8 +91,13 @@ const PageContent = ({
 }: PageContentProps) => {
   const { t } = useTranslation(['common']);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [dateRangeLabel, setDateRangeLabel] = useState<string>('');
   const { sourceIdOptions, apiIdOptions } = useOptions();
+
+  const dateRangeLabel = useMemo(() => {
+    if (!filters.customStartAt || !filters.customEndAt) return '';
+    return `${DateTime.fromSeconds(Number(filters.customStartAt)).toFormat('MMM d, yyyy')} 
+    - ${DateTime.fromSeconds(Number(filters.customEndAt)).toFormat('MMM d, yyyy')}`;
+  }, [filters.customStartAt, filters.customEndAt]);
 
   const timeRangeOptions: DropdownOption[] = useMemo(
     () => [
@@ -109,7 +114,7 @@ const PageContent = ({
 
   const projectOptions: DropdownOption[] = useMemo(
     () => [
-      { label: t('insights.all-projects'), value: '' },
+      { label: t('insights.all-projects'), value: ALL },
       ...projects.map(p => ({ label: p.name, value: p.id }))
     ],
     [projects, t]
@@ -117,7 +122,7 @@ const PageContent = ({
 
   const environmentOptions: DropdownOption[] = useMemo(() => {
     return [
-      { label: t('insights.all-environments'), value: '' },
+      { label: t('insights.all-environments'), value: ALL },
       ...environments.map(e => ({
         label: e.name,
         value: e.id === '' ? 'production' : e.id
@@ -172,14 +177,20 @@ const PageContent = ({
 
   const handleSourceChange = useCallback(
     (value: string) => {
-      onFiltersChange({ ...filters, sourceId: value as InsightSourceId | '' });
+      onFiltersChange({
+        ...filters,
+        sourceId: value as InsightSourceId | typeof ALL
+      });
     },
     [filters, onFiltersChange]
   );
 
   const handleApiChange = useCallback(
     (value: string) => {
-      onFiltersChange({ ...filters, apiId: value as InsightApiId | '' });
+      onFiltersChange({
+        ...filters,
+        apiId: value as InsightApiId | typeof ALL
+      });
     },
     [filters, onFiltersChange]
   );
@@ -189,9 +200,7 @@ const PageContent = ({
       if (value === 'date_range') {
         return setIsDatePickerOpen(true);
       }
-      const preset = (
-        Array.isArray(value) ? value[0] : value
-      ) as TimeRangePreset;
+      const preset = value as TimeRangePreset;
 
       onFiltersChange({
         ...filters,
@@ -199,14 +208,18 @@ const PageContent = ({
         customStartAt: undefined,
         customEndAt: undefined
       });
-      setDateRangeLabel('');
     },
     [filters, onFiltersChange]
   );
   const handleDateRangeApply = useCallback(
     (customStartAt: string, customEndAt: string) => {
       setIsDatePickerOpen(false);
-      onFiltersChange({ ...filters, customStartAt, customEndAt });
+      onFiltersChange({
+        ...filters,
+        timeRange: 'date_range',
+        customStartAt,
+        customEndAt
+      });
     },
     [filters, onFiltersChange]
   );
@@ -228,20 +241,24 @@ const PageContent = ({
     return 'hour';
   }, [filters.timeRange, filters.customStartAt, filters.customEndAt]);
 
-  const selectedProjectLabel = filters.projectId
-    ? projectOptions.find(o => o.value === filters.projectId)?.label
-    : t('insights.all-projects');
+  const selectedProjectLabel =
+    filters.projectId !== ALL
+      ? projectOptions.find(o => o.value === filters.projectId)?.label
+      : t('insights.all-projects');
 
   const selectedEnvLabel = environmentOptions.find(
     o => o.value === filters.environmentId
   )?.label;
 
-  const selectedSourceLabel = filters.sourceId
-    ? sourceIdOptions.find(o => o.value === filters.sourceId)?.label
-    : t('insights.all-sdks');
-  const selectedApiLabel = filters.apiId
-    ? apiIdOptions.find(o => o.value === filters.apiId)?.label
-    : t('insights.all-apis');
+  const selectedSourceLabel =
+    filters.sourceId !== ALL
+      ? sourceIdOptions.find(o => o.value === filters.sourceId)?.label
+      : t('insights.all-sdks');
+
+  const selectedApiLabel =
+    filters.apiId !== ALL
+      ? apiIdOptions.find(o => o.value === filters.apiId)?.label
+      : t('insights.all-apis');
 
   return (
     <div className="p-6 flex flex-col gap-6 min-w-[950px]">
@@ -254,7 +271,9 @@ const PageContent = ({
             options={projectOptions}
             label={selectedProjectLabel}
             itemSelected={filters.projectId}
-            selectedOptions={filters.projectId ? [filters.projectId] : []}
+            selectedOptions={
+              filters.projectId !== ALL ? [filters.projectId] : []
+            }
             placeholder={t('insights.all-projects')}
             onSelectOption={v => onProjectChange(String(v))}
             triggerClassName="min-w-[180px]"
@@ -270,7 +289,7 @@ const PageContent = ({
             label={selectedEnvLabel}
             itemSelected={filters.environmentId}
             selectedOptions={
-              filters.environmentId ? [filters.environmentId] : []
+              filters.environmentId !== ALL ? [filters.environmentId] : []
             }
             placeholder={t('insights.all-environments')}
             onSelectOption={v => handleEnvironmentChange(String(v))}
@@ -286,7 +305,7 @@ const PageContent = ({
             options={sourceIdOptions}
             label={selectedSourceLabel}
             itemSelected={filters.sourceId}
-            selectedOptions={filters.sourceId ? [filters.sourceId] : []}
+            selectedOptions={filters.sourceId !== ALL ? [filters.sourceId] : []}
             placeholder={t('insights.all-sdks')}
             onSelectOption={v => handleSourceChange(String(v))}
             triggerClassName="min-w-[160px]"
@@ -362,7 +381,7 @@ const PageContent = ({
               options={apiIdOptions}
               label={selectedApiLabel}
               itemSelected={filters.apiId}
-              selectedOptions={filters.apiId ? [filters.apiId] : []}
+              selectedOptions={filters.apiId !== ALL ? [filters.apiId] : []}
               placeholder={t('insights.all-apis')}
               onSelectOption={v => handleApiChange(String(v))}
               triggerClassName="min-w-[160px]"
@@ -390,7 +409,7 @@ const PageContent = ({
             <div className="hidden">
               <DateCustom
                 onApply={handleDateRangeApply}
-                onLabelChange={setDateRangeLabel}
+                onLabelChange={() => {}}
                 isOpen={isDatePickerOpen}
                 onClose={() => setIsDatePickerOpen(false)}
               />

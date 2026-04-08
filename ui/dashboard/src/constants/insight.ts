@@ -1,5 +1,7 @@
 import { InsightApiId, InsightSourceId } from '@types';
 
+export const ALL = 'ALL';
+
 export const ALL_API_IDS: InsightApiId[] = [
   'UNKNOWN_API',
   'GET_EVALUATION',

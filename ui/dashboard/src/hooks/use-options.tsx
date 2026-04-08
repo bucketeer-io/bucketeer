@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ALL } from 'constants/insight';
 import { getLanguage, i18n } from 'i18n';
 import { FeatureRuleClauseOperator } from '@types';
 import {
@@ -518,7 +519,7 @@ const useOptions = () => {
 
   const sourceIdOptions: DropdownOption[] = useMemo(
     () => [
-      { label: translation('insights.all-sdks'), value: '' },
+      { label: translation('insights.all-sdks'), value: ALL },
       { label: 'Android', value: 'ANDROID' },
       { label: 'iOS', value: 'IOS' },
       { label: 'Web', value: 'WEB' },
@@ -541,7 +542,7 @@ const useOptions = () => {
 
   const apiIdOptions: DropdownOption[] = useMemo(
     () => [
-      { label: translation('insights.all-apis'), value: '' },
+      { label: translation('insights.all-apis'), value: ALL },
       { label: 'GetEvaluation', value: 'GET_EVALUATION' },
       { label: 'GetEvaluations', value: 'GET_EVALUATIONS' },
       { label: 'RegisterEvents', value: 'REGISTER_EVENTS' },
