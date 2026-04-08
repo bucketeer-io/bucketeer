@@ -21,6 +21,7 @@ export const useInsightsFilters = (
         projectId: initialProjectId || ALL,
         environmentId: initialEnvironmentId || ALL,
         sourceId: ALL,
+        apiId: ALL,
         timeRange: '24h'
       });
     }
@@ -48,9 +49,9 @@ export const useInsightsFilters = (
         projectId: next.projectId || ALL,
         environmentId: next.environmentId || ALL,
         sourceId: next.sourceId,
+        apiId: next.apiId,
         timeRange: next.timeRange
       };
-      if (next.apiId !== ALL) params.apiId = next.apiId;
       if (next.customStartAt) params.customStartAt = next.customStartAt;
       if (next.customEndAt) params.customEndAt = next.customEndAt;
       onChangSearchParams(params);

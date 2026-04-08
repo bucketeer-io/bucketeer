@@ -22,7 +22,6 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
 import { ALL } from 'constants/insight';
-import dayjs from 'dayjs';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { DateTime } from 'luxon';
@@ -43,8 +42,7 @@ import DateCustom from './elements/DateCustom';
 import ChartDescription from './elements/DescriptionChart';
 import MonthlyBarChart from './elements/MonthlyBarChart';
 import TimeSeriesLineChart from './elements/TimeSeriesLineChart';
-import { formatYAxis } from './utils';
-import { InsightsFilters, TimeRangePreset } from './utils';
+import { InsightsFilters, TimeRangePreset, formatYAxis } from './utils';
 
 ChartJS.register(
   CategoryScale,
@@ -97,7 +95,8 @@ const PageContent = ({
 
   const dateRangeLabel = useMemo(() => {
     if (!filters.customStartAt || !filters.customEndAt) return '';
-    return `${dayjs(Number(filters.customStartAt) * 1000).format('MMM D, YYYY')} - ${dayjs(Number(filters.customEndAt) * 1000).format('MMM D, YYYY')}`;
+    return `${DateTime.fromSeconds(Number(filters.customStartAt)).toFormat('MMM d, yyyy')} 
+    - ${DateTime.fromSeconds(Number(filters.customEndAt)).toFormat('MMM d, yyyy')}`;
   }, [filters.customStartAt, filters.customEndAt]);
 
   const timeRangeOptions: DropdownOption[] = useMemo(
