@@ -962,14 +962,36 @@ func (s *FeatureService) validateScheduledChangePayload(
 		}
 	}
 
-	// Validate rule_order: if provided, must have no duplicates
+	// Validate rule_order: if provided, must exactly match the post-change rule set.
+	// Build the expected rule IDs by applying CREATE/DELETE changes to the current rules.
 	if len(payload.RuleOrder) > 0 {
-		seen := make(map[string]bool, len(payload.RuleOrder))
+		expectedRuleIDs := make(map[string]struct{}, len(feature.Rules)+len(payload.RuleChanges))
+		for _, rule := range feature.Rules {
+			if rule != nil && rule.Id != "" {
+				expectedRuleIDs[rule.Id] = struct{}{}
+			}
+		}
+		for _, rc := range payload.RuleChanges {
+			if rc.Rule == nil || rc.Rule.Id == "" {
+				continue
+			}
+			switch rc.ChangeType {
+			case ftproto.ChangeType_CREATE:
+				expectedRuleIDs[rc.Rule.Id] = struct{}{}
+			case ftproto.ChangeType_DELETE:
+				delete(expectedRuleIDs, rc.Rule.Id)
+			}
+		}
+		if len(payload.RuleOrder) != len(expectedRuleIDs) {
+			return statusInvalidRuleOrder.Err()
+		}
 		for _, id := range payload.RuleOrder {
-			if id == "" || seen[id] {
+			if id == "" {
 				return statusInvalidRuleOrder.Err()
 			}
-			seen[id] = true
+			if _, ok := expectedRuleIDs[id]; !ok {
+				return statusInvalidRuleOrder.Err()
+			}
 		}
 	}
 

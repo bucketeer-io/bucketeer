@@ -359,24 +359,7 @@ func (f *Feature) applyGranularCRUDChanges(
 // applyRuleOrder reorders f.Rules to match the given list of rule IDs.
 // Must be called after all rule CREATE/UPDATE/DELETE changes have been applied.
 func (f *Feature) applyRuleOrder(ruleIDs []string) error {
-	if len(ruleIDs) != len(f.Rules) {
-		return errRulesOrderSizeNotEqual
-	}
-	seen := make(map[string]bool, len(ruleIDs))
-	rules := make([]*feature.Rule, 0, len(ruleIDs))
-	for _, id := range ruleIDs {
-		if seen[id] {
-			return errRulesOrderDuplicateIDs
-		}
-		seen[id] = true
-		rule, err := f.getRule(id)
-		if err != nil {
-			return errRuleNotFound
-		}
-		rules = append(rules, rule)
-	}
-	f.Rules = rules
-	return nil
+	return f.ChangeRulesOrder(ruleIDs)
 }
 
 func (f *Feature) updateEnable() error {

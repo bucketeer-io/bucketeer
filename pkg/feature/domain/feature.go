@@ -396,13 +396,13 @@ func (f *Feature) ChangeRulesOrder(ruleIDs []string) error {
 	if len(ruleIDs) != len(f.Rules) {
 		return errRulesOrderSizeNotEqual
 	}
+	seen := make(map[string]bool, len(ruleIDs))
 	rules := make([]*feature.Rule, 0, len(ruleIDs))
 	for _, ruleID := range ruleIDs {
-		for _, r := range rules {
-			if r.Id == ruleID {
-				return errRulesOrderDuplicateIDs
-			}
+		if seen[ruleID] {
+			return errRulesOrderDuplicateIDs
 		}
+		seen[ruleID] = true
 		rule, err := f.getRule(ruleID)
 		if err != nil {
 			return errRuleNotFound
