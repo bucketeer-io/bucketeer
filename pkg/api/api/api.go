@@ -48,20 +48,20 @@ import (
 )
 
 type gatewayService struct {
-	featureClient          featureclient.Client
-	accountClient          accountclient.Client
-	pushClient             pushclient.Client
-	goalPublisher          publisher.Publisher
-	evaluationPublisher    publisher.Publisher
-	userPublisher          publisher.Publisher
-	metricsPublisher       publisher.Publisher
-	segmentUsersCache             cachev3.SegmentUsersCache
-	featuresCache                 cachev3.FeaturesCache
-	environmentAPIKeyCache        cachev3.EnvironmentAPIKeyCache
-	environmentAPIKeyRedisCache   cachev3.EnvironmentAPIKeyCache
-	flightgroup                   singleflight.Group
-	opts                   *options
-	logger                 *zap.Logger
+	featureClient               featureclient.Client
+	accountClient               accountclient.Client
+	pushClient                  pushclient.Client
+	goalPublisher               publisher.Publisher
+	evaluationPublisher         publisher.Publisher
+	userPublisher               publisher.Publisher
+	metricsPublisher            publisher.Publisher
+	segmentUsersCache           cachev3.SegmentUsersCache
+	featuresCache               cachev3.FeaturesCache
+	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
+	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
+	flightgroup                 singleflight.Group
+	opts                        *options
+	logger                      *zap.Logger
 }
 
 func NewGatewayService(
@@ -86,19 +86,19 @@ func NewGatewayService(
 		cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
 	)
 	return &gatewayService{
-		featureClient:          featureClient,
-		accountClient:          accountClient,
-		pushClient:             pushClient,
-		goalPublisher:          gp,
-		evaluationPublisher:    ep,
-		userPublisher:          up,
-		metricsPublisher:       mp,
+		featureClient:               featureClient,
+		accountClient:               accountClient,
+		pushClient:                  pushClient,
+		goalPublisher:               gp,
+		evaluationPublisher:         ep,
+		userPublisher:               up,
+		metricsPublisher:            mp,
 		featuresCache:               cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:           cachev3.NewSegmentUsersCache(redisV3Cache),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		environmentAPIKeyRedisCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache, 0),
 		opts:                        &options,
-		logger:                 options.logger.Named("api"),
+		logger:                      options.logger.Named("api"),
 	}
 }
 
