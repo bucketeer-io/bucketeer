@@ -1616,7 +1616,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 				)
 				return envAPIKey, nil
 			}
-			// L3: account service (DB)
+			// L3: direct DB query
 			s.logger.Warn(
 				"API key not found in cache",
 				log.FieldsFromIncomingContext(ctx).AddFields(
@@ -1624,15 +1624,20 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 					zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
 				)...,
 			)
-			envAPIKey, err = getEnvironmentAPIKey(
-				ctx,
-				apiKey,
-				s.accountClient,
-				s.logger,
-			)
+			// Since the Get and List APIs for the API keys are obsfucated,
+			// we need to directly query the database.
+			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apiKey)
 			if err != nil {
-				return nil, err
+				if errors.Is(err, accountstotage.ErrAPIKeyNotFound) {
+					return nil, ErrInvalidAPIKey
+				}
+				s.logger.Error(
+					"Failed to get environment APIKey from storage",
+					log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+				)
+				return nil, ErrInternal
 			}
+			envAPIKey = domainEnvAPIKey.EnvironmentAPIKey
 			putEnvironmentAPIKeyCache(
 				ctx,
 				envAPIKey,
@@ -1663,29 +1668,6 @@ func (s *grpcGatewayService) extractAPIKey(ctx context.Context) (string, error) 
 
 func environmentAPIKeyFlightID(id string) string {
 	return id
-}
-
-func getEnvironmentAPIKey(
-	ctx context.Context,
-	apiKey string,
-	accountClient accountclient.Client,
-	logger *zap.Logger,
-) (*accountproto.EnvironmentAPIKey, error) {
-	resp, err := accountClient.GetEnvironmentAPIKey(
-		ctx,
-		&accountproto.GetEnvironmentAPIKeyRequest{ApiKey: apiKey},
-	)
-	if err != nil {
-		if code := status.Code(err); code == codes.NotFound {
-			return nil, ErrInvalidAPIKey
-		}
-		logger.Error(
-			"Failed to get environment APIKey from account service",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, ErrInternal
-	}
-	return resp.EnvironmentApiKey, nil
 }
 
 func getEnvironmentAPIKeyFromCache(

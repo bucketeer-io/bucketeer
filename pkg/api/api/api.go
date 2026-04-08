@@ -26,13 +26,12 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -41,6 +40,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -50,6 +50,7 @@ import (
 type gatewayService struct {
 	featureClient               featureclient.Client
 	accountClient               accountclient.Client
+	accountStorage              accountstotage.AccountStorage
 	pushClient                  pushclient.Client
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
@@ -72,6 +73,7 @@ func NewGatewayService(
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	mp publisher.Publisher,
+	mysqlClient mysql.Client,
 	redisV3Cache cache.MultiGetCache,
 	opts ...Option,
 ) *gatewayService {
@@ -88,6 +90,7 @@ func NewGatewayService(
 	return &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,
+		accountStorage:              accountstotage.NewAccountStorage(mysqlClient),
 		pushClient:                  pushClient,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
@@ -577,7 +580,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 		putEnvironmentAPIKeyCache(ctx, envAPIKey, s.environmentAPIKeyCache, s.logger)
 		return envAPIKey, nil
 	}
-	// L3: account service (DB)
+	// L3: direct DB query
 	s.logger.Warn(
 		"API key not found in cache",
 		log.FieldsFromIncomingContext(ctx).AddFields(
@@ -588,10 +591,20 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	k, err, _ := s.flightgroup.Do(
 		apikey,
 		func() (interface{}, error) {
-			return s.getEnvironmentAPIKey(
-				ctx,
-				apikey,
-			)
+			// Since the Get and List APIs for the API keys are obsfucated,
+			// we need to directly query the database.
+			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apikey)
+			if err != nil {
+				if errors.Is(err, accountstotage.ErrAPIKeyNotFound) {
+					return nil, errInvalidAPIKey
+				}
+				s.logger.Error(
+					"Failed to get environment APIKey from storage",
+					log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+				)
+				return nil, errInternal
+			}
+			return domainEnvAPIKey.EnvironmentAPIKey, nil
 		},
 	)
 	if err != nil {
@@ -600,27 +613,6 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	envAPIKey = k.(*accountproto.EnvironmentAPIKey)
 	putEnvironmentAPIKeyCache(ctx, envAPIKey, s.environmentAPIKeyCache, s.logger)
 	return envAPIKey, nil
-}
-
-func (s *gatewayService) getEnvironmentAPIKey(
-	ctx context.Context,
-	apiKey string,
-) (*accountproto.EnvironmentAPIKey, error) {
-	resp, err := s.accountClient.GetEnvironmentAPIKey(
-		ctx,
-		&accountproto.GetEnvironmentAPIKeyRequest{ApiKey: apiKey},
-	)
-	if err != nil {
-		if code := status.Code(err); code == codes.NotFound {
-			return nil, errInvalidAPIKey
-		}
-		s.logger.Error(
-			"Failed to get environment APIKey from account service",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, errInternal
-	}
-	return resp.EnvironmentApiKey, nil
 }
 
 func (s *gatewayService) evaluateFeatures(

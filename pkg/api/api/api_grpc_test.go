@@ -27,12 +27,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -210,8 +211,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.NotFound, "test"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, accountstotage.ErrAPIKeyNotFound)
 			},
 			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
@@ -226,8 +227,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.Unknown, "test"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("db error"))
 			},
 			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
@@ -242,8 +243,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					&accountproto.GetEnvironmentAPIKeyResponse{EnvironmentApiKey: &accountproto.EnvironmentAPIKey{
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					&accountdomain.EnvironmentAPIKey{EnvironmentAPIKey: &accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}}, nil)
@@ -738,8 +739,8 @@ func TestGrpcTrack(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.NotFound, "error: apy key not found"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, accountstotage.ErrAPIKeyNotFound)
 			},
 			input: &gwproto.TrackRequest{
 				Apikey:    "api-key",
@@ -996,8 +997,8 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
 					nil, errors.New("internal error"))
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.NotFound, "test"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, accountstotage.ErrAPIKeyNotFound)
 			},
 			input:       &gwproto.GetSegmentUsersRequest{},
 			expected:    nil,
@@ -1562,8 +1563,8 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
 					nil, errors.New("internal error"))
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.NotFound, "test"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, accountstotage.ErrAPIKeyNotFound)
 			},
 			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
 			expected:    nil,
@@ -4285,6 +4286,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 	return &grpcGatewayService{
 		featureClient:               featureclientmock.NewMockClient(mockController),
 		accountClient:               accountclientmock.NewMockClient(mockController),
+		accountStorage:              accountstoragemock.NewMockAccountStorage(mockController),
 		pushClient:                  pushclientmock.NewMockClient(mockController),
 		codeRefClient:               coderefclientmock.NewMockClient(mockController),
 		auditLogClient:              auditlogclientmock.NewMockClient(mockController),

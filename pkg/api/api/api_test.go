@@ -31,11 +31,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
@@ -51,7 +52,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &gatewayService{}, g)
 }
 
@@ -109,8 +110,8 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.NotFound, "test"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, accountstotage.ErrAPIKeyNotFound)
 			},
 			auth:        "test-key",
 			expected:    nil,
@@ -123,8 +124,8 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					nil, status.Errorf(codes.Unknown, "test"))
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("db error"))
 			},
 			auth:        "test-key",
 			expected:    nil,
@@ -137,8 +138,8 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.environmentAPIKeyRedisCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
-					&accountproto.GetEnvironmentAPIKeyResponse{EnvironmentApiKey: &accountproto.EnvironmentAPIKey{
+				gs.accountStorage.(*accountstoragemock.MockAccountStorage).EXPECT().GetEnvironmentAPIKey(gomock.Any(), gomock.Any()).Return(
+					&accountdomain.EnvironmentAPIKey{EnvironmentAPIKey: &accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}}, nil)
@@ -2531,6 +2532,7 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 	return &gatewayService{
 		featureClient:               featureclientmock.NewMockClient(mockController),
 		accountClient:               accountclientmock.NewMockClient(mockController),
+		accountStorage:              accountstoragemock.NewMockAccountStorage(mockController),
 		goalPublisher:               publishermock.NewMockPublisher(mockController),
 		userPublisher:               publishermock.NewMockPublisher(mockController),
 		metricsPublisher:            publishermock.NewMockPublisher(mockController),

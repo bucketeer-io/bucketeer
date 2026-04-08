@@ -588,6 +588,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		metricsPublisher,
+		mysqlClient,
 		redisV3Cache,
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
