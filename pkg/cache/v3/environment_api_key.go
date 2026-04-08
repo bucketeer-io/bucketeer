@@ -18,7 +18,7 @@ package v3
 import (
 	"time"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
