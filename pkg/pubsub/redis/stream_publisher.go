@@ -21,12 +21,12 @@ import (
 	"fmt"
 	"hash/fnv"
 
+	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	v3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
-	"google.golang.org/protobuf/proto"
 )
 
 var (

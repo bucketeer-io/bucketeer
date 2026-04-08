@@ -20,9 +20,10 @@ import (
 	"errors"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub"       // nolint:staticcheck
+	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/runtime/protoiface"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
@@ -37,7 +38,7 @@ var (
 
 type Message interface {
 	GetId() string
-	proto.Message
+	protoiface.MessageV1
 }
 
 type Publisher interface {
