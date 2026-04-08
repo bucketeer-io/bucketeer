@@ -558,7 +558,6 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	}
 	// L1: in-memory cache
 	envAPIKey, err := getEnvironmentAPIKeyFromCache(
-		ctx,
 		apikey,
 		s.environmentAPIKeyCache,
 		callerGatewayService,
@@ -569,7 +568,6 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	}
 	// L2: Redis cache (kept warm by batch cacher)
 	envAPIKey, err = getEnvironmentAPIKeyFromCache(
-		ctx,
 		apikey,
 		s.environmentAPIKeyRedisCache,
 		callerGatewayService,
