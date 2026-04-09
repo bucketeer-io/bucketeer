@@ -12,9 +12,8 @@ package mock
 import (
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockFeaturesCache is a mock of FeaturesCache interface.

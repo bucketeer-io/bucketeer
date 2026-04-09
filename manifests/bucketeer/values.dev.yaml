@@ -173,6 +173,8 @@ api:
   env:
     oldestEventTimestamp: 168h
     furthestEventTimestamp: 48h
+    featuresMemoryCacheTTL: 10s
+    segmentUsersMemoryCacheTTL: 10s
     gcpEnabled: false
     profile: false
     enablePprof: false

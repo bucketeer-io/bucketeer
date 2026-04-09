@@ -357,47 +357,6 @@ func TestValidateGetEvaluationRequest(t *testing.T) {
 	}
 }
 
-func TestGetFeaturesFromCache(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	patterns := []struct {
-		desc          string
-		setup         func(*cachev3mock.MockFeaturesCache)
-		environmentId string
-		expected      *featureproto.Features
-		expectedErr   error
-	}{
-		{
-			desc: "no error",
-			setup: func(mtf *cachev3mock.MockFeaturesCache) {
-				mtf.EXPECT().Get(gomock.Any()).Return(&featureproto.Features{}, nil)
-			},
-			environmentId: "ns0",
-			expected:      &featureproto.Features{},
-			expectedErr:   nil,
-		},
-		{
-			desc: "error",
-			setup: func(mtf *cachev3mock.MockFeaturesCache) {
-				mtf.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound)
-			},
-			environmentId: "ns0",
-			expected:      nil,
-			expectedErr:   cache.ErrNotFound,
-		},
-	}
-	for _, p := range patterns {
-		mtfc := cachev3mock.NewMockFeaturesCache(mockController)
-		p.setup(mtfc)
-		gs := gatewayService{featuresCache: mtfc}
-		actual, err := gs.getFeaturesFromCache(context.Background(), p.environmentId)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
-	}
-}
-
 func TestGetFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -415,7 +374,7 @@ func TestGetFeatures(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			desc: "exists in redis",
+			desc: "exists in in-memory cache",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -427,9 +386,26 @@ func TestGetFeatures(t *testing.T) {
 			expected:      []*featureproto.Feature{{}},
 		},
 		{
+			desc: "exists in Redis cache",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{{Id: "id-0"}},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			environmentId: "ns0",
+			expectedErr:   nil,
+			expected:      []*featureproto.Feature{{Id: "id-0"}},
+		},
+		{
 			desc: "listFeatures fails",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
@@ -439,9 +415,11 @@ func TestGetFeatures(t *testing.T) {
 			expectedErr:   errInternal,
 		},
 		{
-			desc: "success",
+			desc: "success from service",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
@@ -464,6 +442,8 @@ func TestGetFeatures(t *testing.T) {
 			desc: "success: including off-variation features",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
@@ -512,6 +492,8 @@ func TestGetFeatures(t *testing.T) {
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
 						{
@@ -553,6 +535,8 @@ func TestGetFeatures(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newGatewayServiceWithMock(t, mockController)
+			redisFeaturesCache := cachev3mock.NewMockFeaturesCache(mockController)
+			gs.featuresRedisCache = redisFeaturesCache
 			p.setup(gs)
 			actual, err := gs.getFeatures(context.Background(), p.environmentId)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
@@ -2529,6 +2513,10 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 	require.NoError(t, err)
 	redisAPIKeyCache := cachev3mock.NewMockEnvironmentAPIKeyCache(mockController)
 	redisAPIKeyCache.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
+	redisFeaturesCache := cachev3mock.NewMockFeaturesCache(mockController)
+	redisFeaturesCache.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
+	redisSegmentUsersCache := cachev3mock.NewMockSegmentUsersCache(mockController)
+	redisSegmentUsersCache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
 	return &gatewayService{
 		featureClient:               featureclientmock.NewMockClient(mockController),
 		accountClient:               accountclientmock.NewMockClient(mockController),
@@ -2538,7 +2526,9 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 		metricsPublisher:            publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:         publishermock.NewMockPublisher(mockController),
 		featuresCache:               cachev3mock.NewMockFeaturesCache(mockController),
+		featuresRedisCache:          redisFeaturesCache,
 		segmentUsersCache:           cachev3mock.NewMockSegmentUsersCache(mockController),
+		segmentUsersRedisCache:      redisSegmentUsersCache,
 		environmentAPIKeyCache:      cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
 		environmentAPIKeyRedisCache: redisAPIKeyCache,
 		opts:                        &defaultOptions,

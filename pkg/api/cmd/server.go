@@ -107,6 +107,8 @@ type server struct {
 	furthestEventTimestamp            *time.Duration
 	apiKeyMemoryCacheTTL              *time.Duration
 	apiKeyMemoryCacheEvictionInterval *time.Duration
+	featuresMemoryCacheTTL            *time.Duration
+	segmentUsersMemoryCacheTTL        *time.Duration
 	// PubSub configurations
 	pubSubType                *string
 	pubSubRedisServerName     *string
@@ -229,6 +231,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"api-key-memory-cache-eviction-interval",
 			"Eviction interval for the in-memory API key cache.",
 		).Default("30s").Duration(),
+		featuresMemoryCacheTTL: cmd.Flag(
+			"features-memory-cache-ttl",
+			"TTL for the in-memory features cache.",
+		).Default("1m").Duration(),
+		segmentUsersMemoryCacheTTL: cmd.Flag(
+			"segment-users-memory-cache-ttl",
+			"TTL for the in-memory segment users cache.",
+		).Default("1m").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis-stream).",
@@ -515,6 +525,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisV3Cache,
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
+		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
+		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -592,6 +604,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisV3Cache,
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
+		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
+		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),

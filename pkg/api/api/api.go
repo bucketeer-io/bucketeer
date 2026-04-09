@@ -57,7 +57,9 @@ type gatewayService struct {
 	userPublisher               publisher.Publisher
 	metricsPublisher            publisher.Publisher
 	segmentUsersCache           cachev3.SegmentUsersCache
+	segmentUsersRedisCache      cachev3.SegmentUsersCache
 	featuresCache               cachev3.FeaturesCache
+	featuresRedisCache          cachev3.FeaturesCache
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	flightgroup                 singleflight.Group
@@ -96,8 +98,10 @@ func NewGatewayService(
 		evaluationPublisher:         ep,
 		userPublisher:               up,
 		metricsPublisher:            mp,
-		featuresCache:               cachev3.NewFeaturesCache(redisV3Cache),
-		segmentUsersCache:           cachev3.NewSegmentUsersCache(redisV3Cache),
+		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
+		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
+		segmentUsersCache:           cachev3.NewSegmentUsersCache(inMemoryCache, options.segmentUsersMemoryCacheTTL),
+		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		environmentAPIKeyRedisCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache, 0),
 		opts:                        &options,
@@ -683,10 +687,18 @@ func (s *gatewayService) getSegmentUsers(
 	ctx context.Context,
 	segmentID, environmentId string,
 ) ([]*featureproto.SegmentUser, error) {
-	segmentUsers, err := s.getSegmentUsersFromCache(segmentID, environmentId)
+	// L1: in-memory cache
+	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
 	if err == nil {
-		return segmentUsers, nil
+		return segment.Users, nil
 	}
+	// L2: Redis cache (kept warm by batch cacher)
+	segment, err = s.segmentUsersRedisCache.Get(segmentID, environmentId)
+	if err == nil {
+		putSegmentUsersCache(ctx, segment, environmentId, s.segmentUsersCache, s.logger)
+		return segment.Users, nil
+	}
+	// L3: feature service (DB)
 	s.logger.Warn(
 		"No cached data for SegmentUsers",
 		log.FieldsFromIncomingContext(ctx).AddFields(
@@ -714,24 +726,26 @@ func (s *gatewayService) getSegmentUsers(
 	return res.Users, nil
 }
 
-func (s *gatewayService) getSegmentUsersFromCache(
-	segmentID, environmentId string,
-) ([]*featureproto.SegmentUser, error) {
-	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
-	if err == nil {
-		return segment.Users, nil
-	}
-	return nil, err
-}
-
 func (s *gatewayService) getFeatures(
 	ctx context.Context,
 	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	fs, err := s.getFeaturesFromCache(ctx, environmentId)
+	// L1: in-memory cache
+	fs, err := s.featuresCache.Get(environmentId)
 	if err == nil {
+		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerInMemory, codeHit).Inc()
 		return fs.Features, nil
 	}
+	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerInMemory, codeMiss).Inc()
+	// L2: Redis cache (kept warm by batch cacher)
+	fs, err = s.featuresRedisCache.Get(environmentId)
+	if err == nil {
+		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
+		putFeaturesCache(ctx, fs, environmentId, s.featuresCache, s.logger)
+		return fs.Features, nil
+	}
+	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeMiss).Inc()
+	// L3: feature service (DB)
 	s.logger.Warn(
 		"No cached data for Features",
 		log.FieldsFromIncomingContext(ctx).AddFields(
@@ -751,19 +765,6 @@ func (s *gatewayService) getFeatures(
 		return nil, errInternal
 	}
 	return features, nil
-}
-
-func (s *gatewayService) getFeaturesFromCache(
-	ctx context.Context,
-	environmentId string,
-) (*featureproto.Features, error) {
-	features, err := s.featuresCache.Get(environmentId)
-	if err == nil {
-		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
-		return features, nil
-	}
-	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeMiss).Inc()
-	return nil, err
 }
 
 func (s *gatewayService) listFeatures(

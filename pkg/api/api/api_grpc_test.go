@@ -552,8 +552,7 @@ func TestGrpcGetFeaturesFromCache(t *testing.T) {
 	for _, p := range patterns {
 		mtfc := cachev3mock.NewMockFeaturesCache(mockController)
 		p.setup(mtfc)
-		gs := grpcGatewayService{featuresCache: mtfc}
-		actual, err := gs.getFeaturesFromCache(context.Background(), p.environmentId)
+		actual, err := getFeaturesFromCache(p.environmentId, mtfc, "caller", "layer")
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
@@ -576,7 +575,7 @@ func TestGrpcGetFeatures(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			desc: "exists in redis",
+			desc: "exists in in-memory cache",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -588,9 +587,26 @@ func TestGrpcGetFeatures(t *testing.T) {
 			expected:      []*featureproto.Feature{{}},
 		},
 		{
+			desc: "exists in Redis cache",
+			setup: func(gs *grpcGatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{{Id: "id-0"}},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			environmentId: "ns0",
+			expectedErr:   nil,
+			expected:      []*featureproto.Feature{{Id: "id-0"}},
+		},
+		{
 			desc: "listFeatures fails",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
@@ -600,9 +616,11 @@ func TestGrpcGetFeatures(t *testing.T) {
 			expectedErr:   ErrInternal,
 		},
 		{
-			desc: "success",
+			desc: "success from service",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
@@ -625,6 +643,8 @@ func TestGrpcGetFeatures(t *testing.T) {
 			desc: "success: including off-variation features",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
@@ -673,6 +693,8 @@ func TestGrpcGetFeatures(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
+				gs.featuresRedisCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
 						{
@@ -714,8 +736,171 @@ func TestGrpcGetFeatures(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			redisFeaturesCache := cachev3mock.NewMockFeaturesCache(mockController)
+			gs.featuresRedisCache = redisFeaturesCache
 			p.setup(gs)
 			actual, err := gs.getFeatures(context.Background(), p.environmentId)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
+func TestGrpcGetSegmentUsersFromCache(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*cachev3mock.MockSegmentUsersCache)
+		segmentID   string
+		envID       string
+		expected    *featureproto.SegmentUsers
+		expectedErr error
+	}{
+		{
+			desc: "no error",
+			setup: func(mtf *cachev3mock.MockSegmentUsersCache) {
+				mtf.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&featureproto.SegmentUsers{}, nil)
+			},
+			segmentID:   "seg-0",
+			envID:       "ns0",
+			expected:    &featureproto.SegmentUsers{},
+			expectedErr: nil,
+		},
+		{
+			desc: "error",
+			setup: func(mtf *cachev3mock.MockSegmentUsersCache) {
+				mtf.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, cache.ErrNotFound)
+			},
+			segmentID:   "seg-0",
+			envID:       "ns0",
+			expected:    nil,
+			expectedErr: cache.ErrNotFound,
+		},
+	}
+	for _, p := range patterns {
+		mtfc := cachev3mock.NewMockSegmentUsersCache(mockController)
+		p.setup(mtfc)
+		actual, err := getSegmentUsersFromCache(p.segmentID, p.envID, mtfc, "caller", "layer")
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
+}
+
+func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*grpcGatewayService)
+		segmentID   string
+		envID       string
+		expected    *featureproto.SegmentUsers
+		expectedErr error
+	}{
+		{
+			desc: "exists in in-memory cache",
+			setup: func(gs *grpcGatewayService) {
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					&featureproto.SegmentUsers{
+						SegmentId: "seg-0",
+						Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+					}, nil)
+			},
+			segmentID: "seg-0",
+			envID:     "ns0",
+			expected: &featureproto.SegmentUsers{
+				SegmentId: "seg-0",
+				Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "exists in Redis cache",
+			setup: func(gs *grpcGatewayService) {
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					&featureproto.SegmentUsers{
+						SegmentId: "seg-0",
+						Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			segmentID: "seg-0",
+			envID:     "ns0",
+			expected: &featureproto.SegmentUsers{
+				SegmentId: "seg-0",
+				Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "ErrInternal: ListSegmentUsers fails",
+			setup: func(gs *grpcGatewayService) {
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("test"))
+			},
+			segmentID:   "seg-0",
+			envID:       "ns0",
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "ErrInternal: GetSegment fails",
+			setup: func(gs *grpcGatewayService) {
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("test"))
+			},
+			segmentID:   "seg-0",
+			envID:       "ns0",
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "success from service",
+			setup: func(gs *grpcGatewayService) {
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{UpdatedAt: 12345}}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			segmentID: "seg-0",
+			envID:     "ns0",
+			expected: &featureproto.SegmentUsers{
+				SegmentId: "seg-0",
+				Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+				UpdatedAt: 12345,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			redisSegmentUsersCache := cachev3mock.NewMockSegmentUsersCache(mockController)
+			gs.segmentUsersRedisCache = redisSegmentUsersCache
+			p.setup(gs)
+			actual, err := gs.getSegmentUsersBySegmentID(context.Background(), p.segmentID, p.envID)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -2957,6 +3142,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
@@ -4283,6 +4469,10 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 	require.NoError(t, err)
 	redisAPIKeyCache := cachev3mock.NewMockEnvironmentAPIKeyCache(mockController)
 	redisAPIKeyCache.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
+	redisFeaturesCache := cachev3mock.NewMockFeaturesCache(mockController)
+	redisFeaturesCache.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
+	redisSegmentUsersCache := cachev3mock.NewMockSegmentUsersCache(mockController)
+	redisSegmentUsersCache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, cache.ErrNotFound).AnyTimes()
 	return &grpcGatewayService{
 		featureClient:               featureclientmock.NewMockClient(mockController),
 		accountClient:               accountclientmock.NewMockClient(mockController),
@@ -4301,7 +4491,9 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		userPublisher:               publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:         publishermock.NewMockPublisher(mockController),
 		featuresCache:               cachev3mock.NewMockFeaturesCache(mockController),
+		featuresRedisCache:          redisFeaturesCache,
 		segmentUsersCache:           cachev3mock.NewMockSegmentUsersCache(mockController),
+		segmentUsersRedisCache:      redisSegmentUsersCache,
 		environmentAPIKeyCache:      cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
 		environmentAPIKeyRedisCache: redisAPIKeyCache,
 		apiKeyLastUsedInfoCacher:    sync.Map{},

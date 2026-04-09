@@ -62,7 +62,7 @@ func NewFeatureFlagCacher(
 ) FeatureFlagCacher {
 	caches := make([]cachev3.FeaturesCache, 0, len(multiCaches))
 	for _, c := range multiCaches {
-		caches = append(caches, cachev3.NewFeaturesCache(c))
+		caches = append(caches, cachev3.NewFeaturesCache(c, 0))
 	}
 	return &featureFlagCacher{
 		ftStorage: ftstorage.NewFeatureStorage(mysqlClient),
