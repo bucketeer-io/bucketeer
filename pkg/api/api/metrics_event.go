@@ -16,6 +16,7 @@ package api
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
@@ -386,18 +387,26 @@ func (s *grpcGatewayService) saveInternalSdkError(event *eventproto.MetricsEvent
 	}
 	// Log the error message for debugging SDK internal errors
 	if ev.Labels != nil {
-		s.logger.Warn("SDK internal error received",
-			zap.String("projectID", projectID),
-			zap.String("environmentUrlCode", env),
-			zap.String("apiId", ev.ApiId.String()),
-			zap.String("sdkVersion", event.SdkVersion),
-			zap.String("sourceId", event.SourceId.String()),
-			zap.String("tag", ev.Labels["tag"]),
-			zap.String("errorMessage", ev.Labels["error_message"]),
-			zap.Any("labels", ev.Labels),
-		)
+		errorMessage := ev.Labels["error_message"]
+		// Skip logging cache not found errors
+		if errorMessage != "" && !isCacheNotFoundError(errorMessage) {
+			s.logger.Warn("SDK internal error received",
+				zap.String("projectID", projectID),
+				zap.String("environmentUrlCode", env),
+				zap.String("apiId", ev.ApiId.String()),
+				zap.String("sdkVersion", event.SdkVersion),
+				zap.String("sourceId", event.SourceId.String()),
+				zap.String("tag", ev.Labels["tag"]),
+				zap.String("errorMessage", errorMessage),
+				zap.Any("labels", ev.Labels),
+			)
+		}
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
+}
+
+func isCacheNotFoundError(errorMessage string) bool {
+	return strings.Contains(errorMessage, "cache: not found")
 }
 
 func (s *grpcGatewayService) saveUnknownError(event *eventproto.MetricsEvent, projectID, env string) error {
