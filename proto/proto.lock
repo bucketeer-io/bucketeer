@@ -30778,6 +30778,26 @@
             ]
           },
           {
+            "name": "BulkCloneFeatureStatus",
+            "enum_fields": [
+              {
+                "name": "BULK_CLONE_FEATURE_STATUS_UNSPECIFIED"
+              },
+              {
+                "name": "BULK_CLONE_FEATURE_STATUS_SUCCESS",
+                "integer": 1
+              },
+              {
+                "name": "BULK_CLONE_FEATURE_STATUS_ALREADY_EXISTS",
+                "integer": 2
+              },
+              {
+                "name": "BULK_CLONE_FEATURE_STATUS_FAILED",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListSegmentsRequest.OrderBy",
             "enum_fields": [
               {
@@ -31793,6 +31813,58 @@
           },
           {
             "name": "CloneFeatureResponse"
+          },
+          {
+            "name": "BulkCloneFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "target_environment_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "BulkCloneFeatureResult",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "status",
+                "type": "BulkCloneFeatureStatus"
+              },
+              {
+                "id": 3,
+                "name": "error",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "BulkCloneFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "results",
+                "type": "BulkCloneFeatureResult",
+                "is_repeated": true
+              }
+            ]
           },
           {
             "name": "CreateSegmentRequest",
@@ -34553,6 +34625,182 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.feature.clone"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "BulkCloneFeature",
+                "in_type": "BulkCloneFeatureRequest",
+                "out_type": "BulkCloneFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/feature/bulk_clone"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Bulk Clone Feature Flag"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Clone a feature flag to multiple target environments in a single operation. To call this API, you need an EDITOR role in all specified target environments."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Feature"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.feature.bulk_clone"
                       },
                       {
                         "name": "responses",
