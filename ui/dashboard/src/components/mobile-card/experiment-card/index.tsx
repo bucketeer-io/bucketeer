@@ -4,7 +4,7 @@ import {
   IconEditOutlined,
   IconMoreVertOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
@@ -161,7 +161,7 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
         </div>
         <Divider />
         <div className="flex h-full w-full items-stretch justify-between gap-3 typo-para-medium">
-          <div className="flex-1 p-3 pb-0 rounded-xl text-gray-500">
+          <div className="flex-1 py-3 pb-0 rounded-xl text-gray-500">
             <p className="flex items-center gap-2 uppercase typo-para-tiny">
               <span>{t('time-start')}</span>
             </p>
@@ -177,7 +177,7 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 p-3 pb-0 rounded-xl text-gray-500">
+          <div className="flex-1 py-3 pb-0 rounded-xl text-gray-500">
             <div className="flex-1">
               <p className="flex items-center gap-2 uppercase typo-para-tiny">
                 <span>{t('common:time-stop')}</span>

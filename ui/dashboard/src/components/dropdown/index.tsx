@@ -87,7 +87,7 @@ const Dropdown = ({
   onClear,
   onSearch,
   additionalOptions,
-  additionalValue,
+  additionalValue
 }: DropdownProps) => {
   const [searchValue, setSearchValue] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
