@@ -18,7 +18,6 @@ import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
-import TruncateWithTooltip from 'elements/truncate-with-tooltip';
 import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
 import Overview from './overview';
@@ -255,14 +254,6 @@ const PageContent = ({
           </TableListContainer>
         </TabsContent>
       </Tabs>
-      <TruncateWithTooltip
-        text={
-          'labellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabellabel'
-        }
-        maxLines={1}
-        align="start"
-        className="-mt-0.5"
-      />
     </PageLayout.Content>
   );
 };
