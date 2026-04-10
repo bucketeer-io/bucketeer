@@ -52,6 +52,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
+	uuid "github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
@@ -727,7 +728,19 @@ func (s *server) startCacheInvalidator(
 	inMemoryCache *cachev3.InMemoryCache,
 	logger *zap.Logger,
 ) error {
-	hostname, _ := os.Hostname()
+	hostname, err := os.Hostname()
+	if err != nil || hostname == "" {
+		id, uuidErr := uuid.NewUUID()
+		if uuidErr != nil {
+			logger.Error("Failed to get hostname and generate UUID", zap.Error(err))
+			return fmt.Errorf("failed to generate unique subscription name: %w", uuidErr)
+		}
+		hostname = id.String()
+		logger.Warn("Failed to get hostname, using generated ID",
+			zap.Error(err),
+			zap.String("generatedId", hostname),
+		)
+	}
 	subscription := fmt.Sprintf("gateway-cache-invalidator-%s", hostname)
 	domainPuller, err := pubsubClient.CreatePuller(subscription, *s.domainTopic)
 	if err != nil {
