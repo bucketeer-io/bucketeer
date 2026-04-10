@@ -125,8 +125,8 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
   });
 
   return (
-    <div className="overflow-x-auto small-scroll h-[250px]">
-      <div className="min-w-full">
+    <div className="overflow-x-auto small-scroll h-[200px] sm:h-[250px]">
+      <div className={datasets.length ? 'min-w-[560px]' : 'min-w-[360px]'}>
         <Table.Root>
           <Table.Header className="sticky top-0 z-10 bg-white">
             {table.getHeaderGroups().map(headerGroup => (

@@ -3,7 +3,7 @@ import {
   IconEditOutlined,
   IconMoreVertOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
