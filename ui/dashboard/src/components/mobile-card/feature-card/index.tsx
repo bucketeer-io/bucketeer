@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { IconMoreVertOutlined, MDIcon } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useScreen, useToast } from 'hooks';
 import { useTranslation } from 'i18n';
