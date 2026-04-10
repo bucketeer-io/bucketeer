@@ -726,6 +726,11 @@ func (s *gatewayService) getSegmentUsers(
 		)
 		return nil, errInternal
 	}
+	segmentUsers := &featureproto.SegmentUsers{
+		SegmentId: segmentID,
+		Users:     res.Users,
+	}
+	putSegmentUsersCache(ctx, segmentUsers, environmentId, s.segmentUsersCache, s.logger)
 	return res.Users, nil
 }
 
