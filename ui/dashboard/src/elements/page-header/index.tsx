@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { IconLaunchOutlined } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useScreen } from 'hooks';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
@@ -52,7 +52,7 @@ const PageHeader = ({
             className="inline-flex items-center ml-1 typo-para-small text-primary-500 underline sm:hidden"
             target="_blank"
             to={link}
-            onClick={e => {
+            onClick={(e: React.MouseEvent) => {
               if (!link) return e.preventDefault();
             }}
           >
