@@ -36,7 +36,6 @@ func TestCacheInvalidatorHandleMessage(t *testing.T) {
 		desc             string
 		event            *domaineventproto.Event
 		setupCache       func(featuresCache cachev3.FeaturesCache, segmentUsersCache cachev3.SegmentUsersCache)
-		expectEvicted    string
 		verifyNotEvicted func(t *testing.T, featuresCache cachev3.FeaturesCache, segmentUsersCache cachev3.SegmentUsersCache)
 		verifyEvicted    func(t *testing.T, featuresCache cachev3.FeaturesCache, segmentUsersCache cachev3.SegmentUsersCache)
 	}{

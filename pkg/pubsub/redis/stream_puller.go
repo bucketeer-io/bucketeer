@@ -151,7 +151,9 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 
 	// Clean up stale consumer groups from terminated pods.
 	// If the subscription follows the per-pod convention "<prefix><hostname>",
-	// derive the prefix and destroy matching groups with 0 active consumers.
+	// derive the prefix and destroy matching groups with that prefix, except for
+	// the current subscription. This cleanup does not inspect consumer counts
+	// because Redis Streams' consumer count reflects historical, not active, connections.
 	p.cleanupStaleConsumerGroups(ctx)
 
 	// Create consumer groups for all partitions
@@ -360,7 +362,10 @@ func (p *StreamPuller) consumerGroupExists(ctx context.Context, streamKey, group
 
 // cleanupStaleConsumerGroups removes orphaned consumer groups left by terminated pods.
 // It derives a prefix from the subscription name by stripping the hostname suffix.
-// Only groups matching that prefix with 0 active consumers are destroyed.
+// Any matching group other than the current subscription group is destroyed.
+// Note: Redis Streams' XINFO GROUPS "consumers" field counts historical consumers,
+// not currently connected ones, so consumer count checks are not reliable for
+// detecting stale groups.
 func (p *StreamPuller) cleanupStaleConsumerGroups(ctx context.Context) {
 	hostname, err := os.Hostname()
 	if err != nil || !strings.HasSuffix(p.subscription, hostname) {
