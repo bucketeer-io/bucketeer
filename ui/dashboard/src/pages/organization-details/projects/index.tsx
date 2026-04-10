@@ -21,7 +21,6 @@ const OrganizationProjects = () => {
   const { t } = useTranslation(['form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
-
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
