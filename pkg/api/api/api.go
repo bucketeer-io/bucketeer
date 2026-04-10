@@ -693,14 +693,18 @@ func (s *gatewayService) getSegmentUsers(
 	// L1: in-memory cache
 	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
 	if err == nil {
+		restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerInMemory, codeHit).Inc()
 		return segment.Users, nil
 	}
+	restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerInMemory, codeMiss).Inc()
 	// L2: Redis cache (kept warm by batch cacher)
 	segment, err = s.segmentUsersRedisCache.Get(segmentID, environmentId)
 	if err == nil {
+		restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeHit).Inc()
 		putSegmentUsersCache(ctx, segment, environmentId, s.segmentUsersCache, s.logger)
 		return segment.Users, nil
 	}
+	restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeMiss).Inc()
 	// L3: feature service (DB)
 	s.logger.Warn(
 		"No cached data for SegmentUsers",
