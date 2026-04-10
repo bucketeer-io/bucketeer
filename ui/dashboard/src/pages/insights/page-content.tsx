@@ -81,6 +81,7 @@ interface PageContentProps {
   onFiltersChange: (filters: InsightsFilters) => void;
   onProjectChange: (projectId: string) => void;
   queriesEnabled: boolean;
+  availableSourceIds: Set<InsightSourceId> | null;
 }
 
 const PageContent = ({
@@ -92,11 +93,20 @@ const PageContent = ({
   filters,
   onFiltersChange,
   onProjectChange,
-  queriesEnabled
+  queriesEnabled,
+  availableSourceIds
 }: PageContentProps) => {
   const { t } = useTranslation(['common']);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const { sourceIdOptions, apiIdOptions } = useOptions();
+  const { sourceIdOptions: allSourceIdOptions, apiIdOptions } = useOptions();
+
+  // Show only SDKs that have data; fall back to full list while loading
+  const sourceIdOptions = useMemo(() => {
+    if (!availableSourceIds) return allSourceIdOptions;
+    return allSourceIdOptions.filter(
+      o => o.value === ALL || availableSourceIds.has(o.value as InsightSourceId)
+    );
+  }, [allSourceIdOptions, availableSourceIds]);
 
   const dateRangeLabel = useMemo(() => {
     if (!filters.customStartAt || !filters.customEndAt) return '';

@@ -88,6 +88,28 @@ const PageLoader = () => {
       enabled: hasEnvironments
     });
 
+  // Discover which SDKs have data by fetching monthly summary for all source IDs.
+  // The DB only returns rows for SDKs that actually have records.
+  // Using ALL_SOURCE_IDS also lets React Query share the cache when the SDK
+  // filter is set to "All", avoiding a duplicate request.
+  const discoveryParams = useMemo(
+    () => ({
+      environmentIds,
+      sourceIds: ALL_SOURCE_IDS
+    }),
+    [environmentIds]
+  );
+
+  const { data: allSourcesSummary } = useQueryInsightsMonthlySummary({
+    params: discoveryParams,
+    enabled: hasEnvironments
+  });
+
+  const availableSourceIds = useMemo(() => {
+    if (!allSourcesSummary) return null;
+    return new Set(allSourcesSummary.series.map(s => s.sourceId));
+  }, [allSourcesSummary]);
+
   const timeRangeParams = useMemo(() => {
     const { startAt, endAt } = computeTimeRange(
       filters.timeRange,
@@ -134,6 +156,7 @@ const PageLoader = () => {
       onFiltersChange={setFilters}
       onProjectChange={handleProjectChange}
       queriesEnabled={hasEnvironments}
+      availableSourceIds={availableSourceIds}
     />
   );
 };
