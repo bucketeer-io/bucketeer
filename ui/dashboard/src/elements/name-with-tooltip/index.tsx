@@ -112,7 +112,6 @@ const NameWithTooltip = ({
     window.addEventListener('resize', hasMoreThanMaxLines);
     return () => window.removeEventListener('resize', hasMoreThanMaxLines);
   }, [childrenId, maxLines]);
-  console.log('isTruncate', isTruncate);
 
   return (
     <Tooltip

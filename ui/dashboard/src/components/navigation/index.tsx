@@ -1,5 +1,5 @@
-import { Link, useLocation, useNavigate } from 'react-router';
 import { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import * as ROUTING from 'constants/routing';
