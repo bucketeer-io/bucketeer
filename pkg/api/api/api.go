@@ -86,9 +86,12 @@ func NewGatewayService(
 	if options.metrics != nil {
 		registerMetrics(options.metrics)
 	}
-	inMemoryCache := cachev3.NewInMemoryCache(
-		cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
-	)
+	inMemoryCache := options.inMemoryCache
+	if inMemoryCache == nil {
+		inMemoryCache = cachev3.NewInMemoryCache(
+			cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
+		)
+	}
 	return &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,

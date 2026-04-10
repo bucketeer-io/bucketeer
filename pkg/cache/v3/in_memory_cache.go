@@ -108,6 +108,10 @@ func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) er
 	return nil
 }
 
+func (c *InMemoryCache) Delete(key interface{}) {
+	c.entries.Delete(key)
+}
+
 func (c *InMemoryCache) Destroy() {
 	close(c.doneCh)
 	c.entries.Range(func(key, value interface{}) bool {

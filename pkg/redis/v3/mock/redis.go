@@ -464,6 +464,20 @@ func (mr *MockClientMockRecorder) XGroupCreateMkStream(stream, group, start any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XGroupCreateMkStream", reflect.TypeOf((*MockClient)(nil).XGroupCreateMkStream), stream, group, start)
 }
 
+// XGroupDestroy mocks base method.
+func (m *MockClient) XGroupDestroy(ctx context.Context, stream, group string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XGroupDestroy", ctx, stream, group)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// XGroupDestroy indicates an expected call of XGroupDestroy.
+func (mr *MockClientMockRecorder) XGroupDestroy(ctx, stream, group any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XGroupDestroy", reflect.TypeOf((*MockClient)(nil).XGroupDestroy), ctx, stream, group)
+}
+
 // XInfoGroups mocks base method.
 func (m *MockClient) XInfoGroups(ctx context.Context, stream string) ([]redis0.XInfoGroup, error) {
 	m.ctrl.T.Helper()

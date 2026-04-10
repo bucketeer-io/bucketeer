@@ -102,6 +102,7 @@ type options struct {
 	pubsubTimeout                     time.Duration
 	oldestEventTimestamp              time.Duration
 	furthestEventTimestamp            time.Duration
+	inMemoryCache                     *cachev3.InMemoryCache
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
 }
@@ -154,6 +155,12 @@ func WithFeaturesMemoryCacheTTL(ttl time.Duration) Option {
 func WithSegmentUsersMemoryCacheTTL(ttl time.Duration) Option {
 	return func(opts *options) {
 		opts.segmentUsersMemoryCacheTTL = ttl
+	}
+}
+
+func WithInMemoryCache(c *cachev3.InMemoryCache) Option {
+	return func(opts *options) {
+		opts.inMemoryCache = c
 	}
 }
 
@@ -227,9 +234,12 @@ func NewGrpcGatewayService(
 	if options.metrics != nil {
 		registerMetrics(options.metrics)
 	}
-	inMemoryCache := cachev3.NewInMemoryCache(
-		cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
-	)
+	inMemoryCache := options.inMemoryCache
+	if inMemoryCache == nil {
+		inMemoryCache = cachev3.NewInMemoryCache(
+			cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
+		)
+	}
 	s := &grpcGatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,

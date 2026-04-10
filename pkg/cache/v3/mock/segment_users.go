@@ -12,8 +12,9 @@ package mock
 import (
 	reflect "reflect"
 
-	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gomock "go.uber.org/mock/gomock"
+
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockSegmentUsersCache is a mock of SegmentUsersCache interface.
@@ -37,6 +38,18 @@ func NewMockSegmentUsersCache(ctrl *gomock.Controller) *MockSegmentUsersCache {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockSegmentUsersCache) EXPECT() *MockSegmentUsersCacheMockRecorder {
 	return m.recorder
+}
+
+// Evict mocks base method.
+func (m *MockSegmentUsersCache) Evict(segmentID, environmentId string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Evict", segmentID, environmentId)
+}
+
+// Evict indicates an expected call of Evict.
+func (mr *MockSegmentUsersCacheMockRecorder) Evict(segmentID, environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Evict", reflect.TypeOf((*MockSegmentUsersCache)(nil).Evict), segmentID, environmentId)
 }
 
 // Get mocks base method.

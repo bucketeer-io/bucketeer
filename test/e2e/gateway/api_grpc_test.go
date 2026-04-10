@@ -1393,10 +1393,6 @@ func updateFeatueFlagCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Wait for the in-memory (L1) cache to expire so the gateway
-	// falls through to the now-updated Redis (L2) cache.
-	// The dev/E2E TTL is configured to 10s via environment variables.
-	time.Sleep(10 * time.Second)
 }
 
 func newFeatureClient(t *testing.T) featureclient.Client {

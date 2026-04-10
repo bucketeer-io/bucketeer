@@ -171,10 +171,12 @@ web:
     kmsResourceName: vault
 api:
   env:
+    logLevel: debug
     oldestEventTimestamp: 168h
     furthestEventTimestamp: 48h
-    featuresMemoryCacheTTL: 10s
-    segmentUsersMemoryCacheTTL: 10s
+    featuresMemoryCacheTTL: 1m
+    segmentUsersMemoryCacheTTL: 1m
+    domainTopic: domain
     gcpEnabled: false
     profile: false
     enablePprof: false
