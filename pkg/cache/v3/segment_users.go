@@ -21,8 +21,6 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"errors"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
