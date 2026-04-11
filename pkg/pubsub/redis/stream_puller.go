@@ -18,6 +18,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -147,6 +148,13 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 	// Store the handler function for use in recoveryLoop
 	p.handler = handler
 	p.mutex.Unlock()
+
+	// Clean up stale consumer groups from terminated pods.
+	// If the subscription follows the per-pod convention "<prefix><hostname>",
+	// derive the prefix and destroy matching groups with that prefix, except for
+	// the current subscription. This cleanup does not inspect consumer counts
+	// because Redis Streams' consumer count reflects historical, not active, connections.
+	p.cleanupStaleConsumerGroups(ctx)
 
 	// Create consumer groups for all partitions
 	for partition := 0; partition < p.partitionCount; partition++ {
@@ -350,6 +358,58 @@ func (p *StreamPuller) consumerGroupExists(ctx context.Context, streamKey, group
 	}
 
 	return false, nil
+}
+
+// cleanupStaleConsumerGroups removes orphaned consumer groups left by terminated pods.
+// It derives a prefix from the subscription name by stripping the hostname suffix.
+// Any matching group other than the current subscription group is destroyed.
+// Note: Redis Streams' XINFO GROUPS "consumers" field counts historical consumers,
+// not currently connected ones, so consumer count checks are not reliable for
+// detecting stale groups.
+func (p *StreamPuller) cleanupStaleConsumerGroups(ctx context.Context) {
+	hostname, err := os.Hostname()
+	if err != nil || !strings.HasSuffix(p.subscription, hostname) {
+		return
+	}
+	prefix := strings.TrimSuffix(p.subscription, hostname)
+	if prefix == "" || prefix == p.subscription {
+		return
+	}
+	for partition := 0; partition < p.partitionCount; partition++ {
+		streamKey := p.getStreamKey(partition)
+		exists, err := p.redisClient.Exists(streamKey)
+		if err != nil || exists == 0 {
+			continue
+		}
+		groups, err := p.redisClient.XInfoGroups(ctx, streamKey)
+		if err != nil {
+			p.logger.Warn("Failed to list consumer groups for cleanup",
+				zap.String("stream", streamKey),
+				zap.Error(err),
+			)
+			continue
+		}
+		for _, group := range groups {
+			if !strings.HasPrefix(group.Name, prefix) {
+				continue
+			}
+			if group.Name == p.subscription {
+				continue
+			}
+			if err := p.redisClient.XGroupDestroy(ctx, streamKey, group.Name); err != nil {
+				p.logger.Warn("Failed to destroy stale consumer group",
+					zap.String("stream", streamKey),
+					zap.String("group", group.Name),
+					zap.Error(err),
+				)
+				continue
+			}
+			p.logger.Debug("Destroyed stale consumer group",
+				zap.String("stream", streamKey),
+				zap.String("group", group.Name),
+			)
+		}
+	}
 }
 
 // recoveryLoop periodically checks for stale messages and reclaims them

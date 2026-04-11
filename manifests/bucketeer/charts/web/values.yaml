@@ -63,10 +63,12 @@ env:
   dashboardServicePort: 9103
   tagServicePort: 9104
   coderefServicePort: 9105
+  insightsServicePort: 9108
   unifiedGatewayPort: 9106
   metricsPort: 9002
   timezone: UTC
   emailFilter:
+  prometheusURL: http://prometheus.observability.svc.cluster.local:80
   logLevel: info
   googleTagManagerId:
   apiEndpoint:

@@ -13,23 +13,37 @@ import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
-import { AutoOpsRule, DatetimeClause, Rollout } from '@types';
+import { v4 as uuid } from 'uuid';
+import {
+  AutoOpsRule,
+  DatetimeClause,
+  RecurrenceFrequency,
+  Rollout
+} from '@types';
 import { isSameOrBeforeDate } from 'utils/function';
 import { cn } from 'utils/style';
 import {
-  dateTimeClauseListSchema,
-  DateTimeClauseListType
+  recurringScheduleSchema,
+  ScheduleOperationFormType
 } from 'pages/feature-flag-details/operations/form-schema';
 import {
   ActionTypeMap,
-  OperationActionType
+  EndConditionType,
+  OperationActionType,
+  ScheduleType
 } from 'pages/feature-flag-details/operations/types';
-import { createDatetimeClausesList } from 'pages/feature-flag-details/operations/utils';
+import {
+  createDatetimeClausesList,
+  isRecurringOperation,
+  timeOfDayToSeconds
+} from 'pages/feature-flag-details/operations/utils';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import SlideModal from 'components/modal/slide';
+import { RadioGroup, RadioGroupItem } from 'components/radio';
+import RecurringScheduleList from './recurring-schedule-list';
 import ScheduleList from './schedule-list';
 
 export interface OperationModalProps {
@@ -64,8 +78,18 @@ const ScheduleOperationModal = ({
 
   const isCreate = useMemo(() => actionType === 'NEW', [actionType]);
 
+  const isExistingRecurring = useMemo(
+    () => selectedData && isRecurringOperation(selectedData.clauses),
+    [selectedData]
+  );
+
+  const defaultScheduleType = useMemo(() => {
+    if (isExistingRecurring) return ScheduleType.RECURRING;
+    return ScheduleType.ONE_TIME;
+  }, [isExistingRecurring]);
+
   const handleCreateDefaultValues = () => {
-    if (selectedData) {
+    if (selectedData && !isExistingRecurring) {
       return selectedData.clauses.map(item => {
         const time = new Date(+(item.clause as DatetimeClause).time * 1000);
         return {
@@ -79,10 +103,79 @@ const ScheduleOperationModal = ({
     return [createDatetimeClausesList()];
   };
 
-  const form = useForm({
-    resolver: yupResolver(useFormSchema(dateTimeClauseListSchema)),
+  const handleCreateRecurringDefaults = () => {
+    if (selectedData && isExistingRecurring) {
+      const firstClause = selectedData.clauses[0]?.clause as DatetimeClause;
+      const recurrence = firstClause?.recurrence;
+
+      let endCondition = EndConditionType.NEVER;
+      let endDate: Date | undefined;
+      let maxOccurrences: number | undefined;
+
+      if (recurrence?.endDate && Number(recurrence.endDate) > 0) {
+        endCondition = EndConditionType.ON_DATE;
+        endDate = new Date(Number(recurrence.endDate) * 1000);
+      } else if (recurrence?.maxOccurrences && recurrence.maxOccurrences > 0) {
+        endCondition = EndConditionType.AFTER;
+        maxOccurrences = recurrence.maxOccurrences;
+      }
+
+      const startDate = recurrence?.startDate
+        ? new Date(Number(recurrence.startDate) * 1000)
+        : new Date();
+
+      return {
+        startDate,
+        frequency: (recurrence?.frequency || 'WEEKLY') as RecurrenceFrequency,
+        daysOfWeek: recurrence?.daysOfWeek?.map(Number) || [],
+        dayOfMonth: recurrence?.dayOfMonth || 1,
+        endCondition,
+        endDate,
+        maxOccurrences,
+        recurringClauses: selectedData.clauses.map(c => {
+          const dc = c.clause as DatetimeClause;
+          const totalSeconds = Number(dc.time);
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const timeDate = new Date();
+          timeDate.setHours(hours, minutes, 0, 0);
+          const wasExecuted = (dc.executionCount ?? 0) > 0;
+          return {
+            id: c.id,
+            actionType: c.actionType as ActionTypeMap,
+            time: timeDate,
+            wasExecuted
+          };
+        })
+      };
+    }
+
+    const defaultTime = new Date();
+    defaultTime.setHours(defaultTime.getHours() + 1, 0, 0, 0);
+    return {
+      startDate: new Date(),
+      frequency: 'WEEKLY' as RecurrenceFrequency,
+      daysOfWeek: [1, 2, 3, 4, 5],
+      dayOfMonth: 1,
+      endCondition: EndConditionType.NEVER,
+      endDate: undefined,
+      maxOccurrences: undefined,
+      recurringClauses: [
+        {
+          id: uuid(),
+          actionType: ActionTypeMap.ENABLE,
+          time: defaultTime
+        }
+      ]
+    };
+  };
+
+  const form = useForm<ScheduleOperationFormType>({
+    resolver: yupResolver(useFormSchema(recurringScheduleSchema)) as never,
     defaultValues: {
-      datetimeClausesList: handleCreateDefaultValues()
+      scheduleType: defaultScheduleType,
+      datetimeClausesList: handleCreateDefaultValues(),
+      recurring: handleCreateRecurringDefaults()
     },
     mode: 'onChange'
   });
@@ -91,8 +184,10 @@ const ScheduleOperationModal = ({
     formState: { isValid, isDirty, isSubmitting }
   } = form;
 
+  const scheduleType = form.watch('scheduleType');
+
   const handleCheckDateTimeClauses = useCallback(
-    (datetimeClausesList: DateTimeClauseListType['datetimeClausesList']) => {
+    (datetimeClausesList: ScheduleOperationFormType['datetimeClausesList']) => {
       if (selectedData) {
         const datetimeClauseChanges: ClauseUpdateType<DatetimeClause>[] = [];
         const { clauses } = selectedData;
@@ -151,37 +246,139 @@ const ScheduleOperationModal = ({
     [selectedData]
   );
 
+  const buildRecurrenceRule = useCallback(
+    (recurring: ScheduleOperationFormType['recurring']) => {
+      const startDate = Math.trunc(
+        recurring.startDate.getTime() / 1000
+      ).toString();
+
+      let endDate = '0';
+      let maxOccurrences = 0;
+
+      if (
+        recurring.endCondition === EndConditionType.ON_DATE &&
+        recurring.endDate
+      ) {
+        const endOfDay = new Date(recurring.endDate);
+        endOfDay.setHours(23, 59, 59, 0);
+        endDate = Math.trunc(endOfDay.getTime() / 1000).toString();
+      } else if (
+        recurring.endCondition === EndConditionType.AFTER &&
+        recurring.maxOccurrences
+      ) {
+        maxOccurrences = recurring.maxOccurrences;
+      }
+
+      return {
+        frequency: recurring.frequency,
+        daysOfWeek:
+          recurring.frequency === 'WEEKLY' ? recurring.daysOfWeek : [],
+        dayOfMonth:
+          recurring.frequency === 'MONTHLY' ? recurring.dayOfMonth : 0,
+        startDate,
+        endDate,
+        maxOccurrences,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      };
+    },
+    []
+  );
+
   const onSubmit = useCallback(
-    async (values: DateTimeClauseListType) => {
+    async (values: ScheduleOperationFormType) => {
       try {
         if (editable) {
-          const { datetimeClausesList } = values;
-
           let resp: AutoOpsCreatorResponse | null = null;
 
-          if (!isCreate && selectedData) {
-            const datetimeClauseChanges =
-              handleCheckDateTimeClauses(datetimeClausesList);
+          if (values.scheduleType === ScheduleType.RECURRING) {
+            const { recurring } = values;
+            const recurrenceRule = buildRecurrenceRule(recurring);
+            const datetimeClauses = recurring.recurringClauses.map(item => ({
+              time: timeOfDayToSeconds(item.time).toString(),
+              actionType: item.actionType,
+              recurrence: recurrenceRule
+            }));
 
-            resp = await autoOpsUpdate({
-              id: selectedData.id,
-              environmentId,
-              datetimeClauseChanges
-            });
+            if (!isCreate && selectedData) {
+              const datetimeClauseChanges: ClauseUpdateType<DatetimeClause>[] =
+                [];
+
+              const existingIds = new Set(selectedData.clauses.map(c => c.id));
+              const formIds = new Set(
+                recurring.recurringClauses.map(c => c.id).filter(Boolean)
+              );
+
+              selectedData.clauses.forEach(c => {
+                if (!formIds.has(c.id)) {
+                  datetimeClauseChanges.push({
+                    id: c.id,
+                    changeType: 'DELETE'
+                  });
+                }
+              });
+
+              const recurrenceRuleForUpdate = buildRecurrenceRule(recurring);
+              recurring.recurringClauses.forEach(item => {
+                const clause: DatetimeClause = {
+                  time: timeOfDayToSeconds(item.time).toString(),
+                  actionType: item.actionType,
+                  recurrence: recurrenceRuleForUpdate
+                };
+
+                if (item.id && existingIds.has(item.id)) {
+                  datetimeClauseChanges.push({
+                    id: item.id,
+                    changeType: 'UPDATE',
+                    clause
+                  });
+                } else {
+                  datetimeClauseChanges.push({
+                    changeType: 'CREATE',
+                    clause
+                  });
+                }
+              });
+
+              resp = await autoOpsUpdate({
+                id: selectedData.id,
+                environmentId,
+                datetimeClauseChanges
+              });
+            } else {
+              resp = await autoOpsCreator({
+                featureId,
+                environmentId,
+                opsType: 'SCHEDULE',
+                datetimeClauses
+              });
+            }
           } else {
-            const datetimeClauses = datetimeClausesList.map(item => {
-              const time = Math.trunc(item.time.getTime() / 1000)?.toString();
-              return {
-                time,
-                actionType: item.actionType
-              };
-            });
-            resp = await autoOpsCreator({
-              featureId,
-              environmentId,
-              opsType: 'SCHEDULE',
-              datetimeClauses
-            });
+            const { datetimeClausesList } = values;
+
+            if (!isCreate && selectedData) {
+              const datetimeClauseChanges =
+                handleCheckDateTimeClauses(datetimeClausesList);
+
+              resp = await autoOpsUpdate({
+                id: selectedData.id,
+                environmentId,
+                datetimeClauseChanges
+              });
+            } else {
+              const datetimeClauses = datetimeClausesList.map(item => {
+                const time = Math.trunc(item.time.getTime() / 1000)?.toString();
+                return {
+                  time,
+                  actionType: item.actionType
+                };
+              });
+              resp = await autoOpsCreator({
+                featureId,
+                environmentId,
+                opsType: 'SCHEDULE',
+                datetimeClauses
+              });
+            }
           }
 
           if (resp) {
@@ -198,9 +395,25 @@ const ScheduleOperationModal = ({
         errorNotify(error);
       }
     },
-    [isCreate, actionType, selectedData, editable]
+    [
+      isCreate,
+      actionType,
+      selectedData,
+      editable,
+      environmentId,
+      featureId,
+      buildRecurrenceRule,
+      handleCheckDateTimeClauses,
+      onSubmitOperationSuccess,
+      notify,
+      errorNotify,
+      t
+    ]
   );
+
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
+
+  const isDisabledMode = isFinishedTab && !!selectedData;
 
   return (
     <SlideModal
@@ -232,12 +445,51 @@ const ScheduleOperationModal = ({
               />
             </div>
             <Divider />
-            <ScheduleList
-              selectedData={selectedData}
-              isFinishedTab={isFinishedTab}
-              isCreate={isCreate}
-              rollouts={rollouts}
-            />
+
+            {isCreate && (
+              <Form.Field
+                control={form.control}
+                name="scheduleType"
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Label required>
+                      {t('feature-flags.schedule-type')}
+                    </Form.Label>
+                    <Form.Control>
+                      <RadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        className="flex gap-x-6"
+                      >
+                        <div className="flex items-center gap-x-2">
+                          <RadioGroupItem value={ScheduleType.ONE_TIME} />
+                          <span className="typo-para-medium text-gray-700">
+                            {t('feature-flags.one-time')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-x-2">
+                          <RadioGroupItem value={ScheduleType.RECURRING} />
+                          <span className="typo-para-medium text-gray-700">
+                            {t('feature-flags.recurring')}
+                          </span>
+                        </div>
+                      </RadioGroup>
+                    </Form.Control>
+                  </Form.Item>
+                )}
+              />
+            )}
+
+            {scheduleType === ScheduleType.RECURRING ? (
+              <RecurringScheduleList isDisabled={isDisabledMode} />
+            ) : (
+              <ScheduleList
+                selectedData={selectedData}
+                isFinishedTab={isFinishedTab}
+                isCreate={isCreate}
+                rollouts={rollouts}
+              />
+            )}
           </div>
           <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
             <ButtonBar
@@ -250,9 +502,7 @@ const ScheduleOperationModal = ({
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  disabled={
-                    !isValid || (isFinishedTab && !!selectedData) || !editable
-                  }
+                  disabled={!isValid || isDisabledMode || !editable}
                 >
                   {t(
                     isCreate

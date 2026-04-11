@@ -1490,7 +1490,7 @@ func TestValidateRecurrenceRule(t *testing.T) {
 	}
 }
 
-func TestValidateDatetimeClauses_RecurringDuplicates(t *testing.T) {
+func TestValidateDatetimeClauses(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -1688,12 +1688,195 @@ func TestValidateDatetimeClauses_RecurringDuplicates(t *testing.T) {
 			},
 			expectedErr: statusDatetimeClauseDuplicateTime.Err(),
 		},
+		{
+			desc: "err: mixing recurring and one-time clauses",
+			clauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+				{
+					Time:       time.Now().Add(48 * time.Hour).Unix(),
+					ActionType: autoopsproto.ActionType_DISABLE,
+				},
+			},
+			expectedErr: statusCannotMixRecurringAndOneTime.Err(),
+		},
+		{
+			desc: "success: multiple recurring clauses (no mixing)",
+			clauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+				{
+					Time:       64800,
+					ActionType: autoopsproto.ActionType_DISABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: multiple one-time clauses (no mixing)",
+			clauses: []*autoopsproto.DatetimeClause{
+				{
+					Time:       time.Now().Add(24 * time.Hour).Unix(),
+					ActionType: autoopsproto.ActionType_ENABLE,
+				},
+				{
+					Time:       time.Now().Add(48 * time.Hour).Unix(),
+					ActionType: autoopsproto.ActionType_DISABLE,
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			s := createAutoOpsService(mockController)
 			err := s.validateDatetimeClauses(p.clauses)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateAutoOpsRule_MixedScheduleTypes(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.UpdateAutoOpsRuleRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: adding recurring clause to one-time operation",
+			setup: func(s *AutoOpsService) {
+				existingTime := time.Date(2030, 6, 1, 10, 0, 0, 0, time.UTC).Unix()
+				existingClause, _ := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       existingTime,
+					ActionType: autoopsproto.ActionType_ENABLE,
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.All(),
+				).Return(&domain.AutoOpsRule{
+					AutoOpsRule: &autoopsproto.AutoOpsRule{
+						Id:            "aid1",
+						OpsType:       autoopsproto.OpsType_SCHEDULE,
+						AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+						Deleted:       false,
+						Clauses: []*autoopsproto.Clause{
+							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, Clause: existingClause},
+						}},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+			},
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
+					{
+						Clause: &autoopsproto.DatetimeClause{
+							Time:       36000,
+							ActionType: autoopsproto.ActionType_DISABLE,
+							Recurrence: &autoopsproto.RecurrenceRule{
+								Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+								DaysOfWeek: []int32{1},
+								Timezone:   "UTC",
+								StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+							},
+						},
+						ChangeType: autoopsproto.ChangeType_CREATE,
+					},
+				},
+			},
+			expectedErr: statusCannotMixRecurringAndOneTime.Err(),
+		},
+		{
+			desc: "err: adding one-time clause to recurring operation",
+			setup: func(s *AutoOpsService) {
+				existingClause, _ := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       36000,
+					ActionType: autoopsproto.ActionType_ENABLE,
+					Recurrence: &autoopsproto.RecurrenceRule{
+						Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+						DaysOfWeek: []int32{1},
+						Timezone:   "UTC",
+						StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+					},
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.All(),
+				).Return(&domain.AutoOpsRule{
+					AutoOpsRule: &autoopsproto.AutoOpsRule{
+						Id:            "aid1",
+						OpsType:       autoopsproto.OpsType_SCHEDULE,
+						AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+						Deleted:       false,
+						Clauses: []*autoopsproto.Clause{
+							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, IsRecurring: true, Clause: existingClause},
+						}},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+			},
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
+					{
+						Clause: &autoopsproto.DatetimeClause{
+							Time:       time.Now().Add(48 * time.Hour).Unix(),
+							ActionType: autoopsproto.ActionType_DISABLE,
+						},
+						ChangeType: autoopsproto.ChangeType_CREATE,
+					},
+				},
+			},
+			expectedErr: statusCannotMixRecurringAndOneTime.Err(),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.UpdateAutoOpsRule(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

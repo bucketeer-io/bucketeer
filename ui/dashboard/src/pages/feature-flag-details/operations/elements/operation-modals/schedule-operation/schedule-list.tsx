@@ -5,7 +5,7 @@ import { useTranslation } from 'i18n';
 import { AutoOpsRule, Rollout } from '@types';
 import { cn } from 'utils/style';
 import { IconInfoFilled, IconPlus, IconTrash, IconWatch } from '@icons';
-import { DateTimeClauseListType } from 'pages/feature-flag-details/operations/form-schema';
+import { ScheduleOperationFormType } from 'pages/feature-flag-details/operations/form-schema';
 import { ActionTypeMap } from 'pages/feature-flag-details/operations/types';
 import { createDatetimeClausesList } from 'pages/feature-flag-details/operations/utils';
 import Button from 'components/button';
@@ -39,7 +39,8 @@ const ScheduleList = ({
     number[]
   >([]);
 
-  const { control, watch, trigger } = useFormContext<DateTimeClauseListType>();
+  const { control, watch, trigger } =
+    useFormContext<ScheduleOperationFormType>();
 
   const {
     fields: scheduleData,

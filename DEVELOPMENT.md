@@ -45,14 +45,14 @@ The following command will set up the Minikube and services that Bucketeer depen
 - Google Pub/Sub (Emulator)
 - Google Big Query (Emulator - optional)
 
-Postgres and Big Query are optional in Minikube. By default they are disabled; enable them by setting `POSTGRES_ENABLED=true` and/or `BIGQUERY_ENABLED=true` when you start Minikube.
+**Note:** Postgres and BigQuery are optional in Minikube. They are detected automatically by checking the dataWarehouse configuration in the `values.dev.yaml`.
 
 ```shell
 # Default (Postgres & Big Query disabled)
 make start-minikube
 
 # Enable Postgres/Big Query
-make start-minikube POSTGRES_ENABLED=true BIGQUERY_ENABLED=true
+make start-minikube
 ```
 
 **Note:** When you restart the Minikube cluster, you must use `make start-minikube` to start it. Do not use `minikube start` directly.
@@ -70,6 +70,8 @@ Additionally, this command will:
 ### Deploy Bucketeer
 
 The following command will deploy all the Bucketeer services at once.
+
+**Note:** Postgres and BigQuery are optional in Minikube. They are detected automatically by checking the dataWarehouse configuration in the `values.dev.yaml`.
 
 ```shell
 make deploy-bucketeer

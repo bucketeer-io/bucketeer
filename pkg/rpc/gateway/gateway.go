@@ -377,9 +377,9 @@ func (g *Gateway) Start(ctx context.Context,
 	g.httpServer = &http.Server{
 		Addr:         g.restAddr,
 		Handler:      mux,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  g.opts.httpReadTimeout,
+		WriteTimeout: g.opts.httpWriteTimeout,
+		IdleTimeout:  g.opts.httpIdleTimeout,
 		ErrorLog:     stdlog.New(noOpWriter{}, "", 0),
 	}
 

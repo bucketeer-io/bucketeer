@@ -40,12 +40,14 @@ import (
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	e2eutil "github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 	"github.com/bucketeer-io/bucketeer/v2/test/util"
 )
 
 const (
-	prefixID = "e2e-test"
-	timeout  = 60 * time.Second
+	prefixID              = "e2e-test"
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -345,7 +347,7 @@ func TestListFeaturesCursor(t *testing.T) {
 	// Create a unique prefix for this test to filter features
 	testPrefix := fmt.Sprintf("cursor-test-%s", newUUID(t))
 	// Create 3 features with the unique prefix
-	for i := 0; i < 3; i++ {
+	for i := 0; i < deadlockRetryAttempts; i++ {
 		featureID := fmt.Sprintf("%s-%d", testPrefix, i)
 		createFeature(t, client, newCreateFeatureReq(featureID))
 	}
@@ -561,7 +563,7 @@ func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureIDs := make([]string, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < deadlockRetryAttempts; i++ {
 		featureIDs = append(featureIDs, newFeatureID(t))
 		createFeature(t, client, newCreateFeatureReq(featureIDs[i]))
 	}
@@ -1838,18 +1840,28 @@ func TestEvaluateFeaturesWithEmptyTag(t *testing.T) {
 }
 
 func addRule(t *testing.T, featureID string, rule *feature.Rule, client feature.FeatureServiceClient) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		RuleChanges: []*feature.RuleChange{
-			{
-				ChangeType: feature.ChangeType_CREATE,
-				Rule:       rule,
+	t.Helper()
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			RuleChanges: []*feature.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule:       rule,
+				},
 			},
-		},
-	}); err != nil {
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && e2eutil.IsDeadlockError(err) {
+			t.Logf("Retrying addRule (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -2131,9 +2143,18 @@ func createFeatures(t *testing.T, featureIDS []string, client featureclient.Clie
 
 func createFeature(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.CreateFeature(ctx, req); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && e2eutil.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, req.Id, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -2184,9 +2205,18 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && e2eutil.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
@@ -2198,10 +2228,19 @@ func disableFeature(t *testing.T, featureID string, client featureclient.Client)
 		Enabled:       wrapperspb.Bool(false),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, disableReq); err != nil {
-		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, disableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && e2eutil.IsDeadlockError(err) {
+			t.Logf("Retrying disableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		t.Fatalf("Failed to disable feature id: %s. Error: %v", featureID, err)
 	}
 }
 

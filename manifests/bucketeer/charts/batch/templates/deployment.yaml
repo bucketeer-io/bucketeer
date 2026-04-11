@@ -177,6 +177,12 @@ spec:
               value: "{{ .Values.httpstan.modelId }}"
             - name: BUCKETEER_BATCH_PROMETHEUS_URL
               value: "{{ .Values.env.prometheusURL }}"
+            - name: BUCKETEER_BATCH_HTTP_READ_TIMEOUT
+              value: "{{ .Values.env.httpReadTimeout }}"
+            - name: BUCKETEER_BATCH_HTTP_WRITE_TIMEOUT
+              value: "{{ .Values.env.httpWriteTimeout }}"
+            - name: BUCKETEER_BATCH_HTTP_IDLE_TIMEOUT
+              value: "{{ .Values.env.httpIdleTimeout }}"
 
           volumeMounts:
             - name: service-cert-secret

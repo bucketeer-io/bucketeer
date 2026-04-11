@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { featureUpdater } from '@api/features';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { InfoIcon } from 'lucide-react';
 import { Environment, Feature, StrategyType } from '@types';
 import { IconPercentage } from '@icons';
 import { DefaultRuleSchema } from 'pages/feature-flag-details/targeting/form-schema';
@@ -12,9 +11,11 @@ import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
+import OperationInfoCard from './operation-info-card';
 
-export type StopOperationModalProps = {
+export type OperationActiveModalProps = {
   editable: boolean;
+  isDeleting?: boolean;
   environment: Environment;
   feature: Feature;
   loading?: boolean;
@@ -27,13 +28,14 @@ const CURRENT_PERCENTAGE = 'CURRENT_PERCENTAGE' as const;
 
 const OperationActiveModal = ({
   editable,
+  isDeleting = false,
   environment,
   feature,
   loading,
   onClose,
   onActionOperation,
   refetchFeature
-}: StopOperationModalProps) => {
+}: OperationActiveModalProps) => {
   const { t } = useTranslation(['common', 'table', 'form']);
   const { errorNotify } = useToast();
 
@@ -141,23 +143,19 @@ const OperationActiveModal = ({
           onChange={value => handleSelectStrategy(value as string)}
         />
 
-        <div className="w-full rounded-lg border-l-[8px] border-primary-500 px-4 py-3 shadow-card my-4">
-          <div className="flex items-start gap-4 typo-para-medium">
-            <Icon
-              icon={InfoIcon}
-              size="xxs"
-              className="mt-[5px] text-primary-500"
-            />
-            <div className="">
-              <p className="font-bold text-primary-500">
-                {t('form:operation.confirm-stop-title')}
-              </p>
-              <p className="typo-para-medium text-gray-500 w-full mt-2">
-                {t('form:operation.confirm-stop-desc')}
-              </p>
-            </div>
-          </div>
-        </div>
+        <OperationInfoCard
+          className="my-4"
+          title={t(
+            isDeleting
+              ? 'form:operation.confirm-delete-active-rollout-title'
+              : 'form:operation.confirm-stop-title'
+          )}
+          description={t(
+            isDeleting
+              ? 'form:operation.confirm-delete-active-rollout-desc'
+              : 'form:operation.confirm-stop-rollout-desc'
+          )}
+        />
       </div>
       <ButtonBar
         secondaryButton={

@@ -16,6 +16,9 @@
       "date-increasing-order": "The date must be in increasing order.",
       "schedule-interval": "The scheduled time interval must be at least 5 minutes apart.",
       "schedules-same-time": "You cannot have multiple schedules at the same date and time.",
+      "invalid-frequency": "Please select a valid frequency.",
+      "days-of-week-required": "Please select at least one day of the week.",
+      "end-date-on-after-start-date": "The end date must be on or after the start date.",
       "increments-greater-than": "Increments must be greater than or equal to 1",
       "increments-less-than": "Increments must be less than or equal to 100"
     },
@@ -27,6 +30,11 @@
     "name-at-least-characters": "The {{name}} you have provided must have at least {{count}} characters"
   },
   "copied": "Copied",
+  "api-key-created-title": "API key created",
+  "api-key-secret-warning": "Copy and store the API Key. Once you leave this page, the key will be hidden, and you will not be able to see it again.",
+  "api-key-secret-label": "Your API key",
+  "copy-api-key": "Copy API key",
+  "api-key-secret-close": "Close",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
   "something-went-wrong": "Oops! Something went wrong.",
   "operation": {

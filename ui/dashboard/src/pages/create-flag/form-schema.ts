@@ -15,9 +15,26 @@ import { isJsonString } from 'utils/converts';
 import { isUniqueValue } from 'utils/function';
 import { FlagSwitchVariationType } from './types';
 
-const nameSchema = ({ requiredMessage }: { requiredMessage: string }) =>
-  yup.string().max(FEATURE_NAME_MAX_LENGTH).required(requiredMessage);
-const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
+const nameSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup
+    .string()
+    .max(
+      FEATURE_NAME_MAX_LENGTH,
+      translation('message:validation.max-length-string', {
+        count: FEATURE_NAME_MAX_LENGTH
+      })
+    )
+    .required(requiredMessage);
+
+const descriptionSchema = ({
+  translation
+}: Pick<FormSchemaProps, 'translation'>) =>
+  yup.string().max(
+    FEATURE_DESCRIPTION_MAX_LENGTH,
+    translation('message:validation.max-length-string', {
+      count: FEATURE_DESCRIPTION_MAX_LENGTH
+    })
+  );
 
 export interface VariationSchema {
   id: string;
@@ -134,8 +151,18 @@ export const createVariationsSchema = ({
           name: yup
             .string()
             .required(requiredMessage)
-            .max(VARIATION_NAME_MAX_LENGTH),
-          description: yup.string().max(VARIATION_DESCRIPTION_MAX_LENGTH)
+            .max(
+              VARIATION_NAME_MAX_LENGTH,
+              translation('message:validation.max-length-string', {
+                count: VARIATION_NAME_MAX_LENGTH
+              })
+            ),
+          description: yup.string().max(
+            VARIATION_DESCRIPTION_MAX_LENGTH,
+            translation('message:validation.max-length-string', {
+              count: VARIATION_DESCRIPTION_MAX_LENGTH
+            })
+          )
         })
         .required()
     );
@@ -156,7 +183,7 @@ export const createFlagFormSchema = ({
   translation
 }: FormSchemaProps) =>
   yup.object().shape({
-    name: nameSchema({ requiredMessage }),
+    name: nameSchema({ requiredMessage, translation }),
     flagId: yup
       .string()
       .required(requiredMessage)
@@ -166,7 +193,7 @@ export const createFlagFormSchema = ({
           name: translation('common:source-type.feature-flag')
         })
       ),
-    description: descriptionSchema,
+    description: descriptionSchema({ translation }),
     tags: yup.array().min(1).required(requiredMessage),
     switchVariationType: yup.mixed<FlagSwitchVariationType>(),
     variationType: yup.mixed<FeatureVariationType>().required(requiredMessage),

@@ -52,9 +52,10 @@ import (
 )
 
 const (
-	prefixTestName = "e2e-test"
-	timeout        = 3 * time.Minute
-	retryTimes     = 50
+	prefixTestName        = "e2e-test"
+	timeout               = 3 * time.Minute
+	retryTimes            = 50
+	deadlockRetryAttempts = 3
 )
 
 const defaultVariationID = "default"
@@ -123,6 +124,11 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range experiment.Variations {
@@ -130,10 +136,8 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// Evaluation events must always be sent before goal events
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
@@ -210,7 +214,6 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestExperimentGoalCount(t *testing.T) {
@@ -261,6 +264,11 @@ func TestExperimentGoalCount(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range experiment.Variations {
@@ -268,10 +276,8 @@ func TestExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// Evaluation events must always be sent before goal events
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
@@ -349,7 +355,6 @@ func TestExperimentGoalCount(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGrpcExperimentResult(t *testing.T) {
@@ -405,11 +410,14 @@ func TestGrpcExperimentResult(t *testing.T) {
 	stopAt := time.Now().Add(2 * time.Hour)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
-	// Wait for event-persister-dwh to subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// CVRs is 3/4
 	// Evaluation events must always be sent before goal events
@@ -463,6 +471,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 			t.Fatalf("retry timeout after %d attempts", retryTimes)
 		}
 		time.Sleep(10 * time.Second)
+		triggerExperimentCalculator(t)
 
 		resp, err := getExperimentResult(t, ecClient, experiment.Id)
 		if err != nil {
@@ -523,7 +532,6 @@ func TestGrpcExperimentResult(t *testing.T) {
 		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
 		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestExperimentResult(t *testing.T) {
@@ -579,11 +587,14 @@ func TestExperimentResult(t *testing.T) {
 	stopAt := time.Now().Add(2 * time.Hour)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// CVRs is 3/4
 	// Evaluation events must always be sent before goal events
@@ -636,6 +647,7 @@ func TestExperimentResult(t *testing.T) {
 			t.Fatalf("retry timeout after %d attempts", retryTimes)
 		}
 		time.Sleep(10 * time.Second)
+		triggerExperimentCalculator(t)
 
 		resp, err := getExperimentResult(t, ecClient, experiment.Id)
 		if err != nil {
@@ -696,7 +708,6 @@ func TestExperimentResult(t *testing.T) {
 		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
 		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGrpcMultiGoalsEventCounter(t *testing.T) {
@@ -751,6 +762,11 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -759,10 +775,8 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// Evaluation events must always be sent before goal events
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
@@ -924,7 +938,6 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestMultiGoalsEventCounter(t *testing.T) {
@@ -979,6 +992,11 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -987,10 +1005,8 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// Evaluation events must always be sent before goal events
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
@@ -1152,7 +1168,6 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestHTTPTrack(t *testing.T) {
@@ -1204,6 +1219,11 @@ func TestHTTPTrack(t *testing.T) {
 	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestHTTPTrack", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -1212,10 +1232,8 @@ func TestHTTPTrack(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// Evaluation events must always be sent before goal events
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
@@ -1282,7 +1300,6 @@ func TestHTTPTrack(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
@@ -1347,11 +1364,14 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		f.Variations[0].Id,
 		startAt, stopAt,
 	)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
 	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
@@ -1414,7 +1434,6 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestExperimentEvaluationEventCount(t *testing.T) {
@@ -1478,11 +1497,14 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		f.Variations[0].Id,
 		startAt, stopAt,
 	)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
 	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
@@ -1544,7 +1566,6 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		}
 		break
 	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGetEvaluationTimeseriesCount(t *testing.T) {
@@ -1783,6 +1804,24 @@ func stopExperiment(
 		}
 		fmt.Printf("Failed to execute experiment cacher batch (Called by stopExperiment). Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
+	}
+}
+
+func triggerExperimentCalculator(t *testing.T) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	_, err := batchClient.ExecuteBatchJob(
+		ctx,
+		&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCalculator})
+	if err != nil {
+		st, _ := status.FromError(err)
+		if st.Code() == codes.ResourceExhausted {
+			return
+		}
+		t.Logf("Failed to trigger experiment calculator (best-effort). Error code: %d. Error: %v", st.Code(), err)
 	}
 }
 
@@ -2120,9 +2159,18 @@ func createFeature(
 ) {
 	t.Helper()
 	createReq := newCreateFeatureReq(featureID, []string{variationA, variationB})
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.CreateFeature(ctx, createReq)
+		cancel()
+		if err == nil {
+			break
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 	addTag(t, tag, featureID, client)
@@ -2131,9 +2179,7 @@ func createFeature(
 
 func addTag(t *testing.T, tag string, featureID string, client featureclient.Client) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+	addReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
 		EnvironmentId: *environmentID,
 		TagChanges: []*featureproto.TagChange{
@@ -2142,8 +2188,19 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 				Tag:        tag,
 			},
 		},
-	})
-	if err != nil {
+	}
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, addReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addTag (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -2155,17 +2212,24 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
 func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID string, client featureclient.Client) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 	f, err := getFeature(t, client, featureID)
 	if err != nil {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
@@ -2177,19 +2241,32 @@ func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID 
 			break
 		}
 	}
-	_, err = client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		TargetChanges: []*featureproto.TargetChange{
-			{
-				ChangeType: featureproto.ChangeType_UPDATE,
-				Target: &featureproto.Target{
-					Variation: variationID,
-					Users:     users,
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err = client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			TargetChanges: []*featureproto.TargetChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Target: &featureproto.Target{
+						Variation: variationID,
+						Users:     users,
+					},
 				},
 			},
-		},
-	})
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addFeatureIndividualTargeting (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		t.Fatalf("Failed to add individual targeting for feature %s: %v", featureID, err)
+	}
 }
 
 func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEvaluationsResponse, error) {

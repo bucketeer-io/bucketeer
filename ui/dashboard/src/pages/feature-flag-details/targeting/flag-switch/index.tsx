@@ -93,26 +93,32 @@ const FlagSwitch = ({
         )}
       />
       {!enabledWatch && (
-        <Form.Field
-          name="offVariation"
-          control={control}
-          render={({ field }) => (
-            <Form.Item>
-              <Form.Control>
-                <Dropdown
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={options}
-                  disabled={!editable}
-                  className="max-w-[400px] truncate"
-                  contentClassName="max-w-[400px]"
-                  alignContent="end"
-                />
-              </Form.Control>
-              <Form.Message />
-            </Form.Item>
-          )}
-        />
+        <div className="flex items-center gap-x-3">
+          <p className="typo-para-small text-gray-600 uppercase min-w-fit">
+            {t('serve')}
+          </p>
+          <Form.Field
+            name="offVariation"
+            control={control}
+            render={({ field }) => (
+              <Form.Item>
+                <Form.Control>
+                  <Dropdown
+                    title={t('off-variation')}
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={options}
+                    disabled={!editable}
+                    className="max-w-[400px] truncate"
+                    contentClassName="max-w-[400px]"
+                    alignContent="end"
+                  />
+                </Form.Control>
+                <Form.Message />
+              </Form.Item>
+            )}
+          />
+        </div>
       )}
     </div>
   );

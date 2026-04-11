@@ -306,9 +306,33 @@ func normalizedDaysOfWeekKey(days []int32) string {
 	return strings.Join(strs, ",")
 }
 
+func checkScheduleTypeHomogeneity(clauses []*autoopsproto.DatetimeClause) error {
+	var hasRecurring, hasOneTime bool
+	for _, c := range clauses {
+		if domain.IsRecurring(c) {
+			hasRecurring = true
+		} else {
+			hasOneTime = true
+		}
+	}
+	if hasRecurring && hasOneTime {
+		return statusCannotMixRecurringAndOneTime.Err()
+	}
+	return nil
+}
+
 func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 ) error {
+	for _, c := range clauses {
+		if c == nil {
+			return statusDatetimeClauseRequired.Err()
+		}
+	}
+	if err := checkScheduleTypeHomogeneity(clauses); err != nil {
+		return err
+	}
+
 	type clauseKey struct {
 		time      int64
 		frequency autoopsproto.RecurrenceRule_Frequency
@@ -637,6 +661,35 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 					}
 				}
 			}
+
+			// Collect the resulting clause set and check for mixed types.
+			// Start with existing clauses (deletes already removed),
+			// replace updated ones, then append creates.
+			updatedIDs := make(map[string]*autoopsproto.DatetimeClause)
+			var createdClauses []*autoopsproto.DatetimeClause
+			for _, c := range req.DatetimeClauseChanges {
+				if c.Clause == nil {
+					continue
+				}
+				switch c.ChangeType {
+				case autoopsproto.ChangeType_UPDATE:
+					updatedIDs[c.Id] = c.Clause
+				case autoopsproto.ChangeType_CREATE:
+					createdClauses = append(createdClauses, c.Clause)
+				}
+			}
+			var allResultClauses []*autoopsproto.DatetimeClause
+			for id, c := range extractDateTimeClauses {
+				if updated, ok := updatedIDs[id]; ok {
+					allResultClauses = append(allResultClauses, updated)
+				} else {
+					allResultClauses = append(allResultClauses, c)
+				}
+			}
+			allResultClauses = append(allResultClauses, createdClauses...)
+			if err := checkScheduleTypeHomogeneity(allResultClauses); err != nil {
+				return err
+			}
 		}
 
 		if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE {
@@ -964,6 +1017,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if autoOpsRule.AllClausesFinished() {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
+
 		updated, err := autoOpsRule.Update(&opsStatus, nil, nil)
 		if err != nil {
 			return err

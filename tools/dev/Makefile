@@ -67,7 +67,7 @@ setup-minikube:
 	helm install localenv ../../manifests/localenv
 
 start-minikube:
-	minikube start --cache-images
+	minikube start --memory max --cache-images
 	# ensure ingress addon is enabled
 	minikube addons enable ingress
 	# used to enable ssl-passthrough for nginx ingress container

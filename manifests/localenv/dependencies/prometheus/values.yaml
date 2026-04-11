@@ -1,0 +1,18 @@
+replicaCount: 1
+
+image:
+  repository: prom/prometheus
+  pullPolicy: IfNotPresent
+  tag: "v2.53.0"
+
+service:
+  type: ClusterIP
+  port: 9090
+
+storage:
+  size: "2Gi"
+  class: ""
+
+scrapeInterval: 30s
+
+resources: {}

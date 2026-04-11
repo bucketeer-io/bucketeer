@@ -23,8 +23,11 @@ export interface NoOptionsMessageProps {
   [key: string]: string | number | boolean;
 }
 
-export interface CreatableSelectProps
-  extends CreatableProps<Option, true, GroupBase<Option>> {
+export interface CreatableSelectProps extends CreatableProps<
+  Option,
+  true,
+  GroupBase<Option>
+> {
   isMulti?: true;
   loading?: boolean;
   options?: Option[];

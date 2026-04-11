@@ -176,7 +176,7 @@ const IndividualRule = ({
                           size={'icon'}
                           tabIndex={-1}
                           onClick={() =>
-                            handleCopyUserId(field.value?.join(', '))
+                            handleCopyUserId(field.value?.join(', ') ?? '')
                           }
                         >
                           <Icon icon={IconCopy} />

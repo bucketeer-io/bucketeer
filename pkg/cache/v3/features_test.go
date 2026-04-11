@@ -24,6 +24,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 
+	"time"
+
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -108,7 +110,7 @@ func TestPutFeatures(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(tf *featuresCache) {
-				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures, featuresTTL).Return(nil)
+				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures, time.Duration(0)).Return(nil)
 			},
 			input:       features,
 			expectedErr: nil,

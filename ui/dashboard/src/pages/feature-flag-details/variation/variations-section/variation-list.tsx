@@ -7,11 +7,11 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
 import { IconInfo } from '@icons';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import VariationLabel from 'elements/variation-label';
 import { VariationProps } from '..';
 import { VariationForm } from '../form-schema';
 import Variations from './variations';
@@ -66,13 +66,21 @@ const VariationList = ({
   const variations = watch('variations');
 
   const variationOptions = variations.map((item, index) => ({
-    label: <VariationLabel label={item.name || item.value} index={index} />,
+    label: (
+      <div className="flex items-center gap-x-2 pl-0.5">
+        <FlagVariationPolygon index={index} />
+        <span className="typo-para-medium text-gray-700">
+          {item.name || item.value}
+        </span>
+      </div>
+    ),
     value: item.id
   }));
 
-  const offVariationId = useMemo(() => {
-    const variation = variations.find(item => item.id === offVariation);
-    return variation?.id || '';
+  const offVariationData = useMemo(() => {
+    const index = variations.findIndex(item => item.id === offVariation);
+    const variation = index >= 0 ? variations[index] : null;
+    return { id: variation?.id || '', index, variation };
   }, [offVariation, [...variations]]);
 
   return (
@@ -118,9 +126,16 @@ const VariationList = ({
                 options={variationOptions}
                 value={field.value}
                 onChange={field.onChange}
-                labelCustom={
-                  variationOptions.find(item => item.value === offVariationId)
-                    ?.label || ''
+                trigger={
+                  offVariationData.variation ? (
+                    <div className="flex items-center gap-x-2 pl-0.5 w-0 flex-1 typo-para-medium text-gray-700">
+                      <FlagVariationPolygon index={offVariationData.index} />
+                      <p className="truncate">
+                        {offVariationData.variation.name ||
+                          offVariationData.variation.value}
+                      </p>
+                    </div>
+                  ) : undefined
                 }
                 disabled={isRunningExperiment || !editable}
               />

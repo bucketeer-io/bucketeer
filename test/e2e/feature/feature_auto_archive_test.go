@@ -36,6 +36,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	e2eutil "github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
@@ -489,22 +490,30 @@ func addPrerequisite(
 	featureID, prerequisiteFeatureID, prerequisiteVariationID string,
 ) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		EnvironmentId: *environmentID,
-		Id:            featureID,
-		PrerequisiteChanges: []*featureproto.PrerequisiteChange{
-			{
-				ChangeType: featureproto.ChangeType_CREATE,
-				Prerequisite: &featureproto.Prerequisite{
-					FeatureId:   prerequisiteFeatureID,
-					VariationId: prerequisiteVariationID,
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			EnvironmentId: *environmentID,
+			Id:            featureID,
+			PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Prerequisite: &featureproto.Prerequisite{
+						FeatureId:   prerequisiteFeatureID,
+						VariationId: prerequisiteVariationID,
+					},
 				},
 			},
-		},
-	})
-	if err != nil {
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && e2eutil.IsDeadlockError(err) {
+			t.Logf("Retrying addPrerequisite (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal("Failed to add prerequisite:", err)
 	}
 }
@@ -550,7 +559,7 @@ func waitForLastUsedInfo(t *testing.T, client featureclient.Client, featureID st
 		if f.LastUsedInfo != nil {
 			return
 		}
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 	}
-	t.Logf("Warning: LastUsedInfo not recorded for feature %s after retries", featureID)
+	t.Fatalf("LastUsedInfo not recorded for feature %s after %d retries", featureID, featureRecorderRetryTimes)
 }

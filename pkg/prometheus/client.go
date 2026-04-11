@@ -29,6 +29,7 @@ import (
 // Client defines the interface for querying Prometheus.
 type Client interface {
 	QueryInstant(ctx context.Context, query string, ts time.Time) (model.Vector, error)
+	QueryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (model.Matrix, error)
 }
 
 // Option configures a Client.
@@ -81,4 +82,25 @@ func (c *client) QueryInstant(ctx context.Context, query string, ts time.Time) (
 		return nil, errors.New("prometheus: unexpected response type, expected vector")
 	}
 	return vector, nil
+}
+
+func (c *client) QueryRange(
+	ctx context.Context,
+	query string,
+	start, end time.Time,
+	step time.Duration,
+) (model.Matrix, error) {
+	r := promv1.Range{Start: start, End: end, Step: step}
+	result, warnings, err := c.api.QueryRange(ctx, query, r)
+	if err != nil {
+		return nil, err
+	}
+	if len(warnings) > 0 {
+		c.logger.Warn("Prometheus warnings", zap.Strings("warnings", warnings))
+	}
+	matrix, ok := result.(model.Matrix)
+	if !ok {
+		return nil, errors.New("prometheus: unexpected response type, expected matrix")
+	}
+	return matrix, nil
 }

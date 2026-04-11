@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -1536,4 +1537,429 @@ func TestAdvanceRecurringClause_MultipleClauses(t *testing.T) {
 
 	dtSecond := dateClauses[rule.Clauses[1].Id]
 	assert.Equal(t, int32(0), dtSecond.ExecutionCount)
+}
+
+// TestAdvanceRecurringClause_UpdateAndJSONRoundTrip reproduces the exact
+// ExecuteAutoOps flow: AdvanceRecurringClause → Update() (copier.Copy) →
+// JSON marshal/unmarshal (storage layer). This identifies whether copier.Copy
+// or the JSON round-trip loses the re-marshaled Any bytes.
+func TestAdvanceRecurringClause_UpdateAndJSONRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	dc := &autoopsproto.DatetimeClause{
+		Time:       36000,
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency: autoopsproto.RecurrenceRule_DAILY,
+			Timezone:  "UTC",
+			StartDate: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		},
+	}
+	rule, err := NewAutoOpsRule(
+		"feature-1",
+		autoopsproto.OpsType_SCHEDULE,
+		nil,
+		[]*autoopsproto.DatetimeClause{dc},
+	)
+	require.NoError(t, err)
+	require.Len(t, rule.Clauses, 1)
+	assert.True(t, rule.Clauses[0].IsRecurring)
+
+	now := time.Date(2026, 1, 1, 10, 0, 1, 0, time.UTC)
+	err = rule.AdvanceRecurringClause(rule.Clauses[0].Id, now)
+	require.NoError(t, err)
+
+	// Step 1: Verify the in-memory state is correct after AdvanceRecurringClause
+	dtBefore, err := rule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	dtc := dtBefore[rule.Clauses[0].Id]
+	assert.Equal(t, int32(1), dtc.ExecutionCount, "in-memory: ExecutionCount should be 1")
+	assert.Equal(t, now.Unix(), dtc.LastExecutedAt, "in-memory: LastExecutedAt should be set")
+	assert.True(t, dtc.NextExecutionAt > 0, "in-memory: NextExecutionAt should be set")
+
+	// Step 2: Call Update() which uses copier.Copy — this is what ExecuteAutoOps does
+	opsStatus := autoopsproto.AutoOpsStatus_RUNNING
+	updated, err := rule.Update(&opsStatus, nil, nil)
+	require.NoError(t, err)
+
+	// Step 2a: Check the copier.Copy result
+	dtAfterCopy, err := updated.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	copiedDtc := dtAfterCopy[updated.Clauses[0].Id]
+	require.NotNil(t, copiedDtc, "copier.Copy: DatetimeClause should be extractable")
+	assert.Equal(t, int32(1), copiedDtc.ExecutionCount, "copier.Copy: ExecutionCount should be 1")
+	assert.Equal(t, now.Unix(), copiedDtc.LastExecutedAt, "copier.Copy: LastExecutedAt should be set")
+	assert.Equal(t, dtc.NextExecutionAt, copiedDtc.NextExecutionAt, "copier.Copy: NextExecutionAt should match")
+	assert.NotNil(t, copiedDtc.Recurrence, "copier.Copy: Recurrence should not be nil")
+	assert.True(t, updated.Clauses[0].IsRecurring, "copier.Copy: IsRecurring should be true")
+
+	// Step 3: JSON round-trip (what mysql.JSONObject does for storage)
+	jsonBytes, err := json.Marshal(updated.Clauses)
+	require.NoError(t, err)
+
+	var fromStorage []*autoopsproto.Clause
+	err = json.Unmarshal(jsonBytes, &fromStorage)
+	require.NoError(t, err)
+	require.Len(t, fromStorage, 1)
+
+	storageRule := &AutoOpsRule{AutoOpsRule: &autoopsproto.AutoOpsRule{
+		Clauses: fromStorage,
+	}}
+	dtAfterStorage, err := storageRule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	storedDtc := dtAfterStorage[fromStorage[0].Id]
+	require.NotNil(t, storedDtc, "storage: DatetimeClause should be extractable")
+	assert.Equal(t, int32(1), storedDtc.ExecutionCount, "storage: ExecutionCount should be 1")
+	assert.Equal(t, now.Unix(), storedDtc.LastExecutedAt, "storage: LastExecutedAt should be set")
+	assert.Equal(t, dtc.NextExecutionAt, storedDtc.NextExecutionAt, "storage: NextExecutionAt should match")
+	assert.NotNil(t, storedDtc.Recurrence, "storage: Recurrence should not be nil")
+	assert.True(t, fromStorage[0].IsRecurring, "storage: IsRecurring should be true")
+}
+
+// TestRecurringLifecycle_AllPatternsAndEndConditions tests every combination of
+// frequency (Daily, Weekly, Monthly) × end condition (OnDate, After, Never)
+// by simulating init → advance → advance → verify termination. Each case
+// executes at least twice before ending.
+func TestRecurringLifecycle_AllPatternsAndEndConditions(t *testing.T) {
+	t.Parallel()
+
+	type lifecycleCase struct {
+		desc           string
+		frequency      autoopsproto.RecurrenceRule_Frequency
+		daysOfWeek     []int32
+		dayOfMonth     int32
+		timeOfDay      int64
+		startDate      time.Time
+		endDate        int64
+		maxOccurrences int32
+		firstExecAt    time.Time
+		secondExecAt   time.Time
+		expectThirdRun bool
+	}
+
+	cases := []lifecycleCase{
+		// ===== DAILY =====
+		{
+			desc:           "Daily + OnDate: runs 2 days, stops on end date",
+			frequency:      autoopsproto.RecurrenceRule_DAILY,
+			timeOfDay:      36000, // 10:00
+			startDate:      time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
+			endDate:        time.Date(2026, 3, 2, 23, 59, 59, 0, time.UTC).Unix(),
+			firstExecAt:    time.Date(2026, 3, 1, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 3, 2, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: false,
+		},
+		{
+			desc:           "Daily + After 2: runs exactly twice",
+			frequency:      autoopsproto.RecurrenceRule_DAILY,
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
+			maxOccurrences: 2,
+			firstExecAt:    time.Date(2026, 3, 1, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 3, 2, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: false,
+		},
+		{
+			desc:           "Daily + Never: runs 2 times, continues",
+			frequency:      autoopsproto.RecurrenceRule_DAILY,
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
+			firstExecAt:    time.Date(2026, 3, 1, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 3, 2, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: true,
+		},
+
+		// ===== WEEKLY =====
+		{
+			desc:           "Weekly + OnDate: runs 2 Mondays, stops on end date",
+			frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+			daysOfWeek:     []int32{1}, // Monday
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 3, 2, 0, 0, 0, 0, time.UTC), // Monday
+			endDate:        time.Date(2026, 3, 15, 23, 59, 59, 0, time.UTC).Unix(),
+			firstExecAt:    time.Date(2026, 3, 2, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 3, 9, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: false,
+		},
+		{
+			desc:           "Weekly + After 2: runs exactly 2 Wednesdays",
+			frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+			daysOfWeek:     []int32{3}, // Wednesday
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 3, 4, 0, 0, 0, 0, time.UTC), // Wednesday
+			maxOccurrences: 2,
+			firstExecAt:    time.Date(2026, 3, 4, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 3, 11, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: false,
+		},
+		{
+			desc:           "Weekly + Never: runs 2 Fridays, continues",
+			frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+			daysOfWeek:     []int32{5}, // Friday
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 3, 6, 0, 0, 0, 0, time.UTC), // Friday
+			firstExecAt:    time.Date(2026, 3, 6, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 3, 13, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: true,
+		},
+
+		// ===== MONTHLY =====
+		{
+			desc:           "Monthly + OnDate: runs 2 months on the 15th, stops on end date",
+			frequency:      autoopsproto.RecurrenceRule_MONTHLY,
+			dayOfMonth:     15,
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC),
+			endDate:        time.Date(2026, 3, 14, 23, 59, 59, 0, time.UTC).Unix(),
+			firstExecAt:    time.Date(2026, 1, 15, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 2, 15, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: false,
+		},
+		{
+			desc:           "Monthly + After 2: runs exactly twice on the 1st",
+			frequency:      autoopsproto.RecurrenceRule_MONTHLY,
+			dayOfMonth:     1,
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			maxOccurrences: 2,
+			firstExecAt:    time.Date(2026, 1, 1, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 2, 1, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: false,
+		},
+		{
+			desc:           "Monthly + Never: runs 2 months on the 10th, continues",
+			frequency:      autoopsproto.RecurrenceRule_MONTHLY,
+			dayOfMonth:     10,
+			timeOfDay:      36000,
+			startDate:      time.Date(2026, 1, 10, 0, 0, 0, 0, time.UTC),
+			firstExecAt:    time.Date(2026, 1, 10, 10, 0, 1, 0, time.UTC),
+			secondExecAt:   time.Date(2026, 2, 10, 10, 0, 1, 0, time.UTC),
+			expectThirdRun: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dc := &autoopsproto.DatetimeClause{
+				Time:       tc.timeOfDay,
+				ActionType: autoopsproto.ActionType_ENABLE,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency:      tc.frequency,
+					DaysOfWeek:     tc.daysOfWeek,
+					DayOfMonth:     tc.dayOfMonth,
+					Timezone:       "UTC",
+					StartDate:      tc.startDate.Unix(),
+					EndDate:        tc.endDate,
+					MaxOccurrences: tc.maxOccurrences,
+				},
+			}
+
+			rule, err := NewAutoOpsRule(
+				"feature-1",
+				autoopsproto.OpsType_SCHEDULE,
+				nil,
+				[]*autoopsproto.DatetimeClause{dc},
+			)
+			require.NoError(t, err)
+			require.Len(t, rule.Clauses, 1)
+			assert.True(t, rule.Clauses[0].IsRecurring)
+
+			clauseID := rule.Clauses[0].Id
+
+			// Verify initialization
+			dtClauses, err := rule.ExtractDatetimeClauses()
+			require.NoError(t, err)
+			initDtc := dtClauses[clauseID]
+			require.NotNil(t, initDtc)
+			assert.Equal(t, int32(0), initDtc.ExecutionCount, "init: ExecutionCount should be 0")
+			assert.True(t, initDtc.NextExecutionAt > 0, "init: NextExecutionAt should be set")
+			assert.False(t, rule.AllClausesFinished(), "init: should not be finished")
+
+			// --- First execution ---
+			err = rule.AdvanceRecurringClause(clauseID, tc.firstExecAt)
+			require.NoError(t, err)
+
+			dtClauses, err = rule.ExtractDatetimeClauses()
+			require.NoError(t, err)
+			dtc1 := dtClauses[clauseID]
+			assert.Equal(t, int32(1), dtc1.ExecutionCount, "exec1: ExecutionCount should be 1")
+			assert.Equal(t, tc.firstExecAt.Unix(), dtc1.LastExecutedAt, "exec1: LastExecutedAt should match")
+			assert.True(t, dtc1.NextExecutionAt > 0, "exec1: should have NextExecutionAt for second run")
+			assert.False(t, rule.AllClausesFinished(), "exec1: should not be finished yet")
+
+			// --- Second execution ---
+			err = rule.AdvanceRecurringClause(clauseID, tc.secondExecAt)
+			require.NoError(t, err)
+
+			dtClauses, err = rule.ExtractDatetimeClauses()
+			require.NoError(t, err)
+			dtc2 := dtClauses[clauseID]
+			assert.Equal(t, int32(2), dtc2.ExecutionCount, "exec2: ExecutionCount should be 2")
+			assert.Equal(t, tc.secondExecAt.Unix(), dtc2.LastExecutedAt, "exec2: LastExecutedAt should match")
+
+			if tc.expectThirdRun {
+				assert.True(t, dtc2.NextExecutionAt > 0, "exec2: should have NextExecutionAt (never-ending)")
+				assert.False(t, rule.AllClausesFinished(), "exec2: should NOT be finished (never-ending)")
+			} else {
+				assert.Equal(t, int64(0), dtc2.NextExecutionAt, "exec2: NextExecutionAt should be 0 (exhausted)")
+				assert.True(t, rule.AllClausesFinished(), "exec2: should be finished")
+				assert.True(t, rule.Clauses[0].ExecutedAt > 0, "exec2: outer Clause.ExecutedAt should be set")
+			}
+		})
+	}
+}
+
+// TestRecurringLifecycle_MultiClause_FinishedStatus verifies that a rule with
+// multiple recurring clauses (Enable + Disable) only transitions to FINISHED
+// after ALL clauses are exhausted, for each frequency type.
+func TestRecurringLifecycle_MultiClause_FinishedStatus(t *testing.T) {
+	t.Parallel()
+
+	type execStep struct {
+		clauseIdx int
+		execTime  time.Time
+	}
+
+	type multiClauseCase struct {
+		desc           string
+		frequency      autoopsproto.RecurrenceRule_Frequency
+		daysOfWeek     []int32
+		dayOfMonth     int32
+		enableTime     int64
+		disableTime    int64
+		startDate      time.Time
+		maxOccurrences int32
+		steps          []execStep
+	}
+
+	cases := []multiClauseCase{
+		{
+			desc:           "Daily: Enable 10:00 + Disable 18:00, max 2",
+			frequency:      autoopsproto.RecurrenceRule_DAILY,
+			enableTime:     36000,
+			disableTime:    64800,
+			startDate:      time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
+			maxOccurrences: 2,
+			steps: []execStep{
+				{0, time.Date(2026, 3, 1, 10, 0, 1, 0, time.UTC)},
+				{1, time.Date(2026, 3, 1, 18, 0, 1, 0, time.UTC)},
+				{0, time.Date(2026, 3, 2, 10, 0, 1, 0, time.UTC)},
+				{1, time.Date(2026, 3, 2, 18, 0, 1, 0, time.UTC)},
+			},
+		},
+		{
+			desc:           "Weekly (Mon): Enable 10:00 + Disable 18:00, max 2",
+			frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+			daysOfWeek:     []int32{1},
+			enableTime:     36000,
+			disableTime:    64800,
+			startDate:      time.Date(2026, 3, 2, 0, 0, 0, 0, time.UTC), // Monday
+			maxOccurrences: 2,
+			steps: []execStep{
+				{0, time.Date(2026, 3, 2, 10, 0, 1, 0, time.UTC)},
+				{1, time.Date(2026, 3, 2, 18, 0, 1, 0, time.UTC)},
+				{0, time.Date(2026, 3, 9, 10, 0, 1, 0, time.UTC)},
+				{1, time.Date(2026, 3, 9, 18, 0, 1, 0, time.UTC)},
+			},
+		},
+		{
+			desc:           "Monthly (1st): Enable 10:00 + Disable 18:00, max 2",
+			frequency:      autoopsproto.RecurrenceRule_MONTHLY,
+			dayOfMonth:     1,
+			enableTime:     36000,
+			disableTime:    64800,
+			startDate:      time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			maxOccurrences: 2,
+			steps: []execStep{
+				{0, time.Date(2026, 1, 1, 10, 0, 1, 0, time.UTC)},
+				{1, time.Date(2026, 1, 1, 18, 0, 1, 0, time.UTC)},
+				{0, time.Date(2026, 2, 1, 10, 0, 1, 0, time.UTC)},
+				{1, time.Date(2026, 2, 1, 18, 0, 1, 0, time.UTC)},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			enableClause := &autoopsproto.DatetimeClause{
+				Time:       tc.enableTime,
+				ActionType: autoopsproto.ActionType_ENABLE,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency:      tc.frequency,
+					DaysOfWeek:     tc.daysOfWeek,
+					DayOfMonth:     tc.dayOfMonth,
+					Timezone:       "UTC",
+					StartDate:      tc.startDate.Unix(),
+					MaxOccurrences: tc.maxOccurrences,
+				},
+			}
+			disableClause := &autoopsproto.DatetimeClause{
+				Time:       tc.disableTime,
+				ActionType: autoopsproto.ActionType_DISABLE,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency:      tc.frequency,
+					DaysOfWeek:     tc.daysOfWeek,
+					DayOfMonth:     tc.dayOfMonth,
+					Timezone:       "UTC",
+					StartDate:      tc.startDate.Unix(),
+					MaxOccurrences: tc.maxOccurrences,
+				},
+			}
+
+			rule, err := NewAutoOpsRule(
+				"feature-1",
+				autoopsproto.OpsType_SCHEDULE,
+				nil,
+				[]*autoopsproto.DatetimeClause{enableClause, disableClause},
+			)
+			require.NoError(t, err)
+			require.Len(t, rule.Clauses, 2)
+
+			determineStatus := func() autoopsproto.AutoOpsStatus {
+				if rule.AllClausesFinished() {
+					return autoopsproto.AutoOpsStatus_FINISHED
+				}
+				return autoopsproto.AutoOpsStatus_RUNNING
+			}
+
+			lastStepIdx := len(tc.steps) - 1
+			for i, step := range tc.steps {
+				clauseID := rule.Clauses[step.clauseIdx].Id
+				err = rule.AdvanceRecurringClause(clauseID, step.execTime)
+				require.NoError(t, err, "step %d failed", i)
+
+				if i < lastStepIdx {
+					assert.Equal(t, autoopsproto.AutoOpsStatus_RUNNING, determineStatus(),
+						"step %d: should be RUNNING (not all clauses exhausted yet)", i)
+				} else {
+					assert.Equal(t, autoopsproto.AutoOpsStatus_FINISHED, determineStatus(),
+						"step %d: should be FINISHED (all clauses exhausted)", i)
+				}
+			}
+
+			// Verify final state
+			dtClauses, err := rule.ExtractDatetimeClauses()
+			require.NoError(t, err)
+			for i, c := range rule.Clauses {
+				dtc := dtClauses[c.Id]
+				assert.Equal(t, int64(0), dtc.NextExecutionAt,
+					"clause %d: NextExecutionAt should be 0", i)
+				assert.Equal(t, tc.maxOccurrences, dtc.ExecutionCount,
+					"clause %d: ExecutionCount should be %d", i, tc.maxOccurrences)
+				assert.True(t, c.ExecutedAt > 0,
+					"clause %d: outer ExecutedAt should be set", i)
+			}
+
+			// Verify Update() produces FINISHED status
+			status := autoopsproto.AutoOpsStatus_FINISHED
+			updated, err := rule.Update(&status, nil, nil)
+			require.NoError(t, err)
+			assert.Equal(t, autoopsproto.AutoOpsStatus_FINISHED, updated.AutoOpsStatus)
+		})
+	}
 }

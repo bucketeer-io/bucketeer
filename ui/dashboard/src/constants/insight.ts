@@ -1,0 +1,33 @@
+import { InsightApiId, InsightSourceId } from '@types';
+
+export const ALL = 'ALL';
+
+export const ALL_API_IDS: InsightApiId[] = [
+  'UNKNOWN_API',
+  'GET_EVALUATION',
+  'GET_EVALUATIONS',
+  'REGISTER_EVENTS',
+  'GET_FEATURE_FLAGS',
+  'GET_SEGMENT_USERS',
+  'SDK_GET_VARIATION'
+];
+
+export const ALL_SOURCE_IDS: InsightSourceId[] = [
+  'UNKNOWN',
+  'ANDROID',
+  'IOS',
+  'WEB',
+  'GO_SERVER',
+  'NODE_SERVER',
+  'JAVASCRIPT',
+  'FLUTTER',
+  'REACT',
+  'REACT_NATIVE',
+  'OPEN_FEATURE_KOTLIN',
+  'OPEN_FEATURE_SWIFT',
+  'OPEN_FEATURE_JAVASCRIPT',
+  'OPEN_FEATURE_GO',
+  'OPEN_FEATURE_NODE',
+  'OPEN_FEATURE_REACT',
+  'OPEN_FEATURE_REACT_NATIVE'
+];

@@ -60,7 +60,7 @@ func (s *NotificationService) CreateSubscription(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Any("sourceType", req.SourceTypes),
-				zap.Any("recipient", req.Recipient),
+				zap.String("recipientType", req.Recipient.GetType().String()),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()

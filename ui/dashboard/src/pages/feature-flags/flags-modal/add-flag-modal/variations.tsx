@@ -56,8 +56,7 @@ const Variations = ({
     append({
       id: uuid(),
       value: '',
-      name: '',
-      description: ''
+      name: ''
     });
   };
 

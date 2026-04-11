@@ -50,7 +50,7 @@ func NewAPIKeyCacher(
 	}
 	caches := make([]cachev3.EnvironmentAPIKeyCache, 0, len(multiCaches))
 	for _, cache := range multiCaches {
-		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache))
+		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache, 0))
 	}
 	return &apiKeyCacher{
 		accStorage: accstorage.NewAccountStorage(mysqlClient),
@@ -89,7 +89,7 @@ func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) int {
 				// Log the error, but do not stop the other goroutines
 				c.logger.Error("Failed to cache environment api key",
 					zap.Error(err),
-					zap.Any("envAPIKey", envAPIKey),
+					zap.String("apiKeyId", envAPIKey.GetApiKey().GetId()),
 				)
 				return
 			}

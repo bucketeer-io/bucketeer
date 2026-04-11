@@ -52,7 +52,7 @@ func NewSegmentUserCacher(
 ) SegmentUserCacher {
 	caches := make([]cachev3.SegmentUsersCache, 0, len(multiCaches))
 	for _, c := range multiCaches {
-		caches = append(caches, cachev3.NewSegmentUsersCache(c))
+		caches = append(caches, cachev3.NewSegmentUsersCache(c, 0))
 	}
 	return &segmentUserCacher{
 		segStorage: ftstorage.NewSegmentStorage(mysqlClient),
