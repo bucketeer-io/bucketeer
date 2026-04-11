@@ -117,8 +117,9 @@ func (c *StreamClient) CreatePublisher(topic string) (publisher.Publisher, error
 	return NewStreamPublisher(c.redisClient, topic, options...), nil
 }
 
-// CreatePuller creates a puller for the given subscription and topic
-func (c *StreamClient) CreatePuller(subscription, topic string) (puller.Puller, error) {
+// CreatePuller creates a puller for the given subscription and topic.
+// PullerOption is accepted for interface compatibility but ignored for Redis Streams.
+func (c *StreamClient) CreatePuller(subscription, topic string, _ ...puller.PullerOption) (puller.Puller, error) {
 	if subscription == "" {
 		return nil, ErrInvalidStreamSubscription
 	}

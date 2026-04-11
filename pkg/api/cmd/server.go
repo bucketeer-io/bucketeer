@@ -511,13 +511,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
-	defer invalidatorCancel()
+	var invalidatorCleanup func()
+	defer func() {
+		invalidatorCancel()
+		if invalidatorCleanup != nil {
+			invalidatorCleanup()
+		}
+	}()
 	if *s.domainTopic != "" {
-		if err := s.startCacheInvalidator(
+		cleanup, err := s.startCacheInvalidator(
 			invalidatorCtx, pubsubClient, inMemoryCache, logger,
-		); err != nil {
+		)
+		if err != nil {
 			return err
 		}
+		invalidatorCleanup = cleanup
 	}
 
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
@@ -722,18 +730,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 // startCacheInvalidator subscribes to domain events to evict L1 in-memory
 // cache entries when feature flags or segments are updated. Each pod uses a
 // unique consumer group (based on hostname) so every pod receives every event.
+// It returns a cleanup function that deletes the subscription on shutdown.
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
 	inMemoryCache *cachev3.InMemoryCache,
 	logger *zap.Logger,
-) error {
+) (func(), error) {
 	hostname, err := os.Hostname()
 	if err != nil || hostname == "" {
 		id, uuidErr := uuid.NewUUID()
 		if uuidErr != nil {
-			logger.Error("Failed to get hostname and generate UUID", zap.Error(err))
-			return fmt.Errorf("failed to generate unique subscription name: %w", uuidErr)
+			logger.Error("Failed to get hostname and generate UUID",
+				zap.NamedError("uuidErr", uuidErr),
+				zap.NamedError("hostnameErr", err),
+			)
+			return nil, fmt.Errorf("failed to generate unique subscription name: %w", uuidErr)
 		}
 		hostname = id.String()
 		logger.Warn("Failed to get hostname, using generated ID",
@@ -742,10 +754,12 @@ func (s *server) startCacheInvalidator(
 		)
 	}
 	subscription := fmt.Sprintf("gateway-cache-invalidator-%s", hostname)
-	domainPuller, err := pubsubClient.CreatePuller(subscription, *s.domainTopic)
+	domainPuller, err := pubsubClient.CreatePuller(subscription, *s.domainTopic,
+		puller.PullerOption{ExpirationPolicy: 24 * time.Hour},
+	)
 	if err != nil {
 		logger.Error("Failed to create domain event puller", zap.Error(err))
-		return err
+		return nil, err
 	}
 	rateLimitedPuller := puller.NewRateLimitedPuller(domainPuller, 1000)
 	invalidator := api.NewCacheInvalidator(
@@ -768,7 +782,19 @@ func (s *server) startCacheInvalidator(
 		zap.String("subscription", subscription),
 		zap.String("topic", *s.domainTopic),
 	)
-	return nil
+	cleanup := func() {
+		if err := pubsubClient.DeleteSubscription(subscription); err != nil {
+			logger.Warn("Failed to delete cache invalidator subscription. Will be deleted by expiration policy",
+				zap.String("subscription", subscription),
+				zap.Error(err),
+			)
+			return
+		}
+		logger.Info("Deleted cache invalidator subscription",
+			zap.String("subscription", subscription),
+		)
+	}
+	return cleanup, nil
 }
 
 func (s *server) createMySQLClient(
