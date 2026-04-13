@@ -1335,6 +1335,17 @@ func (c *client) XGroupDestroy(ctx context.Context, stream, group string) error 
 	).Observe(time.Since(startTime).Seconds())
 
 	if err != nil && err != goredis.Nil {
+		// Missing stream/group is expected during startup cleanup or when the
+		// topic partition never received messages; log at debug to avoid noisy
+		// error logs during normal rollouts.
+		if isBenignXGroupDestroyErr(err) {
+			c.logger.Debug("Consumer group or stream not found during destroy (expected)",
+				zap.String("stream", stream),
+				zap.String("group", group),
+				zap.Error(err),
+			)
+			return err
+		}
 		c.logger.Error("Failed to destroy consumer group",
 			zap.String("stream", stream),
 			zap.String("group", group),
@@ -1344,4 +1355,18 @@ func (c *client) XGroupDestroy(ctx context.Context, stream, group string) error 
 	}
 
 	return nil
+}
+
+// isBenignXGroupDestroyErr returns true for errors that indicate the stream or
+// consumer group simply does not exist, which is expected during cleanup.
+func isBenignXGroupDestroyErr(err error) bool {
+	if err == nil {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "nogroup") ||
+		strings.Contains(msg, "no such key") ||
+		strings.Contains(msg, "stream key not found") ||
+		strings.Contains(msg, "the xgroup subcommand requires the key to exist") ||
+		strings.Contains(msg, "requires the key to exist")
 }
