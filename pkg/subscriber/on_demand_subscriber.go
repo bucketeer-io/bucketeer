@@ -138,7 +138,10 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 					continue
 				}
 				if exists {
-					err = s.factoryClient.DeleteSubscription(s.configuration.Subscription)
+					err = s.factoryClient.DeleteSubscription(
+						s.configuration.Subscription,
+						s.configuration.Topic,
+					)
 					if err != nil {
 						s.logger.Error("Failed to delete subscription",
 							zap.String("name", s.name),

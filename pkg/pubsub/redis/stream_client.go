@@ -17,6 +17,8 @@ package redis
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -167,10 +169,34 @@ func (c *StreamClient) SubscriptionExists(subscription string) (bool, error) {
 	return true, nil
 }
 
-// DeleteSubscription deletes a subscription
-func (c *StreamClient) DeleteSubscription(subscription string) error {
-	// For Redis Streams, we would need to delete the consumer group
-	// This would require knowing the stream name, which we don't have
-	// Just return nil to indicate success since the operation is idempotent
+// DeleteSubscription removes the consumer group named subscription from every
+// partition stream for topic (same layout as StreamPuller). Missing streams or
+// groups are ignored so shutdown cleanup is best-effort and idempotent.
+func (c *StreamClient) DeleteSubscription(subscription, topic string) error {
+	if subscription == "" {
+		return ErrInvalidStreamSubscription
+	}
+	if topic == "" {
+		return ErrInvalidStreamTopic
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	for partition := 0; partition < c.partitionCount; partition++ {
+		streamKey := fmt.Sprintf("%s-%d{stream}", topic, partition)
+		exists, err := c.redisClient.Exists(streamKey)
+		if err != nil {
+			return fmt.Errorf("redis stream delete subscription: exists %q: %w", streamKey, err)
+		}
+		if exists == 0 {
+			continue
+		}
+		if err := c.redisClient.XGroupDestroy(ctx, streamKey, subscription); err != nil {
+			msg := strings.ToLower(err.Error())
+			if strings.Contains(msg, "nogroup") || strings.Contains(msg, "no such key") {
+				continue
+			}
+			return fmt.Errorf("redis stream delete subscription: xgroup destroy %q on %q: %w", subscription, streamKey, err)
+		}
+	}
 	return nil
 }

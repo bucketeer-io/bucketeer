@@ -58,8 +58,9 @@ type Client interface {
 	CreatePuller(subscription, topic string, opts ...puller.PullerOption) (puller.Puller, error)
 	// SubscriptionExists checks if a subscription exists.
 	SubscriptionExists(subscription string) (bool, error)
-	// DeleteSubscription deletes a subscription.
-	DeleteSubscription(subscription string) error
+	// DeleteSubscription deletes a subscription. Topic is the Redis Streams base name
+	// (same as CreatePuller); it is ignored for Google Pub/Sub.
+	DeleteSubscription(subscription, topic string) error
 	// Close closes the client.
 	Close() error
 }
@@ -245,7 +246,7 @@ func (a *GoogleClientAdapter) SubscriptionExists(subscription string) (bool, err
 }
 
 // DeleteSubscription deletes a subscription.
-func (a *GoogleClientAdapter) DeleteSubscription(subscription string) error {
+func (a *GoogleClientAdapter) DeleteSubscription(subscription, _ string) error {
 	return a.client.DeleteSubscription(subscription)
 }
 

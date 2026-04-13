@@ -512,12 +512,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()
-	defer func() {
-		invalidatorCancel()
-		if invalidatorCleanup != nil {
-			invalidatorCleanup()
-		}
-	}()
+	var stopInvalidatorOnce sync.Once
+	stopInvalidator := func() {
+		stopInvalidatorOnce.Do(func() {
+			invalidatorCancel()
+			if invalidatorCleanup != nil {
+				invalidatorCleanup()
+				invalidatorCleanup = nil
+			}
+		})
+	}
+	defer stopInvalidator()
 	if *s.domainTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
 			invalidatorCtx, pubsubClient, inMemoryCache, logger,
@@ -661,6 +666,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		healthChecker.Stop()
 		restHealthChecker.Stop()
 
+		// Stop the domain puller and delete the per-pod Pub/Sub subscription (or
+		// Redis consumer groups) now, before the propagation sleep and long HTTP/gRPC
+		// drain. Otherwise the subscription keeps receiving topic messages while no
+		// consumer runs, and oldest_unacked_message_age ramps until ExpirationPolicy.
+		// L1 cache TTL covers brief lack of invalidations during drain.
+		stopInvalidator()
+
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.
 		time.Sleep(propagationDelay)
@@ -730,7 +742,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 // startCacheInvalidator subscribes to domain events to evict L1 in-memory
 // cache entries when feature flags or segments are updated. Each pod uses a
 // unique consumer group (based on hostname) so every pod receives every event.
-// It returns a cleanup function that deletes the subscription on shutdown.
+// It returns a cleanup function that deletes the GCP subscription or Redis
+// consumer group on graceful shutdown.
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
@@ -783,9 +796,12 @@ func (s *server) startCacheInvalidator(
 		zap.String("topic", *s.domainTopic),
 	)
 	cleanup := func() {
-		if err := pubsubClient.DeleteSubscription(subscription); err != nil {
-			logger.Warn("Failed to delete cache invalidator subscription. Will be deleted by expiration policy",
+		if err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic); err != nil {
+			logger.Warn(
+				"Failed to delete cache invalidator subscription; "+
+					"GCP may still remove inactive subscriptions (expiration policy)",
 				zap.String("subscription", subscription),
+				zap.String("topic", *s.domainTopic),
 				zap.Error(err),
 			)
 			return
