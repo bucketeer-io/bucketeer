@@ -48,7 +48,7 @@ type onDemandSubscriber struct {
 	runningPullerCancel       func()
 	client                    *pubsub.Client
 	isRunning                 bool
-	pendingSubscriptionDelete bool
+	pendingSubscriptionDelete bool // true when we need a one-shot delete (running→stopped or off at startup)
 	group                     errgroup.Group
 	opts                      options
 	logger                    *zap.Logger
@@ -103,6 +103,10 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 	ticker := time.NewTicker(time.Duration(s.configuration.CheckInterval) * time.Second)
 	defer ticker.Stop()
 	subscription := make(chan struct{})
+	// Assume a subscription/consumer-group may exist from a previous run when
+	// starting in the stopped state so we attempt a one-shot cleanup on the
+	// first tick.
+	s.pendingSubscriptionDelete = true
 	go s.subscribe(subscription)
 	for {
 		select {

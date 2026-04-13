@@ -210,5 +210,7 @@ func isBenignXGroupDestroyErr(err error) bool {
 	msg := strings.ToLower(err.Error())
 	return strings.Contains(msg, "nogroup") ||
 		strings.Contains(msg, "no such key") ||
-		strings.Contains(msg, "stream key not found")
+		strings.Contains(msg, "stream key not found") ||
+		strings.Contains(msg, "the xgroup subcommand requires the key to exist") ||
+		strings.Contains(msg, "requires the key to exist")
 }

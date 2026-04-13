@@ -762,8 +762,8 @@ func (s *server) startCacheInvalidator(
 		}
 		hostname = id.String()
 		logger.Warn("Failed to get hostname, using generated ID",
-			zap.Error(err),
 			zap.String("generatedId", hostname),
+			zap.NamedError("hostnameErr", err),
 		)
 	}
 	subscription := fmt.Sprintf("gateway-cache-invalidator-%s", hostname)
