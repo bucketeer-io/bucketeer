@@ -347,6 +347,10 @@ export const recurringScheduleSchema = ({
                   .required(requiredMessage)
                   .test('isLaterThanNow', (value, context) => {
                     if (!value) return true;
+                    const clause = context.parent as
+                      | RecurringClauseItem
+                      | undefined;
+                    if (clause?.id) return true;
                     const startDate = (
                       context.from?.[1]?.value as RecurringScheduleFormType
                     )?.startDate;
