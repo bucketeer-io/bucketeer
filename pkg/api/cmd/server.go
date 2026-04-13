@@ -766,7 +766,7 @@ func (s *server) startCacheInvalidator(
 			zap.NamedError("hostnameErr", err),
 		)
 	}
-	subscription := fmt.Sprintf("gateway-cache-invalidator-%s", hostname)
+	subscription := fmt.Sprintf("api-cache-invalidator-%s", hostname)
 	domainPuller, err := pubsubClient.CreatePuller(subscription, *s.domainTopic,
 		puller.PullerOption{ExpirationPolicy: 24 * time.Hour},
 	)
