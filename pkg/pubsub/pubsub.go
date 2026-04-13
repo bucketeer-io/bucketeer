@@ -285,6 +285,22 @@ func (c *Client) subscription(id, topicID string, opts *subscriptionOptions) (*p
 			continue
 		}
 		if ok {
+			if opts != nil && opts.expirationPolicy > 0 {
+				_, updErr := sub.Update(ctx, pubsub.SubscriptionConfigToUpdate{
+					ExpirationPolicy: opts.expirationPolicy,
+				})
+				if updErr != nil {
+					// No-op if nothing changed (e.g. policy already set).
+					if !strings.Contains(updErr.Error(), "nothing to update") {
+						c.logger.Warn(
+							"Failed to update expiration policy on existing subscription",
+							zap.String("subscription", id),
+							zap.Duration("expiration_policy", opts.expirationPolicy),
+							zap.Error(updErr),
+						)
+					}
+				}
+			}
 			return sub, nil
 		}
 		cfg := pubsub.SubscriptionConfig{

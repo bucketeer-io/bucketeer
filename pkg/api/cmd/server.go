@@ -799,7 +799,7 @@ func (s *server) startCacheInvalidator(
 		if err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic); err != nil {
 			logger.Warn(
 				"Failed to delete cache invalidator subscription; "+
-					"GCP may still remove inactive subscriptions (expiration policy)",
+					"manual cleanup or backend-specific TTL may be required",
 				zap.String("subscription", subscription),
 				zap.String("topic", *s.domainTopic),
 				zap.Error(err),

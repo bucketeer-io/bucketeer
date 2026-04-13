@@ -171,7 +171,8 @@ func (c *StreamClient) SubscriptionExists(subscription string) (bool, error) {
 
 // DeleteSubscription removes the consumer group named subscription from every
 // partition stream for topic (same layout as StreamPuller). Missing streams or
-// groups are ignored so shutdown cleanup is best-effort and idempotent.
+// groups are ignored. Attempts all partitions and returns a joined error if any
+// non-benign destroy fails (best-effort shutdown cleanup).
 func (c *StreamClient) DeleteSubscription(subscription, topic string) error {
 	if subscription == "" {
 		return ErrInvalidStreamSubscription
@@ -181,22 +182,33 @@ func (c *StreamClient) DeleteSubscription(subscription, topic string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+	var errs []error
 	for partition := 0; partition < c.partitionCount; partition++ {
 		streamKey := fmt.Sprintf("%s-%d{stream}", topic, partition)
-		exists, err := c.redisClient.Exists(streamKey)
-		if err != nil {
-			return fmt.Errorf("redis stream delete subscription: exists %q: %w", streamKey, err)
-		}
-		if exists == 0 {
-			continue
-		}
 		if err := c.redisClient.XGroupDestroy(ctx, streamKey, subscription); err != nil {
-			msg := strings.ToLower(err.Error())
-			if strings.Contains(msg, "nogroup") || strings.Contains(msg, "no such key") {
+			if isBenignXGroupDestroyErr(err) {
 				continue
 			}
-			return fmt.Errorf("redis stream delete subscription: xgroup destroy %q on %q: %w", subscription, streamKey, err)
+			c.logger.Warn("Failed to destroy consumer group on stream partition",
+				zap.String("stream", streamKey),
+				zap.String("group", subscription),
+				zap.Error(err),
+			)
+			errs = append(errs, fmt.Errorf("partition %s: %w", streamKey, err))
 		}
 	}
+	if len(errs) > 0 {
+		return fmt.Errorf("redis stream delete subscription: %w", errors.Join(errs...))
+	}
 	return nil
+}
+
+func isBenignXGroupDestroyErr(err error) bool {
+	if err == nil {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "nogroup") ||
+		strings.Contains(msg, "no such key") ||
+		strings.Contains(msg, "stream key not found")
 }
