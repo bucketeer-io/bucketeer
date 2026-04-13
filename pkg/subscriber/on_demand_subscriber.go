@@ -38,20 +38,21 @@ type OnDemandConfiguration struct {
 }
 
 type onDemandSubscriber struct {
-	name                string
-	configuration       OnDemandConfiguration
-	rateLimitedPuller   puller.RateLimitedPuller
-	processor           OnDemandProcessor
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	runningPullerCtx    context.Context
-	runningPullerCancel func()
-	client              *pubsub.Client
-	isRunning           bool
-	group               errgroup.Group
-	opts                options
-	logger              *zap.Logger
-	factoryClient       factory.Client
+	name                      string
+	configuration             OnDemandConfiguration
+	rateLimitedPuller         puller.RateLimitedPuller
+	processor                 OnDemandProcessor
+	ctx                       context.Context
+	cancel                    context.CancelFunc
+	runningPullerCtx          context.Context
+	runningPullerCancel       func()
+	client                    *pubsub.Client
+	isRunning                 bool
+	pendingSubscriptionDelete bool
+	group                     errgroup.Group
+	opts                      options
+	logger                    *zap.Logger
+	factoryClient             factory.Client
 }
 
 func NewOnDemandSubscriber(
@@ -112,6 +113,7 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 				continue
 			}
 			if start {
+				s.pendingSubscriptionDelete = false
 				if !s.IsRunning() {
 					err = s.createPuller()
 					if err != nil {
@@ -127,8 +129,13 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 			} else {
 				if s.IsRunning() {
 					s.unsubscribe()
+					s.pendingSubscriptionDelete = true
 				}
-				// delete subscription if it exists
+				// One delete after stop; avoids Redis Streams calling XGROUP DESTROY on
+				// every tick (SubscriptionExists is always true for Redis).
+				if !s.pendingSubscriptionDelete {
+					continue
+				}
 				exists, err := s.factoryClient.SubscriptionExists(s.configuration.Subscription)
 				if err != nil {
 					s.logger.Error("Failed to check subscription existence",
@@ -137,19 +144,22 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 					)
 					continue
 				}
-				if exists {
-					err = s.factoryClient.DeleteSubscription(
-						s.configuration.Subscription,
-						s.configuration.Topic,
-					)
-					if err != nil {
-						s.logger.Error("Failed to delete subscription",
-							zap.String("name", s.name),
-							zap.Error(err),
-						)
-						continue
-					}
+				if !exists {
+					s.pendingSubscriptionDelete = false
+					continue
 				}
+				err = s.factoryClient.DeleteSubscription(
+					s.configuration.Subscription,
+					s.configuration.Topic,
+				)
+				if err != nil {
+					s.logger.Error("Failed to delete subscription",
+						zap.String("name", s.name),
+						zap.Error(err),
+					)
+					continue
+				}
+				s.pendingSubscriptionDelete = false
 			}
 		case <-ctx.Done():
 			s.logger.Debug("Context is done")

@@ -270,6 +270,33 @@ func (c *Client) createTopicForEmulator(ctx context.Context, id string) {
 	}
 }
 
+// tryUpdateSubscriptionExpiration applies opts.expirationPolicy when set (best-effort).
+func (c *Client) tryUpdateSubscriptionExpiration(
+	ctx context.Context,
+	id string,
+	sub *pubsub.Subscription,
+	opts *subscriptionOptions,
+) {
+	if opts == nil || opts.expirationPolicy <= 0 {
+		return
+	}
+	_, updErr := sub.Update(ctx, pubsub.SubscriptionConfigToUpdate{
+		ExpirationPolicy: opts.expirationPolicy,
+	})
+	if updErr == nil {
+		return
+	}
+	if strings.Contains(updErr.Error(), "nothing to update") {
+		return
+	}
+	c.logger.Warn(
+		"Failed to update expiration policy on existing subscription",
+		zap.String("subscription", id),
+		zap.Duration("expiration_policy", opts.expirationPolicy),
+		zap.Error(updErr),
+	)
+}
+
 // TODO: add metrics
 func (c *Client) subscription(id, topicID string, opts *subscriptionOptions) (*pubsub.Subscription, error) {
 	sub := c.Subscription(id)
@@ -285,22 +312,7 @@ func (c *Client) subscription(id, topicID string, opts *subscriptionOptions) (*p
 			continue
 		}
 		if ok {
-			if opts != nil && opts.expirationPolicy > 0 {
-				_, updErr := sub.Update(ctx, pubsub.SubscriptionConfigToUpdate{
-					ExpirationPolicy: opts.expirationPolicy,
-				})
-				if updErr != nil {
-					// No-op if nothing changed (e.g. policy already set).
-					if !strings.Contains(updErr.Error(), "nothing to update") {
-						c.logger.Warn(
-							"Failed to update expiration policy on existing subscription",
-							zap.String("subscription", id),
-							zap.Duration("expiration_policy", opts.expirationPolicy),
-							zap.Error(updErr),
-						)
-					}
-				}
-			}
+			c.tryUpdateSubscriptionExpiration(ctx, id, sub, opts)
 			return sub, nil
 		}
 		cfg := pubsub.SubscriptionConfig{
@@ -318,6 +330,7 @@ func (c *Client) subscription(id, topicID string, opts *subscriptionOptions) (*p
 				zap.String("subscription", id),
 				zap.String("topic", topicID),
 			)
+			c.tryUpdateSubscriptionExpiration(ctx, id, sub, opts)
 			return sub, nil
 		}
 		lastErr = err
