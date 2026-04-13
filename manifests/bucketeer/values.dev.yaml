@@ -656,6 +656,7 @@ subscriber:
       flushTimeout: 30
       maxRetryGoalEventPeriod: 43200 # 12 hours
       retryGoalEventInterval: 1 # Reduced for faster retries in dev/test with Redis Stream
+      maxRetryBackoffInterval: 5 # Cap exponential backoff at 5 seconds for E2E tests
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
         type: ""

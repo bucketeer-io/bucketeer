@@ -40,6 +40,7 @@
     "flushTimeout": 30,
     "maxRetryGoalEventPeriod": 43200,
     "retryGoalEventInterval": 1,
+    "maxRetryBackoffInterval": 5,
     "dataWarehouse": {
       "type": "mysql",
       "batchSize": 1000,

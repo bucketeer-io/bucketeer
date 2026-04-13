@@ -322,11 +322,13 @@ func (w *goalEvtWriter) unlockGoalEventRetryLock(ctx context.Context, key, value
 
 // computeBackoffAndTTL calculates the next retry interval and TTL for a retry message.
 // It handles exponential backoff with dynamic caps based on the max retry period.
+// If maxBackoffInterval > 0, it caps the backoff interval to this value.
 func (w *goalEvtWriter) computeBackoffAndTTL(
 	retryCount int,
 	firstRetryAt int64,
 	initialInterval time.Duration,
 	maxRetryPeriod time.Duration,
+	maxBackoffInterval time.Duration,
 ) (nextInterval time.Duration, ttl time.Duration, err error) {
 	bo := backoff.NewExponentialBackOff()
 	bo.InitialInterval = initialInterval
@@ -335,6 +337,12 @@ func (w *goalEvtWriter) computeBackoffAndTTL(
 	ratio := float64(maxRetryPeriod) / float64(initialInterval)
 	maxExp := int(math.Floor(math.Log2(ratio)))
 	bo.MaxInterval = time.Duration(1<<uint(maxExp)) * initialInterval
+
+	// Apply user-defined max backoff interval cap if provided (and > 0)
+	if maxBackoffInterval > 0 && maxBackoffInterval < bo.MaxInterval {
+		bo.MaxInterval = maxBackoffInterval
+	}
+
 	bo.MaxElapsedTime = maxRetryPeriod
 	bo.Reset()
 
@@ -369,6 +377,7 @@ func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 		msg.FirstRetryAt,
 		w.retryGoalEventInterval,
 		w.maxRetryGoalEventPeriod,
+		w.maxRetryBackoffInterval,
 	)
 	if err != nil {
 		return err

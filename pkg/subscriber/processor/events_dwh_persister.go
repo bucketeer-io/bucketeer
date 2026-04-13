@@ -73,6 +73,7 @@ type eventsDWHPersisterConfig struct {
 	FlushSize               int `json:"flushSize"`
 	MaxRetryGoalEventPeriod int `json:"maxRetryGoalEventPeriod,omitempty"`
 	RetryGoalEventInterval  int `json:"retryGoalEventInterval,omitempty"`
+	MaxRetryBackoffInterval int `json:"maxRetryBackoffInterval,omitempty"`
 
 	// Data warehouse configuration
 	DataWarehouse DataWarehouseConfig `json:"dataWarehouse"`
@@ -269,6 +270,7 @@ func NewEventsDWHPersister(
 		// Get the max retry period and retry interval
 		maxRetryPeriod := time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod) * time.Second
 		retryInterval := time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval) * time.Second
+		maxRetryBackoff := time.Duration(e.eventsDWHPersisterConfig.MaxRetryBackoffInterval) * time.Second
 
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
@@ -284,6 +286,7 @@ func NewEventsDWHPersister(
 			persistentRedisClient,
 			maxRetryPeriod,
 			retryInterval,
+			maxRetryBackoff,
 			registerer,
 			goalOptions...,
 		)

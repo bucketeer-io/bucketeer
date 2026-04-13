@@ -61,6 +61,7 @@ type goalEvtWriter struct {
 	logger                  *zap.Logger
 	maxRetryGoalEventPeriod time.Duration
 	retryGoalEventInterval  time.Duration
+	maxRetryBackoffInterval time.Duration
 }
 
 type GoalEventWriterOption struct {
@@ -82,6 +83,7 @@ func NewGoalEventWriter(
 	redisClient redisv3.Client,
 	maxRetryGoalEventPeriod time.Duration,
 	retryGoalEventInterval time.Duration,
+	maxRetryBackoffInterval time.Duration,
 	registerer metrics.Registerer,
 	options ...GoalEventWriterOption,
 ) (Writer, error) {
@@ -131,6 +133,7 @@ func NewGoalEventWriter(
 			logger:                  logger,
 			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
 			retryGoalEventInterval:  retryGoalEventInterval,
+			maxRetryBackoffInterval: maxRetryBackoffInterval,
 		}
 		w.StartRetryProcessor(ctx)
 		return w, nil
@@ -160,6 +163,7 @@ func NewGoalEventWriter(
 			logger:                  logger,
 			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
 			retryGoalEventInterval:  retryGoalEventInterval,
+			maxRetryBackoffInterval: maxRetryBackoffInterval,
 		}
 		w.StartRetryProcessor(ctx)
 		return w, nil
@@ -225,6 +229,7 @@ func NewGoalEventWriter(
 		logger:                  logger,
 		maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
 		retryGoalEventInterval:  retryGoalEventInterval,
+		maxRetryBackoffInterval: maxRetryBackoffInterval,
 	}
 	w.StartRetryProcessor(ctx)
 	return w, nil
