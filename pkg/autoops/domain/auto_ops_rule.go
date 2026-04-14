@@ -17,6 +17,7 @@ package domain
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"time"
 
@@ -608,25 +609,10 @@ func recurrenceScheduleChanged(existing, updated *proto.DatetimeClause) bool {
 		er.MaxOccurrences != ur.MaxOccurrences {
 		return true
 	}
-	if len(er.DaysOfWeek) != len(ur.DaysOfWeek) {
-		return true
-	}
-	eSorted := make([]int, len(er.DaysOfWeek))
-	uSorted := make([]int, len(ur.DaysOfWeek))
-	for i, d := range er.DaysOfWeek {
-		eSorted[i] = int(d)
-	}
-	for i, d := range ur.DaysOfWeek {
-		uSorted[i] = int(d)
-	}
-	sort.Ints(eSorted)
-	sort.Ints(uSorted)
-	for i := range eSorted {
-		if eSorted[i] != uSorted[i] {
-			return true
-		}
-	}
-	return false
+	return !slices.Equal(
+		slices.Sorted(slices.Values(er.DaysOfWeek)),
+		slices.Sorted(slices.Values(ur.DaysOfWeek)),
+	)
 }
 
 func (a *AutoOpsRule) DeleteClause(id string) error {
