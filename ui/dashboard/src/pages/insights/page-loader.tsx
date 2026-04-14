@@ -56,7 +56,8 @@ const PageLoader = () => {
       setFilters({
         ...filters,
         projectId: projectId || ALL,
-        environmentId: normalizeEnvId(firstEnv?.id ?? '')
+        environmentId: normalizeEnvId(firstEnv?.id ?? ''),
+        sourceId: ALL
       });
     },
     [userEnvironments, filters, setFilters]

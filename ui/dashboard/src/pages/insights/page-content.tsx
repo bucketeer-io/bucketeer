@@ -185,7 +185,7 @@ const PageContent = ({
 
   const handleEnvironmentChange = useCallback(
     (value: string) => {
-      onFiltersChange({ ...filters, environmentId: value });
+      onFiltersChange({ ...filters, environmentId: value, sourceId: ALL });
     },
     [filters, onFiltersChange]
   );
