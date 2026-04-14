@@ -117,20 +117,24 @@ jobs:
             IMAGE=`./tools/build/show-image-name.sh $APP`
             docker build -f Dockerfile-app-$APP -t bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} --load .
           done
-      - name: Build migration image
+      - name: Build migration images
         if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
-        run: docker build migration/ -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} --load
+        run: |
+          docker build -f migration/Dockerfile migration/ -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} --load
+          docker build -f migration/Dockerfile.postgres migration/ -t bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }} --load
       - name: Login to GHCR
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push migration image to GHCR
+      - name: Push migration images to GHCR
         if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: |
           docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
           docker push ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker tag bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Push go application images to GHCR
         run: |
           push_func(){
@@ -169,11 +173,13 @@ jobs:
           registry: ${{ env.GAR_REGISTRY }}
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-      - name: Push migration image to GAR
+      - name: Push migration images to GAR
         if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: |
           docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
           docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker tag bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Push go application images to GAR
         run: |
           push_func(){

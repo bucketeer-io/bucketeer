@@ -1,5 +1,4 @@
+# MySQL schema migrations only. For PostgreSQL use Dockerfile.postgres (separate image).
 FROM arigaio/atlas:latest
 
 COPY mysql /migrations
-# for postgres we change the folder
-# COPY postgres /migrations

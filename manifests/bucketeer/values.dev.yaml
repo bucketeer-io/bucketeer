@@ -91,6 +91,7 @@ global:
 
 migration:
   image:
+    # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres (same tag).
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: localenv
 
@@ -109,7 +110,8 @@ migration:
   dbBaseline: "20240626022133"
 
   # postgres
-  # Uncomment the following lines to use PostgreSQL instead of MySQL
+  # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
+  # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
   # URL format: postgres://user:password@host:port/db_name?sslmode=disable
   # dbUrl: postgres://bucketeer:bucketeer@localenv-postgres.default.svc:5432/bucketeer?sslmode=disable
   # dbBaseline: "20260226174000"

@@ -92,6 +92,11 @@ psql -h localhost -U bucketeer -d bucketeer
 
 ## 2- Running the Migration
 
-In the Dockerfile, change COPY command to copy the PostgreSQL migration file instead of the MySQL one, and rebuild the image.
+Migrations ship as **two images** (same tag scheme as the MySQL image):
 
-When installing Bucketeer, it will run the migration file and create the complete schema.
+- **`ghcr.io/bucketeer-io/bucketeer-migration`** — built from `migration/Dockerfile` (`migration/mysql` → `/migrations`).
+- **`ghcr.io/bucketeer-io/bucketeer-migration-postgres`** — built from `migration/Dockerfile.postgres` (`migration/postgres` → `/migrations`).
+
+For Helm, set `migration.image.repository` to the postgres image when applying PostgreSQL migrations (and set `dbUrl` / `dbBaseline` for Postgres as in `values.yaml` comments).
+
+When installing Bucketeer, the pre-install job runs Atlas against the image you select and creates or updates the schema.

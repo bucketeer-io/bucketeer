@@ -103,6 +103,7 @@ global:
 
 migration:
   image:
+    # MySQL: bucketeer-migration. PostgreSQL: ghcr.io/bucketeer-io/bucketeer-migration-postgres (see migration/Dockerfile.postgres).
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: v2.2.0 # x-release-please-version
   # imagePullSecrets: []  # Optional: Override global.image.imagePullSecrets for migration only
