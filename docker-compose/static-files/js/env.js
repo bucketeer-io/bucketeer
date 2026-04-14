@@ -3,5 +3,5 @@ window.env = {
   "DEMO_SIGN_IN_ENABLED": true,
   "DEMO_SIGN_IN_EMAIL": "demo@bucketeer.io",
   "DEMO_SIGN_IN_PASSWORD": "demo",
-  "SCHEDULED_FLAG_CHANGES_ENABLED": true
+  "SCHEDULED_FLAG_CHANGES_ENABLED": false
 }; 
