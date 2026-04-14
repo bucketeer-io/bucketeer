@@ -618,7 +618,9 @@ func (a *AutoOpsRule) ExtractOpsEventRateClauses() (map[string]*autoopsproto.Ops
 	return opsEventRateClauses, nil
 }
 
-func (a *AutoOpsRule) unmarshalOpsEventRateClause(clause *autoopsproto.Clause) (*autoopsproto.OpsEventRateClause, error) {
+func (a *AutoOpsRule) unmarshalOpsEventRateClause(
+	clause *autoopsproto.Clause,
+) (*autoopsproto.OpsEventRateClause, error) {
 	if clause.Clause.MessageIs(OpsEventRateClause) {
 		c := &autoopsproto.OpsEventRateClause{}
 		if err := clause.Clause.UnmarshalTo(c); err != nil {
