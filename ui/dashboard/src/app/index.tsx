@@ -7,7 +7,7 @@ import {
   useParams,
   useNavigate,
   useLocation
-} from 'react-router-dom';
+} from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   AuthCallbackPage,
@@ -29,6 +29,7 @@ import {
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_GOALS,
+  PAGE_PATH_INSIGHTS,
   PAGE_PATH_MEMBERS,
   PAGE_PATH_NEW,
   PAGE_PATH_NOTIFICATIONS,
@@ -63,6 +64,7 @@ import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
 import AccessDemoPage from 'pages/demo';
 import CreateDemoPage from 'pages/demo/demo-create';
+import InsightsPage from 'pages/insights';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
 import PushesPage from 'pages/pushes';
@@ -292,6 +294,7 @@ export const EnvironmentRoot = memo(
         />
         <Route path={`${PAGE_PATH_AUDIT_LOGS}/*`} element={<AuditLogsPage />} />
         <Route path={`${PAGE_PATH_DEBUGGER}/*`} element={<DebuggerPage />} />
+        <Route path={`${PAGE_PATH_INSIGHTS}/*`} element={<InsightsPage />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

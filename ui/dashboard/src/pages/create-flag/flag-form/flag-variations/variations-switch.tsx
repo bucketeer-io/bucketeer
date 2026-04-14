@@ -206,6 +206,9 @@ const VariationsSwitch = () => {
       if (value === FlagSwitchVariationType.CUSTOM) {
         const currentVariationType = watch('variationType');
 
+        setValue('defaultOnVariation', onVariationId, setValueOptions);
+        setValue('defaultOffVariation', offVariation, setValueOptions);
+
         switch (currentVariationType) {
           case 'BOOLEAN':
             return setValue(

@@ -17,6 +17,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -41,6 +42,7 @@ import (
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
@@ -50,6 +52,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
+	uuid "github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
@@ -68,43 +71,47 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	port                   *int
-	grpcGatewayPort        *int
-	project                *string
-	mysqlUser              *string
-	mysqlPass              *string
-	mysqlHost              *string
-	mysqlPort              *int
-	mysqlDBName            *string
-	goalTopic              *string
-	goalTopicProject       *string
-	evaluationTopic        *string
-	evaluationTopicProject *string
-	userTopic              *string
-	metricsTopic           *string
-	publishNumGoroutines   *int
-	publishTimeout         *time.Duration
-	featureService         *string
-	accountService         *string
-	codeRefService         *string
-	pushService            *string
-	auditLogService        *string
-	tagService             *string
-	teamService            *string
-	notificationService    *string
-	experimentService      *string
-	environmentService     *string
-	eventCounterService    *string
-	redisServerName        *string
-	redisAddr              *string
-	redisMode              *string
-	certPath               *string
-	keyPath                *string
-	serviceTokenPath       *string
-	redisPoolMaxIdle       *int
-	redisPoolMaxActive     *int
-	oldestEventTimestamp   *time.Duration
-	furthestEventTimestamp *time.Duration
+	port                              *int
+	grpcGatewayPort                   *int
+	project                           *string
+	mysqlUser                         *string
+	mysqlPass                         *string
+	mysqlHost                         *string
+	mysqlPort                         *int
+	mysqlDBName                       *string
+	goalTopic                         *string
+	goalTopicProject                  *string
+	evaluationTopic                   *string
+	evaluationTopicProject            *string
+	userTopic                         *string
+	metricsTopic                      *string
+	publishNumGoroutines              *int
+	publishTimeout                    *time.Duration
+	featureService                    *string
+	accountService                    *string
+	codeRefService                    *string
+	pushService                       *string
+	auditLogService                   *string
+	tagService                        *string
+	teamService                       *string
+	notificationService               *string
+	experimentService                 *string
+	environmentService                *string
+	eventCounterService               *string
+	redisServerName                   *string
+	redisAddr                         *string
+	redisMode                         *string
+	certPath                          *string
+	keyPath                           *string
+	serviceTokenPath                  *string
+	redisPoolMaxIdle                  *int
+	redisPoolMaxActive                *int
+	oldestEventTimestamp              *time.Duration
+	furthestEventTimestamp            *time.Duration
+	apiKeyMemoryCacheTTL              *time.Duration
+	apiKeyMemoryCacheEvictionInterval *time.Duration
+	featuresMemoryCacheTTL            *time.Duration
+	segmentUsersMemoryCacheTTL        *time.Duration
 	// PubSub configurations
 	pubSubType                *string
 	pubSubRedisServerName     *string
@@ -113,6 +120,7 @@ type server struct {
 	pubSubRedisMinIdle        *int
 	pubSubRedisPartitionCount *int
 	pubSubRedisMode           *string
+	domainTopic               *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -219,6 +227,22 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"furthest-event-timestamp",
 			"The duration of furthest event timestamp from processing time to allow.",
 		).Default("1h").Duration(),
+		apiKeyMemoryCacheTTL: cmd.Flag(
+			"api-key-memory-cache-ttl",
+			"TTL for the in-memory API key cache.",
+		).Default("1m").Duration(),
+		apiKeyMemoryCacheEvictionInterval: cmd.Flag(
+			"api-key-memory-cache-eviction-interval",
+			"Eviction interval for the in-memory API key cache.",
+		).Default("30s").Duration(),
+		featuresMemoryCacheTTL: cmd.Flag(
+			"features-memory-cache-ttl",
+			"TTL for the in-memory features cache.",
+		).Default("1m").Duration(),
+		segmentUsersMemoryCacheTTL: cmd.Flag(
+			"segment-users-memory-cache-ttl",
+			"TTL for the in-memory segment users cache.",
+		).Default("1m").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis-stream).",
@@ -241,6 +265,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		domainTopic: cmd.Flag("domain-topic",
+			"PubSub topic for domain events. Used to invalidate in-memory caches.",
+		).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -479,6 +506,33 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
+	inMemoryCache := cachev3.NewInMemoryCache(
+		cachev3.WithEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
+	)
+
+	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
+	var invalidatorCleanup func()
+	var stopInvalidatorOnce sync.Once
+	stopInvalidator := func() {
+		stopInvalidatorOnce.Do(func() {
+			invalidatorCancel()
+			if invalidatorCleanup != nil {
+				invalidatorCleanup()
+				invalidatorCleanup = nil
+			}
+		})
+	}
+	defer stopInvalidator()
+	if *s.domainTopic != "" {
+		cleanup, err := s.startCacheInvalidator(
+			invalidatorCtx, pubsubClient, inMemoryCache, logger,
+		)
+		if err != nil {
+			return err
+		}
+		invalidatorCleanup = cleanup
+	}
+
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
@@ -503,6 +557,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		redisV3Cache,
+		api.WithInMemoryCache(inMemoryCache),
+		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
+		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
+		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
+		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -576,7 +635,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		metricsPublisher,
+		mysqlClient,
 		redisV3Cache,
+		api.WithInMemoryCache(inMemoryCache),
+		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
+		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
+		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
+		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -600,6 +665,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// preventing new traffic from being routed to this pod.
 		healthChecker.Stop()
 		restHealthChecker.Stop()
+
+		// Stop the domain puller and delete the per-pod Pub/Sub subscription (or
+		// Redis consumer groups) now, before the propagation sleep and long HTTP/gRPC
+		// drain. Otherwise the subscription keeps receiving topic messages while no
+		// consumer runs, and oldest_unacked_message_age ramps until ExpirationPolicy.
+		// L1 cache TTL covers brief lack of invalidations during drain.
+		stopInvalidator()
 
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.
@@ -665,6 +737,80 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	<-ctx.Done()
 	return nil
+}
+
+// startCacheInvalidator subscribes to domain events to evict L1 in-memory
+// cache entries when feature flags or segments are updated. Each pod uses a
+// unique consumer group (based on hostname) so every pod receives every event.
+// It returns a cleanup function that deletes the GCP subscription or Redis
+// consumer group on graceful shutdown.
+func (s *server) startCacheInvalidator(
+	ctx context.Context,
+	pubsubClient factory.Client,
+	inMemoryCache *cachev3.InMemoryCache,
+	logger *zap.Logger,
+) (func(), error) {
+	hostname, err := os.Hostname()
+	if err != nil || hostname == "" {
+		id, uuidErr := uuid.NewUUID()
+		if uuidErr != nil {
+			logger.Error("Failed to get hostname and generate UUID",
+				zap.NamedError("uuidErr", uuidErr),
+				zap.NamedError("hostnameErr", err),
+			)
+			return nil, fmt.Errorf("failed to generate unique subscription name: %w", uuidErr)
+		}
+		hostname = id.String()
+		logger.Warn("Failed to get hostname, using generated ID",
+			zap.String("generatedId", hostname),
+			zap.NamedError("hostnameErr", err),
+		)
+	}
+	subscription := fmt.Sprintf("api-cache-invalidator-%s", hostname)
+	domainPuller, err := pubsubClient.CreatePuller(subscription, *s.domainTopic,
+		puller.PullerOption{ExpirationPolicy: 24 * time.Hour},
+	)
+	if err != nil {
+		logger.Error("Failed to create domain event puller", zap.Error(err))
+		return nil, err
+	}
+	rateLimitedPuller := puller.NewRateLimitedPuller(domainPuller, 1000)
+	invalidator := api.NewCacheInvalidator(
+		cachev3.NewFeaturesCache(inMemoryCache, 0),
+		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
+		logger,
+	)
+	go func() {
+		if err := rateLimitedPuller.Run(ctx); err != nil {
+			logger.Error("Domain event puller stopped", zap.Error(err))
+		}
+	}()
+	go func() {
+		if err := invalidator.Run(ctx, rateLimitedPuller.MessageCh()); err != nil {
+			logger.Error("Cache invalidator stopped", zap.Error(err))
+		}
+	}()
+	logger.Debug("Cache invalidator started",
+		zap.String("hostname", hostname),
+		zap.String("subscription", subscription),
+		zap.String("topic", *s.domainTopic),
+	)
+	cleanup := func() {
+		if err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic); err != nil {
+			logger.Warn(
+				"Failed to delete cache invalidator subscription; "+
+					"manual cleanup or backend-specific TTL may be required",
+				zap.String("subscription", subscription),
+				zap.String("topic", *s.domainTopic),
+				zap.Error(err),
+			)
+			return
+		}
+		logger.Info("Deleted cache invalidator subscription",
+			zap.String("subscription", subscription),
+		)
+	}
+	return cleanup, nil
 }
 
 func (s *server) createMySQLClient(

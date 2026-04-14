@@ -31,11 +31,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	prefixTestName = "e2e-test"
-	timeout        = 60 * time.Second
+	prefixTestName        = "e2e-test"
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -261,7 +263,16 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 func createFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID, tag string) {
 	t.Helper()
 	createReq := newCreateFeatureReq(featureID, tag)
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		_, err := client.CreateFeature(ctx, createReq)
+		if err == nil {
+			break
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 	enableFeature(t, featureID, client)
@@ -274,9 +285,18 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }

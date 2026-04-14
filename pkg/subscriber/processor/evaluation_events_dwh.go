@@ -201,16 +201,20 @@ func (w *evalEvtWriter) Write(
 		w.logger.Error("Failed to append rows to evaluation_event table",
 			zap.Error(err),
 		)
+		if len(fs) == 0 {
+			for _, ee := range evalEvents {
+				fails[ee.Id] = true
+			}
+			return fails
+		}
 	}
 	failedToAppendMap := make(map[string]*epproto.EvaluationEvent)
 	for id, f := range fs {
-		// To log which event has failed to append in the BigQuery, we need to find the event
 		for _, ee := range evalEvents {
 			if id == ee.Id {
 				failedToAppendMap[id] = ee
 			}
 		}
-		// Update the fails map
 		fails[id] = f
 	}
 	if len(failedToAppendMap) > 0 {

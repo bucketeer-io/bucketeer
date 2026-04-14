@@ -29,12 +29,15 @@ import (
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	coderefproto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	timeout = 60 * time.Second
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -251,7 +254,7 @@ func TestListCodeReferencesPageSize(t *testing.T) {
 	createFeature(t, featureClient, featureID)
 
 	// Create multiple code references
-	for i := 0; i < 3; i++ {
+	for i := 0; i < deadlockRetryAttempts; i++ {
 		createReq := newCreateCodeReferenceRequest(t, featureID)
 		createCodeReference(t, client, createReq)
 		time.Sleep(time.Second) // Ensure different creation times
@@ -382,7 +385,11 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 
 func createFeatureID(t *testing.T) string {
 	t.Helper()
-	return fmt.Sprintf("feature-id-%d", time.Now().UnixNano())
+	id, err := uuid.NewUUID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fmt.Sprintf("e2e-coderef-feature-id-%s", id)
 }
 
 func createFeature(t *testing.T, client featureclient.Client, featureID string) {
@@ -408,8 +415,18 @@ func createFeature(t *testing.T, client featureclient.Client, featureID string) 
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	_, err := client.CreateFeature(ctx, req)
-	assert.NoError(t, err)
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		t.Fatal(err)
+	}
 }

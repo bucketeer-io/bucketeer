@@ -208,9 +208,12 @@ web:
     kmsResourceName: vault
 api:
   env:
-    # Extended to 48h for E2E tests that send events with yesterday's timestamp
-    oldestEventTimestamp: 48h
+    logLevel: debug
+    oldestEventTimestamp: 168h
     furthestEventTimestamp: 48h
+    featuresMemoryCacheTTL: 1m
+    segmentUsersMemoryCacheTTL: 1m
+    domainTopic: domain
     gcpEnabled: false
     profile: false
     enablePprof: false

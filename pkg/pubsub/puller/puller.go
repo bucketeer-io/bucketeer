@@ -17,10 +17,18 @@ package puller
 
 import (
 	"context"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 	"go.uber.org/zap"
 )
+
+// PullerOption configures optional behavior when creating a puller.
+// For GCP Pub/Sub, ExpirationPolicy sets auto-deletion of inactive subscriptions.
+// For Redis Streams, options are ignored.
+type PullerOption struct {
+	ExpirationPolicy time.Duration
+}
 
 type Message struct {
 	ID         string

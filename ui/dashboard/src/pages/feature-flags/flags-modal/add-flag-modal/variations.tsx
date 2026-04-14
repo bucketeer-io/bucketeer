@@ -21,7 +21,7 @@ const Variations = ({
   refModel
 }: {
   variationType: FeatureVariationType;
-  refModel?: React.RefObject<HTMLDivElement>;
+  refModel?: React.RefObject<HTMLDivElement | null>;
 }) => {
   const { t } = useTranslation(['common', 'form']);
 

@@ -37,12 +37,14 @@ import (
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	prefixTestName = "e2e-test"
-	timeout        = 60 * time.Second
-	retryTimes     = 250
+	prefixTestName        = "e2e-test"
+	timeout               = 60 * time.Second
+	retryTimes            = 250
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -911,7 +913,16 @@ func createFeature(ctx context.Context, t *testing.T, featureID string) {
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 	}
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		_, err := client.CreateFeature(ctx, createReq)
+		if err == nil {
+			break
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 	enableFeature(t, featureID, client)
@@ -938,13 +949,23 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+	enableReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
-	}); err != nil {
+	}
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }

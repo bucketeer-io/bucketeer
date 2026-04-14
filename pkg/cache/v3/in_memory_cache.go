@@ -73,7 +73,7 @@ func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
 
 func (c *InMemoryCache) evictExpired(t time.Time) {
 	c.entries.Range(func(key, value interface{}) bool {
-		if e, ok := value.(*entry); ok && e.expiration.Before(t) {
+		if e, ok := value.(*entry); ok && !e.expiration.IsZero() && e.expiration.Before(t) {
 			c.entries.Delete(key)
 		}
 		return true
@@ -89,15 +89,27 @@ func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
 	if !ok {
 		return nil, cache.ErrInvalidType
 	}
+	if !e.expiration.IsZero() && time.Now().After(e.expiration) {
+		c.entries.Delete(key)
+		return nil, cache.ErrNotFound
+	}
 	return e.value, nil
 }
 
 func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) error {
+	var exp time.Time
+	if expiration > 0 {
+		exp = time.Now().Add(expiration)
+	}
 	c.entries.Store(key, &entry{
 		value:      value,
-		expiration: time.Now().Add(expiration),
+		expiration: exp,
 	})
 	return nil
+}
+
+func (c *InMemoryCache) Delete(key interface{}) {
+	c.entries.Delete(key)
 }
 
 func (c *InMemoryCache) Destroy() {

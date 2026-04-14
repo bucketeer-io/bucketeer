@@ -16,6 +16,7 @@
 package v3
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
@@ -27,21 +28,24 @@ import (
 const (
 	segmentUsersKind    = "segment_users"
 	segmentUsersMaxSize = int64(100)
-	segmentUsersTTL     = time.Duration(0)
 )
+
+var errGetAllNotSupported = errors.New("cache: GetAll is not supported by this cache implementation")
 
 type SegmentUsersCache interface {
 	Get(segmentID, environmentId string) (*featureproto.SegmentUsers, error)
 	GetAll(environmentId string) ([]*featureproto.SegmentUsers, error)
 	Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error
+	Evict(segmentID, environmentId string)
 }
 
 type segmentUsersCache struct {
-	cache cache.MultiGetCache
+	cache cache.Cache
+	ttl   time.Duration
 }
 
-func NewSegmentUsersCache(c cache.MultiGetCache) SegmentUsersCache {
-	return &segmentUsersCache{cache: c}
+func NewSegmentUsersCache(c cache.Cache, ttl time.Duration) SegmentUsersCache {
+	return &segmentUsersCache{cache: c, ttl: ttl}
 }
 
 func (c *segmentUsersCache) Get(segmentID, environmentId string) (*featureproto.SegmentUsers, error) {
@@ -63,11 +67,15 @@ func (c *segmentUsersCache) Get(segmentID, environmentId string) (*featureproto.
 }
 
 func (c *segmentUsersCache) GetAll(environmentId string) ([]*featureproto.SegmentUsers, error) {
-	keys, err := c.scan(environmentId)
+	multiCache, ok := c.cache.(cache.MultiGetCache)
+	if !ok {
+		return nil, errGetAllNotSupported
+	}
+	keys, err := c.scan(multiCache, environmentId)
 	if err != nil {
 		return nil, err
 	}
-	users, err := c.cache.GetMulti(keys, false)
+	users, err := multiCache.GetMulti(keys, false)
 	if err != nil {
 		return nil, err
 	}
@@ -93,10 +101,10 @@ func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environ
 		return err
 	}
 	key := c.key(segmentUsers.SegmentId, environmentId)
-	return c.cache.Put(key, buffer, segmentUsersTTL)
+	return c.cache.Put(key, buffer, c.ttl)
 }
 
-func (c *segmentUsersCache) scan(environmentId string) ([]string, error) {
+func (c *segmentUsersCache) scan(multiCache cache.MultiGetCache, environmentId string) ([]string, error) {
 	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentId)
 	key := keyPrefix + "*"
 	var cursor uint64
@@ -104,7 +112,7 @@ func (c *segmentUsersCache) scan(environmentId string) ([]string, error) {
 	var err error
 	keys := []string{}
 	for {
-		cursor, k, err = c.cache.Scan(cursor, key, segmentUsersMaxSize)
+		cursor, k, err = multiCache.Scan(cursor, key, segmentUsersMaxSize)
 		if err != nil {
 			break
 		}
@@ -117,6 +125,12 @@ func (c *segmentUsersCache) scan(environmentId string) ([]string, error) {
 		return nil, err
 	}
 	return keys, nil
+}
+
+func (c *segmentUsersCache) Evict(segmentID, environmentId string) {
+	if inMemory, ok := c.cache.(*InMemoryCache); ok {
+		inMemory.Delete(c.key(segmentID, environmentId))
+	}
 }
 
 func (c *segmentUsersCache) key(segmentID, environmentId string) string {

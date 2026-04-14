@@ -21,13 +21,11 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 const (
 	environmentAPIKeyKind = "environment_apikey"
-	environmentAPIKeyTTL  = time.Duration(0)
 )
 
 type EnvironmentAPIKeyCache interface {
@@ -37,10 +35,11 @@ type EnvironmentAPIKeyCache interface {
 
 type environmentAPIKeyCache struct {
 	cache cache.Cache
+	ttl   time.Duration
 }
 
-func NewEnvironmentAPIKeyCache(c cache.Cache) EnvironmentAPIKeyCache {
-	return &environmentAPIKeyCache{cache: c}
+func NewEnvironmentAPIKeyCache(c cache.Cache, ttl time.Duration) EnvironmentAPIKeyCache {
+	return &environmentAPIKeyCache{cache: c, ttl: ttl}
 }
 
 func (c *environmentAPIKeyCache) Get(apiKey string) (*accountproto.EnvironmentAPIKey, error) {
@@ -66,10 +65,12 @@ func (c *environmentAPIKeyCache) Put(environmentAPIKey *accountproto.Environment
 		return err
 	}
 	key := c.key(environmentAPIKey.ApiKey.ApiKey)
-	return c.cache.Put(key, buffer, environmentAPIKeyTTL)
+	return c.cache.Put(key, buffer, c.ttl)
 }
 
-func (c *environmentAPIKeyCache) key(id string) string {
-	// always use AdminEnvironmentId because we'd like to get APIKey and environment_id only by id
-	return cache.MakeKey(environmentAPIKeyKind, id, storage.AdminEnvironmentID)
+func (c *environmentAPIKeyCache) key(apiKey string) string {
+	// Pass "" as environmentId to skip the environment prefix in the cache key.
+	// At lookup time we only have the API key string from the authorization header
+	// and don't yet know which environment it belongs to.
+	return cache.MakeKey(environmentAPIKeyKind, apiKey, "")
 }

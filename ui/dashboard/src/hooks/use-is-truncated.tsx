@@ -1,7 +1,7 @@
 import { useEffect, useState, DependencyList, RefObject } from 'react';
 
 export const useIsTruncated = (
-  ref: RefObject<HTMLElement>,
+  ref: RefObject<HTMLElement | null>,
   deps: DependencyList = []
 ) => {
   const [truncated, setTruncated] = useState(false);

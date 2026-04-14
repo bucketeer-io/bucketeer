@@ -3,9 +3,9 @@
 # Note: Base image (go-zetasql) only supports AMD64, so ARM64 builds use emulation
 # This is expected and harmless - the final binary will be native ARM64
 # Pin to specific version for reproducible builds
-FROM ghcr.io/goccy/go-zetasql:0.5.5 AS builder
+FROM ghcr.io/recidiviz/go-zetasql:0.5.5-recidiviz.3 AS builder
 
-ARG VERSION=0.6.6
+ARG VERSION=0.6.6-recidiviz.3.5.2
 ARG TARGETARCH
 ARG TARGETOS
 
@@ -40,8 +40,8 @@ RUN if [ "$TARGETARCH" = "arm64" ] && [ "$(uname -m)" != "aarch64" ]; then \
 
 # Clone upstream bigquery-emulator repository with shallow clone
 # Use shallow clone to speed up and reduce size
-RUN git clone --depth 1 --branch v${VERSION} https://github.com/goccy/bigquery-emulator.git . || \
-    (git clone --depth 1 https://github.com/goccy/bigquery-emulator.git . && \
+RUN git clone --depth 1 --branch v${VERSION} https://github.com/Recidiviz/bigquery-emulator.git . || \
+    (git clone --depth 1 https://github.com/Recidiviz/bigquery-emulator.git . && \
      git checkout v${VERSION} 2>/dev/null || git checkout ${VERSION} 2>/dev/null || git checkout $(git describe --tags --abbrev=0 2>/dev/null || echo "v0.6.6"))
 
 # Download dependencies first (with retry logic) - this helps with caching and timeout issues

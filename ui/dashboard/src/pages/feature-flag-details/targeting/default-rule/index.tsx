@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconUndoOutlined } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_FEATURES

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { SortingState } from '@tanstack/react-table';
 import { sortingListFields } from 'constants/collection';
 import { Environment } from '@types';

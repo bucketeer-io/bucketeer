@@ -4,11 +4,10 @@ import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
 import { useInputGroupContext } from 'components/input-group/context';
 
-export interface InputProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'value' | 'size' | 'onChange' | 'onBlur'
-  > {
+export interface InputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'size' | 'onChange' | 'onBlur'
+> {
   size?: 'sm' | 'md' | 'lg';
   value?: string | number | undefined;
   variant?: 'primary' | 'secondary';

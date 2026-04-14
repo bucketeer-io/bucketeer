@@ -27,20 +27,21 @@ import (
 
 const (
 	featuresKind = "features"
-	featuresTTL  = time.Duration(0)
 )
 
 type FeaturesCache interface {
 	Get(environmentId string) (*featureproto.Features, error)
 	Put(features *featureproto.Features, environmentId string) error
+	Evict(environmentId string)
 }
 
 type featuresCache struct {
-	cache cache.MultiGetCache
+	cache cache.Cache
+	ttl   time.Duration
 }
 
-func NewFeaturesCache(c cache.MultiGetCache) FeaturesCache {
-	return &featuresCache{cache: c}
+func NewFeaturesCache(c cache.Cache, ttl time.Duration) FeaturesCache {
+	return &featuresCache{cache: c, ttl: ttl}
 }
 
 func (c *featuresCache) Get(environmentId string) (*featureproto.Features, error) {
@@ -67,7 +68,13 @@ func (c *featuresCache) Put(features *featureproto.Features, environmentId strin
 		return err
 	}
 	key := c.key(environmentId)
-	return c.cache.Put(key, buffer, featuresTTL)
+	return c.cache.Put(key, buffer, c.ttl)
+}
+
+func (c *featuresCache) Evict(environmentId string) {
+	if inMemory, ok := c.cache.(*InMemoryCache); ok {
+		inMemory.Delete(c.key(environmentId))
+	}
 }
 
 func (c *featuresCache) key(environmentId string) string {

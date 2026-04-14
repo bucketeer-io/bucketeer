@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { featureClone } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeature } from '@queries/feature-details';

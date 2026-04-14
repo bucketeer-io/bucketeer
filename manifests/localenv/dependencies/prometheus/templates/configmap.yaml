@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "prometheus.fullname" . }}-config
+  labels:
+    {{- include "prometheus.labels" . | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: {{ .Values.scrapeInterval }}
+      evaluation_interval: 15s
+
+    rule_files:
+      - /etc/prometheus/recording_rules.yml
+
+    scrape_configs:
+      - job_name: default/microservices
+        scrape_interval: 30s
+        static_configs:
+          - targets:
+              - api.default.svc:9002
+              - web.default.svc:9002
+              - batch-server.default.svc:9002
+              - subscriber.default.svc:9002
+
+  recording_rules.yml: |
+{{ .Files.Get "recording_rules/api_gateway.yml" | indent 4 }}

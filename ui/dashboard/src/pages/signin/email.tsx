@@ -4,7 +4,7 @@ import {
   IconRemoveRedEyeOutlined,
   IconVisibilityOffOutlined
 } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { signIn } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';

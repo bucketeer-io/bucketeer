@@ -1,11 +1,11 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
   ReactNode,
   useState
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
@@ -61,9 +61,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children
-}) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation(['message']);
   const navigate = useNavigate();
   const authToken: AuthToken | null = getTokenStorage();

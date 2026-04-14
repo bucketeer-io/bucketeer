@@ -179,6 +179,13 @@ func (w *writer) emulatorAppendRows(
 	ctx context.Context,
 	batches [][][]byte,
 ) ([]int, error) {
+	allBatchFails := func() []int {
+		af := make([]int, len(batches))
+		for i := range batches {
+			af[i] = i
+		}
+		return af
+	}
 	pendingStream, err := w.client.CreateWriteStream(ctx, &storagepb.CreateWriteStreamRequest{
 		Parent: fmt.Sprintf("projects/%s/datasets/%s/tables/%s", w.project, w.dataset, w.table),
 		WriteStream: &storagepb.WriteStream{
@@ -189,14 +196,14 @@ func (w *writer) emulatorAppendRows(
 		w.opts.logger.Error("failed to create pending stream for emulator",
 			zap.Error(err),
 		)
-		return nil, err
+		return allBatchFails(), err
 	}
 	descriptor, err := adapt.NormalizeDescriptor(w.desc)
 	if err != nil {
 		w.opts.logger.Error("failed to normalize descriptor for emulator",
 			zap.Error(err),
 		)
-		return nil, err
+		return allBatchFails(), err
 	}
 	managedStream, err := w.client.NewManagedStream(
 		ctx,
@@ -207,7 +214,7 @@ func (w *writer) emulatorAppendRows(
 		w.opts.logger.Error("failed to create managed stream for emulator",
 			zap.Error(err),
 		)
-		return nil, err
+		return allBatchFails(), err
 	}
 	fails := make([]int, 0, len(batches))
 	results := []*managedwriter.AppendResult{}
@@ -232,7 +239,7 @@ func (w *writer) emulatorAppendRows(
 		w.opts.logger.Error("failed to finalize for emulator",
 			zap.Error(err),
 		)
-		return nil, err
+		return allBatchFails(), err
 	}
 	w.opts.logger.Info("row count",
 		zap.Int64("count", rowCount),
@@ -247,13 +254,13 @@ func (w *writer) emulatorAppendRows(
 		w.opts.logger.Error("failed to batch commit write streams for emulator",
 			zap.Error(err),
 		)
-		return nil, err
+		return allBatchFails(), err
 	}
 	if len(resp.GetStreamErrors()) > 0 {
 		w.opts.logger.Error("failed to batch commit write streams for emulator",
 			zap.Any("errors", resp.GetStreamErrors()),
 		)
-		return nil, err
+		return allBatchFails(), fmt.Errorf("batch commit has %d stream errors", len(resp.GetStreamErrors()))
 	}
 	return getUniqueFails(fails), err
 }

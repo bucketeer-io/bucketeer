@@ -50,7 +50,7 @@ func (s *NotificationService) CreateAdminSubscription(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("sourceType", req.Command.SourceTypes),
-				zap.Any("recipient", req.Command.Recipient),
+				zap.String("recipientType", req.Command.Recipient.GetType().String()),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()

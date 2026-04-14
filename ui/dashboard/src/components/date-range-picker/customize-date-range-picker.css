@@ -138,3 +138,20 @@
 .rdrDateDisplayItemActive {
   @apply !border-primary-500;
 }
+
+.rdrDayDisabled {
+  @apply !bg-white cursor-not-allowed;
+}
+
+.rdrDayDisabled .rdrDayNumber span {
+  @apply !text-[#b0bec5];
+}
+
+.insights-date-picker {
+  @apply max-w-[650px];
+}
+
+.insights-date-picker .rdrDefinedRangesWrapper {
+  @apply hidden;
+}
+

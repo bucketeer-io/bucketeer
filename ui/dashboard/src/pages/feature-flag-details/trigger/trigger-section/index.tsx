@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { IconLaunchOutlined } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { triggerDelete } from '@api/trigger/triggers-delete';
 import {
   triggerUpdate,

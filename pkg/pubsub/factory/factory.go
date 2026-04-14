@@ -53,11 +53,14 @@ type Client interface {
 	// For Redis, this behaves the same as CreatePublisher.
 	CreatePublisherInProject(topic, project string) (publisher.Publisher, error)
 	// CreatePuller creates a puller for the given subscription and topic.
-	CreatePuller(subscription, topic string) (puller.Puller, error)
+	// PullerOption is optional. For GCP, ExpirationPolicy sets auto-deletion
+	// of inactive subscriptions. For Redis, options are ignored.
+	CreatePuller(subscription, topic string, opts ...puller.PullerOption) (puller.Puller, error)
 	// SubscriptionExists checks if a subscription exists.
 	SubscriptionExists(subscription string) (bool, error)
-	// DeleteSubscription deletes a subscription.
-	DeleteSubscription(subscription string) error
+	// DeleteSubscription deletes a subscription. Topic is the Redis Streams base name
+	// (same as CreatePuller); it is ignored for Google Pub/Sub.
+	DeleteSubscription(subscription, topic string) error
 	// Close closes the client.
 	Close() error
 }
@@ -215,9 +218,20 @@ func (a *GoogleClientAdapter) CreatePublisherInProject(topic, project string) (p
 }
 
 // CreatePuller creates a puller for the given subscription and topic.
-func (a *GoogleClientAdapter) CreatePuller(subscription, topic string) (puller.Puller, error) {
-	// Google PubSub requires ReceiveOptions, but we don't expose them in our interface
-	// Use default options
+func (a *GoogleClientAdapter) CreatePuller(
+	subscription,
+	topic string,
+	opts ...puller.PullerOption,
+) (puller.Puller, error) {
+	var subOpts []pubsub.SubscriptionOption
+	for _, opt := range opts {
+		if opt.ExpirationPolicy > 0 {
+			subOpts = append(subOpts, pubsub.WithExpirationPolicy(opt.ExpirationPolicy))
+		}
+	}
+	if len(subOpts) > 0 {
+		return a.client.CreatePullerWithOptions(subscription, topic, subOpts)
+	}
 	return a.client.CreatePuller(subscription, topic)
 }
 
@@ -232,7 +246,7 @@ func (a *GoogleClientAdapter) SubscriptionExists(subscription string) (bool, err
 }
 
 // DeleteSubscription deletes a subscription.
-func (a *GoogleClientAdapter) DeleteSubscription(subscription string) error {
+func (a *GoogleClientAdapter) DeleteSubscription(subscription, _ string) error {
 	return a.client.DeleteSubscription(subscription)
 }
 
