@@ -1599,10 +1599,12 @@ func (s *FeatureService) BulkCloneFeature(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	results := make([]*featureproto.BulkCloneFeatureResult, 0, len(req.TargetEnvironmentIds))
-	var events []*eventproto.Event
 	for _, targetEnvID := range req.TargetEnvironmentIds {
 		editor := editors[targetEnvID]
-		domainFeature := &domain.Feature{Feature: f.Feature}
+		// Deep-copy the source feature per iteration to prevent Clone() from
+		// mutating the shared proto slices (Variations/Targets/strategies) and
+		// corrupting event payloads for earlier iterations.
+		domainFeature := &domain.Feature{Feature: proto.Clone(f.Feature).(*featureproto.Feature)}
 		cloned, err := domainFeature.Clone(editor.Email)
 		if err != nil {
 			s.logger.Error(
@@ -1616,7 +1618,7 @@ func (s *FeatureService) BulkCloneFeature(
 			results = append(results, &featureproto.BulkCloneFeatureResult{
 				EnvironmentId: targetEnvID,
 				Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_FAILED,
-				Error:         err.Error(),
+				Error:         "failed to clone feature",
 			})
 			continue
 		}
@@ -1671,26 +1673,32 @@ func (s *FeatureService) BulkCloneFeature(
 			results = append(results, &featureproto.BulkCloneFeatureResult{
 				EnvironmentId: targetEnvID,
 				Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_FAILED,
-				Error:         txErr.Error(),
+				Error:         "failed to store feature",
 			})
 			continue
 		}
-		events = append(events, event)
-		results = append(results, &featureproto.BulkCloneFeatureResult{
-			EnvironmentId: targetEnvID,
-			Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
-		})
-	}
-	for _, event := range events {
+		// Publish immediately after the successful transaction, consistent with
+		// CloneFeature, so audit events are never silently dropped.
 		if err := s.domainPublisher.Publish(ctx, event); err != nil {
 			s.logger.Error(
 				"Failed to publish bulk clone event",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
+					zap.String("id", req.Id),
+					zap.String("targetEnvironmentId", targetEnvID),
 				)...,
 			)
+			results = append(results, &featureproto.BulkCloneFeatureResult{
+				EnvironmentId: targetEnvID,
+				Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_FAILED,
+				Error:         "failed to publish event",
+			})
+			continue
 		}
+		results = append(results, &featureproto.BulkCloneFeatureResult{
+			EnvironmentId: targetEnvID,
+			Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+		})
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.BulkCloneFeatureResponse{Results: results}, nil

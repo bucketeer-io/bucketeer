@@ -2312,6 +2312,182 @@ func TestCloneFeatureMySQL(t *testing.T) {
 	}
 }
 
+func TestBulkCloneFeatureMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	patterns := []struct {
+		desc            string
+		setup           func(*FeatureService)
+		req             *featureproto.BulkCloneFeatureRequest
+		expectedErr     error
+		expectedResults []*featureproto.BulkCloneFeatureResult
+	}{
+		{
+			desc:  "error: statusMissingID",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1"},
+			},
+			expectedErr: statusMissingID.Err(),
+		},
+		{
+			desc:  "error: statusMissingEnvironmentID",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "",
+				TargetEnvironmentIds: []string{"ns1"},
+			},
+			expectedErr: statusMissingEnvironmentID.Err(),
+		},
+		{
+			desc:  "error: statusMissingTargetEnvironments",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{},
+			},
+			expectedErr: statusMissingTargetEnvironments.Err(),
+		},
+		{
+			desc:  "error: statusDuplicateTargetEnvironments",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1", "ns1"},
+			},
+			expectedErr: statusDuplicateTargetEnvironments.Err(),
+		},
+		{
+			desc:  "error: statusIncorrectDestinationEnvironment (source in targets)",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns0"},
+			},
+			expectedErr: statusIncorrectDestinationEnvironment.Err(),
+		},
+		{
+			desc: "error: statusFeatureNotFound",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(v2fs.ErrFeatureNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1"},
+			},
+			expectedErr: statusFeatureNotFound.Err(),
+		},
+		{
+			desc: "success: all environments cloned",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				}).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil).Times(2)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1", "ns2"},
+			},
+			expectedErr: nil,
+			expectedResults: []*featureproto.BulkCloneFeatureResult{
+				{
+					EnvironmentId: "ns1",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+				},
+				{
+					EnvironmentId: "ns2",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+				},
+			},
+		},
+		{
+			desc: "success: already exists in one environment",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				// First env: already exists (no fn call).
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrFeatureAlreadyExists)
+				// Second env: success.
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1", "ns2"},
+			},
+			expectedErr: nil,
+			expectedResults: []*featureproto.BulkCloneFeatureResult{
+				{
+					EnvironmentId: "ns1",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_ALREADY_EXISTS,
+				},
+				{
+					EnvironmentId: "ns2",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+				},
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.BulkCloneFeature(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedResults != nil {
+				require.NotNil(t, resp)
+				assert.Equal(t, p.expectedResults, resp.Results)
+			}
+		})
+	}
+}
+
 func TestGetTargetFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
