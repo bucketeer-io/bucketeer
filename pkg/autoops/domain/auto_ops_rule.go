@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-	"google.golang.org/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
