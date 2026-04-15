@@ -21,7 +21,7 @@ import (
 )
 
 func MustWithDetails(s *status.Status, details ...proto.Message) error {
-	v1Messages := make([]protoadapt.MessageV1, 0, 10)
+	v1Messages := make([]protoadapt.MessageV1, 0, len(details))
 	for _, v2Message := range details {
 		v1Messages = append(v1Messages, protoadapt.MessageV1Of(v2Message))
 	}
