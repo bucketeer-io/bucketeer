@@ -16,10 +16,9 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"time"
-
-	"errors"
 
 	"google.golang.org/protobuf/proto"
 

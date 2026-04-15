@@ -20,9 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"

@@ -21,7 +21,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
