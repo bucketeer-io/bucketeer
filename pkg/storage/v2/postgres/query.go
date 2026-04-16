@@ -71,6 +71,10 @@ func (f *Filter) BindSQL(next int) (sql string, args []interface{}, nextAfter in
 	if f.Column == "" || f.Operator < OperatorEqual || f.Operator > OperatorContains {
 		return "", nil, next
 	}
+	// IN / NOT IN require multiple placeholders; use InFilter / NotInFilter instead.
+	if f.Operator == OperatorIn || f.Operator == OperatorNotIn {
+		return "", nil, next
+	}
 	if f.Operator == OperatorContains {
 		b, err := json.Marshal(f.Value)
 		if err != nil {
@@ -98,6 +102,32 @@ func (f *InFilter) BindSQL(next int) (sql string, args []interface{}, nextAfter 
 	sb.WriteString(" ")
 	sb.WriteString(f.Column)
 	sb.WriteString(" IN (")
+	for i := range f.Values {
+		if i != 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(fmt.Sprintf("$%d", next+i))
+	}
+	sb.WriteString(")")
+	sql = sb.String()
+	args = append(args, f.Values...)
+	return sql, args, next + len(f.Values)
+}
+
+// NotInFilter builds "col NOT IN ($n,...)" with one placeholder per value.
+type NotInFilter struct {
+	Column string
+	Values []interface{}
+}
+
+func (f *NotInFilter) BindSQL(next int) (sql string, args []interface{}, nextAfter int) {
+	if f.Column == "" || len(f.Values) == 0 {
+		return "", nil, next
+	}
+	var sb strings.Builder
+	sb.WriteString(" ")
+	sb.WriteString(f.Column)
+	sb.WriteString(" NOT IN (")
 	for i := range f.Values {
 		if i != 0 {
 			sb.WriteString(", ")
@@ -151,30 +181,52 @@ func (f *JSONFilter) BindSQL(next int) (sql string, args []interface{}, nextAfte
 		return "", nil, next
 	}
 	switch f.Func {
-	case JSONContainsNumber, JSONContainsString, JSONContainsJSON:
-		sql = fmt.Sprintf("(%s::jsonb @> $%d::jsonb)", f.Column, next)
-		var sb strings.Builder
-		switch f.Func {
-		case JSONContainsNumber, JSONContainsJSON:
-			sb.WriteString("[")
-			for i, v := range f.Values {
-				if i != 0 {
-					sb.WriteString(", ")
-				}
-				sb.WriteString(fmt.Sprint(v))
-			}
-			sb.WriteString("]")
-		case JSONContainsString:
-			sb.WriteString("[")
-			for i, v := range f.Values {
-				if i != 0 {
-					sb.WriteString(", ")
-				}
-				sb.WriteString(fmt.Sprintf(`"%s"`, v))
-			}
-			sb.WriteString("]")
+	case JSONContainsNumber:
+		payload, err := json.Marshal(f.Values)
+		if err != nil {
+			return "", nil, next
 		}
-		args = append(args, sb.String())
+		sql = fmt.Sprintf("(%s::jsonb @> $%d::jsonb)", f.Column, next)
+		args = append(args, string(payload))
+		return sql, args, next + 1
+	case JSONContainsString:
+		strs := make([]string, 0, len(f.Values))
+		for _, v := range f.Values {
+			s, ok := v.(string)
+			if !ok {
+				return "", nil, next
+			}
+			strs = append(strs, s)
+		}
+		payload, err := json.Marshal(strs)
+		if err != nil {
+			return "", nil, next
+		}
+		sql = fmt.Sprintf("(%s::jsonb @> $%d::jsonb)", f.Column, next)
+		args = append(args, string(payload))
+		return sql, args, next + 1
+	case JSONContainsJSON:
+		elems := make([]json.RawMessage, 0, len(f.Values))
+		for _, v := range f.Values {
+			switch t := v.(type) {
+			case string:
+				elems = append(elems, json.RawMessage(t))
+			case json.RawMessage:
+				elems = append(elems, t)
+			default:
+				b, err := json.Marshal(t)
+				if err != nil {
+					return "", nil, next
+				}
+				elems = append(elems, json.RawMessage(b))
+			}
+		}
+		payload, err := json.Marshal(elems)
+		if err != nil {
+			return "", nil, next
+		}
+		sql = fmt.Sprintf("(%s::jsonb @> $%d::jsonb)", f.Column, next)
+		args = append(args, string(payload))
 		return sql, args, next + 1
 	case JSONLengthGreaterThan, JSONLengthSmallerThan:
 		if len(f.Values) == 0 {
@@ -184,8 +236,9 @@ func (f *JSONFilter) BindSQL(next int) (sql string, args []interface{}, nextAfte
 		if f.Func == JSONLengthSmallerThan {
 			op = "<"
 		}
-		sql = fmt.Sprintf("jsonb_array_length(%s::jsonb) %s %s", f.Column, op, f.Values[0])
-		return sql, nil, next
+		sql = fmt.Sprintf("jsonb_array_length(%s::jsonb) %s $%d", f.Column, op, next)
+		args = append(args, f.Values[0])
+		return sql, args, next + 1
 	default:
 		return "", nil, next
 	}
@@ -222,16 +275,25 @@ func (f *OrFilter) BindSQL(next int) (sql string, args []interface{}, nextAfter 
 		return "", nil, next
 	}
 	var sb strings.Builder
-	sb.WriteString("(")
 	cur := next
-	for i, q := range f.Queries {
-		if i != 0 {
+	wrote := false
+	for _, q := range f.Queries {
+		qs, qa, after := q.BindSQL(cur)
+		if qs == "" {
+			continue
+		}
+		if !wrote {
+			sb.WriteString("(")
+			wrote = true
+		} else {
 			sb.WriteString(" OR ")
 		}
-		qs, qa, after := q.BindSQL(cur)
 		sb.WriteString(qs)
 		args = append(args, qa...)
 		cur = after
+	}
+	if !wrote {
+		return "", nil, next
 	}
 	sb.WriteString(")")
 	return sb.String(), args, cur
@@ -242,16 +304,25 @@ func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 		return "", nil
 	}
 	var sb strings.Builder
-	sb.WriteString(" WHERE ")
 	next := 1
-	for i, wp := range wps {
-		if i != 0 {
+	first := true
+	for _, wp := range wps {
+		frag, fragArgs, after := wp.BindSQL(next)
+		if frag == "" {
+			continue
+		}
+		if first {
+			sb.WriteString(" WHERE ")
+			first = false
+		} else {
 			sb.WriteString(" AND ")
 		}
-		frag, fragArgs, after := wp.BindSQL(next)
 		sb.WriteString(frag)
 		args = append(args, fragArgs...)
 		next = after
+	}
+	if first {
+		return "", nil
 	}
 	sql = sb.String() + " "
 	return sql, args
@@ -351,15 +422,16 @@ func ConstructLimitOffsetSQLString(limit, offset int) string {
 }
 
 type ListOptions struct {
-	Limit       int
-	Filters     []*Filter
-	InFilters   []*InFilter
-	NullFilters []*NullFilter
-	JSONFilters []*JSONFilter
-	SearchQuery *SearchQuery
-	OrFilters   []*OrFilter
-	Orders      []*Order
-	Offset      int
+	Limit        int
+	Filters      []*Filter
+	InFilters    []*InFilter
+	NotInFilters []*NotInFilter
+	NullFilters  []*NullFilter
+	JSONFilters  []*JSONFilter
+	SearchQuery  *SearchQuery
+	OrFilters    []*OrFilter
+	Orders       []*Order
+	Offset       int
 }
 
 func (lo *ListOptions) CreateWhereParts() []WherePart {
@@ -371,6 +443,11 @@ func (lo *ListOptions) CreateWhereParts() []WherePart {
 	}
 	if lo.InFilters != nil {
 		for _, f := range lo.InFilters {
+			whereParts = append(whereParts, f)
+		}
+	}
+	if lo.NotInFilters != nil {
+		for _, f := range lo.NotInFilters {
 			whereParts = append(whereParts, f)
 		}
 	}

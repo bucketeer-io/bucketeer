@@ -122,6 +122,22 @@ func TestNewPostgresStorageClient_RunInTransactionV2(t *testing.T) {
 		err := db.RunInTransactionV2(ctx, func(context.Context) error { return nil })
 		assert.ErrorIs(t, err, io.EOF)
 	})
+
+	t.Run("propagates callback error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		pc := pgmock.NewMockClient(ctrl)
+		pc.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(c context.Context, fn func(context.Context, postgres.Transaction) error) error {
+				return fn(c, nil)
+			},
+		)
+		db := NewPostgresStorageClient(pc)
+		err := db.RunInTransactionV2(ctx, func(context.Context) error {
+			return errors.New("cb")
+		})
+		assert.EqualError(t, err, "cb")
+	})
 }
 
 func TestNewPostgresStorageClient_Close(t *testing.T) {
