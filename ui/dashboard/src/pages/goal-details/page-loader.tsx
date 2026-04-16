@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { useQueryGoalDetails } from '@queries/goal-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';

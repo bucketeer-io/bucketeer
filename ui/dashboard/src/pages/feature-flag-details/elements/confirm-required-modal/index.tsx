@@ -1,7 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -69,7 +69,7 @@ export interface ConfirmRequiredValues {
 interface DiscardItemRendererProps<T> {
   title: string;
   items: T[];
-  Renderer: React.FC<T>;
+  Renderer: React.ComponentType<T>;
 }
 
 const ConfirmationRequiredModal = ({
@@ -300,7 +300,7 @@ const ConfirmationRequiredModal = ({
               {segmentRuleDeletedChanges.map((item, index) => (
                 <div key={index}>
                   {item.ruleIndex && (
-                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700 text-accent-red-500">
+                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-accent-red-500">
                       <Trans
                         i18nKey="common:delete-rule"
                         values={{ rule: item.ruleIndex }}

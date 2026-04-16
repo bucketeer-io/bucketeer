@@ -1811,6 +1811,247 @@ func TestRecurringLifecycle_AllPatternsAndEndConditions(t *testing.T) {
 	}
 }
 
+// TestRecurrenceScheduleChanged tests the recurrenceScheduleChanged helper
+// that detects when NextExecutionAt needs recalculation.
+func TestRecurrenceScheduleChanged(t *testing.T) {
+	t.Parallel()
+
+	baseRecurrence := func() *autoopsproto.RecurrenceRule {
+		return &autoopsproto.RecurrenceRule{
+			Frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek:     []int32{1, 5},
+			DayOfMonth:     0,
+			Timezone:       "Asia/Tokyo",
+			StartDate:      time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC).Unix(),
+			EndDate:        0,
+			MaxOccurrences: 0,
+		}
+	}
+
+	tests := []struct {
+		desc     string
+		existing *autoopsproto.DatetimeClause
+		updated  *autoopsproto.DatetimeClause
+		expected bool
+	}{
+		{
+			desc: "no change: identical clauses",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			expected: false,
+		},
+		{
+			desc: "time-of-day changed",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       75300, // 20:55
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time:       68400, // 19:00
+				Recurrence: baseRecurrence(),
+			},
+			expected: true,
+		},
+		{
+			desc: "frequency changed",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency: autoopsproto.RecurrenceRule_DAILY,
+					Timezone:  "Asia/Tokyo",
+					StartDate: baseRecurrence().StartDate,
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "timezone changed",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.Timezone = "America/New_York"
+					return r
+				}(),
+			},
+			expected: true,
+		},
+		{
+			desc: "daysOfWeek changed: different days",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(), // [1, 5]
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.DaysOfWeek = []int32{1, 3} // Mon, Wed
+					return r
+				}(),
+			},
+			expected: true,
+		},
+		{
+			desc: "daysOfWeek changed: added day",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(), // [1, 5]
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.DaysOfWeek = []int32{1, 3, 5}
+					return r
+				}(),
+			},
+			expected: true,
+		},
+		{
+			desc: "daysOfWeek unchanged but different order",
+			existing: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.DaysOfWeek = []int32{5, 1}
+					return r
+				}(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.DaysOfWeek = []int32{1, 5}
+					return r
+				}(),
+			},
+			expected: false,
+		},
+		{
+			desc: "dayOfMonth changed",
+			existing: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency:  autoopsproto.RecurrenceRule_MONTHLY,
+					DayOfMonth: 15,
+					Timezone:   "UTC",
+					StartDate:  baseRecurrence().StartDate,
+				},
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency:  autoopsproto.RecurrenceRule_MONTHLY,
+					DayOfMonth: 20,
+					Timezone:   "UTC",
+					StartDate:  baseRecurrence().StartDate,
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "endDate added",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.EndDate = time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC).Unix()
+					return r
+				}(),
+			},
+			expected: true,
+		},
+		{
+			desc: "maxOccurrences changed",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+				Recurrence: func() *autoopsproto.RecurrenceRule {
+					r := baseRecurrence()
+					r.MaxOccurrences = 10
+					return r
+				}(),
+			},
+			expected: true,
+		},
+		{
+			desc: "only actionType changed (not tracked by recurrenceScheduleChanged)",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				ActionType: autoopsproto.ActionType_ENABLE,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				ActionType: autoopsproto.ActionType_DISABLE,
+				Recurrence: baseRecurrence(),
+			},
+			expected: false,
+		},
+		{
+			desc: "both recurrences nil",
+			existing: &autoopsproto.DatetimeClause{
+				Time: 36000,
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+			},
+			expected: false,
+		},
+		{
+			desc: "existing recurrence nil, updated non-nil",
+			existing: &autoopsproto.DatetimeClause{
+				Time: 36000,
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			expected: true,
+		},
+		{
+			desc: "existing recurrence non-nil, updated nil",
+			existing: &autoopsproto.DatetimeClause{
+				Time:       36000,
+				Recurrence: baseRecurrence(),
+			},
+			updated: &autoopsproto.DatetimeClause{
+				Time: 36000,
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			result := recurrenceScheduleChanged(tt.existing, tt.updated)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 // TestRecurringLifecycle_MultiClause_FinishedStatus verifies that a rule with
 // multiple recurring clauses (Enable + Disable) only transitions to FINISHED
 // after ALL clauses are exhausted, for each frequency type.

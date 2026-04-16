@@ -19,7 +19,7 @@ import './customize-date-range-picker.css';
 import CustomizeNavigator from './customize-navigator';
 
 const ReactDateRangePickerComp =
-  DateRangePicker as unknown as React.FC<DateRangePickerProps>;
+  DateRangePicker as unknown as React.ComponentType<DateRangePickerProps>;
 
 interface DefaultRangeLabel {
   label: string;
@@ -110,7 +110,7 @@ const defaultClassNames = {
   inRange: 'range__days--dayPreview'
 };
 
-export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
+export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
   ({
     from,
     to,

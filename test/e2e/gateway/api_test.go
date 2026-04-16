@@ -104,7 +104,6 @@ func TestGetEvaluationsFullState(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
 	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
 	if response.Evaluations == nil {
@@ -127,7 +126,6 @@ func TestGetEvaluation(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
 	response := util.GetEvaluation(t, tag, featureID2, userID, *gatewayAddr, *apiKeyPath)
 	if response.Evaluation == nil {
 		t.Fatal("Evaluation field is nil")

@@ -3,7 +3,7 @@ import {
   IconLaunchOutlined,
   IconFilterListOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';

@@ -53,7 +53,8 @@ import (
 
 const (
 	prefixTestName        = "e2e-test"
-	timeout               = 3 * time.Minute
+	timeout               = 3 * time.Minute  // Overall test timeout
+	grpcTimeout           = 10 * time.Second // Individual gRPC call timeout
 	retryTimes            = 50
 	deadlockRetryAttempts = 3
 )
@@ -1809,7 +1810,7 @@ func stopExperiment(
 
 func triggerExperimentCalculator(t *testing.T) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	batchClient := newBatchClient(t)
 	defer batchClient.Close()
@@ -1819,6 +1820,11 @@ func triggerExperimentCalculator(t *testing.T) {
 	if err != nil {
 		st, _ := status.FromError(err)
 		if st.Code() == codes.ResourceExhausted {
+			return
+		}
+		// Log but continue - this is best-effort
+		if st.Code() == codes.DeadlineExceeded {
+			t.Logf("Experiment calculator timed out after %v (best-effort)", grpcTimeout)
 			return
 		}
 		t.Logf("Failed to trigger experiment calculator (best-effort). Error code: %d. Error: %v", st.Code(), err)
@@ -1860,7 +1866,7 @@ func grpcRegisterGoalEvent(
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: timestamp,
@@ -1966,7 +1972,7 @@ func grpcRegisterEvaluationEvent(
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	if reason == nil {
 		reason = &featureproto.Reason{}
@@ -2160,7 +2166,7 @@ func createFeature(
 	t.Helper()
 	createReq := newCreateFeatureReq(featureID, []string{variationA, variationB})
 	for i := 0; i < deadlockRetryAttempts; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		_, err := client.CreateFeature(ctx, createReq)
 		cancel()
 		if err == nil {
@@ -2190,7 +2196,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		},
 	}
 	for i := 0; i < deadlockRetryAttempts; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		_, err := client.UpdateFeature(ctx, addReq)
 		cancel()
 		if err == nil {
@@ -2213,7 +2219,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		EnvironmentId: *environmentID,
 	}
 	for i := 0; i < deadlockRetryAttempts; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		_, err := client.UpdateFeature(ctx, enableReq)
 		cancel()
 		if err == nil {
@@ -2242,7 +2248,7 @@ func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID 
 		}
 	}
 	for i := 0; i < deadlockRetryAttempts; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		_, err = client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
 			Id:            featureID,
 			EnvironmentId: *environmentID,
@@ -2273,7 +2279,7 @@ func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEv
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
 		Tag:  tag,
@@ -2302,7 +2308,7 @@ func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEv
 
 func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experimentproto.GetExperimentResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	req := &experimentproto.GetExperimentRequest{
 		EnvironmentId: *environmentID,
@@ -2331,7 +2337,7 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experim
 
 func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (*ecproto.GetExperimentResultResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	req := &ecproto.GetExperimentResultRequest{
 		ExperimentId:  experimentID,
@@ -2368,7 +2374,7 @@ func getExperimentEvaluationCount(
 	t *testing.T, c ecclient.Client, featureID string, featureVersion int32, variationIDs []string,
 ) (*ecproto.GetExperimentEvaluationCountResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentEvaluationCountRequest{
@@ -2410,7 +2416,7 @@ func getExperimentGoalCount(
 	t *testing.T, c ecclient.Client, goalID, featureID string, featureVersion int32, variationIDs []string,
 ) (*ecproto.GetExperimentGoalCountResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentGoalCountRequest{
@@ -2455,7 +2461,7 @@ func getFeature(t *testing.T, client featureclient.Client, featureID string) (*f
 		Id:            featureID,
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	var response *featureproto.GetFeatureResponse
 	var err error
@@ -2482,7 +2488,7 @@ func getEvaluationTimeseriesCount(
 	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	req := &ecproto.GetEvaluationTimeseriesCountRequest{
 		EnvironmentId: *environmentID,

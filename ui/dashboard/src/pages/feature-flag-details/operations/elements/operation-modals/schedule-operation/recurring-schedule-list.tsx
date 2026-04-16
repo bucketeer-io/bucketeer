@@ -366,9 +366,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
             <Form.Control>
               <div className="flex flex-col gap-y-4">
                 {recurringClauses.map((item, index) => {
-                  const clauseExecuted =
-                    watchClausesList[index]?.wasExecuted ?? false;
-                  const clauseDisabled = isDisabled || clauseExecuted;
+                  const clauseDisabled = isDisabled;
                   return (
                     <div className="flex w-full gap-x-4" key={item.clauseKey}>
                       <Form.Field

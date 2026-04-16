@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { Experiment } from '@types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';

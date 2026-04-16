@@ -1,5 +1,5 @@
-import { FC, useEffect, memo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, memo } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { exchangeDemoToken, ExchangeTokenPayload } from '@api/auth';
 import { urls } from 'configs';
 import { PAGE_PATH_DEMO_SITE } from 'constants/routing';
@@ -11,7 +11,7 @@ import { setDemoTokenStorage } from 'storage/demo-token';
 import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
 
-export const AuthDemoCallbackPage: FC = memo(() => {
+export const AuthDemoCallbackPage = memo(() => {
   const { t } = useTranslation(['common', 'message']);
   const { setDemoGoogleAuthError } = useAuth();
   const navigate = useNavigate();

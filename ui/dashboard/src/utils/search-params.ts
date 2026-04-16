@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { NavigateOptions, useLocation, useNavigate } from 'react-router-dom';
+import { NavigateOptions, useLocation, useNavigate } from 'react-router';
 import queryString, { ParsedQuery } from 'query-string';
 
 export type SearchParams = ParsedQuery<string>;

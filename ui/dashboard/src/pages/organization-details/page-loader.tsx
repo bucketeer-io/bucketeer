@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { useQueryOrganizationDetails } from '@queries/organization-details';
 import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
 import PageDetailsHeader from 'elements/page-details-header';

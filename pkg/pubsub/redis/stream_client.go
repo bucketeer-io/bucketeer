@@ -17,6 +17,8 @@ package redis
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -117,8 +119,9 @@ func (c *StreamClient) CreatePublisher(topic string) (publisher.Publisher, error
 	return NewStreamPublisher(c.redisClient, topic, options...), nil
 }
 
-// CreatePuller creates a puller for the given subscription and topic
-func (c *StreamClient) CreatePuller(subscription, topic string) (puller.Puller, error) {
+// CreatePuller creates a puller for the given subscription and topic.
+// PullerOption is accepted for interface compatibility but ignored for Redis Streams.
+func (c *StreamClient) CreatePuller(subscription, topic string, _ ...puller.PullerOption) (puller.Puller, error) {
 	if subscription == "" {
 		return nil, ErrInvalidStreamSubscription
 	}
@@ -166,10 +169,48 @@ func (c *StreamClient) SubscriptionExists(subscription string) (bool, error) {
 	return true, nil
 }
 
-// DeleteSubscription deletes a subscription
-func (c *StreamClient) DeleteSubscription(subscription string) error {
-	// For Redis Streams, we would need to delete the consumer group
-	// This would require knowing the stream name, which we don't have
-	// Just return nil to indicate success since the operation is idempotent
+// DeleteSubscription removes the consumer group named subscription from every
+// partition stream for topic (same layout as StreamPuller). Missing streams or
+// groups are ignored. Attempts all partitions and returns a joined error if any
+// non-benign destroy fails (best-effort shutdown cleanup).
+func (c *StreamClient) DeleteSubscription(subscription, topic string) error {
+	if subscription == "" {
+		return ErrInvalidStreamSubscription
+	}
+	if topic == "" {
+		return ErrInvalidStreamTopic
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	var errs []error
+	for partition := 0; partition < c.partitionCount; partition++ {
+		streamKey := fmt.Sprintf("%s-%d{stream}", topic, partition)
+		if err := c.redisClient.XGroupDestroy(ctx, streamKey, subscription); err != nil {
+			if isBenignXGroupDestroyErr(err) {
+				continue
+			}
+			c.logger.Warn("Failed to destroy consumer group on stream partition",
+				zap.String("stream", streamKey),
+				zap.String("group", subscription),
+				zap.Error(err),
+			)
+			errs = append(errs, fmt.Errorf("partition %s: %w", streamKey, err))
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("redis stream delete subscription: %w", errors.Join(errs...))
+	}
 	return nil
+}
+
+func isBenignXGroupDestroyErr(err error) bool {
+	if err == nil {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "nogroup") ||
+		strings.Contains(msg, "no such key") ||
+		strings.Contains(msg, "stream key not found") ||
+		strings.Contains(msg, "the xgroup subcommand requires the key to exist") ||
+		strings.Contains(msg, "requires the key to exist")
 }

@@ -1,5 +1,5 @@
 import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { invalidateGoalDetails } from '@queries/goal-details';

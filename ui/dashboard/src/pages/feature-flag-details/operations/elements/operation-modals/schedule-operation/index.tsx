@@ -139,12 +139,10 @@ const ScheduleOperationModal = ({
           const minutes = Math.floor((totalSeconds % 3600) / 60);
           const timeDate = new Date();
           timeDate.setHours(hours, minutes, 0, 0);
-          const wasExecuted = (dc.executionCount ?? 0) > 0;
           return {
             id: c.id,
             actionType: c.actionType as ActionTypeMap,
-            time: timeDate,
-            wasExecuted
+            time: timeDate
           };
         })
       };

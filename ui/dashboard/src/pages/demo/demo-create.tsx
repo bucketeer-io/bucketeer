@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Trans } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
 import { PAGE_PATH_DEMO_SITE } from 'constants/routing';
 import { useTranslation } from 'i18n';

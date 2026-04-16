@@ -141,7 +141,6 @@ export interface RecurringClauseItem {
   id?: string;
   actionType: ActionTypeMap;
   time: Date;
-  wasExecuted?: boolean;
 }
 
 export interface RecurringScheduleFormType {
@@ -343,14 +342,15 @@ export const recurringScheduleSchema = ({
               yup.object().shape({
                 id: yup.string(),
                 actionType: yup.mixed<ActionTypeMap>().required(),
-                wasExecuted: yup.boolean(),
                 time: yup
                   .date()
                   .required(requiredMessage)
                   .test('isLaterThanNow', (value, context) => {
-                    const parent = context.parent as RecurringClauseItem;
-                    if (parent.wasExecuted) return true;
                     if (!value) return true;
+                    const clause = context.parent as
+                      | RecurringClauseItem
+                      | undefined;
+                    if (clause?.id) return true;
                     const startDate = (
                       context.from?.[1]?.value as RecurringScheduleFormType
                     )?.startDate;

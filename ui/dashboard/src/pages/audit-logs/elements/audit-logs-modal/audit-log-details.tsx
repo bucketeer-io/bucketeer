@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useQueryAuditLogDetails } from '@queries/audit-log-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';

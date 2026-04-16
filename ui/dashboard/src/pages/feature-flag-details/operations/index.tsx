@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
 import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
