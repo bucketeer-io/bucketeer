@@ -587,7 +587,7 @@ func (a *AutoOpsRule) changeClause(id string, mc proto.Message, actionType autoo
 // recurrenceScheduleChanged returns true when any scheduling-relevant field
 // differs between the stored clause and the incoming update, which means
 // NextExecutionAt must be recalculated.
-func recurrenceScheduleChanged(existing, updated *proto.DatetimeClause) bool {
+func recurrenceScheduleChanged(existing, updated *autoopsproto.DatetimeClause) bool {
 	if existing.Time != updated.Time {
 		return true
 	}

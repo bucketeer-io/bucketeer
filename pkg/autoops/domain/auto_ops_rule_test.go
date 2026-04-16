@@ -736,7 +736,7 @@ func createRecurringRule(
 		dtc.ExecutionCount = executionCount
 		dtc.LastExecutedAt = lastExecutedAt
 		dtc.NextExecutionAt = nextExecutionAt
-		updatedAny, err := ptypes.MarshalAny(dtc)
+		updatedAny, err := anypb.New(dtc)
 		require.NoError(t, err)
 		rule.Clauses[0].Clause = updatedAny
 	}
