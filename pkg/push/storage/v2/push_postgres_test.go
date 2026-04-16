@@ -23,36 +23,36 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	pgmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
-func TestNewPushStorage(t *testing.T) {
+func TestPostgresNewPushStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewPushStorage(mock.NewMockClient(mockController))
-	assert.IsType(t, &pushStorage{}, storage)
+	storage := NewPostgresPushStorage(pgmock.NewMockQueryExecer(mockController))
+	assert.IsType(t, &postgresPushStorage{}, storage)
 }
 
-func TestCreatePush(t *testing.T) {
+func TestPostgresCreatePush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
 		desc          string
-		setup         func(*pushStorage)
+		setup         func(*postgresPushStorage)
 		input         *domain.Push
 		environmentId string
 		expectedErr   error
 	}{
 		{
 			desc: "ErrPushAlreadyExists",
-			setup: func(s *pushStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *postgresPushStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, mysql.ErrDuplicateEntry)
+				).Return(nil, postgres.ErrDuplicateEntry)
 			},
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
@@ -62,11 +62,10 @@ func TestCreatePush(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *pushStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *postgresPushStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
-
 			},
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
@@ -76,8 +75,8 @@ func TestCreatePush(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *pushStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *postgresPushStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -90,7 +89,7 @@ func TestCreatePush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newPushStorageWithMock(t, mockController)
+			storage := newPostgresPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -100,23 +99,23 @@ func TestCreatePush(t *testing.T) {
 	}
 }
 
-func TestUpdatePush(t *testing.T) {
+func TestPostgresUpdatePush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
 		desc          string
-		setup         func(*pushStorage)
+		setup         func(*postgresPushStorage)
 		input         *domain.Push
 		environmentId string
 		expectedErr   error
 	}{
 		{
 			desc: "ErrPushUnexpectedAffectedRows",
-			setup: func(s *pushStorage) {
-				result := mock.NewMockResult(mockController)
+			setup: func(s *postgresPushStorage) {
+				result := pgmock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -128,11 +127,10 @@ func TestUpdatePush(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *pushStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *postgresPushStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
-
 			},
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
@@ -142,10 +140,10 @@ func TestUpdatePush(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *pushStorage) {
-				result := mock.NewMockResult(mockController)
+			setup: func(s *postgresPushStorage) {
+				result := pgmock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -158,7 +156,7 @@ func TestUpdatePush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newPushStorageWithMock(t, mockController)
+			storage := newPostgresPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -168,23 +166,23 @@ func TestUpdatePush(t *testing.T) {
 	}
 }
 
-func TestGetPush(t *testing.T) {
+func TestPostgresGetPush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
 		desc          string
-		setup         func(*pushStorage)
+		setup         func(*postgresPushStorage)
 		id            string
 		environmentId string
 		expectedErr   error
 	}{
 		{
 			desc: "ErrPushNotFound",
-			setup: func(s *pushStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			setup: func(s *postgresPushStorage) {
+				row := pgmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -194,13 +192,12 @@ func TestGetPush(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *pushStorage) {
-				row := mock.NewMockRow(mockController)
+			setup: func(s *postgresPushStorage) {
+				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-
 			},
 			id:            "id-0",
 			environmentId: "ns",
@@ -208,10 +205,10 @@ func TestGetPush(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *pushStorage) {
-				row := mock.NewMockRow(mockController)
+			setup: func(s *postgresPushStorage) {
+				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -222,7 +219,7 @@ func TestGetPush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newPushStorageWithMock(t, mockController)
+			storage := newPostgresPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -232,66 +229,55 @@ func TestGetPush(t *testing.T) {
 	}
 }
 
-func TestListPushes(t *testing.T) {
+func TestPostgresListPushes(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	nameOrder := proto.ListPushesRequest_NAME
 	patterns := []struct {
 		desc           string
-		setup          func(*pushStorage)
-		options        *mysql.ListOptions
+		setup          func(*postgresPushStorage)
+		params         ListPushesParams
 		expected       []*proto.Push
 		expectedCursor int
 		expectedErr    error
 	}{
 		{
 			desc: "Error",
-			setup: func(s *pushStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+			setup: func(s *postgresPushStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params: ListPushesParams{
+				EnvironmentIDs: []string{"ns"},
+			},
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
 		{
 			desc: "Success",
-			setup: func(s *pushStorage) {
-				rows := mock.NewMockRows(mockController)
+			setup: func(s *postgresPushStorage) {
+				rows := pgmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
-				row := mock.NewMockRow(mockController)
+				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Limit:  10,
-				Offset: 5,
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "num",
-						Operator: mysql.OperatorGreaterThanOrEqual,
-						Value:    5,
-					},
-				},
-				InFilters:   nil,
-				NullFilters: nil,
-				JSONFilters: nil,
-				SearchQuery: nil,
-				Orders: []*mysql.Order{
-					{
-						Column:    "id",
-						Direction: mysql.OrderDirectionAsc,
-					},
-				},
+			params: ListPushesParams{
+				PageSize:       10,
+				Cursor:         "5",
+				EnvironmentIDs: []string{"ns"},
+				OrderBy:        &nameOrder,
+				OrderDirection: proto.ListPushesRequest_ASC,
 			},
 			expected:       []*proto.Push{},
 			expectedCursor: 5,
@@ -300,13 +286,13 @@ func TestListPushes(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newPushStorageWithMock(t, mockController)
+			storage := newPostgresPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
 			pushs, cursor, _, err := storage.ListPushes(
 				context.Background(),
-				p.options,
+				p.params,
 			)
 			assert.Equal(t, p.expected, pushs)
 			assert.Equal(t, p.expectedCursor, cursor)
@@ -315,23 +301,23 @@ func TestListPushes(t *testing.T) {
 	}
 }
 
-func TestDeletePush(t *testing.T) {
+func TestPostgresDeletePush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
 		desc          string
-		setup         func(*pushStorage)
+		setup         func(*postgresPushStorage)
 		id            string
 		environmentId string
 		expectedErr   error
 	}{
 		{
 			desc: "Err push unexpected affected rows",
-			setup: func(s *pushStorage) {
-				result := mock.NewMockResult(mockController)
+			setup: func(s *postgresPushStorage) {
+				result := pgmock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -341,9 +327,9 @@ func TestDeletePush(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *pushStorage) {
-				result := mock.NewMockResult(mockController)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *postgresPushStorage) {
+				result := pgmock.NewMockResult(mockController)
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, errors.New("error"))
 			},
@@ -353,10 +339,10 @@ func TestDeletePush(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *pushStorage) {
-				result := mock.NewMockResult(mockController)
+			setup: func(s *postgresPushStorage) {
+				result := pgmock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -367,7 +353,7 @@ func TestDeletePush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newPushStorageWithMock(t, mockController)
+			storage := newPostgresPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -377,7 +363,7 @@ func TestDeletePush(t *testing.T) {
 	}
 }
 
-func newPushStorageWithMock(t *testing.T, mockController *gomock.Controller) *pushStorage {
+func newPostgresPushStorageWithMock(t *testing.T, mockController *gomock.Controller) *postgresPushStorage {
 	t.Helper()
-	return &pushStorage{mock.NewMockQueryExecer(mockController)}
+	return &postgresPushStorage{qe: pgmock.NewMockQueryExecer(mockController)}
 }

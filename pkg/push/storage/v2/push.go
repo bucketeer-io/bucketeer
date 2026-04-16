@@ -17,13 +17,13 @@ package v2
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
@@ -35,183 +35,37 @@ var (
 		"push unexpected affected rows",
 	)
 
-	//go:embed sql/push/insert_push.sql
-	insertPushSQL string
-	//go:embed sql/push/update_push.sql
-	updatePushSQL string
-	//go:embed sql/push/select_push.sql
-	selectPushSQL string
-	//go:embed sql/push/list_pushes.sql
-	listPushesSQL string
-	//go:embed sql/push/count_pushes.sql
-	countPushesSQL string
-	//go:embed sql/push/delete_push.sql
-	deletePushSQL string
+	ErrInvalidListPushesCursor = errors.New("push storage: invalid list pushes cursor")
 )
+
+// ListPushesParams carries list intent for ListPushes without database-specific types.
+type ListPushesParams struct {
+	// PageSize is row limit; use database.QueryNoLimit for an uncapped list.
+	PageSize       int64
+	Cursor         string
+	OrganizationID string
+	EnvironmentIDs []string
+	SearchKeyword  string
+	Disabled       *bool
+	// Deleted filters on push.deleted (e.g. false for active pushes only).
+	Deleted        bool
+	OrderBy        *proto.ListPushesRequest_OrderBy
+	OrderDirection proto.ListPushesRequest_OrderDirection
+}
 
 type PushStorage interface {
 	CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
 	UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
 	GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
-	ListPushes(
-		ctx context.Context,
-		option *mysql.ListOptions,
-	) ([]*proto.Push, int, int64, error)
+	ListPushes(ctx context.Context, p ListPushesParams) ([]*proto.Push, int, int64, error)
 	DeletePush(ctx context.Context, id, environmentId string) error
 }
 
-type pushStorage struct {
-	qe mysql.QueryExecer
+func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage {
+	return &mysqlPushStorage{qe: qe}
 }
 
-func NewPushStorage(qe mysql.QueryExecer) PushStorage {
-	return &pushStorage{qe: qe}
-}
-
-func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertPushSQL,
-		e.Id,
-		e.FcmServiceAccount,
-		mysql.JSONObject{Val: e.Tags},
-		e.Deleted,
-		e.Name,
-		e.CreatedAt,
-		e.UpdatedAt,
-		environmentId,
-		e.Disabled,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrPushAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updatePushSQL,
-		e.FcmServiceAccount,
-		mysql.JSONObject{Val: e.Tags},
-		e.Deleted,
-		e.Name,
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.Disabled,
-		e.Id,
-		environmentId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrPushUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
-	push := proto.Push{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectPushSQL,
-		id,
-		environmentId,
-	).Scan(
-		&push.Id,
-		&push.FcmServiceAccount,
-		&mysql.JSONObject{Val: &push.Tags},
-		&push.Deleted,
-		&push.Name,
-		&push.CreatedAt,
-		&push.UpdatedAt,
-		&push.Disabled,
-		&push.EnvironmentId,
-		&push.EnvironmentName,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrPushNotFound
-		}
-		return nil, err
-	}
-	return &domain.Push{Push: &push}, nil
-}
-
-func (s *pushStorage) ListPushes(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.Push, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(listPushesSQL, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	var offset int
-	var limit int
-	if options != nil {
-		offset = options.Offset
-		limit = options.Limit
-	}
-
-	defer rows.Close()
-	pushes := make([]*proto.Push, 0, limit)
-	for rows.Next() {
-		push := proto.Push{}
-		err := rows.Scan(
-			&push.Id,
-			&push.FcmServiceAccount,
-			&mysql.JSONObject{Val: &push.Tags},
-			&push.Deleted,
-			&push.Name,
-			&push.CreatedAt,
-			&push.UpdatedAt,
-			&push.Disabled,
-			&push.EnvironmentId,
-			&push.EnvironmentName,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		pushes = append(pushes, &push)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(pushes)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countPushesSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return pushes, nextOffset, totalCount, nil
-}
-
-func (s *pushStorage) DeletePush(ctx context.Context, id, environmentId string) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		deletePushSQL,
-		id,
-		environmentId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrPushUnexpectedAffectedRows
-	}
-	return nil
+// NewPostgresPushStorage returns push persistence backed by PostgreSQL.
+func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage {
+	return &postgresPushStorage{qe: qe}
 }

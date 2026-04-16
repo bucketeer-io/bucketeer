@@ -118,7 +118,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -141,7 +141,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -165,7 +165,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -221,7 +221,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2ps.ErrPushNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -245,7 +245,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 						Tags: []string{"tag-0"},
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -273,7 +273,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 						Tags: []string{"tag-0"},
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -306,7 +306,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 						Tags: []string{"tag-0"},
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -420,7 +420,7 @@ func TestDeletePushMySQL(t *testing.T) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2ps.ErrPushNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -442,7 +442,7 @@ func TestDeletePushMySQL(t *testing.T) {
 						Id: "key-0",
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
@@ -652,7 +652,7 @@ func TestGetPushMySQL(t *testing.T) {
 func newPushServiceWithMock(t *testing.T, c *gomock.Controller) *PushService {
 	t.Helper()
 	return &PushService{
-		mysqlClient:      mysqlmock.NewMockClient(c),
+		dbClient:         mysqlmock.NewMockClient(c),
 		pushStorage:      storagemock.NewMockPushStorage(c),
 		featureClient:    featureclientmock.NewMockClient(c),
 		experimentClient: experimentclientmock.NewMockClient(c),
@@ -700,7 +700,7 @@ func newPushService(c *gomock.Controller, specifiedEnvironmentId *string, specif
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &PushService{
-		mysqlClient:      mysqlClient,
+		dbClient:         mysqlClient,
 		featureClient:    featureclientmock.NewMockClient(c),
 		pushStorage:      storagemock.NewMockPushStorage(c),
 		experimentClient: experimentclientmock.NewMockClient(c),

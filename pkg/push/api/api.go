@@ -38,7 +38,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
@@ -59,7 +59,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type PushService struct {
-	mysqlClient      mysql.Client
+	dbClient         database.Client
 	pushStorage      v2ps.PushStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
@@ -70,7 +70,8 @@ type PushService struct {
 }
 
 func NewPushService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	pushStorage v2ps.PushStorage,
 	featureClient featureclient.Client,
 	experimentClient experimentclient.Client,
 	accountClient accountclient.Client,
@@ -84,8 +85,8 @@ func NewPushService(
 		opt(dopts)
 	}
 	return &PushService{
-		mysqlClient:      mysqlClient,
-		pushStorage:      v2ps.NewPushStorage(mysqlClient),
+		dbClient:         dbClient,
+		pushStorage:      pushStorage,
 		featureClient:    featureClient,
 		experimentClient: experimentClient,
 		accountClient:    accountClient,
@@ -154,7 +155,7 @@ func (s *PushService) CreatePush(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		if err := s.pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
@@ -230,7 +231,7 @@ func (s *PushService) UpdatePush(
 	}
 	var updatedPushPb *pushproto.Push
 	var updatePushEvent *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -322,7 +323,7 @@ func (s *PushService) DeletePush(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -504,16 +505,15 @@ func (s *PushService) listAllPushes(
 	ctx context.Context,
 	environmentId string,
 ) ([]*pushproto.Push, error) {
-	pushes, _, _, err := s.listPushes(
-		ctx,
-		mysql.QueryNoLimit,
-		"",
-		"",
-		[]string{environmentId},
-		"",
-		wrapperspb.Bool(false),
-		nil,
-	)
+	disabledFalse := false
+	pushes, _, _, err := s.listPushes(ctx, v2ps.ListPushesParams{
+		PageSize:        database.QueryNoLimit,
+		Cursor:          "",
+		EnvironmentIDs:  []string{environmentId},
+		Disabled:        &disabledFalse,
+		OrderBy:         nil,
+		OrderDirection:  pushproto.ListPushesRequest_ASC,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -546,24 +546,24 @@ func (s *PushService) ListPushes(
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 
-	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
+	if err := validateListPushesOrder(req.OrderBy, req.OrderDirection); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
-	pushes, cursor, totalCount, err := s.listPushes(
-		ctx,
-		req.PageSize,
-		req.Cursor,
-		req.OrganizationId,
-		filterEnvironmentIDs,
-		req.SearchKeyword,
-		req.Disabled,
-		orders,
-	)
+	orderBy := req.OrderBy
+	pushes, cursor, totalCount, err := s.listPushes(ctx, v2ps.ListPushesParams{
+		PageSize:        req.PageSize,
+		Cursor:          req.Cursor,
+		OrganizationID:  req.OrganizationId,
+		EnvironmentIDs:  filterEnvironmentIDs,
+		SearchKeyword:   req.SearchKeyword,
+		Disabled:        boolFromWrapper(req.Disabled),
+		OrderBy:         &orderBy,
+		OrderDirection:  req.OrderDirection,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -606,115 +606,45 @@ func (s *PushService) getAllowedEnvironments(
 	return filterEnvironmentIDs
 }
 
-func (s *PushService) newListOrders(
+func validateListPushesOrder(
 	orderBy pushproto.ListPushesRequest_OrderBy,
-	orderDirection pushproto.ListPushesRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
+	_ pushproto.ListPushesRequest_OrderDirection,
+) error {
 	switch orderBy {
 	case pushproto.ListPushesRequest_DEFAULT,
-		pushproto.ListPushesRequest_NAME:
-		column = "push.name"
-	case pushproto.ListPushesRequest_CREATED_AT:
-		column = "push.created_at"
-	case pushproto.ListPushesRequest_UPDATED_AT:
-		column = "push.updated_at"
-	case pushproto.ListPushesRequest_ENVIRONMENT:
-		column = "env.name"
-	case pushproto.ListPushesRequest_STATE:
-		column = "push.disabled"
+		pushproto.ListPushesRequest_NAME,
+		pushproto.ListPushesRequest_CREATED_AT,
+		pushproto.ListPushesRequest_UPDATED_AT,
+		pushproto.ListPushesRequest_ENVIRONMENT,
+		pushproto.ListPushesRequest_STATE:
+		return nil
 	default:
-		return nil, statusInvalidOrderBy.Err()
+		return statusInvalidOrderBy.Err()
 	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == pushproto.ListPushesRequest_DESC {
-		direction = mysql.OrderDirectionDesc
+}
+
+func boolFromWrapper(v *wrapperspb.BoolValue) *bool {
+	if v == nil {
+		return nil
 	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+	b := v.GetValue()
+	return &b
 }
 
 func (s *PushService) listPushes(
 	ctx context.Context,
-	pageSize int64,
-	cursor string,
-	organizationId string,
-	environmentIDs []string,
-	searchKeyword string,
-	disabled *wrapperspb.BoolValue,
-	orders []*mysql.Order,
+	p v2ps.ListPushesParams,
 ) ([]*pushproto.Push, string, int64, error) {
-	var filters []*mysql.FilterV2
-	var inFilters []*mysql.InFilter
-	if organizationId != "" {
-		// console v3
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "env.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    organizationId,
-		})
-		if len(environmentIDs) > 0 {
-			envIDs := make([]interface{}, 0, len(environmentIDs))
-			for _, id := range environmentIDs {
-				envIDs = append(envIDs, id)
-			}
-			inFilters = append(inFilters, &mysql.InFilter{
-				Column: "push.environment_id",
-				Values: envIDs,
-			})
-		}
-	} else {
-		// console v2
-		if len(environmentIDs) > 0 {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "push.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    environmentIDs[0],
-			})
-		}
-	}
-	if disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "push.disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    disabled.Value,
-		})
-	}
-	var searchQuery *mysql.SearchQuery
-	if searchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"push.name"},
-			Keyword: searchKeyword,
-		}
-	}
-	limit := int(pageSize)
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
+	pushes, nextCursor, totalCount, err := s.pushStorage.ListPushes(ctx, p)
 	if err != nil {
-		return nil, "", 0, statusInvalidCursor.Err()
-	}
-
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		InFilters:   inFilters,
-		Orders:      orders,
-		JSONFilters: nil,
-		NullFilters: nil,
-	}
-	pushes, nextCursor, totalCount, err := s.pushStorage.ListPushes(
-		ctx,
-		options,
-	)
-	if err != nil {
+		if errors.Is(err, v2ps.ErrInvalidListPushesCursor) {
+			return nil, "", 0, statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"Failed to list pushes",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.Strings("environmentId", environmentIDs),
+				zap.Strings("environmentId", p.EnvironmentIDs),
 			)...,
 		)
 		return nil, "", 0, statusInternal.Err()

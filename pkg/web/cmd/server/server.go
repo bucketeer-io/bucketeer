@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -486,11 +488,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go healthcheckServer.Run()
+
+	var dbClient database.Client
 	// mysqlClient
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
+	pushStorage := v2ps.NewMySQLPushStorage(mysqlClient)
+
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -807,7 +813,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// pushService
 	pushService := pushapi.NewPushService(
-		mysqlClient,
+		dbClient,
+		pushStorage,
 		featureClient,
 		experimentClient,
 		accountClient,
