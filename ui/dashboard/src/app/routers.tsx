@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import { ID_CLONE, ID_NEW } from 'constants/routing';
 import CreateFlagPage from 'pages/create-flag';
 import ExperimentDetailsPage from 'pages/experiment-details';

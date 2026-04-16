@@ -56,7 +56,8 @@ const PageLoader = () => {
       setFilters({
         ...filters,
         projectId: projectId || ALL,
-        environmentId: normalizeEnvId(firstEnv?.id ?? '')
+        environmentId: normalizeEnvId(firstEnv?.id ?? ''),
+        sourceId: ALL
       });
     },
     [userEnvironments, filters, setFilters]
@@ -87,6 +88,34 @@ const PageLoader = () => {
       params: monthlySummaryParams,
       enabled: hasEnvironments
     });
+
+  // Discover which SDKs have actual traffic by fetching monthly summary for
+  // all source IDs and filtering out zero-request entries.
+  // Using ALL_SOURCE_IDS also lets React Query share the cache when the SDK
+  // filter is set to "All", avoiding a duplicate request.
+  const discoveryParams = useMemo(
+    () => ({
+      environmentIds,
+      sourceIds: ALL_SOURCE_IDS
+    }),
+    [environmentIds]
+  );
+
+  const { data: allSourcesSummary } = useQueryInsightsMonthlySummary({
+    params: discoveryParams,
+    enabled: hasEnvironments
+  });
+
+  const availableSourceIds = useMemo(() => {
+    if (!allSourcesSummary) return null;
+    // Only include SDKs that have at least one month with requests > 0.
+    // The batch inserts rows for all SDKs even when there is no traffic.
+    return new Set(
+      allSourcesSummary.series
+        .filter(s => s.data.some(d => Number(d.requests) > 0))
+        .map(s => s.sourceId)
+    );
+  }, [allSourcesSummary]);
 
   const timeRangeParams = useMemo(() => {
     const { startAt, endAt } = computeTimeRange(
@@ -134,6 +163,7 @@ const PageLoader = () => {
       onFiltersChange={setFilters}
       onProjectChange={handleProjectChange}
       queriesEnabled={hasEnvironments}
+      availableSourceIds={availableSourceIds}
     />
   );
 };

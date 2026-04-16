@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';

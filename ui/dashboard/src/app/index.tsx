@@ -7,7 +7,7 @@ import {
   useParams,
   useNavigate,
   useLocation
-} from 'react-router-dom';
+} from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   AuthCallbackPage,

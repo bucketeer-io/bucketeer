@@ -1,5 +1,5 @@
 import { forwardRef, Ref, useImperativeHandle } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog } from '@types';
 import Pagination from 'components/pagination';

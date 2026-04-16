@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';

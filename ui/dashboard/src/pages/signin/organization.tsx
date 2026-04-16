@@ -1,5 +1,5 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';

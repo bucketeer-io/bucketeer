@@ -373,7 +373,7 @@ interface DropdownProps {
   onClear?: () => void;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({
+const Dropdown = ({
   searchModel = 'debounce',
   labelCustom,
   title,
@@ -406,7 +406,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   onChange,
   onChangeAdditional,
   onClear
-}) => {
+}: DropdownProps) => {
   const [searchValue, setSearchValue] = useState('');
   const [searchDebounce, setSearchDebounce] = useState('');
   const inputSearchRef = useRef<HTMLInputElement | null>(null);

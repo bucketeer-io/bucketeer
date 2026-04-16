@@ -85,6 +85,18 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
+type subscriptionOptions struct {
+	expirationPolicy time.Duration
+}
+
+type SubscriptionOption func(*subscriptionOptions)
+
+func WithExpirationPolicy(d time.Duration) SubscriptionOption {
+	return func(opts *subscriptionOptions) {
+		opts.expirationPolicy = d
+	}
+}
+
 type receiveOptions = pubsub.ReceiveSettings
 
 type ReceiveOption func(*receiveOptions)
@@ -181,8 +193,28 @@ func (c *Client) createPublisher(topic *pubsub.Topic, opts ...PublishOption) (pu
 	return publisher.NewPublisher(topic, options...), nil
 }
 
+func (c *Client) CreatePullerWithOptions(
+	subscription, topic string,
+	subOpts []SubscriptionOption,
+	recvOpts ...ReceiveOption,
+) (puller.Puller, error) {
+	sopts := &subscriptionOptions{}
+	for _, opt := range subOpts {
+		opt(sopts)
+	}
+	return c.createPuller(subscription, topic, sopts, recvOpts...)
+}
+
 func (c *Client) CreatePuller(subscription, topic string, opts ...ReceiveOption) (puller.Puller, error) {
-	s, err := c.subscription(subscription, topic)
+	return c.createPuller(subscription, topic, nil, opts...)
+}
+
+func (c *Client) createPuller(
+	subscription, topic string,
+	subOpts *subscriptionOptions,
+	recvOpts ...ReceiveOption,
+) (puller.Puller, error) {
+	s, err := c.subscription(subscription, topic, subOpts)
 	if err != nil {
 		c.logger.Error("Failed to create puller",
 			zap.String("subscription", subscription),
@@ -191,7 +223,7 @@ func (c *Client) CreatePuller(subscription, topic string, opts ...ReceiveOption)
 		return nil, err
 	}
 	options := (receiveOptions)(pubsub.DefaultReceiveSettings)
-	for _, opt := range opts {
+	for _, opt := range recvOpts {
 		opt(&options)
 	}
 	s.ReceiveSettings = options
@@ -238,8 +270,35 @@ func (c *Client) createTopicForEmulator(ctx context.Context, id string) {
 	}
 }
 
+// tryUpdateSubscriptionExpiration applies opts.expirationPolicy when set (best-effort).
+func (c *Client) tryUpdateSubscriptionExpiration(
+	ctx context.Context,
+	id string,
+	sub *pubsub.Subscription,
+	opts *subscriptionOptions,
+) {
+	if opts == nil || opts.expirationPolicy <= 0 {
+		return
+	}
+	_, updErr := sub.Update(ctx, pubsub.SubscriptionConfigToUpdate{
+		ExpirationPolicy: opts.expirationPolicy,
+	})
+	if updErr == nil {
+		return
+	}
+	if strings.Contains(updErr.Error(), "nothing to update") {
+		return
+	}
+	c.logger.Warn(
+		"Failed to update expiration policy on existing subscription",
+		zap.String("subscription", id),
+		zap.Duration("expiration_policy", opts.expirationPolicy),
+		zap.Error(updErr),
+	)
+}
+
 // TODO: add metrics
-func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) {
+func (c *Client) subscription(id, topicID string, opts *subscriptionOptions) (*pubsub.Subscription, error) {
 	sub := c.Subscription(id)
 	topic := c.Topic(topicID)
 	var lastErr error
@@ -253,11 +312,16 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 			continue
 		}
 		if ok {
+			c.tryUpdateSubscriptionExpiration(ctx, id, sub, opts)
 			return sub, nil
 		}
-		_, err = c.CreateSubscription(ctx, id, pubsub.SubscriptionConfig{
+		cfg := pubsub.SubscriptionConfig{
 			Topic: topic,
-		})
+		}
+		if opts != nil && opts.expirationPolicy > 0 {
+			cfg.ExpirationPolicy = opts.expirationPolicy
+		}
+		_, err = c.CreateSubscription(ctx, id, cfg)
 		if err == nil {
 			return sub, nil
 		}
@@ -266,6 +330,7 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 				zap.String("subscription", id),
 				zap.String("topic", topicID),
 			)
+			c.tryUpdateSubscriptionExpiration(ctx, id, sub, opts)
 			return sub, nil
 		}
 		lastErr = err

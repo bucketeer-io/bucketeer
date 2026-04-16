@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { apiKeyUpdater } from '@api/api-key';
 import { useQueryAPIKey } from '@queries/api-key-details';
 import { invalidateAPIKeys } from '@queries/api-keys';

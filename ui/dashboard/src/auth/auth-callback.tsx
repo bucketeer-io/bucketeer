@@ -1,5 +1,5 @@
-import { FC, useEffect, memo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, memo } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { exchangeToken, ExchangeTokenPayload } from '@api/auth';
 import { urls } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
@@ -10,7 +10,7 @@ import { setTokenStorage } from 'storage/token';
 import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
 
-export const AuthCallbackPage: FC = memo(() => {
+export const AuthCallbackPage = memo(() => {
   const { syncSignIn, setIsGoogleAuthError, setIsInitialLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

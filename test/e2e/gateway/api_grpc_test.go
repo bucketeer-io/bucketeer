@@ -1393,6 +1393,7 @@ func updateFeatueFlagCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(3 * time.Second)
 }
 
 func newFeatureClient(t *testing.T) featureclient.Client {

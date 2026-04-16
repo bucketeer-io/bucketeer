@@ -703,3 +703,482 @@ func newEventRateClause(t *testing.T, c *autoopsproto.OpsEventRateClause) *autoo
 	}
 	return newClause
 }
+
+// createRecurringRule is a helper that creates a rule with a single recurring
+// clause and pre-sets it to the given ExecutionCount / LastExecutedAt / NextExecutionAt.
+func createRecurringRule(
+	t *testing.T,
+	timeOfDay int64,
+	recurrence *autoopsproto.RecurrenceRule,
+	executionCount int32,
+	lastExecutedAt int64,
+	nextExecutionAt int64,
+) *AutoOpsRule {
+	t.Helper()
+	dc := &autoopsproto.DatetimeClause{
+		Time:       timeOfDay,
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: recurrence,
+	}
+	rule, err := NewAutoOpsRule(
+		"feature-id",
+		autoopsproto.OpsType_SCHEDULE,
+		nil,
+		[]*autoopsproto.DatetimeClause{dc},
+	)
+	require.NoError(t, err)
+	require.Len(t, rule.Clauses, 1)
+
+	if executionCount > 0 || lastExecutedAt > 0 || nextExecutionAt > 0 {
+		dtClauses, err := rule.ExtractDatetimeClauses()
+		require.NoError(t, err)
+		dtc := dtClauses[rule.Clauses[0].Id]
+		require.NotNil(t, dtc)
+		dtc.ExecutionCount = executionCount
+		dtc.LastExecutedAt = lastExecutedAt
+		dtc.NextExecutionAt = nextExecutionAt
+		updatedAny, err := ptypes.MarshalAny(dtc)
+		require.NoError(t, err)
+		rule.Clauses[0].Clause = updatedAny
+	}
+	return rule
+}
+
+// TestChangeDatetimeClause_RecalculatesNextExecution tests that updating
+// scheduling-relevant fields on an already-executed recurring clause triggers
+// recalculation of NextExecutionAt.
+func TestChangeDatetimeClause_RecalculatesNextExecution(t *testing.T) {
+	t.Parallel()
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	baseStartDate := time.Date(2026, 2, 9, 0, 0, 0, 0, jst)
+	baseRecurrence := func() *autoopsproto.RecurrenceRule {
+		return &autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1}, // Monday
+			Timezone:   "Asia/Tokyo",
+			StartDate:  baseStartDate.Unix(),
+		}
+	}
+
+	// Existing state: executed once on Monday Feb 9 10:00 JST, next is Feb 16 10:00 JST
+	existingNextExec := time.Date(2026, 2, 16, 10, 0, 0, 0, jst).Unix()
+	existingLastExec := time.Date(2026, 2, 9, 10, 0, 1, 0, jst).Unix()
+
+	tests := []struct {
+		desc               string
+		existingTimeOfDay  int64
+		existingRecurrence *autoopsproto.RecurrenceRule
+		existingExecCount  int32
+		existingLastExec   int64
+		existingNextExec   int64
+		updatedTimeOfDay   int64
+		updatedActionType  autoopsproto.ActionType
+		updatedRecurrence  *autoopsproto.RecurrenceRule
+		expectRecalculated bool
+		expectNextExecZero bool
+		expectExecCount    int32
+		expectLastExecAt   int64
+	}{
+		{
+			desc:               "time-of-day changed: recalculates nextExecutionAt",
+			existingTimeOfDay:  75300, // 20:55
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  1,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   68400, // 19:00
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence:  baseRecurrence(),
+			expectRecalculated: true,
+			expectExecCount:    1,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "same time: preserves nextExecutionAt",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  1,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   36000,
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence:  baseRecurrence(),
+			expectRecalculated: false,
+			expectExecCount:    1,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "only actionType changed: preserves nextExecutionAt",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  1,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   36000,
+			updatedActionType:  autoopsproto.ActionType_DISABLE,
+			updatedRecurrence:  baseRecurrence(),
+			expectRecalculated: false,
+			expectExecCount:    1,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "time changed on clause with endDate already passed: nextExec becomes 0",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  3,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   32400, // 9:00 AM
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence: func() *autoopsproto.RecurrenceRule {
+				r := baseRecurrence()
+				r.EndDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Unix() // already passed
+				return r
+			}(),
+			expectRecalculated: true,
+			expectNextExecZero: true,
+			expectExecCount:    3,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "maxOccurrences reduced below current count: nextExec becomes 0",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  5,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   36000,
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence: func() *autoopsproto.RecurrenceRule {
+				r := baseRecurrence()
+				r.MaxOccurrences = 3 // less than current count of 5
+				return r
+			}(),
+			expectRecalculated: true,
+			expectNextExecZero: true,
+			expectExecCount:    5,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "daysOfWeek changed: recalculates nextExecutionAt",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(), // Monday only
+			existingExecCount:  1,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   36000,
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence: func() *autoopsproto.RecurrenceRule {
+				r := baseRecurrence()
+				r.DaysOfWeek = []int32{3, 5} // Wed, Fri instead of Mon
+				return r
+			}(),
+			expectRecalculated: true,
+			expectExecCount:    1,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "timezone changed: recalculates nextExecutionAt",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  1,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   36000,
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence: func() *autoopsproto.RecurrenceRule {
+				r := baseRecurrence()
+				r.Timezone = "America/New_York"
+				return r
+			}(),
+			expectRecalculated: true,
+			expectExecCount:    1,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:               "frequency changed from weekly to daily: recalculates",
+			existingTimeOfDay:  36000,
+			existingRecurrence: baseRecurrence(),
+			existingExecCount:  1,
+			existingLastExec:   existingLastExec,
+			existingNextExec:   existingNextExec,
+			updatedTimeOfDay:   36000,
+			updatedActionType:  autoopsproto.ActionType_ENABLE,
+			updatedRecurrence: &autoopsproto.RecurrenceRule{
+				Frequency: autoopsproto.RecurrenceRule_DAILY,
+				Timezone:  "Asia/Tokyo",
+				StartDate: baseStartDate.Unix(),
+			},
+			expectRecalculated: true,
+			expectExecCount:    1,
+			expectLastExecAt:   existingLastExec,
+		},
+		{
+			desc:              "never-executed clause: initializes via InitializeRecurringClause",
+			existingTimeOfDay: 36000,
+			existingRecurrence: func() *autoopsproto.RecurrenceRule {
+				r := baseRecurrence()
+				r.StartDate = time.Now().Add(24 * time.Hour).Unix()
+				return r
+			}(),
+			existingExecCount: 0,
+			existingLastExec:  0,
+			existingNextExec:  0,
+			updatedTimeOfDay:  32400,
+			updatedActionType: autoopsproto.ActionType_ENABLE,
+			updatedRecurrence: func() *autoopsproto.RecurrenceRule {
+				r := baseRecurrence()
+				r.StartDate = time.Now().Add(24 * time.Hour).Unix()
+				return r
+			}(),
+			expectRecalculated: true,
+			expectExecCount:    0,
+			expectLastExecAt:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			rule := createRecurringRule(
+				t,
+				tt.existingTimeOfDay,
+				tt.existingRecurrence,
+				tt.existingExecCount,
+				tt.existingLastExec,
+				tt.existingNextExec,
+			)
+			clauseID := rule.Clauses[0].Id
+
+			updatedDtClause := &autoopsproto.DatetimeClause{
+				Time:       tt.updatedTimeOfDay,
+				ActionType: tt.updatedActionType,
+				Recurrence: tt.updatedRecurrence,
+			}
+
+			err := rule.ChangeDatetimeClause(clauseID, updatedDtClause)
+			require.NoError(t, err)
+
+			dtClauses, err := rule.ExtractDatetimeClauses()
+			require.NoError(t, err)
+			dtClause := dtClauses[clauseID]
+			require.NotNil(t, dtClause)
+
+			assert.Equal(t, tt.expectExecCount, dtClause.ExecutionCount,
+				"ExecutionCount should be preserved")
+			assert.Equal(t, tt.expectLastExecAt, dtClause.LastExecutedAt,
+				"LastExecutedAt should be preserved")
+
+			if tt.expectNextExecZero {
+				assert.Equal(t, int64(0), dtClause.NextExecutionAt,
+					"NextExecutionAt should be 0 (exhausted)")
+			} else if tt.expectRecalculated {
+				if tt.existingExecCount > 0 {
+					assert.NotEqual(t, tt.existingNextExec, dtClause.NextExecutionAt,
+						"NextExecutionAt should have been recalculated")
+				}
+				assert.True(t, dtClause.NextExecutionAt > 0,
+					"NextExecutionAt should be positive after recalculation")
+			} else {
+				assert.Equal(t, tt.existingNextExec, dtClause.NextExecutionAt,
+					"NextExecutionAt should be preserved (no schedule change)")
+			}
+
+			assert.Equal(t, tt.updatedTimeOfDay, dtClause.Time,
+				"Time should be updated")
+			assert.Equal(t, tt.updatedActionType, dtClause.ActionType,
+				"ActionType should be updated")
+		})
+	}
+}
+
+// TestChangeDatetimeClause_UpdateTimeOnExecutedClause_ViaUpdate tests the full
+// Update() path (which uses copier.Copy) to verify recalculation survives the
+// deep copy, simulating the actual API flow.
+func TestChangeDatetimeClause_UpdateTimeOnExecutedClause_ViaUpdate(t *testing.T) {
+	t.Parallel()
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	startDate := time.Date(2026, 2, 9, 0, 0, 0, 0, jst)
+	oldNextExec := time.Date(2026, 2, 16, 20, 55, 0, 0, jst).Unix()
+	lastExec := time.Date(2026, 2, 9, 20, 55, 1, 0, jst).Unix()
+
+	rule := createRecurringRule(
+		t,
+		75300, // 20:55
+		&autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1},
+			Timezone:   "Asia/Tokyo",
+			StartDate:  startDate.Unix(),
+		},
+		1,           // executed once
+		lastExec,    // last executed at
+		oldNextExec, // next execution at
+	)
+	clauseID := rule.Clauses[0].Id
+
+	updated, err := rule.Update(nil, nil, []*autoopsproto.DatetimeClauseChange{
+		{
+			Id:         clauseID,
+			ChangeType: autoopsproto.ChangeType_UPDATE,
+			Clause: &autoopsproto.DatetimeClause{
+				Time:       68400, // 19:00 (changed from 20:55)
+				ActionType: autoopsproto.ActionType_ENABLE,
+				Recurrence: &autoopsproto.RecurrenceRule{
+					Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+					DaysOfWeek: []int32{1},
+					Timezone:   "Asia/Tokyo",
+					StartDate:  startDate.Unix(),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	dtClauses, err := updated.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	dtClause := dtClauses[clauseID]
+	require.NotNil(t, dtClause)
+
+	assert.Equal(t, int64(68400), dtClause.Time, "Time should be updated to 19:00")
+	assert.Equal(t, int32(1), dtClause.ExecutionCount, "ExecutionCount should be preserved")
+	assert.Equal(t, lastExec, dtClause.LastExecutedAt, "LastExecutedAt should be preserved")
+	assert.NotEqual(t, oldNextExec, dtClause.NextExecutionAt,
+		"NextExecutionAt should have been recalculated (not the old 20:55 timestamp)")
+	assert.True(t, dtClause.NextExecutionAt > 0,
+		"NextExecutionAt should be positive (recalculated for 19:00)")
+}
+
+// TestChangeDatetimeClause_MultiClause_OnlyTargetRecalculated verifies that
+// updating one clause in a multi-clause rule only recalculates that clause,
+// leaving the other clause's NextExecutionAt intact.
+func TestChangeDatetimeClause_MultiClause_OnlyTargetRecalculated(t *testing.T) {
+	t.Parallel()
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	startDate := time.Date(2026, 2, 9, 0, 0, 0, 0, jst)
+	recurrence := &autoopsproto.RecurrenceRule{
+		Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+		DaysOfWeek: []int32{1},
+		Timezone:   "Asia/Tokyo",
+		StartDate:  startDate.Unix(),
+	}
+
+	enableClause := &autoopsproto.DatetimeClause{
+		Time:       36000, // 10:00
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: recurrence,
+	}
+	disableClause := &autoopsproto.DatetimeClause{
+		Time:       64800, // 18:00
+		ActionType: autoopsproto.ActionType_DISABLE,
+		Recurrence: recurrence,
+	}
+
+	rule, err := NewAutoOpsRule(
+		"feature-id",
+		autoopsproto.OpsType_SCHEDULE,
+		nil,
+		[]*autoopsproto.DatetimeClause{enableClause, disableClause},
+	)
+	require.NoError(t, err)
+	require.Len(t, rule.Clauses, 2)
+
+	// Simulate both clauses having been executed once
+	advanceTime := time.Date(2026, 2, 9, 18, 0, 1, 0, jst)
+	err = rule.AdvanceRecurringClause(rule.Clauses[0].Id, advanceTime)
+	require.NoError(t, err)
+	err = rule.AdvanceRecurringClause(rule.Clauses[1].Id, advanceTime)
+	require.NoError(t, err)
+
+	// Save clause IDs before the update (sorting may reorder positions)
+	enableClauseID := rule.Clauses[0].Id
+	disableClauseID := rule.Clauses[1].Id
+
+	dtClauses, err := rule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	disableNextExec := dtClauses[disableClauseID].NextExecutionAt
+
+	// Update only the enable clause's time (same recurrence)
+	err = rule.ChangeDatetimeClause(enableClauseID, &autoopsproto.DatetimeClause{
+		Time:       32400, // Changed to 9:00
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: recurrence,
+	})
+	require.NoError(t, err)
+
+	dtClauses, err = rule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+
+	// Enable clause should have been recalculated
+	enableDt := dtClauses[enableClauseID]
+	require.NotNil(t, enableDt)
+	assert.True(t, enableDt.NextExecutionAt > 0,
+		"enable clause NextExecutionAt should be recalculated and positive")
+
+	// Disable clause should be unchanged
+	disableDt := dtClauses[disableClauseID]
+	require.NotNil(t, disableDt)
+	assert.Equal(t, disableNextExec, disableDt.NextExecutionAt,
+		"disable clause NextExecutionAt should be unchanged")
+}
+
+// TestChangeDatetimeClause_EndDateMadeEarlier_ExhaustsClause tests that
+// changing the end date to be in the past on an executed clause correctly
+// sets NextExecutionAt to 0 (exhausted).
+func TestChangeDatetimeClause_EndDateMadeEarlier_ExhaustsClause(t *testing.T) {
+	t.Parallel()
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+
+	startDate := time.Date(2026, 2, 9, 0, 0, 0, 0, jst)
+	oldNextExec := time.Date(2026, 2, 16, 10, 0, 0, 0, jst).Unix()
+	lastExec := time.Date(2026, 2, 9, 10, 0, 1, 0, jst).Unix()
+
+	rule := createRecurringRule(
+		t,
+		36000, // 10:00
+		&autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1},
+			Timezone:   "Asia/Tokyo",
+			StartDate:  startDate.Unix(),
+		},
+		1,           // executed once
+		lastExec,    // last executed at
+		oldNextExec, // next execution at
+	)
+	clauseID := rule.Clauses[0].Id
+
+	// Update with same time but end date in the past
+	err = rule.ChangeDatetimeClause(clauseID, &autoopsproto.DatetimeClause{
+		Time:       36000,
+		ActionType: autoopsproto.ActionType_ENABLE,
+		Recurrence: &autoopsproto.RecurrenceRule{
+			Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+			DaysOfWeek: []int32{1},
+			Timezone:   "Asia/Tokyo",
+			StartDate:  startDate.Unix(),
+			EndDate:    time.Date(2026, 2, 10, 0, 0, 0, 0, jst).Unix(), // already passed
+		},
+	})
+	require.NoError(t, err)
+
+	dtClauses, err := rule.ExtractDatetimeClauses()
+	require.NoError(t, err)
+	dtClause := dtClauses[clauseID]
+	require.NotNil(t, dtClause)
+
+	assert.Equal(t, int64(0), dtClause.NextExecutionAt,
+		"NextExecutionAt should be 0 since endDate is in the past")
+	assert.Equal(t, int32(1), dtClause.ExecutionCount, "ExecutionCount preserved")
+	assert.Equal(t, lastExec, dtClause.LastExecutedAt, "LastExecutedAt preserved")
+}

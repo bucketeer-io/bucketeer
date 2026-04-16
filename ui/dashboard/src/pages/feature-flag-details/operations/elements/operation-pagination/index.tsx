@@ -1,4 +1,4 @@
-import { memo, FC } from 'react';
+import { memo } from 'react';
 import { cn } from 'utils/style';
 import { IconArrowLeft, IconArrowRight } from '@icons';
 import Button from 'components/button';
@@ -10,7 +10,7 @@ interface OperationPaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const OperationPagination: FC<OperationPaginationProps> = memo(
+const OperationPagination = memo<OperationPaginationProps>(
   ({ page, count, onPageChange }) => {
     if (count <= 1) {
       return null;

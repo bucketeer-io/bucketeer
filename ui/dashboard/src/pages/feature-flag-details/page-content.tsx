@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import {
   PAGE_PATH_FEATURES,

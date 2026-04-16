@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { useQueryProjectDetails } from '@queries/project-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_PROJECTS } from 'constants/routing';
