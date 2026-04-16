@@ -52,7 +52,7 @@ CREATE TABLE environment_v2 (
     archived BOOLEAN NOT NULL DEFAULT FALSE,
     require_comment BOOLEAN NOT NULL DEFAULT TRUE,
     auto_archive_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    auto_archive_unused_days INTEGER NOT NULL DEFAULT 90,
+    auto_archive_unused_days INTEGER NOT NULL DEFAULT 60,
     auto_archive_check_code_refs BOOLEAN NOT NULL DEFAULT TRUE,
     created_at BIGINT NOT NULL,
     updated_at BIGINT NOT NULL,
