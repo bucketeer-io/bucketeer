@@ -41,9 +41,11 @@ func (m *MockSegmentUsersCache) EXPECT() *MockSegmentUsersCacheMockRecorder {
 }
 
 // Evict mocks base method.
-func (m *MockSegmentUsersCache) Evict(segmentID, environmentId string) {
+func (m *MockSegmentUsersCache) Evict(segmentID, environmentId string) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Evict", segmentID, environmentId)
+	ret := m.ctrl.Call(m, "Evict", segmentID, environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Evict indicates an expected call of Evict.

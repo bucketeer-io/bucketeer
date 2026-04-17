@@ -32,7 +32,7 @@ const (
 type FeaturesCache interface {
 	Get(environmentId string) (*featureproto.Features, error)
 	Put(features *featureproto.Features, environmentId string) error
-	Evict(environmentId string)
+	Evict(environmentId string) error
 }
 
 type featuresCache struct {
@@ -71,10 +71,8 @@ func (c *featuresCache) Put(features *featureproto.Features, environmentId strin
 	return c.cache.Put(key, buffer, c.ttl)
 }
 
-func (c *featuresCache) Evict(environmentId string) {
-	if inMemory, ok := c.cache.(*InMemoryCache); ok {
-		inMemory.Delete(c.key(environmentId))
-	}
+func (c *featuresCache) Evict(environmentId string) error {
+	return evictKey(c.cache, c.key(environmentId))
 }
 
 func (c *featuresCache) key(environmentId string) string {

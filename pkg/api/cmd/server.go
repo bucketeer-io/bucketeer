@@ -740,10 +740,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 }
 
 // startCacheInvalidator subscribes to domain events to evict L1 in-memory
-// cache entries when feature flags or segments are updated. Each pod uses a
-// unique consumer group (based on hostname) so every pod receives every event.
-// It returns a cleanup function that deletes the GCP subscription or Redis
-// consumer group on graceful shutdown.
+// cache entries when feature flags, segments, or API keys are updated. Each
+// pod uses a unique consumer group (based on hostname) so every pod receives
+// every event. (L2 Redis for features/segments/API keys is not invalidated here,
+// same as for feature and segment caches.)
+// It returns a cleanup function that deletes the pub/sub subscription or
+// pub/sub consumer group on graceful shutdown.
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
@@ -778,6 +780,7 @@ func (s *server) startCacheInvalidator(
 	invalidator := api.NewCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
+		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
 		logger,
 	)
 	go func() {

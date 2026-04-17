@@ -33,6 +33,7 @@ const (
 type AutoOpsRulesCache interface {
 	Get(environmentId string) (*aoproto.AutoOpsRules, error)
 	Put(autoOps *aoproto.AutoOpsRules, environmentId string) error
+	Evict(environmentId string) error
 }
 
 type autoOpsRulesCache struct {
@@ -68,6 +69,10 @@ func (c *autoOpsRulesCache) Put(autoOps *aoproto.AutoOpsRules, environmentId str
 	}
 	key := c.key(environmentId)
 	return c.cache.Put(key, buffer, autoOpsRuleCacheTTL)
+}
+
+func (c *autoOpsRulesCache) Evict(environmentId string) error {
+	return evictKey(c.cache, c.key(environmentId))
 }
 
 func (c *autoOpsRulesCache) key(environmentId string) string {

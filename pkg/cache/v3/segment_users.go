@@ -36,7 +36,7 @@ type SegmentUsersCache interface {
 	Get(segmentID, environmentId string) (*featureproto.SegmentUsers, error)
 	GetAll(environmentId string) ([]*featureproto.SegmentUsers, error)
 	Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error
-	Evict(segmentID, environmentId string)
+	Evict(segmentID, environmentId string) error
 }
 
 type segmentUsersCache struct {
@@ -127,10 +127,8 @@ func (c *segmentUsersCache) scan(multiCache cache.MultiGetCache, environmentId s
 	return keys, nil
 }
 
-func (c *segmentUsersCache) Evict(segmentID, environmentId string) {
-	if inMemory, ok := c.cache.(*InMemoryCache); ok {
-		inMemory.Delete(c.key(segmentID, environmentId))
-	}
+func (c *segmentUsersCache) Evict(segmentID, environmentId string) error {
+	return evictKey(c.cache, c.key(segmentID, environmentId))
 }
 
 func (c *segmentUsersCache) key(segmentID, environmentId string) string {

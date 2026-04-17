@@ -126,8 +126,9 @@ func TestCacheInvalidatorHandleMessage(t *testing.T) {
 			inMemoryCache := cachev3.NewInMemoryCache()
 			featuresCache := cachev3.NewFeaturesCache(inMemoryCache, 10*time.Minute)
 			segmentUsersCache := cachev3.NewSegmentUsersCache(inMemoryCache, 10*time.Minute)
+			environmentAPIKeyCache := cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 10*time.Minute)
 
-			invalidator := NewCacheInvalidator(featuresCache, segmentUsersCache, zap.NewNop())
+			invalidator := NewCacheInvalidator(featuresCache, segmentUsersCache, environmentAPIKeyCache, zap.NewNop())
 
 			if p.setupCache != nil {
 				p.setupCache(featuresCache, segmentUsersCache)

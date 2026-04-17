@@ -540,6 +540,19 @@ func (s *server) registerPubSubProcessorMap(
 			processor.NewDomainEventInformer(environmentClient, sender, logger),
 		)
 
+		nonPersistentRedisCache := cachev3.NewRedisCache(nonPersistentRedisClient)
+		processors.RegisterProcessor(
+			processor.CacheEvictionName,
+			processor.NewCacheEviction(
+				cachev3.NewFeaturesCache(nonPersistentRedisCache, 0),
+				cachev3.NewSegmentUsersCache(nonPersistentRedisCache, 0),
+				cachev3.NewEnvironmentAPIKeyCache(nonPersistentRedisCache, 0),
+				cachev3.NewExperimentsCache(nonPersistentRedisCache),
+				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache),
+				logger,
+			),
+		)
+
 		segmentPersister, err := processor.NewSegmentUserPersister(
 			processorsConfigMap[processor.SegmentUserPersisterName],
 			batchClient,

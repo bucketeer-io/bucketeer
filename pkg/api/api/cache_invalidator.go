@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
@@ -26,20 +27,23 @@ import (
 )
 
 type cacheInvalidator struct {
-	featuresCache     cachev3.FeaturesCache
-	segmentUsersCache cachev3.SegmentUsersCache
-	logger            *zap.Logger
+	featuresCache          cachev3.FeaturesCache
+	segmentUsersCache      cachev3.SegmentUsersCache
+	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	logger                 *zap.Logger
 }
 
 func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
+	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
 	logger *zap.Logger,
 ) *cacheInvalidator {
 	return &cacheInvalidator{
-		featuresCache:     featuresCache,
-		segmentUsersCache: segmentUsersCache,
-		logger:            logger.Named("cache-invalidator"),
+		featuresCache:          featuresCache,
+		segmentUsersCache:      segmentUsersCache,
+		environmentAPIKeyCache: environmentAPIKeyCache,
+		logger:                 logger.Named("cache-invalidator"),
 	}
 }
 
@@ -66,7 +70,15 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 	}
 	switch event.EntityType {
 	case domaineventproto.Event_FEATURE:
-		ci.featuresCache.Evict(event.EnvironmentId)
+		if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
+			ci.logger.Warn("Failed to evict features cache",
+				zap.Error(err),
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("entityId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return
+		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
 		).Inc()
@@ -76,7 +88,15 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 			zap.String("type", event.Type.String()),
 		)
 	case domaineventproto.Event_SEGMENT:
-		ci.segmentUsersCache.Evict(event.EntityId, event.EnvironmentId)
+		if err := ci.segmentUsersCache.Evict(event.EntityId, event.EnvironmentId); err != nil {
+			ci.logger.Warn("Failed to evict segment users cache",
+				zap.Error(err),
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("segmentId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return
+		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
 		).Inc()
@@ -85,5 +105,68 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 			zap.String("segmentId", event.EntityId),
 			zap.String("type", event.Type.String()),
 		)
+	case domaineventproto.Event_APIKEY:
+		secrets := apiKeySecretsForInvalidation(event)
+		if len(secrets) == 0 {
+			ci.logger.Warn(
+				"Skipping environment API key cache eviction; could not read api_key from entity data",
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("entityId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return
+		}
+		for _, s := range secrets {
+			if err := ci.environmentAPIKeyCache.Evict(s); err != nil {
+				ci.logger.Warn("Failed to evict environment API key cache",
+					zap.Error(err),
+					zap.String("environmentId", event.EnvironmentId),
+					zap.String("entityId", event.EntityId),
+					zap.String("type", event.Type.String()),
+				)
+				return
+			}
+		}
+		cacheInvalidationCounter.WithLabelValues(
+			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
+		).Inc()
+		ci.logger.Debug("Evicted environment API key cache",
+			zap.String("environmentId", event.EnvironmentId),
+			zap.String("entityId", event.EntityId),
+			zap.String("type", event.Type.String()),
+		)
 	}
+}
+
+// apiKeySecretsForInvalidation returns distinct raw API key strings from domain event
+// entity snapshots (JSON of account.APIKey). Both previous and current are included so
+// a future rotation can evict the old and new secrets.
+func apiKeySecretsForInvalidation(e *domaineventproto.Event) []string {
+	seen := make(map[string]struct{})
+	var out []string
+	for _, raw := range []string{e.GetPreviousEntityData(), e.GetEntityData()} {
+		sec := apiKeySecretFromEntityJSON(raw)
+		if sec == "" {
+			continue
+		}
+		if _, ok := seen[sec]; ok {
+			continue
+		}
+		seen[sec] = struct{}{}
+		out = append(out, sec)
+	}
+	return out
+}
+
+func apiKeySecretFromEntityJSON(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	var v struct {
+		APIKey string `json:"api_key"`
+	}
+	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		return ""
+	}
+	return v.APIKey
 }

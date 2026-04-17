@@ -33,6 +33,7 @@ const (
 type ExperimentsCache interface {
 	Get(environmentId string) (*exproto.Experiments, error)
 	Put(experiments *exproto.Experiments, environmentId string) error
+	Evict(environmentId string) error
 }
 
 type experimentsCache struct {
@@ -68,6 +69,10 @@ func (c *experimentsCache) Put(experiments *exproto.Experiments, environmentId s
 	}
 	key := c.key(environmentId)
 	return c.cache.Put(key, buffer, experimentCacheTTL)
+}
+
+func (c *experimentsCache) Evict(environmentId string) error {
+	return evictKey(c.cache, c.key(environmentId))
 }
 
 func (c *experimentsCache) key(environmentId string) string {
