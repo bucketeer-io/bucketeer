@@ -16,6 +16,9 @@ package processor
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,10 +26,23 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
+
+type testNetError struct {
+	timeout   bool
+	temporary bool
+	msg       string
+}
+
+func (e *testNetError) Error() string   { return e.msg }
+func (e *testNetError) Timeout() bool   { return e.timeout }
+func (e *testNetError) Temporary() bool { return e.temporary }
+
+var _ net.Error = (*testNetError)(nil)
 
 func TestCacheEvictionHandleMessage(t *testing.T) {
 	t.Parallel()
@@ -255,6 +271,98 @@ func TestAPIKeySecretsFromEvent(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			result := apiKeySecretsFromEvent(p.event)
 			assert.Equal(t, p.expected, result)
+		})
+	}
+}
+
+func TestIsRepeatable(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		err      error
+		expected bool
+	}{
+		{
+			desc:     "nil error",
+			err:      nil,
+			expected: false,
+		},
+		{
+			desc:     "context.Canceled is not repeatable",
+			err:      context.Canceled,
+			expected: false,
+		},
+		{
+			desc:     "context.DeadlineExceeded is repeatable",
+			err:      context.DeadlineExceeded,
+			expected: true,
+		},
+		{
+			desc:     "cache.ErrNotFound is not repeatable",
+			err:      cache.ErrNotFound,
+			expected: false,
+		},
+		{
+			desc:     "cache.ErrInvalidType is not repeatable",
+			err:      cache.ErrInvalidType,
+			expected: false,
+		},
+		{
+			desc:     "net.Error with timeout is repeatable",
+			err:      &testNetError{timeout: true, msg: "i/o timeout"},
+			expected: true,
+		},
+		{
+			desc:     "net.Error without timeout is not repeatable",
+			err:      &testNetError{timeout: false, msg: "some net error"},
+			expected: false,
+		},
+		{
+			desc:     "error containing timeout string is repeatable",
+			err:      errors.New("redis: command Timeout exceeded"),
+			expected: true,
+		},
+		{
+			desc:     "error containing connection reset is repeatable",
+			err:      errors.New("read: connection reset by peer"),
+			expected: true,
+		},
+		{
+			desc:     "error containing broken pipe is repeatable",
+			err:      errors.New("write: broken pipe"),
+			expected: true,
+		},
+		{
+			desc:     "error containing connection refused is repeatable",
+			err:      errors.New("dial tcp: connection refused"),
+			expected: true,
+		},
+		{
+			desc:     "error containing eof is repeatable",
+			err:      errors.New("unexpected EOF"),
+			expected: true,
+		},
+		{
+			desc:     "wrapped context.DeadlineExceeded is repeatable",
+			err:      fmt.Errorf("operation failed: %w", context.DeadlineExceeded),
+			expected: true,
+		},
+		{
+			desc:     "wrapped cache.ErrNotFound is not repeatable",
+			err:      fmt.Errorf("lookup failed: %w", cache.ErrNotFound),
+			expected: false,
+		},
+		{
+			desc:     "generic error is not repeatable",
+			err:      errors.New("something unexpected"),
+			expected: false,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, isRepeatable(p.err))
 		})
 	}
 }
