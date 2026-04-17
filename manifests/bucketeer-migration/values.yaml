@@ -1,5 +1,8 @@
 fullnameOverride: "bucketeer-migration"
 
+# Enable the migration job (set to false to disable)
+enabled: true
+
 annotations: {}
 
 image:
@@ -18,5 +21,23 @@ dbUrl:
 # The migration baseline
 # First revision
 dbBaseline: "20240626022133"
+
+# Database migration rollback configuration
+# WARNING: Rollback can cause data loss. Only use when necessary.
+rollback:
+  # Enable the rollback job (set to true to create the Job resource)
+  enabled: false
+
+  # Dry-run mode: If true, only previews changes without executing
+  # Set to false to actually execute the rollback
+  dryRun: true
+
+  # Rollback configuration
+  # Option 1: Rollback last N migrations
+  count: 1
+
+  # Option 2: Rollback to specific version (overrides count)
+  # Example: "20240815043128"
+  version: ""
 
 resources: {}
