@@ -107,17 +107,9 @@ export const getEnvironmentsByProjectId = (
 };
 
 export const getEditorEnvironments = (account: ConsoleAccount) => {
-  const isPrivileged =
-    account.isSystemAdmin ||
-    account.organizationRole === 'Organization_OWNER' ||
-    account.organizationRole === 'Organization_ADMIN';
-
-  const environmentsEditorRole = isPrivileged
-    ? account.environmentRoles
-    : account.environmentRoles.filter(
-        item => item.role === 'Environment_EDITOR'
-      );
-
+  const environmentsEditorRole = account.environmentRoles.filter(
+    item => item.role === 'Environment_EDITOR'
+  );
   const editorEnvironments = environmentsEditorRole.map(
     item => item.environment
   );
