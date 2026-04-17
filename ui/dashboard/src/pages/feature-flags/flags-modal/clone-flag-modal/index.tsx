@@ -169,7 +169,10 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
           invalidateFeatures(queryClient);
           onClose();
 
-          if (successes.length === 1 && destinationEnvironmentIds.length === 1) {
+          if (
+            successes.length === 1 &&
+            destinationEnvironmentIds.length === 1
+          ) {
             const targetEnvironment = formattedEnvironments.find(
               item => item.id === destinationEnvironmentIds[0]
             );
@@ -278,9 +281,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                           const envId = String(selectedValue);
                           const current = field.value;
                           if (current.includes(envId)) {
-                            field.onChange(
-                              current.filter(v => v !== envId)
-                            );
+                            field.onChange(current.filter(v => v !== envId));
                           } else {
                             field.onChange([...current, envId]);
                           }
