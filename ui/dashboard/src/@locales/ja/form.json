@@ -263,6 +263,7 @@
   },
   "origin-env": "元の環境",
   "destination-env": "複製先環境",
+  "destination-envs": "複製先環境",
   "comment-for-update": "更新コメント",
   "placeholder-comment": "コメントを入力",
   "placeholder-member-tags": "タグを使用してメンバーをチームとしてグループ化できます",

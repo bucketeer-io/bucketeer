@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
-import { featureClone } from '@api/features';
+import { featureBulkClone } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
@@ -25,7 +25,7 @@ import * as yup from 'yup';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import Dropdown from 'components/dropdown';
+import Dropdown, { DropdownValue } from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
@@ -42,7 +42,7 @@ export interface CloneFlagForm {
   id: string;
   name: string;
   originEnvironmentId: string;
-  destinationEnvironmentId: string;
+  destinationEnvironmentIds: string[];
 }
 
 const formSchema = ({ requiredMessage }: FormSchemaProps) =>
@@ -50,7 +50,11 @@ const formSchema = ({ requiredMessage }: FormSchemaProps) =>
     id: yup.string().required(requiredMessage),
     name: yup.string().required(requiredMessage),
     originEnvironmentId: yup.string().required(requiredMessage),
-    destinationEnvironmentId: yup.string().required(requiredMessage)
+    destinationEnvironmentIds: yup
+      .array()
+      .of(yup.string().required())
+      .min(1, requiredMessage)
+      .required(requiredMessage)
   });
 
 const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
@@ -88,7 +92,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
       id: feature?.id || '',
       name: feature?.name || '',
       originEnvironmentId: currentEnvironment?.id || emptyEnvironmentId || '',
-      destinationEnvironmentId: ''
+      destinationEnvironmentIds: [] as string[]
     }
   });
 
@@ -103,47 +107,90 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
     [formattedEnvironments, projects]
   );
 
+  const getEnvName = useCallback(
+    (environmentId: string) => {
+      const env = formattedEnvironments.find(item => item.id === environmentId);
+      return env?.name || environmentId;
+    },
+    [formattedEnvironments]
+  );
+
   const onSubmit: SubmitHandler<CloneFlagForm> = useCallback(
     async values => {
       try {
-        const { id, destinationEnvironmentId, originEnvironmentId } = values;
-        const resp = await featureClone({
+        const { id, destinationEnvironmentIds, originEnvironmentId } = values;
+        const resp = await featureBulkClone({
           id,
           environmentId: checkEnvironmentEmptyId(originEnvironmentId),
-          targetEnvironmentId: checkEnvironmentEmptyId(destinationEnvironmentId)
+          targetEnvironmentIds: destinationEnvironmentIds.map(envId =>
+            checkEnvironmentEmptyId(envId)
+          )
         });
 
         if (resp) {
-          notify({
-            message: t('message:collection-action-success', {
-              collection: t('common:source-type.feature-flag'),
-              action: t('cloned')
-            })
-          });
-          const targetEnvironment = formattedEnvironments.find(
-            item => item.id === destinationEnvironmentId
+          const results = resp.results || [];
+          const successes = results.filter(
+            r => r.status === 'BULK_CLONE_FEATURE_STATUS_SUCCESS'
           );
+          const alreadyExists = results.filter(
+            r => r.status === 'BULK_CLONE_FEATURE_STATUS_ALREADY_EXISTS'
+          );
+          const failures = results.filter(
+            r => r.status === 'BULK_CLONE_FEATURE_STATUS_FAILED'
+          );
+
+          if (successes.length > 0) {
+            notify({
+              message: t('message:collection-action-success', {
+                collection: t('common:source-type.feature-flag'),
+                action: t('cloned')
+              })
+            });
+          }
+
+          alreadyExists.forEach(r => {
+            notify({
+              messageType: 'warning',
+              message: t('message:bulk-clone-already-exists', {
+                env: getEnvName(r.environmentId)
+              })
+            });
+          });
+
+          failures.forEach(r => {
+            notify({
+              messageType: 'error',
+              message: t('message:bulk-clone-failed', {
+                env: getEnvName(r.environmentId)
+              })
+            });
+          });
+
           invalidateFeatures(queryClient);
           onClose();
-          if (targetEnvironment) {
-            setCurrentEnvIdStorage(targetEnvironment?.id);
-            setCurrentProjectEnvironmentStorage({
-              environmentId: targetEnvironment?.id,
-              projectId: targetEnvironment?.projectId
-            });
-            navigate(
-              `/${targetEnvironment?.urlCode}${PAGE_PATH_FEATURES}/${id}${PAGE_PATH_FEATURE_TARGETING}`,
-              {
-                replace: true
-              }
+
+          if (successes.length === 1 && destinationEnvironmentIds.length === 1) {
+            const targetEnvironment = formattedEnvironments.find(
+              item => item.id === destinationEnvironmentIds[0]
             );
+            if (targetEnvironment) {
+              setCurrentEnvIdStorage(targetEnvironment.id);
+              setCurrentProjectEnvironmentStorage({
+                environmentId: targetEnvironment.id,
+                projectId: targetEnvironment.projectId
+              });
+              navigate(
+                `/${targetEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}${PAGE_PATH_FEATURE_TARGETING}`,
+                { replace: true }
+              );
+            }
           }
         }
       } catch (error) {
         errorNotify(error);
       }
     },
-    [formattedEnvironments]
+    [formattedEnvironments, getEnvName]
   );
 
   useEffect(() => {
@@ -214,11 +261,11 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
 
               <Form.Field
                 control={form.control}
-                name={`destinationEnvironmentId`}
+                name={`destinationEnvironmentIds`}
                 render={({ field }) => (
                   <Form.Item className="py-2">
                     <Form.Label required>
-                      {t('form:destination-env')}
+                      {t('form:destination-envs')}
                     </Form.Label>
                     <Form.Control>
                       <EnvironmentEditorList
@@ -227,7 +274,17 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                         currentEnvironmentId={
                           currentEnvironment?.id || emptyEnvironmentId
                         }
-                        onSelectOption={field.onChange}
+                        onSelectOption={(selectedValue: DropdownValue) => {
+                          const envId = String(selectedValue);
+                          const current = field.value;
+                          if (current.includes(envId)) {
+                            field.onChange(
+                              current.filter(v => v !== envId)
+                            );
+                          } else {
+                            field.onChange([...current, envId]);
+                          }
+                        }}
                       />
                     </Form.Control>
                     <Form.Message />
