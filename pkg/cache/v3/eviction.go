@@ -14,6 +14,8 @@
 
 package v3
 
+import "fmt"
+
 type keyDeleter interface {
 	Delete(key string) error
 }
@@ -26,6 +28,6 @@ func evictKey(c interface{}, key string) error {
 	case keyDeleter:
 		return backing.Delete(key)
 	default:
-		return nil
+		return fmt.Errorf("cache: unsupported cache backend type %T for eviction", c)
 	}
 }

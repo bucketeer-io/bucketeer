@@ -33,8 +33,6 @@ import (
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
-const subscriberCacheEviction = "CacheEviction"
-
 var errCacheEvictionBadMessage = errors.New("cache eviction bad message")
 
 type cacheEviction struct {
