@@ -348,10 +348,9 @@ export const handleCheckSegmentRules = (
   segmentRules?.forEach(item => {
     const currentRule = featureRules?.find(rule => rule.id === item.id);
     if (!currentRule) ruleChanges.push(getRuleItem(item, 'CREATE'));
-
     const formattedRule = {
       ...currentRule,
-      clauses: currentRule?.clauses,
+      clauses: currentRule?.clauses?.map(item => omit(item, 'type')),
       strategy: handleGetStrategy(currentRule?.strategy, 1)
     } as FeatureRuleChange;
 
@@ -853,6 +852,80 @@ export const handleSwapRuleFeature = (
 
   return { ...feature, rules: newRules };
 };
+
+export const hasRulePositionChanged = (
+  ruleId: string,
+  originFeatures: Feature,
+  currentFeature: Feature
+) => {
+  const originIds = originFeatures.rules.map(r => r.id);
+  const currentIds = currentFeature.rules.map(r => r.id);
+
+  if (!originIds.includes(ruleId)) return false; // new rule itself
+
+  // Filter deleted rules from origin so deletions don't cause false positives.
+  // Keep new rules in currentIds so insertions before an existing rule are detected.
+  const survivingOriginIds = originIds.filter(id => currentIds.includes(id));
+
+  const originIndex = survivingOriginIds.indexOf(ruleId);
+  const currentIndex = currentIds.indexOf(ruleId);
+
+  return originIndex !== currentIndex;
+};
+
+export function normalizeSegmentRules(
+  featureRefRules: FeatureRule[],
+  segmentRules?: TargetingSchema['segmentRules'] | undefined
+) {
+  if (!segmentRules) return [];
+  return segmentRules.map(segRule => {
+    const originalRule = segRule.id
+      ? featureRefRules.find(rule => rule.id === segRule.id)
+      : undefined;
+    return {
+      ...segRule,
+      id: segRule.id ?? originalRule?.id,
+      clauses: segRule.clauses.map(clause => {
+        const originalClause =
+          clause.id && originalRule
+            ? originalRule.clauses.find(original => original.id === clause.id)
+            : undefined;
+        return {
+          ...clause,
+          id: clause.id ?? originalClause?.id
+        };
+      })
+    };
+  });
+}
+
+export function reorderWithReset(
+  originRules: FeatureRule[],
+  currentRules: FeatureRule[],
+  resetRuleId: string,
+  resetRule: FeatureRule
+): { reordered: FeatureRule[]; resetIndex: number } {
+  const withoutReset = currentRules.filter(r => r.id !== resetRuleId);
+  const currentIds = new Set(currentRules.map(r => r.id));
+
+  // Find the reset rule's target position among rules that survive in both
+  // origin and current (excluding deleted rules so they don't shift the index).
+  const survivingOriginIds = originRules
+    .map(r => r.id)
+    .filter(id => currentIds.has(id) || id === resetRuleId);
+
+  const resetIndex = survivingOriginIds.indexOf(resetRuleId);
+  if (resetIndex < 0) return { reordered: withoutReset, resetIndex };
+
+  // Map surviving-origin index back to an insertion point in withoutReset:
+  // count how many rules before resetRuleId in survivingOriginIds are present in withoutReset.
+  const precedingIds = survivingOriginIds.slice(0, resetIndex);
+  const insertAt = withoutReset.filter(r => precedingIds.includes(r.id)).length;
+
+  const reordered = [...withoutReset];
+  reordered.splice(insertAt, 0, resetRule);
+  return { reordered, resetIndex: insertAt };
+}
 
 const getAudienceChangeData = (
   strategy: FeatureRuleStrategy,

@@ -12,9 +12,12 @@ import {
 import { useTranslation } from 'i18n';
 import { isNil } from 'lodash';
 import { Feature, FeatureRuleStrategy } from '@types';
-import { IconInfo, IconToastWarning, IconWatch } from '@icons';
+import { IconArrowUpDown, IconInfo, IconToastWarning, IconWatch } from '@icons';
 import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
-import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
+import {
+  DiscardChangesStateData,
+  RuleOrders
+} from 'pages/feature-flag-details/targeting/types';
 import {
   checkDefaultRuleDiscardChanges,
   handleCheckIndividualDiscardChanges,
@@ -34,7 +37,8 @@ import DiscardChangeItems from '../discard-change-items';
 import {
   CustomRuleDiscardItem,
   IndividualDiscardItem,
-  PrerequisiteDiscardItem
+  PrerequisiteDiscardItem,
+  ReorderList
 } from '../discard-changes-modal';
 import {
   formSchema,
@@ -54,6 +58,7 @@ export type ConfirmationRequiredModalProps = {
     index: number,
     isAction: boolean
   ) => DiscardChangesStateData[];
+  onSegmentRuleReorder?: () => DiscardChangesStateData | null;
   onClose: () => void;
   onSubmit: (values: ConfirmRequiredValues) => Promise<void>;
 };
@@ -81,6 +86,7 @@ const ConfirmationRequiredModal = ({
   isShowRolloutWarning,
   onSegmentRuleDeleted,
   onSegmentRuleChannge,
+  onSegmentRuleReorder,
   onClose,
   onSubmit
 }: ConfirmationRequiredModalProps) => {
@@ -132,6 +138,10 @@ const ConfirmationRequiredModal = ({
     }
     return [];
   }, [onSegmentRuleDeleted]);
+
+  const segmentRuleReorderChange = useMemo(() => {
+    return onSegmentRuleReorder ? onSegmentRuleReorder() : null;
+  }, [onSegmentRuleReorder]);
 
   const segmentRulesChange = useMemo(() => {
     const change: {
@@ -206,6 +216,9 @@ const ConfirmationRequiredModal = ({
     // Count deleted rules
     deletes += segmentRuleDeletedChanges?.length ?? 0;
 
+    // Count reorder
+    if (segmentRuleReorderChange) updates++;
+
     // Count default rule changes
     defaultRulesChange?.forEach(item => {
       if (item.labelType === 'ADD') adds++;
@@ -219,7 +232,8 @@ const ConfirmationRequiredModal = ({
     defaultRulesChange,
     individualChange,
     prerequisiteChanges,
-    segmentRuleDeletedChanges
+    segmentRuleDeletedChanges,
+    segmentRuleReorderChange
   ]);
 
   const isShowChange = changeBreakdown.total;
@@ -268,7 +282,9 @@ const ConfirmationRequiredModal = ({
 
   const renderSegmentRuleChanges = (): ReactNode => {
     const showCustomRuleChange =
-      !!segmentRulesChange.length || !!segmentRuleDeletedChanges.length;
+      !!segmentRulesChange.length ||
+      !!segmentRuleDeletedChanges.length ||
+      !!segmentRuleReorderChange;
     if (!showCustomRuleChange) return null;
     return (
       <DiscardChangeItems title={t('common:custom-rule')}>
@@ -314,6 +330,17 @@ const ConfirmationRequiredModal = ({
                 </div>
               ))}
             </>
+          )}
+          {segmentRuleReorderChange?.ruleOrders && (
+            <div className="flex flex-col gap-2">
+              <div className="flex pb-1 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700">
+                <Icon icon={IconArrowUpDown} size="sm" color="gray-600" />
+                <Trans i18nKey="form:custom-rule-reorder-confirm-desc" />
+              </div>
+              <ReorderList
+                ruleOrders={segmentRuleReorderChange.ruleOrders as RuleOrders}
+              />
+            </div>
           )}
         </div>
       </DiscardChangeItems>
