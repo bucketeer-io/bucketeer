@@ -21,17 +21,13 @@ export const useFeatureFlagsLoader = ({
   const [cursor, setCursor] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [flags, setFlags] = useState<Feature[]>([]);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  /**
-   * Cache selected flags so labels persist across searches
-   */
   const [selectedFlagsCache, setSelectedFlagsCache] = useState<
     Map<string, Feature>
   >(new Map());
 
-  const { data, isLoading } = useQueryFeatures({
+  const { data, isLoading, isFetching } = useQueryFeatures({
     params: {
       cursor: String(cursor),
       pageSize,
@@ -67,7 +63,6 @@ export const useFeatureFlagsLoader = ({
   );
 
   const loadMore = useCallback(() => {
-    setIsLoadingMore(true);
     setCursor(prev => prev + pageSize);
   }, [pageSize]);
 
@@ -99,7 +94,6 @@ export const useFeatureFlagsLoader = ({
    * Cache flags for selected IDs
    */
   useEffect(() => {
-    setIsLoadingMore(false);
     if (!flags.length) return;
     setSelectedFlagsCache(prev => {
       const hasNewFlags = flags.some(f => !prev.has(f.id));
@@ -179,7 +173,7 @@ export const useFeatureFlagsLoader = ({
     allAvailableFlags,
     isLoading,
     hasMore,
-    isLoadingMore,
+    isLoadingMore: isFetching && cursor > 0,
     isInitialLoading,
     data,
     remainingFlagOptions,

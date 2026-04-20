@@ -47,7 +47,6 @@ const DefaultRule = ({
     const variations = feature.variations.map((item, index) => ({
       label: (
         <VariationLabel
-          asChild={false}
           label={item.name || item.value}
           index={index}
         />
