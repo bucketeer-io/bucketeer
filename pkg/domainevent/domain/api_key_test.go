@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	deproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestExtractAPIKeySecrets(t *testing.T) {
@@ -27,27 +27,27 @@ func TestExtractAPIKeySecrets(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		event       *domaineventproto.Event
+		event       *deproto.Event
 		expected    []string
 		expectError bool
 	}{
 		{
 			desc: "entity data only",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				EntityData: `{"api_key": "secret-1"}`,
 			},
 			expected: []string{"secret-1"},
 		},
 		{
 			desc: "previous entity data only",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				PreviousEntityData: `{"api_key": "old-secret"}`,
 			},
 			expected: []string{"old-secret"},
 		},
 		{
 			desc: "both with different secrets",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				EntityData:         `{"api_key": "new-secret"}`,
 				PreviousEntityData: `{"api_key": "old-secret"}`,
 			},
@@ -55,7 +55,7 @@ func TestExtractAPIKeySecrets(t *testing.T) {
 		},
 		{
 			desc: "both with same secret deduplicates",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				EntityData:         `{"api_key": "same-secret"}`,
 				PreviousEntityData: `{"api_key": "same-secret"}`,
 			},
@@ -63,26 +63,26 @@ func TestExtractAPIKeySecrets(t *testing.T) {
 		},
 		{
 			desc:     "empty entity data returns nil without error",
-			event:    &domaineventproto.Event{},
+			event:    &deproto.Event{},
 			expected: nil,
 		},
 		{
 			desc: "invalid JSON returns error",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				EntityData: `not json`,
 			},
 			expectError: true,
 		},
 		{
 			desc: "valid JSON but missing api_key field returns empty",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				EntityData: `{"name": "test"}`,
 			},
 			expected: nil,
 		},
 		{
 			desc: "one valid and one invalid snapshot returns the valid secret",
-			event: &domaineventproto.Event{
+			event: &deproto.Event{
 				EntityData:         `{"api_key": "good-secret"}`,
 				PreviousEntityData: `not json`,
 			},

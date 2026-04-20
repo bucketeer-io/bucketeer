@@ -18,15 +18,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	deproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 // ExtractAPIKeySecrets returns distinct API key secret strings from a domain
 // event's entity data snapshots. Both previous and current snapshots are
 // checked so that key rotations evict both the old and new secrets.
-// Returns an error if the JSON is malformed or the api_key field is missing
-// from all non-empty snapshots.
-func ExtractAPIKeySecrets(e *domaineventproto.Event) ([]string, error) {
+// Returns an error if all non-empty snapshots fail to parse as JSON. Snapshots
+// without an api_key field are ignored and do not cause an error.
+func ExtractAPIKeySecrets(e *deproto.Event) ([]string, error) {
 	seen := make(map[string]struct{})
 	var out []string
 	var lastErr error
