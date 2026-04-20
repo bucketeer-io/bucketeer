@@ -16,12 +16,12 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -106,14 +106,18 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 			zap.String("type", event.Type.String()),
 		)
 	case domaineventproto.Event_APIKEY:
-		secrets := apiKeySecretsForInvalidation(event)
-		if len(secrets) == 0 {
-			ci.logger.Warn(
-				"Skipping environment API key cache eviction; could not read api_key from entity data",
+		secrets, err := domaineventdomain.ExtractAPIKeySecrets(event)
+		if err != nil {
+			ci.logger.Error(
+				"Failed to extract api_key from entity data",
+				zap.Error(err),
 				zap.String("environmentId", event.EnvironmentId),
 				zap.String("entityId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
+			return
+		}
+		if len(secrets) == 0 {
 			return
 		}
 		for _, s := range secrets {
@@ -136,37 +140,4 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 			zap.String("type", event.Type.String()),
 		)
 	}
-}
-
-// apiKeySecretsForInvalidation returns distinct raw API key strings from domain event
-// entity snapshots (JSON of account.APIKey). Both previous and current are included so
-// a future rotation can evict the old and new secrets.
-func apiKeySecretsForInvalidation(e *domaineventproto.Event) []string {
-	seen := make(map[string]struct{})
-	var out []string
-	for _, raw := range []string{e.GetPreviousEntityData(), e.GetEntityData()} {
-		sec := apiKeySecretFromEntityJSON(raw)
-		if sec == "" {
-			continue
-		}
-		if _, ok := seen[sec]; ok {
-			continue
-		}
-		seen[sec] = struct{}{}
-		out = append(out, sec)
-	}
-	return out
-}
-
-func apiKeySecretFromEntityJSON(raw string) string {
-	if raw == "" {
-		return ""
-	}
-	var v struct {
-		APIKey string `json:"api_key"`
-	}
-	if err := json.Unmarshal([]byte(raw), &v); err != nil {
-		return ""
-	}
-	return v.APIKey
 }

@@ -16,7 +16,6 @@ package processor
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net"
 	"strings"
@@ -25,8 +24,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
-
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
@@ -144,15 +143,19 @@ func (c *cacheEviction) evict(event *domaineventproto.Event) error {
 			zap.String("type", event.Type.String()),
 		)
 	case domaineventproto.Event_APIKEY:
-		secrets := apiKeySecretsFromEvent(event)
-		if len(secrets) == 0 {
+		secrets, err := domaineventdomain.ExtractAPIKeySecrets(event)
+		if err != nil {
 			c.logger.Error(
-				"Skipping API key cache eviction; could not extract api_key from entity data",
+				"Failed to extract api_key from entity data",
+				zap.Error(err),
 				zap.String("environmentId", event.EnvironmentId),
 				zap.String("entityId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
 			return errCacheEvictionBadMessage
+		}
+		if len(secrets) == 0 {
+			return nil
 		}
 		for _, s := range secrets {
 			if err := c.environmentAPIKeyCache.Evict(s); err != nil {
@@ -214,36 +217,4 @@ func isRepeatable(err error) bool {
 		return true
 	}
 	return false
-}
-
-// apiKeySecretsFromEvent extracts distinct API key secrets from the domain
-// event's entity data snapshots (JSON of account.APIKey).
-func apiKeySecretsFromEvent(e *domaineventproto.Event) []string {
-	seen := make(map[string]struct{})
-	var out []string
-	for _, raw := range []string{e.GetPreviousEntityData(), e.GetEntityData()} {
-		sec := apiKeySecretFromJSON(raw)
-		if sec == "" {
-			continue
-		}
-		if _, ok := seen[sec]; ok {
-			continue
-		}
-		seen[sec] = struct{}{}
-		out = append(out, sec)
-	}
-	return out
-}
-
-func apiKeySecretFromJSON(raw string) string {
-	if raw == "" {
-		return ""
-	}
-	var v struct {
-		APIKey string `json:"api_key"`
-	}
-	if err := json.Unmarshal([]byte(raw), &v); err != nil {
-		return ""
-	}
-	return v.APIKey
 }

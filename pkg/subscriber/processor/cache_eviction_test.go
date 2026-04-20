@@ -215,66 +215,6 @@ func TestCacheEvictionHandleMessageNackOnRepeatableError(t *testing.T) {
 	assert.True(t, nacked)
 }
 
-func TestAPIKeySecretsFromEvent(t *testing.T) {
-	t.Parallel()
-
-	patterns := []struct {
-		desc     string
-		event    *domaineventproto.Event
-		expected []string
-	}{
-		{
-			desc: "entity data only",
-			event: &domaineventproto.Event{
-				EntityData: `{"api_key": "secret-1"}`,
-			},
-			expected: []string{"secret-1"},
-		},
-		{
-			desc: "previous entity data only",
-			event: &domaineventproto.Event{
-				PreviousEntityData: `{"api_key": "old-secret"}`,
-			},
-			expected: []string{"old-secret"},
-		},
-		{
-			desc: "both with different secrets",
-			event: &domaineventproto.Event{
-				EntityData:         `{"api_key": "new-secret"}`,
-				PreviousEntityData: `{"api_key": "old-secret"}`,
-			},
-			expected: []string{"old-secret", "new-secret"},
-		},
-		{
-			desc: "both with same secret deduplicates",
-			event: &domaineventproto.Event{
-				EntityData:         `{"api_key": "same-secret"}`,
-				PreviousEntityData: `{"api_key": "same-secret"}`,
-			},
-			expected: []string{"same-secret"},
-		},
-		{
-			desc:     "empty entity data",
-			event:    &domaineventproto.Event{},
-			expected: nil,
-		},
-		{
-			desc: "invalid JSON",
-			event: &domaineventproto.Event{
-				EntityData: `not json`,
-			},
-			expected: nil,
-		},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			result := apiKeySecretsFromEvent(p.event)
-			assert.Equal(t, p.expected, result)
-		})
-	}
-}
-
 func TestIsRepeatable(t *testing.T) {
 	t.Parallel()
 
