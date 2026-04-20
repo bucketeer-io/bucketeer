@@ -314,9 +314,19 @@ func TestIsRepeatable(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:     "net.Error without timeout is not repeatable",
+			desc:     "net.Error without timeout falls through to string check",
 			err:      &testNetError{timeout: false, msg: "some net error"},
 			expected: false,
+		},
+		{
+			desc:     "net.Error without timeout but with connection reset message is repeatable",
+			err:      &testNetError{timeout: false, msg: "read: connection reset by peer"},
+			expected: true,
+		},
+		{
+			desc:     "net.Error without timeout but with broken pipe message is repeatable",
+			err:      &testNetError{timeout: false, msg: "write: broken pipe"},
+			expected: true,
 		},
 		{
 			desc:     "error containing timeout string is repeatable",

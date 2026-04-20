@@ -202,8 +202,8 @@ func isRepeatable(err error) bool {
 		return false
 	}
 	var ne net.Error
-	if errors.As(err, &ne) {
-		return ne.Timeout()
+	if errors.As(err, &ne) && ne.Timeout() {
+		return true
 	}
 	msg := strings.ToLower(err.Error())
 	if strings.Contains(msg, "timeout") ||
