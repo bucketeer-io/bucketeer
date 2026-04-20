@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
+	"golang.org/x/oauth2/google"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub"
@@ -144,7 +145,16 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 		if options.projectID == "" {
 			return nil, fmt.Errorf("project ID is required for Google PubSub")
 		}
+		baseTS, err := google.DefaultTokenSource(ctx,
+			"https://www.googleapis.com/auth/pubsub",
+			"https://www.googleapis.com/auth/cloud-platform",
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to obtain default token source: %w", err)
+		}
+		rts := &resilientTokenSource{base: baseTS}
 		var googleOpts []pubsub.Option
+		googleOpts = append(googleOpts, pubsub.WithTokenSource(rts))
 		if options.metrics != nil {
 			googleOpts = append(googleOpts, pubsub.WithMetrics(options.metrics))
 		}

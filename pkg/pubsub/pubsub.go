@@ -23,6 +23,8 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/option"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/backoff"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
@@ -45,10 +47,11 @@ type Client struct {
 }
 
 type options struct {
-	backoff backoff.Backoff
-	retries int
-	metrics metrics.Registerer
-	logger  *zap.Logger
+	backoff     backoff.Backoff
+	retries     int
+	metrics     metrics.Registerer
+	logger      *zap.Logger
+	tokenSource oauth2.TokenSource
 }
 
 func defaultOptions() *options {
@@ -82,6 +85,12 @@ func WithMetrics(registerer metrics.Registerer) Option {
 func WithLogger(l *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = l
+	}
+}
+
+func WithTokenSource(ts oauth2.TokenSource) Option {
+	return func(opts *options) {
+		opts.tokenSource = ts
 	}
 }
 
@@ -142,13 +151,17 @@ func WithPublishTimeout(timeout time.Duration) PublishOption {
 }
 
 func NewClient(ctx context.Context, project string, opts ...Option) (*Client, error) {
-	c, err := pubsub.NewClient(ctx, project)
-	if err != nil {
-		return nil, err
-	}
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt(options)
+	}
+	var clientOpts []option.ClientOption
+	if options.tokenSource != nil {
+		clientOpts = append(clientOpts, option.WithTokenSource(options.tokenSource))
+	}
+	c, err := pubsub.NewClient(ctx, project, clientOpts...)
+	if err != nil {
+		return nil, err
 	}
 	return &Client{
 		Client: c,
