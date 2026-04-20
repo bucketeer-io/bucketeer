@@ -399,10 +399,6 @@ func ConstructCountQuery(baseQuery string, options *ListOptions) (query string, 
 	return baseQuery, []interface{}{}
 }
 
-type Orders struct {
-	Orders []*Order
-}
-
 const (
 	QueryNoLimit  = 0
 	QueryNoOffset = 0
