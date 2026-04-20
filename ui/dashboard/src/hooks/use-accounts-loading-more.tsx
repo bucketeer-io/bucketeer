@@ -20,6 +20,7 @@ export const useAccountsLoader = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [emails, setEmails] = useState<string[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
 
   const { data, isLoading, isFetching } = useQueryAccounts({
     params: {
@@ -35,6 +36,8 @@ export const useAccountsLoader = ({
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
+        setEmails([]);
+        setHasMore(true);
         setCursor(0);
         setSearchQuery(value);
       }, 300),
@@ -45,9 +48,11 @@ export const useAccountsLoader = ({
     (value: string) => {
       if (!value) {
         debouncedSearch.cancel();
+        setIsTyping(false);
         setCursor(0);
         setSearchQuery('');
       } else {
+        setIsTyping(true);
         debouncedSearch(value);
       }
     },
@@ -61,6 +66,7 @@ export const useAccountsLoader = ({
   useEffect(() => {
     if (!data?.accounts) return;
 
+    setIsTyping(false);
     setEmails(prev => {
       if (cursor === 0) {
         return data.accounts.map(a => a.email);
@@ -71,12 +77,11 @@ export const useAccountsLoader = ({
         .filter(e => !existingSet.has(e));
       return newEmails.length ? [...prev, ...newEmails] : prev;
     });
-  }, [data]);
 
-  useEffect(() => {
-    const total = Number(data?.totalCount ?? 0);
-    const nextCursor = cursor + pageSize;
-    setHasMore(nextCursor < total);
+    if (data.totalCount != null) {
+      const total = Number(data.totalCount);
+      setHasMore(cursor + pageSize < total);
+    }
   }, [data, cursor, pageSize]);
 
   useEffect(() => {
@@ -93,6 +98,8 @@ export const useAccountsLoader = ({
   const isInitialLoading =
     isLoading && !searchQuery && cursor === 0 && emails.length === 0;
 
+  const isSearching = isTyping || (isFetching && cursor === 0 && !!searchQuery);
+
   return {
     emails,
     emailOptions,
@@ -100,6 +107,7 @@ export const useAccountsLoader = ({
     hasMore,
     isLoadingMore: isFetching && cursor > 0,
     isInitialLoading,
+    isSearching,
     loadMore,
     onSearchChange
   };

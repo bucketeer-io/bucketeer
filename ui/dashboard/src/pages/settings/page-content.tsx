@@ -52,6 +52,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
     emailOptions,
     isInitialLoading: isLoadingAccounts,
     isLoadingMore,
+    isSearching,
     hasMore,
     loadMore,
     onSearchChange
@@ -185,6 +186,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                       disabled={disabled}
                       isHasMore={hasMore}
                       isLoadingMore={isLoadingMore}
+                      isSearching={isSearching}
                       onHasMoreOptions={loadMore}
                       onSelectOption={value => field.onChange(value)}
                       onSearchChange={onSearchChange}

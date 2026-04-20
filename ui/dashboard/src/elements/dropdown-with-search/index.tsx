@@ -46,6 +46,7 @@ export interface DropdownMenuWithSearchProps {
   maxOptions?: number;
   isHasMore?: boolean;
   isLoadingMore?: boolean;
+  isSearching?: boolean;
   onHasMoreOptions?: () => void;
   notFoundOption?: (
     value: string,
@@ -94,6 +95,7 @@ const DropdownMenuWithSearch = ({
   maxOptions = 15,
   isHasMore,
   isLoadingMore,
+  isSearching,
   onHasMoreOptions,
   notFoundOption,
   additionalElement,
@@ -205,7 +207,11 @@ const DropdownMenuWithSearch = ({
             })
           }
         />
-        {dropdownOptions?.length > 0 ? (
+        {isSearching ? (
+          <div className="flex-center w-full h-[200px]">
+            <Spinner size="sm" />
+          </div>
+        ) : dropdownOptions?.length > 0 ? (
           <>
             <DropdownList
               options={dropdownOptions}
