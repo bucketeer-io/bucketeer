@@ -48,8 +48,11 @@ func ExtractAPIKeySecrets(e *deproto.Event) ([]string, error) {
 		seen[sec] = struct{}{}
 		out = append(out, sec)
 	}
-	if len(out) == 0 && lastErr != nil {
-		return nil, fmt.Errorf("failed to extract api_key from entity data: %w", lastErr)
+	if lastErr != nil {
+		if len(out) == 0 {
+			return nil, fmt.Errorf("failed to extract api_key from entity data: %w", lastErr)
+		}
+		return out, fmt.Errorf("partially failed to extract api_key from entity data: %w", lastErr)
 	}
 	return out, nil
 }

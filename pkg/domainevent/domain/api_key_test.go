@@ -81,12 +81,13 @@ func TestExtractAPIKeySecrets(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "one valid and one invalid snapshot returns the valid secret",
+			desc: "one valid and one invalid snapshot returns secret with error",
 			event: &deproto.Event{
 				EntityData:         `{"api_key": "good-secret"}`,
 				PreviousEntityData: `not json`,
 			},
-			expected: []string{"good-secret"},
+			expected:    []string{"good-secret"},
+			expectError: true,
 		},
 	}
 
@@ -95,9 +96,9 @@ func TestExtractAPIKeySecrets(t *testing.T) {
 			result, err := ExtractAPIKeySecrets(p.event)
 			if p.expectError {
 				assert.Error(t, err)
-				return
+			} else {
+				assert.NoError(t, err)
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, p.expected, result)
 		})
 	}

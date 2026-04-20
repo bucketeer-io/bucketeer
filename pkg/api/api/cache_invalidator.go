@@ -108,14 +108,24 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 	case domaineventproto.Event_APIKEY:
 		secrets, err := domaineventdomain.ExtractAPIKeySecrets(event)
 		if err != nil {
-			ci.logger.Error(
-				"Failed to extract api_key from entity data",
-				zap.Error(err),
-				zap.String("environmentId", event.EnvironmentId),
-				zap.String("entityId", event.EntityId),
-				zap.String("type", event.Type.String()),
-			)
-			return
+			if len(secrets) > 0 {
+				ci.logger.Warn(
+					"Partially failed to extract api_key from entity data; evicting available secrets",
+					zap.Error(err),
+					zap.String("environmentId", event.EnvironmentId),
+					zap.String("entityId", event.EntityId),
+					zap.String("type", event.Type.String()),
+				)
+			} else {
+				ci.logger.Error(
+					"Failed to extract api_key from entity data",
+					zap.Error(err),
+					zap.String("environmentId", event.EnvironmentId),
+					zap.String("entityId", event.EntityId),
+					zap.String("type", event.Type.String()),
+				)
+				return
+			}
 		}
 		if len(secrets) == 0 {
 			return
