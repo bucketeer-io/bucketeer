@@ -34,7 +34,7 @@ type resilientTokenSource struct {
 
 func (s *resilientTokenSource) Token() (*oauth2.Token, error) {
 	tok, err := s.base.Token()
-	if err == nil {
+	if err == nil && tok != nil {
 		s.mu.Lock()
 		s.lastGood = tok
 		s.mu.Unlock()
@@ -42,7 +42,8 @@ func (s *resilientTokenSource) Token() (*oauth2.Token, error) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.lastGood != nil && time.Now().Before(s.lastGood.Expiry) {
+	if s.lastGood != nil &&
+		(s.lastGood.Expiry.IsZero() || time.Now().Before(s.lastGood.Expiry)) {
 		return s.lastGood, nil
 	}
 	return nil, err

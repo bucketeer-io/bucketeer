@@ -33,90 +33,100 @@ func (s *stubTokenSource) Token() (*oauth2.Token, error) {
 	return s.tok, s.err
 }
 
-func TestResilientTokenSource_DelegatesOnSuccess(t *testing.T) {
-	want := &oauth2.Token{
-		AccessToken: "good",
-		Expiry:      time.Now().Add(time.Hour),
-	}
-	rts := &resilientTokenSource{base: &stubTokenSource{tok: want}}
+func TestResilientTokenSource(t *testing.T) {
+	t.Parallel()
+	errRefused := errors.New("connection refused")
 
-	got, err := rts.Token()
-	require.NoError(t, err)
-	assert.Equal(t, want.AccessToken, got.AccessToken)
-}
-
-func TestResilientTokenSource_FallsBackToCachedToken(t *testing.T) {
-	good := &oauth2.Token{
-		AccessToken: "cached",
-		Expiry:      time.Now().Add(time.Hour),
-	}
-	base := &stubTokenSource{tok: good}
-	rts := &resilientTokenSource{base: base}
-
-	// First call succeeds and caches.
-	_, err := rts.Token()
-	require.NoError(t, err)
-
-	// Base starts failing (metadata server gone).
-	base.tok = nil
-	base.err = errors.New("connection refused")
-
-	got, err := rts.Token()
-	require.NoError(t, err)
-	assert.Equal(t, "cached", got.AccessToken)
-}
-
-func TestResilientTokenSource_FailsWhenCachedTokenExpired(t *testing.T) {
-	expired := &oauth2.Token{
-		AccessToken: "old",
-		Expiry:      time.Now().Add(-time.Minute),
-	}
-	base := &stubTokenSource{tok: expired}
-	rts := &resilientTokenSource{base: base}
-
-	// Cache an already-expired token.
-	_, _ = rts.Token()
-
-	// Base starts failing.
-	base.tok = nil
-	base.err = errors.New("connection refused")
-
-	_, err := rts.Token()
-	assert.Error(t, err)
-}
-
-func TestResilientTokenSource_UpdatesCacheOnNewToken(t *testing.T) {
-	tok1 := &oauth2.Token{
-		AccessToken: "v1",
-		Expiry:      time.Now().Add(time.Hour),
-	}
-	tok2 := &oauth2.Token{
-		AccessToken: "v2",
-		Expiry:      time.Now().Add(2 * time.Hour),
+	validToken := func(access string, expiry time.Duration) *oauth2.Token {
+		return &oauth2.Token{AccessToken: access, Expiry: time.Now().Add(expiry)}
 	}
 
-	base := &stubTokenSource{tok: tok1}
-	rts := &resilientTokenSource{base: base}
+	tests := []struct {
+		desc    string
+		setup   func(base *stubTokenSource, rts *resilientTokenSource)
+		baseTok *oauth2.Token
+		baseErr error
+		wantTok string
+		wantErr bool
+	}{
+		{
+			desc:    "delegates to base on success",
+			baseTok: validToken("good", time.Hour),
+			wantTok: "good",
+		},
+		{
+			desc: "falls back to cached token when base fails",
+			setup: func(base *stubTokenSource, rts *resilientTokenSource) {
+				base.tok = validToken("cached", time.Hour)
+				_, _ = rts.Token()
+			},
+			baseErr: errRefused,
+			wantTok: "cached",
+		},
+		{
+			desc: "fails when cached token is expired",
+			setup: func(base *stubTokenSource, rts *resilientTokenSource) {
+				base.tok = validToken("old", -time.Minute)
+				_, _ = rts.Token()
+			},
+			baseErr: errRefused,
+			wantErr: true,
+		},
+		{
+			desc: "updates cache and returns latest on fallback",
+			setup: func(base *stubTokenSource, rts *resilientTokenSource) {
+				base.tok = validToken("v1", time.Hour)
+				_, _ = rts.Token()
+				base.tok = validToken("v2", 2*time.Hour)
+				_, _ = rts.Token()
+			},
+			baseErr: errRefused,
+			wantTok: "v2",
+		},
+		{
+			desc:    "no cache falls through with error",
+			baseErr: errors.New("no credentials"),
+			wantErr: true,
+		},
+		{
+			desc: "nil token from base does not overwrite cache",
+			setup: func(base *stubTokenSource, rts *resilientTokenSource) {
+				base.tok = validToken("cached", time.Hour)
+				_, _ = rts.Token()
+			},
+			// base returns (nil, nil)
+			wantTok: "cached",
+		},
+		{
+			desc: "zero expiry treated as never expires",
+			setup: func(base *stubTokenSource, rts *resilientTokenSource) {
+				base.tok = &oauth2.Token{AccessToken: "forever"}
+				_, _ = rts.Token()
+			},
+			baseErr: errRefused,
+			wantTok: "forever",
+		},
+	}
 
-	got1, _ := rts.Token()
-	assert.Equal(t, "v1", got1.AccessToken)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
+			base := &stubTokenSource{}
+			rts := &resilientTokenSource{base: base}
 
-	base.tok = tok2
-	got2, _ := rts.Token()
-	assert.Equal(t, "v2", got2.AccessToken)
+			if tt.setup != nil {
+				tt.setup(base, rts)
+			}
+			base.tok = tt.baseTok
+			base.err = tt.baseErr
 
-	// Fail base — should return v2, not v1.
-	base.tok = nil
-	base.err = errors.New("fail")
-	got3, err := rts.Token()
-	require.NoError(t, err)
-	assert.Equal(t, "v2", got3.AccessToken)
-}
-
-func TestResilientTokenSource_NoCacheFallsThrough(t *testing.T) {
-	base := &stubTokenSource{err: errors.New("no credentials")}
-	rts := &resilientTokenSource{base: base}
-
-	_, err := rts.Token()
-	assert.Error(t, err)
+			got, err := rts.Token()
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantTok, got.AccessToken)
+		})
+	}
 }
