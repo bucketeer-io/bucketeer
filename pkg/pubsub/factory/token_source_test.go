@@ -98,6 +98,11 @@ func TestResilientTokenSource(t *testing.T) {
 			wantTok: "cached",
 		},
 		{
+			desc: "nil token from base with no cache returns error",
+			// base returns (nil, nil), no prior cache
+			wantErr: true,
+		},
+		{
 			desc: "zero expiry treated as never expires",
 			setup: func(base *stubTokenSource, rts *resilientTokenSource) {
 				base.tok = &oauth2.Token{AccessToken: "forever"}

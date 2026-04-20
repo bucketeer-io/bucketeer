@@ -15,11 +15,14 @@
 package factory
 
 import (
+	"errors"
 	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
 )
+
+var errTokenNil = errors.New("resilientTokenSource: base returned nil token")
 
 // resilientTokenSource wraps an oauth2.TokenSource and returns the last
 // successfully fetched token when the underlying source cannot refresh
@@ -46,5 +49,8 @@ func (s *resilientTokenSource) Token() (*oauth2.Token, error) {
 		(s.lastGood.Expiry.IsZero() || time.Now().Before(s.lastGood.Expiry)) {
 		return s.lastGood, nil
 	}
-	return nil, err
+	if err != nil {
+		return nil, err
+	}
+	return nil, errTokenNil
 }
