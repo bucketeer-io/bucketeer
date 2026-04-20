@@ -71,6 +71,8 @@ TZ=UTC CGO_ENABLED=0 go test -v ./pkg/feature/...
 TZ=UTC CGO_ENABLED=0 go test -v -run TestFoo ./pkg/feature/domain/
 ```
 
+Tests use a table-driven format (`[]struct{ ... }` test cases iterated with `t.Run`). Follow this pattern when adding new tests.
+
 ### Lint
 ```bash
 make lint              # golangci-lint on cmd/, pkg/, evaluation/go/, hack/, test/
@@ -80,8 +82,12 @@ make gofmt             # Format with goimports (run after any Go changes)
 ### Code generation
 ```bash
 make generate-all      # Regenerate proto Go files + mocks (runs proto-all + mockgen)
+make proto-all         # Regenerate only proto Go files + OpenAPI/Swagger specs
+make mockgen           # Regenerate only mocks (after changing interfaces that have mocks)
 ```
-`generate-all` must be run after any `.proto` file changes. The generated files are committed to the repo. `protoc` v23.4 must be on PATH ahead of any other version for the version header in `.pb.go` files to stay at `v4.23.4`.
+- Run `make proto-all` after any `.proto` file change — this regenerates Go bindings and OpenAPI/Swagger specs.
+- Run `make mockgen` after changing any Go interface that has generated mocks in a `mock/` directory.
+- The generated files are committed to the repo. `protoc` v23.4 must be on PATH ahead of any other version for the version header in `.pb.go` files to stay at `v4.23.4`.
 
 ### Local development
 
