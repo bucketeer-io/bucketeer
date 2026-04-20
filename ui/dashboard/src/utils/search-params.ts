@@ -2,14 +2,14 @@ import { useCallback, useMemo } from 'react';
 import { NavigateOptions, useLocation, useNavigate } from 'react-router';
 import queryString, { ParsedQuery } from 'query-string';
 
-export type SearchParams = ParsedQuery<string>;
+export type SearchParams = ParsedQuery<string | boolean>;
 
 export function useSearchParams() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const searchOptions = useMemo<SearchParams>((): SearchParams => {
-    return queryString.parse(location.search);
+    return queryString.parse(location.search, { parseBooleans: true });
   }, [location.search, location.pathname]);
 
   const onChangSearchParams = useCallback(
