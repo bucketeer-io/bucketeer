@@ -32,33 +32,26 @@ export const useAccountsLoader = ({
     }
   });
 
-  const resetSearchState = useCallback(() => {
-    setEmails([]);
-    setHasMore(true);
-  }, []);
-
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
-        resetSearchState();
         setCursor(0);
         setSearchQuery(value);
       }, 300),
-    [resetSearchState]
+    []
   );
 
   const onSearchChange = useCallback(
     (value: string) => {
       if (!value) {
         debouncedSearch.cancel();
-        resetSearchState();
         setCursor(0);
         setSearchQuery('');
       } else {
         debouncedSearch(value);
       }
     },
-    [debouncedSearch, resetSearchState]
+    [debouncedSearch]
   );
 
   const loadMore = useCallback(() => {
