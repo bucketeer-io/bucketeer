@@ -188,7 +188,7 @@ func (f *Feature) validateAllChanges(
 	// Optional early validation of ruleOrder against current post-general-update state.
 	// Since CRUD hasn't been applied yet, we validate ruleOrder structure only here.
 	// Membership/length are still authoritatively checked in applyRuleOrder after CRUD.
-	if err := validateRuleOrderShape(ruleOrder); err != nil {
+	if err := f.validateRuleOrderShape(ruleOrder); err != nil {
 		return err
 	}
 
@@ -840,7 +840,7 @@ func (f *Feature) validateTagChanges(changes []*feature.TagChange) error {
 	return nil
 }
 
-func validateRuleOrderShape(ruleOrder []string) error {
+func (f *Feature) validateRuleOrderShape(ruleOrder []string) error {
 	if len(ruleOrder) == 0 {
 		return nil
 	}
