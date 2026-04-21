@@ -79,8 +79,7 @@ export const getCurrentProject = (
 };
 
 export const hasEditable = (account: ConsoleAccount): boolean => {
-  if (account.isSystemAdmin) return true;
-
+  if (!account.environmentRoles?.length) return false;
   const envRole = currentEnvironmentRole(account);
   return envRole.role === 'Environment_EDITOR';
 };

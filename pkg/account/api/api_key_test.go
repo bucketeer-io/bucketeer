@@ -53,7 +53,17 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			desc:          "errMissingAPIKeyName",
+			desc: "errMissingAPIKeyName",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@bucketeer.io",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
 				Name: "",
@@ -63,6 +73,14 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@bucketeer.io",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
@@ -77,6 +95,14 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@bucketeer.io",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAPIKey(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)

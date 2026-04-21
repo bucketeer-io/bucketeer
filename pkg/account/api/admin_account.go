@@ -89,7 +89,6 @@ func (s *AccountService) GetMe(
 		return nil, err
 	}
 	if sysAdminAccount != nil && !sysAdminAccount.Disabled {
-		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 		lastSeen := sysAdminAccount.LastSeen
 
 		if updated, err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId); err != nil {
@@ -131,6 +130,25 @@ func (s *AccountService) GetMe(
 			}
 		}
 
+		// Resolve the system admin's role in the requested org. If they have an account
+		// there (i.e. they joined as a member), use their actual roles so the UI correctly
+		// enables or disables write actions. When they are not a member, return viewer-only
+		// access so the console shows read-only UI.
+		var orgRole accountproto.AccountV2_Role_Organization
+		var envRoles []*accountproto.ConsoleAccount_EnvironmentRole
+		orgAccount, orgErr := s.accountStorage.GetAccountV2(ctx, t.Email, req.OrganizationId)
+		if orgErr == nil && !orgAccount.Disabled {
+			orgRole = orgAccount.OrganizationRole
+			if orgAccount.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
+				envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
+			} else {
+				envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+			}
+		} else {
+			orgRole = accountproto.AccountV2_Role_Organization_UNASSIGNED
+			envRoles = s.getAllEnvironmentRoles(environments, projects, accountproto.AccountV2_Role_Environment_VIEWER)
+		}
+
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            sysAdminAccount.Email,
 			Name:             sysAdminAccount.Name,
@@ -139,8 +157,8 @@ func (s *AccountService) GetMe(
 			AvatarImage:      sysAdminAccount.AvatarImage,
 			IsSystemAdmin:    true,
 			Organization:     organization,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: adminEnvRoles,
+			OrganizationRole: orgRole,
+			EnvironmentRoles: envRoles,
 			SearchFilters:    sysAdminAccount.SearchFilters,
 			FirstName:        sysAdminAccount.FirstName,
 			LastName:         sysAdminAccount.LastName,
@@ -227,6 +245,14 @@ func (s *AccountService) getAdminConsoleAccountEnvironmentRoles(
 	environments []*environmentproto.EnvironmentV2,
 	projects []*environmentproto.Project,
 ) []*accountproto.ConsoleAccount_EnvironmentRole {
+	return s.getAllEnvironmentRoles(environments, projects, accountproto.AccountV2_Role_Environment_EDITOR)
+}
+
+func (s *AccountService) getAllEnvironmentRoles(
+	environments []*environmentproto.EnvironmentV2,
+	projects []*environmentproto.Project,
+	role accountproto.AccountV2_Role_Environment,
+) []*accountproto.ConsoleAccount_EnvironmentRole {
 	projectSet := s.makeProjectSet(projects)
 	environmentRoles := make([]*accountproto.ConsoleAccount_EnvironmentRole, 0, len(environments))
 	for _, e := range environments {
@@ -237,12 +263,11 @@ func (s *AccountService) getAdminConsoleAccountEnvironmentRoles(
 		if !ok || p.Disabled {
 			continue
 		}
-		er := &accountproto.ConsoleAccount_EnvironmentRole{
+		environmentRoles = append(environmentRoles, &accountproto.ConsoleAccount_EnvironmentRole{
 			Environment: e,
 			Project:     p,
-			Role:        accountproto.AccountV2_Role_Environment_EDITOR,
-		}
-		environmentRoles = append(environmentRoles, er)
+			Role:        role,
+		})
 	}
 	return environmentRoles
 }

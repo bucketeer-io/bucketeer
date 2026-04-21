@@ -550,12 +550,12 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 			expectedLogCount: 0,
 		},
 		{
-			desc:          "success: system admin bypasses role check",
+			desc:          "success: system admin bypasses role check for viewer",
 			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
-			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			requiredRole:  accountproto.AccountV2_Role_Environment_VIEWER,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
-				t.Fatal("getAccountFunc should not be called for system admin")
+				t.Fatal("getAccountFunc should not be called for system admin viewer check")
 				return nil, nil
 			},
 			expected: &eventproto.Editor{
@@ -565,6 +565,46 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 			},
 			expectedErr:      nil,
 			expectedLogCount: 0,
+		},
+		{
+			desc:          "success: system admin with editor role as org member",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email:            email,
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+					},
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email:   "admin@example.com",
+				Name:    "admin",
+				IsAdmin: true,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+			},
+			expectedErr:      nil,
+			expectedLogCount: 0,
+		},
+		{
+			desc:          "permission denied: system admin not a member tries to write",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:         nil,
+			expectedErr:      errCustomPermissionDenied,
+			expectedLogCount: 1,
+			expectedLogMsg:   "Permission denied",
+			expectedEmail:    "admin@example.com",
 		},
 	}
 	for _, p := range patterns {
@@ -736,12 +776,12 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 			expectedLogCount: 0,
 		},
 		{
-			desc:           "success: system admin bypasses role check",
+			desc:           "success: system admin bypasses role check for member-level",
 			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
-			requiredRole:   accountproto.AccountV2_Role_Organization_OWNER,
+			requiredRole:   accountproto.AccountV2_Role_Organization_MEMBER,
 			organizationID: "org0",
 			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
-				t.Fatal("getAccountFunc should not be called for system admin")
+				t.Fatal("getAccountFunc should not be called for system admin member check")
 				return nil, nil
 			},
 			expected: &eventproto.Editor{
@@ -751,6 +791,42 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 			},
 			expectedErr:      nil,
 			expectedLogCount: 0,
+		},
+		{
+			desc:           "success: system admin with admin role as org member",
+			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			requiredRole:   accountproto.AccountV2_Role_Organization_ADMIN,
+			organizationID: "org0",
+			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email:            "admin@example.com",
+				Name:             "admin",
+				IsAdmin:          true,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			},
+			expectedErr:      nil,
+			expectedLogCount: 0,
+		},
+		{
+			desc:           "permission denied: system admin not a member tries admin operation",
+			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			requiredRole:   accountproto.AccountV2_Role_Organization_ADMIN,
+			organizationID: "org0",
+			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:         nil,
+			expectedErr:      errCustomPermissionDenied,
+			expectedLogCount: 1,
+			expectedLogMsg:   "Permission denied",
+			expectedEmail:    "admin@example.com",
 		},
 	}
 	for _, p := range patterns {

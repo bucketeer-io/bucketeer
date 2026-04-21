@@ -407,6 +407,10 @@ func TestGetMeMySQL(t *testing.T) {
 							return nil
 						},
 					),
+					// membership check: system admin has an account in the requested org
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(orgAccount, nil),
 				)
 			},
 			input: &accountproto.GetMeRequest{
@@ -419,7 +423,7 @@ func TestGetMeMySQL(t *testing.T) {
 					AvatarUrl:        "avatar.png",
 					IsSystemAdmin:    true,
 					Organization:     &org,
-					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
 					EnvironmentRoles: []*accountproto.ConsoleAccount_EnvironmentRole{
 						{
 							Environment: &environmentproto.EnvironmentV2{
@@ -540,6 +544,10 @@ func TestGetMeMySQL(t *testing.T) {
 							return nil
 						},
 					),
+					// membership check: system admin has no account in the requested org
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(nil, v2as.ErrAccountNotFound),
 				)
 			},
 			input: &accountproto.GetMeRequest{
@@ -547,11 +555,12 @@ func TestGetMeMySQL(t *testing.T) {
 			},
 			expected: &accountproto.GetMeResponse{
 				Account: &accountproto.ConsoleAccount{
-					Email:            "bucketeer@example.com",
-					Name:             "System Admin",
-					IsSystemAdmin:    true,
-					Organization:     &org,
-					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					Email:         "bucketeer@example.com",
+					Name:          "System Admin",
+					IsSystemAdmin: true,
+					Organization:  &org,
+					// not a member: viewer-only access
+					OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
 					EnvironmentRoles: []*accountproto.ConsoleAccount_EnvironmentRole{
 						{
 							Environment: &environmentproto.EnvironmentV2{
@@ -562,7 +571,7 @@ func TestGetMeMySQL(t *testing.T) {
 							Project: &environmentproto.Project{
 								Id: "pj0",
 							},
-							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+							Role: accountproto.AccountV2_Role_Environment_VIEWER,
 						},
 						{
 							Environment: &environmentproto.EnvironmentV2{
@@ -573,7 +582,7 @@ func TestGetMeMySQL(t *testing.T) {
 							Project: &environmentproto.Project{
 								Id: "pj0",
 							},
-							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+							Role: accountproto.AccountV2_Role_Environment_VIEWER,
 						},
 					},
 					SearchFilters: []*accountproto.SearchFilter{
