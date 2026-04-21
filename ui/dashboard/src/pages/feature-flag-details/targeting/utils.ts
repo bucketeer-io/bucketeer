@@ -1272,7 +1272,7 @@ export const handleCheckRuleDeleted = (
 };
 
 /**
- * Computes the rule_order to send to the backend.
+ * Computes the ordered_rule_ids to send to the backend.
  * Returns the ordered list of rule IDs from the current form state if the order
  * has changed from the server state (or if rules were added/removed), otherwise
  * returns undefined (no reorder needed).

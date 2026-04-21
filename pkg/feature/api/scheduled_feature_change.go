@@ -962,9 +962,9 @@ func (s *FeatureService) validateScheduledChangePayload(
 		}
 	}
 
-	// Validate rule_order: if provided, must exactly match the post-change rule set.
+	// Validate ordered_rule_ids: if provided, must exactly match the post-change rule set.
 	// Build the expected rule IDs by applying CREATE/DELETE changes to the current rules.
-	if len(payload.RuleOrder) > 0 {
+	if len(payload.OrderedRuleIds) > 0 {
 		expectedRuleIDs := make(map[string]struct{}, len(feature.Rules)+len(payload.RuleChanges))
 		for _, rule := range feature.Rules {
 			if rule != nil && rule.Id != "" {
@@ -972,9 +972,6 @@ func (s *FeatureService) validateScheduledChangePayload(
 			}
 		}
 		for _, rc := range payload.RuleChanges {
-			if rc.Rule == nil || rc.Rule.Id == "" {
-				continue
-			}
 			switch rc.ChangeType {
 			case ftproto.ChangeType_CREATE:
 				expectedRuleIDs[rc.Rule.Id] = struct{}{}
@@ -982,13 +979,10 @@ func (s *FeatureService) validateScheduledChangePayload(
 				delete(expectedRuleIDs, rc.Rule.Id)
 			}
 		}
-		if len(payload.RuleOrder) != len(expectedRuleIDs) {
+		if len(payload.OrderedRuleIds) != len(expectedRuleIDs) {
 			return statusInvalidRuleOrder.Err()
 		}
-		for _, id := range payload.RuleOrder {
-			if id == "" {
-				return statusInvalidRuleOrder.Err()
-			}
+		for _, id := range payload.OrderedRuleIds {
 			if _, ok := expectedRuleIDs[id]; !ok {
 				return statusInvalidRuleOrder.Err()
 			}
@@ -1145,7 +1139,7 @@ func convertPayloadToUpdateRequest(
 		Archived:            payload.Archived,
 		ResetSamplingSeed:   payload.ResetSamplingSeed,
 		Maintainer:          payload.Maintainer,
-		RuleOrder:           payload.RuleOrder,
+		OrderedRuleIds:      payload.OrderedRuleIds,
 	}
 	return req
 }

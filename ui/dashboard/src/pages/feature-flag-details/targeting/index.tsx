@@ -402,7 +402,7 @@ const TargetingPage = ({
 
       const ruleOrder = computeRuleOrder(rules, segmentRules);
       if (ruleOrder) {
-        payload.ruleOrder = ruleOrder;
+        payload.orderedRuleIds = ruleOrder;
       }
 
       const targetChanges = handleCheckIndividualRules(
@@ -619,7 +619,7 @@ const TargetingPage = ({
               enabled,
               defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
               ruleChanges: handleCheckSegmentRules(rules, segmentRules),
-              ruleOrder: computeRuleOrder(rules, segmentRules) ?? [],
+              orderedRuleIds: computeRuleOrder(rules, segmentRules) ?? [],
               targetChanges: handleCheckIndividualRules(
                 targets,
                 individualRules

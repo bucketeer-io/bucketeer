@@ -1123,7 +1123,7 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 		req.VariationChanges,
 		req.TagChanges,
 		req.Maintainer,
-		req.RuleOrder,
+		req.OrderedRuleIds,
 	)
 	if err != nil {
 		return nil, nil, err

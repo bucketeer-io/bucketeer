@@ -30287,7 +30287,7 @@
               },
               {
                 "id": 14,
-                "name": "rule_order",
+                "name": "ordered_rule_ids",
                 "type": "string",
                 "is_repeated": true
               }
@@ -31347,7 +31347,7 @@
               },
               {
                 "id": 19,
-                "name": "rule_order",
+                "name": "ordered_rule_ids",
                 "type": "string",
                 "is_repeated": true
               }

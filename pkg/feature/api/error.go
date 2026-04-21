@@ -220,7 +220,7 @@ var (
 	statusInvalidRuleOrder = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.FeaturePackageName,
-			"rule_order must contain exactly one entry per rule with no duplicates",
-			"RuleOrder",
+			"ordered_rule_ids must contain exactly one entry per rule with no duplicates",
+			"OrderedRuleIds",
 		))
 )
