@@ -26,6 +26,8 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -37,6 +39,17 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
+
+func mockAdminEnvAuth(s *EnvironmentService) {
+	s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&accdomain.AccountV2{
+		AccountV2: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+		},
+	}, nil)
+}
 
 func TestGetEnvironmentV2(t *testing.T) {
 	t.Parallel()
@@ -294,6 +307,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
@@ -327,6 +341,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
@@ -354,6 +369,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
@@ -415,8 +431,10 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrInvalidEnvironmentName: only space",
-			setup: nil,
+			desc: "err: ErrInvalidEnvironmentName: only space",
+			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
+			},
 			req: &proto.UpdateEnvironmentV2Request{
 				Id:          "id01",
 				Name:        wrapperspb.String("  "),
@@ -425,8 +443,10 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
-			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
-			setup: nil,
+			desc: "err: ErrInvalidEnvironmentName: max name length exceeded",
+			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
+			},
 			req: &proto.UpdateEnvironmentV2Request{
 				Id:          "id01",
 				Name:        wrapperspb.String(strings.Repeat("a", 51)),
@@ -437,6 +457,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
@@ -450,6 +471,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
@@ -463,6 +485,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -508,6 +531,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
@@ -518,6 +542,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
@@ -528,6 +553,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -579,6 +605,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
@@ -589,6 +616,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
@@ -599,6 +627,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -774,18 +803,13 @@ func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
 				{
 					desc: "UpdateEnvironmentV2 - permission denied",
 					setupFunc: func(s *EnvironmentService) {
-						// Mock the QueryRowContext call that GetAccountV2ByEnvironmentID will make
-						row := mysqlmock.NewMockRow(mockController)
-						row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
-							// Populate the account struct with the test role
-							if len(args) >= 12 {
-								*(args[11].(*int32)) = int32(rolePattern.roleValue)
-							}
-							return nil
-						})
-						s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-							gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-						).Return(row)
+						s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+							gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(&accdomain.AccountV2{
+							AccountV2: &accountproto.AccountV2{
+								OrganizationRole: rolePattern.roleValue,
+							},
+						}, nil)
 					},
 					testFunc: func(s *EnvironmentService) error {
 						_, err := s.UpdateEnvironmentV2(roleTestCtx, &proto.UpdateEnvironmentV2Request{
@@ -798,18 +822,13 @@ func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
 				{
 					desc: "ArchiveEnvironmentV2 - permission denied",
 					setupFunc: func(s *EnvironmentService) {
-						// Mock the QueryRowContext call that GetAccountV2ByEnvironmentID will make
-						row := mysqlmock.NewMockRow(mockController)
-						row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
-							// Populate the account struct with the test role
-							if len(args) >= 12 {
-								*(args[11].(*int32)) = int32(rolePattern.roleValue)
-							}
-							return nil
-						})
-						s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-							gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-						).Return(row)
+						s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+							gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(&accdomain.AccountV2{
+							AccountV2: &accountproto.AccountV2{
+								OrganizationRole: rolePattern.roleValue,
+							},
+						}, nil)
 					},
 					testFunc: func(s *EnvironmentService) error {
 						_, err := s.ArchiveEnvironmentV2(roleTestCtx, &proto.ArchiveEnvironmentV2Request{
@@ -821,18 +840,13 @@ func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
 				{
 					desc: "UnarchiveEnvironmentV2 - permission denied",
 					setupFunc: func(s *EnvironmentService) {
-						// Mock the QueryRowContext call that GetAccountV2ByEnvironmentID will make
-						row := mysqlmock.NewMockRow(mockController)
-						row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
-							// Populate the account struct with the test role
-							if len(args) >= 12 {
-								*(args[11].(*int32)) = int32(rolePattern.roleValue)
-							}
-							return nil
-						})
-						s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-							gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-						).Return(row)
+						s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+							gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(&accdomain.AccountV2{
+							AccountV2: &accountproto.AccountV2{
+								OrganizationRole: rolePattern.roleValue,
+							},
+						}, nil)
 					},
 					testFunc: func(s *EnvironmentService) error {
 						_, err := s.UnarchiveEnvironmentV2(roleTestCtx, &proto.UnarchiveEnvironmentV2Request{

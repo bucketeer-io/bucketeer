@@ -581,9 +581,9 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 				}, nil
 			},
 			expected: &eventproto.Editor{
-				Email:   "admin@example.com",
-				Name:    "admin",
-				IsAdmin: true,
+				Email:            "admin@example.com",
+				Name:             "admin",
+				IsAdmin:          true,
 				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},

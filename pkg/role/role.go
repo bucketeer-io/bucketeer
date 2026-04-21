@@ -102,7 +102,15 @@ func CheckEnvironmentRole(
 			return nil, ErrUnauthenticated
 		}
 		accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-		return checkRole(account.Email, token.Name, accountEnvRole, requiredRole, account.EnvironmentRoles, account.OrganizationRole, true)
+		return checkRole(
+			account.Email,
+			token.Name,
+			accountEnvRole,
+			requiredRole,
+			account.EnvironmentRoles,
+			account.OrganizationRole,
+			true,
+		)
 	}
 	// get account for the environment id
 	account, err := getAccountFunc(token.Email)

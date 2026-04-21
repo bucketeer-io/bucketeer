@@ -61,11 +61,23 @@ func newNotificationServiceWithMock(
 	c *gomock.Controller,
 ) *NotificationService {
 	t.Helper()
+	accountClientMock := accountclientmock.NewMockClient(c)
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(
+		&accountproto.GetAccountV2ByEnvironmentIDResponse{
+			Account: &accountproto.AccountV2{
+				Email:            "email",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+			},
+		}, nil,
+	).AnyTimes()
 	return &NotificationService{
 		mysqlClient:              mysqlmock.NewMockClient(c),
 		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
 		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
-		accountClient:            accountclientmock.NewMockClient(c),
+		accountClient:            accountClientMock,
 		domainEventPublisher:     publishermock.NewMockPublisher(c),
 		logger:                   zap.NewNop(),
 	}
