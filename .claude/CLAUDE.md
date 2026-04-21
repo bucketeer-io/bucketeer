@@ -12,7 +12,7 @@ Bucketeer is an open-source feature management and experimentation platform. It 
 cmd/           # Four binary entrypoints: api, web, batch, subscriber
 pkg/           # All Go business logic, organized by domain
 proto/         # Protobuf definitions; generated .pb.go files live here too
-ui/dashboard/  # React 19 + Vite frontend (TypeScript)
+ui/dashboard/  # React 19 + Vite + TailwindCSS + TypeScript frontend (Admin console)
 manifests/     # Helm charts for Kubernetes deployment
 migration/     # Atlas-managed SQL migrations (mysql/ and postgres/)
 docker-compose/ # Docker Compose local dev setup
@@ -75,8 +75,9 @@ Tests use a table-driven format (`[]struct{ ... }` test cases iterated with `t.R
 
 ### Lint
 ```bash
-make lint              # golangci-lint on cmd/, pkg/, evaluation/go/, hack/, test/
-make gofmt             # Format with goimports (run after any Go changes)
+make lint                # golangci-lint on cmd/, pkg/, evaluation/go/, hack/, test/
+make gofmt               # Format with goimports (run after any Go changes)
+yarn style:all --write   # Format after making changes to TypeScript files
 ```
 
 ### Code generation
