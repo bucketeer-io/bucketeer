@@ -24,6 +24,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -799,7 +801,16 @@ func (s *server) startCacheInvalidator(
 		zap.String("topic", *s.domainTopic),
 	)
 	cleanup := func() {
-		if err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic); err != nil {
+		err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic)
+		if err != nil && status.Code(err) == codes.NotFound {
+			// Subscription may already be removed (TTL, GCP GC). Idempotent cleanup.
+			logger.Debug("Cache invalidator subscription already gone",
+				zap.String("subscription", subscription),
+				zap.String("topic", *s.domainTopic),
+			)
+			return
+		}
+		if err != nil {
 			logger.Warn(
 				"Failed to delete cache invalidator subscription; "+
 					"manual cleanup or backend-specific TTL may be required",
@@ -809,7 +820,7 @@ func (s *server) startCacheInvalidator(
 			)
 			return
 		}
-		logger.Info("Deleted cache invalidator subscription",
+		logger.Debug("Deleted cache invalidator subscription",
 			zap.String("subscription", subscription),
 		)
 	}

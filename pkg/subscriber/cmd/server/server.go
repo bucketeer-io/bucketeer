@@ -449,7 +449,8 @@ func (s *server) startMultiPubSub(
 		for name, config := range configMap {
 			p, err := processors.GetProcessorByName(name)
 			if err != nil {
-				logger.Error("subscriber: processor not found",
+				logger.Warn(
+					"subscriber: processor not found during startup. It could be because the processor is not registered yet.",
 					zap.String("name", name),
 					zap.Error(err),
 				)
