@@ -5324,16 +5324,30 @@ func TestSingleflightFetchDetachesCallerCancellation(t *testing.T) {
 // TestSingleflightFetchCollapsesConcurrentCallers verifies that N concurrent
 // callers for the same key share a single execution of fn and all receive the
 // same result.
+//
+// The synchronization is intentionally barrier-based (no fixed sleeps) so the
+// test stays deterministic on slow CI runners:
+//  1. The first caller is launched and we wait for fn to actually start —
+//     this guarantees the singleflight call is registered for the key.
+//  2. The remaining callers are launched. Because fn is blocked on `proceed`,
+//     the in-flight call cannot complete, so any DoChan with the same key
+//     must collapse into it.
+//  3. We wait until every caller has at least entered singleflightFetch
+//     (via the `entered` counter) before releasing `proceed`, closing the
+//     residual scheduler race between "increment counter" and "call DoChan".
 func TestSingleflightFetchCollapsesConcurrentCallers(t *testing.T) {
 	t.Parallel()
 
 	s := &grpcGatewayService{}
 
 	var fnCalls atomic.Int32
+	var entered atomic.Int32
+	fnStarted := make(chan struct{})
 	proceed := make(chan struct{})
 
 	fn := func(ctx context.Context) (interface{}, error) {
 		fnCalls.Add(1)
+		close(fnStarted)
 		<-proceed
 		return "shared", nil
 	}
@@ -5343,18 +5357,38 @@ func TestSingleflightFetchCollapsesConcurrentCallers(t *testing.T) {
 	results := make([]interface{}, numCallers)
 	errs := make([]error, numCallers)
 
-	for i := 0; i < numCallers; i++ {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-			v, err := s.singleflightFetch(context.Background(), "same-key", fn)
-			results[idx] = v
-			errs[idx] = err
-		}(i)
+	caller := func(idx int) {
+		defer wg.Done()
+		entered.Add(1)
+		v, err := s.singleflightFetch(context.Background(), "same-key", fn)
+		results[idx] = v
+		errs[idx] = err
 	}
 
-	// Give all goroutines time to fan in on the singleflight group.
-	time.Sleep(50 * time.Millisecond)
+	// 1. Launch the first caller and wait for fn to start. From this point
+	//    the singleflight call is registered for "same-key".
+	wg.Add(1)
+	go caller(0)
+	select {
+	case <-fnStarted:
+	case <-time.After(time.Second):
+		t.Fatal("fn did not start in time")
+	}
+
+	// 2. Launch the remaining callers. fn is blocked on `proceed`, so any
+	//    DoChan with the same key collapses into the in-flight call.
+	for i := 1; i < numCallers; i++ {
+		wg.Add(1)
+		go caller(i)
+	}
+
+	// 3. Wait until every caller goroutine has entered singleflightFetch.
+	//    Combined with fn being blocked, this guarantees they've all reached
+	//    DoChan before we release fn.
+	require.Eventually(t, func() bool {
+		return entered.Load() == int32(numCallers)
+	}, time.Second, time.Millisecond, "not all callers entered singleflightFetch")
+
 	close(proceed)
 	wg.Wait()
 
