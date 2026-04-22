@@ -5120,6 +5120,101 @@ func TestObfuscateString(t *testing.T) {
 	}
 }
 
+// TestTranslateCallerCanceledErr verifies that singleflightFetch's caller-
+// cancellation sentinel is mapped to the right gateway status sentinel,
+// preserving Canceled vs DeadlineExceeded based on the caller's ctx.Err().
+func TestTranslateCallerCanceledErr(t *testing.T) {
+	t.Parallel()
+
+	downstream := errors.New("downstream failure")
+
+	// Build the same wrapped form singleflightFetch produces on caller cancel.
+	wrap := func(ctxErr error) error {
+		return fmt.Errorf("%w: %w", errCallerCanceled, status.FromContextError(ctxErr).Err())
+	}
+
+	// Build pre-finished contexts of each kind. We don't need them to actually
+	// fire — translateCallerCanceledErr only inspects ctx.Err().
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	deadlineCtx, cancel := context.WithDeadline(context.Background(), time.Unix(0, 0))
+	defer cancel()
+
+	patterns := []struct {
+		desc    string
+		ctx     context.Context
+		err     error
+		want    error
+		wantNil bool
+	}{
+		{
+			desc: "non-caller-cancel error is returned unchanged",
+			ctx:  context.Background(),
+			err:  downstream,
+			want: downstream,
+		},
+		{
+			desc:    "nil error is returned unchanged",
+			ctx:     context.Background(),
+			err:     nil,
+			wantNil: true,
+		},
+		{
+			desc: "caller cancellation maps to ErrContextCanceled",
+			ctx:  canceledCtx,
+			err:  wrap(context.Canceled),
+			want: ErrContextCanceled,
+		},
+		{
+			desc: "caller deadline maps to ErrContextDeadlineExceeded",
+			ctx:  deadlineCtx,
+			err:  wrap(context.DeadlineExceeded),
+			want: ErrContextDeadlineExceeded,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			got := translateCallerCanceledErr(p.ctx, p.err)
+			if p.wantNil {
+				assert.NoError(t, got)
+				return
+			}
+			assert.Equal(t, p.want, got)
+		})
+	}
+}
+
+// TestIsCallerContextErr verifies the predicate used by every public-API
+// entry point to suppress noisy logs for client-side disconnects.
+func TestIsCallerContextErr(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc string
+		err  error
+		want bool
+	}{
+		{desc: "nil", err: nil, want: false},
+		{desc: "ErrContextCanceled", err: ErrContextCanceled, want: true},
+		{desc: "ErrContextDeadlineExceeded", err: ErrContextDeadlineExceeded, want: true},
+		{desc: "wrapped ErrContextCanceled", err: fmt.Errorf("wrap: %w", ErrContextCanceled), want: true},
+		{desc: "wrapped ErrContextDeadlineExceeded", err: fmt.Errorf("wrap: %w", ErrContextDeadlineExceeded), want: true},
+		{desc: "ErrInvalidAPIKey", err: ErrInvalidAPIKey, want: false},
+		{desc: "raw context.Canceled", err: context.Canceled, want: false},
+		{desc: "raw context.DeadlineExceeded", err: context.DeadlineExceeded, want: false},
+		{desc: "arbitrary error", err: errors.New("boom"), want: false},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.want, isCallerContextErr(p.err))
+		})
+	}
+}
+
 // TestSingleflightFetch verifies the error-classification contract of
 // singleflightFetch:
 //   - successful results pass through,
