@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -27,7 +28,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -5114,5 +5117,250 @@ func TestObfuscateString(t *testing.T) {
 			actual := obfuscateString(tt.input, tt.showLength)
 			assert.Equal(t, tt.expected, actual)
 		})
+	}
+}
+
+// TestSingleflightFetch verifies the error-classification contract of
+// singleflightFetch:
+//   - successful results pass through,
+//   - downstream errors pass through unchanged (NOT wrapped in
+//     errCallerCanceled),
+//   - caller-side context cancellation / deadline returns an error wrapping
+//     errCallerCanceled with the matching gRPC status code.
+//
+// This is the contract every call site depends on to bump codeCanceled vs
+// codeInternalError correctly.
+func TestSingleflightFetch(t *testing.T) {
+	t.Parallel()
+
+	downstreamErr := errors.New("downstream failure")
+
+	patterns := []struct {
+		desc string
+		// ctxFn returns the caller's context for the call.
+		ctxFn func(t *testing.T) context.Context
+		// fn is the inner function singleflightFetch will execute.
+		fn func(ctx context.Context) (interface{}, error)
+		// wantValue is the expected value when no error is expected.
+		wantValue interface{}
+		// wantErrIs, when non-nil, is asserted with errors.Is(err, wantErrIs).
+		wantErrIs error
+		// wantNotErrIs, when non-nil, is asserted with !errors.Is(err, wantNotErrIs).
+		wantNotErrIs error
+		// wantStatusCode, when not codes.OK, is asserted via status.Code(err).
+		wantStatusCode codes.Code
+	}{
+		{
+			desc: "success returns the value from fn",
+			ctxFn: func(t *testing.T) context.Context {
+				return context.Background()
+			},
+			fn: func(ctx context.Context) (interface{}, error) {
+				return "ok", nil
+			},
+			wantValue: "ok",
+		},
+		{
+			desc: "downstream sentinel error is propagated unchanged",
+			ctxFn: func(t *testing.T) context.Context {
+				return context.Background()
+			},
+			fn: func(ctx context.Context) (interface{}, error) {
+				return nil, downstreamErr
+			},
+			wantErrIs:    downstreamErr,
+			wantNotErrIs: errCallerCanceled,
+		},
+		{
+			desc: "downstream gRPC Internal status is preserved",
+			ctxFn: func(t *testing.T) context.Context {
+				return context.Background()
+			},
+			fn: func(ctx context.Context) (interface{}, error) {
+				return nil, status.Error(codes.Internal, "boom")
+			},
+			wantNotErrIs:   errCallerCanceled,
+			wantStatusCode: codes.Internal,
+		},
+		{
+			desc: "caller cancellation returns errCallerCanceled wrapping Canceled",
+			ctxFn: func(t *testing.T) context.Context {
+				ctx, cancel := context.WithCancel(context.Background())
+				// Cancel shortly after fn is presumed to have started so that
+				// singleflightFetch is already blocked in its select.
+				time.AfterFunc(20*time.Millisecond, cancel)
+				t.Cleanup(cancel)
+				return ctx
+			},
+			fn: func(ctx context.Context) (interface{}, error) {
+				// Sleep on the inner (detached) ctx; caller cancellation must
+				// NOT propagate here. Use a longer sleep than the cancel timer
+				// so singleflightFetch returns via ctx.Done first.
+				select {
+				case <-time.After(200 * time.Millisecond):
+					return "late", nil
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				}
+			},
+			wantErrIs:      errCallerCanceled,
+			wantStatusCode: codes.Canceled,
+		},
+		{
+			desc: "caller deadline returns errCallerCanceled wrapping DeadlineExceeded",
+			ctxFn: func(t *testing.T) context.Context {
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+				t.Cleanup(cancel)
+				return ctx
+			},
+			fn: func(ctx context.Context) (interface{}, error) {
+				select {
+				case <-time.After(200 * time.Millisecond):
+					return "late", nil
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				}
+			},
+			wantErrIs:      errCallerCanceled,
+			wantStatusCode: codes.DeadlineExceeded,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+
+			s := &grpcGatewayService{}
+			ctx := p.ctxFn(t)
+
+			v, err := s.singleflightFetch(ctx, p.desc, p.fn)
+
+			if p.wantErrIs == nil && p.wantStatusCode == codes.OK {
+				require.NoError(t, err)
+				assert.Equal(t, p.wantValue, v)
+				return
+			}
+			require.Error(t, err)
+			if p.wantErrIs != nil {
+				assert.Truef(t, errors.Is(err, p.wantErrIs),
+					"expected err to wrap %v, got %v", p.wantErrIs, err)
+			}
+			if p.wantNotErrIs != nil {
+				assert.Falsef(t, errors.Is(err, p.wantNotErrIs),
+					"err should NOT wrap %v, got %v", p.wantNotErrIs, err)
+			}
+			if p.wantStatusCode != codes.OK {
+				assert.Equal(t, p.wantStatusCode, status.Code(err))
+			}
+		})
+	}
+}
+
+// TestSingleflightFetchDetachesCallerCancellation is the load-bearing test for
+// the cache-miss thundering-herd fix: when the caller's context is canceled,
+// singleflightFetch must return promptly to that caller while the shared inner
+// work continues to completion (so the cache gets populated and any other
+// waiters still receive a successful result).
+func TestSingleflightFetchDetachesCallerCancellation(t *testing.T) {
+	t.Parallel()
+
+	s := &grpcGatewayService{}
+
+	var fnCalls atomic.Int32
+	fnStarted := make(chan struct{})
+	fnCompleted := make(chan struct{})
+
+	fn := func(ctx context.Context) (interface{}, error) {
+		fnCalls.Add(1)
+		close(fnStarted)
+		// The inner ctx must outlive the caller's cancellation. If the caller
+		// cancellation reached us, that is a bug.
+		select {
+		case <-time.After(50 * time.Millisecond):
+		case <-ctx.Done():
+			t.Errorf("inner ctx was canceled by caller cancellation: %v", ctx.Err())
+		}
+		close(fnCompleted)
+		return "value", nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	errCh := make(chan error, 1)
+	go func() {
+		_, err := s.singleflightFetch(ctx, "shared-key", fn)
+		errCh <- err
+	}()
+
+	// Wait until fn has started, then cancel the caller's context.
+	select {
+	case <-fnStarted:
+	case <-time.After(time.Second):
+		t.Fatal("inner fn did not start in time")
+	}
+	cancel()
+
+	// The caller should observe its own cancellation immediately.
+	select {
+	case err := <-errCh:
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, errCallerCanceled))
+		assert.Equal(t, codes.Canceled, status.Code(err))
+	case <-time.After(time.Second):
+		t.Fatal("singleflightFetch did not return after caller cancellation")
+	}
+
+	// The shared inner work must run to completion despite the caller leaving.
+	select {
+	case <-fnCompleted:
+	case <-time.After(time.Second):
+		t.Fatal("inner fn did not complete after caller cancellation")
+	}
+
+	assert.Equal(t, int32(1), fnCalls.Load(), "fn should have been called exactly once")
+}
+
+// TestSingleflightFetchCollapsesConcurrentCallers verifies that N concurrent
+// callers for the same key share a single execution of fn and all receive the
+// same result.
+func TestSingleflightFetchCollapsesConcurrentCallers(t *testing.T) {
+	t.Parallel()
+
+	s := &grpcGatewayService{}
+
+	var fnCalls atomic.Int32
+	proceed := make(chan struct{})
+
+	fn := func(ctx context.Context) (interface{}, error) {
+		fnCalls.Add(1)
+		<-proceed
+		return "shared", nil
+	}
+
+	const numCallers = 10
+	var wg sync.WaitGroup
+	results := make([]interface{}, numCallers)
+	errs := make([]error, numCallers)
+
+	for i := 0; i < numCallers; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			v, err := s.singleflightFetch(context.Background(), "same-key", fn)
+			results[idx] = v
+			errs[idx] = err
+		}(i)
+	}
+
+	// Give all goroutines time to fan in on the singleflight group.
+	time.Sleep(50 * time.Millisecond)
+	close(proceed)
+	wg.Wait()
+
+	assert.Equal(t, int32(1), fnCalls.Load(), "fn must be invoked only once")
+	for i := 0; i < numCallers; i++ {
+		require.NoErrorf(t, errs[i], "caller %d", i)
+		assert.Equalf(t, "shared", results[i], "caller %d", i)
 	}
 }
