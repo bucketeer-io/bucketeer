@@ -133,20 +133,48 @@ func (s *AccountService) GetMe(
 		// Resolve the system admin's role in the requested org. If they have an account
 		// there (i.e. they joined as a member), use their actual roles so the UI correctly
 		// enables or disables write actions. When they are not a member, return viewer-only
-		// access so the console shows read-only UI.
+		// access so the console shows read-only UI. Any other storage error is propagated
+		// so unexpected failures (e.g. DB errors) aren't silently masked as "not a member".
 		var orgRole accountproto.AccountV2_Role_Organization
 		var envRoles []*accountproto.ConsoleAccount_EnvironmentRole
 		orgAccount, orgErr := s.accountStorage.GetAccountV2(ctx, t.Email, req.OrganizationId)
-		if orgErr == nil && !orgAccount.Disabled {
-			orgRole = orgAccount.OrganizationRole
-			if orgAccount.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
-				envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
+		switch {
+		case orgErr == nil:
+			if !orgAccount.Disabled {
+				orgRole = orgAccount.OrganizationRole
+				if orgAccount.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
+					envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
+				} else {
+					envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+				}
 			} else {
-				envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+				orgRole = accountproto.AccountV2_Role_Organization_UNASSIGNED
+				envRoles = s.getAllEnvironmentRoles(
+					environments, projects, accountproto.AccountV2_Role_Environment_VIEWER,
+				)
 			}
-		} else {
+		case errors.Is(orgErr, v2as.ErrAccountNotFound):
+			s.logger.Warn(
+				"System admin is not a member of the requested organization, falling back to read-only view",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("email", t.Email),
+					zap.String("organizationId", req.OrganizationId),
+				)...,
+			)
 			orgRole = accountproto.AccountV2_Role_Organization_UNASSIGNED
-			envRoles = s.getAllEnvironmentRoles(environments, projects, accountproto.AccountV2_Role_Environment_VIEWER)
+			envRoles = s.getAllEnvironmentRoles(
+				environments, projects, accountproto.AccountV2_Role_Environment_VIEWER,
+			)
+		default:
+			s.logger.Error(
+				"Failed to resolve system admin org membership",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(orgErr),
+					zap.String("email", t.Email),
+					zap.String("organizationId", req.OrganizationId),
+				)...,
+			)
+			return nil, api.NewGRPCStatus(orgErr).Err()
 		}
 
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
