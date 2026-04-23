@@ -1278,13 +1278,6 @@ func (s *grpcGatewayService) getFeatures(
 		return fs.Features, nil
 	}
 	// L3: feature service (DB)
-	s.logger.Warn(
-		"No cached data for Features",
-		log.FieldsFromIncomingContext(ctx).AddFields(
-			zap.Error(err),
-			zap.String("environmentID", environmentId),
-		)...,
-	)
 	features, err := s.listFeatures(ctx, environmentId)
 	if err != nil {
 		s.logger.Error(
@@ -1449,14 +1442,6 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 		return segmentUsers, nil
 	}
 	// L3: feature service (DB)
-	s.logger.Warn(
-		"No cached data for SegmentUsers",
-		log.FieldsFromIncomingContext(ctx).AddFields(
-			zap.Error(err),
-			zap.String("environmentID", environmentId),
-			zap.String("segmentId", segmentID),
-		)...,
-	)
 	req := &featureproto.ListSegmentUsersRequest{
 		SegmentId:     segmentID,
 		EnvironmentId: environmentId,
@@ -1464,7 +1449,7 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	res, err := s.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {
 		s.logger.Error(
-			"Failed to retrieve segment users from database",
+			"Failed to retrieve segment users from storage",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
@@ -1480,7 +1465,7 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	respGet, err := s.featureClient.GetSegment(ctx, reqGet)
 	if err != nil {
 		s.logger.Error(
-			"Failed to retrieve segment from database",
+			"Failed to retrieve segment from storage",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
@@ -1739,10 +1724,6 @@ func (s *grpcGatewayService) checkTrackRequest(
 	apiKey string,
 ) (*accountproto.EnvironmentAPIKey, error) {
 	if isContextCanceled(ctx) {
-		s.logger.Warn(
-			"Request was canceled",
-			log.FieldsFromIncomingContext(ctx)...,
-		)
 		return nil, ErrContextCanceled
 	}
 	envAPIKey, err := s.getEnvironmentAPIKey(ctx, apiKey)
@@ -1832,13 +1813,6 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 				return envAPIKey, nil
 			}
 			// L3: direct DB query
-			s.logger.Warn(
-				"API key not found in cache",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
-				)...,
-			)
 			// Since the Get and List APIs for the API keys are obsfucated,
 			// we need to directly query the database.
 			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apiKey)
