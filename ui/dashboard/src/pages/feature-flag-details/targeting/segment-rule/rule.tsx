@@ -97,6 +97,7 @@ const RuleForm = ({
 
   const {
     isLoadingMore,
+    isSearching: isSearchingFeature,
     remainingFlagOptions,
     hasMore,
     loadMore,
@@ -296,6 +297,7 @@ const RuleForm = ({
                                     )}
                                     isLoading={isLoadingFeature}
                                     isLoadingMore={isLoadingMore}
+                                    isSearching={isSearchingFeature}
                                     onHasMoreOptions={loadMore}
                                     onSearchChange={onSearchChange}
                                     isHasMore={hasMore || isLoadingMore}

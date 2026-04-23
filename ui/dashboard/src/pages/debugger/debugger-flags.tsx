@@ -31,6 +31,7 @@ const DebuggerFlags = ({
     data: flagCollection,
     allAvailableFlags,
     isLoadingMore,
+    isSearching,
     hasMore,
     isInitialLoading,
     loadMore,
@@ -86,6 +87,7 @@ const DebuggerFlags = ({
                       onHasMoreOptions={loadMore}
                       disabled={isOnTargeting}
                       isLoadingMore={isLoadingMore}
+                      isSearching={isSearching}
                       isLoading={isInitialLoading}
                       placeholder={t('form:experiments.select-flag')}
                       options={remainingFlagOptions}

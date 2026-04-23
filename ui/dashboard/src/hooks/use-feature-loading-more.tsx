@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryFeatures } from '@queries/features';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { debounce } from 'lodash';
 import { Feature } from '@types';
 
@@ -13,7 +14,7 @@ type UseFeatureFlagsLoaderParams = {
 
 export const useFeatureFlagsLoader = ({
   environmentId,
-  pageSize = 50,
+  pageSize = LIST_PAGE_SIZE,
   selectedFlagIds,
   currentFeatureId,
   filterSelected = false
@@ -22,6 +23,7 @@ export const useFeatureFlagsLoader = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [flags, setFlags] = useState<Feature[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
 
   const [selectedFlagsCache, setSelectedFlagsCache] = useState<
     Map<string, Feature>
@@ -37,12 +39,11 @@ export const useFeatureFlagsLoader = ({
     }
   });
 
-  /**
-   * Debounced search
-   */
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
+        setFlags([]);
+        setHasMore(true);
         setCursor(0);
         setSearchQuery(value);
       }, 300),
@@ -53,9 +54,11 @@ export const useFeatureFlagsLoader = ({
     (value: string) => {
       if (!value) {
         debouncedSearch.cancel();
+        setIsTyping(false);
         setCursor(0);
         setSearchQuery('');
       } else {
+        setIsTyping(true);
         debouncedSearch(value);
       }
     },
@@ -66,48 +69,42 @@ export const useFeatureFlagsLoader = ({
     setCursor(prev => prev + pageSize);
   }, [pageSize]);
 
-  /**
-   * Accumulate / reset flags
-   */
   useEffect(() => {
     if (!data?.features) return;
 
+    setIsTyping(false);
     setFlags(prev => {
       if (cursor === 0) {
         return data.features;
       }
-
       const existingIds = new Set(prev.map(f => f.id));
       const newFlags = data.features.filter(f => !existingIds.has(f.id));
-
       return newFlags.length ? [...prev, ...newFlags] : prev;
     });
-  }, [data, cursor]);
 
-  useEffect(() => {
-    const total = Number(data?.totalCount ?? 0);
-    // Stop loading more when cursor >= totalCount
-    const nextCursor = cursor + pageSize;
-    setHasMore(nextCursor < total);
+    if (data.totalCount != null) {
+      const total = Number(data.totalCount);
+      setHasMore(cursor + pageSize < total);
+    }
   }, [data, cursor, pageSize]);
-  /**
-   * Cache flags for selected IDs
-   */
+
   useEffect(() => {
     if (!flags.length) return;
     setSelectedFlagsCache(prev => {
       const hasNewFlags = flags.some(f => !prev.has(f.id));
-      if (!hasNewFlags) return prev; // Skip if no changes
-
+      if (!hasNewFlags) return prev;
       const cache = new Map(prev);
       flags.forEach(flag => cache.set(flag.id, flag));
       return cache;
     });
   }, [flags]);
 
-  /**
-   * Merge cached selected flags with API flags
-   */
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const allAvailableFlags = useMemo(() => {
     const map = new Map(
       flags.filter(f => f.id !== currentFeatureId).map(flag => [flag.id, flag])
@@ -159,14 +156,10 @@ export const useFeatureFlagsLoader = ({
     }));
   }, [filteredFlags, selectedFlagIds]);
 
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
-
   const isInitialLoading =
     isLoading && !searchQuery && cursor === 0 && flags.length === 0;
+
+  const isSearching = isTyping || (isFetching && cursor === 0 && !!searchQuery);
 
   return {
     flags,
@@ -175,6 +168,7 @@ export const useFeatureFlagsLoader = ({
     hasMore,
     isLoadingMore: isFetching && cursor > 0,
     isInitialLoading,
+    isSearching,
     data,
     remainingFlagOptions,
     filteredFlags,

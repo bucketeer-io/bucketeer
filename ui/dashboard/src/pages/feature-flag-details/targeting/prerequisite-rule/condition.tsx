@@ -67,6 +67,7 @@ const ConditionForm = forwardRef(
 
     const {
       isLoadingMore,
+      isSearching: isSearchingFeature,
       hasMore,
       remainingFlagOptions,
       loadMore,
@@ -133,6 +134,7 @@ const ConditionForm = forwardRef(
                       label={truncateBySide(currentFeature?.name || '', 50)}
                       placeholder={t('experiments.select-flag')}
                       isLoadingMore={isLoadingMore}
+                      isSearching={isSearchingFeature}
                       isLoading={isLoadingFeature}
                       isHasMore={hasMore || isLoadingMore}
                       onSearchChange={onSearchChange}

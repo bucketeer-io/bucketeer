@@ -216,6 +216,7 @@ const ExperimentCreateUpdateModal = ({
     allAvailableFlags,
     remainingFlagOptions,
     isLoadingMore,
+    isSearching: isSearchingFeature,
     isInitialLoading: isLoadingFeature,
     hasMore,
     onSearchChange,
@@ -569,6 +570,7 @@ const ExperimentCreateUpdateModal = ({
                         hidden={isOpenCreateFlagModal}
                         isLoading={isLoadingFeature}
                         isLoadingMore={isLoadingMore}
+                        isSearching={isSearchingFeature}
                         isHasMore={hasMore || isLoadingMore}
                         onSearchChange={onSearchChange}
                         onHasMoreOptions={loadMore}
