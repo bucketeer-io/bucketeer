@@ -1813,7 +1813,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 				return envAPIKey, nil
 			}
 			// L3: direct DB query
-			// Since the Get and List APIs for the API keys are obsfucated,
+			// Since the Get and List APIs for the API keys are obfuscated,
 			// we need to directly query the database.
 			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apiKey)
 			if err != nil {

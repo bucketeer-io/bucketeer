@@ -598,7 +598,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	k, err, _ := s.flightgroup.Do(
 		apikey,
 		func() (interface{}, error) {
-			// Since the Get and List APIs for the API keys are obsfucated,
+			// Since the Get and List APIs for the API keys are obfuscated,
 			// we need to directly query the database.
 			domainEnvAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, apikey)
 			if err != nil {
