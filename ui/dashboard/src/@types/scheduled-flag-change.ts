@@ -64,6 +64,7 @@ export interface ScheduledChangePayloadTagChange {
 
 export interface ScheduledChangePayload {
   ruleChanges?: ScheduledChangePayloadRuleChange[];
+  orderedRuleIds?: string[];
   targetChanges?: ScheduledChangePayloadTargetChange[];
   prerequisiteChanges?: ScheduledChangePayloadPrerequisiteChange[];
   defaultStrategy?: Partial<FeatureRuleStrategy>;

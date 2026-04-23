@@ -160,6 +160,7 @@ const (
 	codeOld           = "Old"
 	codeInternalError = "InternalError"
 	codeBadRequest    = "BadRequest"
+	codeCanceled      = "Canceled"
 )
 
 var (

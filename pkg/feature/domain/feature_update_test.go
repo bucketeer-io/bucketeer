@@ -141,6 +141,7 @@ func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {
 				nil,         // variationChanges
 				nil,         // tagChanges
 				nil,         // maintainer
+				nil,         // ruleOrder
 			)
 
 			require.NoError(t, err)
@@ -241,6 +242,7 @@ func TestUpdateWithIdenticalDefaultStrategy(t *testing.T) {
 		nil,                            // variationChanges
 		nil,                            // tagChanges
 		nil,                            // maintainer
+		nil,                            // ruleOrder
 	)
 
 	require.NoError(t, err)
@@ -521,6 +523,7 @@ func TestUpdateMaintainer(t *testing.T) {
 				nil,          // variationChanges
 				nil,          // tagChanges
 				p.maintainer, // maintainer
+				nil,          // ruleOrder
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -1835,6 +1838,7 @@ func TestUpdateCompleteNoChangesScenario(t *testing.T) {
 		nil, // variationChanges - no changes
 		nil, // tagChanges - no changes
 		nil, // maintainer - no changes
+		nil, // ruleOrder - no changes
 	)
 
 	require.NoError(t, err)
@@ -1899,7 +1903,7 @@ func TestUpdateWithActualChangesIncrementsVersionAndTimestamp(t *testing.T) {
 	// Make an actual change (different name)
 	updated, err := originalFeature.Update(
 		wrapperspb.String("Updated Name"), // CHANGED - different from original
-		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	require.NoError(t, err)
@@ -2240,6 +2244,377 @@ func TestUpdateRemoveVariationMultipleRulesCleanup(t *testing.T) {
 				if rule2HasVariation {
 					t.Fatalf("Rule 2 should NOT have variation after removal")
 				}
+			}
+		})
+	}
+}
+
+func TestUpdateRuleOrder(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		inputFunc   func() *Feature
+		ruleOrder   []string
+		expectedIDs []string
+		expectedErr error
+	}{
+		{
+			desc: "success - reverse order",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-2", "rule-1"},
+			expectedIDs: []string{"rule-2", "rule-1"},
+			expectedErr: nil,
+		},
+		{
+			desc: "success - same order (no-op)",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1", "rule-2"},
+			expectedIDs: []string{"rule-1", "rule-2"},
+			expectedErr: nil,
+		},
+		{
+			desc: "nil ruleOrder - no reordering applied",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   nil,
+			expectedIDs: []string{"rule-1", "rule-2"},
+			expectedErr: nil,
+		},
+		{
+			desc: "error - wrong count",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1"},
+			expectedErr: errRulesOrderSizeNotEqual,
+		},
+		{
+			desc: "error - duplicate IDs",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1", "rule-1"},
+			expectedErr: errRulesOrderDuplicateIDs,
+		},
+		{
+			desc: "error - unknown rule ID",
+			inputFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			ruleOrder:   []string{"rule-1", "does-not-exist"},
+			expectedErr: errRuleNotFound,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := p.inputFunc()
+			updated, err := actual.Update(
+				nil, nil, nil, nil, nil, nil, nil, false,
+				nil, nil, nil, nil, nil, nil,
+				p.ruleOrder,
+			)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, len(p.expectedIDs), len(updated.Rules))
+			for i, id := range p.expectedIDs {
+				assert.Equal(t, id, updated.Rules[i].Id)
+			}
+		})
+	}
+}
+
+func TestUpdateRuleOrderWithRuleChanges(t *testing.T) {
+	t.Parallel()
+
+	newUUID := func() string {
+		id, err := uuid.NewUUID()
+		require.NoError(t, err)
+		return id.String()
+	}
+
+	newClauseID := func() string {
+		id, err := uuid.NewUUID()
+		require.NoError(t, err)
+		return id.String()
+	}
+
+	patterns := []struct {
+		desc             string
+		setupFunc        func() (*Feature, []*feature.RuleChange, []string)
+		expectedRuleIDs  func(*Feature, []*feature.RuleChange) []string
+		expectedErr      error
+		assertRuleUpdate func(*testing.T, *Feature, []*feature.RuleChange)
+	}{
+		{
+			desc: "success - create then reorder",
+			setupFunc: func() (*Feature, []*feature.RuleChange, []string) {
+				f := makeFeature("test-feature")
+				rule1ID := newUUID()
+				rule2ID := newUUID()
+				f.Rules[0].Id = rule1ID
+				f.Rules[1].Id = rule2ID
+
+				newRuleID := newUUID()
+				ruleChanges := []*feature.RuleChange{
+					{
+						ChangeType: feature.ChangeType_CREATE,
+						Rule: &feature.Rule{
+							Id: newRuleID,
+							Clauses: []*feature.Clause{
+								{
+									Id:        newClauseID(),
+									Attribute: "email",
+									Operator:  feature.Clause_IN,
+									Values:    []string{"user@example.com"},
+								},
+							},
+							Strategy: &feature.Strategy{
+								Type: feature.Strategy_FIXED,
+								FixedStrategy: &feature.FixedStrategy{
+									Variation: f.Variations[0].Id,
+								},
+							},
+						},
+					},
+				}
+				ruleOrder := []string{newRuleID, rule1ID, rule2ID}
+				return f, ruleChanges, ruleOrder
+			},
+			expectedRuleIDs: func(f *Feature, rc []*feature.RuleChange) []string {
+				return []string{rc[0].Rule.Id, f.Rules[0].Id, f.Rules[1].Id}
+			},
+		},
+		{
+			desc: "success - delete then reorder",
+			setupFunc: func() (*Feature, []*feature.RuleChange, []string) {
+				f := makeFeature("test-feature")
+				rule1ID := newUUID()
+				rule2ID := newUUID()
+				f.Rules[0].Id = rule1ID
+				f.Rules[1].Id = rule2ID
+
+				ruleChanges := []*feature.RuleChange{
+					{
+						ChangeType: feature.ChangeType_DELETE,
+						Rule: &feature.Rule{
+							Id: rule1ID,
+						},
+					},
+				}
+				ruleOrder := []string{rule2ID}
+				return f, ruleChanges, ruleOrder
+			},
+			expectedRuleIDs: func(f *Feature, rc []*feature.RuleChange) []string {
+				return []string{f.Rules[1].Id}
+			},
+		},
+		{
+			desc: "success - update then reorder",
+			setupFunc: func() (*Feature, []*feature.RuleChange, []string) {
+				f := makeFeature("test-feature")
+				rule1ID := newUUID()
+				rule2ID := newUUID()
+				f.Rules[0].Id = rule1ID
+				f.Rules[1].Id = rule2ID
+
+				ruleChanges := []*feature.RuleChange{
+					{
+						ChangeType: feature.ChangeType_UPDATE,
+						Rule: &feature.Rule{
+							Id: rule2ID,
+							Clauses: []*feature.Clause{
+								{
+									Id:        newClauseID(),
+									Attribute: "email",
+									Operator:  feature.Clause_IN,
+									Values:    []string{"updated@example.com"},
+								},
+							},
+							Strategy: &feature.Strategy{
+								Type: feature.Strategy_FIXED,
+								FixedStrategy: &feature.FixedStrategy{
+									Variation: f.Variations[1].Id,
+								},
+							},
+						},
+					},
+				}
+				ruleOrder := []string{rule2ID, rule1ID}
+				return f, ruleChanges, ruleOrder
+			},
+			expectedRuleIDs: func(f *Feature, rc []*feature.RuleChange) []string {
+				return []string{f.Rules[1].Id, f.Rules[0].Id}
+			},
+			assertRuleUpdate: func(t *testing.T, updated *Feature, ruleChanges []*feature.RuleChange) {
+				require.Len(t, updated.Rules, 2)
+				assert.Equal(t, ruleChanges[0].Rule.Id, updated.Rules[0].Id)
+				require.NotNil(t, updated.Rules[0].Strategy)
+				assert.Equal(t, feature.Strategy_FIXED, updated.Rules[0].Strategy.Type)
+				require.NotNil(t, updated.Rules[0].Strategy.FixedStrategy)
+				assert.Equal(t, ruleChanges[0].Rule.Strategy.FixedStrategy.Variation, updated.Rules[0].Strategy.FixedStrategy.Variation)
+				require.Len(t, updated.Rules[0].Clauses, 1)
+				assert.Equal(t, "updated@example.com", updated.Rules[0].Clauses[0].Values[0])
+			},
+		},
+		{
+			desc: "error - deleted rule still present in ruleOrder",
+			setupFunc: func() (*Feature, []*feature.RuleChange, []string) {
+				f := makeFeature("test-feature")
+				rule1ID := newUUID()
+				rule2ID := newUUID()
+				f.Rules[0].Id = rule1ID
+				f.Rules[1].Id = rule2ID
+
+				ruleChanges := []*feature.RuleChange{
+					{
+						ChangeType: feature.ChangeType_DELETE,
+						Rule: &feature.Rule{
+							Id: rule2ID,
+						},
+					},
+				}
+				ruleOrder := []string{rule1ID, rule2ID}
+				return f, ruleChanges, ruleOrder
+			},
+			expectedErr: errRulesOrderSizeNotEqual,
+		},
+		{
+			desc: "error - created rule missing from ruleOrder",
+			setupFunc: func() (*Feature, []*feature.RuleChange, []string) {
+				f := makeFeature("test-feature")
+				rule1ID := newUUID()
+				rule2ID := newUUID()
+				f.Rules[0].Id = rule1ID
+				f.Rules[1].Id = rule2ID
+
+				ruleChanges := []*feature.RuleChange{
+					{
+						ChangeType: feature.ChangeType_CREATE,
+						Rule: &feature.Rule{
+							Id: newUUID(),
+							Clauses: []*feature.Clause{
+								{
+									Id:        newClauseID(),
+									Attribute: "email",
+									Operator:  feature.Clause_IN,
+									Values:    []string{"user@example.com"},
+								},
+							},
+							Strategy: &feature.Strategy{
+								Type: feature.Strategy_FIXED,
+								FixedStrategy: &feature.FixedStrategy{
+									Variation: f.Variations[0].Id,
+								},
+							},
+						},
+					},
+				}
+				ruleOrder := []string{rule1ID, rule2ID}
+				return f, ruleChanges, ruleOrder
+			},
+			expectedErr: errRulesOrderSizeNotEqual,
+		},
+		{
+			desc: "error - unknown rule in post-change order",
+			setupFunc: func() (*Feature, []*feature.RuleChange, []string) {
+				f := makeFeature("test-feature")
+				rule1ID := newUUID()
+				rule2ID := newUUID()
+				f.Rules[0].Id = rule1ID
+				f.Rules[1].Id = rule2ID
+
+				newRuleID := newUUID()
+				ruleChanges := []*feature.RuleChange{
+					{
+						ChangeType: feature.ChangeType_CREATE,
+						Rule: &feature.Rule{
+							Id: newRuleID,
+							Clauses: []*feature.Clause{
+								{
+									Id:        newClauseID(),
+									Attribute: "email",
+									Operator:  feature.Clause_IN,
+									Values:    []string{"user@example.com"},
+								},
+							},
+							Strategy: &feature.Strategy{
+								Type: feature.Strategy_FIXED,
+								FixedStrategy: &feature.FixedStrategy{
+									Variation: f.Variations[0].Id,
+								},
+							},
+						},
+					},
+				}
+				ruleOrder := []string{newRuleID, rule1ID, newUUID()}
+				return f, ruleChanges, ruleOrder
+			},
+			expectedErr: errRuleNotFound,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual, ruleChanges, ruleOrder := p.setupFunc()
+
+			beforeIDs := make([]string, len(actual.Rules))
+			for i := range actual.Rules {
+				beforeIDs[i] = actual.Rules[i].Id
+			}
+
+			updated, err := actual.Update(
+				nil,   // name
+				nil,   // description
+				nil,   // tags
+				nil,   // enabled
+				nil,   // archived
+				nil,   // defaultStrategy
+				nil,   // offVariation
+				false, // resetSamplingSeed
+				nil,   // prerequisiteChanges
+				nil,   // targetChanges
+				ruleChanges,
+				nil, // variationChanges
+				nil, // tagChanges
+				nil, // maintainer
+				ruleOrder,
+			)
+
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+				assert.Nil(t, updated)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, updated)
+
+			expectedIDs := p.expectedRuleIDs(actual, ruleChanges)
+			require.Len(t, updated.Rules, len(expectedIDs))
+			for i, id := range expectedIDs {
+				assert.Equal(t, id, updated.Rules[i].Id)
+			}
+
+			if p.assertRuleUpdate != nil {
+				p.assertRuleUpdate(t, updated, ruleChanges)
+			}
+
+			// Ensure original input feature was not mutated.
+			require.Len(t, actual.Rules, len(beforeIDs))
+			for i := range actual.Rules {
+				assert.Equal(t, beforeIDs[i], actual.Rules[i].Id)
 			}
 		})
 	}

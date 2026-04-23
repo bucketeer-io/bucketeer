@@ -181,6 +181,7 @@ export interface FeatureUpdaterParams {
   applyScheduleUpdate: boolean;
   variationChanges: VariationChange[];
   ruleChanges: RuleChange[];
+  orderedRuleIds: string[];
   prerequisiteChanges: PrerequisiteChange[];
   targetChanges: TargetChange[];
   tagChanges: TagChange[];

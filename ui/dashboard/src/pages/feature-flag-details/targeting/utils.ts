@@ -1270,3 +1270,20 @@ export const handleCheckRuleDeleted = (
 
   return deletes;
 };
+
+/**
+ * Computes the ordered_rule_ids to send to the backend.
+ * Returns the ordered list of rule IDs from the current form state if the order
+ * has changed from the server state (or if rules were added/removed), otherwise
+ * returns undefined (no reorder needed).
+ */
+export const computeRuleOrder = (
+  serverRules: FeatureRule[],
+  formRules?: { id: string }[]
+): string[] | undefined => {
+  if (!formRules || formRules.length === 0) return undefined;
+  const serverIDs = serverRules.map(r => r.id);
+  const formIDs = formRules.map(r => r.id);
+  if (isEqual(serverIDs, formIDs)) return undefined;
+  return formIDs;
+};

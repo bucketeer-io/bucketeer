@@ -72,6 +72,7 @@ import {
   handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
   handleCheckPrerequisiteDiscardChanges,
+  computeRuleOrder,
   handleCheckPrerequisites,
   handleCheckRuleDeleted,
   handleCheckSegmentRules,
@@ -245,7 +246,6 @@ const TargetingPage = ({
     fields: segmentRules,
     insert: segmentRulesInsert,
     remove: segmentRulesRemove,
-    update: segmentRulesUpdate,
     swap: segmentRulesSwap
   } = useFieldArray({
     control,
@@ -366,19 +366,11 @@ const TargetingPage = ({
 
   const handleSwapSegmentRule = useCallback(
     (indexA: number, indexB: number) => {
-      segmentRulesUpdate(indexA, {
-        ...segmentRulesWatch[indexA],
-        id: uuid()
-      });
-      segmentRulesUpdate(indexB, {
-        ...segmentRulesWatch[indexB],
-        id: uuid()
-      });
       segmentRulesSwap(indexA, indexB);
       const featureRuleSwap = handleSwapRuleFeature(featureRef, indexA, indexB);
       setFeatureRef(featureRuleSwap);
     },
-    [segmentRulesWatch]
+    [featureRef]
   );
 
   const buildSchedulePayload = useCallback(
@@ -406,6 +398,11 @@ const TargetingPage = ({
       const ruleChanges = handleCheckSegmentRules(rules, segmentRules);
       if (ruleChanges.length > 0) {
         payload.ruleChanges = ruleChanges;
+      }
+
+      const ruleOrder = computeRuleOrder(rules, segmentRules);
+      if (ruleOrder) {
+        payload.orderedRuleIds = ruleOrder;
       }
 
       const targetChanges = handleCheckIndividualRules(
@@ -622,6 +619,7 @@ const TargetingPage = ({
               enabled,
               defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
               ruleChanges: handleCheckSegmentRules(rules, segmentRules),
+              orderedRuleIds: computeRuleOrder(rules, segmentRules) ?? [],
               targetChanges: handleCheckIndividualRules(
                 targets,
                 individualRules

@@ -42,6 +42,7 @@ func (f *Feature) Update(
 	variationChanges []*feature.VariationChange,
 	tagChanges []*feature.TagChange,
 	maintainer *wrapperspb.StringValue,
+	ruleOrder []string,
 ) (*Feature, error) {
 	// Use copier.CopyWithOption with DeepCopy: true to standardize empty slices as []
 	// This ensures consistent JSON serialization in both API responses and audit logs
@@ -85,7 +86,7 @@ func (f *Feature) Update(
 		return nil, err
 	}
 
-	// Step 2: Validate all other changes now that new variations exist
+	// Step 2: Validate the rest against the updated variation set
 	if err := updated.validateAllChanges(
 		name,
 		defaultStrategy,
@@ -93,11 +94,12 @@ func (f *Feature) Update(
 		prerequisiteChanges,
 		targetChanges,
 		ruleChanges,
+		tagChanges,
+		ruleOrder,
 	); err != nil {
 		return nil, err
 	}
 
-	// Apply general updates
 	if err := updated.applyGeneralUpdates(
 		name,
 		description,
@@ -112,8 +114,7 @@ func (f *Feature) Update(
 		return nil, err
 	}
 
-	// Apply remaining granular updates (prerequisites, targets, rules, tags)
-	if err := updated.applyGranularChanges(
+	if err := updated.applyGranularCRUDChanges(
 		prerequisiteChanges,
 		targetChanges,
 		ruleChanges,
@@ -122,7 +123,15 @@ func (f *Feature) Update(
 		return nil, err
 	}
 
-	// Step 3: Apply variation deletions last
+	// Rule ordering is intentionally separate from CRUD.
+	// It must run after creates/deletes/updates so it sees the final rule set.
+	if len(ruleOrder) > 0 {
+		if err := updated.applyRuleOrder(ruleOrder); err != nil {
+			return nil, err
+		}
+	}
+
+	// Step 3: variation deletions last
 	if err := updated.validateVariationChanges(variationDeletions); err != nil {
 		return nil, err
 	}
@@ -147,43 +156,40 @@ func (f *Feature) validateAllChanges(
 	prerequisiteChanges []*feature.PrerequisiteChange,
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
+	tagChanges []*feature.TagChange,
+	ruleOrder []string,
 ) error {
-	// Validate name if provided
 	if name != nil && name.Value == "" {
 		return errNameEmpty
 	}
-
-	// Validate default strategy if provided
 	if defaultStrategy != nil {
 		if err := validateStrategy(defaultStrategy, f.Variations); err != nil {
 			return err
 		}
 	}
-
-	// Validate off variation if provided
 	if offVariation != nil {
 		if err := validateOffVariation(offVariation.Value, f.Variations); err != nil {
 			return err
 		}
 	}
-
-	// Validate granular changes
-	for _, change := range prerequisiteChanges {
-		if err := validatePrerequisite(change.Prerequisite.FeatureId, change.Prerequisite.VariationId); err != nil {
-			return err
-		}
+	if err := f.validatePrerequisiteChanges(prerequisiteChanges); err != nil {
+		return err
+	}
+	if err := f.validateTargetChanges(targetChanges); err != nil {
+		return err
+	}
+	if err := f.validateRuleChanges(ruleChanges); err != nil {
+		return err
+	}
+	if err := f.validateTagChanges(tagChanges); err != nil {
+		return err
 	}
 
-	for _, change := range targetChanges {
-		if err := validateTargets([]*feature.Target{change.Target}, f.Variations); err != nil {
-			return err
-		}
-	}
-
-	for _, change := range ruleChanges {
-		if err := validateRules([]*feature.Rule{change.Rule}, f.Variations); err != nil {
-			return err
-		}
+	// Optional early validation of ruleOrder against current post-general-update state.
+	// Since CRUD hasn't been applied yet, we validate ruleOrder structure only here.
+	// Membership/length are still authoritatively checked in applyRuleOrder after CRUD.
+	if err := f.validateRuleOrderShape(ruleOrder); err != nil {
+		return err
 	}
 
 	return nil
@@ -273,14 +279,14 @@ func (f *Feature) applyVariationChanges(
 	return nil
 }
 
-// applyGranularChanges handles prerequisites, targets, rules, and tags updates.
-func (f *Feature) applyGranularChanges(
+// applyGranularCRUDChanges handles prerequisites, targets, rules, and tags CRUD.
+// Rule ordering is intentionally not handled here.
+func (f *Feature) applyGranularCRUDChanges(
 	prerequisiteChanges []*feature.PrerequisiteChange,
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
 	tagChanges []*feature.TagChange,
 ) error {
-	// Prerequisites
 	for _, change := range prerequisiteChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
@@ -298,15 +304,12 @@ func (f *Feature) applyGranularChanges(
 				return err
 			}
 		case feature.ChangeType_DELETE:
-			if err := f.updateRemovePrerequisite(
-				change.Prerequisite.FeatureId,
-			); err != nil {
+			if err := f.updateRemovePrerequisite(change.Prerequisite.FeatureId); err != nil {
 				return err
 			}
 		}
 	}
 
-	// Individual Targets
 	for _, change := range targetChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
@@ -320,7 +323,6 @@ func (f *Feature) applyGranularChanges(
 		}
 	}
 
-	// Custom Rules
 	for _, change := range ruleChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
@@ -338,7 +340,6 @@ func (f *Feature) applyGranularChanges(
 		}
 	}
 
-	// Tags
 	for _, change := range tagChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
@@ -353,6 +354,12 @@ func (f *Feature) applyGranularChanges(
 	}
 
 	return nil
+}
+
+// applyRuleOrder reorders f.Rules to match the given list of rule IDs.
+// Must be called after all rule CREATE/UPDATE/DELETE changes have been applied.
+func (f *Feature) applyRuleOrder(ruleIDs []string) error {
+	return f.ChangeRulesOrder(ruleIDs)
 }
 
 func (f *Feature) updateEnable() error {
@@ -727,4 +734,125 @@ func (f *Feature) updateAddVariationToRolloutStrategy(strategy *feature.RolloutS
 		Variation: variationID,
 		Weight:    0,
 	})
+}
+
+func (f *Feature) validatePrerequisiteChanges(changes []*feature.PrerequisiteChange) error {
+	for _, change := range changes {
+		if change == nil {
+			return errPrerequisiteRequired
+		}
+		if change.Prerequisite == nil {
+			return errPrerequisiteRequired
+		}
+
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
+			if err := validatePrerequisite(
+				change.Prerequisite.FeatureId,
+				change.Prerequisite.VariationId,
+			); err != nil {
+				return err
+			}
+		case feature.ChangeType_DELETE:
+			if change.Prerequisite.FeatureId == "" {
+				return errPrerequisiteFeatureIDRequired
+			}
+		default:
+			return errUnknownChangeType
+		}
+	}
+	return nil
+}
+
+func (f *Feature) validateTargetChanges(changes []*feature.TargetChange) error {
+	for _, change := range changes {
+		if change == nil {
+			return errTargetRequired
+		}
+		if change.Target == nil {
+			return errTargetRequired
+		}
+
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
+			if err := validateTargets([]*feature.Target{change.Target}, f.Variations); err != nil {
+				return err
+			}
+		case feature.ChangeType_DELETE:
+			// delete only needs enough info to identify the target bucket and users to remove
+			if change.Target.Variation == "" {
+				return errTargetVariationRequired
+			}
+			if change.Target.Users == nil {
+				return errTargetUsersRequired
+			}
+			for _, user := range change.Target.Users {
+				if user == "" {
+					return errTargetUserRequired
+				}
+			}
+		default:
+			return errUnknownChangeType
+		}
+	}
+	return nil
+}
+
+func (f *Feature) validateRuleChanges(changes []*feature.RuleChange) error {
+	for _, change := range changes {
+		if change == nil {
+			return errRuleRequired
+		}
+		if change.Rule == nil {
+			return errRuleRequired
+		}
+
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
+			if err := validateRules([]*feature.Rule{change.Rule}, f.Variations); err != nil {
+				return err
+			}
+		case feature.ChangeType_DELETE:
+			if change.Rule.Id == "" {
+				return errRuleIDRequired
+			}
+		default:
+			return errUnknownChangeType
+		}
+	}
+	return nil
+}
+
+func (f *Feature) validateTagChanges(changes []*feature.TagChange) error {
+	for _, change := range changes {
+		if change == nil {
+			return errTagRequired
+		}
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE, feature.ChangeType_DELETE:
+			if change.Tag == "" {
+				return errTagRequired
+			}
+		default:
+			return errUnknownChangeType
+		}
+	}
+	return nil
+}
+
+func (f *Feature) validateRuleOrderShape(ruleOrder []string) error {
+	if len(ruleOrder) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(ruleOrder))
+	for _, id := range ruleOrder {
+		if id == "" {
+			return errRuleIDRequired
+		}
+		if _, ok := seen[id]; ok {
+			return errRulesOrderDuplicateIDs
+		}
+		seen[id] = struct{}{}
+	}
+	return nil
 }

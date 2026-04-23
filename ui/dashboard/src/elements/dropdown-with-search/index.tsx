@@ -17,6 +17,7 @@ import {
   DropdownOption,
   DropdownValue
 } from 'components/dropdown';
+import Spinner from 'components/spinner';
 import DropdownList from 'elements/dropdown-list';
 
 export interface DropdownMenuWithSearchProps {
@@ -43,6 +44,10 @@ export interface DropdownMenuWithSearchProps {
   selectedFieldValue?: string;
   itemSize?: number;
   maxOptions?: number;
+  isHasMore?: boolean;
+  isLoadingMore?: boolean;
+  isSearching?: boolean;
+  onHasMoreOptions?: () => void;
   notFoundOption?: (
     value: string,
     onChangeValue: (value: string) => void
@@ -88,6 +93,10 @@ const DropdownMenuWithSearch = ({
   itemSelected,
   itemSize = 44,
   maxOptions = 15,
+  isHasMore,
+  isLoadingMore,
+  isSearching,
+  onHasMoreOptions,
   notFoundOption,
   additionalElement,
   onSelectOption,
@@ -198,19 +207,33 @@ const DropdownMenuWithSearch = ({
             })
           }
         />
-        {dropdownOptions?.length > 0 ? (
-          <DropdownList
-            options={dropdownOptions}
-            itemSize={itemSize}
-            itemSelected={itemSelected}
-            maxOptions={maxOptions}
-            isMultiselect={isMultiselect}
-            selectedOptions={selectedOptions}
-            selectedFieldValue={selectedFieldValue}
-            additionalElement={additionalElement}
-            onSelectOption={onSelectOption}
-            className={itemClassName}
-          />
+        {isSearching ? (
+          <div className="flex-center w-full h-[200px]">
+            <Spinner size="sm" />
+          </div>
+        ) : dropdownOptions?.length > 0 ? (
+          <>
+            <DropdownList
+              options={dropdownOptions}
+              itemSize={itemSize}
+              itemSelected={itemSelected}
+              maxOptions={maxOptions}
+              isMultiselect={isMultiselect}
+              selectedOptions={selectedOptions}
+              selectedFieldValue={selectedFieldValue}
+              additionalElement={additionalElement}
+              onSelectOption={onSelectOption}
+              className={itemClassName}
+              isHasMore={isHasMore}
+              isLoadingMore={isLoadingMore}
+              onHasMoreOptions={onHasMoreOptions}
+            />
+            {isLoadingMore && (
+              <div className="flex-center py-2">
+                <Spinner size="sm" />
+              </div>
+            )}
+          </>
         ) : notFoundOption ? (
           notFoundOption(searchValue, value => {
             setSearchValue(value);

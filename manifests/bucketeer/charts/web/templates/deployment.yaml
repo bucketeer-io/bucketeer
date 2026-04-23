@@ -78,16 +78,28 @@ spec:
               value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_WEB_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
+            - name: BUCKETEER_WEB_STORAGE_TYPE
+              value: "{{ .Values.env.operationalDatabase.type }}"
             - name: BUCKETEER_WEB_MYSQL_USER
-              value: "{{ .Values.env.mysqlUser }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_WEB_MYSQL_PASS
-              value: "{{ .Values.env.mysqlPass }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.pass }}"
             - name: BUCKETEER_WEB_MYSQL_HOST
-              value: "{{ .Values.env.mysqlHost }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_WEB_MYSQL_PORT
-              value: "{{ .Values.env.mysqlPort }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.port }}"
             - name: BUCKETEER_WEB_MYSQL_DB_NAME
-              value: "{{ .Values.env.mysqlDbName }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.name }}"
+            - name: BUCKETEER_WEB_POSTGRES_USER
+              value: "{{ .Values.env.operationalDatabase.postgres.user }}"
+            - name: BUCKETEER_WEB_POSTGRES_PASS
+              value: "{{ .Values.env.operationalDatabase.postgres.pass }}"
+            - name: BUCKETEER_WEB_POSTGRES_HOST
+              value: "{{ .Values.env.operationalDatabase.postgres.host }}"
+            - name: BUCKETEER_WEB_POSTGRES_PORT
+              value: "{{ .Values.env.operationalDatabase.postgres.port }}"
+            - name: BUCKETEER_WEB_POSTGRES_DB_NAME
+              value: "{{ .Values.env.operationalDatabase.postgres.name }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_ADDR

@@ -12,11 +12,21 @@ env:
   bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   project: bucketeer-dev
-  mysqlUser: bucketeer
-  mysqlPass: bucketeer
-  mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-  mysqlPort: 3306
-  mysqlDbName: bucketeer
+  # Storage configuration
+  operationalDatabase:
+    type: "mysql"
+    mysql:
+      user: bucketeer
+      pass: bucketeer
+      host: localenv-mysql-headless.default.svc.cluster.local
+      port: 3306
+      name: bucketeer
+    postgres:
+      user: bucketeer
+      pass: bucketeer
+      host: localenv-postgres-headless.default.svc.cluster.local
+      port: 5432
+      name: bucketeer
   persistentRedis:
     serverName: backend
     addr: localenv-redis-headless.default.svc.cluster.local:6379

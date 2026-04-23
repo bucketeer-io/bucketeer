@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -63,30 +64,44 @@ const (
 	listRequestSize         = 500
 	secondsToReturnAllFlags = 30 * 24 * 60 * 60 // 30 days
 	obfuscateAPIKeyLength   = 4
+	// singleflightFetchTimeout bounds the shared fetch executed inside a
+	// singleflight group when callers' request contexts are detached. It must
+	// be longer than the worst-case downstream latency (DB / feature service)
+	// and shorter than the SDK / load-balancer timeout so that runaway work
+	// is eventually released.
+	singleflightFetchTimeout = 10 * time.Second
 )
 
 var (
-	ErrSDKVersionRequired = status.Error(codes.InvalidArgument, "gateway: sdk version is required")
-	ErrSourceIDRequired   = status.Error(codes.InvalidArgument, "gateway: source id is required")
-	ErrUserRequired       = status.Error(codes.InvalidArgument, "gateway: user is required")
-	ErrUserIDRequired     = status.Error(codes.InvalidArgument, "gateway: user id is required")
-	ErrGoalIDRequired     = status.Error(codes.InvalidArgument, "gateway: goal id is required")
-	ErrFeatureIDRequired  = status.Error(codes.InvalidArgument, "gateway: feature id is required")
-	ErrTagRequired        = status.Error(codes.InvalidArgument, "gateway: tag is required")
-	ErrMissingEvents      = status.Error(codes.InvalidArgument, "gateway: missing events")
-	ErrMissingEventID     = status.Error(codes.InvalidArgument, "gateway: missing event id")
-	ErrInvalidTimestamp   = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
-	ErrContextCanceled    = status.Error(codes.Canceled, "gateway: context canceled")
-	ErrFeatureNotFound    = status.Error(codes.NotFound, "gateway: feature not found")
-	ErrEvaluationNotFound = status.Error(codes.NotFound, "gateway: evaluation not found")
-	ErrPushNotFound       = status.Error(codes.NotFound, "gateway: push not found")
-	ErrAccountNotFound    = status.Error(codes.NotFound, "gateway: account not found")
-	ErrMissingAPIKey      = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
-	ErrInvalidAPIKey      = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
-	ErrDisabledAPIKey     = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
-	ErrBadRole            = status.Error(codes.PermissionDenied, "gateway: bad role")
-	ErrInternal           = status.Error(codes.Internal, "gateway: internal")
-	ErrNotFound           = status.Error(codes.NotFound, "gateway: not found")
+	ErrSDKVersionRequired      = status.Error(codes.InvalidArgument, "gateway: sdk version is required")
+	ErrSourceIDRequired        = status.Error(codes.InvalidArgument, "gateway: source id is required")
+	ErrUserRequired            = status.Error(codes.InvalidArgument, "gateway: user is required")
+	ErrUserIDRequired          = status.Error(codes.InvalidArgument, "gateway: user id is required")
+	ErrGoalIDRequired          = status.Error(codes.InvalidArgument, "gateway: goal id is required")
+	ErrFeatureIDRequired       = status.Error(codes.InvalidArgument, "gateway: feature id is required")
+	ErrTagRequired             = status.Error(codes.InvalidArgument, "gateway: tag is required")
+	ErrMissingEvents           = status.Error(codes.InvalidArgument, "gateway: missing events")
+	ErrMissingEventID          = status.Error(codes.InvalidArgument, "gateway: missing event id")
+	ErrInvalidTimestamp        = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
+	ErrContextCanceled         = status.Error(codes.Canceled, "gateway: context canceled")
+	ErrContextDeadlineExceeded = status.Error(codes.DeadlineExceeded, "gateway: context deadline exceeded")
+	ErrFeatureNotFound         = status.Error(codes.NotFound, "gateway: feature not found")
+	ErrEvaluationNotFound      = status.Error(codes.NotFound, "gateway: evaluation not found")
+	ErrPushNotFound            = status.Error(codes.NotFound, "gateway: push not found")
+	ErrAccountNotFound         = status.Error(codes.NotFound, "gateway: account not found")
+	ErrMissingAPIKey           = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
+	ErrInvalidAPIKey           = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
+	ErrDisabledAPIKey          = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
+	ErrBadRole                 = status.Error(codes.PermissionDenied, "gateway: bad role")
+	ErrInternal                = status.Error(codes.Internal, "gateway: internal")
+	ErrNotFound                = status.Error(codes.NotFound, "gateway: not found")
+
+	// errCallerCanceled is wrapped around the underlying gRPC status error when
+	// singleflightFetch returns because the caller's request context was
+	// canceled (or its deadline expired). Call sites use errors.Is to detect
+	// this case and avoid bumping internal-error metrics for a client-side
+	// disconnect that is not a server-side failure.
+	errCallerCanceled = errors.New("gateway: caller context canceled")
 
 	grpcGoalEvent       = &eventproto.GoalEvent{}
 	grpcEvaluationEvent = &eventproto.EvaluationEvent{}
@@ -404,7 +419,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
-		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !isCallerContextErr(err) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetEvaluations request",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -445,19 +460,21 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
-	f, err, _ := s.flightgroup.Do(
-		environmentId,
-		func() (interface{}, error) {
-			return s.getFeatures(ctx, environmentId)
-		},
-	)
+	f, err := s.singleflightFetch(ctx, environmentId, func(ctx context.Context) (interface{}, error) {
+		return s.getFeatures(ctx, environmentId)
+	})
+	spanGetFeatures.End()
 	if err != nil {
+		if errors.Is(err, errCallerCanceled) {
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeCanceled, sourceID).Inc()
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		return nil, err
 	}
-	spanGetFeatures.End()
 	features := f.([]*featureproto.Feature)
 	filteredByTag := s.filterByTag(features, req.Tag)
 
@@ -492,6 +509,11 @@ func (s *grpcGatewayService) GetEvaluations(
 
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
+		if errors.Is(err, errCallerCanceled) {
+			evaluationsCounter.WithLabelValues(
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeCanceled, sourceID).Inc()
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
@@ -639,7 +661,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
-		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !isCallerContextErr(err) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetEvaluation request",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -678,17 +700,17 @@ func (s *grpcGatewayService) GetEvaluation(
 	}
 
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
-	f, err, _ := s.flightgroup.Do(
-		envAPIKey.Environment.Id,
-		func() (interface{}, error) {
-			return s.getFeatures(ctx, envAPIKey.Environment.Id)
-		},
-	)
+	f, err := s.singleflightFetch(ctx, envAPIKey.Environment.Id, func(ctx context.Context) (interface{}, error) {
+		return s.getFeatures(ctx, envAPIKey.Environment.Id)
+	})
+	spanGetFeatures.End()
 	if err != nil {
+		if errors.Is(err, errCallerCanceled) {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodGetEvaluation).Inc()
 		return nil, err
 	}
-	spanGetFeatures.End()
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	features, err := s.getTargetFeatures(fs, req.FeatureId)
 	if err != nil {
@@ -696,6 +718,9 @@ func (s *grpcGatewayService) GetEvaluation(
 	}
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id)
 	if err != nil {
+		if errors.Is(err, errCallerCanceled) {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -751,7 +776,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
-		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !isCallerContextErr(err) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetFeatureFlags request",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -792,19 +817,21 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		return nil, err
 	}
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags.GetFeatures")
-	f, err, _ := s.flightgroup.Do(
-		environmentId,
-		func() (interface{}, error) {
-			return s.getFeatures(ctx, environmentId)
-		},
-	)
+	f, err := s.singleflightFetch(ctx, environmentId, func(ctx context.Context) (interface{}, error) {
+		return s.getFeatures(ctx, environmentId)
+	})
+	spanGetFeatures.End()
 	if err != nil {
+		if errors.Is(err, errCallerCanceled) {
+			getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
+				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeCanceled).Inc()
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetFeatureFlags).Inc()
 		return nil, err
 	}
-	spanGetFeatures.End()
 	// Filter flags by tag if needed
 	features := f.([]*featureproto.Feature)
 	var targetFeatures []*featureproto.Feature
@@ -922,7 +949,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	startTime := time.Now()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
-		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !isCallerContextErr(err) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetSegmentUsers request",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -965,20 +992,23 @@ func (s *grpcGatewayService) GetSegmentUsers(
 
 	// Get the feature flags from the cache
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetSegmentUsers.GetFeatures")
-	f, err, _ := s.flightgroup.Do(
-		environmentId,
-		func() (interface{}, error) {
-			return s.getFeatures(ctx, environmentId)
-		},
-	)
+	f, err := s.singleflightFetch(ctx, environmentId, func(ctx context.Context) (interface{}, error) {
+		return s.getFeatures(ctx, environmentId)
+	})
+	spanGetFeatures.End()
 	if err != nil {
+		if errors.Is(err, errCallerCanceled) {
+			getSegmentUsersCounter.WithLabelValues(
+				projectID, envAPIKey.ProjectUrlCode, environmentId,
+				envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeCanceled).Inc()
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		getSegmentUsersCounter.WithLabelValues(
 			projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeInternalError).Inc()
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetSegmentUsers).Inc()
 		return nil, err
 	}
-	spanGetFeatures.End()
 
 	// Return an empty response when there is no feature flags
 	targetFeatures := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
@@ -1012,18 +1042,28 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			ctx,
 			"bucketeerGRPCGatewayService.GetSegmentUsers.GetSegmentUsersBySegmentID",
 		)
-		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, sID), func() (interface{}, error) {
-			return s.getSegmentUsersBySegmentID(ctx, sID, environmentId)
-		})
+		su, err := s.singleflightFetch(
+			ctx,
+			s.segmentFlightID(environmentId, sID),
+			func(ctx context.Context) (interface{}, error) {
+				return s.getSegmentUsersBySegmentID(ctx, sID, environmentId)
+			},
+		)
+		spanGetSegmentUsers.End()
 		if err != nil {
+			if errors.Is(err, errCallerCanceled) {
+				getSegmentUsersCounter.WithLabelValues(
+					projectID, envAPIKey.ProjectUrlCode, environmentId,
+					envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeCanceled).Inc()
+				return nil, status.FromContextError(ctx.Err()).Err()
+			}
 			getSegmentUsersCounter.WithLabelValues(
 				projectID, envAPIKey.ProjectUrlCode, environmentId,
 				envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeInternalError).Inc()
 			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetSegmentUsers).Inc()
 			return nil, err
 		}
-		spanGetSegmentUsers.End()
-		segmentUsers := s.(*featureproto.SegmentUsers)
+		segmentUsers := su.(*featureproto.SegmentUsers)
 		targetSegmentUsers = append(targetSegmentUsers, segmentUsers)
 	}
 
@@ -1149,6 +1189,67 @@ func (s *grpcGatewayService) validateGetEvaluationRequest(req *gwproto.GetEvalua
 		return ErrFeatureIDRequired
 	}
 	return nil
+}
+
+// singleflightFetch shares concurrent fetches via singleflight while ensuring
+// that a single caller's context cancellation does not abort the work for the
+// other waiters. The shared work runs with a context derived from the first
+// caller's context (preserving values such as logging fields and trace
+// metadata) but with cancellation detached and a fresh timeout applied. Each
+// caller still honors its own ctx.Done(), so a slow caller can give up
+// locally without affecting the in-flight call.
+//
+// This avoids the thundering-herd cancellation that occurs when many callers
+// fan-in on a cache-miss path: previously, if the first caller's gRPC context
+// was canceled, the shared downstream call (DB / feature service) was canceled
+// too and every waiter received "context canceled".
+//
+// When the caller's own context is canceled while waiting, the returned error
+// wraps errCallerCanceled so call sites can distinguish a client disconnect
+// (not a server-side failure) from a downstream error and avoid bumping
+// internal-error metrics for it.
+func (s *grpcGatewayService) singleflightFetch(
+	ctx context.Context,
+	key string,
+	fn func(ctx context.Context) (interface{}, error),
+) (interface{}, error) {
+	ch := s.flightgroup.DoChan(key, func() (interface{}, error) {
+		innerCtx, cancel := context.WithTimeout(
+			context.WithoutCancel(ctx),
+			singleflightFetchTimeout,
+		)
+		defer cancel()
+		return fn(innerCtx)
+	})
+	select {
+	case res := <-ch:
+		return res.Val, res.Err
+	case <-ctx.Done():
+		return nil, fmt.Errorf("%w: %w", errCallerCanceled, status.FromContextError(ctx.Err()).Err())
+	}
+}
+
+// isCallerContextErr reports whether err is one of the gateway sentinels
+// produced when the caller's request context terminated (canceled or its
+// deadline was exceeded). Used by the public-API entry points to suppress
+// noisy "Failed to check ... request" logs for client-side disconnects.
+func isCallerContextErr(err error) bool {
+	return errors.Is(err, ErrContextCanceled) || errors.Is(err, ErrContextDeadlineExceeded)
+}
+
+// translateCallerCanceledErr converts a singleflightFetch caller-cancellation
+// error into the package's well-known sentinels, preserving the underlying
+// gRPC status (Canceled vs DeadlineExceeded) so the SDK sees the right code
+// and upstream log-suppression keeps working. Errors that do not wrap
+// errCallerCanceled are returned unchanged.
+func translateCallerCanceledErr(ctx context.Context, err error) error {
+	if !errors.Is(err, errCallerCanceled) {
+		return err
+	}
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return ErrContextDeadlineExceeded
+	}
+	return ErrContextCanceled
 }
 
 func (s *grpcGatewayService) getFeatures(
@@ -1300,13 +1401,17 @@ func (s *grpcGatewayService) listSegmentUsers(
 	}
 	users := make(map[string][]*featureproto.SegmentUser)
 	for segmentID := range mapSegmentIDs {
-		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, segmentID), func() (interface{}, error) {
-			return s.getSegmentUsersBySegmentID(ctx, segmentID, environmentId)
-		})
+		su, err := s.singleflightFetch(
+			ctx,
+			s.segmentFlightID(environmentId, segmentID),
+			func(ctx context.Context) (interface{}, error) {
+				return s.getSegmentUsersBySegmentID(ctx, segmentID, environmentId)
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
-		segmentUsers := s.(*featureproto.SegmentUsers)
+		segmentUsers := su.(*featureproto.SegmentUsers)
 		users[segmentID] = segmentUsers.Users
 	}
 	return users, nil
@@ -1436,7 +1541,7 @@ func (s *grpcGatewayService) RegisterEvents(
 	allowedRoles := []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT, accountproto.APIKey_SDK_SERVER}
 	envAPIKey, err := s.checkRequest(ctx, allowedRoles)
 	if err != nil {
-		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !isCallerContextErr(err) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check RegisterEvents request",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -1696,9 +1801,10 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 	ctx context.Context,
 	apiKey string,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	k, err, _ := s.flightgroup.Do(
+	k, err := s.singleflightFetch(
+		ctx,
 		environmentAPIKeyFlightID(apiKey),
-		func() (interface{}, error) {
+		func(ctx context.Context) (interface{}, error) {
 			// L1: in-memory cache
 			envAPIKey, err := getEnvironmentAPIKeyFromCache(
 				apiKey,
@@ -1757,7 +1863,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, translateCallerCanceledErr(ctx, err)
 	}
 	envAPIKey := k.(*accountproto.EnvironmentAPIKey)
 	return envAPIKey, nil

@@ -76,6 +76,7 @@ func enableFeature(
 		nil,                                // variationChanges
 		nil,                                // tagChanges
 		nil,                                // maintainer
+		nil,                                // ruleOrder
 	)
 	if err != nil {
 		return err
@@ -134,6 +135,7 @@ func disableFeature(
 		nil,                                 // variationChanges
 		nil,                                 // tagChanges
 		nil,                                 // maintainer
+		nil,                                 // ruleOrder
 	)
 	if err != nil {
 		return err

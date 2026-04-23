@@ -107,18 +107,32 @@ spec:
               value: "{{ .Values.env.scheduleProgressiveRolloutWatcher }}"
             - name: BUCKETEER_BATCH_EVENT_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
+            - name: BUCKETEER_BATCH_STORAGE_TYPE
+              value: "{{ .Values.env.operationalDatabase.type }}"
             - name: BUCKETEER_BATCH_MYSQL_USER
-              value: "{{ .Values.env.mysqlUser }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_BATCH_MYSQL_PASS
-              value: "{{ .Values.env.mysqlPass }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.pass }}"
             - name: BUCKETEER_BATCH_MYSQL_HOST
-              value: "{{ .Values.env.mysqlHost }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_BATCH_MYSQL_PORT
-              value: "{{ .Values.env.mysqlPort }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.port }}"
             - name: BUCKETEER_BATCH_MYSQL_DB_NAME
-              value: "{{ .Values.env.mysqlDbName }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.name }}"
             - name: BUCKETEER_BATCH_MYSQL_DB_OPEN_CONNS
-              value: "{{ .Values.env.mysqlDbOpenConns }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.openConns }}"
+            - name: BUCKETEER_BATCH_POSTGRES_USER
+              value: "{{ .Values.env.operationalDatabase.postgres.user }}"
+            - name: BUCKETEER_BATCH_POSTGRES_PASS
+              value: "{{ .Values.env.operationalDatabase.postgres.pass }}"
+            - name: BUCKETEER_BATCH_POSTGRES_HOST
+              value: "{{ .Values.env.operationalDatabase.postgres.host }}"
+            - name: BUCKETEER_BATCH_POSTGRES_PORT
+              value: "{{ .Values.env.operationalDatabase.postgres.port }}"
+            - name: BUCKETEER_BATCH_POSTGRES_DB_NAME
+              value: "{{ .Values.env.operationalDatabase.postgres.name }}"
+            - name: BUCKETEER_BATCH_POSTGRES_DB_OPEN_CONNS
+              value: "{{ .Values.env.operationalDatabase.postgres.openConns }}"
             - name: BUCKETEER_BATCH_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_BATCH_LOG_LEVEL

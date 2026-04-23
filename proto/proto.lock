@@ -30284,6 +30284,12 @@
                 "id": 13,
                 "name": "maintainer",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 14,
+                "name": "ordered_rule_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -31338,6 +31344,12 @@
                 "id": 18,
                 "name": "maintainer",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 19,
+                "name": "ordered_rule_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

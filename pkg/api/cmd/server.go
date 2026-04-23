@@ -24,6 +24,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -740,10 +742,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 }
 
 // startCacheInvalidator subscribes to domain events to evict L1 in-memory
-// cache entries when feature flags or segments are updated. Each pod uses a
-// unique consumer group (based on hostname) so every pod receives every event.
-// It returns a cleanup function that deletes the GCP subscription or Redis
-// consumer group on graceful shutdown.
+// cache entries when feature flags, segments, or API keys are updated. Each
+// pod uses a unique consumer group (based on hostname) so every pod receives
+// every event. (L2 Redis for features/segments/API keys is not invalidated here,
+// same as for feature and segment caches.)
+// It returns a cleanup function that deletes the pub/sub subscription or
+// pub/sub consumer group on graceful shutdown.
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
@@ -778,6 +782,7 @@ func (s *server) startCacheInvalidator(
 	invalidator := api.NewCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
+		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
 		logger,
 	)
 	go func() {
@@ -796,7 +801,16 @@ func (s *server) startCacheInvalidator(
 		zap.String("topic", *s.domainTopic),
 	)
 	cleanup := func() {
-		if err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic); err != nil {
+		err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic)
+		if err != nil && status.Code(err) == codes.NotFound {
+			// Subscription may already be removed (TTL, GCP GC). Idempotent cleanup.
+			logger.Debug("Cache invalidator subscription already gone",
+				zap.String("subscription", subscription),
+				zap.String("topic", *s.domainTopic),
+			)
+			return
+		}
+		if err != nil {
 			logger.Warn(
 				"Failed to delete cache invalidator subscription; "+
 					"manual cleanup or backend-specific TTL may be required",
@@ -806,7 +820,7 @@ func (s *server) startCacheInvalidator(
 			)
 			return
 		}
-		logger.Info("Deleted cache invalidator subscription",
+		logger.Debug("Deleted cache invalidator subscription",
 			zap.String("subscription", subscription),
 		)
 	}
