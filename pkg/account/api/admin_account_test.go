@@ -598,6 +598,90 @@ func TestGetMeMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "err: system admin org membership lookup fails with unexpected error",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				envClient := s.environmentClient.(*ecmock.MockClient)
+				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				email := "bucketeer@example.com"
+				sysAdminOrgID := "sys-org"
+				projects := getProjects(t)
+				environments := getEnvironments(t)
+				sysAdminAccount := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						Name:             "System Admin",
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						LastSeen:         456,
+					},
+				}
+				sysAdminAccountForUpdate := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						LastSeen:         456,
+						UpdatedAt:        456,
+					},
+				}
+				unexpectedErr := pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "db is down")
+				gomock.InOrder(
+					envClient.EXPECT().ListProjects(
+						gomock.Any(),
+						gomock.Any(),
+					).Return(
+						&environmentproto.ListProjectsResponse{
+							Projects: projects,
+							Cursor:   "",
+						},
+						nil,
+					),
+					envClient.EXPECT().ListEnvironmentsV2(
+						gomock.Any(),
+						gomock.Any(),
+					).Return(
+						&environmentproto.ListEnvironmentsV2Response{
+							Environments: environments,
+							Cursor:       "",
+						},
+						nil,
+					),
+					envClient.EXPECT().GetOrganization(
+						gomock.Any(), gomock.Any(),
+					).Return(
+						&environmentproto.GetOrganizationResponse{
+							Organization: &org,
+						},
+						nil,
+					),
+					accountStorage.EXPECT().GetSystemAdminAccountV2(
+						gomock.Any(), email,
+					).Return(sysAdminAccount, nil),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(nil, v2as.ErrAccountNotFound),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, sysAdminOrgID,
+					).Return(sysAdminAccountForUpdate, nil),
+					accountStorage.EXPECT().UpdateAccountV2(
+						gomock.Any(), gomock.AssignableToTypeOf(&domain.AccountV2{}),
+					).Return(nil),
+					// membership check: unexpected storage error propagates to the client
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(nil, unexpectedErr),
+				)
+			},
+			input: &accountproto.GetMeRequest{
+				OrganizationId: "org0",
+			},
+			expected: nil,
+			expectedErr: api.NewGRPCStatus(
+				pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "db is down"),
+			).Err(),
+		},
 	}
 
 	for _, p := range patterns {

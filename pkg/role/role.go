@@ -81,46 +81,27 @@ func CheckEnvironmentRole(
 		}, nil
 	}
 
-	if token.IsSystemAdmin {
-		// System admins can read from any org without membership, but must be an org
-		// member with the appropriate role to write.
-		if requiredRole <= accountproto.AccountV2_Role_Environment_VIEWER {
-			return &eventproto.Editor{
-				Email:   token.Email,
-				Name:    token.Name,
-				IsAdmin: true,
-			}, nil
-		}
-		account, err := getAccountFunc(token.Email)
-		if err != nil {
-			if code := status.Code(err); code == codes.NotFound {
-				return nil, ErrPermissionDenied
-			}
-			return nil, ErrInternal
-		}
-		if account.Disabled {
-			return nil, ErrUnauthenticated
-		}
-		accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-		return checkRole(
-			account.Email,
-			token.Name,
-			accountEnvRole,
-			requiredRole,
-			account.EnvironmentRoles,
-			account.OrganizationRole,
-			true,
-		)
+	// System admins can read from any org without membership, but must be an org
+	// member with the appropriate role to write.
+	if token.IsSystemAdmin && requiredRole <= accountproto.AccountV2_Role_Environment_VIEWER {
+		return &eventproto.Editor{
+			Email:   token.Email,
+			Name:    token.Name,
+			IsAdmin: true,
+		}, nil
 	}
-	// get account for the environment id
 	account, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
+			// A system admin reaching here is authenticated but not a member of the
+			// requested org for a write operation, so surface PermissionDenied.
+			if token.IsSystemAdmin {
+				return nil, ErrPermissionDenied
+			}
 			return nil, ErrUnauthenticated
 		}
 		return nil, ErrInternal
 	}
-
 	if account.Disabled {
 		return nil, ErrUnauthenticated
 	}
@@ -132,7 +113,8 @@ func CheckEnvironmentRole(
 		requiredRole,
 		account.EnvironmentRoles,
 		account.OrganizationRole,
-		false)
+		token.IsSystemAdmin,
+	)
 }
 
 func CheckEnvironmentRoleWithLog(
@@ -234,40 +216,23 @@ func CheckOrganizationRole(
 		}, nil
 	}
 
-	if token.IsSystemAdmin {
-		// System admins can view any org without membership, but must be a member
-		// with the appropriate role for admin/write operations (e.g. creating API keys).
-		if requiredRole <= accountproto.AccountV2_Role_Organization_MEMBER {
-			return &eventproto.Editor{
-				Email:   token.Email,
-				Name:    token.Name,
-				IsAdmin: true,
-			}, nil
-		}
-		resp, err := getAccountFunc(token.Email)
-		if err != nil {
-			if code := status.Code(err); code == codes.NotFound {
-				return nil, ErrPermissionDenied
-			}
-			return nil, ErrInternal
-		}
-		if resp.Account.Disabled {
-			return nil, ErrUnauthenticated
-		}
-		if resp.Account.OrganizationRole < requiredRole {
-			return nil, ErrPermissionDenied
-		}
+	// System admins can view any org without membership, but must be a member
+	// with the appropriate role for admin/write operations (e.g. creating API keys).
+	if token.IsSystemAdmin && requiredRole <= accountproto.AccountV2_Role_Organization_MEMBER {
 		return &eventproto.Editor{
-			Email:            token.Email,
-			Name:             token.Name,
-			IsAdmin:          true,
-			EnvironmentRoles: resp.Account.EnvironmentRoles,
-			OrganizationRole: resp.Account.OrganizationRole,
+			Email:   token.Email,
+			Name:    token.Name,
+			IsAdmin: true,
 		}, nil
 	}
 	resp, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
+			// A system admin reaching here is authenticated but not a member of the
+			// requested org for an admin/write operation, so surface PermissionDenied.
+			if token.IsSystemAdmin {
+				return nil, ErrPermissionDenied
+			}
 			return nil, ErrUnauthenticated
 		}
 		return nil, ErrInternal

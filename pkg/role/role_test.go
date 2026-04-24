@@ -262,6 +262,60 @@ func TestCheckOrganizationRole(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success get API key editor",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "apikey_maintainer@example.com",
+						FirstName:        "apikey",
+						LastName:         "maintainer",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+						},
+					},
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email: "apikey_maintainer@example.com",
+				Name:  "apikey maintainer",
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+					Token:      "apikey_token",
+					Maintainer: "apikey_maintainer@example.com",
+					Name:       "apikey_name",
+				},
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: API key editor get account fails",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: status.Error(codes.NotFound, ""),
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
