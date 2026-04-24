@@ -18,9 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -40,7 +40,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "error: SizeMetricsEvent MetricsSaveErrUnknownApiId",
 			inputEvent: func() *eventproto.MetricsEvent {
-				size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+				size, err := anypb.New(&eventproto.SizeMetricsEvent{
 					ApiId:    eventproto.ApiId_UNKNOWN_API,
 					Labels:   map[string]string{"tag": "iOS"},
 					SizeByte: 100,
@@ -60,7 +60,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "success: SizeMetricsEvent",
 			inputEvent: func() *eventproto.MetricsEvent {
-				size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+				size, err := anypb.New(&eventproto.SizeMetricsEvent{
 					ApiId:    eventproto.ApiId_GET_EVALUATIONS,
 					Labels:   map[string]string{"tag": "iOS"},
 					SizeByte: 100,
@@ -80,7 +80,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "error: LatencyMetricsEvent MetricsSaveErrInvalidDuration",
 			inputEvent: func() *eventproto.MetricsEvent {
-				latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+				latency, err := anypb.New(&eventproto.LatencyMetricsEvent{
 					ApiId:  eventproto.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "iOS"},
 				})
@@ -99,7 +99,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "success: LatencyMetricsEvent",
 			inputEvent: func() *eventproto.MetricsEvent {
-				latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+				latency, err := anypb.New(&eventproto.LatencyMetricsEvent{
 					ApiId:    eventproto.ApiId_GET_EVALUATIONS,
 					Labels:   map[string]string{"tag": "iOS"},
 					Duration: durationpb.New(time.Duration(5)),
@@ -131,7 +131,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "success: ErrorMetricsEvent",
 			inputEvent: func() *eventproto.MetricsEvent {
-				internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+				internalSDKErr, err := anypb.New(&eventproto.InternalSdkErrorMetricsEvent{
 					ApiId:  eventproto.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "iOS"},
 				})

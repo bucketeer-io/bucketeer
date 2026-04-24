@@ -25,11 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -888,7 +887,7 @@ func sendHttpWebhook(t *testing.T, url, payload string) {
 
 func unmarshalOpsEventRateClause(t *testing.T, clause *autoopsproto.Clause) *autoopsproto.OpsEventRateClause {
 	c := &autoopsproto.OpsEventRateClause{}
-	if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
+	if err := clause.Clause.UnmarshalTo(c); err != nil {
 		t.Fatal(err)
 	}
 	return c
@@ -896,7 +895,7 @@ func unmarshalOpsEventRateClause(t *testing.T, clause *autoopsproto.Clause) *aut
 
 func unmarshalDatetimeClause(t *testing.T, clause *autoopsproto.Clause) *autoopsproto.DatetimeClause {
 	c := &autoopsproto.DatetimeClause{}
-	if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
+	if err := clause.Clause.UnmarshalTo(c); err != nil {
 		t.Fatal(err)
 	}
 	return c
@@ -1121,8 +1120,8 @@ func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 }
@@ -1220,7 +1219,7 @@ func registerGoalEventWithEvaluations(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
 		UserId:    userID,
@@ -1265,7 +1264,7 @@ func grpcRegisterGoalEvent(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
 		UserId:    userID,
@@ -1392,7 +1391,7 @@ func grpcRegisterEvaluationEvent(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,

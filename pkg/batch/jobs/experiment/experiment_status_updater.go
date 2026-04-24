@@ -18,8 +18,8 @@ import (
 	"context"
 	"time"
 
-	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
@@ -208,7 +208,7 @@ func (u *experimentStatusUpdater) listEnvironments(ctx context.Context) ([]*envi
 		resp, err := u.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize: listRequestSize,
 			Cursor:   cursor,
-			Archived: &wrappersproto.BoolValue{Value: false},
+			Archived: &wrapperspb.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err

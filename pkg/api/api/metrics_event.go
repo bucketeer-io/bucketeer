@@ -18,7 +18,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -86,67 +85,67 @@ func (s *grpcGatewayService) saveMetricsEventsAsync(
 
 func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, projectID, environmentUrlCode string) error {
 	// TODO: Remove after deleting the api-gateway REST server
-	if ptypes.Is(event.Event, getEvaluationLatencyMetricsEventP) {
+	if event.Event.MessageIs(getEvaluationLatencyMetricsEventP) {
 		return s.saveGetEvaluationLatencyMetricsEvent(event, environmentUrlCode)
 	}
 	// TODO: Remove after deleting the api-gateway REST server
-	if ptypes.Is(event.Event, getEvaluationSizeMetricsEventP) {
+	if event.Event.MessageIs(getEvaluationSizeMetricsEventP) {
 		return s.saveGetEvaluationSizeMetricsEvent(event, environmentUrlCode)
 	}
 	// TODO: Remove after deleting the api-gateway REST server
-	if ptypes.Is(event.Event, timeoutErrorCountMetricsEventP) {
+	if event.Event.MessageIs(timeoutErrorCountMetricsEventP) {
 		return s.saveTimeoutErrorCountMetricsEvent(event, environmentUrlCode)
 	}
 	// TODO: Remove after deleting the api-gateway REST server
-	if ptypes.Is(event.Event, internalErrorCountMetricsEventP) {
+	if event.Event.MessageIs(internalErrorCountMetricsEventP) {
 		return s.saveInternalErrorCountMetricsEvent(event, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, latencyMetricsEventP) {
+	if event.Event.MessageIs(latencyMetricsEventP) {
 		return s.saveLatencyMetricsEvent(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, sizeMetricsEventP) {
+	if event.Event.MessageIs(sizeMetricsEventP) {
 		return s.saveSizeMetricsEvent(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, badRequestErrorMetricsEventP) {
+	if event.Event.MessageIs(badRequestErrorMetricsEventP) {
 		return s.saveBadRequestError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, redirectionRequestExceptionEventP) {
+	if event.Event.MessageIs(redirectionRequestExceptionEventP) {
 		return s.saveRedirectionRequestError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, unauthorizedErrorMetricsEventP) {
+	if event.Event.MessageIs(unauthorizedErrorMetricsEventP) {
 		return s.saveUnauthorizedError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, forbiddenErrorMetricsEventP) {
+	if event.Event.MessageIs(forbiddenErrorMetricsEventP) {
 		return s.saveForbiddenError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, notFoundErrorMetricsEventP) {
+	if event.Event.MessageIs(notFoundErrorMetricsEventP) {
 		return s.saveNotFoundError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, payloadTooLargeExceptionEventP) {
+	if event.Event.MessageIs(payloadTooLargeExceptionEventP) {
 		return s.payloadTooLargeRequestError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, clientClosedRequestErrorMetricsEventP) {
+	if event.Event.MessageIs(clientClosedRequestErrorMetricsEventP) {
 		return s.saveClientClosedRequestError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, internalServerErrorMetricsEventP) {
+	if event.Event.MessageIs(internalServerErrorMetricsEventP) {
 		return s.saveInternalServerError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, serviceUnavailableErrorMetricsEventP) {
+	if event.Event.MessageIs(serviceUnavailableErrorMetricsEventP) {
 		return s.saveServiceUnavailableError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, timeoutErrorMetricsEventP) {
+	if event.Event.MessageIs(timeoutErrorMetricsEventP) {
 		return s.saveTimeoutError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, internalErrorMetricsEventP) {
+	if event.Event.MessageIs(internalErrorMetricsEventP) {
 		return s.saveInternalError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, networkErrorMetricsEventP) {
+	if event.Event.MessageIs(networkErrorMetricsEventP) {
 		return s.saveNetworkError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, internalSdkErrorMetricsEventP) {
+	if event.Event.MessageIs(internalSdkErrorMetricsEventP) {
 		return s.saveInternalSdkError(event, projectID, environmentUrlCode)
 	}
-	if ptypes.Is(event.Event, unknownErrorMetricsEventP) {
+	if event.Event.MessageIs(unknownErrorMetricsEventP) {
 		return s.saveUnknownError(event, projectID, environmentUrlCode)
 	}
 	return MetricsSaveErrUnknownEvent
@@ -154,7 +153,7 @@ func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, project
 
 func (s *grpcGatewayService) saveGetEvaluationLatencyMetricsEvent(event *eventproto.MetricsEvent, env string) error {
 	ev := &eventproto.GetEvaluationLatencyMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	if ev.Duration == nil {
@@ -165,17 +164,17 @@ func (s *grpcGatewayService) saveGetEvaluationLatencyMetricsEvent(event *eventpr
 		tag = ev.Labels["tag"]
 		status = ev.Labels["state"]
 	}
-	dur, err := ptypes.Duration(ev.Duration)
-	if err != nil {
+	if err := ev.Duration.CheckValid(); err != nil {
 		return MetricsSaveErrInvalidDuration
 	}
+	dur := ev.Duration.AsDuration()
 	sdkGetEvaluationsLatencyHistogram.WithLabelValues(env, tag, status).Observe(dur.Seconds())
 	return nil
 }
 
 func (s *grpcGatewayService) saveGetEvaluationSizeMetricsEvent(event *eventproto.MetricsEvent, env string) error {
 	ev := &eventproto.GetEvaluationSizeMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	var tag, status string
@@ -189,7 +188,7 @@ func (s *grpcGatewayService) saveGetEvaluationSizeMetricsEvent(event *eventproto
 
 func (s *grpcGatewayService) saveTimeoutErrorCountMetricsEvent(event *eventproto.MetricsEvent, env string) error {
 	ev := &eventproto.TimeoutErrorCountMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	sdkTimeoutErrorCounter.WithLabelValues(env, ev.Tag).Inc()
@@ -198,7 +197,7 @@ func (s *grpcGatewayService) saveTimeoutErrorCountMetricsEvent(event *eventproto
 
 func (s *grpcGatewayService) saveInternalErrorCountMetricsEvent(event *eventproto.MetricsEvent, env string) error {
 	ev := &eventproto.InternalErrorCountMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	sdkInternalErrorCounter.WithLabelValues(env, ev.Tag).Inc()
@@ -207,7 +206,7 @@ func (s *grpcGatewayService) saveInternalErrorCountMetricsEvent(event *eventprot
 
 func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEvent, projectID, env string) error {
 	ev := &eventproto.LatencyMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	// TODO: When updated to the SDK that uses ev.LatencySecond, we must remove the implementation that use ev.Duration.
@@ -233,10 +232,10 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 		).Observe(ev.LatencySecond)
 		return nil
 	}
-	dur, err := ptypes.Duration(ev.Duration)
-	if err != nil {
+	if err := ev.Duration.CheckValid(); err != nil {
 		return MetricsSaveErrInvalidDuration
 	}
+	dur := ev.Duration.AsDuration()
 	sdkLatencyHistogram.WithLabelValues(
 		projectID,
 		env,
@@ -250,7 +249,7 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 
 func (s *grpcGatewayService) saveSizeMetricsEvent(event *eventproto.MetricsEvent, projectID, env string) error {
 	ev := &eventproto.SizeMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
@@ -274,7 +273,7 @@ func (s *grpcGatewayService) saveSizeMetricsEvent(event *eventproto.MetricsEvent
 func (s *grpcGatewayService) saveBadRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeBadRequest
 	ev := &eventproto.BadRequestErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -283,7 +282,7 @@ func (s *grpcGatewayService) saveBadRequestError(event *eventproto.MetricsEvent,
 func (s *grpcGatewayService) saveRedirectionRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrRedirectionRequest
 	ev := &eventproto.RedirectionRequestExceptionEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -292,7 +291,7 @@ func (s *grpcGatewayService) saveRedirectionRequestError(event *eventproto.Metri
 func (s *grpcGatewayService) saveUnauthorizedError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeUnauthenticated
 	ev := &eventproto.UnauthorizedErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -301,7 +300,7 @@ func (s *grpcGatewayService) saveUnauthorizedError(event *eventproto.MetricsEven
 func (s *grpcGatewayService) saveForbiddenError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeForbidden
 	ev := &eventproto.ForbiddenErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -310,7 +309,7 @@ func (s *grpcGatewayService) saveForbiddenError(event *eventproto.MetricsEvent, 
 func (s *grpcGatewayService) saveNotFoundError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeNotFound
 	ev := &eventproto.NotFoundErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -319,7 +318,7 @@ func (s *grpcGatewayService) saveNotFoundError(event *eventproto.MetricsEvent, p
 func (s *grpcGatewayService) payloadTooLargeRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrPayloadTooLargeRequest
 	ev := &eventproto.PayloadTooLargeExceptionEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -328,7 +327,7 @@ func (s *grpcGatewayService) payloadTooLargeRequestError(event *eventproto.Metri
 func (s *grpcGatewayService) saveClientClosedRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeClientClosedRequest
 	ev := &eventproto.ClientClosedRequestErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -337,7 +336,7 @@ func (s *grpcGatewayService) saveClientClosedRequestError(event *eventproto.Metr
 func (s *grpcGatewayService) saveInternalServerError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeInternalServerError
 	ev := &eventproto.InternalServerErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -346,7 +345,7 @@ func (s *grpcGatewayService) saveInternalServerError(event *eventproto.MetricsEv
 func (s *grpcGatewayService) saveServiceUnavailableError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeServiceUnavailable
 	ev := &eventproto.ServiceUnavailableErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -355,7 +354,7 @@ func (s *grpcGatewayService) saveServiceUnavailableError(event *eventproto.Metri
 func (s *grpcGatewayService) saveTimeoutError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeTimeout
 	ev := &eventproto.TimeoutErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -364,7 +363,7 @@ func (s *grpcGatewayService) saveTimeoutError(event *eventproto.MetricsEvent, pr
 func (s *grpcGatewayService) saveInternalError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeInternal
 	ev := &eventproto.InternalErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -373,7 +372,7 @@ func (s *grpcGatewayService) saveInternalError(event *eventproto.MetricsEvent, p
 func (s *grpcGatewayService) saveNetworkError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeNetwork
 	ev := &eventproto.NetworkErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
@@ -382,7 +381,7 @@ func (s *grpcGatewayService) saveNetworkError(event *eventproto.MetricsEvent, pr
 func (s *grpcGatewayService) saveInternalSdkError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeSDKInternal
 	ev := &eventproto.InternalSdkErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	// Log the error message for debugging SDK internal errors
@@ -412,7 +411,7 @@ func isCacheNotFoundError(errorMessage string) bool {
 func (s *grpcGatewayService) saveUnknownError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeUnknown
 	ev := &eventproto.UnknownErrorMetricsEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+	if err := event.Event.UnmarshalTo(ev); err != nil {
 		return err
 	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)

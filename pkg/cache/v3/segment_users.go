@@ -19,7 +19,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -96,6 +96,9 @@ func (c *segmentUsersCache) GetAll(environmentId string) ([]*featureproto.Segmen
 }
 
 func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error {
+	if segmentUsers == nil {
+		return errors.New("segmentUsers cannot be nil")
+	}
 	buffer, err := proto.Marshal(segmentUsers)
 	if err != nil {
 		return err

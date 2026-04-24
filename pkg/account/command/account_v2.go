@@ -17,8 +17,8 @@ package command
 import (
 	"context"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
