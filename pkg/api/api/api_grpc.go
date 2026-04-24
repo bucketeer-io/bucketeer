@@ -316,17 +316,19 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 	}
 	envAPIKey, err := s.checkTrackRequest(ctx, req.Apikey)
 	if err != nil {
-		s.logger.Error("Failed to check Track request",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("apiKey", obfuscateString(req.Apikey, obfuscateAPIKeyLength)),
-				zap.String("tag", req.Tag),
-				zap.Any("userId", req.Userid),
-				zap.String("goalId", req.Goalid),
-				zap.Int64("timestamp", req.Timestamp),
-				zap.Float64("value", req.Value),
-			)...,
-		)
+		if !isCallerContextErr(err) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+			s.logger.Error("Failed to check Track request",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("apiKey", obfuscateString(req.Apikey, obfuscateAPIKeyLength)),
+					zap.String("tag", req.Tag),
+					zap.Any("userId", req.Userid),
+					zap.String("goalId", req.Goalid),
+					zap.Int64("timestamp", req.Timestamp),
+					zap.Float64("value", req.Value),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	requestTotal.WithLabelValues(
@@ -465,7 +467,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	})
 	spanGetFeatures.End()
 	if err != nil {
-		if errors.Is(err, errCallerCanceled) {
+		if isCallerContextErr(err) {
 			evaluationsCounter.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeCanceled, sourceID).Inc()
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -509,7 +511,7 @@ func (s *grpcGatewayService) GetEvaluations(
 
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
-		if errors.Is(err, errCallerCanceled) {
+		if isCallerContextErr(err) {
 			evaluationsCounter.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeCanceled, sourceID).Inc()
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -705,7 +707,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	})
 	spanGetFeatures.End()
 	if err != nil {
-		if errors.Is(err, errCallerCanceled) {
+		if isCallerContextErr(err) {
 			return nil, status.FromContextError(ctx.Err()).Err()
 		}
 		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, sourceID, methodGetEvaluation).Inc()
@@ -718,7 +720,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	}
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id)
 	if err != nil {
-		if errors.Is(err, errCallerCanceled) {
+		if isCallerContextErr(err) {
 			return nil, status.FromContextError(ctx.Err()).Err()
 		}
 		s.logger.Error(
@@ -822,7 +824,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	})
 	spanGetFeatures.End()
 	if err != nil {
-		if errors.Is(err, errCallerCanceled) {
+		if isCallerContextErr(err) {
 			getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeCanceled).Inc()
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -997,7 +999,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	})
 	spanGetFeatures.End()
 	if err != nil {
-		if errors.Is(err, errCallerCanceled) {
+		if isCallerContextErr(err) {
 			getSegmentUsersCounter.WithLabelValues(
 				projectID, envAPIKey.ProjectUrlCode, environmentId,
 				envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeCanceled).Inc()
@@ -1051,7 +1053,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		)
 		spanGetSegmentUsers.End()
 		if err != nil {
-			if errors.Is(err, errCallerCanceled) {
+			if isCallerContextErr(err) {
 				getSegmentUsersCounter.WithLabelValues(
 					projectID, envAPIKey.ProjectUrlCode, environmentId,
 					envAPIKey.Environment.UrlCode, sourceID, req.GetSdkVersion(), codeCanceled).Inc()
@@ -1229,12 +1231,24 @@ func (s *grpcGatewayService) singleflightFetch(
 	}
 }
 
-// isCallerContextErr reports whether err is one of the gateway sentinels
-// produced when the caller's request context terminated (canceled or its
-// deadline was exceeded). Used by the public-API entry points to suppress
-// noisy "Failed to check ... request" logs for client-side disconnects.
+// isCallerContextErr reports whether err originates from the caller's
+// request context terminating (canceled or its deadline being exceeded).
+// It matches all three forms the gateway can produce:
+//   - errCallerCanceled: the raw wrapper added by singleflightFetch when the
+//     caller's ctx fires while waiting on the shared call. Internal helpers
+//     (e.g. getSegmentUsersMap, listSegmentUsers) propagate this form
+//     unchanged up to the public-API entry point.
+//   - ErrContextCanceled / ErrContextDeadlineExceeded: the public-facing
+//     sentinels produced by translateCallerCanceledErr in getEnvironmentAPIKey
+//     so SDKs see a clean gRPC status code.
+//
+// Used to suppress noisy ERROR logs for client-side disconnects at every
+// place that would otherwise log the propagated error (public-API entry
+// points and intermediate helpers).
 func isCallerContextErr(err error) bool {
-	return errors.Is(err, ErrContextCanceled) || errors.Is(err, ErrContextDeadlineExceeded)
+	return errors.Is(err, errCallerCanceled) ||
+		errors.Is(err, ErrContextCanceled) ||
+		errors.Is(err, ErrContextDeadlineExceeded)
 }
 
 // translateCallerCanceledErr converts a singleflightFetch caller-cancellation
@@ -1372,13 +1386,15 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 	}
 	segmentUsersMap, err := s.listSegmentUsers(ctx, mapIDs, environmentId)
 	if err != nil {
-		s.logger.Error(
-			"Failed to list segments",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", environmentId),
-			)...,
-		)
+		if !isCallerContextErr(err) {
+			s.logger.Error(
+				"Failed to list segments",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentId),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	return segmentUsersMap, nil
@@ -1723,17 +1739,13 @@ func (s *grpcGatewayService) checkTrackRequest(
 	ctx context.Context,
 	apiKey string,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	if isContextCanceled(ctx) {
-		return nil, ErrContextCanceled
+	if err := ctxAlreadyDoneErr(ctx); err != nil {
+		return nil, err
 	}
+	// Caller (Track) logs propagated errors with full suppression, so we
+	// don't log getEnvironmentAPIKey failures here to avoid double-logging.
 	envAPIKey, err := s.getEnvironmentAPIKey(ctx, apiKey)
 	if err != nil {
-		s.logger.Error("Failed to get environment API key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
-			)...,
-		)
 		return nil, err
 	}
 	if err := checkEnvironmentAPIKey(envAPIKey, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT}); err != nil {
@@ -1752,8 +1764,8 @@ func (s *grpcGatewayService) checkRequest(
 	ctx context.Context,
 	roles []accountproto.APIKey_Role,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	if isContextCanceled(ctx) {
-		return nil, ErrContextCanceled
+	if err := ctxAlreadyDoneErr(ctx); err != nil {
+		return nil, err
 	}
 	apiKey, err := s.extractAPIKey(ctx)
 	if err != nil {
@@ -1928,6 +1940,23 @@ func obfuscateString(input string, showLength int) string {
 
 func isContextCanceled(ctx context.Context) bool {
 	return ctx.Err() == context.Canceled
+}
+
+// ctxAlreadyDoneErr returns the package's well-known sentinel matching
+// ctx.Err() if the context is already terminated, or nil otherwise. Used by
+// public-API entry points as a fast-path to bail out immediately for
+// requests whose caller already disconnected (Canceled) or whose deadline
+// already expired (DeadlineExceeded) before the handler started doing any
+// work — without dragging the wrong gRPC status code along the way.
+func ctxAlreadyDoneErr(ctx context.Context) error {
+	switch ctx.Err() {
+	case context.Canceled:
+		return ErrContextCanceled
+	case context.DeadlineExceeded:
+		return ErrContextDeadlineExceeded
+	default:
+		return nil
+	}
 }
 
 func (s *grpcGatewayService) filterOutArchivedFeatures(fs []*featureproto.Feature) []*featureproto.Feature {
