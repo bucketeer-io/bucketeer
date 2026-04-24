@@ -20,8 +20,8 @@ import (
 	"errors"
 	"time"
 
-	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
+	pb "google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
 	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"

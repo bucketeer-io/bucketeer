@@ -21,11 +21,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
@@ -220,7 +220,7 @@ func generatePullerMessages(
 
 func generatePullerMessage(t *testing.T, userEvent *eventproto.UserEvent) *puller.Message {
 	t.Helper()
-	ue, err := ptypes.MarshalAny(userEvent)
+	ue, err := anypb.New(userEvent)
 	if err != nil {
 		t.Fatalf("Failed to marshal any user event: %v", err)
 	}

@@ -22,11 +22,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -905,7 +905,7 @@ func (s *eventCounterService) ListExperimentResults(
 func (s *eventCounterService) listExperiments(
 	ctx context.Context,
 	featureID string,
-	featureVersion *wrappers.Int32Value,
+	featureVersion *wrapperspb.Int32Value,
 	environmentId string,
 ) ([]*experimentproto.Experiment, error) {
 	experiments := []*experimentproto.Experiment{}

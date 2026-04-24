@@ -18,7 +18,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -157,7 +156,7 @@ func (w *featureStaleWatcher) listFeatures(
 			PageSize:      listRequestSize,
 			Cursor:        cursor,
 			EnvironmentId: environmentId,
-			Archived:      &wrappers.BoolValue{Value: false},
+			Archived:      &wrapperspb.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err

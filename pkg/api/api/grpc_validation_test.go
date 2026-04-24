@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -59,7 +59,7 @@ func TestNewEventValidator(t *testing.T) {
 			desc: "evaluationValidator",
 			input: &eventproto.Event{
 				Id: newUUID(t),
-				Event: &any.Any{
+				Event: &anypb.Any{
 					TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 					Value:   bEvaluationEvent,
 				},
@@ -70,7 +70,7 @@ func TestNewEventValidator(t *testing.T) {
 			desc: "GoalValidator",
 			input: &eventproto.Event{
 				Id: newUUID(t),
-				Event: &any.Any{
+				Event: &anypb.Any{
 					TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 					Value:   bGoalEvent,
 				},
@@ -81,7 +81,7 @@ func TestNewEventValidator(t *testing.T) {
 			desc: "MetricsEvent",
 			input: &eventproto.Event{
 				Id: newUUID(t),
-				Event: &any.Any{
+				Event: &anypb.Any{
 					TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 					Value:   bMetricsEvent,
 				},
@@ -170,7 +170,7 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 						Value:   bGoalEvent,
 					},
@@ -194,7 +194,7 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 						Value:   bGoalEvent,
 					},
@@ -219,7 +219,7 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 						Value:   bGoalEvent,
 					},
@@ -243,7 +243,7 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 						Value:   bGoalEvent,
 					},
@@ -272,7 +272,7 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 						Value:   bGoalEvent,
 					},
@@ -334,7 +334,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -362,7 +362,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -390,7 +390,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -418,7 +418,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -446,7 +446,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -474,7 +474,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -502,7 +502,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -530,7 +530,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -558,7 +558,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -586,7 +586,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -614,7 +614,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -643,7 +643,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -669,7 +669,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -695,7 +695,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -723,7 +723,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -752,7 +752,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 						Value:   bEvaluationEvent,
 					},
@@ -803,7 +803,7 @@ func TestGrpcValidateEvaluationEventAllowsEmptyVariationIdForAllProtoErrorTypes(
 		}
 		event := &eventproto.Event{
 			Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-			Event: &any.Any{
+			Event: &anypb.Any{
 				TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 				Value:   bEvaluationEvent,
 			},
@@ -853,7 +853,7 @@ func TestEventEvaluationValidatorStoresLastUnmarshaledEvent(t *testing.T) {
 	}
 	event := &eventproto.Event{
 		Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-		Event: &any.Any{
+		Event: &anypb.Any{
 			TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 			Value:   bEvaluationEvent,
 		},
@@ -905,7 +905,7 @@ func TestGrpcValidateMetrics(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 						Value:   b,
 					},
@@ -925,7 +925,7 @@ func TestGrpcValidateMetrics(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 						Value:   b,
 					},
@@ -945,7 +945,7 @@ func TestGrpcValidateMetrics(t *testing.T) {
 				}
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
+					Event: &anypb.Any{
 						TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 						Value:   b,
 					},

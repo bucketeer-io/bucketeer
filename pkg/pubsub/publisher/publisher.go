@@ -20,7 +20,7 @@ import (
 	"errors"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub"       // nolint:staticcheck
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/runtime/protoiface"

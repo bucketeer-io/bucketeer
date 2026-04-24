@@ -17,8 +17,8 @@ package command
 import (
 	"context"
 
-	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/jinzhu/copier"
+	pb "google.golang.org/protobuf/proto"
 
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"

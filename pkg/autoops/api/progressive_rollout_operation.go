@@ -15,8 +15,6 @@
 package api
 
 import (
-	"github.com/golang/protobuf/ptypes"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
@@ -42,7 +40,7 @@ func ExecuteProgressiveRolloutOperation(
 	switch progressiveRollout.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
 		c := &autoopsproto.ProgressiveRolloutManualScheduleClause{}
-		if err := ptypes.UnmarshalAny(progressiveRollout.Clause, c); err != nil {
+		if err := progressiveRollout.Clause.UnmarshalTo(c); err != nil {
 			return nil, err
 		}
 		variationID = c.VariationId
@@ -53,7 +51,7 @@ func ExecuteProgressiveRolloutOperation(
 		}
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
 		c := &autoopsproto.ProgressiveRolloutTemplateScheduleClause{}
-		if err := ptypes.UnmarshalAny(progressiveRollout.Clause, c); err != nil {
+		if err := progressiveRollout.Clause.UnmarshalTo(c); err != nil {
 			return nil, err
 		}
 		variationID = c.VariationId

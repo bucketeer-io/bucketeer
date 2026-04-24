@@ -18,8 +18,8 @@ import (
 	"encoding/json"
 	"time"
 
-	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
-	"github.com/golang/protobuf/ptypes"
+	pb "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -87,7 +87,7 @@ func newEvent(
 	for _, opt := range opts {
 		opt(&options)
 	}
-	buf, err := ptypes.MarshalAny(event)
+	buf, err := anypb.New(event)
 	if err != nil {
 		return nil, err
 	}

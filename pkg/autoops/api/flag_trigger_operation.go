@@ -17,8 +17,8 @@ package api
 import (
 	"context"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"

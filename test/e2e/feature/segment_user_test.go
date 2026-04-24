@@ -22,9 +22,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -42,12 +42,12 @@ func TestListSegmentUsersPageSize(t *testing.T) {
 	segmentID := createSegment(ctx, t, client).Id
 	userIDs := []string{newUserID(t), newUserID(t)}
 	uploadSegmentUsers(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
-	waitForSegmentUsers(ctx, t, client, segmentID, len(userIDs), &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
+	waitForSegmentUsers(ctx, t, client, segmentID, len(userIDs), &wrapperspb.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
 	pageSize := int64(1)
 	res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
 		PageSize:      pageSize,
 		SegmentId:     segmentID,
-		State:         &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)},
+		State:         &wrapperspb.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)},
 		EnvironmentId: *environmentID,
 	})
 	assert.NoError(t, err)
@@ -62,7 +62,7 @@ func TestListSegmentUsersCursor(t *testing.T) {
 	segmentID := createSegment(ctx, t, client).Id
 	userIDs := []string{newUserID(t), newUserID(t), newUserID(t), newUserID(t)}
 	uploadSegmentUsers(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
-	state := &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)}
+	state := &wrapperspb.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)}
 	waitForSegmentUsers(ctx, t, client, segmentID, len(userIDs), state)
 	var lastUsers []*featureproto.SegmentUser
 	pageSize := int64(2)
@@ -130,14 +130,14 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, uploadRes)
 	// Wait for the background upload to complete by verifying users exist
-	waitForSegmentUsers(ctx, t, client, segmentID, 3, &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
+	waitForSegmentUsers(ctx, t, client, segmentID, 3, &wrapperspb.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
 	// Now download and verify the data
 	downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
 	assert.NoError(t, err)
 	assert.Equal(t, string(userIDs), string(downloadRes.Data))
 }
 
-func listSegmentUsers(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, state *wrappersproto.Int32Value) *featureproto.ListSegmentUsersResponse {
+func listSegmentUsers(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, state *wrapperspb.Int32Value) *featureproto.ListSegmentUsersResponse {
 	t.Helper()
 	req := &featureproto.ListSegmentUsersRequest{
 		SegmentId:     segmentID,
@@ -209,7 +209,7 @@ func waitForSegmentUsers(
 	client featureclient.Client,
 	segmentID string,
 	expectedSize int,
-	state *wrappersproto.Int32Value,
+	state *wrapperspb.Int32Value,
 ) {
 	t.Helper()
 	for i := 0; i < segmentUserRetryTimes; i++ {

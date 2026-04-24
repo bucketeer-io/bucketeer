@@ -23,11 +23,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -872,7 +872,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			goalAny, err := ptypes.MarshalAny(goal)
+			goalAny, err := anypb.New(goal)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeGoal, codeMarshalAnyFailed).Inc()
 				errs[event.ID] = &registerEventsResponseError{
@@ -896,7 +896,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			evalAny, err := ptypes.MarshalAny(eval)
+			evalAny, err := anypb.New(eval)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeMarshalAnyFailed).Inc()
 				errs[event.ID] = &registerEventsResponseError{
@@ -920,7 +920,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			metricsAny, err := ptypes.MarshalAny(metrics)
+			metricsAny, err := anypb.New(metrics)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeMarshalAnyFailed).Inc()
 				errs[event.ID] = &registerEventsResponseError{
@@ -1061,10 +1061,10 @@ func (s *gatewayService) getMetricsEvent(
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		apiID := getApiID(latency.ApiId)
-		eventAny, err = ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+		eventAny, err = anypb.New(&eventproto.LatencyMetricsEvent{
 			ApiId:    apiID,
 			Labels:   latency.Labels,
-			Duration: ptypes.DurationProto(latency.Duration),
+			Duration: durationpb.New(latency.Duration),
 		})
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
@@ -1082,7 +1082,7 @@ func (s *gatewayService) getMetricsEvent(
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		apiID := getApiID(size.ApiId)
-		eventAny, err = ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+		eventAny, err = anypb.New(&eventproto.SizeMetricsEvent{
 			ApiId:    apiID,
 			Labels:   size.Labels,
 			SizeByte: size.SizeByte,
@@ -1102,7 +1102,7 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(&eventproto.TimeoutErrorMetricsEvent{
+		eventAny, err = anypb.New(&eventproto.TimeoutErrorMetricsEvent{
 			ApiId:  timeout.ApiId,
 			Labels: timeout.Labels,
 		})
@@ -1121,7 +1121,7 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
+		eventAny, err = anypb.New(&eventproto.InternalErrorMetricsEvent{
 			ApiId:  internal.ApiId,
 			Labels: internal.Labels,
 		})
@@ -1140,7 +1140,7 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(&eventproto.NetworkErrorMetricsEvent{
+		eventAny, err = anypb.New(&eventproto.NetworkErrorMetricsEvent{
 			ApiId:  network.ApiId,
 			Labels: network.Labels,
 		})
@@ -1159,7 +1159,7 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
+		eventAny, err = anypb.New(&eventproto.InternalErrorMetricsEvent{
 			ApiId:  internalSdk.ApiId,
 			Labels: internalSdk.Labels,
 		})

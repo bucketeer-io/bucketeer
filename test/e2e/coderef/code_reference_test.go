@@ -21,11 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
@@ -411,8 +410,8 @@ func createFeature(t *testing.T, client featureclient.Client, featureID string) 
 				Description: "this is a false variation",
 			},
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 	for i := 0; i < deadlockRetryAttempts; i++ {
