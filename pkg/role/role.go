@@ -93,11 +93,6 @@ func CheckEnvironmentRole(
 	account, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
-			// A system admin reaching here is authenticated but not a member of the
-			// requested org for a write operation, so surface PermissionDenied.
-			if token.IsSystemAdmin {
-				return nil, ErrPermissionDenied
-			}
 			return nil, ErrUnauthenticated
 		}
 		return nil, ErrInternal
@@ -228,11 +223,6 @@ func CheckOrganizationRole(
 	resp, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
-			// A system admin reaching here is authenticated but not a member of the
-			// requested org for an admin/write operation, so surface PermissionDenied.
-			if token.IsSystemAdmin {
-				return nil, ErrPermissionDenied
-			}
 			return nil, ErrUnauthenticated
 		}
 		return nil, ErrInternal

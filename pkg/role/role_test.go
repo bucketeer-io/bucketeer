@@ -646,20 +646,6 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 			expectedErr:      nil,
 			expectedLogCount: 0,
 		},
-		{
-			desc:          "permission denied: system admin not a member tries to write",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
-			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
-			environmentID: "ns0",
-			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
-				return nil, status.Error(codes.NotFound, "")
-			},
-			expected:         nil,
-			expectedErr:      errCustomPermissionDenied,
-			expectedLogCount: 1,
-			expectedLogMsg:   "Permission denied",
-			expectedEmail:    "admin@example.com",
-		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -867,20 +853,6 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 			},
 			expectedErr:      nil,
 			expectedLogCount: 0,
-		},
-		{
-			desc:           "permission denied: system admin not a member tries admin operation",
-			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
-			requiredRole:   accountproto.AccountV2_Role_Organization_ADMIN,
-			organizationID: "org0",
-			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
-				return nil, status.Error(codes.NotFound, "")
-			},
-			expected:         nil,
-			expectedErr:      errCustomPermissionDenied,
-			expectedLogCount: 1,
-			expectedLogMsg:   "Permission denied",
-			expectedEmail:    "admin@example.com",
 		},
 	}
 	for _, p := range patterns {
