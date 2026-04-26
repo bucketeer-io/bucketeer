@@ -9,9 +9,10 @@ INSERT INTO account_v2 (
     disabled,
     created_at,
     updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) AS new
 ON DUPLICATE KEY UPDATE
-    name = VALUES(name),
-    organization_role = VALUES(organization_role),
-    environment_roles = VALUES(environment_roles),
-    updated_at = VALUES(updated_at)
+    name = new.name,
+    organization_role = new.organization_role,
+    environment_roles = new.environment_roles,
+    disabled = new.disabled,
+    updated_at = new.updated_at

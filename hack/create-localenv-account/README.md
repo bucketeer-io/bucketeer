@@ -5,12 +5,15 @@ two rows directly into the `account_v2` MySQL table:
 
 | Organization | Role | Notes |
 |--------------|------|-------|
-| default org (`--default-organization-id`) | `ADMIN` + EDITOR on the e2e environment | Grants org-scoped write permissions so admin APIs (`CreateAPIKey`, etc.) succeed. |
+| default org (`--default-organization-id`) | `ADMIN` | Grants org-scoped write permissions so admin APIs (`CreateAPIKey`, etc.) succeed. Org-level ADMIN implicitly grants access to every environment in the org. |
 | e2e org (`--e2e-organization-id`) | `OWNER` | Expected to be flagged `system_admin=1`, so any member gets system admin privileges. |
 
-The two rows are upserted with `INSERT ... ON DUPLICATE KEY UPDATE` against
-the composite primary key `(email, organization_id)`, so re-running the
-command against a DB that already has the rows is safe.
+The two rows are upserted with `INSERT ... ON DUPLICATE KEY UPDATE` (using
+the MySQL 8.0 row-alias form) against the composite primary key
+`(email, organization_id)`. Re-running the command against a DB that already
+has the rows is safe — the upsert refreshes `name`, `organization_role`,
+`environment_roles`, `disabled`, and `updated_at` so a previously-disabled
+account is also re-enabled.
 
 ## Run Command
 
@@ -24,7 +27,6 @@ go run ./hack/create-localenv-account create \
   --email=<ACCOUNT_EMAIL> \
   --default-organization-id=<DEFAULT_ORGANIZATION_ID> \
   --e2e-organization-id=<E2E_ORGANIZATION_ID> \
-  --e2e-environment-id=<E2E_ENVIRONMENT_ID> \
   --no-profile \
   --no-gcp-trace-enabled
 ```
@@ -39,9 +41,8 @@ go run ./hack/create-localenv-account create \
 | `--mysql-port` | MySQL port. |
 | `--mysql-db-name` | MySQL database name. |
 | `--email` | Email of the account to create. |
-| `--default-organization-id` | ID of the default organization where the account gets ADMIN role + EDITOR role on the e2e environment. |
+| `--default-organization-id` | ID of the default organization where the account gets ADMIN role. |
 | `--e2e-organization-id` | ID of the e2e (system-admin) organization where the account gets OWNER role. |
-| `--e2e-environment-id` | ID of the e2e environment that the default-org account gets EDITOR access to. |
 
 ## When to use
 

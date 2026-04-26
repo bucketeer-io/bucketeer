@@ -17,8 +17,6 @@ package main
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -35,10 +33,15 @@ const (
 
 	// Numeric values match the proto enums in proto/account/account.proto:
 	// Role_Organization: UNASSIGNED=0, MEMBER=1, ADMIN=2, OWNER=3
-	// Role_Environment:  UNASSIGNED=0, VIEWER=1, EDITOR=2
 	roleOrganizationADMIN = 2
 	roleOrganizationOWNER = 3
-	roleEnvironmentEDITOR = 2
+
+	// Both rows written by this script use organization_role >= ADMIN. Per the
+	// domain model (pkg/account/domain/account.go: ChangeOrganizationRole),
+	// org roles >= ADMIN normalize EnvironmentRoles to []. Writing a non-empty
+	// environment_roles JSON alongside ADMIN/OWNER would create an inconsistent
+	// row shape, so it is always [] here.
+	emptyEnvironmentRolesJSON = "[]"
 )
 
 // Upserts a row in account_v2; MySQL's composite PK is (email, organization_id),
@@ -49,6 +52,9 @@ const (
 // The other columns added by later migrations (first_name, last_name, language,
 // last_seen, avatar_file_type, avatar_image, teams, search_filters) are either
 // nullable or have DEFAULT values, so they don't need to be set here.
+//
+// The query uses MySQL 8.0's row-alias form (`VALUES (...) AS new`) instead of
+// the deprecated `VALUES(col)` reference inside ON DUPLICATE KEY UPDATE.
 //
 //go:embed sql/upsert_account_v2.sql
 var upsertAccountV2SQL string
@@ -63,7 +69,6 @@ type command struct {
 	email                 *string
 	defaultOrganizationID *string
 	e2eOrganizationID     *string
-	e2eEnvironmentID      *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -84,15 +89,11 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		).Required().String(),
 		defaultOrganizationID: cmd.Flag(
 			"default-organization-id",
-			"ID of the default organization where the account gets ADMIN role + EDITOR role on the e2e environment.",
+			"ID of the default organization where the account gets ADMIN role.",
 		).Required().String(),
 		e2eOrganizationID: cmd.Flag(
 			"e2e-organization-id",
 			"ID of the e2e (system-admin) organization where the account gets OWNER role.",
-		).Required().String(),
-		e2eEnvironmentID: cmd.Flag(
-			"e2e-environment-id",
-			"ID of the e2e environment that the default-org account gets EDITOR access to.",
 		).Required().String(),
 	}
 	r.RegisterCommand(command)
@@ -110,33 +111,24 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 	name := strings.Split(*c.email, "@")[0]
 	now := time.Now().Unix()
 
-	// Membership in the default org: ADMIN role + EDITOR role on the e2e environment.
-	// environment_roles is JSON; the column shape matches what pkg/account/domain
-	// reads ([]*AccountV2_EnvironmentRole serialized to JSON).
-	envRoles, err := json.Marshal([]map[string]interface{}{
-		{
-			"environment_id": *c.e2eEnvironmentID,
-			"role":           roleEnvironmentEDITOR,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("marshal environment_roles: %w", err)
-	}
+	// Membership in the default org: ADMIN role.
+	// org role >= ADMIN implies access to every environment in the org, so
+	// environment_roles stays empty (see domain normalization).
 	if err := c.upsertAccount(
 		ctx, client, logger,
 		*c.email, name, *c.defaultOrganizationID,
-		roleOrganizationADMIN, string(envRoles), now,
+		roleOrganizationADMIN, now,
 	); err != nil {
 		return err
 	}
 
-	// Membership in the e2e (system-admin) org: OWNER role, no environment roles.
+	// Membership in the e2e (system-admin) org: OWNER role.
 	// The e2e organization is expected to be flagged as a system-admin organization,
 	// so any account in it is granted system admin privileges.
 	if err := c.upsertAccount(
 		ctx, client, logger,
 		*c.email, name, *c.e2eOrganizationID,
-		roleOrganizationOWNER, "[]", now,
+		roleOrganizationOWNER, now,
 	); err != nil {
 		return err
 	}
@@ -146,7 +138,6 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		zap.String("email", *c.email),
 		zap.String("defaultOrganizationId", *c.defaultOrganizationID),
 		zap.String("e2eOrganizationId", *c.e2eOrganizationID),
-		zap.String("e2eEnvironmentId", *c.e2eEnvironmentID),
 	)
 	return nil
 }
@@ -157,7 +148,6 @@ func (c *command) upsertAccount(
 	logger *zap.Logger,
 	email, name, orgID string,
 	orgRole int,
-	envRolesJSON string,
 	now int64,
 ) error {
 	_, err := client.ExecContext(
@@ -169,8 +159,8 @@ func (c *command) upsertAccount(
 		"[]", // tags (json NOT NULL, no default)
 		orgID,
 		orgRole,
-		envRolesJSON,
-		0, // disabled
+		emptyEnvironmentRolesJSON, // environment_roles
+		0,                         // disabled
 		now,
 		now,
 	)
