@@ -227,6 +227,26 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+.PHONY: create-localenv-account
+create-localenv-account:
+ifeq ($(GOOS), darwin)
+	make -C hack/create-localenv-account clean build-darwin
+else
+	make -C hack/create-localenv-account clean build
+endif
+	./hack/create-localenv-account/create-localenv-account create \
+		--mysql-user=${MYSQL_USER} \
+		--mysql-pass=${MYSQL_PASS} \
+		--mysql-host=${MYSQL_HOST} \
+		--mysql-port=${MYSQL_PORT} \
+		--mysql-db-name=${MYSQL_DB_NAME} \
+		--email=${EMAIL} \
+		--default-organization-id=${DEFAULT_ORGANIZATION_ID} \
+		--e2e-organization-id=${E2E_ORGANIZATION_ID} \
+		--e2e-environment-id=${E2E_ENVIRONMENT_ID} \
+		--no-profile \
+		--no-gcp-trace-enabled
+
 .PHONY: create-mysql-event-tables
 create-mysql-event-tables:
 	@echo "Creating MySQL event tables for data warehouse..."
@@ -333,6 +353,19 @@ delete-dev-container-mysql-data:
 	MYSQL_PORT=32000 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
+
+.PHONY: create-dev-container-localenv-account
+create-dev-container-localenv-account:
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=$$(minikube ip) \
+	MYSQL_PORT=32000 \
+	MYSQL_DB_NAME=bucketeer \
+	EMAIL=localenv@bucketeer.io \
+	DEFAULT_ORGANIZATION_ID=default \
+	E2E_ORGANIZATION_ID=e2e \
+	E2E_ENVIRONMENT_ID=e2e \
+	make -C ./ create-localenv-account
 
 .PHONY: update-copyright
 update-copyright:
@@ -714,6 +747,20 @@ docker-compose-delete-data:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
+
+.PHONY: docker-compose-create-localenv-account
+docker-compose-create-localenv-account:
+	@echo "Bootstrapping localenv account in Docker Compose MySQL..."
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=localhost \
+	MYSQL_PORT=3306 \
+	MYSQL_DB_NAME=bucketeer \
+	EMAIL=localenv@bucketeer.io \
+	DEFAULT_ORGANIZATION_ID=default \
+	E2E_ORGANIZATION_ID=e2e \
+	E2E_ENVIRONMENT_ID=e2e \
+	make -C ./ create-localenv-account
 
 .PHONY: docker-compose-create-mysql-event-tables
 docker-compose-create-mysql-event-tables:
