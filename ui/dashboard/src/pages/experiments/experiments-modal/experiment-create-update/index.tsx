@@ -1,14 +1,30 @@
+import { useCallback, useEffect, useMemo } from 'react';
+import {
+  ControllerRenderProps,
+  FormProvider,
+  SubmitHandler,
+  useForm
+} from 'react-hook-form';
 import {
   ExperimentCreateUpdateResponse,
   experimentCreator,
   experimentUpdater
 } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { IconInfo, IconPlus } from '@icons';
 import { useQueryExperimentDetails } from '@queries/experiment-details';
 import { useQueryFeature } from '@queries/feature-details';
 import { useQueryGoals } from '@queries/goals';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
+import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
+import { useToast, useToggleOpen } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
+import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
+import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
+import { useTranslation } from 'i18n';
+import { IconInfo, IconPlus } from '@icons';
+import { createExperimentFormSchema } from 'pages/experiments/form-schema';
+import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { ReactDatePicker } from 'components/date-time-picker';
@@ -21,28 +37,12 @@ import DialogModal from 'components/modal/dialog';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
-import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import CreateGoalModal from 'elements/create-goal-modal';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
 import FormLoading from 'elements/form-loading';
 import VariationLabel from 'elements/variation-label';
-import { useToast, useToggleOpen } from 'hooks';
-import useActionWithURL from 'hooks/use-action-with-url';
-import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
-import useFormSchema from 'hooks/use-form-schema';
-import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
-import { useTranslation } from 'i18n';
-import { createExperimentFormSchema } from 'pages/experiments/form-schema';
-import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
-import { useCallback, useEffect, useMemo } from 'react';
-import {
-  ControllerRenderProps,
-  FormProvider,
-  SubmitHandler,
-  useForm
-} from 'react-hook-form';
 
 interface ExperimentCreateUpdateModalProps {
   disabled: boolean;
