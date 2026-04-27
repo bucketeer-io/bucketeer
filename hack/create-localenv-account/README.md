@@ -11,9 +11,9 @@ two rows directly into the `account_v2` MySQL table:
 The two rows are upserted with `INSERT ... ON DUPLICATE KEY UPDATE` (using
 the MySQL 8.0 row-alias form) against the composite primary key
 `(email, organization_id)`. Re-running the command against a DB that already
-has the rows is safe — the upsert refreshes `name`, `organization_role`,
-`environment_roles`, `disabled`, and `updated_at` so a previously-disabled
-account is also re-enabled.
+has the rows is safe — the upsert refreshes `name`, `avatar_image_url`,
+`tags`, `organization_role`, `environment_roles`, `disabled`, and
+`updated_at` so a previously-disabled account is also re-enabled.
 
 ## Run Command
 
