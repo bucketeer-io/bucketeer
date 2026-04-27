@@ -5186,6 +5186,35 @@ func TestTranslateCallerCanceledErr(t *testing.T) {
 	}
 }
 
+// TestCtxAlreadyDoneErr verifies the fast-path early-return helper used by
+// public-API entry points: it must map the standard context errors to the
+// right gateway sentinel (so SDKs see Canceled vs DeadlineExceeded
+// correctly) and return nil for a live context.
+func TestCtxAlreadyDoneErr(t *testing.T) {
+	t.Parallel()
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	deadlineCtx, cancel := context.WithDeadline(context.Background(), time.Unix(0, 0))
+	defer cancel()
+
+	patterns := []struct {
+		desc string
+		ctx  context.Context
+		want error
+	}{
+		{desc: "live ctx returns nil", ctx: context.Background(), want: nil},
+		{desc: "canceled ctx returns ErrContextCanceled", ctx: canceledCtx, want: ErrContextCanceled},
+		{desc: "deadline ctx returns ErrContextDeadlineExceeded", ctx: deadlineCtx, want: ErrContextDeadlineExceeded},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.want, ctxAlreadyDoneErr(p.ctx))
+		})
+	}
+}
+
 // TestIsCallerContextErr verifies the predicate used by every public-API
 // entry point to suppress noisy logs for client-side disconnects.
 func TestIsCallerContextErr(t *testing.T) {
@@ -5201,6 +5230,16 @@ func TestIsCallerContextErr(t *testing.T) {
 		{desc: "ErrContextDeadlineExceeded", err: ErrContextDeadlineExceeded, want: true},
 		{desc: "wrapped ErrContextCanceled", err: fmt.Errorf("wrap: %w", ErrContextCanceled), want: true},
 		{desc: "wrapped ErrContextDeadlineExceeded", err: fmt.Errorf("wrap: %w", ErrContextDeadlineExceeded), want: true},
+		{
+			desc: "raw errCallerCanceled (singleflightFetch wrapper, before translation)",
+			err:  errCallerCanceled,
+			want: true,
+		},
+		{
+			desc: "wrapped errCallerCanceled (form returned by singleflightFetch)",
+			err:  fmt.Errorf("%w: %w", errCallerCanceled, status.FromContextError(context.Canceled).Err()),
+			want: true,
+		},
 		{desc: "ErrInvalidAPIKey", err: ErrInvalidAPIKey, want: false},
 		{desc: "raw context.Canceled", err: context.Canceled, want: false},
 		{desc: "raw context.DeadlineExceeded", err: context.DeadlineExceeded, want: false},
@@ -5452,14 +5491,20 @@ func TestSingleflightFetchCollapsesConcurrentCallers(t *testing.T) {
 	var entered atomic.Int32
 	var ready sync.WaitGroup
 	ready.Add(numCallers)
+	var fnStartOnce sync.Once
 
 	start := make(chan struct{})
 	fnStarted := make(chan struct{})
 	proceed := make(chan struct{})
 
+	// fn is idempotent on the channel-close so that if the residual
+	// scheduler race documented above ever fires (a late caller arrives
+	// after fn returns and triggers a second DoChan -> second fn
+	// invocation), the test still terminates with a clean assertion
+	// failure (fnCalls > 1) instead of panicking on close-of-closed-channel.
 	fn := func(ctx context.Context) (interface{}, error) {
 		fnCalls.Add(1)
-		close(fnStarted)
+		fnStartOnce.Do(func() { close(fnStarted) })
 		<-proceed
 		return "shared", nil
 	}
@@ -5503,6 +5548,14 @@ func TestSingleflightFetchCollapsesConcurrentCallers(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return entered.Load() == int32(numCallers)
 	}, time.Second, time.Millisecond, "not all callers entered singleflightFetch")
+
+	// 5. Absorb the unobservable scheduler window between `entered.Add(1)`
+	//    and the actual `flightgroup.DoChan(...)` call (see caveat above).
+	//    Without this margin, a late caller may arrive at DoChan after fn
+	//    returns and trigger a second invocation. Under -race the overhead
+	//    widens the window noticeably; 100ms is empirically sufficient
+	//    while remaining trivial in wall-clock test cost.
+	time.Sleep(100 * time.Millisecond)
 
 	close(proceed)
 	wg.Wait()
