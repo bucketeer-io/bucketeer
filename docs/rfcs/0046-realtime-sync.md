@@ -6,7 +6,7 @@ This RFC describes the new way to deliver flag changes to Web/Mobile SDKs **with
 
 ## 1. Background
 
-Currently, the way for client SDKs to receive flag config changes is polling `GetEvaluations`, which has trade-off of intervals.
+Currently, the way for client SDKs to receive flag config changes is polling `GetEvaluations`, which has trade-offs around the polling interval.
 - Short intervals spike gateway load.
 - Long intervals make kill-switches and coordinated launches effectively minute-granular.
 
@@ -24,7 +24,7 @@ That's why we want a push channel delivering changes within 1s.
 
 **Non-Goal.**
 
-- Server SDKs: handled separately later. easier than client SDKs.
+- Server SDKs: handled separately later because they are easier than client SDKs.
 
 ## 3. Design Overview
 
@@ -47,7 +47,7 @@ sequenceDiagram
 
     rect rgb(230, 240, 255)
     Note over SDK,API: 1. Connect
-    SDK->>Pod: POST (tag, userAttrs, etc.)
+    SDK->>Pod: Init connection (tag, userAttrs, etc.)
     Pod->>Pod: cache user context in RAM
     end
 
@@ -144,14 +144,14 @@ Run SSE in dedicated servers, not with the API servers.
 
 Use WebSocket for pushing, not SSE.
 
-**Why discarded**: WebSocket's bidirectional channel is unused. And its protocol may have restricitons in intermediate stacks.
+**Why discarded**: WebSocket's bidirectional channel is unused. And its protocol may have restrictions in intermediate stacks.
 
 ## 7. Tasks
 
 - **Proto**: Define SSE payload types
 - **Backend**:
   - SSE handling
-  - Domain topic subscription, re-evaluation, and delta push (mirror `cache_invalidator.go`)
+  - Domain topic subscription, re-evaluation, and delta push (mirror `pkg/api/api/cache_invalidator.go`)
   - Prometheus metrics
 - **Infra**:
   - Gateway config for allowing SSE
