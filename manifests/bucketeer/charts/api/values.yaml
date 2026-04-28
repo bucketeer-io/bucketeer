@@ -44,6 +44,12 @@ env:
     mode: auto
   oldestEventTimestamp:
   furthestEventTimestamp:
+  # Topic on which the subscriber service announces L2 cache refreshes.
+  # Each api pod subscribes to this topic and evicts its L1 (in-memory)
+  # cache entries on each announcement. Both supported PubSub backends
+  # (Google Pub/Sub and Redis Streams) auto-create the topic on first
+  # publish, so no pre-provisioning step is required.
+  cacheInvalidationTopic:
   logLevel: info
   grpcGatewayPort: 9089
   port: 9090

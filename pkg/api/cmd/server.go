@@ -122,7 +122,7 @@ type server struct {
 	pubSubRedisMinIdle        *int
 	pubSubRedisPartitionCount *int
 	pubSubRedisMode           *string
-	domainTopic               *string
+	cacheInvalidationTopic    *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -267,9 +267,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
-		domainTopic: cmd.Flag("domain-topic",
-			"PubSub topic for domain events. Used to invalidate in-memory caches.",
-		).String(),
+		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
+			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
+				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
+				"announcement so the next request reloads from the (now warm) L2.",
+		).Default("cache-invalidation").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -525,9 +527,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		})
 	}
 	defer stopInvalidator()
-	if *s.domainTopic != "" {
+	// Subscribe to the cache-invalidation topic, which is published by the
+	// subscriber service after it refreshes L2. This pod uses only the
+	// configured cache-invalidation topic for that purpose.
+	if *s.cacheInvalidationTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
-			invalidatorCtx, pubsubClient, inMemoryCache, logger,
+			invalidatorCtx, pubsubClient, inMemoryCache, *s.cacheInvalidationTopic, logger,
 		)
 		if err != nil {
 			return err
@@ -741,17 +746,25 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	return nil
 }
 
-// startCacheInvalidator subscribes to domain events to evict L1 in-memory
-// cache entries when feature flags, segments, or API keys are updated. Each
-// pod uses a unique consumer group (based on hostname) so every pod receives
-// every event. (L2 Redis for features/segments/API keys is not invalidated here,
-// same as for feature and segment caches.)
+// startCacheInvalidator subscribes to the cache-invalidation announcement
+// topic and evicts L1 in-memory cache entries when feature flags, segments,
+// or API keys are updated. Each pod uses a unique consumer group (based on
+// hostname) so every pod receives every event.
+//
+// The L2 (Redis) cache is *not* evicted here — by the time the
+// announcement arrives, the subscriber service has already refreshed L2
+// from MySQL. Subsequent API requests therefore reload from a warm L2
+// instead of fanning out to MySQL through the singleflight safety net,
+// which eliminates the cache-miss thundering herd that previously
+// followed every flag/segment/api-key change.
+//
 // It returns a cleanup function that deletes the pub/sub subscription or
 // pub/sub consumer group on graceful shutdown.
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
 	inMemoryCache *cachev3.InMemoryCache,
+	topic string,
 	logger *zap.Logger,
 ) (func(), error) {
 	hostname, err := os.Hostname()
@@ -771,14 +784,17 @@ func (s *server) startCacheInvalidator(
 		)
 	}
 	subscription := fmt.Sprintf("api-cache-invalidator-%s", hostname)
-	domainPuller, err := pubsubClient.CreatePuller(subscription, *s.domainTopic,
+	invalidationPuller, err := pubsubClient.CreatePuller(subscription, topic,
 		puller.PullerOption{ExpirationPolicy: 24 * time.Hour},
 	)
 	if err != nil {
-		logger.Error("Failed to create domain event puller", zap.Error(err))
+		logger.Error("Failed to create cache invalidation puller",
+			zap.String("topic", topic),
+			zap.Error(err),
+		)
 		return nil, err
 	}
-	rateLimitedPuller := puller.NewRateLimitedPuller(domainPuller, 1000)
+	rateLimitedPuller := puller.NewRateLimitedPuller(invalidationPuller, 1000)
 	invalidator := api.NewCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
@@ -787,7 +803,7 @@ func (s *server) startCacheInvalidator(
 	)
 	go func() {
 		if err := rateLimitedPuller.Run(ctx); err != nil {
-			logger.Error("Domain event puller stopped", zap.Error(err))
+			logger.Error("Cache invalidation puller stopped", zap.Error(err))
 		}
 	}()
 	go func() {
@@ -798,15 +814,15 @@ func (s *server) startCacheInvalidator(
 	logger.Debug("Cache invalidator started",
 		zap.String("hostname", hostname),
 		zap.String("subscription", subscription),
-		zap.String("topic", *s.domainTopic),
+		zap.String("topic", topic),
 	)
 	cleanup := func() {
-		err := pubsubClient.DeleteSubscription(subscription, *s.domainTopic)
+		err := pubsubClient.DeleteSubscription(subscription, topic)
 		if err != nil && status.Code(err) == codes.NotFound {
 			// Subscription may already be removed (TTL, GCP GC). Idempotent cleanup.
 			logger.Debug("Cache invalidator subscription already gone",
 				zap.String("subscription", subscription),
-				zap.String("topic", *s.domainTopic),
+				zap.String("topic", topic),
 			)
 			return
 		}
@@ -815,7 +831,7 @@ func (s *server) startCacheInvalidator(
 				"Failed to delete cache invalidator subscription; "+
 					"manual cleanup or backend-specific TTL may be required",
 				zap.String("subscription", subscription),
-				zap.String("topic", *s.domainTopic),
+				zap.String("topic", topic),
 				zap.Error(err),
 			)
 			return

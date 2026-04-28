@@ -3,7 +3,7 @@ global:
     tag: localenv
     imagePullSecrets:
 
-  # Global data warehouse configuration for development
+      # Global data warehouse configuration for development
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql, postgres
@@ -108,7 +108,6 @@ migration:
   # The migration baseline
   # First revision
   dbBaseline: "20240626022133"
-
   # postgres
   # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
   # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
@@ -213,7 +212,7 @@ api:
     furthestEventTimestamp: 48h
     featuresMemoryCacheTTL: 1m
     segmentUsersMemoryCacheTTL: 1m
-    domainTopic: domain
+    cacheInvalidationTopic: cache-invalidation
     gcpEnabled: false
     profile: false
     enablePprof: false
@@ -483,7 +482,7 @@ subscriber:
       pullerMaxOutstandingBytes: 1000000000
       maxMps: 50
       workerNum: 1
-    cacheEviction:
+    cacheRefresher:
       pubSubType: ${global.pubsub.type}
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
@@ -491,7 +490,8 @@ subscriber:
       redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
-      subscription: cache-eviction-domain-sub
+      subscription: cache-refresher-domain-sub
+      cacheInvalidationTopic: cache-invalidation
       pullerNumGoroutines: 5
       pullerMaxOutstandingMessages: 1000
       pullerMaxOutstandingBytes: 1000000000

@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -36,6 +37,8 @@ import (
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
@@ -329,6 +332,32 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	// Load subscribers config once. We need it both to construct the
+	// cache-invalidation publisher (which reuses the cacheRefresher
+	// processor's PubSub backend settings) and to drive the multi-pubsub
+	// dispatch in startMultiPubSub. Tolerate a missing/unreadable file
+	// the same way startMultiPubSub historically did.
+	subscriberConfigs, err := s.loadSubscriberConfigurations(logger)
+	if err != nil {
+		return err
+	}
+
+	// Create the cache-invalidation publisher up front so it can be wired
+	// into the cache-refresher processor below. The PubSub backend is
+	// taken from the cacheRefresher processor's subscribers config — that
+	// processor is the one consuming domain events and triggering the
+	// refresh, so its publisher inherently uses the same backend in the
+	// same pod. This avoids parallel CLI flags for the same backend.
+	cacheInvalidationPublisher, cacheInvalidationCleanup, err := s.createCacheInvalidationPublisher(
+		ctx, subscriberConfigs, registerer, logger,
+	)
+	if err != nil {
+		return err
+	}
+	if cacheInvalidationCleanup != nil {
+		defer cacheInvalidationCleanup()
+	}
+
 	pubSubProcessors, err := s.registerPubSubProcessorMap(
 		ctx,
 		environmentClient,
@@ -340,6 +369,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		batchClient,
 		autoOpsClient,
 		notificationSender,
+		cacheInvalidationPublisher,
 		registerer,
 		logger,
 	)
@@ -347,7 +377,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, registerer, logger)
+	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, subscriberConfigs, registerer, logger)
 	if err != nil {
 		return err
 	}
@@ -407,6 +437,150 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	return nil
 }
 
+// loadSubscriberConfigurations reads the subscribers config file and
+// parses it into a map keyed by processor name. A missing or empty file
+// is tolerated (returns an empty map and a logged warning) to match the
+// historical behaviour of startMultiPubSub.
+func (s *server) loadSubscriberConfigurations(
+	logger *zap.Logger,
+) (map[string]subscriber.Configuration, error) {
+	bytes, err := os.ReadFile(*s.subscriberConfig)
+	if err != nil {
+		logger.Warn("subscriber: failed to read subscriber config",
+			zap.String("path", *s.subscriberConfig),
+			zap.Error(err),
+		)
+		return map[string]subscriber.Configuration{}, nil
+	}
+	configs := map[string]subscriber.Configuration{}
+	if err := json.Unmarshal(bytes, &configs); err != nil {
+		logger.Error("subscriber: failed to unmarshal subscriber config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return configs, nil
+}
+
+// resolveCacheInvalidationConfig returns the cacheRefresher subscriber
+// configuration if cache-invalidation announcements should be enabled
+// for this pod. Announcements are enabled iff the cacheRefresher block
+// is present AND its CacheInvalidationTopic is non-empty.
+//
+// Extracted as a free function so it can be unit-tested without spinning
+// up a real PubSub backend.
+func resolveCacheInvalidationConfig(
+	subscriberConfigs map[string]subscriber.Configuration,
+) (subscriber.Configuration, bool) {
+	conf, ok := subscriberConfigs[processor.CacheRefresherName]
+	if !ok {
+		return subscriber.Configuration{}, false
+	}
+	if conf.CacheInvalidationTopic == "" {
+		return subscriber.Configuration{}, false
+	}
+	return conf, true
+}
+
+// createCacheInvalidationPublisher builds a publisher for the
+// cache-invalidation announcement topic, reusing the PubSub backend
+// settings from the cacheRefresher processor's subscribers config so the
+// publisher and the consumer that triggers it always agree on backend.
+// The destination topic itself comes from the same config block
+// (CacheInvalidationTopic field).
+//
+// The returned cleanup function (may be nil) stops the publisher, closes
+// the factory client, and releases any backend-specific resources (e.g.
+// a dedicated Redis client for the Redis Streams backend).
+//
+// Returns (nil, nil, nil) when announcements are disabled (no
+// cacheRefresher block, or its CacheInvalidationTopic is empty).
+func (s *server) createCacheInvalidationPublisher(
+	ctx context.Context,
+	subscriberConfigs map[string]subscriber.Configuration,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (publisher.Publisher, func(), error) {
+	conf, enabled := resolveCacheInvalidationConfig(subscriberConfigs)
+	if !enabled {
+		logger.Info(
+			"subscriber: cache-invalidation announcements disabled (no cacheRefresher block or empty cacheInvalidationTopic)",
+		)
+		return nil, nil, nil
+	}
+	pubSubType := factory.PubSubType(conf.PubSubType)
+	if pubSubType == "" {
+		pubSubType = factory.PubSubType(subscriber.DefaultPubSubType)
+	}
+	factoryOpts := []factory.Option{
+		factory.WithPubSubType(pubSubType),
+		factory.WithMetrics(registerer),
+		factory.WithLogger(logger),
+	}
+	// backendCleanup releases backend-specific resources (currently the
+	// Redis client for the Redis Streams backend). The factory client
+	// itself is closed by the returned cleanup below, regardless of
+	// backend.
+	var backendCleanup func()
+	switch pubSubType {
+	case factory.Google:
+		factoryOpts = append(factoryOpts, factory.WithProjectID(conf.Project))
+	case factory.RedisStream:
+		redisClient, err := redisv3.NewClient(
+			conf.RedisAddr,
+			redisv3.WithPoolSize(conf.RedisPoolSize),
+			redisv3.WithMinIdleConns(conf.RedisMinIdle),
+			redisv3.WithServerName(conf.RedisServerName),
+			redisv3.WithRedisMode(redisv3.RedisMode(conf.RedisMode)),
+			redisv3.WithMetrics(registerer),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+		if conf.RedisPartitionCount > 0 {
+			factoryOpts = append(factoryOpts, factory.WithPartitionCount(conf.RedisPartitionCount))
+		}
+		backendCleanup = func() { _ = redisClient.Close() }
+	}
+	client, err := factory.NewClient(ctx, factoryOpts...)
+	if err != nil {
+		if backendCleanup != nil {
+			backendCleanup()
+		}
+		return nil, nil, err
+	}
+	pub, err := client.CreatePublisher(conf.CacheInvalidationTopic)
+	if err != nil {
+		if cerr := client.Close(); cerr != nil {
+			logger.Error("subscriber: failed to close cache invalidation pubsub client during error cleanup",
+				zap.Error(cerr),
+			)
+		}
+		if backendCleanup != nil {
+			backendCleanup()
+		}
+		logger.Error("subscriber: failed to create cache invalidation publisher",
+			zap.String("topic", conf.CacheInvalidationTopic),
+			zap.Error(err),
+		)
+		return nil, nil, err
+	}
+	cleanup := func() {
+		pub.Stop()
+		if err := client.Close(); err != nil {
+			logger.Error("subscriber: failed to close cache invalidation pubsub client",
+				zap.Error(err),
+			)
+		}
+		if backendCleanup != nil {
+			backendCleanup()
+		}
+	}
+	return pub, cleanup, nil
+}
+
 func (s *server) createMySQLClient(
 	ctx context.Context,
 	registerer metrics.Registerer,
@@ -428,6 +602,7 @@ func (s *server) createMySQLClient(
 func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.PubSubProcessors,
+	subscriberConfigs map[string]subscriber.Configuration,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*subscriber.MultiSubscriber, error) {
@@ -435,35 +610,23 @@ func (s *server) startMultiPubSub(
 		subscriber.WithLogger(logger),
 		subscriber.WithMetrics(registerer),
 	)
-	subscriberConfigBytes, err := os.ReadFile(*s.subscriberConfig)
-	if err != nil {
-		logger.Error("subscriber: failed to read subscriber config", zap.Error(err))
-	} else {
-		var configMap map[string]subscriber.Configuration
-		if err := json.Unmarshal(subscriberConfigBytes, &configMap); err != nil {
-			logger.Error("subscriber: failed to unmarshal subscriber config",
+	for name, config := range subscriberConfigs {
+		p, err := processors.GetProcessorByName(name)
+		if err != nil {
+			logger.Warn(
+				"subscriber: processor not found during startup. It could be because the processor is not registered yet.",
+				zap.String("name", name),
 				zap.Error(err),
 			)
-			return nil, err
+			// since we will keep old and new configmap at the same time during canary release,
+			// we should skip the error, just log it here
+			continue
 		}
-		for name, config := range configMap {
-			p, err := processors.GetProcessorByName(name)
-			if err != nil {
-				logger.Warn(
-					"subscriber: processor not found during startup. It could be because the processor is not registered yet.",
-					zap.String("name", name),
-					zap.Error(err),
-				)
-				// since we will keep old and new configmap at the same time during canary release,
-				// we should skip the error, just log it here
-				continue
-			}
-			multiSubscriber.AddSubscriber(subscriber.NewPubSubSubscriber(
-				name, config, p,
-				subscriber.WithLogger(logger),
-				subscriber.WithMetrics(registerer),
-			))
-		}
+		multiSubscriber.AddSubscriber(subscriber.NewPubSubSubscriber(
+			name, config, p,
+			subscriber.WithLogger(logger),
+			subscriber.WithMetrics(registerer),
+		))
 	}
 	onDemandSubscriberConfigBytes, err := os.ReadFile(*s.onDemandSubscriberConfig)
 	if err != nil {
@@ -510,6 +673,7 @@ func (s *server) registerPubSubProcessorMap(
 	batchClient btclient.Client,
 	opsClient autoopsclient.Client,
 	sender notificationsender.Sender,
+	cacheInvalidationPublisher publisher.Publisher,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*processor.PubSubProcessors, error) {
@@ -543,13 +707,18 @@ func (s *server) registerPubSubProcessorMap(
 
 		nonPersistentRedisCache := cachev3.NewRedisCache(nonPersistentRedisClient)
 		processors.RegisterProcessor(
-			processor.CacheEvictionName,
-			processor.NewCacheEviction(
+			processor.CacheRefresherName,
+			processor.NewCacheRefresher(
+				ftClient,
+				exClient,
+				opsClient,
+				accstorage.NewAccountStorage(mysqlClient),
 				cachev3.NewFeaturesCache(nonPersistentRedisCache, 0),
 				cachev3.NewSegmentUsersCache(nonPersistentRedisCache, 0),
 				cachev3.NewEnvironmentAPIKeyCache(nonPersistentRedisCache, 0),
 				cachev3.NewExperimentsCache(nonPersistentRedisCache),
 				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache),
+				cacheInvalidationPublisher,
 				logger,
 			),
 		)

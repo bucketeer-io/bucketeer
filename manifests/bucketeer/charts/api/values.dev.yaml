@@ -26,6 +26,7 @@ env:
   evaluationTopic: evaluation
   userTopic: user
   metricsTopic: metrics
+  cacheInvalidationTopic: cache-invalidation
   publishNumGoroutines: 200
   publishTimeout: 1m
   redis:
