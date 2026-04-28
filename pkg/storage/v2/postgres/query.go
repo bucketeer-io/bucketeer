@@ -399,19 +399,14 @@ func ConstructCountQuery(baseQuery string, options *ListOptions) (query string, 
 	return baseQuery, []interface{}{}
 }
 
-const (
-	QueryNoLimit  = 0
-	QueryNoOffset = 0
-)
-
 func ConstructLimitOffsetSQLString(limit, offset int) string {
-	if limit == QueryNoLimit && offset == QueryNoOffset {
+	if limit == 0 && offset == 0 {
 		return ""
 	}
-	if limit == QueryNoLimit && offset != QueryNoOffset {
+	if limit == 0 {
 		return fmt.Sprintf(" OFFSET %d", offset)
 	}
-	if limit != QueryNoLimit && offset == QueryNoOffset {
+	if offset == 0 {
 		return fmt.Sprintf(" LIMIT %d", limit)
 	}
 	return fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
