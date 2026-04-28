@@ -24,7 +24,7 @@ That's why we want a push channel delivering changes within 1s.
 
 **Non-Goal.**
 
-- Server SDKs: handled separately later because they are easier than client SDKs.
+- Server SDKs: handled separately later. Easier than client SDKs.
 
 ## 3. Design Overview
 
