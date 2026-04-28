@@ -129,6 +129,7 @@
     "redisMode": "auto",
     "topic": "domain",
     "subscription": "cache-refresher",
+    "cacheInvalidationTopic": "cache-invalidation",
     "pullerNumGoroutines": 5,
     "pullerMaxOutstandingMessages": 1000,
     "pullerMaxOutstandingBytes": 1000000000,

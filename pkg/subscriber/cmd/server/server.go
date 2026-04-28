@@ -98,12 +98,6 @@ type server struct {
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
 	nonPersistentRedisMode          *string
-	// Topic on which the cache-refresher processor announces L2 refreshes
-	// so api pods can drop their L1 entries. The PubSub backend (Google
-	// vs Redis Streams, project, redis addr, etc.) is taken from the
-	// "cacheRefresher" entry of the subscribers config, since the publisher
-	// inherently runs in the same pod as that processor's consumer.
-	cacheInvalidationTopic *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -214,11 +208,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
 			"Non-persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
-		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
-			"PubSub topic on which the subscriber announces L2 cache refreshes "+
-				"so api pods can drop their L1 (in-memory) entries. Both backends "+
-				"auto-create the topic on first publish.",
-		).Default("cache-invalidation").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -473,31 +462,49 @@ func (s *server) loadSubscriberConfigurations(
 	return configs, nil
 }
 
+// resolveCacheInvalidationConfig returns the cacheRefresher subscriber
+// configuration if cache-invalidation announcements should be enabled
+// for this pod. Announcements are enabled iff the cacheRefresher block
+// is present AND its CacheInvalidationTopic is non-empty.
+//
+// Extracted as a free function so it can be unit-tested without spinning
+// up a real PubSub backend.
+func resolveCacheInvalidationConfig(
+	subscriberConfigs map[string]subscriber.Configuration,
+) (subscriber.Configuration, bool) {
+	conf, ok := subscriberConfigs[processor.CacheRefresherName]
+	if !ok {
+		return subscriber.Configuration{}, false
+	}
+	if conf.CacheInvalidationTopic == "" {
+		return subscriber.Configuration{}, false
+	}
+	return conf, true
+}
+
 // createCacheInvalidationPublisher builds a publisher for the
 // cache-invalidation announcement topic, reusing the PubSub backend
 // settings from the cacheRefresher processor's subscribers config so the
 // publisher and the consumer that triggers it always agree on backend.
+// The destination topic itself comes from the same config block
+// (CacheInvalidationTopic field).
 //
 // The returned cleanup function (may be nil) stops the publisher, closes
 // the factory client, and releases any backend-specific resources (e.g.
 // a dedicated Redis client for the Redis Streams backend).
 //
-// Returns (nil, nil, nil) when announcements are disabled
-// (--cache-invalidation-topic empty, or no cacheRefresher config block).
+// Returns (nil, nil, nil) when announcements are disabled (no
+// cacheRefresher block, or its CacheInvalidationTopic is empty).
 func (s *server) createCacheInvalidationPublisher(
 	ctx context.Context,
 	subscriberConfigs map[string]subscriber.Configuration,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (publisher.Publisher, func(), error) {
-	if *s.cacheInvalidationTopic == "" {
-		return nil, nil, nil
-	}
-	conf, ok := subscriberConfigs[processor.CacheRefresherName]
-	if !ok {
-		logger.Warn(
-			"subscriber: cacheRefresher config not found; cache-invalidation announcements disabled",
-			zap.String("processor", processor.CacheRefresherName),
+	conf, enabled := resolveCacheInvalidationConfig(subscriberConfigs)
+	if !enabled {
+		logger.Info(
+			"subscriber: cache-invalidation announcements disabled (no cacheRefresher block or empty cacheInvalidationTopic)",
 		)
 		return nil, nil, nil
 	}
@@ -544,7 +551,7 @@ func (s *server) createCacheInvalidationPublisher(
 		}
 		return nil, nil, err
 	}
-	pub, err := client.CreatePublisher(*s.cacheInvalidationTopic)
+	pub, err := client.CreatePublisher(conf.CacheInvalidationTopic)
 	if err != nil {
 		if cerr := client.Close(); cerr != nil {
 			logger.Error("subscriber: failed to close cache invalidation pubsub client during error cleanup",
@@ -555,7 +562,7 @@ func (s *server) createCacheInvalidationPublisher(
 			backendCleanup()
 		}
 		logger.Error("subscriber: failed to create cache invalidation publisher",
-			zap.String("topic", *s.cacheInvalidationTopic),
+			zap.String("topic", conf.CacheInvalidationTopic),
 			zap.Error(err),
 		)
 		return nil, nil, err

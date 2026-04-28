@@ -44,12 +44,6 @@ env:
   port: 9090
   metricsPort: 9002
   refreshInterval: 10m
-  # Topic on which this subscriber announces L2 cache refreshes (so api
-  # pods can drop their L1 in-memory entries). Both PubSub backends auto-
-  # create the topic on first publish. Override only if you need a custom
-  # topic name; otherwise the binary's default of "cache-invalidation" is
-  # used.
-  cacheInvalidationTopic:
   # redis settings
   persistentRedis:
     serverName:
@@ -164,6 +158,12 @@ subscribers:
     project:
     topic:
     subscription:
+    # Destination topic for the L1 cache-invalidation announcement that
+    # the cacheRefresher publishes after each L2 refresh. api pods
+    # subscribe to this topic to evict their in-memory cache entries.
+    # Both PubSub backends auto-create the topic on first publish. Leave
+    # empty to disable announcements (legacy evict-only behaviour).
+    cacheInvalidationTopic: cache-invalidation
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: 1000
     pullerMaxOutstandingBytes: 1000000000
