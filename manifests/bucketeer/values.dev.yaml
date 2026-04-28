@@ -214,6 +214,7 @@ api:
     featuresMemoryCacheTTL: 1m
     segmentUsersMemoryCacheTTL: 1m
     domainTopic: domain
+    cacheInvalidationTopic: cache-invalidation
     gcpEnabled: false
     profile: false
     enablePprof: false
@@ -444,6 +445,7 @@ subscriber:
       poolMaxIdle: 25
       poolMaxActive: 25
       mode: auto
+    cacheInvalidationTopic: cache-invalidation
 
   tls:
     service:

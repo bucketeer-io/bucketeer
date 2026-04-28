@@ -169,6 +169,10 @@ spec:
             - name: BUCKETEER_API_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
             {{- end }}
+            {{- if .Values.env.cacheInvalidationTopic }}
+            - name: BUCKETEER_API_CACHE_INVALIDATION_TOPIC
+              value: "{{ .Values.env.cacheInvalidationTopic }}"
+            {{- end }}
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT

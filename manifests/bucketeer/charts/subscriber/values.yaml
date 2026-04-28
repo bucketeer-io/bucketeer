@@ -44,6 +44,11 @@ env:
   port: 9090
   metricsPort: 9002
   refreshInterval: 10m
+  # Topic on which this subscriber announces L2 cache refreshes (so api
+  # pods can drop their L1 in-memory entries). Both PubSub backends auto-
+  # create the topic on first publish; leave empty to disable announcements
+  # (legacy evict-only behaviour).
+  cacheInvalidationTopic:
   # redis settings
   persistentRedis:
     serverName:

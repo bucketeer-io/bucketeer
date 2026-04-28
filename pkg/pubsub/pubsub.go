@@ -246,6 +246,11 @@ func (c *Client) createPuller(
 	), nil
 }
 
+// topic returns a handle to the topic with the given id, creating the topic
+// idempotently if it does not yet exist. This mirrors the behaviour of
+// subscription(), which already auto-creates subscriptions, and matches the
+// Redis Streams backend, where a stream is created transparently on first
+// publish.
 func (c *Client) topic(id string) (*pubsub.Topic, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -258,9 +263,22 @@ func (c *Client) topic(id string) (*pubsub.Topic, error) {
 	if ok {
 		return topic, nil
 	}
-	return nil, ErrInvalidTopic
+	if _, err := c.CreateTopic(ctx, id); err != nil {
+		if !strings.Contains(err.Error(), rpcErrAlreadyExists) {
+			return nil, err
+		}
+		c.logger.Debug("Topic already exists, use it directly",
+			zap.String("topic", id),
+		)
+	}
+	return c.Topic(id), nil
 }
 
+// topicInProject returns a handle to the topic with the given id in the
+// specified project. When the requested project matches the client's project,
+// the topic is created idempotently on miss (see topic()). Cross-project
+// topics must be pre-provisioned by the operator: the cloud.google.com/go
+// pubsub client can only create topics inside its own project.
 func (c *Client) topicInProject(topicID, projectID string) (*pubsub.Topic, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -273,7 +291,19 @@ func (c *Client) topicInProject(topicID, projectID string) (*pubsub.Topic, error
 	if ok {
 		return topic, nil
 	}
-	return nil, ErrInvalidTopic
+	if projectID != "" && projectID != c.Project() {
+		return nil, ErrInvalidTopic
+	}
+	if _, err := c.CreateTopic(ctx, topicID); err != nil {
+		if !strings.Contains(err.Error(), rpcErrAlreadyExists) {
+			return nil, err
+		}
+		c.logger.Debug("Topic already exists, use it directly",
+			zap.String("topic", topicID),
+			zap.String("project", projectID),
+		)
+	}
+	return c.TopicInProject(topicID, projectID), nil
 }
 
 // createTopicForEmulator create topic when using pubsub emulator.
@@ -313,7 +343,14 @@ func (c *Client) tryUpdateSubscriptionExpiration(
 // TODO: add metrics
 func (c *Client) subscription(id, topicID string, opts *subscriptionOptions) (*pubsub.Subscription, error) {
 	sub := c.Subscription(id)
-	topic := c.Topic(topicID)
+	// Ensure the topic exists before attempting to create the subscription.
+	// This handles the "puller starts before publisher" case symmetrically
+	// with the Redis Streams backend, which transparently creates streams on
+	// first publish or subscribe.
+	topic, err := c.topic(topicID)
+	if err != nil {
+		return nil, err
+	}
 	var lastErr error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()

@@ -176,6 +176,10 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.nonPersistentRedis.mode }}"
+            {{- if .Values.env.cacheInvalidationTopic }}
+            - name: BUCKETEER_SUBSCRIBER_CACHE_INVALIDATION_TOPIC
+              value: "{{ .Values.env.cacheInvalidationTopic }}"
+            {{- end }}
 
           volumeMounts:
             - name: service-cert-secret

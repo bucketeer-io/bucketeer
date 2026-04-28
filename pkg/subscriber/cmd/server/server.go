@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -36,6 +37,8 @@ import (
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
@@ -95,6 +98,17 @@ type server struct {
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
 	nonPersistentRedisMode          *string
+	// PubSub for the cache-invalidation announcement topic.
+	// The subscriber service publishes to this topic after refreshing L2,
+	// so each api pod can drop its L1 entry without re-reading MySQL.
+	pubSubType                *string
+	pubSubRedisServerName     *string
+	pubSubRedisAddr           *string
+	pubSubRedisPoolSize       *int
+	pubSubRedisMinIdle        *int
+	pubSubRedisPartitionCount *int
+	pubSubRedisMode           *string
+	cacheInvalidationTopic    *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -205,6 +219,33 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
 			"Non-persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		pubSubType: cmd.Flag("pubsub-type",
+			"Type of PubSub to use (google or redis-stream) for the cache-invalidation publisher.",
+		).Default("google").String(),
+		pubSubRedisServerName: cmd.Flag("pubsub-redis-server-name",
+			"Name of the Redis server for PubSub.",
+		).Default("non-persistent-redis").String(),
+		pubSubRedisAddr: cmd.Flag("pubsub-redis-addr",
+			"Address of the Redis server for PubSub.",
+		).Default("localhost:6379").String(),
+		pubSubRedisPoolSize: cmd.Flag("pubsub-redis-pool-size",
+			"Maximum number of connections for Redis PubSub.",
+		).Default("10").Int(),
+		pubSubRedisMinIdle: cmd.Flag("pubsub-redis-min-idle",
+			"Minimum number of idle connections for Redis PubSub.",
+		).Default("5").Int(),
+		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
+			"Number of partitions for Redis Streams PubSub.",
+		).Default("16").Int(),
+		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
+			"PubSub Redis client mode: cluster, standalone, or auto.",
+		).Default("auto").String(),
+		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
+			"PubSub topic on which the subscriber announces L2 cache refreshes "+
+				"so api pods can drop their L1 (in-memory) entries. Both backends "+
+				"auto-create the topic on first publish; leave empty to disable "+
+				"the announcement (legacy evict-only behaviour).",
+		).Default("cache-invalidation").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -329,6 +370,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	// Create the cache-invalidation publisher up front so it can be wired
+	// into the cache-refresher processor below. It is intentionally a
+	// separate PubSub client from the per-processor consumers (each
+	// processor brings its own client via the subscribers config); having
+	// one shared publisher avoids creating N publishers per refresher type.
+	cacheInvalidationPubSubClient, cacheInvalidationCleanup, err := s.createCacheInvalidationPubSubClient(
+		ctx, registerer, logger,
+	)
+	if err != nil {
+		return err
+	}
+	if cacheInvalidationCleanup != nil {
+		defer cacheInvalidationCleanup()
+	}
+
+	var cacheInvalidationPublisher publisher.Publisher
+	if cacheInvalidationPubSubClient != nil && *s.cacheInvalidationTopic != "" {
+		cacheInvalidationPublisher, err = cacheInvalidationPubSubClient.CreatePublisher(*s.cacheInvalidationTopic)
+		if err != nil {
+			logger.Error("subscriber: failed to create cache invalidation publisher",
+				zap.String("topic", *s.cacheInvalidationTopic),
+				zap.Error(err),
+			)
+			return err
+		}
+		defer cacheInvalidationPublisher.Stop()
+	}
+
 	pubSubProcessors, err := s.registerPubSubProcessorMap(
 		ctx,
 		environmentClient,
@@ -340,6 +409,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		batchClient,
 		autoOpsClient,
 		notificationSender,
+		cacheInvalidationPublisher,
 		registerer,
 		logger,
 	)
@@ -405,6 +475,58 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	<-ctx.Done()
 	return nil
+}
+
+// createCacheInvalidationPubSubClient builds a PubSub client suitable for
+// publishing cache-invalidation announcements. The returned cleanup
+// function (may be nil) closes any backend-specific resources such as a
+// dedicated Redis client.
+//
+// Returns (nil, nil, nil) when the cache-invalidation topic is empty
+// (announcements disabled).
+func (s *server) createCacheInvalidationPubSubClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (factory.Client, func(), error) {
+	if *s.cacheInvalidationTopic == "" {
+		return nil, nil, nil
+	}
+	pubSubType := factory.PubSubType(*s.pubSubType)
+	factoryOpts := []factory.Option{
+		factory.WithPubSubType(pubSubType),
+		factory.WithMetrics(registerer),
+		factory.WithLogger(logger),
+	}
+	var cleanup func()
+	switch pubSubType {
+	case factory.Google:
+		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
+	case factory.RedisStream:
+		redisClient, err := redisv3.NewClient(
+			*s.pubSubRedisAddr,
+			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
+			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
+			redisv3.WithServerName(*s.pubSubRedisServerName),
+			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
+			redisv3.WithMetrics(registerer),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
+		cleanup = func() { _ = redisClient.Close() }
+	}
+	client, err := factory.NewClient(ctx, factoryOpts...)
+	if err != nil {
+		if cleanup != nil {
+			cleanup()
+		}
+		return nil, nil, err
+	}
+	return client, cleanup, nil
 }
 
 func (s *server) createMySQLClient(
@@ -510,6 +632,7 @@ func (s *server) registerPubSubProcessorMap(
 	batchClient btclient.Client,
 	opsClient autoopsclient.Client,
 	sender notificationsender.Sender,
+	cacheInvalidationPublisher publisher.Publisher,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*processor.PubSubProcessors, error) {
@@ -544,12 +667,17 @@ func (s *server) registerPubSubProcessorMap(
 		nonPersistentRedisCache := cachev3.NewRedisCache(nonPersistentRedisClient)
 		processors.RegisterProcessor(
 			processor.CacheEvictionName,
-			processor.NewCacheEviction(
+			processor.NewCacheRefresher(
+				ftClient,
+				exClient,
+				opsClient,
+				accstorage.NewAccountStorage(mysqlClient),
 				cachev3.NewFeaturesCache(nonPersistentRedisCache, 0),
 				cachev3.NewSegmentUsersCache(nonPersistentRedisCache, 0),
 				cachev3.NewEnvironmentAPIKeyCache(nonPersistentRedisCache, 0),
 				cachev3.NewExperimentsCache(nonPersistentRedisCache),
 				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache),
+				cacheInvalidationPublisher,
 				logger,
 			),
 		)
