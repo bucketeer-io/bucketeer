@@ -25,13 +25,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -1869,7 +1868,7 @@ func grpcRegisterGoalEvent(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: timestamp,
 		GoalId:    goalID,
 		UserId:    userID,
@@ -1978,7 +1977,7 @@ func grpcRegisterEvaluationEvent(
 	if reason == nil {
 		reason = &featureproto.Reason{}
 	}
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
@@ -2145,8 +2144,8 @@ func newCreateFeatureReq(featureID string, variations []string) *featureproto.Cr
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 	for _, v := range variations {

@@ -12879,6 +12879,10 @@ definitions:
         type: boolean
       maintainer:
         type: string
+      orderedRuleIds:
+        type: array
+        items:
+          type: string
     title: The payload of scheduled changes - structured to use existing change types
   featureScheduledFlagChange:
     type: object
@@ -13134,6 +13138,10 @@ definitions:
           $ref: '#/definitions/bucketeerfeatureTagChange'
       maintainer:
         type: string
+      orderedRuleIds:
+        type: array
+        items:
+          type: string
     required:
       - environmentId
       - id

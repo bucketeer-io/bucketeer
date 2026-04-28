@@ -115,6 +115,7 @@ message ScheduledChangePayload {
   google.protobuf.BoolValue archived = 11;
   bool reset_sampling_seed = 12;
   google.protobuf.StringValue maintainer = 13;
+  repeated string ordered_rule_ids = 14;
 }
 
 // ============================================

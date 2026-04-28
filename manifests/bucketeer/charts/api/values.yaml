@@ -7,13 +7,21 @@ env:
   project:
   gcpEnabled: true
   profile: true
-  database:
+  # Database configuration
+  operationalDatabase:
+    type: "mysql"
     mysql:
       user:
       pass:
       host:
-      port:
-      dbName:
+      port: 3306
+      name:
+    postgres:
+      user:
+      pass:
+      host:
+      port: 5432
+      name:
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
   pubsubEmulatorHost:

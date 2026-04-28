@@ -3304,6 +3304,7 @@ func TestUpdate(t *testing.T) {
 				p.variationChanges,
 				p.tagChanges,
 				p.maintainer,
+				nil, // ruleOrder
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -3496,7 +3497,7 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				p.prerequisiteChanges, nil, nil, nil, nil, nil,
+				p.prerequisiteChanges, nil, nil, nil, nil, nil, nil,
 			)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if err == nil {
@@ -3507,87 +3508,156 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 }
 
 func TestUpdateTargetsGranular(t *testing.T) {
-	// Generate valid UUIDs for variations.
+	t.Parallel()
+
 	v1, err := uuid.NewUUID()
 	require.NoError(t, err)
 	v2, err := uuid.NewUUID()
 	require.NoError(t, err)
 
-	genF := func() *Feature {
-		return &Feature{
-			Feature: &ftproto.Feature{
-				Id:            "i",
-				Name:          "n",
-				Description:   "d",
-				Archived:      false,
-				Enabled:       false,
-				Tags:          []string{"t1"},
-				VariationType: ftproto.Feature_BOOLEAN,
-				Variations: []*ftproto.Variation{
-					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
-					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
-				},
-				Prerequisites: []*ftproto.Prerequisite{},
-				Targets: []*ftproto.Target{
-					{Variation: v1.String(), Users: []string{"u1"}},
-					{Variation: v2.String(), Users: []string{"u2"}},
-				},
-				Rules: []*ftproto.Rule{},
-				DefaultStrategy: &ftproto.Strategy{
-					Type:          ftproto.Strategy_FIXED,
-					FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
-				},
-				OffVariation: v1.String(),
-			},
-		}
-	}
-
 	patterns := []struct {
 		desc          string
-		inputFunc     func() *Feature
+		setupFunc     func() *Feature
 		targetChanges []*ftproto.TargetChange
-		expectedFunc  func() *Feature
 		expectedErr   error
 	}{
 		{
-			desc:      "Target Create - error: empty target fields",
-			inputFunc: genF,
+			desc: "Target Create - error: variation not found",
+			setupFunc: func() *Feature {
+				return &Feature{
+					Feature: &ftproto.Feature{
+						Id:            "i",
+						Name:          "n",
+						Archived:      false,
+						Enabled:       false,
+						Tags:          []string{"t1"},
+						VariationType: ftproto.Feature_BOOLEAN,
+						Variations: []*ftproto.Variation{
+							{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+							{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+						},
+						Targets: []*ftproto.Target{
+							{Variation: v1.String(), Users: []string{"u1"}},
+							{Variation: v2.String(), Users: []string{"u2"}},
+						},
+						DefaultStrategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
+						},
+						OffVariation: v1.String(),
+					},
+				}
+			},
 			targetChanges: []*ftproto.TargetChange{
 				{
 					ChangeType: ftproto.ChangeType_CREATE,
-					Target:     &ftproto.Target{Variation: "", Users: []string{}},
+					Target:     &ftproto.Target{Variation: "", Users: []string{"u3"}},
 				},
-			},
-			expectedFunc: func() *Feature {
-				return genF()
 			},
 			expectedErr: errTargetNotFound,
 		},
 		{
-			desc:      "Target Update - error: target not found",
-			inputFunc: genF,
+			desc: "Target Update - error: target not found",
+			setupFunc: func() *Feature {
+				return &Feature{
+					Feature: &ftproto.Feature{
+						Id:            "i",
+						Name:          "n",
+						Archived:      false,
+						Enabled:       false,
+						Tags:          []string{"t1"},
+						VariationType: ftproto.Feature_BOOLEAN,
+						Variations: []*ftproto.Variation{
+							{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+							{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+						},
+						Targets: []*ftproto.Target{
+							{Variation: v1.String(), Users: []string{"u1"}},
+							{Variation: v2.String(), Users: []string{"u2"}},
+						},
+						DefaultStrategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
+						},
+						OffVariation: v1.String(),
+					},
+				}
+			},
 			targetChanges: []*ftproto.TargetChange{
 				{
 					ChangeType: ftproto.ChangeType_UPDATE,
 					Target:     &ftproto.Target{Variation: "non-existent", Users: []string{"u-new"}},
 				},
 			},
-			expectedFunc: func() *Feature {
-				return genF()
-			},
 			expectedErr: errTargetNotFound,
 		},
 		{
-			desc:      "Target Delete - error: target not found",
-			inputFunc: genF,
+			desc: "Target Delete - error: users required",
+			setupFunc: func() *Feature {
+				return &Feature{
+					Feature: &ftproto.Feature{
+						Id:            "i",
+						Name:          "n",
+						Archived:      false,
+						Enabled:       false,
+						Tags:          []string{"t1"},
+						VariationType: ftproto.Feature_BOOLEAN,
+						Variations: []*ftproto.Variation{
+							{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+							{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+						},
+						Targets: []*ftproto.Target{
+							{Variation: v1.String(), Users: []string{"u1"}},
+							{Variation: v2.String(), Users: []string{"u2"}},
+						},
+						DefaultStrategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
+						},
+						OffVariation: v1.String(),
+					},
+				}
+			},
 			targetChanges: []*ftproto.TargetChange{
 				{
 					ChangeType: ftproto.ChangeType_DELETE,
 					Target:     &ftproto.Target{Variation: "non-existent"},
 				},
 			},
-			expectedFunc: func() *Feature {
-				return genF()
+			expectedErr: errTargetUsersRequired,
+		},
+		{
+			desc: "Target Delete - error: target not found",
+			setupFunc: func() *Feature {
+				return &Feature{
+					Feature: &ftproto.Feature{
+						Id:            "i",
+						Name:          "n",
+						Archived:      false,
+						Enabled:       false,
+						Tags:          []string{"t1"},
+						VariationType: ftproto.Feature_BOOLEAN,
+						Variations: []*ftproto.Variation{
+							{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+							{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+						},
+						Targets: []*ftproto.Target{
+							{Variation: v1.String(), Users: []string{"u1"}},
+							{Variation: v2.String(), Users: []string{"u2"}},
+						},
+						DefaultStrategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
+						},
+						OffVariation: v1.String(),
+					},
+				}
+			},
+			targetChanges: []*ftproto.TargetChange{
+				{
+					ChangeType: ftproto.ChangeType_DELETE,
+					Target:     &ftproto.Target{Variation: "non-existent", Users: []string{"u3"}},
+				},
 			},
 			expectedErr: errTargetNotFound,
 		},
@@ -3595,14 +3665,14 @@ func TestUpdateTargetsGranular(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := p.inputFunc().Update(
+			t.Parallel()
+
+			actual, err := p.setupFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				nil, p.targetChanges, nil, nil, nil, nil,
+				nil, p.targetChanges, nil, nil, nil, nil, nil,
 			)
-			assert.Equal(t, p.expectedErr, err, p.desc)
-			if err == nil {
-				assert.Equal(t, p.expectedFunc().Targets, actual.Targets, p.desc)
-			}
+			assert.Equal(t, p.expectedErr, err)
+			assert.Nil(t, actual)
 		})
 	}
 }
@@ -3893,7 +3963,7 @@ func TestUpdateRulesGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
-				nil, nil, p.ruleChanges, nil, nil, nil, // granular change lists
+				nil, nil, p.ruleChanges, nil, nil, nil, nil, // granular change lists
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4108,7 +4178,7 @@ func TestUpdateVariationsGranular(t *testing.T) {
 			t.Parallel()
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
-				nil, nil, nil, p.variationChanges, nil, nil, // granular change lists
+				nil, nil, nil, p.variationChanges, nil, nil, nil, // granular change lists
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4207,7 +4277,7 @@ func TestUpdateTagsGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				nil, nil, nil, nil, p.tagChanges, nil,
+				nil, nil, nil, nil, p.tagChanges, nil, nil,
 			)
 			if p.expectedErr != nil {
 				assert.Error(t, err, p.desc)

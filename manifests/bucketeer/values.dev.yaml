@@ -34,6 +34,25 @@ global:
       password: "bucketeer"
       database: "bucketeer"
 
+  # Global primary database configuration
+  # Set type to "mysql" or "postgres"
+  operationalDatabase:
+    type: mysql
+    mysql:
+      user: "bucketeer"
+      pass: "bucketeer"
+      host: "localenv-mysql-headless.default.svc.cluster.local"
+      port: 3306
+      name: "bucketeer"
+      openConns: 50
+    postgres:
+      user: "bucketeer"
+      pass: "bucketeer"
+      host: "localenv-postgres-headless.default.svc.cluster.local"
+      port: 5432
+      name: "bucketeer"
+      openConns: 50
+
   pubsub:
     type: redis-stream # Options: redis-stream, google
     # Redis configuration (used when type is redis-stream)
@@ -72,6 +91,7 @@ global:
 
 migration:
   image:
+    # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres (same tag).
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: localenv
 
@@ -80,6 +100,7 @@ migration:
   backoffLimit: 0
   ttlSecondsAfterFinished: 86400
 
+  # mysql
   # URL to access the DB to do the migration
   # E.g. mysql://user:password@host:port/db_name
   dbUrl: mysql://root:bucketeer@localenv-mysql.default.svc:3306/bucketeer
@@ -87,6 +108,13 @@ migration:
   # The migration baseline
   # First revision
   dbBaseline: "20240626022133"
+
+  # postgres
+  # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
+  # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
+  # URL format: postgres://user:password@host:port/db_name?sslmode=disable
+  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgres.default.svc:5432/bucketeer?sslmode=disable
+  # dbBaseline: "20260226174000"
 
 web:
   env:
@@ -104,11 +132,20 @@ web:
     pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
     pubSubRedisMode: ${global.pubsub.redis.mode}
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
-    mysqlUser: bucketeer
-    mysqlPass: bucketeer
-    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-    mysqlPort: 3306
-    mysqlDbName: bucketeer
+    operationalDatabase:
+      type: mysql
+      mysql:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-mysql-headless.default.svc.cluster.local"
+        port: 3306
+        name: "bucketeer"
+      postgres:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-postgres-headless.default.svc.cluster.local"
+        port: 5432
+        name: "bucketeer"
     persistentRedis:
       serverName: backend
       addr: localenv-redis-headless.default.svc.cluster.local:6379
@@ -180,13 +217,20 @@ api:
     gcpEnabled: false
     profile: false
     enablePprof: false
-    database:
+    operationalDatabase:
+      type: "mysql"
       mysql:
-        user: bucketeer
-        pass: bucketeer
-        host: localenv-mysql-headless.default.svc.cluster.local
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-mysql-headless.default.svc.cluster.local"
         port: 3306
-        dbName: bucketeer
+        name: "bucketeer"
+      postgres:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-postgres-headless.default.svc.cluster.local"
+        port: 5432
+        name: "bucketeer"
     pprofAddr: 127.0.0.1:6060
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     project: ${global.pubsub.project}
@@ -227,11 +271,22 @@ batch-server:
     gcpEnabled: false
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
-    mysqlUser: bucketeer
-    mysqlPass: bucketeer
-    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-    mysqlPort: 3306
-    mysqlDbName: bucketeer
+    operationalDatabase:
+      type: mysql
+      mysql:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-mysql-headless.default.svc.cluster.local"
+        port: 3306
+        name: "bucketeer"
+        openConns: 50
+      postgres:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-postgres-headless.default.svc.cluster.local"
+        port: 5432
+        name: "bucketeer"
+        openConns: 50
     bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     notificationService: localhost:9001
@@ -347,11 +402,22 @@ subscriber:
     gcpEnabled: false
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
-    mysqlUser: bucketeer
-    mysqlPass: bucketeer
-    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-    mysqlPort: 3306
-    mysqlDbName: bucketeer
+    operationalDatabase:
+      type: mysql
+      mysql:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-mysql-headless.default.svc.cluster.local"
+        port: 3306
+        name: "bucketeer"
+        openConns: 50
+      postgres:
+        user: "bucketeer"
+        pass: "bucketeer"
+        host: "localenv-postgres-headless.default.svc.cluster.local"
+        port: 5432
+        name: "bucketeer"
+        openConns: 50
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
@@ -412,6 +478,20 @@ subscriber:
       project: ${global.pubsub.project}
       topic: domain
       subscription: domain-subscription
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    cacheEviction:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
+      project: ${global.pubsub.project}
+      topic: domain
+      subscription: cache-eviction-domain-sub
       pullerNumGoroutines: 5
       pullerMaxOutstandingMessages: 1000
       pullerMaxOutstandingBytes: 1000000000

@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	pb "google.golang.org/protobuf/proto"
 
 	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"

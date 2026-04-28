@@ -1,0 +1,4 @@
+# PostgreSQL schema migrations only. Published separately from the MySQL migration image.
+FROM arigaio/atlas:latest
+
+COPY postgres /migrations

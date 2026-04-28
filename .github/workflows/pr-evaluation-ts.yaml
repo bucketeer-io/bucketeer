@@ -45,7 +45,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Init
-        run: make init
+        run: yarn install --frozen-lockfile
         
   lint:
     name: Lint

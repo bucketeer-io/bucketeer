@@ -40,6 +40,20 @@ func (m *MockAutoOpsRulesCache) EXPECT() *MockAutoOpsRulesCacheMockRecorder {
 	return m.recorder
 }
 
+// Evict mocks base method.
+func (m *MockAutoOpsRulesCache) Evict(environmentId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Evict", environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Evict indicates an expected call of Evict.
+func (mr *MockAutoOpsRulesCacheMockRecorder) Evict(environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Evict", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Evict), environmentId)
+}
+
 // Get mocks base method.
 func (m *MockAutoOpsRulesCache) Get(environmentId string) (*autoops.AutoOpsRules, error) {
 	m.ctrl.T.Helper()

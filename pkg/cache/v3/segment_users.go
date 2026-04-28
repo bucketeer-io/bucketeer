@@ -19,7 +19,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -36,7 +36,7 @@ type SegmentUsersCache interface {
 	Get(segmentID, environmentId string) (*featureproto.SegmentUsers, error)
 	GetAll(environmentId string) ([]*featureproto.SegmentUsers, error)
 	Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error
-	Evict(segmentID, environmentId string)
+	Evict(segmentID, environmentId string) error
 }
 
 type segmentUsersCache struct {
@@ -96,6 +96,9 @@ func (c *segmentUsersCache) GetAll(environmentId string) ([]*featureproto.Segmen
 }
 
 func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error {
+	if segmentUsers == nil {
+		return errors.New("segmentUsers cannot be nil")
+	}
 	buffer, err := proto.Marshal(segmentUsers)
 	if err != nil {
 		return err
@@ -127,10 +130,8 @@ func (c *segmentUsersCache) scan(multiCache cache.MultiGetCache, environmentId s
 	return keys, nil
 }
 
-func (c *segmentUsersCache) Evict(segmentID, environmentId string) {
-	if inMemory, ok := c.cache.(*InMemoryCache); ok {
-		inMemory.Delete(c.key(segmentID, environmentId))
-	}
+func (c *segmentUsersCache) Evict(segmentID, environmentId string) error {
+	return evictKey(c.cache, c.key(segmentID, environmentId))
 }
 
 func (c *segmentUsersCache) key(segmentID, environmentId string) string {

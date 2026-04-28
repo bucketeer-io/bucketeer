@@ -22,10 +22,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -353,10 +353,10 @@ func (s *FeatureService) listFeatures(
 	cursor string,
 	tags []string,
 	maintainer string,
-	enabled *wrappers.BoolValue,
-	archived *wrappers.BoolValue,
-	hasPrerequisites *wrappers.BoolValue,
-	hasFeatureFlagAsRule *wrappers.BoolValue,
+	enabled *wrapperspb.BoolValue,
+	archived *wrapperspb.BoolValue,
+	hasPrerequisites *wrapperspb.BoolValue,
+	hasFeatureFlagAsRule *wrapperspb.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -516,10 +516,10 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	cursor string,
 	tags []string,
 	maintainer string,
-	enabled *wrappers.BoolValue,
-	archived *wrappers.BoolValue,
-	hasPrerequisites *wrappers.BoolValue,
-	hasFeatureFlagAsRule *wrappers.BoolValue,
+	enabled *wrapperspb.BoolValue,
+	archived *wrapperspb.BoolValue,
+	hasPrerequisites *wrapperspb.BoolValue,
+	hasFeatureFlagAsRule *wrapperspb.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -1123,6 +1123,7 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 		req.VariationChanges,
 		req.TagChanges,
 		req.Maintainer,
+		req.OrderedRuleIds,
 	)
 	if err != nil {
 		return nil, nil, err

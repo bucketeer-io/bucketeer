@@ -40,6 +40,20 @@ func (m *MockEnvironmentAPIKeyCache) EXPECT() *MockEnvironmentAPIKeyCacheMockRec
 	return m.recorder
 }
 
+// Evict mocks base method.
+func (m *MockEnvironmentAPIKeyCache) Evict(apiKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Evict", apiKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Evict indicates an expected call of Evict.
+func (mr *MockEnvironmentAPIKeyCacheMockRecorder) Evict(apiKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Evict", reflect.TypeOf((*MockEnvironmentAPIKeyCache)(nil).Evict), apiKey)
+}
+
 // Get mocks base method.
 func (m *MockEnvironmentAPIKeyCache) Get(arg0 string) (*account.EnvironmentAPIKey, error) {
 	m.ctrl.T.Helper()

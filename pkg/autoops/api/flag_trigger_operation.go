@@ -17,8 +17,8 @@ package api
 import (
 	"context"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -76,6 +76,7 @@ func enableFeature(
 		nil,                                // variationChanges
 		nil,                                // tagChanges
 		nil,                                // maintainer
+		nil,                                // ruleOrder
 	)
 	if err != nil {
 		return err
@@ -134,6 +135,7 @@ func disableFeature(
 		nil,                                 // variationChanges
 		nil,                                 // tagChanges
 		nil,                                 // maintainer
+		nil,                                 // ruleOrder
 	)
 	if err != nil {
 		return err

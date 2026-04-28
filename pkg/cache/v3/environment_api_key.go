@@ -18,7 +18,7 @@ package v3
 import (
 	"time"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -31,6 +31,7 @@ const (
 type EnvironmentAPIKeyCache interface {
 	Get(string) (*accountproto.EnvironmentAPIKey, error)
 	Put(*accountproto.EnvironmentAPIKey) error
+	Evict(apiKey string) error
 }
 
 type environmentAPIKeyCache struct {
@@ -66,6 +67,10 @@ func (c *environmentAPIKeyCache) Put(environmentAPIKey *accountproto.Environment
 	}
 	key := c.key(environmentAPIKey.ApiKey.ApiKey)
 	return c.cache.Put(key, buffer, c.ttl)
+}
+
+func (c *environmentAPIKeyCache) Evict(apiKey string) error {
+	return evictKey(c.cache, c.key(apiKey))
 }
 
 func (c *environmentAPIKeyCache) key(apiKey string) string {

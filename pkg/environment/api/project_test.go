@@ -19,7 +19,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -418,7 +417,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
 				Id:          "",
-				Description: &wrappers.StringValue{Value: "desc"},
+				Description: &wrapperspb.StringValue{Value: "desc"},
 			},
 			expectedErr: statusProjectIDRequired.Err(),
 		},
@@ -427,7 +426,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
 				Id:   "id-0",
-				Name: &wrappers.StringValue{Value: strings.Repeat("a", 51)},
+				Name: &wrapperspb.StringValue{Value: strings.Repeat("a", 51)},
 			},
 			expectedErr: statusInvalidProjectName.Err(),
 		},
@@ -436,8 +435,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
 				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: "    "},
-				Description: &wrappers.StringValue{Value: "updated description"},
+				Name:        &wrapperspb.StringValue{Value: "    "},
+				Description: &wrapperspb.StringValue{Value: "updated description"},
 			},
 			expectedErr: statusProjectNameRequired.Err(),
 		},
@@ -450,7 +449,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			},
 			req: &proto.UpdateProjectRequest{
 				Id:          "id-0",
-				Description: &wrappers.StringValue{Value: "desc"},
+				Description: &wrapperspb.StringValue{Value: "desc"},
 			},
 			expectedErr: statusProjectNotFound.Err(),
 		},
@@ -468,7 +467,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			},
 			req: &proto.UpdateProjectRequest{
 				Id:          "id-1",
-				Description: &wrappers.StringValue{Value: "desc"},
+				Description: &wrapperspb.StringValue{Value: "desc"},
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -489,7 +488,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			},
 			req: &proto.UpdateProjectRequest{
 				Id:          "id-1",
-				Description: &wrappers.StringValue{Value: "desc"},
+				Description: &wrapperspb.StringValue{Value: "desc"},
 			},
 			expectedErr: nil,
 		},

@@ -19,8 +19,8 @@ import (
 	"encoding/hex"
 	"time"
 
-	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
