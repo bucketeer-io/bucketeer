@@ -26,7 +26,6 @@ env:
   evaluationTopic: evaluation
   userTopic: user
   metricsTopic: metrics
-  domainTopic: domain
   cacheInvalidationTopic: cache-invalidation
   publishNumGoroutines: 200
   publishTimeout: 1m

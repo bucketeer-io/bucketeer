@@ -165,10 +165,6 @@ spec:
             - name: BUCKETEER_API_SEGMENT_USERS_MEMORY_CACHE_TTL
               value: "{{ .Values.env.segmentUsersMemoryCacheTTL }}"
             {{- end }}
-            {{- if .Values.env.domainTopic }}
-            - name: BUCKETEER_API_DOMAIN_TOPIC
-              value: "{{ .Values.env.domainTopic }}"
-            {{- end }}
             {{- if .Values.env.cacheInvalidationTopic }}
             - name: BUCKETEER_API_CACHE_INVALIDATION_TOPIC
               value: "{{ .Values.env.cacheInvalidationTopic }}"

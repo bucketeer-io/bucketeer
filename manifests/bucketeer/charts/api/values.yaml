@@ -50,9 +50,6 @@ env:
   # (Google Pub/Sub and Redis Streams) auto-create the topic on first
   # publish, so no pre-provisioning step is required.
   cacheInvalidationTopic:
-  # Legacy domain-events topic. Retained for backward-compatible parsing
-  # only; api pods no longer subscribe to it for cache invalidation.
-  domainTopic:
   logLevel: info
   grpcGatewayPort: 9089
   port: 9090

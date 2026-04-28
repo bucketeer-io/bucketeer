@@ -213,7 +213,6 @@ api:
     furthestEventTimestamp: 48h
     featuresMemoryCacheTTL: 1m
     segmentUsersMemoryCacheTTL: 1m
-    domainTopic: domain
     cacheInvalidationTopic: cache-invalidation
     gcpEnabled: false
     profile: false

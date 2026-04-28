@@ -122,7 +122,6 @@ type server struct {
 	pubSubRedisMinIdle        *int
 	pubSubRedisPartitionCount *int
 	pubSubRedisMode           *string
-	domainTopic               *string
 	cacheInvalidationTopic    *string
 }
 
@@ -268,11 +267,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
-		domainTopic: cmd.Flag("domain-topic",
-			"PubSub topic for domain events. Historically used to invalidate in-memory caches; "+
-				"this is now superseded by --cache-invalidation-topic and the flag is retained "+
-				"only for backward-compatible parsing during canary releases.",
-		).String(),
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
 				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
