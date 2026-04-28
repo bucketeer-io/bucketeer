@@ -276,9 +276,12 @@ func (c *cacheRefresher) handleMessage(ctx context.Context, msg *puller.Message)
 }
 
 // refresh performs the fetch -> Put -> publish sequence for one event.
-// Per the plan, EXPERIMENT and AUTOOPS_RULE remain plain evict (they aren't
-// on the SDK hot path); FEATURE / SEGMENT / APIKEY are all rewrite-then-
-// announce.
+// All five entity types (FEATURE, SEGMENT, APIKEY, EXPERIMENT,
+// AUTOOPS_RULE) follow the same flow: fetch the fresh state from the
+// owning service, write it to L2, then announce on the cache-invalidation
+// topic so api pods drop their L1 entries. Delete-shaped events
+// (e.g. SEGMENT_DELETED) short-circuit to evict-then-announce inside
+// their per-entity handlers.
 func (c *cacheRefresher) refresh(ctx context.Context, event *domaineventproto.Event) error {
 	switch event.EntityType {
 	case domaineventproto.Event_FEATURE:

@@ -528,9 +528,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer stopInvalidator()
 	// Subscribe to the cache-invalidation topic, which is published by the
-	// subscriber service after it refreshes L2. The legacy --domain-topic
-	// flag is parsed for backward compatibility during canary releases but
-	// is no longer used by this pod (see CACHE_REFRESH_ON_DOMAIN_EVENT_PLAN).
+	// subscriber service after it refreshes L2. This pod uses only the
+	// configured cache-invalidation topic for that purpose.
 	if *s.cacheInvalidationTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
 			invalidatorCtx, pubsubClient, inMemoryCache, *s.cacheInvalidationTopic, logger,
@@ -756,8 +755,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 // announcement arrives, the subscriber service has already refreshed L2
 // from MySQL. Subsequent API requests therefore reload from a warm L2
 // instead of fanning out to MySQL through the singleflight safety net,
-// which eliminates the cache-miss thundering herd described in
-// CACHE_REFRESH_ON_DOMAIN_EVENT_PLAN.md.
+// which eliminates the cache-miss thundering herd that previously
+// followed every flag/segment/api-key change.
 //
 // It returns a cleanup function that deletes the pub/sub subscription or
 // pub/sub consumer group on graceful shutdown.

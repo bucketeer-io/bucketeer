@@ -244,7 +244,7 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 			},
 		},
 		{
-			desc: "api key event evicts and skips publish when key is missing in DB",
+			desc: "api key event evicts L2 and publishes invalidation when key is missing in DB",
 			event: &domaineventproto.Event{
 				Id:            "evt-apikey-missing",
 				EntityType:    domaineventproto.Event_APIKEY,

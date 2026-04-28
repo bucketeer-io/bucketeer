@@ -243,8 +243,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes "+
 				"so api pods can drop their L1 (in-memory) entries. Both backends "+
-				"auto-create the topic on first publish; leave empty to disable "+
-				"the announcement (legacy evict-only behaviour).",
+				"auto-create the topic on first publish.",
 		).Default("cache-invalidation").String(),
 	}
 	r.RegisterCommand(server)
@@ -479,8 +478,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 // createCacheInvalidationPubSubClient builds a PubSub client suitable for
 // publishing cache-invalidation announcements. The returned cleanup
-// function (may be nil) closes any backend-specific resources such as a
-// dedicated Redis client.
+// function closes both the factory client (e.g. the Google Pub/Sub gRPC
+// connection) and any backend-specific resources such as a dedicated
+// Redis client.
 //
 // Returns (nil, nil, nil) when the cache-invalidation topic is empty
 // (announcements disabled).
@@ -498,7 +498,11 @@ func (s *server) createCacheInvalidationPubSubClient(
 		factory.WithMetrics(registerer),
 		factory.WithLogger(logger),
 	}
-	var cleanup func()
+	// backendCleanup releases backend-specific resources (currently the
+	// Redis client for the Redis Streams backend). The factory client
+	// itself is closed by the returned cleanup below, regardless of
+	// backend.
+	var backendCleanup func()
 	switch pubSubType {
 	case factory.Google:
 		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
@@ -517,14 +521,24 @@ func (s *server) createCacheInvalidationPubSubClient(
 		}
 		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
 		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
-		cleanup = func() { _ = redisClient.Close() }
+		backendCleanup = func() { _ = redisClient.Close() }
 	}
 	client, err := factory.NewClient(ctx, factoryOpts...)
 	if err != nil {
-		if cleanup != nil {
-			cleanup()
+		if backendCleanup != nil {
+			backendCleanup()
 		}
 		return nil, nil, err
+	}
+	cleanup := func() {
+		if err := client.Close(); err != nil {
+			logger.Error("subscriber: failed to close cache invalidation pubsub client",
+				zap.Error(err),
+			)
+		}
+		if backendCleanup != nil {
+			backendCleanup()
+		}
 	}
 	return client, cleanup, nil
 }
