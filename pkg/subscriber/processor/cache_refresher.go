@@ -54,8 +54,11 @@ const (
 )
 
 const (
-	// cacheRefresherListPageSize matches the page size used by the API
-	// service's listFeatures path so the on-disk request shape is identical.
+	// cacheRefresherListPageSize is the page size used when paging through
+	// ListFeatures during a full refresh. Intentionally larger than the API
+	// service's per-request page size (pkg/api/api/api_grpc.go) because the
+	// refresher always reads the entire flag set for an environment on
+	// every event — fewer pages = fewer round-trips per refresh.
 	cacheRefresherListPageSize = 1000
 
 	// cacheRefresherFetchTimeout caps how long a single refresh attempt may
@@ -170,9 +173,11 @@ func (c *cacheRefresher) Process(ctx context.Context, msgChan <-chan *puller.Mes
 	}
 }
 
-// dispatch routes a message to the worker responsible for its environmentId.
-// If the message cannot be parsed enough to extract an environment, the
-// message is acked (bad message — retrying will not help).
+// dispatch routes a message to the worker responsible for its
+// environmentId. Messages whose envID can't be extracted (e.g. unmarshal
+// failures) are still routed — to worker 0 — and the bad-message ack is
+// performed later by handleMessage when the per-message decode also fails.
+// On shutdown the message is nacked here so a healthy pod redelivers it.
 func (c *cacheRefresher) dispatch(
 	ctx context.Context,
 	msg *puller.Message,
