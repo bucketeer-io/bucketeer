@@ -16,6 +16,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"go.uber.org/zap"
@@ -73,14 +74,58 @@ func (s *grpcGatewayService) saveMetricsEventsAsync(
 	// TODO: using buffered channel to reduce the number of go routines
 	go func() {
 		for i := range metricsEvents {
-			if err := s.saveMetrics(metricsEvents[i], projectID, environmentUrlCode); err != nil {
-				s.logger.Error("Failed to store metrics event to prometheus client", zap.Error(err))
+			event := metricsEvents[i]
+			if err := s.saveMetrics(event, projectID, environmentUrlCode); err != nil {
+				s.logMetricsEventError(err, event, projectID, environmentUrlCode)
 				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeNonRepeatableError).Inc()
 			} else {
 				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeOK).Inc()
 			}
 		}
 	}()
+}
+
+// logMetricsEventError logs a metrics event failure with context from the
+// outer MetricsEvent. For MetricsSaveErrInvalidDuration we additionally
+// unmarshal the inner event to surface its labels (tag, state, ...), which
+// helps pinpoint the SDK call sending invalid data. The extra unmarshal is
+// safe here because this runs in a background goroutine, off the request path.
+func (s *grpcGatewayService) logMetricsEventError(
+	err error, event *eventproto.MetricsEvent, projectID, env string,
+) {
+	fields := []zap.Field{
+		zap.Error(err),
+		zap.String("projectID", projectID),
+		zap.String("environmentUrlCode", env),
+		zap.String("sdkVersion", event.SdkVersion),
+		zap.String("sourceId", event.SourceId.String()),
+		zap.String("eventType", event.Event.TypeUrl),
+	}
+	if errors.Is(err, MetricsSaveErrInvalidDuration) {
+		if labels := extractInvalidDurationLabels(event); labels != nil {
+			fields = append(fields, zap.Any("labels", labels))
+		}
+	}
+	s.logger.Warn("Failed to store metrics event to prometheus client", fields...)
+}
+
+// extractInvalidDurationLabels returns the inner labels for the only event
+// types that can return MetricsSaveErrInvalidDuration. Returns nil if the
+// event type doesn't carry labels or if unmarshalling fails.
+func extractInvalidDurationLabels(event *eventproto.MetricsEvent) map[string]string {
+	switch {
+	case event.Event.MessageIs(getEvaluationLatencyMetricsEventP):
+		ev := &eventproto.GetEvaluationLatencyMetricsEvent{}
+		if err := event.Event.UnmarshalTo(ev); err == nil {
+			return ev.Labels
+		}
+	case event.Event.MessageIs(latencyMetricsEventP):
+		ev := &eventproto.LatencyMetricsEvent{}
+		if err := event.Event.UnmarshalTo(ev); err == nil {
+			return ev.Labels
+		}
+	}
+	return nil
 }
 
 func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, projectID, environmentUrlCode string) error {
@@ -157,14 +202,7 @@ func (s *grpcGatewayService) saveGetEvaluationLatencyMetricsEvent(event *eventpr
 		return err
 	}
 	if ev.Duration == nil {
-		s.logger.Warn("Invalid duration. Duration is nil",
-			zap.String("environmentUrlCode", env),
-			zap.String("sdkVersion", event.SdkVersion),
-			zap.String("sourceId", event.SourceId.String()),
-			zap.String("tag", ev.Labels["tag"]),
-			zap.Any("labels", ev.Labels),
-		)
-		return MetricsSaveErrInvalidDuration
+		return fmt.Errorf("duration is nil: %w", MetricsSaveErrInvalidDuration)
 	}
 	var tag, status string
 	if ev.Labels != nil {
@@ -172,15 +210,7 @@ func (s *grpcGatewayService) saveGetEvaluationLatencyMetricsEvent(event *eventpr
 		status = ev.Labels["state"]
 	}
 	if err := ev.Duration.CheckValid(); err != nil {
-		s.logger.Warn("Invalid duration. Duration is not valid",
-			zap.Error(err),
-			zap.String("environmentUrlCode", env),
-			zap.String("sdkVersion", event.SdkVersion),
-			zap.String("sourceId", event.SourceId.String()),
-			zap.String("tag", ev.Labels["tag"]),
-			zap.Any("labels", ev.Labels),
-		)
-		return MetricsSaveErrInvalidDuration
+		return fmt.Errorf("duration failed validation (%v): %w", err, MetricsSaveErrInvalidDuration)
 	}
 	dur := ev.Duration.AsDuration()
 	sdkGetEvaluationsLatencyHistogram.WithLabelValues(env, tag, status).Observe(dur.Seconds())
@@ -226,7 +256,7 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	}
 	// TODO: When updated to the SDK that uses ev.LatencySecond, we must remove the implementation that use ev.Duration.
 	if ev.Duration == nil && ev.LatencySecond == 0 {
-		return MetricsSaveErrInvalidDuration
+		return fmt.Errorf("duration is nil and latencySecond is 0: %w", MetricsSaveErrInvalidDuration)
 	}
 	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
 		return MetricsSaveErrUnknownApiId
@@ -248,7 +278,7 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 		return nil
 	}
 	if err := ev.Duration.CheckValid(); err != nil {
-		return MetricsSaveErrInvalidDuration
+		return fmt.Errorf("duration failed validation (%v): %w", err, MetricsSaveErrInvalidDuration)
 	}
 	dur := ev.Duration.AsDuration()
 	sdkLatencyHistogram.WithLabelValues(

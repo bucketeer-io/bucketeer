@@ -152,7 +152,11 @@ func TestSaveMetrics(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newGrpcGatewayServiceWithMock(t, mockController)
 			err := gs.saveMetrics(p.inputEvent(), projectID, ns)
-			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, p.expectedErr)
+			}
 		})
 	}
 }
