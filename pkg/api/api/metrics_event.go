@@ -99,7 +99,12 @@ func (s *grpcGatewayService) logMetricsEventError(
 		zap.String("environmentUrlCode", env),
 		zap.String("sdkVersion", event.SdkVersion),
 		zap.String("sourceId", event.SourceId.String()),
-		zap.String("eventType", event.Event.TypeUrl),
+	}
+	// event.Event can be nil (e.g. MetricsSaveErrUnknownEvent), so guard
+	// the field access. anypb.Any.MessageIs is nil-safe, so the
+	// extractInvalidDurationLabels call below does not need a separate guard.
+	if event.Event != nil {
+		fields = append(fields, zap.String("eventType", event.Event.TypeUrl))
 	}
 	if errors.Is(err, MetricsSaveErrInvalidDuration) {
 		if labels := extractInvalidDurationLabels(event); labels != nil {
