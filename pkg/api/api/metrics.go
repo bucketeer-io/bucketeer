@@ -198,9 +198,12 @@ var (
 			Namespace: "bucketeer",
 			Subsystem: "gateway",
 			Name:      "api_metrics_overflow_total",
-			Help: "Total number of metrics event batches processed by overflow goroutines " +
-				"because the worker pool queue was full. Events are still processed (not lost), " +
-				"but increased rates indicate the pool is undersized for current load.",
+			Help: "Total number of metrics event batches processed outside the normal " +
+				"worker pool path. This includes overflow goroutines spawned when the " +
+				"queue is full, and synchronous fallback when the pool has not yet " +
+				"started or has already been shut down. Events are still processed " +
+				"(not lost); sustained rates during normal operation indicate the pool " +
+				"is undersized for current load.",
 		})
 	evaluationsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
