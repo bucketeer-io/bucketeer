@@ -91,8 +91,13 @@ func (s *grpcGatewayService) startMetricsWorkers(workers, queueSize int) {
 func (s *grpcGatewayService) runMetricsWorker(id int) {
 	defer s.metricsPoolWg.Done()
 	for job := range s.metricsJobs {
-		s.processMetricsJobSafely(id, job)
+		// Update the gauge immediately after the receive so it reflects
+		// actual queued batches, not queued+in-flight work. len(s.metricsJobs)
+		// drops as soon as the receive completes, so deferring this until
+		// after processing would over-report queue depth for the entire
+		// duration of processMetricsJobSafely.
 		s.updateMetricsQueueDepth()
+		s.processMetricsJobSafely(id, job)
 	}
 }
 
