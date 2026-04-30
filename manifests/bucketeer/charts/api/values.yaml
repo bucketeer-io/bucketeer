@@ -44,6 +44,12 @@ env:
     mode: auto
   oldestEventTimestamp:
   furthestEventTimestamp:
+  # Bounded worker pool for processing metrics events. Leave unset to use
+  # the Go defaults (4 workers, 4096-batch buffered queue). Increase
+  # metricsWorkers if metrics_overflow_total is sustained > 0; increase
+  # metricsQueueSize if queue depth approaches capacity during bursts.
+  metricsWorkers:
+  metricsQueueSize:
   # Topic on which the subscriber service announces L2 cache refreshes.
   # Each api pod subscribes to this topic and evicts its L1 (in-memory)
   # cache entries on each announcement. Both supported PubSub backends
