@@ -803,11 +803,31 @@ func (s *server) startCacheInvalidator(
 	)
 	go func() {
 		if err := rateLimitedPuller.Run(ctx); err != nil {
+			// During graceful shutdown, cleanup() deletes the per-pod
+			// subscription before the puller's in-flight StreamingPull
+			// has noticed the context cancellation. Google Pub/Sub
+			// returns NotFound on the open stream rather than Canceled,
+			// so the puller's Run() exits with an error even though
+			// nothing went wrong. Detect "we asked for this" via
+			// ctx.Err() and downgrade to Debug so it doesn't trip
+			// alerts on every pod rollover.
+			if ctx.Err() != nil {
+				logger.Debug("Cache invalidation puller stopped during shutdown",
+					zap.Error(err),
+				)
+				return
+			}
 			logger.Error("Cache invalidation puller stopped", zap.Error(err))
 		}
 	}()
 	go func() {
 		if err := invalidator.Run(ctx, rateLimitedPuller.MessageCh()); err != nil {
+			if ctx.Err() != nil {
+				logger.Debug("Cache invalidator stopped during shutdown",
+					zap.Error(err),
+				)
+				return
+			}
 			logger.Error("Cache invalidator stopped", zap.Error(err))
 		}
 	}()
