@@ -89,6 +89,8 @@ type server struct {
 	metricsTopic                      *string
 	publishNumGoroutines              *int
 	publishTimeout                    *time.Duration
+	metricsWorkers                    *int
+	metricsQueueSize                  *int
 	featureService                    *string
 	accountService                    *string
 	codeRefService                    *string
@@ -161,6 +163,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"publish-timeout",
 			"The maximum time to publish a bundle of messages.",
 		).Default("1m").Duration(),
+		metricsWorkers: cmd.Flag(
+			"metrics-workers",
+			"Number of background workers processing metrics events.",
+		).Default("4").Int(),
+		metricsQueueSize: cmd.Flag(
+			"metrics-queue-size",
+			"Buffered channel capacity for pending metrics event batches.",
+		).Default("4096").Int(),
 		featureService: cmd.Flag(
 			"feature-service",
 			"bucketeer-feature-service address.",
@@ -572,6 +582,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
+		api.WithMetricsWorkers(*s.metricsWorkers),
+		api.WithMetricsQueueSize(*s.metricsQueueSize),
 		api.WithLogger(logger),
 	)
 
@@ -708,6 +720,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Now it's safe to stop the gRPC server (no more HTTP→gRPC calls)
 		server.Stop(grpcStopTimeout)
+		if metricsPool, ok := service.(interface{ ShutdownMetricsPool() }); ok {
+			metricsPool.ShutdownMetricsPool()
+		}
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.

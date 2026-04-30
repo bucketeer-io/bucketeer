@@ -116,6 +116,8 @@ type options struct {
 	pubsubTimeout                     time.Duration
 	oldestEventTimestamp              time.Duration
 	furthestEventTimestamp            time.Duration
+	metricsWorkers                    int
+	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
@@ -132,6 +134,8 @@ var defaultOptions = options{
 	// 1 hour - handles legitimate clock skew while preventing malicious timestamps
 	furthestEventTimestamp: 1 * time.Hour,
 	logger:                 zap.NewNop(),
+	metricsWorkers:         4,
+	metricsQueueSize:       4096,
 }
 
 type Option func(*options)
@@ -184,6 +188,18 @@ func WithMetrics(r metrics.Registerer) Option {
 	}
 }
 
+func WithMetricsWorkers(n int) Option {
+	return func(opts *options) {
+		opts.metricsWorkers = n
+	}
+}
+
+func WithMetricsQueueSize(n int) Option {
+	return func(opts *options) {
+		opts.metricsQueueSize = n
+	}
+}
+
 func WithLogger(l *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = l
@@ -216,6 +232,11 @@ type grpcGatewayService struct {
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	apiKeyLastUsedInfoCacher    sync.Map
 	flightgroup                 singleflight.Group
+	metricsJobs                 chan metricsJob
+	metricsPoolWg               sync.WaitGroup
+	metricsPoolMu               sync.RWMutex
+	metricsPoolClosed           bool
+	metricsJobProcessor         func(metricsJob)
 	opts                        *options
 	logger                      *zap.Logger
 }
@@ -283,6 +304,7 @@ func NewGrpcGatewayService(
 		logger:                      options.logger.Named("api_grpc"),
 	}
 
+	s.startMetricsWorkers(options.metricsWorkers, options.metricsQueueSize)
 	go s.writeAPIKeyLastUsedAtCacheToDatabase(ctx)
 
 	return s
