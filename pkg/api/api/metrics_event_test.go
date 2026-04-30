@@ -160,3 +160,153 @@ func TestSaveMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveMetricsEventsAsyncEnqueuesJob(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	gs.metricsJobs = make(chan metricsJob, 1)
+
+	events := []*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}
+	gs.saveMetricsEventsAsync(events, "project-id", "env-url-code")
+
+	select {
+	case job := <-gs.metricsJobs:
+		assert.Equal(t, events, job.events)
+		assert.Equal(t, "project-id", job.projectID)
+		assert.Equal(t, "env-url-code", job.environmentUrlCode)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for metrics job")
+	}
+}
+
+func TestSaveMetricsEventsAsyncSpillsToGoroutineWhenQueueIsFull(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	gs.metricsJobs = make(chan metricsJob, 1)
+	// Pre-fill the queue so the next submit cannot enqueue.
+	gs.metricsJobs <- metricsJob{projectID: "queued"}
+
+	processed := make(chan string, 1)
+	gs.metricsJobProcessor = func(job metricsJob) {
+		processed <- job.projectID
+	}
+
+	gs.saveMetricsEventsAsync([]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}, "overflow", "env-url-code")
+
+	// The overflow batch should be processed on a one-off goroutine, not dropped.
+	select {
+	case projectID := <-processed:
+		assert.Equal(t, "overflow", projectID)
+	case <-time.After(time.Second):
+		t.Fatal("overflow batch was not processed")
+	}
+
+	// The originally queued job must still be in the queue (overflow does not displace it).
+	assert.Equal(t, 1, len(gs.metricsJobs))
+	job := <-gs.metricsJobs
+	assert.Equal(t, "queued", job.projectID)
+}
+
+func TestMetricsWorkerRecoversFromPanicAndContinues(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	processed := make(chan string, 1)
+	gs.metricsJobProcessor = func(job metricsJob) {
+		if job.projectID == "panic" {
+			panic("poison metrics job")
+		}
+		processed <- job.projectID
+	}
+	gs.startMetricsWorkers(1, 2)
+	defer gs.ShutdownMetricsPool()
+
+	gs.saveMetricsEventsAsync([]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}, "panic", "env-url-code")
+	gs.saveMetricsEventsAsync([]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}, "ok", "env-url-code")
+
+	select {
+	case projectID := <-processed:
+		assert.Equal(t, "ok", projectID)
+	case <-time.After(time.Second):
+		t.Fatal("worker did not continue after recovered panic")
+	}
+}
+
+func TestShutdownMetricsPoolDrainsQueuedJobs(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	processed := make(chan string, 3)
+	gs.metricsJobProcessor = func(job metricsJob) {
+		processed <- job.projectID
+	}
+	gs.startMetricsWorkers(1, 3)
+
+	gs.saveMetricsEventsAsync([]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}, "project-1", "env-url-code")
+	gs.saveMetricsEventsAsync([]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}, "project-2", "env-url-code")
+	gs.saveMetricsEventsAsync([]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}}, "project-3", "env-url-code")
+	gs.ShutdownMetricsPool()
+
+	close(processed)
+	assert.ElementsMatch(t, []string{"project-1", "project-2", "project-3"}, channelValues(processed))
+}
+
+func TestShutdownMetricsPoolWaitsForOverflowJob(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	gs.metricsJobs = make(chan metricsJob, 1)
+	gs.metricsJobs <- metricsJob{projectID: "queued"}
+
+	overflowStarted := make(chan struct{})
+	releaseOverflow := make(chan struct{})
+	processed := make(chan string, 1)
+	gs.metricsJobProcessor = func(job metricsJob) {
+		close(overflowStarted)
+		<-releaseOverflow
+		processed <- job.projectID
+	}
+
+	gs.saveMetricsEventsAsync(
+		[]*eventproto.MetricsEvent{{SdkVersion: "v0.0.1-unit-test"}},
+		"overflow",
+		"env-url-code",
+	)
+
+	select {
+	case <-overflowStarted:
+	case <-time.After(time.Second):
+		t.Fatal("overflow job did not start")
+	}
+
+	shutdownDone := make(chan struct{})
+	go func() {
+		gs.ShutdownMetricsPool()
+		close(shutdownDone)
+	}()
+
+	select {
+	case <-shutdownDone:
+		t.Fatal("shutdown returned before overflow job completed")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	close(releaseOverflow)
+
+	select {
+	case <-shutdownDone:
+	case <-time.After(time.Second):
+		t.Fatal("shutdown did not complete after overflow job finished")
+	}
+	assert.Equal(t, "overflow", <-processed)
+}
+
+func channelValues(ch <-chan string) []string {
+	var values []string
+	for value := range ch {
+		values = append(values, value)
+	}
+	return values
+}

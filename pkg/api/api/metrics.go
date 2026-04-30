@@ -179,6 +179,29 @@ var (
 			Name:      "api_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
+	metricsQueueDepthGauge = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_metrics_queue_depth",
+			Help:      "Current number of queued metrics event batches.",
+		})
+	metricsWorkerPanicCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_metrics_worker_panic_total",
+			Help:      "Total number of recovered metrics worker panics.",
+		})
+	metricsOverflowCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_metrics_overflow_total",
+			Help: "Total number of metrics event batches processed by overflow goroutines " +
+				"because the worker pool queue was full. Events are still processed (not lost), " +
+				"but increased rates indicate the pool is undersized for current load.",
+		})
 	evaluationsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -330,6 +353,9 @@ func registerMetrics(r metrics.Registerer) {
 		r.MustRegister(
 			cacheCounter,
 			eventCounter,
+			metricsQueueDepthGauge,
+			metricsWorkerPanicCounter,
+			metricsOverflowCounter,
 			evaluationsCounter,
 			getFeatureFlagsCounter,
 			getSegmentUsersCounter,

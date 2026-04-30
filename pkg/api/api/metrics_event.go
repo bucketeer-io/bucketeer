@@ -24,6 +24,12 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
+type metricsJob struct {
+	events             []*eventproto.MetricsEvent
+	projectID          string
+	environmentUrlCode string
+}
+
 const (
 	ErrRedirectionRequest        = "ErrRedirection"
 	ErrorTypeBadRequest          = "BadRequest"
@@ -68,21 +74,121 @@ var (
 	unknownErrorMetricsEventP             = &eventproto.UnknownErrorMetricsEvent{}
 )
 
+func (s *grpcGatewayService) startMetricsWorkers(workers, queueSize int) {
+	if workers <= 0 {
+		workers = defaultOptions.metricsWorkers
+	}
+	if queueSize <= 0 {
+		queueSize = defaultOptions.metricsQueueSize
+	}
+	s.metricsJobs = make(chan metricsJob, queueSize)
+	for i := 0; i < workers; i++ {
+		s.metricsPoolWg.Add(1)
+		go s.runMetricsWorker(i)
+	}
+}
+
+func (s *grpcGatewayService) runMetricsWorker(id int) {
+	defer s.metricsPoolWg.Done()
+	for job := range s.metricsJobs {
+		s.processMetricsJobSafely(id, job)
+		s.updateMetricsQueueDepth()
+	}
+}
+
+func (s *grpcGatewayService) processMetricsJobSafely(id int, job metricsJob) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("metrics worker recovered panic",
+				zap.Int("workerID", id),
+				zap.Any("panic", r),
+				zap.Stack("stack"),
+			)
+			metricsWorkerPanicCounter.Inc()
+		}
+	}()
+	if s.metricsJobProcessor != nil {
+		s.metricsJobProcessor(job)
+		return
+	}
+	s.processMetricsJob(job)
+}
+
+func (s *grpcGatewayService) processMetricsJob(job metricsJob) {
+	for i := range job.events {
+		event := job.events[i]
+		if err := s.saveMetrics(event, job.projectID, job.environmentUrlCode); err != nil {
+			s.logMetricsEventError(err, event, job.projectID, job.environmentUrlCode)
+			eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeNonRepeatableError).Inc()
+		} else {
+			eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeOK).Inc()
+		}
+	}
+}
+
 func (s *grpcGatewayService) saveMetricsEventsAsync(
 	metricsEvents []*eventproto.MetricsEvent, projectID, environmentUrlCode string,
 ) {
-	// TODO: using buffered channel to reduce the number of go routines
-	go func() {
-		for i := range metricsEvents {
-			event := metricsEvents[i]
-			if err := s.saveMetrics(event, projectID, environmentUrlCode); err != nil {
-				s.logMetricsEventError(err, event, projectID, environmentUrlCode)
-				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeNonRepeatableError).Inc()
-			} else {
-				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeOK).Inc()
-			}
-		}
-	}()
+	if len(metricsEvents) == 0 {
+		return
+	}
+	job := metricsJob{
+		events:             metricsEvents,
+		projectID:          projectID,
+		environmentUrlCode: environmentUrlCode,
+	}
+	s.metricsPoolMu.RLock()
+	// Pool not started yet, or already shut down. The latter only happens
+	// during graceful shutdown after the gRPC server has stopped, so no
+	// real request traffic should hit this branch in production. Process
+	// synchronously so shutdown does not leave untracked work behind.
+	if s.metricsJobs == nil || s.metricsPoolClosed {
+		s.metricsPoolMu.RUnlock()
+		metricsOverflowCounter.Inc()
+		s.processMetricsJobSafely(-1, job)
+		return
+	}
+	select {
+	case s.metricsJobs <- job:
+		// Normal path: handed off to the worker pool.
+		s.updateMetricsQueueDepth()
+		s.metricsPoolMu.RUnlock()
+	default:
+		// Queue is full. Rather than drop the batch, spill to a one-off
+		// goroutine that processes just this batch and exits. Workers
+		// continue draining the queue at their normal rate; this overflow
+		// goroutine does NOT touch the queue itself. metricsOverflowCounter
+		// alerts on this so we know the pool is undersized for current load.
+		s.updateMetricsQueueDepth()
+		metricsOverflowCounter.Inc()
+		s.metricsPoolWg.Add(1)
+		s.metricsPoolMu.RUnlock()
+		go func() {
+			defer s.metricsPoolWg.Done()
+			s.processMetricsJobSafely(-1, job)
+		}()
+	}
+}
+
+func (s *grpcGatewayService) updateMetricsQueueDepth() {
+	if s.metricsJobs == nil {
+		metricsQueueDepthGauge.Set(0)
+		return
+	}
+	metricsQueueDepthGauge.Set(float64(len(s.metricsJobs)))
+}
+
+func (s *grpcGatewayService) ShutdownMetricsPool() {
+	s.metricsPoolMu.Lock()
+	if s.metricsJobs == nil || s.metricsPoolClosed {
+		s.metricsPoolMu.Unlock()
+		return
+	}
+	s.metricsPoolClosed = true
+	close(s.metricsJobs)
+	s.metricsPoolMu.Unlock()
+	s.metricsPoolWg.Wait()
+	s.updateMetricsQueueDepth()
 }
 
 // logMetricsEventError logs a metrics event failure with context from the
