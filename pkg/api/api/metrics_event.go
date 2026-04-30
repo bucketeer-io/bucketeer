@@ -157,6 +157,13 @@ func (s *grpcGatewayService) saveGetEvaluationLatencyMetricsEvent(event *eventpr
 		return err
 	}
 	if ev.Duration == nil {
+		s.logger.Warn("Invalid duration. Duration is nil",
+			zap.String("environmentUrlCode", env),
+			zap.String("sdkVersion", event.SdkVersion),
+			zap.String("sourceId", event.SourceId.String()),
+			zap.String("tag", ev.Labels["tag"]),
+			zap.Any("labels", ev.Labels),
+		)
 		return MetricsSaveErrInvalidDuration
 	}
 	var tag, status string
@@ -165,6 +172,14 @@ func (s *grpcGatewayService) saveGetEvaluationLatencyMetricsEvent(event *eventpr
 		status = ev.Labels["state"]
 	}
 	if err := ev.Duration.CheckValid(); err != nil {
+		s.logger.Warn("Invalid duration. Duration is not valid",
+			zap.Error(err),
+			zap.String("environmentUrlCode", env),
+			zap.String("sdkVersion", event.SdkVersion),
+			zap.String("sourceId", event.SourceId.String()),
+			zap.String("tag", ev.Labels["tag"]),
+			zap.Any("labels", ev.Labels),
+		)
 		return MetricsSaveErrInvalidDuration
 	}
 	dur := ev.Duration.AsDuration()
