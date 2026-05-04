@@ -100,7 +100,7 @@ const PageContent = ({
 
         <TabsContent
           value={filters.status}
-          className="px-3 sm:px-6 pb-6 overflow-y-hidden overflow-x-auto"
+          className="px-3 sm:px-6 pb-6 overflow-y-hidden overflow-x-auto hidden-scroll"
         >
           <CollectionLoader
             onAdd={onAdd}
