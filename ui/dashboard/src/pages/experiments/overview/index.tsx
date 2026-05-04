@@ -69,23 +69,28 @@ const Overview = ({
   const { t } = useTranslation(['table']);
 
   return (
-    <div className="flex flex-nowrap sm:flex-wrap overflow-x-scroll md:overflow-hidden hidden-scroll items-center w-full gap-6 pt-3 sm:pt-0 pb-3 sm:pb-8 px-3 sm:px-6">
-      {overviewOptions.map((item, index) => (
-        <OverviewCard
-          key={index}
-          title={t(item.titleKey)}
-          count={summary && item.countKey ? Number(summary[item.countKey]) : 0}
-          color={item.color}
-          icon={item.icon}
-          className={cn('border border-transparent', {
-            'border-gray-300':
-              filterBySummary && item.summaryFilterValue === filterBySummary
-          })}
-          onClick={() =>
-            onChangeFilters(item.filterValues, item.summaryFilterValue)
-          }
-        />
-      ))}
+    <div className="w-full px-3 sm:px-6">
+      <div className="flex flex-nowrap sm:flex-wrap overflow-x-scroll sm:overflow-visible hidden-scroll items-center w-full gap-4 sm:gap-6 pt-3 sm:pt-0 pb-4 sm:pb-8 px-3 sm:px-0">
+        {overviewOptions.map((item, index) => (
+          <div key={index} className="flex flex-1">
+            <OverviewCard
+              title={t(item.titleKey)}
+              count={
+                summary && item.countKey ? Number(summary[item.countKey]) : 0
+              }
+              color={item.color}
+              icon={item.icon}
+              className={cn('border border-transparent', {
+                'border-gray-300':
+                  filterBySummary && item.summaryFilterValue === filterBySummary
+              })}
+              onClick={() =>
+                onChangeFilters(item.filterValues, item.summaryFilterValue)
+              }
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
