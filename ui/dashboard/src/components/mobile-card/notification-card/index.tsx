@@ -64,7 +64,6 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
                   onActions(data, 'EDIT');
                 }}
                 maxLines={1}
-                className="min-w-[230px]"
               />
             }
             maxLines={1}
@@ -93,19 +92,19 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
 
       <Card.Meta>
         <div className="flex h-full w-full items-stretch justify-between gap-3 typo-para-medium">
-          <div className="flex-1 py-3 rounded-xl bg-gray-100 text-nowrap">
-            <div className="flex-1">
+          <div className="flex-1 p-3 rounded-xl bg-gray-100 min-w-0">
+            <div className="flex-1 min-w-0">
               <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
                 <span>{t('environment')}</span>
               </p>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="text-gray-700 typo-para-medium">
+              <div className="mt-2 flex items-center gap-2 min-w-0">
+                <div className="text-gray-700 typo-para-medium truncate">
                   {environmentName}
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex-1 py-3 rounded-xl bg-gray-100">
+          <div className="flex-1 p-3 rounded-xl bg-gray-100">
             <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
               <span>{t('table:created-at')}</span>
             </p>

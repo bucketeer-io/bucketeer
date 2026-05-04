@@ -38,7 +38,7 @@ const PageHeader = ({
           <h1 className="text-gray-900 typo-head-bold-huge">{title}</h1>
           {createdAt && <CreatedAtTime createdAt={createdAt} />}
         </div>
-        <div className="flex items-center gap-4 text-gray-500">
+        <div className="flex items-center gap-0 sm:gap-4 text-gray-500">
           {isShowApiEndpoint && <SDKApiEndpoint />}
           <SupportPopover />
         </div>

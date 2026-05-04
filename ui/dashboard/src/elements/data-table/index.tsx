@@ -76,6 +76,14 @@ export const DataTable = <TData, TValue>({
     };
   }, [tableContainerRef.current]);
 
+  if (!isLoading && !table.getRowModel().rows?.length) {
+    return (
+      <div className="flex justify-center items-center w-full py-20">
+        {emptyCollection}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={tableContainerRef}
@@ -177,13 +185,7 @@ export const DataTable = <TData, TValue>({
                 </Table.Row>
               );
             })
-          ) : (
-            <Table.Row>
-              <Table.Cell className="pt-32" colSpan={columns.length}>
-                {emptyCollection}
-              </Table.Cell>
-            </Table.Row>
-          )}
+          ) : null}
         </Table.Body>
       </Table.Root>
     </div>

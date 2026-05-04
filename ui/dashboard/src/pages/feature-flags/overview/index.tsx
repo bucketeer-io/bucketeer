@@ -56,13 +56,13 @@ const Overview = ({
 
   return (
     <div className="w-full px-3 sm:px-6">
-      <div className="flex flex-nowrap sm:flex-wrap overflow-x-scroll sm:overflow-visible pt-3 sm:pt-0 px-3 sm:px-0 hidden-scroll items-center w-full gap-6 pb-4 sm:pb-8">
+      <div className="flex flex-nowrap sm:flex-wrap overflow-x-scroll sm:overflow-visible pt-3 sm:pt-0 px-3 sm:px-0 hidden-scroll items-center w-full gap-4 sm:gap-6 pb-4 sm:pb-8">
         {overviewOptions.map((item, index) => (
           <Tooltip
             key={index}
             content={t(item.tooltipKey)}
             trigger={
-              <div className="flex flex-1 w-full min-w-[268px]">
+              <div className="flex flex-1">
                 <OverviewCard
                   title={t(item.titleKey)}
                   count={
