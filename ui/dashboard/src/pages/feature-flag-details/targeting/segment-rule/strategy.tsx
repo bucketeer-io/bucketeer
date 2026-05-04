@@ -202,8 +202,8 @@ const Strategy = ({
           {label}
         </Form.Label>
       )}
-      <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase">
+      <div className="flex items-start w-full gap-x-4">
+        <p className="typo-para-small text-gray-600 mt-3 uppercase shrink-0">
           {t('feature-flags.serve')}
         </p>
         <Form.Field
@@ -218,9 +218,9 @@ const Strategy = ({
                     options={options}
                     onChange={val => handleChangeStrategy(val, field.onChange)}
                     disabled={isDisabled}
-                    wrapTriggerStyle="flex flex-col grap-y-2 w-full"
-                    contentClassName="w-[300px]"
-                    className="w-full max-w-[300px] sm:max-w-full"
+                    wrapTriggerStyle="flex flex-col gap-y-2 w-full"
+                    contentClassName="min-w-[200px] w-full max-w-[300px]"
+                    className="w-full"
                   />
                 </Form.Control>
                 <Form.Message />
@@ -357,7 +357,8 @@ const Strategy = ({
                               value={field.value}
                               onChange={field.onChange}
                               disabled={isDisabled}
-                              className="w-full"
+                              className="w-full !max-w-full"
+                              itemClassName="max-w-full"
                               wrapTriggerStyle="flex flex-col grap-y-2 w-full"
                             />
                           </Form.Control>

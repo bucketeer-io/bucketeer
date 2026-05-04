@@ -60,7 +60,7 @@ export const PushCard: React.FC<PushCardProps> = ({
           />
         }
         triger={
-          <div className="flex items-center gap-0.5 max-w-fit min-w-[230px]">
+          <div className="flex items-center gap-0.5 min-w-0 flex-1">
             <NameWithTooltip
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}
@@ -106,12 +106,12 @@ export const PushCard: React.FC<PushCardProps> = ({
           />
         </div>
         <div className="flex h-full w-full items-stretch justify-between gap-3 typo-para-medium">
-          <div className="flex-1 py-3 rounded-xl bg-gray-100 text-nowrap">
-            <div className="flex-1">
+          <div className="flex-1 p-3 rounded-xl bg-gray-100 min-w-0">
+            <div className="flex-1 min-w-0">
               <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
                 <span>{t('environment')}</span>
               </p>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2 min-w-0">
                 <NameWithTooltip
                   id={id}
                   align="center"
@@ -134,7 +134,7 @@ export const PushCard: React.FC<PushCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex-1 py-3 rounded-xl bg-gray-100">
+          <div className="flex-1 p-3 rounded-xl bg-gray-100">
             <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
               <span>{t('table:created-at')}</span>
             </p>
