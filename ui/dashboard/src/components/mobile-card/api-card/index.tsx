@@ -176,12 +176,12 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
             </div>
           </div>
 
-          <div className="flex-1 p-3 rounded-xl bg-gray-100 text-nowrap">
-            <div className="flex-1">
+          <div className="flex-1 p-3 rounded-xl bg-gray-100 min-w-0">
+            <div className="flex-1 min-w-0">
               <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
                 <span>{t('environment')}</span>
               </p>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2 min-w-0">
                 <NameWithTooltip
                   id={idEnv}
                   align="center"
