@@ -109,7 +109,7 @@ const GridViewCollection = ({
                   />
                 </div>
               </div>
-              <div className="flex col-span-6 mt-3 lg:mt-0 lg:col-span-3 row-span-1 justify-end self-start gap-x-2">
+              <div className="flex col-span-5 mt-3 lg:mt-0 lg:col-span-3 row-span-1 justify-end self-start gap-x-2">
                 <div className="flex-center">
                   <Icon icon={IconWatch} size={'xxs'} />
                 </div>
