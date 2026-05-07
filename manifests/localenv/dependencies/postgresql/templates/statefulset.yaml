@@ -42,7 +42,7 @@ spec:
         livenessProbe:
           exec:
             command:
-            - /usr/bin/pg_isready
+            - pg_isready
             - -U
             - {{ .Values.auth.username | quote }}
             - -d
@@ -54,7 +54,7 @@ spec:
         readinessProbe:
           exec:
             command:
-            - /usr/bin/pg_isready
+            - pg_isready
             - -U
             - {{ .Values.auth.username | quote }}
             - -d
@@ -75,6 +75,13 @@ spec:
         volumeMounts:
         - name: postgres-data
           mountPath: /var/lib/postgresql/data
+        - name: postgres-initdb
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+      volumes:
+      - name: postgres-initdb
+        configMap:
+          name: {{ include "postgres.fullname" . }}-initdb
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

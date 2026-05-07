@@ -5,7 +5,9 @@
 LOCAL_IMPORT_PATH := github.com/bucketeer-io/bucketeer
 # Auto-detect data warehouse type from values.dev.yaml unless explicitly overridden
 DWH_TYPE := $(shell grep -A3 'dataWarehouse:' manifests/bucketeer/values.dev.yaml 2>/dev/null | grep 'type:' | head -1 | awk '{print $$2}')
-POSTGRES_ENABLED ?= $(if $(filter postgres,$(DWH_TYPE)),true,false)
+ODB_TYPE := $(shell grep -A3 'operationalDatabase:' manifests/bucketeer/values.dev.yaml 2>/dev/null | grep 'type:' | head -1 | awk '{print $$2}')
+
+POSTGRES_ENABLED ?= $(if $(filter postgres,$(DWH_TYPE) $(ODB_TYPE)),true,false)
 BIGQUERY_ENABLED ?= $(if $(filter bigquery,$(DWH_TYPE)),true,false)
 
 # go applications
@@ -133,9 +135,18 @@ diff-check:
 migration-validate:
 	atlas migrate validate --dir file://migration/mysql
 
+.PHONY: migration-validate-pg
+migration-validate-pg:
+	atlas migrate validate --dir file://migration/postgres
+
 .PHONY: migration-hash-check
 migration-hash-check:
 	atlas migrate hash --dir file://migration/mysql
+	make diff-check
+
+.PHONY: migration-hash-check-pg
+migration-hash-check-pg:
+	atlas migrate hash --dir file://migration/postgres
 	make diff-check
 
 .PHONY: tidy-deps
@@ -383,6 +394,14 @@ create-migration:
 		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
 		--dev-url docker://mysql/8/${DB}
 
+.PHONY: create-migration-pg
+create-migration-pg:
+	# Example: make create-migration-pg NAME=create_table_users USER=postgres PASS=password HOST=localhost PORT=5432 DB=bucketeer
+	atlas migrate diff ${NAME} \
+		--dir file://migration/postgres \
+		--to "postgres://${USER}:${PASS}@${HOST}:${PORT}/${DB}?sslmode=disable" \
+		--dev-url docker://postgres/16/${DB}
+
 .PHONY: atlas-set-version
 atlas-set-version:
 	# Example: make atlas-set-version VERSION=20240311022556 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
@@ -390,12 +409,27 @@ atlas-set-version:
 		--dir file://migration/mysql \
 		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB}
 
+.PHONY: atlas-set-version-pg
+atlas-set-version-pg:
+	# Example: make atlas-set-version-pg VERSION=20260226174000 USER=postgres PASS=password HOST=localhost PORT=5432 DB=bucketeer
+	atlas migrate set ${VERSION} \
+		--dir file://migration/postgres \
+		--url "postgres://${USER}:${PASS}@${HOST}:${PORT}/${DB}?sslmode=disable"
+
 .PHONY: apply-migration
 check-apply-migration:
 	# Example: make check-apply-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
 	atlas migrate apply \
 		--dir file://migration/mysql \
 		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dry-run
+
+.PHONY: check-apply-migration-pg
+check-apply-migration-pg:
+	# Example: make check-apply-migration-pg USER=postgres PASS=password HOST=localhost PORT=5432 DB=bucketeer
+	atlas migrate apply \
+		--dir file://migration/postgres \
+		--url "postgres://${USER}:${PASS}@${HOST}:${PORT}/${DB}?sslmode=disable" \
 		--dry-run
 
 #############################

@@ -48,7 +48,7 @@ global:
     postgres:
       user: "bucketeer"
       pass: "bucketeer"
-      host: "localenv-postgres-headless.default.svc.cluster.local"
+      host: "localenv-postgresql-headless.default.svc.cluster.local"
       port: 5432
       name: "bucketeer"
       openConns: 50
@@ -91,7 +91,8 @@ global:
 
 migration:
   image:
-    # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres (same tag).
+    # For MySQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-mysql.
+    # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres.
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: localenv
 
@@ -112,7 +113,7 @@ migration:
   # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
   # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
   # URL format: postgres://user:password@host:port/db_name?sslmode=disable
-  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgres.default.svc:5432/bucketeer?sslmode=disable
+  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgresql-headless.default.svc.cluster.local/bucketeer?sslmode=disable
   # dbBaseline: "20260226174000"
 
 web:
@@ -132,7 +133,8 @@ web:
     pubSubRedisMode: ${global.pubsub.redis.mode}
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     operationalDatabase:
-      type: mysql
+      # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -142,7 +144,7 @@ web:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
     persistentRedis:
@@ -217,7 +219,7 @@ api:
     profile: false
     enablePprof: false
     operationalDatabase:
-      type: "mysql"
+      # this will be injected from global config
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -227,7 +229,7 @@ api:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
     pprofAddr: 127.0.0.1:6060
@@ -271,7 +273,7 @@ batch-server:
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
     operationalDatabase:
-      type: mysql
+      # this will be injected from global config
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -282,7 +284,6 @@ batch-server:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
         openConns: 50
@@ -402,7 +403,8 @@ subscriber:
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
     operationalDatabase:
-      type: mysql
+      # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -413,7 +415,7 @@ subscriber:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
         openConns: 50
