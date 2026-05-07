@@ -557,23 +557,7 @@ VALUES ('e2e', 'E2E environment', 'e2e', 'This environment is for local developm
 -- Mark the initialization migration as already applied so Atlas skips it.
 -- ============================================
 
-CREATE SCHEMA IF NOT EXISTS atlas_schema_revisions;
-CREATE TABLE IF NOT EXISTS atlas_schema_revisions.atlas_schema_revisions (
-    version VARCHAR(255) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    type BIGINT NOT NULL DEFAULT 2,
-    applied BIGINT NOT NULL DEFAULT 0,
-    total BIGINT NOT NULL DEFAULT 0,
-    executed_at TIMESTAMP NOT NULL,
-    execution_time BIGINT NOT NULL,
-    error TEXT,
-    error_stmt TEXT,
-    hash VARCHAR(255) NOT NULL,
-    partial_hashes JSONB,
-    operator_version VARCHAR(255) NOT NULL,
-    PRIMARY KEY (version)
-);
-INSERT INTO atlas_schema_revisions.atlas_schema_revisions
+INSERT INTO atlas_schema_revisions
     (version, description, type, applied, total, executed_at, execution_time, error, error_stmt, hash, partial_hashes, operator_version)
 VALUES
     ('20260226174000', 'initialization', 2, 0, 0, NOW(), 0, '', '', 'h1:orWPjklxeOP046jFps+1UhJDdaSDPwDjlODiSe/479c=', NULL, 'localenv-init')

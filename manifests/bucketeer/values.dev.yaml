@@ -113,7 +113,7 @@ migration:
   # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
   # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
   # URL format: postgres://user:password@host:port/db_name?sslmode=disable
-  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgresql-headless.default.svc.cluster.local/bucketeer?sslmode=disable
+  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgresql-headless.default.svc.cluster.local:5432/bucketeer?sslmode=disable
   # dbBaseline: "20260226174000"
 
 web:
@@ -220,6 +220,7 @@ api:
     enablePprof: false
     operationalDatabase:
       # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -274,6 +275,7 @@ batch-server:
     pprofAddr: 127.0.0.1:6060
     operationalDatabase:
       # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -284,6 +286,7 @@ batch-server:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
         openConns: 50

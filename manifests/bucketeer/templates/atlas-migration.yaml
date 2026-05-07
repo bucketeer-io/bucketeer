@@ -24,6 +24,8 @@ spec:
           args:
             - migrate
             - apply
+            - --revisions-schema
+            - public
             - --baseline
             - "{{ .Values.migration.dbBaseline }}"
             - -u
