@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
@@ -112,7 +112,7 @@ func grpcRegisterEvaluationEvents(t *testing.T, features []*feature.Feature, tag
 	defer cancel()
 	events := make([]*eventproto.Event, 0)
 	for _, f := range features {
-		evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+		evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 			Timestamp:      now.Unix(),
 			FeatureId:      f.Id,
 			FeatureVersion: f.Version,

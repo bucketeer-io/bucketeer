@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -410,7 +409,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 			req := &featureproto.ListFeaturesRequest{
 				OrderBy:       p.orderBy,
 				EnvironmentId: "ns0",
-				HasExperiment: &wrappers.BoolValue{Value: p.hasExperiment},
+				HasExperiment: &wrapperspb.BoolValue{Value: p.hasExperiment},
 			}
 			ctx := p.context
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
@@ -440,7 +439,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 		id, name, description                             string
 		variations                                        []*featureproto.Variation
 		tags                                              []string
-		defaultOnVariationIndex, defaultOffVariationIndex *wrappers.Int32Value
+		defaultOnVariationIndex, defaultOffVariationIndex *wrapperspb.Int32Value
 		environmentId                                     string
 		expected                                          error
 	}{
@@ -521,7 +520,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			description:              "error: statusMissingDefaultOffVariation",
 			variations:               variations,
 			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
 			expected:                 statusMissingDefaultOffVariation.Err(),
@@ -537,8 +536,8 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			description:              "error: statusAlreadyExists",
 			variations:               variations,
 			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			defaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 			environmentId:            "ns0",
 			expected:                 statusAlreadyExists.Err(),
 		},
@@ -554,8 +553,8 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			description:              "success",
 			variations:               variations,
 			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			defaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 			environmentId:            "ns0",
 			expected:                 nil,
 		},

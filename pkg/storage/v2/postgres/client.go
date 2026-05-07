@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/client.go
 package postgres
 
 import (

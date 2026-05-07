@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   FixedSizeList,
   ListChildComponentProps,
@@ -72,6 +72,9 @@ interface DropdownListProps extends RowWithDataProps {
   width?: string | number;
   itemSize?: number;
   maxOptions?: number;
+  isHasMore?: boolean;
+  isLoadingMore?: boolean;
+  onHasMoreOptions?: () => void;
 }
 
 const DropdownList = ({
@@ -87,14 +90,45 @@ const DropdownList = ({
   selectedFieldValue = 'value',
   className,
   additionalElement,
+  isHasMore,
+  isLoadingMore,
+  onHasMoreOptions,
   onSelectOption
 }: DropdownListProps) => {
+  const isLoadingMoreRef = useRef(isLoadingMore);
+  isLoadingMoreRef.current = isLoadingMore;
+  const isFetchingRef = useRef(false);
+  const prevOptionsLengthRef = useRef(options.length);
+
+  useEffect(() => {
+    if (options.length !== prevOptionsLengthRef.current) {
+      prevOptionsLengthRef.current = options.length;
+      isFetchingRef.current = false;
+    }
+  }, [options.length]);
+
   const maxHeightList = useMemo(
     () =>
-      height || options.length > maxOptions
+      height ??
+      (isHasMore || options.length >= maxOptions
         ? maxHeight
-        : options.length * itemSize,
-    [options, maxOptions, height, itemSize]
+        : options.length * itemSize),
+    [options, maxOptions, height, itemSize, isHasMore, maxHeight]
+  );
+
+  const handleScroll = useCallback(
+    ({ scrollOffset }: { scrollOffset: number }) => {
+      if (!isHasMore || isLoadingMoreRef.current || isFetchingRef.current)
+        return;
+      const totalHeight = options.length * itemSize;
+      const isNearBottom =
+        scrollOffset + maxHeightList >= totalHeight - itemSize;
+      if (isNearBottom) {
+        isFetchingRef.current = true;
+        onHasMoreOptions?.();
+      }
+    },
+    [isHasMore, options.length, itemSize, maxHeightList, onHasMoreOptions]
   );
 
   return (
@@ -117,8 +151,9 @@ const DropdownList = ({
         onSelectOption
       }}
       className={
-        options?.length < maxOptions ? 'hidden-scroll' : 'small-scroll'
+        options?.length <= maxOptions ? 'hidden-scroll' : 'small-scroll'
       }
+      onScroll={handleScroll}
     >
       {RowWithData}
     </List>

@@ -7,13 +7,21 @@ env:
   project:
   gcpEnabled: true
   profile: true
-  database:
+  # Database configuration
+  operationalDatabase:
+    type: "mysql"
     mysql:
       user:
       pass:
       host:
-      port:
-      dbName:
+      port: 3306
+      name:
+    postgres:
+      user:
+      pass:
+      host:
+      port: 5432
+      name:
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
   pubsubEmulatorHost:
@@ -36,6 +44,19 @@ env:
     mode: auto
   oldestEventTimestamp:
   furthestEventTimestamp:
+  # Bounded worker pool for processing metrics events. Leave unset to use
+  # the Go defaults (4 workers, 4096-batch buffered queue). Increase
+  # metricsWorkers if bucketeer_gateway_api_metrics_overflow_total is
+  # sustained > 0; increase metricsQueueSize if
+  # bucketeer_gateway_api_metrics_queue_depth approaches capacity during bursts.
+  metricsWorkers:
+  metricsQueueSize:
+  # Topic on which the subscriber service announces L2 cache refreshes.
+  # Each api pod subscribes to this topic and evicts its L1 (in-memory)
+  # cache entries on each announcement. Both supported PubSub backends
+  # (Google Pub/Sub and Redis Streams) auto-create the topic on first
+  # publish, so no pre-provisioning step is required.
+  cacheInvalidationTopic:
   logLevel: info
   grpcGatewayPort: 9089
   port: 9090

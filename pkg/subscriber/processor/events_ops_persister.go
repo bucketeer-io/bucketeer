@@ -19,9 +19,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -200,16 +199,16 @@ func (e eventsOPSPersister) extractEvents(messages map[string]*puller.Message) e
 			handleBadMessage(m, err)
 			continue
 		}
-		var innerEvent ptypes.DynamicAny
-		if err := ptypes.UnmarshalAny(event.Event, &innerEvent); err != nil {
+		innerEvent, err := event.Event.UnmarshalNew()
+		if err != nil {
 			handleBadMessage(m, err)
 			continue
 		}
 		if innerEvents, ok := envEvents[event.EnvironmentId]; ok {
-			innerEvents[event.Id] = innerEvent.Message
+			innerEvents[event.Id] = innerEvent
 			continue
 		}
-		envEvents[event.EnvironmentId] = eventOPSMap{event.Id: innerEvent.Message}
+		envEvents[event.EnvironmentId] = eventOPSMap{event.Id: innerEvent}
 	}
 	return envEvents
 }

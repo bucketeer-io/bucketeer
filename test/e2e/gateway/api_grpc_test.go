@@ -24,12 +24,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -761,8 +760,8 @@ app:
 			},
 		},
 		Tags:                     []string{tag},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 
@@ -873,7 +872,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	// Evaluation Event
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      "feature-id",
 		FeatureVersion: 1,
@@ -889,7 +888,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// GoalEvent
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    "goal-id",
 		UserId:    "user-id",
@@ -903,14 +902,14 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// InternalSDKErrorMetricsEvent
-	internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+	internalSDKErr, err := anypb.New(&eventproto.InternalSdkErrorMetricsEvent{
 		ApiId:  eventproto.ApiId_GET_EVALUATIONS,
 		Labels: map[string]string{"tag": "IOS"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsInternalSDK, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsInternalSDK, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      internalSDKErr,
 		SdkVersion: "v0.0.1-e2e",
@@ -920,14 +919,14 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// BadRequestErrorMetricsEvent
-	badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+	badRequestErr, err := anypb.New(&eventproto.BadRequestErrorMetricsEvent{
 		ApiId:  eventproto.ApiId_REGISTER_EVENTS,
 		Labels: map[string]string{"tag": "ANDROID"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsBadRequest, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsBadRequest, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      badRequestErr,
 		SdkVersion: "v0.0.1-e2e",
@@ -937,7 +936,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// SizeMetricsEvent
-	size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+	size, err := anypb.New(&eventproto.SizeMetricsEvent{
 		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
 		Labels:   map[string]string{"tag": "JAVASCRIPT"},
 		SizeByte: 99,
@@ -945,7 +944,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsSize, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsSize, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      size,
 		SdkVersion: "v0.0.1-e2e",
@@ -955,7 +954,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// LatencyMetricsEvent
-	latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+	latency, err := anypb.New(&eventproto.LatencyMetricsEvent{
 		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
 		Labels:   map[string]string{"tag": "GO_SERVER"},
 		Duration: durationpb.New(time.Duration(99)),
@@ -963,7 +962,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsLatency, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsLatency, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      latency,
 		SdkVersion: "v0.0.1-e2e",
@@ -1034,14 +1033,14 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	for _, apiID := range apiIDs {
 		for _, sourceID := range sourceIds {
 			// InternalSDKErrorMetricsEvent
-			internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+			internalSDKErr, err := anypb.New(&eventproto.InternalSdkErrorMetricsEvent{
 				ApiId:  apiID,
 				Labels: map[string]string{"tag": sourceID.String()},
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsInternalSDK, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsInternalSDK, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      internalSDKErr,
 				SdkVersion: sdkVersion,
@@ -1052,14 +1051,14 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			}
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsInternalSDK})
 			// BadRequestErrorMetricsEvent
-			badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+			badRequestErr, err := anypb.New(&eventproto.BadRequestErrorMetricsEvent{
 				ApiId:  apiID,
 				Labels: map[string]string{"tag": sourceID.String()},
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsBadRequest, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsBadRequest, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      badRequestErr,
 				SdkVersion: sdkVersion,
@@ -1070,7 +1069,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			}
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsBadRequest})
 			// SizeMetricsEvent
-			size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+			size, err := anypb.New(&eventproto.SizeMetricsEvent{
 				ApiId:    apiID,
 				Labels:   map[string]string{"tag": sourceID.String()},
 				SizeByte: rand.Int31n(100),
@@ -1078,7 +1077,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsSize, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsSize, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      size,
 				SdkVersion: sdkVersion,
@@ -1089,7 +1088,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			}
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsSize})
 			// LatencyMetricsEvent
-			latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+			latency, err := anypb.New(&eventproto.LatencyMetricsEvent{
 				ApiId:         apiID,
 				Labels:        map[string]string{"tag": sourceID.String()},
 				LatencySecond: rand.Float64(),
@@ -1097,7 +1096,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsLatency, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsLatency, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      latency,
 				SdkVersion: sdkVersion,
@@ -1155,7 +1154,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		testUserDataKeySuffix + "attr3-" + uuid: "value3",
 	}
 
-	evaluation1, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation1, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
@@ -1183,7 +1182,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		testUserDataKeySuffix + "attr6-" + uuid: "value6",
 	}
 
-	evaluation2, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation2, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
@@ -1456,8 +1455,8 @@ func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 }

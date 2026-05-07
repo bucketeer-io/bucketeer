@@ -4,26 +4,25 @@ import { IconLaunchOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQueryAccounts } from '@queries/accounts';
 import { invalidateOrganizationDetails } from '@queries/organization-details';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
+import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
 import Button from 'components/button';
-import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import PageLayout from 'elements/page-layout';
 
 const formSchema = ({ requiredMessage }: FormSchemaProps) =>
@@ -49,12 +48,16 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const queryClient = useQueryClient();
 
   const { t } = useTranslation(['common', 'form', 'message']);
-  const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      organizationId: currentEnvironment.organizationId
-    }
+  const {
+    emailOptions,
+    isInitialLoading: isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onSearchChange
+  } = useAccountsLoader({
+    organizationId: currentEnvironment.organizationId
   });
   const disabled = useMemo(
     () => !envEditable || !isOrganizationAdmin,
@@ -173,19 +176,20 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 <Form.Item>
                   <Form.Label required>{t('form:owner-email')}</Form.Label>
                   <Form.Control className="w-full">
-                    <Dropdown
-                      options={
-                        accounts?.accounts.map(item => ({
-                          value: item.email,
-                          label: item.email
-                        })) || []
-                      }
-                      value={field.value}
-                      onChange={field.onChange}
+                    <DropdownMenuWithSearch
+                      isExpand
+                      label={field.value}
                       placeholder={t('form:owner-email')}
-                      disabled={isLoadingAccounts || disabled}
-                      className="w-full"
-                      contentClassName="w-[400px]"
+                      options={emailOptions}
+                      itemSelected={field.value}
+                      isLoading={isLoadingAccounts}
+                      disabled={disabled}
+                      isHasMore={hasMore}
+                      isLoadingMore={isLoadingMore}
+                      isSearching={isSearching}
+                      onHasMoreOptions={loadMore}
+                      onSelectOption={value => field.onChange(value)}
+                      onSearchChange={onSearchChange}
                     />
                   </Form.Control>
                   <Form.Message />

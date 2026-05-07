@@ -17,7 +17,7 @@ package processor
 import (
 	"context"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	uproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )

@@ -41,9 +41,11 @@ func (m *MockFeaturesCache) EXPECT() *MockFeaturesCacheMockRecorder {
 }
 
 // Evict mocks base method.
-func (m *MockFeaturesCache) Evict(environmentId string) {
+func (m *MockFeaturesCache) Evict(environmentId string) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Evict", environmentId)
+	ret := m.ctrl.Call(m, "Evict", environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Evict indicates an expected call of Evict.

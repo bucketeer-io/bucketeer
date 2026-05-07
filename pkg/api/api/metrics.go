@@ -160,6 +160,7 @@ const (
 	codeOld           = "Old"
 	codeInternalError = "InternalError"
 	codeBadRequest    = "BadRequest"
+	codeCanceled      = "Canceled"
 )
 
 var (
@@ -178,6 +179,32 @@ var (
 			Name:      "api_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
+	metricsQueueDepthGauge = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_metrics_queue_depth",
+			Help:      "Current number of queued metrics event batches.",
+		})
+	metricsWorkerPanicCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_metrics_worker_panic_total",
+			Help:      "Total number of recovered metrics worker panics.",
+		})
+	metricsOverflowCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_metrics_overflow_total",
+			Help: "Total number of metrics event batches processed outside the normal " +
+				"worker pool path. This includes overflow goroutines spawned when the " +
+				"queue is full, and synchronous fallback when the pool has not yet " +
+				"started or has already been shut down. Events are still processed " +
+				"(not lost); sustained rates during normal operation indicate the pool " +
+				"is undersized for current load.",
+		})
 	evaluationsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -329,6 +356,9 @@ func registerMetrics(r metrics.Registerer) {
 		r.MustRegister(
 			cacheCounter,
 			eventCounter,
+			metricsQueueDepthGauge,
+			metricsWorkerPanicCounter,
+			metricsOverflowCounter,
 			evaluationsCounter,
 			getFeatureFlagsCounter,
 			getSegmentUsersCounter,

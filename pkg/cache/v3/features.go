@@ -16,10 +16,11 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -32,7 +33,7 @@ const (
 type FeaturesCache interface {
 	Get(environmentId string) (*featureproto.Features, error)
 	Put(features *featureproto.Features, environmentId string) error
-	Evict(environmentId string)
+	Evict(environmentId string) error
 }
 
 type featuresCache struct {
@@ -63,6 +64,9 @@ func (c *featuresCache) Get(environmentId string) (*featureproto.Features, error
 }
 
 func (c *featuresCache) Put(features *featureproto.Features, environmentId string) error {
+	if features == nil {
+		return errors.New("features cannot be nil")
+	}
 	buffer, err := proto.Marshal(features)
 	if err != nil {
 		return err
@@ -71,10 +75,8 @@ func (c *featuresCache) Put(features *featureproto.Features, environmentId strin
 	return c.cache.Put(key, buffer, c.ttl)
 }
 
-func (c *featuresCache) Evict(environmentId string) {
-	if inMemory, ok := c.cache.(*InMemoryCache); ok {
-		inMemory.Delete(c.key(environmentId))
-	}
+func (c *featuresCache) Evict(environmentId string) error {
+	return evictKey(c.cache, c.key(environmentId))
 }
 
 func (c *featuresCache) key(environmentId string) string {

@@ -19,9 +19,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
@@ -182,7 +181,7 @@ func (p *userEventPersister) unmarshalMessage(msg *puller.Message) (*eventproto.
 		return nil, err
 	}
 	var userEvent eventproto.UserEvent
-	if err := ptypes.UnmarshalAny(event.Event, &userEvent); err != nil {
+	if err := event.Event.UnmarshalTo(&userEvent); err != nil {
 		p.logger.Error("Failed to unmarshal Event -> UserEvent", zap.Error(err), zap.Any("msg", msg))
 		return nil, err
 	}

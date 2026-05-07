@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -198,7 +197,7 @@ func TestUpdatePush(t *testing.T) {
 	updateReq := &pushproto.UpdatePushRequest{
 		Id:            push.Id,
 		EnvironmentId: *environmentID,
-		Name:          &wrappers.StringValue{Value: newName},
+		Name:          &wrapperspb.StringValue{Value: newName},
 		TagChanges: []*pushproto.TagChange{
 			{
 				Tag:        tag,
@@ -319,8 +318,8 @@ func newCreateFeatureReq(featureID, tag string) *featureproto.CreateFeatureReque
 			},
 		},
 		Tags:                     []string{tag},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 }

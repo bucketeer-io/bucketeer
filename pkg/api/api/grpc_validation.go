@@ -19,7 +19,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -71,7 +70,7 @@ func newEventValidator(
 	oldestTimestampDuration, furthestTimestampDuration time.Duration,
 	logger *zap.Logger,
 ) eventValidator {
-	if ptypes.Is(event.Event, grpcGoalEvent) {
+	if event.Event.MessageIs(grpcGoalEvent) {
 		return &eventGoalValidator{
 			event:                     event,
 			oldestTimestampDuration:   oldestTimestampDuration,
@@ -79,7 +78,7 @@ func newEventValidator(
 			logger:                    logger,
 		}
 	}
-	if ptypes.Is(event.Event, grpcEvaluationEvent) {
+	if event.Event.MessageIs(grpcEvaluationEvent) {
 		return &eventEvaluationValidator{
 			event:                     event,
 			oldestTimestampDuration:   oldestTimestampDuration,
@@ -87,7 +86,7 @@ func newEventValidator(
 			logger:                    logger,
 		}
 	}
-	if ptypes.Is(event.Event, grpcMetricsEvent) {
+	if event.Event.MessageIs(grpcMetricsEvent) {
 		return &eventMetricsValidator{
 			event:                     event,
 			oldestTimestampDuration:   oldestTimestampDuration,
@@ -140,7 +139,7 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 
 func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEvent, error) {
 	ev := &eventproto.GoalEvent{}
-	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
+	if err := v.event.Event.UnmarshalTo(ev); err != nil {
 		v.logger.Error(
 			"Failed to extract goal event",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -213,7 +212,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 
 func (v *eventEvaluationValidator) unmarshal(ctx context.Context) (*eventproto.EvaluationEvent, error) {
 	ev := &eventproto.EvaluationEvent{}
-	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
+	if err := v.event.Event.UnmarshalTo(ev); err != nil {
 		v.logger.Error(
 			"Failed to extract evaluation event",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -245,7 +244,7 @@ func (v *eventMetricsValidator) validate(ctx context.Context) (string, error) {
 
 func (v *eventMetricsValidator) unmarshal(ctx context.Context) (*eventproto.MetricsEvent, error) {
 	ev := &eventproto.MetricsEvent{}
-	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
+	if err := v.event.Event.UnmarshalTo(ev); err != nil {
 		v.logger.Error(
 			"Failed to extract metrics event",
 			log.FieldsFromIncomingContext(ctx).AddFields(

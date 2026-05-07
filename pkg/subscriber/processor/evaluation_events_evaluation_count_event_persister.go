@@ -23,9 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -338,7 +337,7 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 			continue
 		}
 		innerEvent := &eventproto.EvaluationEvent{}
-		if err := ptypes.UnmarshalAny(event.Event, innerEvent); err != nil {
+		if err := event.Event.UnmarshalTo(innerEvent); err != nil {
 			handleBadMessage(m, err)
 			continue
 		}
