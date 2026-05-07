@@ -68,6 +68,7 @@ import (
 	gatewayapi "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	tagapi "github.com/bucketeer-io/bucketeer/v2/pkg/tag/api"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -118,11 +119,17 @@ type server struct {
 	certPath                        *string
 	keyPath                         *string
 	serviceTokenPath                *string
+	operationalDatabaseType         *string
 	mysqlUser                       *string
 	mysqlPass                       *string
 	mysqlHost                       *string
 	mysqlPort                       *int
 	mysqlDBName                     *string
+	postgresUser                    *string
+	postgresPass                    *string
+	postgresHost                    *string
+	postgresPort                    *int
+	postgresDBName                  *string
 	persistentRedisServerName       *string
 	persistentRedisAddr             *string
 	persistentRedisPoolMaxIdle      *int
@@ -224,11 +231,17 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		isDemoSiteEnabled: cmd.Flag(
 			"demo-site-enabled",
 			"Is demo site enabled").Default("false").Bool(),
-		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").Default("mysql").String(),
+		mysqlUser:               cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:               cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:               cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:               cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:             cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		postgresUser:            cmd.Flag("postgres-user", "PostgreSQL user.").String(),
+		postgresPass:            cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
+		postgresHost:            cmd.Flag("postgres-host", "PostgreSQL host.").String(),
+		postgresPort:            cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
+		postgresDBName:          cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
 			"Name of the persistent redis.",
@@ -490,12 +503,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go healthcheckServer.Run()
 
 	var dbClient database.Client
-	// mysqlClient
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
-	pushStorage := v2ps.NewMySQLPushStorage(mysqlClient)
+	var pushStorage v2ps.PushStorage
+	if *s.operationalDatabaseType == "postgres" {
+		postgresClient, err := s.createPostgresClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
+		dbClient = database.NewPostgresStorageClient(postgresClient)
+		pushStorage = v2ps.NewPostgresPushStorage(postgresClient)
+	} else {
+		dbClient = database.NewMySQLStorageClient(mysqlClient)
+		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
+	}
 
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(
@@ -1044,6 +1067,23 @@ func (s *server) createMySQLClient(
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
+	)
+}
+
+func (s *server) createPostgresClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return postgres.NewClient(
+		ctx,
+		*s.postgresUser, *s.postgresPass, *s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDBName,
+		postgres.WithLogger(logger),
+		postgres.WithMetrics(registerer),
 	)
 }
 
