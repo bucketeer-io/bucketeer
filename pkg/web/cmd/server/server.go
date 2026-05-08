@@ -509,8 +509,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	var pushStorage v2ps.PushStorage
+	var postgresClient postgres.Client
 	if *s.operationalDatabaseType == "postgres" {
-		postgresClient, err := s.createPostgresClient(ctx, registerer, logger)
+		postgresClient, err = s.createPostgresClient(ctx, registerer, logger)
 		if err != nil {
 			return err
 		}
@@ -1027,6 +1028,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
 		go mysqlClient.Close()
+		if postgresClient != nil {
+			go postgresClient.Close()
+		}
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
 		if dataWarehouseConfig.Type == "bigquery" {

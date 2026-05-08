@@ -181,7 +181,10 @@ func TestPostgresGetPush(t *testing.T) {
 			desc: "ErrPushNotFound",
 			setup: func(s *postgresPushStorage) {
 				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
+				row.EXPECT().Scan(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(postgres.ErrNoRows)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
@@ -194,7 +197,10 @@ func TestPostgresGetPush(t *testing.T) {
 			desc: "Error",
 			setup: func(s *postgresPushStorage) {
 				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				row.EXPECT().Scan(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
@@ -207,7 +213,10 @@ func TestPostgresGetPush(t *testing.T) {
 			desc: "Success",
 			setup: func(s *postgresPushStorage) {
 				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				row.EXPECT().Scan(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)

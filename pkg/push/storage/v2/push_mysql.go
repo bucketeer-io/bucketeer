@@ -268,7 +268,7 @@ func (s *mysqlPushStorage) ListPushes(
 		}
 		pushes = append(pushes, &push)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, 0, 0, err
 	}
 	nextOffset := offset + len(pushes)

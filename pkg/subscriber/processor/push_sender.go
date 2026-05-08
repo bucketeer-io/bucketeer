@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	pushdomain "github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	pushstorage "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -53,7 +52,7 @@ var (
 type pushSender struct {
 	featureClient featureclient.Client
 	batchClient   btclient.Client
-	mysqlClient   mysql.Client
+	pushStorage   pushstorage.PushStorage
 	logger        *zap.Logger
 }
 
@@ -65,13 +64,13 @@ type fcmConfig struct {
 func NewPushSender(
 	featureClient featureclient.Client,
 	batchClient btclient.Client,
-	mysqlClient mysql.Client,
+	pushStorage pushstorage.PushStorage,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
 	return &pushSender{
 		featureClient: featureClient,
 		batchClient:   batchClient,
-		mysqlClient:   mysqlClient,
+		pushStorage:   pushStorage,
 		logger:        logger,
 	}
 }
@@ -280,8 +279,7 @@ func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount str
 // Because the `ListPushes` API removes the FCM service account from the response
 // due to security reasons, we list the pushes directly from the storage interface
 func (p pushSender) listPushes(ctx context.Context, environmentId string) ([]*pushproto.Push, error) {
-	storage := pushstorage.NewMySQLPushStorage(p.mysqlClient)
-	pushes, _, _, err := storage.ListPushes(ctx, pushstorage.ListPushesParams{
+	pushes, _, _, err := p.pushStorage.ListPushes(ctx, pushstorage.ListPushesParams{
 		EnvironmentIDs: []string{environmentId},
 		Deleted:        false,
 	})
