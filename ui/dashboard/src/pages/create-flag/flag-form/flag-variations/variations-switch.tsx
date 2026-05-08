@@ -496,8 +496,7 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
+                        <span
                           className="flex-center cursor-pointer"
                           onClick={e => {
                             e.preventDefault();
@@ -506,7 +505,7 @@ const VariationsSwitch = () => {
                           aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.custom')}
                       className="!z-[100] max-w-[300px]"
@@ -531,8 +530,7 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
+                        <span
                           className="flex-center cursor-pointer"
                           onClick={e => {
                             e.preventDefault();
@@ -541,7 +539,7 @@ const VariationsSwitch = () => {
                           aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.release')}
                       className="!z-[100] max-w-[300px]"
@@ -566,8 +564,7 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
+                        <span
                           className="flex-center cursor-pointer"
                           onClick={e => {
                             e.preventDefault();
@@ -576,7 +573,7 @@ const VariationsSwitch = () => {
                           aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.kill-switch')}
                       className="!z-[100] max-w-[300px]"
@@ -601,8 +598,7 @@ const VariationsSwitch = () => {
                     <Tooltip
                       align="start"
                       trigger={
-                        <button
-                          type="button"
+                        <span
                           className="flex-center cursor-pointer"
                           onClick={e => {
                             e.preventDefault();
@@ -611,7 +607,7 @@ const VariationsSwitch = () => {
                           aria-label={t('template-info-aria-label')}
                         >
                           <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </button>
+                        </span>
                       }
                       content={t('template-tooltip.experiment')}
                       className="!z-[100] max-w-[300px]"
