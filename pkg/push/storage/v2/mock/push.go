@@ -13,10 +13,11 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "go.uber.org/mock/gomock"
+
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	push "github.com/bucketeer-io/bucketeer/v2/proto/push"
-	gomock "go.uber.org/mock/gomock"
 )
 
 // MockPushStorage is a mock of PushStorage interface.

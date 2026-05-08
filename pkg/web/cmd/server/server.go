@@ -23,8 +23,6 @@ import (
 	"sync"
 	"time"
 
-	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -61,12 +59,14 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushapi "github.com/bucketeer-io/bucketeer/v2/pkg/push/api"
+	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	gatewayapi "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	tagapi "github.com/bucketeer-io/bucketeer/v2/pkg/tag/api"
@@ -231,17 +231,18 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		isDemoSiteEnabled: cmd.Flag(
 			"demo-site-enabled",
 			"Is demo site enabled").Default("false").Bool(),
-		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").Default("mysql").String(),
-		mysqlUser:               cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:               cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:               cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:               cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:             cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		postgresUser:            cmd.Flag("postgres-user", "PostgreSQL user.").String(),
-		postgresPass:            cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
-		postgresHost:            cmd.Flag("postgres-host", "PostgreSQL host.").String(),
-		postgresPort:            cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
-		postgresDBName:          cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
+		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
+			Default("mysql").String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		postgresUser:   cmd.Flag("postgres-user", "PostgreSQL user.").String(),
+		postgresPass:   cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
+		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").String(),
+		postgresPort:   cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
+		postgresDBName: cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
 			"Name of the persistent redis.",

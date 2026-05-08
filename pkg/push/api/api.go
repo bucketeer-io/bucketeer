@@ -507,12 +507,12 @@ func (s *PushService) listAllPushes(
 ) ([]*pushproto.Push, error) {
 	disabledFalse := false
 	pushes, _, _, err := s.listPushes(ctx, v2ps.ListPushesParams{
-		PageSize:        database.QueryNoLimit,
-		Cursor:          "",
-		EnvironmentIDs:  []string{environmentId},
-		Disabled:        &disabledFalse,
-		OrderBy:         nil,
-		OrderDirection:  pushproto.ListPushesRequest_ASC,
+		PageSize:       database.QueryNoLimit,
+		Cursor:         "",
+		EnvironmentIDs: []string{environmentId},
+		Disabled:       &disabledFalse,
+		OrderBy:        nil,
+		OrderDirection: pushproto.ListPushesRequest_ASC,
 	})
 	if err != nil {
 		return nil, err
@@ -555,14 +555,14 @@ func (s *PushService) ListPushes(
 	}
 	orderBy := req.OrderBy
 	pushes, cursor, totalCount, err := s.listPushes(ctx, v2ps.ListPushesParams{
-		PageSize:        req.PageSize,
-		Cursor:          req.Cursor,
-		OrganizationID:  req.OrganizationId,
-		EnvironmentIDs:  filterEnvironmentIDs,
-		SearchKeyword:   req.SearchKeyword,
-		Disabled:        boolFromWrapper(req.Disabled),
-		OrderBy:         &orderBy,
-		OrderDirection:  req.OrderDirection,
+		PageSize:       req.PageSize,
+		Cursor:         req.Cursor,
+		OrganizationID: req.OrganizationId,
+		EnvironmentIDs: filterEnvironmentIDs,
+		SearchKeyword:  req.SearchKeyword,
+		Disabled:       boolFromWrapper(req.Disabled),
+		OrderBy:        &orderBy,
+		OrderDirection: req.OrderDirection,
 	})
 	if err != nil {
 		return nil, err
