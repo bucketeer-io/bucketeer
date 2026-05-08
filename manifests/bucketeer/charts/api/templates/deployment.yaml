@@ -58,27 +58,27 @@ spec:
             - name: BUCKETEER_API_PROJECT
               value: "{{ .Values.global.pubsub.project }}"
             - name: BUCKETEER_API_STORAGE_TYPE
-              value: "{{ .Values.env.operationalDatabase.type }}"
+              value: "{{ .Values.env.operationalDatabase.type | default .Values.global.operationalDatabase.type }}"
             - name: BUCKETEER_API_MYSQL_USER
-              value: "{{ .Values.env.operationalDatabase.mysql.user }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_API_MYSQL_PASS
-              value: "{{ .Values.env.operationalDatabase.mysql.pass }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
             - name: BUCKETEER_API_MYSQL_HOST
-              value: "{{ .Values.env.operationalDatabase.mysql.host }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_API_MYSQL_PORT
-              value: "{{ .Values.env.operationalDatabase.mysql.port }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.port | default .Values.global.operationalDatabase.mysql.port }}"
             - name: BUCKETEER_API_MYSQL_DB_NAME
-              value: "{{ .Values.env.operationalDatabase.mysql.name }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.name | default .Values.global.operationalDatabase.mysql.name }}"
             - name: BUCKETEER_API_POSTGRES_USER
-              value: "{{ .Values.env.operationalDatabase.postgres.user }}"
+              value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
             - name: BUCKETEER_API_POSTGRES_PASS
-              value: "{{ .Values.env.operationalDatabase.postgres.pass }}"
+              value: "{{ .Values.env.operationalDatabase.postgres.pass | default .Values.global.operationalDatabase.postgres.pass }}"
             - name: BUCKETEER_API_POSTGRES_HOST
-              value: "{{ .Values.env.operationalDatabase.postgres.host }}"
+              value: "{{ .Values.env.operationalDatabase.postgres.host | default .Values.global.operationalDatabase.postgres.host }}"
             - name: BUCKETEER_API_POSTGRES_PORT
-              value: "{{ .Values.env.operationalDatabase.postgres.port }}"
+              value: "{{ .Values.env.operationalDatabase.postgres.port | default .Values.global.operationalDatabase.postgres.port }}"
             - name: BUCKETEER_API_POSTGRES_DB_NAME
-              value: "{{ .Values.env.operationalDatabase.postgres.name }}"
+              value: "{{ .Values.env.operationalDatabase.postgres.name | default .Values.global.operationalDatabase.postgres.name }}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_API_GOAL_TOPIC
