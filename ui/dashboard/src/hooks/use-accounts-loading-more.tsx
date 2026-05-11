@@ -1,55 +1,111 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQueryAccounts } from '@queries/accounts';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { accountsFetcher } from '@api/account';
+import {
+  ACCOUNTS_QUERY_KEY,
+  useInfiniteQueryAccounts
+} from '@queries/accounts';
+import { useQueries } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { debounce } from 'lodash';
+import { Account } from '@types';
 
 type UseAccountsLoaderParams = {
   organizationId: string;
   environmentId?: string;
   environmentRole?: number;
   pageSize?: number;
+  enabled?: boolean;
+  preloadEmails?: string[];
 };
 
 export const useAccountsLoader = ({
   organizationId,
   environmentId,
   environmentRole,
-  pageSize = LIST_PAGE_SIZE
+  pageSize = LIST_PAGE_SIZE,
+  enabled = true,
+  preloadEmails = []
 }: UseAccountsLoaderParams) => {
-  const [cursor, setCursor] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [emails, setEmails] = useState<string[]>([]);
-  const [hasMore, setHasMore] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
 
-  const { data, isLoading, isFetching } = useQueryAccounts({
-    params: {
-      cursor: String(cursor),
-      pageSize,
-      searchKeyword: searchQuery,
-      organizationId,
-      environmentId,
-      environmentRole
-    }
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useInfiniteQueryAccounts({
+      params: {
+        pageSize,
+        searchKeyword: searchQuery,
+        organizationId,
+        environmentId,
+        environmentRole
+      },
+      enabled
+    });
+
+  const accumulatedAccounts = useMemo<Account[]>(
+    () => data?.pages.flatMap(page => page.accounts) ?? [],
+    [data]
+  );
+
+  const uniquePreloadEmails = useMemo(
+    () => Array.from(new Set(preloadEmails.filter(Boolean))),
+    [preloadEmails.join(',')]
+  );
+
+  const preloadResults = useQueries({
+    queries: uniquePreloadEmails.map(email => ({
+      queryKey: [
+        ACCOUNTS_QUERY_KEY,
+        {
+          searchKeyword: email,
+          organizationId,
+          environmentId,
+          environmentRole,
+          cursor: '0',
+          pageSize: 1
+        }
+      ],
+      queryFn: () =>
+        accountsFetcher({
+          cursor: '0',
+          pageSize: 1,
+          searchKeyword: email,
+          organizationId,
+          environmentId,
+          environmentRole
+        })
+    }))
   });
+
+  const preloadedAccounts = useMemo(
+    () => preloadResults.flatMap(r => r.data?.accounts ?? []),
+    [preloadResults.map(r => r.dataUpdatedAt).join(',')]
+  );
+
+  const allAccounts = useMemo(() => {
+    if (!preloadedAccounts.length) return accumulatedAccounts;
+    const emailsInList = new Set(accumulatedAccounts.map(a => a.email));
+    const missing = preloadedAccounts.filter(a => !emailsInList.has(a.email));
+    return missing.length
+      ? [...accumulatedAccounts, ...missing]
+      : accumulatedAccounts;
+  }, [accumulatedAccounts, preloadedAccounts]);
 
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
-        setEmails([]);
-        setHasMore(true);
-        setCursor(0);
         setSearchQuery(value);
+        setIsTyping(false);
       }, 300),
     []
   );
+
+  useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
 
   const onSearchChange = useCallback(
     (value: string) => {
       if (!value) {
         debouncedSearch.cancel();
         setIsTyping(false);
-        setCursor(0);
         setSearchQuery('');
       } else {
         setIsTyping(true);
@@ -60,55 +116,44 @@ export const useAccountsLoader = ({
   );
 
   const loadMore = useCallback(() => {
-    setCursor(prev => prev + pageSize);
-  }, [pageSize]);
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  useEffect(() => {
-    if (!data?.accounts) return;
-
-    setIsTyping(false);
-    setEmails(prev => {
-      if (cursor === 0) {
-        return data.accounts.map(a => a.email);
-      }
-      const existingSet = new Set(prev);
-      const newEmails = data.accounts
-        .map(a => a.email)
-        .filter(e => !existingSet.has(e));
-      return newEmails.length ? [...prev, ...newEmails] : prev;
-    });
-
-    if (data.totalCount != null) {
-      const total = Number(data.totalCount);
-      setHasMore(cursor + pageSize < total);
-    }
-  }, [data, cursor, pageSize]);
-
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
+  const getAccountLabel = useCallback(
+    (email: string) => {
+      const account = allAccounts.find(a => a.email === email);
+      if (account?.firstName || account?.lastName)
+        return `${account.firstName} ${account.lastName}`.trim();
+      return account?.email ?? email;
+    },
+    [allAccounts]
+  );
 
   const emailOptions = useMemo(
-    () => emails.map(email => ({ label: email, value: email })),
-    [emails]
+    () =>
+      accumulatedAccounts.map(account => ({
+        label: account.email,
+        value: account.email
+      })),
+    [accumulatedAccounts]
   );
 
   const isInitialLoading =
-    isLoading && !searchQuery && cursor === 0 && emails.length === 0;
+    enabled && isLoading && accumulatedAccounts.length === 0;
 
-  const isSearching = isTyping || (isFetching && cursor === 0 && !!searchQuery);
+  const isSearching =
+    isTyping || (enabled && isLoading && accumulatedAccounts.length === 0);
 
   return {
-    emails,
+    accounts: allAccounts,
     emailOptions,
     isLoading,
-    hasMore,
-    isLoadingMore: isFetching && cursor > 0,
+    hasMore: !!hasNextPage,
+    isLoadingMore: isFetchingNextPage,
     isInitialLoading,
     isSearching,
     loadMore,
-    onSearchChange
+    onSearchChange,
+    getAccountLabel
   };
 };

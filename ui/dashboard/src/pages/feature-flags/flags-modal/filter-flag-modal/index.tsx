@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isEmpty } from 'utils/data-type';
@@ -14,6 +14,7 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 export type FilterProps = {
   isOpen: boolean;
@@ -39,27 +40,42 @@ const FilterFlagModal = ({
     flagFilterOptions[0]
   ]);
 
-  const { data: collection, isLoading } = useQueryAccounts({
-    params: {
-      cursor: String(0),
-      environmentId: currentEnvironment?.id,
-      organizationId: currentEnvironment?.organizationId
-    },
-    enabled: !!selectedFilters?.find(
+  const hasMaintainerFilter = !!selectedFilters.find(
+    item => item.value === FilterTypes.MAINTAINER
+  );
+
+  const selectedMaintainer = useMemo(() => {
+    const filter = selectedFilters.find(
       item => item.value === FilterTypes.MAINTAINER
-    )
+    );
+    return typeof filter?.filterValue === 'string' ? filter.filterValue : '';
+  }, [selectedFilters]);
+
+  const {
+    emailOptions,
+    isInitialLoading: isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onSearchChange: onAccountSearchChange,
+    getAccountLabel
+  } = useAccountsLoader({
+    organizationId: currentEnvironment.organizationId,
+    environmentId: currentEnvironment.id,
+    enabled: hasMaintainerFilter,
+    preloadEmails: selectedMaintainer ? [selectedMaintainer] : []
   });
 
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment?.id,
+      environmentId: currentEnvironment.id,
       entityType: 'FEATURE_FLAG'
     },
     enabled: !!selectedFilters?.find(item => item.value === FilterTypes.TAGS)
   });
 
-  const accounts = useMemo(() => collection?.accounts || [], [collection]);
   const tags = useMemo(() => tagCollection?.tags || [], [tagCollection]);
 
   const remainingFilterOptions = useMemo(
@@ -86,31 +102,16 @@ const FilterFlagModal = ({
   const getValueOptions = useCallback(
     (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
-      const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
       const isTagFilter = filterOption.value === FilterTypes.TAGS;
       const isStatusFilter = filterOption.value === FilterTypes.STATUS;
 
-      const isHaveSearchingDropdown =
-        isMaintainerFilter || isTagFilter || isStatusFilter;
-      if (isHaveSearchingDropdown) {
-        const options = isMaintainerFilter
-          ? accounts.map(item => ({
-              label: item.email,
-              value: item.email
-            }))
-          : isTagFilter
-            ? tags.map(item => ({
-                label: item.name,
-                value: item.name
-              }))
-            : flagStatusOptions;
-
-        return options;
+      if (isTagFilter) {
+        return tags.map(item => ({ label: item.name, value: item.name }));
       }
-
+      if (isStatusFilter) return flagStatusOptions;
       return booleanOptions;
     },
-    [accounts, tags]
+    [tags, flagStatusOptions, booleanOptions]
   );
 
   const handleSetFilterOnInit = useCallback(() => {
@@ -169,7 +170,7 @@ const FilterFlagModal = ({
         const isStatusFilter = filterType === FilterTypes.STATUS;
 
         return isMaintainerFilter
-          ? filterValue || ''
+          ? getAccountLabel(filterValue as string)
           : isTagFilter
             ? (Array.isArray(filterValue) &&
                 tags.length &&
@@ -183,7 +184,7 @@ const FilterFlagModal = ({
       }
       return '';
     },
-    [tags]
+    [tags, flagStatusOptions, booleanOptions, getAccountLabel]
   );
 
   const handleChangeFilterValue = useCallback(
@@ -194,27 +195,27 @@ const FilterFlagModal = ({
       if (isTagOption) {
         const values = filterValue as string[];
         if (Array.isArray(value) && isEmpty(value)) {
-          selectedFilters[filterIndex] = {
-            ...selectedFilters[filterIndex],
-            filterValue: value
-          };
-          return setSelectedFilters([...selectedFilters]);
+          return setSelectedFilters(prev => {
+            const next = [...prev];
+            next[filterIndex] = { ...next[filterIndex], filterValue: value };
+            return next;
+          });
         }
         const isExisted = values.find(item => item === value);
         const newValue: string[] = isExisted
           ? values.filter(item => item !== value)
           : [...values, value as string];
-        selectedFilters[filterIndex] = {
-          ...selectedFilters[filterIndex],
-          filterValue: newValue
-        };
-        return setSelectedFilters([...selectedFilters]);
+        return setSelectedFilters(prev => {
+          const next = [...prev];
+          next[filterIndex] = { ...next[filterIndex], filterValue: newValue };
+          return next;
+        });
       }
-      selectedFilters[filterIndex] = {
-        ...selectedFilters[filterIndex],
-        filterValue: value
-      };
-      setSelectedFilters([...selectedFilters]);
+      setSelectedFilters(prev => {
+        const next = [...prev];
+        next[filterIndex] = { ...next[filterIndex], filterValue: value };
+        return next;
+      });
     },
     [selectedFilters]
   );
@@ -223,12 +224,11 @@ const FilterFlagModal = ({
     const selectedOption = flagFilterOptions.find(item => item.value === value);
     if (selectedOption) {
       const filterValue = selectedOption.value === FilterTypes.TAGS ? [] : '';
-
-      selectedFilters[filterIndex] = {
-        ...selectedOption,
-        filterValue
-      };
-      setSelectedFilters([...selectedFilters]);
+      setSelectedFilters(prev => {
+        const next = [...prev];
+        next[filterIndex] = { ...selectedOption, filterValue };
+        return next;
+      });
     }
   };
 
@@ -262,7 +262,7 @@ const FilterFlagModal = ({
       ...defaultFilters,
       ...newFilters
     });
-  }, [selectedFilters]);
+  }, [selectedFilters, onSubmit]);
 
   useEffect(() => {
     handleSetFilterOnInit();
@@ -310,32 +310,66 @@ const FilterFlagModal = ({
                 contentClassName="w-[270px]"
               />
               <p className="typo-para-medium text-gray-600">is</p>
-              <Dropdown
-                disabled={
-                  (isTagFilter && isLoadingTags) ||
-                  (isMaintainerFilter && isLoading) ||
-                  !filterType
-                }
-                loading={
-                  (isTagFilter && isLoadingTags) ||
-                  (isMaintainerFilter && isLoading)
-                }
-                isListItem={isHaveSearchingDropdown}
-                multiselect={isTagFilter}
-                placeholder={t(`select-value`)}
-                value={filterOption?.filterValue as DropdownValue}
-                labelCustom={handleGetLabelFilterValue(filterOption)}
-                isSearchable={isHaveSearchingDropdown}
-                options={valueOptions as DropdownOption[]}
-                onChange={value =>
-                  handleChangeFilterValue(value as DropdownValue, filterIndex)
-                }
-                className="w-full truncate"
-                contentClassName={cn('w-[235px]', {
-                  'pt-0 w-[300px]': isHaveSearchingDropdown,
-                  'hidden-scroll': valueOptions?.length > 15
-                })}
-              />
+              {isHaveSearchingDropdown ? (
+                <DropdownMenuWithSearch
+                  disabled={
+                    (isTagFilter && isLoadingTags) ||
+                    (isMaintainerFilter && isLoadingAccounts) ||
+                    !filterType
+                  }
+                  isLoading={
+                    (isTagFilter && isLoadingTags) ||
+                    (isMaintainerFilter && isLoadingAccounts)
+                  }
+                  isMultiselect={isTagFilter}
+                  placeholder={t(`select-value`)}
+                  itemSelected={
+                    isMaintainerFilter
+                      ? (filterOption?.filterValue as string)
+                      : undefined
+                  }
+                  selectedOptions={
+                    isTagFilter
+                      ? (filterOption?.filterValue as string[])
+                      : undefined
+                  }
+                  label={handleGetLabelFilterValue(filterOption) as string}
+                  options={
+                    isMaintainerFilter
+                      ? emailOptions
+                      : (valueOptions as DropdownOption[])
+                  }
+                  isHasMore={
+                    isMaintainerFilter && hasMaintainerFilter && hasMore
+                  }
+                  isLoadingMore={isMaintainerFilter && isLoadingMore}
+                  onHasMoreOptions={isMaintainerFilter ? loadMore : undefined}
+                  isSearching={isMaintainerFilter && isSearching}
+                  onSearchChange={
+                    isMaintainerFilter ? onAccountSearchChange : undefined
+                  }
+                  onSelectOption={value =>
+                    handleChangeFilterValue(value as DropdownValue, filterIndex)
+                  }
+                  triggerClassName="w-full truncate"
+                  contentClassName={cn('w-[300px]', {
+                    'hidden-scroll': valueOptions?.length > 15
+                  })}
+                />
+              ) : (
+                <Dropdown
+                  disabled={!filterType}
+                  placeholder={t(`select-value`)}
+                  value={filterOption?.filterValue as DropdownValue}
+                  labelCustom={handleGetLabelFilterValue(filterOption)}
+                  options={valueOptions as DropdownOption[]}
+                  onChange={value =>
+                    handleChangeFilterValue(value as DropdownValue, filterIndex)
+                  }
+                  className="w-full truncate"
+                  contentClassName="w-[235px]"
+                />
+              )}
 
               <Button
                 variant={'grey'}
