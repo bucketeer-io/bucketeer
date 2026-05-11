@@ -26,23 +26,20 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
-//go:embed sql/mysql/insert_push.sql
-var insertPushMySQL string
-
-//go:embed sql/mysql/update_push.sql
-var updatePushMySQL string
-
-//go:embed sql/mysql/select_push.sql
-var selectPushMySQL string
-
-//go:embed sql/mysql/list_pushes.sql
-var listPushesMySQL string
-
-//go:embed sql/mysql/count_pushes.sql
-var countPushesMySQL string
-
-//go:embed sql/mysql/delete_push.sql
-var deletePushMySQL string
+var (
+	//go:embed sql/mysql/insert_push.sql
+	insertPushMySQL string
+	//go:embed sql/mysql/update_push.sql
+	updatePushMySQL string
+	//go:embed sql/mysql/select_push.sql
+	selectPushMySQL string
+	//go:embed sql/mysql/list_pushes.sql
+	listPushesMySQL string
+	//go:embed sql/mysql/count_pushes.sql
+	countPushesMySQL string
+	//go:embed sql/mysql/delete_push.sql
+	deletePushMySQL string
+)
 
 type mysqlPushStorage struct {
 	qe mysql.QueryExecer
