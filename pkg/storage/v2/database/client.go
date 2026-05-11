@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
+
 // Package database provides a dialect-agnostic transactional client for API and
 // composition layers. Query execution stays on mysql.Client / postgres.Client
 // (QueryExecer); those clients attach the active transaction to context inside
