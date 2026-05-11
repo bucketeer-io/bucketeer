@@ -20,10 +20,7 @@ import (
 	"errors"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
@@ -59,13 +56,4 @@ type PushStorage interface {
 	GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
 	ListPushes(ctx context.Context, p ListPushesParams) ([]*proto.Push, int, int64, error)
 	DeletePush(ctx context.Context, id, environmentId string) error
-}
-
-func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage {
-	return &mysqlPushStorage{qe: qe}
-}
-
-// NewPostgresPushStorage returns push persistence backed by PostgreSQL.
-func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage {
-	return &postgresPushStorage{qe: qe}
 }

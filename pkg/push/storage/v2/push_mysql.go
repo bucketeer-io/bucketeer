@@ -48,6 +48,11 @@ type mysqlPushStorage struct {
 	qe mysql.QueryExecer
 }
 
+// NewMySQLPushStorage returns push persistence backed by MySQL.
+func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage {
+	return &mysqlPushStorage{qe: qe}
+}
+
 func (s *mysqlPushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
 	_, err := s.qe.ExecContext(
 		ctx,

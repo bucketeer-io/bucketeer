@@ -45,6 +45,11 @@ type postgresPushStorage struct {
 	qe postgres.QueryExecer
 }
 
+// NewPostgresPushStorage returns push persistence backed by PostgreSQL.
+func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage {
+	return &postgresPushStorage{qe: qe}
+}
+
 func (s *postgresPushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
 	_, err := s.qe.ExecContext(
 		ctx,
