@@ -125,18 +125,9 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		{
 			desc: "error: segment not found",
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
@@ -150,18 +141,9 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {

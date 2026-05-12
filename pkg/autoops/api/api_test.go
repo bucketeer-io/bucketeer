@@ -59,8 +59,10 @@ func TestNewAutoOpsService(t *testing.T) {
 	authClientMock := authclientmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
+	featureStorageMock := mockFeatureStorage.NewMockFeatureStorage(mockController)
 	s := NewAutoOpsService(
 		mysqlClientMock,
+		featureStorageMock,
 		featureClientMock,
 		experimentClientMock,
 		accountClientMock,

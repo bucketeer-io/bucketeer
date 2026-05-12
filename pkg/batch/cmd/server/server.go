@@ -50,6 +50,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
@@ -293,6 +294,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	featureStorage := featuremysql.NewFeatureStorage(mysqlClient)
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -516,7 +518,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			autoOpsExecutor,
-			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -527,7 +529,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
-			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -535,7 +537,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			progressiveRolloutExecutor,
-			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -559,7 +561,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithMetrics(registerer),
 		),
 		cacher.NewFeatureFlagCacher(
-			mysqlClient,
+			featureStorage,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
@@ -589,11 +591,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		),
 		deleter.NewTagDeleter(
 			mysqlClient,
+			featureStorage,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		autoarchive.NewFeatureAutoArchiver(
 			mysqlClient,
+			featureStorage,
 			featureClient,
 			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),

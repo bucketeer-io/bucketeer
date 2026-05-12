@@ -49,8 +49,10 @@ func TestNewTagService(t *testing.T) {
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
+	featureStorageMock := featurestoragemock.NewMockFeatureStorage(mockController)
 	s := NewTagService(
 		mysqlClientMock,
+		featureStorageMock,
 		accountClientMock,
 		p,
 		WithLogger(logger),

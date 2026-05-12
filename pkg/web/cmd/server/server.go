@@ -49,6 +49,9 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureapi "github.com/bucketeer-io/bucketeer/v2/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
+	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	insightsapi "github.com/bucketeer-io/bucketeer/v2/pkg/insights/api"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
@@ -509,6 +512,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	var pushStorage v2ps.PushStorage
+	var featureStorage v2fs.FeatureStorage
 	var postgresClient postgres.Client
 	if *s.operationalDatabaseType == "postgres" {
 		postgresClient, err = s.createPostgresClient(ctx, registerer, logger)
@@ -517,9 +521,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 		dbClient = database.NewPostgresStorageClient(postgresClient)
 		pushStorage = v2ps.NewPostgresPushStorage(postgresClient)
+		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
+		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -713,6 +719,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
+		featureStorage,
 		featureClient,
 		experimentClient,
 		accountClient,
@@ -796,6 +803,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// featureService
 	featureService, err := s.createFeatureService(
+		dbClient,
+		featureStorage,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -858,6 +867,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// tagService
 	tagService := tagapi.NewTagService(
 		mysqlClient,
+		featureStorage,
 		accountClient,
 		domainTopicPublisher,
 		tagapi.WithLogger(logger),
@@ -1249,6 +1259,8 @@ func (s *server) createEnvironmentService(
 }
 
 func (s *server) createFeatureService(
+	dbClient database.Client,
+	featureStorage v2fs.FeatureStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1262,6 +1274,8 @@ func (s *server) createFeatureService(
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	featureService := featureapi.NewFeatureService(
+		dbClient,
+		featureStorage,
 		mysqlClient,
 		accountClient,
 		experimentClient,
