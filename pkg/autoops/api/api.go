@@ -37,7 +37,6 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -970,8 +969,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if executeClause.ExecutedAt != 0 {
 			return statusClauseAlreadyExecuted.Err()
 		}
-		ftStorage := featuremysql.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
+		feature, err := s.featureStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -987,7 +985,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		if err := executeAutoOpsRuleOperation(
 			contextWithTx,
-			ftStorage,
+			s.featureStorage,
 			req.EnvironmentId,
 			executeClause.ActionType,
 			feature,
