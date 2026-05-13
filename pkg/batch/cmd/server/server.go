@@ -313,6 +313,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	var featureStorage v2fs.FeatureStorage
 	if *s.operationalDatabaseType == "postgres" {
+		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
+			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
+		}
 		postgresClient, err := s.createPostgresClient(ctx, registerer, logger)
 		if err != nil {
 			return err
