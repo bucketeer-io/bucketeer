@@ -32,7 +32,8 @@ var (
 		"feature unexpected affected rows",
 	)
 
-	ErrInvalidListFeaturesCursor = errors.New("feature storage: invalid list features cursor")
+	ErrInvalidListFeaturesCursor  = errors.New("feature storage: invalid list features cursor")
+	ErrInvalidListFeaturesOrderBy = errors.New("feature storage: invalid list features order by")
 )
 
 // ListFeaturesParams carries list intent for ListFeatures without database-specific types.

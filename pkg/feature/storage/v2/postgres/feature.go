@@ -18,7 +18,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -375,7 +374,7 @@ func listFeaturesOrders(
 	case proto.ListFeaturesRequest_AUTO_OPS:
 		column = "(progressive_rollout_count + schedule_count + kill_switch_count)"
 	default:
-		return nil, fmt.Errorf("list features: invalid order_by %v", orderBy)
+		return nil, v2fs.ErrInvalidListFeaturesOrderBy
 	}
 	direction := pgstorage.OrderDirectionAsc
 	if orderDirection == proto.ListFeaturesRequest_DESC {

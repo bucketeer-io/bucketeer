@@ -506,6 +506,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go healthcheckServer.Run()
 
+	// TODO: postgres is in development and not fully supported yet.
 	var dbClient database.Client
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {

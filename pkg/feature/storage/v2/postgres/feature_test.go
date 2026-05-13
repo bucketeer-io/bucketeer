@@ -29,6 +29,8 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
+var errInternal = errors.New("internal error")
+
 func TestNewFeatureStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -62,10 +64,10 @@ func TestCreateFeature(t *testing.T) {
 			setup: func(s *featureStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, errInternal)
 			},
 			feature:     &domain.Feature{Feature: &proto.Feature{}},
-			expectedErr: errors.New("error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "Success",
@@ -117,10 +119,10 @@ func TestUpdateFeature(t *testing.T) {
 			setup: func(s *featureStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, errInternal)
 			},
 			feature:     &domain.Feature{Feature: &proto.Feature{}},
-			expectedErr: errors.New("error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "Success",
@@ -175,14 +177,14 @@ func TestGetFeature(t *testing.T) {
 			desc: "Error",
 			setup: func(s *featureStorage) {
 				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				row.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
 			id:          "feature-id",
 			expected:    nil,
-			expectedErr: errors.New("error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "Success",
@@ -243,7 +245,7 @@ func TestGetFeatureByVersion(t *testing.T) {
 			desc: "Error",
 			setup: func(s *featureStorage) {
 				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				row.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
@@ -251,7 +253,7 @@ func TestGetFeatureByVersion(t *testing.T) {
 			id:          "feature-id",
 			version:     1,
 			expected:    nil,
-			expectedErr: errors.New("error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "Success",
@@ -300,12 +302,12 @@ func TestListFeatures(t *testing.T) {
 			setup: func(s *featureStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, errInternal)
 			},
 			params:         v2fs.ListFeaturesParams{},
 			expected:       nil,
 			expectedCursor: 0,
-			expectedErr:    errors.New("error"),
+			expectedErr:    errInternal,
 		},
 		{
 			desc: "Success",
@@ -365,12 +367,12 @@ func TestListFeaturesFilteredByExperiment(t *testing.T) {
 			setup: func(s *featureStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, errInternal)
 			},
 			params:         v2fs.ListFeaturesFilteredByExperimentParams{},
 			expected:       nil,
 			expectedCursor: 0,
-			expectedErr:    errors.New("error"),
+			expectedErr:    errInternal,
 		},
 		{
 			desc: "Success",
@@ -431,11 +433,11 @@ func TestListFeaturesByEnvironment(t *testing.T) {
 			setup: func(s *featureStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("query error"))
+				).Return(nil, errInternal)
 			},
 			environmentID: "env-id",
 			expected:      nil,
-			expectedErr:   errors.New("query error"),
+			expectedErr:   errInternal,
 		},
 		{
 			desc: "Success: empty result",
@@ -458,14 +460,14 @@ func TestListFeaturesByEnvironment(t *testing.T) {
 				rows := pgmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
-				rows.EXPECT().Scan(gomock.Any()).Return(errors.New("scan error"))
+				rows.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), "env-id",
 				).Return(rows, nil)
 			},
 			environmentID: "env-id",
 			expected:      nil,
-			expectedErr:   errors.New("scan error"),
+			expectedErr:   errInternal,
 		},
 	}
 	for _, p := range patterns {
@@ -496,10 +498,10 @@ func TestListAllEnvironmentFeatures(t *testing.T) {
 			setup: func(s *featureStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("query error"))
+				).Return(nil, errInternal)
 			},
 			expected:    nil,
-			expectedErr: errors.New("query error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "Success: empty result",
@@ -521,13 +523,13 @@ func TestListAllEnvironmentFeatures(t *testing.T) {
 				rows := pgmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
-				rows.EXPECT().Scan(gomock.Any()).Return(errors.New("scan error"))
+				rows.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
 			expected:    nil,
-			expectedErr: errors.New("scan error"),
+			expectedErr: errInternal,
 		},
 	}
 	for _, p := range patterns {
@@ -558,14 +560,14 @@ func TestGetFeatureSummary(t *testing.T) {
 			desc: "Error",
 			setup: func(s *featureStorage) {
 				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				row.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
 			environmentID: "env",
 			expected:      nil,
-			expectedErr:   errors.New("error"),
+			expectedErr:   errInternal,
 		},
 		{
 			desc: "Success",

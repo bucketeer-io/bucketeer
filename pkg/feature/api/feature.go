@@ -355,6 +355,9 @@ func (s *FeatureService) listFeatures(
 		if errors.Is(err, v2fs.ErrInvalidListFeaturesCursor) {
 			return nil, "", 0, statusInvalidCursor.Err()
 		}
+		if errors.Is(err, v2fs.ErrInvalidListFeaturesOrderBy) {
+			return nil, "", 0, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list features",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -408,6 +411,9 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	if err != nil {
 		if errors.Is(err, v2fs.ErrInvalidListFeaturesCursor) {
 			return nil, "", 0, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2fs.ErrInvalidListFeaturesOrderBy) {
+			return nil, "", 0, statusInvalidOrderBy.Err()
 		}
 		s.logger.Error(
 			"Failed to list features filtered by experiment",
