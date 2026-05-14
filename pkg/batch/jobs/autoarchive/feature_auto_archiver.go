@@ -47,6 +47,7 @@ type featureAutoArchiver struct {
 // NewFeatureAutoArchiver creates a new feature auto-archiver batch job.
 func NewFeatureAutoArchiver(
 	mysqlClient mysql.Client,
+	ftStorage featurestorage.FeatureStorage,
 	featureClient featureclient.Client,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -60,7 +61,7 @@ func NewFeatureAutoArchiver(
 	codeRefStorage := coderefstorage.NewCodeReferenceStorage(mysqlClient)
 	return &featureAutoArchiver{
 		envStorage:     environmentstorage.NewEnvironmentStorage(mysqlClient),
-		ftStorage:      featurestorage.NewFeatureStorage(mysqlClient),
+		ftStorage:      ftStorage,
 		codeRefStorage: codeRefStorage,
 		evaluator:      domain.NewArchivabilityEvaluator(codeRefStorage),
 		featureClient:  featureClient,
@@ -197,24 +198,10 @@ func (a *featureAutoArchiver) listNonArchivedFeatures(
 	environmentID string,
 ) ([]*featureproto.Feature, error) {
 	archived := false
-	options := &mysql.ListOptions{
-		Filters: []*mysql.FilterV2{
-			{
-				Column:   "feature.archived",
-				Operator: mysql.OperatorEqual,
-				Value:    archived,
-			},
-			{
-				Column:   "feature.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    environmentID,
-			},
-		},
-		Limit:  mysql.QueryNoLimit,
-		Offset: mysql.QueryNoOffset,
-	}
-
-	features, _, _, err := a.ftStorage.ListFeatures(ctx, options)
+	features, _, _, err := a.ftStorage.ListFeatures(ctx, featurestorage.ListFeaturesParams{
+		EnvironmentID: environmentID,
+		Archived:      &archived,
+	})
 	if err != nil {
 		a.logger.Error("Failed to list features",
 			zap.String("environmentId", environmentID),

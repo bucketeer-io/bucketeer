@@ -50,6 +50,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
+	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
@@ -65,6 +68,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	batchproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 )
@@ -86,22 +90,23 @@ const (
 type server struct {
 	*kingpin.CmdClause
 	// Common
-	port               *int
-	grpcGatewayPort    *int
-	project            *string
-	certPath           *string
-	keyPath            *string
-	serviceTokenPath   *string
-	timezone           *string
-	refreshInterval    *time.Duration
-	experimentLockTTL  *time.Duration
-	webURL             *string
-	oauthPublicKeyPath *string
-	oauthAudience      *string
-	oauthIssuer        *string
-	stanHost           *string
-	stanPort           *string
-	stanModelID        *string
+	port                    *int
+	grpcGatewayPort         *int
+	project                 *string
+	certPath                *string
+	keyPath                 *string
+	serviceTokenPath        *string
+	timezone                *string
+	refreshInterval         *time.Duration
+	experimentLockTTL       *time.Duration
+	webURL                  *string
+	oauthPublicKeyPath      *string
+	oauthAudience           *string
+	oauthIssuer             *string
+	stanHost                *string
+	stanPort                *string
+	stanModelID             *string
+	operationalDatabaseType *string
 	// MySQL
 	mysqlUser        *string
 	mysqlPass        *string
@@ -109,6 +114,12 @@ type server struct {
 	mysqlPort        *int
 	mysqlDBName      *string
 	mysqlDBOpenConns *int
+	// PostgreSQL
+	postgresUser   *string
+	postgresPass   *string
+	postgresHost   *string
+	postgresPort   *int
+	postgresDBName *string
 	// gRPC service
 	accountService              *string
 	environmentService          *string
@@ -163,16 +174,23 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-audience",
 			"The oauth audience registered in the token",
 		).Required().String(),
-		oauthIssuer:      cmd.Flag("oauth-issuer", "The issuer url").Required().String(),
-		stanHost:         cmd.Flag("stan-host", "httpstan host.").Default("localhost").String(),
-		stanPort:         cmd.Flag("stan-port", "httpstan port.").Default("8080").String(),
-		stanModelID:      cmd.Flag("stan-model-id", "httpstan modelId.").Required().String(),
+		oauthIssuer: cmd.Flag("oauth-issuer", "The issuer url").Required().String(),
+		stanHost:    cmd.Flag("stan-host", "httpstan host.").Default("localhost").String(),
+		stanPort:    cmd.Flag("stan-port", "httpstan port.").Default("8080").String(),
+		stanModelID: cmd.Flag("stan-model-id", "httpstan modelId.").Required().String(),
+		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
+			Default("mysql").String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
 		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Required().Int(),
+		postgresUser:     cmd.Flag("postgres-user", "PostgreSQL user.").String(),
+		postgresPass:     cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
+		postgresHost:     cmd.Flag("postgres-host", "PostgreSQL host.").String(),
+		postgresPort:     cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
+		postgresDBName:   cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -292,6 +310,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
+	}
+	var featureStorage v2fs.FeatureStorage
+	if *s.operationalDatabaseType == "postgres" {
+		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
+			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
+		}
+		postgresClient, err := s.createPostgresClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
+		defer postgresClient.Close()
+		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
+	} else {
+		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -516,7 +548,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			autoOpsExecutor,
-			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -527,7 +559,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
-			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -535,7 +567,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			progressiveRolloutExecutor,
-			ftcacher.NewFeatureFlagCacher(mysqlClient, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -559,7 +591,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithMetrics(registerer),
 		),
 		cacher.NewFeatureFlagCacher(
-			mysqlClient,
+			featureStorage,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
@@ -589,11 +621,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		),
 		deleter.NewTagDeleter(
 			mysqlClient,
+			featureStorage,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		autoarchive.NewFeatureAutoArchiver(
 			mysqlClient,
+			featureStorage,
 			featureClient,
 			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),
@@ -730,6 +764,23 @@ func (s *server) createMySQLClient(
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
 		mysql.WithMaxOpenConns(*s.mysqlDBOpenConns),
+	)
+}
+
+func (s *server) createPostgresClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return postgres.NewClient(
+		ctx,
+		*s.postgresUser, *s.postgresPass, *s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDBName,
+		postgres.WithLogger(logger),
+		postgres.WithMetrics(registerer),
 	)
 }
 
