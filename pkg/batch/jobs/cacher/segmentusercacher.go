@@ -24,7 +24,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 )
 
 type segmentUserCacherJob struct {
@@ -35,7 +35,7 @@ type segmentUserCacherJob struct {
 
 // NewSegmentUserCacher creates a new segment user cacher batch job.
 func NewSegmentUserCacher(
-	mysqlClient mysql.Client,
+	segmentStorage v2fs.SegmentStorage,
 	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -46,7 +46,7 @@ func NewSegmentUserCacher(
 		opt(dopts)
 	}
 	return &segmentUserCacherJob{
-		cacher: ftcacher.NewSegmentUserCacher(mysqlClient, multiCaches, dopts.Logger),
+		cacher: ftcacher.NewSegmentUserCacher(segmentStorage, multiCaches, dopts.Logger),
 		opts:   dopts,
 		logger: dopts.Logger.Named("segment-user-cacher-job"),
 	}

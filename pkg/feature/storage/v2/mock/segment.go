@@ -17,7 +17,6 @@ import (
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -119,9 +118,9 @@ func (mr *MockSegmentStorageMockRecorder) ListSegmentUsersBySegment(ctx, segment
 }
 
 // ListSegments mocks base method.
-func (m *MockSegmentStorage) ListSegments(ctx context.Context, options *mysql.ListOptions, isInUseStatus *bool) ([]*feature.Segment, int, int64, map[string][]string, error) {
+func (m *MockSegmentStorage) ListSegments(ctx context.Context, params v2.ListSegmentsParams) ([]*feature.Segment, int, int64, map[string][]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSegments", ctx, options, isInUseStatus)
+	ret := m.ctrl.Call(m, "ListSegments", ctx, params)
 	ret0, _ := ret[0].([]*feature.Segment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -131,9 +130,9 @@ func (m *MockSegmentStorage) ListSegments(ctx context.Context, options *mysql.Li
 }
 
 // ListSegments indicates an expected call of ListSegments.
-func (mr *MockSegmentStorageMockRecorder) ListSegments(ctx, options, isInUseStatus any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) ListSegments(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegments), ctx, options, isInUseStatus)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegments), ctx, params)
 }
 
 // UpdateSegment mocks base method.

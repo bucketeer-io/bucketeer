@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -70,7 +71,7 @@ func TestCreateSegment(t *testing.T) {
 			segment: &domain.Segment{
 				Segment: &proto.Segment{},
 			},
-			expectedErr: ErrSegmentAlreadyExists,
+			expectedErr: v2fs.ErrSegmentAlreadyExists,
 		},
 		{
 			desc: "success",
@@ -115,6 +116,7 @@ func TestUpdateSegment(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	errInternal := errors.New("test error")
 	tests := []struct {
 		desc        string
 		setup       func(*mock.MockQueryExecer)
@@ -139,12 +141,12 @@ func TestUpdateSegment(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
-				).Return(nil, errors.New("test error"))
+				).Return(nil, errInternal)
 			},
 			segment: &domain.Segment{
 				Segment: &proto.Segment{},
 			},
-			expectedErr: errors.New("test error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "success",
@@ -211,7 +213,7 @@ func TestGetSegment(t *testing.T) {
 				).Return(row)
 			},
 			expected:    nil,
-			expectedErr: ErrSegmentNotFound,
+			expectedErr: v2fs.ErrSegmentNotFound,
 		},
 		{
 			desc: "success",
@@ -250,10 +252,11 @@ func TestListSegments(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	errInternal := errors.New("test error")
 	tests := []struct {
 		desc        string
 		setup       func(*mock.MockQueryExecer)
-		options     *mysql.ListOptions
+		params      v2fs.ListSegmentsParams
 		expectedErr error
 	}{
 		{
@@ -263,13 +266,13 @@ func TestListSegments(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
-				).Return(nil, errors.New("test error"))
+				).Return(nil, errInternal)
 			},
-			options: &mysql.ListOptions{
-				Limit:  10,
-				Offset: 0,
+			params: v2fs.ListSegmentsParams{
+				PageSize:      10,
+				EnvironmentID: "env",
 			},
-			expectedErr: errors.New("test error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "success",
@@ -287,9 +290,9 @@ func TestListSegments(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Limit:  10,
-				Offset: 0,
+			params: v2fs.ListSegmentsParams{
+				PageSize:      10,
+				EnvironmentID: "env",
 			},
 			expectedErr: nil,
 		},
@@ -300,8 +303,7 @@ func TestListSegments(t *testing.T) {
 			mockQueryExecer := mock.NewMockQueryExecer(mockController)
 			tt.setup(mockQueryExecer)
 			storage := NewSegmentStorage(mockQueryExecer)
-			isInUseStatus := false
-			_, _, _, _, err := storage.ListSegments(context.Background(), tt.options, &isInUseStatus)
+			_, _, _, _, err := storage.ListSegments(context.Background(), tt.params)
 			assert.Equal(t, tt.expectedErr, err)
 		})
 	}
@@ -312,6 +314,7 @@ func TestDeleteSegment(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	errInternal := errors.New("test error")
 	tests := []struct {
 		desc        string
 		setup       func(*mock.MockQueryExecer)
@@ -324,9 +327,9 @@ func TestDeleteSegment(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
-				).Return(nil, errors.New("test error"))
+				).Return(nil, errInternal)
 			},
-			expectedErr: errors.New("test error"),
+			expectedErr: errInternal,
 		},
 		{
 			desc: "success",

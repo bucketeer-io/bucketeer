@@ -24,7 +24,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -46,7 +45,7 @@ type segmentUserCacher struct {
 
 // NewSegmentUserCacher creates a new SegmentUserCacher.
 func NewSegmentUserCacher(
-	mysqlClient mysql.Client,
+	segStorage ftstorage.SegmentStorage,
 	multiCaches []cache.MultiGetCache,
 	logger *zap.Logger,
 ) SegmentUserCacher {
@@ -55,7 +54,7 @@ func NewSegmentUserCacher(
 		caches = append(caches, cachev3.NewSegmentUsersCache(c, 0))
 	}
 	return &segmentUserCacher{
-		segStorage: ftstorage.NewSegmentStorage(mysqlClient),
+		segStorage: segStorage,
 		caches:     caches,
 		logger:     logger.Named("segment-user-cacher"),
 	}
