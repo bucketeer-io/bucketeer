@@ -33,9 +33,7 @@ const SearchInput = ({
   useEffect(() => {
     if (searchValueRef.current) {
       const timeout = setTimeout(() => onChange(searchValue), 500);
-      return () => {
-        clearTimeout(timeout);
-      };
+      return () => clearTimeout(timeout);
     }
   }, [searchValue]);
 
@@ -44,11 +42,10 @@ const SearchInput = ({
   }, []);
 
   return (
-    <fieldset
+    <form
       className="w-full"
       onSubmit={event => {
         event.preventDefault();
-        event.stopPropagation();
         onChange(searchValue);
       }}
     >
@@ -73,7 +70,7 @@ const SearchInput = ({
           onKeyDown={e => onKeyDown && onKeyDown(e)}
         />
       </InputGroup>
-    </fieldset>
+    </form>
   );
 };
 

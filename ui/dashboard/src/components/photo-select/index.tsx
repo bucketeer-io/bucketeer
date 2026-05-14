@@ -1,7 +1,14 @@
-import { createRef, forwardRef, useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import type { InputHTMLAttributes, ChangeEvent } from 'react';
 import { useTranslation } from 'i18n';
-import { v4 as uuid } from 'uuid';
 import { formatBytes } from 'utils/files';
 import DraggingOverlay from './dragging-overlay';
 import ErrorMessage from './error-message';
@@ -35,61 +42,69 @@ const accepts: Record<PhotoSelectFormat, string | string[]> = {
 const PhotoSelect = forwardRef<PhotoSelectRef, PhotoSelectProps>(
   ({ format = 'image', onChange, maxFileSize, ...props }, ref) => {
     const { t } = useTranslation('common');
-    const id = uuid();
+    const id = useId();
     const [inputKey, setInputKey] = useState(Date.now());
-    const dropzone = createRef<HTMLLabelElement>();
+    const dropzone = useRef<HTMLLabelElement>(null);
     const draggingCount = useRef(0);
-    const formats = Array.isArray(format) ? format : [format];
+    const formats = useMemo(
+      () => (Array.isArray(format) ? format : [format]),
+      [format]
+    );
     const accept = formats.map(item => accepts[item]).join(',');
-    const validate = (file: File) =>
-      formats.every(item => validates[item](file));
+    const validate = useCallback(
+      (file: File) => formats.every(item => validates[item](file)),
+      [formats]
+    );
     const [dragging, setDragging] = useState(false);
     const [validationError, setValidationError] =
       useState<ValidationError | null>(null);
 
-    const handleValidate = async (_files?: FileList | null) => {
-      // Clear validation error
-      setValidationError(null);
+    const handleValidate = useCallback(
+      async (_files?: FileList | null) => {
+        // Clear validation error
+        setValidationError(null);
 
-      // This is required to convert FileList object to array
-      const files = [...(_files || [])];
+        // This is required to convert FileList object to array
+        const files = [...(_files || [])];
 
-      // Validate single file upload
-      if (files.length > 1) {
-        setValidationError({
-          title: t('file-upload.error-multiple-file-title'),
-          message: t('file-upload.error-multiple-file-message')
-        });
-        return;
-      }
+        // Validate single file upload
+        if (files.length > 1) {
+          setValidationError({
+            title: t('file-upload.error-multiple-file-title'),
+            message: t('file-upload.error-multiple-file-message')
+          });
+          return;
+        }
 
-      // Ok, single file
-      const file = files[0];
-      if (!file) return;
+        // Ok, single file
+        const file = files[0];
+        if (!file) return;
 
-      // Validate file format
-      if (!validate(file)) {
-        setValidationError({
-          title: t('file-upload.error-format-title'),
-          message: t('file-upload.error-format-message', { format })
-        });
-        return;
-      }
+        // Validate file format
+        if (!validate(file)) {
+          setValidationError({
+            title: t('file-upload.error-format-title'),
+            message: t('file-upload.error-format-message', { format })
+          });
+          return;
+        }
 
-      // Validate file size
-      if (maxFileSize && file.size > maxFileSize) {
-        setValidationError({
-          title: t('file-upload.error-file-size-title'),
-          message: t('file-upload.error-file-size-message', {
-            size: formatBytes(maxFileSize)
-          })
-        });
-        return;
-      }
+        // Validate file size
+        if (maxFileSize && file.size > maxFileSize) {
+          setValidationError({
+            title: t('file-upload.error-file-size-title'),
+            message: t('file-upload.error-file-size-message', {
+              size: formatBytes(maxFileSize)
+            })
+          });
+          return;
+        }
 
-      // Ok, upload
-      onChange(file);
-    };
+        // Ok, upload
+        onChange(file);
+      },
+      [t, format, validate, maxFileSize, onChange]
+    );
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
       handleValidate(e.target?.files);
@@ -100,53 +115,54 @@ const PhotoSelect = forwardRef<PhotoSelectRef, PhotoSelectProps>(
       setValidationError(null);
     };
 
-    const handleDragIn = (e: DragEvent) => {
+    const handleDragIn = useCallback((e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       draggingCount.current += 1;
       if (e.dataTransfer?.items?.length) {
         setDragging(true);
       }
-    };
+    }, []);
 
-    const handleDragOut = (e: DragEvent) => {
+    const handleDragOut = useCallback((e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       draggingCount.current -= 1;
       if (draggingCount.current > 0) return;
       setDragging(false);
-    };
+    }, []);
 
-    const handleDrop = (e: DragEvent) => {
+    const handleDrop = useCallback(
+      (e: DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragging(false);
+        draggingCount.current = 0;
+        handleValidate(e.dataTransfer?.files);
+      },
+      [handleValidate]
+    );
+
+    const handleDrag = useCallback((e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      setDragging(false);
-      draggingCount.current = 0;
-      handleValidate(e.dataTransfer?.files);
-    };
-
-    const handleDrag = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
+    }, []);
 
     useEffect(() => {
-      if (dropzone.current) {
-        dropzone.current.addEventListener('dragenter', handleDragIn);
-        dropzone.current.addEventListener('dragleave', handleDragOut);
-        dropzone.current.addEventListener('dragover', handleDrag);
-        dropzone.current.addEventListener('drop', handleDrop);
-      }
+      const el = dropzone.current;
+      if (!el) return;
+      el.addEventListener('dragenter', handleDragIn);
+      el.addEventListener('dragleave', handleDragOut);
+      el.addEventListener('dragover', handleDrag);
+      el.addEventListener('drop', handleDrop);
 
       return () => {
-        if (dropzone.current) {
-          dropzone.current.removeEventListener('dragenter', handleDragIn);
-          dropzone.current.removeEventListener('dragleave', handleDragOut);
-          dropzone.current.removeEventListener('dragover', handleDrag);
-          dropzone.current.removeEventListener('drop', handleDrop);
-        }
+        el.removeEventListener('dragenter', handleDragIn);
+        el.removeEventListener('dragleave', handleDragOut);
+        el.removeEventListener('dragover', handleDrag);
+        el.removeEventListener('drop', handleDrop);
       };
-    }, []);
+    }, [handleDragIn, handleDragOut, handleDrag, handleDrop]);
 
     let content;
     if (validationError) {

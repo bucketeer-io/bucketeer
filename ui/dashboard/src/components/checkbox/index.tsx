@@ -1,6 +1,5 @@
-import { forwardRef, Ref, useMemo } from 'react';
+import { forwardRef, Ref, useId } from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
-import { v4 as uuid } from 'uuid';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import Icon from 'components/icon';
@@ -25,7 +24,7 @@ const Checkbox = forwardRef(
     }: CheckboxProps,
     ref: Ref<HTMLButtonElement>
   ) => {
-    const inputId = useMemo(() => uuid(), []);
+    const inputId = useId();
 
     return (
       <div

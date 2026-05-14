@@ -176,8 +176,8 @@ export const CreatableSelect = memo<CreatableSelectProps>(
         className={className}
         classNamePrefix="react-select"
         styles={{
-          option: (styles, props) =>
-            optionStyle(styles, props, isHiddenCreateNewOption),
+          option: (base, props) =>
+            optionStyle(base, props, isHiddenCreateNewOption),
           ...colorStyles,
           ...styles
         }}

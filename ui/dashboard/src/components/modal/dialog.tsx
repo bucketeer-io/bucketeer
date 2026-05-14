@@ -33,9 +33,12 @@ const DialogModal = ({
   className,
   overlayCls
 }: ModalProps) => {
-  const onOpenChange = useCallback((v: boolean) => {
-    if (v === false) onClose();
-  }, []);
+  const onOpenChange = useCallback(
+    (v: boolean) => {
+      if (v === false) onClose();
+    },
+    [onClose]
+  );
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>

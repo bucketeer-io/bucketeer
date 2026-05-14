@@ -29,7 +29,7 @@ const SlideModal = ({
     (v: boolean) => {
       if (v === false && shouldCloseOnOverlayClick) onClose();
     },
-    [shouldCloseOnOverlayClick]
+    [onClose, shouldCloseOnOverlayClick]
   );
 
   return (
