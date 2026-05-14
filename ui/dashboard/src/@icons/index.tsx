@@ -19,6 +19,7 @@ import IconCopy from './customized-icons/copy.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconDocument from './customized-icons/document.svg?react';
 import IconDownload from './customized-icons/download.svg?react';
+import IconDropZone from './customized-icons/drop-zone-icon.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconEnglishFlag from './customized-icons/english-flag.svg?react';
 import IconExpandSquar from './customized-icons/expand-squar.svg?react';
@@ -194,6 +195,7 @@ export {
   IconBucketWhite,
   IconArrowUpDown,
   IconDownload,
+  IconDropZone,
   // Special icons
   IconGoal,
   IconGoogle,
