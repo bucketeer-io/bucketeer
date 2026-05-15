@@ -142,10 +142,10 @@ func (s *AccountService) GetMe(
 		case orgErr == nil:
 			if !orgAccount.Disabled {
 				orgRole = orgAccount.OrganizationRole
-				if orgAccount.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
-					envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
-				} else {
+				if orgAccount.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 					envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+				} else {
+					envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
 				}
 			} else {
 				orgRole = accountproto.AccountV2_Role_Organization_UNASSIGNED
@@ -200,11 +200,11 @@ func (s *AccountService) GetMe(
 		return nil, err
 	}
 	var envRoles []*accountproto.ConsoleAccount_EnvironmentRole
-	if account.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
-		envRoles = s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
-	} else {
+	if account.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 		// If the user is an admin or owner, no need to filter environments.
 		envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+	} else {
+		envRoles = s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
 	}
 
 	// update user last seen
