@@ -19,13 +19,14 @@ env:
     postgres:
       user: bucketeer
       pass: bucketeer
-      host: localenv-postgres-headless.default.svc.cluster.local
+      host: localenv-postgresql-headless.default.svc.cluster.local
       port: 5432
       name: bucketeer
   goalTopic: goal
   evaluationTopic: evaluation
   userTopic: user
   metricsTopic: metrics
+  cacheInvalidationTopic: cache-invalidation
   publishNumGoroutines: 200
   publishTimeout: 1m
   redis:

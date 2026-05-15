@@ -29,7 +29,6 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -56,7 +55,7 @@ type featureFlagCacher struct {
 
 // NewFeatureFlagCacher creates a new FeatureFlagCacher.
 func NewFeatureFlagCacher(
-	mysqlClient mysql.Client,
+	ftStorage ftstorage.FeatureStorage,
 	multiCaches []cache.MultiGetCache,
 	logger *zap.Logger,
 ) FeatureFlagCacher {
@@ -65,7 +64,7 @@ func NewFeatureFlagCacher(
 		caches = append(caches, cachev3.NewFeaturesCache(c, 0))
 	}
 	return &featureFlagCacher{
-		ftStorage: ftstorage.NewFeatureStorage(mysqlClient),
+		ftStorage: ftStorage,
 		caches:    caches,
 		logger:    logger.Named("feature-flag-cacher"),
 	}

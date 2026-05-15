@@ -34,7 +34,7 @@ const (
 	subscriberSegmentUser           = "SegmentUser"
 	subscriberUserEvent             = "UserEvent"
 	subscriberDemoOrganizationEvent = "DemoOrganizationEvent"
-	subscriberCacheEviction         = "CacheEviction"
+	subscriberCacheRefresher        = "CacheRefresher"
 )
 
 const (

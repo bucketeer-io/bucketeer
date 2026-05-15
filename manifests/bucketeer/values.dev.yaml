@@ -3,7 +3,7 @@ global:
     tag: localenv
     imagePullSecrets:
 
-  # Global data warehouse configuration for development
+      # Global data warehouse configuration for development
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql, postgres
@@ -36,6 +36,7 @@ global:
 
   # Global primary database configuration
   # Set type to "mysql" or "postgres"
+  # (Postgres support is in development)
   operationalDatabase:
     type: mysql
     mysql:
@@ -48,7 +49,7 @@ global:
     postgres:
       user: "bucketeer"
       pass: "bucketeer"
-      host: "localenv-postgres-headless.default.svc.cluster.local"
+      host: "localenv-postgresql-headless.default.svc.cluster.local"
       port: 5432
       name: "bucketeer"
       openConns: 50
@@ -91,7 +92,8 @@ global:
 
 migration:
   image:
-    # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres (same tag).
+    # For MySQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-mysql.
+    # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres.
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: localenv
 
@@ -108,12 +110,11 @@ migration:
   # The migration baseline
   # First revision
   dbBaseline: "20240626022133"
-
   # postgres
   # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
   # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
   # URL format: postgres://user:password@host:port/db_name?sslmode=disable
-  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgres.default.svc:5432/bucketeer?sslmode=disable
+  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgresql-headless.default.svc.cluster.local:5432/bucketeer?sslmode=disable
   # dbBaseline: "20260226174000"
 
 web:
@@ -133,7 +134,8 @@ web:
     pubSubRedisMode: ${global.pubsub.redis.mode}
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     operationalDatabase:
-      type: mysql
+      # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -143,7 +145,7 @@ web:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
     persistentRedis:
@@ -213,12 +215,13 @@ api:
     furthestEventTimestamp: 48h
     featuresMemoryCacheTTL: 1m
     segmentUsersMemoryCacheTTL: 1m
-    domainTopic: domain
+    cacheInvalidationTopic: cache-invalidation
     gcpEnabled: false
     profile: false
     enablePprof: false
     operationalDatabase:
-      type: "mysql"
+      # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -228,7 +231,7 @@ api:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
     pprofAddr: 127.0.0.1:6060
@@ -272,7 +275,8 @@ batch-server:
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
     operationalDatabase:
-      type: mysql
+      # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -283,7 +287,7 @@ batch-server:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
         openConns: 50
@@ -403,7 +407,8 @@ subscriber:
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
     operationalDatabase:
-      type: mysql
+      # this will be injected from global config
+      type: ""
       mysql:
         user: "bucketeer"
         pass: "bucketeer"
@@ -414,7 +419,7 @@ subscriber:
       postgres:
         user: "bucketeer"
         pass: "bucketeer"
-        host: "localenv-postgres-headless.default.svc.cluster.local"
+        host: "localenv-postgresql-headless.default.svc.cluster.local"
         port: 5432
         name: "bucketeer"
         openConns: 50
@@ -483,7 +488,7 @@ subscriber:
       pullerMaxOutstandingBytes: 1000000000
       maxMps: 50
       workerNum: 1
-    cacheEviction:
+    cacheRefresher:
       pubSubType: ${global.pubsub.type}
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
@@ -491,7 +496,8 @@ subscriber:
       redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
       topic: domain
-      subscription: cache-eviction-domain-sub
+      subscription: cache-refresher-domain-sub
+      cacheInvalidationTopic: cache-invalidation
       pullerNumGoroutines: 5
       pullerMaxOutstandingMessages: 1000
       pullerMaxOutstandingBytes: 1000000000

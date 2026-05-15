@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -191,7 +191,7 @@ func TestListFeatureMySQL(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*featureStorage)
-		options        *mysql.ListOptions
+		params         v2fs.ListFeaturesParams
 		expected       []*proto.Feature
 		expectedCursor int
 		expectedErr    error
@@ -203,7 +203,7 @@ func TestListFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params:         v2fs.ListFeaturesParams{},
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -224,21 +224,8 @@ func TestListFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "environment_id",
-						Operator: mysql.OperatorEqual,
-						Value:    "env",
-					},
-				},
-				Orders:      nil,
-				JSONFilters: nil,
-				NullFilters: nil,
-				InFilters:   nil,
-				SearchQuery: nil,
-				Limit:       0,
-				Offset:      0,
+			params: v2fs.ListFeaturesParams{
+				EnvironmentID: "env",
 			},
 			expected:       []*proto.Feature{},
 			expectedCursor: 0,
@@ -253,7 +240,7 @@ func TestListFeatureMySQL(t *testing.T) {
 			}
 			features, cursor, _, err := storage.ListFeatures(
 				context.Background(),
-				p.options,
+				p.params,
 			)
 			assert.Equal(t, p.expected, features)
 			assert.Equal(t, p.expectedCursor, cursor)
@@ -270,7 +257,7 @@ func TestListFeatureFilterByExperiment(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*featureStorage)
-		options        *mysql.ListOptions
+		params         v2fs.ListFeaturesFilteredByExperimentParams
 		expected       []*proto.Feature
 		expectedCursor int
 		expectedErr    error
@@ -282,7 +269,7 @@ func TestListFeatureFilterByExperiment(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params:         v2fs.ListFeaturesFilteredByExperimentParams{},
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -303,21 +290,10 @@ func TestListFeatureFilterByExperiment(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "environment_id",
-						Operator: mysql.OperatorEqual,
-						Value:    "env",
-					},
+			params: v2fs.ListFeaturesFilteredByExperimentParams{
+				ListFeaturesParams: v2fs.ListFeaturesParams{
+					EnvironmentID: "env",
 				},
-				Orders:      nil,
-				JSONFilters: nil,
-				NullFilters: nil,
-				InFilters:   nil,
-				SearchQuery: nil,
-				Limit:       0,
-				Offset:      0,
 			},
 			expected:       []*proto.Feature{},
 			expectedCursor: 0,
@@ -332,7 +308,7 @@ func TestListFeatureFilterByExperiment(t *testing.T) {
 			}
 			features, cursor, _, err := storage.ListFeaturesFilteredByExperiment(
 				context.Background(),
-				p.options,
+				p.params,
 			)
 			assert.Equal(t, p.expected, features)
 			assert.Equal(t, p.expectedCursor, cursor)

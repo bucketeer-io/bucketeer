@@ -1325,15 +1325,12 @@ func (s *FeatureService) checkCircularPrerequisites(
 	// Get non-archived, non-deleted features in the environment for dependency validation.
 	// Archived features are excluded because all pending schedules are cancelled on archive,
 	// so they can't participate in prerequisite cycles.
-	filters := []*mysql.FilterV2{
-		{Column: "feature.deleted", Operator: mysql.OperatorEqual, Value: false},
-		{Column: "feature.archived", Operator: mysql.OperatorEqual, Value: false},
-		{Column: "feature.environment_id", Operator: mysql.OperatorEqual, Value: environmentID},
-	}
-	features, _, _, err := s.featureStorage.ListFeatures(ctx, &mysql.ListOptions{
-		Filters: filters,
-		Limit:   mysql.QueryNoLimit,
-		Offset:  mysql.QueryNoOffset,
+	deleted := false
+	archived := false
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
+		EnvironmentID: environmentID,
+		Deleted:       &deleted,
+		Archived:      &archived,
 	})
 	if err != nil {
 		return nil // Best-effort: don't fail if we can't list features

@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { IconLaunchOutlined } from 'react-icons-material-design';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQueryAccounts } from '@queries/accounts';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { invalidateHistories } from '@queries/histories';
@@ -14,6 +13,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast, useToggleOpen } from 'hooks';
+import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
@@ -63,16 +63,6 @@ const GeneralInfoForm = ({
     }
   });
 
-  const { data: accountCollection, isLoading: isLoadingAccounts } =
-    useQueryAccounts({
-      params: {
-        cursor: String(0),
-        environmentId: currentEnvironment.id,
-        organizationId: currentEnvironment.organizationId,
-        environmentRole: 2
-      }
-    });
-
   const form = useForm<GeneralInfoFormType>({
     resolver: yupResolver(useFormSchema(generalInfoFormSchema)),
     defaultValues: {
@@ -96,19 +86,24 @@ const GeneralInfoForm = ({
   } = form;
   const maintainer = watch('maintainer');
   const tags = tagCollection?.tags || [];
-  const accounts = accountCollection?.accounts || [];
 
-  const accountOptions = accounts.map(item => ({
-    label: item.email,
-    value: item.email
-  }));
+  const {
+    emailOptions: accountOptions,
+    isInitialLoading: isLoadingAccounts,
+    hasMore,
+    isLoadingMore,
+    isSearching,
+    loadMore,
+    onSearchChange: onAccountSearchChange,
+    getAccountLabel
+  } = useAccountsLoader({
+    organizationId: currentEnvironment.organizationId,
+    environmentId: currentEnvironment.id,
+    environmentRole: 2,
+    preloadEmails: maintainer ? [maintainer] : []
+  });
 
-  const maintainerLabel = useMemo(() => {
-    const currentAccount = accounts.find(item => item.email === maintainer);
-    if (currentAccount?.firstName && currentAccount?.lastName)
-      return `${currentAccount.firstName} ${currentAccount.lastName}`;
-    return currentAccount?.email || maintainer;
-  }, [accounts, maintainer]);
+  const maintainerLabel = getAccountLabel(maintainer);
 
   const handleCheckTags = useCallback(
     (tagValues: string[]) => {
@@ -288,6 +283,11 @@ const GeneralInfoForm = ({
                     options={accountOptions}
                     itemSelected={field.value}
                     selectedOptions={[field.value]}
+                    isHasMore={hasMore}
+                    isLoadingMore={isLoadingMore}
+                    isSearching={isSearching}
+                    onHasMoreOptions={loadMore}
+                    onSearchChange={onAccountSearchChange}
                     onSelectOption={field.onChange}
                   />
                 </Form.Control>

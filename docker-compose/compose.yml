@@ -51,6 +51,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+      - ./init-db/postgres_dump.sql:/docker-entrypoint-initdb.d/postgres_dump.sql
     healthcheck:
       test: [ "CMD-SHELL", "export PGPASSWORD=`cat /run/secrets/postgres_password` && pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
@@ -243,7 +244,9 @@ services:
       - BUCKETEER_API_FURTHEST_EVENT_TIMESTAMP=24h
       - BUCKETEER_API_FEATURES_MEMORY_CACHE_TTL=1m
       - BUCKETEER_API_SEGMENT_USERS_MEMORY_CACHE_TTL=1m
-      - BUCKETEER_API_DOMAIN_TOPIC=domain
+      - BUCKETEER_API_METRICS_WORKERS=4
+      - BUCKETEER_API_METRICS_QUEUE_SIZE=4096
+      - BUCKETEER_API_CACHE_INVALIDATION_TOPIC=cache-invalidation
       - BUCKETEER_API_PORT=9090
       - BUCKETEER_API_GRPC_GATEWAY_PORT=9089
       - BUCKETEER_API_METRICS_PORT=9002

@@ -191,29 +191,11 @@ func (s *FeatureService) checkSegmentInUse(
 	ctx context.Context,
 	segmentID, environmentId string,
 ) error {
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		},
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		JSONFilters: nil,
-		Orders:      nil,
-		NullFilters: nil,
-		InFilters:   nil,
-		Limit:       mysql.QueryNoLimit,
-		Offset:      mysql.QueryNoOffset,
-	}
-	features, _, _, err := featureStorage.ListFeatures(ctx, options)
+	deleted := false
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
+		EnvironmentID: environmentId,
+		Deleted:       &deleted,
+	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",

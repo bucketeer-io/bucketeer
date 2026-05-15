@@ -37,7 +37,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -49,8 +48,6 @@ import (
 const (
 	getMultiChunkSize = 1000
 	listRequestSize   = 500
-	// after 7 days without request, the feature is considered as no activity
-	activeDays = 7 * 24 * time.Hour
 )
 
 var errEvaluationNotFound = status.Error(codes.NotFound, "feature: evaluation not found")
@@ -68,17 +65,16 @@ func (s *FeatureService) GetFeature(
 	if err := validateGetFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	var feature *domain.Feature
 	if req.FeatureVersion != nil {
-		feature, err = featureStorage.GetFeatureByVersion(
+		feature, err = s.featureStorage.GetFeatureByVersion(
 			ctx,
 			req.Id,
 			req.FeatureVersion.Value,
 			req.EnvironmentId,
 		)
 	} else {
-		feature, err = featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+		feature, err = s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	}
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
@@ -154,36 +150,10 @@ func (s *FeatureService) GetFeatures(
 	if err := validateGetFeaturesRequest(req); err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-	ids := make([]interface{}, 0, len(req.Ids))
-	for _, id := range req.Ids {
-		ids = append(ids, id)
-	}
-	var inFilters []*mysql.InFilter
-	if len(ids) > 0 {
-		inFilters = append(inFilters, &mysql.InFilter{
-			Column: "feature.id",
-			Values: ids,
-		})
-	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		Orders:      nil,
-		JSONFilters: nil,
-		NullFilters: nil,
-		InFilters:   inFilters,
-		SearchQuery: nil,
-		Limit:       mysql.QueryNoLimit,
-		Offset:      mysql.QueryNoOffset,
-	}
-	features, _, _, err := featureStorage.ListFeatures(ctx, options)
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
+		EnvironmentID: req.EnvironmentId,
+		IDs:           req.Ids,
+	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature",
@@ -363,141 +333,31 @@ func (s *FeatureService) listFeatures(
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "feature.deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		},
+	deleted := false
+	p := v2fs.ListFeaturesParams{
+		PageSize:             pageSize,
+		Cursor:               cursor,
+		EnvironmentID:        environmentId,
+		Tags:                 tags,
+		Maintainer:           maintainer,
+		Deleted:              &deleted,
+		HasPrerequisites:     boolValueToPtr(hasPrerequisites),
+		HasFeatureFlagAsRule: boolValueToPtr(hasFeatureFlagAsRule),
+		SearchKeyword:        searchKeyword,
+		Status:               status,
+		OrderBy:              orderBy,
+		OrderDirection:       orderDirection,
+		Enabled:              boolValueToPtr(enabled),
+		Archived:             boolValueToPtr(archived),
 	}
-	tagValues := make([]interface{}, 0, len(tags))
-	for _, tag := range tags {
-		tagValues = append(tagValues, tag)
-	}
-	var jsonFilters []*mysql.JSONFilter
-	if len(tagValues) > 0 {
-		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-			Column: "feature.tags",
-			Func:   mysql.JSONContainsString,
-			Values: tagValues,
-		})
-	}
-	if maintainer != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature.maintainer",
-			Operator: mysql.OperatorEqual,
-			Value:    maintainer,
-		})
-	}
-	if enabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature.enabled",
-			Operator: mysql.OperatorEqual,
-			Value:    enabled.Value,
-		})
-	}
-	if archived != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature.archived",
-			Operator: mysql.OperatorEqual,
-			Value:    archived.Value,
-		})
-	}
-	if hasPrerequisites != nil {
-		if hasPrerequisites.Value {
-			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-				Column: "feature.prerequisites",
-				Func:   mysql.JSONLengthGreaterThan,
-				Values: []interface{}{"0"},
-			})
-		} else {
-			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-				Column: "feature.prerequisites",
-				Func:   mysql.JSONLengthSmallerThan,
-				Values: []interface{}{"1"},
-			})
-		}
-	}
-	if hasFeatureFlagAsRule != nil {
-		// 11 is feature flag rule operator
-		if hasFeatureFlagAsRule.Value {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
-				Operator: mysql.OperatorEqual,
-				Value:    true,
-			})
-		} else {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
-				Operator: mysql.OperatorEqual,
-				Value:    false,
-			})
-		}
-	}
-	var searchQuery *mysql.SearchQuery
-	if searchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"feature.id", "feature.name", "feature.description"},
-			Keyword: searchKeyword,
-		}
-	}
-	var nullFilters []*mysql.NullFilter
-	switch status {
-	case featureproto.FeatureLastUsedInfo_UNKNOWN:
-	case featureproto.FeatureLastUsedInfo_NEW:
-		nullFilters = append(nullFilters, &mysql.NullFilter{
-			Column: "feature_last_used_info.id",
-			IsNull: true,
-		})
-	case featureproto.FeatureLastUsedInfo_ACTIVE:
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_last_used_info.last_used_at",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    time.Now().Add(-activeDays).Unix(),
-		})
-	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_last_used_info.last_used_at",
-			Operator: mysql.OperatorLessThan,
-			Value:    time.Now().Add(-activeDays).Unix(),
-		})
-	}
-	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection)
+	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(ctx, p)
 	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-			)...,
-		)
-		return nil, "", 0, err
-	}
-	limit := int(pageSize)
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, "", 0, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		Orders:      orders,
-		JSONFilters: jsonFilters,
-		NullFilters: nullFilters,
-		InFilters:   nil,
-		SearchQuery: searchQuery,
-		Limit:       limit,
-		Offset:      offset,
-	}
-	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(ctx, options)
-	if err != nil {
+		if errors.Is(err, v2fs.ErrInvalidListFeaturesCursor) {
+			return nil, "", 0, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2fs.ErrInvalidListFeaturesOrderBy) {
+			return nil, "", 0, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list features",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -527,147 +387,34 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	hasExperiment bool,
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "feature.deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
+	deleted := false
+	p := v2fs.ListFeaturesFilteredByExperimentParams{
+		ListFeaturesParams: v2fs.ListFeaturesParams{
+			PageSize:             pageSize,
+			Cursor:               cursor,
+			EnvironmentID:        environmentId,
+			Tags:                 tags,
+			Maintainer:           maintainer,
+			Deleted:              &deleted,
+			HasPrerequisites:     boolValueToPtr(hasPrerequisites),
+			HasFeatureFlagAsRule: boolValueToPtr(hasFeatureFlagAsRule),
+			SearchKeyword:        searchKeyword,
+			Status:               status,
+			OrderBy:              orderBy,
+			OrderDirection:       orderDirection,
+			Enabled:              boolValueToPtr(enabled),
+			Archived:             boolValueToPtr(archived),
 		},
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		},
+		HasExperiment: hasExperiment,
 	}
-	nullFilters := []*mysql.NullFilter{
-		{
-			Column: "experiment.id",
-			IsNull: !hasExperiment,
-		},
-	}
-	tagValues := make([]interface{}, 0, len(tags))
-	for _, tag := range tags {
-		tagValues = append(tagValues, tag)
-	}
-	var jsonFilters []*mysql.JSONFilter
-	if len(tagValues) > 0 {
-		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-			Column: "feature.tags",
-			Func:   mysql.JSONContainsString,
-			Values: tagValues,
-		})
-	}
-	if maintainer != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature.maintainer",
-			Operator: mysql.OperatorEqual,
-			Value:    maintainer,
-		})
-	}
-	if enabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature.enabled",
-			Operator: mysql.OperatorEqual,
-			Value:    enabled.Value,
-		})
-	}
-	if archived != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature.archived",
-			Operator: mysql.OperatorEqual,
-			Value:    archived.Value,
-		})
-	}
-	if hasPrerequisites != nil {
-		if hasPrerequisites.Value {
-			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-				Column: "feature.prerequisites",
-				Func:   mysql.JSONLengthGreaterThan,
-				Values: []interface{}{"0"},
-			})
-		} else {
-			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-				Column: "feature.prerequisites",
-				Func:   mysql.JSONLengthSmallerThan,
-				Values: []interface{}{"1"},
-			})
-		}
-	}
-	if hasFeatureFlagAsRule != nil {
-		// 11 is feature flag rule operator
-		if hasFeatureFlagAsRule.Value {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
-				Operator: mysql.OperatorEqual,
-				Value:    true,
-			})
-		} else {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
-				Operator: mysql.OperatorEqual,
-				Value:    false,
-			})
-		}
-	}
-	var searchQuery *mysql.SearchQuery
-	if searchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"feature.id", "feature.name", "feature.description"},
-			Keyword: searchKeyword,
-		}
-	}
-	switch status {
-	case featureproto.FeatureLastUsedInfo_UNKNOWN:
-	case featureproto.FeatureLastUsedInfo_NEW:
-		nullFilters = append(nullFilters, &mysql.NullFilter{
-			Column: "feature_last_used_info.id",
-			IsNull: true,
-		})
-	case featureproto.FeatureLastUsedInfo_ACTIVE:
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_last_used_info.last_used_at",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    time.Now().Add(-activeDays).Unix(),
-		})
-	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_last_used_info.last_used_at",
-			Operator: mysql.OperatorLessThan,
-			Value:    time.Now().Add(-activeDays).Unix(),
-		})
-	}
-	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection)
+	features, nextCursor, totalCount, err := s.featureStorage.ListFeaturesFilteredByExperiment(ctx, p)
 	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-			)...,
-		)
-		return nil, "", 0, err
-	}
-	limit := int(pageSize)
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, "", 0, statusInvalidCursor.Err()
-	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		Orders:      orders,
-		JSONFilters: jsonFilters,
-		NullFilters: nullFilters,
-		InFilters:   nil,
-		SearchQuery: searchQuery,
-		Limit:       limit,
-		Offset:      offset,
-	}
-	features, nextCursor, totalCount, err := featureStorage.ListFeaturesFilteredByExperiment(ctx, options)
-	if err != nil {
+		if errors.Is(err, v2fs.ErrInvalidListFeaturesCursor) {
+			return nil, "", 0, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2fs.ErrInvalidListFeaturesOrderBy) {
+			return nil, "", 0, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list features filtered by experiment",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -680,35 +427,6 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	return features, strconv.Itoa(nextCursor), totalCount, nil
 }
 
-func (s *FeatureService) newListFeaturesOrdersMySQL(
-	orderBy featureproto.ListFeaturesRequest_OrderBy,
-	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case featureproto.ListFeaturesRequest_DEFAULT,
-		featureproto.ListFeaturesRequest_NAME:
-		column = "feature.name"
-	case featureproto.ListFeaturesRequest_CREATED_AT:
-		column = "feature.created_at"
-	case featureproto.ListFeaturesRequest_UPDATED_AT:
-		column = "feature.updated_at"
-	case featureproto.ListFeaturesRequest_TAGS:
-		column = "feature.tags"
-	case featureproto.ListFeaturesRequest_ENABLED:
-		column = "feature.enabled"
-	case featureproto.ListFeaturesRequest_AUTO_OPS:
-		column = "(progressive_rollout_count + schedule_count + kill_switch_count)"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == featureproto.ListFeaturesRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
 func (s *FeatureService) ListEnabledFeatures(
 	ctx context.Context,
 	req *featureproto.ListEnabledFeaturesRequest,
@@ -719,63 +437,18 @@ func (s *FeatureService) ListEnabledFeatures(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "archived",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "enabled",
-			Operator: mysql.OperatorEqual,
-			Value:    true,
-		},
-		{
-			Column:   "deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-	tagValues := make([]interface{}, 0, len(req.Tags))
-	for _, tag := range req.Tags {
-		tagValues = append(tagValues, tag)
-	}
-	var jsonFilters []*mysql.JSONFilter
-	if len(tagValues) > 0 {
-		jsonFilters = append(
-			jsonFilters,
-			&mysql.JSONFilter{
-				Column: "tags",
-				Func:   mysql.JSONContainsString,
-				Values: tagValues,
-			})
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		JSONFilters: jsonFilters,
-		Orders:      nil,
-		NullFilters: nil,
-		InFilters:   nil,
-		SearchQuery: nil,
-		Limit:       limit,
-		Offset:      offset,
-	}
-	features, nextCursor, _, err := featureStorage.ListFeatures(ctx, options)
+	archived := false
+	enabled := true
+	deleted := false
+	features, nextCursor, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
+		PageSize:      req.PageSize,
+		Cursor:        req.Cursor,
+		EnvironmentID: req.EnvironmentId,
+		Tags:          req.Tags,
+		Archived:      &archived,
+		Enabled:       &enabled,
+		Deleted:       &deleted,
+	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to list enabled features",
@@ -831,7 +504,7 @@ func (s *FeatureService) CreateFeature(
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FEATURE,
@@ -912,7 +585,7 @@ func (s *FeatureService) UpdateFeature(
 	}
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		event, updatedpb, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, req)
 		return err
@@ -994,29 +667,11 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	editor *eventproto.Editor,
 	req *featureproto.UpdateFeatureRequest,
 ) (*eventproto.Event, *featureproto.Feature, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "feature.deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		JSONFilters: nil,
-		Orders:      nil,
-		NullFilters: nil,
-		InFilters:   nil,
-		SearchQuery: nil,
-		Limit:       mysql.QueryNoLimit,
-		Offset:      mysql.QueryNoOffset,
-	}
-	features, _, _, err := s.featureStorage.ListFeatures(ctx, options)
+	deleted := false
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
+		EnvironmentID: req.EnvironmentId,
+		Deleted:       &deleted,
+	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
@@ -1228,7 +883,7 @@ func (s *FeatureService) DeleteFeature(
 		return nil, err
 	}
 	var eventPb *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		feature, err := s.featureStorage.GetFeature(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -1426,7 +1081,7 @@ func (s *FeatureService) getFeatures(
 	)
 	fs, _, _, err := s.listFeatures(
 		ctx,
-		mysql.QueryNoLimit,
+		0,
 		"",
 		nil,
 		"",
@@ -1806,8 +1461,7 @@ func (s *FeatureService) CloneFeature(
 	if err != nil {
 		return nil, err
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			return nil, statusFeatureNotFound.Err()
@@ -1840,7 +1494,7 @@ func (s *FeatureService) CloneFeature(
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FEATURE,
@@ -1867,7 +1521,7 @@ func (s *FeatureService) CloneFeature(
 			feature,
 		)
 
-		if err := featureStorage.CreateFeature(ctxWithTx, feature, req.TargetEnvironmentId); err != nil {
+		if err := s.featureStorage.CreateFeature(ctxWithTx, feature, req.TargetEnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromIncomingContext(ctxWithTx).AddFields(
@@ -1906,6 +1560,14 @@ func (s *FeatureService) CloneFeature(
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CloneFeatureResponse{}, nil
+}
+
+func boolValueToPtr(v *wrapperspb.BoolValue) *bool {
+	if v == nil {
+		return nil
+	}
+	b := v.Value
+	return &b
 }
 
 // Even if the update request fails, the cronjob will keep trying

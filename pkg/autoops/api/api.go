@@ -78,6 +78,7 @@ type AutoOpsService struct {
 
 func NewAutoOpsService(
 	mysqlClient mysql.Client,
+	featureStorage v2fs.FeatureStorage,
 	featureClient featureclient.Client,
 	experimentClient experimentclient.Client,
 	accountClient accountclient.Client,
@@ -94,7 +95,7 @@ func NewAutoOpsService(
 	return &AutoOpsService{
 		mysqlClient:      mysqlClient,
 		opsCountStorage:  v2os.NewOpsCountStorage(mysqlClient),
-		featureStorage:   v2fs.NewFeatureStorage(mysqlClient),
+		featureStorage:   featureStorage,
 		autoOpsStorage:   v2as.NewAutoOpsRuleStorage(mysqlClient),
 		prStorage:        v2as.NewProgressiveRolloutStorage(mysqlClient),
 		featureClient:    featureClient,
@@ -968,8 +969,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if executeClause.ExecutedAt != 0 {
 			return statusClauseAlreadyExecuted.Err()
 		}
-		ftStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
+		feature, err := s.featureStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -985,7 +985,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		if err := executeAutoOpsRuleOperation(
 			contextWithTx,
-			ftStorage,
+			s.featureStorage,
 			req.EnvironmentId,
 			executeClause.ActionType,
 			feature,

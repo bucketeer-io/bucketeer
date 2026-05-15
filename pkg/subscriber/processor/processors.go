@@ -35,7 +35,7 @@ const (
 	SegmentUserPersisterName             = "segmentUserPersister"
 	UserEventPersisterName               = "userEventPersister"
 	DemoOrganizationCreationNotifierName = "demoOrganizationCreationNotifier"
-	CacheEvictionName                    = "cacheEviction"
+	CacheRefresherName                   = "cacheRefresher"
 )
 
 var (

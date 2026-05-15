@@ -220,6 +220,24 @@ make stop-httpstan
 To run E2E tests you must create API Keys for Server and Client SDKs.
 Please note that you only need to create them once.
 
+### Bootstrap the localenv account (only if needed)
+
+The MySQL init SQL that ships with `make start-minikube` pre-seeds the
+`localenv@bucketeer.io` account in two organizations (`default` with `ADMIN` +
+EDITOR on `e2e`, and `e2e` with `OWNER`). E2E API calls authenticate as that
+account, so they fail if the rows are missing — for example after running
+`make delete-dev-container-mysql-data`, or against a cluster where the init
+SQL never ran.
+
+To re-seed the account, run:
+
+```shell
+make create-dev-container-localenv-account
+```
+
+The target connects to the Minikube MySQL pod and upserts into `account_v2`
+with `INSERT ... ON DUPLICATE KEY UPDATE`, so it is safe to run repeatedly.
+
 ### Create API keys
 
 ```shell
@@ -270,6 +288,25 @@ make delete-redis-retry-keys
 ## For Docker Compose Setup
 
 When using Docker Compose instead of Minikube, you can run E2E tests with modified endpoints:
+
+### Bootstrap the localenv account (only if needed)
+
+`docker-compose/init-db/mysql_dump.sql` already seeds `localenv@bucketeer.io`
+in both the `default` and `e2e` organizations at container startup, so a
+freshly-started stack does not need any manual step here.
+
+If you ran `make docker-compose-delete-data` (or otherwise wiped the
+`account_v2` rows), re-create the account with:
+
+```shell
+make docker-compose-create-localenv-account
+```
+
+The target connects to the Docker Compose MySQL on `localhost:3306` and
+upserts into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE`, so it is
+safe to run repeatedly. See
+[`hack/create-localenv-account/README.md`](./hack/create-localenv-account/README.md)
+for details and the prebuilt Docker image option.
 
 ### Create API Keys for Docker Compose
 

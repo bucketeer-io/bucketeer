@@ -1,4 +1,4 @@
-SELECT 
+SELECT
     env.id AS environment_id,
     ft.id AS feature_id,
     ft.name AS feature_name,

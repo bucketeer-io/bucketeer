@@ -38,7 +38,7 @@ require (
 	github.com/prometheus/common v0.67.5
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	github.com/slack-go/slack v0.21.0
+	github.com/slack-go/slack v0.23.1
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tkuchiki/go-timezone v0.2.3
