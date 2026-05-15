@@ -19,10 +19,13 @@ const buttonActiveCls =
 const VariationsSwitch = () => {
   const { t } = useTranslation(['form', 'common']);
 
-  const { watch, setValue, resetField } = useFormContext<FlagFormSchema>();
+  const { watch, getValues, setValue, resetField } =
+    useFormContext<FlagFormSchema>();
 
-  const currentSwitchVariation = watch('switchVariationType');
-  const currentVariationType = watch('variationType');
+  const [currentSwitchVariation, currentVariationType] = watch([
+    'switchVariationType',
+    'variationType'
+  ]);
   const isInitialMount = useRef(true);
 
   const handleSwitchVariation = useCallback(
@@ -31,13 +34,13 @@ const VariationsSwitch = () => {
       isInitial = false,
       shouldRegenerateIds = true
     ) => {
-      const currentOnVariationId = watch('defaultOnVariation');
-      const currentOffVariationId = watch('defaultOffVariation');
+      const currentOnVariationId = getValues('defaultOnVariation');
+      const currentOffVariationId = getValues('defaultOffVariation');
       const onVariationId = shouldRegenerateIds ? uuid() : currentOnVariationId;
       const offVariation = shouldRegenerateIds ? uuid() : currentOffVariationId;
       const setValueOptions = isInitial ? { shouldDirty: false } : {};
 
-      const previousSwitchVariation = watch('switchVariationType');
+      const previousSwitchVariation = getValues('switchVariationType');
 
       resetField('variations');
       setValue('switchVariationType', value, setValueOptions);
@@ -48,7 +51,7 @@ const VariationsSwitch = () => {
 
       // Handle EXPERIMENT template
       if (value === FlagSwitchVariationType.EXPERIMENT) {
-        const currentVariations = watch('variations');
+        const currentVariations = getValues('variations');
         const thirdVariationId =
           shouldRegenerateIds || !currentVariations?.[2]?.id
             ? uuid()
@@ -62,7 +65,7 @@ const VariationsSwitch = () => {
           setValue('variationType', 'STRING', setValueOptions);
         }
 
-        const variationTypeToUse = watch('variationType');
+        const variationTypeToUse = getValues('variationType');
 
         switch (variationTypeToUse) {
           case 'BOOLEAN':
@@ -204,7 +207,7 @@ const VariationsSwitch = () => {
 
       // Handle CUSTOM template - set defaults based on current variationType
       if (value === FlagSwitchVariationType.CUSTOM) {
-        const currentVariationType = watch('variationType');
+        const currentVariationType = getValues('variationType');
 
         setValue('defaultOnVariation', onVariationId, setValueOptions);
         setValue('defaultOffVariation', offVariation, setValueOptions);
@@ -326,7 +329,7 @@ const VariationsSwitch = () => {
       const isKillSwitch = value === FlagSwitchVariationType.KILL_SWITCH;
 
       if (isRelease || isKillSwitch) {
-        const currentVariationType = watch('variationType');
+        const currentVariationType = getValues('variationType');
         const onName = isRelease ? t('available') : t('enabled');
         const offName = isRelease ? t('unavailable') : t('disabled');
 
@@ -442,7 +445,7 @@ const VariationsSwitch = () => {
         }
       }
     },
-    [watch, setValue, resetField, t]
+    [getValues, setValue, resetField, t]
   );
 
   // Trigger CUSTOM template on initial mount

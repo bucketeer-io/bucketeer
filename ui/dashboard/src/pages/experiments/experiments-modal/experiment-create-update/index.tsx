@@ -3,7 +3,8 @@ import {
   ControllerRenderProps,
   FormProvider,
   SubmitHandler,
-  useForm
+  useForm,
+  useWatch
 } from 'react-hook-form';
 import {
   ExperimentCreateUpdateResponse,
@@ -215,14 +216,13 @@ const ExperimentCreateUpdateModal = ({
   });
 
   const {
-    watch,
     formState: { isDirty, isSubmitting }
   } = form;
 
   useUnsavedLeavePage({
     isShow: isDirty && !isSubmitting
   });
-  const featureId = watch('featureId');
+  const featureId = useWatch({ control: form.control, name: 'featureId' });
 
   const {
     allAvailableFlags,
