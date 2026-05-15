@@ -419,7 +419,6 @@ func (p *segmentUserPersister) persistSegmentUsers(
 		user := domain.NewSegmentUser(segmentID, id, state, false)
 		allSegmentUsers = append(allSegmentUsers, user.SegmentUser)
 	}
-	fmt.Printf("all segment users: %v", allSegmentUsers)
 	err := p.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		return p.segmentUserStorage.UpsertSegmentUsers(contextWithTx, allSegmentUsers, environmentId)
 	})

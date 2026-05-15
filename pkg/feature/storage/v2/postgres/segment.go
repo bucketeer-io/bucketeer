@@ -170,13 +170,13 @@ func listSegmentsOrders(
 	switch orderBy {
 	case proto.ListSegmentsRequest_DEFAULT,
 		proto.ListSegmentsRequest_NAME:
-		column = "seg.name"
+		column = "name"
 	case proto.ListSegmentsRequest_CREATED_AT:
-		column = "seg.created_at"
+		column = "created_at"
 	case proto.ListSegmentsRequest_UPDATED_AT:
-		column = "seg.updated_at"
+		column = "updated_at"
 	case proto.ListSegmentsRequest_USERS:
-		column = "seg.included_user_count"
+		column = "included_user_count"
 	case proto.ListSegmentsRequest_CONNECTIONS:
 		column = "feature_ids"
 	default:
@@ -248,9 +248,9 @@ func (s *segmentStorage) ListSegments(
 	var isInUseStatusSQL string
 	if p.IsInUseStatus != nil {
 		if *p.IsInUseStatus {
-			isInUseStatusSQL = "HAVING feature_ids IS NOT NULL"
+			isInUseStatusSQL = "WHERE feature_ids IS NOT NULL"
 		} else {
-			isInUseStatusSQL = "HAVING feature_ids IS NULL"
+			isInUseStatusSQL = "WHERE feature_ids IS NULL"
 		}
 	}
 	query := fmt.Sprintf(selectSegmentsSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)

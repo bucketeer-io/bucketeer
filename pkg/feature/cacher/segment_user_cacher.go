@@ -27,7 +27,7 @@ import (
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-// SegmentUserCacher provides functionality to sync segment users from MySQL to Redis.
+// SegmentUserCacher syncs segment users from the database to Redis.
 // This is used by the batch job to periodically refresh the cache for all environments.
 //
 //go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
