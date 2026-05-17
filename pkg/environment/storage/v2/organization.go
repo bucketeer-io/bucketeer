@@ -40,6 +40,12 @@ var (
 	selectOrganizationsSQL string
 	//go:embed sql/organization/count_organizations.sql
 	countOrganizationsSQL string
+	//go:embed sql/organization/delete_organizations.sql
+	deleteOrganizationsSQL string
+	//go:embed sql/organization/delete_organization_data.sql
+	deleteOrganizationDataSQL string
+	//go:embed sql/organization/count_env_target_entities_in_organization.sql
+	countTargetEntitiesInOrganizationSQL string
 )
 
 var (
@@ -64,6 +70,13 @@ type OrganizationStorage interface {
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*proto.Organization, int, int64, error)
+	DeleteOrganizations(ctx context.Context, whereParts []mysql.WherePart) error
+	DeleteOrganizationData(ctx context.Context, target string, whereParts []mysql.WherePart) error
+	CountEnvTargetEntitiesInOrganization(
+		ctx context.Context,
+		organizationID string,
+		target string,
+	) (int64, error)
 }
 
 type organizationStorage struct {
@@ -249,4 +262,63 @@ func (s *organizationStorage) ListOrganizations(
 		return nil, 0, 0, err
 	}
 	return organizations, nextOffset, totalCount, nil
+}
+
+func (s *organizationStorage) DeleteOrganizations(ctx context.Context, whereParts []mysql.WherePart) error {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(deleteOrganizationsSQL, whereSQL)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		whereArgs...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *organizationStorage) DeleteOrganizationData(
+	ctx context.Context,
+	target string,
+	whereParts []mysql.WherePart,
+) error {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(deleteOrganizationDataSQL, target, whereSQL)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		whereArgs...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *organizationStorage) CountEnvTargetEntitiesInOrganization(
+	ctx context.Context,
+	organizationID string,
+	target string,
+) (int64, error) {
+	rows, err := s.qe.QueryContext(
+		ctx,
+		fmt.Sprintf(countTargetEntitiesInOrganizationSQL, target, target),
+		organizationID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	var count int64
+	if rows.Next() {
+		err := rows.Scan(&count)
+		if err != nil {
+			return 0, err
+		}
+	}
+	if rows.Err() != nil {
+		return 0, err
+	}
+	return count, nil
 }

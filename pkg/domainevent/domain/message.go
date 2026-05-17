@@ -915,6 +915,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Environment),
 			),
 		}
+	case proto.Event_ENVIRONMENT_V2_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Environment),
+			),
+		}
 	case proto.Event_ADMIN_ACCOUNT_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
@@ -1385,6 +1393,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
 				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Organization),
+			),
+		}
+	case proto.Event_ORGANIZATION_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
 				localizer.MustLocalizeWithTemplate(locale.Organization),
 			),
 		}

@@ -16,6 +16,8 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockFeatureLastUsedInfoStorage is a mock of FeatureLastUsedInfoStorage interface.
@@ -54,6 +56,21 @@ func (m *MockFeatureLastUsedInfoStorage) GetFeatureLastUsedInfos(ctx context.Con
 func (mr *MockFeatureLastUsedInfoStorageMockRecorder) GetFeatureLastUsedInfos(ctx, ids, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedInfoStorage)(nil).GetFeatureLastUsedInfos), ctx, ids, environmentId)
+}
+
+// SelectFeatureLastUsedInfos mocks base method.
+func (m *MockFeatureLastUsedInfoStorage) SelectFeatureLastUsedInfos(ctx context.Context, options *mysql.ListOptions) ([]*feature.FeatureLastUsedInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectFeatureLastUsedInfos", ctx, options)
+	ret0, _ := ret[0].([]*feature.FeatureLastUsedInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectFeatureLastUsedInfos indicates an expected call of SelectFeatureLastUsedInfos.
+func (mr *MockFeatureLastUsedInfoStorageMockRecorder) SelectFeatureLastUsedInfos(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedInfoStorage)(nil).SelectFeatureLastUsedInfos), ctx, options)
 }
 
 // UpsertFeatureLastUsedInfo mocks base method.

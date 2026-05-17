@@ -49,6 +49,8 @@ var (
 	selectProjectsSQL string
 	//go:embed sql/project/count_projects.sql
 	countProjectsSQL string
+	//go:embed sql/project/delete_projects.sql
+	deleteProjectsSQL string
 )
 
 type ProjectStorage interface {
@@ -64,6 +66,7 @@ type ProjectStorage interface {
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*proto.Project, int, int64, error)
+	DeleteProjects(ctx context.Context, whereParts []mysql.WherePart) error
 }
 
 type projectStorage struct {
@@ -246,4 +249,18 @@ func (s *projectStorage) ListProjects(
 		return nil, 0, 0, err
 	}
 	return projects, nextOffset, totalCount, nil
+}
+
+func (s *projectStorage) DeleteProjects(ctx context.Context, whereParts []mysql.WherePart) error {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(deleteProjectsSQL, whereSQL)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		whereArgs...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }

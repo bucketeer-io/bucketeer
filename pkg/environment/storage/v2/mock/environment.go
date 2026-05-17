@@ -43,6 +43,21 @@ func (m *MockEnvironmentStorage) EXPECT() *MockEnvironmentStorageMockRecorder {
 	return m.recorder
 }
 
+// CountTargetEntitiesInEnvironmentV2 mocks base method.
+func (m *MockEnvironmentStorage) CountTargetEntitiesInEnvironmentV2(ctx context.Context, environmentID, target string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountTargetEntitiesInEnvironmentV2", ctx, environmentID, target)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountTargetEntitiesInEnvironmentV2 indicates an expected call of CountTargetEntitiesInEnvironmentV2.
+func (mr *MockEnvironmentStorageMockRecorder) CountTargetEntitiesInEnvironmentV2(ctx, environmentID, target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTargetEntitiesInEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).CountTargetEntitiesInEnvironmentV2), ctx, environmentID, target)
+}
+
 // CreateEnvironmentV2 mocks base method.
 func (m *MockEnvironmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
 	m.ctrl.T.Helper()
@@ -55,6 +70,34 @@ func (m *MockEnvironmentStorage) CreateEnvironmentV2(ctx context.Context, e *dom
 func (mr *MockEnvironmentStorageMockRecorder) CreateEnvironmentV2(ctx, e any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).CreateEnvironmentV2), ctx, e)
+}
+
+// DeleteEnvironmentV2 mocks base method.
+func (m *MockEnvironmentStorage) DeleteEnvironmentV2(ctx context.Context, whereParts []mysql.WherePart) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEnvironmentV2", ctx, whereParts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEnvironmentV2 indicates an expected call of DeleteEnvironmentV2.
+func (mr *MockEnvironmentStorageMockRecorder) DeleteEnvironmentV2(ctx, whereParts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).DeleteEnvironmentV2), ctx, whereParts)
+}
+
+// DeleteTargetFromEnvironmentV2 mocks base method.
+func (m *MockEnvironmentStorage) DeleteTargetFromEnvironmentV2(ctx context.Context, environmentID, targetID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTargetFromEnvironmentV2", ctx, environmentID, targetID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTargetFromEnvironmentV2 indicates an expected call of DeleteTargetFromEnvironmentV2.
+func (mr *MockEnvironmentStorageMockRecorder) DeleteTargetFromEnvironmentV2(ctx, environmentID, targetID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTargetFromEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).DeleteTargetFromEnvironmentV2), ctx, environmentID, targetID)
 }
 
 // GetEnvironmentV2 mocks base method.

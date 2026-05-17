@@ -30,6 +30,8 @@ var (
 	selectFeatureLastUsedInfosSQL string
 	//go:embed sql/feature_last_used_info/upsert_feature_last_used_info.sql
 	upsertFeatureLastUsedInfoSQL string
+	//go:embed sql/feature_last_used_info/list_feature_last_used_infos.sql
+	listFeaturesLastUsedInfosSQL string
 )
 
 type FeatureLastUsedInfoStorage interface {
@@ -43,6 +45,10 @@ type FeatureLastUsedInfoStorage interface {
 		featureLastUsedInfos *domain.FeatureLastUsedInfo,
 		environmentId string,
 	) error
+	SelectFeatureLastUsedInfos(
+		ctx context.Context,
+		options *mysql.ListOptions,
+	) ([]*proto.FeatureLastUsedInfo, error)
 }
 
 type featureLastUsedInfoStorage struct {
@@ -128,4 +134,36 @@ func (s *featureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(
 		return err
 	}
 	return nil
+}
+
+func (s *featureLastUsedInfoStorage) SelectFeatureLastUsedInfos(
+	ctx context.Context,
+	options *mysql.ListOptions,
+) ([]*proto.FeatureLastUsedInfo, error) {
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(listFeaturesLastUsedInfosSQL, options)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	featureLastUsedInfos := make([]*proto.FeatureLastUsedInfo, 0, options.Limit)
+	for rows.Next() {
+		flui := proto.FeatureLastUsedInfo{}
+		err := rows.Scan(
+			&flui.FeatureId,
+			&flui.Version,
+			&flui.LastUsedAt,
+			&flui.ClientOldestVersion,
+			&flui.ClientLatestVersion,
+			&flui.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		featureLastUsedInfos = append(featureLastUsedInfos, &flui)
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	return featureLastUsedInfos, nil
 }
