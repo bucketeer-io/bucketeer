@@ -116,7 +116,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.59.1",
     "unplugin-fonts": "^1.1.1",
-    "uuid": "^10.0.0",
+    "uuid": "^14.0.0",
     "vite": "^7.3.2",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-svgr": "^4.2.0",
