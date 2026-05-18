@@ -91,13 +91,19 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
 
   const variationValues: Option[] = useMemo(
     () =>
-      countData?.map(item => ({
-        value: item.variationId,
-        label:
-          feature.variations.find(v => v.id === item.variationId)?.value ||
-          (item.variationId === 'default' ? 'default value' : ''),
-        variationType: feature.variationType
-      })) || [],
+      countData?.map(item => {
+        const variation = feature.variations.find(
+          v => v.id === item.variationId
+        );
+        return {
+          value: item.variationId,
+          label:
+            variation?.name ||
+            variation?.value ||
+            (item.variationId === 'default' ? 'default value' : ''),
+          variationType: feature.variationType
+        };
+      }) || [],
     [countData, feature]
   );
 
