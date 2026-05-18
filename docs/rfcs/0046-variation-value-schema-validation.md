@@ -88,21 +88,33 @@ message VariationValueSchema {
     JSON_SCHEMA = 3;
   }
 
+  message EnumValidator {
+    // For NUMBER flags, each value must parse as a number.
+    repeated string values = 1;
+  }
+
+  message RegexValidator {
+    // The pattern must compile using Go regexp syntax.
+    string pattern = 1;
+  }
+
+  message JsonSchemaValidator {
+    // The value must be a valid JSON Schema document.
+    string schema = 1;
+  }
+
   Type type = 1;
 
-  // Used when type is ENUM.
-  // For NUMBER flags, each value must parse as a number.
-  repeated string enum_values = 2;
-
-  // Used when type is REGEX.
-  // The pattern must compile using Go regexp syntax.
-  string regex_pattern = 3;
-
-  // Used when type is JSON_SCHEMA.
-  // The value must be a valid JSON Schema document.
-  string json_schema = 4;
+  oneof validator {
+    EnumValidator enum_validator = 2;
+    RegexValidator regex_validator = 3;
+    JsonSchemaValidator json_schema_validator = 4;
+  }
 }
 ```
+
+The `oneof` makes the validator payload structurally exclusive, so callers
+cannot send multiple validator definitions for a single schema.
 
 Add `VariationValueSchema variation_value_schema` to:
 
@@ -198,8 +210,8 @@ validation and uniqueness validation continue to apply.
 
 Enum validation allows a finite set of values.
 
-For `STRING` flags, compare the variation value against `enum_values` using exact
-string matching.
+For `STRING` flags, compare the variation value against
+`enum_validator.values` using exact string matching.
 
 For `NUMBER` flags:
 
@@ -332,7 +344,7 @@ that already has a schema, may receive validation errors before persistence.
   should they follow the same restrictions as variation value updates?
 - Should scheduled flag changes be able to change the schema itself, or should
   schema updates be immediate-only in v1?
-- What is the maximum allowed size for `json_schema`, `regex_pattern`, and enum
-  value lists?
+- What is the maximum allowed size for `json_schema_validator.schema`,
+  `regex_validator.pattern`, and enum value lists?
 - Which Go JSON Schema library should be adopted?
 - Should JSON Schema validation support a specific draft version only?
