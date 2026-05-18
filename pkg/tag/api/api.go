@@ -32,7 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -54,7 +54,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type TagService struct {
-	mysqlClient    mysql.Client
+	dbClient       database.Client
 	tagStorage     tagstorage.TagStorage
 	featureStorage ftstorage.FeatureStorage
 	accountClient  accclient.Client
@@ -64,7 +64,8 @@ type TagService struct {
 }
 
 func NewTagService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	tagStorage tagstorage.TagStorage,
 	featureStorage ftstorage.FeatureStorage,
 	accountClient accclient.Client,
 	publisher publisher.Publisher,
@@ -77,8 +78,8 @@ func NewTagService(
 		opt(dopts)
 	}
 	return &TagService{
-		mysqlClient:    mysqlClient,
-		tagStorage:     tagstorage.NewTagStorage(mysqlClient),
+		dbClient:       dbClient,
+		tagStorage:     tagStorage,
 		featureStorage: featureStorage,
 		accountClient:  accountClient,
 		publisher:      publisher,
@@ -128,7 +129,7 @@ func (s *TagService) CreateTag(
 
 	var event *eventproto.Event
 	var actualTag *domain.Tag
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		// Check if tag exists before upsert to determine if it's create or update
 		existingTag, err := s.tagStorage.GetTagByName(ctxWithTx, tag.Name, tag.EnvironmentId, tag.EntityType)
 		isCreate := err != nil && errors.Is(err, tagstorage.ErrTagNotFound)
@@ -218,8 +219,14 @@ func (s *TagService) ListTags(
 	ctx context.Context,
 	req *proto.ListTagsRequest,
 ) (*proto.ListTagsResponse, error) {
-	inFilters := make([]*mysql.InFilter, 0)
-	filters := []*mysql.FilterV2{}
+	p := tagstorage.ListTagsParams{
+		EntityType:     req.EntityType,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
+	}
 	if req.OrganizationId != "" {
 		// New console
 		editor, err := s.checkOrganizationRole(
@@ -228,22 +235,8 @@ func (s *TagService) ListTags(
 		if err != nil {
 			return nil, err
 		}
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "env.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationId,
-		})
-		filterEnvironmentIDs := s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
-		values := make([]interface{}, 0)
-		for _, id := range filterEnvironmentIDs {
-			values = append(values, id)
-		}
-		if len(filterEnvironmentIDs) > 0 {
-			inFilters = append(inFilters, &mysql.InFilter{
-				Column: "tag.environment_id",
-				Values: values,
-			})
-		}
+		p.OrganizationID = req.OrganizationId
+		p.EnvironmentIDs = s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
 	} else {
 		// Current console
 		_, err := s.checkEnvironmentRole(
@@ -252,57 +245,9 @@ func (s *TagService) ListTags(
 		if err != nil {
 			return nil, err
 		}
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "tag.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		})
+		p.EnvironmentID = req.EnvironmentId
 	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"tag.name"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	if req.EntityType != proto.Tag_UNSPECIFIED {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "tag.entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EntityType,
-		})
-	}
-	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Failed to valid list tags API. Invalid argument.",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Limit:       limit,
-		Offset:      offset,
-		JSONFilters: nil,
-		InFilters:   inFilters,
-		NullFilters: nil,
-	}
-	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, options)
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, p)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",
@@ -330,7 +275,7 @@ func (s *TagService) DeleteTag(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateDeleteTagRquest(req); err != nil {
+	if err := s.validateDeleteTagRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to delete a tag",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -342,7 +287,7 @@ func (s *TagService) DeleteTag(
 		return nil, err
 	}
 	var tag *domain.Tag
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		tagDB, err := s.tagStorage.GetTag(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -384,6 +329,14 @@ func (s *TagService) DeleteTag(
 		return s.tagStorage.DeleteTag(ctxWithTx, req.Id)
 	})
 	if err != nil {
+		s.logger.Error(
+			"Failed to delete tag",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("id", req.Id),
+			)...,
+		)
 		if errors.Is(err, statusTagInUsed.Err()) {
 			return nil, statusTagInUsed.Err()
 		}
@@ -432,7 +385,7 @@ func (s *TagService) listFeaturesFromEnvironment(
 	return features, nil
 }
 
-func (s *TagService) validateDeleteTagRquest(req *proto.DeleteTagRequest) error {
+func (s *TagService) validateDeleteTagRequest(req *proto.DeleteTagRequest) error {
 	if req.Id == "" {
 		return statusNameRequired.Err()
 	}
@@ -517,31 +470,6 @@ func (s *TagService) getAllowedEnvironments(
 		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
 	}
 	return filterEnvironmentIDs
-}
-
-func (s *TagService) newListTagsOrdersMySQL(
-	orderBy proto.ListTagsRequest_OrderBy,
-	orderDirection proto.ListTagsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListTagsRequest_DEFAULT,
-		proto.ListTagsRequest_NAME:
-		column = "tag.name"
-	case proto.ListTagsRequest_CREATED_AT:
-		column = "tag.created_at"
-	case proto.ListTagsRequest_UPDATED_AT:
-		column = "tag.updated_at"
-	case proto.ListTagsRequest_ENTITY_TYPE:
-		column = "tag.entity_type"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == proto.ListTagsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *TagService) reportInternalServerError(

@@ -22,8 +22,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
+	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -39,48 +39,31 @@ func (s *FeatureService) ListTags(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"id"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection)
+	orderBy, err := toTagOrderBy(req.OrderBy)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("orderBy", req.OrderBy.String()),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, err
+		return nil, statusInvalidOrderBy.Err()
 	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
+	orderDirection := tagproto.ListTagsRequest_ASC
+	if req.OrderDirection == featureproto.ListTagsRequest_DESC {
+		orderDirection = tagproto.ListTagsRequest_DESC
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Limit:       limit,
-		Offset:      offset,
-	}
-	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, options)
+
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, tagstorage.ListTagsParams{
+		EnvironmentID:  req.EnvironmentId,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        orderBy,
+		OrderDirection: orderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
+	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",
@@ -105,27 +88,19 @@ func (s *FeatureService) ListTags(
 	}, nil
 }
 
-func (s *FeatureService) newListTagsOrdersMySQL(
-	orderBy featureproto.ListTagsRequest_OrderBy,
-	orderDirection featureproto.ListTagsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
+func toTagOrderBy(orderBy featureproto.ListTagsRequest_OrderBy) (tagproto.ListTagsRequest_OrderBy, error) {
 	switch orderBy {
-	case featureproto.ListTagsRequest_DEFAULT,
-		featureproto.ListTagsRequest_NAME:
-		column = "tag.name"
+	case featureproto.ListTagsRequest_DEFAULT:
+		return tagproto.ListTagsRequest_DEFAULT, nil
+	case featureproto.ListTagsRequest_NAME:
+		return tagproto.ListTagsRequest_NAME, nil
 	case featureproto.ListTagsRequest_CREATED_AT:
-		column = "tag.created_at"
+		return tagproto.ListTagsRequest_CREATED_AT, nil
 	case featureproto.ListTagsRequest_UPDATED_AT:
-		column = "tag.updated_at"
+		return tagproto.ListTagsRequest_UPDATED_AT, nil
 	default:
-		return nil, statusInvalidOrderBy.Err()
+		return 0, statusInvalidOrderBy.Err()
 	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == featureproto.ListTagsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *FeatureService) upsertTags(

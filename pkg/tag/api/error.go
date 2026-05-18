@@ -28,12 +28,6 @@ var (
 	)
 	statusTagInUsed = api.NewGRPCStatus(
 		err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use"))
-	statusInvalidCursor = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "cursor is invalid", "Cursor"),
-	)
-	statusInvalidOrderBy = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "order_by is invalid", "OrderBy"),
-	)
 	statusUnauthenticated = api.NewGRPCStatus(
 		err.NewErrorUnauthenticated(err.TagPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(
