@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -58,34 +57,24 @@ func (s *FeatureService) ListSegmentUsers(
 		)
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("segment_id", "=", req.SegmentId),
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-	}
+	var state *int32
 	if req.State != nil {
-		whereParts = append(whereParts, mysql.NewFilter("state", "=", req.State.GetValue()))
+		v := req.State.GetValue()
+		state = &v
 	}
-	if req.UserId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("user_id", "=", req.UserId))
+	p := v2fs.ListSegmentUsersParams{
+		SegmentID:     req.SegmentId,
+		EnvironmentID: req.EnvironmentId,
+		State:         state,
+		UserID:        req.UserId,
+		PageSize:      int(req.PageSize),
+		Cursor:        req.Cursor,
 	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
+	users, nextCursor, err := s.segmentUserStorage.ListSegmentUsers(ctx, p)
 	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	users, nextCursor, err := s.segmentUserStorage.ListSegmentUsers(
-		ctx,
-		whereParts,
-		nil,
-		limit,
-		offset,
-	)
-	if err != nil {
+		if errors.Is(err, v2fs.ErrInvalidListSegmentUsersCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"Failed to list segment users",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -121,7 +110,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		)
 		return nil, err
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -246,18 +235,14 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	if segment.Status != featureproto.Segment_SUCEEDED {
 		return nil, statusSegmentStatusNotSuceeded.Err()
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("segment_id", "=", req.SegmentId),
-		mysql.NewFilter("state", "=", int32(req.State)),
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-	}
+	stateVal := int32(req.State)
 	users, _, err := s.segmentUserStorage.ListSegmentUsers(
 		ctx,
-		whereParts,
-		nil,
-		mysql.QueryNoLimit,
-		mysql.QueryNoOffset,
+		v2fs.ListSegmentUsersParams{
+			SegmentID:     req.SegmentId,
+			EnvironmentID: req.EnvironmentId,
+			State:         &stateVal,
+		},
 	)
 	if err != nil {
 		s.logger.Error(

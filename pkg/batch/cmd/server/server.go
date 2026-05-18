@@ -312,6 +312,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	var featureStorage v2fs.FeatureStorage
+	var segmentStorage v2fs.SegmentStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -322,8 +323,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 		defer postgresClient.Close()
 		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
+		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 	} else {
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
+		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -596,7 +599,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
-			mysqlClient,
+			segmentStorage,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),

@@ -30,27 +30,27 @@ import (
 const activeDays = 7 * 24 * time.Hour
 
 var (
-	//go:embed sql/create_feature.sql
+	//go:embed sql/feature/create_feature.sql
 	createFeatureSQLQuery string
-	//go:embed sql/update_feature.sql
+	//go:embed sql/feature/update_feature.sql
 	updateFeatureSQLQuery string
-	//go:embed sql/select_feature.sql
+	//go:embed sql/feature/select_feature.sql
 	selectFeatureSQLQuery string
-	//go:embed sql/select_feature_by_version.sql
+	//go:embed sql/feature/select_feature_by_version.sql
 	selectFeatureByVersionSQLQuery string
-	//go:embed sql/select_features.sql
+	//go:embed sql/feature/select_features.sql
 	selectFeaturesSQLQuery string
-	//go:embed sql/select_features_by_experiment.sql
+	//go:embed sql/feature/select_features_by_experiment.sql
 	selectFeaturesByExperimentSQLQuery string
-	//go:embed sql/select_features_by_environment.sql
+	//go:embed sql/feature/select_features_by_environment.sql
 	selectFeaturesByEnvironmentSQLQuery string
-	//go:embed sql/select_all_environment_features.sql
+	//go:embed sql/feature/select_all_environment_features.sql
 	selectAllEnvironmentFeaturesSQLQuery string
-	//go:embed sql/select_feature_count_by_status.sql
+	//go:embed sql/feature/select_feature_count_by_status.sql
 	selectFeatureCountByStatusSQLQuery string
-	//go:embed sql/count_features.sql
+	//go:embed sql/feature/count_features.sql
 	countFeatureSQLQuery string
-	//go:embed sql/count_features_by_experiment.sql
+	//go:embed sql/feature/count_features_by_experiment.sql
 	countFeaturesByExperimentSQLQuery string
 )
 

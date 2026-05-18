@@ -27,7 +27,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -69,7 +69,7 @@ func (s *FeatureService) CreateSegment(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment",
@@ -140,7 +140,7 @@ func (s *FeatureService) DeleteSegment(
 	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -265,7 +265,7 @@ func (s *FeatureService) UpdateSegment(
 		return nil, err
 	}
 	var updatedSegment *featureproto.Segment
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -406,69 +406,36 @@ func (s *FeatureService) ListSegments(
 		)
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "seg.deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "seg.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
+	var status *int32
 	if req.Status != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "seg.status",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Status.Value,
-		})
-	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"seg.name", "seg.description"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
+		v := req.Status.Value
+		status = &v
 	}
 	var isInUseStatus *bool
 	if req.IsInUseStatus != nil {
 		isInUseStatus = &req.IsInUseStatus.Value
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		NullFilters: nil,
-		JSONFilters: nil,
-		InFilters:   nil,
-		SearchQuery: searchQuery,
-		Orders:      orders,
+	params := v2fs.ListSegmentsParams{
+		PageSize:       req.PageSize,
+		Cursor:         req.Cursor,
+		EnvironmentID:  req.EnvironmentId,
+		Status:         status,
+		SearchKeyword:  req.SearchKeyword,
+		IsInUseStatus:  isInUseStatus,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
 	}
 	segments, nextCursor, totalCount, featureIDsMap, err := s.segmentStorage.ListSegments(
 		ctx,
-		options,
-		isInUseStatus,
+		params,
 	)
 	if err != nil {
+		if errors.Is(err, v2fs.ErrInvalidListSegmentsCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2fs.ErrInvalidListSegmentsOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list segments",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -498,33 +465,6 @@ func (s *FeatureService) ListSegments(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
-}
-
-func (s *FeatureService) newSegmentListOrders(
-	orderBy featureproto.ListSegmentsRequest_OrderBy,
-	orderDirection featureproto.ListSegmentsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case featureproto.ListSegmentsRequest_DEFAULT,
-		featureproto.ListSegmentsRequest_NAME:
-		column = "seg.name"
-	case featureproto.ListSegmentsRequest_CREATED_AT:
-		column = "seg.created_at"
-	case featureproto.ListSegmentsRequest_UPDATED_AT:
-		column = "seg.updated_at"
-	case featureproto.ListSegmentsRequest_USERS:
-		column = "seg.included_user_count"
-	case featureproto.ListSegmentsRequest_CONNECTIONS:
-		column = "feature_ids"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == featureproto.ListSegmentsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *FeatureService) injectFeaturesIntoSegments(
@@ -564,7 +504,7 @@ func (s *FeatureService) listAllFeatures(
 ) (map[string]*featureproto.Feature, error) {
 	fs, _, _, err := s.listFeatures(
 		ctx,
-		mysql.QueryNoLimit,
+		database.QueryNoLimit,
 		"",
 		nil,
 		"",
