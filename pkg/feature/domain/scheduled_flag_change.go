@@ -519,6 +519,9 @@ func (s *ScheduledFlagChange) CountChanges() int {
 	if s.Payload.Maintainer != nil {
 		count++
 	}
+	if len(s.Payload.OrderedRuleIds) > 0 {
+		count++
+	}
 	return count
 }
 

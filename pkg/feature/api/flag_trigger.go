@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"strconv"
 
-	pb "github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
+	pb "google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"

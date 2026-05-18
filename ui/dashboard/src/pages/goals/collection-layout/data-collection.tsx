@@ -1,5 +1,5 @@
 import { IconArchiveOutlined } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';

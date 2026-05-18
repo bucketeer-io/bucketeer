@@ -18,8 +18,10 @@ package factory
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.uber.org/zap"
+	"golang.org/x/oauth2/google"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub"
@@ -53,11 +55,14 @@ type Client interface {
 	// For Redis, this behaves the same as CreatePublisher.
 	CreatePublisherInProject(topic, project string) (publisher.Publisher, error)
 	// CreatePuller creates a puller for the given subscription and topic.
-	CreatePuller(subscription, topic string) (puller.Puller, error)
+	// PullerOption is optional. For GCP, ExpirationPolicy sets auto-deletion
+	// of inactive subscriptions. For Redis, options are ignored.
+	CreatePuller(subscription, topic string, opts ...puller.PullerOption) (puller.Puller, error)
 	// SubscriptionExists checks if a subscription exists.
 	SubscriptionExists(subscription string) (bool, error)
-	// DeleteSubscription deletes a subscription.
-	DeleteSubscription(subscription string) error
+	// DeleteSubscription deletes a subscription. Topic is the Redis Streams base name
+	// (same as CreatePuller); it is ignored for Google Pub/Sub.
+	DeleteSubscription(subscription, topic string) error
 	// Close closes the client.
 	Close() error
 }
@@ -142,6 +147,18 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 			return nil, fmt.Errorf("project ID is required for Google PubSub")
 		}
 		var googleOpts []pubsub.Option
+		if os.Getenv("PUBSUB_EMULATOR_HOST") == "" {
+			baseTS, err := google.DefaultTokenSource(ctx,
+				"https://www.googleapis.com/auth/pubsub",
+				"https://www.googleapis.com/auth/cloud-platform",
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to obtain default token source: %w", err)
+			}
+			googleOpts = append(googleOpts, pubsub.WithTokenSource(
+				&resilientTokenSource{base: baseTS},
+			))
+		}
 		if options.metrics != nil {
 			googleOpts = append(googleOpts, pubsub.WithMetrics(options.metrics))
 		}
@@ -215,9 +232,20 @@ func (a *GoogleClientAdapter) CreatePublisherInProject(topic, project string) (p
 }
 
 // CreatePuller creates a puller for the given subscription and topic.
-func (a *GoogleClientAdapter) CreatePuller(subscription, topic string) (puller.Puller, error) {
-	// Google PubSub requires ReceiveOptions, but we don't expose them in our interface
-	// Use default options
+func (a *GoogleClientAdapter) CreatePuller(
+	subscription,
+	topic string,
+	opts ...puller.PullerOption,
+) (puller.Puller, error) {
+	var subOpts []pubsub.SubscriptionOption
+	for _, opt := range opts {
+		if opt.ExpirationPolicy > 0 {
+			subOpts = append(subOpts, pubsub.WithExpirationPolicy(opt.ExpirationPolicy))
+		}
+	}
+	if len(subOpts) > 0 {
+		return a.client.CreatePullerWithOptions(subscription, topic, subOpts)
+	}
 	return a.client.CreatePuller(subscription, topic)
 }
 
@@ -232,7 +260,7 @@ func (a *GoogleClientAdapter) SubscriptionExists(subscription string) (bool, err
 }
 
 // DeleteSubscription deletes a subscription.
-func (a *GoogleClientAdapter) DeleteSubscription(subscription string) error {
+func (a *GoogleClientAdapter) DeleteSubscription(subscription, _ string) error {
 	return a.client.DeleteSubscription(subscription)
 }
 

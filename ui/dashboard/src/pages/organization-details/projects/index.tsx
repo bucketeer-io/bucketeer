@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_ORGANIZATIONS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { usePartialState, useToggleOpen } from 'hooks';
@@ -21,7 +21,6 @@ const OrganizationProjects = () => {
   const { t } = useTranslation(['form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
-
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 

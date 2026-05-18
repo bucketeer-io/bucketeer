@@ -1,5 +1,5 @@
 import { Trans } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'i18n';
 import { DomainEventEntityType } from '@types';
 import { getPathName } from '../utils';

@@ -1,5 +1,4 @@
 import { useCallback, useReducer } from 'react';
-import type { Reducer } from 'react';
 import type { ServerError } from '@types';
 
 interface State<Response> {
@@ -71,9 +70,7 @@ export const useSubmit = <Payload, Response>(
     error: undefined
   };
 
-  const [state, dispatch] = useReducer<
-    Reducer<State<Response>, Action<Response>>
-  >(reducer, initiatedialState);
+  const [state, dispatch] = useReducer(reducer, initiatedialState);
 
   const onSubmit = useCallback(async (payload: Payload) => {
     dispatch({ type: 'submit' });

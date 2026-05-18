@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { organizationDemoCreator } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { PAGE_PATH_ROOT } from 'constants/routing';

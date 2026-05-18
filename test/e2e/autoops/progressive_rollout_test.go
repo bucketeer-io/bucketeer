@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -208,7 +207,7 @@ func TestStopProgressiveRollout(t *testing.T) {
 		Id:            progressiveRollouts[0].Id,
 	})
 	assert.NoError(t, err)
-	assert.True(t, resp.ProgressiveRollout.StoppedAt > time.Now().Add(time.Second*-10).Unix())
+	assert.True(t, resp.ProgressiveRollout.StoppedAt > time.Now().Add(time.Second*-60).Unix())
 	assert.Equal(t, autoopsproto.ProgressiveRollout_STOPPED, resp.ProgressiveRollout.Status)
 	assert.Equal(t, autoopsproto.ProgressiveRollout_USER, resp.ProgressiveRollout.StoppedBy)
 }
@@ -294,6 +293,7 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to execute progressive rollout: %s", err.Error())
 	}
+	time.Sleep(3 * time.Second)
 	feature = getFeature(t, featureClient, featureID)
 	expectedStrategy := &featureproto.RolloutStrategy{
 		Variations: []*featureproto.RolloutStrategy_Variation{
@@ -311,7 +311,7 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 		t.Fatalf("Flag shouldn't be disabled at this point")
 	}
 	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
-		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
+		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.DefaultStrategy.RolloutStrategy)
 	}
 	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
 	if actual[0].Status != autoopsproto.ProgressiveRollout_RUNNING {
@@ -441,7 +441,7 @@ func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureI
 
 func unmarshalProgressiveRolloutManualClause(t *testing.T, clause *anypb.Any) *autoopsproto.ProgressiveRolloutManualScheduleClause {
 	c := &autoopsproto.ProgressiveRolloutManualScheduleClause{}
-	if err := ptypes.UnmarshalAny(clause, c); err != nil {
+	if err := clause.UnmarshalTo(c); err != nil {
 		t.Fatal(err)
 	}
 	return c

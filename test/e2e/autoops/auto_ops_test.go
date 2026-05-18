@@ -25,11 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -54,14 +53,15 @@ const (
 	goalEventType eventType = iota + 1 // eventType starts from 1 for validation.
 	evaluationEventType
 	metricsEventType
-	prefixTestName   = "e2e-test"
-	retryTimes       = 30
-	timeout          = 2 * time.Minute
-	prefixID         = "e2e-test"
-	version          = "/v1"
-	service          = "/gateway"
-	eventsAPI        = "/events"
-	authorizationKey = "authorization"
+	prefixTestName        = "e2e-test"
+	retryTimes            = 30
+	timeout               = 2 * time.Minute
+	prefixID              = "e2e-test"
+	version               = "/v1"
+	deadlockRetryAttempts = 3
+	service               = "/gateway"
+	eventsAPI             = "/events"
+	authorizationKey      = "authorization"
 )
 
 var (
@@ -207,6 +207,113 @@ func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
 	oerc2 := unmarshalDatetimeClause(t, actualClause2)
 	if oerc2.ActionType != autoopsproto.ActionType_ENABLE {
 		t.Fatalf("different dateClause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
+	}
+}
+
+func TestCreateAutoOpsRule_RejectMixedRecurringAndOneTime(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+
+	mixedClauses := []*autoopsproto.DatetimeClause{
+		{
+			Time:       36000,
+			ActionType: autoopsproto.ActionType_ENABLE,
+			Recurrence: &autoopsproto.RecurrenceRule{
+				Frequency:  autoopsproto.RecurrenceRule_WEEKLY,
+				DaysOfWeek: []int32{1},
+				Timezone:   "Asia/Tokyo",
+				StartDate:  time.Now().Add(24 * time.Hour).Unix(),
+			},
+		},
+		{
+			Time:       time.Now().Add(48 * time.Hour).Unix(),
+			ActionType: autoopsproto.ActionType_DISABLE,
+		},
+	}
+
+	_, err := autoOpsClient.CreateAutoOpsRule(ctx, &autoopsproto.CreateAutoOpsRuleRequest{
+		EnvironmentId:   *environmentID,
+		FeatureId:       featureID,
+		OpsType:         autoopsproto.OpsType_SCHEDULE,
+		DatetimeClauses: mixedClauses,
+	})
+	if err == nil {
+		t.Fatal("expected error when mixing recurring and one-time clauses, got nil")
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		t.Fatalf("expected gRPC status error, got: %v", err)
+	}
+	if st.Code() != codes.InvalidArgument {
+		t.Fatalf("expected InvalidArgument, got: %s (message: %s)", st.Code(), st.Message())
+	}
+}
+
+func TestCreateAutoOpsRule_RecurringSchedule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+
+	recurringClauses := []*autoopsproto.DatetimeClause{
+		{
+			Time:       36000, // 10:00 AM
+			ActionType: autoopsproto.ActionType_ENABLE,
+			Recurrence: &autoopsproto.RecurrenceRule{
+				Frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+				DaysOfWeek:     []int32{1, 5}, // Mon, Fri
+				Timezone:       "Asia/Tokyo",
+				StartDate:      time.Now().Add(24 * time.Hour).Unix(),
+				MaxOccurrences: 10,
+			},
+		},
+		{
+			Time:       64800, // 6:00 PM
+			ActionType: autoopsproto.ActionType_DISABLE,
+			Recurrence: &autoopsproto.RecurrenceRule{
+				Frequency:      autoopsproto.RecurrenceRule_WEEKLY,
+				DaysOfWeek:     []int32{1, 5},
+				Timezone:       "Asia/Tokyo",
+				StartDate:      time.Now().Add(24 * time.Hour).Unix(),
+				MaxOccurrences: 10,
+			},
+		},
+	}
+
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, recurringClauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	actual := autoOpsRules[0]
+	if len(actual.Clauses) != 2 {
+		t.Fatalf("expected 2 clauses, got %d", len(actual.Clauses))
+	}
+	for _, c := range actual.Clauses {
+		if !c.IsRecurring {
+			t.Fatal("expected all clauses to be recurring")
+		}
+		dtc := unmarshalDatetimeClause(t, c)
+		if dtc.NextExecutionAt <= 0 {
+			t.Fatal("expected NextExecutionAt to be initialized")
+		}
+		if dtc.Recurrence == nil {
+			t.Fatal("expected Recurrence to be set")
+		}
 	}
 }
 
@@ -449,8 +556,9 @@ func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 		t.Fatalf("feature is enabled")
 	}
 	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
-		t.Fatalf("status is not running")
+	aor := autoOpsRules[0]
+	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
 	}
 }
 
@@ -486,10 +594,8 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -533,10 +639,8 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -602,10 +706,8 @@ func TestOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -667,10 +769,8 @@ func TestDatetimeBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 
@@ -723,10 +823,9 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
+
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 	// As a requirement, when disabling a flag using an auto operation,
 	// It must stop the progressive rollout if it is running
@@ -788,7 +887,7 @@ func sendHttpWebhook(t *testing.T, url, payload string) {
 
 func unmarshalOpsEventRateClause(t *testing.T, clause *autoopsproto.Clause) *autoopsproto.OpsEventRateClause {
 	c := &autoopsproto.OpsEventRateClause{}
-	if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
+	if err := clause.Clause.UnmarshalTo(c); err != nil {
 		t.Fatal(err)
 	}
 	return c
@@ -796,7 +895,7 @@ func unmarshalOpsEventRateClause(t *testing.T, clause *autoopsproto.Clause) *aut
 
 func unmarshalDatetimeClause(t *testing.T, clause *autoopsproto.Clause) *autoopsproto.DatetimeClause {
 	c := &autoopsproto.DatetimeClause{}
-	if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
+	if err := clause.Clause.UnmarshalTo(c); err != nil {
 		t.Fatal(err)
 	}
 	return c
@@ -934,7 +1033,16 @@ func newWebhookName(t *testing.T) string {
 
 func createFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		_, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID))
+		if err == nil {
+			break
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 	enableFeature(t, featureID, client)
@@ -942,7 +1050,16 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 
 func createDisabledFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		_, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID))
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createDisabledFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1003,8 +1120,8 @@ func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 }
@@ -1016,9 +1133,18 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
@@ -1093,7 +1219,7 @@ func registerGoalEventWithEvaluations(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
 		UserId:    userID,
@@ -1138,7 +1264,7 @@ func grpcRegisterGoalEvent(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
 		UserId:    userID,
@@ -1265,7 +1391,7 @@ func grpcRegisterEvaluationEvent(
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,

@@ -1,5 +1,10 @@
 import { accountsFetcher, AccountsFetcherParams } from '@api/account';
-import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
 import type { AccountCollection, QueryOptionsRespond } from '@types';
 
 type QueryOptions = QueryOptionsRespond<AccountCollection> & {
@@ -51,3 +56,25 @@ export const invalidateAccounts = (queryClient: QueryClient) => {
     queryKey: [ACCOUNTS_QUERY_KEY]
   });
 };
+
+type InfiniteQueryOptions = {
+  params?: Omit<AccountsFetcherParams, 'cursor'>;
+  enabled?: boolean;
+};
+
+export const useInfiniteQueryAccounts = ({
+  params,
+  enabled = true
+}: InfiniteQueryOptions = {}) =>
+  useInfiniteQuery({
+    queryKey: [ACCOUNTS_QUERY_KEY, 'infinite', params],
+    queryFn: ({ pageParam = '0' }) =>
+      accountsFetcher({ ...params, cursor: pageParam as string }),
+    initialPageParam: '0',
+    getNextPageParam: (lastPage: AccountCollection) => {
+      const nextCursor = Number(lastPage.cursor);
+      const total = Number(lastPage.totalCount);
+      return nextCursor < total ? String(nextCursor) : undefined;
+    },
+    enabled
+  });

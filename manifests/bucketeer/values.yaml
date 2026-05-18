@@ -29,6 +29,24 @@ global:
       user: ""
       password: ""
       database: ""
+  # Global primary database configuration
+  # Supported types: mysql, postgres
+  operationalDatabase:
+    type: mysql
+    mysql:
+      user: ""
+      pass: ""
+      host: ""
+      port: 3306
+      name: ""
+      openConns: 50
+    postgres:
+      user: ""
+      pass: ""
+      host: ""
+      port: 5432
+      name: ""
+      openConns: 50
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""
@@ -85,6 +103,7 @@ global:
 
 migration:
   image:
+    # MySQL: bucketeer-migration. PostgreSQL: ghcr.io/bucketeer-io/bucketeer-migration-postgres (see migration/Dockerfile.postgres).
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: v2.2.0 # x-release-please-version
   # imagePullSecrets: []  # Optional: Override global.image.imagePullSecrets for migration only
@@ -98,4 +117,5 @@ migration:
 
   # The migration baseline
   # First revision
-  dbBaseline: "20240626022133"
+  dbBaseline: "20240626022133" # mysql
+  # dbBaseline: "20260226174000" # postgres

@@ -15,10 +15,11 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -182,12 +183,12 @@ func TestPutSegmentUser(t *testing.T) {
 			desc:        "error_proto_message_nil",
 			setup:       nil,
 			input:       nil,
-			expectedErr: proto.ErrNil,
+			expectedErr: errors.New("segmentUsers cannot be nil"),
 		},
 		{
 			desc: "success",
 			setup: func(sc *segmentUsersCache) {
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataSegmentUsers, segmentUsersTTL).Return(nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataSegmentUsers, time.Duration(0)).Return(nil)
 			},
 			input:       segmentUsers,
 			expectedErr: nil,

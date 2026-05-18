@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -62,6 +63,7 @@ type FeatureService struct {
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
 	tagStorage                 v2ts.TagStorage
 	mysqlClient                mysql.Client
+	dbClient                   database.Client
 	accountClient              accountclient.Client
 	experimentClient           experimentclient.Client
 	featuresCache              cachev3.FeaturesCache
@@ -79,6 +81,10 @@ type FeatureService struct {
 }
 
 func NewFeatureService(
+	dbClient database.Client,
+	featureStorage v2fs.FeatureStorage,
+	segmentStorage v2fs.SegmentStorage,
+	segmentUserStorage v2fs.SegmentUserStorage,
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
@@ -101,19 +107,20 @@ func NewFeatureService(
 	return &FeatureService{
 		fluiStorage:                v2fs.NewFeatureLastUsedInfoStorage(mysqlClient),
 		flagTriggerStorage:         v2fs.NewFlagTriggerStorage(mysqlClient),
-		featureStorage:             v2fs.NewFeatureStorage(mysqlClient),
-		segmentStorage:             v2fs.NewSegmentStorage(mysqlClient),
-		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
+		featureStorage:             featureStorage,
+		segmentStorage:             segmentStorage,
+		segmentUserStorage:         segmentUserStorage,
 		scheduledFlagChangeStorage: v2fs.NewScheduledFlagChangeStorage(mysqlClient),
 		tagStorage:                 v2ts.NewTagStorage(mysqlClient),
 		mysqlClient:                mysqlClient,
+		dbClient:                   dbClient,
 		accountClient:              accountClient,
 		experimentClient:           experimentClient,
 		autoOpsClient:              autoOpsClient,
 		batchClient:                batchClient,
 		environmentClient:          environmentClient,
-		featuresCache:              cachev3.NewFeaturesCache(v3Cache),
-		segmentUsersCache:          cachev3.NewSegmentUsersCache(v3Cache),
+		featuresCache:              cachev3.NewFeaturesCache(v3Cache, 0),
+		segmentUsersCache:          cachev3.NewSegmentUsersCache(v3Cache, 0),
 		userAttributesCache:        cachev3.NewUserAttributesCache(persistentRedisV3Cache),
 		segmentUsersPublisher:      segmentUsersPublisher,
 		domainPublisher:            domainPublisher,

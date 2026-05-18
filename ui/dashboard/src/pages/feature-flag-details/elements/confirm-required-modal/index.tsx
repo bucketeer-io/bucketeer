@@ -1,7 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -69,7 +69,7 @@ export interface ConfirmRequiredValues {
 interface DiscardItemRendererProps<T> {
   title: string;
   items: T[];
-  Renderer: React.FC<T>;
+  Renderer: React.ComponentType<T>;
 }
 
 const ConfirmationRequiredModal = ({
@@ -300,7 +300,7 @@ const ConfirmationRequiredModal = ({
               {segmentRuleDeletedChanges.map((item, index) => (
                 <div key={index}>
                   {item.ruleIndex && (
-                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700 text-accent-red-500">
+                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-accent-red-500">
                       <Trans
                         i18nKey="common:delete-rule"
                         values={{ rule: item.ruleIndex }}
@@ -380,70 +380,64 @@ const ConfirmationRequiredModal = ({
                 </>
               )}
               <div className="flex flex-col w-full px-5 pb-5">
-                {!isShowSchedule && (
-                  <>
-                    <Form.Field
-                      control={control}
-                      name="comment"
-                      render={({ field }) => (
-                        <Form.Item className="py-0">
-                          <Form.Label
-                            required={isRequireComment && !isShowSchedule}
-                          >
-                            {t('form:comment-for-update')}
-                          </Form.Label>
-                          <Form.Control>
-                            <TextArea
-                              placeholder={`${t('form:placeholder-comment')}`}
-                              rows={3}
-                              {...field}
-                              onChange={value => {
-                                field.onChange(value);
-                              }}
-                              name="comment"
-                            />
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                    <Form.Field
-                      control={control}
-                      name="resetSampling"
-                      render={({ field }) => (
-                        <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
-                          <div className="flex items-center gap-x-2">
-                            <Form.Control>
-                              <Checkbox
-                                ref={field.ref}
-                                checked={field.value}
-                                onCheckedChange={checked =>
-                                  field.onChange(checked)
-                                }
-                                title={t('form:reset-sampling')}
+                <Form.Field
+                  control={control}
+                  name="comment"
+                  render={({ field }) => (
+                    <Form.Item className="py-0">
+                      <Form.Label
+                        required={isRequireComment && !isShowSchedule}
+                      >
+                        {t('form:comment-for-update')}
+                      </Form.Label>
+                      <Form.Control>
+                        <TextArea
+                          placeholder={`${t('form:placeholder-comment')}`}
+                          rows={3}
+                          {...field}
+                          onChange={value => {
+                            field.onChange(value);
+                          }}
+                          name="comment"
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+                <Form.Field
+                  control={control}
+                  name="resetSampling"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
+                      <div className="flex items-center gap-x-2">
+                        <Form.Control>
+                          <Checkbox
+                            ref={field.ref}
+                            checked={field.value}
+                            onCheckedChange={checked => field.onChange(checked)}
+                            title={t('form:reset-sampling')}
+                          />
+                        </Form.Control>
+                        <Tooltip
+                          align="start"
+                          content={t('form:reset-sampling-tooltip')}
+                          trigger={
+                            <div className="flex-center size-fit">
+                              <Icon
+                                icon={IconInfo}
+                                size="xs"
+                                color="gray-500"
                               />
-                            </Form.Control>
-                            <Tooltip
-                              align="start"
-                              content={t('form:reset-sampling-tooltip')}
-                              trigger={
-                                <div className="flex-center size-fit">
-                                  <Icon
-                                    icon={IconInfo}
-                                    size="xs"
-                                    color="gray-500"
-                                  />
-                                </div>
-                              }
-                              className="max-w-[400px]"
-                            />
-                          </div>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                  </>
-                )}
+                            </div>
+                          }
+                          className="max-w-[400px]"
+                        />
+                      </div>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
 
                 {isShowScheduleSelect && (
                   <>

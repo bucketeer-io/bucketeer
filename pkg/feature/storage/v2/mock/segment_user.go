@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -59,9 +59,9 @@ func (mr *MockSegmentUserStorageMockRecorder) GetSegmentUser(ctx, id, environmen
 }
 
 // ListSegmentUsers mocks base method.
-func (m *MockSegmentUserStorage) ListSegmentUsers(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*feature.SegmentUser, int, error) {
+func (m *MockSegmentUserStorage) ListSegmentUsers(ctx context.Context, params v2.ListSegmentUsersParams) ([]*feature.SegmentUser, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSegmentUsers", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListSegmentUsers", ctx, params)
 	ret0, _ := ret[0].([]*feature.SegmentUser)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -69,9 +69,9 @@ func (m *MockSegmentUserStorage) ListSegmentUsers(ctx context.Context, wherePart
 }
 
 // ListSegmentUsers indicates an expected call of ListSegmentUsers.
-func (mr *MockSegmentUserStorageMockRecorder) ListSegmentUsers(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockSegmentUserStorageMockRecorder) ListSegmentUsers(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegmentUsers", reflect.TypeOf((*MockSegmentUserStorage)(nil).ListSegmentUsers), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegmentUsers", reflect.TypeOf((*MockSegmentUserStorage)(nil).ListSegmentUsers), ctx, params)
 }
 
 // UpsertSegmentUsers mocks base method.

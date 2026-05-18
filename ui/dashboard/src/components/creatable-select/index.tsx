@@ -1,4 +1,4 @@
-import { FC, memo, ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 import {
   StylesConfig,
   ActionMeta,
@@ -23,8 +23,11 @@ export interface NoOptionsMessageProps {
   [key: string]: string | number | boolean;
 }
 
-export interface CreatableSelectProps
-  extends CreatableProps<Option, true, GroupBase<Option>> {
+export interface CreatableSelectProps extends CreatableProps<
+  Option,
+  true,
+  GroupBase<Option>
+> {
   isMulti?: true;
   loading?: boolean;
   options?: Option[];
@@ -41,7 +44,7 @@ export interface CreatableSelectProps
     actionMeta: ActionMeta<Option>
   ) => void;
   onCreateOption?: (v: string) => void;
-  formatCreateLabel?: (v: string) => JSX.Element;
+  formatCreateLabel?: (v: string) => ReactNode;
   noOptionsMessage?: (props: NoOptionsMessageProps) => ReactNode;
 }
 
@@ -143,7 +146,7 @@ export const CustomMenuList = ({
   );
 };
 
-export const CreatableSelect: FC<CreatableSelectProps> = memo(
+export const CreatableSelect = memo<CreatableSelectProps>(
   ({
     isMulti = true,
     loading = false,

@@ -16,6 +16,9 @@
       "date-increasing-order": "日付は昇順で指定してください。",
       "schedule-interval": "スケジュールの時間間隔は最低5分以上必要です。",
       "schedules-same-time": "同じ日時に複数のスケジュールを設定することはできません。",
+      "invalid-frequency": "有効な頻度を選択してください。",
+      "days-of-week-required": "少なくとも1日を選択してください。",
+      "end-date-on-after-start-date": "終了日は開始日以降の日付を指定してください。",
       "increments-greater-than": "増分は1以上である必要があります",
       "increments-less-than": "増分は100以下である必要があります"
     },
@@ -27,6 +30,11 @@
     "name-at-least-characters": "{{name}}は{{count}}文字以上である必要があります。"
   },
   "copied": "コピーしました",
+  "api-key-created-title": "APIキーを作成しました",
+  "api-key-secret-warning": "APIキーをコピーして保管してください。このページを離れると、キーは非表示になり、再び表示することはできません。",
+  "api-key-secret-label": "APIキー",
+  "copy-api-key": "APIキーをコピー",
+  "api-key-secret-close": "閉じる",
   "copy-trigger-url": "このURLをコピーして保存してください。このページを離れると、URLは非表示になります。",
   "something-went-wrong": "問題が発生しました。",
   "operation": {

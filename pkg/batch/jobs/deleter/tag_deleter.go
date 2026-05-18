@@ -42,6 +42,7 @@ type tagDeleter struct {
 
 func NewTagDeleter(
 	mysqlClient mysql.Client,
+	ftStorage ftstorage.FeatureStorage,
 	opts ...jobs.Option) jobs.Job {
 
 	dopts := &jobs.Options{
@@ -53,7 +54,7 @@ func NewTagDeleter(
 	}
 	return &tagDeleter{
 		tagStorage: tagstorage.NewTagStorage(mysqlClient),
-		ftStorage:  ftstorage.NewFeatureStorage(mysqlClient),
+		ftStorage:  ftStorage,
 		opts:       dopts,
 		logger:     dopts.Logger.Named("tag-deleter"),
 	}

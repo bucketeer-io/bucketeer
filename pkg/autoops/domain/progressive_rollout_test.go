@@ -18,10 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
@@ -87,7 +87,7 @@ func TestAlreadyTriggered(t *testing.T) {
 	patterns := []struct {
 		desc                   string
 		progressiveRolloutType autoopsproto.ProgressiveRollout_Type
-		clause                 protoiface.MessageV1
+		clause                 proto.Message
 		targetScheduleID       string
 		expected               bool
 		expectedErr            error
@@ -192,7 +192,7 @@ func TestAlreadyTriggered(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			s := createProgressiveRollout(t)
-			ac, err := ptypes.MarshalAny(p.clause)
+			ac, err := anypb.New(p.clause)
 			assert.NoError(t, err)
 			s.Clause = ac
 			s.Type = p.progressiveRolloutType
@@ -207,7 +207,7 @@ func TestProgressiveRolloutSetTriggeredAt(t *testing.T) {
 	patterns := []struct {
 		desc                   string
 		progressiveRolloutType autoopsproto.ProgressiveRollout_Type
-		clause                 protoiface.MessageV1
+		clause                 proto.Message
 		targetScheduleID       string
 		expectedErr            error
 		expectedStatus         autoopsproto.ProgressiveRollout_Status
@@ -311,7 +311,7 @@ func TestProgressiveRolloutSetTriggeredAt(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			s := createProgressiveRollout(t)
-			ac, err := ptypes.MarshalAny(p.clause)
+			ac, err := anypb.New(p.clause)
 			assert.NoError(t, err)
 			s.Clause = ac
 			s.Type = p.progressiveRolloutType

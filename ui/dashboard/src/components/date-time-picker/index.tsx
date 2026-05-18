@@ -1,4 +1,4 @@
-import { FC, memo, useRef } from 'react';
+import { memo, useRef } from 'react';
 import DatePicker, { DatePickerProps } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import CustomizeHeader from './customize-header';
 
 type ReactDatetimePickerProps = DatePickerProps;
 
-export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
+export const ReactDatePicker = memo<ReactDatetimePickerProps>(
   ({
     selected,
     disabled,

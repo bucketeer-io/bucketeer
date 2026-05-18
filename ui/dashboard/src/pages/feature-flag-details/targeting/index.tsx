@@ -34,7 +34,6 @@ import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -73,6 +72,7 @@ import {
   handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
   handleCheckPrerequisiteDiscardChanges,
+  computeRuleOrder,
   handleCheckPrerequisites,
   handleCheckRuleDeleted,
   handleCheckSegmentRules,
@@ -84,7 +84,17 @@ import {
 } from './utils';
 
 export const TargetingDivider = () => (
-  <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
+  <div className="flex-center py-3 text-gray-400" aria-hidden="true">
+    <svg width="12" height="24" viewBox="0 0 12 24" fill="none">
+      <path
+        d="M6 1v18M2 15l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </div>
 );
 
 const TargetingPage = ({
@@ -236,7 +246,6 @@ const TargetingPage = ({
     fields: segmentRules,
     insert: segmentRulesInsert,
     remove: segmentRulesRemove,
-    update: segmentRulesUpdate,
     swap: segmentRulesSwap
   } = useFieldArray({
     control,
@@ -357,19 +366,11 @@ const TargetingPage = ({
 
   const handleSwapSegmentRule = useCallback(
     (indexA: number, indexB: number) => {
-      segmentRulesUpdate(indexA, {
-        ...segmentRulesWatch[indexA],
-        id: uuid()
-      });
-      segmentRulesUpdate(indexB, {
-        ...segmentRulesWatch[indexB],
-        id: uuid()
-      });
       segmentRulesSwap(indexA, indexB);
       const featureRuleSwap = handleSwapRuleFeature(featureRef, indexA, indexB);
       setFeatureRef(featureRuleSwap);
     },
-    [segmentRulesWatch]
+    [featureRef]
   );
 
   const buildSchedulePayload = useCallback(
@@ -397,6 +398,11 @@ const TargetingPage = ({
       const ruleChanges = handleCheckSegmentRules(rules, segmentRules);
       if (ruleChanges.length > 0) {
         payload.ruleChanges = ruleChanges;
+      }
+
+      const ruleOrder = computeRuleOrder(rules, segmentRules);
+      if (ruleOrder) {
+        payload.orderedRuleIds = ruleOrder;
       }
 
       const targetChanges = handleCheckIndividualRules(
@@ -613,6 +619,7 @@ const TargetingPage = ({
               enabled,
               defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
               ruleChanges: handleCheckSegmentRules(rules, segmentRules),
+              orderedRuleIds: computeRuleOrder(rules, segmentRules) ?? [],
               targetChanges: handleCheckIndividualRules(
                 targets,
                 individualRules
@@ -679,19 +686,15 @@ const TargetingPage = ({
             setIsShowRules={setIsShowRules}
             editable={editable}
           />
-          {(!feature.enabled || !enabledWatch) && (
-            <>
-              <TargetingDivider />
-              <FlagOffDescription
-                isShowRules={isShowRules}
-                setIsShowRules={setIsShowRules}
-              />
-            </>
+          {!enabledWatch && (
+            <FlagOffDescription
+              isShowRules={isShowRules}
+              setIsShowRules={setIsShowRules}
+            />
           )}
           {isShowRules && (
             <>
-              {(prerequisites?.length > 0 ||
-                hasPrerequisiteFlags?.length > 0) && (
+              {prerequisites?.length > 0 && (
                 <>
                   <TargetingDivider />
                   <PrerequisiteRule
@@ -765,15 +768,19 @@ const TargetingPage = ({
               )}
             </>
           )}
-          <TargetingDivider />
-          <DefaultRule
-            editable={editable}
-            urlCode={currentEnvironment.urlCode}
-            feature={feature}
-            waitingRunningRollouts={waitingRunningRollouts}
-            handleDiscardChanges={handleDiscardChanges}
-            handleCheckEdit={checkEditRule}
-          />
+          {isShowRules && (
+            <>
+              <TargetingDivider />
+              <DefaultRule
+                editable={editable}
+                urlCode={currentEnvironment.urlCode}
+                feature={feature}
+                waitingRunningRollouts={waitingRunningRollouts}
+                handleDiscardChanges={handleDiscardChanges}
+                handleCheckEdit={checkEditRule}
+              />
+            </>
+          )}
           <ButtonBar
             primaryButton={
               <Tooltip

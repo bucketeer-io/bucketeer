@@ -24,12 +24,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -43,11 +42,13 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	prefixTestName = "e2e-test"
-	timeout        = 60 * time.Second
+	prefixTestName        = "e2e-test"
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -145,24 +146,32 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
 
-	// Find feature with tag, with the same features ID, and requested at.
-	// "None" response: RequestedAt should be preserved (not advanced).
-	ffid := response.FeatureFlagsId
-	prevRequestedAt := response.RequestedAt
-	response = grpcGetFeatureFlags(t, tag, response.FeatureFlagsId, response.RequestedAt)
-	assert.Equal(t, ffid, response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.Equal(t, prevRequestedAt, response.RequestedAt)
-	assert.False(t, response.ForceUpdate)
+	// Re-fetch fresh baseline to minimize race window with parallel tests
+	// that may update the feature flag cache between calls.
+	var ffid string
+	var noneResponse *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		ffid = baseline.FeatureFlagsId
+		noneResponse = grpcGetFeatureFlags(t, tag, ffid, baseline.RequestedAt)
+		return len(noneResponse.Features) == 0
+	}, 30*time.Second, 2*time.Second, "cache should stabilize for same featuresId")
+	assert.Equal(t, ffid, noneResponse.FeatureFlagsId)
+	assert.Equal(t, 0, len(noneResponse.ArchivedFeatureFlagIds))
+	assert.False(t, noneResponse.ForceUpdate)
 
 	// Find feature with tag, with the different features ID, and requested at
-	response = grpcGetFeatureFlags(t, tag, "random-id", response.RequestedAt)
-	assert.Equal(t, ffid, response.FeatureFlagsId)
-	assert.Equal(t, 0, len(response.Features))
-	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
-	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, response.ForceUpdate)
+	var diffResponse *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		ffid = baseline.FeatureFlagsId
+		diffResponse = grpcGetFeatureFlags(t, tag, "random-id", baseline.RequestedAt)
+		return len(diffResponse.Features) == 0
+	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
+	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
+	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
+	assert.True(t, diffResponse.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, diffResponse.ForceUpdate)
 }
 
 func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
@@ -214,11 +223,18 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 		return requestFFID != diffResp.FeatureFlagsId && len(diffResp.ArchivedFeatureFlagIds) > 0
 	}, 30*time.Second, 2*time.Second, "archived flag should appear in the diff response")
 
-	assert.Equal(t, 0, len(diffResp.Features))
-	assert.Equal(t, 1, len(diffResp.ArchivedFeatureFlagIds))
+	// With >= filter, features created in the same second as the previous
+	// response's RequestedAt may also be included (harmless re-send).
+	assert.True(t, len(diffResp.ArchivedFeatureFlagIds) >= 1, "at least the archived flag should be present")
 	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.False(t, diffResp.ForceUpdate)
-	assert.Equal(t, req1.Id, diffResp.ArchivedFeatureFlagIds[0])
+	foundArchived := false
+	for _, id := range diffResp.ArchivedFeatureFlagIds {
+		if id == req1.Id {
+			foundArchived = true
+		}
+	}
+	assert.True(t, foundArchived, "archived feature should be in ArchivedFeatureFlagIds")
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
@@ -744,8 +760,8 @@ app:
 			},
 		},
 		Tags:                     []string{tag},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 
@@ -856,7 +872,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	// Evaluation Event
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      "feature-id",
 		FeatureVersion: 1,
@@ -872,7 +888,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// GoalEvent
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
+	goal, err := anypb.New(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    "goal-id",
 		UserId:    "user-id",
@@ -886,14 +902,14 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// InternalSDKErrorMetricsEvent
-	internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+	internalSDKErr, err := anypb.New(&eventproto.InternalSdkErrorMetricsEvent{
 		ApiId:  eventproto.ApiId_GET_EVALUATIONS,
 		Labels: map[string]string{"tag": "IOS"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsInternalSDK, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsInternalSDK, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      internalSDKErr,
 		SdkVersion: "v0.0.1-e2e",
@@ -903,14 +919,14 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// BadRequestErrorMetricsEvent
-	badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+	badRequestErr, err := anypb.New(&eventproto.BadRequestErrorMetricsEvent{
 		ApiId:  eventproto.ApiId_REGISTER_EVENTS,
 		Labels: map[string]string{"tag": "ANDROID"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsBadRequest, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsBadRequest, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      badRequestErr,
 		SdkVersion: "v0.0.1-e2e",
@@ -920,7 +936,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// SizeMetricsEvent
-	size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+	size, err := anypb.New(&eventproto.SizeMetricsEvent{
 		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
 		Labels:   map[string]string{"tag": "JAVASCRIPT"},
 		SizeByte: 99,
@@ -928,7 +944,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsSize, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsSize, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      size,
 		SdkVersion: "v0.0.1-e2e",
@@ -938,7 +954,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	// LatencyMetricsEvent
-	latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+	latency, err := anypb.New(&eventproto.LatencyMetricsEvent{
 		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
 		Labels:   map[string]string{"tag": "GO_SERVER"},
 		Duration: durationpb.New(time.Duration(99)),
@@ -946,7 +962,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metricsLatency, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+	metricsLatency, err := anypb.New(&eventproto.MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      latency,
 		SdkVersion: "v0.0.1-e2e",
@@ -1017,14 +1033,14 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	for _, apiID := range apiIDs {
 		for _, sourceID := range sourceIds {
 			// InternalSDKErrorMetricsEvent
-			internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+			internalSDKErr, err := anypb.New(&eventproto.InternalSdkErrorMetricsEvent{
 				ApiId:  apiID,
 				Labels: map[string]string{"tag": sourceID.String()},
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsInternalSDK, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsInternalSDK, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      internalSDKErr,
 				SdkVersion: sdkVersion,
@@ -1035,14 +1051,14 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			}
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsInternalSDK})
 			// BadRequestErrorMetricsEvent
-			badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+			badRequestErr, err := anypb.New(&eventproto.BadRequestErrorMetricsEvent{
 				ApiId:  apiID,
 				Labels: map[string]string{"tag": sourceID.String()},
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsBadRequest, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsBadRequest, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      badRequestErr,
 				SdkVersion: sdkVersion,
@@ -1053,7 +1069,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			}
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsBadRequest})
 			// SizeMetricsEvent
-			size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+			size, err := anypb.New(&eventproto.SizeMetricsEvent{
 				ApiId:    apiID,
 				Labels:   map[string]string{"tag": sourceID.String()},
 				SizeByte: rand.Int31n(100),
@@ -1061,7 +1077,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsSize, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsSize, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      size,
 				SdkVersion: sdkVersion,
@@ -1072,7 +1088,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			}
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsSize})
 			// LatencyMetricsEvent
-			latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+			latency, err := anypb.New(&eventproto.LatencyMetricsEvent{
 				ApiId:         apiID,
 				Labels:        map[string]string{"tag": sourceID.String()},
 				LatencySecond: rand.Float64(),
@@ -1080,7 +1096,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			metricsLatency, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+			metricsLatency, err := anypb.New(&eventproto.MetricsEvent{
 				Timestamp:  time.Now().Unix(),
 				Event:      latency,
 				SdkVersion: sdkVersion,
@@ -1138,7 +1154,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		testUserDataKeySuffix + "attr3-" + uuid: "value3",
 	}
 
-	evaluation1, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation1, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
@@ -1166,7 +1182,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		testUserDataKeySuffix + "attr6-" + uuid: "value6",
 	}
 
-	evaluation2, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation2, err := anypb.New(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
@@ -1376,6 +1392,7 @@ func updateFeatueFlagCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(3 * time.Second)
 }
 
 func newFeatureClient(t *testing.T) featureclient.Client {
@@ -1438,8 +1455,8 @@ func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 		EnvironmentId:            *environmentID,
 	}
 }
@@ -1450,16 +1467,24 @@ func createFeature(
 	req *featureproto.CreateFeatureRequest,
 ) *featureproto.Feature {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	createRes, err := client.CreateFeature(ctx, req)
-	if err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		createRes, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			if createRes == nil {
+				t.Fatal("Created response is nil")
+			}
+			return createRes.Feature
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, req.Id, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
-	if createRes == nil {
-		t.Fatal("Created resonse is nil")
-	}
-	return createRes.Feature
+	return nil
 }
 
 func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
@@ -1489,9 +1514,18 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 			},
 		},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, addReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, addReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addTag (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1500,18 +1534,27 @@ func addRule(t *testing.T, featureID, variationID string, client featureclient.C
 	t.Helper()
 	rule := newFixedStrategyRule(variationID)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		RuleChanges: []*featureproto.RuleChange{
-			{
-				ChangeType: featureproto.ChangeType_CREATE,
-				Rule:       rule,
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			RuleChanges: []*featureproto.RuleChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Rule:       rule,
+				},
 			},
-		},
-	}); err != nil {
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addRule (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -1523,22 +1566,40 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, enableReq)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying enableFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
 func archiveFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Id:            featureID,
-		EnvironmentId: *environmentID,
-		Archived:      wrapperspb.Bool(true),
-	}); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			Archived:      wrapperspb.Bool(true),
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying archiveFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }

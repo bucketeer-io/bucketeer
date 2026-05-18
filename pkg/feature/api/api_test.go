@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -125,6 +126,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		mock.NewMockScheduledFlagChangeStorage(c),
 		tagstoragemock.NewMockTagStorage(c),
 		mysqlmock.NewMockClient(c),
+		databasemock.NewMockClient(c),
 		a,
 		e,
 		cachev3mock.NewMockFeaturesCache(c),
@@ -156,8 +158,11 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		fluiStorage:                mock.NewMockFeatureLastUsedInfoStorage(c),
 		flagTriggerStorage:         mock.NewMockFlagTriggerStorage(c),
 		featureStorage:             mock.NewMockFeatureStorage(c),
+		segmentStorage:             mock.NewMockSegmentStorage(c),
+		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
 		scheduledFlagChangeStorage: mock.NewMockScheduledFlagChangeStorage(c),
 		mysqlClient:                mysqlmock.NewMockClient(c),
+		dbClient:                   databasemock.NewMockClient(c),
 		tagStorage:                 tagstoragemock.NewMockTagStorage(c),
 		accountClient:              a,
 		autoOpsClient:              aoclientmock.NewMockClient(c),
@@ -198,7 +203,9 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 		scheduledFlagChangeStorage: mock.NewMockScheduledFlagChangeStorage(c),
 		segmentUsersCache:          cachev3mock.NewMockSegmentUsersCache(c),
 		segmentStorage:             mock.NewMockSegmentStorage(c),
+		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
 		mysqlClient:                mysqlmock.NewMockClient(c),
+		dbClient:                   databasemock.NewMockClient(c),
 		accountClient:              a,
 		autoOpsClient:              aoclientmock.NewMockClient(c),
 		experimentClient:           experimentclientmock.NewMockClient(c),

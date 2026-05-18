@@ -18,7 +18,7 @@ interface ReactCodeEditorProps extends EditorProps {
   isResize?: boolean;
   isExpand?: boolean;
   lastLine?: number;
-  scrollParent?: RefObject<HTMLElement>;
+  scrollParent?: RefObject<HTMLElement | null>;
   onExpand?: () => void;
 }
 
@@ -186,7 +186,7 @@ export default function ReactCodeEditor({
         loading={
           <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
             <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
-              Loading...
+              {t('common:loading')}
             </p>
             <Spinner />
           </div>

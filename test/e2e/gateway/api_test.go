@@ -20,9 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -105,7 +104,6 @@ func TestGetEvaluationsFullState(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
 	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
 	if response.Evaluations == nil {
@@ -128,7 +126,6 @@ func TestGetEvaluation(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
 	response := util.GetEvaluation(t, tag, featureID2, userID, *gatewayAddr, *apiKeyPath)
 	if response.Evaluation == nil {
 		t.Fatal("Evaluation field is nil")

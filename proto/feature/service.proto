@@ -161,6 +161,7 @@ message UpdateFeatureRequest {
   repeated TargetChange target_changes = 16;
   repeated TagChange tag_changes = 17;
   google.protobuf.StringValue maintainer = 18;
+  repeated string ordered_rule_ids = 19;
 }
 
 message UpdateFeatureResponse {

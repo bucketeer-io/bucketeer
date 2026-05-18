@@ -418,7 +418,7 @@ const Strategy = ({
               return (
                 <Form.Item className="flex flex-col w-full gap-y-2">
                   <Form.Control>
-                    <>
+                    <div>
                       {percentageValueCount > 0 && (
                         <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
                           {rolloutStrategy?.variations?.map(
@@ -464,7 +464,7 @@ const Strategy = ({
                           )
                         )}
                       </div>
-                    </>
+                    </div>
                   </Form.Control>
                   {splitOptionType && <Form.Message />}
                 </Form.Item>

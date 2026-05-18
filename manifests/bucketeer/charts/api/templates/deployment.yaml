@@ -57,16 +57,28 @@ spec:
               value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_API_PROJECT
               value: "{{ .Values.global.pubsub.project }}"
+            - name: BUCKETEER_API_STORAGE_TYPE
+              value: "{{ .Values.env.operationalDatabase.type | default .Values.global.operationalDatabase.type }}"
             - name: BUCKETEER_API_MYSQL_USER
-              value: "{{ .Values.env.database.mysql.user }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_API_MYSQL_PASS
-              value: "{{ .Values.env.database.mysql.pass }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
             - name: BUCKETEER_API_MYSQL_HOST
-              value: "{{ .Values.env.database.mysql.host }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_API_MYSQL_PORT
-              value: "{{ .Values.env.database.mysql.port }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.port | default .Values.global.operationalDatabase.mysql.port }}"
             - name: BUCKETEER_API_MYSQL_DB_NAME
-              value: "{{ .Values.env.database.mysql.dbName }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.name | default .Values.global.operationalDatabase.mysql.name }}"
+            - name: BUCKETEER_API_POSTGRES_USER
+              value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
+            - name: BUCKETEER_API_POSTGRES_PASS
+              value: "{{ .Values.env.operationalDatabase.postgres.pass | default .Values.global.operationalDatabase.postgres.pass }}"
+            - name: BUCKETEER_API_POSTGRES_HOST
+              value: "{{ .Values.env.operationalDatabase.postgres.host | default .Values.global.operationalDatabase.postgres.host }}"
+            - name: BUCKETEER_API_POSTGRES_PORT
+              value: "{{ .Values.env.operationalDatabase.postgres.port | default .Values.global.operationalDatabase.postgres.port }}"
+            - name: BUCKETEER_API_POSTGRES_DB_NAME
+              value: "{{ .Values.env.operationalDatabase.postgres.name | default .Values.global.operationalDatabase.postgres.name }}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_API_GOAL_TOPIC
@@ -145,6 +157,26 @@ spec:
               value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_MODE
               value: "{{ .Values.env.pubSubRedisMode }}"
+            {{- if .Values.env.featuresMemoryCacheTTL }}
+            - name: BUCKETEER_API_FEATURES_MEMORY_CACHE_TTL
+              value: "{{ .Values.env.featuresMemoryCacheTTL }}"
+            {{- end }}
+            {{- if .Values.env.metricsWorkers }}
+            - name: BUCKETEER_API_METRICS_WORKERS
+              value: "{{ .Values.env.metricsWorkers }}"
+            {{- end }}
+            {{- if .Values.env.metricsQueueSize }}
+            - name: BUCKETEER_API_METRICS_QUEUE_SIZE
+              value: "{{ .Values.env.metricsQueueSize }}"
+            {{- end }}
+            {{- if .Values.env.segmentUsersMemoryCacheTTL }}
+            - name: BUCKETEER_API_SEGMENT_USERS_MEMORY_CACHE_TTL
+              value: "{{ .Values.env.segmentUsersMemoryCacheTTL }}"
+            {{- end }}
+            {{- if .Values.env.cacheInvalidationTopic }}
+            - name: BUCKETEER_API_CACHE_INVALIDATION_TOPIC
+              value: "{{ .Values.env.cacheInvalidationTopic }}"
+            {{- end }}
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT

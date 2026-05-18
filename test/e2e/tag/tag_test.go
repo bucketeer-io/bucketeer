@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
@@ -30,11 +30,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
-	prefixID = "e2e-test"
-	timeout  = 60 * time.Second
+	prefixID              = "e2e-test"
+	timeout               = 60 * time.Second
+	deadlockRetryAttempts = 3
 )
 
 var (
@@ -250,16 +252,25 @@ func newCreateFeatureReq(featureID string, tags []string) *feature.CreateFeature
 			},
 		},
 		Tags:                     tags,
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 	}
 }
 
 func createFeatureNoCmd(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.CreateFeature(ctx, req); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, req.Id, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }

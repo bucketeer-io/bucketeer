@@ -9,8 +9,10 @@ import UploadMessage from './upload-message';
 
 export type PhotoSelectRef = HTMLInputElement;
 
-export interface PhotoSelectProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'accept' | 'onChange'> {
+export interface PhotoSelectProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'accept' | 'onChange'
+> {
   onChange: (file: File) => void;
   format?: PhotoSelectFormat | PhotoSelectFormat[];
   maxFileSize: number;

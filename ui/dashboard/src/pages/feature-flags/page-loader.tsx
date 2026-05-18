@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { autoOpsCreator } from '@api/auto-ops';
+import { useLocation, useNavigate } from 'react-router';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
@@ -45,7 +44,6 @@ const PageLoader = () => {
   const location = useLocation();
   const [selectedFlag, setSelectedFlag] = useState<Feature>();
   const [isArchiving, setIsArchiving] = useState(false);
-  const [isEnabling, setIsEnabling] = useState(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -87,7 +85,6 @@ const PageLoader = () => {
         return onOpenConfirmModal();
       }
       if (['ACTIVE', 'INACTIVE'].includes(type)) {
-        setIsEnabling(type === 'ACTIVE');
         onOpenConfirmRequiredModal();
       }
     },
@@ -130,36 +127,30 @@ const PageLoader = () => {
     async (additionalValues?: ConfirmRequiredValues) => {
       try {
         if (selectedFlag) {
-          const { scheduleType, comment, scheduleAt } = additionalValues || {};
-          let resp;
-          if (['ENABLE', 'DISABLE'].includes(scheduleType as string)) {
-            resp = await featureUpdater({
-              id: selectedFlag.id,
-              environmentId: currentEnvironment.id,
-              enabled: !selectedFlag.enabled,
-              comment
-            });
-          } else {
-            resp = await autoOpsCreator({
-              environmentId: currentEnvironment.id,
-              featureId: selectedFlag.id,
-              opsType: 'SCHEDULE',
-              datetimeClauses: [
-                {
-                  actionType: selectedFlag.enabled ? 'DISABLE' : 'ENABLE',
-                  time: scheduleAt as string
-                }
-              ]
-            });
-          }
+          const { comment, resetSampling } = additionalValues || {};
+          const resp = await featureUpdater({
+            id: selectedFlag.id,
+            environmentId: currentEnvironment.id,
+            enabled: !selectedFlag.enabled,
+            comment,
+            resetSamplingSeed: resetSampling
+          });
           if (resp) {
             notify({
-              message: t('message:collection-action-success', {
-                collection: t('source-type.feature-flag'),
-                action: t('updated')
-              })
+              message: (
+                <Trans
+                  i18nKey={'form:feature-flags.flag-switch'}
+                  values={{
+                    name: selectedFlag.name,
+                    state: selectedFlag.enabled
+                      ? t('form:disabled')
+                      : t('form:enabled')
+                  }}
+                />
+              )
             });
             invalidateFeatures(queryClient);
+            invalidateFeature(queryClient);
             onCloseConfirmRequiredModal();
           }
         }
@@ -167,7 +158,7 @@ const PageLoader = () => {
         errorNotify(error);
       }
     },
-    [isEnabling, selectedFlag, currentEnvironment]
+    [selectedFlag, currentEnvironment]
   );
 
   return (
@@ -222,7 +213,6 @@ const PageLoader = () => {
         <ConfirmationRequiredModal
           isOpen={openConfirmRequiredModal}
           feature={selectedFlag}
-          isShowScheduleSelect={true}
           isShowRolloutWarning={selectedFlag.enabled}
           onClose={onCloseConfirmRequiredModal}
           onSubmit={handleToggleFeatureState}

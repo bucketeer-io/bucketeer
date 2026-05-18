@@ -20,10 +20,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	acclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	aoclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
@@ -46,6 +46,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	insightsstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
@@ -69,11 +70,12 @@ type setupMockFunc func(
 	notificationMockSender *notificationsender.MockSender,
 	mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 	mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-	// redisCounterDeleterMock *redisCounterDeleterMock,
 	mysqlMockClient *mysqlmock.MockClient,
 	mysqlMockRows *mysqlmock.MockRows,
 	redisMockClient *redismock.MockMultiGetCache,
 	mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+	featureStorageMock *featurestoragemock.MockFeatureStorage,
+	segmentStorageMock *featurestoragemock.MockSegmentStorage,
 )
 
 func TestExperimentStatusUpdater(t *testing.T) {
@@ -92,6 +94,8 @@ func TestExperimentStatusUpdater(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -139,6 +143,8 @@ func TestExperimentRunningWatcher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -183,6 +189,8 @@ func TestFeatureStaleWatcher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -227,6 +235,8 @@ func TestDatetimeWatcher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -279,6 +289,8 @@ func TestEventCountWatcher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -386,6 +398,8 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -453,14 +467,12 @@ func TestFeatureFlagCacher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
-		mysqlMockRows.EXPECT().Close().Return(nil)
-		mysqlMockRows.EXPECT().Next().Return(false)
-		mysqlMockRows.EXPECT().Err().Return(nil)
-
-		mysqlMockClient.EXPECT().QueryContext(
-			gomock.Any(), gomock.Any(), gomock.Any(),
-		).Return(mysqlMockRows, nil)
+		featureStorageMock.EXPECT().ListAllEnvironmentFeatures(
+			gomock.Any(),
+		).Return([]*featureproto.EnvironmentFeature{}, nil)
 		redisMockClient.EXPECT().
 			Put(gomock.Any(), gomock.Any(), gomock.Any()).
 			AnyTimes().
@@ -487,15 +499,12 @@ func TestSegmentUserCacher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
-		// Mock for ListAllInUseSegments query - returns empty (no in-use segments)
-		mysqlMockRows.EXPECT().Close().Return(nil)
-		mysqlMockRows.EXPECT().Next().Return(false)
-		mysqlMockRows.EXPECT().Err().Return(nil)
-
-		mysqlMockClient.EXPECT().QueryContext(
-			gomock.Any(), gomock.Any(),
-		).Return(mysqlMockRows, nil)
+		segmentStorageMock.EXPECT().ListAllInUseSegments(
+			gomock.Any(),
+		).Return(nil, nil)
 		redisMockClient.EXPECT().
 			Put(gomock.Any(), gomock.Any(), gomock.Any()).
 			AnyTimes().
@@ -522,6 +531,8 @@ func TestAPIKeyCacher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		mysqlMockRows.EXPECT().Close().Return(nil)
 		mysqlMockRows.EXPECT().Next().Return(false)
@@ -552,6 +563,8 @@ func TestExperimentCacher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -599,6 +612,8 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
+		featureStorageMock *featurestoragemock.MockFeatureStorage,
+		segmentStorageMock *featurestoragemock.MockSegmentStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -664,6 +679,8 @@ func newBatchService(t *testing.T,
 	mysqlMockQueryExecer := mysqlmock.NewMockQueryExecer(mockController)
 	mauCacheMock := maucachemock.NewMockMAUCache(mockController)
 	monthlySummaryStorageMock := insightsstoragemock.NewMockMonthlySummaryStorage(mockController)
+	featureStorageMock := featurestoragemock.NewMockFeatureStorage(mockController)
+	segmentStorageMock := featurestoragemock.NewMockSegmentStorage(mockController)
 
 	setupMock(
 		accountMockClient,
@@ -679,6 +696,8 @@ func newBatchService(t *testing.T,
 		mysqlMockRows,
 		redisMockClient,
 		mysqlMockQueryExecer,
+		featureStorageMock,
+		segmentStorageMock,
 	)
 
 	service := NewBatchService(
@@ -736,11 +755,11 @@ func newBatchService(t *testing.T,
 		),
 		nil,
 		cacher.NewFeatureFlagCacher(
-			mysqlMockClient,
+			featureStorageMock,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewSegmentUserCacher(
-			mysqlMockClient,
+			segmentStorageMock,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewAPIKeyCacher(
@@ -757,9 +776,10 @@ func newBatchService(t *testing.T,
 			autoOpsRulesMockClient,
 			redisMockClient,
 		),
-		deleter.NewTagDeleter(mysqlMockClient),
+		deleter.NewTagDeleter(mysqlMockClient, featureStorageMock),
 		autoarchive.NewFeatureAutoArchiver(
 			mysqlMockClient,
+			featureStorageMock,
 			featureMockClient,
 			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),
@@ -872,7 +892,7 @@ func newProgressiveRollout(t *testing.T) *autoopsproto.ProgressiveRollout {
 			},
 		},
 	}
-	c, err := ptypes.MarshalAny(dc)
+	c, err := anypb.New(dc)
 	require.NoError(t, err)
 	return &autoopsproto.ProgressiveRollout{
 		Id:        "prID",

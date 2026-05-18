@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,12 +18,14 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 const (
 	timeout                  = 60 * time.Second
 	sleepTimeBetweenRequests = 10 * time.Second
 	maxRetries               = 15
+	deadlockRetryAttempts    = 3
 )
 
 var (
@@ -174,9 +175,18 @@ func newUUID(t *testing.T) string {
 
 func createFeatureNoCmd(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.CreateFeature(ctx, req); err != nil {
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.CreateFeature(ctx, req)
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying createFeature (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, req.Id, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
 		t.Fatal(err)
 	}
 }
@@ -214,8 +224,8 @@ func newCreateFeatureReq(featureID string) *feature.CreateFeatureRequest {
 			"e2e-test-tag-2",
 			"e2e-test-tag-3",
 		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 	}
 }
 

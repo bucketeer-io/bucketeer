@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	pb "google.golang.org/protobuf/proto"
 
 	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -65,6 +65,7 @@ type TagService struct {
 
 func NewTagService(
 	mysqlClient mysql.Client,
+	featureStorage ftstorage.FeatureStorage,
 	accountClient accclient.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
@@ -78,7 +79,7 @@ func NewTagService(
 	return &TagService{
 		mysqlClient:    mysqlClient,
 		tagStorage:     tagstorage.NewTagStorage(mysqlClient),
-		featureStorage: ftstorage.NewFeatureStorage(mysqlClient),
+		featureStorage: featureStorage,
 		accountClient:  accountClient,
 		publisher:      publisher,
 		opts:           dopts,
@@ -415,21 +416,8 @@ func (s *TagService) listFeaturesFromEnvironment(
 	ctx context.Context,
 	environmentID string,
 ) ([]*feature.Feature, error) {
-	features, _, _, err := s.featureStorage.ListFeatures(ctx, &mysql.ListOptions{
-		Filters: []*mysql.FilterV2{
-			{
-				Column:   "feature.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    environmentID,
-			},
-		},
-		Orders:      nil,
-		JSONFilters: nil,
-		NullFilters: nil,
-		InFilters:   nil,
-		SearchQuery: nil,
-		Limit:       mysql.QueryNoLimit,
-		Offset:      mysql.QueryNoOffset,
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, ftstorage.ListFeaturesParams{
+		EnvironmentID: environmentID,
 	})
 	if err != nil {
 		s.logger.Error(

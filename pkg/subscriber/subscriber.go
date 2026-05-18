@@ -82,6 +82,13 @@ type Configuration struct {
 	PullerMaxOutstandingBytes    int    `json:"pullerMaxOutstandingBytes"`
 	MaxMPS                       int    `json:"maxMPS"`
 	WorkerNum                    int    `json:"workerNum"`
+	// CacheInvalidationTopic is the destination topic for processors that
+	// publish announcements after consuming from Topic. Currently only the
+	// cacheRefresher processor uses it: it consumes domain events from
+	// Topic, refreshes L2, then publishes to CacheInvalidationTopic so
+	// api pods can drop their L1 entries. Empty disables the publisher
+	// (legacy evict-only behaviour).
+	CacheInvalidationTopic string `json:"cacheInvalidationTopic,omitempty"`
 	// Redis configuration (used when PubSubType is "redis")
 	RedisServerName     string `json:"redisServerName,omitempty"`
 	RedisAddr           string `json:"redisAddr,omitempty"`

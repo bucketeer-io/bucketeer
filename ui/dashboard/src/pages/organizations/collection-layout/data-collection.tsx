@@ -3,7 +3,7 @@ import {
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { PAGE_PATH_ORGANIZATIONS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';

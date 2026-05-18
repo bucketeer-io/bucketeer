@@ -33,7 +33,7 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
@@ -283,13 +283,16 @@ func (s *authService) RefreshToken(
 	if err := validateRefreshTokenRequest(req); err != nil {
 		s.logger.Error("Failed to validate refresh token request",
 			zap.Error(err),
-			zap.String("refresh_token", req.RefreshToken),
+			zap.String("refresh_token", obfuscateString(req.RefreshToken, obfuscateTokenLength)),
 		)
 		return nil, err
 	}
 	refreshToken, err := s.verifier.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
-		s.logger.Error("Refresh token is invalid", zap.Any("refresh_token", refreshToken))
+		s.logger.Error("Refresh token is invalid",
+			zap.Error(err),
+			zap.String("refresh_token", obfuscateString(req.RefreshToken, obfuscateTokenLength)),
+		)
 		return nil, statusUnauthenticated.Err()
 	}
 	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email)
@@ -297,7 +300,7 @@ func (s *authService) RefreshToken(
 		s.logger.Error("Failed to get organizations by email",
 			zap.Error(err),
 			zap.String("email", refreshToken.Email),
-			zap.String("refresh_token", req.RefreshToken),
+			zap.String("refresh_token", obfuscateString(req.RefreshToken, obfuscateTokenLength)),
 		)
 		return nil, err
 	}
@@ -322,7 +325,6 @@ func (s *authService) RefreshToken(
 			zap.Error(err),
 			zap.String("email", refreshToken.Email),
 			zap.Any("organizations", organizations),
-			zap.Any("refresh_token", refreshToken),
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -808,14 +810,14 @@ func (s *authService) PrepareDemoUser() {
 		return
 	}
 	// Create a demo account if not exists
-	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	accountStorage := accstorage.NewAccountStorage(s.mysqlClient)
 	_, err = accountStorage.GetAccountV2(
 		ctx,
 		config.Email,
 		config.OrganizationId,
 	)
 	if err != nil {
-		if errors.Is(err, accountstotage.ErrAccountNotFound) {
+		if errors.Is(err, accstorage.ErrAccountNotFound) {
 			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
 				AccountV2: &acproto.AccountV2{
 					OrganizationId:   config.OrganizationId,
@@ -834,10 +836,19 @@ func (s *authService) PrepareDemoUser() {
 					UpdatedAt: now.Unix(),
 				},
 			})
-			if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
+			if err != nil && !errors.Is(err, accstorage.ErrAccountAlreadyExists) {
 				s.logger.Error("Create account for demo user error", zap.Error(err))
 			}
 		}
 	}
 	s.logger.Info("Demo environment prepared successfully")
+}
+
+const obfuscateTokenLength = 4
+
+func obfuscateString(input string, showLength int) string {
+	if len(input) > showLength*2 {
+		return input[:showLength] + "...." + input[len(input)-showLength:]
+	}
+	return input
 }

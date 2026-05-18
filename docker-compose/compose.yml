@@ -33,8 +33,12 @@ services:
     networks:
       - bucketeer
 
+  # NOTE: If you are switching from the official postgres image to timescaledb (or vice versa),
+  # you must remove the existing volume or reset the database before starting, otherwise the
+  # container will fail to initialize due to incompatible data directory formats.
+  # Run: docker compose down -v  (warning: this will delete all local data)
   postgres:
-    image: postgres:${POSTGRES_VERSION:-18}
+    image: timescale/timescaledb:${POSTGRES_VERSION:-2.25.2-pg18}
     container_name: bucketeer-postgres
     restart: unless-stopped
     environment:
@@ -47,6 +51,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+      - ./init-db/postgres_dump.sql:/docker-entrypoint-initdb.d/postgres_dump.sql
     healthcheck:
       test: [ "CMD-SHELL", "export PGPASSWORD=`cat /run/secrets/postgres_password` && pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
@@ -100,11 +105,17 @@ services:
     command: ["server"]
     environment:
       - BUCKETEER_TEST_ENABLED=true
+      - BUCKETEER_WEB_STORAGE_TYPE=mysql
       - BUCKETEER_WEB_MYSQL_USER=bucketeer
       - BUCKETEER_WEB_MYSQL_PASS=bucketeer
       - BUCKETEER_WEB_MYSQL_HOST=mysql
       - BUCKETEER_WEB_MYSQL_PORT=3306
       - BUCKETEER_WEB_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_WEB_POSTGRES_USER=bucketeer
+      - BUCKETEER_WEB_POSTGRES_PASS=bucketeer
+      - BUCKETEER_WEB_POSTGRES_HOST=postgres
+      - BUCKETEER_WEB_POSTGRES_PORT=5432
+      - BUCKETEER_WEB_POSTGRES_DB_NAME=bucketeer
       - BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME=persistent-redis
       - BUCKETEER_WEB_PERSISTENT_REDIS_ADDR=redis:6379
       - BUCKETEER_WEB_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -207,11 +218,17 @@ services:
     command: ["server"]
     environment:
       - BUCKETEER_API_PROJECT=bucketeer-dev
+      - BUCKETEER_API_STORAGE_TYPE=mysql
       - BUCKETEER_API_MYSQL_USER=bucketeer
       - BUCKETEER_API_MYSQL_PASS=bucketeer
       - BUCKETEER_API_MYSQL_HOST=mysql
       - BUCKETEER_API_MYSQL_PORT=3306
       - BUCKETEER_API_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_API_POSTGRES_USER=bucketeer
+      - BUCKETEER_API_POSTGRES_PASS=bucketeer
+      - BUCKETEER_API_POSTGRES_HOST=postgres
+      - BUCKETEER_API_POSTGRES_PORT=5432
+      - BUCKETEER_API_POSTGRES_DB_NAME=bucketeer
       - BUCKETEER_API_GOAL_TOPIC=goal
       - BUCKETEER_API_EVALUATION_TOPIC=evaluation
       - BUCKETEER_API_USER_TOPIC=user
@@ -232,6 +249,11 @@ services:
       - BUCKETEER_API_PUBSUB_REDIS_MODE=auto
       - BUCKETEER_API_OLDEST_EVENT_TIMESTAMP=24h
       - BUCKETEER_API_FURTHEST_EVENT_TIMESTAMP=24h
+      - BUCKETEER_API_FEATURES_MEMORY_CACHE_TTL=1m
+      - BUCKETEER_API_SEGMENT_USERS_MEMORY_CACHE_TTL=1m
+      - BUCKETEER_API_METRICS_WORKERS=4
+      - BUCKETEER_API_METRICS_QUEUE_SIZE=4096
+      - BUCKETEER_API_CACHE_INVALIDATION_TOPIC=cache-invalidation
       - BUCKETEER_API_PORT=9090
       - BUCKETEER_API_GRPC_GATEWAY_PORT=9089
       - BUCKETEER_API_METRICS_PORT=9002
@@ -276,12 +298,19 @@ services:
     command: ["server"]
     environment:
       - BUCKETEER_BATCH_PROJECT=bucketeer-dev
+      - BUCKETEER_BATCH_STORAGE_TYPE=mysql
       - BUCKETEER_BATCH_MYSQL_USER=bucketeer
       - BUCKETEER_BATCH_MYSQL_PASS=bucketeer
       - BUCKETEER_BATCH_MYSQL_HOST=mysql
       - BUCKETEER_BATCH_MYSQL_PORT=3306
       - BUCKETEER_BATCH_MYSQL_DB_NAME=bucketeer
       - BUCKETEER_BATCH_MYSQL_DB_OPEN_CONNS=50
+      - BUCKETEER_BATCH_POSTGRES_USER=bucketeer
+      - BUCKETEER_BATCH_POSTGRES_PASS=bucketeer
+      - BUCKETEER_BATCH_POSTGRES_HOST=postgres
+      - BUCKETEER_BATCH_POSTGRES_PORT=5432
+      - BUCKETEER_BATCH_POSTGRES_DB_NAME=bucketeer
+      - BUCKETEER_BATCH_POSTGRES_DB_OPEN_CONNS=50
       - BUCKETEER_BATCH_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_BATCH_PERSISTENT_REDIS_ADDR=redis:6379
       - BUCKETEER_BATCH_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -351,12 +380,19 @@ services:
     command: ["server"]
     environment:
       - BUCKETEER_SUBSCRIBER_PROJECT=bucketeer-dev
+      - BUCKETEER_SUBSCRIBER_STORAGE_TYPE=mysql
       - BUCKETEER_SUBSCRIBER_MYSQL_USER=bucketeer
       - BUCKETEER_SUBSCRIBER_MYSQL_PASS=bucketeer
       - BUCKETEER_SUBSCRIBER_MYSQL_HOST=mysql
       - BUCKETEER_SUBSCRIBER_MYSQL_PORT=3306
       - BUCKETEER_SUBSCRIBER_MYSQL_DB_NAME=bucketeer
       - BUCKETEER_SUBSCRIBER_MYSQL_DB_OPEN_CONNS=50
+      - BUCKETEER_SUBSCRIBER_POSTGRES_USER=bucketeer
+      - BUCKETEER_SUBSCRIBER_POSTGRES_PASS=bucketeer
+      - BUCKETEER_SUBSCRIBER_POSTGRES_HOST=postgres
+      - BUCKETEER_SUBSCRIBER_POSTGRES_PORT=5432
+      - BUCKETEER_SUBSCRIBER_POSTGRES_DB_NAME=bucketeer
+      - BUCKETEER_SUBSCRIBER_POSTGRES_DB_OPEN_CONNS=50
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR=redis:6379
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -453,6 +489,29 @@ services:
       - bucketeer
     restart: unless-stopped
 
+  # Prometheus for Insights metrics
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: bucketeer-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bucketeer
+
   # Nginx reverse proxy for routing
   nginx:
     image: nginx:${NGINX_VERSION:-1.25-alpine}
@@ -479,6 +538,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  prometheus_data:
     driver: local
 
 networks:

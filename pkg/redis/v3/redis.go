@@ -34,29 +34,31 @@ import (
 const (
 	clientVersion = "v3"
 
-	scanCmdName         = "SCAN"
-	getCmdName          = "GET"
-	getMultiCmdName     = "GET_MULTI"
-	setCmdName          = "SET"
-	pfAddCmdName        = "PFADD"
-	pfCountCmdName      = "PFCOUNT"
-	pfMergeCmdName      = "PFMERGE"
-	incrByFloatCmdName  = "INCR_BY_FLOAT"
-	delCmdName          = "DEL"
-	incrCmdName         = "INCR"
-	expireCmdName       = "EXPIRE"
-	pipelineExecCmdName = "PIPELINE_EXEC"
-	ttlCmdName          = "TTL"
-	SetNXCmdName        = "SETNX"
-	saddCmdName         = "SADD"
-	smembersCmdName     = "SMEMBERS"
-	xAddCmdName         = "XADD"
-	xGroupCreateCmdName = "XGROUP_CREATE"
-	xReadGroupCmdName   = "XREADGROUP"
-	xAckCmdName         = "XACK"
-	xPendingCmdName     = "XPENDING"
-	xClaimCmdName       = "XCLAIM"
-	xInfoGroupsCmdName  = "XINFO_GROUPS"
+	scanCmdName          = "SCAN"
+	getCmdName           = "GET"
+	getMultiCmdName      = "GET_MULTI"
+	setCmdName           = "SET"
+	pfAddCmdName         = "PFADD"
+	pfCountCmdName       = "PFCOUNT"
+	pfMergeCmdName       = "PFMERGE"
+	incrByFloatCmdName   = "INCR_BY_FLOAT"
+	delCmdName           = "DEL"
+	incrCmdName          = "INCR"
+	incrByCmdName        = "INCRBY"
+	expireCmdName        = "EXPIRE"
+	pipelineExecCmdName  = "PIPELINE_EXEC"
+	ttlCmdName           = "TTL"
+	SetNXCmdName         = "SETNX"
+	saddCmdName          = "SADD"
+	smembersCmdName      = "SMEMBERS"
+	xAddCmdName          = "XADD"
+	xGroupCreateCmdName  = "XGROUP_CREATE"
+	xReadGroupCmdName    = "XREADGROUP"
+	xAckCmdName          = "XACK"
+	xPendingCmdName      = "XPENDING"
+	xClaimCmdName        = "XCLAIM"
+	xInfoGroupsCmdName   = "XINFO_GROUPS"
+	xGroupDestroyCmdName = "XGROUP_DESTROY"
 )
 
 // RedisMode specifies how the Redis client should be created.
@@ -110,6 +112,7 @@ type Client interface {
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
+	IncrBy(key string, value int64) (int64, error)
 	SAdd(key string, members ...interface{}) (int64, error)
 	SMembers(key string) ([]string, error)
 	Pipeline(tx bool) PipeClient
@@ -140,6 +143,7 @@ type Client interface {
 		minIdle time.Duration,
 		ids []string) ([]goredis.XMessage, error)
 	XInfoGroups(ctx context.Context, stream string) ([]goredis.XInfoGroup, error)
+	XGroupDestroy(ctx context.Context, stream, group string) error
 }
 
 type client struct {
@@ -154,6 +158,7 @@ type PipeClient interface {
 	PFAdd(key string, els ...string) *goredis.IntCmd
 	PFMerge(dest string, keys ...string) *goredis.StatusCmd
 	Incr(key string) *goredis.IntCmd
+	IncrBy(key string, value int64) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
 	SAdd(key string, members ...interface{}) *goredis.IntCmd
 	Expire(key string, expiration time.Duration) *goredis.BoolCmd
@@ -850,6 +855,21 @@ func (c *client) Incr(key string) (int64, error) {
 	return v, err
 }
 
+func (c *client) IncrBy(key string, value int64) (int64, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName).Inc()
+	v, err := c.rc.IncrBy(context.TODO(), key, value).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incrByCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return v, err
+}
+
 func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName).Inc()
@@ -907,6 +927,11 @@ func (c *client) Pipeline(tx bool) PipeClient {
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
 	return c.pipe.Incr(c.ctx, key)
+}
+
+func (c *pipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
+	c.cmds = append(c.cmds, incrByCmdName)
+	return c.pipe.IncrBy(c.ctx, key, value)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
@@ -1286,4 +1311,62 @@ func (c *client) XInfoGroups(ctx context.Context, stream string) ([]goredis.XInf
 	}
 
 	return groups, err
+}
+
+// XGroupDestroy destroys a consumer group from a stream
+func (c *client) XGroupDestroy(ctx context.Context, stream, group string) error {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xGroupDestroyCmdName).Inc()
+
+	err := c.rc.XGroupDestroy(ctx, stream, group).Err()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xGroupDestroyCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xGroupDestroyCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil && err != goredis.Nil {
+		// Missing stream/group is expected during startup cleanup or when the
+		// topic partition never received messages; log at debug to avoid noisy
+		// error logs during normal rollouts.
+		if isBenignXGroupDestroyErr(err) {
+			c.logger.Debug("Consumer group or stream not found during destroy (expected)",
+				zap.String("stream", stream),
+				zap.String("group", group),
+				zap.Error(err),
+			)
+			return err
+		}
+		c.logger.Error("Failed to destroy consumer group",
+			zap.String("stream", stream),
+			zap.String("group", group),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
+// isBenignXGroupDestroyErr returns true for errors that indicate the stream or
+// consumer group simply does not exist, which is expected during cleanup.
+func isBenignXGroupDestroyErr(err error) bool {
+	if err == nil {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "nogroup") ||
+		strings.Contains(msg, "no such key") ||
+		strings.Contains(msg, "stream key not found") ||
+		strings.Contains(msg, "the xgroup subcommand requires the key to exist") ||
+		strings.Contains(msg, "requires the key to exist")
 }

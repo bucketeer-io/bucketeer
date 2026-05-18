@@ -17,12 +17,10 @@ package domain
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
@@ -101,8 +99,8 @@ func (p *ProgressiveRollout) addTemplatelScheduleClause(
 	return p.setClause(c)
 }
 
-func (p *ProgressiveRollout) setClause(c protoiface.MessageV1) error {
-	ac, err := ptypes.MarshalAny(c)
+func (p *ProgressiveRollout) setClause(c proto.Message) error {
+	ac, err := anypb.New(c)
 	if err != nil {
 		return err
 	}
@@ -175,7 +173,7 @@ func unmarshalProgressiveRolloutManualClause(
 	clause *anypb.Any,
 ) (*autoopsproto.ProgressiveRolloutManualScheduleClause, error) {
 	c := &autoopsproto.ProgressiveRolloutManualScheduleClause{}
-	if err := ptypes.UnmarshalAny(clause, c); err != nil {
+	if err := clause.UnmarshalTo(c); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -185,7 +183,7 @@ func unmarshalProgressiveRolloutTemplateClause(
 	clause *anypb.Any,
 ) (*autoopsproto.ProgressiveRolloutTemplateScheduleClause, error) {
 	c := &autoopsproto.ProgressiveRolloutTemplateScheduleClause{}
-	if err := ptypes.UnmarshalAny(clause, c); err != nil {
+	if err := clause.UnmarshalTo(c); err != nil {
 		return nil, err
 	}
 	return c, nil

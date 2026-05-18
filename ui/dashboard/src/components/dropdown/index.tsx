@@ -342,6 +342,7 @@ const DropdownMenuSearch = forwardRef(
 interface DropdownProps {
   searchModel?: 'instant' | 'debounce';
   labelCustom?: string | ReactNode;
+  title?: ReactNode;
   isTruncate?: boolean;
   isExpand?: boolean;
   cleanable?: boolean;
@@ -372,9 +373,10 @@ interface DropdownProps {
   onClear?: () => void;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({
+const Dropdown = ({
   searchModel = 'debounce',
   labelCustom,
+  title,
   isTruncate = true,
   isExpand,
   cleanable,
@@ -404,7 +406,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   onChange,
   onChangeAdditional,
   onClear
-}) => {
+}: DropdownProps) => {
   const [searchValue, setSearchValue] = useState('');
   const [searchDebounce, setSearchDebounce] = useState('');
   const inputSearchRef = useRef<HTMLInputElement | null>(null);
@@ -487,6 +489,11 @@ const Dropdown: React.FC<DropdownProps> = ({
         sideOffset={sideOffsetContent}
         side={menuContentSide}
       >
+        {title && (
+          <div className="px-3 py-2 typo-para-small text-gray-500 border-b border-gray-200">
+            {title}
+          </div>
+        )}
         {isSearchable && (
           <DropdownMenuSearch
             ref={inputSearchRef}

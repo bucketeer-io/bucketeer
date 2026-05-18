@@ -40,6 +40,20 @@ func (m *MockFeaturesCache) EXPECT() *MockFeaturesCacheMockRecorder {
 	return m.recorder
 }
 
+// Evict mocks base method.
+func (m *MockFeaturesCache) Evict(environmentId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Evict", environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Evict indicates an expected call of Evict.
+func (mr *MockFeaturesCacheMockRecorder) Evict(environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Evict", reflect.TypeOf((*MockFeaturesCache)(nil).Evict), environmentId)
+}
+
 // Get mocks base method.
 func (m *MockFeaturesCache) Get(environmentId string) (*feature.Features, error) {
 	m.ctrl.T.Helper()

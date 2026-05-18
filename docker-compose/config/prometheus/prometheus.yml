@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/recording_rules.yml
+
+scrape_configs:
+  # Bucketeer microservices (mirrors production's "default/microservices" job)
+  - job_name: bucketeer-services
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - web:9002
+          - api:9002
+          - batch:9002
+          - subscriber:9002

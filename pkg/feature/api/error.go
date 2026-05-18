@@ -217,4 +217,10 @@ var (
 			"scheduling this prerequisite change would create a circular dependency",
 			"PrerequisiteId",
 		))
+	statusInvalidRuleOrder = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"ordered_rule_ids must contain exactly one entry per rule with no duplicates",
+			"OrderedRuleIds",
+		))
 )

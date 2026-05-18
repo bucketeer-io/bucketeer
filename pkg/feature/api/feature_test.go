@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -38,8 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -79,11 +77,11 @@ func TestGetFeatureMySQL(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					AutoOpsSummary: &featureproto.AutoOpsSummary{},
+				}}, nil)
 				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -101,11 +99,11 @@ func TestGetFeatureMySQL(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					AutoOpsSummary: &featureproto.AutoOpsSummary{},
+				}}, nil)
 				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -123,11 +121,11 @@ func TestGetFeatureMySQL(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureByVersion(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					AutoOpsSummary: &featureproto.AutoOpsSummary{},
+				}}, nil)
 				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -208,18 +206,9 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			input: []string{"fid"},
 			getExpectedErr: func() error {
@@ -231,18 +220,9 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			input: []string{"fid"},
 			getExpectedErr: func() error {
@@ -297,15 +277,19 @@ func TestListFeaturesMySQL(t *testing.T) {
 		getExpectedErr func() error
 	}{
 		{
-			desc:          "error: invalid order by",
-			service:       createFeatureService(mockController),
-			context:       createContextWithToken(),
-			setup:         nil,
+			desc:    "error: invalid order by",
+			service: createFeatureService(mockController),
+			context: createContextWithToken(),
+			setup: func(s *FeatureService) {
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("list features: invalid order_by 999"))
+			},
 			orderBy:       featureproto.ListFeaturesRequest_OrderBy(999),
 			hasExperiment: false,
 			environmentId: "ns0",
 			getExpectedErr: func() error {
-				return statusInvalidOrderBy.Err()
+				return errors.New("list features: invalid order_by 999")
 			},
 		},
 		{
@@ -313,18 +297,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 			service: createFeatureService(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -339,18 +314,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 			service: createFeatureService(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -367,18 +333,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -410,7 +367,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 			req := &featureproto.ListFeaturesRequest{
 				OrderBy:       p.orderBy,
 				EnvironmentId: "ns0",
-				HasExperiment: &wrappers.BoolValue{Value: p.hasExperiment},
+				HasExperiment: &wrapperspb.BoolValue{Value: p.hasExperiment},
 			}
 			ctx := p.context
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
@@ -440,7 +397,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 		id, name, description                             string
 		variations                                        []*featureproto.Variation
 		tags                                              []string
-		defaultOnVariationIndex, defaultOffVariationIndex *wrappers.Int32Value
+		defaultOnVariationIndex, defaultOffVariationIndex *wrapperspb.Int32Value
 		environmentId                                     string
 		expected                                          error
 	}{
@@ -521,14 +478,14 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			description:              "error: statusMissingDefaultOffVariation",
 			variations:               variations,
 			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
 			expected:                 statusMissingDefaultOffVariation.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureAlreadyExists)
 			},
@@ -537,14 +494,14 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			description:              "error: statusAlreadyExists",
 			variations:               variations,
 			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			defaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 			environmentId:            "ns0",
 			expected:                 statusAlreadyExists.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
@@ -554,8 +511,8 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			description:              "success",
 			variations:               variations,
 			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			defaultOnVariationIndex:  &wrapperspb.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrapperspb.Int32Value{Value: int32(1)},
 			environmentId:            "ns0",
 			expected:                 nil,
 		},
@@ -1043,7 +1000,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1104,7 +1061,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1444,7 +1401,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
@@ -1510,7 +1467,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
@@ -1856,7 +1813,7 @@ func TestEvaluateSingleFeature(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
@@ -1994,18 +1951,9 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			getExpectedErr: func() error {
 				return nil
@@ -2016,18 +1964,9 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			getExpectedErr: func() error {
 				return nil
@@ -2209,7 +2148,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 		{
 			desc: "error: statusFeatureNotFound",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureNotFound)
 				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).Return(
@@ -2228,7 +2167,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
@@ -2303,19 +2242,24 @@ func TestCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "error: statusAlreadyExists",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:         "id-0",
+					Variations: createFeatureVariations(),
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation_id_1"},
+					},
+				}}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(v2fs.ErrFeatureAlreadyExists)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, v2fs.ErrFeatureAlreadyExists)
+				).Return(v2fs.ErrFeatureAlreadyExists)
 			},
 			req: &featureproto.CloneFeatureRequest{
 				Id:                  "id-0",
@@ -2327,19 +2271,24 @@ func TestCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:         "id-0",
+					Variations: createFeatureVariations(),
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation_id_1"},
+					},
+				}}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
+				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			req: &featureproto.CloneFeatureRequest{
@@ -2680,7 +2629,7 @@ func TestUpdateFeature(t *testing.T) {
 					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
 					nil,
 				)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
@@ -2715,10 +2664,10 @@ func TestUpdateFeature(t *testing.T) {
 					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
 					nil,
 				)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					// The error is expected because another feature depends on the target
 					assert.Error(t, err)
 				}).Return(statusInvalidArchive.Err())
@@ -2809,10 +2758,10 @@ func TestUpdateFeature(t *testing.T) {
 					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
 					nil,
 				)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(

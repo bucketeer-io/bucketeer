@@ -104,7 +104,7 @@ func (c *command) scanAndCopyBatch(src, dest v3.Client, logger *zap.Logger) erro
 				zap.Error(err),
 				zap.Uint64("cursor", cursor),
 			)
-			return fmt.Errorf("error scanning keys from source Redis: %v", err)
+			return fmt.Errorf("error scanning keys from source Redis: %w", err)
 		}
 
 		copiedKeys, err := c.copyBatch(src, dest, keys, logger)
@@ -145,18 +145,18 @@ func (c *command) copyBatch(src, dest v3.Client, keys []string, logger *zap.Logg
 				logger.Info("Key not found", zap.String("key", key))
 				continue
 			}
-			return copiedKeys, fmt.Errorf("error dumping key %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error dumping key %s: %w", key, err)
 		}
 
 		exists, err := dest.Exists(key)
 		if err != nil {
-			return copiedKeys, fmt.Errorf("error checking key existence %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error checking key existence %s: %w", key, err)
 		}
 
 		if exists == 1 {
 			if *c.overrideDestKey {
 				if err := dest.Del(key); err != nil {
-					return copiedKeys, fmt.Errorf("error deleting existing key %s: %v", key, err)
+					return copiedKeys, fmt.Errorf("error deleting existing key %s: %w", key, err)
 				}
 			} else {
 				logger.Info("Skipping existing key", zap.String("key", key))
@@ -167,7 +167,7 @@ func (c *command) copyBatch(src, dest v3.Client, keys []string, logger *zap.Logg
 		err = dest.Restore(key, 0, dumpedValue)
 
 		if err != nil {
-			return copiedKeys, fmt.Errorf("error restoring key %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error restoring key %s: %w", key, err)
 		}
 		copiedKeys++
 	}

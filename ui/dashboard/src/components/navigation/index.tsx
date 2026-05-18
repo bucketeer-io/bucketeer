@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
@@ -90,6 +90,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`navigation.user-segment`),
           icon: IconSystem.IconUser,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_USER_SEGMENTS}`
+        },
+        {
+          label: t(`navigation.insights`),
+          icon: IconSystem.IconUsage,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INSIGHTS}`
         },
         {
           label: t(`navigation.debugger`),

@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -118,9 +118,9 @@ func (mr *MockFeatureStorageMockRecorder) ListAllEnvironmentFeatures(ctx any) *g
 }
 
 // ListFeatures mocks base method.
-func (m *MockFeatureStorage) ListFeatures(ctx context.Context, options *mysql.ListOptions) ([]*feature.Feature, int, int64, error) {
+func (m *MockFeatureStorage) ListFeatures(ctx context.Context, p v2.ListFeaturesParams) ([]*feature.Feature, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListFeatures", ctx, options)
+	ret := m.ctrl.Call(m, "ListFeatures", ctx, p)
 	ret0, _ := ret[0].([]*feature.Feature)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -129,9 +129,9 @@ func (m *MockFeatureStorage) ListFeatures(ctx context.Context, options *mysql.Li
 }
 
 // ListFeatures indicates an expected call of ListFeatures.
-func (mr *MockFeatureStorageMockRecorder) ListFeatures(ctx, options any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) ListFeatures(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatures", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeatures), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatures", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeatures), ctx, p)
 }
 
 // ListFeaturesByEnvironment mocks base method.
@@ -150,9 +150,9 @@ func (mr *MockFeatureStorageMockRecorder) ListFeaturesByEnvironment(ctx, environ
 }
 
 // ListFeaturesFilteredByExperiment mocks base method.
-func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Context, options *mysql.ListOptions) ([]*feature.Feature, int, int64, error) {
+func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Context, p v2.ListFeaturesFilteredByExperimentParams) ([]*feature.Feature, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListFeaturesFilteredByExperiment", ctx, options)
+	ret := m.ctrl.Call(m, "ListFeaturesFilteredByExperiment", ctx, p)
 	ret0, _ := ret[0].([]*feature.Feature)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -161,9 +161,9 @@ func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Contex
 }
 
 // ListFeaturesFilteredByExperiment indicates an expected call of ListFeaturesFilteredByExperiment.
-func (mr *MockFeatureStorageMockRecorder) ListFeaturesFilteredByExperiment(ctx, options any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) ListFeaturesFilteredByExperiment(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeaturesFilteredByExperiment", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeaturesFilteredByExperiment), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeaturesFilteredByExperiment", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeaturesFilteredByExperiment), ctx, p)
 }
 
 // UpdateFeature mocks base method.

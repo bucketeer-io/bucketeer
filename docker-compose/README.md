@@ -299,6 +299,27 @@ docker-compose -f docker-compose/compose.yml up -d --scale batch=2
 
 When using Docker Compose, you can run E2E tests against the local services:
 
+### Bootstrap the localenv account (only if needed)
+
+`init-db/mysql_dump.sql` already seeds `localenv@bucketeer.io` in both the
+`default` org (with `ADMIN` + EDITOR on `e2e`) and the `e2e` org (with
+`OWNER`) when MySQL first starts up, so a freshly-started stack does not need
+any manual step here.
+
+If you ran `make docker-compose-delete-data` (or otherwise wiped the
+`account_v2` rows), re-create the account before creating API keys or running
+E2E — write APIs need the account to exist with org membership:
+
+```shell
+make docker-compose-create-localenv-account
+```
+
+The target connects to the Docker Compose MySQL on `localhost:3306` and
+upserts into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE` against
+the composite PK `(email, organization_id)`, so it is safe to run repeatedly.
+See [`../hack/create-localenv-account/README.md`](../hack/create-localenv-account/README.md)
+for details and the prebuilt Docker image option.
+
 ### Create API Keys
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \

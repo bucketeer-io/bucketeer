@@ -15,13 +15,15 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
@@ -102,12 +104,12 @@ func TestPutFeatures(t *testing.T) {
 			desc:        "error_proto_message_nil",
 			setup:       nil,
 			input:       nil,
-			expectedErr: proto.ErrNil,
+			expectedErr: errors.New("features cannot be nil"),
 		},
 		{
 			desc: "success",
 			setup: func(tf *featuresCache) {
-				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures, featuresTTL).Return(nil)
+				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures, time.Duration(0)).Return(nil)
 			},
 			input:       features,
 			expectedErr: nil,

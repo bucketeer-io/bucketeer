@@ -35,7 +35,6 @@ import (
 	aichatllm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	aichatrag "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
 	aichatratelimit "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
-
 	auditlogapi "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
@@ -54,20 +53,29 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureapi "github.com/bucketeer-io/bucketeer/v2/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
+	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	insightsapi "github.com/bucketeer-io/bucketeer/v2/pkg/insights/api"
+	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushapi "github.com/bucketeer-io/bucketeer/v2/pkg/push/api"
+	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	gatewayapi "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	tagapi "github.com/bucketeer-io/bucketeer/v2/pkg/tag/api"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -81,6 +89,7 @@ import (
 	eventcounterproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
 	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -118,11 +127,17 @@ type server struct {
 	certPath                        *string
 	keyPath                         *string
 	serviceTokenPath                *string
+	operationalDatabaseType         *string
 	mysqlUser                       *string
 	mysqlPass                       *string
 	mysqlHost                       *string
 	mysqlPort                       *int
 	mysqlDBName                     *string
+	postgresUser                    *string
+	postgresPass                    *string
+	postgresHost                    *string
+	postgresPort                    *int
+	postgresDBName                  *string
 	persistentRedisServerName       *string
 	persistentRedisAddr             *string
 	persistentRedisPoolMaxIdle      *int
@@ -151,6 +166,8 @@ type server struct {
 	tagServicePort                  *int
 	codeReferenceServicePort        *int
 	teamServicePort                 *int
+	insightsServicePort             *int
+	prometheusURL                   *string
 	webGrpcGatewayPort              *int
 	accountService                  *string
 	authService                     *string
@@ -229,11 +246,18 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		isDemoSiteEnabled: cmd.Flag(
 			"demo-site-enabled",
 			"Is demo site enabled").Default("false").Bool(),
-		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
+			Default("mysql").String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		postgresUser:   cmd.Flag("postgres-user", "PostgreSQL user.").String(),
+		postgresPass:   cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
+		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").String(),
+		postgresPort:   cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
+		postgresDBName: cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
 			"Name of the persistent redis.",
@@ -338,6 +362,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"team-service-port",
 			"Port to bind to team service.",
 		).Default("9107").Int(),
+		insightsServicePort: cmd.Flag(
+			"insights-service-port",
+			"Port to bind to insights service.",
+		).Default("9108").Int(),
+		prometheusURL: cmd.Flag(
+			"prometheus-url",
+			"URL of the Prometheus server. If empty, time-series APIs are disabled.",
+		).Default("").String(),
 		webGrpcGatewayPort: cmd.Flag(
 			"web-grpc-gateway-port",
 			"Port to bind to web gRPC gateway.",
@@ -510,11 +542,39 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go healthcheckServer.Run()
-	// mysqlClient
+
+	// TODO: postgres is in development and not fully supported yet.
+	var dbClient database.Client
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
+	var pushStorage v2ps.PushStorage
+	var featureStorage v2fs.FeatureStorage
+	var segmentStorage v2fs.SegmentStorage
+	var segmentUserStorage v2fs.SegmentUserStorage
+	var postgresClient postgres.Client
+	if *s.operationalDatabaseType == "postgres" {
+		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
+			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
+		}
+		postgresClient, err = s.createPostgresClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
+		dbClient = database.NewPostgresStorageClient(postgresClient)
+		pushStorage = v2ps.NewPostgresPushStorage(postgresClient)
+		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
+		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
+		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
+	} else {
+		dbClient = database.NewMySQLStorageClient(mysqlClient)
+		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
+		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
+		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
+		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
+	}
+
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -706,6 +766,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
+		featureStorage,
 		featureClient,
 		experimentClient,
 		accountClient,
@@ -789,6 +850,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// featureService
 	featureService, err := s.createFeatureService(
+		dbClient,
+		featureStorage,
+		segmentStorage,
+		segmentUserStorage,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -831,7 +896,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// pushService
 	pushService := pushapi.NewPushService(
-		mysqlClient,
+		dbClient,
+		pushStorage,
 		featureClient,
 		experimentClient,
 		accountClient,
@@ -850,6 +916,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// tagService
 	tagService := tagapi.NewTagService(
 		mysqlClient,
+		featureStorage,
 		accountClient,
 		domainTopicPublisher,
 		tagapi.WithLogger(logger),
@@ -894,6 +961,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go teamServer.Run()
+
+	// insightsService
+	var promClient prometheus.Client
+	if *s.prometheusURL != "" {
+		promClient, err = prometheus.NewClient(
+			*s.prometheusURL,
+			prometheus.WithLogger(logger),
+		)
+		if err != nil {
+			logger.Error("Failed to create Prometheus client", zap.Error(err))
+			return err
+		}
+	}
+	monthlySummaryStorage := insightsstorage.NewMonthlySummaryStorage(mysqlClient)
+	insightsService := insightsapi.NewInsightsService(
+		accountClient,
+		promClient,
+		monthlySummaryStorage,
+		insightsapi.WithLogger(logger),
+	)
+	insightsServer := rpc.NewServer(insightsService, *s.certPath, *s.keyPath,
+		"insights-server",
+		rpc.WithPort(*s.insightsServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go insightsServer.Run()
 
 	// aichatService (optional — enabled when OpenAI API key is provided)
 	var aichatServer *rpc.Server
@@ -963,7 +1058,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithKeyPath(*s.keyPath),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create web gRPC gateway: %v", err)
+		return fmt.Errorf("failed to create web gRPC gateway: %w", err)
 	}
 
 	gatewayHandlers := s.createGatewayHandlers()
@@ -1031,6 +1126,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			tagServer,
 			codeReferenceServer,
 			teamServer,
+			insightsServer,
 		}
 		if aichatServer != nil {
 			servers = append(servers, aichatServer)
@@ -1050,6 +1146,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
 		go mysqlClient.Close()
+		if postgresClient != nil {
+			go postgresClient.Close()
+		}
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
 		if dataWarehouseConfig.Type == "bigquery" {
@@ -1091,6 +1190,23 @@ func (s *server) createMySQLClient(
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
+	)
+}
+
+func (s *server) createPostgresClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return postgres.NewClient(
+		ctx,
+		*s.postgresUser, *s.postgresPass, *s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDBName,
+		postgres.WithLogger(logger),
+		postgres.WithMetrics(registerer),
 	)
 }
 
@@ -1251,6 +1367,10 @@ func (s *server) createEnvironmentService(
 }
 
 func (s *server) createFeatureService(
+	dbClient database.Client,
+	featureStorage v2fs.FeatureStorage,
+	segmentStorage v2fs.SegmentStorage,
+	segmentUserStorage v2fs.SegmentUserStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1264,6 +1384,10 @@ func (s *server) createFeatureService(
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	featureService := featureapi.NewFeatureService(
+		dbClient,
+		featureStorage,
+		segmentStorage,
+		segmentUserStorage,
 		mysqlClient,
 		accountClient,
 		experimentClient,
@@ -1334,6 +1458,10 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
 			return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			insightsGrpcAddr := fmt.Sprintf("localhost:%d", *s.insightsServicePort)
+			return insightsproto.RegisterInsightsServiceHandlerFromEndpoint(ctx, mux, insightsGrpcAddr, opts)
 		},
 	}
 }

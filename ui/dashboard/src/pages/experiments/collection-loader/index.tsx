@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
@@ -59,6 +59,7 @@ const CollectionLoader = memo(
 
     const experiments = collection?.experiments || [];
     const totalCount = Number(collection?.totalCount) || 0;
+
     useEffect(() => {
       if (!collection?.experiments?.length) return;
 
@@ -76,14 +77,22 @@ const CollectionLoader = memo(
       }
     }, [collection, refetch]);
 
+    const hasFilter = useMemo(() => {
+      const statuses = searchOptions?.statuses;
+      // `query-string` may return `statuses` as string or array of string based on the number of values in the URL
+      // depending on whether the query param appears once or multiple times.
+      const hasStatuses =
+        (typeof statuses === 'string' || Array.isArray(statuses)) &&
+        !!statuses.length;
+
+      return filters.isFilter || (hasStatuses && !filters.filterByTab);
+    }, [filters.isFilter, filters.filterByTab, searchOptions.statuses]);
+
     const emptyState = (
       <CollectionEmpty
         data={experiments}
         searchQuery={filters.searchQuery}
-        isFilter={
-          filters.isFilter ||
-          (!!searchOptions?.statuses?.length && !filters?.filterByTab)
-        }
+        isFilter={hasFilter}
         description={t('message:empty:experiment-match')}
         onClear={() => {
           setFilters(

@@ -962,6 +962,33 @@ func (s *FeatureService) validateScheduledChangePayload(
 		}
 	}
 
+	// Validate ordered_rule_ids: if provided, must exactly match the post-change rule set.
+	// Build the expected rule IDs by applying CREATE/DELETE changes to the current rules.
+	if len(payload.OrderedRuleIds) > 0 {
+		expectedRuleIDs := make(map[string]struct{}, len(feature.Rules)+len(payload.RuleChanges))
+		for _, rule := range feature.Rules {
+			if rule != nil && rule.Id != "" {
+				expectedRuleIDs[rule.Id] = struct{}{}
+			}
+		}
+		for _, rc := range payload.RuleChanges {
+			switch rc.ChangeType {
+			case ftproto.ChangeType_CREATE:
+				expectedRuleIDs[rc.Rule.Id] = struct{}{}
+			case ftproto.ChangeType_DELETE:
+				delete(expectedRuleIDs, rc.Rule.Id)
+			}
+		}
+		if len(payload.OrderedRuleIds) != len(expectedRuleIDs) {
+			return statusInvalidRuleOrder.Err()
+		}
+		for _, id := range payload.OrderedRuleIds {
+			if _, ok := expectedRuleIDs[id]; !ok {
+				return statusInvalidRuleOrder.Err()
+			}
+		}
+	}
+
 	// Validate target references
 	for _, tc := range payload.TargetChanges {
 		if tc.Target == nil {
@@ -1112,6 +1139,7 @@ func convertPayloadToUpdateRequest(
 		Archived:            payload.Archived,
 		ResetSamplingSeed:   payload.ResetSamplingSeed,
 		Maintainer:          payload.Maintainer,
+		OrderedRuleIds:      payload.OrderedRuleIds,
 	}
 	return req
 }
@@ -1297,15 +1325,12 @@ func (s *FeatureService) checkCircularPrerequisites(
 	// Get non-archived, non-deleted features in the environment for dependency validation.
 	// Archived features are excluded because all pending schedules are cancelled on archive,
 	// so they can't participate in prerequisite cycles.
-	filters := []*mysql.FilterV2{
-		{Column: "feature.deleted", Operator: mysql.OperatorEqual, Value: false},
-		{Column: "feature.archived", Operator: mysql.OperatorEqual, Value: false},
-		{Column: "feature.environment_id", Operator: mysql.OperatorEqual, Value: environmentID},
-	}
-	features, _, _, err := s.featureStorage.ListFeatures(ctx, &mysql.ListOptions{
-		Filters: filters,
-		Limit:   mysql.QueryNoLimit,
-		Offset:  mysql.QueryNoOffset,
+	deleted := false
+	archived := false
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
+		EnvironmentID: environmentID,
+		Deleted:       &deleted,
+		Archived:      &archived,
 	})
 	if err != nil {
 		return nil // Best-effort: don't fail if we can't list features

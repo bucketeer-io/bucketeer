@@ -3,8 +3,12 @@
 #############################
 
 LOCAL_IMPORT_PATH := github.com/bucketeer-io/bucketeer
-POSTGRES_ENABLED ?= false
-BIGQUERY_ENABLED ?= false
+# Auto-detect data warehouse type from values.dev.yaml unless explicitly overridden
+DWH_TYPE := $(shell grep -A3 'dataWarehouse:' manifests/bucketeer/values.dev.yaml 2>/dev/null | grep 'type:' | head -1 | awk '{print $$2}')
+ODB_TYPE := $(shell grep -A3 'operationalDatabase:' manifests/bucketeer/values.dev.yaml 2>/dev/null | grep 'type:' | head -1 | awk '{print $$2}')
+
+POSTGRES_ENABLED ?= $(if $(filter postgres,$(DWH_TYPE) $(ODB_TYPE)),true,false)
+BIGQUERY_ENABLED ?= $(if $(filter bigquery,$(DWH_TYPE)),true,false)
 
 # go applications
 GO_APP_DIRS := $(wildcard cmd/*)
@@ -131,9 +135,18 @@ diff-check:
 migration-validate:
 	atlas migrate validate --dir file://migration/mysql
 
+.PHONY: migration-validate-pg
+migration-validate-pg:
+	atlas migrate validate --dir file://migration/postgres
+
 .PHONY: migration-hash-check
 migration-hash-check:
 	atlas migrate hash --dir file://migration/mysql
+	make diff-check
+
+.PHONY: migration-hash-check-pg
+migration-hash-check-pg:
+	atlas migrate hash --dir file://migration/postgres
 	make diff-check
 
 .PHONY: tidy-deps
@@ -222,6 +235,26 @@ endif
 		--mysql-port=${MYSQL_PORT} \
 		--mysql-db-name=${MYSQL_DB_NAME} \
 		--test-id=${TEST_ID} \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: create-localenv-account
+create-localenv-account:
+ifeq ($(GOOS), darwin)
+	make -C hack/create-localenv-account clean build-darwin
+else
+	make -C hack/create-localenv-account clean build
+endif
+	./hack/create-localenv-account/create-localenv-account create \
+		--mysql-user=${MYSQL_USER} \
+		--mysql-pass=${MYSQL_PASS} \
+		--mysql-host=${MYSQL_HOST} \
+		--mysql-port=${MYSQL_PORT} \
+		--mysql-db-name=${MYSQL_DB_NAME} \
+		--email=${EMAIL} \
+		--default-organization-id=${DEFAULT_ORGANIZATION_ID} \
+		--e2e-organization-id=${E2E_ORGANIZATION_ID} \
+		--e2e-environment-id=${E2E_ENVIRONMENT_ID} \
 		--no-profile \
 		--no-gcp-trace-enabled
 
@@ -321,7 +354,7 @@ e2e:
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \
 		-organization-id=${ORGANIZATION_ID} \
-		-test-id=${TEST_ID}	
+		-test-id=${TEST_ID}
 
 .PHONY: delete-dev-container-mysql-data
 delete-dev-container-mysql-data:
@@ -331,6 +364,19 @@ delete-dev-container-mysql-data:
 	MYSQL_PORT=32000 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
+
+.PHONY: create-dev-container-localenv-account
+create-dev-container-localenv-account:
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=$$(minikube ip) \
+	MYSQL_PORT=32000 \
+	MYSQL_DB_NAME=bucketeer \
+	EMAIL=localenv@bucketeer.io \
+	DEFAULT_ORGANIZATION_ID=default \
+	E2E_ORGANIZATION_ID=e2e \
+	E2E_ENVIRONMENT_ID=e2e \
+	make -C ./ create-localenv-account
 
 .PHONY: update-copyright
 update-copyright:
@@ -348,6 +394,14 @@ create-migration:
 		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
 		--dev-url docker://mysql/8/${DB}
 
+.PHONY: create-migration-pg
+create-migration-pg:
+	# Example: make create-migration-pg NAME=create_table_users USER=postgres PASS=password HOST=localhost PORT=5432 DB=bucketeer
+	atlas migrate diff ${NAME} \
+		--dir file://migration/postgres \
+		--to "postgres://${USER}:${PASS}@${HOST}:${PORT}/${DB}?sslmode=disable" \
+		--dev-url docker://postgres/16/${DB}
+
 .PHONY: atlas-set-version
 atlas-set-version:
 	# Example: make atlas-set-version VERSION=20240311022556 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
@@ -355,12 +409,27 @@ atlas-set-version:
 		--dir file://migration/mysql \
 		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB}
 
+.PHONY: atlas-set-version-pg
+atlas-set-version-pg:
+	# Example: make atlas-set-version-pg VERSION=20260226174000 USER=postgres PASS=password HOST=localhost PORT=5432 DB=bucketeer
+	atlas migrate set ${VERSION} \
+		--dir file://migration/postgres \
+		--url "postgres://${USER}:${PASS}@${HOST}:${PORT}/${DB}?sslmode=disable"
+
 .PHONY: apply-migration
 check-apply-migration:
 	# Example: make check-apply-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
 	atlas migrate apply \
 		--dir file://migration/mysql \
 		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dry-run
+
+.PHONY: check-apply-migration-pg
+check-apply-migration-pg:
+	# Example: make check-apply-migration-pg USER=postgres PASS=password HOST=localhost PORT=5432 DB=bucketeer
+	atlas migrate apply \
+		--dir file://migration/postgres \
+		--url "postgres://${USER}:${PASS}@${HOST}:${PORT}/${DB}?sslmode=disable" \
 		--dry-run
 
 #############################
@@ -460,6 +529,12 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+# Update localenv Helm chart dependencies (populates manifests/localenv/charts/)
+.PHONY: localenv-dep-update
+localenv-dep-update:
+	@echo "Updating localenv Helm chart dependencies..."
+	helm dependency update manifests/localenv
+
 setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
@@ -471,10 +546,12 @@ setup-localenv:
 	kubectl delete pod -l app.kubernetes.io/name=vault --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=postgresql --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=prometheus --ignore-not-found=true
 	@echo "Waiting for infrastructure pods to be ready..."
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus --timeout=300s
 	@if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
 		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s; \
 	fi
@@ -520,12 +597,13 @@ build-docker-images:
 		docker build --platform $(PLATFORM) -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
 		rm Dockerfile-app-$$APP; \
 	done
-	docker build --platform $(PLATFORM) migration/ -t ghcr.io/bucketeer-io/bucketeer-migration:${TAG}
+	docker build --platform $(PLATFORM) -f migration/Dockerfile migration/ -t ghcr.io/bucketeer-io/bucketeer-migration:${TAG}
+	docker build --platform $(PLATFORM) -f migration/Dockerfile.postgres migration/ -t ghcr.io/bucketeer-io/bucketeer-migration-postgres:${TAG}
 
 # copy go application docker image to minikube
 # please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
 minikube-load-images:
-	for APP in $$(ls bin) migration; do \
+	for APP in $$(ls bin) migration migration-postgres; do \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
 		docker save ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
 		docker cp $$IMAGE.tar minikube:/home/docker; \
@@ -546,10 +624,24 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED) || \
+	helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) --set bigquery.enabled=$(BIGQUERY_ENABLED)
 	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
 	if [ "$(BIGQUERY_ENABLED)" = "true" ]; then \
 		echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."; \
-		make -C ./ create-bigquery-emulator-tables; \
+		created=0; \
+		for i in 1 2 3 4 5; do \
+			if make -C ./ create-bigquery-emulator-tables; then \
+				created=1; \
+				break; \
+			fi; \
+			echo "BigQuery emulator not ready yet, retrying in 5s... ($$i/5)"; \
+			sleep 5; \
+		done; \
+		if [ "$$created" -ne 1 ]; then \
+			echo "Failed to create BigQuery emulator tables after 5 attempts."; \
+			exit 1; \
+		fi; \
 	fi
 	if [ "$(POSTGRES_ENABLED)" = "true" ]; then \
 		echo "Ensuring PostgreSQL event tables exist..."; \
@@ -689,6 +781,20 @@ docker-compose-delete-data:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
+
+.PHONY: docker-compose-create-localenv-account
+docker-compose-create-localenv-account:
+	@echo "Bootstrapping localenv account in Docker Compose MySQL..."
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=localhost \
+	MYSQL_PORT=3306 \
+	MYSQL_DB_NAME=bucketeer \
+	EMAIL=localenv@bucketeer.io \
+	DEFAULT_ORGANIZATION_ID=default \
+	E2E_ORGANIZATION_ID=e2e \
+	E2E_ENVIRONMENT_ID=e2e \
+	make -C ./ create-localenv-account
 
 .PHONY: docker-compose-create-mysql-event-tables
 docker-compose-create-mysql-event-tables:

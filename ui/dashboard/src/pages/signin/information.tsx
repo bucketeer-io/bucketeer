@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { IconEditOutlined } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { AccountAvatar, accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import defaultAvatar from 'assets/avatars/default.svg';

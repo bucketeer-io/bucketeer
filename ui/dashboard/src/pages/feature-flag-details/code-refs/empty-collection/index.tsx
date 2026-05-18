@@ -3,7 +3,7 @@ import {
   IconAddOutlined,
   IconLaunchOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import Icon from 'components/icon';

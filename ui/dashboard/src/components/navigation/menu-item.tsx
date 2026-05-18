@@ -1,5 +1,5 @@
 import type { FunctionComponent } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router';
 import { cn } from 'utils/style';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';

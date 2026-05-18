@@ -98,18 +98,32 @@ spec:
               value: "{{ .Values.env.batchService }}"
             - name: BUCKETEER_SUBSCRIBER_EVENT_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
+            - name: BUCKETEER_SUBSCRIBER_STORAGE_TYPE
+              value: "{{ .Values.env.operationalDatabase.type | default .Values.global.operationalDatabase.type }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_USER
-              value: "{{ .Values.env.mysqlUser }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_PASS
-              value: "{{ .Values.env.mysqlPass }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_HOST
-              value: "{{ .Values.env.mysqlHost }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_PORT
-              value: "{{ .Values.env.mysqlPort }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.port | default .Values.global.operationalDatabase.mysql.port }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_DB_NAME
-              value: "{{ .Values.env.mysqlDbName }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.name | default .Values.global.operationalDatabase.mysql.name }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_DB_OPEN_CONNS
-              value: "{{ .Values.env.mysqlDbOpenConns }}"
+              value: "{{ .Values.env.operationalDatabase.mysql.openConns | default .Values.global.operationalDatabase.mysql.openConns }}"
+            - name: BUCKETEER_SUBSCRIBER_POSTGRES_USER
+              value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
+            - name: BUCKETEER_SUBSCRIBER_POSTGRES_PASS
+              value: "{{ .Values.env.operationalDatabase.postgres.pass | default .Values.global.operationalDatabase.postgres.pass }}"
+            - name: BUCKETEER_SUBSCRIBER_POSTGRES_HOST
+              value: "{{ .Values.env.operationalDatabase.postgres.host | default .Values.global.operationalDatabase.postgres.host }}"
+            - name: BUCKETEER_SUBSCRIBER_POSTGRES_PORT
+              value: "{{ .Values.env.operationalDatabase.postgres.port | default .Values.global.operationalDatabase.postgres.port }}"
+            - name: BUCKETEER_SUBSCRIBER_POSTGRES_DB_NAME
+              value: "{{ .Values.env.operationalDatabase.postgres.name | default .Values.global.operationalDatabase.postgres.name }}"
+            - name: BUCKETEER_SUBSCRIBER_POSTGRES_DB_OPEN_CONNS
+              value: "{{ .Values.env.operationalDatabase.postgres.openConns | default .Values.global.operationalDatabase.postgres.openConns }}"
             - name: BUCKETEER_SUBSCRIBER_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_SUBSCRIBER_LOG_LEVEL
@@ -162,14 +176,6 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.nonPersistentRedis.mode }}"
-            # Migration environment variables for environment ID migration
-            # These enable double-write to both old and new key formats during migration
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_ENABLED
-              value: "{{ .Values.env.migration.environmentId.enabled }}"
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_FROM
-              value: "{{ .Values.env.migration.environmentId.from }}"
-            - name: BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_TO
-              value: "{{ .Values.env.migration.environmentId.to }}"
 
           volumeMounts:
             - name: service-cert-secret

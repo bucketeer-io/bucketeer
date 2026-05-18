@@ -3,7 +3,7 @@ import {
   IconHelpOutlineOutlined,
   IconLaunchOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { urls } from 'configs';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';

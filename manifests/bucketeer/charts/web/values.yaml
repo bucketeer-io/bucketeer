@@ -19,11 +19,21 @@ env:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
   pubSubRedisMode: auto
-  mysqlUser:
-  mysqlPass:
-  mysqlHost:
-  mysqlPort: 3306
-  mysqlDbName:
+  # Database configuration
+  operationalDatabase:
+    type: "mysql"
+    mysql:
+      user:
+      pass:
+      host:
+      port: 3306
+      name:
+    postgres:
+      user:
+      pass:
+      host:
+      port: 5432
+      name:
   persistentRedis:
     serverName:
     addr:
@@ -63,10 +73,12 @@ env:
   dashboardServicePort: 9103
   tagServicePort: 9104
   coderefServicePort: 9105
+  insightsServicePort: 9108
   unifiedGatewayPort: 9106
   metricsPort: 9002
   timezone: UTC
   emailFilter:
+  prometheusURL: http://prometheus.observability.svc.cluster.local:80
   logLevel: info
   # AI Chat configuration (optional — leave openaiApiKey empty to disable)
   aichat:

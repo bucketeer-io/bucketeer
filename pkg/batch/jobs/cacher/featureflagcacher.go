@@ -24,7 +24,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 )
 
 type featureFlagCacherJob struct {
@@ -35,7 +35,7 @@ type featureFlagCacherJob struct {
 
 // NewFeatureFlagCacher creates a new feature flag cacher batch job.
 func NewFeatureFlagCacher(
-	mysqlClient mysql.Client,
+	ftStorage ftstorage.FeatureStorage,
 	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -46,7 +46,7 @@ func NewFeatureFlagCacher(
 		opt(dopts)
 	}
 	return &featureFlagCacherJob{
-		cacher: ftcacher.NewFeatureFlagCacher(mysqlClient, multiCaches, dopts.Logger),
+		cacher: ftcacher.NewFeatureFlagCacher(ftStorage, multiCaches, dopts.Logger),
 		opts:   dopts,
 		logger: dopts.Logger.Named("feature-flag-cacher-job"),
 	}

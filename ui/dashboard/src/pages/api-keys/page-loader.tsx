@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { apiKeyUpdater } from '@api/api-key';
 import { useQueryAPIKey } from '@queries/api-key-details';
 import { invalidateAPIKeys } from '@queries/api-keys';
@@ -20,6 +20,7 @@ import { APIKey } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import ConfirmModal from 'elements/confirm-modal';
 import APIKeyCreateUpdateModal from './api-key-modal/api-key-create-update-modal';
+import APIKeyCreatedSecretModal from './api-key-modal/api-key-created-secret-modal';
 import PageContent from './page-content';
 import { APIKeyActionsType } from './types';
 
@@ -57,6 +58,9 @@ const PageLoader = () => {
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
+  const [createdApiKeySecret, setCreatedApiKeySecret] = useState<string | null>(
+    null
+  );
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -168,8 +172,13 @@ const PageLoader = () => {
           environments={editorEnvironments}
           resetApiKey={() => setSelectedAPIKey(undefined)}
           onClose={handleOnCloseModal}
+          onCreatedWithSecret={setCreatedApiKeySecret}
         />
       )}
+      <APIKeyCreatedSecretModal
+        apiKeySecret={createdApiKeySecret}
+        onClose={() => setCreatedApiKeySecret(null)}
+      />
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
