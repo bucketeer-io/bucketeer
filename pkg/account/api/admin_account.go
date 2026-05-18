@@ -140,18 +140,20 @@ func (s *AccountService) GetMe(
 		orgAccount, orgErr := s.accountStorage.GetAccountV2(ctx, t.Email, req.OrganizationId)
 		switch {
 		case orgErr == nil:
-			if !orgAccount.Disabled {
-				orgRole = orgAccount.OrganizationRole
-				if orgAccount.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
-					envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
-				} else {
-					envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
-				}
-			} else {
-				orgRole = accountproto.AccountV2_Role_Organization_UNASSIGNED
-				envRoles = s.getAllEnvironmentRoles(
-					environments, projects, accountproto.AccountV2_Role_Environment_VIEWER,
+			if orgAccount.Disabled {
+				s.logger.Error("System admin's account in the requested organization is disabled",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.String("email", t.Email),
+						zap.String("organizationId", req.OrganizationId),
+					)...,
 				)
+				return nil, statusUnauthenticated.Err()
+			}
+			orgRole = orgAccount.OrganizationRole
+			if orgAccount.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
+				envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+			} else {
+				envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
 			}
 		case errors.Is(orgErr, v2as.ErrAccountNotFound):
 			s.logger.Warn(
