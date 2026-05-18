@@ -232,8 +232,7 @@ func TestChat(t *testing.T) {
 				EnvironmentId: "env-1",
 				Messages:      tooManyMessages,
 			},
-			// ErrorTypeExceededMax maps to codes.Unknown via convertStatusCode
-			expectedErr: codes.Unknown,
+			expectedErr: codes.InvalidArgument,
 		},
 		{
 			desc: "success",
