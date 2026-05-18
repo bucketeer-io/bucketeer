@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
-import { FeatureResponse, featureUpdater } from '@api/features';
+import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateFeature } from '@queries/feature-details';
+import {
+  invalidateFeature,
+  updateFeatureCache
+} from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
 import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
@@ -20,7 +23,6 @@ import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { isEqual, isNil } from 'lodash';
 import cloneDeep from 'lodash/cloneDeep';
-import { v4 as uuid } from 'uuid';
 import {
   Evaluation,
   Feature,
@@ -68,11 +70,11 @@ import {
 } from './types';
 import {
   checkDefaultRuleDiscardChanges,
+  computeRuleOrder,
   getDefaultRule,
   handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
   handleCheckPrerequisiteDiscardChanges,
-  computeRuleOrder,
   handleCheckPrerequisites,
   handleCheckRuleDeleted,
   handleCheckSegmentRules,
@@ -271,12 +273,12 @@ const TargetingPage = ({
         ? index
         : segmentRulesWatch.length + 1;
       const newSegmentRule = getDefaultRule(feature);
-      segmentRulesInsert(segmentIndex!, { ...newSegmentRule, id: uuid() });
+      segmentRulesInsert(segmentIndex!, newSegmentRule);
       setFeatureRef(prev => ({
         ...prev,
         rules: [
           ...prev.rules.slice(0, segmentIndex),
-          { ...newSegmentRule, id: uuid() },
+          cloneDeep(newSegmentRule),
           ...prev.rules.slice(segmentIndex)
         ]
       }));
@@ -639,12 +641,17 @@ const TargetingPage = ({
                   action: t('updated')
                 })
               });
+              const updatedFeature = resp.feature;
+              updateFeatureCache(
+                queryClient,
+                { id: feature.id, environmentId: currentEnvironment.id },
+                updatedFeature
+              );
               invalidateFeature(queryClient);
               invalidateFeatures(queryClient);
               invalidateUserSegments(queryClient);
-              reset(
-                handleCreateDefaultValues((resp as FeatureResponse)?.feature)
-              );
+              reset(handleCreateDefaultValues(updatedFeature));
+              setFeatureRef(cloneDeep(updatedFeature));
               onCloseConfirmModal();
             }
           }
