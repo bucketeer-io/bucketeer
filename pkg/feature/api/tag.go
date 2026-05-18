@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -72,6 +73,12 @@ func (s *FeatureService) ListTags(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
+		if errors.Is(err, tagstorage.ErrInvalidListTagsCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, tagstorage.ErrInvalidListTagsOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	convertedTags := make([]*featureproto.Tag, len(tags))

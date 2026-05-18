@@ -56,7 +56,7 @@ func TestListTagsMySQL(t *testing.T) {
 			},
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId, Cursor: "foo"},
 			expected:    nil,
-			expectedErr: api.NewGRPCStatus(tagstorage.ErrInvalidListTagsCursor).Err(),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "errInternal",
