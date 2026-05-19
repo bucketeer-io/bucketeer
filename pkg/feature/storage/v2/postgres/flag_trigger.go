@@ -51,6 +51,22 @@ func NewFlagTriggerStorage(qe pgstorage.QueryExecer) v2fs.FlagTriggerStorage {
 	return &flagTriggerStorage{qe: qe}
 }
 
+// actionToBool converts a proto Action enum to a boolean for PostgreSQL
+// storage, where the action column is defined as BOOLEAN.
+// Action_ON (1) → true, everything else → false.
+func actionToBool(action proto.FlagTrigger_Action) bool {
+	return action == proto.FlagTrigger_Action_ON
+}
+
+// boolToAction converts a PostgreSQL BOOLEAN value back to a proto Action enum.
+// true → Action_ON, false → Action_OFF.
+func boolToAction(b bool) proto.FlagTrigger_Action {
+	if b {
+		return proto.FlagTrigger_Action_ON
+	}
+	return proto.FlagTrigger_Action_OFF
+}
+
 func (f *flagTriggerStorage) CreateFlagTrigger(
 	ctx context.Context,
 	flagTrigger *domain.FlagTrigger,
@@ -60,7 +76,7 @@ func (f *flagTriggerStorage) CreateFlagTrigger(
 		flagTrigger.FeatureId,
 		flagTrigger.EnvironmentId,
 		flagTrigger.Type,
-		flagTrigger.Action,
+		actionToBool(flagTrigger.Action),
 		flagTrigger.Description,
 		flagTrigger.TriggerCount,
 		flagTrigger.LastTriggeredAt,
@@ -85,7 +101,7 @@ func (f *flagTriggerStorage) UpdateFlagTrigger(
 	result, err := f.qe.ExecContext(ctx, updateFlagTriggerSQL,
 		flagTrigger.FeatureId,
 		flagTrigger.Type,
-		flagTrigger.Action,
+		actionToBool(flagTrigger.Action),
 		flagTrigger.Description,
 		flagTrigger.TriggerCount,
 		flagTrigger.LastTriggeredAt,
@@ -135,6 +151,7 @@ func (f *flagTriggerStorage) GetFlagTrigger(
 	id, environmentId string,
 ) (*domain.FlagTrigger, error) {
 	trigger := proto.FlagTrigger{}
+	var actionBool bool
 	err := f.qe.QueryRowContext(
 		ctx,
 		getFlagTriggerSQL,
@@ -145,7 +162,7 @@ func (f *flagTriggerStorage) GetFlagTrigger(
 		&trigger.FeatureId,
 		&trigger.EnvironmentId,
 		&trigger.Type,
-		&trigger.Action,
+		&actionBool,
 		&trigger.Description,
 		&trigger.TriggerCount,
 		&trigger.LastTriggeredAt,
@@ -160,6 +177,7 @@ func (f *flagTriggerStorage) GetFlagTrigger(
 		}
 		return nil, err
 	}
+	trigger.Action = boolToAction(actionBool)
 	return &domain.FlagTrigger{FlagTrigger: &trigger}, nil
 }
 
@@ -168,6 +186,7 @@ func (f *flagTriggerStorage) GetFlagTriggerByToken(
 	token string,
 ) (*domain.FlagTrigger, error) {
 	trigger := proto.FlagTrigger{}
+	var actionBool bool
 	err := f.qe.QueryRowContext(
 		ctx,
 		getFlagTriggerByTokenSQL,
@@ -177,7 +196,7 @@ func (f *flagTriggerStorage) GetFlagTriggerByToken(
 		&trigger.FeatureId,
 		&trigger.EnvironmentId,
 		&trigger.Type,
-		&trigger.Action,
+		&actionBool,
 		&trigger.Description,
 		&trigger.TriggerCount,
 		&trigger.LastTriggeredAt,
@@ -192,6 +211,7 @@ func (f *flagTriggerStorage) GetFlagTriggerByToken(
 		}
 		return nil, err
 	}
+	trigger.Action = boolToAction(actionBool)
 	return &domain.FlagTrigger{FlagTrigger: &trigger}, nil
 }
 
@@ -217,11 +237,12 @@ func (f *flagTriggerStorage) ListFlagTriggers(
 	flagTriggers := make([]*proto.FlagTrigger, 0, limit)
 	for rows.Next() {
 		trigger := proto.FlagTrigger{}
+		var actionBool bool
 		err := rows.Scan(
 			&trigger.Id,
 			&trigger.FeatureId,
 			&trigger.Type,
-			&trigger.Action,
+			&actionBool,
 			&trigger.Description,
 			&trigger.TriggerCount,
 			&trigger.LastTriggeredAt,
@@ -233,6 +254,7 @@ func (f *flagTriggerStorage) ListFlagTriggers(
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		trigger.Action = boolToAction(actionBool)
 		flagTriggers = append(flagTriggers, &trigger)
 	}
 	nextOffset := offset + len(flagTriggers)

@@ -377,6 +377,9 @@ func (s *FeatureService) ListFlagTriggers(
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
+		if errors.Is(err, v2fs.ErrInvalidListFlagTriggersCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
 		if errors.Is(err, v2fs.ErrInvalidListFlagTriggersOrderBy) {
 			return nil, statusInvalidOrderBy.Err()
 		}
