@@ -48,7 +48,6 @@ func TestListTagsMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "errInvalidCursor",
-			setup:       nil,
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId, Cursor: "foo"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),
