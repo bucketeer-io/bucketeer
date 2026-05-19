@@ -1583,8 +1583,7 @@ func (s *FeatureService) BulkCloneFeature(
 		}
 		editors[targetEnvID] = editor
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			return nil, statusFeatureNotFound.Err()
@@ -1624,7 +1623,7 @@ func (s *FeatureService) BulkCloneFeature(
 			continue
 		}
 		var event *eventproto.Event
-		txErr := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		txErr := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 			event, err = domainevent.NewEvent(
 				editor,
 				eventproto.Event_FEATURE,
@@ -1653,7 +1652,7 @@ func (s *FeatureService) BulkCloneFeature(
 			if err != nil {
 				return err
 			}
-			return featureStorage.CreateFeature(ctxWithTx, cloned, targetEnvID)
+			return s.featureStorage.CreateFeature(ctxWithTx, cloned, targetEnvID)
 		})
 		if txErr != nil {
 			if errors.Is(txErr, v2fs.ErrFeatureAlreadyExists) {
