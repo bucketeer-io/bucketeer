@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_EXPERIMENTS,
@@ -17,7 +17,10 @@ export const usePageContext = (): PageContext => {
     let pageType: PageType | '' = '';
     let featureId: string | undefined;
 
-    if (pathname.includes(PAGE_PATH_FEATURES)) {
+    if (pathname.includes(PAGE_PATH_FEATURE_AUTOOPS)) {
+      pageType = 'autoops';
+      featureId = params.flagId;
+    } else if (pathname.includes(PAGE_PATH_FEATURES)) {
       if (params.flagId) {
         pageType = 'targeting';
         featureId = params.flagId;
@@ -28,8 +31,6 @@ export const usePageContext = (): PageContext => {
       pageType = 'experiments';
     } else if (pathname.includes(PAGE_PATH_USER_SEGMENTS)) {
       pageType = 'segments';
-    } else if (pathname.includes(PAGE_PATH_FEATURE_AUTOOPS)) {
-      pageType = 'autoops';
     }
 
     return { pageType, featureId };

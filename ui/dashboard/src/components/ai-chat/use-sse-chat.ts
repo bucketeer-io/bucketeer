@@ -66,7 +66,9 @@ export const useSSEChat = ({
     };
 
     const currentMessages = [
-      ...messagesRef.current.filter(m => m.content),
+      ...messagesRef.current
+        .filter(m => m.content)
+        .slice(-(MAX_HISTORY_MESSAGES - 1)),
       userMessage
     ];
 

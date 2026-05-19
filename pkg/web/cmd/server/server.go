@@ -999,6 +999,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	}
 	if *s.openAIAPIKey != "" {
+		if *s.aichatModel == "" {
+			return fmt.Errorf("aichat-model must be set when openai-api-key is configured")
+		}
 		llmClient := aichatllm.NewOpenAIClient(*s.openAIAPIKey, *s.openAIBaseURL)
 		ragSearcher := aichatrag.NewGitHubSearcher(logger, *s.aichatGitHubToken)
 		chatCfg := aichatapi.ChatConfig{

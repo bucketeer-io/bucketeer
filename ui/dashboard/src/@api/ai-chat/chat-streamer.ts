@@ -123,7 +123,10 @@ export const chatStreamer = async (
       }),
       signal
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw err;
+    }
     throw new Error(CHAT_ERROR.NETWORK);
   }
 
