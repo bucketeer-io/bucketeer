@@ -2382,11 +2382,9 @@ func TestBulkCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "error: statusFeatureNotFound",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(v2fs.ErrFeatureNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, v2fs.ErrFeatureNotFound)
 			},
 			req: &featureproto.BulkCloneFeatureRequest{
 				Id:                   "id-0",
@@ -2398,19 +2396,24 @@ func TestBulkCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "success: all environments cloned",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:         "id-0",
+					Variations: createFeatureVariations(),
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation_id_1"},
+					},
+				}}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
-				}).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
+				}).Return(nil).Times(2)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil).Times(2)
+				).Return(nil).Times(2)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			req: &featureproto.BulkCloneFeatureRequest{
@@ -2433,24 +2436,29 @@ func TestBulkCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "success: already exists in one environment",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:         "id-0",
+					Variations: createFeatureVariations(),
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation_id_1"},
+					},
+				}}, nil)
 				// First env: already exists (no fn call).
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureAlreadyExists)
 				// Second env: success.
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
-				})
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
+				}).Return(nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
+				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			req: &featureproto.BulkCloneFeatureRequest{
