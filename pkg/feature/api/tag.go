@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -56,6 +55,13 @@ func (s *FeatureService) ListTags(
 	if req.OrderDirection == featureproto.ListTagsRequest_DESC {
 		orderDirection = tagproto.ListTagsRequest_DESC
 	}
+	cursor := req.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	if _, err := strconv.Atoi(cursor); err != nil {
+		return nil, statusInvalidCursor.Err()
+	}
 
 	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, tagstorage.ListTagsParams{
 		EnvironmentID:  req.EnvironmentId,
@@ -63,7 +69,7 @@ func (s *FeatureService) ListTags(
 		OrderBy:        orderBy,
 		OrderDirection: orderDirection,
 		PageSize:       int(req.PageSize),
-		Cursor:         req.Cursor,
+		Cursor:         cursor,
 	})
 	if err != nil {
 		s.logger.Error(
@@ -73,12 +79,6 @@ func (s *FeatureService) ListTags(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		if errors.Is(err, tagstorage.ErrInvalidListTagsCursor) {
-			return nil, statusInvalidCursor.Err()
-		}
-		if errors.Is(err, tagstorage.ErrInvalidListTagsOrderBy) {
-			return nil, statusInvalidOrderBy.Err()
-		}
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	convertedTags := make([]*featureproto.Tag, len(tags))

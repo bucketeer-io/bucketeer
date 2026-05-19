@@ -219,13 +219,20 @@ func (s *TagService) ListTags(
 	ctx context.Context,
 	req *proto.ListTagsRequest,
 ) (*proto.ListTagsResponse, error) {
+	cursor := req.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	if _, err := strconv.Atoi(cursor); err != nil {
+		return nil, statusInvalidCursor.Err()
+	}
 	p := tagstorage.ListTagsParams{
 		EntityType:     req.EntityType,
 		SearchKeyword:  req.SearchKeyword,
 		OrderBy:        req.OrderBy,
 		OrderDirection: req.OrderDirection,
 		PageSize:       int(req.PageSize),
-		Cursor:         req.Cursor,
+		Cursor:         cursor,
 	}
 	if req.OrganizationId != "" {
 		// New console
@@ -256,9 +263,6 @@ func (s *TagService) ListTags(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		if errors.Is(err, tagstorage.ErrInvalidListTagsCursor) {
-			return nil, statusInvalidCursor.Err()
-		}
 		if errors.Is(err, tagstorage.ErrInvalidListTagsOrderBy) {
 			return nil, statusInvalidOrderBy.Err()
 		}

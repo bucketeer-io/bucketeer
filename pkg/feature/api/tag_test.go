@@ -24,7 +24,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -48,12 +47,7 @@ func TestListTagsMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "errInvalidCursor",
-			setup: func(fs *FeatureService) {
-				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), tagstorage.ErrInvalidListTagsCursor)
-			},
+			desc:        "errInvalidCursor",
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId, Cursor: "foo"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),
