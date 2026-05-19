@@ -34,8 +34,7 @@ import (
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -58,7 +57,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
@@ -73,10 +72,10 @@ func TestCreateFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
@@ -274,7 +273,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
@@ -288,10 +287,10 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		{
 			desc: "Success update description",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
@@ -318,10 +317,10 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		{
 			desc: "Success reset flag trigger",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
@@ -380,7 +379,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
@@ -393,10 +392,10 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
@@ -496,10 +495,10 @@ func TestFlagTriggerWebhook(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
