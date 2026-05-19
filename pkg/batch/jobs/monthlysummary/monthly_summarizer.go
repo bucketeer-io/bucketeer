@@ -147,13 +147,9 @@ func (m *monthlySummarizer) listEnvironments(ctx context.Context) ([]*envproto.E
 }
 
 func listSourceIDs() []string {
-	ids := make([]string, 0, len(eventproto.SourceId_value)-1)
+	ids := make([]string, 0, len(eventproto.SourceId_value))
 	for _, v := range eventproto.SourceId_value {
-		id := eventproto.SourceId(v)
-		if id == eventproto.SourceId_UNKNOWN {
-			continue
-		}
-		ids = append(ids, id.String())
+		ids = append(ids, eventproto.SourceId(v).String())
 	}
 	return ids
 }
