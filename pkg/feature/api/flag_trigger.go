@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -84,7 +83,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		if err := flagTrigger.GenerateToken(); err != nil {
 			return err
 		}
@@ -156,7 +155,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 	}
 	var event *eventproto.Event
 	var resetURL string
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
 			request.Id,
@@ -239,7 +238,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
 			request.Id,
@@ -355,46 +354,34 @@ func (s *FeatureService) ListFlagTriggers(
 		)
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "feature_id",
-			Operator: mysql.OperatorEqual,
-			Value:    request.FeatureId,
-		},
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    request.EnvironmentId,
-		},
-	}
-	orders, err := s.newListFlagTriggerOrders(request.OrderBy, request.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create order",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(request.PageSize)
 	cursor := request.Cursor
 	if cursor == "" {
 		cursor = "0"
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Orders:      orders,
-		Filters:     filters,
-		NullFilters: nil,
-		JSONFilters: nil,
-		InFilters:   nil,
-		SearchQuery: nil,
+	flagTriggers, nextOffset, totalCount, err := s.flagTriggerStorage.ListFlagTriggers(ctx, v2fs.ListFlagTriggersParams{
+		FeatureID:      request.FeatureId,
+		EnvironmentID:  request.EnvironmentId,
+		OrderBy:        request.OrderBy,
+		OrderDirection: request.OrderDirection,
+		PageSize:       int(request.PageSize),
+		Cursor:         cursor,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to list flag triggers",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", request.EnvironmentId),
+			)...,
+		)
+		if errors.Is(err, v2fs.ErrInvalidListFlagTriggersOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		return nil, s.reportInternalServerError(ctx, err, request.EnvironmentId)
 	}
-	flagTriggers, nextOffset, totalCount, _ := s.flagTriggerStorage.ListFlagTriggers(ctx, options)
 	triggerWithUrls := make([]*featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl, 0, len(flagTriggers))
 	for _, trigger := range flagTriggers {
 		triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
@@ -408,28 +395,6 @@ func (s *FeatureService) ListFlagTriggers(
 		FlagTriggers: triggerWithUrls,
 		Cursor:       strconv.Itoa(nextOffset),
 		TotalCount:   totalCount,
-	}, nil
-}
-
-func (s *FeatureService) newListFlagTriggerOrders(
-	orderBy featureproto.ListFlagTriggersRequest_OrderBy,
-	orderDirection featureproto.ListFlagTriggersRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case featureproto.ListFlagTriggersRequest_DEFAULT, featureproto.ListFlagTriggersRequest_CREATED_AT:
-		column = "created_at"
-	case featureproto.ListFlagTriggersRequest_UPDATED_AT:
-		column = "updated_at"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == featureproto.ListFlagTriggersRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{
-		mysql.NewOrder(column, direction),
 	}, nil
 }
 
@@ -512,7 +477,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	flagTrigger *domain.FlagTrigger,
 ) error {
 	var event *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		prev := &domain.FlagTrigger{}
 		if err := copier.Copy(prev, flagTrigger); err != nil {
 			return err
@@ -577,7 +542,7 @@ func (s *FeatureService) updateEnableFeature(
 	enabled bool,
 ) error {
 	var event *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		feature, err := s.featureStorage.GetFeature(contextWithTx, featureId, environmentId)
 		if err != nil {
 			return err

@@ -86,6 +86,7 @@ func NewFeatureService(
 	segmentStorage v2fs.SegmentStorage,
 	segmentUserStorage v2fs.SegmentUserStorage,
 	tagStorage v2ts.TagStorage,
+	flagTriggerStorage v2fs.FlagTriggerStorage,
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
@@ -107,7 +108,7 @@ func NewFeatureService(
 	}
 	return &FeatureService{
 		fluiStorage:                v2fs.NewFeatureLastUsedInfoStorage(mysqlClient),
-		flagTriggerStorage:         v2fs.NewFlagTriggerStorage(mysqlClient),
+		flagTriggerStorage:         flagTriggerStorage,
 		featureStorage:             featureStorage,
 		segmentStorage:             segmentStorage,
 		segmentUserStorage:         segmentUserStorage,
