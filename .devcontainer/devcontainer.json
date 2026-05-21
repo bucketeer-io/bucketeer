@@ -12,6 +12,11 @@
   "runArgs": [
     "--cgroupns=host"
   ],
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest"
+    }
+  },
   "mounts": [
     // Persistent Go modules cache
     "source=bucketeer-go-mod-cache,target=/go/pkg/mod,type=volume",
