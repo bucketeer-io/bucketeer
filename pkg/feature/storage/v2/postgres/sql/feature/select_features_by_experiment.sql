@@ -9,7 +9,7 @@ WITH auto_ops_counts AS (
     WHERE aor.deleted = FALSE
     GROUP BY aor.feature_id, aor.environment_id
 )
-SELECT DISTINCT
+SELECT
     feature.id,
     feature.name,
     feature.description,
@@ -55,7 +55,11 @@ LEFT JOIN feature_last_used_info ON
         AND (flui2.last_used_at > feature_last_used_info.last_used_at
         OR (flui2.last_used_at = feature_last_used_info.last_used_at AND flui2.version > feature_last_used_info.version))
     )
-LEFT JOIN experiment ON
-    feature.id = experiment.feature_id AND
-    feature.environment_id = experiment.environment_id AND
-    experiment.deleted = FALSE
+LEFT JOIN LATERAL (
+    SELECT e.id
+    FROM experiment e
+    WHERE e.feature_id = feature.id
+    AND e.environment_id = feature.environment_id
+    AND e.deleted = FALSE
+    LIMIT 1
+) experiment ON TRUE
