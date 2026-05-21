@@ -189,8 +189,9 @@ func listAdminAuditLogsOptionsFromParams(p v2als.ListAdminAuditLogsParams) (*pgs
 	}
 	var searchQuery *pgstorage.SearchQuery
 	if p.SearchKeyword != "" {
+		// editor is a JSONB column, so we cast to text for LIKE matching
 		searchQuery = &pgstorage.SearchQuery{
-			Columns: []string{"editor"},
+			Columns: []string{"editor::text"},
 			Keyword: p.SearchKeyword,
 		}
 	}
