@@ -62,6 +62,11 @@ single schema should describe the allowed shape of all values for that flag.
 Per-variation schemas would allow a flag to contain incompatible contracts and
 would make client-side usage harder to reason about.
 
+In v1, schemas are owned by feature flags because Bucketeer does not currently
+have a reusable Variable or Config entity separate from Feature. If reusable
+schemas become necessary later, this design can be extended by introducing a
+schema registry and storing a schema reference on the feature.
+
 ## V1 Type Matrix
 
 | Variation type | Enum | Regex | JSON Schema |
@@ -110,6 +115,9 @@ message VariationValueSchema {
     RegexValidator regex_validator = 3;
     JsonSchemaValidator json_schema_validator = 4;
   }
+
+  // Optional human-readable explanation of the schema purpose.
+  string description = 5;
 }
 ```
 
