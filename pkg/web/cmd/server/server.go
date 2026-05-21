@@ -521,6 +521,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var segmentUserStorage v2fs.SegmentUserStorage
 	var tagStorage tagstorage.TagStorage
 	var flagTriggerStorage v2fs.FlagTriggerStorage
+	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	var postgresClient postgres.Client
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
@@ -537,6 +538,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 		flagTriggerStorage = featurepostgres.NewFlagTriggerStorage(postgresClient)
+		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -545,6 +547,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
 		flagTriggerStorage = featuremysql.NewFlagTriggerStorage(mysqlClient)
+		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -829,6 +832,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage,
 		tagStorage,
 		flagTriggerStorage,
+		fluiStorage,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -1290,6 +1294,7 @@ func (s *server) createFeatureService(
 	segmentUserStorage v2fs.SegmentUserStorage,
 	tagStorage tagstorage.TagStorage,
 	flagTriggerStorage v2fs.FlagTriggerStorage,
+	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1309,6 +1314,7 @@ func (s *server) createFeatureService(
 		segmentUserStorage,
 		tagStorage,
 		flagTriggerStorage,
+		fluiStorage,
 		mysqlClient,
 		accountClient,
 		experimentClient,

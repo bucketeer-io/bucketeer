@@ -252,6 +252,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var pushStorage pushstorage.PushStorage
 	var segmentStorage v2fs.SegmentStorage
 	var segmentUserStorage v2fs.SegmentUserStorage
+	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -264,11 +265,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushStorage = pushstorage.NewPostgresPushStorage(postgresClient)
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
+		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = pushstorage.NewMySQLPushStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
+		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -411,6 +414,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		dbClient,
 		segmentStorage,
 		segmentUserStorage,
+		fluiStorage,
 		pushStorage,
 		persistentRedisClient,
 		nonPersistentRedisClient,
@@ -739,6 +743,7 @@ func (s *server) registerPubSubProcessorMap(
 	dbClient database.Client,
 	segmentStorage v2fs.SegmentStorage,
 	segmentUserStorage v2fs.SegmentUserStorage,
+	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	pushStorage pushstorage.PushStorage,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
@@ -866,6 +871,7 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			processorsConfigMap[processor.EvaluationCountEventPersisterName],
 			mysqlClient,
+			fluiStorage,
 			redisCache,
 			cachev3.NewUserAttributesCache(redisCache),
 			cachev3.NewDAUCache(redisCache),
