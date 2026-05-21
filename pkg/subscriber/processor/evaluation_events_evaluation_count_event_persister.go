@@ -73,6 +73,7 @@ type EvaluationCountEventPersisterConfig struct {
 type evaluationCountEventPersister struct {
 	evaluationCountEventPersisterConfig EvaluationCountEventPersisterConfig
 	mysqlClient                         mysql.Client
+	fluiStorage                         ftstorage.FeatureLastUsedInfoStorage
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
 	userAttributesCacher                cachev3.UserAttributesCache
@@ -89,6 +90,7 @@ func NewEvaluationCountEventPersister(
 	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
+	fluiStorage ftstorage.FeatureLastUsedInfoStorage,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	userAttributesCacher cachev3.UserAttributesCache,
 	dauCache cachev3.DAUCache,
@@ -113,6 +115,7 @@ func NewEvaluationCountEventPersister(
 	e := &evaluationCountEventPersister{
 		evaluationCountEventPersisterConfig: evaluationCountEventPersisterConfig,
 		mysqlClient:                         mysqlClient,
+		fluiStorage:                         fluiStorage,
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
 		userAttributesCacher:                userAttributesCacher,
@@ -673,7 +676,7 @@ func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 	p.envLastUsedCache[environmentId] = cache
 }
 
-// Write the feature flag last-used cache in the MySQL and reset the cache
+// Write the feature flag last-used cache in the database and reset the cache
 func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.Context) error {
 	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteCacheInterval) * time.Second)
 	for {
@@ -719,9 +722,8 @@ func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
 	for _, f := range featureLastUsedInfos {
 		ids = append(ids, f.ID())
 	}
-	storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
 	updatedInfo := make([]*ftdomain.FeatureLastUsedInfo, 0, len(ids))
-	currentInfo, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentId)
+	currentInfo, err := p.fluiStorage.GetFeatureLastUsedInfos(ctx, ids, environmentId)
 	if err != nil {
 		return err
 	}
@@ -765,8 +767,7 @@ func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 	featureLastUsedInfo *ftdomain.FeatureLastUsedInfo,
 	environmentId string,
 ) error {
-	storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
-	if err := storage.UpsertFeatureLastUsedInfo(
+	if err := p.fluiStorage.UpsertFeatureLastUsedInfo(
 		ctx,
 		featureLastUsedInfo,
 		environmentId,

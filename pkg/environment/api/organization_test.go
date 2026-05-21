@@ -369,8 +369,10 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrInvalidOrganizationName: empty name",
-			setup: nil,
+			desc: "err: ErrInvalidOrganizationName: empty name",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:   "id-0",
 				Name: wrapperspb.String(""),
@@ -378,8 +380,10 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
-			desc:  "err: ErrInvalidOrganizationName: only space",
-			setup: nil,
+			desc: "err: ErrInvalidOrganizationName: only space",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:   "id-0",
 				Name: wrapperspb.String("    "),
@@ -387,8 +391,10 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
-			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
-			setup: nil,
+			desc: "err: ErrInvalidOrganizationName: max name length exceeded",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:   "id-0",
 				Name: wrapperspb.String(strings.Repeat("a", 51)),
@@ -398,6 +404,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 		{
 			desc: "err: ErrOrganizationNotFound",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrOrganizationNotFound)
@@ -411,6 +418,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -424,6 +432,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -1003,6 +1012,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			desc: "success: no ownership transfer (name change only)",
 			ctx:  ctxAdmin,
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -1018,6 +1028,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			desc: "err: no-op ownership transfer (same owner email)",
 			ctx:  ctxAdmin,
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
 					gomock.Any(), "org-1",
 				).Return(&domain.Organization{
@@ -1064,6 +1075,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			desc: "err: new owner account not found",
 			ctx:  ctxAdmin,
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
 					gomock.Any(), "org-1",
 				).Return(&domain.Organization{
@@ -1086,6 +1098,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			desc: "err: new owner account is disabled",
 			ctx:  ctxAdmin,
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
 					gomock.Any(), "org-1",
 				).Return(&domain.Organization{
@@ -1113,6 +1126,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			desc: "success: valid ownership transfer passes validation",
 			ctx:  ctxAdmin,
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				// Mock validation phase - validateOwnershipTransfer
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
 					gomock.Any(), "org-1",

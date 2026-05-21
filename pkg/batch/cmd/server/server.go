@@ -69,6 +69,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
+	tagmysql "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mysql"
+	tagpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	batchproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 )
@@ -312,6 +315,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	var featureStorage v2fs.FeatureStorage
+	var segmentStorage v2fs.SegmentStorage
+	var tagStorage tagstorage.TagStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -322,8 +327,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 		defer postgresClient.Close()
 		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
+		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
+		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 	} else {
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
+		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
+		tagStorage = tagmysql.NewTagStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -596,7 +605,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
-			mysqlClient,
+			segmentStorage,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
@@ -620,7 +629,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		deleter.NewTagDeleter(
-			mysqlClient,
+			tagStorage,
 			featureStorage,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),

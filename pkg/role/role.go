@@ -81,16 +81,15 @@ func CheckEnvironmentRole(
 		}, nil
 	}
 
-	if token.IsSystemAdmin {
-		return checkRole(
-			token.Email,
-			token.Name,
-			accountproto.AccountV2_Role_Environment_EDITOR, requiredRole,
-			nil,
-			0,
-			true)
+	// System admins can read from any org without membership, but must be an org
+	// member with the appropriate role to write.
+	if token.IsSystemAdmin && requiredRole <= accountproto.AccountV2_Role_Environment_VIEWER {
+		return &eventproto.Editor{
+			Email:   token.Email,
+			Name:    token.Name,
+			IsAdmin: true,
+		}, nil
 	}
-	// get account for the environment id
 	account, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
@@ -98,7 +97,6 @@ func CheckEnvironmentRole(
 		}
 		return nil, ErrInternal
 	}
-
 	if account.Disabled {
 		return nil, ErrUnauthenticated
 	}
@@ -110,7 +108,8 @@ func CheckEnvironmentRole(
 		requiredRole,
 		account.EnvironmentRoles,
 		account.OrganizationRole,
-		false)
+		token.IsSystemAdmin,
+	)
 }
 
 func CheckEnvironmentRoleWithLog(
@@ -212,7 +211,9 @@ func CheckOrganizationRole(
 		}, nil
 	}
 
-	if token.IsSystemAdmin {
+	// System admins can view any org without membership, but must be a member
+	// with the appropriate role for admin/write operations (e.g. creating API keys).
+	if token.IsSystemAdmin && requiredRole <= accountproto.AccountV2_Role_Organization_MEMBER {
 		return &eventproto.Editor{
 			Email:   token.Email,
 			Name:    token.Name,

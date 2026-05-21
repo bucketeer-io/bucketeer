@@ -73,6 +73,7 @@ type AccountService struct {
 func NewAccountService(
 	e environmentclient.Client,
 	mysqlClient mysql.Client,
+	tagStorage tagstorage.TagStorage,
 	publisher publisher.Publisher,
 	opts ...Option,
 ) *AccountService {
@@ -84,7 +85,7 @@ func NewAccountService(
 		environmentClient:    e,
 		mysqlClient:          mysqlClient,
 		accountStorage:       v2.NewAccountStorage(mysqlClient),
-		tagStorage:           tagstorage.NewTagStorage(mysqlClient),
+		tagStorage:           tagStorage,
 		teamStorage:          teamstorage.NewTeamStorage(mysqlClient),
 		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),
 		publisher:            publisher,

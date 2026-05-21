@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package v2
+package postgres
 
 import (
 	"context"
@@ -24,8 +24,8 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -146,6 +146,21 @@ func TestFlagTriggerStorageDeleteFlagTrigger(t *testing.T) {
 				EnvironmentId: "env",
 			}},
 			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "ErrFlagTriggerUnexpectedAffectedRows",
+			setup: func(s *flagTriggerStorage) {
+				result := mock.NewMockResult(mockController)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+			},
+			flagTrigger: &domain.FlagTrigger{FlagTrigger: &proto.FlagTrigger{
+				Id:            "id",
+				EnvironmentId: "env",
+			}},
+			expectedErr: v2fs.ErrFlagTriggerUnexpectedAffectedRows,
 		},
 		{
 			desc: "success",
@@ -282,11 +297,19 @@ func TestFlagTriggerStorageListFlagTriggers(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(storage *flagTriggerStorage)
-		options        *mysql.ListOptions
+		params         v2fs.ListFlagTriggersParams
 		expected       []*proto.FlagTrigger
 		expectedCursor int
 		expectedErr    error
 	}{
+		{
+			desc:           "ErrInvalidCursor",
+			setup:          func(s *flagTriggerStorage) {},
+			params:         v2fs.ListFlagTriggersParams{Cursor: "invalid"},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    v2fs.ErrInvalidListFlagTriggersCursor,
+		},
 		{
 			desc: "error",
 			setup: func(s *flagTriggerStorage) {
@@ -294,7 +317,7 @@ func TestFlagTriggerStorageListFlagTriggers(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:     nil,
+			params:      v2fs.ListFlagTriggersParams{},
 			expected:    nil,
 			expectedErr: errors.New("error"),
 		},
@@ -313,15 +336,7 @@ func TestFlagTriggerStorageListFlagTriggers(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Limit:       0,
-				Offset:      0,
-				Filters:     []*mysql.FilterV2{},
-				Orders:      []*mysql.Order{},
-				NullFilters: nil,
-				InFilters:   nil,
-				JSONFilters: nil,
-			},
+			params:         v2fs.ListFlagTriggersParams{},
 			expected:       []*proto.FlagTrigger{},
 			expectedCursor: 0,
 			expectedErr:    nil,
@@ -331,7 +346,7 @@ func TestFlagTriggerStorageListFlagTriggers(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &flagTriggerStorage{qe: mock.NewMockQueryExecer(mockController)}
 			p.setup(storage)
-			expected, nextOffset, _, err := storage.ListFlagTriggers(context.Background(), p.options)
+			expected, nextOffset, _, err := storage.ListFlagTriggers(context.Background(), p.params)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, expected)
 			assert.Equal(t, p.expectedCursor, nextOffset)

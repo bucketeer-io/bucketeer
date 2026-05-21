@@ -73,6 +73,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	tagapi "github.com/bucketeer-io/bucketeer/v2/pkg/tag/api"
+	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
+	tagmysql "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mysql"
+	tagpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/postgres"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -514,6 +517,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	var pushStorage v2ps.PushStorage
 	var featureStorage v2fs.FeatureStorage
+	var segmentStorage v2fs.SegmentStorage
+	var segmentUserStorage v2fs.SegmentUserStorage
+	var tagStorage tagstorage.TagStorage
+	var flagTriggerStorage v2fs.FlagTriggerStorage
+	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	var postgresClient postgres.Client
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
@@ -526,10 +534,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		dbClient = database.NewPostgresStorageClient(postgresClient)
 		pushStorage = v2ps.NewPostgresPushStorage(postgresClient)
 		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
+		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
+		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
+		tagStorage = tagpostgres.NewTagStorage(postgresClient)
+		flagTriggerStorage = featurepostgres.NewFlagTriggerStorage(postgresClient)
+		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
+		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
+		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
+		tagStorage = tagmysql.NewTagStorage(mysqlClient)
+		flagTriggerStorage = featuremysql.NewFlagTriggerStorage(mysqlClient)
+		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -693,6 +711,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	accountService := accountapi.NewAccountService(
 		environmentClient,
 		mysqlClient,
+		tagStorage,
 		domainTopicPublisher,
 		accountapi.WithLogger(logger),
 	)
@@ -809,6 +828,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	featureService, err := s.createFeatureService(
 		dbClient,
 		featureStorage,
+		segmentStorage,
+		segmentUserStorage,
+		tagStorage,
+		flagTriggerStorage,
+		fluiStorage,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -870,7 +894,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// tagService
 	tagService := tagapi.NewTagService(
-		mysqlClient,
+		dbClient,
+		tagStorage,
 		featureStorage,
 		accountClient,
 		domainTopicPublisher,
@@ -1265,6 +1290,11 @@ func (s *server) createEnvironmentService(
 func (s *server) createFeatureService(
 	dbClient database.Client,
 	featureStorage v2fs.FeatureStorage,
+	segmentStorage v2fs.SegmentStorage,
+	segmentUserStorage v2fs.SegmentUserStorage,
+	tagStorage tagstorage.TagStorage,
+	flagTriggerStorage v2fs.FlagTriggerStorage,
+	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1280,6 +1310,11 @@ func (s *server) createFeatureService(
 	featureService := featureapi.NewFeatureService(
 		dbClient,
 		featureStorage,
+		segmentStorage,
+		segmentUserStorage,
+		tagStorage,
+		flagTriggerStorage,
+		fluiStorage,
 		mysqlClient,
 		accountClient,
 		experimentClient,

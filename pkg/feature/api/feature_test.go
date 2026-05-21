@@ -1000,7 +1000,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1061,7 +1061,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1401,7 +1401,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
@@ -1467,7 +1467,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
@@ -1813,7 +1813,7 @@ func TestEvaluateSingleFeature(t *testing.T) {
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{

@@ -170,6 +170,7 @@ func (c *command) constructDeleteQueryForOrganization(target *mysqlE2EInfo) (que
 			DELETE FROM
 				%s
 			WHERE
+			    name != 'localenv' AND -- to avoid deleting the service account used for e2e test
 				organization_id = ? AND
 				%s LIKE ?
 		`, target.table, target.targetField)
@@ -184,6 +185,8 @@ func (c *command) constructDeleteQueryForOrganization(target *mysqlE2EInfo) (que
 			%s
 		WHERE
 			organization_id = ?
+		AND
+		    name != 'localenv' -- to avoid deleting the service account used for e2e test
 	`, target.table)
 	args = []interface{}{
 		organizationID,

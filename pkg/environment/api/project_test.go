@@ -39,6 +39,17 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
+func mockAdminOrgAuth(s *EnvironmentService) {
+	s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+		gomock.Any(), gomock.Any(),
+	).Return(&accountproto.GetAccountV2Response{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+		},
+	}, nil)
+}
+
 func TestGetProjectMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -224,36 +235,44 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: empty name",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: empty name",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name: "",
 			},
 			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: only space",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: only space",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name: "    ",
 			},
 			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: max name length exceeded",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: max name length exceeded",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name: strings.Repeat("a", 51),
 			},
 			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: empty url code",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: empty url code",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: "",
@@ -261,9 +280,11 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: url code can't use uppercase",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: url code can't use uppercase",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: "URLCODE",
@@ -271,9 +292,11 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: url code can't use space",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: url code can't use space",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: "url code",
@@ -281,9 +304,11 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: max url code length exceeded",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: max url code length exceeded",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: strings.Repeat("a", 51),
@@ -291,9 +316,11 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
-			ctx:   ctx,
-			desc:  "err: organization ID required",
-			setup: nil,
+			ctx:  ctx,
+			desc: "err: organization ID required",
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+			},
 			req: &proto.CreateProjectRequest{
 				Name:           "name",
 				UrlCode:        "url-code",
@@ -305,6 +332,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "err: project already exists",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
@@ -321,6 +349,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "err: internal error",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal error"))
@@ -337,6 +366,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "err: publish domain event failed",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -357,6 +387,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -461,6 +492,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -479,6 +511,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1", Description: "old desc"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -549,6 +582,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -566,6 +600,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -633,6 +668,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -650,6 +686,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -717,6 +754,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -734,6 +772,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
+				mockAdminOrgAuth(s)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)

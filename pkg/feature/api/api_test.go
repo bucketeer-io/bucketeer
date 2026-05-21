@@ -154,10 +154,22 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		},
 	}
 	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	arByEnv := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{EnvironmentId: "namespace", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+			},
+		},
+	}
+	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(arByEnv, nil).AnyTimes()
 	return &FeatureService{
 		fluiStorage:                mock.NewMockFeatureLastUsedInfoStorage(c),
 		flagTriggerStorage:         mock.NewMockFlagTriggerStorage(c),
 		featureStorage:             mock.NewMockFeatureStorage(c),
+		segmentStorage:             mock.NewMockSegmentStorage(c),
+		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
 		scheduledFlagChangeStorage: mock.NewMockScheduledFlagChangeStorage(c),
 		mysqlClient:                mysqlmock.NewMockClient(c),
 		dbClient:                   databasemock.NewMockClient(c),
@@ -201,6 +213,7 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 		scheduledFlagChangeStorage: mock.NewMockScheduledFlagChangeStorage(c),
 		segmentUsersCache:          cachev3mock.NewMockSegmentUsersCache(c),
 		segmentStorage:             mock.NewMockSegmentStorage(c),
+		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
 		mysqlClient:                mysqlmock.NewMockClient(c),
 		dbClient:                   databasemock.NewMockClient(c),
 		accountClient:              a,

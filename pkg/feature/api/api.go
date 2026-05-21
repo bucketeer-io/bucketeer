@@ -83,6 +83,11 @@ type FeatureService struct {
 func NewFeatureService(
 	dbClient database.Client,
 	featureStorage v2fs.FeatureStorage,
+	segmentStorage v2fs.SegmentStorage,
+	segmentUserStorage v2fs.SegmentUserStorage,
+	tagStorage v2ts.TagStorage,
+	flagTriggerStorage v2fs.FlagTriggerStorage,
+	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
@@ -103,13 +108,13 @@ func NewFeatureService(
 		opt(dopts)
 	}
 	return &FeatureService{
-		fluiStorage:                v2fs.NewFeatureLastUsedInfoStorage(mysqlClient),
-		flagTriggerStorage:         v2fs.NewFlagTriggerStorage(mysqlClient),
+		fluiStorage:                fluiStorage,
+		flagTriggerStorage:         flagTriggerStorage,
 		featureStorage:             featureStorage,
-		segmentStorage:             v2fs.NewSegmentStorage(mysqlClient),
-		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
+		segmentStorage:             segmentStorage,
+		segmentUserStorage:         segmentUserStorage,
 		scheduledFlagChangeStorage: v2fs.NewScheduledFlagChangeStorage(mysqlClient),
-		tagStorage:                 v2ts.NewTagStorage(mysqlClient),
+		tagStorage:                 tagStorage,
 		mysqlClient:                mysqlClient,
 		dbClient:                   dbClient,
 		accountClient:              accountClient,

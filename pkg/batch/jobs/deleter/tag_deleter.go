@@ -23,7 +23,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -41,7 +40,7 @@ type tagDeleter struct {
 }
 
 func NewTagDeleter(
-	mysqlClient mysql.Client,
+	tagStorage tagstorage.TagStorage,
 	ftStorage ftstorage.FeatureStorage,
 	opts ...jobs.Option) jobs.Job {
 
@@ -53,7 +52,7 @@ func NewTagDeleter(
 		opt(dopts)
 	}
 	return &tagDeleter{
-		tagStorage: tagstorage.NewTagStorage(mysqlClient),
+		tagStorage: tagStorage,
 		ftStorage:  ftStorage,
 		opts:       dopts,
 		logger:     dopts.Logger.Named("tag-deleter"),

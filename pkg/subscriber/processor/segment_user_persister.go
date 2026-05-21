@@ -37,7 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	v3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	domainproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -69,7 +69,7 @@ type segmentUserPersister struct {
 	segmentUserPersisterConfig segmentUserPersisterConfig
 	domainPublisher            publisher.Publisher
 	batchClient                btclient.Client
-	mysqlClient                mysql.Client
+	dbClient                   database.Client
 	segmentStorage             v2fs.SegmentStorage
 	segmentUserStorage         v2fs.SegmentUserStorage
 	logger                     *zap.Logger
@@ -78,7 +78,9 @@ type segmentUserPersister struct {
 func NewSegmentUserPersister(
 	config interface{},
 	batchClient btclient.Client,
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	segmentStorage v2fs.SegmentStorage,
+	segmentUserStorage v2fs.SegmentUserStorage,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
@@ -151,9 +153,9 @@ func NewSegmentUserPersister(
 		segmentUserPersisterConfig: segmentPersisterConfig,
 		domainPublisher:            domainPublisher,
 		batchClient:                batchClient,
-		mysqlClient:                mysqlClient,
-		segmentStorage:             v2fs.NewSegmentStorage(mysqlClient),
-		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
+		dbClient:                   dbClient,
+		segmentStorage:             segmentStorage,
+		segmentUserStorage:         segmentUserStorage,
 		logger:                     logger,
 	}, nil
 }
@@ -417,11 +419,8 @@ func (p *segmentUserPersister) persistSegmentUsers(
 		user := domain.NewSegmentUser(segmentID, id, state, false)
 		allSegmentUsers = append(allSegmentUsers, user.SegmentUser)
 	}
-	err := p.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if err := p.segmentUserStorage.UpsertSegmentUsers(contextWithTx, allSegmentUsers, environmentId); err != nil {
-			return err
-		}
-		return nil
+	err := p.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+		return p.segmentUserStorage.UpsertSegmentUsers(contextWithTx, allSegmentUsers, environmentId)
 	})
 	if err != nil {
 		return 0, err
@@ -439,7 +438,7 @@ func (p *segmentUserPersister) updateSegmentStatus(
 	state featureproto.SegmentUser_State,
 	status featureproto.Segment_Status,
 ) error {
-	return p.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	return p.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := p.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
 		if err != nil {
 			return err

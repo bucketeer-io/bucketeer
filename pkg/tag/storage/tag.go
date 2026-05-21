@@ -17,33 +17,21 @@ package storage
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 
-	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	pkgerr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 var (
-	ErrTagNotFound               = err.NewErrorNotFound(err.TagPackageName, "tag not found", "tag")
-	ErrTagUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(err.TagPackageName, "tag unexpected affected rows")
-
-	//go:embed sql/insert_tag.sql
-	insertTagSQL string
-	//go:embed sql/select_tag.sql
-	selectTagSQL string
-	//go:embed sql/select_tag_by_name.sql
-	selectTagByNameSQL string
-	//go:embed sql/select_tags.sql
-	selectTagsSQL string
-	//go:embed sql/select_all_environment_tags.sql
-	selectAllEnvironmentTagsSQL string
-	//go:embed sql/count_tags.sql
-	countTagsSQL string
-	//go:embed sql/delete_tag.sql
-	deleteTagSQL string
+	ErrTagNotFound               = pkgerr.NewErrorNotFound(pkgerr.TagPackageName, "tag not found", "tag")
+	ErrTagUnexpectedAffectedRows = pkgerr.NewErrorUnexpectedAffectedRows(
+		pkgerr.TagPackageName,
+		"tag unexpected affected rows",
+	)
+	ErrInvalidListTagsCursor  = errors.New("tag storage: invalid list tags cursor")
+	ErrInvalidListTagsOrderBy = errors.New("tag storage: invalid list tags order by")
 )
 
 type TagStorage interface {
@@ -56,196 +44,20 @@ type TagStorage interface {
 	) (*domain.Tag, error)
 	ListTags(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListTagsParams,
 	) ([]*proto.Tag, int, int64, error)
 	ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error)
 	DeleteTag(ctx context.Context, id string) error
 }
 
-type tagStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewTagStorage(qe mysql.QueryExecer) TagStorage {
-	return &tagStorage{qe: qe}
-}
-
-func (s *tagStorage) UpsertTag(ctx context.Context, tag *domain.Tag) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertTagSQL,
-		tag.Id,
-		&tag.Name,
-		tag.CreatedAt,
-		tag.UpdatedAt,
-		int32(tag.EntityType),
-		tag.EnvironmentId,
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *tagStorage) GetTag(ctx context.Context, id, environmentId string) (*domain.Tag, error) {
-	var entityType int32
-	tag := proto.Tag{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectTagSQL,
-		id,
-		environmentId,
-	).Scan(
-		&tag.Id,
-		&tag.Name,
-		&tag.CreatedAt,
-		&tag.UpdatedAt,
-		&entityType,
-		&tag.EnvironmentId,
-		&tag.EnvironmentName,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrTagNotFound
-		}
-		return nil, err
-	}
-	tag.EntityType = proto.Tag_EntityType(entityType)
-	return &domain.Tag{Tag: &tag}, nil
-}
-
-func (s *tagStorage) GetTagByName(
-	ctx context.Context,
-	name, environmentId string,
-	entityType proto.Tag_EntityType,
-) (*domain.Tag, error) {
-	var entityTypeInt int32
-	tag := proto.Tag{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectTagByNameSQL,
-		name,
-		environmentId,
-		int32(entityType),
-	).Scan(
-		&tag.Id,
-		&tag.Name,
-		&tag.CreatedAt,
-		&tag.UpdatedAt,
-		&entityTypeInt,
-		&tag.EnvironmentId,
-		&tag.EnvironmentName,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrTagNotFound
-		}
-		return nil, err
-	}
-	tag.EntityType = proto.Tag_EntityType(entityTypeInt)
-	return &domain.Tag{Tag: &tag}, nil
-}
-
-func (s *tagStorage) ListTags(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.Tag, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectTagsSQL, options)
-
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	var limit, offset int
-	if options != nil {
-		limit = options.Limit
-		offset = options.Offset
-	}
-	tags := make([]*proto.Tag, 0, limit)
-	for rows.Next() {
-		var entityType int32
-		tag := proto.Tag{}
-		err := rows.Scan(
-			&tag.Id,
-			&tag.Name,
-			&tag.CreatedAt,
-			&tag.UpdatedAt,
-			&entityType,
-			&tag.EnvironmentId,
-			&tag.EnvironmentName,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		tag.EntityType = proto.Tag_EntityType(entityType)
-		tags = append(tags, &tag)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(tags)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countTagsSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return tags, nextOffset, totalCount, nil
-}
-
-func (s *tagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error) {
-	rows, err := s.qe.QueryContext(ctx, selectAllEnvironmentTagsSQL)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	envTags := map[string][]*proto.Tag{}
-	for rows.Next() {
-		var entityType int32
-		var envID string
-		tag := proto.Tag{}
-		err := rows.Scan(
-			&envID,
-			&tag.Id,
-			&tag.Name,
-			&tag.CreatedAt,
-			&tag.UpdatedAt,
-			&entityType,
-			&tag.EnvironmentId,
-			&tag.EnvironmentName,
-		)
-		if err != nil {
-			return nil, err
-		}
-		tag.EntityType = proto.Tag_EntityType(entityType)
-		envTags[envID] = append(envTags[envID], &tag)
-	}
-	if rows.Err() != nil {
-		return nil, err
-	}
-	environmentTags := make([]*proto.EnvironmentTag, 0, len(envTags))
-	for key, tags := range envTags {
-		envTag := &proto.EnvironmentTag{
-			EnvironmentId: key,
-			Tags:          tags,
-		}
-		environmentTags = append(environmentTags, envTag)
-	}
-	return environmentTags, nil
-}
-
-func (s *tagStorage) DeleteTag(ctx context.Context, id string) error {
-	result, err := s.qe.ExecContext(ctx, deleteTagSQL, id)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrTagUnexpectedAffectedRows
-	}
-	return nil
+type ListTagsParams struct {
+	EnvironmentID  string
+	OrganizationID string
+	EnvironmentIDs []string
+	EntityType     proto.Tag_EntityType
+	SearchKeyword  string
+	OrderBy        proto.ListTagsRequest_OrderBy
+	OrderDirection proto.ListTagsRequest_OrderDirection
+	PageSize       int
+	Cursor         string
 }

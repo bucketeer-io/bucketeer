@@ -31,8 +31,7 @@ import (
 	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -45,13 +44,15 @@ func TestNewTagService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mysqlClientMock := mysqlmock.NewMockClient(mockController)
+	dbClientMock := databasemock.NewMockClient(mockController)
+	tagStorageMock := tagstoragemock.NewMockTagStorage(mockController)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	featureStorageMock := featurestoragemock.NewMockFeatureStorage(mockController)
 	s := NewTagService(
-		mysqlClientMock,
+		dbClientMock,
+		tagStorageMock,
 		featureStorageMock,
 		accountClientMock,
 		p,
@@ -95,10 +96,10 @@ func TestCreateTagMySQL(t *testing.T) {
 		{
 			desc: "err: UpsertTag fails",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					return fn(ctx)
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
@@ -127,10 +128,10 @@ func TestCreateTagMySQL(t *testing.T) {
 		{
 			desc: "err: GetTagByName fails",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					return fn(ctx)
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
@@ -147,10 +148,10 @@ func TestCreateTagMySQL(t *testing.T) {
 		{
 			desc: "err: Publish fails",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					return fn(ctx)
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
@@ -182,10 +183,10 @@ func TestCreateTagMySQL(t *testing.T) {
 		{
 			desc: "success: new tag creation",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					return fn(ctx)
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(),
@@ -224,10 +225,10 @@ func TestCreateTagMySQL(t *testing.T) {
 		{
 			desc: "success: tag upsert (existing tag)",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					return fn(ctx)
 				})
 				// Simulate upsert of existing tag - same ID and created_at, but updated updated_at
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
@@ -389,10 +390,10 @@ func TestDeleteTagMySQL(t *testing.T) {
 		{
 			desc: "err: GetTag",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -407,10 +408,10 @@ func TestDeleteTagMySQL(t *testing.T) {
 		{
 			desc: "err: in used",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -440,10 +441,10 @@ func TestDeleteTagMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *TagService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -493,7 +494,7 @@ func TestDeleteTagMySQL(t *testing.T) {
 }
 
 func createTagService(c *gomock.Controller) *TagService {
-	mysqlClientMock := mysqlmock.NewMockClient(c)
+	dbClientMock := databasemock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
@@ -515,7 +516,7 @@ func createTagService(c *gomock.Controller) *TagService {
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &TagService{
-		mysqlClient:    mysqlClientMock,
+		dbClient:       dbClientMock,
 		tagStorage:     tagstoragemock.NewMockTagStorage(c),
 		featureStorage: featurestoragemock.NewMockFeatureStorage(c),
 		accountClient:  accountClientMock,
@@ -528,7 +529,7 @@ func createTagService(c *gomock.Controller) *TagService {
 }
 
 func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *TagService {
-	mysqlClientMock := mysqlmock.NewMockClient(c)
+	dbClientMock := databasemock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
@@ -546,7 +547,7 @@ func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accou
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &TagService{
-		mysqlClient:   mysqlClientMock,
+		dbClient:      dbClientMock,
 		tagStorage:    tagstoragemock.NewMockTagStorage(c),
 		accountClient: accountClientMock,
 		publisher:     p,

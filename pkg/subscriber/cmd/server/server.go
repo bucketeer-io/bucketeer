@@ -33,6 +33,9 @@ import (
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
+	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
@@ -44,6 +47,7 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
@@ -243,8 +247,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	var dbClient database.Client
 	var postgresClient postgres.Client
 	var pushStorage pushstorage.PushStorage
+	var segmentStorage v2fs.SegmentStorage
+	var segmentUserStorage v2fs.SegmentUserStorage
+	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -253,9 +261,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		if err != nil {
 			return err
 		}
+		dbClient = database.NewPostgresStorageClient(postgresClient)
 		pushStorage = pushstorage.NewPostgresPushStorage(postgresClient)
+		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
+		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
+		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 	} else {
+		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = pushstorage.NewMySQLPushStorage(mysqlClient)
+		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
+		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
+		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -395,6 +411,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		ctx,
 		environmentClient,
 		mysqlClient,
+		dbClient,
+		segmentStorage,
+		segmentUserStorage,
+		fluiStorage,
 		pushStorage,
 		persistentRedisClient,
 		nonPersistentRedisClient,
@@ -720,6 +740,10 @@ func (s *server) registerPubSubProcessorMap(
 	ctx context.Context,
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
+	dbClient database.Client,
+	segmentStorage v2fs.SegmentStorage,
+	segmentUserStorage v2fs.SegmentUserStorage,
+	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	pushStorage pushstorage.PushStorage,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
@@ -781,7 +805,9 @@ func (s *server) registerPubSubProcessorMap(
 		segmentPersister, err := processor.NewSegmentUserPersister(
 			processorsConfigMap[processor.SegmentUserPersisterName],
 			batchClient,
-			mysqlClient,
+			dbClient,
+			segmentStorage,
+			segmentUserStorage,
 			registerer,
 			logger,
 		)
@@ -845,6 +871,7 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			processorsConfigMap[processor.EvaluationCountEventPersisterName],
 			mysqlClient,
+			fluiStorage,
 			redisCache,
 			cachev3.NewUserAttributesCache(redisCache),
 			cachev3.NewDAUCache(redisCache),
