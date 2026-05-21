@@ -262,6 +262,60 @@ func TestCheckOrganizationRole(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success get API key editor",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "apikey_maintainer@example.com",
+						FirstName:        "apikey",
+						LastName:         "maintainer",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+						},
+					},
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email: "apikey_maintainer@example.com",
+				Name:  "apikey maintainer",
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+					Token:      "apikey_token",
+					Maintainer: "apikey_maintainer@example.com",
+					Name:       "apikey_name",
+				},
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: API key editor get account fails",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: status.Error(codes.NotFound, ""),
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -550,18 +604,44 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 			expectedLogCount: 0,
 		},
 		{
-			desc:          "success: system admin bypasses role check",
+			desc:          "success: system admin bypasses role check for viewer",
 			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
-			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			requiredRole:  accountproto.AccountV2_Role_Environment_VIEWER,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
-				t.Fatal("getAccountFunc should not be called for system admin")
+				t.Fatal("getAccountFunc should not be called for system admin viewer check")
 				return nil, nil
 			},
 			expected: &eventproto.Editor{
 				Email:   "admin@example.com",
 				Name:    "admin",
 				IsAdmin: true,
+			},
+			expectedErr:      nil,
+			expectedLogCount: 0,
+		},
+		{
+			desc:          "success: system admin with editor role as org member",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email:            email,
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+					},
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email:            "admin@example.com",
+				Name:             "admin",
+				IsAdmin:          true,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
 			},
 			expectedErr:      nil,
 			expectedLogCount: 0,
@@ -736,18 +816,40 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 			expectedLogCount: 0,
 		},
 		{
-			desc:           "success: system admin bypasses role check",
+			desc:           "success: system admin bypasses role check for member-level",
 			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
-			requiredRole:   accountproto.AccountV2_Role_Organization_OWNER,
+			requiredRole:   accountproto.AccountV2_Role_Organization_MEMBER,
 			organizationID: "org0",
 			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
-				t.Fatal("getAccountFunc should not be called for system admin")
+				t.Fatal("getAccountFunc should not be called for system admin member check")
 				return nil, nil
 			},
 			expected: &eventproto.Editor{
 				Email:   "admin@example.com",
 				Name:    "admin",
 				IsAdmin: true,
+			},
+			expectedErr:      nil,
+			expectedLogCount: 0,
+		},
+		{
+			desc:           "success: system admin with admin role as org member",
+			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			requiredRole:   accountproto.AccountV2_Role_Organization_ADMIN,
+			organizationID: "org0",
+			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email:            "admin@example.com",
+				Name:             "admin",
+				IsAdmin:          true,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			},
 			expectedErr:      nil,
 			expectedLogCount: 0,

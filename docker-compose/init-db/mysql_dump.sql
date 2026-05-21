@@ -131,6 +131,14 @@ CREATE TABLE `account_v2` (
   CONSTRAINT `account_v2_foreign_organization_id` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
+LOCK TABLES `account_v2` WRITE;
+-- Admin account for local development / e2e tests.
+-- Member of the default org with ADMIN role + EDITOR role on the e2e environment.
+INSERT INTO `account_v2` VALUES ('localenv@bucketeer.io', 'localenv', '', 'default', 2, '[{"environment_id":"e2e","role":2}]', 0, 1706092038, 1706092038);
+-- Also member of the e2e org with ADMIN role (no environments in the e2e org).
+INSERT INTO `account_v2` VALUES ('localenv@bucketeer.io', 'localenv', '', 'e2e', 3, '[]', 0, 1706092038, 1706092038);
+UNLOCK TABLES;
+
 --
 -- Table structure for table `admin_account`
 --
