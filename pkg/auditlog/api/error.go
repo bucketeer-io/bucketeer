@@ -30,6 +30,4 @@ var (
 		pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "audit log not found", "AuditLog"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "cursor is invalid", "cursor"))
-	statusInvalidOrderBy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "order_by is invalid", "order_by"))
 )

@@ -28,7 +28,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -41,14 +40,15 @@ type auditLogPersisterConfig struct {
 
 type auditLogPersister struct {
 	auditLogPersisterConfig auditLogPersisterConfig
-	mysqlAdminStorage       v2als.AdminAuditLogStorage
-	mysqlStorage            v2als.AuditLogStorage
+	adminStorage            v2als.AdminAuditLogStorage
+	storage                 v2als.AuditLogStorage
 	logger                  *zap.Logger
 }
 
 func NewAuditLogPersister(
 	config interface{},
-	mysqlClient mysql.Client,
+	auditLogStorage v2als.AuditLogStorage,
+	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	auditLogPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -69,8 +69,8 @@ func NewAuditLogPersister(
 	}
 	return &auditLogPersister{
 		auditLogPersisterConfig: persisterConfig,
-		mysqlAdminStorage:       v2als.NewAdminAuditLogStorage(mysqlClient),
-		mysqlStorage:            v2als.NewAuditLogStorage(mysqlClient),
+		adminStorage:            adminAuditLogStorage,
+		storage:                 auditLogStorage,
 		logger:                  logger,
 	}, nil
 }
@@ -122,9 +122,9 @@ func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
 	)
 	defer cancel()
 	// Environment audit logs
-	a.createAuditLogsMySQL(ctx, auditlogs, messages, a.mysqlStorage.CreateAuditLog)
+	a.createAuditLogs(ctx, auditlogs, messages, a.storage.CreateAuditLog)
 	// Admin audit logs
-	a.createAuditLogsMySQL(ctx, adminAuditLogs, adminMessages, a.mysqlAdminStorage.CreateAdminAuditLog)
+	a.createAuditLogs(ctx, adminAuditLogs, adminMessages, a.adminStorage.CreateAdminAuditLog)
 }
 
 func (a auditLogPersister) extractAuditLogs(
@@ -152,7 +152,7 @@ func (a auditLogPersister) extractAuditLogs(
 	return
 }
 
-func (a auditLogPersister) createAuditLogsMySQL(
+func (a auditLogPersister) createAuditLogs(
 	ctx context.Context,
 	auditlogs []*domain.AuditLog,
 	messages []*puller.Message,

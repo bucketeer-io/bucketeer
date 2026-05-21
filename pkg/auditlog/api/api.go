@@ -80,7 +80,9 @@ type auditlogService struct {
 
 func NewAuditLogService(
 	accountClient accountclient.Client,
-	mysqlClient mysql.Client,
+	accountStorage v2as.AccountStorage,
+	auditLogStorage v2als.AuditLogStorage,
+	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	opts ...Option,
 ) AuditlogService {
 	dopts := &options{
@@ -91,9 +93,9 @@ func NewAuditLogService(
 	}
 	return &auditlogService{
 		accountClient:        accountClient,
-		accountStorage:       v2as.NewAccountStorage(mysqlClient),
-		auditLogStorage:      v2als.NewAuditLogStorage(mysqlClient),
-		adminAuditLogStorage: v2als.NewAdminAuditLogStorage(mysqlClient),
+		accountStorage:       accountStorage,
+		auditLogStorage:      auditLogStorage,
+		adminAuditLogStorage: adminAuditLogStorage,
 		opts:                 dopts,
 		logger:               dopts.logger.Named("api"),
 	}
@@ -188,64 +190,29 @@ func (s *auditlogService) ListAuditLogs(
 	if cursor == "" {
 		cursor = "0"
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	// Validate cursor before passing to storage
+	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
-	var filters = []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-	if req.From != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.From,
-		})
-	}
-	if req.To != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.To,
-		})
-	}
+
+	var entityType *int32
 	if req.EntityType != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EntityType.Value,
-		})
+		v := req.EntityType.Value
+		entityType = &v
 	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"editor"},
-			Keyword: req.SearchKeyword,
-		}
+
+	params := v2als.ListAuditLogsParams{
+		EnvironmentID:  req.EnvironmentId,
+		EntityType:     entityType,
+		From:           req.From,
+		To:             req.To,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       limit,
+		Cursor:         cursor,
 	}
-	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		InFilters:   nil,
-		JSONFilters: nil,
-		NullFilters: nil,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-	}
-	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, options)
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list auditlogs",
@@ -282,25 +249,6 @@ func (s *auditlogService) ListAuditLogs(
 	}, nil
 }
 
-func (s *auditlogService) newAuditLogListOrders(
-	orderBy proto.ListAuditLogsRequest_OrderBy,
-	orderDirection proto.ListAuditLogsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListAuditLogsRequest_DEFAULT,
-		proto.ListAuditLogsRequest_TIMESTAMP:
-		column = "timestamp"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionDesc
-	if orderDirection == proto.ListAuditLogsRequest_ASC {
-		direction = mysql.OrderDirectionAsc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
 func (s *auditlogService) ListAdminAuditLogs(
 	ctx context.Context,
 	req *proto.ListAdminAuditLogsRequest,
@@ -308,43 +256,6 @@ func (s *auditlogService) ListAdminAuditLogs(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
-		return nil, err
-	}
-	filters := []*mysql.FilterV2{}
-	if req.From != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.From,
-		})
-	}
-	if req.To != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.To,
-		})
-	}
-	if req.EntityType != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EntityType.Value,
-		})
-	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"editor"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newAdminAuditLogListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
 		return nil, err
 	}
 
@@ -358,21 +269,28 @@ func (s *auditlogService) ListAdminAuditLogs(
 	if cursor == "" {
 		cursor = "0"
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	// Validate cursor before passing to storage
+	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Filters:     filters,
-		NullFilters: nil,
-		InFilters:   nil,
-		JSONFilters: nil,
+
+	var entityType *int32
+	if req.EntityType != nil {
+		v := req.EntityType.Value
+		entityType = &v
 	}
-	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(ctx, options)
+
+	params := v2als.ListAdminAuditLogsParams{
+		EntityType:     entityType,
+		From:           req.From,
+		To:             req.To,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       limit,
+		Cursor:         cursor,
+	}
+	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(ctx, params)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list admin auditlogs",
@@ -390,25 +308,6 @@ func (s *auditlogService) ListAdminAuditLogs(
 	}, nil
 }
 
-func (s *auditlogService) newAdminAuditLogListOrders(
-	orderBy proto.ListAdminAuditLogsRequest_OrderBy,
-	orderDirection proto.ListAdminAuditLogsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListAdminAuditLogsRequest_DEFAULT,
-		proto.ListAdminAuditLogsRequest_TIMESTAMP:
-		column = "timestamp"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionDesc
-	if orderDirection == proto.ListAdminAuditLogsRequest_ASC {
-		direction = mysql.OrderDirectionAsc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
 func (s *auditlogService) ListFeatureHistory(
 	ctx context.Context,
 	req *proto.ListFeatureHistoryRequest,
@@ -418,52 +317,6 @@ func (s *auditlogService) ListFeatureHistory(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)
 	if err != nil {
-		return nil, err
-	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-		{
-			Column:   "entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    int32(eventproto.Event_FEATURE),
-		},
-		{
-			Column:   "entity_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.FeatureId,
-		},
-	}
-	if req.From != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.From,
-		})
-	}
-	if req.To != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.To,
-		})
-	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"editor"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
 		return nil, err
 	}
 
@@ -477,21 +330,25 @@ func (s *auditlogService) ListFeatureHistory(
 	if cursor == "" {
 		cursor = "0"
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	// Validate cursor before passing to storage
+	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Filters:     filters,
-		NullFilters: nil,
-		InFilters:   nil,
-		JSONFilters: nil,
+
+	entityType := int32(eventproto.Event_FEATURE)
+	params := v2als.ListAuditLogsParams{
+		EnvironmentID:  req.EnvironmentId,
+		EntityType:     &entityType,
+		EntityID:       req.FeatureId,
+		From:           req.From,
+		To:             req.To,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        proto.ListAuditLogsRequest_OrderBy(req.OrderBy),
+		OrderDirection: proto.ListAuditLogsRequest_OrderDirection(req.OrderDirection),
+		PageSize:       limit,
+		Cursor:         cursor,
 	}
-	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, options)
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list feature history",
@@ -526,6 +383,7 @@ func (s *auditlogService) getAccountMapByEmails(
 	for i, email := range emails {
 		emailsArg[i] = email
 	}
+	// TODO: Refactor account storage to use DB-agnostic params when account package is migrated.
 	options := &mysql.ListOptions{
 		Limit:  0,
 		Offset: 0,
@@ -560,25 +418,6 @@ func (s *auditlogService) getAccountMapByEmails(
 		accountMap[accounts[i].Email] = accounts[i]
 	}
 	return accountMap, nil
-}
-
-func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
-	orderBy proto.ListFeatureHistoryRequest_OrderBy,
-	orderDirection proto.ListFeatureHistoryRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListFeatureHistoryRequest_DEFAULT,
-		proto.ListFeatureHistoryRequest_TIMESTAMP:
-		column = "timestamp"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionDesc
-	if orderDirection == proto.ListFeatureHistoryRequest_ASC {
-		direction = mysql.OrderDirectionAsc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *auditlogService) checkEnvironmentRole(

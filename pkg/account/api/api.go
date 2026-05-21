@@ -74,6 +74,7 @@ func NewAccountService(
 	e environmentclient.Client,
 	mysqlClient mysql.Client,
 	tagStorage tagstorage.TagStorage,
+	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage,
 	publisher publisher.Publisher,
 	opts ...Option,
 ) *AccountService {
@@ -87,7 +88,7 @@ func NewAccountService(
 		accountStorage:       v2.NewAccountStorage(mysqlClient),
 		tagStorage:           tagStorage,
 		teamStorage:          teamstorage.NewTeamStorage(mysqlClient),
-		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),
+		adminAuditLogStorage: adminAuditLogStorage,
 		publisher:            publisher,
 		opts:                 &options,
 		logger:               options.logger.Named("api"),
