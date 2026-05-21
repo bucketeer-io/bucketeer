@@ -372,7 +372,9 @@ func listFeaturesOrders(
 	case proto.ListFeaturesRequest_ENABLED:
 		column = "feature.enabled"
 	case proto.ListFeaturesRequest_AUTO_OPS:
-		column = "(COALESCE(auto_ops_counts.progressive_rollout_count, 0) + COALESCE(auto_ops_counts.schedule_count, 0) + COALESCE(auto_ops_counts.kill_switch_count, 0))"
+		column = "(COALESCE(auto_ops_counts.progressive_rollout_count, 0) + " +
+			"COALESCE(auto_ops_counts.schedule_count, 0) + " +
+			"COALESCE(auto_ops_counts.kill_switch_count, 0))"
 	default:
 		return nil, v2fs.ErrInvalidListFeaturesOrderBy
 	}
