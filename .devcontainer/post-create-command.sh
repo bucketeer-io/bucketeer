@@ -1,0 +1,35 @@
+#!/bin/bash
+set -euo pipefail
+
+USER_NAME="${USER_NAME:-codespace}"
+WORKSPACE_DIR="${WORKSPACE_DIR:-/workspaces/bucketeer}"
+
+echo "Running post-create setup..."
+
+run_privileged() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif sudo -n true >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    echo "sudo is unavailable; skipping privileged command: $*"
+  fi
+}
+
+if id "$USER_NAME" >/dev/null 2>&1; then
+  run_privileged mkdir -p /go/pkg "/home/$USER_NAME"
+  run_privileged chown -R "$USER_NAME:$USER_NAME" /go/pkg "/home/$USER_NAME"
+else
+  echo "User '$USER_NAME' not found; skipping ownership setup"
+fi
+
+MYSQL_CONF_DIR="$WORKSPACE_DIR/docker-compose/config/mysql-conf"
+if [ -d "$MYSQL_CONF_DIR" ]; then
+  run_privileged chown -R "$USER_NAME:$USER_NAME" "$MYSQL_CONF_DIR"
+  find "$MYSQL_CONF_DIR" -type f -name "*.cnf" -exec chmod 0644 {} \;
+  find "$MYSQL_CONF_DIR" -type d -exec chmod 0755 {} \;
+else
+  echo "MySQL config directory not found: $MYSQL_CONF_DIR"
+fi
+
+echo "Post-create setup completed"
