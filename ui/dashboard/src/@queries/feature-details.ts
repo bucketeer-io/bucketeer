@@ -55,3 +55,13 @@ export const invalidateFeature = (queryClient: QueryClient) => {
     queryKey: [FEATURE_QUERY_KEY]
   });
 };
+
+export const updateFeatureCache = (
+  queryClient: QueryClient,
+  params: FeatureFetcherParams,
+  updatedFeature: FeatureResponse['feature']
+) => {
+  queryClient.setQueryData<FeatureResponse>([FEATURE_QUERY_KEY, params], old =>
+    old ? { ...old, feature: updatedFeature } : old
+  );
+};
