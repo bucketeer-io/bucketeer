@@ -244,7 +244,7 @@ func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*mysqlstorage.
 		proto.ListAuditLogsRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		column = "timestamp"
+		return nil, v2als.ErrInvalidOrderBy
 	}
 	direction := mysqlstorage.OrderDirectionDesc
 	if p.OrderDirection == proto.ListAuditLogsRequest_ASC {

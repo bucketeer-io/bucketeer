@@ -214,6 +214,9 @@ func (s *auditlogService) ListAuditLogs(
 	}
 	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
 	if err != nil {
+		if errors.Is(err, v2als.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list auditlogs",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
@@ -292,6 +295,9 @@ func (s *auditlogService) ListAdminAuditLogs(
 	}
 	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(ctx, params)
 	if err != nil {
+		if errors.Is(err, v2als.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list admin auditlogs",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
@@ -350,6 +356,9 @@ func (s *auditlogService) ListFeatureHistory(
 	}
 	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
 	if err != nil {
+		if errors.Is(err, v2als.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list feature history",
 			log.FieldsFromIncomingContext(ctx).AddFields(

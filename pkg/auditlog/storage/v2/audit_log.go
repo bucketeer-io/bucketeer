@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -26,6 +27,7 @@ import (
 var (
 	ErrAuditLogAlreadyExists = pkgErr.NewErrorAlreadyExists(pkgErr.AuditlogPackageName, "auditlog already exists")
 	ErrAuditLogNotFound      = pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "auditlog not found", "auditlog")
+	ErrInvalidOrderBy        = errors.New("auditlog storage: invalid order by")
 )
 
 // ListAuditLogsParams carries list intent for ListAuditLogs without database-specific types.

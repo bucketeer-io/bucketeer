@@ -251,7 +251,7 @@ func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*pgstorage.Lis
 		proto.ListAuditLogsRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		column = "timestamp"
+		return nil, v2als.ErrInvalidOrderBy
 	}
 	direction := pgstorage.OrderDirectionDesc
 	if p.OrderDirection == proto.ListAuditLogsRequest_ASC {
