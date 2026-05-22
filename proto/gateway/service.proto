@@ -142,8 +142,8 @@ message StreamEvaluationsRequest {
 // Payload of the SSE `put` and `patch` events. The event kind is conveyed by
 // the SSE `event:` field, not inside the payload.
 //
-// - `put`:   `evaluations` is the full snapshot for the user/tag.
-// - `patch`: `evaluations` lists changed/added evaluations.
+// - `put`:   full snapshot for the user/tag.
+// - `patch`: delta since the last snapshot.
 message StreamEvaluationsEvent {
   feature.UserEvaluations evaluations = 1;
   string user_evaluations_id = 2;

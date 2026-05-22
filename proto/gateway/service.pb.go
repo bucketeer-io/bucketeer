@@ -855,8 +855,8 @@ func (x *StreamEvaluationsRequest) GetSdkVersion() string {
 // Payload of the SSE `put` and `patch` events. The event kind is conveyed by
 // the SSE `event:` field, not inside the payload.
 //
-// - `put`:   `evaluations` is the full snapshot for the user/tag.
-// - `patch`: `evaluations` lists changed/added evaluations.
+// - `put`:   full snapshot for the user/tag.
+// - `patch`: delta since the last snapshot.
 type StreamEvaluationsEvent struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
