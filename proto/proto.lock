@@ -37083,6 +37083,20 @@
     {
       "protopath": "gateway:/:service.proto",
       "def": {
+        "enums": [
+          {
+            "name": "StreamErrorEvent.Code",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "INTERNAL",
+                "integer": 1
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "PingRequest"
@@ -37332,6 +37346,66 @@
                 "id": 1,
                 "name": "evaluation",
                 "type": "feature.Evaluation"
+              }
+            ]
+          },
+          {
+            "name": "StreamEvaluationsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "user",
+                "type": "user.User"
+              },
+              {
+                "id": 3,
+                "name": "user_evaluations_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "source_id",
+                "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 5,
+                "name": "sdk_version",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "StreamEvaluationsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "evaluations",
+                "type": "feature.UserEvaluations"
+              },
+              {
+                "id": 2,
+                "name": "user_evaluations_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "StreamErrorEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "Code"
+              },
+              {
+                "id": 2,
+                "name": "message",
+                "type": "string"
               }
             ]
           },
