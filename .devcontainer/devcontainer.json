@@ -86,6 +86,6 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "postCreateCommand": "bash .devcontainer/post-create-command.sh",
+  "postCreateCommand": "bash .devcontainer/setup-permissions.sh",
   "postAttachCommand": "bash .devcontainer/setup.sh"
 }

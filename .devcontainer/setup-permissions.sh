@@ -6,6 +6,8 @@ WORKSPACE_DIR="${WORKSPACE_DIR:-/workspaces/bucketeer}"
 
 echo "Running post-create setup..."
 
+# Keep Codespaces-mounted files usable by tools invoked from make docker-compose-up.
+# In particular, MySQL ignores world-writable config files and then misses local settings.
 run_privileged() {
   if [ "$(id -u)" -eq 0 ]; then
     "$@"
@@ -26,6 +28,7 @@ fi
 MYSQL_CONF_DIR="$WORKSPACE_DIR/docker-compose/config/mysql-conf"
 if [ -d "$MYSQL_CONF_DIR" ]; then
   run_privileged chown -R "$USER_NAME:$USER_NAME" "$MYSQL_CONF_DIR"
+  # MySQL ignores world-writable config files, which can happen with Codespaces workspace mounts.
   find "$MYSQL_CONF_DIR" -type f -name "*.cnf" -exec chmod 0644 {} \;
   find "$MYSQL_CONF_DIR" -type d -exec chmod 0755 {} \;
 else
