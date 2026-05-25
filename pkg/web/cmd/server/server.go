@@ -489,7 +489,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		aichatServicePort: cmd.Flag(
 			"aichat-service-port",
 			"Port to bind to AI Chat service.",
-		).Default("9108").Int(),
+		).Default("9109").Int(),
 	}
 	r.RegisterCommand(server)
 	return server

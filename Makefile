@@ -615,6 +615,18 @@ minikube-load-images:
 delete-bucketeer-from-minikube:
 	helm uninstall bucketeer --ignore-not-found
 
+# Create the Kubernetes secret for AI Chat.
+# Usage: make setup-aichat-secret OPENAI_API_KEY=sk-...
+.PHONY: setup-aichat-secret
+setup-aichat-secret:
+	@if [ -z "$(OPENAI_API_KEY)" ]; then \
+		echo "Usage: make setup-aichat-secret OPENAI_API_KEY=sk-..."; \
+		exit 1; \
+	fi
+	kubectl create secret generic bucketeer-generate-ai-chat \
+		--from-literal=openai-api-key=$(OPENAI_API_KEY) \
+		--dry-run=client -o yaml | kubectl apply -f -
+
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C tools/dev service-cert-secret

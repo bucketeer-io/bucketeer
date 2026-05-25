@@ -88,7 +88,7 @@ env:
     openaiBaseUrl: ""
     model: ""
     maxTokens: 1000
-    servicePort: 9108
+    servicePort: 9109
   googleTagManagerId:
   apiEndpoint:
   accessTokenTTL: 10m
