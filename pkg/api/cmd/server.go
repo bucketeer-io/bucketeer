@@ -29,6 +29,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
@@ -554,6 +555,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	accountStorage := accountmysql.NewAccountStorage(mysqlClient)
 
 	service := api.NewGrpcGatewayService(
 		ctx,
@@ -569,7 +571,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentClient,
 		eventCounterClient,
 		environmentClient,
-		mysqlClient,
+		accountStorage,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
@@ -654,7 +656,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		metricsPublisher,
-		mysqlClient,
+		accountStorage,
 		redisV3Cache,
 		api.WithInMemoryCache(inMemoryCache),
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),

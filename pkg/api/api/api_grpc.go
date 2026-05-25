@@ -49,7 +49,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -219,7 +218,6 @@ type grpcGatewayService struct {
 	experimentClient            experimentclient.Client
 	eventCounterClient          eventcounterclient.Client
 	environmentClient           environmentclient.Client
-	mysqlClient                 mysql.Client
 	accountStorage              accstorage.AccountStorage
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
@@ -255,7 +253,7 @@ func NewGrpcGatewayService(
 	experimentClient experimentclient.Client,
 	eventCounterClient eventcounterclient.Client,
 	environmentClient environmentclient.Client,
-	mysqlClient mysql.Client,
+	accountStorage accstorage.AccountStorage,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -288,8 +286,7 @@ func NewGrpcGatewayService(
 		experimentClient:            experimentClient,
 		eventCounterClient:          eventCounterClient,
 		environmentClient:           environmentClient,
-		mysqlClient:                 mysqlClient,
-		accountStorage:              accstorage.NewAccountStorage(mysqlClient),
+		accountStorage:              accountStorage,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
 		userPublisher:               up,

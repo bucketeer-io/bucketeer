@@ -89,6 +89,7 @@ type EnvironmentService struct {
 func NewEnvironmentService(
 	ac accountclient.Client,
 	mysqlClient mysql.Client,
+	accountStorage v2acc.AccountStorage,
 	publisher publisher.Publisher,
 	config *auth.OAuthConfig,
 	issuer string,
@@ -110,7 +111,7 @@ func NewEnvironmentService(
 		projectStorage:     v2.NewProjectStorage(mysqlClient),
 		orgStorage:         v2.NewOrganizationStorage(mysqlClient),
 		environmentStorage: v2.NewEnvironmentStorage(mysqlClient),
-		accountStorage:     v2acc.NewAccountStorage(mysqlClient),
+		accountStorage:     accountStorage,
 		publisher:          publisher,
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,

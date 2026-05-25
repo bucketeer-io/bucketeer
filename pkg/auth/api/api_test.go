@@ -25,6 +25,7 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -256,6 +257,7 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 
 			mysqlClient := mysqlmock.NewMockClient(mockController)
 			accountClient := accountclientmock.NewMockClient(mockController)
+			accountStorage := accstoragemock.NewMockAccountStorage(mockController)
 			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
 			require.NoError(t, err)
 			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
@@ -269,6 +271,7 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 				verifier,
 				mysqlClient,
 				accountClient,
+				accountStorage,
 				config,
 				p.setupFunc()...,
 			).(*authService)
@@ -430,6 +433,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 
 			mysqlClient := mysqlmock.NewMockClient(mockController)
 			accountClient := accountclientmock.NewMockClient(mockController)
+			accountStorage := accstoragemock.NewMockAccountStorage(mockController)
 			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
 			require.NoError(t, err)
 			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
@@ -444,6 +448,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 				verifier,
 				mysqlClient,
 				accountClient,
+				accountStorage,
 				config,
 				opts...,
 			).(*authService)

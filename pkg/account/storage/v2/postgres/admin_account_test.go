@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	pgmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 )
 
-func TestGetAdminAccountV2(t *testing.T) {
+func TestGetSystemAdminAccountV2Postgres(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -37,40 +37,39 @@ func TestGetAdminAccountV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "ErrAdminAccountNotFound",
+			desc: "ErrSystemAdminAccountNotFound",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				row := pgmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			email:       "bucketeer@example.com",
-			expectedErr: ErrSystemAdminAccountNotFound,
+			email:       "admin@example.com",
+			expectedErr: v2as.ErrSystemAdminAccountNotFound,
 		},
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				row := pgmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errInternal)
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-
 			},
-			email:       "bucketeer@example.com",
-			expectedErr: errors.New("error"),
+			email:       "admin@example.com",
+			expectedErr: errInternal,
 		},
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
+				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			email:       "bucketeer@example.com",
+			email:       "admin@example.com",
 			expectedErr: nil,
 		},
 	}

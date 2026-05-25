@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -388,30 +387,11 @@ func (s *auditlogService) getAccountMapByEmails(
 	if len(emails) == 0 {
 		return accountMap, nil
 	}
-	emailsArg := make([]interface{}, len(emails))
-	for i, email := range emails {
-		emailsArg[i] = email
+	params := v2as.GetAvatarAccountsV2Params{
+		Emails:        emails,
+		EnvironmentID: environmentID,
 	}
-	// TODO: Refactor account storage to use DB-agnostic params when account package is migrated.
-	options := &mysql.ListOptions{
-		Limit:  0,
-		Offset: 0,
-		Orders: nil,
-		InFilters: []*mysql.InFilter{
-			{
-				Column: "a.email",
-				Values: emailsArg,
-			},
-		},
-		Filters: []*mysql.FilterV2{
-			{
-				Column:   "e.id",
-				Operator: mysql.OperatorEqual,
-				Value:    environmentID,
-			},
-		},
-	}
-	accounts, err := s.accountStorage.GetAvatarAccountsV2(ctx, options)
+	accounts, err := s.accountStorage.GetAvatarAccountsV2(ctx, params)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list feature history",
