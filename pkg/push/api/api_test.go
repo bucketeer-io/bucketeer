@@ -656,12 +656,24 @@ func TestGetPushMySQL(t *testing.T) {
 
 func newPushServiceWithMock(t *testing.T, c *gomock.Controller) *PushService {
 	t.Helper()
+	accountClientMock := accountclientmock.NewMockClient(c)
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(
+		&accountproto.GetAccountV2ByEnvironmentIDResponse{
+			Account: &accountproto.AccountV2{
+				Email:            "email",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+			},
+		}, nil,
+	).AnyTimes()
 	return &PushService{
 		dbClient:         databasemock.NewMockClient(c),
 		pushStorage:      storagemock.NewMockPushStorage(c),
 		featureClient:    featureclientmock.NewMockClient(c),
 		experimentClient: experimentclientmock.NewMockClient(c),
-		accountClient:    accountclientmock.NewMockClient(c),
+		accountClient:    accountClientMock,
 		publisher:        publishermock.NewMockPublisher(c),
 		logger:           zap.NewNop(),
 	}

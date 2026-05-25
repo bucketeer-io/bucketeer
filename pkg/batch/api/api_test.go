@@ -52,6 +52,7 @@ import (
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	batchproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -76,6 +77,7 @@ type setupMockFunc func(
 	mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 	featureStorageMock *featurestoragemock.MockFeatureStorage,
 	segmentStorageMock *featurestoragemock.MockSegmentStorage,
+	tagStorageMock *tagstoragemock.MockTagStorage,
 )
 
 func TestExperimentStatusUpdater(t *testing.T) {
@@ -96,6 +98,7 @@ func TestExperimentStatusUpdater(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -145,6 +148,7 @@ func TestExperimentRunningWatcher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -191,6 +195,7 @@ func TestFeatureStaleWatcher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -237,6 +242,7 @@ func TestDatetimeWatcher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -291,6 +297,7 @@ func TestEventCountWatcher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -400,6 +407,7 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -469,6 +477,7 @@ func TestFeatureFlagCacher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		featureStorageMock.EXPECT().ListAllEnvironmentFeatures(
 			gomock.Any(),
@@ -501,6 +510,7 @@ func TestSegmentUserCacher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		segmentStorageMock.EXPECT().ListAllInUseSegments(
 			gomock.Any(),
@@ -533,6 +543,7 @@ func TestAPIKeyCacher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		mysqlMockRows.EXPECT().Close().Return(nil)
 		mysqlMockRows.EXPECT().Next().Return(false)
@@ -565,6 +576,7 @@ func TestExperimentCacher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -614,6 +626,7 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 		featureStorageMock *featurestoragemock.MockFeatureStorage,
 		segmentStorageMock *featurestoragemock.MockSegmentStorage,
+		tagStorageMock *tagstoragemock.MockTagStorage,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -681,6 +694,7 @@ func newBatchService(t *testing.T,
 	monthlySummaryStorageMock := insightsstoragemock.NewMockMonthlySummaryStorage(mockController)
 	featureStorageMock := featurestoragemock.NewMockFeatureStorage(mockController)
 	segmentStorageMock := featurestoragemock.NewMockSegmentStorage(mockController)
+	tagStorageMock := tagstoragemock.NewMockTagStorage(mockController)
 
 	setupMock(
 		accountMockClient,
@@ -698,6 +712,7 @@ func newBatchService(t *testing.T,
 		mysqlMockQueryExecer,
 		featureStorageMock,
 		segmentStorageMock,
+		tagStorageMock,
 	)
 
 	service := NewBatchService(
@@ -776,7 +791,7 @@ func newBatchService(t *testing.T,
 			autoOpsRulesMockClient,
 			redisMockClient,
 		),
-		deleter.NewTagDeleter(mysqlMockClient, featureStorageMock),
+		deleter.NewTagDeleter(tagStorageMock, featureStorageMock),
 		autoarchive.NewFeatureAutoArchiver(
 			mysqlMockClient,
 			featureStorageMock,

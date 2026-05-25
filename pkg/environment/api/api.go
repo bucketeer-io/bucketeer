@@ -381,8 +381,7 @@ func (s *EnvironmentService) getAccountV2ByEnvironmentID(
 	ctx context.Context,
 	email, environmentID string,
 ) (*accdomain.AccountV2, error) {
-	storage := v2acc.NewAccountStorage(s.mysqlClient)
-	account, err := storage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
+	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 	if err != nil {
 		if errors.Is(err, v2acc.ErrAccountNotFound) {
 			return nil, statusAccountNotFound.Err()

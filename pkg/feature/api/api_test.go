@@ -154,6 +154,16 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		},
 	}
 	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	arByEnv := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{EnvironmentId: "namespace", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+			},
+		},
+	}
+	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(arByEnv, nil).AnyTimes()
 	return &FeatureService{
 		fluiStorage:                mock.NewMockFeatureLastUsedInfoStorage(c),
 		flagTriggerStorage:         mock.NewMockFlagTriggerStorage(c),
