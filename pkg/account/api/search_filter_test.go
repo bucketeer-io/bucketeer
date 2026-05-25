@@ -889,7 +889,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
 					err := fn(ctx)
-					println(err)
+					assert.NoError(t, err)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
