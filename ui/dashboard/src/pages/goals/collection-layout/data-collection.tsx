@@ -78,13 +78,15 @@ export const useColumns = ({
             />
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
               {id}
-              <div onClick={() => handleCopyId(id)}>
-                <Icon
-                  icon={IconCopy}
-                  size={'sm'}
-                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                />
-              </div>
+              <button
+                type="button"
+                aria-label="Copy ID"
+                title="Copy ID"
+                onClick={() => handleCopyId(id)}
+                className="flex-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              >
+                <Icon icon={IconCopy} size={'sm'} className="cursor-pointer" />
+              </button>
             </div>
           </div>
         );

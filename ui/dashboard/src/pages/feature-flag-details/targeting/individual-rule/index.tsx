@@ -170,14 +170,12 @@ const IndividualRule = ({
                           }}
                         />
                         <Button
-                          disabled={!field.value?.length}
+                          disabled={!userWatch.length}
                           variant={'secondary-2'}
                           type="button"
                           size={'icon'}
                           tabIndex={-1}
-                          onClick={() =>
-                            handleCopyUserId(field.value?.join(', ') ?? '')
-                          }
+                          onClick={() => handleCopyUserId(userWatch.join(', '))}
                         >
                           <Icon icon={IconCopy} />
                         </Button>

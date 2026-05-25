@@ -192,7 +192,7 @@ const RuleForm = ({
           );
           return (
             <div
-              key={clause.clauseId}
+              key={clause.clauseId ?? clauseIndex}
               className="flex items-center w-full gap-x-4"
             >
               <div
@@ -380,7 +380,7 @@ const RuleForm = ({
                                 }
                                 value={field.value ?? clause.operator}
                                 onChange={value => field.onChange(value)}
-                                placeholder="Select condition"
+                                placeholder={t('common:select-condition')}
                                 className="w-full"
                                 alignContent="start"
                               />
