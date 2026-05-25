@@ -31,11 +31,15 @@ import (
 
 	accountapi "github.com/bucketeer-io/bucketeer/v2/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	aichatapi "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/api"
 	aichatllm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	aichatrag "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
 	aichatratelimit "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
 	auditlogapi "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/api"
+	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	auditlogmysql "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mysql"
+	auditlogpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
@@ -559,6 +563,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var tagStorage tagstorage.TagStorage
 	var flagTriggerStorage v2fs.FlagTriggerStorage
 	var fluiStorage v2fs.FeatureLastUsedInfoStorage
+	var auditLogStorage v2als.AuditLogStorage
+	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	var postgresClient postgres.Client
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
@@ -576,6 +582,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 		flagTriggerStorage = featurepostgres.NewFlagTriggerStorage(postgresClient)
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
+		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
+		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -585,6 +593,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
 		flagTriggerStorage = featuremysql.NewFlagTriggerStorage(mysqlClient)
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
+		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
+		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -749,6 +759,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		mysqlClient,
 		tagStorage,
+		adminAuditLogStorage,
 		domainTopicPublisher,
 		accountapi.WithLogger(logger),
 	)
@@ -762,9 +773,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go accountServer.Run()
 
 	// auditLogService
+	accountStorage := v2as.NewAccountStorage(mysqlClient)
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
-		mysqlClient,
+		accountStorage,
+		auditLogStorage,
+		adminAuditLogStorage,
 		auditlogapi.WithLogger(logger),
 	)
 	auditLogServer := rpc.NewServer(auditLogService, *s.certPath, *s.keyPath,
