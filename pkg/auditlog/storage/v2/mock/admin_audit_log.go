@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
 	auditlog "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 )
 
@@ -72,9 +72,9 @@ func (mr *MockAdminAuditLogStorageMockRecorder) CreateAdminAuditLogs(ctx, auditL
 }
 
 // ListAdminAuditLogs mocks base method.
-func (m *MockAdminAuditLogStorage) ListAdminAuditLogs(ctx context.Context, options *mysql.ListOptions) ([]*auditlog.AuditLog, int, int64, error) {
+func (m *MockAdminAuditLogStorage) ListAdminAuditLogs(ctx context.Context, params v2.ListAdminAuditLogsParams) ([]*auditlog.AuditLog, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAdminAuditLogs", ctx, options)
+	ret := m.ctrl.Call(m, "ListAdminAuditLogs", ctx, params)
 	ret0, _ := ret[0].([]*auditlog.AuditLog)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -83,7 +83,7 @@ func (m *MockAdminAuditLogStorage) ListAdminAuditLogs(ctx context.Context, optio
 }
 
 // ListAdminAuditLogs indicates an expected call of ListAdminAuditLogs.
-func (mr *MockAdminAuditLogStorageMockRecorder) ListAdminAuditLogs(ctx, options any) *gomock.Call {
+func (mr *MockAdminAuditLogStorageMockRecorder) ListAdminAuditLogs(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminAuditLogs", reflect.TypeOf((*MockAdminAuditLogStorage)(nil).ListAdminAuditLogs), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminAuditLogs", reflect.TypeOf((*MockAdminAuditLogStorage)(nil).ListAdminAuditLogs), ctx, params)
 }

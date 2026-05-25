@@ -27,14 +27,13 @@ import (
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	v2asmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
 	v2alsmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
@@ -46,9 +45,17 @@ func TestNewAuditLogService(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	accountClientMock := accountclientmock.NewMockClient(mockController)
-	mysqlClient := mysqlmock.NewMockClient(mockController)
+	accountStorageMock := v2asmock.NewMockAccountStorage(mockController)
+	auditLogStorageMock := v2alsmock.NewMockAuditLogStorage(mockController)
+	adminAuditLogStorageMock := v2alsmock.NewMockAdminAuditLogStorage(mockController)
 	logger := zap.NewNop()
-	s := NewAuditLogService(accountClientMock, mysqlClient, WithLogger(logger))
+	s := NewAuditLogService(
+		accountClientMock,
+		accountStorageMock,
+		auditLogStorageMock,
+		adminAuditLogStorageMock,
+		WithLogger(logger),
+	)
 	assert.IsType(t, &auditlogService{}, s)
 }
 
@@ -165,7 +172,7 @@ func TestGetAuditLog(t *testing.T) {
 	}
 }
 
-func TestListAuditLogsMySQL(t *testing.T) {
+func TestListAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -231,25 +238,14 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
-				// Expect the default page size (200) to be used
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
-					&mysql.ListOptions{
-						Limit:  200, // maxAuditLogPageSize (used as default when page_size is 0)
-						Offset: 0,
-						Filters: []*mysql.FilterV2{
-							{
-								Column:   "environment_id",
-								Operator: mysql.OperatorEqual,
-								Value:    "ns0",
-							},
-						},
-						Orders: []*mysql.Order{
-							{
-								Column:    "timestamp",
-								Direction: mysql.OrderDirectionDesc,
-							},
-						},
+					v2als.ListAuditLogsParams{
+						EnvironmentID:  "ns0",
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       200,
+						Cursor:         "0",
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
@@ -281,25 +277,14 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
-				// Expect the maximum page size (200) to be used even though 1000 was requested
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
-					&mysql.ListOptions{
-						Limit:  200, // maxAuditLogPageSize
-						Offset: 0,
-						Filters: []*mysql.FilterV2{
-							{
-								Column:   "environment_id",
-								Operator: mysql.OperatorEqual,
-								Value:    "ns0",
-							},
-						},
-						Orders: []*mysql.Order{
-							{
-								Column:    "timestamp",
-								Direction: mysql.OrderDirectionDesc,
-							},
-						},
+					v2als.ListAuditLogsParams{
+						EnvironmentID:  "ns0",
+						OrderBy:        proto.ListAuditLogsRequest_TIMESTAMP,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       200,
+						Cursor:         "0",
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
@@ -307,14 +292,14 @@ func TestListAuditLogsMySQL(t *testing.T) {
 				).Return([]*accountproto.AccountV2{}, nil)
 			},
 			input: &proto.ListAuditLogsRequest{
-				PageSize:       1000, // Exceeds maximum, should be capped at 200
+				PageSize:       1000,
 				EnvironmentId:  "ns0",
 				OrderBy:        proto.ListAuditLogsRequest_TIMESTAMP,
 				OrderDirection: proto.ListAuditLogsRequest_DESC,
 			},
 			expected: &proto.ListAuditLogsResponse{
 				AuditLogs:  createAuditLogs(t),
-				Cursor:     "200", // Capped at maximum page size
+				Cursor:     "200",
 				TotalCount: 10,
 			},
 			expectedErr: nil,
@@ -338,7 +323,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	}
 }
 
-func TestListAdminAuditLogsMySQL(t *testing.T) {
+func TestListAdminAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -389,11 +374,11 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(),
-					&mysql.ListOptions{
-						Limit:   200, // maxAuditLogPageSize (used as default when page_size is 0)
-						Offset:  0,
-						Orders:  []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
-						Filters: []*mysql.FilterV2{},
+					v2als.ListAdminAuditLogsParams{
+						OrderBy:        proto.ListAdminAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAdminAuditLogsRequest_DESC,
+						PageSize:       200,
+						Cursor:         "0",
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 			},
@@ -406,11 +391,11 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(),
-					&mysql.ListOptions{
-						Limit:   200, // maxAuditLogPageSize
-						Offset:  0,
-						Orders:  []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
-						Filters: []*mysql.FilterV2{},
+					v2als.ListAdminAuditLogsParams{
+						OrderBy:        proto.ListAdminAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAdminAuditLogsRequest_DESC,
+						PageSize:       200,
+						Cursor:         "0",
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 			},
@@ -432,7 +417,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	}
 }
 
-func TestListFeatureHistoryMySQL(t *testing.T) {
+func TestListFeatureHistory(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -514,34 +499,17 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
+				entityType := int32(domaineventproto.Event_FEATURE)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
-					&mysql.ListOptions{
-						Limit:  200, // maxAuditLogPageSize (used as default when page_size is 0)
-						Offset: 0,
-						Filters: []*mysql.FilterV2{
-							{
-								Column:   "environment_id",
-								Operator: mysql.OperatorEqual,
-								Value:    "ns0",
-							},
-							{
-								Column:   "entity_type",
-								Operator: mysql.OperatorEqual,
-								Value:    int32(domaineventproto.Event_FEATURE),
-							},
-							{
-								Column:   "entity_id",
-								Operator: mysql.OperatorEqual,
-								Value:    "fid-1",
-							},
-						},
-						Orders: []*mysql.Order{
-							{
-								Column:    "timestamp",
-								Direction: mysql.OrderDirectionDesc,
-							},
-						},
+					v2als.ListAuditLogsParams{
+						EnvironmentID:  "ns0",
+						EntityType:     &entityType,
+						EntityID:       "fid-1",
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       200,
+						Cursor:         "0",
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 			},
@@ -556,34 +524,17 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
+				entityType := int32(domaineventproto.Event_FEATURE)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
-					&mysql.ListOptions{
-						Limit:  200, // maxAuditLogPageSize
-						Offset: 0,
-						Filters: []*mysql.FilterV2{
-							{
-								Column:   "environment_id",
-								Operator: mysql.OperatorEqual,
-								Value:    "ns0",
-							},
-							{
-								Column:   "entity_type",
-								Operator: mysql.OperatorEqual,
-								Value:    int32(domaineventproto.Event_FEATURE),
-							},
-							{
-								Column:   "entity_id",
-								Operator: mysql.OperatorEqual,
-								Value:    "fid-1",
-							},
-						},
-						Orders: []*mysql.Order{
-							{
-								Column:    "timestamp",
-								Direction: mysql.OrderDirectionDesc,
-							},
-						},
+					v2als.ListAuditLogsParams{
+						EnvironmentID:  "ns0",
+						EntityType:     &entityType,
+						EntityID:       "fid-1",
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       200,
+						Cursor:         "0",
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 			},
