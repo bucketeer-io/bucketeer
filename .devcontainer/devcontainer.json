@@ -16,11 +16,6 @@
     "ghcr.io/devcontainers/features/sshd:1": {
       "version": "latest"
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-        "version": "latest",
-        "moby": true,
-        "enableNonRootDocker": true
-    },
   },
   "mounts": [
     // Persistent Go modules cache
