@@ -723,7 +723,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go authServer.Run()
-	// teamStorage
+
+	// TODO: move to DB-agnostic storage after postgres support is added
 	teamStorage := teamstorage.NewTeamStorage(mysqlClient)
 
 	// accountService
