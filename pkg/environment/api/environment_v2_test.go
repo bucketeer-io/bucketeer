@@ -34,8 +34,7 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
@@ -133,8 +132,12 @@ func TestListEnvironmentsV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "err: ErrInvalidCursor",
-			setup:       nil,
+			desc: "err: ErrInvalidCursor",
+			setup: func(s *EnvironmentService) {
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
+			},
 			input:       &proto.ListEnvironmentsV2Request{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),
@@ -308,7 +311,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
 			},
@@ -342,10 +345,10 @@ func TestCreateEnvironmentV2(t *testing.T) {
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
@@ -370,10 +373,10 @@ func TestCreateEnvironmentV2(t *testing.T) {
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
@@ -458,7 +461,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
@@ -472,7 +475,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
@@ -486,7 +489,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -532,7 +535,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
@@ -543,7 +546,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
@@ -559,10 +562,10 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 				).Return(&domain.EnvironmentV2{
 					EnvironmentV2: &proto.EnvironmentV2{},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
@@ -606,7 +609,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
@@ -617,7 +620,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
@@ -633,10 +636,10 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 				).Return(&domain.EnvironmentV2{
 					EnvironmentV2: &proto.EnvironmentV2{},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(

@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	environment "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
@@ -88,9 +88,9 @@ func (mr *MockEnvironmentStorageMockRecorder) ListAutoArchiveEnabledEnvironments
 }
 
 // ListEnvironmentsV2 mocks base method.
-func (m *MockEnvironmentStorage) ListEnvironmentsV2(ctx context.Context, options *mysql.ListOptions) ([]*environment.EnvironmentV2, int, int64, error) {
+func (m *MockEnvironmentStorage) ListEnvironmentsV2(ctx context.Context, params v2.ListEnvironmentsV2Params) ([]*environment.EnvironmentV2, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEnvironmentsV2", ctx, options)
+	ret := m.ctrl.Call(m, "ListEnvironmentsV2", ctx, params)
 	ret0, _ := ret[0].([]*environment.EnvironmentV2)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockEnvironmentStorage) ListEnvironmentsV2(ctx context.Context, options
 }
 
 // ListEnvironmentsV2 indicates an expected call of ListEnvironmentsV2.
-func (mr *MockEnvironmentStorageMockRecorder) ListEnvironmentsV2(ctx, options any) *gomock.Call {
+func (mr *MockEnvironmentStorageMockRecorder) ListEnvironmentsV2(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnvironmentsV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).ListEnvironmentsV2), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnvironmentsV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).ListEnvironmentsV2), ctx, params)
 }
 
 // UpdateEnvironmentV2 mocks base method.

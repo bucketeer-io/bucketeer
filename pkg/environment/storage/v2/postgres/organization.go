@@ -1,0 +1,298 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package postgres
+
+import (
+	"context"
+	_ "embed"
+	"errors"
+	"fmt"
+	"strconv"
+
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+)
+
+var (
+	//go:embed sql/organization/insert_organization.sql
+	insertOrganizationSQL string
+	//go:embed sql/organization/update_organization.sql
+	updateOrganizationSQL string
+	//go:embed sql/organization/select_organization.sql
+	selectOrganizationSQL string
+	//go:embed sql/organization/select_system_admin_organization.sql
+	selectSystemAdminOrganizationSQL string
+	//go:embed sql/organization/select_organizations.sql
+	selectOrganizationsSQL string
+	//go:embed sql/organization/count_organizations.sql
+	countOrganizationsSQL string
+)
+
+type organizationStorage struct {
+	qe pgstorage.QueryExecer
+}
+
+func NewOrganizationStorage(qe pgstorage.QueryExecer) v2es.OrganizationStorage {
+	return &organizationStorage{qe}
+}
+
+func (s *organizationStorage) CreateOrganization(ctx context.Context, o *domain.Organization) error {
+	_, err := s.qe.ExecContext(
+		ctx,
+		insertOrganizationSQL,
+		o.Id,
+		o.Name,
+		o.OwnerEmail,
+		o.UrlCode,
+		o.Description,
+		o.Disabled,
+		o.Archived,
+		o.Trial,
+		o.SystemAdmin,
+		o.CreatedAt,
+		o.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgstorage.ErrDuplicateEntry) {
+			return v2es.ErrOrganizationAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.Organization) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		updateOrganizationSQL,
+		o.Name,
+		o.OwnerEmail,
+		o.Description,
+		o.Disabled,
+		o.Archived,
+		o.Trial,
+		o.CreatedAt,
+		o.UpdatedAt,
+		o.Id,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return v2es.ErrOrganizationUnexpectedAffectedRows
+	}
+	return nil
+}
+
+func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*domain.Organization, error) {
+	organization := proto.Organization{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectOrganizationSQL,
+		id,
+	).Scan(
+		&organization.Id,
+		&organization.Name,
+		&organization.OwnerEmail,
+		&organization.UrlCode,
+		&organization.Description,
+		&organization.Disabled,
+		&organization.Archived,
+		&organization.Trial,
+		&organization.SystemAdmin,
+		&organization.CreatedAt,
+		&organization.UpdatedAt,
+		&organization.ProjectCount,
+		&organization.EnvironmentCount,
+		&organization.UserCount,
+	)
+	if err != nil {
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2es.ErrOrganizationNotFound
+		}
+		return nil, err
+	}
+	return &domain.Organization{Organization: &organization}, nil
+}
+
+func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error) {
+	organization := proto.Organization{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectSystemAdminOrganizationSQL,
+	).Scan(
+		&organization.Id,
+		&organization.Name,
+		&organization.OwnerEmail,
+		&organization.UrlCode,
+		&organization.Description,
+		&organization.Disabled,
+		&organization.Archived,
+		&organization.Trial,
+		&organization.SystemAdmin,
+		&organization.CreatedAt,
+		&organization.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2es.ErrOrganizationNotFound
+		}
+		return nil, err
+	}
+	return &domain.Organization{Organization: &organization}, nil
+}
+
+func (s *organizationStorage) ListOrganizations(
+	ctx context.Context,
+	params v2es.ListOrganizationsParams,
+) ([]*proto.Organization, int, int64, error) {
+	options, err := listOrganizationsOptionsFromParams(params)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	var query string
+	var whereArgs []any
+	if options != nil {
+		var whereSQL string
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = pgstorage.ConstructWhereSQLString(whereParts)
+		orderBySQL := pgstorage.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL := pgstorage.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	} else {
+		query = selectOrganizationsSQL
+		whereArgs = []interface{}{}
+	}
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	organizations := make([]*proto.Organization, 0, options.Limit)
+	for rows.Next() {
+		organization := proto.Organization{}
+		err := rows.Scan(
+			&organization.Id,
+			&organization.Name,
+			&organization.OwnerEmail,
+			&organization.UrlCode,
+			&organization.Description,
+			&organization.Disabled,
+			&organization.Archived,
+			&organization.Trial,
+			&organization.SystemAdmin,
+			&organization.CreatedAt,
+			&organization.UpdatedAt,
+			&organization.ProjectCount,
+			&organization.EnvironmentCount,
+			&organization.UserCount,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		organizations = append(organizations, &organization)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, rows.Err()
+	}
+	nextOffset := options.Offset + len(organizations)
+	var totalCount int64
+	countQuery, countWhereArgs := pgstorage.ConstructCountQuery(countOrganizationsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return organizations, nextOffset, totalCount, nil
+}
+
+func listOrganizationsOptionsFromParams(p v2es.ListOrganizationsParams) (*pgstorage.ListOptions, error) {
+	var filters []*pgstorage.Filter
+	if p.Disabled != nil {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "organization.disabled",
+			Operator: pgstorage.OperatorEqual,
+			Value:    *p.Disabled,
+		})
+	}
+	if p.Archived != nil {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "organization.archived",
+			Operator: pgstorage.OperatorEqual,
+			Value:    *p.Archived,
+		})
+	}
+
+	var searchQuery *pgstorage.SearchQuery
+	if p.SearchKeyword != "" {
+		searchQuery = &pgstorage.SearchQuery{
+			Columns: []string{
+				"organization.id",
+				"organization.name",
+				"organization.url_code",
+			},
+			Keyword: p.SearchKeyword,
+		}
+	}
+
+	var column string
+	switch p.OrderBy {
+	case proto.ListOrganizationsRequest_DEFAULT,
+		proto.ListOrganizationsRequest_NAME:
+		column = "organization.name"
+	case proto.ListOrganizationsRequest_URL_CODE:
+		column = "organization.url_code"
+	case proto.ListOrganizationsRequest_ID:
+		column = "organization.id"
+	case proto.ListOrganizationsRequest_CREATED_AT:
+		column = "organization.created_at"
+	case proto.ListOrganizationsRequest_UPDATED_AT:
+		column = "organization.updated_at"
+	case proto.ListOrganizationsRequest_ENVIRONMENT_COUNT:
+		column = "environments"
+	case proto.ListOrganizationsRequest_PROJECT_COUNT:
+		column = "projects"
+	case proto.ListOrganizationsRequest_USER_COUNT:
+		column = "users"
+	default:
+		return nil, v2es.ErrInvalidOrderBy
+	}
+	direction := pgstorage.OrderDirectionAsc
+	if p.OrderDirection == proto.ListOrganizationsRequest_DESC {
+		direction = pgstorage.OrderDirectionDesc
+	}
+
+	cursor := p.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		return nil, v2es.ErrInvalidCursor
+	}
+
+	return &pgstorage.ListOptions{
+		Limit:       p.PageSize,
+		Offset:      offset,
+		Filters:     filters,
+		SearchQuery: searchQuery,
+		Orders:      []*pgstorage.Order{pgstorage.NewOrder(column, direction)},
+	}, nil
+}

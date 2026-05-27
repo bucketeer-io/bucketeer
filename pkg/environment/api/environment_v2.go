@@ -31,7 +31,6 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -88,72 +87,32 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	if err != nil {
 		return nil, err
 	}
-	var filters []*mysql.FilterV2
-	if req.ProjectId != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "environment_v2.project_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.ProjectId,
-		})
-	}
-	if req.OrganizationId != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "environment_v2.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationId,
-		})
-	}
+	var archived *bool
 	if req.Archived != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "environment_v2.archived",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Archived.Value,
-		})
+		v := req.Archived.Value
+		archived = &v
 	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{
-				"environment_v2.id",
-				"environment_v2.name",
-				"environment_v2.url_code",
-				"environment_v2.description",
-			},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newEnvironmentV2ListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		Orders:      orders,
-		SearchQuery: searchQuery,
-		InFilters:   nil,
-		NullFilters: nil,
-		JSONFilters: nil,
+	params := v2es.ListEnvironmentsV2Params{
+		ProjectID:      req.ProjectId,
+		OrganizationID: req.OrganizationId,
+		Archived:       archived,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
 	}
 	environments, nextCursor, totalCount, err := s.environmentStorage.ListEnvironmentsV2(
 		ctx,
-		options,
+		params,
 	)
 	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		if errors.Is(err, v2es.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"Failed to list environments",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -167,35 +126,6 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 		Cursor:       strconv.Itoa(nextCursor),
 		TotalCount:   totalCount,
 	}, nil
-}
-
-func (s *EnvironmentService) newEnvironmentV2ListOrders(
-	orderBy environmentproto.ListEnvironmentsV2Request_OrderBy,
-	orderDirection environmentproto.ListEnvironmentsV2Request_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case environmentproto.ListEnvironmentsV2Request_DEFAULT,
-		environmentproto.ListEnvironmentsV2Request_NAME:
-		column = "environment_v2.name"
-	case environmentproto.ListEnvironmentsV2Request_ID:
-		column = "environment_v2.id"
-	case environmentproto.ListEnvironmentsV2Request_URL_CODE:
-		column = "environment_v2.url_code"
-	case environmentproto.ListEnvironmentsV2Request_CREATED_AT:
-		column = "environment_v2.created_at"
-	case environmentproto.ListEnvironmentsV2Request_UPDATED_AT:
-		column = "environment_v2.updated_at"
-	case environmentproto.ListEnvironmentsV2Request_FEATURE_COUNT:
-		column = "feature_count"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == environmentproto.ListEnvironmentsV2Request_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *EnvironmentService) CreateEnvironmentV2(
@@ -236,7 +166,7 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		e, err := domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ENVIRONMENT,
@@ -330,7 +260,7 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -450,7 +380,7 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 	}
 
 	event := &eventproto.Event{}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err
@@ -519,7 +449,7 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 	}
 
 	event := &eventproto.Event{}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err

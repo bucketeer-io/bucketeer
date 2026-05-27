@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	environment "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
@@ -88,9 +88,9 @@ func (mr *MockOrganizationStorageMockRecorder) GetSystemAdminOrganization(ctx an
 }
 
 // ListOrganizations mocks base method.
-func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, options *mysql.ListOptions) ([]*environment.Organization, int, int64, error) {
+func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, params v2.ListOrganizationsParams) ([]*environment.Organization, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrganizations", ctx, options)
+	ret := m.ctrl.Call(m, "ListOrganizations", ctx, params)
 	ret0, _ := ret[0].([]*environment.Organization)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, options
 }
 
 // ListOrganizations indicates an expected call of ListOrganizations.
-func (mr *MockOrganizationStorageMockRecorder) ListOrganizations(ctx, options any) *gomock.Call {
+func (mr *MockOrganizationStorageMockRecorder) ListOrganizations(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockOrganizationStorage)(nil).ListOrganizations), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockOrganizationStorage)(nil).ListOrganizations), ctx, params)
 }
 
 // UpdateOrganization mocks base method.
