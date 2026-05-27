@@ -724,7 +724,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	// authService
-	authService, err := s.createAuthService(dbClient, accountClient, accountStorage, orgStorage, projectStorage, environmentStorage, verifier, oAuthConfig, logger)
+	authService, err := s.createAuthService(
+		dbClient,
+		accountClient,
+		accountStorage,
+		orgStorage,
+		projectStorage,
+		environmentStorage,
+		verifier,
+		oAuthConfig,
+		logger,
+	)
 	if err != nil {
 		return err
 	}
