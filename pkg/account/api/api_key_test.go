@@ -29,8 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
@@ -81,7 +80,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
@@ -107,10 +106,10 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 

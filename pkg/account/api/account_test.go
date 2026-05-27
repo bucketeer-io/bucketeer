@@ -34,8 +34,7 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
@@ -126,7 +125,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountAlreadyExists)
 			},
@@ -161,7 +160,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -196,10 +195,10 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 
@@ -372,7 +371,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -407,7 +406,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -461,10 +460,10 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 
@@ -587,7 +586,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -611,7 +610,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -645,10 +644,10 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 
@@ -764,7 +763,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -788,7 +787,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -833,10 +832,10 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 
@@ -952,7 +951,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -976,7 +975,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -1002,10 +1001,10 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil).Times(2)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(

@@ -29,8 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
@@ -166,7 +165,7 @@ func TestCreateSearchFilter(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
@@ -208,7 +207,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -361,10 +360,10 @@ func TestCreateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -426,10 +425,10 @@ func TestCreateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
@@ -479,10 +478,10 @@ func TestCreateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -643,7 +642,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -680,7 +679,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -886,11 +885,11 @@ func TestUpdateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
-					println(err)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
+					assert.NoError(t, err)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -977,10 +976,10 @@ func TestUpdateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
@@ -1035,10 +1034,10 @@ func TestUpdateSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -1191,7 +1190,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
@@ -1227,7 +1226,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
@@ -1317,10 +1316,10 @@ func TestDeleteSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -1402,10 +1401,10 @@ func TestDeleteSearchFilter(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{

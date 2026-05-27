@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
@@ -20,17 +20,9 @@ import (
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-)
-
-var (
-	ErrSystemAdminAccountNotFound = pkgErr.NewErrorNotFound(
-		pkgErr.AccountPackageName,
-		"admin account not found",
-		"admin_account",
-	)
 )
 
 var (
@@ -54,20 +46,20 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 		&account.AvatarImageUrl,
 		&account.AvatarFileType,
 		&account.AvatarImage,
-		&mysql.JSONObject{Val: &account.Tags},
-		&mysql.JSONObject{Val: &account.Teams},
+		&pgstorage.JSONObject{Val: &account.Tags},
+		&pgstorage.JSONObject{Val: &account.Teams},
 		&account.OrganizationId,
 		&organizationRole,
-		&mysql.JSONObject{Val: &account.EnvironmentRoles},
+		&pgstorage.JSONObject{Val: &account.EnvironmentRoles},
 		&account.Disabled,
 		&account.CreatedAt,
 		&account.UpdatedAt,
 		&account.LastSeen,
-		&mysql.JSONObject{Val: &account.SearchFilters},
+		&pgstorage.JSONObject{Val: &account.SearchFilters},
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrSystemAdminAccountNotFound
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2as.ErrSystemAdminAccountNotFound
 		}
 		return nil, err
 	}
