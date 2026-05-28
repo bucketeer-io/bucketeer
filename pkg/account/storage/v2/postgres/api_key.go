@@ -12,27 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
 	_ "embed"
 	"errors"
+	"strconv"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-)
-
-var (
-	ErrAPIKeyAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "api key already exists")
-	ErrAPIKeyNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "api key not found", "api_key")
-	ErrAPIKeyUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
-		pkgErr.AccountPackageName,
-		"api key unexpected affected rows",
-	)
 )
 
 var (
@@ -72,8 +64,8 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Description,
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrAPIKeyAlreadyExists
+		if errors.Is(err, pgstorage.ErrDuplicateEntry) {
+			return v2as.ErrAPIKeyAlreadyExists
 		}
 		return err
 	}
@@ -101,7 +93,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		return err
 	}
 	if rowsAffected != 1 {
-		return ErrAPIKeyUnexpectedAffectedRows
+		return v2as.ErrAPIKeyUnexpectedAffectedRows
 	}
 	return nil
 }
@@ -150,8 +142,8 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.LastUsedAt,
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAPIKeyNotFound
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2as.ErrAPIKeyNotFound
 		}
 		return nil, err
 	}
@@ -184,8 +176,8 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 		&apiKeyDB.LastUsedAt,
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAPIKeyNotFound
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2as.ErrAPIKeyNotFound
 		}
 		return nil, err
 	}
@@ -246,7 +238,7 @@ func (s *accountStorage) ListAllEnvironmentAPIKeys(
 		envApiKeys = append(envApiKeys, &domain.EnvironmentAPIKey{EnvironmentAPIKey: &envApiKeyDB})
 	}
 	if rows.Err() != nil {
-		return nil, err
+		return nil, rows.Err()
 	}
 	return envApiKeys, nil
 }
@@ -294,8 +286,8 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 		&envApiKeyDB.EnvironmentDisabled,
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAPIKeyNotFound
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2as.ErrAPIKeyNotFound
 		}
 		return nil, err
 	}
@@ -307,20 +299,19 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 
 func (s *accountStorage) ListAPIKeys(
 	ctx context.Context,
-	options *mysql.ListOptions,
+	params v2as.ListAPIKeysParams,
 ) ([]*proto.APIKey, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAPIKeyV2SQLQuery, options)
+	options, err := listAPIKeysOptionsFromParams(params)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	query, whereArgs := pgstorage.ConstructQueryAndWhereArgs(selectAPIKeyV2SQLQuery, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	var limit, offset int
-	if options.Limit != 0 {
-		limit = options.Limit
-		offset = options.Offset
-	}
-	apiKeys := make([]*proto.APIKey, 0, limit)
+	apiKeys := make([]*proto.APIKey, 0, options.Limit)
 	for rows.Next() {
 		apiKey := proto.APIKey{}
 		var role int32
@@ -344,14 +335,102 @@ func (s *accountStorage) ListAPIKeys(
 		apiKeys = append(apiKeys, &apiKey)
 	}
 	if rows.Err() != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, rows.Err()
 	}
-	nextOffset := offset + len(apiKeys)
+	nextOffset := options.Offset + len(apiKeys)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(selectAPIKeyV2CountSQLQuery, options)
+	countQuery, countWhereArgs := pgstorage.ConstructCountQuery(selectAPIKeyV2CountSQLQuery, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	return apiKeys, nextOffset, totalCount, nil
+}
+
+func listAPIKeysOptionsFromParams(p v2as.ListAPIKeysParams) (*pgstorage.ListOptions, error) {
+	var filters []*pgstorage.Filter
+	if p.OrganizationID != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "environment_v2.organization_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    p.OrganizationID,
+		})
+	}
+	if p.Disabled != nil {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "api_key.disabled",
+			Operator: pgstorage.OperatorEqual,
+			Value:    *p.Disabled,
+		})
+	}
+	if p.MaintainerEmail != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "api_key.maintainer",
+			Operator: pgstorage.OperatorEqual,
+			Value:    p.MaintainerEmail,
+		})
+	}
+
+	var inFilters []*pgstorage.InFilter
+	if len(p.EnvironmentIDs) > 0 {
+		environmentIDs := make([]interface{}, 0, len(p.EnvironmentIDs))
+		for _, id := range p.EnvironmentIDs {
+			environmentIDs = append(environmentIDs, id)
+		}
+		inFilters = append(inFilters, &pgstorage.InFilter{
+			Column: "api_key.environment_id",
+			Values: environmentIDs,
+		})
+	}
+
+	var searchQuery *pgstorage.SearchQuery
+	if p.SearchKeyword != "" {
+		searchQuery = &pgstorage.SearchQuery{
+			Columns: []string{"api_key.name"},
+			Keyword: p.SearchKeyword,
+		}
+	}
+
+	var column string
+	switch p.OrderBy {
+	case proto.ListAPIKeysRequest_DEFAULT,
+		proto.ListAPIKeysRequest_NAME:
+		column = "api_key.name"
+	case proto.ListAPIKeysRequest_CREATED_AT:
+		column = "api_key.created_at"
+	case proto.ListAPIKeysRequest_UPDATED_AT:
+		column = "api_key.updated_at"
+	case proto.ListAPIKeysRequest_ROLE:
+		column = "api_key.role"
+	case proto.ListAPIKeysRequest_ENVIRONMENT:
+		column = "environment_v2.name"
+	case proto.ListAPIKeysRequest_STATE:
+		column = "api_key.disabled"
+	case proto.ListAPIKeysRequest_LAST_USED_AT:
+		column = "api_key.last_used_at"
+	default:
+		return nil, v2as.ErrInvalidOrderBy
+	}
+	direction := pgstorage.OrderDirectionAsc
+	if p.OrderDirection == proto.ListAPIKeysRequest_DESC {
+		direction = pgstorage.OrderDirectionDesc
+	}
+
+	cursor := p.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		return nil, v2as.ErrInvalidCursor
+	}
+
+	return &pgstorage.ListOptions{
+		Limit:       p.PageSize,
+		Offset:      offset,
+		Filters:     filters,
+		InFilters:   inFilters,
+		SearchQuery: searchQuery,
+		Orders:      []*pgstorage.Order{pgstorage.NewOrder(column, direction)},
+	}, nil
 }

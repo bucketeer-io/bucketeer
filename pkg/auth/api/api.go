@@ -104,6 +104,7 @@ type authService struct {
 	organizationStorage envstotage.OrganizationStorage
 	projectStorage      envstotage.ProjectStorage
 	environmentStorage  envstotage.EnvironmentStorage
+	accountStorage      accstorage.AccountStorage
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
@@ -118,6 +119,7 @@ func NewAuthService(
 	verifier token.Verifier,
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
+	accountStorage accstorage.AccountStorage,
 	config *auth.OAuthConfig,
 	opts ...Option,
 ) rpc.Service {
@@ -135,6 +137,7 @@ func NewAuthService(
 		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
 		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
 		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
+		accountStorage:      accountStorage,
 		accountClient:       accountClient,
 		verifier:            verifier,
 		googleAuthenticator: google.NewAuthenticator(
@@ -810,15 +813,14 @@ func (s *authService) PrepareDemoUser() {
 		return
 	}
 	// Create a demo account if not exists
-	accountStorage := accstorage.NewAccountStorage(s.mysqlClient)
-	_, err = accountStorage.GetAccountV2(
+	_, err = s.accountStorage.GetAccountV2(
 		ctx,
 		config.Email,
 		config.OrganizationId,
 	)
 	if err != nil {
 		if errors.Is(err, accstorage.ErrAccountNotFound) {
-			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+			err = s.accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
 				AccountV2: &acproto.AccountV2{
 					OrganizationId:   config.OrganizationId,
 					Email:            config.Email,

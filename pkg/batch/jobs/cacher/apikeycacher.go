@@ -26,7 +26,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
@@ -38,7 +37,7 @@ type apiKeyCacher struct {
 }
 
 func NewAPIKeyCacher(
-	mysqlClient mysql.Client,
+	accountStorage accstorage.AccountStorage,
 	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -53,7 +52,7 @@ func NewAPIKeyCacher(
 		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache, 0))
 	}
 	return &apiKeyCacher{
-		accStorage: accstorage.NewAccountStorage(mysqlClient),
+		accStorage: accountStorage,
 		caches:     caches,
 		opts:       dopts,
 		logger:     dopts.Logger.Named("api-key-cacher"),

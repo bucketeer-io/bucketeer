@@ -12,39 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
 package v2
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-)
-
-var (
-	//go:embed sql/account_v2/insert_account_v2.sql
-	insertAccountV2SQL string
-	//go:embed sql/account_v2/update_account_v2.sql
-	updateAccountV2SQL string
-	//go:embed sql/account_v2/delete_account_v2.sql
-	deleteAccountV2SQL string
-	//go:embed sql/account_v2/select_account_v2.sql
-	selectAccountV2SQL string
-	//go:embed sql/account_v2/select_account_v2_by_environment_id.sql
-	selectAccountV2ByEnvironmentIDSQL string
-	//go:embed sql/account_v2/select_avatar_accounts_v2.sql
-	selectAvatarAccountsV2SQL string
-	//go:embed sql/account_v2/select_accounts_v2.sql
-	selectAccountsV2SQL string
-	//go:embed sql/account_v2/count_accounts_v2.sql
-	countAccountsV2SQL string
-	//go:embed sql/account_v2/select_accounts_with_organization.sql
-	selectAccountsWithOrganizationSQL string
 )
 
 // nolint:lll
@@ -52,321 +29,75 @@ var (
 	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists")
 	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account")
 	ErrAccountUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.AccountPackageName, " unexpected affected rows")
+	ErrSystemAdminAccountNotFound    = pkgErr.NewErrorNotFound(
+		pkgErr.AccountPackageName,
+		"admin account not found",
+		"admin_account",
+	)
+	ErrAPIKeyAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "api key already exists")
+	ErrAPIKeyNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "api key not found", "api_key")
+	ErrAPIKeyUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.AccountPackageName,
+		"api key unexpected affected rows",
+	)
 )
 
-func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertAccountV2SQL,
-		a.Email,
-		a.Name,
-		a.FirstName,
-		a.LastName,
-		a.Language,
-		a.AvatarImageUrl,
-		a.AvatarFileType,
-		a.AvatarImage,
-		&mysql.JSONObject{Val: a.Tags},
-		&mysql.JSONObject{Val: a.Teams},
-		a.OrganizationId,
-		int32(a.OrganizationRole),
-		mysql.JSONObject{Val: a.EnvironmentRoles},
-		a.Disabled,
-		a.CreatedAt,
-		a.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrAccountAlreadyExists
-		}
-		return err
-	}
-	return nil
+var (
+	ErrInvalidOrderBy = errors.New("account storage: invalid order by")
+	ErrInvalidCursor  = errors.New("account storage: invalid cursor")
+)
+
+type AccountStorage interface {
+	CreateAccountV2(ctx context.Context, a *domain.AccountV2) error
+	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
+	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
+	GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error)
+	GetAccountV2ByEnvironmentID(ctx context.Context, email, environmentID string) (*domain.AccountV2, error)
+	GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error)
+	GetAccountsWithOrganization(ctx context.Context, email string) ([]*domain.AccountWithOrganization, error)
+	GetAvatarAccountsV2(ctx context.Context, params GetAvatarAccountsV2Params) ([]*proto.AccountV2, error)
+	ListAccountsV2(ctx context.Context, params ListAccountsV2Params) ([]*proto.AccountV2, int, int64, error)
+	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error
+	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error
+	UpdateAPIKeyLastUsedAt(ctx context.Context, id, environmentID string, lastUsedAt int64) (bool, error)
+	GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error)
+	GetAPIKeyByAPIKey(ctx context.Context, apiKey string, environmentID string) (*domain.APIKey, error)
+	GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error)
+	ListAllEnvironmentAPIKeys(ctx context.Context) ([]*domain.EnvironmentAPIKey, error)
+	ListAPIKeys(ctx context.Context, params ListAPIKeysParams) ([]*proto.APIKey, int, int64, error)
 }
 
-func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateAccountV2SQL,
-		a.Name,
-		a.FirstName,
-		a.LastName,
-		a.Language,
-		a.AvatarImageUrl,
-		a.AvatarFileType,
-		a.AvatarImage,
-		&mysql.JSONObject{Val: a.Tags},
-		&mysql.JSONObject{Val: a.Teams},
-		int32(a.OrganizationRole),
-		mysql.JSONObject{Val: a.EnvironmentRoles},
-		a.Disabled,
-		a.UpdatedAt,
-		a.LastSeen,
-		mysql.JSONObject{Val: a.SearchFilters},
-		a.Email,
-		a.OrganizationId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrAccountUnexpectedAffectedRows
-	}
-	return nil
+type GetAvatarAccountsV2Params struct {
+	Emails        []string
+	EnvironmentID string
 }
 
-func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		deleteAccountV2SQL,
-		a.Email,
-		a.OrganizationId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrAccountUnexpectedAffectedRows
-	}
-	return nil
+type ListAccountsV2Params struct {
+	OrganizationID   string
+	Disabled         *bool
+	Tags             []string
+	Teams            []string
+	OrganizationRole *int32
+	EnvironmentID    *string
+	EnvironmentRole  *int32
+	// EnvironmentRoles is used for members who can only see accounts in their environments.
+	// When set, generates OR conditions: (env_roles contains role1) OR (env_roles contains role2) OR (org_role >= admin)
+	EnvironmentRoles []*proto.AccountV2_EnvironmentRole
+	SearchKeyword    string
+	OrderBy          proto.ListAccountsV2Request_OrderBy
+	OrderDirection   proto.ListAccountsV2Request_OrderDirection
+	PageSize         int
+	Cursor           string
 }
 
-func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
-	account := proto.AccountV2{}
-	var organizationRole int32
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectAccountV2SQL,
-		email,
-		organizationID,
-	).Scan(
-		&account.Email,
-		&account.Name,
-		&account.FirstName,
-		&account.LastName,
-		&account.Language,
-		&account.AvatarImageUrl,
-		&account.AvatarFileType,
-		&account.AvatarImage,
-		&mysql.JSONObject{Val: &account.Tags},
-		&mysql.JSONObject{Val: &account.Teams},
-		&account.OrganizationId,
-		&organizationRole,
-		&mysql.JSONObject{Val: &account.EnvironmentRoles},
-		&account.Disabled,
-		&account.CreatedAt,
-		&account.UpdatedAt,
-		&account.LastSeen,
-		&mysql.JSONObject{Val: &account.SearchFilters},
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAccountNotFound
-		}
-		return nil, err
-	}
-	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
-	return &domain.AccountV2{AccountV2: &account}, nil
-}
-
-func (s *accountStorage) GetAccountV2ByEnvironmentID(
-	ctx context.Context,
-	email, environmentID string,
-) (*domain.AccountV2, error) {
-	account := proto.AccountV2{}
-	var organizationRole int32
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectAccountV2ByEnvironmentIDSQL,
-		email,
-		environmentID,
-	).Scan(
-		&account.Email,
-		&account.Name,
-		&account.FirstName,
-		&account.LastName,
-		&account.Language,
-		&account.AvatarImageUrl,
-		&account.AvatarFileType,
-		&account.AvatarImage,
-		&mysql.JSONObject{Val: &account.Tags},
-		&mysql.JSONObject{Val: &account.Teams},
-		&account.OrganizationId,
-		&organizationRole,
-		&mysql.JSONObject{Val: &account.EnvironmentRoles},
-		&account.Disabled,
-		&account.CreatedAt,
-		&account.UpdatedAt,
-		&account.LastSeen,
-		&mysql.JSONObject{Val: &account.SearchFilters},
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAccountNotFound
-		}
-		return nil, err
-	}
-	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
-	return &domain.AccountV2{AccountV2: &account}, nil
-}
-
-func (s *accountStorage) GetAvatarAccountsV2(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.AccountV2, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAvatarAccountsV2SQL, options)
-	rows, err := s.qe.QueryContext(
-		ctx,
-		query,
-		whereArgs...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	accounts := make([]*proto.AccountV2, 0)
-	for rows.Next() {
-		account := &proto.AccountV2{}
-		var organizationRole int32
-		err := rows.Scan(
-			&account.Email,
-			&account.AvatarFileType,
-			&account.AvatarImage,
-		)
-		if err != nil {
-			return nil, err
-		}
-		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
-		accounts = append(accounts, account)
-	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-	return accounts, nil
-}
-
-func (s *accountStorage) GetAccountsWithOrganization(
-	ctx context.Context,
-	email string,
-) ([]*domain.AccountWithOrganization, error) {
-	rows, err := s.qe.QueryContext(ctx, selectAccountsWithOrganizationSQL, email)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	accountsWithOrg := make([]*domain.AccountWithOrganization, 0)
-	for rows.Next() {
-		account := proto.AccountV2{}
-		organization := environmentproto.Organization{}
-		var organizationRole int32
-		err := rows.Scan(
-			&account.Email,
-			&account.Name,
-			&account.FirstName,
-			&account.LastName,
-			&account.Language,
-			&account.AvatarImageUrl,
-			&account.AvatarFileType,
-			&account.AvatarImage,
-			&mysql.JSONObject{Val: &account.Tags},
-			&mysql.JSONObject{Val: &account.Teams},
-			&account.OrganizationId,
-			&organizationRole,
-			&mysql.JSONObject{Val: &account.EnvironmentRoles},
-			&account.Disabled,
-			&account.CreatedAt,
-			&account.UpdatedAt,
-			&account.LastSeen,
-			&mysql.JSONObject{Val: &account.SearchFilters},
-			&organization.Id,
-			&organization.Name,
-			&organization.UrlCode,
-			&organization.Description,
-			&organization.Disabled,
-			&organization.Archived,
-			&organization.Trial,
-			&organization.SystemAdmin,
-			&organization.CreatedAt,
-			&organization.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
-		accountsWithOrg = append(accountsWithOrg, &domain.AccountWithOrganization{
-			AccountV2:    &account,
-			Organization: &organization,
-		})
-	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-	return accountsWithOrg, nil
-}
-
-func (s *accountStorage) ListAccountsV2(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.AccountV2, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAccountsV2SQL, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	var limit, offset int
-	if options != nil {
-		offset = options.Offset
-		limit = options.Limit
-	}
-	accounts := make([]*proto.AccountV2, 0, limit)
-	for rows.Next() {
-		account := proto.AccountV2{}
-		var organizationRole int32
-		err := rows.Scan(
-			&account.Email,
-			&account.Name,
-			&account.FirstName,
-			&account.LastName,
-			&account.Language,
-			&account.AvatarImageUrl,
-			&account.AvatarFileType,
-			&account.AvatarImage,
-			&mysql.JSONObject{Val: &account.Tags},
-			&mysql.JSONObject{Val: &account.Teams},
-			&account.OrganizationId,
-			&organizationRole,
-			&mysql.JSONObject{Val: &account.EnvironmentRoles},
-			&account.Disabled,
-			&account.CreatedAt,
-			&account.UpdatedAt,
-			&account.LastSeen,
-			&mysql.JSONObject{Val: &account.SearchFilters},
-			&account.EnvironmentCount,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
-		accounts = append(accounts, &account)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, rows.Err()
-	}
-	nextOffset := offset + len(accounts)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countAccountsV2SQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return accounts, nextOffset, totalCount, nil
+type ListAPIKeysParams struct {
+	OrganizationID  string
+	EnvironmentIDs  []string
+	Disabled        *bool
+	MaintainerEmail string
+	SearchKeyword   string
+	OrderBy         proto.ListAPIKeysRequest_OrderBy
+	OrderDirection  proto.ListAPIKeysRequest_OrderDirection
+	PageSize        int
+	Cursor          string
 }

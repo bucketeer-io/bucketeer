@@ -32,6 +32,8 @@ import (
 	accountapi "github.com/bucketeer-io/bucketeer/v2/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
+	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
 	aichatapi "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/api"
 	aichatllm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	aichatrag "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
@@ -85,6 +87,7 @@ import (
 	tagmysql "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mysql"
 	tagpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/postgres"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
+	teamstorage "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
@@ -566,6 +569,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var auditLogStorage v2als.AuditLogStorage
 	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	var postgresClient postgres.Client
+	var accountStorage v2as.AccountStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -584,6 +588,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
 		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
+		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -595,6 +600,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
 		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
+		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -743,7 +749,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	// authService
-	authService, err := s.createAuthService(mysqlClient, accountClient, verifier, oAuthConfig, logger)
+	authService, err := s.createAuthService(mysqlClient, accountClient, accountStorage, verifier, oAuthConfig, logger)
 	if err != nil {
 		return err
 	}
@@ -754,11 +760,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go authServer.Run()
+
+	// TODO: move to DB-agnostic storage after postgres support is added
+	teamStorage := teamstorage.NewTeamStorage(mysqlClient)
+
 	// accountService
 	accountService := accountapi.NewAccountService(
 		environmentClient,
-		mysqlClient,
+		dbClient,
+		accountStorage,
 		tagStorage,
+		teamStorage,
 		adminAuditLogStorage,
 		domainTopicPublisher,
 		accountapi.WithLogger(logger),
@@ -773,7 +785,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go accountServer.Run()
 
 	// auditLogService
-	accountStorage := v2as.NewAccountStorage(mysqlClient)
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
 		accountStorage,
@@ -814,6 +825,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	environmentService, err := s.createEnvironmentService(
 		mysqlClient,
 		accountClient,
+		accountStorage,
 		domainTopicPublisher,
 		oAuthConfig,
 		verifier,
@@ -1329,6 +1341,7 @@ func (s *server) readOAuthConfig(
 func (s *server) createAuthService(
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
+	accountStorage v2as.AccountStorage,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	logger *zap.Logger,
@@ -1357,6 +1370,7 @@ func (s *server) createAuthService(
 		verifier,
 		mysqlClient,
 		accountClient,
+		accountStorage,
 		config,
 		serviceOptions...,
 	), nil
@@ -1365,6 +1379,7 @@ func (s *server) createAuthService(
 func (s *server) createEnvironmentService(
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
+	accountStorage v2as.AccountStorage,
 	domainTopicPublisher publisher.Publisher,
 	oAuthConfig *auth.OAuthConfig,
 	verifier token.Verifier,
@@ -1390,6 +1405,7 @@ func (s *server) createEnvironmentService(
 	return environmentapi.NewEnvironmentService(
 		accountClient,
 		mysqlClient,
+		accountStorage,
 		domainTopicPublisher,
 		oAuthConfig,
 		config.Issuer,

@@ -27,6 +27,9 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	acclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
+	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/api"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -314,6 +317,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	var accountStorage accstorage.AccountStorage
 	var featureStorage v2fs.FeatureStorage
 	var segmentStorage v2fs.SegmentStorage
 	var tagStorage tagstorage.TagStorage
@@ -326,10 +330,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			return err
 		}
 		defer postgresClient.Close()
+		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 	} else {
+		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
@@ -610,7 +616,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewAPIKeyCacher(
-			mysqlClient,
+			accountStorage,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),

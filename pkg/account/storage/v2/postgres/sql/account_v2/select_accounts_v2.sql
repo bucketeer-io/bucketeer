@@ -1,0 +1,21 @@
+SELECT
+    email,
+    name,
+    first_name,
+    last_name,
+    language,
+    avatar_image_url,
+    avatar_file_type,
+    avatar_image,
+    tags,
+    teams,
+    organization_id,
+    organization_role,
+    environment_roles,
+    disabled,
+    created_at,
+    updated_at,
+    last_seen,
+    search_filters,
+    jsonb_array_length(environment_roles) as environment_count
+FROM account_v2

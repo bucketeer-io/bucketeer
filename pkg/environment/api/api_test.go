@@ -45,8 +45,9 @@ func TestNewEnvironmentService(t *testing.T) {
 	mysqlClient := mysqlmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
+	accStorage := accstoragemock.NewMockAccountStorage(mockController)
 	s := NewEnvironmentService(
-		ac, mysqlClient, p, &auth.OAuthConfig{}, "", "", nil, nil, WithLogger(logger))
+		ac, mysqlClient, accStorage, p, &auth.OAuthConfig{}, "", "", nil, nil, WithLogger(logger))
 	assert.IsType(t, &EnvironmentService{}, s)
 }
 
