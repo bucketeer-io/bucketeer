@@ -62,6 +62,7 @@ const ChatWidget = memo(() => {
                   ?.focus();
               }, 0);
             }}
+            onInteractOutside={e => e.preventDefault()}
           >
             <ChatPopoverContainer onClose={handleClose} />
           </PopoverPrimitive.Content>

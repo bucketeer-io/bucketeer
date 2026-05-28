@@ -619,13 +619,10 @@ delete-bucketeer-from-minikube:
 # Usage: make setup-aichat-secret OPENAI_API_KEY=sk-...
 .PHONY: setup-aichat-secret
 setup-aichat-secret:
-	@if [ -z "$(OPENAI_API_KEY)" ]; then \
-		echo "Usage: make setup-aichat-secret OPENAI_API_KEY=sk-..."; \
-		exit 1; \
-	fi
-	kubectl create secret generic bucketeer-generate-ai-chat \
-		--from-literal=openai-api-key=$(OPENAI_API_KEY) \
-		--dry-run=client -o yaml | kubectl apply -f -
+	@bash -c 'read -r -s -p "Enter the AI chat API key: " API_KEY; echo; \
+		if [ -z "$$API_KEY" ]; then echo "Error: API key cannot be empty"; exit 1; fi; \
+		kubectl delete secret bucketeer-ai-chat-api-key --ignore-not-found; \
+		kubectl create secret generic bucketeer-ai-chat-api-key --from-literal=openai-api-key="$$API_KEY";'
 
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
