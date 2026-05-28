@@ -168,19 +168,11 @@ func (s *projectStorage) ListProjects(
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	var query string
-	var whereArgs []any
-	if options != nil {
-		var whereSQL string
-		whereParts := options.CreateWhereParts()
-		whereSQL, whereArgs = pgstorage.ConstructWhereSQLString(whereParts)
-		orderBySQL := pgstorage.ConstructOrderBySQLString(options.Orders)
-		limitOffsetSQL := pgstorage.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
-		query = fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	} else {
-		query = selectProjectsSQL
-		whereArgs = []interface{}{}
-	}
+	whereParts := options.CreateWhereParts()
+	whereSQL, whereArgs := pgstorage.ConstructWhereSQLString(whereParts)
+	orderBySQL := pgstorage.ConstructOrderBySQLString(options.Orders)
+	limitOffsetSQL := pgstorage.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+	query := fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
