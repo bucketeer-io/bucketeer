@@ -37,9 +37,11 @@ var (
 		"environment unexpected affected rows")
 )
 
+// Shared list-query errors returned by EnvironmentStorage, OrganizationStorage,
+// and ProjectStorage implementations.
 var (
-	ErrInvalidOrderBy = errors.New("environment storage: invalid order by")
-	ErrInvalidCursor  = errors.New("environment storage: invalid cursor")
+	ErrInvalidOrderBy = errors.New("environment/storage/v2: invalid order by")
+	ErrInvalidCursor  = errors.New("environment/storage/v2: invalid cursor")
 )
 
 type EnvironmentStorage interface {

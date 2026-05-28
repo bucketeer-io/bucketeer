@@ -647,6 +647,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		// TODO: wire CodeReferenceStorage from postgresClient once a postgres impl exists.
 		autoarchive.NewFeatureAutoArchiver(
 			envStorage,
 			featureStorage,
