@@ -137,7 +137,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
     useToggleOpen(false);
 
   return (
-    <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
+    <div className="fixed h-screen w-[248px] bg-primary-500 dark:bg-dark-black-900 z-50 py-8 px-6">
       <div className="flex flex-col size-full relative overflow-hidden">
         <Link to={ROUTING.PAGE_PATH_ROOT} onClick={onCloseSetting}>
           <img src={logo} alt="Bucketer" />
@@ -155,12 +155,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                 onCloseSetting();
                 navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
               }}
-              className="flex items-center gap-x-2 text-primary-50"
+              className="flex items-center gap-x-2 text-primary-50 dark:text-white"
             >
               <Icon icon={IconSystem.IconBackspace} />
               <span>{t(`navigation.back-to-main`)}</span>
             </button>
-            <Divider className="my-5 bg-primary-50 opacity-10" />
+            <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
             {settingMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
@@ -176,11 +176,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               { 'left-0': !isOpenSetting }
             )}
           >
-            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 dark:text-dark-gray-100 mb-3">
               {t(`environment`)}
             </div>
             <MyProjects />
-            <Divider className="my-5 bg-primary-50 opacity-10" />
+            <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
@@ -193,7 +193,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </div>
         </div>
 
-        <Divider className="mb-3 bg-primary-50 opacity-10" />
+        <Divider className="mb-3 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
 
         <div className="flex items-center justify-between">
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
