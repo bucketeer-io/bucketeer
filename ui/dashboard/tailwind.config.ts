@@ -44,6 +44,32 @@ const colors = {
     100: '#FAFAFC',
     50: '#FFFFFF'
   },
+  dark: {
+    black: {
+      950: '#0D0917',
+      900: '#110D1C',
+      800: '#171321',
+      700: '#1B1725'
+    },
+    border: {
+      DEFAULT: '#2B1F45',
+      hover: '#6C46D9'
+    },
+    purple: {
+      400: '#B58CFF',
+      500: '#9A6FFF',
+      600: '#8B5CF6',
+      700: '#7B4FF5'
+    },
+    text: {
+      primary: '#F2EDF7',
+      secondary: '#B5B0C2',
+      muted: '#7D768E'
+    },
+    icon: {
+      bg: '#B7B6BB'
+    }
+  },
   accent: {
     pink: {
       900: '#463154',
@@ -133,6 +159,8 @@ const theme = {
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
     'border-primary-700': `inset 0 0 0 1px ${colors.primary[700]}`,
+    'border-primary-glow': `0 0 0 1px ${colors.primary[600]}, 0 0 20px rgba(139,91,246,0.15)`,
+    'button-primary-glow': `0 4px 15px rgba(139,91,246,0.35)`,
     'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,
     'border-gray-300': `inset 0 0 0 1px ${colors.gray[300]}`,
     'border-gray-400': `inset 0 0 0 1px ${colors.gray[400]}`,
@@ -418,6 +446,7 @@ const iconSize = plugin(({ addComponents }) => {
 
 export default {
   mode: 'jit',
+  darkMode: 'class',
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme,
   plugins: [tailwindCssForm, container, typography, iconSize],
