@@ -4514,6 +4514,398 @@
       }
     },
     {
+      "protopath": "aichat:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "PageContext.PageType",
+            "enum_fields": [
+              {
+                "name": "PAGE_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "PAGE_TYPE_FEATURE_FLAGS",
+                "integer": 1
+              },
+              {
+                "name": "PAGE_TYPE_TARGETING",
+                "integer": 2
+              },
+              {
+                "name": "PAGE_TYPE_EXPERIMENTS",
+                "integer": 3
+              },
+              {
+                "name": "PAGE_TYPE_SEGMENTS",
+                "integer": 4
+              },
+              {
+                "name": "PAGE_TYPE_AUTOOPS",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ChatMessage.Role",
+            "enum_fields": [
+              {
+                "name": "ROLE_UNSPECIFIED"
+              },
+              {
+                "name": "ROLE_USER",
+                "integer": 1
+              },
+              {
+                "name": "ROLE_ASSISTANT",
+                "integer": 2
+              }
+            ]
+          },
+          {
+            "name": "SuggestionType",
+            "enum_fields": [
+              {
+                "name": "SUGGESTION_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "SUGGESTION_TYPE_FEATURE_DISCOVERY",
+                "integer": 1
+              },
+              {
+                "name": "SUGGESTION_TYPE_BEST_PRACTICE",
+                "integer": 2
+              },
+              {
+                "name": "SUGGESTION_TYPE_OPTIMIZATION",
+                "integer": 3
+              },
+              {
+                "name": "SUGGESTION_TYPE_WARNING",
+                "integer": 4
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "PageContext",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_type",
+                "type": "PageType"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "metadata",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ChatMessage",
+            "fields": [
+              {
+                "id": 1,
+                "name": "role",
+                "type": "Role"
+              },
+              {
+                "id": 2,
+                "name": "content",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChatRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "messages",
+                "type": "ChatMessage",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "page_context",
+                "type": "PageContext"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ChatStreamResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "content",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "done",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "finish_reason",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "Suggestion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "title",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "doc_url",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "type",
+                "type": "SuggestionType"
+              }
+            ]
+          },
+          {
+            "name": "GetSuggestionsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "page_context",
+                "type": "PageContext"
+              }
+            ]
+          },
+          {
+            "name": "GetSuggestionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "suggestions",
+                "type": "Suggestion",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "AIChatService",
+            "rpcs": [
+              {
+                "name": "Chat",
+                "in_type": "ChatRequest",
+                "out_type": "ChatStreamResponse",
+                "out_streamed": true
+              },
+              {
+                "name": "GetSuggestions",
+                "in_type": "GetSuggestionsRequest",
+                "out_type": "GetSuggestionsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/aichat/suggestions"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Suggestions"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get proactive AI suggestions based on page context."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "AI Chat"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.aichat.get_suggestions"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.aichat"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "auditlog:/:auditlog.proto",
       "def": {
         "messages": [

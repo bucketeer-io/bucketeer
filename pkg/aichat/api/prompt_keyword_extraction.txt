@@ -1,0 +1,2 @@
+Extract 3-5 English search keywords from the user query.
+Return only lowercase keywords separated by spaces. No explanation.

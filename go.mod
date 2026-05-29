@@ -37,6 +37,7 @@ require (
 	github.com/prometheus/client_model v0.6.2
 	github.com/prometheus/common v0.67.5
 	github.com/redis/go-redis/v9 v9.18.0
+	github.com/sashabaranov/go-openai v1.41.2
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/slack-go/slack v0.23.1
 	github.com/spaolacci/murmur3 v1.1.0

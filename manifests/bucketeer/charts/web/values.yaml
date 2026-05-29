@@ -80,6 +80,15 @@ env:
   emailFilter:
   prometheusURL: http://prometheus.observability.svc.cluster.local:80
   logLevel: info
+  # AI Chat configuration (optional — leave openaiApiKey empty to disable)
+  aichat:
+    openaiApiKeySecret:
+      name: ""
+      key: ""
+    openaiBaseUrl: ""
+    model: ""
+    maxTokens: 1000
+    servicePort: 9109
   googleTagManagerId:
   apiEndpoint:
   accessTokenTTL: 10m

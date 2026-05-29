@@ -4,6 +4,7 @@ export enum Language {
 }
 
 export type Namespace =
+  | 'ai-chat'
   | 'common'
   | 'auth'
   | 'form'

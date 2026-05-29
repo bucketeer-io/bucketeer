@@ -615,6 +615,15 @@ minikube-load-images:
 delete-bucketeer-from-minikube:
 	helm uninstall bucketeer --ignore-not-found
 
+# Create the Kubernetes secret for AI Chat.
+# Usage: make setup-aichat-secret OPENAI_API_KEY=sk-...
+.PHONY: setup-aichat-secret
+setup-aichat-secret:
+	@bash -c 'read -r -s -p "Enter the AI chat API key: " API_KEY; echo; \
+		if [ -z "$$API_KEY" ]; then echo "Error: API key cannot be empty"; exit 1; fi; \
+		kubectl delete secret bucketeer-ai-chat-api-key --ignore-not-found; \
+		kubectl create secret generic bucketeer-ai-chat-api-key --from-literal=openai-api-key="$$API_KEY";'
+
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C tools/dev service-cert-secret
