@@ -344,6 +344,146 @@ func TestTokenizeQuery(t *testing.T) {
 	}
 }
 
+func TestExpandQueryTokens(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		tokens   []string
+		expected []string
+	}{
+		{
+			desc:     "a/b expands to experiment terms",
+			tokens:   []string{"a/b", "test"},
+			expected: []string{"a/b", "test", "experiment", "experiments"},
+		},
+		{
+			desc:     "ab expands to experiment terms",
+			tokens:   []string{"ab"},
+			expected: []string{"ab", "experiment", "experiments"},
+		},
+		{
+			desc:     "experiment expands to a/b",
+			tokens:   []string{"experiment"},
+			expected: []string{"experiment", "a/b"},
+		},
+		{
+			desc:     "progressive expands to auto-operation and rollout",
+			tokens:   []string{"progressive"},
+			expected: []string{"progressive", "auto-operation", "rollout"},
+		},
+		{
+			desc:     "automated expands to auto-operation",
+			tokens:   []string{"automated"},
+			expected: []string{"automated", "auto-operation"},
+		},
+		{
+			desc:     "variant expands to variations",
+			tokens:   []string{"variant"},
+			expected: []string{"variant", "variations"},
+		},
+		{
+			desc:     "activity expands to audit-logs and history",
+			tokens:   []string{"activity"},
+			expected: []string{"activity", "audit-logs", "history"},
+		},
+		{
+			desc:     "webhook expands to trigger",
+			tokens:   []string{"webhook"},
+			expected: []string{"webhook", "trigger"},
+		},
+		{
+			desc:     "no synonyms leaves tokens unchanged",
+			tokens:   []string{"sdk", "android"},
+			expected: []string{"sdk", "android"},
+		},
+		{
+			desc:     "does not duplicate existing tokens",
+			tokens:   []string{"a/b", "experiment"},
+			expected: []string{"a/b", "experiment", "experiments"},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			result := expandQueryTokens(p.tokens)
+			assert.ElementsMatch(t, p.expected, result)
+		})
+	}
+}
+
+func TestGitHubSearcherSearchQuery(t *testing.T) {
+	t.Parallel()
+
+	// Fixture mirrors Bucketeer's actual docs paths. Each doc is filed under
+	// canonical terminology that doesn't always match how users phrase questions.
+	// The subtests verify expandQueryTokens bridges that gap end-to-end.
+	server := newTestServer(t, map[string]string{
+		"docs/experimentation/experiments.md":                                  "---\ntitle: Create an Experiment\n---\n\n# Create an Experiment\n\nDefine variations and goals.",
+		"docs/feature-flags/segments.mdx":                                      "---\ntitle: Segments\n---\n\n# Segments\n\nSegments allow grouping users.",
+		"docs/feature-flags/audit-logs.mdx":                                    "---\ntitle: Audit Logs\n---\n\n# Audit Logs\n\nTrack changes to your flags over time.",
+		"docs/feature-flags/creating-feature-flags/auto-operation/rollout.mdx": "---\ntitle: Progressive Rollout\n---\n\n# Auto-operation Rollout\n\nGradually increase traffic to a variation.",
+		"docs/feature-flags/creating-feature-flags/variations.mdx":             "---\ntitle: Variations\n---\n\n# Variations\n\nDefine the possible values returned by a flag.",
+		"docs/feature-flags/creating-feature-flags/trigger.mdx":                "---\ntitle: Triggers\n---\n\n# Triggers\n\nFire flag operations via webhook URLs.",
+	})
+	// t.Cleanup (not defer) so the server stays alive for parallel subtests
+	// that haven't started yet when this function returns.
+	t.Cleanup(server.Close)
+
+	searcher := NewGitHubSearcher(zap.NewNop(), "")
+	searcher.apiBaseURL = server.URL
+	searcher.rawBaseURL = server.URL
+
+	patterns := []struct {
+		desc         string
+		query        string
+		wantTopTitle string
+	}{
+		{
+			desc:         "A/B test query maps to experiments doc",
+			query:        "How do I set up an A/B test?",
+			wantTopTitle: "Create an Experiment",
+		},
+		{
+			desc:         "progressive rollout query maps to auto-operation doc",
+			query:        "How do I do a progressive rollout?",
+			wantTopTitle: "Progressive Rollout",
+		},
+		{
+			desc:         "variant query maps to variations doc",
+			query:        "How do I add a variant?",
+			wantTopTitle: "Variations",
+		},
+		{
+			desc:         "activity query maps to audit logs doc",
+			query:        "Where can I see flag activity?",
+			wantTopTitle: "Audit Logs",
+		},
+		{
+			desc:         "webhook query maps to trigger doc",
+			query:        "How do I set up a webhook?",
+			wantTopTitle: "Triggers",
+		},
+		{
+			desc:         "direct keyword query still works without expansion",
+			query:        "segments",
+			wantTopTitle: "Segments",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			docs, err := searcher.Search(t.Context(), p.query, 3)
+			require.NoError(t, err)
+			require.NotEmpty(t, docs, "expected results for query %q", p.query)
+			assert.Equal(t, p.wantTopTitle, docs[0].Metadata.Title,
+				"for query %q", p.query)
+		})
+	}
+}
+
 func TestScoreDoc(t *testing.T) {
 	t.Parallel()
 
