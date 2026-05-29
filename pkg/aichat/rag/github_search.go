@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -385,7 +386,8 @@ func expandQueryTokens(tokens []string) []string {
 	for _, t := range tokens {
 		seen[t] = true
 	}
-	expanded := tokens
+	// Clone so we never write into the caller's backing array via append.
+	expanded := slices.Clone(tokens)
 	for _, t := range tokens {
 		for _, syn := range querySynonyms[t] {
 			if !seen[syn] {
