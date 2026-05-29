@@ -33,9 +33,9 @@ const MenuItemComponent = ({
   ) : null;
 
   const textClsx = cn(
-    'flex items-center gap-x-2 w-full text-primary-50',
+    'flex items-center gap-x-2 w-full text-primary-50 dark:text-dark-gray-200',
     'px-3 py-3 rounded-lg typo-para-medium my-0.5 capitalize',
-    'hover:bg-primary-400 hover:opacity-100 opacity-80 sidebar-menu'
+    'hover:bg-primary-400 dark:hover:bg-dark-black-700 hover:opacity-100 opacity-80 dark:opacity-100 sidebar-menu'
   );
 
   const actionEl =
@@ -61,7 +61,7 @@ const MenuItemComponent = ({
           ) : null
         }))}
         onChange={value => onSelectOption?.(value as string)}
-        className="w-full !p-0 !border-none !shadow-none [&>div>div>div>div]:text-primary-50 bg-transparent hover:bg-primary-400 hover:opacity-100  sidebar-menu"
+        className="w-full !p-0 !border-none !shadow-none [&>div>div>div>div]:text-primary-50 dark:[&>div>div>div>div]:text-dark-gray-200 bg-transparent hover:bg-primary-400 dark:hover:bg-dark-black-700 hover:opacity-100 sidebar-menu"
         menuContentSide="right"
       />
     ) : href ? (

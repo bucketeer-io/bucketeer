@@ -89,7 +89,7 @@ import {
 } from './routers';
 
 export const AppLoading = () => (
-  <div className="flex items-center justify-center h-screen w-full">
+  <div className="flex items-center justify-center h-screen w-full bg-white dark:bg-dark-black-950">
     <Spinner size="md" />
   </div>
 );
@@ -155,9 +155,9 @@ export const Root = memo(() => {
       return <UserInformation />;
     }
     return (
-      <div className="flex flex-row w-full h-full">
+      <div className="flex flex-row w-full h-full bg-white dark:bg-dark-black-950">
         <Navigation onClickNavLink={handleChangePageKey} />
-        <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
+        <div className="w-full ml-[248px] shadow-lg overflow-y-auto bg-white dark:bg-dark-black-950">
           <Routes>
             {consoleAccount.isSystemAdmin && (
               <Route
