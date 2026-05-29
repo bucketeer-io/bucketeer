@@ -27,7 +27,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	envstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
@@ -255,9 +256,12 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			mysqlClient := mysqlmock.NewMockClient(mockController)
+			dbClient := dbmock.NewMockClient(mockController)
 			accountClient := accountclientmock.NewMockClient(mockController)
 			accountStorage := accstoragemock.NewMockAccountStorage(mockController)
+			orgStorage := envstoragemock.NewMockOrganizationStorage(mockController)
+			projectStorage := envstoragemock.NewMockProjectStorage(mockController)
+			environmentStorage := envstoragemock.NewMockEnvironmentStorage(mockController)
 			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
 			require.NoError(t, err)
 			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
@@ -269,9 +273,12 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 				"test-audience",
 				signer,
 				verifier,
-				mysqlClient,
+				dbClient,
 				accountClient,
 				accountStorage,
+				orgStorage,
+				projectStorage,
+				environmentStorage,
 				config,
 				p.setupFunc()...,
 			).(*authService)
@@ -431,9 +438,12 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			mysqlClient := mysqlmock.NewMockClient(mockController)
+			dbClient := dbmock.NewMockClient(mockController)
 			accountClient := accountclientmock.NewMockClient(mockController)
 			accountStorage := accstoragemock.NewMockAccountStorage(mockController)
+			orgStorage := envstoragemock.NewMockOrganizationStorage(mockController)
+			projectStorage := envstoragemock.NewMockProjectStorage(mockController)
+			environmentStorage := envstoragemock.NewMockEnvironmentStorage(mockController)
 			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
 			require.NoError(t, err)
 			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
@@ -446,9 +456,12 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 				"test-audience",
 				signer,
 				verifier,
-				mysqlClient,
+				dbClient,
 				accountClient,
 				accountStorage,
+				orgStorage,
+				projectStorage,
+				environmentStorage,
 				config,
 				opts...,
 			).(*authService)

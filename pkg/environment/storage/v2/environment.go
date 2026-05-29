@@ -17,13 +17,10 @@ package v2
 
 import (
 	"context"
-	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
@@ -38,19 +35,13 @@ var (
 	ErrEnvironmentUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
 		pkgErr.EnvironmentPackageName,
 		"environment unexpected affected rows")
+)
 
-	//go:embed sql/environment/insert_environment.sql
-	insertEnvironmentSQL string
-	//go:embed sql/environment/update_environment.sql
-	updateEnvironmentSQL string
-	//go:embed sql/environment/select_environment.sql
-	selectEnvironmentSQL string
-	//go:embed sql/environment/select_environments.sql
-	selectEnvironmentsSQL string
-	//go:embed sql/environment/count_environments.sql
-	countEnvironmentsSQL string
-	//go:embed sql/environment/list_auto_archive_enabled_environments.sql
-	listAutoArchiveEnabledEnvironmentsSQL string
+// Shared list-query errors returned by EnvironmentStorage, OrganizationStorage,
+// and ProjectStorage implementations.
+var (
+	ErrInvalidOrderBy = errors.New("environment/storage/v2: invalid order by")
+	ErrInvalidCursor  = errors.New("environment/storage/v2: invalid cursor")
 )
 
 type EnvironmentStorage interface {
@@ -59,203 +50,18 @@ type EnvironmentStorage interface {
 	GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error)
 	ListEnvironmentsV2(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListEnvironmentsV2Params,
 	) ([]*proto.EnvironmentV2, int, int64, error)
 	ListAutoArchiveEnabledEnvironments(ctx context.Context) ([]*domain.EnvironmentV2, error)
 }
 
-type environmentStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewEnvironmentStorage(qe mysql.QueryExecer) EnvironmentStorage {
-	return &environmentStorage{qe}
-}
-
-func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertEnvironmentSQL,
-		e.Id,
-		e.Name,
-		e.UrlCode,
-		e.Description,
-		e.ProjectId,
-		e.OrganizationId,
-		e.Archived,
-		e.RequireComment,
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.AutoArchiveEnabled,
-		e.AutoArchiveUnusedDays,
-		e.AutoArchiveCheckCodeRefs,
-	)
-	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
-			return ErrEnvironmentAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateEnvironmentSQL,
-		e.Name,
-		e.Description,
-		e.Archived,
-		e.RequireComment,
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.AutoArchiveEnabled,
-		e.AutoArchiveUnusedDays,
-		e.AutoArchiveCheckCodeRefs,
-		e.Id,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrEnvironmentUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error) {
-	environment := proto.EnvironmentV2{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectEnvironmentSQL,
-		id,
-	).Scan(
-		&environment.Id,
-		&environment.Name,
-		&environment.UrlCode,
-		&environment.Description,
-		&environment.ProjectId,
-		&environment.OrganizationId,
-		&environment.Archived,
-		&environment.RequireComment,
-		&environment.CreatedAt,
-		&environment.UpdatedAt,
-		&environment.AutoArchiveEnabled,
-		&environment.AutoArchiveUnusedDays,
-		&environment.AutoArchiveCheckCodeRefs,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrEnvironmentNotFound
-		}
-		return nil, err
-	}
-	return &domain.EnvironmentV2{EnvironmentV2: &environment}, nil
-}
-
-func (s *environmentStorage) ListEnvironmentsV2(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.EnvironmentV2, int, int64, error) {
-	// Because select_environments.sql defines the variable strings in a complex constructed way,
-	//  we do not use ConstructQueryAndWhereArgs() here.
-	var query string
-	var whereArgs []any
-	if options != nil {
-		var whereSQL string
-		whereParts := options.CreateWhereParts()
-		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
-		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
-		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
-		query = fmt.Sprintf(selectEnvironmentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	} else {
-		query = selectEnvironmentsSQL
-		whereArgs = []interface{}{}
-	}
-
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	var limit, offset int
-	if options != nil {
-		limit = options.Limit
-		offset = options.Offset
-	}
-	defer rows.Close()
-	environments := make([]*proto.EnvironmentV2, 0, limit)
-	for rows.Next() {
-		environment := proto.EnvironmentV2{}
-		err := rows.Scan(
-			&environment.Id,
-			&environment.Name,
-			&environment.UrlCode,
-			&environment.Description,
-			&environment.ProjectId,
-			&environment.OrganizationId,
-			&environment.Archived,
-			&environment.RequireComment,
-			&environment.CreatedAt,
-			&environment.UpdatedAt,
-			&environment.AutoArchiveEnabled,
-			&environment.AutoArchiveUnusedDays,
-			&environment.AutoArchiveCheckCodeRefs,
-			&environment.FeatureFlagCount,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		environments = append(environments, &environment)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(environments)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countEnvironmentsSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return environments, nextOffset, totalCount, nil
-}
-
-func (s *environmentStorage) ListAutoArchiveEnabledEnvironments(ctx context.Context) ([]*domain.EnvironmentV2, error) {
-	rows, err := s.qe.QueryContext(ctx, listAutoArchiveEnabledEnvironmentsSQL)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	environments := make([]*domain.EnvironmentV2, 0)
-	for rows.Next() {
-		environment := proto.EnvironmentV2{}
-		err := rows.Scan(
-			&environment.Id,
-			&environment.Name,
-			&environment.UrlCode,
-			&environment.Description,
-			&environment.ProjectId,
-			&environment.OrganizationId,
-			&environment.Archived,
-			&environment.RequireComment,
-			&environment.CreatedAt,
-			&environment.UpdatedAt,
-			&environment.AutoArchiveEnabled,
-			&environment.AutoArchiveUnusedDays,
-			&environment.AutoArchiveCheckCodeRefs,
-		)
-		if err != nil {
-			return nil, err
-		}
-		environments = append(environments, &domain.EnvironmentV2{EnvironmentV2: &environment})
-	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-	return environments, nil
+type ListEnvironmentsV2Params struct {
+	ProjectID      string
+	OrganizationID string
+	Archived       *bool
+	SearchKeyword  string
+	OrderBy        proto.ListEnvironmentsV2Request_OrderBy
+	OrderDirection proto.ListEnvironmentsV2Request_OrderDirection
+	PageSize       int
+	Cursor         string
 }

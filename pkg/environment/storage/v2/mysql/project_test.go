@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -36,336 +37,338 @@ func TestNewProjectStorage(t *testing.T) {
 	assert.IsType(t, &projectStorage{}, storage)
 }
 
-func TestCreateProject(t *testing.T) {
+func TestCreateProjectMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
 	patterns := []struct {
 		desc        string
 		setup       func(*projectStorage)
-		input       *domain.Project
 		expectedErr error
 	}{
 		{
-			desc: "ErrProjectAlreadyExists",
+			desc: "error",
 			setup: func(s *projectStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "error: duplicate entry",
+			setup: func(s *projectStorage) {
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
-			input: &domain.Project{
-				Project: &proto.Project{Id: "pid-0"},
-			},
-			expectedErr: ErrProjectAlreadyExists,
+			expectedErr: v2es.ErrProjectAlreadyExists,
 		},
 		{
-			desc: "Error",
+			desc: "success",
 			setup: func(s *projectStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
-			},
-			input: &domain.Project{
-				Project: &proto.Project{Id: "pid-0"},
-			},
-			expectedErr: errors.New("error"),
-		},
-		{
-			desc: "Success",
-			setup: func(s *projectStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
-			input: &domain.Project{
-				Project: &proto.Project{Id: "pid-0"},
-			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newProjectStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			err := storage.CreateProject(context.Background(), p.input)
+			storage := &projectStorage{qe: mock.NewMockClient(mockController)}
+			p.setup(storage)
+			err := storage.CreateProject(
+				context.Background(),
+				&domain.Project{Project: &proto.Project{}},
+			)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func TestUpdateProject(t *testing.T) {
+func TestUpdateProjectMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
 	patterns := []struct {
 		desc        string
 		setup       func(*projectStorage)
-		input       *domain.Project
 		expectedErr error
 	}{
 		{
-			desc: "ErrProjectUnexpectedAffectedRows",
+			desc: "error",
 			setup: func(s *projectStorage) {
-				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
-			},
-			input: &domain.Project{
-				Project: &proto.Project{Id: "pid-0"},
-			},
-			expectedErr: ErrProjectUnexpectedAffectedRows,
-		},
-		{
-			desc: "Error",
-			setup: func(s *projectStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input: &domain.Project{
-				Project: &proto.Project{Id: "pid-0"},
-			},
 			expectedErr: errors.New("error"),
 		},
 		{
-			desc: "Success",
+			desc: "error: unexpected affected rows",
 			setup: func(s *projectStorage) {
 				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
-			input: &domain.Project{
-				Project: &proto.Project{Id: "pid-0"},
+			expectedErr: v2es.ErrProjectUnexpectedAffectedRows,
+		},
+		{
+			desc: "success",
+			setup: func(s *projectStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newProjectStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			err := storage.UpdateProject(context.Background(), p.input)
+			storage := &projectStorage{qe: mock.NewMockClient(mockController)}
+			p.setup(storage)
+			err := storage.UpdateProject(
+				context.Background(),
+				&domain.Project{Project: &proto.Project{}},
+			)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func TestGetProject(t *testing.T) {
+func TestGetProjectMySQLStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
 	patterns := []struct {
 		desc        string
 		setup       func(*projectStorage)
-		id          string
 		expectedErr error
 	}{
 		{
-			desc: "ErrProjectNotFound",
+			desc: "error: ErrNoRows",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:          "id-0",
-			expectedErr: ErrProjectNotFound,
+			expectedErr: v2es.ErrProjectNotFound,
 		},
 		{
-			desc: "Error",
+			desc: "error: internal",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal error"))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-
 			},
-			id:          "id-0",
-			expectedErr: errors.New("error"),
+			expectedErr: errors.New("internal error"),
 		},
 		{
-			desc: "Success",
+			desc: "success",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:          "id-0",
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newProjectStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			_, err := storage.GetProject(context.Background(), p.id)
+			storage := &projectStorage{qe: mock.NewMockClient(mockController)}
+			p.setup(storage)
+			_, err := storage.GetProject(context.Background(), "project-id")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func TestGetTrialProjectByEmail(t *testing.T) {
+func TestGetTrialProjectByEmailMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
 	patterns := []struct {
 		desc        string
 		setup       func(*projectStorage)
-		email       string
-		disabled    bool
-		trial       bool
 		expectedErr error
 	}{
 		{
-			desc: "ErrProjectNotFound",
+			desc: "error: ErrNoRows",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			email:       "test@example.com",
-			disabled:    false,
-			trial:       false,
-			expectedErr: ErrProjectNotFound,
+			expectedErr: v2es.ErrProjectNotFound,
 		},
 		{
-			desc: "Error",
+			desc: "error: internal",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal error"))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-
 			},
-			email:       "test@example.com",
-			disabled:    false,
-			trial:       false,
-			expectedErr: errors.New("error"),
+			expectedErr: errors.New("internal error"),
 		},
 		{
-			desc: "Success",
+			desc: "success",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			email:       "test@example.com",
-			disabled:    false,
-			trial:       false,
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newProjectStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			_, err := storage.GetTrialProjectByEmail(context.Background(), p.email, p.disabled, p.trial)
+			storage := &projectStorage{qe: mock.NewMockClient(mockController)}
+			p.setup(storage)
+			_, err := storage.GetTrialProjectByEmail(
+				context.Background(), "test@example.com", false, true,
+			)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func TestListProjects(t *testing.T) {
+func TestListProjectsMySQLStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	disabled := false
 	patterns := []struct {
 		desc           string
 		setup          func(*projectStorage)
-		options        *mysql.ListOptions
+		params         v2es.ListProjectsParams
 		expected       []*proto.Project
 		expectedCursor int
 		expectedErr    error
 	}{
 		{
-			desc: "Error",
+			desc:  "error: invalid order by",
+			setup: nil,
+			params: v2es.ListProjectsParams{
+				OrderBy: proto.ListProjectsV2Request_OrderBy(99),
+			},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    v2es.ErrInvalidOrderBy,
+		},
+		{
+			desc:  "error: invalid cursor",
+			setup: nil,
+			params: v2es.ListProjectsParams{
+				PageSize: 10,
+				Cursor:   "invalid",
+			},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    v2es.ErrInvalidCursor,
+		},
+		{
+			desc: "error: query",
 			setup: func(s *projectStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params: v2es.ListProjectsParams{
+				PageSize: 10,
+				Cursor:   "0",
+			},
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
 		{
-			desc: "Success",
+			desc: "error: count",
 			setup: func(s *projectStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("count error"))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			params: v2es.ListProjectsParams{
+				PageSize: 10,
+				Cursor:   "0",
+			},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    errors.New("count error"),
+		},
+		{
+			desc: "success",
+			setup: func(s *projectStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Limit:  10,
-				Offset: 5,
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "num",
-						Operator: mysql.OperatorGreaterThanOrEqual,
-						Value:    5,
-					},
-				},
-				Orders: []*mysql.Order{
-					{
-						Column:    "id",
-						Direction: mysql.OrderDirectionAsc,
-					},
-				},
+			params: v2es.ListProjectsParams{
+				PageSize:        10,
+				Cursor:          "0",
+				OrganizationID:  "org-id",
+				OrganizationIDs: []string{"org-1", "org-2"},
+				Disabled:        &disabled,
+				SearchKeyword:   "demo",
 			},
 			expected:       []*proto.Project{},
-			expectedCursor: 5,
+			expectedCursor: 0,
 			expectedErr:    nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newProjectStorageWithMock(t, mockController)
+			storage := &projectStorage{qe: mock.NewMockClient(mockController)}
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			accounts, cursor, _, err := storage.ListProjects(
+			projects, cursor, _, err := storage.ListProjects(
 				context.Background(),
-				p.options,
+				p.params,
 			)
-			assert.Equal(t, p.expected, accounts)
+			assert.Equal(t, p.expected, projects)
 			assert.Equal(t, p.expectedCursor, cursor)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
-}
-
-func newProjectStorageWithMock(t *testing.T, mockController *gomock.Controller) *projectStorage {
-	t.Helper()
-	return &projectStorage{mock.NewMockQueryExecer(mockController)}
 }

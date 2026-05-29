@@ -54,6 +54,9 @@ import (
 	coderefapi "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/api"
 	environmentapi "github.com/bucketeer-io/bucketeer/v2/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	environmentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mysql"
+	environmentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/postgres"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/api"
 	experimentapi "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
@@ -570,6 +573,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	var postgresClient postgres.Client
 	var accountStorage v2as.AccountStorage
+	var projectStorage v2es.ProjectStorage
+	var orgStorage v2es.OrganizationStorage
+	var environmentStorage v2es.EnvironmentStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -589,6 +595,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
 		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
+		projectStorage = environmentpostgres.NewProjectStorage(postgresClient)
+		orgStorage = environmentpostgres.NewOrganizationStorage(postgresClient)
+		environmentStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -601,6 +610,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
 		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
+		projectStorage = environmentmysql.NewProjectStorage(mysqlClient)
+		orgStorage = environmentmysql.NewOrganizationStorage(mysqlClient)
+		environmentStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -749,7 +761,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	// authService
-	authService, err := s.createAuthService(mysqlClient, accountClient, accountStorage, verifier, oAuthConfig, logger)
+	authService, err := s.createAuthService(
+		dbClient,
+		accountClient,
+		accountStorage,
+		orgStorage,
+		projectStorage,
+		environmentStorage,
+		verifier,
+		oAuthConfig,
+		logger,
+	)
 	if err != nil {
 		return err
 	}
@@ -823,8 +845,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// environmentService
 	environmentService, err := s.createEnvironmentService(
-		mysqlClient,
+		dbClient,
 		accountClient,
+		projectStorage,
+		orgStorage,
+		environmentStorage,
 		accountStorage,
 		domainTopicPublisher,
 		oAuthConfig,
@@ -1339,9 +1364,12 @@ func (s *server) readOAuthConfig(
 }
 
 func (s *server) createAuthService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
 	accountClient accountclient.Client,
 	accountStorage v2as.AccountStorage,
+	orgStorage v2es.OrganizationStorage,
+	projectStorage v2es.ProjectStorage,
+	environmentStorage v2es.EnvironmentStorage,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	logger *zap.Logger,
@@ -1368,17 +1396,23 @@ func (s *server) createAuthService(
 		config.Audience,
 		signer,
 		verifier,
-		mysqlClient,
+		dbClient,
 		accountClient,
 		accountStorage,
+		orgStorage,
+		projectStorage,
+		environmentStorage,
 		config,
 		serviceOptions...,
 	), nil
 }
 
 func (s *server) createEnvironmentService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
 	accountClient accountclient.Client,
+	projectStorage v2es.ProjectStorage,
+	orgStorage v2es.OrganizationStorage,
+	environmentStorage v2es.EnvironmentStorage,
 	accountStorage v2as.AccountStorage,
 	domainTopicPublisher publisher.Publisher,
 	oAuthConfig *auth.OAuthConfig,
@@ -1404,7 +1438,10 @@ func (s *server) createEnvironmentService(
 
 	return environmentapi.NewEnvironmentService(
 		accountClient,
-		mysqlClient,
+		dbClient,
+		projectStorage,
+		orgStorage,
+		environmentStorage,
 		accountStorage,
 		domainTopicPublisher,
 		oAuthConfig,

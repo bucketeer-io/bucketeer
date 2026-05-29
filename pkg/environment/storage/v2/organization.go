@@ -17,29 +17,10 @@ package v2
 
 import (
 	"context"
-	_ "embed"
-	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-)
-
-var (
-	//go:embed sql/organization/insert_organization.sql
-	insertOrganizationSQL string
-	//go:embed sql/organization/update_organization.sql
-	updateOrganizationSQL string
-	//go:embed sql/organization/select_organization.sql
-	selectOrganizationSQL string
-	//go:embed sql/organization/select_system_admin_organization.sql
-	selectSystemAdminOrganizationSQL string
-	//go:embed sql/organization/select_organizations.sql
-	selectOrganizationsSQL string
-	//go:embed sql/organization/count_organizations.sql
-	countOrganizationsSQL string
 )
 
 var (
@@ -62,191 +43,16 @@ type OrganizationStorage interface {
 	GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error)
 	ListOrganizations(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListOrganizationsParams,
 	) ([]*proto.Organization, int, int64, error)
 }
 
-type organizationStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewOrganizationStorage(qe mysql.QueryExecer) OrganizationStorage {
-	return &organizationStorage{qe}
-}
-
-func (s *organizationStorage) CreateOrganization(ctx context.Context, o *domain.Organization) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertOrganizationSQL,
-		o.Id,
-		o.Name,
-		o.OwnerEmail,
-		o.UrlCode,
-		o.Description,
-		o.Disabled,
-		o.Archived,
-		o.Trial,
-		o.SystemAdmin,
-		o.CreatedAt,
-		o.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrOrganizationAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.Organization) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateOrganizationSQL,
-		o.Name,
-		o.OwnerEmail,
-		o.Description,
-		o.Disabled,
-		o.Archived,
-		o.Trial,
-		o.CreatedAt,
-		o.UpdatedAt,
-		o.Id,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrOrganizationUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*domain.Organization, error) {
-	organization := proto.Organization{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectOrganizationSQL,
-		id,
-	).Scan(
-		&organization.Id,
-		&organization.Name,
-		&organization.OwnerEmail,
-		&organization.UrlCode,
-		&organization.Description,
-		&organization.Disabled,
-		&organization.Archived,
-		&organization.Trial,
-		&organization.SystemAdmin,
-		&organization.CreatedAt,
-		&organization.UpdatedAt,
-		&organization.ProjectCount,
-		&organization.EnvironmentCount,
-		&organization.UserCount,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrOrganizationNotFound
-		}
-		return nil, err
-	}
-	return &domain.Organization{Organization: &organization}, nil
-}
-
-func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error) {
-	organization := proto.Organization{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectSystemAdminOrganizationSQL,
-	).Scan(
-		&organization.Id,
-		&organization.Name,
-		&organization.OwnerEmail,
-		&organization.UrlCode,
-		&organization.Description,
-		&organization.Disabled,
-		&organization.Archived,
-		&organization.Trial,
-		&organization.SystemAdmin,
-		&organization.CreatedAt,
-		&organization.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrOrganizationNotFound
-		}
-		return nil, err
-	}
-	return &domain.Organization{Organization: &organization}, nil
-}
-
-func (s *organizationStorage) ListOrganizations(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.Organization, int, int64, error) {
-	// Because select_organizations.sql defines the variable strings in a complex constructed way,
-	//  we do not use ConstructQueryAndWhereArgs() here.
-	var query string
-	var whereArgs []any
-	if options != nil {
-		var whereSQL string
-		whereParts := options.CreateWhereParts()
-		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
-		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
-		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
-		query = fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	} else {
-		query = selectOrganizationsSQL
-		whereArgs = []interface{}{}
-	}
-	// Construct the SQL query
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	var limit, offset int
-	if options != nil {
-		limit = options.Limit
-		offset = options.Offset
-	}
-	defer rows.Close()
-	organizations := make([]*proto.Organization, 0, limit)
-	for rows.Next() {
-		organization := proto.Organization{}
-		err := rows.Scan(
-			&organization.Id,
-			&organization.Name,
-			&organization.OwnerEmail,
-			&organization.UrlCode,
-			&organization.Description,
-			&organization.Disabled,
-			&organization.Archived,
-			&organization.Trial,
-			&organization.SystemAdmin,
-			&organization.CreatedAt,
-			&organization.UpdatedAt,
-			&organization.ProjectCount,
-			&organization.EnvironmentCount,
-			&organization.UserCount,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		organizations = append(organizations, &organization)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(organizations)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countOrganizationsSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return organizations, nextOffset, totalCount, nil
+type ListOrganizationsParams struct {
+	Disabled       *bool
+	Archived       *bool
+	SearchKeyword  string
+	OrderBy        proto.ListOrganizationsRequest_OrderBy
+	OrderDirection proto.ListOrganizationsRequest_OrderDirection
+	PageSize       int
+	Cursor         string
 }

@@ -32,7 +32,7 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 )
 
@@ -42,12 +42,16 @@ func TestNewEnvironmentService(t *testing.T) {
 	defer mockController.Finish()
 
 	ac := acmock.NewMockClient(mockController)
-	mysqlClient := mysqlmock.NewMockClient(mockController)
+	db := dbmock.NewMockClient(mockController)
+	projectStorage := storagemock.NewMockProjectStorage(mockController)
+	orgStorage := storagemock.NewMockOrganizationStorage(mockController)
+	envStorage := storagemock.NewMockEnvironmentStorage(mockController)
+	accStorage := accstoragemock.NewMockAccountStorage(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
-	accStorage := accstoragemock.NewMockAccountStorage(mockController)
 	s := NewEnvironmentService(
-		ac, mysqlClient, accStorage, p, &auth.OAuthConfig{}, "", "", nil, nil, WithLogger(logger))
+		ac, db, projectStorage, orgStorage, envStorage, accStorage, p,
+		&auth.OAuthConfig{}, "", "", nil, nil, WithLogger(logger))
 	assert.IsType(t, &EnvironmentService{}, s)
 }
 
@@ -96,7 +100,7 @@ func newEnvironmentService(t *testing.T, mockController *gomock.Controller, s st
 	require.NoError(t, err)
 	return &EnvironmentService{
 		accountClient:      acmock.NewMockClient(mockController),
-		mysqlClient:        mysqlmock.NewMockClient(mockController),
+		dbClient:           dbmock.NewMockClient(mockController),
 		orgStorage:         storagemock.NewMockOrganizationStorage(mockController),
 		projectStorage:     storagemock.NewMockProjectStorage(mockController),
 		environmentStorage: storagemock.NewMockEnvironmentStorage(mockController),
@@ -112,7 +116,7 @@ func newDemoEnvironmentService(t *testing.T, mockController *gomock.Controller, 
 	require.NoError(t, err)
 	return &EnvironmentService{
 		accountClient:      acmock.NewMockClient(mockController),
-		mysqlClient:        mysqlmock.NewMockClient(mockController),
+		dbClient:           dbmock.NewMockClient(mockController),
 		orgStorage:         storagemock.NewMockOrganizationStorage(mockController),
 		projectStorage:     storagemock.NewMockProjectStorage(mockController),
 		environmentStorage: storagemock.NewMockEnvironmentStorage(mockController),

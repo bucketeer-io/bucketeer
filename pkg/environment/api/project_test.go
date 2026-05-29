@@ -33,7 +33,7 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pubmock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -138,8 +138,12 @@ func TestListProjectsMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "err: ErrInvalidCursor",
-			setup:       nil,
+			desc: "err: ErrInvalidCursor",
+			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
+			},
 			input:       &proto.ListProjectsRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),
@@ -333,7 +337,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			desc: "err: project already exists",
 			setup: func(s *EnvironmentService) {
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
 			},
@@ -350,7 +354,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			desc: "err: internal error",
 			setup: func(s *EnvironmentService) {
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal error"))
 			},
@@ -367,7 +371,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			desc: "err: publish domain event failed",
 			setup: func(s *EnvironmentService) {
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				// Simulate a failure when publishing the update event.
@@ -388,7 +392,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
@@ -493,7 +497,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
@@ -512,7 +516,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1", Description: "old desc"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
@@ -583,7 +587,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
@@ -601,7 +605,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
@@ -669,7 +673,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
@@ -687,7 +691,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
@@ -755,7 +759,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
@@ -773,7 +777,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
 				mockAdminOrgAuth(s)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
@@ -1017,6 +1021,9 @@ func TestListProjectsV2(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					},
 				}, nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
 			},
 			input: &environmentproto.ListProjectsV2Request{
 				PageSize:       10,

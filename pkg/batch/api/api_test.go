@@ -42,7 +42,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	maucachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	coderefstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mock"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	envstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
@@ -695,6 +697,8 @@ func newBatchService(t *testing.T,
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	mockProgressiveRolloutExecutor := opsexecutor.NewMockProgressiveRolloutExecutor(mockController)
 	cacheMock := redismock.NewMockMultiGetDeleteCountCache(mockController)
+	envStorageMock := envstoragemock.NewMockEnvironmentStorage(mockController)
+	codeRefStorageMock := coderefstoragemock.NewMockCodeReferenceStorage(mockController)
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 	mysqlMockRows := mysqlmock.NewMockRows(mockController)
 	redisMockClient := redismock.NewMockMultiGetCache(mockController)
@@ -804,8 +808,9 @@ func newBatchService(t *testing.T,
 		),
 		deleter.NewTagDeleter(tagStorageMock, featureStorageMock),
 		autoarchive.NewFeatureAutoArchiver(
-			mysqlMockClient,
+			envStorageMock,
 			featureStorageMock,
+			codeRefStorageMock,
 			featureMockClient,
 			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),

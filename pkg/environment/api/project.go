@@ -29,7 +29,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -96,61 +95,31 @@ func (s *EnvironmentService) ListProjects(
 	if err != nil {
 		return nil, err
 	}
-	var infilters []*mysql.InFilter
-	if len(req.OrganizationIds) > 0 {
-		oIDs := convToInterfaceSlice(req.OrganizationIds)
-		infilters = append(infilters, &mysql.InFilter{
-			Column: "project.organization_id",
-			Values: oIDs,
-		})
-	}
-	var filters []*mysql.FilterV2
+	var disabled *bool
 	if req.Disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "project.disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Disabled.Value,
-		})
+		v := req.Disabled.Value
+		disabled = &v
 	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"project.id", "project.name", "project.url_code", "project.creator_email"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		InFilters:   infilters,
-		Orders:      orders,
-		SearchQuery: searchQuery,
-		JSONFilters: nil,
-		NullFilters: nil,
+	params := v2es.ListProjectsParams{
+		OrganizationIDs: req.OrganizationIds,
+		Disabled:        disabled,
+		SearchKeyword:   req.SearchKeyword,
+		OrderBy:         environmentproto.ListProjectsV2Request_OrderBy(req.OrderBy),
+		OrderDirection:  environmentproto.ListProjectsV2Request_OrderDirection(req.OrderDirection),
+		PageSize:        int(req.PageSize),
+		Cursor:          req.Cursor,
 	}
 	projects, nextCursor, totalCount, err := s.projectStorage.ListProjects(
 		ctx,
-		options,
+		params,
 	)
 	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		if errors.Is(err, v2es.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"Failed to list projects",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -164,49 +133,6 @@ func (s *EnvironmentService) ListProjects(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
-}
-
-func convToInterfaceSlice(
-	slice []string,
-) []interface{} {
-	result := make([]interface{}, 0, len(slice))
-	for _, element := range slice {
-		result = append(result, element)
-	}
-	return result
-}
-
-func (s *EnvironmentService) newProjectListOrders(
-	orderBy environmentproto.ListProjectsRequest_OrderBy,
-	orderDirection environmentproto.ListProjectsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case environmentproto.ListProjectsRequest_DEFAULT,
-		environmentproto.ListProjectsRequest_NAME:
-		column = "project.name"
-	case environmentproto.ListProjectsRequest_URL_CODE:
-		column = "project.url_code"
-	case environmentproto.ListProjectsRequest_ID:
-		column = "project.id"
-	case environmentproto.ListProjectsRequest_CREATED_AT:
-		column = "project.created_at"
-	case environmentproto.ListProjectsRequest_UPDATED_AT:
-		column = "project.updated_at"
-	case environmentproto.ListProjectsRequest_ENVIRONMENT_COUNT:
-		column = "environment_count"
-	case environmentproto.ListProjectsRequest_FEATURE_COUNT:
-		column = "feature_count"
-	case environmentproto.ListProjectsRequest_CREATOR_EMAIL:
-		column = "project.creator_email"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == environmentproto.ListProjectsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *EnvironmentService) CreateProject(
@@ -236,13 +162,12 @@ func (s *EnvironmentService) CreateProject(
 		return nil, err
 	}
 	var domainEvent *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		storage := v2es.NewProjectStorage(tx)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		domainEvent, err = s.newCreateDomainEvent(newProj.Project, editor)
 		if err != nil {
 			return err
 		}
-		return storage.CreateProject(ctxWithTx, newProj)
+		return s.projectStorage.CreateProject(ctxWithTx, newProj)
 	})
 	if err != nil {
 		return nil, s.reportCreateProjectRequestError(ctx, req, err)
@@ -340,8 +265,7 @@ func (s *EnvironmentService) UpdateProject(
 		return nil, err
 	}
 	var domainEvent *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		storage := v2es.NewProjectStorage(tx)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		updated, err := project.Update(
 			req.Name,
 			req.Description,
@@ -359,7 +283,7 @@ func (s *EnvironmentService) UpdateProject(
 		if err != nil {
 			return err
 		}
-		return storage.UpdateProject(ctxWithTx, updated)
+		return s.projectStorage.UpdateProject(ctxWithTx, updated)
 	})
 	if err != nil {
 		return nil, s.reportUpdateProjectRequestError(ctx, req, err)
@@ -453,8 +377,7 @@ func (s *EnvironmentService) EnableProject(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		storage := v2es.NewProjectStorage(tx)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		prev := &domain.Project{}
 		if err := copier.Copy(prev, project); err != nil {
 			return err
@@ -474,7 +397,7 @@ func (s *EnvironmentService) EnableProject(
 		if err != nil {
 			return err
 		}
-		return storage.UpdateProject(ctxWithTx, project)
+		return s.projectStorage.UpdateProject(ctxWithTx, project)
 	})
 	if err != nil {
 		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
@@ -527,8 +450,7 @@ func (s *EnvironmentService) DisableProject(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		storage := v2es.NewProjectStorage(tx)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		prev := &domain.Project{}
 		if err := copier.Copy(prev, project); err != nil {
 			return err
@@ -548,7 +470,7 @@ func (s *EnvironmentService) DisableProject(
 		if err != nil {
 			return err
 		}
-		return storage.UpdateProject(ctxWithTx, project)
+		return s.projectStorage.UpdateProject(ctxWithTx, project)
 	})
 	if err != nil {
 		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
@@ -601,8 +523,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		storage := v2es.NewProjectStorage(tx)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		prev := &domain.Project{}
 		if err := copier.Copy(prev, project); err != nil {
 			return err
@@ -622,7 +543,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 		if err != nil {
 			return err
 		}
-		return storage.UpdateProject(ctxWithTx, project)
+		return s.projectStorage.UpdateProject(ctxWithTx, project)
 	})
 	if err != nil {
 		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
@@ -676,60 +597,31 @@ func (s *EnvironmentService) ListProjectsV2(
 		)
 		return nil, err
 	}
-	var filters []*mysql.FilterV2
-	if req.OrganizationId != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "project.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationId,
-		})
-	}
+	var disabled *bool
 	if req.Disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "project.disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Disabled.Value,
-		})
+		v := req.Disabled.Value
+		disabled = &v
 	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"project.id", "project.name", "project.url_code", "project.creator_email"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newProjectListV2Orders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		SearchQuery: searchQuery,
-		Filters:     filters,
-		InFilters:   nil,
-		NullFilters: nil,
-		JSONFilters: nil,
-		Orders:      orders,
+	params := v2es.ListProjectsParams{
+		OrganizationID: req.OrganizationId,
+		Disabled:       disabled,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
 	}
 	projects, nextCursor, totalCount, err := s.projectStorage.ListProjects(
 		ctx,
-		options,
+		params,
 	)
 	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		if errors.Is(err, v2es.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"Failed to list projects",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -743,37 +635,4 @@ func (s *EnvironmentService) ListProjectsV2(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
-}
-
-func (s *EnvironmentService) newProjectListV2Orders(
-	orderBy environmentproto.ListProjectsV2Request_OrderBy,
-	orderDirection environmentproto.ListProjectsV2Request_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case environmentproto.ListProjectsV2Request_DEFAULT,
-		environmentproto.ListProjectsV2Request_NAME:
-		column = "project.name"
-	case environmentproto.ListProjectsV2Request_URL_CODE:
-		column = "project.url_code"
-	case environmentproto.ListProjectsV2Request_ID:
-		column = "project.id"
-	case environmentproto.ListProjectsV2Request_CREATED_AT:
-		column = "project.created_at"
-	case environmentproto.ListProjectsV2Request_UPDATED_AT:
-		column = "project.updated_at"
-	case environmentproto.ListProjectsV2Request_ENVIRONMENT_COUNT:
-		column = "environment_count"
-	case environmentproto.ListProjectsV2Request_FEATURE_COUNT:
-		column = "feature_count"
-	case environmentproto.ListProjectsV2Request_CREATOR_EMAIL:
-		column = "project.creator_email"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == environmentproto.ListProjectsV2Request_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }

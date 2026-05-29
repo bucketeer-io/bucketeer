@@ -47,7 +47,11 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	coderefstorage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	environmentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mysql"
+	environmentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/postgres"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
@@ -321,6 +325,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var featureStorage v2fs.FeatureStorage
 	var segmentStorage v2fs.SegmentStorage
 	var tagStorage tagstorage.TagStorage
+	var envStorage v2es.EnvironmentStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -334,11 +339,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
+		envStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
+		envStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -640,9 +647,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		// TODO: wire CodeReferenceStorage from postgresClient once a postgres impl exists.
 		autoarchive.NewFeatureAutoArchiver(
-			mysqlClient,
+			envStorage,
 			featureStorage,
+			coderefstorage.NewCodeReferenceStorage(mysqlClient),
 			featureClient,
 			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),
