@@ -153,7 +153,12 @@ func (s *AccountService) GetMe(
 			if orgAccount.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 				envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 			} else {
-				envRoles = s.getConsoleAccountEnvironmentRoles(orgAccount.EnvironmentRoles, environments, projects)
+				// System admin who joined as a non-admin member: show every environment in
+				// the org (system admins always have read access), but apply the explicit
+				// member role where one exists so write permissions are respected.
+				envRoles = s.getSystemAdminMemberEnvironmentRoles(
+					orgAccount.EnvironmentRoles, environments, projects,
+				)
 			}
 		case errors.Is(orgErr, v2as.ErrAccountNotFound):
 			s.logger.Warn(
@@ -323,6 +328,38 @@ func (s *AccountService) getConsoleAccountEnvironmentRoles(
 			Environment: env,
 			Role:        r.Role,
 			Project:     project,
+		})
+	}
+	return environmentRoles
+}
+
+func (s *AccountService) getSystemAdminMemberEnvironmentRoles(
+	roles []*accountproto.AccountV2_EnvironmentRole,
+	environments []*environmentproto.EnvironmentV2,
+	projects []*environmentproto.Project,
+) []*accountproto.ConsoleAccount_EnvironmentRole {
+	roleByEnv := make(map[string]accountproto.AccountV2_Role_Environment, len(roles))
+	for _, r := range roles {
+		roleByEnv[r.EnvironmentId] = r.Role
+	}
+	projectSet := s.makeProjectSet(projects)
+	environmentRoles := make([]*accountproto.ConsoleAccount_EnvironmentRole, 0, len(environments))
+	for _, e := range environments {
+		if e.Archived {
+			continue
+		}
+		p, ok := projectSet[e.ProjectId]
+		if !ok || p.Disabled {
+			continue
+		}
+		role, ok := roleByEnv[e.Id]
+		if !ok {
+			role = accountproto.AccountV2_Role_Environment_VIEWER
+		}
+		environmentRoles = append(environmentRoles, &accountproto.ConsoleAccount_EnvironmentRole{
+			Environment: e,
+			Project:     p,
+			Role:        role,
 		})
 	}
 	return environmentRoles
