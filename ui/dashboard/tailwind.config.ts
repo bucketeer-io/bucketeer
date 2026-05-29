@@ -51,23 +51,19 @@ const colors = {
       800: '#171321',
       700: '#1B1725'
     },
-    border: {
-      DEFAULT: '#2B1F45',
-      hover: '#6C46D9'
-    },
     purple: {
-      400: '#B58CFF',
+      100: '#2B1F45',
+      200: '#6C46D9',
+      300: '#7B4FF5',
+      400: '#8B5CF6',
       500: '#9A6FFF',
-      600: '#8B5CF6',
-      700: '#7B4FF5'
+      600: '#B58CFF'
     },
-    text: {
-      primary: '#F2EDF7',
-      secondary: '#B5B0C2',
-      muted: '#7D768E'
-    },
-    icon: {
-      bg: '#B7B6BB'
+    gray: {
+      100: '#7D768E',
+      200: '#B5B0C2',
+      300: '#B7B6BB',
+      400: '#F2EDF7'
     }
   },
   accent: {
@@ -167,6 +163,8 @@ const theme = {
     'border-gray-500': `inset 0 0 0 1px ${colors.gray[500]}`,
     'border-accent-red-500': `inset 0 0 0 1px ${colors.accent.red[500]}`,
     none: 'none',
+    'dark-card': '0px 4px 8px 1px rgba(0, 0, 0, 0.4)',
+    'dark-glow': '0 4px 15px rgba(154, 111, 255, 0.4)',
     tooltip:
       'rgba(29, 29, 29, 0.35) 0px 10px 38px -10px, rgba(29, 29, 29, 0.20) 0px 10px 20px -15px'
   },
