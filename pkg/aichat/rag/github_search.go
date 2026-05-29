@@ -146,6 +146,7 @@ func (g *GitHubSearcher) Search(ctx context.Context, query string, topK int) ([]
 	if len(tokens) == 0 {
 		return nil, nil
 	}
+	tokens = expandQueryTokens(tokens)
 
 	// Score all indexed docs
 	type scored struct {
@@ -346,6 +347,54 @@ func (g *GitHubSearcher) fetchRawDoc(ctx context.Context, docPath string) (index
 		lowerContent: strings.ToLower(content),
 		pathSegments: extractPathSegments(docPath),
 	}, nil
+}
+
+// querySynonyms maps a token to additional tokens that should also be searched.
+// Bucketeer's docs use canonical terminology (e.g. "experiment") that doesn't always
+// match how users phrase questions (e.g. "A/B test"). Expansion bridges that gap
+// without requiring a semantic search backend.
+//
+// Keep this list narrow: only terms that are genuinely interchangeable in the docs
+// domain. Avoid generic words like "test" — they would boost too many docs.
+var querySynonyms = map[string][]string{
+	// A/B testing -> experiments
+	"a/b":         {"experiment", "experiments"},
+	"ab":          {"experiment", "experiments"},
+	"split":       {"experiment", "experiments"},
+	"experiment":  {"a/b"},
+	"experiments": {"a/b"},
+	// Progressive / automated rollout -> auto-operation
+	"progressive": {"auto-operation", "rollout"},
+	"automated":   {"auto-operation"},
+	"autoops":     {"auto-operation"},
+	"automation":  {"auto-operation"},
+	// Variant terminology -> variations
+	"variant":  {"variations"},
+	"variants": {"variations"},
+	// Activity -> audit logs / history
+	"activity": {"audit-logs", "history"},
+	// Webhooks -> trigger (Bucketeer's flag-trigger feature)
+	"webhook":  {"trigger"},
+	"webhooks": {"trigger"},
+}
+
+// expandQueryTokens appends synonym tokens for any token in the input that has
+// entries in querySynonyms. Existing tokens are preserved; duplicates are skipped.
+func expandQueryTokens(tokens []string) []string {
+	seen := make(map[string]bool, len(tokens))
+	for _, t := range tokens {
+		seen[t] = true
+	}
+	expanded := tokens
+	for _, t := range tokens {
+		for _, syn := range querySynonyms[t] {
+			if !seen[syn] {
+				seen[syn] = true
+				expanded = append(expanded, syn)
+			}
+		}
+	}
+	return expanded
 }
 
 // tokenizeQuery splits a query into unique lowercase tokens,
