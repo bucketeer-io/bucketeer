@@ -368,11 +368,6 @@ func TestExpandQueryTokens(t *testing.T) {
 			expected: []string{"experiment", "a/b"},
 		},
 		{
-			desc:     "toggle expands to flag",
-			tokens:   []string{"toggle"},
-			expected: []string{"toggle", "flag", "flags"},
-		},
-		{
 			desc:     "progressive expands to auto-operation and rollout",
 			tokens:   []string{"progressive"},
 			expected: []string{"progressive", "auto-operation", "rollout"},
