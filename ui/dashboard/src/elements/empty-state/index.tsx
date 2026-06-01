@@ -74,11 +74,19 @@ const EmptyStateBody = ({ children }: PropsWithChildren) => {
 };
 
 const EmptyStateTitle = ({ children }: { children: string }) => {
-  return <div className="text-gray-900 typo-head-bold-medium">{children}</div>;
+  return (
+    <div className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-medium">
+      {children}
+    </div>
+  );
 };
 
 const EmptyStateDescription = ({ children }: { children: ReactNode }) => {
-  return <div className="text-gray-600 typo-para-small">{children}</div>;
+  return (
+    <div className="text-gray-600 dark:text-dark-gray-200 typo-para-small">
+      {children}
+    </div>
+  );
 };
 
 const EmptyStateActions = ({ children }: PropsWithChildren) => {
