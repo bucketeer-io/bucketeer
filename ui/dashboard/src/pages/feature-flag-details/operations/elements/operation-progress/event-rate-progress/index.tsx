@@ -22,10 +22,12 @@ const PercentItem = ({
       <div
         className={cn(
           'size-2 rounded-full relative',
-          isActive ? 'bg-accent-pink-500' : 'border border-gray-400 bg-gray-50'
+          isActive
+            ? 'bg-accent-pink-500'
+            : 'border border-gray-400 dark:border-dark-gray-200 bg-gray-50 dark:bg-dark-black-800'
         )}
       >
-        <span className="absolute -top-8 left-1/2 -translate-x-1/2 typo-head-light-small text-gray-700">
+        <span className="absolute -top-8 left-1/2 -translate-x-1/2 typo-head-light-small text-gray-700 dark:text-dark-gray-400">
           {percent}%
         </span>
       </div>
@@ -117,11 +119,11 @@ const EventRateProgress = ({
         />
       </div>
 
-      <div className="bg-gray-100 rounded px-12 pt-16 pb-10 relative">
+      <div className="bg-gray-100 dark:bg-dark-black-700 rounded px-12 pt-16 pb-10 relative">
         <p className="absolute right-10 top-1.5 typo-para-medium text-accent-pink-500">
           {t('form:threshold')}
         </p>
-        <div className="flex h-[4px] bg-gray-200 relative">
+        <div className="flex h-[4px] bg-gray-200 dark:bg-gray-600 relative">
           <div
             className="bg-accent-pink-500 absolute h-1 "
             style={{
