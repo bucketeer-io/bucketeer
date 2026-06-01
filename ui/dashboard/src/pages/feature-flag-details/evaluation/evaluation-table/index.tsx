@@ -41,14 +41,14 @@ const EvaluationTable = ({
   return (
     <div className="flex flex-col gap-y-6 w-full min-w-[650px]">
       <div className="flex items-center w-full gap-x-6">
-        <div className="w-[40%] typo-para-medium text-gray-700">
+        <div className="w-[40%] typo-para-medium text-gray-700 dark:text-dark-gray-300">
           {t('evaluation.variation-counts')}
         </div>
-        <div className="w-[60%] typo-para-medium text-gray-700">
+        <div className="w-[60%] typo-para-medium text-gray-700 dark:text-dark-gray-300">
           <Trans
             i18nKey="table:evaluation.total-evaluations"
             components={{
-              desc: <span className="text-gray-500" />
+              desc: <span className="text-gray-500 dark:text-dark-gray-200" />
             }}
             values={{
               value: `(${timeRangeLabel})`
@@ -63,7 +63,7 @@ const EvaluationTable = ({
         return (
           <div
             key={index}
-            className="flex items-center w-full px-4 py-5 bg-white rounded-lg shadow-card gap-x-6"
+            className="flex items-center w-full px-4 py-5 bg-white dark:bg-dark-black-800 rounded-lg shadow-card dark:shadow-dark-card gap-x-6"
           >
             <div className="flex items-center w-[40%] gap-x-2">
               <Checkbox
@@ -86,7 +86,7 @@ const EvaluationTable = ({
                   content={t('default-value-tooltip')}
                   trigger={
                     <div className="flex items-center gap-x-2">
-                      <p className="typo-para-small text-gray-700">
+                      <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
                         {getVariationLabel(item)}
                       </p>
                       <Icon icon={IconInfo} size={'xs'} color="gray-500" />
@@ -95,12 +95,12 @@ const EvaluationTable = ({
                   className="max-w-[300px]"
                 />
               ) : (
-                <p className="typo-para-small text-gray-700">
+                <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
                   {getVariationLabel(item)}
                 </p>
               )}
             </div>
-            <div className="w-[60%] typo-para-medium text-gray-700">
+            <div className="w-[60%] typo-para-medium text-gray-700 dark:text-dark-gray-300">
               {Number(item.timeseries?.totalCounts || 0)?.toLocaleString()}
             </div>
           </div>

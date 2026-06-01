@@ -4,7 +4,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { EvaluationTimeRange, Feature } from '@types';
+import { EvaluationCounter, EvaluationTimeRange, Feature } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import {
@@ -91,7 +91,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
 
   const variationValues: Option[] = useMemo(
     () =>
-      countData?.map(item => {
+      countData?.map((item: EvaluationCounter) => {
         const variation = feature.variations.find(
           v => v.id === item.variationId
         );
@@ -114,7 +114,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
 
   const chartData = useMemo(
     () =>
-      countData.map(vt => {
+      countData.map((vt: EvaluationCounter) => {
         return vt.timeseries?.values?.map((v: number) => Math.round(v));
       }) || [],
     [countData]
