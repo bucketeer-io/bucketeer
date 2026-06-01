@@ -42,7 +42,7 @@ const InputGroup = ({
           className={cn(
             inputGroupVariants({ addonSlot }),
             'typo-para-medium absolute top-1/2 -translate-y-1/2',
-            'flex items-center text-center text-gray-500',
+            'flex items-center text-center text-gray-500 dark:text-dark-gray-200',
             addonClassName
           )}
         >

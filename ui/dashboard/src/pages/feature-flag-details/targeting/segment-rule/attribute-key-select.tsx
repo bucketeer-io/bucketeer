@@ -2,10 +2,15 @@ import { memo, useRef } from 'react';
 import { components, GroupBase, OptionProps } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
 import { useIsTruncated } from 'hooks/use-is-truncated';
+import { useTheme } from 'hooks/use-theme';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
-import { colorStyles, Option, optionStyle } from 'components/creatable-select';
+import {
+  buildColorStyles,
+  Option,
+  optionStyle
+} from 'components/creatable-select';
 import { Tooltip } from 'components/tooltip';
 import { UserMessage } from '../individual-rule';
 
@@ -25,7 +30,7 @@ const CustomOption = memo((props: OptionProps<Option>) => {
       {...props}
       className={cn(
         'flex items-center justify-between w-full gap-2 px-3 py-1.5 mb-0.5',
-        props.isSelected && 'bg-gray-100'
+        props.isSelected && 'bg-gray-100 dark:!bg-dark-purple-100'
       )}
     >
       {isTruncated ? (
@@ -53,6 +58,9 @@ const AttributeKeySelect = ({
   onCreateOption: (v: string) => void;
 }) => {
   const { t } = useTranslation(['form', 'common', 'table']);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const themedColorStyles = buildColorStyles(isDark);
 
   return (
     <ReactCreatableSelect<Option, false, GroupBase<Option>>
@@ -76,7 +84,7 @@ const AttributeKeySelect = ({
           props.children && (
             <div
               className={cn(
-                'typo-para-tiny text-gray-600 bg-gray-100 relative w-full px-2 py-2.5 mb-2'
+                'typo-para-tiny text-gray-600 dark:text-dark-gray-200 bg-gray-100 dark:bg-dark-black-700 relative w-full px-2 py-2.5 mb-2'
               )}
             >
               {props.children}
@@ -84,8 +92,8 @@ const AttributeKeySelect = ({
           )
       }}
       styles={{
-        option: (styles, props) => optionStyle(styles, props, false),
-        ...colorStyles,
+        option: (styles, props) => optionStyle(styles, props, false, isDark),
+        ...themedColorStyles,
         menu: base => ({
           ...base,
           width: 'auto',
