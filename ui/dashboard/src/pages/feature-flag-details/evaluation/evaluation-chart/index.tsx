@@ -70,6 +70,9 @@ export const EvaluationChart = forwardRef(
     ref: Ref<ChartToggleLegendRef>
   ) => {
     const chartRef = useRef<ChartJS<'line'> | null>(null);
+    const isDark = document.documentElement.classList.contains('dark');
+    const tickColor = isDark ? '#B5B0C2' : '#94A3B8';
+    const gridColor = isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0';
 
     const maxValue = Math.max(...data.flat());
     const useSymlog = maxValue > 100;
@@ -99,6 +102,9 @@ export const EvaluationChart = forwardRef(
           })),
           backgroundColor: color,
           borderColor: color,
+          borderWidth: isDark ? 2.5 : 2,
+          pointRadius: isDark ? 3 : 2,
+          pointHoverRadius: isDark ? 5 : 4,
           fill: false,
           tension: 0.2,
           value: e.value
@@ -160,7 +166,18 @@ export const EvaluationChart = forwardRef(
               size: 14,
               weight: 400
             },
-            color: '#94A3B8'
+            color: tickColor
+          },
+          grid: {
+            display: true,
+            color: isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0',
+            lineWidth: 1,
+            tickWidth: 0
+          },
+          border: {
+            display: true,
+            color: isDark ? 'rgba(181, 176, 194, 0.4)' : '#E2E8F0',
+            width: 1
           }
         },
         y: {
@@ -184,7 +201,7 @@ export const EvaluationChart = forwardRef(
               size: 14,
               weight: 400
             },
-            color: '#94A3B8'
+            color: tickColor
           },
           afterBuildTicks: axis => {
             if (useSymlog) {
@@ -202,9 +219,14 @@ export const EvaluationChart = forwardRef(
           },
           grid: {
             display: true,
-            color: '#E2E8F0',
-            lineWidth: 2,
+            color: gridColor,
+            lineWidth: 1,
             tickWidth: 0
+          },
+          border: {
+            display: true,
+            color: isDark ? 'rgba(181, 176, 194, 0.4)' : '#E2E8F0',
+            width: 1
           }
         }
       }
