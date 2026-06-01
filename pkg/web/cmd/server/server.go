@@ -1547,7 +1547,7 @@ func (s *server) createAuthService(
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	emailConfig *email.Config,
-	credentialsStorage  authstorage.CredentialsStorage,
+	credentialsStorage authstorage.CredentialsStorage,
 	domainPolicyStorage authstorage.DomainPolicyStorage,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
