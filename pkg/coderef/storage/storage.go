@@ -17,21 +17,37 @@ package storage
 
 import (
 	"context"
+	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	coderefproto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
+)
+
+var (
+	ErrCodeReferenceNotFound = bkterr.NewErrorNotFound(
+		bkterr.CoderefPackageName,
+		"code reference not found", "code_reference",
+	)
+	ErrCodeReferenceUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
+		bkterr.CoderefPackageName,
+		"code reference unexpected affected rows",
+	)
+)
+
+// Shared list-query errors returned by CodeReferenceStorage implementations.
+var (
+	ErrInvalidOrderBy = errors.New("coderef/storage: invalid order by")
+	ErrInvalidCursor  = errors.New("coderef/storage: invalid cursor")
 )
 
 type CodeReferenceStorage interface {
-	RunInTransaction(ctx context.Context, f func() error) error
 	CreateCodeReference(ctx context.Context, codeRef *domain.CodeReference) error
 	UpdateCodeReference(ctx context.Context, codeRef *domain.CodeReference) error
 	GetCodeReference(ctx context.Context, id string) (*domain.CodeReference, error)
 	ListCodeReferences(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		params ListCodeReferencesParams,
 	) ([]*domain.CodeReference, int, int64, error)
 	DeleteCodeReference(ctx context.Context, id string) error
 	// GetCodeReferenceCountsByFeatureIDs returns a map of feature ID to code reference count
@@ -41,4 +57,18 @@ type CodeReferenceStorage interface {
 		environmentID string,
 		featureIDs []string,
 	) (map[string]int64, error)
+}
+
+type ListCodeReferencesParams struct {
+	EnvironmentID    string
+	FeatureID        string
+	RepositoryName   string
+	RepositoryOwner  string
+	RepositoryType   coderefproto.CodeReference_RepositoryType
+	RepositoryBranch string
+	FileExtension    string
+	OrderBy          coderefproto.ListCodeReferencesRequest_OrderBy
+	OrderDirection   coderefproto.ListCodeReferencesRequest_OrderDirection
+	PageSize         int
+	Cursor           string
 }
