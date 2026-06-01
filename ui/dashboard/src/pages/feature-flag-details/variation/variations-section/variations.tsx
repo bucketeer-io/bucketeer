@@ -34,7 +34,12 @@ const VariationLabel = ({
   className?: string;
   specificColor?: string;
 }) => (
-  <div className={cn('flex items-center gap-x-2 text-gray-600', className)}>
+  <div
+    className={cn(
+      'flex items-center gap-x-2 text-gray-600 dark:text-dark-gray-400',
+      className
+    )}
+  >
     <FlagVariationPolygon index={index} specificColor={specificColor} />
     <Trans
       i18nKey={'form:feature-flags.variation'}
@@ -379,7 +384,7 @@ const Variations = ({
                               }}
                               defaultLanguage={isYAML ? 'yaml' : 'json'}
                               title={
-                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 font-bold">
+                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 dark:text-dark-gray-400 font-bold">
                                   <FlagVariationPolygon
                                     index={variationIndex}
                                   />
