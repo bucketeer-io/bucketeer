@@ -82,7 +82,7 @@ const ArchiveFlag = ({
 
   return (
     <Card>
-      <p className="typo-head-bold-small text-gray-800">
+      <p className="typo-head-bold-small text-gray-800 dark:text-gray-400">
         {t(feature.archived ? 'unarchive-flag' : 'archive-flag')}
       </p>
       <p className="typo-para-small text-gray-500">
