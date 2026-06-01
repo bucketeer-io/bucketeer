@@ -133,7 +133,7 @@ const RolloutProgress = ({
       </div>
       {!!currentAllocationPercentage.length && isActive && (
         <div className="hover:cursor-pointer typo-para-medium pb-3">
-          <p className="text-gray-600 pb-2">
+          <p className="text-gray-600 dark:text-dark-gray-200 pb-2">
             {t('form:operation.current-variation-title')}
           </p>
           <Tooltip
@@ -174,7 +174,7 @@ const RolloutProgress = ({
               </div>
             }
             trigger={
-              <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
+              <div className="flex items-center w-full p-0.5 border border-gray-400 dark:border-dark-black-700 rounded-full">
                 {currentAllocationPercentage.map(
                   (item: RuleStrategyVariation, index: number) => (
                     <PercentageBar
@@ -190,7 +190,7 @@ const RolloutProgress = ({
           />
         </div>
       )}
-      <div className="p-12 pb-16 bg-gray-100 rounded-lg">
+      <div className="p-12 pb-16 bg-gray-100 dark:bg-dark-black-700 rounded-lg">
         <div className="flex relative h-1">
           <ProgressDateTimePoint
             displayLabel={`${firstSchedule.weight || 0}%`}
