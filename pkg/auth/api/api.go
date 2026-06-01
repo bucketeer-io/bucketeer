@@ -113,6 +113,7 @@ type authService struct {
 	googleAuthenticator auth.Authenticator
 	credentialsStorage  storage.CredentialsStorage
 	domainPolicyStorage storage.DomainPolicyStorage
+	emailConfig         *email.Config
 	emailService        email.Service
 	opts                *options
 	logger              *zap.Logger
@@ -131,7 +132,7 @@ func NewAuthService(
 	environmentStorage envstotage.EnvironmentStorage,
 	config *auth.OAuthConfig,
 	emailConfig *email.Config,
-	credentialsStorage  storage.CredentialsStorage,
+	credentialsStorage storage.CredentialsStorage,
 	domainPolicyStorage storage.DomainPolicyStorage,
 	opts ...Option,
 ) rpc.Service {
@@ -171,6 +172,7 @@ func NewAuthService(
 		),
 		credentialsStorage:  credentialsStorage,
 		domainPolicyStorage: domainPolicyStorage,
+		emailConfig:         emailConfig,
 		emailService:        emailService,
 		opts:                &options,
 		logger:              logger,
