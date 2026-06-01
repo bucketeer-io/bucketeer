@@ -44,7 +44,7 @@ const AuditLogList = memo(
               key={item}
               className="flex flex-col items-center w-full gap-y-6"
             >
-              <p className="typo-para-medium text-gray-600">
+              <p className="typo-para-medium text-gray-600 dark:text-dark-gray-300">
                 {getDateLabel(item)}
               </p>
               <div className="flex flex-col w-full gap-y-2">
