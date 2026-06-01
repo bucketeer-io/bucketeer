@@ -338,6 +338,8 @@ func (s *AccountService) getSystemAdminMemberEnvironmentRoles(
 	environments []*environmentproto.EnvironmentV2,
 	projects []*environmentproto.Project,
 ) []*accountproto.ConsoleAccount_EnvironmentRole {
+	// If the system-admin user belongs to multiple non-system organizations,
+	// we must use the configured environment roles instead of configuring it to `VIEWER`.
 	roleByEnv := make(map[string]accountproto.AccountV2_Role_Environment, len(roles))
 	for _, r := range roles {
 		roleByEnv[r.EnvironmentId] = r.Role
@@ -354,6 +356,7 @@ func (s *AccountService) getSystemAdminMemberEnvironmentRoles(
 		}
 		role, ok := roleByEnv[e.Id]
 		if !ok {
+			// Only set to `VIEWER` if the system-admin user doesn't belong to the target organization.
 			role = accountproto.AccountV2_Role_Environment_VIEWER
 		}
 		environmentRoles = append(environmentRoles, &accountproto.ConsoleAccount_EnvironmentRole{
