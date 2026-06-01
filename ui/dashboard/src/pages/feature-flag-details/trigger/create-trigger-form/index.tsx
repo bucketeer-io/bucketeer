@@ -48,7 +48,7 @@ const CreateTriggerForm = forwardRef(
           label: (
             <div className="flex items-center w-full gap-x-2">
               <Icon icon={IconWebhook} />
-              <p className="text-gray-600 typo-para-medium truncate">{`${t('trigger.dropdown-desc')}`}</p>
+              <p className="text-gray-600 dark:text-dark-gray-400 typo-para-medium">{`${t('trigger.dropdown-desc')}`}</p>
             </div>
           ),
           value: TriggerType.WEBHOOK
@@ -144,7 +144,10 @@ const CreateTriggerForm = forwardRef(
 
     useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
     return (
-      <div ref={ref} className="w-full  p-6 border border-gray-400 rounded-lg">
+      <div
+        ref={ref}
+        className="w-full p-6 border border-gray-400 dark:border-dark-black-700 rounded-lg dark:bg-dark-black-800"
+      >
         <FormProvider {...form}>
           <Form
             onSubmit={form.handleSubmit(onSubmit)}
