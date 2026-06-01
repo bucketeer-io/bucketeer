@@ -35,7 +35,7 @@ const SubmitBar = ({
   return (
     <div className="flex items-center justify-between w-full gap-x-6">
       <div className="flex items-center gap-x-2">
-        <h3 className="typo-head-bold-small text-gray-800">
+        <h3 className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
           {t('table:feature-flags.variation')}
         </h3>
         <Tooltip
@@ -56,9 +56,12 @@ const SubmitBar = ({
         />
         {currentOption && <Icon icon={currentOption?.icon} size="sm" />}
         <p
-          className={cn('typo-para-small text-gray-600', {
-            uppercase: feature.variationType === 'JSON'
-          })}
+          className={cn(
+            'typo-para-small text-gray-600 dark:text-dark-gray-200',
+            {
+              uppercase: feature.variationType === 'JSON'
+            }
+          )}
         >
           {currentOption?.label}
         </p>

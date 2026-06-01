@@ -8,7 +8,7 @@ const VariationsSection = ({
   isRunningExperiment
 }: VariationProps) => {
   return (
-    <Card className="divide-y divide-gray-900/10">
+    <Card className="divide-y divide-gray-900/10 dark:divide-dark-black-700">
       <VariationList
         editable={editable}
         feature={feature}
