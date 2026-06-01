@@ -18,8 +18,8 @@ const SDKApiEndpoint = () => {
     });
   }, [urls]);
   return (
-    <div className="flex items-center gap-x-2 p-2 bg-gray-100 rounded">
-      <p className="typo-para-small text-gray-600 whitespace-nowrap">
+    <div className="flex items-center gap-x-2 p-2 bg-gray-100 dark:bg-dark-black-700 rounded">
+      <p className="typo-para-small text-gray-600 dark:text-dark-gray-200 whitespace-nowrap">
         {t('sdk-api-endpoint')}
         {isJapaneseLanguage ? '：' : ':'}
       </p>

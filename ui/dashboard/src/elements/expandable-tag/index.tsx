@@ -28,7 +28,7 @@ export const Tag = ({
     <div
       id={tagId}
       className={cn(
-        'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap border border-transparent',
+        'px-2 py-1.5 bg-primary-100/70 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-400 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap border border-transparent',
         className
       )}
       onClick={onTagClick}
@@ -102,7 +102,9 @@ const ExpandableTag = ({
       </div>
       {tags.length > 3 && (
         <div
-          className={cn('flex-center cursor-pointer hover:bg-gray-200 rounded')}
+          className={cn(
+            'flex-center cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-purple-100 rounded'
+          )}
           onClick={handleExpandTag}
         >
           <Icon
