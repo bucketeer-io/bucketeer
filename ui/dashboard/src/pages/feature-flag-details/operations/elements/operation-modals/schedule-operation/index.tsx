@@ -422,7 +422,7 @@ const ScheduleOperationModal = ({
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-y-5 w-full p-5 pb-28">
-            <div className="flex items-center gap-x-4 typo-head-bold-small text-gray-800">
+            <div className="flex items-center gap-x-4 typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
               <Trans
                 i18nKey={'form:feature-flags.current-state'}
                 values={{
@@ -432,9 +432,10 @@ const ScheduleOperationModal = ({
                   comp: (
                     <div
                       className={cn(
-                        'flex-center typo-para-small text-gray-600 px-2 py-[1px] border border-gray-400 rounded mb-[-4px]',
+                        'flex-center typo-para-small text-gray-600 dark:text-dark-gray-200 px-2 py-[1px] border border-gray-400 dark:border-dark-black-700 rounded mb-[-4px]',
                         {
-                          'bg-primary-500 text-white': isEnabledFlag
+                          'bg-primary-500 text-white dark:text-white':
+                            isEnabledFlag
                         }
                       )}
                     />
@@ -461,13 +462,13 @@ const ScheduleOperationModal = ({
                       >
                         <div className="flex items-center gap-x-2">
                           <RadioGroupItem value={ScheduleType.ONE_TIME} />
-                          <span className="typo-para-medium text-gray-700">
+                          <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                             {t('feature-flags.one-time')}
                           </span>
                         </div>
                         <div className="flex items-center gap-x-2">
                           <RadioGroupItem value={ScheduleType.RECURRING} />
-                          <span className="typo-para-medium text-gray-700">
+                          <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                             {t('feature-flags.recurring')}
                           </span>
                         </div>
@@ -489,7 +490,7 @@ const ScheduleOperationModal = ({
               />
             )}
           </div>
-          <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+          <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={
                 <Button type="button" variant="secondary" onClick={onClose}>
