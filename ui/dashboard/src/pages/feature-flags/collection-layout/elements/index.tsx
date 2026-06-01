@@ -54,7 +54,7 @@ export const GridViewRoot = ({ children }: PropsWithChildren) => (
 );
 
 export const GridViewRow = ({ children }: PropsWithChildren) => (
-  <div className="grid grid-cols-12 items-center w-full max-w-full p-5 gap-x-10 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
+  <div className="grid grid-cols-12 items-center w-full max-w-full p-5 gap-x-10 xxl:gap-x-10 rounded shadow-card dark:shadow-dark-card bg-white dark:bg-dark-black-800 self-stretch">
     {children}
   </div>
 );
@@ -66,7 +66,12 @@ export const FlagDataTypeIcon = ({
   icon: FunctionComponent;
   className?: string;
 }) => (
-  <div className={cn('flex-center size-8 bg-primary-50 rounded-md', className)}>
+  <div
+    className={cn(
+      'flex-center size-8 bg-primary-50 dark:bg-dark-purple-100 rounded-md',
+      className
+    )}
+  >
     <Icon icon={icon} size={'xxs'} color="primary-500" />
   </div>
 );
@@ -78,7 +83,7 @@ export const FlagIconWrapper = ({
 }: IconProps) => (
   <div
     className={cn(
-      'flex-center size-[26px] min-w-[26px] bg-primary-50 rounded-md',
+      'flex-center size-[26px] min-w-[26px] bg-primary-50 dark:bg-dark-purple-100 rounded-md',
       className
     )}
   >
@@ -103,9 +108,12 @@ export const FlagStatus = ({ status }: { status: FeatureActivityStatus }) => {
       className={cn(
         'flex items-center w-fit min-w-fit gap-x-1 px-2 py-1.5 rounded-[3px] relative',
         {
-          'bg-accent-green-50 text-accent-green-500': isActive,
-          'bg-accent-yellow-50 text-accent-yellow-500': isInActive,
-          'bg-accent-blue-50 text-accent-blue-500': isNeverUsed
+          'bg-accent-green-50 dark:bg-accent-green-900/30 text-accent-green-500':
+            isActive,
+          'bg-accent-yellow-50 dark:bg-accent-yellow-900/30 text-accent-yellow-500':
+            isInActive,
+          'bg-accent-blue-50 dark:bg-accent-blue-900/30 text-accent-blue-500':
+            isNeverUsed
         }
       )}
     >
@@ -136,7 +144,7 @@ export const FlagVariationPolygon = ({
         zIndex: index
       }}
       className={cn(
-        'flex-center size-[14px] min-w-[14px] border border-gray-200 rounded rotate-45',
+        'flex-center size-[14px] min-w-[14px] border border-gray-200 dark:border-dark-black-700 rounded rotate-45',
         className
       )}
     />
@@ -194,7 +202,7 @@ const FlagIdElement = ({ id }: { id: string }) => {
     });
   };
   return (
-    <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
+    <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 dark:text-dark-gray-200 group select-none">
       <p className="truncate">{truncateBySide(id, 55)}</p>
       <button
         type="button"
@@ -303,7 +311,9 @@ export const FlagVariationsElement = ({
 
   if (!variationCount)
     return (
-      <p className="typo-para-small text-gray-700">{t('no-variations')}</p>
+      <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
+        {t('no-variations')}
+      </p>
     );
   if (variationCount === 1) {
     const currentVariation = variations[variationCount - 1];
@@ -312,7 +322,7 @@ export const FlagVariationsElement = ({
         <div className="flex-center size-4">
           <FlagVariationPolygon index={0} />
         </div>
-        <p className="typo-para-small text-gray-700 truncate flex-1">
+        <p className="typo-para-small text-gray-700 dark:text-dark-gray-300 truncate flex-1">
           {currentVariation.name || currentVariation.value}
         </p>
       </div>
@@ -331,7 +341,7 @@ export const FlagVariationsElement = ({
                 <FlagVariationPolygon key={index} index={index} />
               ))}
             </div>
-            <p className="typo-para-small whitespace-nowrap text-gray-700">
+            <p className="typo-para-small whitespace-nowrap text-gray-700 dark:text-dark-gray-300">
               {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
             </p>
             <div className="flex-center size-fit">
@@ -435,10 +445,10 @@ export const FlagOperationsElement = ({
                 }
                 className={
                   isSchedule
-                    ? 'bg-primary-50'
+                    ? 'bg-primary-50 dark:bg-dark-purple-100'
                     : isRollout
-                      ? 'bg-accent-blue-50'
-                      : 'bg-accent-pink-50'
+                      ? 'bg-accent-blue-50 dark:bg-accent-blue-900/30'
+                      : 'bg-accent-pink-50 dark:bg-accent-pink-900/30'
                 }
               />
             }
