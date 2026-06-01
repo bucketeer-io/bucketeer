@@ -302,8 +302,12 @@ func listCodeReferencesQueryFromParams(
 		cursor = "0"
 	}
 	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	if err != nil || offset < 0 {
 		return nil, nil, 0, 0, storage.ErrInvalidCursor
 	}
-	return whereParts, orders, p.PageSize, offset, nil
+	limit := p.PageSize
+	if limit < 0 {
+		limit = 0
+	}
+	return whereParts, orders, limit, offset, nil
 }

@@ -221,6 +221,17 @@ func TestListCodeReferencesMySQL(t *testing.T) {
 			expectedErr:    storage.ErrInvalidCursor,
 		},
 		{
+			desc:  "error: negative cursor",
+			setup: nil,
+			params: storage.ListCodeReferencesParams{
+				PageSize: 10,
+				Cursor:   "-1",
+			},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    storage.ErrInvalidCursor,
+		},
+		{
 			desc: "error: query",
 			setup: func(s *codeReferenceStorage) {
 				s.qe.(*mock.MockClient).EXPECT().QueryContext(

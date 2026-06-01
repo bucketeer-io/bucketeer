@@ -311,11 +311,15 @@ func listCodeReferencesOptionsFromParams(
 		cursor = "0"
 	}
 	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	if err != nil || offset < 0 {
 		return nil, storage.ErrInvalidCursor
 	}
+	limit := p.PageSize
+	if limit < 0 {
+		limit = 0
+	}
 	return &pgstorage.ListOptions{
-		Limit:   p.PageSize,
+		Limit:   limit,
 		Offset:  offset,
 		Filters: filters,
 		Orders:  []*pgstorage.Order{pgstorage.NewOrder(column, direction)},
