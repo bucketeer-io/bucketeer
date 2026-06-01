@@ -68,6 +68,9 @@ import (
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor"
+	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
+	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
+	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
@@ -326,6 +329,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var segmentStorage v2fs.SegmentStorage
 	var tagStorage tagstorage.TagStorage
 	var envStorage v2es.EnvironmentStorage
+	var opsCountStorage v2os.OpsCountStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -340,12 +344,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 		envStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
+		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
 		envStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
+		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -575,7 +581,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		opsevent.NewEventCountWatcher(
-			mysqlClient,
+			opsCountStorage,
 			environmentClient,
 			autoOpsClient,
 			eventCounterClient,

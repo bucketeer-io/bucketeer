@@ -71,6 +71,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
+	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
+	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
+	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -576,6 +579,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var projectStorage v2es.ProjectStorage
 	var orgStorage v2es.OrganizationStorage
 	var environmentStorage v2es.EnvironmentStorage
+	var opsCountStorage v2os.OpsCountStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -598,6 +602,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		projectStorage = environmentpostgres.NewProjectStorage(postgresClient)
 		orgStorage = environmentpostgres.NewOrganizationStorage(postgresClient)
 		environmentStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
+		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -613,6 +618,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		projectStorage = environmentmysql.NewProjectStorage(mysqlClient)
 		orgStorage = environmentmysql.NewOrganizationStorage(mysqlClient)
 		environmentStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
+		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -826,6 +832,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
+		opsCountStorage,
 		featureStorage,
 		featureClient,
 		experimentClient,

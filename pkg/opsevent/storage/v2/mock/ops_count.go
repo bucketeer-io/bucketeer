@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	autoops "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
@@ -44,9 +44,9 @@ func (m *MockOpsCountStorage) EXPECT() *MockOpsCountStorageMockRecorder {
 }
 
 // ListOpsCounts mocks base method.
-func (m *MockOpsCountStorage) ListOpsCounts(ctx context.Context, options *mysql.ListOptions) ([]*autoops.OpsCount, int, error) {
+func (m *MockOpsCountStorage) ListOpsCounts(ctx context.Context, params v2.ListOpsCountsParams) ([]*autoops.OpsCount, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOpsCounts", ctx, options)
+	ret := m.ctrl.Call(m, "ListOpsCounts", ctx, params)
 	ret0, _ := ret[0].([]*autoops.OpsCount)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -54,9 +54,9 @@ func (m *MockOpsCountStorage) ListOpsCounts(ctx context.Context, options *mysql.
 }
 
 // ListOpsCounts indicates an expected call of ListOpsCounts.
-func (mr *MockOpsCountStorageMockRecorder) ListOpsCounts(ctx, options any) *gomock.Call {
+func (mr *MockOpsCountStorageMockRecorder) ListOpsCounts(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOpsCounts", reflect.TypeOf((*MockOpsCountStorage)(nil).ListOpsCounts), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOpsCounts", reflect.TypeOf((*MockOpsCountStorage)(nil).ListOpsCounts), ctx, params)
 }
 
 // UpsertOpsCount mocks base method.

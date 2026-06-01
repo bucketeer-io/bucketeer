@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -23,74 +23,102 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
-func TestNewOpsEventStorage(t *testing.T) {
+func TestNewOpsCountStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	db := NewOpsCountStorage(mock.NewMockClient(mockController))
-	assert.IsType(t, &opsCountStorage{}, db)
+	s := NewOpsCountStorage(mock.NewMockQueryExecer(mockController))
+	assert.IsType(t, &opsCountStorage{}, s)
 }
 
-func TestUpsertOpsCount(t *testing.T) {
+func TestUpsertOpsCountMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup         func(*opsCountStorage)
-		input         *domain.OpsCount
-		environmentId string
-		expectedErr   error
+		desc        string
+		setup       func(*opsCountStorage)
+		expectedErr error
 	}{
 		{
+			desc: "error",
+			setup: func(s *opsCountStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "success",
 			setup: func(s *opsCountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
-			input:         &domain.OpsCount{OpsCount: &proto.OpsCount{}},
-			environmentId: "ns",
-			expectedErr:   nil,
+			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
-		storage := newOpsCountStorageWithMock(t, mockController)
-		if p.setup != nil {
-			p.setup(storage)
-		}
-		err := storage.UpsertOpsCount(context.Background(), p.environmentId, p.input)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			s := &opsCountStorage{qe: mock.NewMockQueryExecer(mockController)}
+			p.setup(s)
+			err := s.UpsertOpsCount(context.Background(), "env-1", &domain.OpsCount{
+				OpsCount: &proto.OpsCount{},
+			})
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
-func TestListOpsCounts(t *testing.T) {
+func TestListOpsCountsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
 	patterns := []struct {
+		desc           string
 		setup          func(*opsCountStorage)
-		options        *mysql.ListOptions
+		params         v2os.ListOpsCountsParams
 		expected       []*proto.OpsCount
 		expectedCursor int
 		expectedErr    error
 	}{
 		{
+			desc:  "error: invalid cursor",
+			setup: nil,
+			params: v2os.ListOpsCountsParams{
+				PageSize: 10,
+				Cursor:   "invalid",
+			},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    v2os.ErrInvalidCursor,
+		},
+		{
+			desc: "error: query",
 			setup: func(s *opsCountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params: v2os.ListOpsCountsParams{
+				PageSize:      10,
+				Cursor:        "0",
+				EnvironmentID: "env-1",
+			},
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
 		{
+			desc: "success",
 			setup: func(s *opsCountStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -100,22 +128,12 @@ func TestListOpsCounts(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			options: &mysql.ListOptions{
-				Limit:  10,
-				Offset: 5,
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "num",
-						Operator: mysql.OperatorGreaterThanOrEqual,
-						Value:    5,
-					},
-				},
-				Orders: []*mysql.Order{
-					{
-						Column:    "id",
-						Direction: mysql.OrderDirectionAsc,
-					},
-				},
+			params: v2os.ListOpsCountsParams{
+				PageSize:       10,
+				Cursor:         "5",
+				EnvironmentID:  "env-1",
+				FeatureIDs:     []string{"ftr-1", "ftr-2"},
+				AutoOpsRuleIDs: []string{"rule-1"},
 			},
 			expected:       []*proto.OpsCount{},
 			expectedCursor: 5,
@@ -123,21 +141,15 @@ func TestListOpsCounts(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		storage := newOpsCountStorageWithMock(t, mockController)
-		if p.setup != nil {
-			p.setup(storage)
-		}
-		opsCounts, cursor, err := storage.ListOpsCounts(
-			context.Background(),
-			p.options,
-		)
-		assert.Equal(t, p.expected, opsCounts)
-		assert.Equal(t, p.expectedCursor, cursor)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			s := &opsCountStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(s)
+			}
+			opsCounts, cursor, err := s.ListOpsCounts(context.Background(), p.params)
+			assert.Equal(t, p.expected, opsCounts)
+			assert.Equal(t, p.expectedCursor, cursor)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
-}
-
-func newOpsCountStorageWithMock(t *testing.T, mockController *gomock.Controller) *opsCountStorage {
-	t.Helper()
-	return &opsCountStorage{mock.NewMockQueryExecer(mockController)}
 }
