@@ -86,12 +86,12 @@ const AuditLogItem = memo(
 
     const buttonCls = useMemo(
       () =>
-        'typo-para-medium !text-gray-600 !shadow-none border border-gray-200 hover:border-gray-400',
+        'typo-para-medium !text-gray-600 dark:!text-dark-gray-300 !shadow-none border border-gray-200 dark:border-dark-black-700 hover:border-gray-400 dark:hover:border-dark-purple-300',
       []
     );
     const buttonActiveCls = useMemo(
       () =>
-        '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500',
+        '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 dark:!text-dark-purple-400 dark:border-dark-purple-300 dark:hover:!text-dark-purple-400 dark:hover:border-dark-purple-300 dark:bg-dark-purple-200/20',
       []
     );
 
@@ -133,7 +133,7 @@ const AuditLogItem = memo(
     return (
       <div
         className={cn(
-          'flex flex-col w-full p-3 bg-white shadow-card rounded-lg h-[73px] min-h-[73px] transition-all duration-100',
+          'flex flex-col w-full p-3 bg-white dark:bg-dark-black-800 shadow-card dark:shadow-dark-card rounded-lg h-[73px] min-h-[73px] transition-all duration-100',
           {
             'h-fit min-h-[179px]': isExpanded && isHaveEntityData,
             'h-fit': !!options.comment
@@ -148,7 +148,7 @@ const AuditLogItem = memo(
           >
             <div
               className={cn(
-                'flex items-center gap-x-1.5 w-fit max-w-full typo-para-medium font-normal text-gray-700 truncate cursor-default',
+                'flex items-center gap-x-1.5 w-fit max-w-full typo-para-medium font-normal text-gray-700 dark:text-dark-gray-400 truncate cursor-default',
                 {
                   'gap-x-0': isLanguageJapanese
                 }
@@ -175,14 +175,16 @@ const AuditLogItem = memo(
               trigger={
                 <div className="flex items-center gap-x-1 w-fit cursor-default">
                   <Icon icon={IconWatch} size={'sm'} />
-                  <p className="typo-para-small text-gray-500">{time}</p>
+                  <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
+                    {time}
+                  </p>
                 </div>
               }
               date={timestamp}
             />
           </div>
           {isHaveEntityData && (
-            <div className="flex items-center min-w-fit divide-x divide-gray-200">
+            <div className="flex items-center min-w-fit divide-x divide-gray-200 dark:divide-dark-black-700">
               <Tooltip
                 align="end"
                 sideOffset={-6}
@@ -218,7 +220,7 @@ const AuditLogItem = memo(
         </div>
         {options.comment && (
           <div className="pt-3 cursor-pointer" onClick={onClick}>
-            <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
+            <div className="flex items-center w-full p-3 bg-gray-100 dark:bg-dark-black-700 rounded typo-para-small text-gray-600 dark:text-dark-gray-300 break-all border-l-4 border-gray-500 dark:border-dark-purple-300">
               {options.comment}
             </div>
           </div>
@@ -240,7 +242,7 @@ const AuditLogItem = memo(
                 )}
                 onClick={handleOnExpandAuditLog}
               >
-                <p className="typo-para-small text-gray-500 uppercase cursor-default">
+                <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 uppercase cursor-default">
                   {t(
                     currentTab === AuditLogTab.SNAPSHOT
                       ? 'current-version'
