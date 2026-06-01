@@ -207,7 +207,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
         <FormLoading />
       ) : (
         <div className="w-full p-5">
-          <p className="text-gray-600 typo-para-small">
+          <p className="text-gray-600 dark:text-dark-gray-300 typo-para-small">
             {t('form:feature-flags.clone-desc')}
           </p>
           <FormProvider {...form}>
@@ -288,7 +288,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                 )}
               />
 
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button variant="secondary" onClick={onClose}>
