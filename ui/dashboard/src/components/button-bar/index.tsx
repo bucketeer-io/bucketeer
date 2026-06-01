@@ -11,7 +11,12 @@ export const ButtonBar = ({
   className?: string;
 }) => {
   return (
-    <div className={cn('p-5 border-t border-gray-200 w-full', className)}>
+    <div
+      className={cn(
+        'p-5 border-t border-gray-200 dark:border-dark-black-700 w-full',
+        className
+      )}
+    >
       <div className="flex items-center gap-4 justify-end">
         {primaryButton}
         {secondaryButton}

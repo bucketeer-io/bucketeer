@@ -17,7 +17,7 @@ const RolloutWarning = ({
 }) => {
   const { t } = useTranslation(['form']);
   return (
-    <div className="flex w-full gap-x-3 p-4 rounded-md bg-accent-yellow-50 typo-para-small text-accent-yellow-700">
+    <div className="flex w-full gap-x-3 p-4 rounded-md bg-accent-yellow-50 dark:bg-accent-yellow-900/30 typo-para-small text-accent-yellow-700">
       <Icon icon={IconToastWarning} />
       <div className="flex flex-col flex-1">
         <p className="font-bold">{t('rollout-warning-title')}</p>

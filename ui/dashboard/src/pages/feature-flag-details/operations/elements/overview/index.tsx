@@ -66,11 +66,13 @@ const Overview = ({
           <OverviewCard
             key={index}
             title={
-              <p className="typo-head-bold-medium text-gray-900">
+              <p className="typo-head-bold-medium text-gray-900 dark:text-dark-gray-400">
                 {t(titleKey)}
               </p>
             }
-            description={<p>{t(description)}</p>}
+            description={
+              <p className="dark:text-dark-gray-200">{t(description)}</p>
+            }
             color={color}
             icon={icon}
             iconSize={iconSize}

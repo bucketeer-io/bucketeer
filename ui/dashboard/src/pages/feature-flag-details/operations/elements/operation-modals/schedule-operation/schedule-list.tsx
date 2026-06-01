@@ -16,7 +16,7 @@ import Icon from 'components/icon';
 
 const WarningMessage = ({ description }: { description: string }) => {
   return (
-    <div className="flex items-center w-full p-3 gap-x-2 rounded border-l-4 border-accent-yellow-600 bg-accent-yellow-50">
+    <div className="flex items-center w-full p-3 gap-x-2 rounded border-l-4 border-accent-yellow-600 bg-accent-yellow-50 dark:bg-accent-yellow-900/30">
       <Icon icon={IconInfoFilled} size={'xxs'} color="accent-yellow-600" />
       <p className="typo-para-medium text-accent-yellow-600">{description}</p>
     </div>
@@ -127,7 +127,7 @@ const ScheduleList = ({
 
   return (
     <>
-      <p className="typo-head-bold-small text-gray-800">
+      <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
         {t('feature-flags.schedule')}
       </p>
       <Form.Field
