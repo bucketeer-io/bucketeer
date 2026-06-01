@@ -21,11 +21,11 @@ const PopoverItemWrapper = ({
   return (
     <div
       className={cn(
-        'flex cursor-pointer items-center gap-x-2 p-2 text-gray-700',
-        'hover:bg-primary-50 [&>*]:hover:text-primary-500',
+        'flex cursor-pointer items-center gap-x-2 p-2 text-gray-700 dark:text-dark-gray-300',
+        'hover:bg-primary-50 dark:hover:bg-dark-purple-100 [&>*]:hover:text-primary-500 dark:[&>*]:hover:text-dark-purple-400',
         {
           'flex-row-reverse': addonSlot === 'right',
-          '!bg-transparent !text-gray-400 [&>*]:hover:!text-gray-400 cursor-not-allowed':
+          '!bg-transparent !text-gray-400 dark:!text-dark-gray-200 [&>*]:hover:!text-gray-400 dark:[&>*]:hover:!text-dark-gray-200 cursor-not-allowed':
             disabled
         }
       )}
@@ -68,7 +68,9 @@ const PopoverItem = ({
         <span
           className={cn(
             'flex size-5 items-center justify-center',
-            disabled ? 'text-gray-400' : 'text-gray-600'
+            disabled
+              ? 'text-gray-400 dark:text-dark-gray-200'
+              : 'text-gray-600 dark:text-dark-gray-300'
           )}
         >
           <Icon
