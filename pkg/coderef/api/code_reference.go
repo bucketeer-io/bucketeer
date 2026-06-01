@@ -27,7 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -100,8 +99,7 @@ func (s *CodeReferenceService) GetCodeReference(
 	if err := validateGetCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
-	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
-	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id)
+	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 			return nil, statusNotFound.Err()
@@ -136,50 +134,29 @@ func (s *CodeReferenceService) ListCodeReferences(
 	if err := validateListCodeReferencesRequest(req); err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-		mysql.NewFilter("feature_id", "=", req.FeatureId),
-	}
-	if req.RepositoryName != "" {
-		whereParts = append(whereParts, mysql.NewFilter("repository_name", "=", req.RepositoryName))
-	}
-	if req.RepositoryOwner != "" {
-		whereParts = append(whereParts, mysql.NewFilter("repository_owner", "=", req.RepositoryOwner))
-	}
-	if req.RepositoryType != proto.CodeReference_REPOSITORY_TYPE_UNSPECIFIED {
-		whereParts = append(whereParts, mysql.NewFilter("repository_type", "=", req.RepositoryType))
-	}
-	if req.RepositoryBranch != "" {
-		whereParts = append(whereParts, mysql.NewFilter("repository_branch", "=", req.RepositoryBranch))
-	}
-	if req.FileExtension != "" {
-		whereParts = append(whereParts, mysql.NewFilter("file_extension", "=", req.FileExtension))
-	}
-	orders := []*mysql.Order{mysql.NewOrder("id", mysql.OrderDirectionAsc)}
-	switch req.OrderBy {
-	case proto.ListCodeReferencesRequest_CREATED_AT:
-		orders = []*mysql.Order{mysql.NewOrder("created_at", s.toMySQLOrderDirection(req.OrderDirection))}
-	case proto.ListCodeReferencesRequest_UPDATED_AT:
-		orders = []*mysql.Order{mysql.NewOrder("updated_at", s.toMySQLOrderDirection(req.OrderDirection))}
-	}
-	limit := int(req.PageSize)
-	cursor := 0
-	if req.Cursor != "" {
-		c, err := strconv.Atoi(req.Cursor)
-		if err != nil {
-			return nil, statusInvalidCursor.Err()
-		}
-		cursor = c
-	}
-	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
-	codeRefs, nextCursor, totalCount, err := codeRefStorage.ListCodeReferences(
+	codeRefs, nextCursor, totalCount, err := s.codeRefStorage.ListCodeReferences(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		cursor,
+		storage.ListCodeReferencesParams{
+			EnvironmentID:    req.EnvironmentId,
+			FeatureID:        req.FeatureId,
+			RepositoryName:   req.RepositoryName,
+			RepositoryOwner:  req.RepositoryOwner,
+			RepositoryType:   req.RepositoryType,
+			RepositoryBranch: req.RepositoryBranch,
+			FileExtension:    req.FileExtension,
+			OrderBy:          req.OrderBy,
+			OrderDirection:   req.OrderDirection,
+			PageSize:         int(req.PageSize),
+			Cursor:           req.Cursor,
+		},
 	)
 	if err != nil {
+		if errors.Is(err, storage.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, storage.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list code references",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -241,8 +218,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
-	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
+	if err := s.codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
 		s.logger.Error(
 			"Failed to create code reference",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -314,12 +290,11 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	if err := validateUpdateCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
-	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	var codeRef *domain.CodeReference
 	var updatedCodeRef *domain.CodeReference
-	err = codeRefStorage.RunInTransaction(ctx, func() error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
-		codeRef, err = codeRefStorage.GetCodeReference(ctx, req.Id)
+		codeRef, err = s.codeRefStorage.GetCodeReference(ctxWithTx, req.Id)
 		if err != nil {
 			if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 				return statusNotFound.Err()
@@ -354,7 +329,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 			)
 			return api.NewGRPCStatus(err).Err()
 		}
-		if err := codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
+		if err := s.codeRefStorage.UpdateCodeReference(ctxWithTx, updatedCodeRef); err != nil {
 			s.logger.Error(
 				"Failed to update code reference",
 				log.FieldsFromIncomingContext(ctx).AddFields(
@@ -426,8 +401,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := validateDeleteCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
-	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
-	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id)
+	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 			return nil, statusNotFound.Err()
@@ -442,7 +416,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id); err != nil {
+	if err := s.codeRefStorage.DeleteCodeReference(ctx, codeRef.Id); err != nil {
 		s.logger.Error(
 			"Failed to delete code reference",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -484,13 +458,4 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.DeleteCodeReferenceResponse{}, nil
-}
-
-func (s *CodeReferenceService) toMySQLOrderDirection(
-	d proto.ListCodeReferencesRequest_OrderDirection,
-) mysql.OrderDirection {
-	if d == proto.ListCodeReferencesRequest_DESC {
-		return mysql.OrderDirectionDesc
-	}
-	return mysql.OrderDirectionAsc
 }
