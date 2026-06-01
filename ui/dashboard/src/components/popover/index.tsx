@@ -46,7 +46,7 @@ const PopoverContent = React.forwardRef<
     align={align}
     sideOffset={sideOffset}
     className={cn(
-      'max-h-[260px] min-w-[167px] overflow-auto rounded-lg bg-gray-50 p-1 shadow-dropdown',
+      'max-h-[260px] min-w-[167px] overflow-auto rounded-lg bg-gray-50 dark:bg-dark-black-800 p-1 shadow-dropdown dark:shadow-dark-card dark:border dark:border-dark-black-700',
       className
     )}
     {...props}
@@ -115,7 +115,7 @@ const Popover = forwardRef(
       <PopoverRoot modal={modal} onOpenChange={onOpenChange}>
         <PopoverTrigger
           className={cn(
-            'typo-para-small flex items-center justify-center gap-x-2 text-gray-700 hover:text-gray-600 hover:drop-shadow disabled:cursor-not-allowed',
+            'typo-para-small flex items-center justify-center gap-x-2 text-gray-700 dark:text-dark-gray-300 hover:text-gray-600 dark:hover:text-dark-gray-400 hover:drop-shadow disabled:cursor-not-allowed',
             {
               'flex-row-reverse': addonSlot === 'right',
               'w-full justify-between': expand === 'full'
