@@ -20,7 +20,7 @@ const TextArea = forwardRef(
           ref={ref}
           {...props}
           id={id}
-          className="p-3 border border-gray-400 dark:border-dark-purple-100 rounded-lg w-full text-gray-700 dark:text-dark-gray-400 bg-white dark:bg-dark-black-800 typo-para-medium resize-none focus:outline-none focus:border-primary-500 dark:focus:border-dark-purple-300 placeholder:text-gray-400 dark:placeholder:text-dark-gray-200 disabled:bg-gray-100 dark:disabled:bg-dark-black-700 disabled:text-gray-400 dark:disabled:text-dark-gray-200"
+          className="p-3 border border-gray-400 dark:border-dark-purple-100 rounded-lg w-full text-gray-700 dark:text-dark-gray-400 bg-white dark:bg-dark-black-900 typo-para-medium resize-none focus:outline-none focus:border-primary-500 dark:focus:border-dark-purple-300 placeholder:text-gray-400 dark:placeholder:text-dark-gray-200 disabled:bg-gray-100 dark:disabled:bg-dark-black-700 disabled:text-gray-400 dark:disabled:text-dark-gray-200"
         />
         {IconLeft && (
           <button onClick={onClickIcon}>
