@@ -682,6 +682,117 @@ func TestGetMeMySQL(t *testing.T) {
 				pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "db is down"),
 			).Err(),
 		},
+		{
+			// Regression: a system admin joined as a non-admin member with editor access
+			// on ns0 only must still see ns1 (as viewer), since system admins always have
+			// read access to every environment in the org.
+			desc: "success: system admin non-admin member sees all envs with member role applied",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				envClient := s.environmentClient.(*ecmock.MockClient)
+				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				email := "bucketeer@example.com"
+				sysAdminOrgID := "sys-org"
+				projects := getProjects(t)
+				environments := getEnvironments(t)
+				sysAdminAccount := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						Name:             "System Admin",
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						LastSeen:         456,
+					},
+				}
+				sysAdminAccountForUpdate := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						LastSeen:         456,
+						UpdatedAt:        456,
+					},
+				}
+				memberOrgAccount := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   org.Id,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+						},
+					},
+				}
+				gomock.InOrder(
+					envClient.EXPECT().ListProjects(
+						gomock.Any(), gomock.Any(),
+					).Return(
+						&environmentproto.ListProjectsResponse{Projects: projects, Cursor: ""},
+						nil,
+					),
+					envClient.EXPECT().ListEnvironmentsV2(
+						gomock.Any(), gomock.Any(),
+					).Return(
+						&environmentproto.ListEnvironmentsV2Response{Environments: environments, Cursor: ""},
+						nil,
+					),
+					envClient.EXPECT().GetOrganization(
+						gomock.Any(), gomock.Any(),
+					).Return(
+						&environmentproto.GetOrganizationResponse{Organization: &org},
+						nil,
+					),
+					accountStorage.EXPECT().GetSystemAdminAccountV2(
+						gomock.Any(), email,
+					).Return(sysAdminAccount, nil),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(memberOrgAccount, nil),
+					accountStorage.EXPECT().UpdateAccountV2(
+						gomock.Any(), gomock.AssignableToTypeOf(&domain.AccountV2{}),
+					).Return(nil),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, sysAdminOrgID,
+					).Return(sysAdminAccountForUpdate, nil),
+					accountStorage.EXPECT().UpdateAccountV2(
+						gomock.Any(), gomock.AssignableToTypeOf(&domain.AccountV2{}),
+					).Return(nil),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(memberOrgAccount, nil),
+				)
+			},
+			input: &accountproto.GetMeRequest{OrganizationId: "org0"},
+			expected: &accountproto.GetMeResponse{
+				Account: &accountproto.ConsoleAccount{
+					Email:            "bucketeer@example.com",
+					Name:             "System Admin",
+					IsSystemAdmin:    true,
+					Organization:     &org,
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.ConsoleAccount_EnvironmentRole{
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id: "ns0", Name: "ns0", ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{Id: "pj0"},
+							Role:    accountproto.AccountV2_Role_Environment_EDITOR,
+						},
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id: "ns1", Name: "ns1", ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{Id: "pj0"},
+							Role:    accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, p := range patterns {
