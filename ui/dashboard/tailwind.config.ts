@@ -165,6 +165,7 @@ const theme = {
     none: 'none',
     'dark-card': '0px 4px 8px 1px rgba(0, 0, 0, 0.4)',
     'dark-glow': '0 4px 15px rgba(154, 111, 255, 0.4)',
+    'border-dark-purple-300': `inset 0 0 0 1px #7B4FF5`,
     tooltip:
       'rgba(29, 29, 29, 0.35) 0px 10px 38px -10px, rgba(29, 29, 29, 0.20) 0px 10px 20px -15px'
   },

@@ -16,16 +16,16 @@ const buttonVariants = cva(
           'disabled:bg-primary-200 disabled:text-primary-50'
         ],
         secondary: [
-          'text-primary-500 shadow-border-primary-500',
+          'text-primary-500 dark:text-dark-purple-500 shadow-border-primary-500 dark:shadow-border-primary-glow',
           'rounded-lg px-6 py-2',
-          'hover:text-primary-700 hover:shadow-border-primary-700',
-          'disabled:text-gray-500 disabled:shadow-border-gray-500'
+          'hover:text-primary-700 dark:hover:text-dark-purple-600 hover:shadow-border-primary-700 dark:hover:shadow-border-primary-glow',
+          'disabled:text-gray-500 dark:disabled:text-dark-gray-200 disabled:shadow-border-gray-500'
         ],
         'secondary-2': [
-          'text-gray-700 shadow-border-gray-300',
+          'text-gray-700 dark:text-dark-gray-300 shadow-border-gray-300 dark:shadow-border-gray-500',
           'rounded-lg px-6 py-2',
-          'hover:text-gray-900 hover:shadow-border-gray-500',
-          'disabled:text-gray-500 disabled:shadow-border-gray-300 disabled:bg-gray-100'
+          'hover:text-gray-900 dark:hover:text-dark-gray-400 hover:shadow-border-gray-500',
+          'disabled:text-gray-500 dark:disabled:text-dark-gray-200 disabled:shadow-border-gray-300 disabled:bg-gray-100 dark:disabled:bg-dark-black-700'
         ],
         negative: [
           'bg-accent-red-500 text-gray-50 shadow-border-accent-red-500',
@@ -34,14 +34,14 @@ const buttonVariants = cva(
           'disabled:bg-accent-red-50 disabled:shadow-border-gray-400 disabled:text-gray-500'
         ],
         text: [
-          'text-primary-500 px-2',
-          'hover:text-primary-600',
-          'disabled:text-gray-500'
+          'text-primary-500 dark:text-dark-purple-500 px-2',
+          'hover:text-primary-600 dark:hover:text-dark-purple-600',
+          'disabled:text-gray-500 dark:disabled:text-dark-gray-200'
         ],
         grey: [
-          'text-gray-600 rounded-lg',
-          'hover:text-gray-700',
-          'disabled:text-gray-400'
+          'text-gray-600 dark:text-dark-gray-200 rounded-lg',
+          'hover:text-gray-700 dark:hover:text-dark-gray-400',
+          'disabled:text-gray-400 dark:disabled:text-dark-gray-200'
         ]
       },
       size: {

@@ -15,8 +15,9 @@ const TEXT_COLOR_MAP = {
 };
 
 const CONTAINER_COLOR_MAP = {
-  info: 'border-accent-blue-500 bg-accent-blue-50',
-  warning: 'border-accent-yellow-500 bg-accent-yellow-50'
+  info: 'border-accent-blue-500 bg-accent-blue-50 dark:bg-accent-blue-900/30',
+  warning:
+    'border-accent-yellow-500 bg-accent-yellow-50 dark:bg-accent-yellow-900/30'
 };
 
 type InfoMessageProps = {
@@ -75,7 +76,7 @@ const InfoMessage = ({
           onClick={() => setIsExpanded(prev => !prev)}
           className="flex w-fit max-w-full items-center gap-x-2 pl-6"
         >
-          <p className="typo-para-small text-gray-700">
+          <p className="typo-para-small text-gray-700 dark:text-dark-gray-400">
             {t(isExpanded ? 'close' : 'see-more')}
           </p>
           <Icon
@@ -96,7 +97,7 @@ const InfoMessage = ({
             'typo-para-small pl-10',
             typeOfIcon === 'warning'
               ? 'text-accent-yellow-500'
-              : 'text-gray-700',
+              : 'text-gray-700 dark:text-dark-gray-400',
             {
               'pl-[30px]': !isToggleable
             }

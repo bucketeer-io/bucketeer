@@ -92,7 +92,7 @@ const Strategy = ({
       variationOptions.map(opt => {
         return {
           label: (
-            <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
+            <div className="flex items-center gap-x-2 typo-para-medium text-gray-700 dark:text-dark-gray-400">
               {opt.icon && <Icon icon={opt.icon} size={'sm'} />}
               {opt.label}
             </div>
@@ -197,13 +197,15 @@ const Strategy = ({
       {label && (
         <Form.Label
           required={isRequired}
-          className={cn('relative w-fit mb-2 ml-14 text-gray-700')}
+          className={cn(
+            'relative w-fit mb-2 ml-14 text-gray-700 dark:text-dark-gray-400'
+          )}
         >
           {label}
         </Form.Label>
       )}
       <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase min-w-fit">
+        <p className="typo-para-small text-gray-600 dark:text-dark-gray-200 mt-3 uppercase min-w-fit">
           {t('feature-flags.serve')}
         </p>
         <Form.Field
@@ -232,7 +234,7 @@ const Strategy = ({
       {isShowPercentage && (
         <>
           <div className="flex items-center gap-x-1">
-            <div className="typo-para-medium text-gray-700 my-5">
+            <div className="typo-para-medium text-gray-700 dark:text-dark-gray-400 my-5">
               {t('form:experiments.define-audience.audience-traffic')}
             </div>
             <Tooltip
@@ -282,7 +284,7 @@ const Strategy = ({
                               addon={'%'}
                               addonSlot="right"
                               className="w-32 overflow-hidden"
-                              addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg bg-gray-200 w-[29px] typo-para-medium text-gray-700"
+                              addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg bg-gray-200 dark:bg-dark-black-700 w-[29px] typo-para-medium text-gray-700 dark:text-dark-gray-200"
                             >
                               <Input
                                 {...field}
@@ -308,8 +310,8 @@ const Strategy = ({
               );
             }}
           />
-          <div className="flex flex-col w-full gap-y-4 typo-para-small leading-[14px] text-gray-600 mt-6">
-            <div className="w-full h-3 p-[1px] border border-gray-400 rounded-full ">
+          <div className="flex flex-col w-full gap-y-4 typo-para-small leading-[14px] text-gray-600 dark:text-dark-gray-200 mt-6">
+            <div className="w-full h-3 p-[1px] border border-gray-400 dark:border-dark-purple-100 rounded-full ">
               <div
                 className={cn('h-full bg-primary-500 rounded-l-full', {
                   'rounded-r-full': experimentPercentage >= 100
@@ -325,14 +327,14 @@ const Strategy = ({
                 <p>{`${experimentPercentage}% ${t('form:experiments.define-audience.included')}`}</p>
               </div>
               <div className="flex items-center gap-x-2">
-                <div className="flex-center size-5 m-0.5 border border-gray-400 rounded bg-gray-100" />
+                <div className="flex-center size-5 m-0.5 border border-gray-400 dark:border-dark-black-700 rounded bg-gray-100 dark:bg-dark-black-700" />
                 <p>{`${100 - experimentPercentage}% ${t('form:experiments.define-audience.excluded')}`}</p>
               </div>
             </div>
           </div>
 
           {experimentPercentage > 0 && Number(experimentPercentage) !== 100 && (
-            <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+            <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 dark:text-dark-gray-200 whitespace-nowrap">
               <Trans
                 i18nKey={
                   'form:experiments.define-audience.not-included-allocation'
@@ -342,7 +344,7 @@ const Strategy = ({
                 }}
                 components={{
                   highlight: (
-                    <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
+                    <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 dark:text-dark-gray-400 bg-gray-additional-2 dark:bg-dark-black-700" />
                   ),
                   select: (
                     <Form.Field
@@ -369,9 +371,9 @@ const Strategy = ({
               />
             </div>
           )}
-          <Divider className="my-5 border-gray-300" />
+          <Divider className="my-5 border-gray-300 dark:border-dark-purple-300" />
           <div className="flex items-center gap-x-1">
-            <div className="typo-para-medium text-gray-700">
+            <div className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
               {t('form:experiments.define-audience.variation-allocation')}
             </div>
             <Tooltip
@@ -404,7 +406,7 @@ const Strategy = ({
                 <label
                   htmlFor={`${value}-${rootName}`}
                   className={cn(
-                    'typo-para-medium leading-4 text-gray-600',
+                    'typo-para-medium leading-4 text-gray-600 dark:text-dark-gray-200',
                     isDisabled
                       ? 'cursor-not-allowed pointer-events-none'
                       : 'cursor-pointer'
@@ -415,7 +417,7 @@ const Strategy = ({
               </div>
             ))}
           </RadioGroup>
-          <div className="typo-para-small text-gray-500 mt-6">
+          <div className="typo-para-small text-gray-500 dark:text-dark-gray-200 mt-6">
             {t('form:experiments.define-audience.audience-split')}
           </div>
 
@@ -428,7 +430,7 @@ const Strategy = ({
                   <Form.Control>
                     <div>
                       {showPercentageBar && (
-                        <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
+                        <div className="flex items-center w-full p-0.5 border border-gray-400 dark:border-dark-black-700 rounded-full">
                           {(field.value as RuleStrategyVariation[])?.map(
                             (item: RuleStrategyVariation, index: number) => (
                               <PercentageBar
@@ -442,10 +444,10 @@ const Strategy = ({
                         </div>
                       )}
                       <div className="flex items-center w-full mb-3 mt-5 px-2">
-                        <div className="typo-para-small text-gray-500 uppercase flex-1">
+                        <div className="typo-para-small text-gray-500 dark:text-dark-gray-200 uppercase flex-1">
                           {t('common:name')}
                         </div>
-                        <div className="typo-para-small text-gray-500 uppercase flex-1">
+                        <div className="typo-para-small text-gray-500 dark:text-dark-gray-200 uppercase flex-1">
                           {t(`common:percentage`)}
                         </div>
                       </div>

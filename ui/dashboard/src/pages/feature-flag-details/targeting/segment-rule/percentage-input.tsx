@@ -42,7 +42,7 @@ const PercentageInput = ({
             <Form.Control>
               <div className="flex items-center gap-x-2">
                 {showVariationName && (
-                  <div className="flex items-center flex-1 gap-x-2 typo-para-small text-gray-600">
+                  <div className="flex items-center flex-1 gap-x-2 typo-para-small text-gray-600 dark:text-dark-gray-200">
                     {currentOption?.label}
                   </div>
                 )}
@@ -51,7 +51,7 @@ const PercentageInput = ({
                     addon={'%'}
                     addonSlot="right"
                     className="w-[82px] overflow-hidden"
-                    addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg bg-gray-200 w-[29px] typo-para-medium text-gray-700"
+                    addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg bg-gray-200 dark:bg-dark-black-700 w-[29px] typo-para-medium text-gray-700 dark:text-dark-gray-200"
                   >
                     <Input
                       {...field}
