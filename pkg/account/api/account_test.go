@@ -1039,10 +1039,10 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil).Times(2)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
