@@ -31,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor"
 	opseventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/domain"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
@@ -39,7 +38,7 @@ import (
 )
 
 type eventCountWatcher struct {
-	mysqlClient        mysql.Client
+	opsCountStorage    v2os.OpsCountStorage
 	envClient          envclient.Client
 	aoClient           aoclient.Client
 	eventCounterClient ecclient.Client
@@ -51,7 +50,7 @@ type eventCountWatcher struct {
 }
 
 func NewEventCountWatcher(
-	mysqlClient mysql.Client,
+	opsCountStorage v2os.OpsCountStorage,
 	envClient envclient.Client,
 	aoClient aoclient.Client,
 	eventCounterClient ecclient.Client,
@@ -68,7 +67,7 @@ func NewEventCountWatcher(
 		opt(dopts)
 	}
 	return &eventCountWatcher{
-		mysqlClient:        mysqlClient,
+		opsCountStorage:    opsCountStorage,
 		envClient:          envClient,
 		aoClient:           aoClient,
 		eventCounterClient: eventCounterClient,
@@ -371,8 +370,7 @@ func (w *eventCountWatcher) persistOpsCount(
 	environmentId string,
 	oc *opseventdomain.OpsCount,
 ) error {
-	opsCountStorage := v2os.NewOpsCountStorage(w.mysqlClient)
-	if err := opsCountStorage.UpsertOpsCount(ctx, environmentId, oc); err != nil {
+	if err := w.opsCountStorage.UpsertOpsCount(ctx, environmentId, oc); err != nil {
 		w.logger.Error("Failed to upsert ops count", zap.Error(err),
 			zap.String("autoOpsRuleId", oc.AutoOpsRuleId),
 			zap.String("clauseId", oc.ClauseId),
