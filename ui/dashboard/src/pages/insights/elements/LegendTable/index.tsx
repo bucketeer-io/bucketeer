@@ -78,7 +78,7 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
               content={row.original.label}
               side="top"
               trigger={
-                <span className="max-w-[300px] text-gray-700 truncate typo-para-medium">
+                <span className="max-w-[300px] text-gray-700 dark:text-dark-gray-300 truncate typo-para-medium">
                   {row.original.label}
                 </span>
               }
@@ -128,7 +128,7 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
     <div className="overflow-x-auto small-scroll h-[250px]">
       <div className="min-w-full">
         <Table.Root>
-          <Table.Header className="sticky top-0 z-10 bg-white">
+          <Table.Header className="sticky top-0 z-10 bg-white dark:bg-dark-black-800">
             {table.getHeaderGroups().map(headerGroup => (
               <Table.Row key={headerGroup.id}>
                 {headerGroup.headers.map((header, i) => (
@@ -175,12 +175,12 @@ export const LegendTable = ({ datasets, formatter }: LegendTableProps) => {
             ) : (
               <>
                 {table.getRowModel().rows.map(row => (
-                  <Table.Row key={row.id}>
+                  <Table.Row key={row.id} className="dark:bg-dark-black-800">
                     {row.getVisibleCells().map((cell, i) => (
                       <Table.Cell
                         key={cell.id}
                         align={i === 0 ? undefined : 'right'}
-                        className="typo-para-medium text-gray-700 pr-4"
+                        className="typo-para-medium text-gray-700 dark:text-dark-gray-300 pr-4"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

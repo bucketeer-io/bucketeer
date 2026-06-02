@@ -15,7 +15,7 @@
 }
 
 .range__weekDay {
-  @apply flex-center typo-para-tiny !h-6 !w-10 !max-w-10 uppercase text-gray-500 last:w-9;
+  @apply flex-center typo-para-tiny !h-6 !w-10 !max-w-10 uppercase text-gray-500 dark:text-dark-gray-200 last:w-9;
 }
 
 .range__days {
@@ -36,7 +36,7 @@
 }
 
 .range__days--number {
-  @apply typo-para-small size-10 [&>span::after]:hidden [&>span]:!text-gray-600;
+  @apply typo-para-small size-10 [&>span::after]:hidden [&>span]:!text-gray-600 dark:[&>span]:!text-dark-gray-300;
 }
 
 .range__days--day:has(.range__days--edge) .range__days--number {
@@ -44,17 +44,17 @@
 }
 
 .range__days--dayPreview {
-  @apply top-1/2 !h-10 -translate-y-1/2 !border-none bg-gray-500/10;
+  @apply top-1/2 !h-10 -translate-y-1/2 !border-none bg-gray-500/10 dark:bg-dark-purple-100/40;
 }
 
 .range__days--day:not(.rdrDayEndOfWeek):has(.range__days--edge):has(
     + .range__days--day .rdrInRange
   ) {
-  @apply rounded-l-full bg-gray-500/10;
+  @apply rounded-l-full bg-gray-500/10 dark:bg-dark-purple-100/40;
 }
 
 .range__days--day:has(.rdrInRange) + .range__days--day:has(.range__days--edge) {
-  @apply rounded-r-full bg-gray-500/10;
+  @apply rounded-r-full bg-gray-500/10 dark:bg-dark-purple-100/40;
 }
 
 .rdrDayPassive {
@@ -62,7 +62,7 @@
 }
 
 .range__days--day.rdrDayPassive .range__days--number span {
-  @apply !text-gray-500;
+  @apply !text-gray-500 dark:!text-dark-gray-200/40;
 }
 .rdrDefinedRangesWrapper {
   @apply max-w-[175px];
@@ -86,7 +86,7 @@
 }
 
 .rdrStaticRangeLabel {
-  @apply !typo-para-medium !h-12 !p-0 !text-gray-600;
+  @apply !typo-para-medium !h-12 !p-0 !text-gray-600 dark:!text-dark-gray-300;
 }
 
 .rdrStaticRange.rdrStaticRangeSelected,
@@ -96,7 +96,7 @@
 }
 
 .rdrStaticRangeSelected:has(span .range-selected) {
-  @apply !bg-gray-200 [&>span>div]:text-gray-700;
+  @apply !bg-gray-200 dark:!bg-dark-purple-100 [&>span>div]:text-gray-700 dark:[&>span>div]:text-dark-gray-400;
 }
 
 .rdrInputRanges {
@@ -104,7 +104,7 @@
 }
 
 .rdrDateDisplayWrapper {
-  @apply !mx-5 !mb-0 !mt-11 !bg-white;
+  @apply !mx-5 !mb-0 !mt-11 !bg-white dark:!bg-dark-black-800;
 }
 
 .rdrDateDisplay {
@@ -112,18 +112,18 @@
 }
 
 .rdrDateInput {
-  @apply !rounded-lg !border-gray-400;
+  @apply !rounded-lg !border-gray-400 dark:!border-dark-black-700 dark:!bg-dark-black-700;
 }
 
 .rdrDateInput input {
   background-image: url('../../@icons/customized-icons/calendar-gray.svg');
   background-position: right 12px center;
-  @apply !typo-para-medium !h-12 bg-auto bg-no-repeat p-3 pr-[44px] text-left text-gray-700;
+  @apply !typo-para-medium !h-12 bg-auto bg-no-repeat p-3 pr-[44px] text-left text-gray-700 dark:text-dark-gray-300 dark:!bg-dark-black-700;
 }
 
 .rdrDateInput:first-child::before {
   content: 'From';
-  @apply typo-para-small absolute -top-[26px] text-gray-600;
+  @apply typo-para-small absolute -top-[26px] text-gray-600 dark:text-dark-gray-200;
 }
 
 .rdrDateInput:last-child {
@@ -132,7 +132,7 @@
 
 .rdrDateInput:last-child::before {
   content: 'To';
-  @apply typo-para-small absolute -top-[26px] text-gray-600;
+  @apply typo-para-small absolute -top-[26px] text-gray-600 dark:text-dark-gray-200;
 }
 
 .rdrDateDisplayItemActive {
@@ -140,11 +140,42 @@
 }
 
 .rdrDayDisabled {
-  @apply !bg-white cursor-not-allowed;
+  @apply !bg-white dark:!bg-dark-black-800 cursor-not-allowed;
 }
 
 .rdrDayDisabled .rdrDayNumber span {
-  @apply !text-[#b0bec5];
+  @apply !text-[#b0bec5] dark:!text-dark-gray-200/30;
+}
+
+/* Dark mode overrides for react-date-range library base styles */
+.dark .rdrCalendarWrapper,
+.dark .rdrMonth,
+.dark .rdrMonths,
+.dark .rdrDateRangeWrapper,
+.dark .rdrDefinedRangesWrapper {
+  @apply !bg-dark-black-800 !text-dark-gray-300;
+}
+
+.dark .rdrMonthAndYearWrapper,
+.dark .rdrMonthAndYearPickers {
+  @apply !bg-dark-black-800;
+}
+
+.dark .rdrStaticRange {
+  @apply !bg-dark-black-800;
+}
+
+.dark .rdrStaticRange:hover,
+.dark .rdrStaticRange:focus {
+  @apply !bg-dark-black-800;
+}
+
+.dark .rdrDay:not(.rdrDayPassive) .rdrDayNumber span {
+  @apply !text-dark-gray-300;
+}
+
+.dark .rdrDayToday .rdrDayNumber span::after {
+  @apply !bg-primary-500;
 }
 
 .insights-date-picker {
