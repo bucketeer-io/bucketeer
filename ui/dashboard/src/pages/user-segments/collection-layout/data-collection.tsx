@@ -83,7 +83,7 @@ export const useColumns = ({
         return (
           <div
             className={cn(
-              'flex-center w-fit px-2 py-1.5 rounded bg-primary-50 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-400 typo-para-medium',
+              'flex-center w-fit px-2 py-1.5 rounded bg-primary-50 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-700 typo-para-medium',
               {
                 'cursor-pointer': segment?.features?.length
               }
