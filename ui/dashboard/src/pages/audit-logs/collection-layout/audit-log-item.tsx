@@ -91,7 +91,7 @@ const AuditLogItem = memo(
     );
     const buttonActiveCls = useMemo(
       () =>
-        '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 dark:!text-dark-purple-400 dark:border-dark-purple-300 dark:hover:!text-dark-purple-400 dark:hover:border-dark-purple-300 dark:bg-dark-purple-200/20',
+        '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 dark:!text-dark-purple-700 dark:border-dark-purple-300 dark:hover:!text-dark-purple-700 dark:hover:border-dark-purple-300 dark:bg-dark-purple-200/20',
       []
     );
 
