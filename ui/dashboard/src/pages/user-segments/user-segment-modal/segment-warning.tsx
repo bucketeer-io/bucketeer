@@ -49,7 +49,7 @@ const SegmentWarning = ({
         {features?.map((item, index) => (
           <div
             key={item.id}
-            className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500 dark:text-dark-purple-400"
+            className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500 dark:text-dark-purple-700"
           >
             <p>{index + 1}.</p>
             <Link
