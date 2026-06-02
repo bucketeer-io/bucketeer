@@ -50,18 +50,22 @@ const EmptyStateRoot = ({
 const EmptyStateIllustration = () => {
   const { variant } = useEmptyState();
 
+  const imgClass = 'w-fit dark:[filter:brightness(0.4)_saturate(2.5)]';
+
   switch (variant) {
     case 'error':
-      return <img alt="Error" className="w-fit" src={emptyStateError} />;
+      return <img alt="Error" className={imgClass} src={emptyStateError} />;
 
     case 'no-data':
-      return <img alt="No Data" className="w-fit" src={emptyStateNoData} />;
+      return <img alt="No Data" className={imgClass} src={emptyStateNoData} />;
 
     case 'no-search':
-      return <img alt="No Search" className="w-fit" src={emptyStateNoSearch} />;
+      return (
+        <img alt="No Search" className={imgClass} src={emptyStateNoSearch} />
+      );
 
     case 'invalid':
-      return <img alt="Invalid" className="w-fit" src={emptyStateCode} />;
+      return <img alt="Invalid" className={imgClass} src={emptyStateCode} />;
   }
 };
 
