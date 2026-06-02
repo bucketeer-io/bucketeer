@@ -61,7 +61,7 @@ const SelectMenu = ({
                         <NameWithTooltip.Trigger
                           name={content}
                           id={id}
-                          className="typo-para-small py-1 [&>div]:!text-primary-500 dark:[&>div]:!text-dark-purple-400"
+                          className="typo-para-small py-1 [&>div]:!text-primary-500 dark:[&>div]:!text-dark-purple-700"
                           maxLines={1}
                           haveAction={false}
                         />

@@ -29,7 +29,7 @@ const TabsTrigger = React.forwardRef<
       'flex-center whitespace-nowrap typo-para-medium text-gray-500 dark:text-dark-gray-200',
       'border-b-2 data-[state=active]:border-primary-500',
       'disabled:opacity-50 border-transparent py-1 px-4',
-      'transition-all data-[state=active]:text-primary-500 dark:data-[state=active]:text-dark-purple-400',
+      'transition-all data-[state=active]:text-primary-500 dark:data-[state=active]:text-dark-purple-700',
       className
     )}
     {...props}

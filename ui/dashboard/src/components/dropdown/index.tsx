@@ -61,7 +61,7 @@ const triggerVariants = cva(
     variants: {
       variant: {
         primary:
-          'border-primary-500 hover:shadow-border-primary-500 [&>*]:text-primary-500 dark:border-dark-purple-300 dark:hover:shadow-border-primary-glow dark:[&>*]:text-dark-purple-400',
+          'border-primary-500 hover:shadow-border-primary-500 [&>*]:text-primary-500 dark:border-dark-purple-300 dark:hover:shadow-border-primary-glow dark:[&>*]:text-dark-purple-700',
         secondary:
           'border-gray-400 hover:shadow-border-gray-400 [&_div]:text-gray-700 [&_span]:text-gray-600 [&>i]:text-gray-500 dark:border-dark-purple-100 dark:hover:shadow-border-dark-purple-300 dark:[&_div]:text-dark-gray-400 dark:[&_span]:text-dark-gray-300 dark:[&>i]:text-dark-gray-200'
       }
