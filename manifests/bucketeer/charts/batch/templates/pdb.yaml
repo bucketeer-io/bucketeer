@@ -9,4 +9,5 @@ spec:
   selector:
     matchLabels:
       app: {{ template "batch-server.name" . }}
+      release: {{ template "batch-server.fullname" . }}
 {{- end }}
