@@ -22,7 +22,7 @@ const SegmentWarning = ({
   return (
     <div
       className={cn(
-        'flex flex-col w-full px-4 py-3 bg-accent-yellow-50 border-l-4 border-accent-yellow-500 rounded mt-5',
+        'flex flex-col w-full px-4 py-3 bg-accent-yellow-50 dark:bg-accent-yellow-900/30 border-l-4 border-accent-yellow-500 rounded mt-5',
         className
       )}
     >
@@ -49,7 +49,7 @@ const SegmentWarning = ({
         {features?.map((item, index) => (
           <div
             key={item.id}
-            className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500"
+            className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500 dark:text-dark-purple-400"
           >
             <p>{index + 1}.</p>
             <Link
