@@ -16,27 +16,28 @@ interface MonthlyBarChartProps {
   environmentNameMap: Record<string, string>;
 }
 
-const BAR_OPTIONS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: {
-    x: {
-      stacked: true,
-      grid: { display: false },
-      ticks: { color: '#94A3B8', font: { size: 12 } }
-    },
-    y: {
-      stacked: true,
-      grid: { color: '#E2E8F0' },
-      ticks: {
-        color: '#94A3B8',
-        font: { size: 12 },
-        callback: (value: number | string) => formatLargeNumber(Number(value))
+const getBarOptions = (isDark: boolean) =>
+  ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        stacked: true,
+        grid: { display: false },
+        ticks: { color: isDark ? '#B5B0C2' : '#94A3B8', font: { size: 12 } }
+      },
+      y: {
+        stacked: true,
+        grid: { color: isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0' },
+        ticks: {
+          color: isDark ? '#B5B0C2' : '#94A3B8',
+          font: { size: 12 },
+          callback: (value: number | string) => formatLargeNumber(Number(value))
+        }
       }
     }
-  }
-} as const;
+  }) as const;
 
 const MonthlyBarChart = ({
   title,
@@ -49,6 +50,8 @@ const MonthlyBarChart = ({
   environmentNameMap
 }: MonthlyBarChartProps) => {
   const { t } = useTranslation(['common']);
+  const isDark = document.documentElement.classList.contains('dark');
+  const barOptions = getBarOptions(isDark);
 
   const { datasets, isStacked } = useMemo(() => {
     if (!summary?.series?.length) return { datasets: [], isStacked: false };
@@ -151,7 +154,7 @@ const MonthlyBarChart = ({
         </div>
       ) : (
         <div className="h-[300px]">
-          <Bar data={{ labels, datasets }} options={BAR_OPTIONS} />
+          <Bar data={{ labels, datasets }} options={barOptions} />
         </div>
       )}
     </ChartCard>
