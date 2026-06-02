@@ -49,7 +49,7 @@ const DeleteUserSegmentModal = ({
         ) : (
           <>
             <IconDelete />
-            <div className="typo-para-big text-gray-700 text-center">
+            <div className="typo-para-big text-gray-700 dark:text-dark-gray-300 text-center">
               <Trans
                 i18nKey="table:user-segment.delete-user-segment-desc"
                 values={{ name: userSegment.name }}
