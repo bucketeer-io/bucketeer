@@ -27,7 +27,7 @@ const AudienceSelect = ({
           ? 'cursor-not-allowed bg-gray-100 dark:bg-dark-black-700'
           : 'cursor-pointer dark:hover:bg-dark-purple-100',
         {
-          'text-primary-500 border-primary-500 dark:text-dark-purple-400 dark:border-dark-purple-300':
+          'text-primary-500 border-primary-500 dark:text-dark-purple-700 dark:border-dark-purple-300':
             isActive && !disabled
         }
       )}

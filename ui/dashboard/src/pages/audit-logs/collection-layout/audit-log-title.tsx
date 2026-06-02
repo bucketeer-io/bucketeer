@@ -55,7 +55,7 @@ const AuditLogTitle = ({
               const pathName = getPathName(entityId, entityType);
               if (pathName) navigate(`/${urlCode}${pathName}`);
             }}
-            className="text-primary-500 dark:text-dark-purple-400 underline truncate"
+            className="text-primary-500 dark:text-dark-purple-700 underline truncate"
           />
         )
       }}

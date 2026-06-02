@@ -33,7 +33,7 @@ const ResultItem = ({
   return (
     <div
       className={cn(
-        'flex flex-col w-full p-5 pb-0 rounded-lg shadow-card min-h-[86px] transition-all duration-200',
+        'flex flex-col w-full p-5 pb-0 rounded-lg shadow-card dark:bg-dark-black-800 dark:shadow-dark-card min-h-[86px] transition-all duration-200',
         {
           'pb-5 min-h-fit': isExpand
         }
@@ -41,7 +41,7 @@ const ResultItem = ({
     >
       <div
         className={cn('flex items-center w-full justify-between gap-x-4 pb-5', {
-          'border-b border-gray-200': isExpand
+          'border-b border-gray-200 dark:border-dark-black-700': isExpand
         })}
       >
         <ResultName
@@ -68,7 +68,7 @@ const ResultItem = ({
       </div>
       <div
         className={cn(
-          '[&>table]:m-0 [&>table]:border-collapse [&>table>tbody]:divide-y [&>table>tbody]:divide-gray-200 [&>table>tbody>tr]:rounded-none [&>table>tbody>tr]:shadow-none [&>table>tbody>tr>td]:rounded-none [&>table>tbody>tr:last-child]:rounded-b-lg [&>table>tbody>tr>td:first-child]:pl-0 [&>table>tbody>tr>td:last-child]:pr-0 [&>table>thead>tr>th:first-child]:pl-0 [&>table>thead>tr>th:last-child]:pr-0 h-0 opacity-0 transition-all duration-200 z-[-1] [&>table>tbody>tr>td]:py-4',
+          '[&>table]:m-0 [&>table]:border-collapse [&>table>tbody]:divide-y [&>table>tbody]:divide-gray-200 dark:[&>table>tbody]:divide-dark-black-700 [&>table>tbody>tr]:rounded-none [&>table>tbody>tr]:shadow-none [&>table>tbody>tr>td]:rounded-none [&>table>tbody>tr:last-child]:rounded-b-lg [&>table>tbody>tr>td:first-child]:pl-0 [&>table>tbody>tr>td:last-child]:pr-0 [&>table>thead>tr>th:first-child]:pl-0 [&>table>thead>tr>th:last-child]:pr-0 h-0 opacity-0 transition-all duration-200 z-[-1] [&>table>tbody>tr>td]:py-4',
           {
             'h-fit opacity-100 z-0': isExpand
           }

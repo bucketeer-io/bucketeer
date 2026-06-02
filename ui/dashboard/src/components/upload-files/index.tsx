@@ -110,7 +110,7 @@ const UploadFiles = ({
           className="hidden"
         />
         <div
-          className="flex-center flex-col size-full gap-y-4 cursor-pointer py-4"
+          className="flex-center flex-col size-full gap-y-4 cursor-pointer py-4 dark:bg-dark-black-900"
           onDrop={handleDrop}
           onDragOver={preventAndStopFnc}
           onDragEnter={preventAndStopFnc}

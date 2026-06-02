@@ -22,7 +22,7 @@ const PopoverItemWrapper = ({
     <div
       className={cn(
         'flex cursor-pointer items-center gap-x-2 p-2 text-gray-700 dark:text-dark-gray-300',
-        'hover:bg-primary-50 dark:hover:bg-dark-purple-100 [&>*]:hover:text-primary-500 dark:[&>*]:hover:text-dark-purple-400',
+        'hover:bg-primary-50 dark:hover:bg-dark-purple-100 [&>*]:hover:text-primary-500 dark:[&>*]:hover:text-dark-purple-700',
         {
           'flex-row-reverse': addonSlot === 'right',
           '!bg-transparent !text-gray-400 dark:!text-dark-gray-200 [&>*]:hover:!text-gray-400 dark:[&>*]:hover:!text-dark-gray-200 cursor-not-allowed':

@@ -27,7 +27,7 @@ const inputVariants = cva(
         primary:
           'border-gray-400 text-gray-700 dark:border-dark-purple-100 dark:text-dark-gray-400 dark:hover:shadow-border-dark-purple-300 dark:focus:border-dark-purple-300 dark:focus:ring-0 disabled:border-gray-400',
         secondary:
-          '!border-primary-200 text-primary-500 disabled:!border-primary-100 bg-white dark:!border-dark-purple-300 dark:text-dark-purple-400 dark:bg-dark-black-900 dark:disabled:!border-dark-black-700'
+          '!border-primary-200 text-primary-500 disabled:!border-primary-100 bg-white dark:!border-dark-purple-300 dark:text-dark-purple-700 dark:bg-dark-black-900 dark:disabled:!border-dark-black-700'
       },
       size: {
         sm: 'px-4 py-2',
