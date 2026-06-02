@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	storage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 )
 
 // MockCodeReferenceStorage is a mock of CodeReferenceStorage interface.
@@ -101,9 +101,9 @@ func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReferenceCountsByFeatureI
 }
 
 // ListCodeReferences mocks base method.
-func (m *MockCodeReferenceStorage) ListCodeReferences(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*domain.CodeReference, int, int64, error) {
+func (m *MockCodeReferenceStorage) ListCodeReferences(ctx context.Context, params storage.ListCodeReferencesParams) ([]*domain.CodeReference, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCodeReferences", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListCodeReferences", ctx, params)
 	ret0, _ := ret[0].([]*domain.CodeReference)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -112,23 +112,9 @@ func (m *MockCodeReferenceStorage) ListCodeReferences(ctx context.Context, where
 }
 
 // ListCodeReferences indicates an expected call of ListCodeReferences.
-func (mr *MockCodeReferenceStorageMockRecorder) ListCodeReferences(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockCodeReferenceStorageMockRecorder) ListCodeReferences(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCodeReferences", reflect.TypeOf((*MockCodeReferenceStorage)(nil).ListCodeReferences), ctx, whereParts, orders, limit, offset)
-}
-
-// RunInTransaction mocks base method.
-func (m *MockCodeReferenceStorage) RunInTransaction(ctx context.Context, f func() error) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunInTransaction", ctx, f)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RunInTransaction indicates an expected call of RunInTransaction.
-func (mr *MockCodeReferenceStorageMockRecorder) RunInTransaction(ctx, f any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunInTransaction", reflect.TypeOf((*MockCodeReferenceStorage)(nil).RunInTransaction), ctx, f)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCodeReferences", reflect.TypeOf((*MockCodeReferenceStorage)(nil).ListCodeReferences), ctx, params)
 }
 
 // UpdateCodeReference mocks base method.

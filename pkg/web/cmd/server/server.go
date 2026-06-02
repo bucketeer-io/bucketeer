@@ -52,6 +52,9 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 	coderefapi "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/api"
+	coderefstorage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
+	coderefmysql "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mysql"
+	coderefpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/postgres"
 	environmentapi "github.com/bucketeer-io/bucketeer/v2/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -580,6 +583,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var orgStorage v2es.OrganizationStorage
 	var environmentStorage v2es.EnvironmentStorage
 	var opsCountStorage v2os.OpsCountStorage
+	var codeRefStorage coderefstorage.CodeReferenceStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -603,6 +607,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		orgStorage = environmentpostgres.NewOrganizationStorage(postgresClient)
 		environmentStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
 		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
+		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -618,6 +623,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		projectStorage = environmentmysql.NewProjectStorage(mysqlClient)
 		orgStorage = environmentmysql.NewOrganizationStorage(mysqlClient)
 		environmentStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
+		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 	}
 
@@ -1008,7 +1014,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// codeReferenceService
 	codeReferenceService := coderefapi.NewCodeReferenceService(
 		accountClient,
-		mysqlClient,
+		dbClient,
+		codeRefStorage,
 		domainTopicPublisher,
 		coderefapi.WithLogger(logger),
 	)

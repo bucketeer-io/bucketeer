@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package postgres
 
 import (
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
-	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	coderefproto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 )
 
 var (
@@ -43,48 +45,16 @@ var (
 	countCodeReferencesByFeatureIDsSQL string
 )
 
-type contextKey string
-
-const transactionKey contextKey = "transaction"
-
-var (
-	ErrCodeReferenceNotFound = bkterr.NewErrorNotFound(
-		bkterr.CoderefPackageName,
-		"code reference not found", "code_reference",
-	)
-	ErrCodeReferenceUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
-		bkterr.CoderefPackageName,
-		"code reference unexpected affected rows",
-	)
-)
-
 type codeReferenceStorage struct {
-	client mysql.Client
+	qe pgstorage.QueryExecer
 }
 
-func NewCodeReferenceStorage(client mysql.Client) CodeReferenceStorage {
-	return &codeReferenceStorage{client}
-}
-
-func (s *codeReferenceStorage) RunInTransaction(ctx context.Context, f func() error) error {
-	tx, err := s.client.BeginTx(ctx)
-	if err != nil {
-		return fmt.Errorf("coderef: begin tx: %w", err)
-	}
-	ctx = context.WithValue(ctx, transactionKey, tx)
-	return s.client.RunInTransaction(ctx, tx, f)
-}
-
-func (s *codeReferenceStorage) qe(ctx context.Context) mysql.QueryExecer {
-	tx, ok := ctx.Value(transactionKey).(mysql.Transaction)
-	if ok {
-		return tx
-	}
-	return s.client
+func NewCodeReferenceStorage(qe pgstorage.QueryExecer) storage.CodeReferenceStorage {
+	return &codeReferenceStorage{qe}
 }
 
 func (s *codeReferenceStorage) CreateCodeReference(ctx context.Context, cr *domain.CodeReference) error {
-	_, err := s.qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertCodeReferenceSQL,
 		cr.Id,
@@ -94,7 +64,7 @@ func (s *codeReferenceStorage) CreateCodeReference(ctx context.Context, cr *doma
 		cr.LineNumber,
 		cr.CodeSnippet,
 		cr.ContentHash,
-		mysql.JSONObject{Val: cr.Aliases},
+		pgstorage.JSONObject{Val: cr.Aliases},
 		cr.RepositoryName,
 		cr.RepositoryOwner,
 		cr.RepositoryType,
@@ -111,7 +81,7 @@ func (s *codeReferenceStorage) CreateCodeReference(ctx context.Context, cr *doma
 }
 
 func (s *codeReferenceStorage) UpdateCodeReference(ctx context.Context, cr *domain.CodeReference) error {
-	result, err := s.qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateCodeReferenceSQL,
 		cr.FilePath,
@@ -119,7 +89,7 @@ func (s *codeReferenceStorage) UpdateCodeReference(ctx context.Context, cr *doma
 		cr.LineNumber,
 		cr.CodeSnippet,
 		cr.ContentHash,
-		mysql.JSONObject{Val: cr.Aliases},
+		pgstorage.JSONObject{Val: cr.Aliases},
 		cr.RepositoryName,
 		cr.RepositoryOwner,
 		cr.RepositoryType,
@@ -137,7 +107,7 @@ func (s *codeReferenceStorage) UpdateCodeReference(ctx context.Context, cr *doma
 		return err
 	}
 	if rowsAffected != 1 {
-		return ErrCodeReferenceUnexpectedAffectedRows
+		return storage.ErrCodeReferenceUnexpectedAffectedRows
 	}
 	return nil
 }
@@ -147,11 +117,7 @@ func (s *codeReferenceStorage) GetCodeReference(
 	id string,
 ) (*domain.CodeReference, error) {
 	codeRef := &domain.CodeReference{}
-	row := s.qe(ctx).QueryRowContext(
-		ctx,
-		selectCodeReferenceSQL,
-		id,
-	)
+	row := s.qe.QueryRowContext(ctx, selectCodeReferenceSQL, id)
 	err := row.Scan(
 		&codeRef.Id,
 		&codeRef.FeatureId,
@@ -160,7 +126,7 @@ func (s *codeReferenceStorage) GetCodeReference(
 		&codeRef.LineNumber,
 		&codeRef.CodeSnippet,
 		&codeRef.ContentHash,
-		&mysql.JSONObject{Val: &codeRef.Aliases},
+		&pgstorage.JSONObject{Val: &codeRef.Aliases},
 		&codeRef.RepositoryName,
 		&codeRef.RepositoryOwner,
 		&codeRef.RepositoryType,
@@ -171,8 +137,8 @@ func (s *codeReferenceStorage) GetCodeReference(
 		&codeRef.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrCodeReferenceNotFound
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, storage.ErrCodeReferenceNotFound
 		}
 		return nil, err
 	}
@@ -181,20 +147,23 @@ func (s *codeReferenceStorage) GetCodeReference(
 
 func (s *codeReferenceStorage) ListCodeReferences(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	params storage.ListCodeReferencesParams,
 ) ([]*domain.CodeReference, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
+	options, err := listCodeReferencesOptionsFromParams(params)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	whereParts := options.CreateWhereParts()
+	whereSQL, whereArgs := pgstorage.ConstructWhereSQLString(whereParts)
+	orderBySQL := pgstorage.ConstructOrderBySQLString(options.Orders)
+	limitOffsetSQL := pgstorage.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
 	query := fmt.Sprintf("%s %s %s %s", selectCodeReferencesSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	codeRefs := make([]*domain.CodeReference, 0, limit)
+	codeRefs := make([]*domain.CodeReference, 0, options.Limit)
 	for rows.Next() {
 		codeRef := &domain.CodeReference{}
 		err := rows.Scan(
@@ -205,7 +174,7 @@ func (s *codeReferenceStorage) ListCodeReferences(
 			&codeRef.LineNumber,
 			&codeRef.CodeSnippet,
 			&codeRef.ContentHash,
-			&mysql.JSONObject{Val: &codeRef.Aliases},
+			&pgstorage.JSONObject{Val: &codeRef.Aliases},
 			&codeRef.RepositoryName,
 			&codeRef.RepositoryOwner,
 			&codeRef.RepositoryType,
@@ -223,10 +192,10 @@ func (s *codeReferenceStorage) ListCodeReferences(
 	if rows.Err() != nil {
 		return nil, 0, 0, rows.Err()
 	}
-	nextOffset := offset + len(codeRefs)
+	nextOffset := options.Offset + len(codeRefs)
 	var total int64
 	countQuery := fmt.Sprintf("%s %s", countCodeReferencesSQL, whereSQL)
-	row := s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...)
+	row := s.qe.QueryRowContext(ctx, countQuery, whereArgs...)
 	if err := row.Scan(&total); err != nil {
 		return nil, 0, 0, err
 	}
@@ -234,7 +203,7 @@ func (s *codeReferenceStorage) ListCodeReferences(
 }
 
 func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id string) error {
-	result, err := s.qe(ctx).ExecContext(ctx, deleteCodeReferenceSQL, id)
+	result, err := s.qe.ExecContext(ctx, deleteCodeReferenceSQL, id)
 	if err != nil {
 		return err
 	}
@@ -243,13 +212,11 @@ func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id strin
 		return err
 	}
 	if rowsAffected == 0 {
-		return ErrCodeReferenceNotFound
+		return storage.ErrCodeReferenceNotFound
 	}
 	return nil
 }
 
-// GetCodeReferenceCountsByFeatureIDs returns a map of feature ID to code reference count
-// for the given environment. This is used for bulk archivability evaluation to avoid N+1 queries.
 func (s *codeReferenceStorage) GetCodeReferenceCountsByFeatureIDs(
 	ctx context.Context,
 	environmentID string,
@@ -260,17 +227,17 @@ func (s *codeReferenceStorage) GetCodeReferenceCountsByFeatureIDs(
 		return result, nil
 	}
 
-	// Build placeholders for IN clause
+	// $1 is environment_id; feature_id placeholders start at $2.
 	placeholders := make([]string, len(featureIDs))
 	args := make([]interface{}, len(featureIDs)+1)
 	args[0] = environmentID
 	for i, id := range featureIDs {
-		placeholders[i] = "?"
+		placeholders[i] = fmt.Sprintf("$%d", i+2)
 		args[i+1] = id
 	}
 
 	query := fmt.Sprintf(countCodeReferencesByFeatureIDsSQL, strings.Join(placeholders, ", "))
-	rows, err := s.qe(ctx).QueryContext(ctx, query, args...)
+	rows, err := s.qe.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -287,6 +254,74 @@ func (s *codeReferenceStorage) GetCodeReferenceCountsByFeatureIDs(
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return result, nil
+}
+
+func listCodeReferencesOptionsFromParams(
+	p storage.ListCodeReferencesParams,
+) (*pgstorage.ListOptions, error) {
+	filters := []*pgstorage.Filter{
+		{Column: "environment_id", Operator: pgstorage.OperatorEqual, Value: p.EnvironmentID},
+		{Column: "feature_id", Operator: pgstorage.OperatorEqual, Value: p.FeatureID},
+	}
+	if p.RepositoryName != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column: "repository_name", Operator: pgstorage.OperatorEqual, Value: p.RepositoryName,
+		})
+	}
+	if p.RepositoryOwner != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column: "repository_owner", Operator: pgstorage.OperatorEqual, Value: p.RepositoryOwner,
+		})
+	}
+	if p.RepositoryType != coderefproto.CodeReference_REPOSITORY_TYPE_UNSPECIFIED {
+		filters = append(filters, &pgstorage.Filter{
+			Column: "repository_type", Operator: pgstorage.OperatorEqual, Value: p.RepositoryType,
+		})
+	}
+	if p.RepositoryBranch != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column: "repository_branch", Operator: pgstorage.OperatorEqual, Value: p.RepositoryBranch,
+		})
+	}
+	if p.FileExtension != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column: "file_extension", Operator: pgstorage.OperatorEqual, Value: p.FileExtension,
+		})
+	}
+
+	var column string
+	switch p.OrderBy {
+	case coderefproto.ListCodeReferencesRequest_DEFAULT:
+		column = "id"
+	case coderefproto.ListCodeReferencesRequest_CREATED_AT:
+		column = "created_at"
+	case coderefproto.ListCodeReferencesRequest_UPDATED_AT:
+		column = "updated_at"
+	default:
+		return nil, storage.ErrInvalidOrderBy
+	}
+	direction := pgstorage.OrderDirectionAsc
+	if p.OrderDirection == coderefproto.ListCodeReferencesRequest_DESC {
+		direction = pgstorage.OrderDirectionDesc
+	}
+
+	cursor := p.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil || offset < 0 {
+		return nil, storage.ErrInvalidCursor
+	}
+	limit := p.PageSize
+	if limit < 0 {
+		limit = 0
+	}
+	return &pgstorage.ListOptions{
+		Limit:   limit,
+		Offset:  offset,
+		Filters: filters,
+		Orders:  []*pgstorage.Order{pgstorage.NewOrder(column, direction)},
+	}, nil
 }
