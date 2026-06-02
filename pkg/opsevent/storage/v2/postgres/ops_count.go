@@ -57,10 +57,7 @@ func (s *opsCountStorage) UpsertOpsCount(
 		oc.FeatureId,
 		environmentId,
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *opsCountStorage) ListOpsCounts(
