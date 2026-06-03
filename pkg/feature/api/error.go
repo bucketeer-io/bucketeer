@@ -78,12 +78,34 @@ var (
 			maxSegmentUsersDataSize,
 		))
 	statusUnknownSegmentUserState = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "unknown segment user state", "SegmentUserState"))
+		pkgErr.NewErrorInvalidArgUnknown(
+			pkgErr.FeaturePackageName,
+			"unknown segment user state",
+			"SegmentUserState",
+		))
 	statusIncorrectDestinationEnvironment = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.FeaturePackageName,
 			"destination environment is the same as origin one",
 			"DestinationEnvironment",
+		))
+	statusMissingEnvironmentID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.FeaturePackageName,
+			"environment_id is required",
+			"EnvironmentId",
+		))
+	statusMissingTargetEnvironments = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.FeaturePackageName,
+			"target_environment_ids must not be empty",
+			"TargetEnvironmentIds",
+		))
+	statusDuplicateTargetEnvironments = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgDuplicated(
+			pkgErr.FeaturePackageName,
+			"target_environment_ids must not contain duplicates",
+			"TargetEnvironmentIds",
 		))
 	statusExceededMaxPageSizePerRequest = api.NewGRPCStatus(
 		pkgErr.NewErrorExceededMax(

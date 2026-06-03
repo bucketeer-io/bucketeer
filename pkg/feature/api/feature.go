@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
@@ -1560,6 +1561,147 @@ func (s *FeatureService) CloneFeature(
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CloneFeatureResponse{}, nil
+}
+
+func (s *FeatureService) BulkCloneFeature(
+	ctx context.Context,
+	req *featureproto.BulkCloneFeatureRequest,
+) (*featureproto.BulkCloneFeatureResponse, error) {
+	if err := validateBulkCloneFeatureRequest(req); err != nil {
+		return nil, err
+	}
+	// Check EDITOR permission on ALL target environments upfront.
+	// We collect permission errors and abort before any cloning if any env fails.
+	editors := make(map[string]*eventproto.Editor, len(req.TargetEnvironmentIds))
+	for _, targetEnvID := range req.TargetEnvironmentIds {
+		editor, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+			targetEnvID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		editors[targetEnvID] = editor
+	}
+	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
+			return nil, statusFeatureNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to get feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	results := make([]*featureproto.BulkCloneFeatureResult, 0, len(req.TargetEnvironmentIds))
+	for _, targetEnvID := range req.TargetEnvironmentIds {
+		editor := editors[targetEnvID]
+		// Deep-copy the source feature per iteration to prevent Clone() from
+		// mutating the shared proto slices (Variations/Targets/strategies) and
+		// corrupting event payloads for earlier iterations.
+		domainFeature := &domain.Feature{Feature: proto.Clone(f.Feature).(*featureproto.Feature)}
+		cloned, err := domainFeature.Clone(editor.Email)
+		if err != nil {
+			s.logger.Error(
+				"Failed to clone domain feature",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("targetEnvironmentId", targetEnvID),
+				)...,
+			)
+			results = append(results, &featureproto.BulkCloneFeatureResult{
+				EnvironmentId: targetEnvID,
+				Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_FAILED,
+				Error:         "failed to clone feature",
+			})
+			continue
+		}
+		var event *eventproto.Event
+		txErr := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+			event, err = domainevent.NewEvent(
+				editor,
+				eventproto.Event_FEATURE,
+				cloned.Id,
+				eventproto.Event_FEATURE_CLONED,
+				&eventproto.FeatureClonedEvent{
+					Id:                cloned.Id,
+					Name:              cloned.Name,
+					Description:       cloned.Description,
+					Variations:        cloned.Variations,
+					Targets:           cloned.Targets,
+					Rules:             cloned.Rules,
+					DefaultStrategy:   cloned.DefaultStrategy,
+					OffVariation:      cloned.OffVariation,
+					Tags:              cloned.Tags,
+					Maintainer:        cloned.Maintainer,
+					VariationType:     cloned.VariationType,
+					Prerequisites:     cloned.Prerequisites,
+					SourceEnvironment: req.EnvironmentId,
+					TargetEnvironment: targetEnvID,
+				},
+				targetEnvID,
+				cloned,
+				cloned,
+			)
+			if err != nil {
+				return err
+			}
+			return s.featureStorage.CreateFeature(ctxWithTx, cloned, targetEnvID)
+		})
+		if txErr != nil {
+			if errors.Is(txErr, v2fs.ErrFeatureAlreadyExists) {
+				results = append(results, &featureproto.BulkCloneFeatureResult{
+					EnvironmentId: targetEnvID,
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_ALREADY_EXISTS,
+				})
+				continue
+			}
+			s.logger.Error(
+				"Failed to clone feature",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(txErr),
+					zap.String("id", req.Id),
+					zap.String("targetEnvironmentId", targetEnvID),
+				)...,
+			)
+			results = append(results, &featureproto.BulkCloneFeatureResult{
+				EnvironmentId: targetEnvID,
+				Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_FAILED,
+				Error:         "failed to store feature",
+			})
+			continue
+		}
+		// Publish immediately after the successful transaction, consistent with
+		// CloneFeature, so audit events are never silently dropped.
+		if err := s.domainPublisher.Publish(ctx, event); err != nil {
+			s.logger.Error(
+				"Failed to publish bulk clone event",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("targetEnvironmentId", targetEnvID),
+				)...,
+			)
+			results = append(results, &featureproto.BulkCloneFeatureResult{
+				EnvironmentId: targetEnvID,
+				Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_FAILED,
+				Error:         "failed to publish event",
+			})
+			continue
+		}
+		results = append(results, &featureproto.BulkCloneFeatureResult{
+			EnvironmentId: targetEnvID,
+			Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+		})
+	}
+	s.updateFeatureFlagCache(ctx)
+	return &featureproto.BulkCloneFeatureResponse{Results: results}, nil
 }
 
 func boolValueToPtr(v *wrapperspb.BoolValue) *bool {

@@ -2312,6 +2312,190 @@ func TestCloneFeatureMySQL(t *testing.T) {
 	}
 }
 
+func TestBulkCloneFeatureMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	patterns := []struct {
+		desc            string
+		setup           func(*FeatureService)
+		req             *featureproto.BulkCloneFeatureRequest
+		expectedErr     error
+		expectedResults []*featureproto.BulkCloneFeatureResult
+	}{
+		{
+			desc:  "error: statusMissingID",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1"},
+			},
+			expectedErr: statusMissingID.Err(),
+		},
+		{
+			desc:  "error: statusMissingEnvironmentID",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "",
+				TargetEnvironmentIds: []string{"ns1"},
+			},
+			expectedErr: statusMissingEnvironmentID.Err(),
+		},
+		{
+			desc:  "error: statusMissingTargetEnvironments",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{},
+			},
+			expectedErr: statusMissingTargetEnvironments.Err(),
+		},
+		{
+			desc:  "error: statusDuplicateTargetEnvironments",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1", "ns1"},
+			},
+			expectedErr: statusDuplicateTargetEnvironments.Err(),
+		},
+		{
+			desc:  "error: statusIncorrectDestinationEnvironment (source in targets)",
+			setup: nil,
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns0"},
+			},
+			expectedErr: statusIncorrectDestinationEnvironment.Err(),
+		},
+		{
+			desc: "error: statusFeatureNotFound",
+			setup: func(s *FeatureService) {
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, v2fs.ErrFeatureNotFound)
+			},
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1"},
+			},
+			expectedErr: statusFeatureNotFound.Err(),
+		},
+		{
+			desc: "success: all environments cloned",
+			setup: func(s *FeatureService) {
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:         "id-0",
+					Variations: createFeatureVariations(),
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation_id_1"},
+					},
+				}}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
+				}).Return(nil).Times(2)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil).Times(2)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1", "ns2"},
+			},
+			expectedErr: nil,
+			expectedResults: []*featureproto.BulkCloneFeatureResult{
+				{
+					EnvironmentId: "ns1",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+				},
+				{
+					EnvironmentId: "ns2",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+				},
+			},
+		},
+		{
+			desc: "success: already exists in one environment",
+			setup: func(s *FeatureService) {
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:         "id-0",
+					Variations: createFeatureVariations(),
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation_id_1"},
+					},
+				}}, nil)
+				// First env: already exists (no fn call).
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrFeatureAlreadyExists)
+				// Second env: success.
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
+				}).Return(nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			req: &featureproto.BulkCloneFeatureRequest{
+				Id:                   "id-0",
+				EnvironmentId:        "ns0",
+				TargetEnvironmentIds: []string{"ns1", "ns2"},
+			},
+			expectedErr: nil,
+			expectedResults: []*featureproto.BulkCloneFeatureResult{
+				{
+					EnvironmentId: "ns1",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_ALREADY_EXISTS,
+				},
+				{
+					EnvironmentId: "ns2",
+					Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
+				},
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.BulkCloneFeature(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedResults != nil {
+				require.NotNil(t, resp)
+				assert.Equal(t, p.expectedResults, resp.Results)
+			}
+		})
+	}
+}
+
 func TestGetTargetFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
