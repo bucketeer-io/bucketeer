@@ -716,6 +716,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				envClient := s.environmentClient.(*ecmock.MockClient)
 				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				credentialsStorage := s.credentialsStorage.(*authstoragemock.MockCredentialsStorage)
 				email := "bucketeer@example.com"
 				sysAdminOrgID := "sys-org"
 				projects := getProjects(t)
@@ -788,16 +789,23 @@ func TestGetMeMySQL(t *testing.T) {
 					accountStorage.EXPECT().GetAccountV2(
 						gomock.Any(), email, org.Id,
 					).Return(memberOrgAccount, nil),
+					credentialsStorage.EXPECT().GetCredentials(
+						gomock.Any(), email,
+					).Return(nil, authstorage.ErrCredentialsNotFound),
+					credentialsStorage.EXPECT().CreateCredentials(
+						gomock.Any(), email, "",
+					).Return(nil),
 				)
 			},
 			input: &accountproto.GetMeRequest{OrganizationId: "org0"},
 			expected: &accountproto.GetMeResponse{
 				Account: &accountproto.ConsoleAccount{
-					Email:            "bucketeer@example.com",
-					Name:             "System Admin",
-					IsSystemAdmin:    true,
-					Organization:     &org,
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					Email:                 "bucketeer@example.com",
+					Name:                  "System Admin",
+					IsSystemAdmin:         true,
+					Organization:          &org,
+					OrganizationRole:      accountproto.AccountV2_Role_Organization_MEMBER,
+					PasswordSetupRequired: true,
 					EnvironmentRoles: []*accountproto.ConsoleAccount_EnvironmentRole{
 						{
 							Environment: &environmentproto.EnvironmentV2{
