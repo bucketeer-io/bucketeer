@@ -161,6 +161,22 @@ func simulateGetFeatureFlagsFixed(
 		}
 	}
 
+	// Force-recover fallback: ffID mismatched but the timestamp filter
+	// produced an empty diff. Returning an empty diff would let the SDK
+	// accept the new ffID without applying any update, permanently masking
+	// the missed change. Fall back to the full feature set with
+	// ForceUpdate=true so the SDK reconciles.
+	if len(updatedFeatures) == 0 {
+		return featureFlagsResponse{
+			FeatureFlagsId:         ffID,
+			Features:               serverFeatures,
+			ArchivedFeatureFlagIds: []string{},
+			RequestedAt:            now,
+			ForceUpdate:            true,
+			ResponseType:           "forceAll",
+		}
+	}
+
 	return featureFlagsResponse{
 		FeatureFlagsId:         ffID,
 		Features:               updatedFeatures,
@@ -780,6 +796,133 @@ func TestGetFeatureFlagsSameSecondUpdate(t *testing.T) {
 	assert.Len(t, resp.Features, 1,
 		fmt.Sprintf("flag-2 (UpdatedAt == RequestedAt) is included with >= comparison"))
 	assert.Equal(t, "flag-2", resp.Features[0].Id)
+}
+
+// TestGetFeatureFlagsRapidFlipTrap reproduces the production incident where a
+// rapid catch-up of multiple back-to-back auto-ops executions caused ~13% of
+// Go SDK pods to permanently miss the final flag state until they were
+// restarted.
+//
+// Failure mode (without the force-recover fallback):
+//  1. SDK is at ffID_v0 with requestedAt=T0.
+//  2. An unrelated flag changes at T_other → L2 advances to state with new
+//     ffID. The SDK's next poll returns Diff including that flag, advancing
+//     the SDK's local requestedAt to a value AFTER our target flag's
+//     UpdatedAt that L2 has not yet reflected.
+//  3. L2 finally catches up and now contains the target flag's new value.
+//  4. SDK polls again: ffID mismatch → Diff path; the target flag's UpdatedAt
+//     is now < the SDK's advanced requestedAt → it is filtered out; archives
+//     are empty.
+//  5. Server returns Features=[], ArchivedFeatureFlagIds=[], FeatureFlagsId =
+//     new ffID. SDK applies: features unchanged, local ffID is overwritten.
+//  6. From here on, ffID always matches → None responses forever; the SDK is
+//     permanently stuck on the pre-step-3 state.
+//
+// With the force-recover fallback, step 5 instead returns ForceUpdate=true
+// with the full feature set, so the SDK reconciles.
+func TestGetFeatureFlagsRapidFlipTrap(t *testing.T) {
+	t.Parallel()
+
+	baseTime := int64(1710000000)
+
+	targetFlagV1 := &featureproto.Feature{
+		Id:        "target-flag",
+		Version:   1,
+		Enabled:   true,
+		UpdatedAt: baseTime - 3600,
+	}
+	targetFlagV2 := &featureproto.Feature{
+		Id:        "target-flag",
+		Version:   2,
+		Enabled:   false,
+		UpdatedAt: baseTime + 10, // updated BEFORE the unrelated flag below
+	}
+	unrelatedFlag := &featureproto.Feature{
+		Id:        "unrelated-flag",
+		Version:   1,
+		Enabled:   true,
+		UpdatedAt: baseTime + 20, // updated AFTER target-flag but reaches L2 first
+	}
+
+	patterns := []struct {
+		desc                  string
+		serverFn              featureFlagsServerFunc
+		expectPermanentlyStuck bool
+	}{
+		{
+			desc:                  "buggy: empty diff with ffID mismatch silently loses the update",
+			serverFn:              simulateGetFeatureFlagsBuggy,
+			expectPermanentlyStuck: true,
+		},
+		{
+			desc:                  "fixed: empty diff with ffID mismatch triggers ForceUpdate",
+			serverFn:              simulateGetFeatureFlagsFixed,
+			expectPermanentlyStuck: false,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sdk := &featureFlagsSDKCache{features: make(map[string]*featureproto.Feature)}
+
+			// T=0: initial sync. L2 has only the target flag at V1 (Enabled).
+			serverFeatures := []*featureproto.Feature{targetFlagV1}
+			resp := p.serverFn(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime)
+			require.Equal(t, "all", resp.ResponseType)
+			sdk.applyResponse(resp)
+			require.True(t, sdk.features["target-flag"].Enabled)
+			require.Equal(t, baseTime, sdk.requestedAt)
+
+			// T=10: target-flag updated to V2 (Disabled) in MySQL. L2 has NOT
+			// yet propagated this change.
+			//
+			// T=20: unrelated-flag created. L2 receives this update first
+			// (e.g., cacheRefresher processes the unrelated event before the
+			// target one due to ordering / partitioning).
+			serverFeatures = []*featureproto.Feature{targetFlagV1, unrelatedFlag}
+
+			// T=25: SDK polls. L2 reflects the unrelated flag but not yet
+			// target-flag V2. ffID changed → Diff returns unrelated-flag,
+			// advancing the SDK's requestedAt to 25.
+			resp = p.serverFn(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+25)
+			require.Equal(t, "diff", resp.ResponseType)
+			require.Len(t, resp.Features, 1)
+			require.Equal(t, "unrelated-flag", resp.Features[0].Id)
+			sdk.applyResponse(resp)
+			require.Equal(t, baseTime+25, sdk.requestedAt)
+			require.True(t, sdk.features["target-flag"].Enabled,
+				"target-flag still appears Enabled to the SDK at this point")
+
+			// T=30: L2 finally catches up with target-flag V2. Server state
+			// now reflects both changes consistently.
+			serverFeatures = []*featureproto.Feature{targetFlagV2, unrelatedFlag}
+
+			// T=35: SDK polls. ffID mismatch (state now contains target V2).
+			// Diff filter excludes:
+			//   - target-flag V2: UpdatedAt=10 < requestedAt=25 → EXCLUDED
+			//   - unrelated-flag: UpdatedAt=20 < requestedAt=25 → EXCLUDED
+			// Archives are also empty → this is the trap trigger.
+			resp = p.serverFn(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+35)
+			sdk.applyResponse(resp)
+
+			// Subsequent polls observe the long-term effect.
+			for _, offset := range []int64{60, 120, 180, 240, 300} {
+				resp = p.serverFn(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+35+offset)
+				sdk.applyResponse(resp)
+			}
+
+			if p.expectPermanentlyStuck {
+				assert.True(t, sdk.features["target-flag"].Enabled,
+					"buggy: SDK is permanently stuck with target-flag Enabled=true "+
+						"because the empty Diff was accepted as the truth")
+			} else {
+				assert.False(t, sdk.features["target-flag"].Enabled,
+					"fixed: SDK recovered to target-flag Enabled=false via ForceUpdate fallback")
+				assert.Contains(t, sdk.features, "unrelated-flag",
+					"fixed: SDK also retains unrelated-flag after ForceUpdate reconciliation")
+			}
+		})
+	}
 }
 
 // TestGetFeatureFlagsSameSecondAfterDiff verifies the same-second edge case
