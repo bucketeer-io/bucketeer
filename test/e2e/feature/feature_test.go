@@ -645,7 +645,8 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 	featureWithProgressiveRollout := newFeatureID(t)
 	featureWithoutAutoOps := newFeatureID(t)
 	createFeature(t, client, newCreateFeatureReq(featureWithScheduleAutoOps))
-	createFeature(t, client, newCreateFeatureReq(featureWithProgressiveRollout))
+	// Progressive rollouts require features with exactly 2 variations.
+	createFeature(t, client, newCreateFeatureWithTwoVariationsRequest(featureWithProgressiveRollout))
 	createFeature(t, client, newCreateFeatureReq(featureWithoutAutoOps))
 
 	// Attach a schedule auto ops rule to one feature
