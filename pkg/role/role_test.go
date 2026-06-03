@@ -316,6 +316,54 @@ func TestCheckOrganizationRole(t *testing.T) {
 			expected:    nil,
 			expectedErr: status.Error(codes.NotFound, ""),
 		},
+		{
+			desc: "success: service token retains write access without account membership",
+			inputCtx: getContextWithToken(t, &token.AccessToken{
+				Email:          "batch@bucketeer.io",
+				Name:           "batch",
+				IsSystemAdmin:  true,
+				IsServiceToken: true,
+			}),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected: &eventproto.Editor{
+				Email:   "batch@bucketeer.io",
+				Name:    "batch",
+				IsAdmin: true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: human system admin is read-only for admin operations",
+			inputCtx: getContextWithToken(t, &token.AccessToken{
+				Email:         "admin@bucketeer.io",
+				Name:          "admin",
+				IsSystemAdmin: true,
+			}),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: service token without system admin does not bypass role check",
+			inputCtx: getContextWithToken(t, &token.AccessToken{
+				Email:          "rogue@bucketeer.io",
+				Name:           "rogue",
+				IsSystemAdmin:  false,
+				IsServiceToken: true,
+			}),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -466,6 +514,57 @@ func TestCheckEnvironmentRole(t *testing.T) {
 				},
 			},
 			expectedErr: nil,
+		},
+		{
+			desc: "success: service token retains write access without account membership",
+			ctx: getContextWithToken(t, &token.AccessToken{
+				Email:          "batch@bucketeer.io",
+				Name:           "batch",
+				IsSystemAdmin:  true,
+				IsServiceToken: true,
+			}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected: &eventproto.Editor{
+				Email:   "batch@bucketeer.io",
+				Name:    "batch",
+				IsAdmin: true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: human system admin is read-only for write operations",
+			ctx: getContextWithToken(t, &token.AccessToken{
+				Email:         "admin@bucketeer.io",
+				Name:          "admin",
+				IsSystemAdmin: true,
+			}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: service token without system admin does not bypass role check",
+			ctx: getContextWithToken(t, &token.AccessToken{
+				Email:          "rogue@bucketeer.io",
+				Name:           "rogue",
+				IsSystemAdmin:  false,
+				IsServiceToken: true,
+			}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
 		},
 	}
 	for _, p := range patterns {

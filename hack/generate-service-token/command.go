@@ -60,12 +60,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		return err
 	}
 	accessToken := &token.AccessToken{
-		Issuer:        *c.issuer,
-		Audience:      *c.audience,
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         *c.email,
-		IsSystemAdmin: true,
+		Issuer:         *c.issuer,
+		Audience:       *c.audience,
+		Expiry:         time.Now().AddDate(100, 0, 0),
+		IssuedAt:       time.Now(),
+		Email:          *c.email,
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
 	}
 	signedAccessToken, err := signer.SignAccessToken(accessToken)
 	if err != nil {
