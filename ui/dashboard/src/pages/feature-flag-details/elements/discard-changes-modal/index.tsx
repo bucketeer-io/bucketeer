@@ -8,6 +8,7 @@ import { IconArrowUpDown, IconPlus, IconSwitchUpdate } from '@icons';
 import {
   DiscardChangesStateData,
   DiscardChangesType,
+  RuleOrders,
   VariationPercent
 } from 'pages/feature-flag-details/targeting/types';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
@@ -16,6 +17,7 @@ import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import VariationLabel from 'elements/variation-label';
 
 interface Props {
   isOpen: boolean;
@@ -24,6 +26,7 @@ interface Props {
   ruleIndex?: number;
   actionSegmentRule?: 'new-rule' | 'edit-rule' | undefined;
   ruleDiscardChange?: DiscardChangesType;
+  reorderRule?: boolean;
   onClose: () => void;
   onSubmit: (type: DiscardChangesType, index?: number) => void;
 }
@@ -350,6 +353,62 @@ const StrategyList = ({ variations }: { variations?: VariationPercent[] }) =>
     </div>
   );
 
+export const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
+  const { t } = useTranslation(['common', 'form']);
+
+  const RuleLabel = (ruleLabel: string[], isNewRule: boolean) => (
+    <p>
+      {isNewRule && (
+        <span className="px-1 font-bold text-accent-red-400">
+          ({t('common:new')})
+        </span>
+      )}
+      {ruleLabel.reduce<React.ReactNode[]>((acc, label, i) => {
+        if (i > 0) {
+          acc.push(<b key={`and-${i}`}> {t('common:and').toLowerCase()} </b>);
+        }
+        acc.push(<span key={`label-${i}`}>{label}</span>);
+        return acc;
+      }, [])}
+      <strong className="pl-1">{t('common:server').toLowerCase()}</strong>
+      <span>:</span>
+    </p>
+  );
+
+  return (
+    <div className="pl-4">
+      <ol className="leading-7 space-y-2">
+        {ruleOrders.labels.map((ruleLabel: string[], index: number) => (
+          <li key={`label-${index}`}>
+            <div className="flex gap-1">
+              <span>{index + 1}.</span>
+              {RuleLabel(
+                ruleLabel,
+                (ruleOrders.isNewRules && ruleOrders?.isNewRules[index]) ||
+                  false
+              )}
+            </div>
+            {ruleOrders.variations[index].map((v, vIndex: number) => (
+              <div
+                className="flex items-center gap-1 ml-4"
+                key={`variation-${index}-${vIndex}`}
+              >
+                <VariationLabel
+                  label={v.variation}
+                  index={v.variationIndex || 0}
+                />
+                {!isNil(v.weight) && (
+                  <p className="text-gray-700"> - ({v.weight}%)</p>
+                )}
+              </div>
+            ))}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+};
+
 export const CustomRuleDiscardItem = ({
   labelType,
   label,
@@ -408,6 +467,7 @@ const DiscardChangeModal = ({
   ruleIndex,
   actionSegmentRule,
   ruleDiscardChange,
+  reorderRule = false,
   onClose,
   onSubmit
 }: Props) => {
@@ -466,6 +526,7 @@ const DiscardChangeModal = ({
             const { PREREQUISITE, INDIVIDUAL, CUSTOM, DEFAULT } =
               DiscardChangesType;
             if (isNil(item)) return null;
+            if (item.changeType === 'reorder') return null;
             if (type === PREREQUISITE)
               return <PrerequisiteDiscardItem key={index} {...item} />;
             if (type === INDIVIDUAL)
@@ -481,6 +542,23 @@ const DiscardChangeModal = ({
             }
             return null;
           })}
+
+          {reorderRule &&
+            data.map(
+              (item, index) =>
+                item?.changeType === 'reorder' &&
+                item.ruleOrders && (
+                  <div key={`reorder-${index}`} className="flex flex-col gap-2">
+                    <div className="flex gap-1 items-center typo-para-medium text-gray-700">
+                      <Icon icon={IconArrowUpDown} size="sm" color="gray-600" />
+                      <span className="font-medium">
+                        <Trans i18nKey="form:custom-rule-reorder-discard-desc" />
+                      </span>
+                    </div>
+                    <ReorderList ruleOrders={item.ruleOrders} />
+                  </div>
+                )
+            )}
         </>
       </div>
 
