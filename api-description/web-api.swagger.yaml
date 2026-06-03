@@ -5495,6 +5495,10 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: hasAutoOps
+          in: query
+          required: false
+          type: boolean
       tags:
         - Feature
   /v1/flag_trigger:

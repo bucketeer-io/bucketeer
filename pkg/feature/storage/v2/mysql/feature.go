@@ -288,6 +288,7 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*mysqlstorage.Lis
 			})
 		}
 	}
+	existsFilters, orFilters := listFeaturesAutoOpsFilters(p.HasAutoOps)
 
 	// Null filters and status-based filters
 	var nullFilters []*mysqlstorage.NullFilter
@@ -352,14 +353,43 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*mysqlstorage.Lis
 	}
 
 	return &mysqlstorage.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		JSONFilters: jsonFilters,
-		NullFilters: nullFilters,
-		InFilters:   inFilters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
+		Limit:         limit,
+		Offset:        offset,
+		Filters:       filters,
+		JSONFilters:   jsonFilters,
+		NullFilters:   nullFilters,
+		ExistsFilters: existsFilters,
+		InFilters:     inFilters,
+		OrFilters:     orFilters,
+		SearchQuery:   searchQuery,
+		Orders:        orders,
+	}, nil
+}
+
+func listFeaturesAutoOpsFilters(hasAutoOps *bool) ([]*mysqlstorage.ExistsFilter, []*mysqlstorage.OrFilter) {
+	if hasAutoOps == nil {
+		return nil, nil
+	}
+	autoOpsRuleSubquery := "SELECT 1 FROM auto_ops_rule aor " +
+		"WHERE aor.feature_id = feature.id " +
+		"AND aor.environment_id = feature.environment_id " +
+		"AND aor.deleted = 0"
+	progressiveRolloutSubquery := "SELECT 1 FROM ops_progressive_rollout opr " +
+		"WHERE opr.feature_id = feature.id " +
+		"AND opr.environment_id = feature.environment_id"
+	if *hasAutoOps {
+		return nil, []*mysqlstorage.OrFilter{
+			{
+				Queries: []mysqlstorage.WherePart{
+					&mysqlstorage.ExistsFilter{Subquery: autoOpsRuleSubquery},
+					&mysqlstorage.ExistsFilter{Subquery: progressiveRolloutSubquery},
+				},
+			},
+		}
+	}
+	return []*mysqlstorage.ExistsFilter{
+		{Subquery: autoOpsRuleSubquery, NotExists: true},
+		{Subquery: progressiveRolloutSubquery, NotExists: true},
 	}, nil
 }
 

@@ -284,6 +284,7 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*pgstorage.ListOp
 			})
 		}
 	}
+	existsFilters, orFilters := listFeaturesAutoOpsFilters(p.HasAutoOps)
 
 	var nullFilters []*pgstorage.NullFilter
 	switch p.Status {
@@ -343,14 +344,43 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*pgstorage.ListOp
 	}
 
 	return &pgstorage.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		JSONFilters: jsonFilters,
-		NullFilters: nullFilters,
-		InFilters:   inFilters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
+		Limit:         limit,
+		Offset:        offset,
+		Filters:       filters,
+		JSONFilters:   jsonFilters,
+		NullFilters:   nullFilters,
+		ExistsFilters: existsFilters,
+		InFilters:     inFilters,
+		OrFilters:     orFilters,
+		SearchQuery:   searchQuery,
+		Orders:        orders,
+	}, nil
+}
+
+func listFeaturesAutoOpsFilters(hasAutoOps *bool) ([]*pgstorage.ExistsFilter, []*pgstorage.OrFilter) {
+	if hasAutoOps == nil {
+		return nil, nil
+	}
+	autoOpsRuleSubquery := "SELECT 1 FROM auto_ops_rule aor " +
+		"WHERE aor.feature_id = feature.id " +
+		"AND aor.environment_id = feature.environment_id " +
+		"AND aor.deleted = FALSE"
+	progressiveRolloutSubquery := "SELECT 1 FROM ops_progressive_rollout opr " +
+		"WHERE opr.feature_id = feature.id " +
+		"AND opr.environment_id = feature.environment_id"
+	if *hasAutoOps {
+		return nil, []*pgstorage.OrFilter{
+			{
+				Queries: []pgstorage.WherePart{
+					&pgstorage.ExistsFilter{Subquery: autoOpsRuleSubquery},
+					&pgstorage.ExistsFilter{Subquery: progressiveRolloutSubquery},
+				},
+			},
+		}
+	}
+	return []*pgstorage.ExistsFilter{
+		{Subquery: autoOpsRuleSubquery, NotExists: true},
+		{Subquery: progressiveRolloutSubquery, NotExists: true},
 	}, nil
 }
 

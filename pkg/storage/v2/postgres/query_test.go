@@ -494,6 +494,48 @@ func TestSearchQueryBindSQL(t *testing.T) {
 	}
 }
 
+func TestExistsFilterBindSQL(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		input        *ExistsFilter
+		expectedSQL  string
+		expectedArgs []interface{}
+	}{
+		{
+			desc:         "Empty",
+			input:        &ExistsFilter{},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+		{
+			desc: "exists",
+			input: &ExistsFilter{
+				Subquery: "SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id",
+			},
+			expectedSQL:  "EXISTS (SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id)",
+			expectedArgs: nil,
+		},
+		{
+			desc: "not exists",
+			input: &ExistsFilter{
+				Subquery:  "SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id",
+				NotExists: true,
+			},
+			expectedSQL:  "NOT EXISTS (SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id)",
+			expectedArgs: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sql, args, next := p.input.BindSQL(1)
+			assert.Equal(t, p.expectedSQL, sql)
+			assert.Equal(t, p.expectedArgs, args)
+			assert.Equal(t, 1, next)
+		})
+	}
+}
+
 func TestOrFilterBindSQL(t *testing.T) {
 	t.Parallel()
 	sql, args, _ := (&OrFilter{
