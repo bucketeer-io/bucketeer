@@ -123,7 +123,8 @@ const FilterFlagModal = ({
         enabled,
         tags,
         status,
-        hasFeatureFlagAsRule
+        hasFeatureFlagAsRule,
+        hasAutoOps
       } = filters || {};
       const filterTypeArr: FilterOption[] = [];
       const addFilterOption = (
@@ -149,11 +150,12 @@ const FilterFlagModal = ({
       };
       addFilterOption(0, hasPrerequisites);
       addFilterOption(1, hasFeatureFlagAsRule);
-      addFilterOption(2, hasExperiment);
-      addFilterOption(3, enabled);
-      addFilterOption(4, tags);
-      addFilterOption(5, status);
-      addFilterOption(6, maintainer);
+      addFilterOption(2, hasAutoOps);
+      addFilterOption(3, hasExperiment);
+      addFilterOption(4, enabled);
+      addFilterOption(5, tags);
+      addFilterOption(6, status);
+      addFilterOption(7, maintainer);
 
       setSelectedFilters(
         filterTypeArr.length ? filterTypeArr : [flagFilterOptions[0]]
@@ -240,7 +242,8 @@ const FilterFlagModal = ({
       enabled: undefined,
       tags: undefined,
       status: undefined,
-      hasFeatureFlagAsRule: undefined
+      hasFeatureFlagAsRule: undefined,
+      hasAutoOps: undefined
     };
 
     const newFilters = {};

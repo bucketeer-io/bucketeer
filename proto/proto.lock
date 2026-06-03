@@ -31460,6 +31460,11 @@
                 "id": 15,
                 "name": "has_feature_flag_as_rule",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 16,
+                "name": "has_auto_ops",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [

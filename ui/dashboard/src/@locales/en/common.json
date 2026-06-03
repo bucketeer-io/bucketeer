@@ -283,6 +283,7 @@
   "profile": "Profile",
   "started": "started",
   "has-flag-as-rule": "Has Feature Flag as Rule",
+  "has-auto-ops": "Has Auto Operations",
   "editor": "Editor",
   "viewer": "Viewer",
   "admin-account": "Admin Account",

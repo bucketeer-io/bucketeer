@@ -31,6 +31,7 @@ export interface FlagFilters {
   tags?: string[];
   status?: StatusFilterType;
   hasFeatureFlagAsRule?: boolean;
+  hasAutoOps?: boolean;
 }
 
 export enum FeatureActivityStatus {

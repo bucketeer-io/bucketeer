@@ -50,6 +50,7 @@ type ListFeaturesParams struct {
 	Deleted              *bool
 	HasPrerequisites     *bool
 	HasFeatureFlagAsRule *bool
+	HasAutoOps           *bool
 	SearchKeyword        string
 	Status               proto.FeatureLastUsedInfo_Status
 	OrderBy              proto.ListFeaturesRequest_OrderBy

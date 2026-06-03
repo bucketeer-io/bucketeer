@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -629,6 +630,136 @@ func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 	}
 	if count < 1 {
 		t.Errorf("Expected at least one feature with feature flag clause, got %d", count)
+	}
+}
+
+func TestListFeaturesFilterHasAutoOps(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	aoClient := newAutoOpsClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create features
+	featureWithScheduleAutoOps := newFeatureID(t)
+	featureWithProgressiveRollout := newFeatureID(t)
+	featureWithoutAutoOps := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureWithScheduleAutoOps))
+	createFeature(t, client, newCreateFeatureReq(featureWithProgressiveRollout))
+	createFeature(t, client, newCreateFeatureReq(featureWithoutAutoOps))
+
+	// Attach a schedule auto ops rule to one feature
+	createAutoOpsRule(
+		ctx,
+		t,
+		aoClient,
+		featureWithScheduleAutoOps,
+		aoproto.OpsType_SCHEDULE,
+		nil,
+		[]*aoproto.DatetimeClause{
+			{
+				Time:       time.Now().Add(24 * time.Hour).Unix(),
+				ActionType: aoproto.ActionType_DISABLE,
+			},
+		},
+	)
+	progressiveRolloutFeature := getFeature(t, featureWithProgressiveRollout, client)
+	createProgressiveRollout(
+		ctx,
+		t,
+		aoClient,
+		featureWithProgressiveRollout,
+		&aoproto.ProgressiveRolloutManualScheduleClause{
+			Schedules: []*aoproto.ProgressiveRolloutSchedule{
+				{
+					Weight:    50000,
+					ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
+				},
+			},
+			VariationId: progressiveRolloutFeature.Variations[0].Id,
+		},
+		nil,
+	)
+
+	// Filter: has_auto_ops = true
+	trueResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId: *environmentID,
+		HasAutoOps:    &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundWithScheduleAutoOps := false
+	foundWithProgressiveRollout := false
+	for _, f := range trueResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			foundWithScheduleAutoOps = true
+		}
+		if f.Id == featureWithProgressiveRollout {
+			foundWithProgressiveRollout = true
+		}
+		if f.Id == featureWithoutAutoOps {
+			t.Errorf("Feature %s should not appear when filtering has_auto_ops=true", featureWithoutAutoOps)
+		}
+	}
+	if !foundWithScheduleAutoOps {
+		t.Errorf("Feature %s should appear when filtering has_auto_ops=true", featureWithScheduleAutoOps)
+	}
+	if !foundWithProgressiveRollout {
+		t.Errorf("Feature %s should appear when filtering has_auto_ops=true", featureWithProgressiveRollout)
+	}
+
+	// Filter: has_auto_ops = false
+	falseResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId: *environmentID,
+		HasAutoOps:    &wrappers.BoolValue{Value: false},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundWithoutAutoOps := false
+	for _, f := range falseResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			t.Errorf("Feature %s should not appear when filtering has_auto_ops=false", featureWithScheduleAutoOps)
+		}
+		if f.Id == featureWithProgressiveRollout {
+			t.Errorf("Feature %s should not appear when filtering has_auto_ops=false", featureWithProgressiveRollout)
+		}
+		if f.Id == featureWithoutAutoOps {
+			foundWithoutAutoOps = true
+		}
+	}
+	if !foundWithoutAutoOps {
+		t.Errorf("Feature %s should appear when filtering has_auto_ops=false", featureWithoutAutoOps)
+	}
+
+	// Filter: has_auto_ops = true combined with has_experiment (exercises listFeaturesFilteredByExperiment path)
+	experimentResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId: *environmentID,
+		HasAutoOps:    &wrappers.BoolValue{Value: true},
+		HasExperiment: &wrappers.BoolValue{Value: false},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundWithScheduleAutoOpsInExpPath := false
+	foundWithProgressiveRolloutInExpPath := false
+	for _, f := range experimentResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			foundWithScheduleAutoOpsInExpPath = true
+		}
+		if f.Id == featureWithProgressiveRollout {
+			foundWithProgressiveRolloutInExpPath = true
+		}
+		if f.Id == featureWithoutAutoOps {
+			t.Errorf("Feature %s should not appear when filtering has_auto_ops=true with has_experiment=false", featureWithoutAutoOps)
+		}
+	}
+	if !foundWithScheduleAutoOpsInExpPath {
+		t.Errorf("Feature %s should appear when filtering has_auto_ops=true with has_experiment=false", featureWithScheduleAutoOps)
+	}
+	if !foundWithProgressiveRolloutInExpPath {
+		t.Errorf("Feature %s should appear when filtering has_auto_ops=true with has_experiment=false", featureWithProgressiveRollout)
 	}
 }
 
