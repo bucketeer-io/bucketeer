@@ -32,8 +32,7 @@ import (
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	mockFeatureStorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -615,7 +614,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
 					nil,
 				)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
@@ -650,7 +649,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
 					nil,
 				)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutAlreadyExists)
 			},
@@ -755,7 +754,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
 					nil,
 				)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -860,7 +859,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: internal error during transaction",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
@@ -874,7 +873,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: not found",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutNotFound)
 			},
@@ -888,7 +887,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: unexpected affected rows",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
 			},
@@ -902,7 +901,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
@@ -952,7 +951,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: internal error during transaction",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
@@ -962,7 +961,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: ErrProgressiveRolloutNotFound",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutNotFound)
 			},
@@ -972,7 +971,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: ErrProgressiveRolloutUnexpectedAffectedRows",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
 			},
@@ -982,7 +981,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
@@ -1022,8 +1021,12 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 		expected      error
 	}{
 		{
-			desc:          "err: InvalidOrderBy",
-			setup:         nil,
+			desc: "err: InvalidOrderBy",
+			setup: func(s *AutoOpsService) {
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, int64(0), 0, v2as.ErrInvalidOrderBy)
+			},
 			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_OrderBy(999),
 			environmentId: "ns0",
 			expected:      statusProgressiveRolloutInvalidOrderBy.Err(),
@@ -1099,11 +1102,10 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				tx := mysqlmock.NewMockTransaction(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, tx)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
 					gomock.Any(), gomock.Any(), gomock.Any(),

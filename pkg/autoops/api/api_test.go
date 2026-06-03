@@ -40,7 +40,7 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -53,6 +53,7 @@ func TestNewAutoOpsService(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	mysqlClientMock := mysqlmock.NewMockClient(mockController)
+	dbClientMock := dbmock.NewMockClient(mockController)
 	featureClientMock := featureclientmock.NewMockClient(mockController)
 	experimentClientMock := experimentclientmock.NewMockClient(mockController)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
@@ -61,8 +62,13 @@ func TestNewAutoOpsService(t *testing.T) {
 	logger := zap.NewNop()
 	featureStorageMock := mockFeatureStorage.NewMockFeatureStorage(mockController)
 	opsCountStorageMock := mockOpsCountStorage.NewMockOpsCountStorage(mockController)
+	autoOpsStorageMock := mockAutoOpsStorage.NewMockAutoOpsRuleStorage(mockController)
+	prStorageMock := mockAutoOpsStorage.NewMockProgressiveRolloutStorage(mockController)
 	s := NewAutoOpsService(
 		mysqlClientMock,
+		dbClientMock,
+		autoOpsStorageMock,
+		prStorageMock,
 		opsCountStorageMock,
 		featureStorageMock,
 		featureClientMock,
@@ -332,10 +338,10 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(),
 				).Return(&experimentproto.GetGoalResponse{}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -363,10 +369,10 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success schedule",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -580,10 +586,10 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 							{Id: "cid2", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
 						}},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -639,10 +645,10 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, Clause: existingClause},
 						}},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -712,10 +718,10 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 							{Id: "cid", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
 						}},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -774,10 +780,10 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 							{Id: "cid", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
 						}},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -1051,7 +1057,7 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
@@ -1164,6 +1170,7 @@ func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 	logger := zap.NewNop()
 	return &AutoOpsService{
 		mysqlClient:      mysqlClientMock,
+		dbClient:         dbmock.NewMockClient(c),
 		featureStorage:   mockFeatureStorage.NewMockFeatureStorage(c),
 		autoOpsStorage:   mockAutoOpsStorage.NewMockAutoOpsRuleStorage(c),
 		prStorage:        mockAutoOpsStorage.NewMockProgressiveRolloutStorage(c),
@@ -1203,6 +1210,7 @@ func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accou
 	logger := zap.NewNop()
 	return &AutoOpsService{
 		mysqlClient:      mysqlClientMock,
+		dbClient:         dbmock.NewMockClient(c),
 		autoOpsStorage:   mockAutoOpsStorage.NewMockAutoOpsRuleStorage(c),
 		prStorage:        mockAutoOpsStorage.NewMockProgressiveRolloutStorage(c),
 		opsCountStorage:  mockOpsCountStorage.NewMockOpsCountStorage(c),
@@ -1799,10 +1807,10 @@ func TestUpdateAutoOpsRule_MixedScheduleTypes(t *testing.T) {
 							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, Clause: existingClause},
 						}},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
 				})
 			},
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
@@ -1851,10 +1859,10 @@ func TestUpdateAutoOpsRule_MixedScheduleTypes(t *testing.T) {
 							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, IsRecurring: true, Clause: existingClause},
 						}},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
 				})
 			},
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{

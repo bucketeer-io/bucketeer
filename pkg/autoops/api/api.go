@@ -42,6 +42,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -63,6 +64,7 @@ func WithLogger(l *zap.Logger) Option {
 
 type AutoOpsService struct {
 	mysqlClient      mysql.Client
+	dbClient         database.Client
 	opsCountStorage  v2os.OpsCountStorage
 	autoOpsStorage   v2as.AutoOpsRuleStorage
 	prStorage        v2as.ProgressiveRolloutStorage
@@ -78,6 +80,9 @@ type AutoOpsService struct {
 
 func NewAutoOpsService(
 	mysqlClient mysql.Client,
+	dbClient database.Client,
+	autoOpsStorage v2as.AutoOpsRuleStorage,
+	prStorage v2as.ProgressiveRolloutStorage,
 	opsCountStorage v2os.OpsCountStorage,
 	featureStorage v2fs.FeatureStorage,
 	featureClient featureclient.Client,
@@ -95,10 +100,11 @@ func NewAutoOpsService(
 	}
 	return &AutoOpsService{
 		mysqlClient:      mysqlClient,
+		dbClient:         dbClient,
 		opsCountStorage:  opsCountStorage,
 		featureStorage:   featureStorage,
-		autoOpsStorage:   v2as.NewAutoOpsRuleStorage(mysqlClient),
-		prStorage:        v2as.NewProgressiveRolloutStorage(mysqlClient),
+		autoOpsStorage:   autoOpsStorage,
+		prStorage:        prStorage,
 		featureClient:    featureClient,
 		experimentClient: experimentClient,
 		accountClient:    accountClient,
@@ -168,7 +174,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		}
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
@@ -467,7 +473,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -528,7 +534,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -606,7 +612,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		}
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -872,49 +878,19 @@ func (s *AutoOpsService) listAutoOpsRules(
 	featureIds []string,
 	environmentId string,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "aor.deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
+	autoOpsRules, nextCursor, err := s.autoOpsStorage.ListAutoOpsRules(
+		ctx,
+		v2as.ListAutoOpsRulesParams{
+			EnvironmentID: environmentId,
+			FeatureIDs:    featureIds,
+			PageSize:      int(pageSize),
+			Cursor:        cursor,
 		},
-		{
-			Column:   "aor.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		},
-	}
-	fIDs := make([]interface{}, 0, len(featureIds))
-	for _, fID := range featureIds {
-		fIDs = append(fIDs, fID)
-	}
-	var inFilters []*mysql.InFilter
-	if len(fIDs) > 0 {
-		inFilters = append(inFilters, &mysql.InFilter{
-			Column: "aor.feature_id",
-			Values: fIDs,
-		})
-	}
-	limit := int(pageSize)
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
+	)
 	if err != nil {
-		return nil, "", statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		InFilters:   inFilters,
-		NullFilters: nil,
-		JSONFilters: nil,
-		SearchQuery: nil,
-		Orders:      nil,
-	}
-	autoOpsRules, nextCursor, err := s.autoOpsStorage.ListAutoOpsRules(ctx, options)
-	if err != nil {
+		if errors.Is(err, v2as.ErrInvalidCursor) {
+			return nil, "", statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"Failed to list autoOpsRules",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -949,7 +925,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -1112,7 +1088,7 @@ func (s *AutoOpsService) stopProgressiveRollout(
 	if err := executeStopProgressiveRolloutOperation(
 		ctx,
 		s.prStorage,
-		s.convToInterfaceSlice([]string{autoOpsRule.FeatureId}),
+		[]string{autoOpsRule.FeatureId},
 		environmentId,
 		stoppedBy,
 	); err != nil {

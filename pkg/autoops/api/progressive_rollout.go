@@ -32,7 +32,6 @@ import (
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -73,7 +72,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		event, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
@@ -165,7 +164,7 @@ func (s *AutoOpsService) StopProgressiveRollout(
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -241,7 +240,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -338,7 +337,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		return nil, err
 	}
 	var events []publisher.Message
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -523,63 +522,26 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	ctx context.Context,
 	req *autoopsproto.ListProgressiveRolloutsRequest,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
+	progressiveRollouts, totalCount, nextOffset, err := s.prStorage.ListProgressiveRollouts(
+		ctx,
+		v2as.ListProgressiveRolloutsParams{
+			EnvironmentID:  req.EnvironmentId,
+			FeatureIDs:     req.FeatureIds,
+			Type:           req.Type,
+			Status:         req.Status,
+			OrderBy:        req.OrderBy,
+			OrderDirection: req.OrderDirection,
+			PageSize:       int(req.PageSize),
+			Cursor:         req.Cursor,
 		},
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, 0, 0, statusProgressiveRolloutInvalidCursor.Err()
-	}
-	var inFilters []*mysql.InFilter = nil
-	if len(req.FeatureIds) > 0 {
-		fIDs := s.convToInterfaceSlice(req.FeatureIds)
-		inFilters = append(inFilters, &mysql.InFilter{
-			Column: "feature_id",
-			Values: fIDs,
-		})
-	}
-	orders, err := s.newListProgressiveRolloutsOrdersMySQL(
-		req.OrderBy,
-		req.OrderDirection,
 	)
 	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, 0, 0, err
-	}
-	if req.Type != nil {
-		filters = append(filters, &mysql.FilterV2{Column: "type", Operator: mysql.OperatorEqual, Value: req.Type})
-	}
-	if req.Status != nil {
-		filters = append(filters, &mysql.FilterV2{Column: "status", Operator: mysql.OperatorEqual, Value: req.Status})
-	}
-	listOptions := &mysql.ListOptions{
-		Filters:     filters,
-		Orders:      orders,
-		InFilters:   inFilters,
-		NullFilters: nil,
-		JSONFilters: nil,
-		SearchQuery: nil,
-		Limit:       limit,
-		Offset:      offset,
-	}
-
-	progressiveRollouts, totalCount, nextOffset, err := s.prStorage.ListProgressiveRollouts(ctx, listOptions)
-	if err != nil {
+		if errors.Is(err, v2as.ErrInvalidCursor) {
+			return nil, 0, 0, statusProgressiveRolloutInvalidCursor.Err()
+		}
+		if errors.Is(err, v2as.ErrInvalidOrderBy) {
+			return nil, 0, 0, statusProgressiveRolloutInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list progressive rollouts",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -590,38 +552,6 @@ func (s *AutoOpsService) listProgressiveRollouts(
 		return nil, 0, 0, api.NewGRPCStatus(err).Err()
 	}
 	return progressiveRollouts, totalCount, nextOffset, nil
-}
-
-func (s *AutoOpsService) newListProgressiveRolloutsOrdersMySQL(
-	orderBy autoopsproto.ListProgressiveRolloutsRequest_OrderBy,
-	orderDirection autoopsproto.ListProgressiveRolloutsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case autoopsproto.ListProgressiveRolloutsRequest_DEFAULT:
-		column = "id"
-	case autoopsproto.ListProgressiveRolloutsRequest_CREATED_AT:
-		column = "created_at"
-	case autoopsproto.ListProgressiveRolloutsRequest_UPDATED_AT:
-		column = "updated_at"
-	default:
-		return nil, statusProgressiveRolloutInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == autoopsproto.ListProgressiveRolloutsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
-func (s *AutoOpsService) convToInterfaceSlice(
-	slice []string,
-) []interface{} {
-	result := make([]interface{}, 0, len(slice))
-	for _, element := range slice {
-		result = append(result, element)
-	}
-	return result
 }
 
 func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(

@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	autoops "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
@@ -73,9 +73,9 @@ func (mr *MockAutoOpsRuleStorageMockRecorder) GetAutoOpsRule(ctx, id, environmen
 }
 
 // ListAutoOpsRules mocks base method.
-func (m *MockAutoOpsRuleStorage) ListAutoOpsRules(ctx context.Context, options *mysql.ListOptions) ([]*autoops.AutoOpsRule, int, error) {
+func (m *MockAutoOpsRuleStorage) ListAutoOpsRules(ctx context.Context, params v2.ListAutoOpsRulesParams) ([]*autoops.AutoOpsRule, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAutoOpsRules", ctx, options)
+	ret := m.ctrl.Call(m, "ListAutoOpsRules", ctx, params)
 	ret0, _ := ret[0].([]*autoops.AutoOpsRule)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -83,9 +83,9 @@ func (m *MockAutoOpsRuleStorage) ListAutoOpsRules(ctx context.Context, options *
 }
 
 // ListAutoOpsRules indicates an expected call of ListAutoOpsRules.
-func (mr *MockAutoOpsRuleStorageMockRecorder) ListAutoOpsRules(ctx, options any) *gomock.Call {
+func (mr *MockAutoOpsRuleStorageMockRecorder) ListAutoOpsRules(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoOpsRules", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).ListAutoOpsRules), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoOpsRules", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).ListAutoOpsRules), ctx, params)
 }
 
 // UpdateAutoOpsRule mocks base method.

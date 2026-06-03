@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	autoops "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
@@ -87,9 +87,9 @@ func (mr *MockProgressiveRolloutStorageMockRecorder) GetProgressiveRollout(ctx, 
 }
 
 // ListProgressiveRollouts mocks base method.
-func (m *MockProgressiveRolloutStorage) ListProgressiveRollouts(ctx context.Context, options *mysql.ListOptions) ([]*autoops.ProgressiveRollout, int64, int, error) {
+func (m *MockProgressiveRolloutStorage) ListProgressiveRollouts(ctx context.Context, params v2.ListProgressiveRolloutsParams) ([]*autoops.ProgressiveRollout, int64, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProgressiveRollouts", ctx, options)
+	ret := m.ctrl.Call(m, "ListProgressiveRollouts", ctx, params)
 	ret0, _ := ret[0].([]*autoops.ProgressiveRollout)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(int)
@@ -98,9 +98,9 @@ func (m *MockProgressiveRolloutStorage) ListProgressiveRollouts(ctx context.Cont
 }
 
 // ListProgressiveRollouts indicates an expected call of ListProgressiveRollouts.
-func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRollouts(ctx, options any) *gomock.Call {
+func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRollouts(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).ListProgressiveRollouts), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).ListProgressiveRollouts), ctx, params)
 }
 
 // UpdateProgressiveRollout mocks base method.
