@@ -160,18 +160,25 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.Equal(t, 0, len(noneResponse.ArchivedFeatureFlagIds))
 	assert.False(t, noneResponse.ForceUpdate)
 
-	// Find feature with tag, with the different features ID, and requested at
+	// Mismatched FeatureFlagsId with a RequestedAt that's newer than every
+	// feature's UpdatedAt triggers the force-recover fallback: the timestamp
+	// filter would otherwise produce an empty diff while the ffIDs disagree,
+	// which would silently leave the SDK out of sync. The server falls back
+	// to returning the full feature set with ForceUpdate=true so the SDK
+	// reconciles.
 	var diffResponse *gatewayproto.GetFeatureFlagsResponse
 	require.Eventually(t, func() bool {
 		baseline := grpcGetFeatureFlags(t, tag, "", 0)
 		ffid = baseline.FeatureFlagsId
 		diffResponse = grpcGetFeatureFlags(t, tag, "random-id", baseline.RequestedAt)
-		return len(diffResponse.Features) == 0
+		return len(diffResponse.Features) == 2 &&
+			findFeatureByID(t, req1.Id, diffResponse.Features) &&
+			findFeatureByID(t, req3.Id, diffResponse.Features)
 	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
 	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
 	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
 	assert.True(t, diffResponse.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.False(t, diffResponse.ForceUpdate)
+	assert.True(t, diffResponse.ForceUpdate)
 }
 
 func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
