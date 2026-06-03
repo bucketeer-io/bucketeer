@@ -105,7 +105,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   return (
     <SlideModal title={t('new-goal')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5">
-        <p className="text-gray-800 typo-head-bold-small">
+        <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
           {t('form:general-info')}
         </p>
         <FormProvider {...form}>
@@ -207,7 +207,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                         />
                         <label
                           htmlFor="experiments-connection"
-                          className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                          className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                         >
                           {t('experiments')}
                         </label>
@@ -220,7 +220,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                         />
                         <label
                           htmlFor="operations-connection"
-                          className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                          className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                         >
                           {t('form:operations')}
                         </label>
@@ -231,7 +231,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                 </Form.Item>
               )}
             />
-            <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+            <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
                   <Button type="button" variant="secondary" onClick={onClose}>
