@@ -51,9 +51,11 @@ export const ExperimentStatuses = ({
       className={cn(
         'flex-center w-fit gap-x-1 px-2 py-1.5 typo-para-small rounded whitespace-nowrap capitalize',
         {
-          'bg-primary-50 text-primary-500': isRunning,
-          'bg-accent-orange-50 text-accent-orange-500': isWaiting,
-          'bg-accent-red-50 text-accent-red-500': isStopped
+          'bg-primary-50 dark:bg-dark-purple-100 text-primary-500': isRunning,
+          'bg-accent-orange-50 dark:bg-dark-purple-100 text-accent-orange-500':
+            isWaiting,
+          'bg-accent-red-50 dark:bg-dark-purple-100 text-accent-red-500':
+            isStopped
         }
       )}
     >
@@ -146,7 +148,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium min-w-[150px]">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium min-w-[150px]">
                 {formatLongDateTime({
                   value: experiment.startAt,
                   overrideOptions: {
@@ -175,7 +177,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium min-w-[150px]">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium min-w-[150px]">
                 {formatLongDateTime({
                   value: experiment.stopAt,
                   overrideOptions: {
