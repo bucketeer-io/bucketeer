@@ -845,18 +845,18 @@ func TestGetFeatureFlagsRapidFlipTrap(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc                  string
-		serverFn              featureFlagsServerFunc
+		desc                   string
+		serverFn               featureFlagsServerFunc
 		expectPermanentlyStuck bool
 	}{
 		{
-			desc:                  "buggy: empty diff with ffID mismatch silently loses the update",
-			serverFn:              simulateGetFeatureFlagsBuggy,
+			desc:                   "buggy: empty diff with ffID mismatch silently loses the update",
+			serverFn:               simulateGetFeatureFlagsBuggy,
 			expectPermanentlyStuck: true,
 		},
 		{
-			desc:                  "fixed: empty diff with ffID mismatch triggers ForceUpdate",
-			serverFn:              simulateGetFeatureFlagsFixed,
+			desc:                   "fixed: empty diff with ffID mismatch triggers ForceUpdate",
+			serverFn:               simulateGetFeatureFlagsFixed,
 			expectPermanentlyStuck: false,
 		},
 	}
