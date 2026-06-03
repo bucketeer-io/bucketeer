@@ -66,8 +66,10 @@ func CheckEnvironmentRole(
 		return nil, ErrUnauthenticated
 	}
 	// Service tokens (machine accounts used by internal batch/subscriber jobs)
-	// bypass all role checks and retain full access.
-	if token.IsServiceToken {
+	// bypass all role checks and retain full access. Both flags are required so a
+	// token accidentally minted with is_service_token=true cannot escalate to
+	// admin without also being a system admin.
+	if token.IsSystemAdmin && token.IsServiceToken {
 		return &eventproto.Editor{
 			Email:   token.Email,
 			Name:    token.Name,
@@ -205,8 +207,10 @@ func CheckOrganizationRole(
 		return nil, ErrUnauthenticated
 	}
 	// Service tokens (machine accounts used by internal batch/subscriber jobs)
-	// bypass all role checks and retain full access.
-	if token.IsServiceToken {
+	// bypass all role checks and retain full access. Both flags are required so a
+	// token accidentally minted with is_service_token=true cannot escalate to
+	// admin without also being a system admin.
+	if token.IsSystemAdmin && token.IsServiceToken {
 		return &eventproto.Editor{
 			Email:   token.Email,
 			Name:    token.Name,

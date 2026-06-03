@@ -349,6 +349,21 @@ func TestCheckOrganizationRole(t *testing.T) {
 			expected:    nil,
 			expectedErr: ErrUnauthenticated,
 		},
+		{
+			desc: "err: service token without system admin does not bypass role check",
+			inputCtx: getContextWithToken(t, &token.AccessToken{
+				Email:          "rogue@bucketeer.io",
+				Name:           "rogue",
+				IsSystemAdmin:  false,
+				IsServiceToken: true,
+			}),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -526,6 +541,22 @@ func TestCheckEnvironmentRole(t *testing.T) {
 				Email:         "admin@bucketeer.io",
 				Name:          "admin",
 				IsSystemAdmin: true,
+			}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: service token without system admin does not bypass role check",
+			ctx: getContextWithToken(t, &token.AccessToken{
+				Email:          "rogue@bucketeer.io",
+				Name:           "rogue",
+				IsSystemAdmin:  false,
+				IsServiceToken: true,
 			}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
