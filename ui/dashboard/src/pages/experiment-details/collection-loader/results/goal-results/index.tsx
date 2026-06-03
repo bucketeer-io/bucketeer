@@ -128,20 +128,20 @@ const GoalResultItem = ({
   return (
     <div
       className={cn(
-        'flex flex-col w-full min-w-fit gap-y-6 p-5 shadow-card rounded-lg bg-white',
+        'flex flex-col w-full min-w-fit gap-y-6 p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card',
         {
           'h-16 overflow-hidden': isNarrow
         }
       )}
     >
       <div className="flex items-center justify-between w-full">
-        <p className="text-gray-800 typo-head-bold-small">
+        <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
           {experiment?.goals?.find(goal => goal.id === goalResult?.goalId)
             ?.name || ''}
         </p>
         <div
           className={cn(
-            'flex-center cursor-pointer rounded hover:bg-gray-200 transition-all duration-300',
+            'flex-center cursor-pointer rounded hover:bg-gray-200 dark:hover:bg-dark-purple-100 transition-all duration-300',
             {
               'rotate-180': isNarrow
             }
