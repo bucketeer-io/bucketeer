@@ -65,6 +65,15 @@ func CheckEnvironmentRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
+	// Service tokens (machine accounts used by internal batch/subscriber jobs)
+	// bypass all role checks and retain full access.
+	if token.IsServiceToken {
+		return &eventproto.Editor{
+			Email:   token.Email,
+			Name:    token.Name,
+			IsAdmin: true,
+		}, nil
+	}
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
 		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
@@ -194,6 +203,15 @@ func CheckOrganizationRole(
 	token, ok := rpc.GetAccessToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated
+	}
+	// Service tokens (machine accounts used by internal batch/subscriber jobs)
+	// bypass all role checks and retain full access.
+	if token.IsServiceToken {
+		return &eventproto.Editor{
+			Email:   token.Email,
+			Name:    token.Name,
+			IsAdmin: true,
+		}, nil
 	}
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
