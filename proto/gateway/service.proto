@@ -131,6 +131,35 @@ message GetEvaluationResponse {
   feature.Evaluation evaluation = 1;
 }
 
+message StreamEvaluationsRequest {
+  string tag = 1;
+  user.User user = 2;
+  string user_evaluations_id = 3;
+  bucketeer.event.client.SourceId source_id = 4;
+  string sdk_version = 5;
+}
+
+// Payload of the SSE `put` and `patch` events. The event kind is conveyed by
+// the SSE `event:` field, not inside the payload.
+//
+// - `put`:   full snapshot for the user/tag.
+// - `patch`: delta since the last snapshot.
+message StreamEvaluationsEvent {
+  feature.UserEvaluations evaluations = 1;
+  string user_evaluations_id = 2;
+}
+
+// Payload of the SSE `error` event. Sent immediately before the server closes
+// the stream.
+message StreamErrorEvent {
+  enum Code {
+    UNKNOWN = 0;
+    INTERNAL = 1;
+  }
+  Code code = 1;
+  string message = 2;
+}
+
 message RegisterEventsRequest {
   repeated bucketeer.event.client.Event events = 1;
   string sdk_version = 2;
