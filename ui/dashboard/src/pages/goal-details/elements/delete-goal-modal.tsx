@@ -34,7 +34,7 @@ const DeleteGoalModal = ({
     >
       <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
         <IconDelete />
-        <div className="typo-para-big text-gray-700 text-center">
+        <div className="typo-para-big text-gray-700 dark:text-dark-gray-300 text-center">
           <Trans
             i18nKey="table:goals.delete-goal-desc"
             values={{ name: goal.name }}
