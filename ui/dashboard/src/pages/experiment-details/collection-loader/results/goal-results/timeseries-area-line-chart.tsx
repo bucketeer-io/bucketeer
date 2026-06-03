@@ -153,6 +153,10 @@ export const TimeseriesAreaLineChart = memo(
         }
       };
 
+      const isDark = document.documentElement.classList.contains('dark');
+      const tickColor = isDark ? '#B5B0C2' : '#94A3B8';
+      const gridColor = isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0';
+
       const chartData: ChartData<'line', (number | Point | null)[], Date> = {
         labels,
         datasets: datasets
@@ -200,13 +204,14 @@ export const TimeseriesAreaLineChart = memo(
             },
             grid: {
               display: true,
-              color: '#E2E8F0',
+              color: gridColor,
               lineWidth: 2,
               tickWidth: 0
             },
             border: {
+              display: true,
               dash: [5, 5],
-              color: '#E2E8F0'
+              color: gridColor
             },
             ticks: {
               align: 'center' as const,
@@ -218,7 +223,7 @@ export const TimeseriesAreaLineChart = memo(
                 size: 14,
                 weight: 400
               },
-              color: '#94A3B8'
+              color: tickColor
             }
           },
           y: {
@@ -226,7 +231,9 @@ export const TimeseriesAreaLineChart = memo(
               display: false
             },
             border: {
-              dash: [5, 5]
+              display: true,
+              dash: [5, 5],
+              color: gridColor
             },
             ticks: {
               font: {
@@ -234,11 +241,11 @@ export const TimeseriesAreaLineChart = memo(
                 size: 14,
                 weight: 400
               },
-              color: '#94A3B8'
+              color: tickColor
             },
             grid: {
               display: true,
-              color: '#E2E8F0',
+              color: gridColor,
               lineWidth: 2,
               tickWidth: 0
             }

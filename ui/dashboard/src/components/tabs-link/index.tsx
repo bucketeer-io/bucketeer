@@ -20,7 +20,7 @@ const TabsList = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      'inline-flex w-full border-b border-gray-300 items-center',
+      'inline-flex w-full border-b border-gray-300 dark:border-dark-black-700 items-center',
       className
     )}
     {...props}
@@ -32,7 +32,7 @@ const TabsLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
     <NavLink
       to={to}
       className={cn(
-        'flex-center whitespace-nowrap typo-para-medium text-gray-500',
+        'flex-center whitespace-nowrap typo-para-medium text-gray-500 dark:text-dark-gray-200',
         'py-1 px-4 border-b-2 border-transparent transition-all tab-item',
         className
       )}
