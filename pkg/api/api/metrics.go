@@ -153,6 +153,7 @@ const (
 	codeEmptyField              = "EmptyField"
 
 	codeAll           = "All"
+	codeForceAll      = "ForceAll"
 	codeDiff          = "Diff"
 	codeNone          = "None"
 	codeNoFeatures    = "NoFeatures"

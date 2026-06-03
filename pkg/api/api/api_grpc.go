@@ -935,6 +935,35 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
+	// Force-recover fallback: ffID mismatched but the diff filter excluded
+	// every flag AND there are no archives. Happens when req.RequestedAt has
+	// advanced past a changed flag's UpdatedAt (e.g. L2 propagation race
+	// under rapid updates). Returning an empty diff here would let the SDK
+	// adopt our new ffID without applying the change and get stuck on stale
+	// data until pod restart. Return the full set with ForceUpdate=true so
+	// the SDK reconciles. Tracked under a distinct metric label for
+	// observability.
+	if len(updatedFeatures) == 0 && len(archivedIDs) == 0 {
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeForceAll).Inc()
+		s.logger.Warn(
+			"Diff response would be empty despite ffID mismatch; "+
+				"falling back to ForceUpdate to prevent SDK staleness",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("environmentID", environmentId),
+				zap.String("tag", req.Tag),
+				zap.Int64("requestedAt", req.RequestedAt),
+				zap.Int("targetFeaturesLength", len(targetFeatures)),
+			)...,
+		)
+		return &gwproto.GetFeatureFlagsResponse{
+			FeatureFlagsId:         ffID,
+			Features:               filteredArchivedFlags,
+			ArchivedFeatureFlagIds: make([]string, 0),
+			RequestedAt:            now.Unix(),
+			ForceUpdate:            true,
+		}, nil
+	}
 	getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 		environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff).Inc()
 	return &gwproto.GetFeatureFlagsResponse{
