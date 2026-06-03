@@ -146,7 +146,7 @@ const ConversionRateTable = ({
           />
         ))}
       </div>
-      <div className="divide-y divide-gray-300">
+      <div className="divide-y divide-gray-300 dark:divide-dark-black-700">
         {conversionRateData?.map((item, i) => {
           const {
             experimentCount,
