@@ -38,7 +38,7 @@ const HeaderDetails = ({ experiment }: { experiment: Experiment }) => {
             />
           ))}
         </div>
-        <p className="typo-para-small text-gray-700">
+        <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
           {experiment.variations?.length} Variations
         </p>
         <Icon
