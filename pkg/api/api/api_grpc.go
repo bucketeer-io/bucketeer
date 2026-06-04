@@ -185,7 +185,7 @@ func WithSegmentUsersMemoryCacheTTL(ttl time.Duration) Option {
 
 // WithFeatureFlagDiffGracePeriod widens the diff filter for the
 // GetFeatureFlags / GetEvaluations APIs by the given duration, so flags
-// updated within (RequestedAt - grace, RequestedAt] are re-included on the
+// updated within [RequestedAt - grace, RequestedAt] are re-included on the
 // next poll. Defends against the partial-diff trap caused by L2 cache
 // propagation lag under rapid back-to-back flag changes.
 func WithFeatureFlagDiffGracePeriod(d time.Duration) Option {

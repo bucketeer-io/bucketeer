@@ -41,9 +41,10 @@ import (
 )
 
 // testGracePeriodSeconds is the grace window applied to the diff filter
-// in the fixed simulator. It mirrors defaultOptions.featureFlagDiffGracePeriod
-// so the simulation matches production behavior.
-const testGracePeriodSeconds = int64(10 * time.Minute / time.Second)
+// in the fixed simulator. It is derived from
+// defaultOptions.featureFlagDiffGracePeriod so the simulation stays in sync
+// with the production default even if that default is tuned later.
+var testGracePeriodSeconds = int64(defaultOptions.featureFlagDiffGracePeriod / time.Second)
 
 // ---------------------------------------------------------------------------
 // GetFeatureFlags simulation
