@@ -31,7 +31,13 @@ import (
 
 const (
 	secondsToReEvaluateAll = 30 * 24 * 60 * 60 // 30 days
-	secondsForAdjustment   = 10                // 10 seconds
+	// defaultSecondsForAdjustment is the grace period (in seconds) applied
+	// to the diff filter (`feature.UpdatedAt > evaluatedAt - grace`). It
+	// re-includes recently updated flags that may have been missed by a
+	// previous diff response due to L2 propagation lag combined with
+	// concurrent updates (the "RequestedAt trap" / partial-diff trap).
+	// Callers can override via WithSecondsForAdjustment.
+	defaultSecondsForAdjustment = 10 // 10 seconds
 )
 
 var (
@@ -53,12 +59,37 @@ type evaluator struct {
 	// variationCache caches YAML to JSON conversions using variation ID as the key.
 	// Since variation IDs are UUIDs, they are globally unique and safe to use as cache keys.
 	variationCache *sync.Map
+	// secondsForAdjustment widens the diff filter in
+	// EvaluateFeaturesByEvaluatedAt to recover from missed updates caused
+	// by L2 propagation race conditions. Defaults to
+	// defaultSecondsForAdjustment (10s). The server overrides this with a
+	// larger value (typically minutes) to defend against the partial-diff
+	// trap on the gateway path.
+	secondsForAdjustment int64
 }
 
-func NewEvaluator() *evaluator {
-	return &evaluator{
-		variationCache: &sync.Map{},
+// EvaluatorOption configures an evaluator instance.
+type EvaluatorOption func(*evaluator)
+
+// WithSecondsForAdjustment overrides the grace period (in seconds) used by
+// EvaluateFeaturesByEvaluatedAt when computing the diff filter. A larger
+// value re-includes more recently updated flags and protects against the
+// partial-diff trap, at the cost of slightly larger responses.
+func WithSecondsForAdjustment(seconds int64) EvaluatorOption {
+	return func(e *evaluator) {
+		e.secondsForAdjustment = seconds
 	}
+}
+
+func NewEvaluator(opts ...EvaluatorOption) *evaluator {
+	e := &evaluator{
+		variationCache:       &sync.Map{},
+		secondsForAdjustment: defaultSecondsForAdjustment,
+	}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
 }
 
 // This function will be removed once all the SDK clients are updated.
@@ -87,7 +118,7 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
 		return e.evaluate(fs, user, mapSegmentUsers, true, targetTag)
 	}
-	adjustedEvalAt := evaluatedAt - secondsForAdjustment
+	adjustedEvalAt := evaluatedAt - e.secondsForAdjustment
 	updatedFeatures := make([]*ftproto.Feature, 0, len(fs))
 	for _, feature := range fs {
 		if feature.UpdatedAt > adjustedEvalAt {

@@ -17,16 +17,21 @@
 // Affected APIs:
 //   - GetFeatureFlags: uses FeatureFlagsId + RequestedAt for None/Diff/All responses
 //   - GetSegmentUsers: uses SegmentIds + RequestedAt for None/Diff/All responses
+//   - GetEvaluations (client SDK): uses UserEvaluationsId + evaluatedAt; the
+//     same partial-diff trap exists in evaluation.EvaluateFeaturesByEvaluatedAt,
+//     and the server widens its grace window (secondsForAdjustment) using the
+//     same featureFlagDiffGracePeriod config.
 //
 // NOT affected:
-//   - GetEvaluation / GetEvaluations: client SDK APIs that evaluate per-request
-//     using evaluatedAt, not the RequestedAt/Diff caching mechanism.
+//   - GetEvaluation (singular): evaluates a single feature per request with
+//     no diff/caching mechanism.
 
 package api
 
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,6 +39,11 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
+
+// testGracePeriodSeconds is the grace window applied to the diff filter
+// in the fixed simulator. It mirrors defaultOptions.featureFlagDiffGracePeriod
+// so the simulation matches production behavior.
+const testGracePeriodSeconds = int64(10 * time.Minute / time.Second)
 
 // ---------------------------------------------------------------------------
 // GetFeatureFlags simulation
@@ -153,16 +163,20 @@ func simulateGetFeatureFlagsFixed(
 		}
 	}
 
-	// Diff: reqRequestedAt is guaranteed within [now-30days, now]
+	// Diff: reqRequestedAt is guaranteed within [now-30days, now].
+	// The grace window widens the filter so flags whose updates reached
+	// L2 only after a previous response advanced the SDK's RequestedAt
+	// past them are re-emitted on the next poll (partial-diff trap).
 	updatedFeatures := make([]*featureproto.Feature, 0)
 	for _, feature := range serverFeatures {
-		if feature.UpdatedAt >= reqRequestedAt {
+		if feature.UpdatedAt >= reqRequestedAt-testGracePeriodSeconds {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
 
-	// Force-recover fallback: ffID mismatched but the timestamp filter
-	// produced an empty diff. Returning an empty diff would let the SDK
+	// Force-recover fallback: ffID mismatched but even the grace-widened
+	// filter produced an empty diff. Rare with the grace window above but
+	// kept as defense-in-depth: returning an empty diff would let the SDK
 	// accept the new ffID without applying any update, permanently masking
 	// the missed change. Fall back to the full feature set with
 	// ForceUpdate=true so the SDK reconciles.
@@ -923,6 +937,115 @@ func TestGetFeatureFlagsRapidFlipTrap(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestGetFeatureFlagsPartialDiffTrap reproduces the partial-diff variant of
+// the trap, which the empty-diff fallback alone does NOT cover.
+//
+// Failure mode without the grace window:
+//  1. SDK is at ffID_v0 with requestedAt=T0.
+//  2. target-flag updates at T_target. L2 has not yet propagated this.
+//  3. A different flag updates at T_other > T_target. L2 propagates this
+//     first.
+//  4. SDK polls at T_poll > T_other. Diff returns the other flag, advancing
+//     SDK requestedAt to T_poll (now > T_target).
+//  5. L2 catches up; ffID now reflects both flags.
+//  6. A THIRD unrelated flag updates at T_new > T_poll.
+//  7. SDK polls again. ffID mismatched. Diff filter:
+//     - target-flag: UpdatedAt=T_target < requestedAt=T_poll → EXCLUDED
+//     - third-flag: UpdatedAt=T_new >= T_poll → INCLUDED
+//     updatedFeatures is non-empty → empty-diff fallback does NOT fire.
+//  8. SDK applies a partial diff: third-flag is updated, target-flag stays
+//     stale. The new ffID is accepted, masking the missed change.
+//
+// With the grace window (10 minutes), step 7's filter becomes
+// `UpdatedAt >= requestedAt - 10m`, which re-includes target-flag and any
+// other recent updates that may have been missed.
+func TestGetFeatureFlagsPartialDiffTrap(t *testing.T) {
+	t.Parallel()
+
+	baseTime := int64(1710000000)
+
+	targetFlagV1 := &featureproto.Feature{
+		Id:        "target-flag",
+		Version:   1,
+		Enabled:   true,
+		UpdatedAt: baseTime - 3600,
+	}
+	targetFlagV2 := &featureproto.Feature{
+		Id:        "target-flag",
+		Version:   2,
+		Enabled:   false,
+		UpdatedAt: baseTime + 10,
+	}
+	unrelatedFlag := &featureproto.Feature{
+		Id:        "unrelated-flag",
+		Version:   1,
+		Enabled:   true,
+		UpdatedAt: baseTime + 20,
+	}
+	// A third flag whose update arrives AFTER the SDK's advanced
+	// requestedAt. Its presence in the next diff keeps updatedFeatures
+	// non-empty, which would otherwise hide the missed target-flag update
+	// by sidestepping the empty-diff fallback.
+	thirdFlag := &featureproto.Feature{
+		Id:        "third-flag",
+		Version:   1,
+		Enabled:   true,
+		UpdatedAt: baseTime + 90,
+	}
+
+	sdk := &featureFlagsSDKCache{features: make(map[string]*featureproto.Feature)}
+
+	serverFeatures := []*featureproto.Feature{targetFlagV1}
+	resp := simulateGetFeatureFlagsFixed(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime)
+	require.Equal(t, "all", resp.ResponseType)
+	sdk.applyResponse(resp)
+	require.True(t, sdk.features["target-flag"].Enabled)
+
+	// T=10: target-flag → V2 in DB (not yet in L2)
+	// T=20: unrelated-flag created and reaches L2 first
+	serverFeatures = []*featureproto.Feature{targetFlagV1, unrelatedFlag}
+
+	// T=25: SDK polls. Diff returns unrelated-flag, advancing requestedAt.
+	resp = simulateGetFeatureFlagsFixed(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+25)
+	require.Equal(t, "diff", resp.ResponseType)
+	sdk.applyResponse(resp)
+	require.Equal(t, baseTime+25, sdk.requestedAt)
+	require.True(t, sdk.features["target-flag"].Enabled,
+		"target-flag still appears Enabled at this point")
+
+	// T=30: L2 catches up with target-flag V2.
+	// T=90: third-flag is created.
+	serverFeatures = []*featureproto.Feature{targetFlagV2, unrelatedFlag, thirdFlag}
+
+	// T=100: SDK polls. ffID mismatched (state contains target V2 + third).
+	// Without grace window:
+	//   - target-flag V2 UpdatedAt=10 < requestedAt=25 → EXCLUDED
+	//   - unrelated-flag UpdatedAt=20 < requestedAt=25 → EXCLUDED
+	//   - third-flag UpdatedAt=90 >= requestedAt=25 → INCLUDED
+	//   updatedFeatures = [third-flag] → empty-diff fallback NOT triggered.
+	//   SDK applies partial diff → target-flag silently stuck Enabled.
+	// With grace window (10m = 600s):
+	//   - filter becomes UpdatedAt >= 25 - 600 = -575
+	//   - all three flags are included → SDK reconciles target-flag.
+	resp = simulateGetFeatureFlagsFixed(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+100)
+	sdk.applyResponse(resp)
+
+	// Subsequent polls observe the long-term effect: once ffID matches
+	// again, only None responses are returned and nothing changes.
+	for _, offset := range []int64{60, 120, 180, 240, 300} {
+		resp = simulateGetFeatureFlagsFixed(serverFeatures, sdk.featureFlagsID, sdk.requestedAt, baseTime+100+offset)
+		sdk.applyResponse(resp)
+	}
+
+	assert.False(t, sdk.features["target-flag"].Enabled,
+		"with grace window: SDK recovered target-flag V2 (Enabled=false) "+
+			"even though a third unrelated update kept updatedFeatures non-empty")
+	assert.Contains(t, sdk.features, "unrelated-flag",
+		"unrelated-flag is also re-included by the grace window")
+	assert.Contains(t, sdk.features, "third-flag",
+		"third-flag (the trigger) is still applied")
 }
 
 // TestGetFeatureFlagsSameSecondAfterDiff verifies the same-second edge case

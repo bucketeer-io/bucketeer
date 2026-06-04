@@ -160,12 +160,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.Equal(t, 0, len(noneResponse.ArchivedFeatureFlagIds))
 	assert.False(t, noneResponse.ForceUpdate)
 
-	// Mismatched FeatureFlagsId with a RequestedAt that's newer than every
-	// feature's UpdatedAt triggers the force-recover fallback: the timestamp
-	// filter would otherwise produce an empty diff while the ffIDs disagree,
-	// which would silently leave the SDK out of sync. The server falls back
-	// to returning the full feature set with ForceUpdate=true so the SDK
-	// reconciles.
+	// Mismatched FeatureFlagsId with a recent RequestedAt: the diff filter
+	// (`UpdatedAt >= RequestedAt - featureFlagDiffGracePeriod`, default 10m)
+	// re-includes both flags because they were created within the grace
+	// window. This is a regular Diff response (ForceUpdate=false) — not the
+	// empty-diff ForceUpdate fallback, which only fires when even the
+	// grace-widened filter excludes every flag.
 	var diffResponse *gatewayproto.GetFeatureFlagsResponse
 	require.Eventually(t, func() bool {
 		baseline := grpcGetFeatureFlags(t, tag, "", 0)
@@ -174,12 +174,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 		return len(diffResponse.Features) == 2 &&
 			findFeatureByID(t, req1.Id, diffResponse.Features) &&
 			findFeatureByID(t, req3.Id, diffResponse.Features) &&
-			diffResponse.ForceUpdate
+			!diffResponse.ForceUpdate
 	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
 	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
 	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
 	assert.True(t, diffResponse.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
-	assert.True(t, diffResponse.ForceUpdate)
+	assert.False(t, diffResponse.ForceUpdate)
 }
 
 func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
@@ -338,6 +338,89 @@ func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
+}
+
+// TestGrpcGetFeatureFlagsPartialDiffTrap verifies the grace window fix for
+// the partial-diff trap, the production failure mode where SOME flags pass
+// the diff filter (keeping the diff non-empty so the ForceUpdate fallback
+// does NOT fire) while OTHER flags are silently dropped because the SDK's
+// RequestedAt cursor has advanced past their UpdatedAt under L2
+// propagation lag.
+//
+// Setup recreates the trap deterministically:
+//  1. Create flag A → A.UpdatedAt = T_A.
+//  2. Anchor RequestedAt = T_req between T_A and T_B (T_A < T_req < T_B).
+//  3. Create flag B → B.UpdatedAt = T_B.
+//  4. Send a Diff request with random ffID + RequestedAt = T_req.
+//
+// Without the grace window:
+//   - A: UpdatedAt < RequestedAt → EXCLUDED
+//   - B: UpdatedAt >= RequestedAt → INCLUDED
+//   - updatedFeatures = [B] → non-empty → empty-diff fallback NOT triggered
+//   - SDK silently misses A (trap).
+//
+// With the grace window (default 10m, sized to the test's few-second gap):
+//   - A: UpdatedAt >= RequestedAt - 10m → INCLUDED
+//   - B: UpdatedAt >= RequestedAt - 10m → INCLUDED
+//   - SDK reconciles both flags in a regular Diff (ForceUpdate=false).
+func TestGrpcGetFeatureFlagsPartialDiffTrap(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+
+	// Create flag A and ensure it is cached.
+	featureIDA := newFeatureID(t, uuid)
+	reqA := createFeatureWithTag(t, tag, featureIDA)
+
+	// Anchor RequestedAt between flag A's UpdatedAt and flag B's
+	// UpdatedAt. The 2s sleeps make the ordering unambiguous despite the
+	// 1-second resolution of UpdatedAt.
+	time.Sleep(2 * time.Second)
+	simulatedRequestedAt := time.Now().Unix()
+	time.Sleep(2 * time.Second)
+
+	// Create flag B and ensure it is cached.
+	uuid2 := newUUID(t)
+	featureIDB := newFeatureID(t, uuid2)
+	reqB := createFeatureWithTag(t, tag, featureIDB)
+
+	// Wait until both flags are visible via the gateway (cache propagated).
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		return findFeatureByID(t, reqA.Id, baseline.Features) &&
+			findFeatureByID(t, reqB.Id, baseline.Features)
+	}, 30*time.Second, 2*time.Second, "both flags A and B should be visible after cache propagation")
+
+	// Diff request that recreates the partial-diff trap:
+	//   - random ffID (mismatched → Diff path)
+	//   - RequestedAt = T_req, between A.UpdatedAt and B.UpdatedAt
+	// The grace window must re-include A even though A.UpdatedAt < T_req,
+	// otherwise A would be silently dropped (B alone keeps the diff
+	// non-empty, sidestepping the empty-diff ForceUpdate fallback).
+	var diffResp *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		diffResp = grpcGetFeatureFlags(t, tag, "random-id", simulatedRequestedAt)
+		return len(diffResp.Features) == 2 &&
+			findFeatureByID(t, reqA.Id, diffResp.Features) &&
+			findFeatureByID(t, reqB.Id, diffResp.Features)
+	}, 30*time.Second, 2*time.Second,
+		"grace window should re-include flag A (UpdatedAt < RequestedAt) "+
+			"alongside flag B (UpdatedAt >= RequestedAt), so the SDK does "+
+			"not silently lose A to the partial-diff trap")
+
+	// This is the regular Diff path with grace re-inclusion, NOT the
+	// empty-diff fallback (which would set ForceUpdate=true). Verifying
+	// ForceUpdate=false ensures the grace window — not the fallback —
+	// is what recovered flag A.
+	assert.False(t, diffResp.ForceUpdate,
+		"grace re-includes flags within the window; the empty-diff fallback should NOT fire here")
+	assert.Equal(t, 0, len(diffResp.ArchivedFeatureFlagIds))
+	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.NotEqual(t, "random-id", diffResp.FeatureFlagsId,
+		"server returns the actual current FeatureFlagsId, not the SDK-supplied one")
 }
 
 func findFeatureByID(t *testing.T, id string, features []*featureproto.Feature) bool {
