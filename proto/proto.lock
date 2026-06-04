@@ -31464,6 +31464,22 @@
               {
                 "id": 16,
                 "name": "has_auto_ops",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 17,
+                "name": "has_active_auto_ops",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 18,
+                "name": "has_finished_auto_ops",
                 "type": "google.protobuf.BoolValue"
               }
             ],

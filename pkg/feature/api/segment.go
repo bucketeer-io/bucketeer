@@ -513,6 +513,7 @@ func (s *FeatureService) listAllFeatures(
 		nil,
 		nil,
 		nil,
+		nil,
 		"",
 		featureproto.FeatureLastUsedInfo_UNKNOWN,
 		featureproto.ListFeaturesRequest_DEFAULT,

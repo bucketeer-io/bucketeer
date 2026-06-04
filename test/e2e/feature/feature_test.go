@@ -649,7 +649,9 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 	createFeature(t, client, newCreateFeatureWithTwoVariationsRequest(featureWithProgressiveRollout))
 	createFeature(t, client, newCreateFeatureReq(featureWithoutAutoOps))
 
-	// Attach a schedule auto ops rule to one feature
+	// Attach a schedule auto ops rule to one feature. Newly created auto ops
+	// rules and progressive rollouts start in WAITING status, so both features
+	// should match has_active_auto_ops=true and has_finished_auto_ops=false.
 	createAutoOpsRule(
 		ctx,
 		t,
@@ -682,10 +684,10 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 		nil,
 	)
 
-	// Filter: has_auto_ops = true
+	// Filter: has_active_auto_ops = true
 	trueResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
-		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: true},
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: true},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -700,20 +702,20 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 			foundWithProgressiveRollout = true
 		}
 		if f.Id == featureWithoutAutoOps {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=true", featureWithoutAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=true", featureWithoutAutoOps)
 		}
 	}
 	if !foundWithScheduleAutoOps {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true", featureWithScheduleAutoOps)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true", featureWithScheduleAutoOps)
 	}
 	if !foundWithProgressiveRollout {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true", featureWithProgressiveRollout)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true", featureWithProgressiveRollout)
 	}
 
-	// Filter: has_auto_ops = false
+	// Filter: has_active_auto_ops = false
 	falseResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
-		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: false},
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: false},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -721,24 +723,42 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 	foundWithoutAutoOps := false
 	for _, f := range falseResp.Features {
 		if f.Id == featureWithScheduleAutoOps {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=false", featureWithScheduleAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=false", featureWithScheduleAutoOps)
 		}
 		if f.Id == featureWithProgressiveRollout {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=false", featureWithProgressiveRollout)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=false", featureWithProgressiveRollout)
 		}
 		if f.Id == featureWithoutAutoOps {
 			foundWithoutAutoOps = true
 		}
 	}
 	if !foundWithoutAutoOps {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=false", featureWithoutAutoOps)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=false", featureWithoutAutoOps)
 	}
 
-	// Filter: has_auto_ops = true combined with has_experiment (exercises listFeaturesFilteredByExperiment path)
+	// Filter: has_finished_auto_ops = true should not return the newly created
+	// features because their operations are still WAITING.
+	finishedResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId:      *environmentID,
+		HasFinishedAutoOps: &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range finishedResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			t.Errorf("Feature %s should not appear when filtering has_finished_auto_ops=true (op is WAITING)", featureWithScheduleAutoOps)
+		}
+		if f.Id == featureWithProgressiveRollout {
+			t.Errorf("Feature %s should not appear when filtering has_finished_auto_ops=true (op is WAITING)", featureWithProgressiveRollout)
+		}
+	}
+
+	// Filter: has_active_auto_ops = true combined with has_experiment (exercises listFeaturesFilteredByExperiment path)
 	experimentResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
-		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: true},
-		HasExperiment: &wrappers.BoolValue{Value: false},
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: true},
+		HasExperiment:    &wrappers.BoolValue{Value: false},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -753,14 +773,43 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 			foundWithProgressiveRolloutInExpPath = true
 		}
 		if f.Id == featureWithoutAutoOps {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=true with has_experiment=false", featureWithoutAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithoutAutoOps)
 		}
 	}
 	if !foundWithScheduleAutoOpsInExpPath {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true with has_experiment=false", featureWithScheduleAutoOps)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithScheduleAutoOps)
 	}
 	if !foundWithProgressiveRolloutInExpPath {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true with has_experiment=false", featureWithProgressiveRollout)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithProgressiveRollout)
+	}
+
+	// Deprecated alias: has_auto_ops should still behave as has_active_auto_ops.
+	//nolint:staticcheck // SA1019: exercising the deprecated alias on purpose.
+	deprecatedResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId: *environmentID,
+		HasAutoOps:    &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundWithScheduleViaDeprecated := false
+	foundWithProgressiveViaDeprecated := false
+	for _, f := range deprecatedResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			foundWithScheduleViaDeprecated = true
+		}
+		if f.Id == featureWithProgressiveRollout {
+			foundWithProgressiveViaDeprecated = true
+		}
+		if f.Id == featureWithoutAutoOps {
+			t.Errorf("Feature %s should not appear when filtering deprecated has_auto_ops=true", featureWithoutAutoOps)
+		}
+	}
+	if !foundWithScheduleViaDeprecated {
+		t.Errorf("Feature %s should appear when filtering deprecated has_auto_ops=true", featureWithScheduleAutoOps)
+	}
+	if !foundWithProgressiveViaDeprecated {
+		t.Errorf("Feature %s should appear when filtering deprecated has_auto_ops=true", featureWithProgressiveRollout)
 	}
 }
 

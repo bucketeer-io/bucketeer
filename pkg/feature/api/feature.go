@@ -221,6 +221,12 @@ func (s *FeatureService) ListFeatures(
 	var features []*featureproto.Feature
 	var cursor string
 	var totalCount int64
+	// Backward compatibility: the deprecated has_auto_ops field is treated as
+	// an alias for has_active_auto_ops when the latter is not set.
+	hasActiveAutoOps := req.HasActiveAutoOps
+	if hasActiveAutoOps == nil {
+		hasActiveAutoOps = req.HasAutoOps
+	}
 	if req.HasExperiment == nil {
 		features, cursor, totalCount, err = s.listFeatures(
 			ctx,
@@ -232,7 +238,8 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.HasFeatureFlagAsRule,
-			req.HasAutoOps,
+			hasActiveAutoOps,
+			req.HasFinishedAutoOps,
 			req.SearchKeyword,
 			req.Status,
 			req.OrderBy,
@@ -250,7 +257,8 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.HasFeatureFlagAsRule,
-			req.HasAutoOps,
+			hasActiveAutoOps,
+			req.HasFinishedAutoOps,
 			req.SearchKeyword,
 			req.Status,
 			req.OrderBy,
@@ -330,7 +338,8 @@ func (s *FeatureService) listFeatures(
 	archived *wrapperspb.BoolValue,
 	hasPrerequisites *wrapperspb.BoolValue,
 	hasFeatureFlagAsRule *wrapperspb.BoolValue,
-	hasAutoOps *wrapperspb.BoolValue,
+	hasActiveAutoOps *wrapperspb.BoolValue,
+	hasFinishedAutoOps *wrapperspb.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -347,7 +356,8 @@ func (s *FeatureService) listFeatures(
 		Deleted:              &deleted,
 		HasPrerequisites:     boolValueToPtr(hasPrerequisites),
 		HasFeatureFlagAsRule: boolValueToPtr(hasFeatureFlagAsRule),
-		HasAutoOps:           boolValueToPtr(hasAutoOps),
+		HasActiveAutoOps:     boolValueToPtr(hasActiveAutoOps),
+		HasFinishedAutoOps:   boolValueToPtr(hasFinishedAutoOps),
 		SearchKeyword:        searchKeyword,
 		Status:               status,
 		OrderBy:              orderBy,
@@ -385,7 +395,8 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	archived *wrapperspb.BoolValue,
 	hasPrerequisites *wrapperspb.BoolValue,
 	hasFeatureFlagAsRule *wrapperspb.BoolValue,
-	hasAutoOps *wrapperspb.BoolValue,
+	hasActiveAutoOps *wrapperspb.BoolValue,
+	hasFinishedAutoOps *wrapperspb.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -404,7 +415,8 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			Deleted:              &deleted,
 			HasPrerequisites:     boolValueToPtr(hasPrerequisites),
 			HasFeatureFlagAsRule: boolValueToPtr(hasFeatureFlagAsRule),
-			HasAutoOps:           boolValueToPtr(hasAutoOps),
+			HasActiveAutoOps:     boolValueToPtr(hasActiveAutoOps),
+			HasFinishedAutoOps:   boolValueToPtr(hasFinishedAutoOps),
 			SearchKeyword:        searchKeyword,
 			Status:               status,
 			OrderBy:              orderBy,
@@ -1092,6 +1104,7 @@ func (s *FeatureService) getFeatures(
 		"",
 		nil,
 		"",
+		nil,
 		nil,
 		nil,
 		nil,

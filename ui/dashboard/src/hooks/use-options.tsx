@@ -29,7 +29,8 @@ export enum FilterTypes {
   ROLE = 'organizationRole',
   STATUSES = 'statuses',
   HAS_RULE = 'hasFeatureFlagAsRule',
-  HAS_AUTO_OPS = 'hasAutoOps',
+  HAS_ACTIVE_AUTO_OPS = 'hasActiveAutoOps',
+  HAS_FINISHED_AUTO_OPS = 'hasFinishedAutoOps',
   IN_USE = 'in-use',
   NOT_IN_USE = 'not-in-use',
   TEAMS = 'teams',
@@ -112,8 +113,13 @@ const useOptions = () => {
         filterValue: ''
       },
       {
-        value: FilterTypes.HAS_AUTO_OPS,
-        label: translation('has-auto-ops'),
+        value: FilterTypes.HAS_ACTIVE_AUTO_OPS,
+        label: translation('has-active-auto-ops'),
+        filterValue: ''
+      },
+      {
+        value: FilterTypes.HAS_FINISHED_AUTO_OPS,
+        label: translation('has-finished-auto-ops'),
         filterValue: ''
       },
       {
