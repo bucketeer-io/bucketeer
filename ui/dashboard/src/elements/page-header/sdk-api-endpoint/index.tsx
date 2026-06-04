@@ -24,7 +24,9 @@ const SDKApiEndpoint = () => {
         {isJapaneseLanguage ? '：' : ':'}
       </p>
       <div className="flex items-center gap-x-1">
-        <p className="typo-para-small text-primary-500 dark:text-dark-purple-700">{urls.API_ENDPOINT}</p>
+        <p className="typo-para-small text-primary-500 dark:text-dark-purple-700">
+          {urls.API_ENDPOINT}
+        </p>
         <Button variant={'grey'} className="size-fit p-0" onClick={handleCopy}>
           <Icon icon={IconCopy} size={'xs'} />
         </Button>
