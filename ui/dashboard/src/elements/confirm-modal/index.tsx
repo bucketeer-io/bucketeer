@@ -32,7 +32,7 @@ const ConfirmModal = ({
       onClose={onClose}
     >
       <div className="flex flex-col w-full items-start px-5 py-8">
-        <div className="typo-para-medium text-gray-700 w-full">
+        <div className="typo-para-medium text-gray-700 dark:text-dark-gray-300 w-full">
           {description}
         </div>
       </div>
