@@ -173,7 +173,8 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 		diffResponse = grpcGetFeatureFlags(t, tag, "random-id", baseline.RequestedAt)
 		return len(diffResponse.Features) == 2 &&
 			findFeatureByID(t, req1.Id, diffResponse.Features) &&
-			findFeatureByID(t, req3.Id, diffResponse.Features)
+			findFeatureByID(t, req3.Id, diffResponse.Features) &&
+			diffResponse.ForceUpdate
 	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
 	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
 	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
