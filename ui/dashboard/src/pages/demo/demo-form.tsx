@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { organizationDemoCreator } from '@api/organization';
@@ -45,6 +45,7 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
   const navigate = useNavigate();
 
   const [demoFormError, setDemoFormError] = useState<ServerErrorType>();
+  const isUrlCodeEdited = useRef(false);
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -102,14 +103,13 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
                   {...field}
                   onChange={value => {
                     field.onChange(value);
-                    const isUrlCodeDirty = form.getFieldState(
-                      'organizationUrlCode'
-                    ).isDirty;
-                    const urlCode = form.getValues('organizationUrlCode');
-                    form.setValue(
-                      'organizationUrlCode',
-                      isUrlCodeDirty ? urlCode : onGenerateSlug(value)
-                    );
+                    if (!isUrlCodeEdited.current) {
+                      form.setValue(
+                        'organizationUrlCode',
+                        onGenerateSlug(value),
+                        { shouldDirty: false, shouldValidate: true }
+                      );
+                    }
                   }}
                 />
               </Form.Control>
@@ -127,6 +127,11 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
                 <Input
                   placeholder={`${t('form:placeholder-code')}`}
                   {...field}
+                  autoComplete="off"
+                  onChange={value => {
+                    isUrlCodeEdited.current = value !== '';
+                    field.onChange(value);
+                  }}
                 />
               </Form.Control>
               <Form.Message />

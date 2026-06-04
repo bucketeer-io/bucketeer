@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { Tag } from '@types';
@@ -26,7 +26,8 @@ const GeneralInfo = ({
       })),
     [tags]
   );
-  const { control, getFieldState, setValue, getValues } = useFormContext();
+  const isFlagIdEdited = useRef(false);
+  const { control, setValue } = useFormContext();
 
   return (
     <div className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card">
@@ -48,13 +49,11 @@ const GeneralInfo = ({
                     name="flag-name"
                     onChange={value => {
                       field.onChange(value);
-                      if (!isUpdate) {
-                        const isFlagIdDirty = getFieldState('flagId').isDirty;
-                        const flagId = getValues('flagId');
-                        setValue(
-                          'flagId',
-                          isFlagIdDirty ? flagId : onGenerateSlug(value)
-                        );
+                      if (!isUpdate && !isFlagIdEdited.current) {
+                        setValue('flagId', onGenerateSlug(value), {
+                          shouldDirty: false,
+                          shouldValidate: true
+                        });
                       }
                     }}
                   />
@@ -86,6 +85,11 @@ const GeneralInfo = ({
                     disabled={isUpdate}
                     {...field}
                     name="flag-id"
+                    autoComplete="off"
+                    onChange={value => {
+                      isFlagIdEdited.current = value !== '';
+                      field.onChange(value);
+                    }}
                   />
                 </Form.Control>
                 <Form.Message />
