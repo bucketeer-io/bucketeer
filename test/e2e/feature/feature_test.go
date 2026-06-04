@@ -633,7 +633,7 @@ func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 	}
 }
 
-func TestListFeaturesFilterHasAutoOps(t *testing.T) {
+func TestListFeaturesFilterAutoOps(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	aoClient := newAutoOpsClient(t)
@@ -783,33 +783,65 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithProgressiveRollout)
 	}
 
-	// Deprecated alias: has_auto_ops should still behave as has_active_auto_ops.
-	//nolint:staticcheck // SA1019: exercising the deprecated alias on purpose.
-	deprecatedResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+	// Stop the progressive rollout to move it into STOPPED status (one of the
+	// "finished" statuses), and verify the has_finished_auto_ops filter picks
+	// it up positively.
+	progressiveRollouts := listProgressiveRollouts(t, aoClient, featureWithProgressiveRollout)
+	if len(progressiveRollouts) != 1 {
+		t.Fatalf("expected 1 progressive rollout for %s, got %d", featureWithProgressiveRollout, len(progressiveRollouts))
+	}
+	if _, err = aoClient.StopProgressiveRollout(ctx, &aoproto.StopProgressiveRolloutRequest{
 		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: true},
+		Id:            progressiveRollouts[0].Id,
+		StoppedBy:     aoproto.ProgressiveRollout_USER,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Filter: has_finished_auto_ops = true should now return the feature whose
+	// progressive rollout we just stopped, while the feature with the still-
+	// WAITING auto ops rule should remain excluded.
+	finishedAfterStopResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId:      *environmentID,
+		HasFinishedAutoOps: &wrappers.BoolValue{Value: true},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	foundWithScheduleViaDeprecated := false
-	foundWithProgressiveViaDeprecated := false
-	for _, f := range deprecatedResp.Features {
+	foundFinishedProgressiveRollout := false
+	for _, f := range finishedAfterStopResp.Features {
+		if f.Id == featureWithProgressiveRollout {
+			foundFinishedProgressiveRollout = true
+		}
 		if f.Id == featureWithScheduleAutoOps {
-			foundWithScheduleViaDeprecated = true
+			t.Errorf("Feature %s should not appear when filtering has_finished_auto_ops=true (its auto ops rule is still WAITING)", featureWithScheduleAutoOps)
+		}
+	}
+	if !foundFinishedProgressiveRollout {
+		t.Errorf("Feature %s should appear when filtering has_finished_auto_ops=true after stopping its progressive rollout", featureWithProgressiveRollout)
+	}
+
+	// Filter: has_active_auto_ops = true should no longer return the stopped
+	// progressive rollout's feature, but should still return the feature with
+	// the WAITING auto ops rule.
+	activeAfterStopResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundActiveScheduleAutoOps := false
+	for _, f := range activeAfterStopResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			foundActiveScheduleAutoOps = true
 		}
 		if f.Id == featureWithProgressiveRollout {
-			foundWithProgressiveViaDeprecated = true
-		}
-		if f.Id == featureWithoutAutoOps {
-			t.Errorf("Feature %s should not appear when filtering deprecated has_auto_ops=true", featureWithoutAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=true after stopping its progressive rollout", featureWithProgressiveRollout)
 		}
 	}
-	if !foundWithScheduleViaDeprecated {
-		t.Errorf("Feature %s should appear when filtering deprecated has_auto_ops=true", featureWithScheduleAutoOps)
-	}
-	if !foundWithProgressiveViaDeprecated {
-		t.Errorf("Feature %s should appear when filtering deprecated has_auto_ops=true", featureWithProgressiveRollout)
+	if !foundActiveScheduleAutoOps {
+		t.Errorf("Feature %s should still appear when filtering has_active_auto_ops=true (its auto ops rule is still WAITING)", featureWithScheduleAutoOps)
 	}
 }
 

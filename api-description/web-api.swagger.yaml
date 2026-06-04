@@ -5495,13 +5495,6 @@ paths:
           in: query
           required: false
           type: boolean
-        - name: hasAutoOps
-          description: |-
-            Deprecated: use has_active_auto_ops instead. When set without
-            has_active_auto_ops, it is treated as an alias for has_active_auto_ops.
-          in: query
-          required: false
-          type: boolean
         - name: hasActiveAutoOps
           description: |-
             Matches flags that have at least one auto ops rule or progressive rollout

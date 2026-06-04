@@ -31462,17 +31462,6 @@
                 "type": "google.protobuf.BoolValue"
               },
               {
-                "id": 16,
-                "name": "has_auto_ops",
-                "type": "google.protobuf.BoolValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 17,
                 "name": "has_active_auto_ops",
                 "type": "google.protobuf.BoolValue"
@@ -31484,7 +31473,11 @@
               }
             ],
             "reserved_ids": [
-              6
+              6,
+              16
+            ],
+            "reserved_names": [
+              "has_auto_ops"
             ]
           },
           {

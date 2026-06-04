@@ -221,12 +221,6 @@ func (s *FeatureService) ListFeatures(
 	var features []*featureproto.Feature
 	var cursor string
 	var totalCount int64
-	// Backward compatibility: the deprecated has_auto_ops field is treated as
-	// an alias for has_active_auto_ops when the latter is not set.
-	hasActiveAutoOps := req.HasActiveAutoOps
-	if hasActiveAutoOps == nil {
-		hasActiveAutoOps = req.HasAutoOps
-	}
 	if req.HasExperiment == nil {
 		features, cursor, totalCount, err = s.listFeatures(
 			ctx,
@@ -238,7 +232,7 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.HasFeatureFlagAsRule,
-			hasActiveAutoOps,
+			req.HasActiveAutoOps,
 			req.HasFinishedAutoOps,
 			req.SearchKeyword,
 			req.Status,
@@ -257,7 +251,7 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.HasFeatureFlagAsRule,
-			hasActiveAutoOps,
+			req.HasActiveAutoOps,
 			req.HasFinishedAutoOps,
 			req.SearchKeyword,
 			req.Status,
