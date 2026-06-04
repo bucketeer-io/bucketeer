@@ -115,6 +115,7 @@ type options struct {
 	pubsubTimeout                     time.Duration
 	oldestEventTimestamp              time.Duration
 	furthestEventTimestamp            time.Duration
+	featureFlagDiffGracePeriod        time.Duration
 	metricsWorkers                    int
 	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
@@ -132,9 +133,18 @@ var defaultOptions = options{
 	oldestEventTimestamp: 744 * time.Hour,
 	// 1 hour - handles legitimate clock skew while preventing malicious timestamps
 	furthestEventTimestamp: 1 * time.Hour,
-	logger:                 zap.NewNop(),
-	metricsWorkers:         4,
-	metricsQueueSize:       4096,
+	// 10 minutes - widens the diff filters so changes missed by a previous
+	// response due to L2 propagation lag are re-included on the next poll:
+	//   - GetFeatureFlags:  UpdatedAt >= RequestedAt - grace
+	//   - GetEvaluations:   UpdatedAt > evaluatedAt - grace (via
+	//                       evaluation.WithSecondsForAdjustment)
+	// Prevents the partial-diff trap where the SDK silently keeps stale
+	// flag values after an unrelated update advances its time cursor past
+	// a still-stale flag's UpdatedAt.
+	featureFlagDiffGracePeriod: 10 * time.Minute,
+	logger:                     zap.NewNop(),
+	metricsWorkers:             4,
+	metricsQueueSize:           4096,
 }
 
 type Option func(*options)
@@ -172,6 +182,25 @@ func WithFeaturesMemoryCacheTTL(ttl time.Duration) Option {
 func WithSegmentUsersMemoryCacheTTL(ttl time.Duration) Option {
 	return func(opts *options) {
 		opts.segmentUsersMemoryCacheTTL = ttl
+	}
+}
+
+// WithFeatureFlagDiffGracePeriod widens the diff filters by the given
+// duration so recently updated flags are re-included on the next poll:
+//   - GetFeatureFlags:  UpdatedAt >= RequestedAt - grace  (inclusive)
+//   - GetEvaluations:   UpdatedAt > evaluatedAt - grace   (exclusive, via
+//     evaluation.WithSecondsForAdjustment)
+//
+// Defends against the partial-diff trap caused by L2 cache propagation
+// lag under rapid back-to-back flag changes. Negative values are clamped
+// to 0 because they would narrow the filter and re-introduce the trap
+// this option is meant to prevent.
+func WithFeatureFlagDiffGracePeriod(d time.Duration) Option {
+	if d < 0 {
+		d = 0
+	}
+	return func(opts *options) {
+		opts.featureFlagDiffGracePeriod = d
 	}
 }
 
@@ -547,7 +576,14 @@ func (s *grpcGatewayService) GetEvaluations(
 		)
 		return nil, err
 	}
-	evaluator := evaluation.NewEvaluator()
+	// Use the same grace window as GetFeatureFlags so the
+	// EvaluateFeaturesByEvaluatedAt diff filter does not miss flags whose
+	// updates reached L2 only after a previous response advanced the
+	// SDK's evaluatedAt cursor past them (partial-diff trap on the client
+	// SDK path).
+	evaluator := evaluation.NewEvaluator(
+		evaluation.WithSecondsForAdjustment(int64(s.opts.featureFlagDiffGracePeriod / time.Second)),
+	)
 	var evaluations *featureproto.UserEvaluations
 	// FIXME Remove s.getEvaluations once all SDKs use UserEvaluationCondition.
 	// New SDKs always use UserEvaluationCondition.
@@ -924,6 +960,14 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	}
 	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
 	// so req.RequestedAt can be used directly without clamping.
+	//
+	// Grace window: widen the filter by featureFlagDiffGracePeriod so flags
+	// whose update reached L2 after the SDK's previous poll (but were
+	// missed because an unrelated flag's update bumped the SDK's
+	// RequestedAt past them) are re-emitted on the next poll. This is the
+	// primary defense against the partial-diff trap. The empty-diff
+	// fallback below catches any remaining edge case.
+	gracePeriodSeconds := int64(s.opts.featureFlagDiffGracePeriod / time.Second)
 	updatedFeatures := make([]*featureproto.Feature, 0, len(targetFeatures))
 	archivedIDs := make([]string, 0)
 	for _, feature := range targetFeatures {
@@ -931,18 +975,17 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			archivedIDs = append(archivedIDs, feature.Id)
 			continue
 		}
-		if feature.UpdatedAt >= req.RequestedAt {
+		if feature.UpdatedAt >= req.RequestedAt-gracePeriodSeconds {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
-	// Force-recover fallback: ffID mismatched but the diff filter excluded
-	// every flag AND there are no archives. Happens when req.RequestedAt has
-	// advanced past a changed flag's UpdatedAt (e.g. L2 propagation race
-	// under rapid updates). Returning an empty diff here would let the SDK
-	// adopt our new ffID without applying the change and get stuck on stale
-	// data until pod restart. Return the full set with ForceUpdate=true so
-	// the SDK reconciles. Tracked under a distinct metric label for
-	// observability.
+	// Force-recover fallback: ffID mismatched but the diff filter still
+	// excluded every flag AND there are no archives. Should be rare with
+	// the grace window above but kept as a defense-in-depth: returning an
+	// empty diff would let the SDK adopt our new ffID without applying any
+	// change and silently stay stale. Return the full set with
+	// ForceUpdate=true so the SDK reconciles. Tracked under a distinct
+	// metric label for observability.
 	if len(updatedFeatures) == 0 && len(archivedIDs) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeForceAll).Inc()

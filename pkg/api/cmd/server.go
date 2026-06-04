@@ -126,6 +126,7 @@ type server struct {
 	apiKeyMemoryCacheEvictionInterval *time.Duration
 	featuresMemoryCacheTTL            *time.Duration
 	segmentUsersMemoryCacheTTL        *time.Duration
+	featureFlagDiffGracePeriod        *time.Duration
 	// PubSub configurations
 	pubSubType                *string
 	pubSubRedisServerName     *string
@@ -272,6 +273,15 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"segment-users-memory-cache-ttl",
 			"TTL for the in-memory segment users cache.",
 		).Default("1m").Duration(),
+		featureFlagDiffGracePeriod: cmd.Flag(
+			"feature-flag-diff-grace-period",
+			"Grace window applied to the diff filters for GetFeatureFlags "+
+				"(UpdatedAt >= RequestedAt - grace) and GetEvaluations "+
+				"(UpdatedAt > evaluatedAt - grace). Defends against the partial-diff "+
+				"trap caused by L2 cache propagation lag under rapid back-to-back flag "+
+				"updates. Increase if pods continue to observe stale flags; decrease to "+
+				"reduce diff response size.",
+		).Default("10m").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis-stream).",
@@ -610,6 +620,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
 		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
+		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -692,6 +703,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
 		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
+		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),

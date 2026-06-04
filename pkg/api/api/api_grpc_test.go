@@ -2080,7 +2080,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: with tag and with different feature flags ID, and with old requested at",
+			// With the 10-minute featureFlagDiffGracePeriod default, the
+			// diff filter becomes UpdatedAt >= RequestedAt - 10m, so
+			// feature-id-1 (UpdatedAt=-20m, RequestedAt=-10m) is now
+			// re-included on the boundary (-20m >= -20m). This protects
+			// against the partial-diff trap caused by L2 propagation lag.
+			desc: "success: with tag and with different feature flags ID, and with old requested at (grace re-includes recent flag)",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -2105,7 +2110,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
 				FeatureFlagsId:         singleFeatureID,
-				Features:               make([]*featureproto.Feature, 0),
+				Features:               []*featureproto.Feature{multiFeatures[0]},
 				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
 				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
