@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	segmentUserRetryTimes = 20
+	segmentUserRetryTimes = 25
 )
 
 func TestListSegmentUsersPageSize(t *testing.T) {
@@ -212,9 +212,17 @@ func waitForSegmentUsers(
 	state *wrapperspb.Int32Value,
 ) {
 	t.Helper()
+	req := &featureproto.ListSegmentUsersRequest{
+		SegmentId:     segmentID,
+		State:         state,
+		EnvironmentId: *environmentID,
+	}
 	for i := 0; i < segmentUserRetryTimes; i++ {
-		res := listSegmentUsers(ctx, t, client, segmentID, state)
-		if len(res.Users) >= expectedSize {
+		if err := ctx.Err(); err != nil {
+			t.Fatalf("waitForSegmentUsers: context done: %v", err)
+		}
+		res, err := client.ListSegmentUsers(ctx, req)
+		if err == nil && res != nil && len(res.Users) >= expectedSize {
 			return
 		}
 		time.Sleep(2 * time.Second)

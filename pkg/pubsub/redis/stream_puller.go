@@ -503,11 +503,14 @@ func (p *StreamPuller) reprocessClaimedMessages(ctx context.Context, claimed []g
 			}
 		}
 
-		// Create a message with Ack/Nack functions
+		// Create a message with Ack/Nack functions.
+		// Note: "id" must be set so downstream processors don't silently ACK
+		// the message (they treat an empty "id" attribute as a missing-ID error).
 		message := &puller.Message{
 			ID:   msg.ID,
 			Data: data,
 			Attributes: map[string]string{
+				"id":      msg.ID,
 				"stream":  streamKey,
 				"claimed": "true",
 			},
