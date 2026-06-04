@@ -94,9 +94,9 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <PageLayout.Content className="p-6">
-      <div className="p-5 shadow-card rounded-lg bg-white">
+      <div className="p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card">
         <div className="flex items-center justify-between">
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('form:general-info')}
           </p>
           <Link target="_blank" to={DOCUMENTATION_LINKS.ORGANIZATIONS}>
