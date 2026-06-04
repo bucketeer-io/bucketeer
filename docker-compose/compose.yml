@@ -334,6 +334,8 @@ services:
       - BUCKETEER_BATCH_REFRESH_INTERVAL=10m
       - BUCKETEER_BATCH_EXPERIMENT_LOCK_TTL=1m
       - BUCKETEER_BATCH_WEB_URL=http://localhost:3000
+      - BUCKETEER_BATCH_FAILURE_ALERT_SLACK_TOKEN=
+      - BUCKETEER_BATCH_FAILURE_ALERT_SLACK_CHANNEL=
       - BUCKETEER_BATCH_CERT=/usr/local/certs/service/tls.crt
       - BUCKETEER_BATCH_KEY=/usr/local/certs/service/tls.key
       - BUCKETEER_BATCH_SERVICE_TOKEN=/usr/local/service-token/token
@@ -413,6 +415,8 @@ services:
       - BUCKETEER_SUBSCRIBER_METRICS_PORT=9002
       - BUCKETEER_SUBSCRIBER_REFRESH_INTERVAL=10m
       - BUCKETEER_SUBSCRIBER_WEB_URL=http://localhost:3000
+      - BUCKETEER_SUBSCRIBER_FAILURE_ALERT_SLACK_TOKEN=
+      - BUCKETEER_SUBSCRIBER_FAILURE_ALERT_SLACK_CHANNEL=
       - BUCKETEER_SUBSCRIBER_CERT=/usr/local/certs/service/tls.crt
       - BUCKETEER_SUBSCRIBER_KEY=/usr/local/certs/service/tls.key
       - BUCKETEER_SUBSCRIBER_SERVICE_TOKEN=/usr/local/service-token/token

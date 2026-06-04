@@ -181,8 +181,31 @@ func (n *slackNotifier) createAttachment(
 		return n.createMAUCountAttachment(notification.MauCountNotification)
 	case senderproto.Notification_DemoOrganizationCreation:
 		return n.createDemoOrganizationCreationAttachment(notification.DemoOrganizationCreationNotification)
+	case senderproto.Notification_JobFailure:
+		return jobFailureAttachment(notification.JobFailureNotification), nil
 	}
 	return nil, ErrUnknownNotification
+}
+
+// jobFailureAttachment renders a batch job / subscriber consumer failure alert.
+// It is a free function (no notifier state) so it can be reused by the
+// FailureAlerter, which posts via the Slack Web API rather than a webhook.
+func jobFailureAttachment(
+	notification *senderproto.JobFailureNotification,
+) *slack.Attachment {
+	title := "A batch job failed."
+	unitLabel := "Job"
+	if notification.ServiceType == senderproto.JobFailureNotification_SUBSCRIBER {
+		title = "A subscriber consumer failed."
+		unitLabel = "Consumer"
+	}
+	return &slack.Attachment{
+		Color:      "#D32F2F",
+		MarkdownIn: []string{"text"},
+		Text: ":rotating_light: " + title + "\n\n" +
+			unitLabel + ": `" + notification.JobName + "`\n" +
+			"Error: ```" + notification.ErrorMessage + "```",
+	}
 }
 
 func (n *slackNotifier) createDemoOrganizationCreationAttachment(

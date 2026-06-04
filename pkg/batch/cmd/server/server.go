@@ -105,23 +105,25 @@ const (
 type server struct {
 	*kingpin.CmdClause
 	// Common
-	port                    *int
-	grpcGatewayPort         *int
-	project                 *string
-	certPath                *string
-	keyPath                 *string
-	serviceTokenPath        *string
-	timezone                *string
-	refreshInterval         *time.Duration
-	experimentLockTTL       *time.Duration
-	webURL                  *string
-	oauthPublicKeyPath      *string
-	oauthAudience           *string
-	oauthIssuer             *string
-	stanHost                *string
-	stanPort                *string
-	stanModelID             *string
-	operationalDatabaseType *string
+	port                     *int
+	grpcGatewayPort          *int
+	project                  *string
+	certPath                 *string
+	keyPath                  *string
+	serviceTokenPath         *string
+	timezone                 *string
+	refreshInterval          *time.Duration
+	experimentLockTTL        *time.Duration
+	webURL                   *string
+	failureAlertSlackToken   *string
+	failureAlertSlackChannel *string
+	oauthPublicKeyPath       *string
+	oauthAudience            *string
+	oauthIssuer              *string
+	stanHost                 *string
+	stanPort                 *string
+	stanModelID              *string
+	operationalDatabaseType  *string
 	// MySQL
 	mysqlUser        *string
 	mysqlPass        *string
@@ -181,6 +183,15 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Interval between refreshing target objects.",
 		).Default("1m").Duration(),
 		webURL: cmd.Flag("web-url", "Web console URL.").Required().String(),
+		failureAlertSlackToken: cmd.Flag(
+			"failure-alert-slack-token",
+			"Slack bot token (Bearer) used to post batch job failure alerts via chat.postMessage. "+
+				"Empty disables alerts.",
+		).Default("").String(),
+		failureAlertSlackChannel: cmd.Flag(
+			"failure-alert-slack-channel",
+			"Slack channel for batch job failure alerts (e.g. #bucketeer-emergency). Empty disables alerts.",
+		).Default("").String(),
 		oauthPublicKeyPath: cmd.Flag(
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
@@ -464,6 +475,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
+	failureAlerter := notifier.NewFailureAlerter(
+		*s.failureAlertSlackToken,
+		*s.failureAlertSlackChannel,
+		notifier.WithFailureAlertLogger(logger),
+	)
+
 	notificationSender := notificationsender.NewSender(
 		notificationClient,
 		[]notifier.Notifier{slackNotifier},
@@ -679,6 +696,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			promClient,
 			jobs.WithLogger(logger),
 		),
+		failureAlerter,
 		logger,
 	)
 

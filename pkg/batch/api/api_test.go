@@ -17,12 +17,16 @@ package api
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	acclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -53,6 +57,7 @@ import (
 	insightsstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
+	notifiermock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier/mock"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
 	opseventstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -841,9 +846,61 @@ func newBatchService(t *testing.T,
 			nil,
 			jobs.WithLogger(logger),
 		),
+		nil, // failureAlerter - success-path tests do not trigger alerts
 		logger,
 	)
 	return service
+}
+
+type fakeFailingJob struct {
+	err error
+}
+
+func (f fakeFailingJob) Run(context.Context) error {
+	return f.err
+}
+
+func TestExecuteBatchJobFailureAlert(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		jobErr      error
+		expectAlert bool
+	}{
+		{
+			desc:        "real failure triggers an alert",
+			jobErr:      errors.New("something went wrong"),
+			expectAlert: true,
+		},
+		{
+			desc:        "resource exhausted (pod busy) does not trigger an alert",
+			jobErr:      status.Error(codes.ResourceExhausted, "pod busy"),
+			expectAlert: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			alerter := notifiermock.NewMockFailureAlerter(ctrl)
+			if p.expectAlert {
+				alerter.EXPECT().NotifyBatchJobFailure(
+					gomock.Any(),
+					batchproto.BatchJob_ExperimentCalculator.String(),
+					p.jobErr,
+				).Times(1)
+			}
+			service := &batchService{
+				experimentCalculator: fakeFailingJob{err: p.jobErr},
+				failureAlerter:       alerter,
+				logger:               zap.NewNop(),
+			}
+			_, err := service.ExecuteBatchJob(context.Background(), &batchproto.BatchJobRequest{
+				Job: batchproto.BatchJob_ExperimentCalculator,
+			})
+			assert.Equal(t, p.jobErr, err)
+		})
+	}
 }
 
 func getEnvironments(t *testing.T) []*environmentproto.EnvironmentV2 {

@@ -30,3 +30,11 @@ type Notifier interface {
 		language notificationproto.Recipient_Language,
 	) error
 }
+
+// FailureAlerter sends an operational Slack alert when a batch job or a
+// subscriber consumer fails. Implementations may throttle repeated alerts for
+// the same job/consumer to avoid alert storms.
+type FailureAlerter interface {
+	NotifyBatchJobFailure(ctx context.Context, jobName string, jobErr error)
+	NotifySubscriberFailure(ctx context.Context, consumerName string, consumerErr error)
+}

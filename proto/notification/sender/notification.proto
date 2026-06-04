@@ -28,6 +28,7 @@ message Notification {
     ExperimentRunning = 2;
     MauCount = 3;
     DemoOrganizationCreation = 4;
+    JobFailure = 5;
   }
   Type type = 1;
   DomainEventNotification domain_event_notification = 2;
@@ -36,6 +37,7 @@ message Notification {
   MauCountNotification mau_count_notification = 5;
   DemoOrganizationCreationNotification demo_organization_creation_notification =
       6;
+  JobFailureNotification job_failure_notification = 7;
 }
 
 message DomainEventNotification {
@@ -79,4 +81,15 @@ message DemoOrganizationCreationNotification {
   string owner_email = 1;
   string organization_id = 2;
   string organization_name = 3;
+}
+
+message JobFailureNotification {
+  enum ServiceType {
+    BATCH = 0;
+    SUBSCRIBER = 1;
+  }
+  ServiceType service_type = 1;
+  // The failed unit: a batch job name or a subscriber/consumer name.
+  string job_name = 2;
+  string error_message = 3;
 }

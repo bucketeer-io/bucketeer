@@ -68,14 +68,16 @@ const (
 type server struct {
 	*kingpin.CmdClause
 	// Common
-	port             *int
-	project          *string
-	certPath         *string
-	keyPath          *string
-	serviceTokenPath *string
-	webURL           *string
-	emailConfigPath  *string
-	demoSiteEnabled  *bool
+	port                     *int
+	project                  *string
+	certPath                 *string
+	keyPath                  *string
+	serviceTokenPath         *string
+	webURL                   *string
+	failureAlertSlackToken   *string
+	failureAlertSlackChannel *string
+	emailConfigPath          *string
+	demoSiteEnabled          *bool
 	// Operational database
 	operationalDatabaseType *string
 	// MySQL
@@ -131,7 +133,17 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
 		webURL:           cmd.Flag("web-url", "Web console URL.").Required().String(),
-		emailConfigPath:  cmd.Flag("email-config-path", "Path to email config.").Required().String(),
+		failureAlertSlackToken: cmd.Flag(
+			"failure-alert-slack-token",
+			"Slack bot token (Bearer) used to post subscriber consumer failure alerts via chat.postMessage. "+
+				"Empty disables alerts.",
+		).Default("").String(),
+		failureAlertSlackChannel: cmd.Flag(
+			"failure-alert-slack-channel",
+			"Slack channel for subscriber consumer failure alerts (e.g. #bucketeer-emergency). "+
+				"Empty disables alerts.",
+		).Default("").String(),
+		emailConfigPath: cmd.Flag("email-config-path", "Path to email config.").Required().String(),
 		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
 			Default("mysql").String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
@@ -376,6 +388,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
+	failureAlerter := notifier.NewFailureAlerter(
+		*s.failureAlertSlackToken,
+		*s.failureAlertSlackChannel,
+		notifier.WithFailureAlertLogger(logger),
+	)
+
 	notificationSender := notificationsender.NewSender(
 		notificationClient,
 		[]notifier.Notifier{slackNotifier},
@@ -448,7 +466,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, subscriberConfigs, registerer, logger)
+	multiPubSub, err := s.startMultiPubSub(
+		ctx, pubSubProcessors, subscriberConfigs, failureAlerter, registerer, logger,
+	)
 	if err != nil {
 		return err
 	}
@@ -694,6 +714,7 @@ func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.PubSubProcessors,
 	subscriberConfigs map[string]subscriber.Configuration,
+	failureAlerter notifier.FailureAlerter,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*subscriber.MultiSubscriber, error) {
@@ -717,6 +738,7 @@ func (s *server) startMultiPubSub(
 			name, config, p,
 			subscriber.WithLogger(logger),
 			subscriber.WithMetrics(registerer),
+			subscriber.WithFailureAlerter(failureAlerter),
 		))
 	}
 	onDemandSubscriberConfigBytes, err := os.ReadFile(*s.onDemandSubscriberConfig)
@@ -745,6 +767,7 @@ func (s *server) startMultiPubSub(
 				name, config, p.(subscriber.OnDemandProcessor),
 				subscriber.WithLogger(logger),
 				subscriber.WithMetrics(registerer),
+				subscriber.WithFailureAlerter(failureAlerter),
 			))
 		}
 	}

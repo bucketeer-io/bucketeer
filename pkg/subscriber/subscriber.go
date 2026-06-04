@@ -22,14 +22,16 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 type options struct {
-	metrics metrics.Registerer
-	logger  *zap.Logger
+	metrics        metrics.Registerer
+	logger         *zap.Logger
+	failureAlerter notifier.FailureAlerter
 }
 
 // Configuration types
@@ -54,6 +56,14 @@ func WithMetrics(r metrics.Registerer) Option {
 func WithLogger(logger *zap.Logger) Option {
 	return func(o *options) {
 		o.logger = logger
+	}
+}
+
+// WithFailureAlerter sets the alerter used to notify (e.g. via Slack) when a
+// consumer fails. When unset, no failure alerts are sent.
+func WithFailureAlerter(a notifier.FailureAlerter) Option {
+	return func(o *options) {
+		o.failureAlerter = a
 	}
 }
 
@@ -149,6 +159,7 @@ func (s pubSubSubscriber) Run(ctx context.Context) {
 	rateLimiterPuller := s.createPuller(ctx)
 	if rateLimiterPuller == nil {
 		s.logger.Error("Failed to create puller, stopping subscriber", zap.String("name", s.name))
+		s.alertFailure(ctx, fmt.Errorf("failed to create puller for subscriber %q", s.name))
 		return
 	}
 	group := errgroup.Group{}
@@ -165,9 +176,20 @@ func (s pubSubSubscriber) Run(ctx context.Context) {
 		s.logger.Error("subscriber stopped with error",
 			zap.String("name", s.name),
 			zap.Error(err))
+		s.alertFailure(ctx, err)
 	}
 	s.logger.Debug("subscriber stopped",
 		zap.String("name", s.name))
+}
+
+// alertFailure sends a failure alert for this consumer, unless alerts are
+// disabled (no alerter configured) or the failure is caused by a graceful
+// shutdown (the context was canceled), which is not an actual failure.
+func (s pubSubSubscriber) alertFailure(ctx context.Context, err error) {
+	if s.opts.failureAlerter == nil || ctx.Err() != nil {
+		return
+	}
+	s.opts.failureAlerter.NotifySubscriberFailure(ctx, s.name, err)
 }
 
 func (s pubSubSubscriber) Stop() {

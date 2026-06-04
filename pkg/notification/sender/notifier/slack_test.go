@@ -136,3 +136,48 @@ func TestCreateDomainEventAttachment(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateJobFailureAttachment(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc          string
+		serviceType   senderproto.JobFailureNotification_ServiceType
+		jobName       string
+		errorMessage  string
+		expectedTitle string
+		expectedLabel string
+	}{
+		{
+			desc:          "batch job failure",
+			serviceType:   senderproto.JobFailureNotification_BATCH,
+			jobName:       "ExperimentCalculator",
+			errorMessage:  "context deadline exceeded",
+			expectedTitle: "A batch job failed.",
+			expectedLabel: "Job:",
+		},
+		{
+			desc:          "subscriber consumer failure",
+			serviceType:   senderproto.JobFailureNotification_SUBSCRIBER,
+			jobName:       "evaluationCountEventPersister",
+			errorMessage:  "redis: connection refused",
+			expectedTitle: "A subscriber consumer failed.",
+			expectedLabel: "Consumer:",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			attachment := jobFailureAttachment(&senderproto.JobFailureNotification{
+				ServiceType:  p.serviceType,
+				JobName:      p.jobName,
+				ErrorMessage: p.errorMessage,
+			})
+			assert.NotNil(t, attachment)
+			assert.Equal(t, "#D32F2F", attachment.Color)
+			assert.Contains(t, attachment.Text, p.expectedTitle)
+			assert.Contains(t, attachment.Text, p.expectedLabel)
+			assert.Contains(t, attachment.Text, p.jobName)
+			assert.Contains(t, attachment.Text, p.errorMessage)
+		})
+	}
+}

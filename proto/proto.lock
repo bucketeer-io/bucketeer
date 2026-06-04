@@ -46359,6 +46359,22 @@
               {
                 "name": "DemoOrganizationCreation",
                 "integer": 4
+              },
+              {
+                "name": "JobFailure",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "JobFailureNotification.ServiceType",
+            "enum_fields": [
+              {
+                "name": "BATCH"
+              },
+              {
+                "name": "SUBSCRIBER",
+                "integer": 1
               }
             ]
           }
@@ -46396,6 +46412,11 @@
                 "id": 6,
                 "name": "demo_organization_creation_notification",
                 "type": "DemoOrganizationCreationNotification"
+              },
+              {
+                "id": 7,
+                "name": "job_failure_notification",
+                "type": "JobFailureNotification"
               }
             ]
           },
@@ -46542,6 +46563,26 @@
               {
                 "id": 3,
                 "name": "organization_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "JobFailureNotification",
+            "fields": [
+              {
+                "id": 1,
+                "name": "service_type",
+                "type": "ServiceType"
+              },
+              {
+                "id": 2,
+                "name": "job_name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "error_message",
                 "type": "string"
               }
             ]

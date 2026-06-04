@@ -98,6 +98,7 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 			zap.Error(err),
 			zap.String("name", s.name),
 		)
+		s.alertFailure(err)
 		return
 	}
 	ticker := time.NewTicker(time.Duration(s.configuration.CheckInterval) * time.Second)
@@ -201,6 +202,7 @@ func (s *onDemandSubscriber) subscribe(subscription chan struct{}) {
 			err := s.group.Wait()
 			if err != nil {
 				s.logger.Error("Failed while running pull messages", zap.Error(err))
+				s.alertFailure(err)
 			}
 			s.isRunning = false
 		case <-s.ctx.Done():
@@ -316,6 +318,16 @@ func (s *onDemandSubscriber) createPuller() error {
 	}
 
 	return fmt.Errorf("no pubsub client available")
+}
+
+// alertFailure sends a failure alert for this on-demand consumer, unless alerts
+// are disabled (no alerter configured) or the failure is caused by a graceful
+// shutdown (the context was canceled), which is not an actual failure.
+func (s *onDemandSubscriber) alertFailure(err error) {
+	if s.opts.failureAlerter == nil || s.ctx == nil || s.ctx.Err() != nil {
+		return
+	}
+	s.opts.failureAlerter.NotifySubscriberFailure(s.ctx, s.name, err)
 }
 
 func (s *onDemandSubscriber) Stop() {

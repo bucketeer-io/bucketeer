@@ -24,6 +24,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/v2/proto/batch"
 )
 
@@ -49,6 +50,7 @@ type batchService struct {
 	featureAutoArchiver         jobs.Job
 	scheduledFlagChangeExecutor jobs.Job
 	monthlySummarizer           jobs.Job
+	failureAlerter              notifier.FailureAlerter
 	logger                      *zap.Logger
 }
 
@@ -61,6 +63,7 @@ func NewBatchService(
 	experimentCacher, autoOpsRulesCacher, tagDeleter,
 	featureAutoArchiver, scheduledFlagChangeExecutor,
 	monthlySummarizer jobs.Job,
+	failureAlerter notifier.FailureAlerter,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -81,6 +84,7 @@ func NewBatchService(
 		featureAutoArchiver:         featureAutoArchiver,
 		scheduledFlagChangeExecutor: scheduledFlagChangeExecutor,
 		monthlySummarizer:           monthlySummarizer,
+		failureAlerter:              failureAlerter,
 		logger:                      logger.Named("batch-service"),
 	}
 }
@@ -146,6 +150,9 @@ func (s *batchService) ExecuteBatchJob(
 					zap.Error(err),
 				)...,
 			)
+			if s.failureAlerter != nil {
+				s.failureAlerter.NotifyBatchJobFailure(ctx, req.Job.String(), err)
+			}
 		}
 		return nil, err
 	}

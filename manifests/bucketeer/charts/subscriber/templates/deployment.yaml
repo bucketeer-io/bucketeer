@@ -126,6 +126,10 @@ spec:
               value: "{{ .Values.env.operationalDatabase.postgres.openConns | default .Values.global.operationalDatabase.postgres.openConns }}"
             - name: BUCKETEER_SUBSCRIBER_WEB_URL
               value: "{{ .Values.env.webURL }}"
+            - name: BUCKETEER_SUBSCRIBER_FAILURE_ALERT_SLACK_TOKEN
+              value: "{{ .Values.env.failureAlertSlackToken }}"
+            - name: BUCKETEER_SUBSCRIBER_FAILURE_ALERT_SLACK_CHANNEL
+              value: "{{ .Values.env.failureAlertSlackChannel }}"
             - name: BUCKETEER_SUBSCRIBER_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_SUBSCRIBER_ENABLE_PPROF
