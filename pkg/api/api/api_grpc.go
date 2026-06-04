@@ -187,8 +187,13 @@ func WithSegmentUsersMemoryCacheTTL(ttl time.Duration) Option {
 // GetFeatureFlags / GetEvaluations APIs by the given duration, so flags
 // updated within [RequestedAt - grace, RequestedAt] are re-included on the
 // next poll. Defends against the partial-diff trap caused by L2 cache
-// propagation lag under rapid back-to-back flag changes.
+// propagation lag under rapid back-to-back flag changes. Negative values
+// are clamped to 0 because they would narrow the filter and re-introduce
+// the trap this option is meant to prevent.
 func WithFeatureFlagDiffGracePeriod(d time.Duration) Option {
+	if d < 0 {
+		d = 0
+	}
 	return func(opts *options) {
 		opts.featureFlagDiffGracePeriod = d
 	}

@@ -74,8 +74,13 @@ type EvaluatorOption func(*evaluator)
 // WithSecondsForAdjustment overrides the grace period (in seconds) used by
 // EvaluateFeaturesByEvaluatedAt when computing the diff filter. A larger
 // value re-includes more recently updated flags and protects against the
-// partial-diff trap, at the cost of slightly larger responses.
+// partial-diff trap, at the cost of slightly larger responses. Negative
+// values are clamped to 0 because they would narrow the filter and
+// re-introduce the trap this option is meant to prevent.
 func WithSecondsForAdjustment(seconds int64) EvaluatorOption {
+	if seconds < 0 {
+		seconds = 0
+	}
 	return func(e *evaluator) {
 		e.secondsForAdjustment = seconds
 	}
