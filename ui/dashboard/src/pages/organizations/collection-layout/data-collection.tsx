@@ -54,7 +54,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const organization = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {organization.projectCount}
           </div>
         );
@@ -67,7 +67,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const organization = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {organization.environmentCount}
           </div>
         );
@@ -80,7 +80,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const organization = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {organization.userCount}
           </div>
         );
@@ -95,7 +95,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {formatDateTime(organization.createdAt)}
               </div>
             }
