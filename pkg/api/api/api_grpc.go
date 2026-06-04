@@ -133,12 +133,14 @@ var defaultOptions = options{
 	oldestEventTimestamp: 744 * time.Hour,
 	// 1 hour - handles legitimate clock skew while preventing malicious timestamps
 	furthestEventTimestamp: 1 * time.Hour,
-	// 10 minutes - widens the GetFeatureFlags / GetEvaluations diff filter
-	// (UpdatedAt >= RequestedAt - grace) so changes missed by a previous
-	// diff response due to L2 propagation lag are re-included on the next
-	// poll. Prevents the partial-diff trap where the SDK silently keeps
-	// stale flag values when an unrelated flag update advances its
-	// RequestedAt cursor past a still-stale flag's UpdatedAt.
+	// 10 minutes - widens the diff filters so changes missed by a previous
+	// response due to L2 propagation lag are re-included on the next poll:
+	//   - GetFeatureFlags:  UpdatedAt >= RequestedAt - grace
+	//   - GetEvaluations:   UpdatedAt > evaluatedAt - grace (via
+	//                       evaluation.WithSecondsForAdjustment)
+	// Prevents the partial-diff trap where the SDK silently keeps stale
+	// flag values after an unrelated update advances its time cursor past
+	// a still-stale flag's UpdatedAt.
 	featureFlagDiffGracePeriod: 10 * time.Minute,
 	logger:                     zap.NewNop(),
 	metricsWorkers:             4,
@@ -183,13 +185,16 @@ func WithSegmentUsersMemoryCacheTTL(ttl time.Duration) Option {
 	}
 }
 
-// WithFeatureFlagDiffGracePeriod widens the diff filter for the
-// GetFeatureFlags / GetEvaluations APIs by the given duration, so flags
-// updated within [RequestedAt - grace, RequestedAt] are re-included on the
-// next poll. Defends against the partial-diff trap caused by L2 cache
-// propagation lag under rapid back-to-back flag changes. Negative values
-// are clamped to 0 because they would narrow the filter and re-introduce
-// the trap this option is meant to prevent.
+// WithFeatureFlagDiffGracePeriod widens the diff filters by the given
+// duration so recently updated flags are re-included on the next poll:
+//   - GetFeatureFlags:  UpdatedAt >= RequestedAt - grace  (inclusive)
+//   - GetEvaluations:   UpdatedAt > evaluatedAt - grace   (exclusive, via
+//     evaluation.WithSecondsForAdjustment)
+//
+// Defends against the partial-diff trap caused by L2 cache propagation
+// lag under rapid back-to-back flag changes. Negative values are clamped
+// to 0 because they would narrow the filter and re-introduce the trap
+// this option is meant to prevent.
 func WithFeatureFlagDiffGracePeriod(d time.Duration) Option {
 	if d < 0 {
 		d = 0

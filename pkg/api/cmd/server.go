@@ -275,11 +275,12 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("1m").Duration(),
 		featureFlagDiffGracePeriod: cmd.Flag(
 			"feature-flag-diff-grace-period",
-			"Grace window applied to the GetFeatureFlags / GetEvaluations diff filter "+
-				"(UpdatedAt >= RequestedAt - grace). Defends against the partial-diff trap "+
-				"caused by L2 cache propagation lag under rapid back-to-back flag updates. "+
-				"Increase if pods continue to observe stale flags; decrease to reduce diff "+
-				"response size.",
+			"Grace window applied to the diff filters for GetFeatureFlags "+
+				"(UpdatedAt >= RequestedAt - grace) and GetEvaluations "+
+				"(UpdatedAt > evaluatedAt - grace). Defends against the partial-diff "+
+				"trap caused by L2 cache propagation lag under rapid back-to-back flag "+
+				"updates. Increase if pods continue to observe stale flags; decrease to "+
+				"reduce diff response size.",
 		).Default("10m").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",

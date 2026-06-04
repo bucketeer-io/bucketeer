@@ -375,11 +375,27 @@ func TestGrpcGetFeatureFlagsPartialDiffTrap(t *testing.T) {
 	featureIDA := newFeatureID(t, uuid)
 	reqA := createFeatureWithTag(t, tag, featureIDA)
 
-	// Anchor RequestedAt between flag A's UpdatedAt and flag B's
-	// UpdatedAt. The 2s sleeps make the ordering unambiguous despite the
-	// 1-second resolution of UpdatedAt.
-	time.Sleep(2 * time.Second)
-	simulatedRequestedAt := time.Now().Unix()
+	// Derive simulatedRequestedAt from flag A's server-side UpdatedAt
+	// rather than the test runner's time.Now(). This avoids client/server
+	// clock skew: if the runner's clock were ahead of the API server, a
+	// time.Now()-based RequestedAt could trigger the future-RequestedAt
+	// "All" path (ForceUpdate=true) instead of the Diff path under test.
+	var simulatedRequestedAt int64
+	require.Eventually(t, func() bool {
+		resp := grpcGetFeatureFlags(t, tag, "", 0)
+		for _, f := range resp.Features {
+			if f.Id == reqA.Id {
+				// +1 places RequestedAt strictly after A.UpdatedAt so A
+				// is filtered out without the grace window.
+				simulatedRequestedAt = f.UpdatedAt + 1
+				return true
+			}
+		}
+		return false
+	}, 30*time.Second, 2*time.Second, "flag A should be visible to derive UpdatedAt")
+
+	// Sleep so flag B's UpdatedAt is strictly greater than
+	// simulatedRequestedAt (1-second UpdatedAt resolution + safety margin).
 	time.Sleep(2 * time.Second)
 
 	// Create flag B and ensure it is cached.
