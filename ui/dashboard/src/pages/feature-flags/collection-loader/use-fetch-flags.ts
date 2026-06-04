@@ -18,7 +18,8 @@ export const useFetchFlags = ({
   tab,
   status,
   hasFeatureFlagAsRule,
-  hasAutoOps
+  hasActiveAutoOps,
+  hasFinishedAutoOps
 }: {
   environmentId: string;
   pageSize?: number;
@@ -34,7 +35,8 @@ export const useFetchFlags = ({
   tab: CollectionStatusType;
   status?: StatusFilterType;
   hasFeatureFlagAsRule?: boolean;
-  hasAutoOps?: boolean;
+  hasActiveAutoOps?: boolean;
+  hasFinishedAutoOps?: boolean;
 }) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -54,7 +56,8 @@ export const useFetchFlags = ({
       tags,
       status,
       hasFeatureFlagAsRule,
-      hasAutoOps
+      hasActiveAutoOps,
+      hasFinishedAutoOps
     }
   });
 };

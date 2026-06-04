@@ -633,7 +633,7 @@ func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 	}
 }
 
-func TestListFeaturesFilterHasAutoOps(t *testing.T) {
+func TestListFeaturesFilterAutoOps(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	aoClient := newAutoOpsClient(t)
@@ -649,7 +649,9 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 	createFeature(t, client, newCreateFeatureWithTwoVariationsRequest(featureWithProgressiveRollout))
 	createFeature(t, client, newCreateFeatureReq(featureWithoutAutoOps))
 
-	// Attach a schedule auto ops rule to one feature
+	// Attach a schedule auto ops rule to one feature. Newly created auto ops
+	// rules and progressive rollouts start in WAITING status, so both features
+	// should match has_active_auto_ops=true and has_finished_auto_ops=false.
 	createAutoOpsRule(
 		ctx,
 		t,
@@ -682,10 +684,10 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 		nil,
 	)
 
-	// Filter: has_auto_ops = true
+	// Filter: has_active_auto_ops = true
 	trueResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
-		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: true},
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: true},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -700,20 +702,20 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 			foundWithProgressiveRollout = true
 		}
 		if f.Id == featureWithoutAutoOps {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=true", featureWithoutAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=true", featureWithoutAutoOps)
 		}
 	}
 	if !foundWithScheduleAutoOps {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true", featureWithScheduleAutoOps)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true", featureWithScheduleAutoOps)
 	}
 	if !foundWithProgressiveRollout {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true", featureWithProgressiveRollout)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true", featureWithProgressiveRollout)
 	}
 
-	// Filter: has_auto_ops = false
+	// Filter: has_active_auto_ops = false
 	falseResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
-		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: false},
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: false},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -721,24 +723,42 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 	foundWithoutAutoOps := false
 	for _, f := range falseResp.Features {
 		if f.Id == featureWithScheduleAutoOps {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=false", featureWithScheduleAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=false", featureWithScheduleAutoOps)
 		}
 		if f.Id == featureWithProgressiveRollout {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=false", featureWithProgressiveRollout)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=false", featureWithProgressiveRollout)
 		}
 		if f.Id == featureWithoutAutoOps {
 			foundWithoutAutoOps = true
 		}
 	}
 	if !foundWithoutAutoOps {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=false", featureWithoutAutoOps)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=false", featureWithoutAutoOps)
 	}
 
-	// Filter: has_auto_ops = true combined with has_experiment (exercises listFeaturesFilteredByExperiment path)
+	// Filter: has_finished_auto_ops = true should not return the newly created
+	// features because their operations are still WAITING.
+	finishedResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId:      *environmentID,
+		HasFinishedAutoOps: &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range finishedResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			t.Errorf("Feature %s should not appear when filtering has_finished_auto_ops=true (op is WAITING)", featureWithScheduleAutoOps)
+		}
+		if f.Id == featureWithProgressiveRollout {
+			t.Errorf("Feature %s should not appear when filtering has_finished_auto_ops=true (op is WAITING)", featureWithProgressiveRollout)
+		}
+	}
+
+	// Filter: has_active_auto_ops = true combined with has_experiment (exercises listFeaturesFilteredByExperiment path)
 	experimentResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
-		EnvironmentId: *environmentID,
-		HasAutoOps:    &wrappers.BoolValue{Value: true},
-		HasExperiment: &wrappers.BoolValue{Value: false},
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: true},
+		HasExperiment:    &wrappers.BoolValue{Value: false},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -753,14 +773,75 @@ func TestListFeaturesFilterHasAutoOps(t *testing.T) {
 			foundWithProgressiveRolloutInExpPath = true
 		}
 		if f.Id == featureWithoutAutoOps {
-			t.Errorf("Feature %s should not appear when filtering has_auto_ops=true with has_experiment=false", featureWithoutAutoOps)
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithoutAutoOps)
 		}
 	}
 	if !foundWithScheduleAutoOpsInExpPath {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true with has_experiment=false", featureWithScheduleAutoOps)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithScheduleAutoOps)
 	}
 	if !foundWithProgressiveRolloutInExpPath {
-		t.Errorf("Feature %s should appear when filtering has_auto_ops=true with has_experiment=false", featureWithProgressiveRollout)
+		t.Errorf("Feature %s should appear when filtering has_active_auto_ops=true with has_experiment=false", featureWithProgressiveRollout)
+	}
+
+	// Stop the progressive rollout to move it into STOPPED status (one of the
+	// "finished" statuses), and verify the has_finished_auto_ops filter picks
+	// it up positively.
+	progressiveRollouts := listProgressiveRollouts(t, aoClient, featureWithProgressiveRollout)
+	if len(progressiveRollouts) != 1 {
+		t.Fatalf("expected 1 progressive rollout for %s, got %d", featureWithProgressiveRollout, len(progressiveRollouts))
+	}
+	if _, err = aoClient.StopProgressiveRollout(ctx, &aoproto.StopProgressiveRolloutRequest{
+		EnvironmentId: *environmentID,
+		Id:            progressiveRollouts[0].Id,
+		StoppedBy:     aoproto.ProgressiveRollout_USER,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Filter: has_finished_auto_ops = true should now return the feature whose
+	// progressive rollout we just stopped, while the feature with the still-
+	// WAITING auto ops rule should remain excluded.
+	finishedAfterStopResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId:      *environmentID,
+		HasFinishedAutoOps: &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundFinishedProgressiveRollout := false
+	for _, f := range finishedAfterStopResp.Features {
+		if f.Id == featureWithProgressiveRollout {
+			foundFinishedProgressiveRollout = true
+		}
+		if f.Id == featureWithScheduleAutoOps {
+			t.Errorf("Feature %s should not appear when filtering has_finished_auto_ops=true (its auto ops rule is still WAITING)", featureWithScheduleAutoOps)
+		}
+	}
+	if !foundFinishedProgressiveRollout {
+		t.Errorf("Feature %s should appear when filtering has_finished_auto_ops=true after stopping its progressive rollout", featureWithProgressiveRollout)
+	}
+
+	// Filter: has_active_auto_ops = true should no longer return the stopped
+	// progressive rollout's feature, but should still return the feature with
+	// the WAITING auto ops rule.
+	activeAfterStopResp, err := client.ListFeatures(ctx, &feature.ListFeaturesRequest{
+		EnvironmentId:    *environmentID,
+		HasActiveAutoOps: &wrappers.BoolValue{Value: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundActiveScheduleAutoOps := false
+	for _, f := range activeAfterStopResp.Features {
+		if f.Id == featureWithScheduleAutoOps {
+			foundActiveScheduleAutoOps = true
+		}
+		if f.Id == featureWithProgressiveRollout {
+			t.Errorf("Feature %s should not appear when filtering has_active_auto_ops=true after stopping its progressive rollout", featureWithProgressiveRollout)
+		}
+	}
+	if !foundActiveScheduleAutoOps {
+		t.Errorf("Feature %s should still appear when filtering has_active_auto_ops=true (its auto ops rule is still WAITING)", featureWithScheduleAutoOps)
 	}
 }
 

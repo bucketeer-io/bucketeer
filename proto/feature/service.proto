@@ -86,7 +86,14 @@ message ListFeaturesRequest {
   string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
   FeatureLastUsedInfo.Status status = 14;
   google.protobuf.BoolValue has_feature_flag_as_rule = 15;
-  google.protobuf.BoolValue has_auto_ops = 16;
+  reserved 16;  // has_auto_ops
+  reserved "has_auto_ops";
+  // Matches flags that have at least one auto ops rule or progressive rollout
+  // with status WAITING or RUNNING.
+  google.protobuf.BoolValue has_active_auto_ops = 17;
+  // Matches flags that have at least one auto ops rule or progressive rollout
+  // with status FINISHED or STOPPED.
+  google.protobuf.BoolValue has_finished_auto_ops = 18;
 }
 
 message FeatureSummary {

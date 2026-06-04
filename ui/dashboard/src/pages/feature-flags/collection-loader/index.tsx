@@ -104,7 +104,8 @@ const CollectionLoader = memo(
             filters?.tags ??
             filters?.status ??
             filters?.hasFeatureFlagAsRule ??
-            filters?.hasAutoOps
+            filters?.hasActiveAutoOps ??
+            filters?.hasFinishedAutoOps
         )}
         searchQuery={filters?.searchQuery}
         onClear={onClearFilters}

@@ -288,7 +288,7 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*mysqlstorage.Lis
 			})
 		}
 	}
-	existsFilters, orFilters := listFeaturesAutoOpsFilters(p.HasAutoOps)
+	existsFilters, orFilters := listFeaturesAutoOpsFilters(p.HasActiveAutoOps, p.HasFinishedAutoOps)
 
 	// Null filters and status-based filters
 	var nullFilters []*mysqlstorage.NullFilter
@@ -366,18 +366,50 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*mysqlstorage.Lis
 	}, nil
 }
 
-func listFeaturesAutoOpsFilters(hasAutoOps *bool) ([]*mysqlstorage.ExistsFilter, []*mysqlstorage.OrFilter) {
-	if hasAutoOps == nil {
-		return nil, nil
+// Status sets used to classify auto operations.
+//   - active:   WAITING (0), RUNNING (1)   -> still going to fire or firing now
+//   - finished: FINISHED (2), STOPPED (3)  -> will not fire again
+//
+// Both AutoOpsRule.auto_ops_status and ProgressiveRollout.status share these
+// integer values and are stored in the `status` column.
+const (
+	autoOpsActiveStatuses   = "(0, 1)"
+	autoOpsFinishedStatuses = "(2, 3)"
+)
+
+func listFeaturesAutoOpsFilters(
+	hasActive *bool,
+	hasFinished *bool,
+) ([]*mysqlstorage.ExistsFilter, []*mysqlstorage.OrFilter) {
+	var existsFilters []*mysqlstorage.ExistsFilter
+	var orFilters []*mysqlstorage.OrFilter
+	if hasActive != nil {
+		ex, or := buildAutoOpsStatusFilter(*hasActive, autoOpsActiveStatuses)
+		existsFilters = append(existsFilters, ex...)
+		orFilters = append(orFilters, or...)
 	}
+	if hasFinished != nil {
+		ex, or := buildAutoOpsStatusFilter(*hasFinished, autoOpsFinishedStatuses)
+		existsFilters = append(existsFilters, ex...)
+		orFilters = append(orFilters, or...)
+	}
+	return existsFilters, orFilters
+}
+
+func buildAutoOpsStatusFilter(
+	want bool,
+	statuses string,
+) ([]*mysqlstorage.ExistsFilter, []*mysqlstorage.OrFilter) {
 	autoOpsRuleSubquery := "SELECT 1 FROM auto_ops_rule aor " +
 		"WHERE aor.feature_id = feature.id " +
 		"AND aor.environment_id = feature.environment_id " +
-		"AND aor.deleted = 0"
+		"AND aor.deleted = 0 " +
+		"AND aor.status IN " + statuses
 	progressiveRolloutSubquery := "SELECT 1 FROM ops_progressive_rollout opr " +
 		"WHERE opr.feature_id = feature.id " +
-		"AND opr.environment_id = feature.environment_id"
-	if *hasAutoOps {
+		"AND opr.environment_id = feature.environment_id " +
+		"AND opr.status IN " + statuses
+	if want {
 		return nil, []*mysqlstorage.OrFilter{
 			{
 				Queries: []mysqlstorage.WherePart{

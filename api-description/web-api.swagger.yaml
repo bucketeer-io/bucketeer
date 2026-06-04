@@ -5495,7 +5495,17 @@ paths:
           in: query
           required: false
           type: boolean
-        - name: hasAutoOps
+        - name: hasActiveAutoOps
+          description: |-
+            Matches flags that have at least one auto ops rule or progressive rollout
+            with status WAITING or RUNNING.
+          in: query
+          required: false
+          type: boolean
+        - name: hasFinishedAutoOps
+          description: |-
+            Matches flags that have at least one auto ops rule or progressive rollout
+            with status FINISHED or STOPPED.
           in: query
           required: false
           type: boolean

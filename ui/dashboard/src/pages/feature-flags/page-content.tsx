@@ -24,7 +24,8 @@ import { FlagActionType, FlagFilters, StatusFilterType } from './types';
 
 const booleanFilterKeys = [
   'enabled',
-  'hasAutoOps',
+  'hasActiveAutoOps',
+  'hasFinishedAutoOps',
   'hasExperiment',
   'hasFeatureFlagAsRule',
   'hasPrerequisites'
@@ -89,7 +90,8 @@ const PageContent = ({
       'tags',
       'status',
       'hasFeatureFlagAsRule',
-      'hasAutoOps'
+      'hasActiveAutoOps',
+      'hasFinishedAutoOps'
     ];
     const count = filterKeys.reduce((acc, curr) => {
       if (isNotEmpty(filters[curr as keyof FlagFilters])) ++acc;
@@ -127,7 +129,8 @@ const PageContent = ({
       tab: 'ACTIVE',
       status: undefined,
       hasFeatureFlagAsRule: undefined,
-      hasAutoOps: undefined
+      hasActiveAutoOps: undefined,
+      hasFinishedAutoOps: undefined
     });
     onCloseFilterModal();
   }, [filters]);
@@ -161,7 +164,8 @@ const PageContent = ({
         tab: 'ACTIVE',
         status: undefined,
         hasFeatureFlagAsRule: undefined,
-        hasAutoOps: undefined
+        hasActiveAutoOps: undefined,
+        hasFinishedAutoOps: undefined
       });
     }
   }, [location]);

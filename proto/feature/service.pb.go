@@ -828,7 +828,12 @@ type ListFeaturesRequest struct {
 	EnvironmentId        string                             `protobuf:"bytes,13,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
 	Status               FeatureLastUsedInfo_Status         `protobuf:"varint,14,opt,name=status,proto3,enum=bucketeer.feature.FeatureLastUsedInfo_Status" json:"status"`
 	HasFeatureFlagAsRule *wrapperspb.BoolValue              `protobuf:"bytes,15,opt,name=has_feature_flag_as_rule,json=hasFeatureFlagAsRule,proto3" json:"has_feature_flag_as_rule"`
-	HasAutoOps           *wrapperspb.BoolValue              `protobuf:"bytes,16,opt,name=has_auto_ops,json=hasAutoOps,proto3" json:"has_auto_ops"`
+	// Matches flags that have at least one auto ops rule or progressive rollout
+	// with status WAITING or RUNNING.
+	HasActiveAutoOps *wrapperspb.BoolValue `protobuf:"bytes,17,opt,name=has_active_auto_ops,json=hasActiveAutoOps,proto3" json:"has_active_auto_ops"`
+	// Matches flags that have at least one auto ops rule or progressive rollout
+	// with status FINISHED or STOPPED.
+	HasFinishedAutoOps *wrapperspb.BoolValue `protobuf:"bytes,18,opt,name=has_finished_auto_ops,json=hasFinishedAutoOps,proto3" json:"has_finished_auto_ops"`
 }
 
 func (x *ListFeaturesRequest) Reset() {
@@ -961,9 +966,16 @@ func (x *ListFeaturesRequest) GetHasFeatureFlagAsRule() *wrapperspb.BoolValue {
 	return nil
 }
 
-func (x *ListFeaturesRequest) GetHasAutoOps() *wrapperspb.BoolValue {
+func (x *ListFeaturesRequest) GetHasActiveAutoOps() *wrapperspb.BoolValue {
 	if x != nil {
-		return x.HasAutoOps
+		return x.HasActiveAutoOps
+	}
+	return nil
+}
+
+func (x *ListFeaturesRequest) GetHasFinishedAutoOps() *wrapperspb.BoolValue {
+	if x != nil {
+		return x.HasFinishedAutoOps
 	}
 	return nil
 }
@@ -5142,7 +5154,7 @@ var file_proto_feature_service_proto_rawDesc = []byte{
 	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x36, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73,
 	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
 	0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75,
-	0x72, 0x65, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x22, 0xe1, 0x07, 0x0a,
+	0x72, 0x65, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x22, 0xd1, 0x08, 0x0a,
 	0x13, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x73, 0x69, 0x7a,
 	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x70, 0x61, 0x67, 0x65, 0x53, 0x69, 0x7a,
@@ -5192,19 +5204,26 @@ var file_proto_feature_service_proto_rawDesc = []byte{
 	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
 	0x2e, 0x42, 0x6f, 0x6f, 0x6c, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x14, 0x68, 0x61, 0x73, 0x46,
 	0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x41, 0x73, 0x52, 0x75, 0x6c, 0x65,
-	0x12, 0x3c, 0x0a, 0x0c, 0x68, 0x61, 0x73, 0x5f, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x6f, 0x70, 0x73,
-	0x18, 0x10, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x42, 0x6f, 0x6f, 0x6c, 0x56, 0x61, 0x6c,
-	0x75, 0x65, 0x52, 0x0a, 0x68, 0x61, 0x73, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x22, 0x65,
-	0x0a, 0x07, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x79, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x46,
-	0x41, 0x55, 0x4c, 0x54, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x41, 0x4d, 0x45, 0x10, 0x01,
-	0x12, 0x0e, 0x0a, 0x0a, 0x43, 0x52, 0x45, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x41, 0x54, 0x10, 0x02,
-	0x12, 0x0e, 0x0a, 0x0a, 0x55, 0x50, 0x44, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x41, 0x54, 0x10, 0x03,
-	0x12, 0x08, 0x0a, 0x04, 0x54, 0x41, 0x47, 0x53, 0x10, 0x04, 0x12, 0x0b, 0x0a, 0x07, 0x45, 0x4e,
-	0x41, 0x42, 0x4c, 0x45, 0x44, 0x10, 0x05, 0x12, 0x0c, 0x0a, 0x08, 0x41, 0x55, 0x54, 0x4f, 0x5f,
-	0x4f, 0x50, 0x53, 0x10, 0x06, 0x22, 0x23, 0x0a, 0x0e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x44, 0x69,
-	0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x07, 0x0a, 0x03, 0x41, 0x53, 0x43, 0x10, 0x00,
-	0x12, 0x08, 0x0a, 0x04, 0x44, 0x45, 0x53, 0x43, 0x10, 0x01, 0x4a, 0x04, 0x08, 0x06, 0x10, 0x07,
+	0x12, 0x49, 0x0a, 0x13, 0x68, 0x61, 0x73, 0x5f, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x61,
+	0x75, 0x74, 0x6f, 0x5f, 0x6f, 0x70, 0x73, 0x18, 0x11, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
+	0x42, 0x6f, 0x6f, 0x6c, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x10, 0x68, 0x61, 0x73, 0x41, 0x63,
+	0x74, 0x69, 0x76, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x12, 0x4d, 0x0a, 0x15, 0x68,
+	0x61, 0x73, 0x5f, 0x66, 0x69, 0x6e, 0x69, 0x73, 0x68, 0x65, 0x64, 0x5f, 0x61, 0x75, 0x74, 0x6f,
+	0x5f, 0x6f, 0x70, 0x73, 0x18, 0x12, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x42, 0x6f, 0x6f,
+	0x6c, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x12, 0x68, 0x61, 0x73, 0x46, 0x69, 0x6e, 0x69, 0x73,
+	0x68, 0x65, 0x64, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x22, 0x65, 0x0a, 0x07, 0x4f, 0x72,
+	0x64, 0x65, 0x72, 0x42, 0x79, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x46, 0x41, 0x55, 0x4c, 0x54,
+	0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x41, 0x4d, 0x45, 0x10, 0x01, 0x12, 0x0e, 0x0a, 0x0a,
+	0x43, 0x52, 0x45, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x41, 0x54, 0x10, 0x02, 0x12, 0x0e, 0x0a, 0x0a,
+	0x55, 0x50, 0x44, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x41, 0x54, 0x10, 0x03, 0x12, 0x08, 0x0a, 0x04,
+	0x54, 0x41, 0x47, 0x53, 0x10, 0x04, 0x12, 0x0b, 0x0a, 0x07, 0x45, 0x4e, 0x41, 0x42, 0x4c, 0x45,
+	0x44, 0x10, 0x05, 0x12, 0x0c, 0x0a, 0x08, 0x41, 0x55, 0x54, 0x4f, 0x5f, 0x4f, 0x50, 0x53, 0x10,
+	0x06, 0x22, 0x23, 0x0a, 0x0e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x07, 0x0a, 0x03, 0x41, 0x53, 0x43, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04,
+	0x44, 0x45, 0x53, 0x43, 0x10, 0x01, 0x4a, 0x04, 0x08, 0x06, 0x10, 0x07, 0x4a, 0x04, 0x08, 0x10,
+	0x10, 0x11, 0x52, 0x0c, 0x68, 0x61, 0x73, 0x5f, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x6f, 0x70, 0x73,
 	0x22, 0x5a, 0x0a, 0x0e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x53, 0x75, 0x6d, 0x6d, 0x61,
 	0x72, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x05, 0x52, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69,
@@ -7435,151 +7454,152 @@ var file_proto_feature_service_proto_depIdxs = []int32{
 	84,  // 8: bucketeer.feature.ListFeaturesRequest.has_prerequisites:type_name -> google.protobuf.BoolValue
 	85,  // 9: bucketeer.feature.ListFeaturesRequest.status:type_name -> bucketeer.feature.FeatureLastUsedInfo.Status
 	84,  // 10: bucketeer.feature.ListFeaturesRequest.has_feature_flag_as_rule:type_name -> google.protobuf.BoolValue
-	84,  // 11: bucketeer.feature.ListFeaturesRequest.has_auto_ops:type_name -> google.protobuf.BoolValue
-	83,  // 12: bucketeer.feature.ListFeaturesResponse.features:type_name -> bucketeer.feature.Feature
-	16,  // 13: bucketeer.feature.ListFeaturesResponse.feature_count_by_status:type_name -> bucketeer.feature.FeatureSummary
-	83,  // 14: bucketeer.feature.ListEnabledFeaturesResponse.features:type_name -> bucketeer.feature.Feature
-	86,  // 15: bucketeer.feature.CreateFeatureRequest.variations:type_name -> bucketeer.feature.Variation
-	82,  // 16: bucketeer.feature.CreateFeatureRequest.default_on_variation_index:type_name -> google.protobuf.Int32Value
-	82,  // 17: bucketeer.feature.CreateFeatureRequest.default_off_variation_index:type_name -> google.protobuf.Int32Value
-	87,  // 18: bucketeer.feature.CreateFeatureRequest.variation_type:type_name -> bucketeer.feature.Feature.VariationType
-	83,  // 19: bucketeer.feature.CreateFeatureResponse.feature:type_name -> bucketeer.feature.Feature
-	88,  // 20: bucketeer.feature.UpdateFeatureRequest.name:type_name -> google.protobuf.StringValue
-	88,  // 21: bucketeer.feature.UpdateFeatureRequest.description:type_name -> google.protobuf.StringValue
-	89,  // 22: bucketeer.feature.UpdateFeatureRequest.tags:type_name -> bucketeer.common.StringListValue
-	84,  // 23: bucketeer.feature.UpdateFeatureRequest.enabled:type_name -> google.protobuf.BoolValue
-	84,  // 24: bucketeer.feature.UpdateFeatureRequest.archived:type_name -> google.protobuf.BoolValue
-	90,  // 25: bucketeer.feature.UpdateFeatureRequest.default_strategy:type_name -> bucketeer.feature.Strategy
-	88,  // 26: bucketeer.feature.UpdateFeatureRequest.off_variation:type_name -> google.protobuf.StringValue
-	91,  // 27: bucketeer.feature.UpdateFeatureRequest.variation_changes:type_name -> bucketeer.feature.VariationChange
-	92,  // 28: bucketeer.feature.UpdateFeatureRequest.rule_changes:type_name -> bucketeer.feature.RuleChange
-	93,  // 29: bucketeer.feature.UpdateFeatureRequest.prerequisite_changes:type_name -> bucketeer.feature.PrerequisiteChange
-	94,  // 30: bucketeer.feature.UpdateFeatureRequest.target_changes:type_name -> bucketeer.feature.TargetChange
-	95,  // 31: bucketeer.feature.UpdateFeatureRequest.tag_changes:type_name -> bucketeer.feature.TagChange
-	88,  // 32: bucketeer.feature.UpdateFeatureRequest.maintainer:type_name -> google.protobuf.StringValue
-	83,  // 33: bucketeer.feature.UpdateFeatureResponse.feature:type_name -> bucketeer.feature.Feature
-	96,  // 34: bucketeer.feature.CreateScheduledFlagChangeRequest.payload:type_name -> bucketeer.feature.ScheduledChangePayload
-	97,  // 35: bucketeer.feature.CreateScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
-	98,  // 36: bucketeer.feature.CreateScheduledFlagChangeResponse.detected_conflicts:type_name -> bucketeer.feature.ScheduledChangeConflict
-	99,  // 37: bucketeer.feature.UpdateScheduledFlagChangeRequest.scheduled_at:type_name -> google.protobuf.Int64Value
-	88,  // 38: bucketeer.feature.UpdateScheduledFlagChangeRequest.timezone:type_name -> google.protobuf.StringValue
-	96,  // 39: bucketeer.feature.UpdateScheduledFlagChangeRequest.payload:type_name -> bucketeer.feature.ScheduledChangePayload
-	88,  // 40: bucketeer.feature.UpdateScheduledFlagChangeRequest.comment:type_name -> google.protobuf.StringValue
-	97,  // 41: bucketeer.feature.UpdateScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
-	98,  // 42: bucketeer.feature.UpdateScheduledFlagChangeResponse.detected_conflicts:type_name -> bucketeer.feature.ScheduledChangeConflict
-	100, // 43: bucketeer.feature.ListScheduledFlagChangesRequest.statuses:type_name -> bucketeer.feature.ScheduledFlagChangeStatus
-	3,   // 44: bucketeer.feature.ListScheduledFlagChangesRequest.order_by:type_name -> bucketeer.feature.ListScheduledFlagChangesRequest.OrderBy
-	4,   // 45: bucketeer.feature.ListScheduledFlagChangesRequest.order_direction:type_name -> bucketeer.feature.ListScheduledFlagChangesRequest.OrderDirection
-	97,  // 46: bucketeer.feature.ListScheduledFlagChangesResponse.scheduled_flag_changes:type_name -> bucketeer.feature.ScheduledFlagChange
-	97,  // 47: bucketeer.feature.GetScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
-	97,  // 48: bucketeer.feature.ExecuteScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
-	101, // 49: bucketeer.feature.GetScheduledFlagChangeSummaryResponse.summary:type_name -> bucketeer.feature.ScheduledFlagChangeSummary
-	0,   // 50: bucketeer.feature.BulkCloneFeatureResult.status:type_name -> bucketeer.feature.BulkCloneFeatureStatus
-	43,  // 51: bucketeer.feature.BulkCloneFeatureResponse.results:type_name -> bucketeer.feature.BulkCloneFeatureResult
-	102, // 52: bucketeer.feature.CreateSegmentResponse.segment:type_name -> bucketeer.feature.Segment
-	102, // 53: bucketeer.feature.GetSegmentResponse.segment:type_name -> bucketeer.feature.Segment
-	5,   // 54: bucketeer.feature.ListSegmentsRequest.order_by:type_name -> bucketeer.feature.ListSegmentsRequest.OrderBy
-	6,   // 55: bucketeer.feature.ListSegmentsRequest.order_direction:type_name -> bucketeer.feature.ListSegmentsRequest.OrderDirection
-	82,  // 56: bucketeer.feature.ListSegmentsRequest.status:type_name -> google.protobuf.Int32Value
-	84,  // 57: bucketeer.feature.ListSegmentsRequest.is_in_use_status:type_name -> google.protobuf.BoolValue
-	102, // 58: bucketeer.feature.ListSegmentsResponse.segments:type_name -> bucketeer.feature.Segment
-	88,  // 59: bucketeer.feature.UpdateSegmentRequest.name:type_name -> google.protobuf.StringValue
-	88,  // 60: bucketeer.feature.UpdateSegmentRequest.description:type_name -> google.protobuf.StringValue
-	102, // 61: bucketeer.feature.UpdateSegmentResponse.segment:type_name -> bucketeer.feature.Segment
-	82,  // 62: bucketeer.feature.ListSegmentUsersRequest.state:type_name -> google.protobuf.Int32Value
-	103, // 63: bucketeer.feature.ListSegmentUsersResponse.users:type_name -> bucketeer.feature.SegmentUser
-	104, // 64: bucketeer.feature.BulkUploadSegmentUsersRequest.state:type_name -> bucketeer.feature.SegmentUser.State
-	104, // 65: bucketeer.feature.BulkDownloadSegmentUsersRequest.state:type_name -> bucketeer.feature.SegmentUser.State
-	105, // 66: bucketeer.feature.EvaluateFeaturesRequest.user:type_name -> bucketeer.user.User
-	106, // 67: bucketeer.feature.EvaluateFeaturesResponse.user_evaluations:type_name -> bucketeer.feature.UserEvaluations
-	105, // 68: bucketeer.feature.DebugEvaluateFeaturesRequest.users:type_name -> bucketeer.user.User
-	107, // 69: bucketeer.feature.DebugEvaluateFeaturesResponse.evaluations:type_name -> bucketeer.feature.Evaluation
-	7,   // 70: bucketeer.feature.ListTagsRequest.order_by:type_name -> bucketeer.feature.ListTagsRequest.OrderBy
-	8,   // 71: bucketeer.feature.ListTagsRequest.order_direction:type_name -> bucketeer.feature.ListTagsRequest.OrderDirection
-	108, // 72: bucketeer.feature.ListTagsResponse.tags:type_name -> bucketeer.feature.Tag
-	109, // 73: bucketeer.feature.CreateFlagTriggerRequest.type:type_name -> bucketeer.feature.FlagTrigger.Type
-	110, // 74: bucketeer.feature.CreateFlagTriggerRequest.action:type_name -> bucketeer.feature.FlagTrigger.Action
-	111, // 75: bucketeer.feature.CreateFlagTriggerResponse.flag_trigger:type_name -> bucketeer.feature.FlagTrigger
-	88,  // 76: bucketeer.feature.UpdateFlagTriggerRequest.description:type_name -> google.protobuf.StringValue
-	84,  // 77: bucketeer.feature.UpdateFlagTriggerRequest.disabled:type_name -> google.protobuf.BoolValue
-	111, // 78: bucketeer.feature.GetFlagTriggerResponse.flag_trigger:type_name -> bucketeer.feature.FlagTrigger
-	9,   // 79: bucketeer.feature.ListFlagTriggersRequest.order_by:type_name -> bucketeer.feature.ListFlagTriggersRequest.OrderBy
-	10,  // 80: bucketeer.feature.ListFlagTriggersRequest.order_direction:type_name -> bucketeer.feature.ListFlagTriggersRequest.OrderDirection
-	81,  // 81: bucketeer.feature.ListFlagTriggersResponse.flag_triggers:type_name -> bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl
-	111, // 82: bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.flag_trigger:type_name -> bucketeer.feature.FlagTrigger
-	11,  // 83: bucketeer.feature.FeatureService.GetFeature:input_type -> bucketeer.feature.GetFeatureRequest
-	13,  // 84: bucketeer.feature.FeatureService.GetFeatures:input_type -> bucketeer.feature.GetFeaturesRequest
-	15,  // 85: bucketeer.feature.FeatureService.ListFeatures:input_type -> bucketeer.feature.ListFeaturesRequest
-	18,  // 86: bucketeer.feature.FeatureService.ListEnabledFeatures:input_type -> bucketeer.feature.ListEnabledFeaturesRequest
-	20,  // 87: bucketeer.feature.FeatureService.CreateFeature:input_type -> bucketeer.feature.CreateFeatureRequest
-	22,  // 88: bucketeer.feature.FeatureService.UpdateFeature:input_type -> bucketeer.feature.UpdateFeatureRequest
-	24,  // 89: bucketeer.feature.FeatureService.CreateScheduledFlagChange:input_type -> bucketeer.feature.CreateScheduledFlagChangeRequest
-	32,  // 90: bucketeer.feature.FeatureService.GetScheduledFlagChange:input_type -> bucketeer.feature.GetScheduledFlagChangeRequest
-	26,  // 91: bucketeer.feature.FeatureService.UpdateScheduledFlagChange:input_type -> bucketeer.feature.UpdateScheduledFlagChangeRequest
-	28,  // 92: bucketeer.feature.FeatureService.DeleteScheduledFlagChange:input_type -> bucketeer.feature.DeleteScheduledFlagChangeRequest
-	30,  // 93: bucketeer.feature.FeatureService.ListScheduledFlagChanges:input_type -> bucketeer.feature.ListScheduledFlagChangesRequest
-	34,  // 94: bucketeer.feature.FeatureService.ExecuteScheduledFlagChange:input_type -> bucketeer.feature.ExecuteScheduledFlagChangeRequest
-	36,  // 95: bucketeer.feature.FeatureService.GetScheduledFlagChangeSummary:input_type -> bucketeer.feature.GetScheduledFlagChangeSummaryRequest
-	38,  // 96: bucketeer.feature.FeatureService.DeleteFeature:input_type -> bucketeer.feature.DeleteFeatureRequest
-	40,  // 97: bucketeer.feature.FeatureService.CloneFeature:input_type -> bucketeer.feature.CloneFeatureRequest
-	42,  // 98: bucketeer.feature.FeatureService.BulkCloneFeature:input_type -> bucketeer.feature.BulkCloneFeatureRequest
-	45,  // 99: bucketeer.feature.FeatureService.CreateSegment:input_type -> bucketeer.feature.CreateSegmentRequest
-	47,  // 100: bucketeer.feature.FeatureService.GetSegment:input_type -> bucketeer.feature.GetSegmentRequest
-	49,  // 101: bucketeer.feature.FeatureService.ListSegments:input_type -> bucketeer.feature.ListSegmentsRequest
-	51,  // 102: bucketeer.feature.FeatureService.DeleteSegment:input_type -> bucketeer.feature.DeleteSegmentRequest
-	53,  // 103: bucketeer.feature.FeatureService.UpdateSegment:input_type -> bucketeer.feature.UpdateSegmentRequest
-	55,  // 104: bucketeer.feature.FeatureService.ListSegmentUsers:input_type -> bucketeer.feature.ListSegmentUsersRequest
-	57,  // 105: bucketeer.feature.FeatureService.BulkUploadSegmentUsers:input_type -> bucketeer.feature.BulkUploadSegmentUsersRequest
-	59,  // 106: bucketeer.feature.FeatureService.BulkDownloadSegmentUsers:input_type -> bucketeer.feature.BulkDownloadSegmentUsersRequest
-	61,  // 107: bucketeer.feature.FeatureService.EvaluateFeatures:input_type -> bucketeer.feature.EvaluateFeaturesRequest
-	63,  // 108: bucketeer.feature.FeatureService.DebugEvaluateFeatures:input_type -> bucketeer.feature.DebugEvaluateFeaturesRequest
-	65,  // 109: bucketeer.feature.FeatureService.ListTags:input_type -> bucketeer.feature.ListTagsRequest
-	67,  // 110: bucketeer.feature.FeatureService.CreateFlagTrigger:input_type -> bucketeer.feature.CreateFlagTriggerRequest
-	71,  // 111: bucketeer.feature.FeatureService.UpdateFlagTrigger:input_type -> bucketeer.feature.UpdateFlagTriggerRequest
-	69,  // 112: bucketeer.feature.FeatureService.DeleteFlagTrigger:input_type -> bucketeer.feature.DeleteFlagTriggerRequest
-	73,  // 113: bucketeer.feature.FeatureService.GetFlagTrigger:input_type -> bucketeer.feature.GetFlagTriggerRequest
-	75,  // 114: bucketeer.feature.FeatureService.ListFlagTriggers:input_type -> bucketeer.feature.ListFlagTriggersRequest
-	79,  // 115: bucketeer.feature.FeatureService.GetUserAttributeKeys:input_type -> bucketeer.feature.GetUserAttributeKeysRequest
-	77,  // 116: bucketeer.feature.FeatureService.FlagTriggerWebhook:input_type -> bucketeer.feature.FlagTriggerWebhookRequest
-	12,  // 117: bucketeer.feature.FeatureService.GetFeature:output_type -> bucketeer.feature.GetFeatureResponse
-	14,  // 118: bucketeer.feature.FeatureService.GetFeatures:output_type -> bucketeer.feature.GetFeaturesResponse
-	17,  // 119: bucketeer.feature.FeatureService.ListFeatures:output_type -> bucketeer.feature.ListFeaturesResponse
-	19,  // 120: bucketeer.feature.FeatureService.ListEnabledFeatures:output_type -> bucketeer.feature.ListEnabledFeaturesResponse
-	21,  // 121: bucketeer.feature.FeatureService.CreateFeature:output_type -> bucketeer.feature.CreateFeatureResponse
-	23,  // 122: bucketeer.feature.FeatureService.UpdateFeature:output_type -> bucketeer.feature.UpdateFeatureResponse
-	25,  // 123: bucketeer.feature.FeatureService.CreateScheduledFlagChange:output_type -> bucketeer.feature.CreateScheduledFlagChangeResponse
-	33,  // 124: bucketeer.feature.FeatureService.GetScheduledFlagChange:output_type -> bucketeer.feature.GetScheduledFlagChangeResponse
-	27,  // 125: bucketeer.feature.FeatureService.UpdateScheduledFlagChange:output_type -> bucketeer.feature.UpdateScheduledFlagChangeResponse
-	29,  // 126: bucketeer.feature.FeatureService.DeleteScheduledFlagChange:output_type -> bucketeer.feature.DeleteScheduledFlagChangeResponse
-	31,  // 127: bucketeer.feature.FeatureService.ListScheduledFlagChanges:output_type -> bucketeer.feature.ListScheduledFlagChangesResponse
-	35,  // 128: bucketeer.feature.FeatureService.ExecuteScheduledFlagChange:output_type -> bucketeer.feature.ExecuteScheduledFlagChangeResponse
-	37,  // 129: bucketeer.feature.FeatureService.GetScheduledFlagChangeSummary:output_type -> bucketeer.feature.GetScheduledFlagChangeSummaryResponse
-	39,  // 130: bucketeer.feature.FeatureService.DeleteFeature:output_type -> bucketeer.feature.DeleteFeatureResponse
-	41,  // 131: bucketeer.feature.FeatureService.CloneFeature:output_type -> bucketeer.feature.CloneFeatureResponse
-	44,  // 132: bucketeer.feature.FeatureService.BulkCloneFeature:output_type -> bucketeer.feature.BulkCloneFeatureResponse
-	46,  // 133: bucketeer.feature.FeatureService.CreateSegment:output_type -> bucketeer.feature.CreateSegmentResponse
-	48,  // 134: bucketeer.feature.FeatureService.GetSegment:output_type -> bucketeer.feature.GetSegmentResponse
-	50,  // 135: bucketeer.feature.FeatureService.ListSegments:output_type -> bucketeer.feature.ListSegmentsResponse
-	52,  // 136: bucketeer.feature.FeatureService.DeleteSegment:output_type -> bucketeer.feature.DeleteSegmentResponse
-	54,  // 137: bucketeer.feature.FeatureService.UpdateSegment:output_type -> bucketeer.feature.UpdateSegmentResponse
-	56,  // 138: bucketeer.feature.FeatureService.ListSegmentUsers:output_type -> bucketeer.feature.ListSegmentUsersResponse
-	58,  // 139: bucketeer.feature.FeatureService.BulkUploadSegmentUsers:output_type -> bucketeer.feature.BulkUploadSegmentUsersResponse
-	60,  // 140: bucketeer.feature.FeatureService.BulkDownloadSegmentUsers:output_type -> bucketeer.feature.BulkDownloadSegmentUsersResponse
-	62,  // 141: bucketeer.feature.FeatureService.EvaluateFeatures:output_type -> bucketeer.feature.EvaluateFeaturesResponse
-	64,  // 142: bucketeer.feature.FeatureService.DebugEvaluateFeatures:output_type -> bucketeer.feature.DebugEvaluateFeaturesResponse
-	66,  // 143: bucketeer.feature.FeatureService.ListTags:output_type -> bucketeer.feature.ListTagsResponse
-	68,  // 144: bucketeer.feature.FeatureService.CreateFlagTrigger:output_type -> bucketeer.feature.CreateFlagTriggerResponse
-	72,  // 145: bucketeer.feature.FeatureService.UpdateFlagTrigger:output_type -> bucketeer.feature.UpdateFlagTriggerResponse
-	70,  // 146: bucketeer.feature.FeatureService.DeleteFlagTrigger:output_type -> bucketeer.feature.DeleteFlagTriggerResponse
-	74,  // 147: bucketeer.feature.FeatureService.GetFlagTrigger:output_type -> bucketeer.feature.GetFlagTriggerResponse
-	76,  // 148: bucketeer.feature.FeatureService.ListFlagTriggers:output_type -> bucketeer.feature.ListFlagTriggersResponse
-	80,  // 149: bucketeer.feature.FeatureService.GetUserAttributeKeys:output_type -> bucketeer.feature.GetUserAttributeKeysResponse
-	78,  // 150: bucketeer.feature.FeatureService.FlagTriggerWebhook:output_type -> bucketeer.feature.FlagTriggerWebhookResponse
-	117, // [117:151] is the sub-list for method output_type
-	83,  // [83:117] is the sub-list for method input_type
-	83,  // [83:83] is the sub-list for extension type_name
-	83,  // [83:83] is the sub-list for extension extendee
-	0,   // [0:83] is the sub-list for field type_name
+	84,  // 11: bucketeer.feature.ListFeaturesRequest.has_active_auto_ops:type_name -> google.protobuf.BoolValue
+	84,  // 12: bucketeer.feature.ListFeaturesRequest.has_finished_auto_ops:type_name -> google.protobuf.BoolValue
+	83,  // 13: bucketeer.feature.ListFeaturesResponse.features:type_name -> bucketeer.feature.Feature
+	16,  // 14: bucketeer.feature.ListFeaturesResponse.feature_count_by_status:type_name -> bucketeer.feature.FeatureSummary
+	83,  // 15: bucketeer.feature.ListEnabledFeaturesResponse.features:type_name -> bucketeer.feature.Feature
+	86,  // 16: bucketeer.feature.CreateFeatureRequest.variations:type_name -> bucketeer.feature.Variation
+	82,  // 17: bucketeer.feature.CreateFeatureRequest.default_on_variation_index:type_name -> google.protobuf.Int32Value
+	82,  // 18: bucketeer.feature.CreateFeatureRequest.default_off_variation_index:type_name -> google.protobuf.Int32Value
+	87,  // 19: bucketeer.feature.CreateFeatureRequest.variation_type:type_name -> bucketeer.feature.Feature.VariationType
+	83,  // 20: bucketeer.feature.CreateFeatureResponse.feature:type_name -> bucketeer.feature.Feature
+	88,  // 21: bucketeer.feature.UpdateFeatureRequest.name:type_name -> google.protobuf.StringValue
+	88,  // 22: bucketeer.feature.UpdateFeatureRequest.description:type_name -> google.protobuf.StringValue
+	89,  // 23: bucketeer.feature.UpdateFeatureRequest.tags:type_name -> bucketeer.common.StringListValue
+	84,  // 24: bucketeer.feature.UpdateFeatureRequest.enabled:type_name -> google.protobuf.BoolValue
+	84,  // 25: bucketeer.feature.UpdateFeatureRequest.archived:type_name -> google.protobuf.BoolValue
+	90,  // 26: bucketeer.feature.UpdateFeatureRequest.default_strategy:type_name -> bucketeer.feature.Strategy
+	88,  // 27: bucketeer.feature.UpdateFeatureRequest.off_variation:type_name -> google.protobuf.StringValue
+	91,  // 28: bucketeer.feature.UpdateFeatureRequest.variation_changes:type_name -> bucketeer.feature.VariationChange
+	92,  // 29: bucketeer.feature.UpdateFeatureRequest.rule_changes:type_name -> bucketeer.feature.RuleChange
+	93,  // 30: bucketeer.feature.UpdateFeatureRequest.prerequisite_changes:type_name -> bucketeer.feature.PrerequisiteChange
+	94,  // 31: bucketeer.feature.UpdateFeatureRequest.target_changes:type_name -> bucketeer.feature.TargetChange
+	95,  // 32: bucketeer.feature.UpdateFeatureRequest.tag_changes:type_name -> bucketeer.feature.TagChange
+	88,  // 33: bucketeer.feature.UpdateFeatureRequest.maintainer:type_name -> google.protobuf.StringValue
+	83,  // 34: bucketeer.feature.UpdateFeatureResponse.feature:type_name -> bucketeer.feature.Feature
+	96,  // 35: bucketeer.feature.CreateScheduledFlagChangeRequest.payload:type_name -> bucketeer.feature.ScheduledChangePayload
+	97,  // 36: bucketeer.feature.CreateScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
+	98,  // 37: bucketeer.feature.CreateScheduledFlagChangeResponse.detected_conflicts:type_name -> bucketeer.feature.ScheduledChangeConflict
+	99,  // 38: bucketeer.feature.UpdateScheduledFlagChangeRequest.scheduled_at:type_name -> google.protobuf.Int64Value
+	88,  // 39: bucketeer.feature.UpdateScheduledFlagChangeRequest.timezone:type_name -> google.protobuf.StringValue
+	96,  // 40: bucketeer.feature.UpdateScheduledFlagChangeRequest.payload:type_name -> bucketeer.feature.ScheduledChangePayload
+	88,  // 41: bucketeer.feature.UpdateScheduledFlagChangeRequest.comment:type_name -> google.protobuf.StringValue
+	97,  // 42: bucketeer.feature.UpdateScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
+	98,  // 43: bucketeer.feature.UpdateScheduledFlagChangeResponse.detected_conflicts:type_name -> bucketeer.feature.ScheduledChangeConflict
+	100, // 44: bucketeer.feature.ListScheduledFlagChangesRequest.statuses:type_name -> bucketeer.feature.ScheduledFlagChangeStatus
+	3,   // 45: bucketeer.feature.ListScheduledFlagChangesRequest.order_by:type_name -> bucketeer.feature.ListScheduledFlagChangesRequest.OrderBy
+	4,   // 46: bucketeer.feature.ListScheduledFlagChangesRequest.order_direction:type_name -> bucketeer.feature.ListScheduledFlagChangesRequest.OrderDirection
+	97,  // 47: bucketeer.feature.ListScheduledFlagChangesResponse.scheduled_flag_changes:type_name -> bucketeer.feature.ScheduledFlagChange
+	97,  // 48: bucketeer.feature.GetScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
+	97,  // 49: bucketeer.feature.ExecuteScheduledFlagChangeResponse.scheduled_flag_change:type_name -> bucketeer.feature.ScheduledFlagChange
+	101, // 50: bucketeer.feature.GetScheduledFlagChangeSummaryResponse.summary:type_name -> bucketeer.feature.ScheduledFlagChangeSummary
+	0,   // 51: bucketeer.feature.BulkCloneFeatureResult.status:type_name -> bucketeer.feature.BulkCloneFeatureStatus
+	43,  // 52: bucketeer.feature.BulkCloneFeatureResponse.results:type_name -> bucketeer.feature.BulkCloneFeatureResult
+	102, // 53: bucketeer.feature.CreateSegmentResponse.segment:type_name -> bucketeer.feature.Segment
+	102, // 54: bucketeer.feature.GetSegmentResponse.segment:type_name -> bucketeer.feature.Segment
+	5,   // 55: bucketeer.feature.ListSegmentsRequest.order_by:type_name -> bucketeer.feature.ListSegmentsRequest.OrderBy
+	6,   // 56: bucketeer.feature.ListSegmentsRequest.order_direction:type_name -> bucketeer.feature.ListSegmentsRequest.OrderDirection
+	82,  // 57: bucketeer.feature.ListSegmentsRequest.status:type_name -> google.protobuf.Int32Value
+	84,  // 58: bucketeer.feature.ListSegmentsRequest.is_in_use_status:type_name -> google.protobuf.BoolValue
+	102, // 59: bucketeer.feature.ListSegmentsResponse.segments:type_name -> bucketeer.feature.Segment
+	88,  // 60: bucketeer.feature.UpdateSegmentRequest.name:type_name -> google.protobuf.StringValue
+	88,  // 61: bucketeer.feature.UpdateSegmentRequest.description:type_name -> google.protobuf.StringValue
+	102, // 62: bucketeer.feature.UpdateSegmentResponse.segment:type_name -> bucketeer.feature.Segment
+	82,  // 63: bucketeer.feature.ListSegmentUsersRequest.state:type_name -> google.protobuf.Int32Value
+	103, // 64: bucketeer.feature.ListSegmentUsersResponse.users:type_name -> bucketeer.feature.SegmentUser
+	104, // 65: bucketeer.feature.BulkUploadSegmentUsersRequest.state:type_name -> bucketeer.feature.SegmentUser.State
+	104, // 66: bucketeer.feature.BulkDownloadSegmentUsersRequest.state:type_name -> bucketeer.feature.SegmentUser.State
+	105, // 67: bucketeer.feature.EvaluateFeaturesRequest.user:type_name -> bucketeer.user.User
+	106, // 68: bucketeer.feature.EvaluateFeaturesResponse.user_evaluations:type_name -> bucketeer.feature.UserEvaluations
+	105, // 69: bucketeer.feature.DebugEvaluateFeaturesRequest.users:type_name -> bucketeer.user.User
+	107, // 70: bucketeer.feature.DebugEvaluateFeaturesResponse.evaluations:type_name -> bucketeer.feature.Evaluation
+	7,   // 71: bucketeer.feature.ListTagsRequest.order_by:type_name -> bucketeer.feature.ListTagsRequest.OrderBy
+	8,   // 72: bucketeer.feature.ListTagsRequest.order_direction:type_name -> bucketeer.feature.ListTagsRequest.OrderDirection
+	108, // 73: bucketeer.feature.ListTagsResponse.tags:type_name -> bucketeer.feature.Tag
+	109, // 74: bucketeer.feature.CreateFlagTriggerRequest.type:type_name -> bucketeer.feature.FlagTrigger.Type
+	110, // 75: bucketeer.feature.CreateFlagTriggerRequest.action:type_name -> bucketeer.feature.FlagTrigger.Action
+	111, // 76: bucketeer.feature.CreateFlagTriggerResponse.flag_trigger:type_name -> bucketeer.feature.FlagTrigger
+	88,  // 77: bucketeer.feature.UpdateFlagTriggerRequest.description:type_name -> google.protobuf.StringValue
+	84,  // 78: bucketeer.feature.UpdateFlagTriggerRequest.disabled:type_name -> google.protobuf.BoolValue
+	111, // 79: bucketeer.feature.GetFlagTriggerResponse.flag_trigger:type_name -> bucketeer.feature.FlagTrigger
+	9,   // 80: bucketeer.feature.ListFlagTriggersRequest.order_by:type_name -> bucketeer.feature.ListFlagTriggersRequest.OrderBy
+	10,  // 81: bucketeer.feature.ListFlagTriggersRequest.order_direction:type_name -> bucketeer.feature.ListFlagTriggersRequest.OrderDirection
+	81,  // 82: bucketeer.feature.ListFlagTriggersResponse.flag_triggers:type_name -> bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl
+	111, // 83: bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.flag_trigger:type_name -> bucketeer.feature.FlagTrigger
+	11,  // 84: bucketeer.feature.FeatureService.GetFeature:input_type -> bucketeer.feature.GetFeatureRequest
+	13,  // 85: bucketeer.feature.FeatureService.GetFeatures:input_type -> bucketeer.feature.GetFeaturesRequest
+	15,  // 86: bucketeer.feature.FeatureService.ListFeatures:input_type -> bucketeer.feature.ListFeaturesRequest
+	18,  // 87: bucketeer.feature.FeatureService.ListEnabledFeatures:input_type -> bucketeer.feature.ListEnabledFeaturesRequest
+	20,  // 88: bucketeer.feature.FeatureService.CreateFeature:input_type -> bucketeer.feature.CreateFeatureRequest
+	22,  // 89: bucketeer.feature.FeatureService.UpdateFeature:input_type -> bucketeer.feature.UpdateFeatureRequest
+	24,  // 90: bucketeer.feature.FeatureService.CreateScheduledFlagChange:input_type -> bucketeer.feature.CreateScheduledFlagChangeRequest
+	32,  // 91: bucketeer.feature.FeatureService.GetScheduledFlagChange:input_type -> bucketeer.feature.GetScheduledFlagChangeRequest
+	26,  // 92: bucketeer.feature.FeatureService.UpdateScheduledFlagChange:input_type -> bucketeer.feature.UpdateScheduledFlagChangeRequest
+	28,  // 93: bucketeer.feature.FeatureService.DeleteScheduledFlagChange:input_type -> bucketeer.feature.DeleteScheduledFlagChangeRequest
+	30,  // 94: bucketeer.feature.FeatureService.ListScheduledFlagChanges:input_type -> bucketeer.feature.ListScheduledFlagChangesRequest
+	34,  // 95: bucketeer.feature.FeatureService.ExecuteScheduledFlagChange:input_type -> bucketeer.feature.ExecuteScheduledFlagChangeRequest
+	36,  // 96: bucketeer.feature.FeatureService.GetScheduledFlagChangeSummary:input_type -> bucketeer.feature.GetScheduledFlagChangeSummaryRequest
+	38,  // 97: bucketeer.feature.FeatureService.DeleteFeature:input_type -> bucketeer.feature.DeleteFeatureRequest
+	40,  // 98: bucketeer.feature.FeatureService.CloneFeature:input_type -> bucketeer.feature.CloneFeatureRequest
+	42,  // 99: bucketeer.feature.FeatureService.BulkCloneFeature:input_type -> bucketeer.feature.BulkCloneFeatureRequest
+	45,  // 100: bucketeer.feature.FeatureService.CreateSegment:input_type -> bucketeer.feature.CreateSegmentRequest
+	47,  // 101: bucketeer.feature.FeatureService.GetSegment:input_type -> bucketeer.feature.GetSegmentRequest
+	49,  // 102: bucketeer.feature.FeatureService.ListSegments:input_type -> bucketeer.feature.ListSegmentsRequest
+	51,  // 103: bucketeer.feature.FeatureService.DeleteSegment:input_type -> bucketeer.feature.DeleteSegmentRequest
+	53,  // 104: bucketeer.feature.FeatureService.UpdateSegment:input_type -> bucketeer.feature.UpdateSegmentRequest
+	55,  // 105: bucketeer.feature.FeatureService.ListSegmentUsers:input_type -> bucketeer.feature.ListSegmentUsersRequest
+	57,  // 106: bucketeer.feature.FeatureService.BulkUploadSegmentUsers:input_type -> bucketeer.feature.BulkUploadSegmentUsersRequest
+	59,  // 107: bucketeer.feature.FeatureService.BulkDownloadSegmentUsers:input_type -> bucketeer.feature.BulkDownloadSegmentUsersRequest
+	61,  // 108: bucketeer.feature.FeatureService.EvaluateFeatures:input_type -> bucketeer.feature.EvaluateFeaturesRequest
+	63,  // 109: bucketeer.feature.FeatureService.DebugEvaluateFeatures:input_type -> bucketeer.feature.DebugEvaluateFeaturesRequest
+	65,  // 110: bucketeer.feature.FeatureService.ListTags:input_type -> bucketeer.feature.ListTagsRequest
+	67,  // 111: bucketeer.feature.FeatureService.CreateFlagTrigger:input_type -> bucketeer.feature.CreateFlagTriggerRequest
+	71,  // 112: bucketeer.feature.FeatureService.UpdateFlagTrigger:input_type -> bucketeer.feature.UpdateFlagTriggerRequest
+	69,  // 113: bucketeer.feature.FeatureService.DeleteFlagTrigger:input_type -> bucketeer.feature.DeleteFlagTriggerRequest
+	73,  // 114: bucketeer.feature.FeatureService.GetFlagTrigger:input_type -> bucketeer.feature.GetFlagTriggerRequest
+	75,  // 115: bucketeer.feature.FeatureService.ListFlagTriggers:input_type -> bucketeer.feature.ListFlagTriggersRequest
+	79,  // 116: bucketeer.feature.FeatureService.GetUserAttributeKeys:input_type -> bucketeer.feature.GetUserAttributeKeysRequest
+	77,  // 117: bucketeer.feature.FeatureService.FlagTriggerWebhook:input_type -> bucketeer.feature.FlagTriggerWebhookRequest
+	12,  // 118: bucketeer.feature.FeatureService.GetFeature:output_type -> bucketeer.feature.GetFeatureResponse
+	14,  // 119: bucketeer.feature.FeatureService.GetFeatures:output_type -> bucketeer.feature.GetFeaturesResponse
+	17,  // 120: bucketeer.feature.FeatureService.ListFeatures:output_type -> bucketeer.feature.ListFeaturesResponse
+	19,  // 121: bucketeer.feature.FeatureService.ListEnabledFeatures:output_type -> bucketeer.feature.ListEnabledFeaturesResponse
+	21,  // 122: bucketeer.feature.FeatureService.CreateFeature:output_type -> bucketeer.feature.CreateFeatureResponse
+	23,  // 123: bucketeer.feature.FeatureService.UpdateFeature:output_type -> bucketeer.feature.UpdateFeatureResponse
+	25,  // 124: bucketeer.feature.FeatureService.CreateScheduledFlagChange:output_type -> bucketeer.feature.CreateScheduledFlagChangeResponse
+	33,  // 125: bucketeer.feature.FeatureService.GetScheduledFlagChange:output_type -> bucketeer.feature.GetScheduledFlagChangeResponse
+	27,  // 126: bucketeer.feature.FeatureService.UpdateScheduledFlagChange:output_type -> bucketeer.feature.UpdateScheduledFlagChangeResponse
+	29,  // 127: bucketeer.feature.FeatureService.DeleteScheduledFlagChange:output_type -> bucketeer.feature.DeleteScheduledFlagChangeResponse
+	31,  // 128: bucketeer.feature.FeatureService.ListScheduledFlagChanges:output_type -> bucketeer.feature.ListScheduledFlagChangesResponse
+	35,  // 129: bucketeer.feature.FeatureService.ExecuteScheduledFlagChange:output_type -> bucketeer.feature.ExecuteScheduledFlagChangeResponse
+	37,  // 130: bucketeer.feature.FeatureService.GetScheduledFlagChangeSummary:output_type -> bucketeer.feature.GetScheduledFlagChangeSummaryResponse
+	39,  // 131: bucketeer.feature.FeatureService.DeleteFeature:output_type -> bucketeer.feature.DeleteFeatureResponse
+	41,  // 132: bucketeer.feature.FeatureService.CloneFeature:output_type -> bucketeer.feature.CloneFeatureResponse
+	44,  // 133: bucketeer.feature.FeatureService.BulkCloneFeature:output_type -> bucketeer.feature.BulkCloneFeatureResponse
+	46,  // 134: bucketeer.feature.FeatureService.CreateSegment:output_type -> bucketeer.feature.CreateSegmentResponse
+	48,  // 135: bucketeer.feature.FeatureService.GetSegment:output_type -> bucketeer.feature.GetSegmentResponse
+	50,  // 136: bucketeer.feature.FeatureService.ListSegments:output_type -> bucketeer.feature.ListSegmentsResponse
+	52,  // 137: bucketeer.feature.FeatureService.DeleteSegment:output_type -> bucketeer.feature.DeleteSegmentResponse
+	54,  // 138: bucketeer.feature.FeatureService.UpdateSegment:output_type -> bucketeer.feature.UpdateSegmentResponse
+	56,  // 139: bucketeer.feature.FeatureService.ListSegmentUsers:output_type -> bucketeer.feature.ListSegmentUsersResponse
+	58,  // 140: bucketeer.feature.FeatureService.BulkUploadSegmentUsers:output_type -> bucketeer.feature.BulkUploadSegmentUsersResponse
+	60,  // 141: bucketeer.feature.FeatureService.BulkDownloadSegmentUsers:output_type -> bucketeer.feature.BulkDownloadSegmentUsersResponse
+	62,  // 142: bucketeer.feature.FeatureService.EvaluateFeatures:output_type -> bucketeer.feature.EvaluateFeaturesResponse
+	64,  // 143: bucketeer.feature.FeatureService.DebugEvaluateFeatures:output_type -> bucketeer.feature.DebugEvaluateFeaturesResponse
+	66,  // 144: bucketeer.feature.FeatureService.ListTags:output_type -> bucketeer.feature.ListTagsResponse
+	68,  // 145: bucketeer.feature.FeatureService.CreateFlagTrigger:output_type -> bucketeer.feature.CreateFlagTriggerResponse
+	72,  // 146: bucketeer.feature.FeatureService.UpdateFlagTrigger:output_type -> bucketeer.feature.UpdateFlagTriggerResponse
+	70,  // 147: bucketeer.feature.FeatureService.DeleteFlagTrigger:output_type -> bucketeer.feature.DeleteFlagTriggerResponse
+	74,  // 148: bucketeer.feature.FeatureService.GetFlagTrigger:output_type -> bucketeer.feature.GetFlagTriggerResponse
+	76,  // 149: bucketeer.feature.FeatureService.ListFlagTriggers:output_type -> bucketeer.feature.ListFlagTriggersResponse
+	80,  // 150: bucketeer.feature.FeatureService.GetUserAttributeKeys:output_type -> bucketeer.feature.GetUserAttributeKeysResponse
+	78,  // 151: bucketeer.feature.FeatureService.FlagTriggerWebhook:output_type -> bucketeer.feature.FlagTriggerWebhookResponse
+	118, // [118:152] is the sub-list for method output_type
+	84,  // [84:118] is the sub-list for method input_type
+	84,  // [84:84] is the sub-list for extension type_name
+	84,  // [84:84] is the sub-list for extension extendee
+	0,   // [0:84] is the sub-list for field type_name
 }
 
 func init() { file_proto_feature_service_proto_init() }
