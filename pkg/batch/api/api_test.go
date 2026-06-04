@@ -864,17 +864,26 @@ func TestExecuteBatchJobFailureAlert(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc        string
+		job         batchproto.BatchJob
 		jobErr      error
 		expectAlert bool
 	}{
 		{
-			desc:        "real failure triggers an alert",
+			desc:        "selected job real failure triggers an alert",
+			job:         batchproto.BatchJob_ExperimentCalculator,
 			jobErr:      errors.New("something went wrong"),
 			expectAlert: true,
 		},
 		{
-			desc:        "resource exhausted (pod busy) does not trigger an alert",
+			desc:        "selected job resource exhausted (pod busy) does not trigger an alert",
+			job:         batchproto.BatchJob_ExperimentCalculator,
 			jobErr:      status.Error(codes.ResourceExhausted, "pod busy"),
+			expectAlert: false,
+		},
+		{
+			desc:        "non-selected job real failure does not trigger an alert",
+			job:         batchproto.BatchJob_TagDeleter,
+			jobErr:      errors.New("something went wrong"),
 			expectAlert: false,
 		},
 	}
@@ -886,17 +895,23 @@ func TestExecuteBatchJobFailureAlert(t *testing.T) {
 			if p.expectAlert {
 				alerter.EXPECT().NotifyBatchJobFailure(
 					gomock.Any(),
-					batchproto.BatchJob_ExperimentCalculator.String(),
+					p.job.String(),
 					p.jobErr,
 				).Times(1)
 			}
+			fake := fakeFailingJob{err: p.jobErr}
 			service := &batchService{
-				experimentCalculator: fakeFailingJob{err: p.jobErr},
-				failureAlerter:       alerter,
-				logger:               zap.NewNop(),
+				failureAlerter: alerter,
+				logger:         zap.NewNop(),
+			}
+			switch p.job {
+			case batchproto.BatchJob_ExperimentCalculator:
+				service.experimentCalculator = fake
+			case batchproto.BatchJob_TagDeleter:
+				service.tagDeleter = fake
 			}
 			_, err := service.ExecuteBatchJob(context.Background(), &batchproto.BatchJobRequest{
-				Job: batchproto.BatchJob_ExperimentCalculator,
+				Job: p.job,
 			})
 			assert.Equal(t, p.jobErr, err)
 		})

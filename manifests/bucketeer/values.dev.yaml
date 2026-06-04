@@ -300,8 +300,11 @@ batch-server:
     eventCounterService: localhost:9001
     featureService: localhost:9001
     webURL: http://localhost:3000
-    failureAlertSlackToken:
-    failureAlertSlackChannel:
+    failureAlert:
+      throttleInterval: 30m
+      slack:
+        token: ""
+        channel: ""
     logLevel: debug
     port: 9090
     metricsPort: 9002
@@ -434,8 +437,11 @@ subscriber:
     experimentService: localhost:9001
     featureService: localhost:9001
     webURL: http://localhost:3000
-    failureAlertSlackToken:
-    failureAlertSlackChannel:
+    failureAlert:
+      throttleInterval: 30m
+      slack:
+        token: ""
+        channel: ""
     logLevel: debug
     port: 9090
     metricsPort: 9002

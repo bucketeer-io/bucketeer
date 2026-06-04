@@ -136,9 +136,11 @@ spec:
             - name: BUCKETEER_BATCH_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_BATCH_FAILURE_ALERT_SLACK_TOKEN
-              value: "{{ .Values.env.failureAlertSlackToken }}"
+              value: "{{ .Values.env.failureAlert.slack.token }}"
             - name: BUCKETEER_BATCH_FAILURE_ALERT_SLACK_CHANNEL
-              value: "{{ .Values.env.failureAlertSlackChannel }}"
+              value: "{{ .Values.env.failureAlert.slack.channel }}"
+            - name: BUCKETEER_BATCH_FAILURE_ALERT_THROTTLE_INTERVAL
+              value: "{{ .Values.env.failureAlert.throttleInterval }}"
             - name: BUCKETEER_BATCH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_BATCH_ENABLE_PPROF

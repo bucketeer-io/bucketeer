@@ -127,9 +127,11 @@ spec:
             - name: BUCKETEER_SUBSCRIBER_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_SUBSCRIBER_FAILURE_ALERT_SLACK_TOKEN
-              value: "{{ .Values.env.failureAlertSlackToken }}"
+              value: "{{ .Values.env.failureAlert.slack.token }}"
             - name: BUCKETEER_SUBSCRIBER_FAILURE_ALERT_SLACK_CHANNEL
-              value: "{{ .Values.env.failureAlertSlackChannel }}"
+              value: "{{ .Values.env.failureAlert.slack.channel }}"
+            - name: BUCKETEER_SUBSCRIBER_FAILURE_ALERT_THROTTLE_INTERVAL
+              value: "{{ .Values.env.failureAlert.throttleInterval }}"
             - name: BUCKETEER_SUBSCRIBER_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_SUBSCRIBER_ENABLE_PPROF

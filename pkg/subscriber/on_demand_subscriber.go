@@ -98,7 +98,6 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 			zap.Error(err),
 			zap.String("name", s.name),
 		)
-		s.alertFailure(err)
 		return
 	}
 	ticker := time.NewTicker(time.Duration(s.configuration.CheckInterval) * time.Second)

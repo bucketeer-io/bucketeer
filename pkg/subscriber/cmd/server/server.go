@@ -76,6 +76,7 @@ type server struct {
 	webURL                   *string
 	failureAlertSlackToken   *string
 	failureAlertSlackChannel *string
+	failureAlertThrottle     *time.Duration
 	emailConfigPath          *string
 	demoSiteEnabled          *bool
 	// Operational database
@@ -143,6 +144,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Slack channel for subscriber consumer failure alerts (e.g. #bucketeer-emergency). "+
 				"Empty disables alerts.",
 		).Default("").String(),
+		failureAlertThrottle: cmd.Flag(
+			"failure-alert-throttle-interval",
+			"Minimum interval between repeated failure alerts for the same consumer.",
+		).Default("30m").Duration(),
 		emailConfigPath: cmd.Flag("email-config-path", "Path to email config.").Required().String(),
 		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
 			Default("mysql").String(),
@@ -391,6 +396,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	failureAlerter := notifier.NewFailureAlerter(
 		*s.failureAlertSlackToken,
 		*s.failureAlertSlackChannel,
+		notifier.WithFailureAlertCooldown(*s.failureAlertThrottle),
 		notifier.WithFailureAlertLogger(logger),
 	)
 
@@ -710,6 +716,14 @@ func (s *server) createPostgresClient(
 	)
 }
 
+// failureAlertSubscribers lists the consumers whose failures directly affect
+// end users and therefore trigger a Slack alert. Every other consumer only
+// logs on failure.
+var failureAlertSubscribers = map[string]struct{}{
+	processor.PushSenderName:           {},
+	processor.SegmentUserPersisterName: {},
+}
+
 func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.PubSubProcessors,
@@ -734,12 +748,14 @@ func (s *server) startMultiPubSub(
 			// we should skip the error, just log it here
 			continue
 		}
-		multiSubscriber.AddSubscriber(subscriber.NewPubSubSubscriber(
-			name, config, p,
+		opts := []subscriber.Option{
 			subscriber.WithLogger(logger),
 			subscriber.WithMetrics(registerer),
-			subscriber.WithFailureAlerter(failureAlerter),
-		))
+		}
+		if _, ok := failureAlertSubscribers[name]; ok {
+			opts = append(opts, subscriber.WithFailureAlerter(failureAlerter))
+		}
+		multiSubscriber.AddSubscriber(subscriber.NewPubSubSubscriber(name, config, p, opts...))
 	}
 	onDemandSubscriberConfigBytes, err := os.ReadFile(*s.onDemandSubscriberConfig)
 	if err != nil {
@@ -763,11 +779,15 @@ func (s *server) startMultiPubSub(
 				// we should skip the error, just log it here
 				continue
 			}
-			multiSubscriber.AddSubscriber(subscriber.NewOnDemandSubscriber(
-				name, config, p.(subscriber.OnDemandProcessor),
+			opts := []subscriber.Option{
 				subscriber.WithLogger(logger),
 				subscriber.WithMetrics(registerer),
-				subscriber.WithFailureAlerter(failureAlerter),
+			}
+			if _, ok := failureAlertSubscribers[name]; ok {
+				opts = append(opts, subscriber.WithFailureAlerter(failureAlerter))
+			}
+			multiSubscriber.AddSubscriber(subscriber.NewOnDemandSubscriber(
+				name, config, p.(subscriber.OnDemandProcessor), opts...,
 			))
 		}
 	}

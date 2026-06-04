@@ -40,8 +40,11 @@ env:
   featureService: localhost:9001
   batchService: localhost:9001
   webURL:
-  failureAlertSlackToken:
-  failureAlertSlackChannel:
+  failureAlert:
+    throttleInterval: 30m
+    slack:
+      token: ""
+      channel: ""
   logLevel: info
   port: 9090
   metricsPort: 9002

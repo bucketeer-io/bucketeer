@@ -117,6 +117,7 @@ type server struct {
 	webURL                   *string
 	failureAlertSlackToken   *string
 	failureAlertSlackChannel *string
+	failureAlertThrottle     *time.Duration
 	oauthPublicKeyPath       *string
 	oauthAudience            *string
 	oauthIssuer              *string
@@ -192,6 +193,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"failure-alert-slack-channel",
 			"Slack channel for batch job failure alerts (e.g. #bucketeer-emergency). Empty disables alerts.",
 		).Default("").String(),
+		failureAlertThrottle: cmd.Flag(
+			"failure-alert-throttle-interval",
+			"Minimum interval between repeated failure alerts for the same job.",
+		).Default("30m").Duration(),
 		oauthPublicKeyPath: cmd.Flag(
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
@@ -478,6 +483,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	failureAlerter := notifier.NewFailureAlerter(
 		*s.failureAlertSlackToken,
 		*s.failureAlertSlackChannel,
+		notifier.WithFailureAlertCooldown(*s.failureAlertThrottle),
 		notifier.WithFailureAlertLogger(logger),
 	)
 

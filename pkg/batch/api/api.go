@@ -32,6 +32,16 @@ var (
 	errUnknownJob = status.Error(codes.InvalidArgument, "batch: unknown job")
 )
 
+// failureAlertJobs lists the jobs whose failures directly affect end users
+// (flag serving or user-configured automation) and therefore trigger a Slack alert
+var failureAlertJobs = map[batch.BatchJob]struct{}{
+	batch.BatchJob_DatetimeWatcher:             {},
+	batch.BatchJob_EventCountWatcher:           {},
+	batch.BatchJob_ProgressiveRolloutWatcher:   {},
+	batch.BatchJob_ScheduledFlagChangeExecutor: {},
+	batch.BatchJob_ExperimentCalculator:        {},
+}
+
 type batchService struct {
 	experimentStatusUpdater     jobs.Job
 	experimentRunningWatcher    jobs.Job
@@ -150,7 +160,7 @@ func (s *batchService) ExecuteBatchJob(
 					zap.Error(err),
 				)...,
 			)
-			if s.failureAlerter != nil {
+			if _, ok := failureAlertJobs[req.Job]; ok && s.failureAlerter != nil {
 				s.failureAlerter.NotifyBatchJobFailure(ctx, req.Job.String(), err)
 			}
 		}

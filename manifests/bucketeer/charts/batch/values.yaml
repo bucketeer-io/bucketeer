@@ -42,8 +42,11 @@ env:
   experimentCalculatorService: localhost:9001
   batchService: localhost:9001
   webURL:
-  failureAlertSlackToken:
-  failureAlertSlackChannel:
+  failureAlert:
+    throttleInterval: 30m
+    slack:
+      token: ""
+      channel: ""
   logLevel: info
   grpcGatewayPort: 9089
   port: 9090
