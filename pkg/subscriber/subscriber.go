@@ -146,7 +146,7 @@ func NewPubSubSubscriber(
 	}
 }
 
-func (s pubSubSubscriber) Run(ctx context.Context) {
+func (s *pubSubSubscriber) Run(ctx context.Context) {
 	s.logger.Debug("subscriber starting",
 		zap.String("name", s.name),
 		zap.String("pubSubType", s.configuration.PubSubType),
@@ -185,20 +185,20 @@ func (s pubSubSubscriber) Run(ctx context.Context) {
 // alertFailure sends a failure alert for this consumer, unless alerts are
 // disabled (no alerter configured) or the failure is caused by a graceful
 // shutdown (the context was canceled), which is not an actual failure.
-func (s pubSubSubscriber) alertFailure(ctx context.Context, err error) {
+func (s *pubSubSubscriber) alertFailure(ctx context.Context, err error) {
 	if s.opts.failureAlerter == nil || ctx.Err() != nil {
 		return
 	}
 	s.opts.failureAlerter.NotifySubscriberFailure(ctx, s.name, err)
 }
 
-func (s pubSubSubscriber) Stop() {
+func (s *pubSubSubscriber) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
 }
 
-func (s pubSubSubscriber) createPuller(
+func (s *pubSubSubscriber) createPuller(
 	ctx context.Context,
 ) puller.RateLimitedPuller {
 	var pubsubClient factory.Client
