@@ -49,6 +49,14 @@ const (
 	prefixTestName        = "e2e-test"
 	timeout               = 60 * time.Second
 	deadlockRetryAttempts = 3
+	// evaluatedAtGracePeriodSeconds mirrors the API server's
+	// --feature-flag-diff-grace-period default (10 minutes). The
+	// GetEvaluations diff filter applies it as
+	//   feature.UpdatedAt > evaluatedAt - evaluatedAtGracePeriodSeconds
+	// (see pkg/api/api/api_grpc.go and
+	// manifests/bucketeer/charts/api/values.yaml). If the server default
+	// changes, update this constant so the e2e tests stay aligned.
+	evaluatedAtGracePeriodSeconds int64 = 600
 )
 
 var (
@@ -566,15 +574,28 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
+	fc := newFeatureClient(t)
+	defer fc.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // Wait for cache propagation
+	// Read feature 1's server-side UpdatedAt so prevEvalAt can be anchored
+	// to the server clock, independent of any client/server clock skew.
+	feature1UpdatedAt := getFeature(t, featureID, fc).UpdatedAt
+	time.Sleep(3 * time.Second) // ensure feature 2's UpdatedAt > feature 1's
 	featureID2 := newFeatureID(t, newUUID(t))
 	req := createFeatureWithTag(t, tag, featureID2)
-	prevEvalAt := time.Now().Unix()
+	// Place prevEvalAt so the server-side diff filter
+	//   feature.UpdatedAt > evaluatedAt - evaluatedAtGracePeriodSeconds
+	// lands strictly between the two features:
+	//   adjusted = feature1.UpdatedAt + 1
+	//     feature 1: UpdatedAt > adjusted is false -> EXCLUDED
+	//     feature 2: UpdatedAt > adjusted is true  -> INCLUDED
+	// This keeps the "older feature is filtered out" assertion meaningful
+	// even with the wider featureFlagDiffGracePeriod (10 min by default).
+	prevEvalAt := feature1UpdatedAt + evaluatedAtGracePeriodSeconds + 1
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
@@ -626,7 +647,11 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	addTag(t, tag, featureID, fc)
 	enableFeature(t, featureID, fc)
 	archiveFeature(t, featureID, fc)
-	time.Sleep(10 * time.Second) // Wait for cache propagation
+	// Capture feature 1's post-archive UpdatedAt so prevEvalAt can be
+	// anchored to the server clock (see comment in
+	// TestGrpcGetEvaluationsByEvaluatedAt for details).
+	feature1UpdatedAt := getFeature(t, featureID, fc).UpdatedAt
+	time.Sleep(3 * time.Second) // ensure feature 2's UpdatedAt > feature 1's
 
 	uuid2 := newUUID(t)
 	featureID2 := newFeatureID(t, uuid2)
@@ -639,7 +664,10 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
 
-	prevEvalAt := time.Now().Unix()
+	// adjusted = feature1.UpdatedAt + 1, so feature 1 is excluded and
+	// feature 2 (created >=3s later) is included by the diff filter
+	// even with the wider featureFlagDiffGracePeriod (10 min default).
+	prevEvalAt := feature1UpdatedAt + evaluatedAtGracePeriodSeconds + 1
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
@@ -672,15 +700,24 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
+	fc := newFeatureClient(t)
+	defer fc.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // Wait for cache propagation
+	// Anchor prevEvalAt to feature 1's server-side UpdatedAt so the diff
+	// filter excludes feature 1 regardless of the configured
+	// featureFlagDiffGracePeriod (see TestGrpcGetEvaluationsByEvaluatedAt
+	// for the full explanation). With userAttributesUpdated=true the
+	// server still excludes flags that (a) fall outside the grace window
+	// and (b) have no rules, so feature 1 (no rules) must be dropped.
+	feature1UpdatedAt := getFeature(t, featureID, fc).UpdatedAt
+	time.Sleep(3 * time.Second) // ensure feature 2's UpdatedAt > feature 1's
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithRule(t, tag, featureID2)
-	prevEvalAt := time.Now().Unix()
+	prevEvalAt := feature1UpdatedAt + evaluatedAtGracePeriodSeconds + 1
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, true)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
