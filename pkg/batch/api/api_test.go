@@ -894,7 +894,6 @@ func TestExecuteBatchJobFailureAlert(t *testing.T) {
 			alerter := notifiermock.NewMockFailureAlerter(ctrl)
 			if p.expectAlert {
 				alerter.EXPECT().NotifyBatchJobFailure(
-					gomock.Any(),
 					p.job.String(),
 					p.jobErr,
 				).Times(1)

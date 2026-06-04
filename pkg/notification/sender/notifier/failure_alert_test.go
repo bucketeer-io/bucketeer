@@ -68,12 +68,8 @@ func TestFailureAlerterDisabledWhenCredentialsEmpty(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			alerter := NewFailureAlerter(p.token, p.channel)
-			_, isNoop := alerter.(*noopFailureAlerter)
-			assert.True(t, isNoop)
-			// Must not panic when disabled.
-			alerter.NotifyBatchJobFailure(context.Background(), "job-a", errors.New("boom"))
-			alerter.NotifySubscriberFailure(context.Background(), "consumer-a", errors.New("boom"))
+			// Disabled => nil; call sites nil-check before use.
+			assert.Nil(t, NewFailureAlerter(p.token, p.channel))
 		})
 	}
 }
@@ -84,7 +80,7 @@ func TestFailureAlerterPostsToConfiguredChannel(t *testing.T) {
 	fake := &fakeSlackPoster{}
 	alerter.poster = fake
 
-	alerter.NotifyBatchJobFailure(context.Background(), "ExperimentCalculator", errors.New("boom"))
+	alerter.NotifyBatchJobFailure("ExperimentCalculator", errors.New("boom"))
 
 	assert.Equal(t, []string{"#bucketeer-emergency"}, fake.calls)
 }
@@ -95,7 +91,7 @@ func TestFailureAlerterIgnoresNilError(t *testing.T) {
 	fake := &fakeSlackPoster{}
 	alerter.poster = fake
 
-	alerter.NotifyBatchJobFailure(context.Background(), "job-a", nil)
+	alerter.NotifyBatchJobFailure("job-a", nil)
 
 	assert.Equal(t, 0, fake.callCount())
 }
@@ -112,14 +108,13 @@ func TestFailureAlerterThrottlesWithinCooldown(t *testing.T) {
 	now := time.Unix(0, 0).UTC()
 	alerter.now = func() time.Time { return now }
 
-	ctx := context.Background()
 	jobErr := errors.New("boom")
-	alerter.NotifyBatchJobFailure(ctx, "job-a", jobErr) // delivered (1)
-	alerter.NotifyBatchJobFailure(ctx, "job-a", jobErr) // throttled
+	alerter.NotifyBatchJobFailure("job-a", jobErr) // delivered (1)
+	alerter.NotifyBatchJobFailure("job-a", jobErr) // throttled
 	now = now.Add(29 * time.Minute)
-	alerter.NotifyBatchJobFailure(ctx, "job-a", jobErr) // still throttled
-	now = now.Add(2 * time.Minute)                      // 31m total > cooldown
-	alerter.NotifyBatchJobFailure(ctx, "job-a", jobErr) // delivered (2)
+	alerter.NotifyBatchJobFailure("job-a", jobErr) // still throttled
+	now = now.Add(2 * time.Minute)                 // 31m total > cooldown
+	alerter.NotifyBatchJobFailure("job-a", jobErr) // delivered (2)
 
 	assert.Equal(t, 2, fake.callCount())
 }
@@ -136,12 +131,11 @@ func TestFailureAlerterThrottleIsPerKey(t *testing.T) {
 	now := time.Unix(0, 0).UTC()
 	alerter.now = func() time.Time { return now }
 
-	ctx := context.Background()
 	jobErr := errors.New("boom")
-	alerter.NotifyBatchJobFailure(ctx, "job-a", jobErr)   // delivered: batch:job-a
-	alerter.NotifyBatchJobFailure(ctx, "job-b", jobErr)   // delivered: batch:job-b
-	alerter.NotifySubscriberFailure(ctx, "job-a", jobErr) // delivered: subscriber:job-a
-	alerter.NotifyBatchJobFailure(ctx, "job-a", jobErr)   // throttled: batch:job-a
+	alerter.NotifyBatchJobFailure("job-a", jobErr)   // delivered: batch:job-a
+	alerter.NotifyBatchJobFailure("job-b", jobErr)   // delivered: batch:job-b
+	alerter.NotifySubscriberFailure("job-a", jobErr) // delivered: subscriber:job-a
+	alerter.NotifyBatchJobFailure("job-a", jobErr)   // throttled: batch:job-a
 
 	assert.Equal(t, 3, fake.callCount())
 }
@@ -160,9 +154,8 @@ func TestFailureAlerterRetriesAfterFailedDelivery(t *testing.T) {
 	now := time.Unix(0, 0).UTC()
 	alerter.now = func() time.Time { return now }
 
-	ctx := context.Background()
-	alerter.NotifyBatchJobFailure(ctx, "job-a", errors.New("boom")) // attempt 1: fails
-	alerter.NotifyBatchJobFailure(ctx, "job-a", errors.New("boom")) // attempt 2: succeeds
+	alerter.NotifyBatchJobFailure("job-a", errors.New("boom")) // attempt 1: fails
+	alerter.NotifyBatchJobFailure("job-a", errors.New("boom")) // attempt 2: succeeds
 
 	assert.Equal(t, 2, fake.callCount())
 }

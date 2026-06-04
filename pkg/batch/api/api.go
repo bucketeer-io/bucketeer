@@ -161,7 +161,7 @@ func (s *batchService) ExecuteBatchJob(
 				)...,
 			)
 			if _, ok := failureAlertJobs[req.Job]; ok && s.failureAlerter != nil {
-				s.failureAlerter.NotifyBatchJobFailure(ctx, req.Job.String(), err)
+				s.failureAlerter.NotifyBatchJobFailure(req.Job.String(), err)
 			}
 		}
 		return nil, err

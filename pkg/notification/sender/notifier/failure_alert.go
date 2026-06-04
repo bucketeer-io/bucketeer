@@ -29,9 +29,8 @@ import (
 // the same job/consumer. Batch cron jobs run every minute, so without a
 // cooldown a persistently failing job would post a Slack message every minute.
 const defaultFailureAlertCooldown = 30 * time.Minute
+const failureAlertPostTimeout = 5 * time.Second
 
-// slackMessagePoster is the subset of the Slack Web API client used to post
-// failure alerts. *slack.Client satisfies it; tests inject a fake.
 type slackMessagePoster interface {
 	PostMessageContext(
 		ctx context.Context,
@@ -59,16 +58,12 @@ func WithFailureAlertLogger(l *zap.Logger) FailureAlerterOption {
 	}
 }
 
-// NewFailureAlerter returns a FailureAlerter that posts to the given Slack
-// channel through the Slack Web API (chat.postMessage), authenticated with the
-// given bot token. When token or channel is empty the alerter is disabled (a
-// no-op is returned).
 func NewFailureAlerter(
 	token, channel string,
 	opts ...FailureAlerterOption,
 ) FailureAlerter {
 	if token == "" || channel == "" {
-		return &noopFailureAlerter{}
+		return nil
 	}
 	options := &failureAlerterOptions{
 		cooldown: defaultFailureAlertCooldown,
@@ -97,20 +92,15 @@ type failureAlerter struct {
 	logger   *zap.Logger
 }
 
-func (a *failureAlerter) NotifyBatchJobFailure(ctx context.Context, jobName string, jobErr error) {
-	a.notify(ctx, senderproto.JobFailureNotification_BATCH, jobName, jobErr)
+func (a *failureAlerter) NotifyBatchJobFailure(jobName string, jobErr error) {
+	a.notify(senderproto.JobFailureNotification_BATCH, jobName, jobErr)
 }
 
-func (a *failureAlerter) NotifySubscriberFailure(
-	ctx context.Context,
-	consumerName string,
-	consumerErr error,
-) {
-	a.notify(ctx, senderproto.JobFailureNotification_SUBSCRIBER, consumerName, consumerErr)
+func (a *failureAlerter) NotifySubscriberFailure(consumerName string, consumerErr error) {
+	a.notify(senderproto.JobFailureNotification_SUBSCRIBER, consumerName, consumerErr)
 }
 
 func (a *failureAlerter) notify(
-	ctx context.Context,
 	serviceType senderproto.JobFailureNotification_ServiceType,
 	name string,
 	failureErr error,
@@ -132,6 +122,8 @@ func (a *failureAlerter) notify(
 		JobName:      name,
 		ErrorMessage: failureErr.Error(),
 	})
+	ctx, cancel := context.WithTimeout(context.Background(), failureAlertPostTimeout)
+	defer cancel()
 	if _, _, err := a.poster.PostMessageContext(
 		ctx,
 		a.channel,
@@ -143,8 +135,6 @@ func (a *failureAlerter) notify(
 			zap.String("name", name),
 			zap.String("channel", a.channel),
 		)
-		// Do not start the cooldown when the alert was not delivered, so the
-		// next failure can try again.
 		return
 	}
 	a.markSent(key)
@@ -164,8 +154,3 @@ func (a *failureAlerter) markSent(key string) {
 	defer a.mu.Unlock()
 	a.lastSent[key] = a.now()
 }
-
-type noopFailureAlerter struct{}
-
-func (n *noopFailureAlerter) NotifyBatchJobFailure(context.Context, string, error)   {}
-func (n *noopFailureAlerter) NotifySubscriberFailure(context.Context, string, error) {}

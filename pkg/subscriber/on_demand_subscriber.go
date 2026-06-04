@@ -326,7 +326,7 @@ func (s *onDemandSubscriber) alertFailure(err error) {
 	if s.opts.failureAlerter == nil || s.ctx == nil || s.ctx.Err() != nil {
 		return
 	}
-	s.opts.failureAlerter.NotifySubscriberFailure(s.ctx, s.name, err)
+	s.opts.failureAlerter.NotifySubscriberFailure(s.name, err)
 }
 
 func (s *onDemandSubscriber) Stop() {

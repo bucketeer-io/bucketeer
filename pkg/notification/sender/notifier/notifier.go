@@ -35,6 +35,6 @@ type Notifier interface {
 // subscriber consumer fails. Implementations may throttle repeated alerts for
 // the same job/consumer to avoid alert storms.
 type FailureAlerter interface {
-	NotifyBatchJobFailure(ctx context.Context, jobName string, jobErr error)
-	NotifySubscriberFailure(ctx context.Context, consumerName string, consumerErr error)
+	NotifyBatchJobFailure(jobName string, jobErr error)
+	NotifySubscriberFailure(consumerName string, consumerErr error)
 }

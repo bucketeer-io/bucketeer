@@ -189,7 +189,7 @@ func (s *pubSubSubscriber) alertFailure(ctx context.Context, err error) {
 	if s.opts.failureAlerter == nil || ctx.Err() != nil {
 		return
 	}
-	s.opts.failureAlerter.NotifySubscriberFailure(ctx, s.name, err)
+	s.opts.failureAlerter.NotifySubscriberFailure(s.name, err)
 }
 
 func (s *pubSubSubscriber) Stop() {

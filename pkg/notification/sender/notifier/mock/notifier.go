@@ -80,25 +80,25 @@ func (m *MockFailureAlerter) EXPECT() *MockFailureAlerterMockRecorder {
 }
 
 // NotifyBatchJobFailure mocks base method.
-func (m *MockFailureAlerter) NotifyBatchJobFailure(ctx context.Context, jobName string, jobErr error) {
+func (m *MockFailureAlerter) NotifyBatchJobFailure(jobName string, jobErr error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "NotifyBatchJobFailure", ctx, jobName, jobErr)
+	m.ctrl.Call(m, "NotifyBatchJobFailure", jobName, jobErr)
 }
 
 // NotifyBatchJobFailure indicates an expected call of NotifyBatchJobFailure.
-func (mr *MockFailureAlerterMockRecorder) NotifyBatchJobFailure(ctx, jobName, jobErr any) *gomock.Call {
+func (mr *MockFailureAlerterMockRecorder) NotifyBatchJobFailure(jobName, jobErr any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyBatchJobFailure", reflect.TypeOf((*MockFailureAlerter)(nil).NotifyBatchJobFailure), ctx, jobName, jobErr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyBatchJobFailure", reflect.TypeOf((*MockFailureAlerter)(nil).NotifyBatchJobFailure), jobName, jobErr)
 }
 
 // NotifySubscriberFailure mocks base method.
-func (m *MockFailureAlerter) NotifySubscriberFailure(ctx context.Context, consumerName string, consumerErr error) {
+func (m *MockFailureAlerter) NotifySubscriberFailure(consumerName string, consumerErr error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "NotifySubscriberFailure", ctx, consumerName, consumerErr)
+	m.ctrl.Call(m, "NotifySubscriberFailure", consumerName, consumerErr)
 }
 
 // NotifySubscriberFailure indicates an expected call of NotifySubscriberFailure.
-func (mr *MockFailureAlerterMockRecorder) NotifySubscriberFailure(ctx, consumerName, consumerErr any) *gomock.Call {
+func (mr *MockFailureAlerterMockRecorder) NotifySubscriberFailure(consumerName, consumerErr any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifySubscriberFailure", reflect.TypeOf((*MockFailureAlerter)(nil).NotifySubscriberFailure), ctx, consumerName, consumerErr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifySubscriberFailure", reflect.TypeOf((*MockFailureAlerter)(nil).NotifySubscriberFailure), consumerName, consumerErr)
 }
