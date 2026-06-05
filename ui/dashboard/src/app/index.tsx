@@ -8,7 +8,7 @@ import {
   useNavigate,
   useLocation
 } from 'react-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import {
   AuthCallbackPage,
   AuthProvider,
@@ -18,6 +18,7 @@ import {
   AuthDemoCallbackPage
 } from 'auth';
 import { AI_CHAT_ENABLED } from 'configs';
+import { queryClient } from 'configs/query-client';
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import {
   PAGE_PATH_APIKEYS,
@@ -92,14 +93,6 @@ export const AppLoading = () => (
     <Spinner size="md" />
   </div>
 );
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30 * 60 * 1000 // Set the global stale time to 30 minutes
-    }
-  }
-});
 
 function App() {
   return (

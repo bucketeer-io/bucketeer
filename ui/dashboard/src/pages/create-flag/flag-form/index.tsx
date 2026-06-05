@@ -3,9 +3,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { featureCreator } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateFeatures } from '@queries/features';
-import { invalidateTags, useQueryTags } from '@queries/tags';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import {
   PAGE_PATH_FEATURE_TARGETING,
@@ -44,7 +42,6 @@ const FlagForm = () => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const navigate = useNavigate();
@@ -120,8 +117,6 @@ const FlagForm = () => {
             action: t('created')
           })
         });
-        invalidateFeatures(queryClient);
-        invalidateTags(queryClient);
         navigate(
           `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${resp.feature.id}${PAGE_PATH_FEATURE_TARGETING}`
         );

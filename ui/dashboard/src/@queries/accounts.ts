@@ -51,12 +51,6 @@ export const prefetchAccounts = (
   });
 };
 
-export const invalidateAccounts = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [ACCOUNTS_QUERY_KEY]
-  });
-};
-
 type InfiniteQueryOptions = {
   params?: Omit<AccountsFetcherParams, 'cursor'>;
   enabled?: boolean;

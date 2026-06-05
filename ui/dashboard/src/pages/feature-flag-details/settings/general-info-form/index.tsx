@@ -3,12 +3,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { IconLaunchOutlined } from 'react-icons-material-design';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
-import { invalidateHistories } from '@queries/histories';
 import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
-import { invalidateTags, useQueryTags } from '@queries/tags';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
@@ -48,7 +44,6 @@ const GeneralInfoForm = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
 
   const [isOpenSaveModal, onOpenSaveModal, onCloseSaveModal] =
     useToggleOpen(false);
@@ -214,10 +209,6 @@ const GeneralInfoForm = ({
                   Math.floor((new Date().getTime() + 3600000) / 1000)
                 )
               });
-              invalidateFeature(queryClient);
-              invalidateFeatures(queryClient);
-              invalidateTags(queryClient);
-              invalidateHistories(queryClient);
               onCloseSaveModal();
             }
           }

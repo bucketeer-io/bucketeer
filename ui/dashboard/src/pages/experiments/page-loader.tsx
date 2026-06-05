@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
-import { invalidateExperiments } from '@queries/experiments';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
@@ -21,7 +20,6 @@ import { ExperimentActionsType } from './types';
 
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table', 'message']);
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
@@ -73,7 +71,6 @@ const PageLoader = () => {
     onSuccess: () => {
       onCloseConfirmModal();
       onCloseToggleExperimentModal();
-      invalidateExperiments(queryClient);
       mutation.reset();
       notify({
         message: t('message:collection-action-success', {

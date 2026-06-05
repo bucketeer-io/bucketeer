@@ -3,8 +3,7 @@ import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { apiKeyUpdater } from '@api/api-key';
 import { useQueryAPIKey } from '@queries/api-key-details';
-import { invalidateAPIKeys } from '@queries/api-keys';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
   getAccountAccess,
   getCurrentEnvironment,
@@ -26,7 +25,6 @@ import { APIKeyActionsType } from './types';
 
 const PageLoader = () => {
   const { t } = useTranslation(['table', 'message', 'common']);
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
@@ -126,7 +124,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseConfirmModal();
-      invalidateAPIKeys(queryClient);
       mutationState.reset();
       notify({
         message: t('message:collection-action-success', {

@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { organizationArchive, organizationUnarchive } from '@api/organization';
-import { invalidateOrganizations } from '@queries/organizations';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
@@ -15,7 +14,6 @@ import { OrganizationActionsType } from './types';
 
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
-  const queryClient = useQueryClient();
   const [selectedOrganization, setSelectedOrganization] =
     useState<Organization>();
 
@@ -41,7 +39,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseConfirmModal();
-      invalidateOrganizations(queryClient);
       mutation.reset();
     }
   });

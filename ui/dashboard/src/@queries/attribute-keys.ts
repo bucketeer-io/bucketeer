@@ -45,9 +45,3 @@ export const prefetchAttributeKeys = (
     ...queryOptions
   });
 };
-
-export const invalidateAttributeKeys = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [USER_ATTRIBUTE_KEYS]
-  });
-};

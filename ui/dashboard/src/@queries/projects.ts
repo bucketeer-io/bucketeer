@@ -45,9 +45,3 @@ export const prefetchProjects = (
     ...queryOptions
   });
 };
-
-export const invalidateProjects = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [PROJECTS_QUERY_KEY]
-  });
-};

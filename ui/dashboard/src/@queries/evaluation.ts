@@ -48,9 +48,3 @@ export const prefetchEvaluation = (
     ...queryOptions
   });
 };
-
-export const invalidateEvaluation = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [EVALUATION_QUERY_KEY]
-  });
-};

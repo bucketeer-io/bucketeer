@@ -45,9 +45,3 @@ export const prefetchAuditLogs = (
     ...queryOptions
   });
 };
-
-export const invalidateAuditLogs = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [AUDIT_LOGS_QUERY_KEY]
-  });
-};

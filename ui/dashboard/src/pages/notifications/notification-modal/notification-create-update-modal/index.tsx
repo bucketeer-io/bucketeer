@@ -11,9 +11,6 @@ import {
   notificationUpdater
 } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateNotificationDetails } from '@queries/notification-details';
-import { invalidateNotifications } from '@queries/notifications';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
 import { languageList } from 'constants/notification';
 import { ID_NEW } from 'constants/routing';
@@ -89,12 +86,10 @@ const NotificationCreateUpdateModal = ({
   isOpen,
   isLoadingNotification,
   notification,
-  notificationEnvironmentId,
   resetNotification,
   onClose
 }: NotificationCreateUpdateModalProps) => {
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
 
   const { consoleAccount } = useAuth();
@@ -205,11 +200,6 @@ const NotificationCreateUpdateModal = ({
               collection: t('notification'),
               action: t(isEditNotification ? 'updated' : 'created')
             })
-          });
-          invalidateNotifications(queryClient);
-          invalidateNotificationDetails(queryClient, {
-            id: notificationId as string,
-            environmentId: notificationEnvironmentId as string
           });
           onClose();
         }

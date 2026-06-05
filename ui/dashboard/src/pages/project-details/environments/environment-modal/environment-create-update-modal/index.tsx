@@ -7,15 +7,8 @@ import {
   environmentUpdater
 } from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateEnvironments } from '@queries/environments';
-import {
-  invalidateEnvironmentDetails,
-  useQueryEnvironmentDetails
-} from '@queries/environments-details';
-import { invalidateOrganizations } from '@queries/organizations';
+import { useQueryEnvironmentDetails } from '@queries/environments-details';
 import { useQueryProjectDetails } from '@queries/project-details';
-import { invalidateProjects } from '@queries/projects';
-import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -103,7 +96,7 @@ const EnvironmentCreateUpdateModal = ({
   isOpen,
   onClose
 }: EnvironmentCreateUpdateModalProps) => {
-  const queryClient = useQueryClient();
+  const isUrlEdited = useRef(false);
   const { projectId, environmentId } = useParams();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
@@ -205,10 +198,6 @@ const EnvironmentCreateUpdateModal = ({
               action: t(environmentDetail ? 'updated' : 'created')
             })
           });
-          invalidateOrganizations(queryClient);
-          invalidateProjects(queryClient);
-          invalidateEnvironments(queryClient);
-          invalidateEnvironmentDetails(queryClient);
           onMeFetcher({ organizationId: currentEnvironment.organizationId });
           onClose();
         }
@@ -264,14 +253,11 @@ const EnvironmentCreateUpdateModal = ({
                         {...field}
                         onChange={value => {
                           field.onChange(value);
-                          if (!environmentDetail) {
-                            const isUrlCodeDirty =
-                              form.getFieldState('urlCode').isDirty;
-                            const urlCode = form.getValues('urlCode');
-                            form.setValue(
-                              'urlCode',
-                              isUrlCodeDirty ? urlCode : onGenerateSlug(value)
-                            );
+                          if (!environmentDetail && !isUrlEdited.current) {
+                            form.setValue('urlCode', onGenerateSlug(value), {
+                              shouldDirty: false,
+                              shouldValidate: true
+                            });
                           }
                         }}
                         name="environment-name"
@@ -312,6 +298,11 @@ const EnvironmentCreateUpdateModal = ({
                         placeholder={`${t('form:placeholder-code')}`}
                         disabled={disabled || !!environmentDetail}
                         name="environment-code"
+                        autoComplete="off"
+                        onChange={value => {
+                          isUrlEdited.current = value !== '';
+                          field.onChange(value);
+                        }}
                       />
                     </Form.Control>
                     <Form.Message />

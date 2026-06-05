@@ -5,11 +5,8 @@ import { Link } from 'react-router';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryExperiments } from '@queries/experiments';
-import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
 import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import {
@@ -52,7 +49,6 @@ const Variation = ({ feature, editable }: VariationProps) => {
   const { t } = useTranslation(['common', 'message', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const queryClient = useQueryClient();
 
   const [openConfirmDialog, onOpenConfirmDialog, onCloseConfirmDialog] =
     useToggleOpen(false);
@@ -192,8 +188,6 @@ const Variation = ({ feature, editable }: VariationProps) => {
                   action: t('updated')
                 })
               });
-              invalidateFeature(queryClient);
-              invalidateFeatures(queryClient);
               onCloseConfirmDialog();
             }
           }

@@ -50,12 +50,14 @@ export const prefetchFeature = (
   });
 };
 
-export const invalidateFeature = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [FEATURE_QUERY_KEY]
-  });
-};
-
+/**
+ * Optimistic in-place update of a single feature-details cache entry.
+ *
+ * The axios response interceptor invalidates the query for free on every
+ * non-GET response, but invalidation triggers a refetch. Use this helper
+ * when the mutation response already contains the new feature payload and
+ * you want the UI to update without waiting for the round-trip.
+ */
 export const updateFeatureCache = (
   queryClient: QueryClient,
   params: FeatureFetcherParams,

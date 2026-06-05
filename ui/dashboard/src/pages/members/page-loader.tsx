@@ -2,8 +2,7 @@ import { useCallback, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { accountDisable, accountEnable } from '@api/account';
 import { accountDeleter } from '@api/account/account-deleter';
-import { invalidateAccounts } from '@queries/accounts';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
@@ -19,7 +18,6 @@ import { MemberActionsType } from './types';
 const PageLoader = () => {
   const { notify } = useToast();
   const { t } = useTranslation(['table', 'message', 'common']);
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -50,7 +48,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseDeleteModal();
-      invalidateAccounts(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('common:member'),
@@ -78,7 +75,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseConfirmModal();
-      invalidateAccounts(queryClient);
       mutationState.reset();
     }
   });

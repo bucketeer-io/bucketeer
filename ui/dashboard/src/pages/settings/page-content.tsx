@@ -4,9 +4,6 @@ import { IconLaunchOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateOrganizationDetails } from '@queries/organization-details';
-import { invalidateOrganizations } from '@queries/organizations';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
@@ -45,7 +42,6 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
-  const queryClient = useQueryClient();
 
   const { t } = useTranslation(['common', 'form', 'message']);
   const {
@@ -89,10 +85,6 @@ const PageContent = ({ organization }: { organization: Organization }) => {
             action: t('updated')
           })
         });
-        invalidateOrganizationDetails(queryClient, {
-          id: currentEnvironment.organizationId
-        });
-        invalidateOrganizations(queryClient);
       }
     } catch (error) {
       errorNotify(error);

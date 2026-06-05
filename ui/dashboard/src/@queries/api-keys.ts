@@ -45,9 +45,3 @@ export const prefetchAPIKeys = (
     ...queryOptions
   });
 };
-
-export const invalidateAPIKeys = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [API_KEYS_QUERY_KEY]
-  });
-};

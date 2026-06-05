@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router';
 import { featureBulkClone } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   getCurrentEnvironment,
   getEditorEnvironments,
@@ -64,7 +62,6 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   );
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(editorEnvironments);
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
@@ -166,9 +163,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
             });
           });
 
-          invalidateFeatures(queryClient);
           onClose();
-
           if (
             successes.length === 1 &&
             destinationEnvironmentIds.length === 1

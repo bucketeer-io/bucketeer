@@ -48,9 +48,3 @@ export const prefetchUserSegments = (
     ...queryOptions
   });
 };
-
-export const invalidateUserSegments = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [USER_SEGMENTS_QUERY_KEY]
-  });
-};
