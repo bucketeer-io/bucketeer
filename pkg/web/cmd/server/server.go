@@ -846,7 +846,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
-		mysqlClient,
 		dbClient,
 		autoOpsStorage,
 		prStorage,

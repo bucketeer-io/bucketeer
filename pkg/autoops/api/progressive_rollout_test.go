@@ -1032,6 +1032,17 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 			expected:      statusProgressiveRolloutInvalidOrderBy.Err(),
 		},
 		{
+			desc: "err: InvalidCursor",
+			setup: func(s *AutoOpsService) {
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, int64(0), 0, v2as.ErrInvalidCursor)
+			},
+			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
+			environmentId: "ns0",
+			expected:      statusProgressiveRolloutInvalidCursor.Err(),
+		},
+		{
 			desc: "err: interal error",
 			setup: func(s *AutoOpsService) {
 				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(

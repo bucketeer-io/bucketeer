@@ -43,7 +43,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -63,7 +62,6 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type AutoOpsService struct {
-	mysqlClient      mysql.Client
 	dbClient         database.Client
 	opsCountStorage  v2os.OpsCountStorage
 	autoOpsStorage   v2as.AutoOpsRuleStorage
@@ -79,7 +77,6 @@ type AutoOpsService struct {
 }
 
 func NewAutoOpsService(
-	mysqlClient mysql.Client,
 	dbClient database.Client,
 	autoOpsStorage v2as.AutoOpsRuleStorage,
 	prStorage v2as.ProgressiveRolloutStorage,
@@ -99,7 +96,6 @@ func NewAutoOpsService(
 		opt(dopts)
 	}
 	return &AutoOpsService{
-		mysqlClient:      mysqlClient,
 		dbClient:         dbClient,
 		opsCountStorage:  opsCountStorage,
 		featureStorage:   featureStorage,

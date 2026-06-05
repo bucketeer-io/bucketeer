@@ -41,7 +41,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -52,7 +51,6 @@ func TestNewAutoOpsService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mysqlClientMock := mysqlmock.NewMockClient(mockController)
 	dbClientMock := dbmock.NewMockClient(mockController)
 	featureClientMock := featureclientmock.NewMockClient(mockController)
 	experimentClientMock := experimentclientmock.NewMockClient(mockController)
@@ -65,7 +63,6 @@ func TestNewAutoOpsService(t *testing.T) {
 	autoOpsStorageMock := mockAutoOpsStorage.NewMockAutoOpsRuleStorage(mockController)
 	prStorageMock := mockAutoOpsStorage.NewMockProgressiveRolloutStorage(mockController)
 	s := NewAutoOpsService(
-		mysqlClientMock,
 		dbClientMock,
 		autoOpsStorageMock,
 		prStorageMock,
@@ -931,6 +928,17 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
+			desc:    "err: InvalidCursor",
+			service: createAutoOpsService(mockController),
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().ListAutoOpsRules(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, v2ao.ErrInvalidCursor)
+			},
+			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: "invalid"},
+			expectedErr: statusInvalidCursor.Err(),
+		},
+		{
 			desc:    "success with viewer",
 			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
@@ -1144,7 +1152,6 @@ func TestExistGoal(t *testing.T) {
 }
 
 func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
-	mysqlClientMock := mysqlmock.NewMockClient(c)
 	featureClientMock := featureclientmock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
@@ -1169,7 +1176,6 @@ func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &AutoOpsService{
-		mysqlClient:      mysqlClientMock,
 		dbClient:         dbmock.NewMockClient(c),
 		featureStorage:   mockFeatureStorage.NewMockFeatureStorage(c),
 		autoOpsStorage:   mockAutoOpsStorage.NewMockAutoOpsRuleStorage(c),
@@ -1188,7 +1194,6 @@ func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 }
 
 func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *AutoOpsService {
-	mysqlClientMock := mysqlmock.NewMockClient(c)
 	featureClientMock := featureclientmock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
@@ -1209,7 +1214,6 @@ func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accou
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &AutoOpsService{
-		mysqlClient:      mysqlClientMock,
 		dbClient:         dbmock.NewMockClient(c),
 		autoOpsStorage:   mockAutoOpsStorage.NewMockAutoOpsRuleStorage(c),
 		prStorage:        mockAutoOpsStorage.NewMockProgressiveRolloutStorage(c),

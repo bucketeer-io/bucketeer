@@ -16,9 +16,8 @@
 package v2
 
 import (
-	"errors"
-
 	"context"
+	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
