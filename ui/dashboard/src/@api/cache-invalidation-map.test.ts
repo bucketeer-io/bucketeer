@@ -64,12 +64,14 @@ const NON_INVALIDATED_QUERY_KEYS: ReadonlySet<string> = new Set([
  *
  * To prevent false positives from unrelated objects (e.g. `array.delete()` or
  * `Map.get()`), the scan is gated on `AXIOS_CLIENT_IMPORT_REGEX` below: only
- * files that actually import the shared `axiosClient` are considered.
+ * files that actually import the shared `axiosClient` — or create their own
+ * instance and install the cache-invalidation interceptor on it — are
+ * considered. Both cases route through the same invalidation logic.
  */
 const AXIOS_CALL_METHOD_REGEX =
   /\.(get|post|put|patch|delete)\b(?:<[^>]*>)?\s*\(/g;
 const AXIOS_CLIENT_IMPORT_REGEX =
-  /from\s+['"](?:@api\/axios-client|\.{1,2}\/(?:[^'"]+\/)?axios-client)['"]/;
+  /from\s+['"](?:@api\/axios-client|\.{1,2}\/(?:[^'"]+\/)?axios-client)['"]|\binstallCacheInvalidationInterceptor\s*\(/;
 const URL_LITERAL_REGEX = /^\s*[`'"]([^`'"]+?)[`'"]/;
 
 type ExtractedCall = {
@@ -271,6 +273,52 @@ describe('cache-invalidation-map: every @queries key is reachable', () => {
           'in `src/@queries/`. Either rename the rule to match the real key',
           'or remove it:',
           ...unknown.map(k => `  - ${k}`)
+        ].join('\n')
+      );
+    }
+  });
+});
+
+describe('cache-invalidation-map: every axios instance installs the interceptor', () => {
+  const AXIOS_CREATE_REGEX = /\baxios\.create\s*\(/;
+  const INSTALL_INTERCEPTOR_REGEX = /\binstallCacheInvalidationInterceptor\s*\(/;
+
+  const findAxiosInstanceFiles = (): string[] =>
+    walk(API_ROOT)
+      .filter(f => !f.endsWith('cache-invalidation-interceptor.ts'))
+      .filter(f => AXIOS_CREATE_REGEX.test(readFileSync(f, 'utf8')));
+
+  it('finds the shared axios client (sanity check)', () => {
+    const files = findAxiosInstanceFiles();
+    // We always expect at least the shared client. If this drops to zero the
+    // test is misconfigured (e.g. wrong path or regex), so fail loudly.
+    expect(
+      files.some(f => f.endsWith('axios-client.ts')),
+      `Expected to find @api/axios-client.ts among axios.create() sites, got:\n${files.join('\n')}`
+    ).toBe(true);
+  });
+
+  it('every axios.create() site under src/@api/ installs the cache-invalidation interceptor', () => {
+    const offenders: string[] = [];
+    for (const file of findAxiosInstanceFiles()) {
+      const source = readFileSync(file, 'utf8');
+      if (!INSTALL_INTERCEPTOR_REGEX.test(source)) {
+        offenders.push(file.replace(SRC_ROOT, 'src'));
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        [
+          'The following files create their own axios instance via',
+          '`axios.create()` but do NOT call',
+          '`installCacheInvalidationInterceptor(...)` on it. Mutations made',
+          'through these instances will silently bypass React Query cache',
+          'invalidation and leave stale data in the UI:',
+          ...offenders.map(f => `  - ${f}`),
+          '',
+          'Either route the request through `@api/axios-client` (preferred)',
+          'or call `installCacheInvalidationInterceptor(client)` from',
+          '`@api/cache-invalidation-interceptor` after creating the instance.'
         ].join('\n')
       );
     }

@@ -1,10 +1,9 @@
 import axios from 'axios';
-import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosInstance } from 'axios';
 import { urls } from 'configs';
-import { queryClient } from 'configs/query-client';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { refreshTokenFetcher } from './auth';
-import { resolveInvalidationKeys } from './cache-invalidation-map';
+import { installCacheInvalidationInterceptor } from './cache-invalidation-interceptor';
 
 let isRefreshing = false;
 
@@ -25,20 +24,10 @@ axiosClient.interceptors.request.use(
   }
 );
 
-const invalidateCacheForResponse = (config: InternalAxiosRequestConfig) => {
-  const method = config.method?.toUpperCase();
-  if (!method || method === 'GET') return;
-  const url = config.url ?? '';
-  const keys = resolveInvalidationKeys(url);
-  if (keys.length === 0) return;
-  keys.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
-};
+installCacheInvalidationInterceptor(axiosClient);
 
 axiosClient.interceptors.response.use(
-  response => {
-    invalidateCacheForResponse(response.config);
-    return response;
-  },
+  response => response,
   async error => {
     const authToken = getTokenStorage();
     const originalRequest = error.config;

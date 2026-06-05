@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { urls } from 'configs';
 import { getDemoTokenStorage } from 'storage/demo-token';
 import { Organization } from '@types';
+import { installCacheInvalidationInterceptor } from '../cache-invalidation-interceptor';
 
 export interface OrganizationDemoCreatorPayload {
   name: string;
@@ -30,6 +31,8 @@ axiosClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+installCacheInvalidationInterceptor(axiosClient);
 
 export const organizationDemoCreator = async (
   payload?: OrganizationDemoCreatorPayload
