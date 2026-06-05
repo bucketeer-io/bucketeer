@@ -69,10 +69,7 @@ axiosClient.interceptors.response.use(
             })
           );
           isRefreshing = false;
-          return axiosClient(originalRequest).then(retryResponse => {
-            invalidateCacheForResponse(retryResponse.config);
-            return retryResponse;
-          });
+          return axiosClient(originalRequest);
         })
         .catch(err => {
           isRefreshing = false;
