@@ -54,6 +54,25 @@ const NON_INVALIDATED_QUERY_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Files under `src/@api/` that are allowed to use a non-axios HTTP transport
+ * (native `fetch`, `XMLHttpRequest`, etc.). Such requests do NOT pass through
+ * the cache-invalidation interceptor, so each entry must be a read-only
+ * endpoint or have a documented reason to be exempt.
+ *
+ * Add a new entry here ONLY after confirming the endpoint does not need to
+ * invalidate any client-side cache. Anything that mutates user-visible data
+ * MUST be migrated to `@api/axios-client` (or another axios instance with the
+ * interceptor installed) instead.
+ */
+const NON_AXIOS_TRANSPORT_FILES: ReadonlySet<string> = new Set([
+  // POST /v1/aichat/chat – uses native fetch for SSE/ReadableStream support
+  // (axios cannot consume SSE streams). The response is a streamed AI
+  // suggestion, not a persisted mutation; the corresponding query key
+  // `ai-chat-suggestions` is in NON_INVALIDATED_QUERY_KEYS above.
+  'src/@api/ai-chat/chat-streamer.ts'
+]);
+
+/**
  * Matches HTTP-method calls (`.get(`, `.post(`, etc.) on an axios chain. We
  * deliberately match `.method(` rather than `axiosClient.method(` because the
  * codebase formats requests as multi-line chains, e.g.
@@ -149,15 +168,15 @@ const ALL_INVALIDATION_KEYS: ReadonlySet<string> = new Set(
   URL_TO_KEYS.flatMap(rule => rule.keys)
 );
 
-describe('cache-invalidation-map: every mutating @api endpoint is covered', () => {
+describe('cache-invalidation-map: every mutating axios endpoint is covered', () => {
   const allCalls = collectAllApiCalls();
   const mutatingCalls = allCalls.filter(c => c.method !== 'get');
 
-  it('finds at least some mutation endpoints (sanity check)', () => {
+  it('finds at least some axios mutation endpoints (sanity check)', () => {
     expect(mutatingCalls.length).toBeGreaterThan(10);
   });
 
-  it('every non-GET endpoint either matches URL_TO_KEYS or is allow-listed', () => {
+  it('every non-GET axios endpoint either matches URL_TO_KEYS or is allow-listed', () => {
     const uncovered: ExtractedCall[] = [];
 
     for (const call of mutatingCalls) {
@@ -320,6 +339,64 @@ describe('cache-invalidation-map: every axios instance installs the interceptor'
           'Either route the request through `@api/axios-client` (preferred)',
           'or call `installCacheInvalidationInterceptor(client)` from',
           '`@api/cache-invalidation-interceptor` after creating the instance.'
+        ].join('\n')
+      );
+    }
+  });
+});
+
+describe('cache-invalidation-map: non-axios HTTP transports are explicitly allow-listed', () => {
+  // Detects native `fetch(...)` / `new XMLHttpRequest()` / `sendBeacon(...)`
+  // usage. These bypass our axios response interceptor entirely, so the
+  // cache-invalidation guardrails above do not protect them. The only safe
+  // non-axios calls are read-only endpoints captured in
+  // `NON_AXIOS_TRANSPORT_FILES`.
+  const NON_AXIOS_TRANSPORT_REGEX =
+    /\bfetch\s*\(|\bnew\s+XMLHttpRequest\s*\(|\bnavigator\.sendBeacon\s*\(/;
+
+  const findNonAxiosTransportFiles = (): string[] =>
+    walk(API_ROOT)
+      .filter(f => !f.endsWith('cache-invalidation-map.test.ts'))
+      .filter(f => NON_AXIOS_TRANSPORT_REGEX.test(readFileSync(f, 'utf8')));
+
+  it('every non-axios HTTP call site under src/@api/ is in the allowlist', () => {
+    const found = findNonAxiosTransportFiles().map(f =>
+      f.replace(SRC_ROOT, 'src')
+    );
+    const offenders = found.filter(f => !NON_AXIOS_TRANSPORT_FILES.has(f));
+    if (offenders.length > 0) {
+      throw new Error(
+        [
+          'The following files use a non-axios HTTP transport (e.g.',
+          '`fetch`, `XMLHttpRequest`, or `sendBeacon`) and therefore bypass',
+          'the cache-invalidation interceptor:',
+          ...offenders.map(f => `  - ${f}`),
+          '',
+          'If the endpoint is genuinely read-only (or has another reason it',
+          'cannot use axios), add it to `NON_AXIOS_TRANSPORT_FILES` in this',
+          'test file with a comment explaining why. Otherwise, migrate it',
+          'to `@api/axios-client` so its mutations participate in cache',
+          'invalidation.'
+        ].join('\n')
+      );
+    }
+  });
+
+  it('NON_AXIOS_TRANSPORT_FILES only references files that actually exist', () => {
+    const found = new Set(
+      findNonAxiosTransportFiles().map(f => f.replace(SRC_ROOT, 'src'))
+    );
+    const stale: string[] = [];
+    for (const f of NON_AXIOS_TRANSPORT_FILES) {
+      if (!found.has(f)) stale.push(f);
+    }
+    if (stale.length > 0) {
+      throw new Error(
+        [
+          'NON_AXIOS_TRANSPORT_FILES references files that either no longer',
+          'exist or no longer contain a non-axios HTTP call. Remove the',
+          'stale entries:',
+          ...stale.map(f => `  - ${f}`)
         ].join('\n')
       );
     }
