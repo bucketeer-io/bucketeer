@@ -722,6 +722,7 @@ func (s *server) createPostgresClient(
 var failureAlertSubscribers = map[string]struct{}{
 	processor.PushSenderName:           {},
 	processor.SegmentUserPersisterName: {},
+	processor.DomainEventInformerName:  {},
 }
 
 func (s *server) startMultiPubSub(
