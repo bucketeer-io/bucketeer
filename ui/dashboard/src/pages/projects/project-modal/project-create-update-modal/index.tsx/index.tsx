@@ -212,6 +212,7 @@ const ProjectCreateUpdateModal = ({
                     </Form.Label>
                     <Form.Control>
                       <Input
+                        {...field}
                         value={field.value}
                         placeholder={`${t('form:placeholder-code')}`}
                         disabled={!!projectDetail || disabled}
