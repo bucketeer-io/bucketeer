@@ -1,13 +1,18 @@
 import { readdirSync, readFileSync, statSync } from 'fs';
-import { join, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { describe, expect, it } from 'vitest';
 import { resolveInvalidationKeys, URL_TO_KEYS } from './cache-invalidation-map';
 
 /**
  * The repo root for this dashboard package, computed relative to this file.
  * Tests resolve `@api` and `@queries` paths from here so the test stays robust
- * regardless of where vitest is invoked from.
+ * regardless of where vitest is invoked from. The package is ESM
+ * (`"type": "module"`), so we derive the path from `import.meta.url` instead
+ * of relying on the CommonJS `__dirname` shim.
  */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const SRC_ROOT = resolve(__dirname, '..');
 const API_ROOT = resolve(SRC_ROOT, '@api');
 const QUERIES_ROOT = resolve(SRC_ROOT, '@queries');
@@ -48,7 +53,23 @@ const NON_INVALIDATED_QUERY_KEYS: ReadonlySet<string> = new Set([
   'insights-error-rates'
 ]);
 
-const HTTP_METHOD_REGEX = /\.(get|post|put|patch|delete)\b(?:<[^>]*>)?\s*\(/g;
+/**
+ * Matches HTTP-method calls (`.get(`, `.post(`, etc.) on an axios chain. We
+ * deliberately match `.method(` rather than `axiosClient.method(` because the
+ * codebase formats requests as multi-line chains, e.g.
+ *
+ *     return axiosClient
+ *       .post('/v1/foo', body)
+ *       .then(...);
+ *
+ * To prevent false positives from unrelated objects (e.g. `array.delete()` or
+ * `Map.get()`), the scan is gated on `AXIOS_CLIENT_IMPORT_REGEX` below: only
+ * files that actually import the shared `axiosClient` are considered.
+ */
+const AXIOS_CALL_METHOD_REGEX =
+  /\.(get|post|put|patch|delete)\b(?:<[^>]*>)?\s*\(/g;
+const AXIOS_CLIENT_IMPORT_REGEX =
+  /from\s+['"](?:@api\/axios-client|\.{1,2}\/(?:[^'"]+\/)?axios-client)['"]/;
 const URL_LITERAL_REGEX = /^\s*[`'"]([^`'"]+?)[`'"]/;
 
 type ExtractedCall = {
@@ -72,9 +93,14 @@ const walk = (dir: string, files: string[] = []): string[] => {
 
 const extractAxiosCalls = (file: string): ExtractedCall[] => {
   const source = readFileSync(file, 'utf8');
+  // Skip files that don't actually use the shared axios instance. Only calls
+  // routed through `@api/axios-client` go through the response interceptor
+  // that triggers cache invalidation, so any `.get/.post(` matches in other
+  // files are irrelevant (and could be false positives on unrelated objects).
+  if (!AXIOS_CLIENT_IMPORT_REGEX.test(source)) return [];
   const calls: ExtractedCall[] = [];
 
-  for (const match of source.matchAll(HTTP_METHOD_REGEX)) {
+  for (const match of source.matchAll(AXIOS_CALL_METHOD_REGEX)) {
     const method = match[1] as ExtractedCall['method'];
     const after = source.slice(match.index! + match[0].length);
     const urlMatch = URL_LITERAL_REGEX.exec(after);
