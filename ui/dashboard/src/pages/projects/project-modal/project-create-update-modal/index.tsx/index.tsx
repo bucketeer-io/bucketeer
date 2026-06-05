@@ -176,7 +176,8 @@ const ProjectCreateUpdateModal = ({
                           field.onChange(value);
                           if (!projectDetail && !isUrlEdited.current) {
                             form.setValue('urlCode', onGenerateSlug(value), {
-                              shouldDirty: false
+                              shouldDirty: false,
+                              shouldValidate: true
                             });
                           }
                         }}
