@@ -281,7 +281,8 @@ describe('cache-invalidation-map: every @queries key is reachable', () => {
 
 describe('cache-invalidation-map: every axios instance installs the interceptor', () => {
   const AXIOS_CREATE_REGEX = /\baxios\.create\s*\(/;
-  const INSTALL_INTERCEPTOR_REGEX = /\binstallCacheInvalidationInterceptor\s*\(/;
+  const INSTALL_INTERCEPTOR_REGEX =
+    /\binstallCacheInvalidationInterceptor\s*\(/;
 
   const findAxiosInstanceFiles = (): string[] =>
     walk(API_ROOT)
