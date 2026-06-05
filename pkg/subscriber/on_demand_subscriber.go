@@ -201,7 +201,11 @@ func (s *onDemandSubscriber) subscribe(subscription chan struct{}) {
 			err := s.group.Wait()
 			if err != nil {
 				s.logger.Error("Failed while running pull messages", zap.Error(err))
-				s.alertFailure(err)
+				// Fire failure alert for opted-in consumers (see failureAlertSubscribers
+				// in pkg/subscriber/cmd/server/server.go). Skip on graceful shutdown.
+				if s.opts.failureAlerter != nil && s.ctx.Err() == nil {
+					s.opts.failureAlerter.NotifySubscriberFailure(s.name, err)
+				}
 			}
 			s.isRunning = false
 		case <-s.ctx.Done():
@@ -317,16 +321,6 @@ func (s *onDemandSubscriber) createPuller() error {
 	}
 
 	return fmt.Errorf("no pubsub client available")
-}
-
-// alertFailure sends a failure alert for this on-demand consumer, unless alerts
-// are disabled (no alerter configured) or the failure is caused by a graceful
-// shutdown (the context was canceled), which is not an actual failure.
-func (s *onDemandSubscriber) alertFailure(err error) {
-	if s.opts.failureAlerter == nil || s.ctx == nil || s.ctx.Err() != nil {
-		return
-	}
-	s.opts.failureAlerter.NotifySubscriberFailure(s.name, err)
 }
 
 func (s *onDemandSubscriber) Stop() {
