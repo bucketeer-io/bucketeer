@@ -235,7 +235,7 @@ const EnvironmentCreateUpdateModal = ({
         <FormLoading />
       ) : (
         <div className="w-full p-5">
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('form:general-info')}
           </p>
           <FormProvider {...form}>
@@ -349,7 +349,7 @@ const EnvironmentCreateUpdateModal = ({
               />
 
               <Divider className="mb-5" />
-              <h3 className="typo-head-bold-small text-gray-900">
+              <h3 className="typo-head-bold-small text-gray-900 dark:text-dark-gray-400">
                 {t(`form:env-settings`)}
               </h3>
               <Form.Field
@@ -371,7 +371,7 @@ const EnvironmentCreateUpdateModal = ({
               />
 
               <Divider className="my-5" />
-              <h3 className="typo-head-bold-small text-gray-900 mb-4">
+              <h3 className="typo-head-bold-small text-gray-900 dark:text-dark-gray-400 mb-4">
                 {t('form:flag-lifecycle')}
               </h3>
 
@@ -525,7 +525,7 @@ const EnvironmentCreateUpdateModal = ({
               {/* Spacer for fixed ButtonBar */}
               <div className="h-20" />
 
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button type="button" variant="secondary" onClick={onClose}>
