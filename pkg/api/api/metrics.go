@@ -25,12 +25,13 @@ import (
 const (
 	callerGatewayService = "GatewayService"
 
-	methodGetEvaluations  = "GetEvaluations"
-	methodGetEvaluation   = "GetEvaluation"
-	methodRegisterEvents  = "RegisterEvents"
-	methodTrack           = "Track"
-	methodGetFeatureFlags = "GetFeatureFlags"
-	methodGetSegmentUsers = "GetSegmentUsers"
+	methodGetEvaluations    = "GetEvaluations"
+	methodGetEvaluation     = "GetEvaluation"
+	methodStreamEvaluations = "StreamEvaluations"
+	methodRegisterEvents    = "RegisterEvents"
+	methodTrack             = "Track"
+	methodGetFeatureFlags   = "GetFeatureFlags"
+	methodGetSegmentUsers   = "GetSegmentUsers"
 
 	methodGetGoal    = "Goal"
 	methodListGoals  = "ListGoals"
@@ -349,6 +350,20 @@ var (
 			Name:      "api_cache_invalidation_total",
 			Help:      "Total number of in-memory cache invalidations triggered by domain events",
 		}, []string{"entity_type", "event_type", "environment_id"})
+	sseActiveConnectionsGauge = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "sse_active_connections",
+			Help:      "Current number of active SSE connections held in the stream dispatcher.",
+		}, []string{"environment_id", "tag"})
+	sseDispatchDroppedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "sse_dispatch_dropped_total",
+			Help:      "Total dispatched events dropped because a connection's buffer was full.",
+		}, []string{"environment_id", "tag"})
 )
 
 func registerMetrics(r metrics.Registerer) {
@@ -374,6 +389,8 @@ func registerMetrics(r metrics.Registerer) {
 			handledSecondsHistogram,
 			apiErrorCounter,
 			cacheInvalidationCounter,
+			sseActiveConnectionsGauge,
+			sseDispatchDroppedCounter,
 		)
 	})
 }
