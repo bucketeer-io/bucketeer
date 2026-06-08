@@ -59,7 +59,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const environment = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {environment.featureFlagCount}
           </div>
         );
@@ -74,7 +74,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {formatDateTime(environment.createdAt)}
               </div>
             }
