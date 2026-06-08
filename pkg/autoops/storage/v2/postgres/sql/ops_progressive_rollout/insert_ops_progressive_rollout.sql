@@ -1,0 +1,14 @@
+INSERT INTO ops_progressive_rollout (
+    id,
+    feature_id,
+    clause,
+    status,
+    stopped_by,
+    type,
+    stopped_at,
+    created_at,
+    updated_at,
+    environment_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+)

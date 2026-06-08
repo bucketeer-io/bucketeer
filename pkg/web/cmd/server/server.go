@@ -47,6 +47,9 @@ import (
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
 	autoopsapi "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	v2aos "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
+	autoopsmysql "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/mysql"
+	autoopspostgres "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/postgres"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -584,6 +587,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var environmentStorage v2es.EnvironmentStorage
 	var opsCountStorage v2os.OpsCountStorage
 	var codeRefStorage coderefstorage.CodeReferenceStorage
+	var autoOpsStorage v2aos.AutoOpsRuleStorage
+	var prStorage v2aos.ProgressiveRolloutStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -608,6 +613,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
 		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
 		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
+		autoOpsStorage = autoopspostgres.NewAutoOpsRuleStorage(postgresClient)
+		prStorage = autoopspostgres.NewProgressiveRolloutStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -625,6 +632,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
 		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
+		autoOpsStorage = autoopsmysql.NewAutoOpsRuleStorage(mysqlClient)
+		prStorage = autoopsmysql.NewProgressiveRolloutStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -837,7 +846,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
-		mysqlClient,
+		dbClient,
+		autoOpsStorage,
+		prStorage,
 		opsCountStorage,
 		featureStorage,
 		featureClient,

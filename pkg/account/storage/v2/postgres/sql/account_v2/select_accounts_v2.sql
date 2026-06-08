@@ -17,5 +17,8 @@ SELECT
     updated_at,
     last_seen,
     search_filters,
-    jsonb_array_length(environment_roles) as environment_count
+    CASE
+        WHEN jsonb_typeof(environment_roles) = 'array' THEN jsonb_array_length(environment_roles)
+        ELSE 0
+    END as environment_count
 FROM account_v2

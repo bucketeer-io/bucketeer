@@ -19,41 +19,20 @@ import (
 
 	prdomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 func executeStopProgressiveRolloutOperation(
 	ctx context.Context,
 	storage v2as.ProgressiveRolloutStorage,
-	featureIDs []interface{},
+	featureIDs []string,
 	environmentId string,
 	operation autoopsproto.ProgressiveRollout_StoppedBy,
 ) error {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		},
-	}
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "feature_id",
-			Values: featureIDs,
-		},
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		Orders:      nil,
-		InFilters:   inFilters,
-		NullFilters: nil,
-		JSONFilters: nil,
-		SearchQuery: nil,
-		Limit:       0,
-		Offset:      0,
-	}
-	list, _, _, err := storage.ListProgressiveRollouts(ctx, options)
+	list, _, _, err := storage.ListProgressiveRollouts(ctx, v2as.ListProgressiveRolloutsParams{
+		EnvironmentID: environmentId,
+		FeatureIDs:    featureIDs,
+	})
 	if err != nil {
 		return err
 	}

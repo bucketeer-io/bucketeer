@@ -17,24 +17,11 @@ package v2
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
-)
-
-var (
-	//go:embed sql/auto_ops_rule/insert_auto_ops_rule.sql
-	insertAutoOpsRuleSQL string
-	//go:embed sql/auto_ops_rule/update_auto_ops_rule.sql
-	updateAutoOpsRuleSQL string
-	//go:embed sql/auto_ops_rule/select_auto_ops_rule.sql
-	selectAutoOpsRuleSQL string
-	//go:embed sql/auto_ops_rule/select_auto_ops_rules.sql
-	selectAutoOpsRulesSQL string
 )
 
 var (
@@ -46,152 +33,22 @@ var (
 	)
 )
 
+// Shared list-query errors returned by AutoOpsRuleStorage implementations.
+var ErrInvalidCursor = errors.New("autoops/storage/v2: invalid cursor")
+
 type AutoOpsRuleStorage interface {
 	CreateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error
 	UpdateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error
 	GetAutoOpsRule(ctx context.Context, id, environmentId string) (*domain.AutoOpsRule, error)
 	ListAutoOpsRules(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListAutoOpsRulesParams,
 	) ([]*proto.AutoOpsRule, int, error)
 }
 
-type autoOpsRuleStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewAutoOpsRuleStorage(qe mysql.QueryExecer) AutoOpsRuleStorage {
-	return &autoOpsRuleStorage{qe: qe}
-}
-
-func (s *autoOpsRuleStorage) CreateAutoOpsRule(
-	ctx context.Context,
-	e *domain.AutoOpsRule,
-	environmentId string,
-) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertAutoOpsRuleSQL,
-		e.Id,
-		e.FeatureId,
-		int32(e.OpsType),
-		mysql.JSONObject{Val: e.Clauses},
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.Deleted,
-		int32(e.AutoOpsStatus),
-		environmentId,
-	)
-	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
-			return ErrAutoOpsRuleAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
-	ctx context.Context,
-	e *domain.AutoOpsRule,
-	environmentId string,
-) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateAutoOpsRuleSQL,
-		e.FeatureId,
-		int32(e.OpsType),
-		mysql.JSONObject{Val: e.Clauses},
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.Deleted,
-		int32(e.AutoOpsStatus),
-		e.Id,
-		environmentId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrAutoOpsRuleUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *autoOpsRuleStorage) GetAutoOpsRule(
-	ctx context.Context,
-	id, environmentId string,
-) (*domain.AutoOpsRule, error) {
-	autoOpsRule := proto.AutoOpsRule{}
-	var opsType int32
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectAutoOpsRuleSQL,
-		id,
-		environmentId,
-	).Scan(
-		&autoOpsRule.Id,
-		&autoOpsRule.FeatureId,
-		&opsType,
-		&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-		&autoOpsRule.CreatedAt,
-		&autoOpsRule.UpdatedAt,
-		&autoOpsRule.Deleted,
-		&autoOpsRule.AutoOpsStatus,
-		&autoOpsRule.FeatureName,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAutoOpsRuleNotFound
-		}
-		return nil, err
-	}
-	autoOpsRule.OpsType = proto.OpsType(opsType)
-	return &domain.AutoOpsRule{AutoOpsRule: &autoOpsRule}, nil
-}
-
-func (s *autoOpsRuleStorage) ListAutoOpsRules(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.AutoOpsRule, int, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAutoOpsRulesSQL, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer rows.Close()
-	autoOpsRules := make([]*proto.AutoOpsRule, 0)
-	for rows.Next() {
-		autoOpsRule := proto.AutoOpsRule{}
-		var opsType int32
-		err := rows.Scan(
-			&autoOpsRule.Id,
-			&autoOpsRule.FeatureId,
-			&opsType,
-			&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-			&autoOpsRule.CreatedAt,
-			&autoOpsRule.UpdatedAt,
-			&autoOpsRule.Deleted,
-			&autoOpsRule.AutoOpsStatus,
-			&autoOpsRule.FeatureName,
-		)
-		if err != nil {
-			return nil, 0, err
-		}
-		autoOpsRule.OpsType = proto.OpsType(opsType)
-		autoOpsRules = append(autoOpsRules, &autoOpsRule)
-	}
-	if rows.Err() != nil {
-		return nil, 0, err
-	}
-	var offset int
-	if options != nil {
-		offset = options.Offset
-	}
-	nextOffset := offset + len(autoOpsRules)
-	return autoOpsRules, nextOffset, nil
+type ListAutoOpsRulesParams struct {
+	EnvironmentID string
+	FeatureIDs    []string
+	PageSize      int
+	Cursor        string
 }
