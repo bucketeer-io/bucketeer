@@ -123,6 +123,6 @@
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-svgr": "^4.2.0",
     "vite-tsconfig-paths": "^5.0.1",
-    "vitest": "3.2.6"
+    "vitest": "4.1.0"
   }
 }
