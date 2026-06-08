@@ -12,39 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package v2
+package postgres
 
 import (
 	"context"
 	_ "embed"
 	"errors"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	operationaldatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
-
-var ErrExperimentResultNotFound = pkgErr.NewErrorNotFound(
-	pkgErr.EventCounterPackageName,
-	"experiment result not found",
-	"experiment_result")
 
 var (
 	//go:embed sql/select_experiment_result.sql
 	selectExperimentResultSQL string
 )
 
-type ExperimentResultStorage interface {
-	GetExperimentResult(ctx context.Context, id, environmentId string) (*domain.ExperimentResult, error)
-}
-
 type experimentResultStorage struct {
-	qe mysql.QueryExecer
+	qe postgres.QueryExecer
 }
 
-func NewExperimentResultStorage(qe mysql.QueryExecer) ExperimentResultStorage {
+func NewExperimentResultStorage(qe postgres.QueryExecer) operationaldatabase.ExperimentResultStorage {
 	return &experimentResultStorage{qe}
 }
 
@@ -63,11 +53,11 @@ func (s *experimentResultStorage) GetExperimentResult(
 		&er.Id,
 		&er.ExperimentId,
 		&er.UpdatedAt,
-		&mysql.JSONPBObject{Val: &erForGoalResults},
+		&postgres.JSONObject{Val: &erForGoalResults},
 	)
 	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrExperimentResultNotFound
+		if errors.Is(err, postgres.ErrNoRows) {
+			return nil, operationaldatabase.ErrExperimentResultNotFound
 		}
 		return nil, err
 	}

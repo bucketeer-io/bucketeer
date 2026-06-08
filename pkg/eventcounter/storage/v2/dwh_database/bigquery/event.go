@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package v2
+package bigquery
 
 import (
 	"context"
@@ -25,14 +24,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/iterator"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
-)
-
-const (
-	DataTypeEvaluationEvent = "evaluation_event"
-	DataTypeGoalEvent       = "goal_event"
 )
 
 var (
@@ -44,120 +38,37 @@ var (
 
 	//go:embed sql/goal_count.sql
 	goalCountSQL string
-
-	ErrBQUnexpectedMultipleResults = pkgErr.NewErrorInternal(
-		pkgErr.EventCounterPackageName,
-		"bigquery: unexpected multiple results")
-	ErrBQNoResultsFound = pkgErr.NewErrorInternal(
-		pkgErr.EventCounterPackageName,
-		"bigquery: no results found")
-
-	ErrMySQLUnexpectedMultipleResults = pkgErr.NewErrorInternal(
-		pkgErr.EventCounterPackageName,
-		"MySQL: unexpected multiple results")
-	ErrMySQLNoResultsFound = pkgErr.NewErrorInternal(
-		pkgErr.EventCounterPackageName,
-		"MySQL: no results found")
-
-	ErrPostgresUnexpectedMultipleResults = pkgErr.NewErrorInternal(
-		pkgErr.EventCounterPackageName,
-		"Postgres: unexpected multiple results")
-	ErrPostgresNoResultsFound = pkgErr.NewErrorInternal(
-		pkgErr.EventCounterPackageName,
-		"Postgres: no results found")
 )
 
-type EventStorage interface {
-	QueryEvaluationCount(
-		ctx context.Context,
-		environmentId string,
-		startAt, endAt time.Time,
-		featureID string,
-		featureVersion int32,
-	) ([]*EvaluationEventCount, error)
-	QueryGoalCount(
-		ctx context.Context,
-		environmentId string,
-		startAt, endAt time.Time,
-		goalID, featureID string,
-		featureVersion int32,
-	) ([]*GoalEventCount, error)
-	QueryUserEvaluation(
-		ctx context.Context,
-		environmentID, userID, featureID string,
-		featureVersion int32,
-		experimentStartAt, experimentEndAt time.Time,
-	) (*UserEvaluation, error)
-}
-
-type bigQueryEventStorage struct {
+type eventStorage struct {
 	querier bqquerier.Client
 	dataset string
 	logger  *zap.Logger
 }
 
-type EvaluationEventCount struct {
-	VariationID     string
-	EvaluationUser  int64
-	EvaluationTotal int64
-}
-
-type GoalEventCount struct {
-	VariationID       string
-	GoalUser          int64
-	GoalTotal         int64
-	GoalValueTotal    float64
-	GoalValueMean     float64
-	GoalValueVariance float64
-}
-
-type UserEvaluation struct {
-	UserID         string
-	FeatureID      string
-	FeatureVersion int32
-	VariationID    string
-	Reason         string
-	Timestamp      int64
-}
-
-func NewBigQueryEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
-	return &bigQueryEventStorage{
+func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) dwhdatabase.EventStorage {
+	return &eventStorage{
 		querier: querier,
 		dataset: dataset,
-		logger:  logger.Named("storage"),
+		logger:  logger.Named("bigquery-event-storage"),
 	}
 }
 
-func (es *bigQueryEventStorage) QueryEvaluationCount(
+func (es *eventStorage) QueryEvaluationCount(
 	ctx context.Context,
 	environmentId string,
 	startAt, endAt time.Time,
 	featureID string,
 	featureVersion int32,
-) ([]*EvaluationEventCount, error) {
-	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
+) ([]*dwhdatabase.EvaluationEventCount, error) {
+	datasource := fmt.Sprintf("%s.%s", es.dataset, dwhdatabase.DataTypeEvaluationEvent)
 	query := fmt.Sprintf(evaluationCountSQL, datasource)
 	params := []bigquery.QueryParameter{
-		{
-			Name:  "environmentId",
-			Value: environmentId,
-		},
-		{
-			Name:  "startAt",
-			Value: startAt,
-		},
-		{
-			Name:  "endAt",
-			Value: endAt,
-		},
-		{
-			Name:  "featureID",
-			Value: featureID,
-		},
-		{
-			Name:  "featureVersion",
-			Value: featureVersion,
-		},
+		{Name: "environmentId", Value: environmentId},
+		{Name: "startAt", Value: startAt},
+		{Name: "endAt", Value: endAt},
+		{Name: "featureID", Value: featureID},
+		{Name: "featureVersion", Value: featureVersion},
 	}
 	es.logger.Debug("Query evaluation count",
 		zap.String("query", query),
@@ -175,9 +86,9 @@ func (es *bigQueryEventStorage) QueryEvaluationCount(
 		)
 		return nil, err
 	}
-	rows := make([]*EvaluationEventCount, 0, iter.TotalRows)
+	rows := make([]*dwhdatabase.EvaluationEventCount, 0, iter.TotalRows)
 	for {
-		var row EvaluationEventCount
+		var row dwhdatabase.EvaluationEventCount
 		err := iter.Next(&row)
 		if err == iterator.Done {
 			break
@@ -198,40 +109,22 @@ func (es *bigQueryEventStorage) QueryEvaluationCount(
 	return rows, nil
 }
 
-func (es *bigQueryEventStorage) QueryGoalCount(
+func (es *eventStorage) QueryGoalCount(
 	ctx context.Context,
 	environmentId string,
 	startAt, endAt time.Time,
 	goalID, featureID string,
 	featureVersion int32,
-) ([]*GoalEventCount, error) {
-	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeGoalEvent)
+) ([]*dwhdatabase.GoalEventCount, error) {
+	datasource := fmt.Sprintf("%s.%s", es.dataset, dwhdatabase.DataTypeGoalEvent)
 	query := fmt.Sprintf(goalCountSQL, datasource)
 	params := []bigquery.QueryParameter{
-		{
-			Name:  "environmentId",
-			Value: environmentId,
-		},
-		{
-			Name:  "startAt",
-			Value: startAt,
-		},
-		{
-			Name:  "endAt",
-			Value: endAt,
-		},
-		{
-			Name:  "goalID",
-			Value: goalID,
-		},
-		{
-			Name:  "featureID",
-			Value: featureID,
-		},
-		{
-			Name:  "featureVersion",
-			Value: featureVersion,
-		},
+		{Name: "environmentId", Value: environmentId},
+		{Name: "startAt", Value: startAt},
+		{Name: "endAt", Value: endAt},
+		{Name: "goalID", Value: goalID},
+		{Name: "featureID", Value: featureID},
+		{Name: "featureVersion", Value: featureVersion},
 	}
 	es.logger.Debug("query goal count",
 		zap.String("query", query),
@@ -249,9 +142,9 @@ func (es *bigQueryEventStorage) QueryGoalCount(
 		)
 		return nil, err
 	}
-	rows := make([]*GoalEventCount, 0, iter.TotalRows)
+	rows := make([]*dwhdatabase.GoalEventCount, 0, iter.TotalRows)
 	for {
-		var row GoalEventCount
+		var row dwhdatabase.GoalEventCount
 		err := iter.Next(&row)
 		if err == iterator.Done {
 			break
@@ -272,39 +165,21 @@ func (es *bigQueryEventStorage) QueryGoalCount(
 	return rows, nil
 }
 
-func (es *bigQueryEventStorage) QueryUserEvaluation(
+func (es *eventStorage) QueryUserEvaluation(
 	ctx context.Context,
 	environmentID, userID, featureID string,
 	featureVersion int32,
 	experimentStartAt, experimentEndAt time.Time,
-) (*UserEvaluation, error) {
-	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
+) (*dwhdatabase.UserEvaluation, error) {
+	datasource := fmt.Sprintf("%s.%s", es.dataset, dwhdatabase.DataTypeEvaluationEvent)
 	query := fmt.Sprintf(userEvaluationSQL, datasource)
 	params := []bigquery.QueryParameter{
-		{
-			Name:  "environmentId",
-			Value: environmentID,
-		},
-		{
-			Name:  "userId",
-			Value: userID,
-		},
-		{
-			Name:  "featureId",
-			Value: featureID,
-		},
-		{
-			Name:  "featureVersion",
-			Value: featureVersion,
-		},
-		{
-			Name:  "experimentStartAt",
-			Value: experimentStartAt,
-		},
-		{
-			Name:  "experimentEndAt",
-			Value: experimentEndAt,
-		},
+		{Name: "environmentId", Value: environmentID},
+		{Name: "userId", Value: userID},
+		{Name: "featureId", Value: featureID},
+		{Name: "featureVersion", Value: featureVersion},
+		{Name: "experimentStartAt", Value: experimentStartAt},
+		{Name: "experimentEndAt", Value: experimentEndAt},
 	}
 	es.logger.Debug("Query user evaluation",
 		zap.String("query", query),
@@ -323,13 +198,11 @@ func (es *bigQueryEventStorage) QueryUserEvaluation(
 		return nil, err
 	}
 
-	// Check if there are unexpected multiple rows
 	if iter.TotalRows > 1 {
-		return nil, ErrBQUnexpectedMultipleResults
+		return nil, dwhdatabase.ErrBQUnexpectedMultipleResults
 	}
 
-	// Retrieve the single expected row
-	var row UserEvaluation
+	var row dwhdatabase.UserEvaluation
 	err = iter.Next(&row)
 	if err == iterator.Done {
 		es.logger.Error(
@@ -340,7 +213,7 @@ func (es *bigQueryEventStorage) QueryUserEvaluation(
 				zap.Any("params", params),
 			)...,
 		)
-		return nil, ErrBQNoResultsFound
+		return nil, dwhdatabase.ErrBQNoResultsFound
 	}
 	if err != nil {
 		es.logger.Error(
