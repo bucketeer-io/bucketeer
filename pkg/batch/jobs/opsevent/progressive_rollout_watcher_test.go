@@ -37,7 +37,7 @@ import (
 )
 
 func TestNewProgressiveRolloutWacher(t *testing.T) {
-	w := NewProgressiveRolloutWacher(nil, nil, nil, nil)
+	w := NewProgressiveRolloutWatcher(nil, nil, nil, nil)
 	assert.IsType(t, &progressiveRolloutWatcher{}, w)
 }
 

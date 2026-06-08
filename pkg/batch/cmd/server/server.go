@@ -596,7 +596,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		opsevent.NewProgressiveRolloutWacher(
+		opsevent.NewProgressiveRolloutWatcher(
 			environmentClient,
 			autoOpsClient,
 			progressiveRolloutExecutor,
