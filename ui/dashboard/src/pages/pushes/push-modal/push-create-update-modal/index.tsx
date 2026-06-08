@@ -2,8 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushCreator, PushResponse, pushUpdater, TagChange } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidatePushes } from '@queries/pushes';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
 import { ID_NEW } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -71,7 +69,6 @@ const PushCreateUpdateModal = ({
   onClose
 }: PushCreateUpdateModalProps) => {
   const { consoleAccount } = useAuth();
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const [files, setFiles] = useState<File[]>([]);
@@ -184,7 +181,6 @@ const PushCreateUpdateModal = ({
               action: t('updated')
             })
           });
-          invalidatePushes(queryClient);
           onClose();
         }
       } catch (error) {

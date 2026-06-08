@@ -45,9 +45,3 @@ export const prefetchTriggers = (
     ...queryOptions
   });
 };
-
-export const invalidateTriggers = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [TRIGGERS_KEY]
-  });
-};

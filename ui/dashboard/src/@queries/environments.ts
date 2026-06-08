@@ -11,6 +11,7 @@ type QueryOptions = QueryOptionsRespond<EnvironmentCollection> & {
 };
 
 export const ENVIRONMENTS_QUERY_KEY = 'environments';
+export const ENVIRONMENTS_MULTIPLE_IDS_QUERY_KEY = 'environments-multiple-ids';
 
 export const useQueryEnvironments = (options?: QueryOptions) => {
   const { params, ...queryOptions } = options || {};
@@ -26,7 +27,7 @@ export const useQueryEnvironments = (options?: QueryOptions) => {
 
 export const useEnvironmentsMultiIds = (ids: string[], enabled?: boolean) => {
   return useQuery({
-    queryKey: ['environments-multiple-ids', ids],
+    queryKey: [ENVIRONMENTS_MULTIPLE_IDS_QUERY_KEY, ids],
     queryFn: async () => {
       return Promise.all(ids.map(id => environmentFetcher({ id })));
     },
@@ -57,11 +58,5 @@ export const prefetchEnvironments = (
       return environmentsFetcher(params);
     },
     ...queryOptions
-  });
-};
-
-export const invalidateEnvironments = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [ENVIRONMENTS_QUERY_KEY]
   });
 };

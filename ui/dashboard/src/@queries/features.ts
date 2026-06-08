@@ -45,9 +45,3 @@ export const prefetchFeatures = (
     ...queryOptions
   });
 };
-
-export const invalidateFeatures = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [FEATURES_QUERY_KEY]
-  });
-};

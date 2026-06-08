@@ -1,8 +1,5 @@
 import { Trans } from 'react-i18next';
-import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
 import { useExecuteScheduledFlagChange } from '@queries/scheduled-flag-changes';
-import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { ScheduledFlagChange } from '@types';
@@ -20,7 +17,6 @@ interface ApplyNowDialogProps {
 const ApplyNowDialog = ({ schedule, isOpen, onClose }: ApplyNowDialogProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
   const executeMutation = useExecuteScheduledFlagChange();
 
   const handleConfirm = async () => {
@@ -32,8 +28,6 @@ const ApplyNowDialog = ({ schedule, isOpen, onClose }: ApplyNowDialogProps) => {
       notify({
         message: t('form:feature-flags.schedule-applied-now')
       });
-      invalidateFeature(queryClient);
-      invalidateFeatures(queryClient);
       onClose();
     } catch (error) {
       errorNotify(error);

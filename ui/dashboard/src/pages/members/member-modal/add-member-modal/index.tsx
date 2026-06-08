@@ -10,9 +10,7 @@ import {
   EnvironmentRoleItem
 } from '@api/account/account-creator';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAccounts } from '@queries/accounts';
-import { invalidateTeams, useQueryTeams } from '@queries/teams';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryTeams } from '@queries/teams';
 import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -105,7 +103,6 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { consoleAccount } = useAuth();
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify, errorNotify } = useToast();
   const { organizationRoles } = useOptions();
@@ -186,8 +183,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             action: t('created')
           })
         });
-        invalidateAccounts(queryClient);
-        invalidateTeams(queryClient);
         onClose();
       })
       .catch(error => errorNotify(error));

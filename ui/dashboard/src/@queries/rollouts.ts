@@ -48,9 +48,3 @@ export const prefetchRollouts = (
     ...queryOptions
   });
 };
-
-export const invalidateRollouts = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [ROLLOUTS_KEY]
-  });
-};

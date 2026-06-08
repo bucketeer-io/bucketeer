@@ -2,17 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import {
-  invalidateFeature,
-  updateFeatureCache
-} from '@queries/feature-details';
-import { invalidateFeatures, useQueryFeatures } from '@queries/features';
+import { updateFeatureCache } from '@queries/feature-details';
+import { useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
 import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
-import {
-  invalidateUserSegments,
-  useQueryUserSegments
-} from '@queries/user-segments';
+import { useQueryUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
@@ -779,9 +773,6 @@ const TargetingPage = ({
                 { id: feature.id, environmentId: currentEnvironment.id },
                 updatedFeature
               );
-              invalidateFeature(queryClient);
-              invalidateFeatures(queryClient);
-              invalidateUserSegments(queryClient);
               reset(handleCreateDefaultValues(updatedFeature));
               setTrackedFeature(cloneDeep(updatedFeature));
               onCloseConfirmModal();

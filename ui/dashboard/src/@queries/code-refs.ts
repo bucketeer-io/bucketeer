@@ -45,9 +45,3 @@ export const prefetchCodeRefs = (
     ...queryOptions
   });
 };
-
-export const invalidateCodeRefs = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [CODE_REFS_KEY]
-  });
-};

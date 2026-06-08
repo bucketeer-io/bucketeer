@@ -40,5 +40,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Lint
         run: yarn style:all
+      - name: Test
+        run: yarn test
       - name: Build
         run: yarn build

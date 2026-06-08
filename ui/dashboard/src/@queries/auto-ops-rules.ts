@@ -45,9 +45,3 @@ export const prefetchAutoOpsRules = (
     ...queryOptions
   });
 };
-
-export const invalidateAutoOpsRules = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [AUTO_OPS_RULES_KEY]
-  });
-};

@@ -2,9 +2,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAccounts, useQueryAccounts } from '@queries/accounts';
-import { invalidateOrganizationDetails } from '@queries/organization-details';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryAccounts } from '@queries/accounts';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -38,7 +36,6 @@ const OrganizationSettings = ({
   organization: Organization;
 }) => {
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const params = useParams();
   const orgDetailsId = params.organizationId!;
@@ -69,8 +66,6 @@ const OrganizationSettings = ({
         description: values.description
       });
       if (resp) {
-        invalidateOrganizationDetails(queryClient, { id: orgDetailsId });
-        invalidateAccounts(queryClient);
         notify({
           message: t('message:collection-action-success', {
             collection: t('organization'),

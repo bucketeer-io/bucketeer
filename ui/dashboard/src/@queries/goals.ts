@@ -45,9 +45,3 @@ export const prefetchGoals = (
     ...queryOptions
   });
 };
-
-export const invalidateGoals = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [GOALS_QUERY_KEY]
-  });
-};

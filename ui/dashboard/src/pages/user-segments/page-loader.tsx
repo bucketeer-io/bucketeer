@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { userSegmentBulkDownload } from '@api/user-segment';
 import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
 import { useQueryUserSegment } from '@queries/user-segment-details';
-import { invalidateUserSegments } from '@queries/user-segments';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -60,7 +59,6 @@ const PageLoader = () => {
   });
 
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (selectedSegment: UserSegment) => {
@@ -72,7 +70,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseDeleteModal();
-      invalidateUserSegments(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.segment'),

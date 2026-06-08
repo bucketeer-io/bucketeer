@@ -45,9 +45,3 @@ export const prefetchAutoOpsCount = (
     ...queryOptions
   });
 };
-
-export const invalidateAutoOpsCount = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [AUTO_OPS_COUNT_KEY]
-  });
-};

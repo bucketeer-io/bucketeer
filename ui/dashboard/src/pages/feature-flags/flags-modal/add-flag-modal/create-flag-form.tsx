@@ -3,9 +3,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureCreator } from '@api/features/feature-creator';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { getDefaultYamlValue } from 'constants/feature-flag';
 import { useToast } from 'hooks';
@@ -73,7 +71,7 @@ const CreateFlagForm = ({
   const formSchema = useFormSchema(createFlagFormSchema);
   const { flagTypeOptions } = useOptions();
   const refFormModel = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
+  const isFlagIdEdited = useRef(false);
   const isJapaneseLanguage = getLanguage() === Language.JAPANESE;
 
   const { t } = useTranslation(['common', 'form', 'message']);
@@ -194,7 +192,6 @@ const CreateFlagForm = ({
             action: t('created')
           })
         });
-        invalidateFeatures(queryClient);
         onCompleted?.(resp.feature);
         onClose();
       }
@@ -235,14 +232,13 @@ const CreateFlagForm = ({
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       onChange={value => {
-                        const isFlagIdDirty =
-                          form.getFieldState('flagId').isDirty;
-                        const flagId = form.getValues('flagId');
                         field.onChange(value);
-                        form.setValue(
-                          'flagId',
-                          isFlagIdDirty ? flagId : onGenerateSlug(value)
-                        );
+                        if (!isFlagIdEdited.current) {
+                          form.setValue('flagId', onGenerateSlug(value), {
+                            shouldDirty: false,
+                            shouldValidate: true
+                          });
+                        }
                       }}
                       name="flag-name"
                     />
@@ -275,6 +271,11 @@ const CreateFlagForm = ({
                       placeholder={`${t('form:feature-flags.placeholder-flag')}`}
                       {...field}
                       name="flag-id"
+                      autoComplete="off"
+                      onChange={value => {
+                        isFlagIdEdited.current = value !== '';
+                        field.onChange(value);
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />

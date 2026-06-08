@@ -11,14 +11,9 @@ import {
   experimentUpdater
 } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import {
-  invalidateExperimentDetails,
-  useQueryExperimentDetails
-} from '@queries/experiment-details';
-import { invalidateExperiments } from '@queries/experiments';
+import { useQueryExperimentDetails } from '@queries/experiment-details';
 import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
@@ -109,7 +104,6 @@ const ExperimentCreateUpdateModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
-  const queryClient = useQueryClient();
 
   const [
     isOpenCreateGoalModal,
@@ -292,11 +286,6 @@ const ExperimentCreateUpdateModal = ({
               collection: t('common:source-type.experiment'),
               action: t(isEdit ? 'common:updated' : 'common:created')
             })
-          });
-          invalidateExperiments(queryClient);
-          invalidateExperimentDetails(queryClient, {
-            id: experimentId as string,
-            environmentId: currentEnvironment.id
           });
           onClose();
         }

@@ -48,9 +48,3 @@ export const prefetchScheduleFlags = (
     ...queryOptions
   });
 };
-
-export const invalidateScheduleFlags = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [SCHEDULE_FLAGS_QUERY_KEY]
-  });
-};

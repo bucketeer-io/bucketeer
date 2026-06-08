@@ -2,8 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useParams } from 'react-router';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
-import { invalidateEnvironments } from '@queries/environments';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import {
   PAGE_PATH_ENVIRONMENTS,
@@ -25,7 +24,6 @@ const ProjectEnvironments = ({
   organizationId: string;
 }) => {
   const { t } = useTranslation(['common', 'table']);
-  const queryClient = useQueryClient();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const params = useParams();
   const { consoleAccount, onMeFetcher } = useAuth();
@@ -59,7 +57,6 @@ const ProjectEnvironments = ({
     onSuccess: async () => {
       await onMeFetcher({ organizationId: currentEnvironment.organizationId });
       onCloseConfirmModal();
-      invalidateEnvironments(queryClient);
       mutation.reset();
     }
   });

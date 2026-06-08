@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
-import { invalidateGoals } from '@queries/goals';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
@@ -19,7 +18,6 @@ import { GoalActions } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table', 'message']);
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -64,7 +62,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseDeleteModal();
-      invalidateGoals(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
@@ -86,7 +83,6 @@ const PageLoader = () => {
     },
     onSuccess: () => {
       onCloseConfirmModal();
-      invalidateGoals(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),

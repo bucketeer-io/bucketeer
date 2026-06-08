@@ -1,14 +1,8 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { projectCreator, ProjectResponse, projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateOrganizations } from '@queries/organizations';
-import {
-  invalidateProjectDetails,
-  useQueryProjectDetails
-} from '@queries/project-details';
-import { invalidateProjects } from '@queries/projects';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryProjectDetails } from '@queries/project-details';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -59,7 +53,7 @@ const ProjectCreateUpdateModal = ({
   isOpen,
   onClose
 }: ProjectCreateUpdateModalProps) => {
-  const queryClient = useQueryClient();
+  const isUrlEdited = useRef(false);
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
@@ -121,10 +115,6 @@ const ProjectCreateUpdateModal = ({
             description: values.description,
             name: values.name
           });
-          invalidateProjectDetails(queryClient, {
-            id: projectDetail?.id,
-            organizationId: projectDetail?.organizationId
-          });
         } else {
           resp = await projectCreator({
             ...values,
@@ -133,8 +123,6 @@ const ProjectCreateUpdateModal = ({
         }
 
         if (resp) {
-          invalidateProjects(queryClient);
-          invalidateOrganizations(queryClient);
           notify({
             message: t('message:collection-action-success', {
               collection: t('project'),
@@ -186,15 +174,11 @@ const ProjectCreateUpdateModal = ({
                         {...field}
                         onChange={value => {
                           field.onChange(value);
-
-                          if (!projectDetail) {
-                            const isUrlCodeDirty =
-                              form.getFieldState('urlCode').isDirty;
-                            const urlCode = form.getValues('urlCode');
-                            form.setValue(
-                              'urlCode',
-                              isUrlCodeDirty ? urlCode : onGenerateSlug(value)
-                            );
+                          if (!projectDetail && !isUrlEdited.current) {
+                            form.setValue('urlCode', onGenerateSlug(value), {
+                              shouldDirty: false,
+                              shouldValidate: true
+                            });
                           }
                         }}
                         name="project-name"
@@ -229,10 +213,16 @@ const ProjectCreateUpdateModal = ({
                     </Form.Label>
                     <Form.Control>
                       <Input
+                        {...field}
                         value={field.value}
                         placeholder={`${t('form:placeholder-code')}`}
                         disabled={!!projectDetail || disabled}
                         name="project-code"
+                        autoComplete="off"
+                        onChange={value => {
+                          isUrlEdited.current = value !== '';
+                          field.onChange(value);
+                        }}
                       />
                     </Form.Control>
                     <Form.Message />

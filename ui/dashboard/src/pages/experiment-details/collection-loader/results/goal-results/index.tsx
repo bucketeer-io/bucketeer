@@ -1,10 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { featureUpdater } from '@api/features';
-import { invalidateExperimentDetails } from '@queries/experiment-details';
-import { invalidateExperimentResultDetails } from '@queries/experiment-result';
-import { invalidateFeature } from '@queries/feature-details';
-import { useQueryClient } from '@tanstack/react-query';
 import { useToast, useToggleOpen } from 'hooks';
 import { Experiment, Feature, GoalResult, StrategyType } from '@types';
 import { getData, getTimeSeries } from 'utils/chart';
@@ -51,7 +47,6 @@ const GoalResultItem = ({
   const conversionRateChartRef = useRef<ChartToggleLegendRef>(null);
   const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
 
   const [conversionRateDataSets, setConversionRateDataSets] = useState<
     DatasetReduceType[]
@@ -101,15 +96,6 @@ const GoalResultItem = ({
                 collection: t('rollout-variant'),
                 action: t('updated')
               })
-            });
-            invalidateFeature(queryClient);
-            invalidateExperimentDetails(queryClient, {
-              environmentId,
-              id: experiment.id
-            });
-            invalidateExperimentResultDetails(queryClient, {
-              environmentId,
-              experimentId: experiment.id
             });
             onCloseRolloutVariant();
           }

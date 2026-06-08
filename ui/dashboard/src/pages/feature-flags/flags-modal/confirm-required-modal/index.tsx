@@ -5,10 +5,7 @@ import { useNavigate } from 'react-router';
 import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import {
   PAGE_PATH_FEATURE_AUTOOPS,
@@ -53,7 +50,6 @@ const ConfirmationRequiredModal = ({
 }: ConfirmationRequiredModalProps) => {
   const { t } = useTranslation(['common', 'form', 'table', 'message']);
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -164,8 +160,6 @@ const ConfirmationRequiredModal = ({
               />
             )
           });
-          invalidateFeatures(queryClient);
-          invalidateFeature(queryClient);
           onClose();
         }
       } catch (error) {

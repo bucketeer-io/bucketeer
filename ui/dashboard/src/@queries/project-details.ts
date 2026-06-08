@@ -10,12 +10,12 @@ type QueryOptions = QueryOptionsRespond<ProjectDetailsResponse> & {
   params?: ProjectDetailsFetcherParams;
 };
 
-export const ORGANIZATION_DETAILS_QUERY_KEY = 'project-details';
+export const PROJECT_DETAILS_QUERY_KEY = 'project-details';
 
 export const useQueryProjectDetails = (options?: QueryOptions) => {
   const { params, ...queryOptions } = options || {};
   const query = useQuery({
-    queryKey: [ORGANIZATION_DETAILS_QUERY_KEY, params],
+    queryKey: [PROJECT_DETAILS_QUERY_KEY, params],
     queryFn: async () => {
       return projectDetailsFetcher(params);
     },
@@ -28,7 +28,7 @@ export const usePrefetchProjectDetails = (options?: QueryOptions) => {
   const { params, ...queryOptions } = options || {};
   const queryClient = useQueryClient();
   queryClient.prefetchQuery({
-    queryKey: [ORGANIZATION_DETAILS_QUERY_KEY, params],
+    queryKey: [PROJECT_DETAILS_QUERY_KEY, params],
     queryFn: async () => {
       return projectDetailsFetcher(params);
     },
@@ -42,19 +42,10 @@ export const prefetchProjectDetails = (
 ) => {
   const { params, ...queryOptions } = options || {};
   queryClient.prefetchQuery({
-    queryKey: [ORGANIZATION_DETAILS_QUERY_KEY, params],
+    queryKey: [PROJECT_DETAILS_QUERY_KEY, params],
     queryFn: async () => {
       return projectDetailsFetcher(params);
     },
     ...queryOptions
-  });
-};
-
-export const invalidateProjectDetails = (
-  queryClient: QueryClient,
-  params: ProjectDetailsFetcherParams
-) => {
-  queryClient.invalidateQueries({
-    queryKey: [ORGANIZATION_DETAILS_QUERY_KEY, params]
   });
 };

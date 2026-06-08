@@ -48,9 +48,3 @@ export const prefetchNotifications = (
     ...queryOptions
   });
 };
-
-export const invalidateNotifications = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [NOTIFICATIONS_QUERY_KEY]
-  });
-};

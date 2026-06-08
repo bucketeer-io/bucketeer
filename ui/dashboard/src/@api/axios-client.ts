@@ -3,6 +3,7 @@ import type { AxiosInstance } from 'axios';
 import { urls } from 'configs';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { refreshTokenFetcher } from './auth';
+import { installCacheInvalidationInterceptor } from './cache-invalidation-interceptor';
 
 let isRefreshing = false;
 
@@ -22,6 +23,8 @@ axiosClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+installCacheInvalidationInterceptor(axiosClient);
 
 axiosClient.interceptors.response.use(
   response => response,
