@@ -782,7 +782,7 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		opsevent.NewProgressiveRolloutWacher(
+		opsevent.NewProgressiveRolloutWatcher(
 			environmentMockClient,
 			autoOpsRulesMockClient,
 			mockProgressiveRolloutExecutor,

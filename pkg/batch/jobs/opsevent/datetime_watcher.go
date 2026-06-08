@@ -66,6 +66,11 @@ func NewDatetimeWatcher(
 }
 
 func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobDatetimeWatcher, lastErr, time.Since(startTime))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
 	envs, err := w.listEnvironments(ctx)

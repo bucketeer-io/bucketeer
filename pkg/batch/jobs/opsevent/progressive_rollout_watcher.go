@@ -40,7 +40,7 @@ type progressiveRolloutWatcher struct {
 	logger                     *zap.Logger
 }
 
-func NewProgressiveRolloutWacher(
+func NewProgressiveRolloutWatcher(
 	envClient envclient.Client,
 	aoClient aoclient.Client,
 	progressiveRolloutExecutor executor.ProgressiveRolloutExecutor,
@@ -67,6 +67,11 @@ func NewProgressiveRolloutWacher(
 func (w *progressiveRolloutWatcher) Run(
 	ctx context.Context,
 ) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobProgressiveRolloutWatcher, lastErr, time.Since(startTime))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
 	environments, err := w.listEnvironments(ctx)
