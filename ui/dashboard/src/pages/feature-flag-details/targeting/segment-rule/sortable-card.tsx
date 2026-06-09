@@ -81,14 +81,14 @@ export const CardContent = ({
         <div className="flex items-center gap-x-2">
           {segmentRules.length > 1 && (
             <div
-              className="flex-center cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none"
+              className="flex-center cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-dark-gray-200 dark:hover:text-dark-gray-400 touch-none"
               {...dragHandleProps?.attributes}
               {...dragHandleProps?.listeners}
             >
               <GripVertical size={16} />
             </div>
           )}
-          <p className="typo-para-medium leading-5 text-gray-700">
+          <p className="typo-para-medium leading-5 text-gray-700 dark:text-dark-gray-400">
             <Trans
               i18nKey={'table:feature-flags.rule-index'}
               values={{ index: (displayIndex ?? segmentIndex) + 1 }}
@@ -109,7 +109,7 @@ export const CardContent = ({
         <div className="flex items-center gap-x-2">
           {editSegmentRule(segmentIndex) && (
             <div
-              className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+              className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800 dark:border-dark-black-700 dark:hover:border-dark-purple-300"
               onClick={() =>
                 handleDiscardChanges(DiscardChangesType.CUSTOM, segmentIndex)
               }
@@ -117,7 +117,7 @@ export const CardContent = ({
               <Icon
                 icon={IconUndoOutlined}
                 size={'sm'}
-                className="flex-center text-gray-500 group-hover:text-gray-700"
+                className="flex-center text-gray-500 group-hover:text-gray-700 dark:text-dark-gray-200 dark:group-hover:text-dark-gray-400"
               />
             </div>
           )}
@@ -133,7 +133,7 @@ export const CardContent = ({
                   <Icon
                     icon={IconArrowDownwardFilled}
                     size={'sm'}
-                    className="text-gray-500 group-hover:text-gray-700"
+                    className="text-gray-500 group-hover:text-gray-700 dark:text-dark-gray-200 dark:group-hover:text-dark-gray-400"
                   />
                 </div>
               )}
@@ -147,7 +147,7 @@ export const CardContent = ({
                   <Icon
                     icon={IconArrowUpwardFilled}
                     size={'sm'}
-                    className="text-gray-500 group-hover:text-gray-700"
+                    className="text-gray-500 group-hover:text-gray-700 dark:text-dark-gray-200 dark:group-hover:text-dark-gray-400"
                   />
                 </div>
               )}
@@ -160,7 +160,7 @@ export const CardContent = ({
             <Icon
               icon={IconClose}
               size={'sm'}
-              className="flex-center text-gray-500 group-hover:text-gray-700"
+              className="flex-center text-gray-500 group-hover:text-gray-700 dark:text-dark-gray-200 dark:group-hover:text-dark-gray-400"
             />
           </div>
         </div>
@@ -254,7 +254,7 @@ const SortableCard = ({
     <div ref={setNodeRef} style={style} className="flex flex-col w-full">
       {isDragging ? (
         <div
-          className="flex items-center justify-center gap-x-2 w-full rounded-lg border-2 border-dashed border-primary-500 bg-primary-50 text-primary-500"
+          className="flex items-center justify-center gap-x-2 w-full rounded-lg border-2 border-dashed border-primary-500 bg-primary-50 text-primary-500 dark:border-dark-purple-300 dark:bg-dark-purple-100 dark:text-dark-purple-700"
           style={{ height: ghostHeight ?? undefined }}
         >
           <Icon icon={IconDropZone} className="w-[120px] h-[120px]" />

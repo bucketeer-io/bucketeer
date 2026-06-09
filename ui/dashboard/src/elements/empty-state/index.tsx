@@ -50,7 +50,7 @@ const EmptyStateRoot = ({
 const EmptyStateIllustration = () => {
   const { variant } = useEmptyState();
 
-  const imgClass = 'w-fit dark:[filter:brightness(0.4)_saturate(2.5)]';
+  const imgClass = 'w-fit dark:[filter:brightness(0.3)_saturate(2.5)]';
 
   switch (variant) {
     case 'error':

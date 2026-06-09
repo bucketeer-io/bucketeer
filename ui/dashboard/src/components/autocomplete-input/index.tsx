@@ -91,15 +91,15 @@ const AutocompleteInput = ({
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        className="border border-gray-400 p-2 typo-para-medium w-full px-4 py-[11px] text-gray-700"
+        className="border border-gray-400 dark:border-dark-purple-100 dark:bg-dark-black-900 p-2 typo-para-medium w-full px-4 py-[11px] text-gray-700 dark:text-dark-gray-300"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute p-1 max-h-[252px] bg-white border rounded-lg w-full shadow-dropdown overflow-x-hidden overflow-y-auto small-scroll mt-1 z-10">
+        <ul className="absolute p-1 max-h-[252px] bg-white dark:bg-dark-black-800 border dark:border-dark-black-700 rounded-lg w-full shadow-dropdown dark:shadow-dark-card overflow-x-hidden overflow-y-auto small-scroll mt-1 z-10">
           {suggestions.map((suggestion, index) => (
             <li
               key={index}
               onMouseDown={() => handleSelect(suggestion)}
-              className="p-2 hover:bg-gray-100 cursor-pointer rounded-md typo-para-medium text-gray-700"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-dark-black-700 cursor-pointer rounded-md typo-para-medium text-gray-700 dark:text-dark-gray-300"
             >
               {suggestion}
             </li>

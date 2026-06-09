@@ -48,7 +48,7 @@ const CancelScheduleDialog = ({
     >
       <div className="flex flex-col w-full items-center px-5 py-8 gap-y-6">
         <IconCalendarCancel />
-        <p className="typo-para-big text-gray-700 text-center">
+        <p className="typo-para-big text-gray-700 dark:text-dark-gray-300 text-center">
           <Trans
             i18nKey="form:feature-flags.cancel-schedule-confirm"
             values={{ datetime: formatScheduledDate(schedule.scheduledAt) }}
