@@ -63,7 +63,9 @@ const EnvironmentRoles = ({
 
   return (
     <>
-      <p className="text-gray-800 typo-head-bold-small">{t('environment')}</p>
+      <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
+        {t('environment')}
+      </p>
       <Button
         onClick={onAddEnvironment}
         variant="text"
