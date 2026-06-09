@@ -6,7 +6,7 @@ const UploadMessage = ({ maxFileSize }: { maxFileSize: number }) => {
   const { t } = useTranslation(['form']);
   return (
     <UploadZone color="positive">
-      <div className="flex-center flex-col gap-y-2 typo-para-small text-gray-600 mt-3">
+      <div className="flex-center flex-col gap-y-2 typo-para-small text-gray-600 dark:text-dark-gray-200 mt-3">
         <div>
           <Trans
             i18nKey="form:upload-files"

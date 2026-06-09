@@ -181,6 +181,7 @@ const IndividualRule = ({
                           type="button"
                           size={'icon'}
                           tabIndex={-1}
+                          className="dark:!shadow-border-dark-purple-100 dark:hover:!shadow-border-dark-purple-300"
                           onClick={() => handleCopyUserId(userWatch.join(', '))}
                         >
                           <Icon icon={IconCopy} />

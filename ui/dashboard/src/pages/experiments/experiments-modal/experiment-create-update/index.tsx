@@ -441,7 +441,7 @@ const ExperimentCreateUpdateModal = ({
                             <RadioGroupItem value={value} id={value} />
                             <label
                               htmlFor={value}
-                              className="typo-para-medium leading-4 text-gray-600 cursor-pointer"
+                              className="typo-para-medium leading-4 text-gray-600 dark:text-dark-gray-200 cursor-pointer"
                             >
                               {label}
                             </label>

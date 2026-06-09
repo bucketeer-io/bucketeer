@@ -53,19 +53,19 @@ const colors = {
       600: '#1f1f1f'
     },
     purple: {
-      100: '#2B1F45',
-      200: '#6C46D9',
-      300: '#7B4FF5',
-      400: '#8B5CF6',
-      500: '#9A6FFF',
+      700: '#B88EFF',
       600: '#B58CFF',
-      700: '#B88EFF'
+      500: '#9A6FFF',
+      400: '#8B5CF6',
+      300: '#7B4FF5',
+      200: '#6C46D9',
+      100: '#2B1F45'
     },
     gray: {
-      100: '#7D768E',
-      200: '#B5B0C2',
+      400: '#F2EDF7',
       300: '#B7B6BB',
-      400: '#F2EDF7'
+      200: '#B5B0C2',
+      100: '#7D768E'
     }
   },
   accent: {
@@ -167,7 +167,9 @@ const theme = {
     none: 'none',
     'dark-card': '0px 4px 8px 1px rgba(0, 0, 0, 0.4)',
     'dark-glow': '0 4px 15px rgba(154, 111, 255, 0.4)',
+    'border-dark-purple-100': `inset 0 0 0 1px ${colors.dark.purple[100]}`,
     'border-dark-purple-300': `inset 0 0 0 1px #7B4FF5`,
+    'border-dark-black-700': `inset 0 0 0 1px ${colors.dark.black[700]}`,
     tooltip:
       'rgba(29, 29, 29, 0.35) 0px 10px 38px -10px, rgba(29, 29, 29, 0.20) 0px 10px 20px -15px'
   },

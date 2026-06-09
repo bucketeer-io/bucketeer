@@ -224,10 +224,10 @@ const NotificationCreateUpdateModal = ({
         <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
-          <div className="typo-para-small text-gray-600 mb-3">
+          <div className="typo-para-small text-gray-600 dark:text-dark-gray-200 mb-3">
             {t('new-notification-subtitle')}
           </div>
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('form:general-info')}
           </p>
           <FormProvider {...form}>
@@ -313,7 +313,7 @@ const NotificationCreateUpdateModal = ({
               />
 
               <Divider className="my-3" />
-              <p className="text-gray-800 typo-head-bold-small mb-4">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small mb-4">
                 {t('types')}
               </p>
 
@@ -331,7 +331,7 @@ const NotificationCreateUpdateModal = ({
                   render={({ field }) => (
                     <>
                       <div className="mt-4 flex items-center justify-between">
-                        <div className="typo-para-tiny text-gray-500 uppercase">
+                        <div className="typo-para-tiny text-gray-500 dark:text-dark-gray-200 uppercase">
                           {t('all-types-selected', {
                             count: checkedTypes.length
                           })}
@@ -367,10 +367,10 @@ const NotificationCreateUpdateModal = ({
                                   : 'cursor-pointer'
                               )}
                             >
-                              <p className="typo-para-medium text-gray-800">
+                              <p className="typo-para-medium text-gray-800 dark:text-dark-gray-400">
                                 {item.label}
                               </p>
-                              <p className="typo-para-small text-gray-600 mt-0.5">
+                              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200 mt-0.5">
                                 {item.description}
                               </p>
                             </label>
@@ -490,13 +490,13 @@ const NotificationCreateUpdateModal = ({
               ) : (
                 <div className="flex flex-col justify-center items-center gap-3 pt-16 pb-4">
                   <IconNoData />
-                  <div className="typo-para-medium text-gray-500">
+                  <div className="typo-para-medium text-gray-500 dark:text-dark-gray-200">
                     {t(`no-data`)}
                   </div>
                 </div>
               )}
 
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button

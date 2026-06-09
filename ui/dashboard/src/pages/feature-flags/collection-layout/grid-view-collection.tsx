@@ -152,7 +152,7 @@ const GridViewCollection = ({
                 </div>
                 <DateTooltip
                   trigger={
-                    <div className="text-gray-700 typo-para-small whitespace-nowrap">
+                    <div className="text-gray-700 dark:text-dark-gray-300 typo-para-small whitespace-nowrap">
                       {Number(updatedAt) === 0 ? (
                         t('never')
                       ) : (

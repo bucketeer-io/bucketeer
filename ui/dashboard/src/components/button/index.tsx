@@ -13,13 +13,13 @@ const buttonVariants = cva(
           'bg-primary-500 text-gray-50',
           'rounded-lg px-6 py-2',
           'hover:bg-primary-700',
-          'disabled:bg-primary-200 disabled:text-primary-50'
+          'disabled:bg-primary-200 disabled:text-primary-50 dark:disabled:bg-dark-black-700 dark:disabled:text-dark-gray-200'
         ],
         secondary: [
           'text-primary-500 dark:text-dark-purple-500 shadow-border-primary-500 dark:shadow-border-primary-glow',
           'rounded-lg px-6 py-2',
           'hover:text-primary-700 dark:hover:text-dark-purple-600 hover:shadow-border-primary-700 dark:hover:shadow-border-primary-glow',
-          'disabled:text-gray-500 dark:disabled:text-dark-gray-200 disabled:shadow-border-gray-500'
+          'disabled:text-gray-500 dark:disabled:text-dark-gray-200 disabled:shadow-border-gray-500 dark:disabled:shadow-border-dark-black-700'
         ],
         'secondary-2': [
           'text-gray-700 dark:text-dark-gray-300 shadow-border-gray-300 dark:shadow-border-gray-500',
@@ -31,7 +31,7 @@ const buttonVariants = cva(
           'bg-accent-red-500 text-gray-50 shadow-border-accent-red-500',
           'rounded-lg px-6 py-2',
           'hover:bg-accent-red-600 hover:shadow-border-accent-red-600',
-          'disabled:bg-accent-red-50 disabled:shadow-border-gray-400 disabled:text-gray-500'
+          'disabled:bg-accent-red-50 disabled:shadow-border-gray-400 disabled:text-gray-500 dark:disabled:bg-dark-black-700 dark:disabled:shadow-border-dark-black-700 dark:disabled:text-dark-gray-200'
         ],
         text: [
           'text-primary-500 dark:text-dark-purple-500 px-2',

@@ -58,7 +58,7 @@ export interface OperationModalProps {
 }
 
 const buttonCls =
-  '!typo-para-medium flex-1 !text-gray-600 dark:!text-dark-gray-300 !shadow-none border border-gray-200 dark:border-dark-black-700 hover:border-gray-400 dark:hover:border-dark-purple-300';
+  '!typo-para-medium flex-1 !text-gray-600 dark:!text-dark-gray-300 !shadow-none border border-gray-200 dark:border-dark-purple-100 hover:border-gray-400 dark:hover:border-dark-purple-300';
 const buttonActiveCls =
   '!text-accent-pink-500 border-accent-pink-500 dark:border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 dark:hover:border-accent-pink-500';
 

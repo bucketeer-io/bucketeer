@@ -31,28 +31,28 @@ const STATUS_STYLE: Record<
   { bg: string; text: string; labelKey: string }
 > = {
   [ScheduledFlagChangeStatuses.PENDING]: {
-    bg: 'bg-accent-blue-50',
+    bg: 'bg-accent-blue-50 dark:bg-accent-blue-900/30',
     text: 'text-accent-blue-500',
     labelKey: 'status-pending'
   },
   [ScheduledFlagChangeStatuses.CONFLICT]: {
-    bg: 'bg-accent-yellow-50',
+    bg: 'bg-accent-yellow-50 dark:bg-accent-yellow-900/30',
     text: 'text-accent-yellow-500',
     labelKey: 'status-conflict'
   },
   [ScheduledFlagChangeStatuses.EXECUTED]: {
-    bg: 'bg-accent-green-50',
+    bg: 'bg-accent-green-50 dark:bg-accent-green-900/30',
     text: 'text-accent-green-500',
     labelKey: 'status-executed'
   },
   [ScheduledFlagChangeStatuses.FAILED]: {
-    bg: 'bg-accent-red-50',
+    bg: 'bg-accent-red-50 dark:bg-accent-red-900/30',
     text: 'text-accent-red-500',
     labelKey: 'status-failed'
   },
   [ScheduledFlagChangeStatuses.CANCELLED]: {
-    bg: 'bg-gray-200',
-    text: 'text-gray-600',
+    bg: 'bg-gray-200 dark:bg-dark-black-700',
+    text: 'text-gray-600 dark:text-dark-gray-200',
     labelKey: 'status-cancelled'
   }
 };
@@ -102,12 +102,12 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
   ];
 
   return (
-    <div className="flex flex-col w-full rounded shadow-card bg-white overflow-hidden">
+    <div className="flex flex-col w-full rounded shadow-card dark:shadow-dark-card bg-white dark:bg-dark-black-800 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-x-3">
           <div className="flex items-center gap-x-1.5">
             <Icon icon={IconCalendar} size="xs" color="primary-500" />
-            <span className="typo-para-medium font-medium text-gray-800">
+            <span className="typo-para-medium font-medium text-gray-800 dark:text-dark-gray-400">
               {formatScheduledDate(schedule.scheduledAt)}
             </span>
           </div>
@@ -120,7 +120,7 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
           >
             {t(`feature-flags.${statusStyle.labelKey}`)}
           </span>
-          <span className="px-2 py-[3px] rounded bg-gray-200 text-gray-600 typo-para-small whitespace-nowrap">
+          <span className="px-2 py-[3px] rounded bg-gray-200 dark:bg-dark-black-700 text-gray-600 dark:text-dark-gray-200 typo-para-small whitespace-nowrap">
             {t(`feature-flags.${categoryKey}`)}
           </span>
         </div>
@@ -129,7 +129,7 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
             align="end"
             options={menuOptions}
             trigger={
-              <span className="flex-center text-gray-500 cursor-pointer">
+              <span className="flex-center text-gray-500 dark:text-dark-gray-200 cursor-pointer">
                 <IconMoreHorizOutlined style={{ fontSize: 20 }} />
               </span>
             }
@@ -138,15 +138,17 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
         )}
       </div>
 
-      <div className="flex flex-col px-4 py-3 gap-y-2 border-t border-gray-100">
+      <div className="flex flex-col px-4 py-3 gap-y-2 border-t border-gray-100 dark:border-dark-black-700">
         {schedule.changeSummaries?.length > 0 ? (
           <ul className="flex flex-col gap-y-1.5">
             {schedule.changeSummaries.map((summary, index) => (
               <li
                 key={index}
-                className="flex items-start gap-x-2 typo-para-small text-gray-700"
+                className="flex items-start gap-x-2 typo-para-small text-gray-700 dark:text-dark-gray-300"
               >
-                <span className="text-gray-400 mt-0.5">•</span>
+                <span className="text-gray-400 dark:text-dark-gray-100 mt-0.5">
+                  •
+                </span>
                 <span>
                   {t(
                     `ScheduledChange.${summary.messageKey.replace('ScheduledChange.', '')}`,
@@ -157,18 +159,18 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
             ))}
           </ul>
         ) : (
-          <p className="typo-para-small text-gray-400 italic">
+          <p className="typo-para-small text-gray-400 dark:text-dark-gray-100 italic">
             {t('common:no-data')}
           </p>
         )}
 
         {schedule.comment && (
-          <div className="flex items-start gap-x-2 pt-2 border-t border-gray-100">
+          <div className="flex items-start gap-x-2 pt-2 border-t border-gray-100 dark:border-dark-black-700">
             <Tooltip
               align="start"
               content={schedule.comment}
               trigger={
-                <p className="typo-para-small text-gray-500 truncate max-w-full cursor-default">
+                <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 truncate max-w-full cursor-default">
                   {t('form:comment-for-update')}: {schedule.comment}
                 </p>
               }
@@ -178,7 +180,7 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
         )}
 
         {isConflict && (
-          <div className="flex items-start gap-x-2 px-4 py-3 rounded bg-accent-yellow-50 border-l-4 border-accent-yellow-500 mt-1">
+          <div className="flex items-start gap-x-2 px-4 py-3 rounded bg-accent-yellow-50 dark:bg-accent-yellow-900/30 border-l-4 border-accent-yellow-500 mt-1">
             <Icon
               icon={IconToastWarning}
               size="xxs"
@@ -202,7 +204,7 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
         )}
 
         {isFailed && schedule.failureReason && (
-          <div className="flex items-start gap-x-2 px-4 py-3 rounded bg-accent-red-50 border-l-4 border-accent-red-500 mt-1">
+          <div className="flex items-start gap-x-2 px-4 py-3 rounded bg-accent-red-50 dark:bg-accent-red-900/30 border-l-4 border-accent-red-500 mt-1">
             <Icon
               icon={IconToastWarningDynamic}
               size="xxs"
@@ -221,8 +223,8 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
         )}
       </div>
 
-      <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100">
-        <p className="typo-para-small text-gray-500 truncate mr-2">
+      <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-dark-black-700">
+        <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 truncate mr-2">
           {schedule.createdBy}
         </p>
         <DateTooltip
@@ -231,7 +233,7 @@ const ScheduleCard = ({ schedule, onAction }: ScheduleCardProps) => {
           trigger={
             <div className="flex items-center gap-x-1.5 flex-shrink-0">
               <Icon icon={IconWatch} size="xxs" color="gray-500" />
-              <p className="typo-para-small text-gray-500 whitespace-nowrap">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 whitespace-nowrap">
                 {formatDateTime(schedule.createdAt)}
               </p>
             </div>

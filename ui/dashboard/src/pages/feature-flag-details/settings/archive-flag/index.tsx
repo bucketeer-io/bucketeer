@@ -85,7 +85,7 @@ const ArchiveFlag = ({
       <p className="typo-head-bold-small text-gray-800 dark:text-gray-400">
         {t(feature.archived ? 'unarchive-flag' : 'archive-flag')}
       </p>
-      <p className="typo-para-small text-gray-500">
+      <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
         {t(
           feature.archived
             ? 'form:unarchive-flag-desc'
