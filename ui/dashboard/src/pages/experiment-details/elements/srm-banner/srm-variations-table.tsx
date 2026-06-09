@@ -106,7 +106,7 @@ const SrmVariationsTable = ({
           />
         ))}
       </div>
-      <div className="divide-y divide-gray-300">
+      <div className="divide-y divide-gray-300 dark:divide-dark-black-700">
         {orderedVariations.map((v, rowIndex) => {
           const name = resolveName(v.variationId);
           // Prefer the variation's position in experiment.variations so
@@ -120,7 +120,7 @@ const SrmVariationsTable = ({
           return (
             <div key={v.variationId} className="flex items-center w-full">
               <div
-                className="flex items-center size-fit w-full px-4 py-5 gap-x-2 text-gray-500"
+                className="flex items-center size-fit w-full px-4 py-5 gap-x-2 text-gray-500 dark:text-dark-gray-200"
                 style={{ minWidth: VARIATION_MIN_SIZE }}
               >
                 <Polygon
@@ -145,7 +145,7 @@ const SrmVariationsTable = ({
                       name={name}
                       maxLines={1}
                       haveAction={false}
-                      className="typo-para-medium text-gray-800"
+                      className="typo-para-medium text-gray-800 dark:text-dark-gray-400"
                     />
                   }
                 />

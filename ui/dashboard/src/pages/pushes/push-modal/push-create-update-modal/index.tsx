@@ -205,10 +205,10 @@ const PushCreateUpdateModal = ({
         <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
-          <div className="typo-para-small text-gray-600 mb-3">
+          <div className="typo-para-small text-gray-600 dark:text-dark-gray-200 mb-3">
             {t('new-push-subtitle')}
           </div>
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('form:general-info')}
           </p>
           <FormProvider {...form}>
@@ -362,7 +362,7 @@ const PushCreateUpdateModal = ({
                 )}
               />
 
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button

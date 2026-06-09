@@ -95,7 +95,10 @@ const PaginationActions = ({
       <PaginationGroup>
         {renderCell.map((value, index) =>
           typeof value === 'string' ? (
-            <span key={`${value}${index}`} className="text-gray-500">
+            <span
+              key={`${value}${index}`}
+              className="text-gray-500 dark:text-dark-gray-200"
+            >
               ...
             </span>
           ) : (

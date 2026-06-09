@@ -69,7 +69,7 @@ const AccessDemoPage = () => {
       ) : (
         <>
           <div className="flex items-center justify-between gap-2 mt-6">
-            <h1 className="text-gray-900 typo-head-bold-huge">
+            <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge">
               {t('auth:demo')}
             </h1>
 
@@ -88,9 +88,13 @@ const AccessDemoPage = () => {
             </div>
           )}
           <div
-            className={cn('text-gray-600 typo-para-medium mt-8', {
-              'text-accent-red-500': !isDemoSiteEnabled
-            })}
+            className={cn(
+              'text-gray-600 dark:text-dark-gray-200 typo-para-medium mt-8',
+              {
+                'text-accent-red-500 dark:!text-accent-red-500':
+                  !isDemoSiteEnabled
+              }
+            )}
           >
             {t(
               isDemoSiteEnabled

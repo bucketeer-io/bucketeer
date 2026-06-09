@@ -114,7 +114,7 @@ const CreateDebuggerForm = ({
             evaluations={evaluations}
             onCancel={onShowResults}
           />
-          <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+          <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={
                 <Button
