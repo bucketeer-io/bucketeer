@@ -50,7 +50,7 @@ const AutoWrapText = ({
           <div
             key={index}
             style={{ lineHeight: `${lineHeight}px` }}
-            className="px-1 pb-[1px] border bg-gray-100 border-gray-200 rounded-sm inline"
+            className="px-1 pb-[1px] border bg-primary-100/70 dark:bg-dark-purple-100 border-gray-200 dark:border-dark-black-700 text-primary-500 dark:text-dark-purple-700 rounded-sm inline"
           >
             {line}
           </div>
