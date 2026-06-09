@@ -842,6 +842,7 @@ const TargetingPage = ({
                 <>
                   <TargetingDivider />
                   <PrerequisiteRule
+                    currentEnvironment={currentEnvironment}
                     isDisableAddPrerequisite={isDisableAddPrerequisite}
                     features={activeFeatures}
                     feature={feature}

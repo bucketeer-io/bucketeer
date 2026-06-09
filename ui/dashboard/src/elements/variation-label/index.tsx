@@ -5,11 +5,13 @@ import NameWithTooltip from 'elements/name-with-tooltip';
 const VariationLabel = ({
   label,
   index,
-  className
+  className,
+  asChild = true
 }: {
   label: string;
   index: number;
   className?: string;
+  asChild?: boolean;
 }) => {
   const id = `variation-label-${index}`;
 
@@ -26,6 +28,7 @@ const VariationLabel = ({
             <p>{label}</p>
           </div>
         }
+        asChild={asChild}
         align="start"
         trigger={
           <NameWithTooltip.Trigger
