@@ -70,7 +70,7 @@ const FilterProjectModal = ({
     >
       <div className="flex flex-col w-full items-start p-5 gap-y-4">
         <div className="flex items-center w-full h-12 gap-x-4">
-          <div className="typo-para-small text-center py-[3px] px-4 rounded text-accent-pink-500 bg-accent-pink-50 dark:bg-dark-purple-100">
+          <div className="typo-para-small text-center py-[3px] px-4 rounded text-accent-pink-500 bg-accent-pink-50 dark:bg-accent-pink-900/30">
             {t(`if`)}
           </div>
           <Divider vertical={true} className="border-primary-500" />
