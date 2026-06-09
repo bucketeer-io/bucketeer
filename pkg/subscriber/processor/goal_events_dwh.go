@@ -218,7 +218,7 @@ func NewGoalEventWriter(
 
 	w := &goalEvtWriter{
 		writer:                  storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),
-		eventStorage:            ecbigquery.NewEventStorage(eventQuerier, bigQueryDataSet, logger),
+		eventStorage:            ecbigquery.NewBigQueryEventStorage(eventQuerier, bigQueryDataSet, logger),
 		experimentClient:        exClient,
 		featureClient:           ftClient,
 		redisClient:             redisClient,

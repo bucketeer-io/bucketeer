@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"sync"
@@ -903,8 +904,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go environmentServer.Run()
 
-	// eventCounter data-warehouse storage, uses its own dedicated client, separate from the operational database.
-	eventDWHStorage, err := s.createDWHEventStorage(
+	// eventCounter data-warehouse storage. Always opens a dedicated DWH pool
+	// (separate from mysqlClient / postgresClient) so the closer is non-nil
+	// for the MySQL/Postgres backends and must be closed on shutdown.
+	eventDWHStorage, dwhCloser, err := s.createDWHEventStorage(
 		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, logger,
 	)
 	if err != nil {
@@ -1259,6 +1262,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go mysqlClient.Close()
 		if postgresClient != nil {
 			go postgresClient.Close()
+		}
+		if dwhCloser != nil {
+			go func() { _ = dwhCloser.Close() }()
 		}
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
@@ -1645,18 +1651,14 @@ func (s *server) readDataWarehouseConfig(
 	return config, nil
 }
 
-// createDWHEventStorage builds the eventcounter EventStorage backed by the
-// configured data warehouse. The data warehouse always uses its own dedicated
-// client connection — separate from the operational MySQL/Postgres client used
-// for transactional data (experiment_result, mau, mau_summary, etc.) — even
-// when the DWH happens to point at the same host as the operational DB.
+// createDWHEventStorage builds the eventcounter EventStorage backed by the configured data warehouse.
 func (s *server) createDWHEventStorage(
 	ctx context.Context,
 	config *DataWarehouseConfig,
 	bigQueryQuerier bqquerier.Client,
 	bigQueryDataSet string,
 	logger *zap.Logger,
-) (dwhdatabase.EventStorage, error) {
+) (dwhdatabase.EventStorage, io.Closer, error) {
 	switch config.Type {
 	case "mysql":
 		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -1665,16 +1667,10 @@ func (s *server) createDWHEventStorage(
 		if err != nil {
 			logger.Error("Failed to create MySQL client for data warehouse",
 				zap.Error(err),
-				zap.String("host", config.MySQL.Host),
-				zap.String("database", config.MySQL.Database),
 			)
-			return nil, err
+			return nil, nil, err
 		}
-		logger.Info("Using dedicated MySQL connection for data warehouse",
-			zap.String("host", config.MySQL.Host),
-			zap.String("database", config.MySQL.Database),
-		)
-		return dwhmysql.NewMySQLEventStorage(client, logger), nil
+		return dwhmysql.NewMySQLEventStorage(client, logger), client, nil
 	case "postgres":
 		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
@@ -1685,25 +1681,18 @@ func (s *server) createDWHEventStorage(
 				zap.String("host", config.Postgres.Host),
 				zap.String("database", config.Postgres.Database),
 			)
-			return nil, err
+			return nil, nil, err
 		}
-		logger.Info("Using dedicated Postgres connection for data warehouse",
-			zap.String("host", config.Postgres.Host),
-			zap.String("database", config.Postgres.Database),
-		)
-		return dwhpostgres.NewPostgresEventStorage(client, logger), nil
+		return dwhpostgres.NewPostgresEventStorage(client, logger), client, nil
 	case "bigquery":
-		return dwhbigquery.NewEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil
+		return dwhbigquery.NewBigQueryEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil, nil
 	default:
 		// Default to BigQuery for backward compatibility
-		return dwhbigquery.NewEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil
+		return dwhbigquery.NewBigQueryEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil, nil
 	}
 }
 
-// createDWHMySQLClient builds a fresh MySQL client/pool dedicated to the data
-// warehouse. When UseMainConnection is true, the operational MySQL credentials
-// (--mysql-user / --mysql-host / etc.) are reused, but the pool is still
-// independent of the operational mysqlClient.
+// createDWHMySQLClient opens a fresh MySQL pool dedicated to the data warehouse.
 func (s *server) createDWHMySQLClient(
 	ctx context.Context,
 	config DataWarehouseMySQLConfig,
@@ -1739,11 +1728,12 @@ func (s *server) createDWHMySQLClient(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data warehouse MySQL client: %w", err)
 	}
-	logger.Info("Created MySQL client for data warehouse",
+	logger.Info("Created dedicated MySQL client for data warehouse",
 		zap.String("host", host),
 		zap.Int("port", port),
 		zap.String("database", database),
 		zap.String("user", user),
+		zap.Bool("useMainConnection", config.UseMainConnection),
 	)
 	return client, nil
 }

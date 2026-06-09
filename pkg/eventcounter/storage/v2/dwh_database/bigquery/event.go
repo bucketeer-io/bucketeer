@@ -46,7 +46,7 @@ type eventStorage struct {
 	logger  *zap.Logger
 }
 
-func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) dwhdatabase.EventStorage {
+func NewBigQueryEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) dwhdatabase.EventStorage {
 	return &eventStorage{
 		querier: querier,
 		dataset: dataset,
