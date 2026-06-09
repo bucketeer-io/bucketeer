@@ -21,15 +21,19 @@ const SuggestionCard = memo(({ suggestion, onClick }: SuggestionCardProps) => {
     <button
       type="button"
       className={cn(
-        'w-full rounded-lg border border-gray-200 p-3 text-left',
-        'transition-colors duration-200 hover:border-primary-300 hover:bg-primary-50',
+        'w-full rounded-lg border border-gray-200 dark:border-dark-black-700 p-3 text-left',
+        'transition-colors duration-200 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-dark-purple-100',
         'motion-reduce:transition-none',
         'focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2'
       )}
       onClick={() => onClick(title)}
     >
-      <p className="typo-para-small font-medium text-gray-700">{title}</p>
-      <p className="typo-para-tiny mt-1 text-gray-500">{description}</p>
+      <p className="typo-para-small font-medium text-gray-700 dark:text-dark-gray-300">
+        {title}
+      </p>
+      <p className="typo-para-tiny mt-1 text-gray-500 dark:text-dark-gray-200">
+        {description}
+      </p>
     </button>
   );
 });

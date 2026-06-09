@@ -327,17 +327,19 @@ const DropdownMenuSearch = forwardRef(
     ref: Ref<HTMLInputElement>
   ) => {
     return (
-      <div className="sticky top-0 left-0 right-0 flex items-center w-full px-3 py-[11.5px] gap-x-2 border-b border-gray-200 dark:border-dark-black-700 bg-white dark:bg-dark-black-800 z-50">
-        <div className="flex-center size-5">
-          <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+      <div className="sticky top-0 left-0 right-0 w-full px-3 py-[11.5px] bg-white dark:bg-dark-black-800 z-50">
+        <div className="flex items-center w-full gap-x-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-dark-purple-100 bg-white dark:bg-dark-black-700 hover:border-gray-400 focus-within:border-primary-500 dark:hover:border-dark-purple-300 dark:focus-within:border-dark-purple-300">
+          <div className="flex-center size-5">
+            <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+          </div>
+          <Input
+            {...props}
+            ref={ref}
+            value={value}
+            onChange={onChange}
+            className="p-0 border-none rounded-none bg-white dark:bg-dark-black-700 hover:shadow-none focus:shadow-none dark:hover:shadow-none dark:focus:shadow-none focus:ring-0 focus:border-none"
+          />
         </div>
-        <Input
-          {...props}
-          ref={ref}
-          value={value}
-          onChange={onChange}
-          className="p-0 border-none rounded-none"
-        />
       </div>
     );
   }

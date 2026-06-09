@@ -98,7 +98,9 @@ const TriggerItem = ({
           </div>
         </div>
         {description && (
-          <p className="typo-para-medium text-gray-500">{description}</p>
+          <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200">
+            {description}
+          </p>
         )}
 
         <Divider className="border-gray-300 dark:border-dark-purple-300" />

@@ -175,10 +175,10 @@ const UserInformation = () => {
     <AuthWrapper>
       <div className="grid gap-10">
         <div>
-          <h1 className="text-gray-900 typo-head-bold-huge mb-4">
+          <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge mb-4">
             {t(`enter-information.title`)}
           </h1>
-          <p className="text-gray-600 typo-para-medium">
+          <p className="text-gray-600 dark:text-dark-gray-200 typo-para-medium">
             {t(`enter-information.description`)}
           </p>
         </div>

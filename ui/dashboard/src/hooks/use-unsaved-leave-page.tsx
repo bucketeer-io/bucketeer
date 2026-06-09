@@ -244,7 +244,7 @@ export function PopupGlobal({
       isOpen={isOpen}
       onClose={() => onClose?.()}
     >
-      <div className="p-5">{t(message)}</div>
+      <div className="p-5 dark:text-dark-gray-300">{t(message)}</div>
 
       <ButtonBar
         primaryButton={
