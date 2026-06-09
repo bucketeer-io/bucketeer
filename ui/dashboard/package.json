@@ -22,6 +22,8 @@
     "src/**/*.{js,jsx,ts,tsx,css}": "prettier --write --ignore-unknown"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@hookform/resolvers": "^3.9.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-checkbox": "^1.3.3",

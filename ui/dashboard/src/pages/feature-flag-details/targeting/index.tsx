@@ -250,7 +250,8 @@ const TargetingPage = ({
     insert: segmentRulesInsert,
     remove: segmentRulesRemove,
     swap: segmentRulesSwap,
-    replace: segmentRulesReplace
+    replace: segmentRulesReplace,
+    move: segmentRulesMove
   } = useFieldArray({
     control,
     name: 'segmentRules',
@@ -387,6 +388,19 @@ const TargetingPage = ({
       setTrackedFeature(featureRuleSwap);
     },
     [trackedFeature]
+  );
+
+  const handleMoveSegmentRule = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      segmentRulesMove(fromIndex, toIndex);
+      setTrackedFeature(prev => {
+        const newRules = [...prev.rules];
+        const [moved] = newRules.splice(fromIndex, 1);
+        newRules.splice(toIndex, 0, moved);
+        return { ...prev, rules: newRules };
+      });
+    },
+    [segmentRulesMove]
   );
 
   const buildSchedulePayload = useCallback(
@@ -883,6 +897,7 @@ const TargetingPage = ({
                     onAddRule={onAddRule}
                     segmentRulesRemove={handleSegmentRuleRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
+                    segmentRulesMove={handleMoveSegmentRule}
                     handleDiscardChanges={handleDiscardChanges}
                     handleCheckEdit={checkEditRule}
                   />
