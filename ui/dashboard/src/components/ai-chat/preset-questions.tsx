@@ -25,9 +25,9 @@ const PresetQuestions = memo(({ onSelect }: PresetQuestionsProps) => {
             key={key}
             type="button"
             className={cn(
-              'rounded-lg border border-gray-200 px-3 py-2 text-left',
-              'typo-para-tiny text-gray-600',
-              'transition-colors duration-200 hover:border-primary-300 hover:bg-primary-50',
+              'rounded-lg border border-gray-200 dark:border-dark-black-700 px-3 py-2 text-left',
+              'typo-para-tiny text-gray-600 dark:text-dark-gray-200',
+              'transition-colors duration-200 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-dark-purple-100',
               'motion-reduce:transition-none',
               'focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2'
             )}

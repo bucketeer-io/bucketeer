@@ -202,7 +202,7 @@ const MyProjects = () => {
     <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
       <Popover.Portal>
         <Popover.Content align="start" className="border-none mt-2 z-20">
-          <div className="w-[600px] bg-white dark:bg-dark-black-800 rounded-lg shadow-menu dark:shadow-none dark:ring-1 dark:ring-dark-black-700">
+          <div className="w-[600px] bg-white dark:bg-dark-black-800 rounded-lg shadow-menu dark:shadow-none dark:ring-1 dark:ring-dark-purple-200">
             <div className="flex items-center justify-between px-5 py-4">
               <h1 className="typo-head-bold-huge text-gray-900 dark:text-white capitalize">
                 {t(`navigation.my-projects`)}
@@ -276,9 +276,9 @@ const MyProjects = () => {
       <Popover.Trigger className="w-full">
         <div
           className={cn(
-            'flex items-center w-full text-primary-50 dark:text-white hover:bg-primary-400 dark:hover:bg-dark-black-800',
+            'flex items-center w-full text-primary-50 dark:text-white hover:bg-primary-400 dark:hover:bg-dark-purple-100',
             'pl-3 pr-1.5 py-3 rounded-lg typo-para-medium justify-between',
-            { 'bg-primary-400 dark:bg-dark-black-800': isShowProjectsList }
+            { 'bg-primary-400 dark:bg-dark-purple-200/20': isShowProjectsList }
           )}
         >
           <div className="flex items-center gap-x-2 truncate">
