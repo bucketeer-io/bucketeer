@@ -90,7 +90,7 @@ export const useColumns = ({
               maxLines={1}
             />
 
-            <div className="typo-para-tiny h-5 text-gray-500 select-none">
+            <div className="typo-para-tiny h-5 text-gray-500 dark:text-dark-gray-200 select-none">
               {truncateTextCenter(apiKey)}
             </div>
           </div>
@@ -108,7 +108,7 @@ export const useColumns = ({
           <Tooltip
             content={roleTooltipContent}
             trigger={
-              <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded whitespace-nowrap">
+              <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 dark:bg-accent-blue-900/30 px-2 py-[3px] w-fit rounded whitespace-nowrap">
                 {role}
               </div>
             }
@@ -158,7 +158,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {isNever ? t('never') : formatDateTime(apiKey.lastUsedAt)}
               </div>
             }
@@ -176,7 +176,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {formatDateTime(apiKey.createdAt)}
               </div>
             }

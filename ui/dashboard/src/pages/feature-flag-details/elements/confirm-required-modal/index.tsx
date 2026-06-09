@@ -291,7 +291,7 @@ const ConfirmationRequiredModal = ({
         <div className="flex flex-col gap-2 pl-4">
           {segmentRulesChange.map(({ rule, changes, action }) => (
             <div key={rule}>
-              <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700">
+              <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700 dark:text-dark-gray-300">
                 <Trans
                   i18nKey={
                     action === 'new-rule'
@@ -366,8 +366,8 @@ const ConfirmationRequiredModal = ({
             <div className="relative overflow-auto w-full h-full small-scroll">
               {!!isShowChange && (
                 <>
-                  <div className="sticky top-0 z-20 bg-white typo-para-small text-gray-600 w-full px-5">
-                    <p className="typo-para-medium leading-4 text-gray-700 pb-5">
+                  <div className="sticky top-0 z-20 bg-white dark:bg-dark-black-800 typo-para-small text-gray-600 dark:text-dark-gray-200 w-full px-5">
+                    <p className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 pb-5">
                       <Trans
                         i18nKey="common:change-count-breakdown"
                         values={{
@@ -493,7 +493,7 @@ const ConfirmationRequiredModal = ({
                                 />
                                 <label
                                   htmlFor="active_now"
-                                  className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                                  className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                                 >
                                   {t('update-now')}
                                 </label>
@@ -506,11 +506,11 @@ const ConfirmationRequiredModal = ({
                                 />
                                 <label
                                   htmlFor="schedule"
-                                  className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                                  className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                                 >
                                   {t('form:feature-flags.schedule-the-updates')}
                                 </label>
-                                <span className="px-2 py-1.5 rounded-[3px] bg-accent-blue-50 text-accent-blue-500 typo-para-small leading-[14px] whitespace-nowrap uppercase">
+                                <span className="px-2 py-1.5 rounded-[3px] bg-accent-blue-50 dark:bg-accent-blue-900/30 text-accent-blue-500 typo-para-small leading-[14px] whitespace-nowrap uppercase">
                                   New
                                 </span>
                                 <Tooltip
@@ -616,7 +616,7 @@ const ConfirmationRequiredModal = ({
                   </>
                 )}
                 {isShowRolloutWarning && hasRolloutRunning && (
-                  <div className="flex w-full gap-x-3 p-4 mt-5 rounded-md bg-accent-yellow-50 typo-para-small">
+                  <div className="flex w-full gap-x-3 p-4 mt-5 rounded-md bg-accent-yellow-50 dark:bg-accent-yellow-900/30 typo-para-small">
                     <Icon icon={IconToastWarning} />
                     <p className="w-full typo-para-medium text-accent-yellow-700">
                       <Trans

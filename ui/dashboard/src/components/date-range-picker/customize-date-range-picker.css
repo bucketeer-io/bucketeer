@@ -170,6 +170,11 @@
   @apply !bg-dark-black-800;
 }
 
+.dark .rdrStaticRange:hover .rdrStaticRangeLabel,
+.dark .rdrStaticRange:focus .rdrStaticRangeLabel {
+  @apply !bg-dark-black-700;
+}
+
 .dark .rdrDay:not(.rdrDayPassive) .rdrDayNumber span {
   @apply !text-dark-gray-300;
 }

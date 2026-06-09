@@ -74,23 +74,44 @@
     border-color: #cbd5e1; /* gray-400 */
   }
 
+  /* Browser autofill: mask the native background via box-shadow so it
+     follows the theme instead of the browser's default light color */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: #475569; /* gray-700 */
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset; /* white */
+    caret-color: #475569; /* gray-700 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark input:-webkit-autofill:active {
+    -webkit-text-fill-color: #f2edf7; /* dark-gray-400 */
+    -webkit-box-shadow: 0 0 0 1000px #110d1c inset; /* dark-black-900 */
+    caret-color: #f2edf7; /* dark-gray-400 */
+  }
+
   .sidebar-menu.active {
     @apply bg-primary-400 opacity-100;
   }
 
   .dark .sidebar-menu.active {
-    background-color: #2B1F45;
+    background-color: #2b1f45;
     opacity: 1;
-    color: #B88EFF;
-    border-left: 2px solid #6C46D9;
+    color: #b88eff;
+    border-left: 2px solid #6c46d9;
   }
 
   .tab-item.active {
     @apply border-primary-500 text-primary-500;
   }
   .dark .tab-item.active {
-    border-color: #8B5BF6;
-    color: #A06EFF;
+    border-color: #8b5bf6;
+    color: #a06eff;
   }
   .small-scroll::-webkit-scrollbar {
     width: 5px; /* Thin scrollbar */
