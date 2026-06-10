@@ -146,7 +146,7 @@ export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
   const [showMenu, setShowMenu] = useState<boolean>(false);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -178,15 +178,16 @@ export const Root = memo(() => {
               </Button>
             )}
           </div>
-          {fromMobileScreen ? (
+          {!isMobile ? (
             <Navigation onClickNavLink={handleChangePageKey} />
           ) : (
             <Drawer
               side="left"
               open={showMenu}
               onClose={() => setShowMenu(false)}
+              className="!z-30"
             >
-              <Navigation onClickNavLink={handleChangePageKey} />
+              <Navigation onClickNavLink={handleChangePageKey} forceExpanded />
             </Drawer>
           )}
 

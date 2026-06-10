@@ -23,8 +23,8 @@ const FilterAPIKeyModal = ({
   onClearFilters,
   filters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
-  return fromMobileScreen ? (
+  const { isMobile } = useScreen();
+  return !isMobile ? (
     <FilterAPIKeyPopup
       isOpen={isOpen}
       onClearFilters={onClearFilters}

@@ -57,7 +57,6 @@ export const useColumns = ({
         isSystemAdmin ||
         (isUserOwner && isAccountOwnerRole) ||
         (!isUserOwner && isOrganizationAdmin);
-
       return canEditMember ? 'EDIT' : 'DETAILS';
     },
     [isAccountOwnerRole, isOrganizationAdmin, isSystemAdmin]

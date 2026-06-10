@@ -262,8 +262,7 @@ const useFilterFlagLogic = (
     handleChangeFilterValue,
     handleChangeOption,
     setSelectedFilters,
-    onConfirmHandler,
-    confirm
+    onConfirmHandler
   };
 };
 

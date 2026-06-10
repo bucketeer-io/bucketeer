@@ -72,7 +72,7 @@ const PageContent = () => {
   >(undefined);
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const { fromMobileScreen, fromTabletScreen } = useScreen();
+  const { isMobile, fromTabletScreen } = useScreen();
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
@@ -133,7 +133,7 @@ const PageContent = () => {
   }, [searchOptions]);
 
   return (
-    <PageLayout.Content className="gapy-3 sm:gap-y-6">
+    <PageLayout.Content className="gap-y-3 sm:gap-y-6">
       <Filter
         link={DOCUMENTATION_LINKS.AUDIT_LOGS}
         isShowDocumentation={fromTabletScreen}
@@ -142,7 +142,7 @@ const PageContent = () => {
         action={
           <>
             <EntityTypeDropdown
-              className="w-fit max-w-[120px] sm:max-w-full [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
+              className="w-fit max-w-[150px] sm:max-w-full [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
@@ -153,7 +153,7 @@ const PageContent = () => {
               isAllTime={[filters?.range, searchFilters?.range].includes(
                 'all-time'
               )}
-              direction={fromMobileScreen ? 'horizontal' : 'vertical'}
+              direction={!isMobile ? 'horizontal' : 'vertical'}
               className="w-fit"
               onChange={(startDate, endDate) => {
                 onChangeFilters({
@@ -173,8 +173,7 @@ const PageContent = () => {
                 size="sm"
                 color="primary-500"
               />
-              {fromMobileScreen &&
-                t(isExpandAll ? 'collapse-all' : 'expand-all')}
+              {!isMobile && t(isExpandAll ? 'collapse-all' : 'expand-all')}
             </Button>
           </>
         }

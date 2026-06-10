@@ -55,7 +55,7 @@ const FilterProjectPopup = ({
             className="w-full"
             contentClassName="w-[235px]"
           />
-          <p className="typo-para-medium text-gray-600">is</p>
+          <p className="typo-para-medium text-gray-600">{t('is')}</p>
           <Dropdown
             options={enabledOptions as DropdownOption[]}
             value={valueOption?.value}

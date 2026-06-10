@@ -83,7 +83,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
     <Card>
       <Card.Header
         icon={<Icon icon={IconMember} />}
-        triger={
+        trigger={
           <div>
             <NameWithTooltip
               id={email}
