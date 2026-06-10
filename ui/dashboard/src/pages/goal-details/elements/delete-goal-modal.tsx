@@ -26,8 +26,8 @@ const DeleteGoalModal = ({
   disabled
 }: DeleteMemberProps) => {
   const { t } = useTranslation(['common']);
-  const { fromMobileScreen } = useScreen();
-  const sizeIcon = fromMobileScreen ? 'fit' : '3xl';
+  const { isMobile } = useScreen();
+  const sizeIcon = !isMobile ? 'fit' : '3xl';
   return (
     <DialogModal
       className="max-w-[500px]"

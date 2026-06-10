@@ -59,7 +59,7 @@ export const PushCard: React.FC<PushCardProps> = ({
             }
           />
         }
-        triger={
+        trigger={
           <div className="flex items-center gap-0.5 min-w-0 flex-1">
             <NameWithTooltip
               id={id}

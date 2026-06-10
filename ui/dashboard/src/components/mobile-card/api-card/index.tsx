@@ -112,7 +112,7 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
             />
           </div>
         }
-        triger={
+        trigger={
           <div className="flex flex-col gap-0.5 max-w-fit">
             <NameWithTooltip
               id={id}

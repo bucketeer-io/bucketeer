@@ -39,7 +39,7 @@ export const UserSegmentCard: React.FC<UserSegmentCardProps> = ({
     <Card>
       <Card.Header
         icon={<Icon icon={IconUser} />}
-        triger={
+        trigger={
           <div className="flex flex-col gap-y-1">
             <div
               onClick={() =>

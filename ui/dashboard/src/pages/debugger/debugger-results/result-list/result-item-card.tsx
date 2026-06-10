@@ -32,7 +32,7 @@ const ResultItemCard = ({
   return (
     <Card className="shadow-none border border-gray-200 rounded-xl p-4">
       <Card.Header
-        triger={
+        trigger={
           <ResultName
             feature={feature}
             id={!isFlag ? featureId : userId}

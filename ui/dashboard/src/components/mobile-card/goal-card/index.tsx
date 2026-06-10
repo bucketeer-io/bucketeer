@@ -104,7 +104,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({ data, onActions }) => {
     <Card>
       <Card.Header
         icon={<Icon icon={IconGoal} />}
-        triger={
+        trigger={
           <div className="flex flex-col gap-0.5 max-w-fit">
             <NameWithTooltip
               id={data.id}

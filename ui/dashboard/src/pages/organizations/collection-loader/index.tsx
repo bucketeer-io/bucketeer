@@ -29,7 +29,7 @@ const CollectionLoader = memo(
     onActions: (item: Organization, type: OrganizationActionsType) => void;
     onClearFilters: () => void;
   }) => {
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
     const columns = useColumns({ onActions });
     const {
       data: collection,
@@ -67,7 +67,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading}
             data={organizations}

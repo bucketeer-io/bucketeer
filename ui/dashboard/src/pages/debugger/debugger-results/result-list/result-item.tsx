@@ -26,7 +26,7 @@ const ResultItem = ({
   onToggleExpandItem
 }: Props) => {
   const isFlag = useMemo(() => groupBy === 'FLAG', [groupBy]);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
 
   const columns = useColumns({
     isFlag,
@@ -74,7 +74,7 @@ const ResultItem = ({
           'h-fit opacity-100 z-0': isExpand
         })}
       >
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <div className="overflow-x-auto [&>table]:m-0 [&>table]:border-collapse [&>table>tbody]:divide-y [&>table>tbody]:divide-gray-200 [&>table>tbody>tr]:rounded-none [&>table>tbody>tr]:shadow-none [&>table>tbody>tr>td]:rounded-none [&>table>tbody>tr:last-child]:rounded-b-lg [&>table>tbody>tr>td:first-child]:pl-0 [&>table>tbody>tr>td:last-child]:pr-0 [&>table>thead>tr>th:first-child]:pl-0 [&>table>thead>tr>th:last-child]:pr-0 [&>table>tbody>tr>td]:py-4">
             <DataTable columns={columns} data={group} manualSorting={false} />
           </div>

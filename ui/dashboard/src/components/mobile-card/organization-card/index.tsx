@@ -34,7 +34,7 @@ export const OrganizationCard: React.FC<UserSegmentCardProps> = ({
     <Card>
       <Card.Header
         icon={<Icon icon={IconUser} />}
-        triger={
+        trigger={
           <div className="flex flex-col gap-0.5 max-w-fit">
             <NameWithTooltip
               id={data.id}
