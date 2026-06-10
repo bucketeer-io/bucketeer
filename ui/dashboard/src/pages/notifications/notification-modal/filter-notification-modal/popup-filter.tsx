@@ -94,7 +94,7 @@ const FilterNotificationPopup = ({
                 contentClassName="w-[270px]"
               />
 
-              <p className="typo-para-medium text-gray-600">is</p>
+              <p className="typo-para-medium text-gray-600">{t('is')}</p>
               <Dropdown
                 isSearchable={isEnvironmentFilter}
                 disabled={!filterType}

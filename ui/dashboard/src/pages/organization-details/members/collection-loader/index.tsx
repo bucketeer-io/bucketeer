@@ -23,7 +23,7 @@ const CollectionLoader = ({
   onActions: (value: Account) => void;
 }) => {
   const columns = useColumns({ onActions });
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const {
     data: collection,
     isLoading,
@@ -59,7 +59,7 @@ const CollectionLoader = ({
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <TableListContent>
-      {fromMobileScreen ? (
+      {!isMobile ? (
         <DataTable
           isLoading={isLoading}
           data={accounts}

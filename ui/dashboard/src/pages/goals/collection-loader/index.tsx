@@ -28,7 +28,7 @@ const CollectionLoader = ({
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const {
     data: collection,
     isLoading,
@@ -68,7 +68,7 @@ const CollectionLoader = ({
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <TableListContent>
-      {fromMobileScreen ? (
+      {!isMobile ? (
         <DataTable
           isLoading={isLoading}
           data={goals}

@@ -18,9 +18,9 @@ const FilterUserSegmentModal = ({
   onClearFilters,
   filters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
 
-  return fromMobileScreen ? (
+  return !isMobile ? (
     <FilterUserSegmentPopup
       isOpen={isOpen}
       filters={filters}

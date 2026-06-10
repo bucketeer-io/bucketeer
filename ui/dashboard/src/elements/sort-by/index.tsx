@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { OrderBy, OrderDirection } from '@types';
@@ -23,19 +23,14 @@ const SortBy = <T extends SortedState>({
   sortDirectionOptions
 }: SortByProps<T>) => {
   useTranslation(['common', 'table', 'form']);
-  const [sortedState, setSortedState] = useState<SortedState>({
-    orderBy: filters.orderBy,
-    orderDirection: filters.orderDirection
-  });
 
   const currentOption = useMemo(
-    () => sortByOptions.find(item => item.value === sortedState.orderBy),
-    [sortedState, sortByOptions]
+    () => sortByOptions.find(item => item.value === filters.orderBy),
+    [filters.orderBy, sortByOptions]
   );
 
   const handleSorting = useCallback(
     (value: Partial<SortedState>) => {
-      setSortedState(prev => ({ ...prev, ...value }));
       setFilters(value as Partial<T>);
     },
     [setFilters]
@@ -56,13 +51,13 @@ const SortBy = <T extends SortedState>({
         )
       }
       options={sortByOptions}
-      value={sortedState.orderBy}
+      value={filters.orderBy}
       onChange={value => handleSorting({ orderBy: value as OrderBy })}
       wrapTriggerStyle="w-fit"
       className="w-fit"
       contentClassName="!max-h-fit !divide-y"
       additionalOptions={sortDirectionOptions}
-      additionalValue={sortedState.orderDirection}
+      additionalValue={filters.orderDirection}
       onChangeAdditional={value =>
         handleSorting({ orderDirection: value as OrderDirection })
       }

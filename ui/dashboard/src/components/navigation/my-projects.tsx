@@ -37,7 +37,7 @@ const MyProjects = ({ isExpanded = true }: { isExpanded?: boolean }) => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { errorNotify } = useToast();
   const { isShow: showConfirm, confirm, setIsShow } = useConfirm();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
@@ -202,7 +202,7 @@ const MyProjects = ({ isExpanded = true }: { isExpanded?: boolean }) => {
   return (
     <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
       <Popover.Portal>
-        <Popover.Content align="start" className="border-none mt-2 z-20">
+        <Popover.Content align="start" className="border-none mt-2 z-50">
           <div className="w-[350px] sm:w-[600px] bg-white rounded-lg shadow-menu">
             <div className="flex items-center justify-between px-3 sm:px-5 py-4">
               <h1 className="typo-head-bold-huge text-gray-900 capitalize">
@@ -238,7 +238,7 @@ const MyProjects = ({ isExpanded = true }: { isExpanded?: boolean }) => {
                       />
                     </ScrollArea>
                   </div>
-                  {!fromMobileScreen && <Divider />}
+                  {isMobile && <Divider />}
                   <div className="flex flex-col gap-3">
                     <List.Title>{t(`environments`)}</List.Title>
                     <ScrollArea className="h-[120px] pr-2">

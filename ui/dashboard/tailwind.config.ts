@@ -193,12 +193,11 @@ const theme = {
       'slide-right': {
         '0%': {
           opacity: '0',
-          left: '-100%'
+          transform: 'translateX(-100%)'
         },
         '100%': {
           opacity: '1',
-          left: '0',
-          transform: 'scale(1)'
+          transform: 'translateX(0)'
         }
       },
       'slide-up': {
