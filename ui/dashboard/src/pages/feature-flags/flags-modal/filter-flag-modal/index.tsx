@@ -18,9 +18,9 @@ const FilterFlagModal = ({
   onClose,
   onClearFilters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
 
-  return fromMobileScreen ? (
+  return !isMobile ? (
     <FilterFlagPopup
       isOpen={isOpen}
       onClearFilters={onClearFilters}

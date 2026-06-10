@@ -35,7 +35,7 @@ const CollectionLoader = memo(
   }) => {
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
     const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
       params: {
         cursor: String(0),
@@ -91,7 +91,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading || isLoadingTeams}
             data={accounts}

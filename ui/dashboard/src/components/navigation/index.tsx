@@ -24,13 +24,19 @@ const LogoIcon = () => (
   </span>
 );
 
-const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
+const Navigation = ({
+  onClickNavLink,
+  forceExpanded = false
+}: {
+  onClickNavLink: () => void;
+  forceExpanded?: boolean;
+}) => {
   const { t } = useTranslation(['common']);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { consoleAccount } = useAuth();
 
-  const { fromTabletScreen, fromMobileScreen } = useScreen();
+  const { fromTabletScreen, isMobile } = useScreen();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
 
@@ -146,31 +152,42 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
     useToggleOpen(false);
 
-  const [isExpanded, setIsExpanded, setIsCloseExpand] = useToggleOpen(false);
+  const [_isExpanded, setIsExpanded, setIsCloseExpand] = useToggleOpen(false);
+  const isExpanded = forceExpanded || _isExpanded;
 
   useEffect(() => {
+    if (forceExpanded) return;
     if (fromTabletScreen) {
+      setIsExpanded();
+    } else if (isMobile) {
       setIsCloseExpand();
     }
-    if (!fromMobileScreen) {
-      setIsExpanded();
-    }
-  }, [fromTabletScreen, fromMobileScreen, setIsCloseExpand]);
+    // Run only on mount to set the initial collapsed/expanded state.
+    // Subsequent resizes should not override a user's manual toggle.
+  }, []);
   return (
     <div
       className={cn(
-        'fixed h-screen bg-primary-500 z-50 transition-[width] duration-300 ease-in-out overflow-hidden',
+        'fixed h-screen bg-primary-500 z-50 transition-[width] duration-300 ease-in-out',
+        isOpenSwitchOrg ? 'overflow-visible' : 'overflow-hidden',
         !fromTabletScreen && isExpanded
           ? 'w-[248px] px-3 sm:px-6 py-4'
-          : !fromMobileScreen
+          : isMobile
             ? 'w-[248px] px-3 sm:px-6 py-4'
             : 'w-[60px] md:w-[248px] py-4 px-2 md:px-6 md:py-8'
       )}
     >
-      <div className="flex flex-col size-full relative overflow-hidden pt-4 md:pt-0">
-        {!fromTabletScreen && (
+      <div
+        className={cn(
+          'flex flex-col size-full relative pt-4 md:pt-0',
+          isOpenSwitchOrg ? 'overflow-visible' : 'overflow-hidden'
+        )}
+      >
+        {!fromTabletScreen && !forceExpanded && (
           <button
-            onClick={() => (!isExpanded ? setIsExpanded() : setIsCloseExpand())}
+            onClick={() =>
+              !_isExpanded ? setIsExpanded() : setIsCloseExpand()
+            }
             className={cn(
               'hidden sm:flex items-center justify-center hover:bg-primary-300 hover:rounded-full w-6 h-6',
               isExpanded
@@ -206,7 +223,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           >
             <div
               className={cn(
-                'w-full flex ',
+                'w-full flex',
                 !fromTabletScreen
                   ? isExpanded
                     ? 'justify-start'
@@ -296,7 +313,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </button>
         </div>
       </div>
-      {fromMobileScreen && isOpenSwitchOrg ? (
+      {!isMobile && isOpenSwitchOrg ? (
         <SwitchOrganization
           isExpanded={isExpanded}
           isOpen={isOpenSwitchOrg}
@@ -305,10 +322,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         />
       ) : (
         <DialogModal
-          className="w-[350px]"
+          className="w-[290px]"
           title=""
           isOpen={isOpenSwitchOrg}
           onClose={onCloseSwitchOrg}
+          overlayCls="!z-[500]"
         >
           <SwitchOrganization
             isExpanded={isExpanded}

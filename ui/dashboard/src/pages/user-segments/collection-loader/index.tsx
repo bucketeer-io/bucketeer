@@ -38,7 +38,7 @@ const CollectionLoader = memo(
   }) => {
     const columns = useColumns({ getUploadingStatus, onActionHandler });
     const { consoleAccount } = useAuth();
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
@@ -80,7 +80,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading}
             data={userSegments}

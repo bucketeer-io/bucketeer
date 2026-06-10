@@ -34,7 +34,7 @@ const CollectionLoader = memo(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { editorEnvironmentIDs } = getEditorEnvironments(consoleAccount!);
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
 
     const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
       organizationId: currentEnvironment.organizationId,
@@ -84,7 +84,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading || isLoadingTags}
             data={pushes}

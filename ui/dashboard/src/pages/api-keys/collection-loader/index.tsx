@@ -32,7 +32,7 @@ const CollectionLoader = memo(
     const columns = useColumns({ onActions });
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
 
     const {
       data: collection,
@@ -73,7 +73,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <div className="flex flex-col">
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading}
             data={apiKeys}

@@ -117,7 +117,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <Card>
       <Card.Header
-        triger={
+        trigger={
           <NameWithTooltip
             id={data.id}
             content={
