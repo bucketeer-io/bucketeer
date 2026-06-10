@@ -61,7 +61,7 @@ const FilterOrganizationSlide = ({
                 contentClassName="w-[270px]"
               />
               <div className="flex min-w-0 items-center gap-3 mt-3 pl-3">
-                <p className="typo-para-medium text-gray-600">is</p>
+                <p className="typo-para-medium text-gray-600">{t('is')}</p>
                 <Dropdown
                   disabled={!selectedFilterType}
                   placeholder={t('select-value')}

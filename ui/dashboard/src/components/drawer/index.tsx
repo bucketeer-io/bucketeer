@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { IconCancelFilled } from 'react-icons-material-design';
 import { cn } from 'utils/style';
-import { IconClose } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 
@@ -40,6 +39,7 @@ interface DrawerProps {
   open: boolean;
   onClose: () => void;
   side?: DrawerSide;
+  className?: string;
   children: React.ReactNode;
 }
 
@@ -47,6 +47,7 @@ export const Drawer = ({
   open,
   onClose,
   side = 'left',
+  className,
   children
 }: DrawerProps) => {
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -65,40 +66,33 @@ export const Drawer = ({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    }
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previous;
     };
   }, [open]);
 
+  if (!open) return null;
+
   return createPortal(
     <div
-      className={cn(
-        'fixed inset-0 z-50',
-        open ? 'w-full' : 'w-0 overflow-hidden'
-      )}
+      role="dialog"
+      aria-modal="true"
+      className={cn('fixed inset-0 z-[200]', className)}
+      style={{ pointerEvents: 'auto' }}
     >
-      <div
-        className={cn(
-          'absolute inset-0 bg-overlay transition-opacity duration-300',
-          open ? 'opacity-100' : 'opacity-0'
-        )}
-        onClick={onClose}
-      />
-      <button className="absolute top-3 right-3 text-white " onClick={onClose}>
-        <Icon icon={IconClose} />
-      </button>
+      <div className="absolute inset-0 bg-overlay" onClick={onClose} />
       <div
         ref={drawerRef}
         className={cn(
-          'fixed bg-white shadow-card transition-all duration-5000',
-          side === 'right' && 'right-0 top-0 h-full',
+          'absolute bg-white shadow-card',
+          side === 'right' && 'right-0 top-0 h-full w-[248px]',
           side === 'left' && 'left-0 top-0 h-full w-[248px]',
           side === 'top' && 'top-0 left-0 w-full',
-          side === 'bottom' && 'bottom-0 left-0 w-full',
-          side === 'left' && (open ? 'translate-x-0' : '-translate-x-full')
+          side === 'bottom' &&
+            'bottom-0 left-0 w-full rounded-t-2xl max-h-[90vh] overflow-y-auto'
         )}
       >
         {children}

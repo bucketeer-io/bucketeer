@@ -67,7 +67,7 @@ const FilterUserSegmentPopup = ({
             contentClassName="w-[235px]"
           />
 
-          <p className="typo-para-medium text-gray-600">is</p>
+          <p className="typo-para-medium text-gray-600">{t('is')}</p>
           <Dropdown
             placeholder={t(`select-value`)}
             disabled={!selectedFilterType}

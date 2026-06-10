@@ -18,7 +18,7 @@ import Input from 'components/input';
 
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const {
     control,
     watch,
@@ -79,7 +79,7 @@ const Variations = () => {
                 }}
               />
             </div>
-            {!fromMobileScreen && (
+            {!!isMobile && (
               <Button
                 variant="grey"
                 size="icon"
@@ -187,7 +187,7 @@ const Variations = () => {
                 />
               </div>
             </div>
-            {fromMobileScreen && (
+            {!isMobile && (
               <Button
                 variant="grey"
                 size="icon"

@@ -34,7 +34,7 @@ const CollectionLoader = memo(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { editorEnvironmentIDs } = getEditorEnvironments(consoleAccount!);
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
     const {
       data: collection,
       isLoading,
@@ -75,7 +75,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading}
             data={apiKeys}

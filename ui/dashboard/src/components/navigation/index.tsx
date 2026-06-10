@@ -39,7 +39,7 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
     onToggleCollapsed(next);
   };
 
-  const { fromTabletScreen, fromMobileScreen } = useScreen();
+  const { fromTabletScreen, isMobile } = useScreen();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
 
@@ -176,16 +176,17 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
   const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
     useToggleOpen(false);
 
-  const [isExpanded, setIsExpanded, setIsCloseExpand] = useToggleOpen(false);
+  const [_isExpanded, setIsExpanded, setIsCloseExpand] = useToggleOpen(false);
 
   useEffect(() => {
     if (fromTabletScreen) {
+      setIsExpanded();
+    } else if (isMobile) {
       setIsCloseExpand();
     }
-    if (!fromMobileScreen) {
-      setIsExpanded();
-    }
-  }, [fromTabletScreen, fromMobileScreen, setIsCloseExpand]);
+    // Run only on mount to set the initial collapsed/expanded state.
+    // Subsequent resizes should not override a user's manual toggle.
+  }, []);
   return (
     <div
       className={cn(
@@ -275,7 +276,6 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
             {settingMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
-                isExpanded={isExpanded}
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
@@ -300,7 +300,7 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
-                isExpanded={isExpanded}
+               
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
@@ -347,9 +347,8 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
           </div>
         </div>
       </div>
-      {fromMobileScreen && isOpenSwitchOrg ? (
+      {!isMobile && isOpenSwitchOrg ? (
         <SwitchOrganization
-          isExpanded={isExpanded}
           isOpen={isOpenSwitchOrg}
           onCloseSwitchOrg={onCloseSwitchOrg}
           onCloseSetting={onCloseSetting}
@@ -357,13 +356,14 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
 
       ) : (
         <DialogModal
-          className="w-[350px]"
+          className="w-[290px]"
           title=""
           isOpen={isOpenSwitchOrg}
           onClose={onCloseSwitchOrg}
+          overlayCls="!z-[500]"
         >
           <SwitchOrganization
-            isExpanded={isExpanded}
+
             isOpen={isOpenSwitchOrg}
             onCloseSwitchOrg={onCloseSwitchOrg}
             onCloseSetting={onCloseSetting}

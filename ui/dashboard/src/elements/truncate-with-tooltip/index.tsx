@@ -27,7 +27,7 @@ const TruncateWithTooltip = ({
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
-  }, [text, maxLines]);
+  }, [text, maxLines, className]);
 
   const trigger = (
     <div

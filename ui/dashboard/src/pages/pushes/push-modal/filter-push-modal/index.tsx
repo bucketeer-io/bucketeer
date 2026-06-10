@@ -18,8 +18,8 @@ const FilterPushModal = ({
   onClearFilters,
   filters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
-  return fromMobileScreen ? (
+  const { isMobile } = useScreen();
+  return !isMobile ? (
     <FilterPushPopup
       isOpen={isOpen}
       onClearFilters={onClearFilters}

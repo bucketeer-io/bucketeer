@@ -82,7 +82,7 @@ const FilterFlagPopup = ({
                 className="w-full truncate"
                 contentClassName="w-[270px]"
               />
-              <p className="typo-para-medium text-gray-600">is</p>
+              <p className="typo-para-medium text-gray-600">{t('is')}</p>
               <Dropdown
                 disabled={
                   (isTagFilter && isLoadingTags) ||

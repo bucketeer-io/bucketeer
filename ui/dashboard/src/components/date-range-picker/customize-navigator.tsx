@@ -10,6 +10,7 @@ import { StaticRangeOption } from '.';
 interface Props {
   currFocusedDate: Date;
   staticRanges: StaticRangeOption[];
+  selectedLabel?: string;
   handleStaticRangeClick: (range: StaticRangeOption) => void;
   changeShownDate: (
     value: Date | number | string,
@@ -30,6 +31,7 @@ const CustomizeNavigator = memo(
   ({
     currFocusedDate,
     staticRanges,
+    selectedLabel,
     handleStaticRangeClick,
     changeShownDate
   }: Props) => {
@@ -48,20 +50,19 @@ const CustomizeNavigator = memo(
 
     return (
       <div className={cn('w-full relative z-[1000] p-5 pb-0')}>
-        <div className="md:hidden w-full max-w-[350px] sm:max-w-[570px] mb-3">
-          <div className="w-[350px] sm:w-[570px] overflow-x-scroll flex items-center gap-x-3 ">
-            {staticRanges.map(staticRange => (
-              <div
-                key={staticRange.label}
-                onClick={() =>
-                  handleStaticRangeClick(staticRange as StaticRangeOption)
-                }
-                className="w-[120px] bg-gray-100 py-2 px-3 rounded-full text-nowrap typo-para-medium text-gray-700"
-              >
-                {staticRange.label}
-              </div>
-            ))}
-          </div>
+        <div className="md:hidden w-full mb-3">
+          <Dropdown
+            options={staticRanges.map(r => ({
+              label: r.label,
+              value: r.label
+            }))}
+            value={selectedLabel ?? ''}
+            onChange={value => {
+              const found = staticRanges.find(r => r.label === value);
+              if (found) handleStaticRangeClick(found);
+            }}
+            isExpand
+          />
         </div>
         <div className="flex items-center justify-between w-full border-b border-gray-200 pb-5">
           <Button

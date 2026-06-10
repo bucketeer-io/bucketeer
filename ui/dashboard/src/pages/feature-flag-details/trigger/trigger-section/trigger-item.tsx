@@ -54,10 +54,10 @@ const TriggerItem = ({
   }, []);
 
   return (
-    <div className="flex w-full min-w-fit gap-x-3 p-6 bg-white border border-gray-400 rounded-lg">
+    <div className="flex w-full gap-x-3 p-4 sm:p-6 bg-white border border-gray-400 rounded-lg">
       <Icon icon={IconWebhook} />
-      <div className="flex flex-col flex-1 gap-y-4">
-        <div className="flex items-center w-full justify-between">
+      <div className="flex flex-col flex-1 gap-y-4 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center w-full gap-y-2 sm:justify-between">
           <div className="flex items-center gap-x-2">
             <p className="typo-para-medium text-gray-700">
               {t('trigger.generic-trigger')}
@@ -125,8 +125,8 @@ const TriggerItem = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-12 w-full gap-x-4">
-            <div className="flex flex-col gap-y-3 col-span-2">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-y-3 min-w-[120px]">
               <p className="typo-para-medium text-gray-500 uppercase">
                 {t('trigger.action')}
               </p>
@@ -134,7 +134,7 @@ const TriggerItem = ({
                 {t(`trigger.${isOnFlag ? 'turn-on-flag' : 'turn-off-flag'}`)}
               </p>
             </div>
-            <div className="flex flex-col gap-y-3 col-span-4">
+            <div className="flex flex-col gap-y-3 flex-1 min-w-[140px]">
               <p className="typo-para-medium text-gray-500 uppercase">
                 {t('trigger.trigger-url')}
               </p>
@@ -142,13 +142,13 @@ const TriggerItem = ({
                 {url}
               </p>
             </div>
-            <div className="flex flex-col gap-y-3 col-span-3">
+            <div className="flex flex-col gap-y-3 min-w-[120px]">
               <p className="typo-para-medium text-gray-500 uppercase">
                 {t('trigger.triggered-times')}
               </p>
               <p className="typo-para-medium text-gray-700">{triggerCount}</p>
             </div>
-            <div className="flex flex-col gap-y-3 col-span-3">
+            <div className="flex flex-col gap-y-3 min-w-[120px]">
               <p className="typo-para-medium text-gray-500 uppercase">
                 {t('trigger.last-triggered')}
               </p>

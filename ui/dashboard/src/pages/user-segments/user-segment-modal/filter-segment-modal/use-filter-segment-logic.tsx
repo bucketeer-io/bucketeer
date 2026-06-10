@@ -46,8 +46,7 @@ const useFilterSegmentLogic = (
     isDisabledSubmitBtn,
     setSelectedFilterType,
     setValueOption,
-    onConfirmHandler,
-    confirm
+    onConfirmHandler
   };
 };
 

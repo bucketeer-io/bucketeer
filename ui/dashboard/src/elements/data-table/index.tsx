@@ -36,7 +36,7 @@ export const DataTable = <TData, TValue>({
   onSortingChange
 }: DataTableProps<TData, TValue>) => {
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [isScrolltable, setIsScrollTable] = useState(false);
+  const [isScrollable, setIsScrollable] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const onSortingChangeHandler = useCallback(
@@ -61,20 +61,14 @@ export const DataTable = <TData, TValue>({
   });
 
   useEffect(() => {
-    const checkScrollTable = () => {
-      if (!tableContainerRef.current) return;
-      const isScrollable =
-        tableContainerRef.current.scrollWidth >
-        tableContainerRef.current.clientWidth;
-
-      setIsScrollTable(isScrollable);
-    };
-    checkScrollTable();
-    window.addEventListener('resize', () => checkScrollTable());
-    return () => {
-      window.removeEventListener('resize', () => checkScrollTable());
-    };
-  }, [tableContainerRef.current]);
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      setIsScrollable(el.scrollWidth > el.clientWidth);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (!isLoading && !table.getRowModel().rows?.length) {
     return (
@@ -89,7 +83,7 @@ export const DataTable = <TData, TValue>({
       ref={tableContainerRef}
       className={cn(
         'overflow-x-auto hidden-scroll w-full relative',
-        isScrolltable ? 'px-0' : 'px-2'
+        isScrollable ? 'px-0' : 'px-2'
       )}
     >
       <Table.Root>
@@ -145,7 +139,7 @@ export const DataTable = <TData, TValue>({
                   data-hoverable={!!onRowClick}
                   onClick={() => onRowClick?.(row.original)}
                   className={cn('shadow-card bg-white', {
-                    'rounded-lg': !isScrolltable
+                    'rounded-lg': !isScrollable
                   })}
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => {
@@ -162,12 +156,12 @@ export const DataTable = <TData, TValue>({
                           'px-4 py-2 h-[60px] min-h-[60px] border-gray-300',
                           {
                             'first:rounded-l-lg last:rounded-r-lg':
-                              !isScrolltable,
-                            'sticky bg-white z-[15]': isSticky && isScrolltable,
+                              !isScrollable,
+                            'sticky bg-white z-[15]': isSticky && isScrollable,
                             'left-0 shadow-right border-l before:absolute':
-                              isFirst && isScrolltable,
+                              isFirst && isScrollable,
                             'right-0 shadow-left border-r':
-                              isLast && isScrolltable
+                              isLast && isScrollable
                           }
                         )}
                         style={{
