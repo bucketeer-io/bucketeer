@@ -18,9 +18,9 @@ const FilterOrganizationModal = ({
   onClearFilters,
   filters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
 
-  return fromMobileScreen ? (
+  return !isMobile ? (
     <FilterOrganizationPopup
       onSubmit={onSubmit}
       isOpen={isOpen}

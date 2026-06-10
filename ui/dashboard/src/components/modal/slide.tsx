@@ -23,7 +23,7 @@ const SlideModal = ({
   isOpen,
   onClose,
   children,
-  shouldCloseOnOverlayClick = true
+  shouldCloseOnOverlayClick = false
 }: SliderProps) => {
   const onOpenChange = useCallback(
     (v: boolean) => {
@@ -36,7 +36,14 @@ const SlideModal = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 h-full w-full animate-fade bg-overlay" />
-        <Dialog.Content>
+        <Dialog.Content
+          onPointerDownOutside={
+            shouldCloseOnOverlayClick ? undefined : e => e.preventDefault()
+          }
+          onInteractOutside={
+            shouldCloseOnOverlayClick ? undefined : e => e.preventDefault()
+          }
+        >
           <div
             className={cn(
               'fixed z-50 flex h-full w-full flex-col rounded-l-lg bg-gray-50 max-w-[542px]',

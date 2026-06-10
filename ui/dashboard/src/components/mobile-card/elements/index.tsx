@@ -24,14 +24,14 @@ export interface CardHeaderProps {
   title?: string;
   subtitle?: string;
   children?: ReactNode;
-  triger?: ReactNode;
+  trigger?: ReactNode;
 }
 
 const Header: React.FC<CardHeaderProps> = ({
   icon,
   title,
   subtitle,
-  triger,
+  trigger,
   children
 }) => (
   <div className="flex items-center justify-between gap-4 mb-3 typo-head-semi-medium">
@@ -41,8 +41,8 @@ const Header: React.FC<CardHeaderProps> = ({
           {icon}
         </div>
       )}
-      {triger ? (
-        <div className="min-w-0 flex-1">{triger}</div>
+      {trigger ? (
+        <div className="min-w-0 flex-1">{trigger}</div>
       ) : (
         <div className="flex gap-x-4">
           <div className="flex-1 min-w-0">

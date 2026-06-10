@@ -18,8 +18,8 @@ const FilterNotificationModal = ({
   onClose,
   onClearFilters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
-  return fromMobileScreen ? (
+  const { isMobile } = useScreen();
+  return !isMobile ? (
     <FilterNotificationPopup
       isOpen={isOpen}
       onClearFilters={onClearFilters}

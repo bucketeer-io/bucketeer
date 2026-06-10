@@ -35,7 +35,7 @@ const PageContent = ({
   ) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { userSegmentSortByOptions, flagSortDirectionOptions } = useOptions();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -97,7 +97,7 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <>
-            {!fromMobileScreen && (
+            {!!isMobile && (
               <SortBy
                 filters={filters}
                 setFilters={setFilters}

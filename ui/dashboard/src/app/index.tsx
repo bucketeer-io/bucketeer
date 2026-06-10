@@ -136,7 +136,7 @@ export const Root = memo(() => {
     getNavigationCollapsedStorage
   );
   const [showMenu, setShowMenu] = useState<boolean>(false);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -183,7 +183,7 @@ export const Root = memo(() => {
               </Button>
             )}
           </div>
-          {fromMobileScreen ? (
+          {!isMobile  ? (
           <Navigation
           isCollapsed={isNavCollapsed}
           onToggleCollapsed={setIsNavCollapsed}
@@ -193,6 +193,7 @@ export const Root = memo(() => {
               side="left"
               open={showMenu}
               onClose={() => setShowMenu(false)}
+              className="!z-30"
             >
           <Navigation
             isCollapsed={isNavCollapsed}

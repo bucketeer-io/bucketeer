@@ -93,10 +93,10 @@ const Dropdown = ({
 }: DropdownProps) => {
   const [searchValue, setSearchValue] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [contentWidth, setContentWidth] = useState<number | undefined>();
 
   const inputSearchRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const contentWidthRef = useRef<number | undefined>(undefined);
 
   const debounceSetQuery = useRef(
     (() => {
@@ -172,7 +172,7 @@ const Dropdown = ({
     (open: boolean) => {
       if (open) {
         if (isExpand) {
-          setContentWidth(triggerRef.current?.offsetWidth);
+          contentWidthRef.current = triggerRef.current?.offsetWidth;
         }
         requestAnimationFrame(() => inputSearchRef.current?.focus());
         return;
@@ -183,7 +183,10 @@ const Dropdown = ({
     [isExpand]
   );
 
-  const contentStyle = isExpand && contentWidth ? { width: contentWidth } : {};
+  const contentStyle =
+    isExpand && contentWidthRef.current
+      ? { width: contentWidthRef.current }
+      : {};
 
   return (
     <DropdownMenu onOpenChange={handleOpenChange}>

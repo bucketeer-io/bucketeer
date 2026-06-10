@@ -100,7 +100,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
         icon={<Icon icon={getDataTypeIcon(data.variationType)} />}
         title={data.name}
         subtitle={data.id}
-        triger={
+        trigger={
           <div className="flex flex-col gap-y-1">
             <NameWithTooltip
               id={data.id}
