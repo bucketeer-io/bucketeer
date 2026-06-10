@@ -18,9 +18,9 @@ const FilterExperimentModal = ({
   onClearFilters,
   filters
 }: FilterProps) => {
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
 
-  return fromMobileScreen ? (
+  return !isMobile ? (
     <FilterExperimentPopup
       onSubmit={onSubmit}
       isOpen={isOpen}

@@ -31,7 +31,7 @@ const CollectionLoader = memo(
     const { projectId } = useParams();
     const columns = useColumns({ onActions });
     const { searchOptions } = useSearchParams();
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
     const organizationId = searchOptions?.organizationId as string;
 
     const {
@@ -74,7 +74,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <DataTable
             isLoading={isLoading}
             data={environments}

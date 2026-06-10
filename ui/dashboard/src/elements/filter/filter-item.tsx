@@ -1,5 +1,5 @@
-import { ReactNode, SetStateAction } from 'react';
-import { FilterOption } from 'hooks/use-options';
+import { SetStateAction } from 'react';
+import { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
@@ -8,23 +8,13 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 
-interface FilterProps {
-  valueOption: DropdownValue;
-  valueLabel?: string | number | true | string[];
-  optionFilter: DropdownOption[];
+interface FilterItemProps {
+  filterIndex: number;
+  filterOption: FilterOption;
+  filterOptions: DropdownOption[];
   isLoadingTags: boolean;
   isLoading: boolean;
-  isListItem?: boolean;
-  isMultiselect?: boolean;
-  isSearchable?: boolean;
   selectedFilters: FilterOption[];
-  filterIndex: number;
-  filterType?: string | number;
-  filterOption: FilterOption;
-  label: ReactNode;
-  disable?: boolean;
-  valueOptions: DropdownOption[];
-  onClose: () => void;
   getValueOptions: (filterOption: FilterOption) => FilterOption[];
   handleChangeOption: (value: string, filterIndex: number) => void;
   handleGetLabelFilterValue: (
@@ -34,32 +24,28 @@ interface FilterProps {
   handleChangeFilterValue: (value: DropdownValue, filterIndex: number) => void;
 }
 
-const FilterSlideItem = ({
+const FilterItem = ({
   filterIndex,
-  filterType,
-  isListItem,
-  isMultiselect,
-  label,
-  valueOption,
-  optionFilter,
-  valueOptions,
-  disable,
   filterOption,
-  isSearchable,
-  selectedFilters,
+  filterOptions,
+  isLoadingTags,
   isLoading,
-
+  selectedFilters,
+  getValueOptions,
   handleChangeOption,
   handleGetLabelFilterValue,
   setSelectedFilters,
   handleChangeFilterValue
-}: FilterProps) => {
+}: FilterItemProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { label, value: filterType } = filterOption;
+  const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
+  const isTagFilter = filterType === FilterTypes.TAGS;
+  const isHaveSearchingDropdown = isMaintainerFilter || isTagFilter;
+  const valueOptions = getValueOptions(filterOption);
+
   return (
-    <div
-      className="flex items-start w-full h-[100px] gap-x-3"
-      key={filterIndex}
-    >
+    <div className="flex items-start w-full h-[100px] gap-x-3">
       <div className="h-full flex flex-col gap-y-4 items-center justify-center">
         <div
           className={cn(
@@ -69,44 +55,48 @@ const FilterSlideItem = ({
             }
           )}
         >
-          {t(filterIndex === 0 ? `if` : 'and')}
+          {t(filterIndex === 0 ? 'if' : 'and')}
         </div>
         <Divider vertical={true} className="border-primary-500" />
       </div>
       <div className="flex flex-col w-full">
         <Dropdown
-          placeholder={t(`select-filter`)}
+          placeholder={t('select-filter')}
           labelCustom={label}
-          options={optionFilter as DropdownOption[]}
+          options={filterOptions}
           value={filterType}
-          onChange={value => {
-            handleChangeOption(value as string, filterIndex);
-          }}
+          onChange={value => handleChangeOption(value as string, filterIndex)}
           className="w-full truncate py-2"
           contentClassName="w-[270px]"
         />
         <div className="flex items-center gap-3 mt-3 pl-3">
-          <p className="typo-para-medium text-gray-600">is</p>
+          <p className="typo-para-medium text-gray-600">{t('is')}</p>
           <Dropdown
-            disabled={disable}
-            loading={isLoading}
-            isListItem={isListItem}
-            multiselect={isMultiselect}
-            placeholder={t(`select-value`)}
-            value={valueOption}
+            disabled={
+              (isTagFilter && isLoadingTags) ||
+              (isMaintainerFilter && isLoading) ||
+              !filterType
+            }
+            loading={
+              (isTagFilter && isLoadingTags) ||
+              (isMaintainerFilter && isLoading)
+            }
+            isListItem={isHaveSearchingDropdown}
+            multiselect={isTagFilter}
+            placeholder={t('select-value')}
+            value={filterOption?.filterValue as DropdownValue}
             labelCustom={handleGetLabelFilterValue(filterOption)}
-            isSearchable={isSearchable}
+            isSearchable={isHaveSearchingDropdown}
             options={valueOptions as DropdownOption[]}
             onChange={value =>
               handleChangeFilterValue(value as DropdownValue, filterIndex)
             }
             className="w-full truncate py-2"
             contentClassName={cn('w-[235px]', {
-              'pt-0 w-[300px]': isListItem,
+              'pt-0 w-[300px]': isHaveSearchingDropdown,
               'hidden-scroll': valueOptions?.length > 15
             })}
           />
-
           <Button
             variant={'grey'}
             className="px-0 w-fit"
@@ -125,4 +115,4 @@ const FilterSlideItem = ({
   );
 };
 
-export default FilterSlideItem;
+export default FilterItem;

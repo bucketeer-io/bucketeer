@@ -24,12 +24,12 @@ const GoalsConnectionModal = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const goals = experiment?.goalIds?.map(item =>
     experiment?.goals?.find(goal => goal.id === item)
   );
 
-  const sizeIcon = fromMobileScreen ? 'fit' : '3xl';
+  const sizeIcon = !isMobile ? 'fit' : '3xl';
   return (
     <DialogModal
       className="w-full max-w-[500px]"

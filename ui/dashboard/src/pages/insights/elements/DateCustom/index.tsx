@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Range } from 'react-date-range';
 import dayjs from 'dayjs';
+import { useScreen } from 'hooks/use-screen';
 import { useTranslation } from 'i18n';
 import { truncNumber } from 'pages/audit-logs/utils';
 import Button from 'components/button';
@@ -22,6 +23,7 @@ const InsightsDateRangePicker = ({
   onClose
 }: InsightsDateRangePickerProps) => {
   const { t } = useTranslation(['common']);
+  const { isMobile } = useScreen();
 
   const initRange = useMemo(
     () => ({
@@ -66,6 +68,8 @@ const InsightsDateRangePicker = ({
       from={selectedRange.from}
       to={selectedRange.to}
       maxDate={maxDate}
+      months={2}
+      direction={!isMobile ? 'horizontal' : 'vertical'}
       getTriggerLabel={() => {}}
       isShowRange={isOpen}
       onClose={onClose}
