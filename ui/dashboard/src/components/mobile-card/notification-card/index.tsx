@@ -52,7 +52,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
             }
           />
         }
-        triger={
+        trigger={
           <NameWithTooltip
             id={id}
             content={<NameWithTooltip.Content content={name} id={id} />}

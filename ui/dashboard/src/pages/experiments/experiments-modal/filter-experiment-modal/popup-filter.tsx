@@ -84,7 +84,7 @@ const FilterExperimentPopup = ({
                 }
               />
 
-              <p className="typo-para-medium text-gray-600">is</p>
+              <p className="typo-para-medium text-gray-600">{t('is')}</p>
               <Dropdown
                 disabled={isLoading || !filterType}
                 placeholder={t(`select-value`)}

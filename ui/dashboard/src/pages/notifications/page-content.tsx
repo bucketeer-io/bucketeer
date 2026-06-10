@@ -30,7 +30,7 @@ const PageContent = ({
   onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { notificationSortByOptions, flagSortDirectionOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
@@ -92,7 +92,7 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <>
-            {!fromMobileScreen && (
+            {!!isMobile && (
               <SortBy
                 filters={filters}
                 setFilters={setFilters}

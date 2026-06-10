@@ -26,7 +26,7 @@ const PageContent = ({
   onHandleActions: (item: Organization, type: OrganizationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { organizationSortByOptions, flagSortDirectionOptions } = useOptions();
 
   // NOTE: Need improve search options
@@ -77,7 +77,7 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <>
-            {!fromMobileScreen && (
+            {!!isMobile && (
               <SortBy
                 filters={filters}
                 setFilters={setFilters}

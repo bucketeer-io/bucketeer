@@ -27,22 +27,25 @@ const DialogModal = ({
   isOpen,
   onClose,
   closeOnPressEscape = true,
-  closeOnClickOutside = true,
+  closeOnClickOutside = false,
   isShowHeader = true,
   children,
   className,
   overlayCls
 }: ModalProps) => {
-  const onOpenChange = useCallback((v: boolean) => {
-    if (v === false) onClose();
-  }, []);
+  const onOpenChange = useCallback(
+    (v: boolean) => {
+      if (v === false && closeOnClickOutside) onClose();
+    },
+    [closeOnClickOutside]
+  );
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay
           className={cn(
-            'fixed inset-0 grid h-full w-full animate-fade z-50',
+            'fixed inset-0 grid h-full w-full animate-fade z-[400]',
             'place-items-center overflow-y-auto bg-overlay',
             'p-6',
             overlayCls
@@ -57,6 +60,9 @@ const DialogModal = ({
               closeOnPressEscape ? undefined : event => event.preventDefault()
             }
             onPointerDownOutside={
+              closeOnClickOutside ? undefined : event => event.preventDefault()
+            }
+            onInteractOutside={
               closeOnClickOutside ? undefined : event => event.preventDefault()
             }
           >

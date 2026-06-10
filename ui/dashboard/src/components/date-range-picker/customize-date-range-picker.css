@@ -160,5 +160,53 @@
 }
 
 .rdrCalendarWrapper {
-  @apply sm:!w-[645px]
+  @apply !w-full sm:!w-[645px];
+}
+
+@media (max-width: 599px) {
+  .rdrDateRangePickerWrapper {
+    display: flex;
+    width: 100% !important;
+  }
+
+  .rdrCalendarWrapper {
+    font-size: 11px;
+  }
+
+  .range__months {
+    @apply p-3;
+  }
+
+  .range__weekDay {
+    @apply !h-5 !text-[10px];
+  }
+
+  .range__days--day {
+    @apply !min-h-[34px];
+  }
+
+  .range__days--number {
+    @apply !size-[34px] !text-[11px];
+  }
+
+  .rdrStartEdge,
+  .rdrEndEdge {
+    @apply !size-[34px];
+  }
+
+  .range__days--dayPreview {
+    @apply !h-[34px];
+  }
+
+  .rdrDateDisplayWrapper {
+    @apply !mx-3 !mt-8;
+  }
+
+  .rdrDateInput input {
+    @apply !h-9 !text-xs !p-2 !pr-8;
+  }
+
+  .rdrDateInput:last-child {
+    @apply !ml-2;
+  }
 }

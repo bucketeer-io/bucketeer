@@ -30,7 +30,7 @@ const PageContent = ({
   onHandleActions: (item: Push, type: PushActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { pushSortByOptions, flagSortDirectionOptions } = useOptions();
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -92,7 +92,7 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <>
-            {!fromMobileScreen && (
+            {!!isMobile && (
               <SortBy
                 filters={filters}
                 setFilters={setFilters}

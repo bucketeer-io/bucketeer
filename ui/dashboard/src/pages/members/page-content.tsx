@@ -28,7 +28,7 @@ const PageContent = ({
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { fromMobileScreen } = useScreen();
+  const { isMobile } = useScreen();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { memberSortByOptions, flagSortDirectionOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -96,7 +96,7 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <>
-            {!fromMobileScreen && (
+            {!!isMobile && (
               <SortBy
                 filters={filters}
                 setFilters={setFilters}

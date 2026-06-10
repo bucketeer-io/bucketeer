@@ -40,7 +40,7 @@ const CollectionLoader = memo(
     onClearFilters: () => void;
   }) => {
     const { consoleAccount } = useAuth();
-    const { fromMobileScreen } = useScreen();
+    const { isMobile } = useScreen();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { t } = useTranslation(['common', 'table']);
     const {
@@ -177,7 +177,7 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent className="gap-y-6">
-        {fromMobileScreen ? (
+        {!isMobile ? (
           <GridViewCollection
             filterTags={filters?.tags}
             autoOpsRules={autoOpsRules}

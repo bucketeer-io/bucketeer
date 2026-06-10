@@ -37,7 +37,7 @@ export const EnvironmentCard: React.FC<EnvCardProps> = ({
     <Card>
       <Card.Header
         icon={<Icon icon={IconMember} />}
-        triger={
+        trigger={
           <NameWithTooltip
             id={id}
             content={<NameWithTooltip.Content content={name} id={id} />}
