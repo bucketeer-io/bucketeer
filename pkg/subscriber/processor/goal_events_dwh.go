@@ -442,7 +442,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			exp.StopAt,
 		)
 		if err != nil {
-			if errors.Is(err, ecdwh.ErrBQNoResultsFound) {
+			if ecdwh.IsNoResultsFound(err) {
 				w.logger.Error("Evaluation not found",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),

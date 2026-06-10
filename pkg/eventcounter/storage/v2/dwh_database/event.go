@@ -17,6 +17,7 @@ package dwhdatabase
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -49,6 +50,16 @@ var (
 		pkgErr.EventCounterPackageName,
 		"Postgres: no results found")
 )
+
+// IsNoResultsFound reports whether err signals that the DWH backend returned
+// no rows for the query, regardless of which backend (BigQuery, MySQL, or
+// Postgres) produced it. Callers should use this instead of comparing against
+// the backend-specific sentinels.
+func IsNoResultsFound(err error) bool {
+	return errors.Is(err, ErrBQNoResultsFound) ||
+		errors.Is(err, ErrMySQLNoResultsFound) ||
+		errors.Is(err, ErrPostgresNoResultsFound)
+}
 
 type EventStorage interface {
 	QueryEvaluationCount(
