@@ -1,7 +1,7 @@
 import { useScreen } from 'hooks';
 import { APIKeysFilters } from 'pages/api-keys/types';
-import FilterProjectSlide from 'pages/projects/project-modal/filter-project-modal/slide-filter';
 import FilterAPIKeyPopup from './popup-filter';
+import FilterAPIKeySlide from './slide-filter';
 
 export type FilterProps = {
   onSubmit: (v: Partial<APIKeysFilters>) => void;
@@ -33,7 +33,7 @@ const FilterAPIKeyModal = ({
       filters={filters}
     />
   ) : (
-    <FilterProjectSlide
+    <FilterAPIKeySlide
       isOpen={isOpen}
       onClearFilters={onClearFilters}
       onClose={onClose}

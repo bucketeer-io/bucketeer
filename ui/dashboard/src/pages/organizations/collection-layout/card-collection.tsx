@@ -22,8 +22,12 @@ export const CardCollection = ({
   ) : (
     <div className="flex flex-col gap-3">
       {data.length
-        ? data.map(goal => (
-            <OrganizationCard key={goal.id} onActions={onActions} data={goal} />
+        ? data.map(organization => (
+            <OrganizationCard
+              key={organization.id}
+              onActions={onActions}
+              data={organization}
+            />
           ))
         : emptyCollection}
     </div>
