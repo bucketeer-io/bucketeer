@@ -130,24 +130,6 @@ message GetOpsGoalUserCountResponse {
   int64 count = 3;
 }
 
-message GetMAUCountRequest {
-  reserved 1;
-  string year_month = 2 [(google.api.field_behavior) = REQUIRED];
-  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
-}
-
-message GetMAUCountResponse {
-  int64 event_count = 1;
-  int64 user_count = 2;
-}
-
-message SummarizeMAUCountsRequest {
-  string year_month = 1 [(google.api.field_behavior) = REQUIRED];
-  bool is_finished = 2;
-}
-
-message SummarizeMAUCountsResponse {}
-
 service EventCounterService {
   rpc GetExperimentEvaluationCount(GetExperimentEvaluationCountRequest)
       returns (GetExperimentEvaluationCountResponse) {
@@ -343,97 +325,6 @@ service EventCounterService {
       description: "Get an experiment goal count"
       tags: "experiment_goal_count"
       operation_id: "web.v1.event_counter.experiment_goal_count.get"
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "404"
-        value: {
-          description: "Returned when the requested resource is not found."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 5, "message": "not found", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-
-  rpc GetMAUCount(GetMAUCountRequest) returns (GetMAUCountResponse) {
-    option (google.api.http) = {
-      get: "/v1/mau_count"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get MAU Count"
-      description: "Get MAU count"
-      tags: "mau_count"
-      operation_id: "web.v1.event_counter.mau_count.get"
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "404"
-        value: {
-          description: "Returned when the requested resource is not found."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 5, "message": "not found", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-
-  rpc SummarizeMAUCounts(SummarizeMAUCountsRequest)
-      returns (SummarizeMAUCountsResponse) {
-    option (google.api.http) = {
-      get: "/v1/summarize_mau_counts"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Summarize MAU Counts"
-      description: "Summarize MAU counts"
-      tags: "mau_count"
-      operation_id: "web.v1.event_counter.summarize_mau_counts.get"
       responses: {
         key: "400"
         value: {

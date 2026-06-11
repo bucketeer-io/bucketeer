@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -22,11 +22,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	operationaldatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 )
 
-func TestNewExperimentResultStorage(t *testing.T) {
+func TestNewExperimentResultStorageMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -34,7 +35,7 @@ func TestNewExperimentResultStorage(t *testing.T) {
 	assert.IsType(t, &experimentResultStorage{}, storage)
 }
 
-func TestGetExperimentResult(t *testing.T) {
+func TestGetExperimentResultMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -49,24 +50,27 @@ func TestGetExperimentResult(t *testing.T) {
 			desc: "ErrExperimentResultNotFound",
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				row.EXPECT().Scan(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(mysql.ErrNoRows)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
 			id:            "id-0",
 			environmentId: "ns",
-			expectedErr:   ErrExperimentResultNotFound,
+			expectedErr:   operationaldatabase.ErrExperimentResultNotFound,
 		},
 		{
 			desc: "Error",
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				row.EXPECT().Scan(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-
 			},
 			id:            "id-0",
 			environmentId: "ns",
@@ -76,9 +80,11 @@ func TestGetExperimentResult(t *testing.T) {
 			desc: "Success",
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				row.EXPECT().Scan(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
 			id:            "id-0",
@@ -88,7 +94,7 @@ func TestGetExperimentResult(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newExperimentResultStorageWithMock(t, mockController)
+			storage := &experimentResultStorage{mock.NewMockQueryExecer(mockController)}
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -96,9 +102,4 @@ func TestGetExperimentResult(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
-}
-
-func newExperimentResultStorageWithMock(t *testing.T, mockController *gomock.Controller) *experimentResultStorage {
-	t.Helper()
-	return &experimentResultStorage{mock.NewMockQueryExecer(mockController)}
 }

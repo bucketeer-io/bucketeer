@@ -12,23 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
+package operationaldatabase
 
-package bucketeer.eventcounter;
-option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter";
+import (
+	"context"
 
-import "proto/event/client/event.proto";
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/domain"
+)
 
-message MAUSummary {
-  string yearmonth = 1;
-  string environment_id = 2;
-  bucketeer.event.client.SourceId source_id = 3;
-  int64 user_count = 4;
-  int64 request_count = 5;
-  int64 evaluation_count = 6;
-  int64 goal_count = 7;
-  bool is_all = 8;
-  bool is_finished = 9;
-  int64 created_at = 10;
-  int64 updated_at = 11;
+var ErrExperimentResultNotFound = pkgErr.NewErrorNotFound(
+	pkgErr.EventCounterPackageName,
+	"experiment result not found",
+	"experiment_result")
+
+type ExperimentResultStorage interface {
+	GetExperimentResult(ctx context.Context, id, environmentId string) (*domain.ExperimentResult, error)
 }

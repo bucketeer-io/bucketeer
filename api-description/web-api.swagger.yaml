@@ -6600,67 +6600,6 @@ paths:
           format: int64
       tags:
         - insights
-  /v1/mau_count:
-    get:
-      summary: Get MAU Count
-      description: Get MAU count
-      operationId: web.v1.event_counter.mau_count.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/eventcounterGetMAUCountResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "404":
-          description: Returned when the requested resource is not found.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 5
-              details: []
-              message: not found
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: yearMonth
-          in: query
-          required: true
-          type: string
-        - name: environmentId
-          in: query
-          required: true
-          type: string
-      tags:
-        - mau_count
   /v1/ops_evaluation_user_count:
     get:
       summary: Get Ops Evaluation User Count
@@ -8697,67 +8636,6 @@ paths:
           collectionFormat: multi
       tags:
         - subscription
-  /v1/summarize_mau_counts:
-    get:
-      summary: Summarize MAU Counts
-      description: Summarize MAU counts
-      operationId: web.v1.event_counter.summarize_mau_counts.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/eventcounterSummarizeMAUCountsResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "404":
-          description: Returned when the requested resource is not found.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 5
-              details: []
-              message: not found
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: yearMonth
-          in: query
-          required: true
-          type: string
-        - name: isFinished
-          in: query
-          required: false
-          type: boolean
-      tags:
-        - mau_count
   /v1/tag:
     delete:
       summary: Delete
@@ -11854,15 +11732,6 @@ definitions:
     properties:
       experimentResult:
         $ref: '#/definitions/eventcounterExperimentResult'
-  eventcounterGetMAUCountResponse:
-    type: object
-    properties:
-      eventCount:
-        type: string
-        format: int64
-      userCount:
-        type: string
-        format: int64
   eventcounterGetOpsEvaluationUserCountResponse:
     type: object
     properties:
@@ -11915,8 +11784,6 @@ definitions:
         type: object
         additionalProperties:
           $ref: '#/definitions/eventcounterExperimentResult'
-  eventcounterSummarizeMAUCountsResponse:
-    type: object
   eventcounterSummaryVariation:
     type: object
     properties:
