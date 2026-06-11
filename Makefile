@@ -368,7 +368,7 @@ e2e-l4:
 e2e:
 	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
 		--format pkgname \
-		-- -v ./test/e2e/feature -args \
+		-- -v ./test/e2e/... --- -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
