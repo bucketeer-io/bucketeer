@@ -17,12 +17,10 @@ package v2
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
@@ -45,19 +43,12 @@ var (
 		"cannot be archived",
 		"experiment_status",
 	)
+)
 
-	//go:embed sql/experiment/select_experiment.sql
-	selectExperimentSQL string
-	//go:embed sql/experiment/select_experiments.sql
-	selectExperimentsSQL string
-	//go:embed sql/experiment/count_experiment.sql
-	countExperimentSQL string
-	//go:embed sql/experiment/summarize_experiment.sql
-	summarizeExperimentSQL string
-	//go:embed sql/experiment/update_experiment.sql
-	updateExperimentSQL string
-	//go:embed sql/experiment/insert_experiment.sql
-	insertExperimentSQL string
+// Shared list-query errors returned by ExperimentStorage / GoalStorage implementations.
+var (
+	ErrInvalidCursor  = errors.New("experiment/storage/v2: invalid cursor")
+	ErrInvalidOrderBy = errors.New("experiment/storage/v2: invalid order by")
 )
 
 type ExperimentStorage interface {
@@ -66,222 +57,30 @@ type ExperimentStorage interface {
 	GetExperiment(ctx context.Context, id, environmentId string) (*domain.Experiment, error)
 	ListExperiments(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListExperimentsParams,
 	) ([]*proto.Experiment, int, int64, error)
 	// GetExperimentSummary returns the total count of experiments by status.
 	GetExperimentSummary(ctx context.Context, environmentID string) (*ExperimentSummary, error)
+}
+
+type ListExperimentsParams struct {
+	EnvironmentID  string
+	Archived       *bool
+	FeatureID      string
+	FeatureVersion *int32
+	StartAt        int64
+	StopAt         int64
+	Maintainer     string
+	Statuses       []proto.Experiment_Status
+	SearchKeyword  string
+	OrderBy        proto.ListExperimentsRequest_OrderBy
+	OrderDirection proto.ListExperimentsRequest_OrderDirection
+	PageSize       int
+	Cursor         string
 }
 
 type ExperimentSummary struct {
 	TotalWaitingCount int64
 	TotalRunningCount int64
 	TotalStoppedCount int64
-}
-
-type experimentStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewExperimentStorage(qe mysql.QueryExecer) ExperimentStorage {
-	return &experimentStorage{qe: qe}
-}
-
-func (s *experimentStorage) CreateExperiment(
-	ctx context.Context,
-	e *domain.Experiment,
-	environmentId string,
-) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertExperimentSQL,
-		e.Id,
-		e.GoalId,
-		e.FeatureId,
-		e.FeatureVersion,
-		mysql.JSONObject{Val: e.Variations},
-		e.StartAt,
-		e.StopAt,
-		e.Stopped,
-		e.StoppedAt,
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.Archived,
-		e.Deleted,
-		mysql.JSONObject{Val: e.GoalIds},
-		e.Name,
-		e.Description,
-		e.BaseVariationId,
-		int32(e.Status),
-		e.Maintainer,
-		environmentId,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrExperimentAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *experimentStorage) UpdateExperiment(
-	ctx context.Context,
-	e *domain.Experiment,
-	environmentId string,
-) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateExperimentSQL,
-		e.GoalId,
-		e.FeatureId,
-		e.FeatureVersion,
-		mysql.JSONObject{Val: e.Variations},
-		e.StartAt,
-		e.StopAt,
-		e.Stopped,
-		e.StoppedAt,
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.Archived,
-		e.Deleted,
-		mysql.JSONObject{Val: e.GoalIds},
-		e.Name,
-		e.Description,
-		e.BaseVariationId,
-		e.Maintainer,
-		int32(e.Status),
-		e.Id,
-		environmentId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrExperimentUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *experimentStorage) GetExperiment(
-	ctx context.Context,
-	id, environmentId string,
-) (*domain.Experiment, error) {
-	experiment := proto.Experiment{}
-	var status int32
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectExperimentSQL,
-		id,
-		environmentId,
-	).Scan(
-		&experiment.Id,
-		&experiment.GoalId,
-		&experiment.FeatureId,
-		&experiment.FeatureVersion,
-		&mysql.JSONObject{Val: &experiment.Variations},
-		&experiment.StartAt,
-		&experiment.StopAt,
-		&experiment.Stopped,
-		&experiment.StoppedAt,
-		&experiment.CreatedAt,
-		&experiment.UpdatedAt,
-		&experiment.Archived,
-		&experiment.Deleted,
-		&mysql.JSONObject{Val: &experiment.GoalIds},
-		&experiment.Name,
-		&experiment.Description,
-		&experiment.BaseVariationId,
-		&experiment.Maintainer,
-		&status,
-		&mysql.JSONObject{Val: &experiment.Goals},
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrExperimentNotFound
-		}
-		return nil, err
-	}
-	experiment.Status = proto.Experiment_Status(status)
-	return &domain.Experiment{Experiment: &experiment}, nil
-}
-
-func (s *experimentStorage) ListExperiments(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.Experiment, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectExperimentsSQL, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	var limit, offset int
-	if options != nil {
-		limit = options.Limit
-		offset = options.Offset
-	}
-	experiments := make([]*proto.Experiment, 0, limit)
-	for rows.Next() {
-		experiment := proto.Experiment{}
-		var status int32
-		err := rows.Scan(
-			&experiment.Id,
-			&experiment.GoalId,
-			&experiment.FeatureId,
-			&experiment.FeatureVersion,
-			&mysql.JSONObject{Val: &experiment.Variations},
-			&experiment.StartAt,
-			&experiment.StopAt,
-			&experiment.Stopped,
-			&experiment.StoppedAt,
-			&experiment.CreatedAt,
-			&experiment.UpdatedAt,
-			&experiment.Archived,
-			&experiment.Deleted,
-			&mysql.JSONObject{Val: &experiment.GoalIds},
-			&experiment.Name,
-			&experiment.Description,
-			&experiment.BaseVariationId,
-			&experiment.Maintainer,
-			&status,
-			&mysql.JSONObject{Val: &experiment.Goals},
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		experiment.Status = proto.Experiment_Status(status)
-		experiments = append(experiments, &experiment)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(experiments)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countExperimentSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
-	return experiments, nextOffset, totalCount, nil
-}
-
-func (s *experimentStorage) GetExperimentSummary(
-	ctx context.Context,
-	environmentID string,
-) (*ExperimentSummary, error) {
-	summary := &ExperimentSummary{}
-	err := s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
-		&summary.TotalWaitingCount,
-		&summary.TotalRunningCount,
-		&summary.TotalStoppedCount,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return summary, nil
 }

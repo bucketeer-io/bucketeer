@@ -13,49 +13,16 @@
 // limitations under the License.
 //
 
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
 package v2
 
 import (
 	"context"
-	_ "embed"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-)
-
-var (
-	//go:embed sql/update_experiment_result.sql
-	updateExperimentResultSQL string
 )
 
 type ExperimentResultStorage interface {
 	UpdateExperimentResult(ctx context.Context, environmentId string,
 		experimentResult *domain.ExperimentResult) error
-}
-
-type experimentResultStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewExperimentResultStorage(qe mysql.QueryExecer) ExperimentResultStorage {
-	return &experimentResultStorage{qe: qe}
-}
-
-func (e experimentResultStorage) UpdateExperimentResult(
-	ctx context.Context,
-	environmentId string,
-	experimentResult *domain.ExperimentResult,
-) error {
-	if _, err := e.qe.ExecContext(
-		ctx,
-		updateExperimentResultSQL,
-		experimentResult.Id,
-		experimentResult.ExperimentId,
-		experimentResult.UpdatedAt,
-		mysql.JSONObject{Val: experimentResult},
-		environmentId,
-	); err != nil {
-		return err
-	}
-	return nil
 }

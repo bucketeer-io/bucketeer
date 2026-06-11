@@ -66,6 +66,9 @@ import (
 	eventcounterapi "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/api"
 	experimentapi "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	v2exs "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
+	experimentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mysql"
+	experimentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/postgres"
 	featureapi "github.com/bucketeer-io/bucketeer/v2/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
@@ -589,6 +592,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var codeRefStorage coderefstorage.CodeReferenceStorage
 	var autoOpsStorage v2aos.AutoOpsRuleStorage
 	var prStorage v2aos.ProgressiveRolloutStorage
+	var experimentStorage v2exs.ExperimentStorage
+	var goalStorage v2exs.GoalStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -615,6 +620,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
 		autoOpsStorage = autoopspostgres.NewAutoOpsRuleStorage(postgresClient)
 		prStorage = autoopspostgres.NewProgressiveRolloutStorage(postgresClient)
+		experimentStorage = experimentpostgres.NewExperimentStorage(postgresClient)
+		goalStorage = experimentpostgres.NewGoalStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -634,6 +641,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 		autoOpsStorage = autoopsmysql.NewAutoOpsRuleStorage(mysqlClient)
 		prStorage = autoopsmysql.NewProgressiveRolloutStorage(mysqlClient)
+		experimentStorage = experimentmysql.NewExperimentStorage(mysqlClient)
+		goalStorage = experimentmysql.NewGoalStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -923,7 +932,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient,
 		accountClient,
 		autoOpsClient,
-		mysqlClient,
+		dbClient,
+		experimentStorage,
+		goalStorage,
 		domainTopicPublisher,
 		experimentapi.WithLogger(logger),
 	)

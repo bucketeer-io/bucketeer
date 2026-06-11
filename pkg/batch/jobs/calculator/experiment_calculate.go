@@ -33,8 +33,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/experimentcalc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	v2ecs "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
@@ -60,7 +60,7 @@ func NewExperimentCalculate(
 	environmentClient environmentclient.Client,
 	experimentClient experimentclient.Client,
 	ecClient ecclient.Client,
-	mysqlClient mysql.Client,
+	experimentResultStorage v2ecs.ExperimentResultStorage,
 	experimentLock *ExperimentLock,
 	location *time.Location,
 	opts ...jobs.Option,
@@ -78,7 +78,7 @@ func NewExperimentCalculate(
 		environmentClient,
 		ecClient,
 		experimentClient,
-		mysqlClient,
+		experimentResultStorage,
 		dopts.Metrics,
 		location,
 		dopts.Logger,

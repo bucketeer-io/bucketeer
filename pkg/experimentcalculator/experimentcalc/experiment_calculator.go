@@ -34,7 +34,6 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
@@ -54,11 +53,11 @@ type ExperimentCalculator struct {
 	httpStan    *stan.Stan
 	stanModelID string
 
-	environmentClient  envclient.Client
-	eventCounterClient ecclient.Client
-	experimentClient   experimentclient.Client
-	mysqlClient        mysql.Client
-	metrics            metrics.Registerer
+	environmentClient       envclient.Client
+	eventCounterClient      ecclient.Client
+	experimentClient        experimentclient.Client
+	experimentResultStorage v2es.ExperimentResultStorage
+	metrics                 metrics.Registerer
 
 	location *time.Location
 	logger   *zap.Logger
@@ -70,21 +69,21 @@ func NewExperimentCalculator(
 	environmentClient envclient.Client,
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
-	mysqlClient mysql.Client,
+	experimentResultStorage v2es.ExperimentResultStorage,
 	metrics metrics.Registerer,
 	loc *time.Location,
 	logger *zap.Logger,
 ) *ExperimentCalculator {
 	registerMetrics(metrics)
 	return &ExperimentCalculator{
-		httpStan:           httpStan,
-		stanModelID:        stanModelID,
-		environmentClient:  environmentClient,
-		eventCounterClient: eventCounterClient,
-		experimentClient:   experimentClient,
-		mysqlClient:        mysqlClient,
-		metrics:            metrics,
-		location:           loc,
+		httpStan:                httpStan,
+		stanModelID:             stanModelID,
+		environmentClient:       environmentClient,
+		eventCounterClient:      eventCounterClient,
+		experimentClient:        experimentClient,
+		experimentResultStorage: experimentResultStorage,
+		metrics:                 metrics,
+		location:                loc,
 
 		logger: logger.Named("experiment-calculator"),
 	}
@@ -103,7 +102,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 		)
 		return calculationErr
 	}
-	if err := v2es.NewExperimentResultStorage(e.mysqlClient).
+	if err := e.experimentResultStorage.
 		UpdateExperimentResult(ctx, request.EnvironmentId, &domain.ExperimentResult{
 			ExperimentResult: experimentResult,
 		}); err != nil {
