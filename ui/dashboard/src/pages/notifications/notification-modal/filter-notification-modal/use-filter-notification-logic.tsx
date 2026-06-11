@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getEditorEnvironments, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import isNil from 'lodash/isNil';
@@ -22,6 +22,7 @@ const useFilterNotificationLogic = (
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     environmentEnabledFilterOptions[0]
   ]);
+  const initialized = useRef(false);
 
   const remainingFilterOptions = useMemo(
     () =>
@@ -99,29 +100,24 @@ const useFilterNotificationLogic = (
       const filterOption = selectedFilters[filterIndex];
       const { value: filterType, filterValue } = filterOption;
       const isEnvironmentFilter = filterType === FilterTypes.ENVIRONMENT_IDs;
-      let newFilterValue: string | number | string[] = value;
-      if (isEnvironmentFilter) {
-        if (Array.isArray(newFilterValue) && newFilterValue.length === 0) {
-          selectedFilters[filterIndex] = {
-            ...selectedFilters[filterIndex],
-            filterValue: value
-          };
-          return setSelectedFilters([...selectedFilters]);
-        }
-      }
-      if (isEnvironmentFilter) {
-        const values = filterValue as string[];
-        const isExisted = values.find(item => item === value);
-        const newValue: string[] = isExisted
-          ? values.filter(item => item !== value)
-          : [...values, value as string];
-        newFilterValue = newValue;
-      }
-      selectedFilters[filterIndex] = {
-        ...selectedFilters[filterIndex],
-        filterValue: newFilterValue
-      };
-      setSelectedFilters([...selectedFilters]);
+
+      setSelectedFilters(prev =>
+        prev.map((item, i) => {
+          if (i !== filterIndex) return item;
+          if (isEnvironmentFilter) {
+            if (Array.isArray(value) && value.length === 0) {
+              return { ...item, filterValue: value };
+            }
+            const values = filterValue as string[];
+            const isExisted = values.find(v => v === value);
+            const newValue: string[] = isExisted
+              ? values.filter(v => v !== value)
+              : [...values, value as string];
+            return { ...item, filterValue: newValue };
+          }
+          return { ...item, filterValue: value };
+        })
+      );
     },
     [selectedFilters]
   );
@@ -190,6 +186,8 @@ const useFilterNotificationLogic = (
   }, [filters, emptyEnvironmentId]);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     handleSetFilterOnInit();
   }, [filters]);
 

@@ -1,7 +1,7 @@
 import { useScreen } from 'hooks';
 import { PushFilters } from 'pages/pushes/types';
 import FilterPushPopup from './popup-filter';
-import FilterPushSlide from './side-filter';
+import FilterPushSlide from './slide-filter';
 
 export type FilterProps = {
   onSubmit: (v: Partial<PushFilters>) => void;

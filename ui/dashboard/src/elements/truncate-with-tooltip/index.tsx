@@ -19,14 +19,15 @@ const TruncateWithTooltip = ({
   const [isTruncated, setIsTruncated] = useState(false);
 
   useEffect(() => {
-    const check = () => {
-      const el = textRef.current;
-      if (!el) return;
-      setIsTruncated(el.scrollHeight > el.clientHeight);
-    };
+    const el = textRef.current;
+    if (!el) return;
+
+    const check = () => setIsTruncated(el.scrollHeight > el.clientHeight);
     check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [text, maxLines, className]);
 
   const trigger = (

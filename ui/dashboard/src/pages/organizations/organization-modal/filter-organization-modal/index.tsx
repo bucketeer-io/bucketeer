@@ -1,7 +1,7 @@
 import { useScreen } from 'hooks';
 import { OrganizationFilters } from 'pages/organizations/types';
 import FilterOrganizationPopup from './popup-filter';
-import FilterOrganizationSlideModal from './side-filter';
+import FilterOrganizationSlideModal from './slide-filter';
 
 export type FilterProps = {
   onSubmit: (v: Partial<OrganizationFilters>) => void;

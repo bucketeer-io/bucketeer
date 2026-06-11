@@ -27,17 +27,19 @@ const DialogModal = ({
   isOpen,
   onClose,
   closeOnPressEscape = true,
-  closeOnClickOutside = false,
+  closeOnClickOutside = true,
   isShowHeader = true,
   children,
   className,
   overlayCls
 }: ModalProps) => {
+  // Outside interactions are already blocked via onPointerDownOutside /
+  // onInteractOutside, so any close reaching here (Escape, Dialog.Close) is allowed
   const onOpenChange = useCallback(
     (v: boolean) => {
-      if (v === false && closeOnClickOutside) onClose();
+      if (v === false) onClose();
     },
-    [closeOnClickOutside]
+    [onClose]
   );
 
   return (

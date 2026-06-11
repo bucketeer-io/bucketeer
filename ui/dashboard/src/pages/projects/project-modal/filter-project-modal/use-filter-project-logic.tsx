@@ -48,7 +48,7 @@ const useFilterProjectLogic = (
       setSelectedFilterType(undefined);
       setValueOption(undefined);
     }
-  }, [filters]);
+  }, [filters, filterEnabledOptions, enabledOptions]);
 
   return {
     enabledOptions,

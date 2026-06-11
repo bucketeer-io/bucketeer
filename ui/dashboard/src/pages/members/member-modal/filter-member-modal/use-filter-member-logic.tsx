@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryTeams } from '@queries/teams';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
@@ -16,6 +16,7 @@ const useFilterMemberLogic = (
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     memberFilterOptions[0]
   ]);
+  const initialized = useRef(false);
 
   const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
     params: {
@@ -47,12 +48,12 @@ const useFilterMemberLogic = (
       !memberFilterOptions.length ||
       selectedFilters.length >= memberFilterOptions.length,
 
-    [memberFilterOptions, selectedFilters, memberFilterOptions]
+    [memberFilterOptions, selectedFilters]
   );
 
   const isDisabledSubmitButton = useMemo(() => {
     return !!selectedFilters.find(item => isEmpty(item.filterValue));
-  }, [[...selectedFilters]]);
+  }, [selectedFilters]);
 
   const handleGetLabelFilterValue = useCallback(
     (filterOption?: FilterOption) => {
@@ -77,7 +78,7 @@ const useFilterMemberLogic = (
       }
       return '';
     },
-    [teams]
+    [teams, booleanOptions, roleOptions]
   );
 
   const getValueOptions = useCallback(
@@ -90,7 +91,7 @@ const useFilterMemberLogic = (
       if (isRoleFilter) return roleOptions;
       return booleanOptions;
     },
-    [teamOptions]
+    [teamOptions, roleOptions, booleanOptions]
   );
 
   const handleChangeFilterValue = useCallback(
@@ -98,30 +99,24 @@ const useFilterMemberLogic = (
       const filterOption = selectedFilters[filterIndex];
       const { value: filterType, filterValue } = filterOption;
       const isTeamsFilter = filterType === FilterTypes.TEAMS;
-      if (isTeamsFilter) {
-        const values = filterValue as string[];
-        if (Array.isArray(value) && value.length === 0) {
-          selectedFilters[filterIndex] = {
-            ...selectedFilters[filterIndex],
-            filterValue: []
-          };
-          return setSelectedFilters([...selectedFilters]);
-        }
-        const isExisted = values.find(item => item === value);
-        const newValue: string[] = isExisted
-          ? values.filter(item => item !== value)
-          : [...values, value as string];
-        selectedFilters[filterIndex] = {
-          ...selectedFilters[filterIndex],
-          filterValue: newValue
-        };
-        return setSelectedFilters([...selectedFilters]);
-      }
-      selectedFilters[filterIndex] = {
-        ...selectedFilters[filterIndex],
-        filterValue: value
-      };
-      setSelectedFilters([...selectedFilters]);
+
+      setSelectedFilters(prev =>
+        prev.map((item, i) => {
+          if (i !== filterIndex) return item;
+          if (isTeamsFilter) {
+            if (Array.isArray(value) && value.length === 0) {
+              return { ...item, filterValue: [] };
+            }
+            const values = filterValue as string[];
+            const isExisted = values.find(v => v === value);
+            const newValue: string[] = isExisted
+              ? values.filter(v => v !== value)
+              : [...values, value as string];
+            return { ...item, filterValue: newValue };
+          }
+          return { ...item, filterValue: value };
+        })
+      );
     },
     [selectedFilters]
   );
@@ -188,6 +183,8 @@ const useFilterMemberLogic = (
   };
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     handleSetFilterOnInit();
   }, [filters]);
 

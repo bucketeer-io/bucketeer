@@ -79,7 +79,7 @@
   @apply text-gray-500;
 }
 .react-datepicker__view-calendar-icon input{
-  @apply w-full
+  @apply w-full;
 }
 
 @media (max-width: 599px) {
@@ -115,10 +115,10 @@
     @apply w-full;
   }
   .react-datepicker__time-list {
-    @apply !h-[56px] flex overflow-x-auto overflow-y-hidden;
+    @apply !h-auto flex flex-wrap gap-2 overflow-visible p-3;
   }
   .react-datepicker__time-list-item {
-    @apply shrink-0 px-3;
+    @apply !h-auto shrink-0 rounded-md border border-gray-200 px-3 py-2;
   }
   .react-datepicker__time-box {
     @apply !w-full;
