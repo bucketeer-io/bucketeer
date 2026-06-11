@@ -299,25 +299,31 @@ docker-compose -f docker-compose/compose.yml up -d --scale batch=2
 
 When using Docker Compose, you can run E2E tests against the local services:
 
-### Bootstrap the localenv account (only if needed)
+### Bootstrap the e2e accounts (required before running E2E)
 
-`init-db/mysql_dump.sql` already seeds `localenv@bucketeer.io` in both the
-`default` org (with `ADMIN` + EDITOR on `e2e`) and the `e2e` org (with
-`OWNER`) when MySQL first starts up, so a freshly-started stack does not need
-any manual step here.
+E2E tests authenticate as four accounts that exercise the real RBAC path:
 
-If you ran `make docker-compose-delete-data` (or otherwise wiped the
-`account_v2` rows), re-create the account before creating API keys or running
-E2E — write APIs need the account to exist with org membership:
+| Account | Organization (role) | Environment role | Token |
+|---------|---------------------|------------------|-------|
+| `sysadmin@bucketeer.io` | `e2e` (`OWNER`) | — | system admin |
+| `orgadmin@bucketeer.io` | `default` (`ADMIN`) + `e2e` (`ADMIN`) | — | org admin |
+| `envwrite@bucketeer.io` | `default` (`MEMBER`) | `EDITOR` on the `e2e` environment | env editor |
+| `envread@bucketeer.io` | `default` (`MEMBER`) | `VIEWER` on the `e2e` environment | env viewer |
+
+Bootstrap them and generate their access tokens before creating API keys or
+running E2E — `make e2e` no longer does this for you, and write APIs need the
+accounts to exist with org membership. Re-run it any time the `account_v2`
+rows are wiped (e.g. after `make docker-compose-delete-data`):
 
 ```shell
-make docker-compose-create-localenv-account
+make docker-compose-create-e2e-accounts
 ```
 
-The target connects to the Docker Compose MySQL on `localhost:3306` and
-upserts into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE` against
-the composite PK `(email, organization_id)`, so it is safe to run repeatedly.
-See [`../hack/create-localenv-account/README.md`](../hack/create-localenv-account/README.md)
+The target connects to the Docker Compose MySQL on `localhost:3306`, upserts
+into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE` against the
+composite PK `(email, organization_id)`, and writes the four access tokens
+under `tools/dev/cert/`, so it is safe to run repeatedly.
+See [`../hack/create-e2e-accounts/README.md`](../hack/create-e2e-accounts/README.md)
 for details and the prebuilt Docker image option.
 
 ### Create API Keys

@@ -40,18 +40,21 @@ const (
 )
 
 var (
-	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentID    = flag.String("environment-id", "", "Environment id")
-	testID           = flag.String("test-id", "", "test ID")
-	organizationID   = flag.String("organization-id", "", "Organization ID")
+	webGatewayAddr           = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort           = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert           = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath               = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath         = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr              = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort              = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert              = flag.String("gateway-cert", "", "Gateway crt file")
+	sysAdminAccessTokenPath  = flag.String("sys-admin-access-token", "", "System admin access token path")
+	orgAdminAccessTokenPath  = flag.String("org-admin-access-token", "", "Organization admin access token path")
+	envEditorAccessTokenPath = flag.String("env-editor-access-token", "", "Environment editor access token path")
+	envViewerAccessTokenPath = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
+	environmentID            = flag.String("environment-id", "", "Environment id")
+	testID                   = flag.String("test-id", "", "test ID")
+	organizationID           = flag.String("organization-id", "", "Organization ID")
 )
 
 func TestCreateCodeReference(t *testing.T) {
@@ -354,7 +357,7 @@ func getCodeReference(
 
 func newCodeRefClient(t *testing.T) coderefproto.CodeReferenceServiceClient {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*orgAdminAccessTokenPath)
 	assert.NoError(t, err)
 	conn, err := rpcclient.NewClientConn(
 		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
@@ -369,7 +372,7 @@ func newCodeRefClient(t *testing.T) coderefproto.CodeReferenceServiceClient {
 
 func newFeatureClient(t *testing.T) featureclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*orgAdminAccessTokenPath)
 	assert.NoError(t, err)
 	featureClient, err := featureclient.NewClient(
 		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),

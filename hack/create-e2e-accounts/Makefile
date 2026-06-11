@@ -1,5 +1,5 @@
 TAG=v0.0.1
-IMAGE=ghcr.io/bucketeer-io/bucketeer-create-localenv-account
+IMAGE=ghcr.io/bucketeer-io/bucketeer-create-e2e-accounts
 
 .PHONY: deps
 deps:
@@ -8,11 +8,11 @@ deps:
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./create-localenv-account .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./create-e2e-accounts .
 
 .PHONY: build-darwin
 build-darwin:
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./create-localenv-account .
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./create-e2e-accounts .
 
 .PHONY: docker-build
 docker-build:
@@ -31,4 +31,4 @@ docker-push:
 
 .PHONY: clean
 clean:
-	rm -f ./create-localenv-account
+	rm -f ./create-e2e-accounts

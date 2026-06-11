@@ -1410,7 +1410,7 @@ func createScheduledFlagChangeAt(
 
 func newAuditLogClient(t *testing.T) auditlogclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*orgAdminAccessTokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}

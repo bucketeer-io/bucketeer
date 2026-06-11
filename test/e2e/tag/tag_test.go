@@ -42,18 +42,21 @@ const (
 var (
 	// FIXME: To avoid compiling the test many times, webGatewayAddr, webGatewayPort & apiKey has been also added here to prevent from getting:
 	// "flag provided but not defined" error during the test. These 3 are being use in the Gateway test
-	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentID    = flag.String("environment-id", "", "Environment id")
-	testID           = flag.String("test-id", "", "test ID")
-	organizationID   = flag.String("organization-id", "", "Organization ID")
+	webGatewayAddr           = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort           = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert           = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath               = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath         = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr              = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort              = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert              = flag.String("gateway-cert", "", "Gateway crt file")
+	sysAdminAccessTokenPath  = flag.String("sys-admin-access-token", "", "System admin access token path")
+	orgAdminAccessTokenPath  = flag.String("org-admin-access-token", "", "Organization admin access token path")
+	envEditorAccessTokenPath = flag.String("env-editor-access-token", "", "Environment editor access token path")
+	envViewerAccessTokenPath = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
+	environmentID            = flag.String("environment-id", "", "Environment id")
+	testID                   = flag.String("test-id", "", "test ID")
+	organizationID           = flag.String("organization-id", "", "Organization ID")
 )
 
 func TestUpsertAndListTag(t *testing.T) {
@@ -277,7 +280,7 @@ func createFeatureNoCmd(t *testing.T, client featureclient.Client, req *feature.
 
 func newFeatureClient(t *testing.T) featureclient.Client {
 	t.Helper()
-	creds, err := client.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := client.NewPerRPCCredentials(*orgAdminAccessTokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
@@ -308,7 +311,7 @@ func listTags(ctx context.Context, t *testing.T, client tagclient.Client) []*tag
 
 func newTagClient(t *testing.T) tagclient.Client {
 	t.Helper()
-	creds, err := client.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := client.NewPerRPCCredentials(*orgAdminAccessTokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
