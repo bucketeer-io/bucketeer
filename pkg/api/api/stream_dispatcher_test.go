@@ -15,10 +15,18 @@
 package api
 
 import (
+	"encoding/json"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/anypb"
+
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type testConnSpec struct {
@@ -76,7 +84,7 @@ func TestStreamDispatcherRegister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewStreamDispatcher()
+			d := NewStreamDispatcher(zap.NewNop())
 			for _, r := range tc.clients {
 				_, cancel := d.register(r.envID, r.tag)
 				defer cancel()
@@ -122,7 +130,7 @@ func TestStreamDispatcherDeregister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewStreamDispatcher()
+			d := NewStreamDispatcher(zap.NewNop())
 			cancels := make(map[testConnSpec]func())
 			for env, tagConns := range tc.conns {
 				for tag := range tagConns {
@@ -174,7 +182,7 @@ func TestStreamDispatcherDispatch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewStreamDispatcher()
+			d := NewStreamDispatcher(zap.NewNop())
 			chs := make([]<-chan streamEvent, len(tc.conns))
 			for i, c := range tc.conns {
 				ch, cancel := d.register(c.envID, c.tag)
@@ -202,4 +210,230 @@ func TestStreamDispatcherDispatch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStreamDispatcherHandleEvent(t *testing.T) {
+	t.Parallel()
+	const envID = "env-1"
+	patterns := []struct {
+		desc         string
+		event        *domaineventproto.Event
+		clientTag    string
+		wantDispatch bool
+		wantTags     []string
+	}{
+		{
+			desc: "feature updated dispatches with affected tags",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_FEATURE,
+				Type:          domaineventproto.Event_FEATURE_UPDATED,
+				EnvironmentId: envID,
+				EntityData:    featureTagsJSON(t, "android"),
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     []string{"android"},
+		},
+		{
+			desc: "feature enabled dispatches",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_FEATURE,
+				Type:          domaineventproto.Event_FEATURE_ENABLED,
+				EnvironmentId: envID,
+				EntityData:    featureTagsJSON(t, "android"),
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     []string{"android"},
+		},
+		{
+			desc: "feature disabled dispatches",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_FEATURE,
+				Type:          domaineventproto.Event_FEATURE_DISABLED,
+				EnvironmentId: envID,
+				EntityData:    featureTagsJSON(t, "android"),
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     []string{"android"},
+		},
+		{
+			desc: "feature created is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_FEATURE,
+				Type:          domaineventproto.Event_FEATURE_CREATED,
+				EnvironmentId: envID,
+				EntityData:    featureTagsJSON(t, "android"),
+			},
+			clientTag:    "android",
+			wantDispatch: false,
+		},
+		{
+			desc: "feature archived is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_FEATURE,
+				Type:          domaineventproto.Event_FEATURE_ARCHIVED,
+				EnvironmentId: envID,
+				EntityData:    featureTagsJSON(t, "android"),
+			},
+			clientTag:    "android",
+			wantDispatch: false,
+		},
+		{
+			desc: "segment succeeded upload dispatches env-wide",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_SEGMENT,
+				Type:          domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED,
+				EnvironmentId: envID,
+				Data:          segmentStatusData(t, featureproto.Segment_SUCEEDED),
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "segment upload still uploading is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_SEGMENT,
+				Type:          domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED,
+				EnvironmentId: envID,
+				Data:          segmentStatusData(t, featureproto.Segment_UPLOADING),
+			},
+			clientTag: "android",
+		},
+		{
+			desc: "segment upload failed is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_SEGMENT,
+				Type:          domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED,
+				EnvironmentId: envID,
+				Data:          segmentStatusData(t, featureproto.Segment_FAILED),
+			},
+			clientTag: "android",
+		},
+		{
+			desc: "segment non-bulk-upload type is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_SEGMENT,
+				Type:          domaineventproto.Event_SEGMENT_CREATED,
+				EnvironmentId: envID,
+				Data:          segmentStatusData(t, featureproto.Segment_SUCEEDED),
+			},
+			clientTag: "android",
+		},
+		{
+			desc: "segment event with nil data is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_SEGMENT,
+				Type:          domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED,
+				EnvironmentId: envID,
+				Data:          nil,
+			},
+			clientTag: "android",
+		},
+		{
+			desc: "unknown entity type is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_GOAL,
+				Type:          domaineventproto.Event_GOAL_CREATED,
+				EnvironmentId: envID,
+			},
+			clientTag: "android",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			d := NewStreamDispatcher(zap.NewNop())
+			ch, cancel := d.register(envID, p.clientTag)
+			defer cancel()
+
+			d.handleEvent(p.event)
+
+			select {
+			case got := <-ch:
+				require.True(t, p.wantDispatch, "unexpected dispatch")
+				assert.Equal(t, envID, got.environmentID)
+				assert.Equal(t, p.wantTags, got.tags)
+			default:
+				require.False(t, p.wantDispatch, "expected dispatch but none occurred")
+			}
+		})
+	}
+}
+
+func segmentStatusData(t *testing.T, status featureproto.Segment_Status) *anypb.Any {
+	t.Helper()
+	data, err := anypb.New(&domaineventproto.SegmentBulkUploadUsersStatusChangedEvent{
+		SegmentId: "seg-1",
+		Status:    status,
+	})
+	require.NoError(t, err)
+	return data
+}
+
+func TestStreamDispatcherAffectedTags(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		entity   string
+		previous string
+		expected []string
+	}{
+		{
+			desc:     "both empty",
+			entity:   "",
+			previous: "",
+			expected: nil,
+		},
+		{
+			desc:     "only current",
+			entity:   featureTagsJSON(t, "android", "ios"),
+			previous: "",
+			expected: []string{"android", "ios"},
+		},
+		{
+			desc:     "only previous",
+			entity:   "",
+			previous: featureTagsJSON(t, "android"),
+			expected: []string{"android"},
+		},
+		{
+			desc:     "union of added and removed tags",
+			entity:   featureTagsJSON(t, "android"),
+			previous: featureTagsJSON(t, "android", "ios"),
+			expected: []string{"android", "ios"},
+		},
+		{
+			desc:     "deduplicates overlapping tags",
+			entity:   featureTagsJSON(t, "android", "ios"),
+			previous: featureTagsJSON(t, "ios", "web"),
+			expected: []string{"android", "ios", "web"},
+		},
+		{
+			desc:     "invalid json yields no tags",
+			entity:   "{not json",
+			previous: "",
+			expected: nil,
+		},
+	}
+	d := &StreamDispatcher{logger: zap.NewNop()}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			got := d.affectedTags(&domaineventproto.Event{
+				EntityData:         p.entity,
+				PreviousEntityData: p.previous,
+			})
+			sort.Strings(got)
+			sort.Strings(p.expected)
+			assert.Equal(t, p.expected, got)
+		})
+	}
+}
+
+func featureTagsJSON(t *testing.T, tags ...string) string {
+	t.Helper()
+	b, err := json.Marshal(&featureproto.Feature{Tags: tags})
+	require.NoError(t, err)
+	return string(b)
 }

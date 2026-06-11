@@ -15,14 +15,21 @@
 package api
 
 import (
+	"encoding/json"
 	"sync"
+
+	"go.uber.org/zap"
+
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-// StreamDispatcher is the mapping of (environmentID, tag) to SSE connections.
+// StreamDispatcher forwards relevant domain events to SSE connections.
 type StreamDispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns map[string]map[string]map[*streamConn]struct{}
+	conns  map[string]map[string]map[*streamConn]struct{}
+	logger *zap.Logger
 }
 
 type streamEvent struct {
@@ -35,9 +42,10 @@ type streamConn struct {
 	tag string
 }
 
-func NewStreamDispatcher() *StreamDispatcher {
+func NewStreamDispatcher(logger *zap.Logger) *StreamDispatcher {
 	return &StreamDispatcher{
-		conns: make(map[string]map[string]map[*streamConn]struct{}),
+		conns:  make(map[string]map[string]map[*streamConn]struct{}),
+		logger: logger.Named("stream-dispatcher"),
 	}
 }
 
@@ -95,6 +103,78 @@ func (d *StreamDispatcher) deregister(envID string, target *streamConn) {
 
 	// target.ch is intentionally not closed because closing it here would
 	// race with dispatch and panic. The handler exits via ctx.Done().
+}
+
+// handleEvent dispatches a domain event to the affected connections if it can
+// change evaluation results.
+func (d *StreamDispatcher) handleEvent(event *domaineventproto.Event) {
+	switch event.EntityType {
+	case domaineventproto.Event_FEATURE:
+		if event.Type != domaineventproto.Event_FEATURE_UPDATED &&
+			event.Type != domaineventproto.Event_FEATURE_ENABLED &&
+			event.Type != domaineventproto.Event_FEATURE_DISABLED {
+			return
+		}
+		d.dispatch(streamEvent{
+			environmentID: event.EnvironmentId,
+			tags:          d.affectedTags(event),
+		})
+	case domaineventproto.Event_SEGMENT:
+		// Segment membership only changes through a bulk upload.
+		if event.Type != domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED {
+			return
+		}
+		if event.Data == nil {
+			return
+		}
+		payload := &domaineventproto.SegmentBulkUploadUsersStatusChangedEvent{}
+		if err := event.Data.UnmarshalTo(payload); err != nil {
+			d.logger.Warn("Failed to unmarshal segment bulk upload event", zap.Error(err))
+			return
+		}
+		// Membership changes only on a succeeded upload.
+		if payload.Status != featureproto.Segment_SUCEEDED {
+			return
+		}
+		// TODO: resolve the affected tags from the segment.
+		// Currently, it fans out env-wide (all tags).
+		d.dispatch(streamEvent{
+			environmentID: event.EnvironmentId,
+		})
+	}
+}
+
+// affectedTags unions the flag's tags before and after the update so that
+// removing a tag still notifies that tag's subscribers.
+//
+// TODO: also pull the tags of flags that depend on this one.
+func (d *StreamDispatcher) affectedTags(event *domaineventproto.Event) []string {
+	seen := make(map[string]struct{})
+	var tags []string
+	for _, data := range []string{event.EntityData, event.PreviousEntityData} {
+		for _, tag := range d.parseTags(data) {
+			if _, ok := seen[tag]; ok {
+				continue
+			}
+			seen[tag] = struct{}{}
+			tags = append(tags, tag)
+		}
+	}
+	return tags
+}
+
+func (d *StreamDispatcher) parseTags(data string) []string {
+	if data == "" {
+		return nil
+	}
+	var payload struct {
+		Tags []string `json:"tags"`
+	}
+	if err := json.Unmarshal([]byte(data), &payload); err != nil {
+		d.logger.Warn("Failed to extract tags from feature entity data", zap.Error(err))
+		return nil
+	}
+	return payload.Tags
 }
 
 // dispatch fans an event out to matching tag connections in the environment, or to

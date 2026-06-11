@@ -63,6 +63,7 @@ type gatewayService struct {
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	flightgroup                 singleflight.Group
+	streamDispatcher            *StreamDispatcher
 	opts                        *options
 	logger                      *zap.Logger
 }
@@ -92,6 +93,10 @@ func NewGatewayService(
 			cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
 		)
 	}
+	streamDispatcher := options.streamDispatcher
+	if streamDispatcher == nil {
+		streamDispatcher = NewStreamDispatcher(options.logger)
+	}
 	return &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,
@@ -107,19 +112,21 @@ func NewGatewayService(
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		environmentAPIKeyRedisCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache, 0),
+		streamDispatcher:            streamDispatcher,
 		opts:                        &options,
 		logger:                      options.logger.Named("api"),
 	}
 }
 
 const (
-	Version          = "/v1"
-	Service          = "/gateway"
-	pingAPI          = "/ping"
-	evaluationsAPI   = "/evaluations"
-	evaluationAPI    = "/evaluation"
-	eventAPI         = "/events"
-	authorizationKey = "authorization"
+	Version              = "/v1"
+	Service              = "/gateway"
+	pingAPI              = "/ping"
+	evaluationsAPI       = "/evaluations"
+	evaluationAPI        = "/evaluation"
+	streamEvaluationsAPI = "/stream_evaluations"
+	eventAPI             = "/events"
+	authorizationKey     = "authorization"
 )
 
 var (
@@ -149,6 +156,7 @@ func (s *gatewayService) Register(mux *http.ServeMux) {
 	s.regist(mux, pingAPI, s.ping)
 	s.regist(mux, evaluationsAPI, s.getEvaluations)
 	s.regist(mux, evaluationAPI, s.getEvaluation)
+	s.regist(mux, streamEvaluationsAPI, s.streamEvaluations)
 	s.regist(mux, eventAPI, s.registerEvents)
 }
 

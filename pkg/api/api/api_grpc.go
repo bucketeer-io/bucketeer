@@ -116,9 +116,11 @@ type options struct {
 	pubsubTimeout                     time.Duration
 	oldestEventTimestamp              time.Duration
 	furthestEventTimestamp            time.Duration
+	sseHeartbeatInterval              time.Duration
 	metricsWorkers                    int
 	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
+	streamDispatcher                  *StreamDispatcher
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
 }
@@ -133,9 +135,11 @@ var defaultOptions = options{
 	oldestEventTimestamp: 744 * time.Hour,
 	// 1 hour - handles legitimate clock skew while preventing malicious timestamps
 	furthestEventTimestamp: 1 * time.Hour,
-	logger:                 zap.NewNop(),
-	metricsWorkers:         4,
-	metricsQueueSize:       4096,
+	// Shorter than typical proxy idle-timeout (~60s).
+	sseHeartbeatInterval: 25 * time.Second,
+	logger:               zap.NewNop(),
+	metricsWorkers:       4,
+	metricsQueueSize:     4096,
 }
 
 type Option func(*options)
@@ -149,6 +153,12 @@ func WithOldestEventTimestamp(d time.Duration) Option {
 func WithFurthestEventTimestamp(d time.Duration) Option {
 	return func(opts *options) {
 		opts.furthestEventTimestamp = d
+	}
+}
+
+func WithSSEHeartbeatInterval(d time.Duration) Option {
+	return func(opts *options) {
+		opts.sseHeartbeatInterval = d
 	}
 }
 
@@ -203,6 +213,12 @@ func WithMetricsQueueSize(n int) Option {
 func WithLogger(l *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = l
+	}
+}
+
+func WithStreamDispatcher(d *StreamDispatcher) Option {
+	return func(opts *options) {
+		opts.streamDispatcher = d
 	}
 }
 

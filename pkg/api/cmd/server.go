@@ -125,6 +125,7 @@ type server struct {
 	pubSubRedisPartitionCount *int
 	pubSubRedisMode           *string
 	cacheInvalidationTopic    *string
+	sseHeartbeatInterval      *time.Duration
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -280,8 +281,13 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
 				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
-				"announcement so the next request reloads from the (now warm) L2.",
+				"announcement and notifies active SSE streams",
 		).Default("cache-invalidation").String(),
+		sseHeartbeatInterval: cmd.Flag("sse-heartbeat-interval",
+			"Interval between SSE heartbeat comments on the stream_evaluations "+
+				"endpoint. Must be shorter than the idle timeout of any reverse "+
+				"proxy or load balancer in front of the gateway.",
+		).Default("25s").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -524,6 +530,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cachev3.WithEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 	)
 
+	streamDispatcher := api.NewStreamDispatcher(logger)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()
 	var stopInvalidatorOnce sync.Once
@@ -542,7 +549,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// configured cache-invalidation topic for that purpose.
 	if *s.cacheInvalidationTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
-			invalidatorCtx, pubsubClient, inMemoryCache, *s.cacheInvalidationTopic, logger,
+			invalidatorCtx, pubsubClient, streamDispatcher, inMemoryCache, *s.cacheInvalidationTopic, logger,
 		)
 		if err != nil {
 			return err
@@ -665,6 +672,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
 		api.WithLogger(logger),
+		api.WithStreamDispatcher(streamDispatcher),
+		api.WithSSEHeartbeatInterval(*s.sseHeartbeatInterval),
 	)
 
 	httpServer := rest.NewServer(
@@ -763,8 +772,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 // startCacheInvalidator subscribes to the cache-invalidation announcement
 // topic and evicts L1 in-memory cache entries when feature flags, segments,
-// or API keys are updated. Each pod uses a unique consumer group (based on
-// hostname) so every pod receives every event.
+// or API keys are updated. After each eviction it forwards the event to the
+// StreamDispatcher so active SSE connections compute patches from fresh data.
+// Each pod uses a unique consumer group (based on hostname) so every pod
+// receives every event.
 //
 // The L2 (Redis) cache is *not* evicted here — by the time the
 // announcement arrives, the subscriber service has already refreshed L2
@@ -778,6 +789,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
+	dispatcher *api.StreamDispatcher,
 	inMemoryCache *cachev3.InMemoryCache,
 	topic string,
 	logger *zap.Logger,
@@ -814,6 +826,7 @@ func (s *server) startCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
 		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
+		dispatcher,
 		logger,
 	)
 	go func() {

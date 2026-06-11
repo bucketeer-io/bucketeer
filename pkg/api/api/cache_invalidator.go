@@ -30,6 +30,7 @@ type cacheInvalidator struct {
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	streamDispatcher       *StreamDispatcher
 	logger                 *zap.Logger
 }
 
@@ -37,12 +38,14 @@ func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	streamDispatcher *StreamDispatcher,
 	logger *zap.Logger,
 ) *cacheInvalidator {
 	return &cacheInvalidator{
 		featuresCache:          featuresCache,
 		segmentUsersCache:      segmentUsersCache,
 		environmentAPIKeyCache: environmentAPIKeyCache,
+		streamDispatcher:       streamDispatcher,
 		logger:                 logger.Named("cache-invalidator"),
 	}
 }
@@ -68,6 +71,14 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 		ci.logger.Warn("Failed to unmarshal domain event", zap.Error(err))
 		return
 	}
+	ci.evict(event)
+	// Dispatch after eviction so SSE patches are computed from fresh data.
+	if ci.streamDispatcher != nil {
+		ci.streamDispatcher.handleEvent(event)
+	}
+}
+
+func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
 	switch event.EntityType {
 	case domaineventproto.Event_FEATURE:
 		if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
