@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"sync"
@@ -64,6 +65,13 @@ import (
 	environmentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mysql"
 	environmentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/postgres"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/api"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	dwhbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/bigquery"
+	dwhmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mysql"
+	dwhpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/postgres"
+	v2er "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
+	eventcountermysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/mysql"
+	eventcounterpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/postgres"
 	experimentapi "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	v2exs "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
@@ -594,6 +602,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var prStorage v2aos.ProgressiveRolloutStorage
 	var experimentStorage v2exs.ExperimentStorage
 	var goalStorage v2exs.GoalStorage
+	var experimentResultStorage v2er.ExperimentResultStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -622,6 +631,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		prStorage = autoopspostgres.NewProgressiveRolloutStorage(postgresClient)
 		experimentStorage = experimentpostgres.NewExperimentStorage(postgresClient)
 		goalStorage = experimentpostgres.NewGoalStorage(postgresClient)
+		experimentResultStorage = eventcounterpostgres.NewExperimentResultStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -641,6 +651,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 		autoOpsStorage = autoopsmysql.NewAutoOpsRuleStorage(mysqlClient)
 		prStorage = autoopsmysql.NewProgressiveRolloutStorage(mysqlClient)
+		experimentResultStorage = eventcountermysql.NewExperimentResultStorage(mysqlClient)
 		experimentStorage = experimentmysql.NewExperimentStorage(mysqlClient)
 		goalStorage = experimentmysql.NewGoalStorage(mysqlClient)
 	}
@@ -902,19 +913,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go environmentServer.Run()
 
+	// eventCounter data-warehouse storage. Always opens a dedicated DWH pool
+	// (separate from mysqlClient / postgresClient) so the closer is non-nil
+	// for the MySQL/Postgres backends and must be closed on shutdown.
+	eventDWHStorage, dwhCloser, err := s.createDWHEventStorage(
+		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, logger,
+	)
+	if err != nil {
+		return err
+	}
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
-		mysqlClient,
+		eventDWHStorage,
+		experimentResultStorage,
 		experimentClient,
 		featureClient,
 		accountClient,
-		bigQueryQuerier,
-		bigQueryDataSet,
 		registerer,
 		persistentRedisV3Cache,
 		location,
 		logger,
-		eventcounterapi.WithDataWarehouseConfig(s.convertToAPIDataWarehouseConfig(dataWarehouseConfig)),
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
 		"event-counter-server",
@@ -1255,6 +1273,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go mysqlClient.Close()
 		if postgresClient != nil {
 			go postgresClient.Close()
+		}
+		if dwhCloser != nil {
+			go func() { _ = dwhCloser.Close() }()
 		}
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
@@ -1641,30 +1662,124 @@ func (s *server) readDataWarehouseConfig(
 	return config, nil
 }
 
-func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *eventcounterapi.DataWarehouseConfig {
-	return &eventcounterapi.DataWarehouseConfig{
-		Type:      config.Type,
-		BatchSize: config.BatchSize,
-		Timezone:  config.Timezone,
-		MySQL: eventcounterapi.DataWarehouseMySQLConfig{
-			UseMainConnection: config.MySQL.UseMainConnection,
-			Host:              config.MySQL.Host,
-			Port:              config.MySQL.Port,
-			User:              config.MySQL.User,
-			Password:          config.MySQL.Password,
-			Database:          config.MySQL.Database,
-		},
-		BigQuery: eventcounterapi.DataWarehouseBigQueryConfig{
-			Project:  config.BigQuery.Project,
-			Dataset:  config.BigQuery.Dataset,
-			Location: config.BigQuery.Location,
-		},
-		Postgres: eventcounterapi.DataWarehousePostgresConfig{
-			Host:     config.Postgres.Host,
-			Port:     config.Postgres.Port,
-			User:     config.Postgres.User,
-			Password: config.Postgres.Password,
-			Database: config.Postgres.Database,
-		},
+// createDWHEventStorage builds the eventcounter EventStorage backed by the configured data warehouse.
+func (s *server) createDWHEventStorage(
+	ctx context.Context,
+	config *DataWarehouseConfig,
+	bigQueryQuerier bqquerier.Client,
+	bigQueryDataSet string,
+	logger *zap.Logger,
+) (dwhdatabase.EventStorage, io.Closer, error) {
+	switch config.Type {
+	case "mysql":
+		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		client, err := s.createDWHMySQLClient(clientCtx, config.MySQL, logger)
+		if err != nil {
+			logger.Error("Failed to create MySQL client for data warehouse",
+				zap.Error(err),
+			)
+			return nil, nil, err
+		}
+		return dwhmysql.NewMySQLEventStorage(client, logger), client, nil
+	case "postgres":
+		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		client, err := s.createDWHPostgresClient(clientCtx, config.Postgres, logger)
+		if err != nil {
+			logger.Error("Failed to create Postgres client for data warehouse",
+				zap.Error(err),
+				zap.String("host", config.Postgres.Host),
+				zap.String("database", config.Postgres.Database),
+			)
+			return nil, nil, err
+		}
+		return dwhpostgres.NewPostgresEventStorage(client, logger), client, nil
+	case "bigquery":
+		return dwhbigquery.NewBigQueryEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil, nil
+	default:
+		// Default to BigQuery for backward compatibility
+		return dwhbigquery.NewBigQueryEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil, nil
 	}
+}
+
+// createDWHMySQLClient opens a fresh MySQL pool dedicated to the data warehouse.
+func (s *server) createDWHMySQLClient(
+	ctx context.Context,
+	config DataWarehouseMySQLConfig,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	user := config.User
+	password := config.Password
+	host := config.Host
+	port := config.Port
+	database := config.Database
+	if config.UseMainConnection {
+		user = *s.mysqlUser
+		password = *s.mysqlPass
+		host = *s.mysqlHost
+		port = *s.mysqlPort
+		database = *s.mysqlDBName
+	}
+	if host == "" || database == "" || user == "" {
+		return nil, fmt.Errorf("mysql host, database, and user are required for data warehouse connection")
+	}
+	if port == 0 {
+		port = 3306
+	}
+	client, err := mysql.NewClient(
+		ctx,
+		user,
+		password,
+		host,
+		port,
+		database,
+		mysql.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create data warehouse MySQL client: %w", err)
+	}
+	logger.Info("Created dedicated MySQL client for data warehouse",
+		zap.String("host", host),
+		zap.Int("port", port),
+		zap.String("database", database),
+		zap.String("user", user),
+		zap.Bool("useMainConnection", config.UseMainConnection),
+	)
+	return client, nil
+}
+
+// createDWHPostgresClient builds a fresh Postgres client/pool dedicated to the
+// data warehouse, independent of the operational postgresClient.
+func (s *server) createDWHPostgresClient(
+	ctx context.Context,
+	config DataWarehousePostgresConfig,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("postgres host, database, and user are required for data warehouse connection")
+	}
+	port := config.Port
+	if port == 0 {
+		port = 5432
+	}
+	client, err := postgres.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		postgres.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create data warehouse Postgres client: %w", err)
+	}
+	logger.Info("Created Postgres client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+	return client, nil
 }

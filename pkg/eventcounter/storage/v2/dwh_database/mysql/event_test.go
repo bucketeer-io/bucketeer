@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -24,10 +24,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 )
 
-func TestPostgresEventStorageQueryEvaluationCount(t *testing.T) {
+func TestMySQLEventStorageQueryEvaluationCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -38,13 +39,13 @@ func TestPostgresEventStorageQueryEvaluationCount(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(s *PostgresEventStorage)
-		expected    []*EvaluationEventCount
+		setup       func(s *eventStorage)
+		expected    []*dwhdatabase.EvaluationEventCount
 		expectedErr error
 	}{
 		{
 			desc: "success",
-			setup: func(s *PostgresEventStorage) {
+			setup: func(s *eventStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
@@ -67,11 +68,11 @@ func TestPostgresEventStorageQueryEvaluationCount(t *testing.T) {
 				)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			expected: []*EvaluationEventCount{
+			expected: []*dwhdatabase.EvaluationEventCount{
 				{VariationID: "vid1", EvaluationUser: 1, EvaluationTotal: 2},
 				{VariationID: "vid2", EvaluationUser: 3, EvaluationTotal: 4},
 			},
@@ -79,8 +80,8 @@ func TestPostgresEventStorageQueryEvaluationCount(t *testing.T) {
 		},
 		{
 			desc: "error: query",
-			setup: func(s *PostgresEventStorage) {
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+			setup: func(s *eventStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("query error"))
 			},
@@ -90,8 +91,8 @@ func TestPostgresEventStorageQueryEvaluationCount(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := &PostgresEventStorage{
-				qe:     mock.NewMockTransaction(mockController),
+			s := &eventStorage{
+				qe:     mock.NewMockQueryExecer(mockController),
 				logger: zap.NewNop(),
 			}
 			if p.setup != nil {
@@ -104,7 +105,7 @@ func TestPostgresEventStorageQueryEvaluationCount(t *testing.T) {
 	}
 }
 
-func TestPostgresEventStorageQueryGoalCount(t *testing.T) {
+func TestMySQLEventStorageQueryGoalCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -115,13 +116,13 @@ func TestPostgresEventStorageQueryGoalCount(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(s *PostgresEventStorage)
-		expected    []*GoalEventCount
+		setup       func(s *eventStorage)
+		expected    []*dwhdatabase.GoalEventCount
 		expectedErr error
 	}{
 		{
 			desc: "success",
-			setup: func(s *PostgresEventStorage) {
+			setup: func(s *eventStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
@@ -154,11 +155,11 @@ func TestPostgresEventStorageQueryGoalCount(t *testing.T) {
 				)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			expected: []*GoalEventCount{
+			expected: []*dwhdatabase.GoalEventCount{
 				{
 					VariationID:       "vid1",
 					GoalUser:          1,
@@ -180,8 +181,8 @@ func TestPostgresEventStorageQueryGoalCount(t *testing.T) {
 		},
 		{
 			desc: "error: query",
-			setup: func(s *PostgresEventStorage) {
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+			setup: func(s *eventStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("query error"))
 			},
@@ -191,8 +192,8 @@ func TestPostgresEventStorageQueryGoalCount(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := &PostgresEventStorage{
-				qe:     mock.NewMockTransaction(mockController),
+			s := &eventStorage{
+				qe:     mock.NewMockQueryExecer(mockController),
 				logger: zap.NewNop(),
 			}
 			if p.setup != nil {
@@ -205,7 +206,7 @@ func TestPostgresEventStorageQueryGoalCount(t *testing.T) {
 	}
 }
 
-func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
+func TestMySQLEventStorageQueryUserEvaluation(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -216,13 +217,13 @@ func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(s *PostgresEventStorage)
-		expected    *UserEvaluation
+		setup       func(s *eventStorage)
+		expected    *dwhdatabase.UserEvaluation
 		expectedErr error
 	}{
 		{
 			desc: "success",
-			setup: func(s *PostgresEventStorage) {
+			setup: func(s *eventStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
@@ -241,11 +242,11 @@ func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
 				)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			expected: &UserEvaluation{
+			expected: &dwhdatabase.UserEvaluation{
 				UserID:         "uid",
 				FeatureID:      "fid",
 				FeatureVersion: 1,
@@ -257,8 +258,8 @@ func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
 		},
 		{
 			desc: "error: query",
-			setup: func(s *PostgresEventStorage) {
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+			setup: func(s *eventStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("query error"))
 			},
@@ -266,26 +267,26 @@ func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
 		},
 		{
 			desc: "error: no results",
-			setup: func(s *PostgresEventStorage) {
+			setup: func(s *eventStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			expectedErr: ErrPostgresNoResultsFound,
+			expectedErr: dwhdatabase.ErrMySQLNoResultsFound,
 		},
 		{
 			desc: "error: scan",
-			setup: func(s *PostgresEventStorage) {
+			setup: func(s *eventStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
 				rows.EXPECT().Scan(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(errors.New("scan error"))
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -293,7 +294,7 @@ func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
 		},
 		{
 			desc: "error: unexpected multiple results",
-			setup: func(s *PostgresEventStorage) {
+			setup: func(s *eventStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
@@ -301,18 +302,18 @@ func TestPostgresEventStorageQueryUserEvaluation(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				rows.EXPECT().Next().Return(true)
-				s.qe.(*mock.MockTransaction).EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			expectedErr: ErrPostgresUnexpectedMultipleResults,
+			expectedErr: dwhdatabase.ErrMySQLUnexpectedMultipleResults,
 		},
 	}
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := &PostgresEventStorage{
-				qe:     mock.NewMockTransaction(mockController),
+			s := &eventStorage{
+				qe:     mock.NewMockQueryExecer(mockController),
 				logger: zap.NewNop(),
 			}
 			if p.setup != nil {

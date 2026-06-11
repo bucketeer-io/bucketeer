@@ -24,8 +24,6 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -33,7 +31,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
-	v2ecstorage "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	operationaldatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -41,9 +40,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
@@ -65,46 +61,12 @@ const (
 	pfMergeExpiration            = 10 * time.Minute
 )
 
-type DataWarehouseConfig struct {
-	Type      string                      `yaml:"type"`
-	BatchSize int                         `yaml:"batchSize"`
-	Timezone  string                      `yaml:"timezone"`
-	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
-	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
-	Postgres  DataWarehousePostgresConfig `yaml:"postgres"`
-}
-
-type DataWarehouseBigQueryConfig struct {
-	Project  string `yaml:"project"`
-	Dataset  string `yaml:"dataset"`
-	Location string `yaml:"location"`
-}
-
-type DataWarehouseMySQLConfig struct {
-	UseMainConnection bool   `yaml:"useMainConnection"`
-	Host              string `yaml:"host"`
-	Port              int    `yaml:"port"`
-	User              string `yaml:"user"`
-	Password          string `yaml:"password"`
-	Database          string `yaml:"database"`
-}
-
-type DataWarehousePostgresConfig struct {
-	UseMainConnection bool   `yaml:"useMainConnection"`
-	Host              string `yaml:"host"`
-	Port              int    `yaml:"port"`
-	User              string `yaml:"user"`
-	Password          string `yaml:"password"`
-	Database          string `yaml:"database"`
-}
-
 var (
 	errUnknownTimeRange = errors.New("eventcounter: a time range is unknown")
 )
 
 type options struct {
-	logger              *zap.Logger
-	dataWarehouseConfig *DataWarehouseConfig
+	logger *zap.Logger
 }
 
 type Option func(*options)
@@ -115,42 +77,24 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
-func WithDataWarehouse(dataWarehouseType string) Option {
-	return func(opts *options) {
-		// Maintain backward compatibility by setting a basic config
-		opts.dataWarehouseConfig = &DataWarehouseConfig{
-			Type: dataWarehouseType,
-		}
-	}
-}
-
-func WithDataWarehouseConfig(config *DataWarehouseConfig) Option {
-	return func(opts *options) {
-		opts.dataWarehouseConfig = config
-	}
-}
-
 type eventCounterService struct {
-	experimentClient             experimentclient.Client
-	featureClient                featureclient.Client
-	accountClient                accountclient.Client
-	eventStorage                 v2ecstorage.EventStorage
-	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
-	mysqlMAUSummaryStorage       v2ecstorage.MAUSummaryStorage
-	userCountStorage             v2ecstorage.UserCountStorage
-	metrics                      metrics.Registerer
-	evaluationCountCacher        cachev3.EventCounterCache
-	location                     *time.Location
-	logger                       *zap.Logger
+	experimentClient        experimentclient.Client
+	featureClient           featureclient.Client
+	accountClient           accountclient.Client
+	eventStorage            dwhdatabase.EventStorage
+	experimentResultStorage operationaldatabase.ExperimentResultStorage
+	metrics                 metrics.Registerer
+	evaluationCountCacher   cachev3.EventCounterCache
+	location                *time.Location
+	logger                  *zap.Logger
 }
 
 func NewEventCounterService(
-	mc mysql.Client,
+	eventStorage dwhdatabase.EventStorage,
+	experimentResultStorage operationaldatabase.ExperimentResultStorage,
 	e experimentclient.Client,
 	f featureclient.Client,
 	a accountclient.Client,
-	b bqquerier.Client,
-	bigQueryDataSet string,
 	r metrics.Registerer,
 	redis cache.MultiGetDeleteCountCache,
 	loc *time.Location,
@@ -159,9 +103,6 @@ func NewEventCounterService(
 ) rpc.Service {
 	dopts := &options{
 		logger: l,
-		dataWarehouseConfig: &DataWarehouseConfig{
-			Type: "bigquery", // default
-		},
 	}
 	for _, opt := range opts {
 		opt(dopts)
@@ -169,84 +110,16 @@ func NewEventCounterService(
 
 	registerMetrics(r)
 
-	var eventStorage v2ecstorage.EventStorage
-	switch dopts.dataWarehouseConfig.Type {
-	case "mysql":
-		// Use the main MySQL client if useMainConnection is true or no custom connection specified
-		if dopts.dataWarehouseConfig.MySQL.UseMainConnection || dopts.dataWarehouseConfig.MySQL.Host == "" {
-			eventStorage = v2ecstorage.NewMySQLEventStorage(mc, dopts.logger)
-		} else {
-			// Create custom MySQL client with the specified connection details
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-
-			customMySQLClient, err := createCustomMySQLClient(
-				ctx,
-				dopts.dataWarehouseConfig.MySQL,
-				dopts.logger,
-			)
-			if err != nil {
-				dopts.logger.Error("Failed to create custom MySQL client for data warehouse",
-					zap.Error(err),
-					zap.String("host", dopts.dataWarehouseConfig.MySQL.Host),
-					zap.String("database", dopts.dataWarehouseConfig.MySQL.Database),
-				)
-				// Return nil to cause service initialization to fail
-				// This prevents data inconsistency by ensuring we don't silently fall back
-				return nil
-			}
-
-			dopts.logger.Info("Using custom MySQL connection for data warehouse",
-				zap.String("host", dopts.dataWarehouseConfig.MySQL.Host),
-				zap.String("database", dopts.dataWarehouseConfig.MySQL.Database),
-			)
-			eventStorage = v2ecstorage.NewMySQLEventStorage(customMySQLClient, dopts.logger)
-		}
-	case "postgres":
-		// Create custom Postgres client with the specified connection details
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		customPostgresClient, err := createCustomPostgresClient(
-			ctx,
-			dopts.dataWarehouseConfig.Postgres,
-			dopts.logger,
-		)
-		if err != nil {
-			dopts.logger.Error("Failed to create custom Postgres client for data warehouse",
-				zap.Error(err),
-				zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
-				zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
-			)
-			// Return nil to cause service initialization to fail
-			// This prevents data inconsistency by ensuring we don't silently fall back
-			return nil
-		}
-
-		dopts.logger.Info("Using custom Postgres connection for data warehouse",
-			zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
-			zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
-		)
-		eventStorage = v2ecstorage.NewPostgresEventStorage(customPostgresClient, dopts.logger)
-	case "bigquery":
-		eventStorage = v2ecstorage.NewBigQueryEventStorage(b, bigQueryDataSet, dopts.logger)
-	default:
-		// Default to BigQuery for backward compatibility
-		eventStorage = v2ecstorage.NewBigQueryEventStorage(b, bigQueryDataSet, dopts.logger)
-	}
-
 	return &eventCounterService{
-		experimentClient:             e,
-		featureClient:                f,
-		accountClient:                a,
-		eventStorage:                 eventStorage,
-		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
-		mysqlMAUSummaryStorage:       v2ecstorage.NewMAUSummaryStorage(mc),
-		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
-		metrics:                      r,
-		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
-		location:                     loc,
-		logger:                       dopts.logger.Named("api"),
+		experimentClient:        e,
+		featureClient:           f,
+		accountClient:           a,
+		eventStorage:            eventStorage,
+		experimentResultStorage: experimentResultStorage,
+		metrics:                 r,
+		evaluationCountCacher:   cachev3.NewEventCountCache(redis),
+		location:                loc,
+		logger:                  dopts.logger.Named("api"),
 	}
 }
 
@@ -319,7 +192,7 @@ func validateGetExperimentEvaluationCountRequest(
 }
 
 func (s *eventCounterService) convertEvaluationCounts(
-	rows []*v2ecstorage.EvaluationEventCount,
+	rows []*dwhdatabase.EvaluationEventCount,
 	variationIDs []string,
 ) []*ecproto.VariationCount {
 	vcsMap := map[string]*ecproto.VariationCount{}
@@ -825,9 +698,9 @@ func (s *eventCounterService) GetExperimentResult(
 	if req.ExperimentId == "" {
 		return nil, statusExperimentIDRequired.Err()
 	}
-	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentId)
+	result, err := s.experimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentId)
 	if err != nil {
-		if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
+		if errors.Is(err, operationaldatabase.ErrExperimentResultNotFound) {
 			return nil, statusExperimentResultNotFound.Err()
 		}
 		s.logger.Error(
@@ -878,9 +751,9 @@ func (s *eventCounterService) ListExperimentResults(
 	}
 	results := make(map[string]*ecproto.ExperimentResult, len(experiments))
 	for _, e := range experiments {
-		er, err := s.getExperimentResultMySQL(ctx, e.Id, req.EnvironmentId)
+		er, err := s.getExperimentResult(ctx, e.Id, req.EnvironmentId)
 		if err != nil {
-			if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
+			if errors.Is(err, operationaldatabase.ErrExperimentResultNotFound) {
 				getExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
 			} else {
 				s.logger.Error(
@@ -998,7 +871,7 @@ func validateGetExperimentGoalCountRequest(
 }
 
 func (s *eventCounterService) convertGoalCounts(
-	rows []*v2ecstorage.GoalEventCount,
+	rows []*dwhdatabase.GoalEventCount,
 	variationIDs []string,
 ) []*ecproto.VariationCount {
 	vcsMap := map[string]*ecproto.VariationCount{}
@@ -1025,102 +898,13 @@ func (s *eventCounterService) convertGoalCounts(
 	return vcs
 }
 
-func (s *eventCounterService) GetMAUCount(
-	ctx context.Context,
-	req *ecproto.GetMAUCountRequest,
-) (*ecproto.GetMAUCountResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if req.YearMonth == "" {
-		return nil, statusMAUYearMonthRequired.Err()
-	}
-	userCount, eventCount, err := s.userCountStorage.GetMAUCount(ctx, req.EnvironmentId, req.YearMonth)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get the mau count",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.String("yearMonth", req.YearMonth),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &ecproto.GetMAUCountResponse{
-		UserCount:  userCount,
-		EventCount: eventCount,
-	}, nil
-}
-
-func (s *eventCounterService) SummarizeMAUCounts(
-	ctx context.Context,
-	req *ecproto.SummarizeMAUCountsRequest,
-) (*ecproto.SummarizeMAUCountsResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if req.YearMonth == "" {
-		return nil, statusMAUYearMonthRequired.Err()
-	}
-	summaries := make([]*ecproto.MAUSummary, 0)
-	// Get the mau counts grouped by sourceID and environmentID.
-	groupBySourceID, err := s.userCountStorage.GetMAUCountsGroupBySourceID(ctx, req.YearMonth)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get the mau counts by sourceID",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("yearMonth", req.YearMonth),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	summaries = append(summaries, groupBySourceID...)
-	// Get the mau counts grouped by environmentID.
-	groupByEnvID, err := s.userCountStorage.GetMAUCounts(ctx, req.YearMonth)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get the mau counts",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("yearMonth", req.YearMonth),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	summaries = append(summaries, groupByEnvID...)
-	s.logger.Debug("SummarizeMAUCounts result", zap.Any("summaries", summaries))
-	for _, summary := range summaries {
-		summary.IsFinished = req.IsFinished
-		summary.CreatedAt = time.Now().Unix()
-		summary.UpdatedAt = time.Now().Unix()
-		err := s.mysqlMAUSummaryStorage.UpsertMAUSummary(ctx, summary)
-		if err != nil {
-			s.logger.Error(
-				"Failed to upsert the mau summary",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.Any("summary", summary),
-				)...,
-			)
-			return nil, err
-		}
-	}
-	return &ecproto.SummarizeMAUCountsResponse{}, nil
-}
-
-func (s *eventCounterService) getExperimentResultMySQL(
+func (s *eventCounterService) getExperimentResult(
 	ctx context.Context,
 	id, environmentId string,
 ) (*ecproto.ExperimentResult, error) {
-	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, id, environmentId)
+	result, err := s.experimentResultStorage.GetExperimentResult(ctx, id, environmentId)
 	if err != nil {
-		if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
+		if errors.Is(err, operationaldatabase.ErrExperimentResultNotFound) {
 			return nil, err
 		}
 		s.logger.Error(
@@ -1315,115 +1099,4 @@ func (s *eventCounterService) checkEnvironmentRole(
 		statusPermissionDenied.Err(),
 		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
-}
-
-func (s *eventCounterService) checkSystemAdminRole(
-	ctx context.Context,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckSystemAdminRole(ctx)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
-}
-
-// createCustomMySQLClient creates a dedicated MySQL client with the specified connection details
-func createCustomMySQLClient(
-	ctx context.Context,
-	config DataWarehouseMySQLConfig,
-	logger *zap.Logger,
-) (mysql.Client, error) {
-	// Validate required fields
-	if config.Host == "" || config.Database == "" || config.User == "" {
-		return nil, fmt.Errorf("mysql host, database, and user are required for custom connection")
-	}
-
-	// Set default port if not specified
-	port := config.Port
-	if port == 0 {
-		port = 3306 // Default MySQL port
-	}
-
-	// Create MySQL client with custom connection
-	client, err := mysql.NewClient(
-		ctx,
-		config.User,
-		config.Password,
-		config.Host,
-		port,
-		config.Database,
-		mysql.WithLogger(logger),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create MySQL client: %w", err)
-	}
-
-	logger.Info("Created custom MySQL client for data warehouse",
-		zap.String("host", config.Host),
-		zap.Int("port", port),
-		zap.String("database", config.Database),
-		zap.String("user", config.User),
-	)
-
-	return client, nil
-}
-
-// createCustomPostgresClient creates a dedicated Postgres client with the specified connection details
-func createCustomPostgresClient(
-	ctx context.Context,
-	config DataWarehousePostgresConfig,
-	logger *zap.Logger,
-) (postgres.Client, error) {
-	// Validate required fields
-	if config.Host == "" || config.Database == "" || config.User == "" {
-		return nil, fmt.Errorf("postgres host, database, and user are required for custom connection")
-	}
-
-	// Set default port if not specified
-	port := config.Port
-	if port == 0 {
-		port = 5432 // Default Postgres port
-	}
-
-	// Create Postgres client with custom connection
-	client, err := postgres.NewClient(
-		ctx,
-		config.User,
-		config.Password,
-		config.Host,
-		port,
-		config.Database,
-		postgres.WithLogger(logger),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Postgres client: %w", err)
-	}
-
-	logger.Info("Created custom Postgres client for data warehouse",
-		zap.String("host", config.Host),
-		zap.Int("port", port),
-		zap.String("database", config.Database),
-		zap.String("user", config.User),
-	)
-
-	return client, nil
 }

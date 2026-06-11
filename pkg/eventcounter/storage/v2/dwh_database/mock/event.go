@@ -16,7 +16,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 )
 
 // MockEventStorage is a mock of EventStorage interface.
@@ -43,10 +43,10 @@ func (m *MockEventStorage) EXPECT() *MockEventStorageMockRecorder {
 }
 
 // QueryEvaluationCount mocks base method.
-func (m *MockEventStorage) QueryEvaluationCount(ctx context.Context, environmentId string, startAt, endAt time.Time, featureID string, featureVersion int32) ([]*v2.EvaluationEventCount, error) {
+func (m *MockEventStorage) QueryEvaluationCount(ctx context.Context, environmentId string, startAt, endAt time.Time, featureID string, featureVersion int32) ([]*dwhdatabase.EvaluationEventCount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryEvaluationCount", ctx, environmentId, startAt, endAt, featureID, featureVersion)
-	ret0, _ := ret[0].([]*v2.EvaluationEventCount)
+	ret0, _ := ret[0].([]*dwhdatabase.EvaluationEventCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -58,10 +58,10 @@ func (mr *MockEventStorageMockRecorder) QueryEvaluationCount(ctx, environmentId,
 }
 
 // QueryGoalCount mocks base method.
-func (m *MockEventStorage) QueryGoalCount(ctx context.Context, environmentId string, startAt, endAt time.Time, goalID, featureID string, featureVersion int32) ([]*v2.GoalEventCount, error) {
+func (m *MockEventStorage) QueryGoalCount(ctx context.Context, environmentId string, startAt, endAt time.Time, goalID, featureID string, featureVersion int32) ([]*dwhdatabase.GoalEventCount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryGoalCount", ctx, environmentId, startAt, endAt, goalID, featureID, featureVersion)
-	ret0, _ := ret[0].([]*v2.GoalEventCount)
+	ret0, _ := ret[0].([]*dwhdatabase.GoalEventCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -73,10 +73,10 @@ func (mr *MockEventStorageMockRecorder) QueryGoalCount(ctx, environmentId, start
 }
 
 // QueryUserEvaluation mocks base method.
-func (m *MockEventStorage) QueryUserEvaluation(ctx context.Context, environmentID, userID, featureID string, featureVersion int32, experimentStartAt, experimentEndAt time.Time) (*v2.UserEvaluation, error) {
+func (m *MockEventStorage) QueryUserEvaluation(ctx context.Context, environmentID, userID, featureID string, featureVersion int32, experimentStartAt, experimentEndAt time.Time) (*dwhdatabase.UserEvaluation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryUserEvaluation", ctx, environmentID, userID, featureID, featureVersion, experimentStartAt, experimentEndAt)
-	ret0, _ := ret[0].(*v2.UserEvaluation)
+	ret0, _ := ret[0].(*dwhdatabase.UserEvaluation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package v2
+package mysql
 
 import (
 	"context"
@@ -22,44 +21,44 @@ import (
 
 	"go.uber.org/zap"
 
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 var (
-	//go:embed sql/evaluation_event_postgres.sql
-	evaluationEventPostgresQuery string
+	//go:embed sql/evaluation_event.sql
+	evaluationEventSQL string
 
-	//go:embed sql/goal_event_postgres.sql
-	goalEventPostgresQuery string
+	//go:embed sql/goal_event.sql
+	goalEventSQL string
 
-	//go:embed sql/user_evaluation_postgres.sql
-	userEvaluationPostgresQuery string
+	//go:embed sql/user_evaluation.sql
+	userEvaluationSQL string
 )
 
-type PostgresEventStorage struct {
-	qe     postgres.QueryExecer
+type eventStorage struct {
+	qe     mysql.QueryExecer
 	logger *zap.Logger
 }
 
-func NewPostgresEventStorage(qe postgres.QueryExecer, logger *zap.Logger) EventStorage {
-	return &PostgresEventStorage{
+func NewMySQLEventStorage(qe mysql.QueryExecer, logger *zap.Logger) dwhdatabase.EventStorage {
+	return &eventStorage{
 		qe:     qe,
-		logger: logger.Named("postgres-event-storage"),
+		logger: logger.Named("mysql-dwh-event-storage"),
 	}
 }
 
-func (es *PostgresEventStorage) QueryEvaluationCount(
+func (es *eventStorage) QueryEvaluationCount(
 	ctx context.Context,
 	environmentId string,
-	startAt,
-	endAt time.Time,
+	startAt, endAt time.Time,
 	featureID string,
 	featureVersion int32,
-) ([]*EvaluationEventCount, error) {
+) ([]*dwhdatabase.EvaluationEventCount, error) {
 	rows, err := es.qe.QueryContext(
 		ctx,
-		evaluationEventPostgresQuery,
+		evaluationEventSQL,
 		startAt,
 		endAt,
 		environmentId,
@@ -82,9 +81,9 @@ func (es *PostgresEventStorage) QueryEvaluationCount(
 	}
 	defer rows.Close()
 
-	results := make([]*EvaluationEventCount, 0)
+	results := make([]*dwhdatabase.EvaluationEventCount, 0)
 	for rows.Next() {
-		var ec EvaluationEventCount
+		var ec dwhdatabase.EvaluationEventCount
 		if err := rows.Scan(&ec.VariationID, &ec.EvaluationUser, &ec.EvaluationTotal); err != nil {
 			es.logger.Error(
 				"Failed to scan evaluation event count",
@@ -110,18 +109,16 @@ func (es *PostgresEventStorage) QueryEvaluationCount(
 	return results, nil
 }
 
-func (es *PostgresEventStorage) QueryGoalCount(
+func (es *eventStorage) QueryGoalCount(
 	ctx context.Context,
 	environmentId string,
-	startAt,
-	endAt time.Time,
-	goalID,
-	featureID string,
+	startAt, endAt time.Time,
+	goalID, featureID string,
 	featureVersion int32,
-) ([]*GoalEventCount, error) {
+) ([]*dwhdatabase.GoalEventCount, error) {
 	rows, err := es.qe.QueryContext(
 		ctx,
-		goalEventPostgresQuery,
+		goalEventSQL,
 		startAt,
 		endAt,
 		environmentId,
@@ -146,9 +143,9 @@ func (es *PostgresEventStorage) QueryGoalCount(
 	}
 	defer rows.Close()
 
-	results := make([]*GoalEventCount, 0)
+	results := make([]*dwhdatabase.GoalEventCount, 0)
 	for rows.Next() {
-		var gc GoalEventCount
+		var gc dwhdatabase.GoalEventCount
 		if err := rows.Scan(
 			&gc.VariationID,
 			&gc.GoalUser,
@@ -181,18 +178,15 @@ func (es *PostgresEventStorage) QueryGoalCount(
 	return results, nil
 }
 
-func (es *PostgresEventStorage) QueryUserEvaluation(
+func (es *eventStorage) QueryUserEvaluation(
 	ctx context.Context,
-	environmentID,
-	userID,
-	featureID string,
+	environmentID, userID, featureID string,
 	featureVersion int32,
-	experimentStartAt,
-	experimentEndAt time.Time,
-) (*UserEvaluation, error) {
+	experimentStartAt, experimentEndAt time.Time,
+) (*dwhdatabase.UserEvaluation, error) {
 	rows, err := es.qe.QueryContext(
 		ctx,
-		userEvaluationPostgresQuery,
+		userEvaluationSQL,
 		environmentID,
 		featureID,
 		featureVersion,
@@ -218,10 +212,10 @@ func (es *PostgresEventStorage) QueryUserEvaluation(
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, ErrPostgresNoResultsFound
+		return nil, dwhdatabase.ErrMySQLNoResultsFound
 	}
 
-	var ue UserEvaluation
+	var ue dwhdatabase.UserEvaluation
 	if err := rows.Scan(
 		&ue.UserID,
 		&ue.FeatureID,
@@ -240,7 +234,7 @@ func (es *PostgresEventStorage) QueryUserEvaluation(
 	}
 
 	if rows.Next() {
-		return nil, ErrPostgresUnexpectedMultipleResults
+		return nil, dwhdatabase.ErrMySQLUnexpectedMultipleResults
 	}
 
 	if err := rows.Err(); err != nil {

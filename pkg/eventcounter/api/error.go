@@ -31,8 +31,6 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "variation id is required", "VariationId"))
 	statusExperimentIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "experiment id is required", "ExperimentId"))
-	statusMAUYearMonthRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "mau year month is required", "MauYearMonth"))
 	statusGoalIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "goal id is required", "Goal"))
 	statusStartAtRequired = api.NewGRPCStatus(
