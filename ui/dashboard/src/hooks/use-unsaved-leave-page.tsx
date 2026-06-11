@@ -101,7 +101,7 @@ export function useUnsavedLeavePage({
             callBackCancel();
           }
           setIsShowGlobal(false);
-          return push(...args);
+          allowNavigation(() => push(...args));
         }
       });
     };
@@ -119,7 +119,7 @@ export function useUnsavedLeavePage({
             callBackCancel();
           }
           setIsShowGlobal(false);
-          return replace(...args);
+          allowNavigation(() => replace(...args));
         }
       });
     };
@@ -147,6 +147,7 @@ export function useUnsavedLeavePage({
             callBackCancel();
           }
           setIsShowGlobal(false);
+          allowNavigation();
           history.back();
         },
         onCancel: () => {

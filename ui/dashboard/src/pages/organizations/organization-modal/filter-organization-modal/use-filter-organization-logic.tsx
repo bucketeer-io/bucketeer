@@ -35,7 +35,7 @@ const useFilterOrganizationLogic = (
       setSelectedFilterType(undefined);
       setSelectedValue(undefined);
     }
-  }, [filters]);
+  }, [filters, filterEnabledOptions, enabledOptions]);
 
   return {
     isDisabledSubmitBtn,
