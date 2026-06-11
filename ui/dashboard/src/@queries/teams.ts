@@ -45,9 +45,3 @@ export const prefetchTeams = (
     ...queryOptions
   });
 };
-
-export const invalidateTeams = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [TEAMS_QUERY_KEY]
-  });
-};

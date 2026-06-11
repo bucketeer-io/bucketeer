@@ -35,7 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
@@ -74,7 +74,7 @@ type EnvironmentService struct {
 	audience            string
 	signer              token.Signer
 	accountClient       accountclient.Client
-	mysqlClient         mysql.Client
+	dbClient            database.Client
 	projectStorage      v2.ProjectStorage
 	orgStorage          v2.OrganizationStorage
 	environmentStorage  v2.EnvironmentStorage
@@ -88,7 +88,11 @@ type EnvironmentService struct {
 
 func NewEnvironmentService(
 	ac accountclient.Client,
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	projectStorage v2.ProjectStorage,
+	orgStorage v2.OrganizationStorage,
+	environmentStorage v2.EnvironmentStorage,
+	accountStorage v2acc.AccountStorage,
 	publisher publisher.Publisher,
 	config *auth.OAuthConfig,
 	issuer string,
@@ -106,11 +110,11 @@ func NewEnvironmentService(
 	logger := dopts.logger.Named("api")
 	return &EnvironmentService{
 		accountClient:      ac,
-		mysqlClient:        mysqlClient,
-		projectStorage:     v2.NewProjectStorage(mysqlClient),
-		orgStorage:         v2.NewOrganizationStorage(mysqlClient),
-		environmentStorage: v2.NewEnvironmentStorage(mysqlClient),
-		accountStorage:     v2acc.NewAccountStorage(mysqlClient),
+		dbClient:           dbClient,
+		projectStorage:     projectStorage,
+		orgStorage:         orgStorage,
+		environmentStorage: environmentStorage,
+		accountStorage:     accountStorage,
 		publisher:          publisher,
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,

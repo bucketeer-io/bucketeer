@@ -35,7 +35,7 @@ import (
 	ftmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	opseventstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
@@ -51,7 +51,7 @@ func newNewCountWatcherWithMock(t *testing.T, mockController *gomock.Controller)
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &eventCountWatcher{
-		mysqlClient:        mysqlmock.NewMockClient(mockController),
+		opsCountStorage:    opseventstoragemock.NewMockOpsCountStorage(mockController),
 		envClient:          envclientemock.NewMockClient(mockController),
 		aoClient:           aoclientemock.NewMockClient(mockController),
 		eventCounterClient: eccmock.NewMockClient(mockController),
@@ -294,9 +294,9 @@ func TestRunCountWatcher(t *testing.T) {
 						},
 					}, nil)
 
-				w.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					nil, nil,
-				)
+				w.opsCountStorage.(*opseventstoragemock.MockOpsCountStorage).EXPECT().UpsertOpsCount(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
 
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
 					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)

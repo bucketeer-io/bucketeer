@@ -45,9 +45,3 @@ export const prefetchPushes = (
     ...queryOptions
   });
 };
-
-export const invalidatePushes = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [PUSHES_QUERY_KEY]
-  });
-};

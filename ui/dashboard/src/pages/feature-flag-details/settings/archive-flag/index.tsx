@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { featureUpdater } from '@api/features';
-import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures, useQueryFeatures } from '@queries/features';
-import { invalidateHistories } from '@queries/histories';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryFeatures } from '@queries/features';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -27,7 +25,6 @@ const ArchiveFlag = ({
 }) => {
   const { t } = useTranslation(['common', 'form', 'table', 'message']);
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -66,9 +63,6 @@ const ArchiveFlag = ({
           action: t('updated')
         })
       });
-      invalidateFeature(queryClient);
-      invalidateFeatures(queryClient);
-      invalidateHistories(queryClient);
       mutation.reset();
     },
     onError: error => errorNotify(error)

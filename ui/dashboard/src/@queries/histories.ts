@@ -45,9 +45,3 @@ export const prefetchHistories = (
     ...queryOptions
   });
 };
-
-export const invalidateHistories = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [HISTORIES_QUERY_KEY]
-  });
-};

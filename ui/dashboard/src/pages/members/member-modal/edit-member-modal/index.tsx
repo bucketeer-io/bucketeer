@@ -8,9 +8,7 @@ import {
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAccounts } from '@queries/accounts';
-import { invalidateTeams, useQueryTeams } from '@queries/teams';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryTeams } from '@queries/teams';
 import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -100,7 +98,6 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
 
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { consoleAccount } = useAuth();
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
   const { organizationRoles } = useOptions();
@@ -207,8 +204,6 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
           action: t('updated')
         })
       });
-      invalidateAccounts(queryClient);
-      invalidateTeams(queryClient);
       onClose();
     });
   };

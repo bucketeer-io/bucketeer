@@ -41,7 +41,7 @@ import (
 	envstotage "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
@@ -100,10 +100,11 @@ type authService struct {
 	audience            string
 	signer              token.Signer
 	config              *auth.OAuthConfig
-	mysqlClient         mysql.Client
+	dbClient            database.Client
 	organizationStorage envstotage.OrganizationStorage
 	projectStorage      envstotage.ProjectStorage
 	environmentStorage  envstotage.EnvironmentStorage
+	accountStorage      accstorage.AccountStorage
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
@@ -116,8 +117,12 @@ func NewAuthService(
 	audience string,
 	signer token.Signer,
 	verifier token.Verifier,
-	mysqlClient mysql.Client,
+	dbClient database.Client,
 	accountClient accountclient.Client,
+	accountStorage accstorage.AccountStorage,
+	organizationStorage envstotage.OrganizationStorage,
+	projectStorage envstotage.ProjectStorage,
+	environmentStorage envstotage.EnvironmentStorage,
 	config *auth.OAuthConfig,
 	opts ...Option,
 ) rpc.Service {
@@ -131,10 +136,11 @@ func NewAuthService(
 		audience:            audience,
 		signer:              signer,
 		config:              config,
-		mysqlClient:         mysqlClient,
-		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
-		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
-		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
+		dbClient:            dbClient,
+		organizationStorage: organizationStorage,
+		environmentStorage:  environmentStorage,
+		projectStorage:      projectStorage,
+		accountStorage:      accountStorage,
 		accountClient:       accountClient,
 		verifier:            verifier,
 		googleAuthenticator: google.NewAuthenticator(
@@ -732,7 +738,7 @@ func (s *authService) PrepareDemoUser() {
 
 	now := time.Now()
 	var err error
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		// Create a demo organization if not exists
 		_, err = s.organizationStorage.GetOrganization(contextWithTx, config.OrganizationId)
 		if err != nil {
@@ -810,15 +816,14 @@ func (s *authService) PrepareDemoUser() {
 		return
 	}
 	// Create a demo account if not exists
-	accountStorage := accstorage.NewAccountStorage(s.mysqlClient)
-	_, err = accountStorage.GetAccountV2(
+	_, err = s.accountStorage.GetAccountV2(
 		ctx,
 		config.Email,
 		config.OrganizationId,
 	)
 	if err != nil {
 		if errors.Is(err, accstorage.ErrAccountNotFound) {
-			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+			err = s.accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
 				AccountV2: &acproto.AccountV2{
 					OrganizationId:   config.OrganizationId,
 					Email:            config.Email,

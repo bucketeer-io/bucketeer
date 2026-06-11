@@ -32,7 +32,6 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -99,59 +98,33 @@ func (s *EnvironmentService) ListOrganizations(
 	if err != nil {
 		return nil, err
 	}
-	var filters []*mysql.FilterV2
+	var disabled *bool
 	if req.Disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "organization.disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Disabled.Value,
-		})
+		v := req.Disabled.Value
+		disabled = &v
 	}
+	var archived *bool
 	if req.Archived != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "organization.archived",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Archived.Value,
-		})
+		v := req.Archived.Value
+		archived = &v
 	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"organization.id", "organization.name", "organization.url_code"},
-			Keyword: req.SearchKeyword,
+	params := v2es.ListOrganizationsParams{
+		Disabled:       disabled,
+		Archived:       archived,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
+	}
+	organizations, nextCursor, totalCount, err := s.orgStorage.ListOrganizations(ctx, params)
+	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
 		}
-	}
-	orders, err := s.newOrganizationListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"failed to create OrganizationListOrders",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		InFilters:   nil,
-		NullFilters: nil,
-		JSONFilters: nil,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-	}
-	organizations, nextCursor, totalCount, err := s.orgStorage.ListOrganizations(ctx, options)
-	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
 		s.logger.Error(
 			"failed to list organizations",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -192,7 +165,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		return nil, err
 	}
 
-	organization, err := s.createOrganizationMySQL(
+	organization, err := s.createOrganization(
 		ctx,
 		req.Name,
 		req.UrlCode,
@@ -257,40 +230,6 @@ func validateCreateDemoOrganizationRequest(
 	return nil
 }
 
-func (s *EnvironmentService) newOrganizationListOrders(
-	orderBy environmentproto.ListOrganizationsRequest_OrderBy,
-	orderDirection environmentproto.ListOrganizationsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case environmentproto.ListOrganizationsRequest_DEFAULT,
-		environmentproto.ListOrganizationsRequest_NAME:
-		column = "organization.name"
-	case environmentproto.ListOrganizationsRequest_URL_CODE:
-		column = "organization.url_code"
-	case environmentproto.ListOrganizationsRequest_ID:
-		column = "organization.id"
-	case environmentproto.ListOrganizationsRequest_CREATED_AT:
-		column = "organization.created_at"
-	case environmentproto.ListOrganizationsRequest_UPDATED_AT:
-		column = "organization.updated_at"
-	case environmentproto.ListOrganizationsRequest_ENVIRONMENT_COUNT:
-		column = "environments"
-	case environmentproto.ListOrganizationsRequest_PROJECT_COUNT:
-		column = "projects"
-	case environmentproto.ListOrganizationsRequest_USER_COUNT:
-		column = "users"
-
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == environmentproto.ListOrganizationsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
 func (s *EnvironmentService) CreateOrganization(
 	ctx context.Context,
 	req *environmentproto.CreateOrganizationRequest,
@@ -305,7 +244,7 @@ func (s *EnvironmentService) CreateOrganization(
 	// Create the organization
 	name := strings.TrimSpace(req.Name)
 	urlCode := strings.TrimSpace(req.UrlCode)
-	organization, err := s.createOrganizationMySQL(
+	organization, err := s.createOrganization(
 		ctx,
 		name,
 		urlCode,
@@ -369,7 +308,7 @@ func (s *EnvironmentService) validateCreateOrganizationRequest(
 	return nil
 }
 
-func (s *EnvironmentService) createOrganizationMySQL(
+func (s *EnvironmentService) createOrganization(
 	ctx context.Context,
 	name string,
 	urlCode string,
@@ -400,7 +339,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		// Check if there is already a system admin organization
 		if organization.SystemAdmin {
 			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
@@ -600,9 +539,8 @@ func (s *EnvironmentService) UpdateOrganization(
 	var prevOwnerEmail string
 	var newOwnerEmail string
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -636,7 +574,7 @@ func (s *EnvironmentService) UpdateOrganization(
 		if prevOwnerEmail != updated.OwnerEmail {
 			newOwnerEmail = updated.OwnerEmail
 		}
-		return orgStorage.UpdateOrganization(ctxWithTx, updated)
+		return s.orgStorage.UpdateOrganization(ctxWithTx, updated)
 	})
 	if err != nil {
 		return nil, s.reportUpdateOrganizationError(ctx, err)
@@ -788,9 +726,8 @@ func (s *EnvironmentService) EnableOrganization(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -813,7 +750,7 @@ func (s *EnvironmentService) EnableOrganization(
 		if err != nil {
 			return err
 		}
-		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+		return s.orgStorage.UpdateOrganization(ctxWithTx, organization)
 	})
 	if err != nil {
 		return nil, s.reportUpdateOrganizationError(ctx, err)
@@ -853,9 +790,8 @@ func (s *EnvironmentService) DisableOrganization(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -880,7 +816,7 @@ func (s *EnvironmentService) DisableOrganization(
 		if err != nil {
 			return err
 		}
-		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+		return s.orgStorage.UpdateOrganization(ctxWithTx, organization)
 	})
 	if err != nil {
 		return nil, s.reportUpdateOrganizationError(ctx, err)
@@ -920,9 +856,8 @@ func (s *EnvironmentService) ArchiveOrganization(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -947,7 +882,7 @@ func (s *EnvironmentService) ArchiveOrganization(
 		if err != nil {
 			return err
 		}
-		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+		return s.orgStorage.UpdateOrganization(ctxWithTx, organization)
 	})
 	if err != nil {
 		return nil, s.reportUpdateOrganizationError(ctx, err)
@@ -987,9 +922,8 @@ func (s *EnvironmentService) UnarchiveOrganization(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -1012,7 +946,7 @@ func (s *EnvironmentService) UnarchiveOrganization(
 		if err != nil {
 			return err
 		}
-		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+		return s.orgStorage.UpdateOrganization(ctxWithTx, organization)
 	})
 	if err != nil {
 		return nil, s.reportUpdateOrganizationError(ctx, err)
@@ -1052,9 +986,8 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -1077,7 +1010,7 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 		if err != nil {
 			return err
 		}
-		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+		return s.orgStorage.UpdateOrganization(ctxWithTx, organization)
 	})
 	if err != nil {
 		return nil, s.reportUpdateOrganizationError(ctx, err)

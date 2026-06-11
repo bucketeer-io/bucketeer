@@ -40,7 +40,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -76,7 +75,7 @@ func NewGatewayService(
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	mp publisher.Publisher,
-	mysqlClient mysql.Client,
+	accountStorage accstorage.AccountStorage,
 	redisV3Cache cache.MultiGetCache,
 	opts ...Option,
 ) *gatewayService {
@@ -100,7 +99,7 @@ func NewGatewayService(
 	return &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,
-		accountStorage:              accstorage.NewAccountStorage(mysqlClient),
+		accountStorage:              accountStorage,
 		pushClient:                  pushClient,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,

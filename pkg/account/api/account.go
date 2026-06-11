@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -32,7 +31,6 @@ import (
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagdomain "github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	teamdomain "github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -78,7 +76,7 @@ func (s *AccountService) CreateAccountV2(
 		req.EnvironmentRoles,
 	)
 	var createAccountEvent *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		createAccountEvent, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
@@ -452,7 +450,7 @@ func (s *AccountService) updateAccountV2MySQL(
 	email, organizationID string,
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
@@ -487,7 +485,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
 	var updateAccountV2Event *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
@@ -573,7 +571,7 @@ func (s *AccountService) DeleteAccountV2(
 		)
 		return nil, err
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, req.Email, req.OrganizationId)
 		if err != nil {
 			return err
@@ -741,157 +739,53 @@ func (s *AccountService) ListAccountsV2(
 		}
 	}
 
-	var filters = []*mysql.FilterV2{
-		{
-			Column:   "organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationId,
-		},
-	}
-	if req.Disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Disabled.Value,
-		})
-	}
-	tagValues := make([]interface{}, 0, len(req.Tags))
-	for _, tag := range req.Tags {
-		tagValues = append(tagValues, tag)
-	}
-	teamValues := make([]interface{}, 0, len(req.Teams))
-	for _, team := range req.Teams {
-		teamValues = append(teamValues, team)
-	}
-	var jsonFilters []*mysql.JSONFilter
-	if len(tagValues) > 0 {
-		jsonFilters = append(
-			jsonFilters,
-			&mysql.JSONFilter{
-				Column: "tags",
-				Func:   mysql.JSONContainsString,
-				Values: tagValues,
-			})
-	}
-	if len(teamValues) > 0 {
-		jsonFilters = append(
-			jsonFilters,
-			&mysql.JSONFilter{
-				Column: "teams",
-				Func:   mysql.JSONContainsString,
-				Values: teamValues,
-			})
-	}
-
-	if req.OrganizationRole != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "organization_role",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationRole.Value,
-		})
-	}
-
-	type EnvironmentRole struct {
-		EnvironmentID *string `json:"environment_id"`
-		Role          *int32  `json:"role"`
-	}
-
-	orFilters := make([]*mysql.OrFilter, 0)
-	if len(requestEnvironmentRoles) == 0 {
-		values := make([]interface{}, 1)
-		envRole := &EnvironmentRole{}
-		if req.EnvironmentId != nil {
-			envRole.EnvironmentID = &req.EnvironmentId.Value
-		}
-		if req.EnvironmentRole != nil {
-			envRole.Role = &req.EnvironmentRole.Value
-		}
-		jsonValues, err := json.Marshal(envRole)
-		if err != nil {
-			s.logger.Error(
-				"Failed to marshal environment role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-		values = append(values, string(jsonValues))
-
-		if values[0] != nil && values[0] != "" {
-			jsonFilters = append(
-				jsonFilters,
-				&mysql.JSONFilter{
-					Column: "environment_roles",
-					Func:   mysql.JSONContainsJSON,
-					Values: values,
-				})
-		}
-	} else {
-		orWhereParts := make([]mysql.WherePart, 0)
-		for _, r := range requestEnvironmentRoles {
-			envRole := &EnvironmentRole{
-				EnvironmentID: &r.EnvironmentId,
-				Role:          (*int32)(&r.Role),
-			}
-			jsonValues, err := json.Marshal(envRole)
-			if err != nil {
-				s.logger.Error(
-					"Failed to marshal environment role",
-					log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-				)
-				return nil, api.NewGRPCStatus(err).Err()
-			}
-			orWhereParts = append(orWhereParts, &mysql.JSONFilter{
-				Column: "environment_roles",
-				Func:   mysql.JSONContainsJSON,
-				Values: []interface{}{string(jsonValues)},
-			})
-		}
-		orWhereParts = append(
-			orWhereParts,
-			mysql.NewFilter("organization_role", ">=", accountproto.AccountV2_Role_Organization_ADMIN),
-		)
-		orFilters = append(orFilters, &mysql.OrFilter{
-			Queries: orWhereParts,
-		})
-	}
-
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"email", "first_name", "last_name"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Filters:     filters,
-		Offset:      offset,
-		JSONFilters: jsonFilters,
-		SearchQuery: searchQuery,
-		OrFilters:   orFilters,
-		Orders:      orders,
-		NullFilters: nil,
-		InFilters:   nil,
+
+	params := v2as.ListAccountsV2Params{
+		OrganizationID:   req.OrganizationId,
+		SearchKeyword:    req.SearchKeyword,
+		OrderBy:          req.OrderBy,
+		OrderDirection:   req.OrderDirection,
+		PageSize:         limit,
+		Cursor:           cursor,
+		EnvironmentRoles: requestEnvironmentRoles,
 	}
-	accounts, nextCursor, totalCount, err := s.accountStorage.ListAccountsV2(ctx, options)
+	if req.Disabled != nil {
+		disabled := req.Disabled.Value
+		params.Disabled = &disabled
+	}
+	if len(req.Tags) > 0 {
+		params.Tags = req.Tags
+	}
+	if len(req.Teams) > 0 {
+		params.Teams = req.Teams
+	}
+	if req.OrganizationRole != nil {
+		orgRole := req.OrganizationRole.Value
+		params.OrganizationRole = &orgRole
+	}
+	// Only set EnvironmentID/EnvironmentRole when user is not a member with restricted roles
+	if len(requestEnvironmentRoles) == 0 {
+		if req.EnvironmentId != nil {
+			params.EnvironmentID = &req.EnvironmentId.Value
+		}
+		if req.EnvironmentRole != nil {
+			params.EnvironmentRole = &req.EnvironmentRole.Value
+		}
+	}
+
+	accounts, nextCursor, totalCount, err := s.accountStorage.ListAccountsV2(ctx, params)
 	if err != nil {
+		if errors.Is(err, v2as.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list accounts",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -937,39 +831,4 @@ func (s *AccountService) constructEnvironmentRoles(
 		requestEnvironmentRoles = append(requestEnvironmentRoles, editor.EnvironmentRoles...)
 	}
 	return requestEnvironmentRoles, nil
-}
-
-func (s *AccountService) newAccountV2ListOrders(
-	orderBy accountproto.ListAccountsV2Request_OrderBy,
-	orderDirection accountproto.ListAccountsV2Request_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case accountproto.ListAccountsV2Request_DEFAULT,
-		accountproto.ListAccountsV2Request_EMAIL:
-		column = "email"
-	case accountproto.ListAccountsV2Request_CREATED_AT:
-		column = "created_at"
-	case accountproto.ListAccountsV2Request_UPDATED_AT:
-		column = "updated_at"
-	case accountproto.ListAccountsV2Request_ORGANIZATION_ROLE:
-		column = "organization_role"
-	case accountproto.ListAccountsV2Request_ENVIRONMENT_COUNT:
-		column = "environment_count"
-	case accountproto.ListAccountsV2Request_LAST_SEEN:
-		column = "last_seen"
-	case accountproto.ListAccountsV2Request_STATE:
-		column = "disabled"
-	case accountproto.ListAccountsV2Request_TAGS:
-		column = "tags"
-	case accountproto.ListAccountsV2Request_TEAMS:
-		column = "teams"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == accountproto.ListAccountsV2Request_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }

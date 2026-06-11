@@ -26,3 +26,4 @@ export * from './code-refs';
 export * from './trigger';
 export * from './team';
 export * from './insight';
+export * from './ai-chat';

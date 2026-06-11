@@ -41,15 +41,15 @@ const EnvironmentEditorList = ({
   }, [formattedEnvironments, currentEnvironmentId, projects, t]);
 
   const remainingEnvironmentsOptions = useMemo(() => {
-    const remainingEnvironments = environmentOptions.filter(item =>
+    if (Array.isArray(value)) {
+      return environmentOptions;
+    }
+    return environmentOptions.filter(item =>
       selectedValues
         ? !selectedValues.includes(item.value)
-        : Array.isArray(value)
-          ? !value.includes(item.value)
-          : item.value !== value
+        : item.value !== value
     );
-    return remainingEnvironments;
-  }, [environmentOptions, selectedValues]);
+  }, [environmentOptions, selectedValues, value]);
 
   const getEnvLabel = useCallback(
     (value: string) => {

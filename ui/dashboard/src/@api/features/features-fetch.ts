@@ -15,6 +15,8 @@ export interface FeaturesFetcherParams extends CollectionParams {
   tags?: string[];
   status?: StatusFilterType;
   hasFeatureFlagAsRule?: boolean;
+  hasActiveAutoOps?: boolean;
+  hasFinishedAutoOps?: boolean;
 }
 
 export const featuresFetcher = async (

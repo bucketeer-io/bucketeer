@@ -1,8 +1,6 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { goalCreator } from '@api/goal';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateGoals } from '@queries/goals';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -55,7 +53,6 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
@@ -77,7 +74,6 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
           action: t('created')
         })
       });
-      invalidateGoals(queryClient);
       onClose();
     }
   };

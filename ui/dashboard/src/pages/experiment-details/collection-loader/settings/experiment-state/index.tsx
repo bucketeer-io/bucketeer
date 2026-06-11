@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
-import { invalidateExperimentDetails } from '@queries/experiment-details';
-import { invalidateExperiments } from '@queries/experiments';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -32,7 +30,6 @@ const ExperimentState = ({
   experimentResult?: ExperimentResult;
 }) => {
   const { t } = useTranslation(['table', 'form', 'common', 'message']);
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
@@ -67,14 +64,9 @@ const ExperimentState = ({
     mutationFn: async (params: ExperimentUpdaterParams) => {
       return experimentUpdater(params);
     },
-    onSuccess: ({ experiment }, params) => {
+    onSuccess: (_data, params) => {
       onCloseToggleExperimentModal();
 
-      invalidateExperiments(queryClient);
-      invalidateExperimentDetails(queryClient, {
-        environmentId: currentEnvironment.id,
-        id: experiment?.id ?? ''
-      });
       mutation.reset();
       notify({
         message: t('message:collection-action-success', {

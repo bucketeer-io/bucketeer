@@ -29,6 +29,9 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
+	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
@@ -52,6 +55,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	uuid "github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -76,11 +80,17 @@ type server struct {
 	port                              *int
 	grpcGatewayPort                   *int
 	project                           *string
+	operationalDatabaseType           *string
 	mysqlUser                         *string
 	mysqlPass                         *string
 	mysqlHost                         *string
 	mysqlPort                         *int
 	mysqlDBName                       *string
+	postgresUser                      *string
+	postgresPass                      *string
+	postgresHost                      *string
+	postgresPort                      *int
+	postgresDBName                    *string
 	goalTopic                         *string
 	goalTopicProject                  *string
 	evaluationTopic                   *string
@@ -116,6 +126,7 @@ type server struct {
 	apiKeyMemoryCacheEvictionInterval *time.Duration
 	featuresMemoryCacheTTL            *time.Duration
 	segmentUsersMemoryCacheTTL        *time.Duration
+	featureFlagDiffGracePeriod        *time.Duration
 	// PubSub configurations
 	pubSubType                *string
 	pubSubRedisServerName     *string
@@ -135,12 +146,19 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		port:            cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
 		grpcGatewayPort: cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
 		project:         cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
-		mysqlUser:       cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:       cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:       cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:       cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:     cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		goalTopic:       cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
+		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
+			Default("mysql").String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		postgresUser:   cmd.Flag("postgres-user", "PostgreSQL user.").String(),
+		postgresPass:   cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
+		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").String(),
+		postgresPort:   cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
+		postgresDBName: cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
+		goalTopic:      cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
 			"goal-topic-project",
 			"GCP Project id to use for PubSub to publish GoalEvent.",
@@ -256,6 +274,15 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"segment-users-memory-cache-ttl",
 			"TTL for the in-memory segment users cache.",
 		).Default("1m").Duration(),
+		featureFlagDiffGracePeriod: cmd.Flag(
+			"feature-flag-diff-grace-period",
+			"Grace window applied to the diff filters for GetFeatureFlags "+
+				"(UpdatedAt >= RequestedAt - grace) and GetEvaluations "+
+				"(UpdatedAt > evaluatedAt - grace). Defends against the partial-diff "+
+				"trap caused by L2 cache propagation lag under rapid back-to-back flag "+
+				"updates. Increase if pods continue to observe stale flags; decrease to "+
+				"reduce diff response size.",
+		).Default("10m").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis-stream).",
@@ -561,6 +588,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	var postgresClient postgres.Client
+	var accountStorage v2as.AccountStorage
+	if *s.operationalDatabaseType == "postgres" {
+		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
+			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
+		}
+		postgresClient, err = s.createPostgresClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
+		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
+	} else {
+		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
+	}
 
 	service := api.NewGrpcGatewayService(
 		ctx,
@@ -576,7 +617,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentClient,
 		eventCounterClient,
 		environmentClient,
-		mysqlClient,
+		accountStorage,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
@@ -586,6 +627,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
 		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
+		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -661,13 +703,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		metricsPublisher,
-		mysqlClient,
+		accountStorage,
 		redisV3Cache,
 		api.WithInMemoryCache(inMemoryCache),
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 		api.WithFeaturesMemoryCacheTTL(*s.featuresMemoryCacheTTL),
 		api.WithSegmentUsersMemoryCacheTTL(*s.segmentUsersMemoryCacheTTL),
+		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -756,6 +799,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go eventCounterClient.Close()
 		go environmentClient.Close()
 		go redisV3Client.Close()
+		if postgresClient != nil {
+			go postgresClient.Close()
+		}
 
 		// Log total shutdown duration
 		logger.Info("Graceful shutdown sequence completed",
@@ -905,5 +951,22 @@ func (s *server) createMySQLClient(
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
+	)
+}
+
+func (s *server) createPostgresClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return postgres.NewClient(
+		ctx,
+		*s.postgresUser, *s.postgresPass, *s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDBName,
+		postgres.WithLogger(logger),
+		postgres.WithMetrics(registerer),
 	)
 }

@@ -33,8 +33,10 @@ import (
 	eccachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/domain"
-	v2ecs "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
-	v2ecsmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/mock"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	dwhmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mock"
+	operationaldatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
+	opmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -61,7 +63,7 @@ func TestNewEventCounterService(t *testing.T) {
 	reg := metrics.DefaultRegisterer()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	g := NewEventCounterService(nil, nil, nil, nil, nil, "", reg, nil, jpLocation, logger)
+	g := NewEventCounterService(nil, nil, nil, nil, nil, reg, nil, jpLocation, logger)
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
@@ -149,8 +151,8 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
-					[]*v2ecs.EvaluationEventCount{
+				s.eventStorage.(*dwhmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
+					[]*dwhdatabase.EvaluationEventCount{
 						{
 							VariationID:     vID1,
 							EvaluationUser:  int64(1),
@@ -184,8 +186,8 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 		{
 			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
-					[]*v2ecs.EvaluationEventCount{
+				s.eventStorage.(*dwhmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
+					[]*dwhdatabase.EvaluationEventCount{
 						{
 							VariationID:     vID1,
 							EvaluationUser:  int64(1),
@@ -325,9 +327,9 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *eventCounterService) {
-				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
+				s.experimentResultStorage.(*opmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, v2ecs.ErrExperimentResultNotFound)
+				).Return(nil, operationaldatabase.ErrExperimentResultNotFound)
 			},
 			input: &ecproto.GetExperimentResultRequest{
 				ExperimentId:  "eid",
@@ -350,7 +352,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
-				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
+				s.experimentResultStorage.(*opmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.ExperimentResult{}, nil)
 			},
@@ -461,9 +463,9 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
+				s.experimentResultStorage.(*opmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), "eid", gomock.Any(),
-				).Return(nil, v2ecs.ErrExperimentResultNotFound)
+				).Return(nil, operationaldatabase.ErrExperimentResultNotFound)
 			},
 			input: &ecproto.ListExperimentResultsRequest{
 				FeatureId:      "fid",
@@ -493,7 +495,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
+				s.experimentResultStorage.(*opmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), "eid", gomock.Any(),
 				).Return(
 					&domain.ExperimentResult{
@@ -630,8 +632,8 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
-					[]*v2ecs.GoalEventCount{
+				s.eventStorage.(*dwhmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
+					[]*dwhdatabase.GoalEventCount{
 						{
 							VariationID:       vID1,
 							GoalUser:          int64(1),
@@ -671,8 +673,8 @@ func TestGetExperimentGoalCount(t *testing.T) {
 		{
 			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
-					[]*v2ecs.GoalEventCount{
+				s.eventStorage.(*dwhmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
+					[]*dwhdatabase.GoalEventCount{
 						{
 							VariationID:       vID1,
 							GoalUser:          int64(1),
@@ -735,168 +737,6 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			actual, err := s.GetExperimentGoalCount(ctx, p.input)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestGetMAUCount(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithToken(t, false)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	input := &ecproto.GetMAUCountRequest{
-		EnvironmentId: "ns0",
-		YearMonth:     "201212",
-	}
-	patterns := []struct {
-		desc        string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
-		setup       func(*eventCounterService)
-		input       *ecproto.GetMAUCountRequest
-		expected    *ecproto.GetMAUCountResponse
-		expectedErr error
-	}{
-		{
-			desc:        "error: mau year month is required",
-			input:       &ecproto.GetMAUCountRequest{EnvironmentId: "ns0"},
-			expected:    nil,
-			expectedErr: statusMAUYearMonthRequired.Err(),
-		},
-		{
-			desc: "err: internal",
-			setup: func(s *eventCounterService) {
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
-					ctx, input.EnvironmentId, input.YearMonth,
-				).Return(int64(0), int64(0), pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
-			},
-			input:       input,
-			expected:    nil,
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
-		},
-		{
-			desc:        "error: ErrPermissionDenied",
-			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input:       input,
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *eventCounterService) {
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
-					ctx, input.EnvironmentId, input.YearMonth,
-				).Return(int64(2), int64(4), nil)
-			},
-			input: input,
-			expected: &ecproto.GetMAUCountResponse{
-				UserCount:  2,
-				EventCount: 4,
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
-			if p.setup != nil {
-				p.setup(gs)
-			}
-			actual, err := gs.GetMAUCount(ctx, p.input)
-			assert.Equal(t, p.expected, actual, "%s", p.desc)
-			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
-		})
-	}
-}
-
-func TestSummarizeMAUCounts(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	input := &ecproto.SummarizeMAUCountsRequest{
-		YearMonth:  "201212",
-		IsFinished: false,
-	}
-	patterns := []struct {
-		desc        string
-		setup       func(*eventCounterService)
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
-		input       *ecproto.SummarizeMAUCountsRequest
-		expected    *ecproto.SummarizeMAUCountsResponse
-		expectedErr error
-	}{
-		{
-			desc:        "error: mau year month is required",
-			input:       &ecproto.SummarizeMAUCountsRequest{},
-			expected:    nil,
-			expectedErr: statusMAUYearMonthRequired.Err(),
-		},
-		{
-			desc: "err: internal",
-			setup: func(s *eventCounterService) {
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCountsGroupBySourceID(
-					ctx, input.YearMonth,
-				).Return([]*ecproto.MAUSummary{}, nil)
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
-					ctx, input.YearMonth,
-				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
-			},
-			input:       input,
-			expected:    nil,
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
-		},
-		{
-			desc: "success get mau counts",
-			setup: func(s *eventCounterService) {
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCountsGroupBySourceID(
-					ctx, input.YearMonth,
-				).Return([]*ecproto.MAUSummary{}, nil)
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
-					ctx, input.YearMonth,
-				).Return([]*ecproto.MAUSummary{}, nil)
-			},
-			input:       input,
-			expected:    &ecproto.SummarizeMAUCountsResponse{},
-			expectedErr: nil,
-		},
-		{
-			desc: "success upsert mau summary",
-			setup: func(s *eventCounterService) {
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCountsGroupBySourceID(
-					ctx, input.YearMonth,
-				).Return([]*ecproto.MAUSummary{{Yearmonth: input.YearMonth}}, nil)
-				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
-					ctx, input.YearMonth,
-				).Return([]*ecproto.MAUSummary{}, nil)
-				s.mysqlMAUSummaryStorage.(*v2ecsmock.MockMAUSummaryStorage).EXPECT().UpsertMAUSummary(
-					ctx, gomock.Any(),
-				).Return(nil)
-			},
-			input:       input,
-			expected:    &ecproto.SummarizeMAUCountsResponse{},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
-			if p.setup != nil {
-				p.setup(gs)
-			}
-			actual, err := gs.SummarizeMAUCounts(ctx, p.input)
-			assert.Equal(t, p.expected, actual, "%s", p.desc)
-			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
 	}
 }
@@ -1782,17 +1622,15 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller, spe
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &eventCounterService{
-		experimentClient:             experimentclientmock.NewMockClient(mockController),
-		featureClient:                featureclientmock.NewMockClient(mockController),
-		accountClient:                accountClientMock,
-		mysqlExperimentResultStorage: v2ecsmock.NewMockExperimentResultStorage(mockController),
-		mysqlMAUSummaryStorage:       v2ecsmock.NewMockMAUSummaryStorage(mockController),
-		userCountStorage:             v2ecsmock.NewMockUserCountStorage(mockController),
-		evaluationCountCacher:        eccachemock.NewMockEventCounterCache(mockController),
-		eventStorage:                 v2ecsmock.NewMockEventStorage(mockController),
-		metrics:                      reg,
-		location:                     jpLocation,
-		logger:                       logger.Named("api"),
+		experimentClient:        experimentclientmock.NewMockClient(mockController),
+		featureClient:           featureclientmock.NewMockClient(mockController),
+		accountClient:           accountClientMock,
+		experimentResultStorage: opmock.NewMockExperimentResultStorage(mockController),
+		evaluationCountCacher:   eccachemock.NewMockEventCounterCache(mockController),
+		eventStorage:            dwhmock.NewMockEventStorage(mockController),
+		metrics:                 reg,
+		location:                jpLocation,
+		logger:                  logger.Named("api"),
 	}
 }
 
@@ -1910,40 +1748,6 @@ func TestGetUserCounts(t *testing.T) {
 			}
 			actual, _ := gs.getUserCounts(p.keys, featureID, environmentId, vID, p.unit)
 			assert.Len(t, actual, p.expectedLen)
-		})
-	}
-}
-
-func TestCheckAdminRole(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []struct {
-		desc        string
-		inputCtx    context.Context
-		expectedErr error
-	}{
-		{
-			desc:        "error: Unauthenticated",
-			inputCtx:    context.Background(),
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			desc:        "error: PermissionDenied",
-			inputCtx:    createContextWithToken(t, false),
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:        "success",
-			inputCtx:    createContextWithToken(t, true),
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, nil, nil)
-			_, actualErr := gs.checkSystemAdminRole(p.inputCtx)
-			assert.Equal(t, actualErr, p.expectedErr)
 		})
 	}
 }

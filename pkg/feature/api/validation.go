@@ -220,6 +220,32 @@ func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest) error {
 	return nil
 }
 
+func validateBulkCloneFeatureRequest(req *featureproto.BulkCloneFeatureRequest) error {
+	if req.Id == "" {
+		return statusMissingID.Err()
+	}
+	if req.EnvironmentId == "" {
+		return statusMissingEnvironmentID.Err()
+	}
+	if len(req.TargetEnvironmentIds) == 0 {
+		return statusMissingTargetEnvironments.Err()
+	}
+	seen := make(map[string]struct{}, len(req.TargetEnvironmentIds))
+	for _, targetEnvID := range req.TargetEnvironmentIds {
+		if targetEnvID == "" {
+			return statusMissingTargetEnvironments.Err()
+		}
+		if targetEnvID == req.EnvironmentId {
+			return statusIncorrectDestinationEnvironment.Err()
+		}
+		if _, ok := seen[targetEnvID]; ok {
+			return statusDuplicateTargetEnvironments.Err()
+		}
+		seen[targetEnvID] = struct{}{}
+	}
+	return nil
+}
+
 func (s *FeatureService) validateFeatureStatus(
 	ctx context.Context,
 	id, environmentId string,

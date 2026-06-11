@@ -26,7 +26,10 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
-	ecstorage "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
+	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	ecbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/bigquery"
+	ecmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mysql"
+	ecpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/postgres"
 	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
@@ -50,7 +53,7 @@ const (
 
 type goalEvtWriter struct {
 	writer                  storage.GoalEventWriter
-	eventStorage            ecstorage.EventStorage
+	eventStorage            ecdwh.EventStorage
 	experimentClient        ec.Client
 	featureClient           ft.Client
 	redisClient             redisv3.Client
@@ -97,7 +100,7 @@ func NewGoalEventWriter(
 		}
 
 		goalStorage := storagev2.NewMysqlGoalEventStorage(option.MySQLClient)
-		mysqlEventStorage := ecstorage.NewMySQLEventStorage(option.MySQLClient, logger)
+		mysqlEventStorage := ecmysql.NewMySQLEventStorage(option.MySQLClient, logger)
 
 		// Calculate lock TTL as 80% of retry interval
 		if retryGoalEventInterval == 0 {
@@ -140,7 +143,7 @@ func NewGoalEventWriter(
 		}
 
 		goalStorage := storagev2.NewPostgresGoalEventStorage(option.PostgresClient)
-		postgresEventStorage := ecstorage.NewPostgresEventStorage(option.PostgresClient, logger)
+		postgresEventStorage := ecpostgres.NewPostgresEventStorage(option.PostgresClient, logger)
 
 		// Calculate lock TTL as 80% of retry interval
 		if retryGoalEventInterval == 0 {
@@ -215,7 +218,7 @@ func NewGoalEventWriter(
 
 	w := &goalEvtWriter{
 		writer:                  storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),
-		eventStorage:            ecstorage.NewBigQueryEventStorage(eventQuerier, bigQueryDataSet, logger),
+		eventStorage:            ecbigquery.NewBigQueryEventStorage(eventQuerier, bigQueryDataSet, logger),
 		experimentClient:        exClient,
 		featureClient:           ftClient,
 		redisClient:             redisClient,
@@ -343,7 +346,7 @@ func (w *goalEvtWriter) convToGoalEvents(
 
 func (w *goalEvtWriter) convToGoalEvent(
 	e *eventproto.GoalEvent,
-	eval *ecstorage.UserEvaluation,
+	eval *ecdwh.UserEvaluation,
 	id, tag, environmentID string,
 ) (*epproto.GoalEvent, bool, error) {
 	var ud []byte
@@ -385,7 +388,7 @@ func (w *goalEvtWriter) linkGoalEvent(
 	event *eventproto.GoalEvent,
 	id, environmentID, tag string,
 	experiments []*exproto.Experiment,
-) ([]*ecstorage.UserEvaluation, bool, error) {
+) ([]*ecdwh.UserEvaluation, bool, error) {
 	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, id, environmentID, tag, experiments)
 	if err != nil {
 		return nil, retriable, err
@@ -399,7 +402,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	event *eventproto.GoalEvent,
 	id, environmentID, tag string,
 	experiments []*exproto.Experiment,
-) ([]*ecstorage.UserEvaluation, bool, error) {
+) ([]*ecdwh.UserEvaluation, bool, error) {
 	// Find the experiment by goal ID
 	// TODO: we must change the console UI not to allow creating
 	// multiple experiments running at the same time,
@@ -425,7 +428,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	if len(exps) == 0 {
 		return nil, false, ErrExperimentNotFound
 	}
-	evals := make([]*ecstorage.UserEvaluation, 0, len(exps))
+	evals := make([]*ecdwh.UserEvaluation, 0, len(exps))
 	for _, exp := range exps {
 		// Get the user evaluation using the experiment info
 		userID := getUserID(event.UserId, event.User)
@@ -439,7 +442,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			exp.StopAt,
 		)
 		if err != nil {
-			if errors.Is(err, ecstorage.ErrBQNoResultsFound) {
+			if ecdwh.IsNoResultsFound(err) {
 				w.logger.Error("Evaluation not found",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
@@ -543,7 +546,7 @@ func (w *goalEvtWriter) getUserEvaluation(
 	environmentID, userID, featureID string,
 	featureVersion int32,
 	experimentStartAt, experimentEndAt int64,
-) (*ecstorage.UserEvaluation, error) {
+) (*ecdwh.UserEvaluation, error) {
 	eval, err := w.eventStorage.QueryUserEvaluation(
 		ctx,
 		environmentID,

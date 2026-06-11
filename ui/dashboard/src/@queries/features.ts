@@ -1,5 +1,10 @@
 import { featuresFetcher, FeaturesFetcherParams } from '@api/features';
-import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
 import type { FeatureCollection, QueryOptionsRespond } from '@types';
 
 type QueryOptions = QueryOptionsRespond<FeatureCollection> & {
@@ -46,8 +51,38 @@ export const prefetchFeatures = (
   });
 };
 
-export const invalidateFeatures = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [FEATURES_QUERY_KEY]
-  });
+type UseInfiniteQueryFeaturesParams = Pick<
+  FeaturesFetcherParams,
+  'environmentId' | 'archived'
+> & {
+  searchKeyword?: string;
+  pageSize?: number;
 };
+
+export const useInfiniteQueryFeatures = ({
+  environmentId,
+  searchKeyword = '',
+  pageSize,
+  archived
+}: UseInfiniteQueryFeaturesParams) =>
+  useInfiniteQuery({
+    queryKey: [
+      FEATURES_QUERY_KEY,
+      'infinite',
+      { environmentId, searchKeyword, pageSize }
+    ],
+    queryFn: ({ pageParam = 0 }) =>
+      featuresFetcher({
+        cursor: String(pageParam),
+        pageSize,
+        searchKeyword,
+        environmentId,
+        archived
+      }),
+    getNextPageParam: (lastPage, allPages) => {
+      const fetched = allPages.reduce((sum, p) => sum + p.features.length, 0);
+      const total = Number(lastPage.totalCount);
+      return fetched < total ? fetched : undefined;
+    },
+    initialPageParam: 0
+  });

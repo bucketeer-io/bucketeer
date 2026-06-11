@@ -3,8 +3,7 @@ import { Trans } from 'react-i18next';
 import { pushUpdater } from '@api/push';
 import { pushDelete } from '@api/push/push-delete';
 import { useQueryPush } from '@queries/push-details';
-import { invalidatePushes } from '@queries/pushes';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_PUSHES } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -20,7 +19,6 @@ import { PushActionsType } from './types';
 
 const PageLoader = () => {
   const { t } = useTranslation(['table', 'message', 'common']);
-  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
@@ -117,7 +115,6 @@ const PageLoader = () => {
         })
       });
       handleOnCloseModal();
-      invalidatePushes(queryClient);
       mutationState.reset();
     },
     onError: errorNotify

@@ -42,6 +42,26 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// BulkCloneFeature mocks base method.
+func (m *MockClient) BulkCloneFeature(ctx context.Context, in *feature.BulkCloneFeatureRequest, opts ...grpc.CallOption) (*feature.BulkCloneFeatureResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "BulkCloneFeature", varargs...)
+	ret0, _ := ret[0].(*feature.BulkCloneFeatureResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BulkCloneFeature indicates an expected call of BulkCloneFeature.
+func (mr *MockClientMockRecorder) BulkCloneFeature(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCloneFeature", reflect.TypeOf((*MockClient)(nil).BulkCloneFeature), varargs...)
+}
+
 // BulkDownloadSegmentUsers mocks base method.
 func (m *MockClient) BulkDownloadSegmentUsers(ctx context.Context, in *feature.BulkDownloadSegmentUsersRequest, opts ...grpc.CallOption) (*feature.BulkDownloadSegmentUsersResponse, error) {
 	m.ctrl.T.Helper()

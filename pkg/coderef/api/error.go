@@ -23,6 +23,9 @@ var (
 	statusInvalidCursor = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.CoderefPackageName, "invalid cursor", "Cursor"),
 	)
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgUnknown(bkterr.CoderefPackageName, "invalid order by", "OrderBy"),
+	)
 	statusMissingID = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "id is required", "ID"),
 	)

@@ -22,9 +22,10 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -43,16 +44,18 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type CodeReferenceService struct {
-	accountClient accountclient.Client
-	mysqlClient   mysql.Client
-	publisher     publisher.Publisher
-	opts          *options
-	logger        *zap.Logger
+	accountClient  accountclient.Client
+	dbClient       database.Client
+	codeRefStorage storage.CodeReferenceStorage
+	publisher      publisher.Publisher
+	opts           *options
+	logger         *zap.Logger
 }
 
 func NewCodeReferenceService(
 	ac accountclient.Client,
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	codeRefStorage storage.CodeReferenceStorage,
 	p publisher.Publisher,
 	opts ...Option,
 ) *CodeReferenceService {
@@ -63,11 +66,12 @@ func NewCodeReferenceService(
 		opt(dopts)
 	}
 	return &CodeReferenceService{
-		accountClient: ac,
-		mysqlClient:   mysqlClient,
-		publisher:     p,
-		opts:          dopts,
-		logger:        dopts.logger.Named("api"),
+		accountClient:  ac,
+		dbClient:       dbClient,
+		codeRefStorage: codeRefStorage,
+		publisher:      p,
+		opts:           dopts,
+		logger:         dopts.logger.Named("api"),
 	}
 }
 

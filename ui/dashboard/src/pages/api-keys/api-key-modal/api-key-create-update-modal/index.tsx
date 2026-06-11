@@ -2,8 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { apiKeyCreator, APIKeyResponse, apiKeyUpdater } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAPIKeys } from '@queries/api-keys';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -62,7 +60,6 @@ const APIKeyCreateUpdateModal = ({
   onClose,
   onCreatedWithSecret
 }: APIKeyCreateUpdateModalProps) => {
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
   const { apiKeyOptions } = useOptions();
@@ -132,11 +129,10 @@ const APIKeyCreateUpdateModal = ({
             action: t(apiKey ? 'updated' : 'created')
           })
         });
-        invalidateAPIKeys(queryClient);
         handleClose(true);
       }
     },
-    [apiKey, isEditApiKey, onCreatedWithSecret, queryClient, t, notify]
+    [apiKey, isEditApiKey, onCreatedWithSecret, t, notify]
   );
 
   useUnsavedLeavePage({

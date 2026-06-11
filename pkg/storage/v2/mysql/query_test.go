@@ -223,6 +223,93 @@ func TestJSONFilterSQLString(t *testing.T) {
 	}
 }
 
+func TestExistsFilterSQLString(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		input        *ExistsFilter
+		expectedSQL  string
+		expectedArgs []interface{}
+	}{
+		{
+			desc:         "Empty",
+			input:        &ExistsFilter{},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success: exists",
+			input: &ExistsFilter{
+				Subquery:  "SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id",
+				NotExists: false,
+			},
+			expectedSQL:  "EXISTS (SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id)",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success: not exists",
+			input: &ExistsFilter{
+				Subquery:  "SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id",
+				NotExists: true,
+			},
+			expectedSQL:  "NOT EXISTS (SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id)",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success: with args",
+			input: &ExistsFilter{
+				Subquery:  "SELECT 1 FROM auto_ops_rule WHERE environment_id = ?",
+				Values:    []interface{}{"env-1"},
+				NotExists: false,
+			},
+			expectedSQL:  "EXISTS (SELECT 1 FROM auto_ops_rule WHERE environment_id = ?)",
+			expectedArgs: []interface{}{"env-1"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sql, args := p.input.SQLString()
+			assert.Equal(t, p.expectedSQL, sql)
+			assert.Equal(t, p.expectedArgs, args)
+		})
+	}
+}
+
+func TestOrFilterSQLString(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		input        *OrFilter
+		expectedSQL  string
+		expectedArgs []interface{}
+	}{
+		{
+			desc:         "Empty",
+			input:        &OrFilter{},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success",
+			input: &OrFilter{
+				Queries: []WherePart{
+					NewFilter("name", "=", "feature"),
+					NewFilter("id", "=", "feature-1"),
+				},
+			},
+			expectedSQL:  "(name = ? OR id = ?)",
+			expectedArgs: []interface{}{"feature", "feature-1"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sql, args := p.input.SQLString()
+			assert.Equal(t, p.expectedSQL, sql)
+			assert.Equal(t, p.expectedArgs, args)
+		})
+	}
+}
+
 func TestSearchQuerySQLString(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -278,6 +365,20 @@ func TestConstructWhereSQLString(t *testing.T) {
 			},
 			expectedSQL:  " WHERE name = ? AND JSON_CONTAINS(enums, ?) ",
 			expectedArgs: []interface{}{"feature", "[1, 3]"},
+		},
+		{
+			desc: "Success with or filter",
+			input: []WherePart{
+				NewFilter("deleted", "=", false),
+				&OrFilter{
+					Queries: []WherePart{
+						NewFilter("name", "=", "feature"),
+						NewFilter("id", "=", "feature-1"),
+					},
+				},
+			},
+			expectedSQL:  " WHERE deleted = ? AND (name = ? OR id = ?) ",
+			expectedArgs: []interface{}{false, "feature", "feature-1"},
 		},
 	}
 	for _, p := range patterns {

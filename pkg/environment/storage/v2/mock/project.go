@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	environment "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
@@ -88,9 +88,9 @@ func (mr *MockProjectStorageMockRecorder) GetTrialProjectByEmail(ctx, email, dis
 }
 
 // ListProjects mocks base method.
-func (m *MockProjectStorage) ListProjects(ctx context.Context, options *mysql.ListOptions) ([]*environment.Project, int, int64, error) {
+func (m *MockProjectStorage) ListProjects(ctx context.Context, params v2.ListProjectsParams) ([]*environment.Project, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProjects", ctx, options)
+	ret := m.ctrl.Call(m, "ListProjects", ctx, params)
 	ret0, _ := ret[0].([]*environment.Project)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockProjectStorage) ListProjects(ctx context.Context, options *mysql.Li
 }
 
 // ListProjects indicates an expected call of ListProjects.
-func (mr *MockProjectStorageMockRecorder) ListProjects(ctx, options any) *gomock.Call {
+func (mr *MockProjectStorageMockRecorder) ListProjects(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), ctx, params)
 }
 
 // UpdateProject mocks base method.

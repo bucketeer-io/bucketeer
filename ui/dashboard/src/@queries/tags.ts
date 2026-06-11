@@ -45,9 +45,3 @@ export const prefetchTags = (
     ...queryOptions
   });
 };
-
-export const invalidateTags = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [TAGS_QUERY_KEY]
-  });
-};

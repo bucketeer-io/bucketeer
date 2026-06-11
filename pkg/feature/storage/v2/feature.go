@@ -50,10 +50,16 @@ type ListFeaturesParams struct {
 	Deleted              *bool
 	HasPrerequisites     *bool
 	HasFeatureFlagAsRule *bool
-	SearchKeyword        string
-	Status               proto.FeatureLastUsedInfo_Status
-	OrderBy              proto.ListFeaturesRequest_OrderBy
-	OrderDirection       proto.ListFeaturesRequest_OrderDirection
+	// HasActiveAutoOps filters by the presence of auto ops rules or
+	// progressive rollouts whose status is WAITING or RUNNING.
+	HasActiveAutoOps *bool
+	// HasFinishedAutoOps filters by the presence of auto ops rules or
+	// progressive rollouts whose status is FINISHED or STOPPED.
+	HasFinishedAutoOps *bool
+	SearchKeyword      string
+	Status             proto.FeatureLastUsedInfo_Status
+	OrderBy            proto.ListFeaturesRequest_OrderBy
+	OrderDirection     proto.ListFeaturesRequest_OrderDirection
 }
 
 // ListFeaturesFilteredByExperimentParams extends ListFeaturesParams with experiment filtering.

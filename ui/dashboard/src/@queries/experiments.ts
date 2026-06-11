@@ -45,9 +45,3 @@ export const prefetchExperiments = (
     ...queryOptions
   });
 };
-
-export const invalidateExperiments = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [EXPERIMENTS_QUERY_KEY]
-  });
-};

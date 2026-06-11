@@ -3,8 +3,6 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { userSegmentBulkUpload, userSegmentCreator } from '@api/user-segment';
 import { userSegmentUpdater } from '@api/user-segment/user-segment-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateUserSegments } from '@queries/user-segments';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
@@ -52,7 +50,6 @@ const SegmentCreateUpdateModal = ({
   const { t } = useTranslation(['common', 'form', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const queryClient = useQueryClient();
   const { notify, errorNotify } = useToast();
 
   const isDisabledUserIds = useMemo(
@@ -103,7 +100,6 @@ const SegmentCreateUpdateModal = ({
       handleClose();
     }
     if (isUpload) setSegmentUploading(null);
-    invalidateUserSegments(queryClient);
   };
 
   const onUpdateSuccess = (isUpload = false) => {

@@ -276,6 +276,33 @@ func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
 	return
 }
 
+type ExistsFilter struct {
+	Subquery  string
+	Values    []interface{}
+	NotExists bool
+}
+
+func NewExistsFilter(subquery string, notExists bool, values ...interface{}) WherePart {
+	return &ExistsFilter{
+		Subquery:  subquery,
+		Values:    values,
+		NotExists: notExists,
+	}
+}
+
+func (f *ExistsFilter) SQLString() (sql string, args []interface{}) {
+	if f.Subquery == "" {
+		return "", nil
+	}
+	if f.NotExists {
+		sql = fmt.Sprintf("NOT EXISTS (%s)", f.Subquery)
+	} else {
+		sql = fmt.Sprintf("EXISTS (%s)", f.Subquery)
+	}
+	args = f.Values
+	return
+}
+
 type OrFilter struct {
 	Queries []WherePart
 }
@@ -449,15 +476,16 @@ func ConstructLimitOffsetSQLString(limit, offset int) string {
 }
 
 type ListOptions struct {
-	Limit       int
-	Filters     []*FilterV2
-	InFilters   []*InFilter
-	NullFilters []*NullFilter
-	JSONFilters []*JSONFilter
-	SearchQuery *SearchQuery
-	OrFilters   []*OrFilter
-	Orders      []*Order
-	Offset      int
+	Limit         int
+	Filters       []*FilterV2
+	InFilters     []*InFilter
+	NullFilters   []*NullFilter
+	JSONFilters   []*JSONFilter
+	ExistsFilters []*ExistsFilter
+	SearchQuery   *SearchQuery
+	OrFilters     []*OrFilter
+	Orders        []*Order
+	Offset        int
 }
 
 func (lo *ListOptions) CreateWhereParts() []WherePart {
@@ -479,6 +507,11 @@ func (lo *ListOptions) CreateWhereParts() []WherePart {
 	}
 	if lo.JSONFilters != nil {
 		for _, f := range lo.JSONFilters {
+			whereParts = append(whereParts, f)
+		}
+	}
+	if lo.ExistsFilters != nil {
+		for _, f := range lo.ExistsFilters {
 			whereParts = append(whereParts, f)
 		}
 	}

@@ -134,26 +134,6 @@ func (mr *MockClientMockRecorder) GetExperimentResult(ctx, in any, opts ...any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentResult", reflect.TypeOf((*MockClient)(nil).GetExperimentResult), varargs...)
 }
 
-// GetMAUCount mocks base method.
-func (m *MockClient) GetMAUCount(ctx context.Context, in *eventcounter.GetMAUCountRequest, opts ...grpc.CallOption) (*eventcounter.GetMAUCountResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetMAUCount", varargs...)
-	ret0, _ := ret[0].(*eventcounter.GetMAUCountResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetMAUCount indicates an expected call of GetMAUCount.
-func (mr *MockClientMockRecorder) GetMAUCount(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCount", reflect.TypeOf((*MockClient)(nil).GetMAUCount), varargs...)
-}
-
 // GetOpsEvaluationUserCount mocks base method.
 func (m *MockClient) GetOpsEvaluationUserCount(ctx context.Context, in *eventcounter.GetOpsEvaluationUserCountRequest, opts ...grpc.CallOption) (*eventcounter.GetOpsEvaluationUserCountResponse, error) {
 	m.ctrl.T.Helper()
@@ -212,24 +192,4 @@ func (mr *MockClientMockRecorder) ListExperimentResults(ctx, in any, opts ...any
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExperimentResults", reflect.TypeOf((*MockClient)(nil).ListExperimentResults), varargs...)
-}
-
-// SummarizeMAUCounts mocks base method.
-func (m *MockClient) SummarizeMAUCounts(ctx context.Context, in *eventcounter.SummarizeMAUCountsRequest, opts ...grpc.CallOption) (*eventcounter.SummarizeMAUCountsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "SummarizeMAUCounts", varargs...)
-	ret0, _ := ret[0].(*eventcounter.SummarizeMAUCountsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SummarizeMAUCounts indicates an expected call of SummarizeMAUCounts.
-func (mr *MockClientMockRecorder) SummarizeMAUCounts(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SummarizeMAUCounts", reflect.TypeOf((*MockClient)(nil).SummarizeMAUCounts), varargs...)
 }

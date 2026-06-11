@@ -207,11 +207,7 @@ const DropdownMenuWithSearch = ({
             })
           }
         />
-        {isSearching ? (
-          <div className="flex-center w-full h-[200px]">
-            <Spinner size="sm" />
-          </div>
-        ) : dropdownOptions?.length > 0 ? (
+        {dropdownOptions?.length > 0 ? (
           <>
             <DropdownList
               options={dropdownOptions}
@@ -228,12 +224,16 @@ const DropdownMenuWithSearch = ({
               isLoadingMore={isLoadingMore}
               onHasMoreOptions={onHasMoreOptions}
             />
-            {isLoadingMore && (
+            {(isLoadingMore || isSearching) && (
               <div className="flex-center py-2">
                 <Spinner size="sm" />
               </div>
             )}
           </>
+        ) : isSearching ? (
+          <div className="flex-center w-full h-[200px]">
+            <Spinner size="sm" />
+          </div>
         ) : notFoundOption ? (
           notFoundOption(searchValue, value => {
             setSearchValue(value);

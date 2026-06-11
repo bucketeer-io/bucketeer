@@ -36,8 +36,8 @@ import (
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
-func TestNewProgressiveRolloutWacher(t *testing.T) {
-	w := NewProgressiveRolloutWacher(nil, nil, nil, nil)
+func TestNewProgressiveRolloutWatcher(t *testing.T) {
+	w := NewProgressiveRolloutWatcher(nil, nil, nil, nil)
 	assert.IsType(t, &progressiveRolloutWatcher{}, w)
 }
 

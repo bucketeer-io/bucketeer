@@ -3,12 +3,8 @@ import { useNavigate } from 'react-router';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
 import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
-import {
-  invalidateAutoOpsRules,
-  useQueryAutoOpsRules
-} from '@queries/auto-ops-rules';
-import { invalidateRollouts, useQueryRollouts } from '@queries/rollouts';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
+import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import {
@@ -56,7 +52,6 @@ const Operations = ({
   const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const navigate = useNavigate();
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -174,12 +169,8 @@ const Operations = ({
   );
 
   const onSubmitOperationSuccess = useCallback(() => {
-    invalidateAutoOpsRules(queryClient);
-    invalidateRollouts(queryClient);
-    // Auto navigate to ACTIVE tab when creating operation from FINISHED tab
     if (currentTab === OperationTab.FINISHED) {
       setCurrentTab(OperationTab.ACTIVE);
-      // Update search params to ACTIVE tab before closing modal
       const updatedSearchOptions = {
         ...searchOptions,
         tab: OperationTab.ACTIVE
@@ -199,7 +190,6 @@ const Operations = ({
     searchOptions,
     navigate,
     getPathName,
-    queryClient,
     onCloseActionModal
   ]);
 

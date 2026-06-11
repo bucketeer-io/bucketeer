@@ -7,8 +7,8 @@ import {
   triggerUpdate,
   TriggerUpdateParams
 } from '@api/trigger/triggers-update';
-import { invalidateTriggers, useQueryTriggers } from '@queries/triggers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryTriggers } from '@queries/triggers';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
@@ -41,7 +41,6 @@ const TriggerList = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const formRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
   const { notify, errorNotify } = useToast();
 
   const [triggerNewlyCreated, setTriggerNewlyCreated] = useState<
@@ -129,7 +128,6 @@ const TriggerList = ({
         })
       });
       onReset();
-      invalidateTriggers(queryClient);
       mutationState.reset();
     },
     onError: error => errorNotify(error)

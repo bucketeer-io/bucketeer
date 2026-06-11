@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"sync"
@@ -31,20 +32,46 @@ import (
 
 	accountapi "github.com/bucketeer-io/bucketeer/v2/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
+	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
+	aichatapi "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/api"
+	aichatllm "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
+	aichatrag "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
+	aichatratelimit "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
 	auditlogapi "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/api"
+	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	auditlogmysql "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mysql"
+	auditlogpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
 	autoopsapi "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	v2aos "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
+	autoopsmysql "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/mysql"
+	autoopspostgres "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/postgres"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 	coderefapi "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/api"
+	coderefstorage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
+	coderefmysql "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mysql"
+	coderefpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/postgres"
 	environmentapi "github.com/bucketeer-io/bucketeer/v2/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	environmentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mysql"
+	environmentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/postgres"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/api"
+	dwhdatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	dwhbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/bigquery"
+	dwhmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mysql"
+	dwhpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/postgres"
+	v2er "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
+	experimentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/mysql"
+	experimentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/postgres"
 	experimentapi "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureapi "github.com/bucketeer-io/bucketeer/v2/pkg/feature/api"
@@ -58,6 +85,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
+	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
+	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
+	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -77,8 +107,10 @@ import (
 	tagmysql "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mysql"
 	tagpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/postgres"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
+	teamstorage "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
 	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -194,6 +226,13 @@ type server struct {
 	pubSubRedisMode                 *string
 	dataWarehouseType               *string
 	dataWarehouseConfigPath         *string
+	// AI Chat configuration
+	openAIAPIKey      *string
+	openAIBaseURL     *string
+	aichatModel       *string
+	aichatGitHubToken *string
+	aichatMaxTokens   *int
+	aichatServicePort *int
 }
 
 type DataWarehouseConfig struct {
@@ -456,6 +495,31 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		// AI Chat configuration (optional — disabled when openai-api-key is empty)
+		openAIAPIKey: cmd.Flag(
+			"openai-api-key",
+			"OpenAI API key for AI Chat feature. Leave empty to disable AI Chat.",
+		).Default("").String(),
+		openAIBaseURL: cmd.Flag(
+			"openai-base-url",
+			"Base URL for the OpenAI-compatible API endpoint. Leave empty for default OpenAI endpoint.",
+		).Default("").String(),
+		aichatModel: cmd.Flag(
+			"aichat-model",
+			"LLM model name for AI Chat.",
+		).Default("").String(),
+		aichatGitHubToken: cmd.Flag(
+			"aichat-github-token",
+			"GitHub token for AI Chat RAG documentation search. Optional but increases rate limit.",
+		).Default("").String(),
+		aichatMaxTokens: cmd.Flag(
+			"aichat-max-tokens",
+			"Maximum tokens for AI Chat responses.",
+		).Default("1000").Int(),
+		aichatServicePort: cmd.Flag(
+			"aichat-service-port",
+			"Port to bind to AI Chat service.",
+		).Default("9109").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -522,7 +586,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var tagStorage tagstorage.TagStorage
 	var flagTriggerStorage v2fs.FlagTriggerStorage
 	var fluiStorage v2fs.FeatureLastUsedInfoStorage
+	var auditLogStorage v2als.AuditLogStorage
+	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	var postgresClient postgres.Client
+	var accountStorage v2as.AccountStorage
+	var projectStorage v2es.ProjectStorage
+	var orgStorage v2es.OrganizationStorage
+	var environmentStorage v2es.EnvironmentStorage
+	var opsCountStorage v2os.OpsCountStorage
+	var codeRefStorage coderefstorage.CodeReferenceStorage
+	var autoOpsStorage v2aos.AutoOpsRuleStorage
+	var prStorage v2aos.ProgressiveRolloutStorage
+	var experimentResultStorage v2er.ExperimentResultStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -539,6 +614,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 		flagTriggerStorage = featurepostgres.NewFlagTriggerStorage(postgresClient)
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
+		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
+		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
+		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
+		projectStorage = environmentpostgres.NewProjectStorage(postgresClient)
+		orgStorage = environmentpostgres.NewOrganizationStorage(postgresClient)
+		environmentStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
+		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
+		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
+		autoOpsStorage = autoopspostgres.NewAutoOpsRuleStorage(postgresClient)
+		prStorage = autoopspostgres.NewProgressiveRolloutStorage(postgresClient)
+		experimentResultStorage = experimentpostgres.NewExperimentResultStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -548,6 +634,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
 		flagTriggerStorage = featuremysql.NewFlagTriggerStorage(mysqlClient)
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
+		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
+		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
+		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
+		projectStorage = environmentmysql.NewProjectStorage(mysqlClient)
+		orgStorage = environmentmysql.NewOrganizationStorage(mysqlClient)
+		environmentStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
+		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
+		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
+		autoOpsStorage = autoopsmysql.NewAutoOpsRuleStorage(mysqlClient)
+		prStorage = autoopsmysql.NewProgressiveRolloutStorage(mysqlClient)
+		experimentResultStorage = experimentmysql.NewExperimentResultStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -696,7 +793,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	// authService
-	authService, err := s.createAuthService(mysqlClient, accountClient, verifier, oAuthConfig, logger)
+	authService, err := s.createAuthService(
+		dbClient,
+		accountClient,
+		accountStorage,
+		orgStorage,
+		projectStorage,
+		environmentStorage,
+		verifier,
+		oAuthConfig,
+		logger,
+	)
 	if err != nil {
 		return err
 	}
@@ -707,11 +814,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go authServer.Run()
+
+	// TODO: move to DB-agnostic storage after postgres support is added
+	teamStorage := teamstorage.NewTeamStorage(mysqlClient)
+
 	// accountService
 	accountService := accountapi.NewAccountService(
 		environmentClient,
-		mysqlClient,
+		dbClient,
+		accountStorage,
 		tagStorage,
+		teamStorage,
+		adminAuditLogStorage,
 		domainTopicPublisher,
 		accountapi.WithLogger(logger),
 	)
@@ -727,7 +841,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
-		mysqlClient,
+		accountStorage,
+		auditLogStorage,
+		adminAuditLogStorage,
 		auditlogapi.WithLogger(logger),
 	)
 	auditLogServer := rpc.NewServer(auditLogService, *s.certPath, *s.keyPath,
@@ -741,7 +857,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
-		mysqlClient,
+		dbClient,
+		autoOpsStorage,
+		prStorage,
+		opsCountStorage,
 		featureStorage,
 		featureClient,
 		experimentClient,
@@ -761,8 +880,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// environmentService
 	environmentService, err := s.createEnvironmentService(
-		mysqlClient,
+		dbClient,
 		accountClient,
+		projectStorage,
+		orgStorage,
+		environmentStorage,
+		accountStorage,
 		domainTopicPublisher,
 		oAuthConfig,
 		verifier,
@@ -781,19 +904,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go environmentServer.Run()
 
+	// eventCounter data-warehouse storage. Always opens a dedicated DWH pool
+	// (separate from mysqlClient / postgresClient) so the closer is non-nil
+	// for the MySQL/Postgres backends and must be closed on shutdown.
+	eventDWHStorage, dwhCloser, err := s.createDWHEventStorage(
+		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, logger,
+	)
+	if err != nil {
+		return err
+	}
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
-		mysqlClient,
+		eventDWHStorage,
+		experimentResultStorage,
 		experimentClient,
 		featureClient,
 		accountClient,
-		bigQueryQuerier,
-		bigQueryDataSet,
 		registerer,
 		persistentRedisV3Cache,
 		location,
 		logger,
-		eventcounterapi.WithDataWarehouseConfig(s.convertToAPIDataWarehouseConfig(dataWarehouseConfig)),
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
 		"event-counter-server",
@@ -913,7 +1043,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// codeReferenceService
 	codeReferenceService := coderefapi.NewCodeReferenceService(
 		accountClient,
-		mysqlClient,
+		dbClient,
+		codeRefStorage,
 		domainTopicPublisher,
 		coderefapi.WithLogger(logger),
 	)
@@ -970,13 +1101,63 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go insightsServer.Run()
 
-	// Start the dashboard servers
-	dashboardServer := rest.NewServer(
-		*s.certPath, *s.keyPath,
+	// aichatService (optional — enabled when OpenAI API key is provided)
+	var aichatServer *rpc.Server
+	dashboardRestOpts := []rest.Option{
 		rest.WithLogger(logger),
 		rest.WithPort(*s.dashboardServicePort),
 		rest.WithService(NewDashboardService(*s.webConsoleEnvJSPath)),
 		rest.WithMetrics(registerer),
+	}
+	if *s.openAIAPIKey != "" {
+		if *s.aichatModel == "" {
+			return fmt.Errorf("aichat-model must be set when openai-api-key is configured")
+		}
+		llmClient := aichatllm.NewOpenAIClient(*s.openAIAPIKey, *s.openAIBaseURL)
+		ragSearcher := aichatrag.NewGitHubSearcher(logger, *s.aichatGitHubToken)
+		chatCfg := aichatapi.ChatConfig{
+			Model:       *s.aichatModel,
+			MaxTokens:   *s.aichatMaxTokens,
+			Temperature: 0.7,
+		}
+		rateLimiter := aichatratelimit.NewLimiter(ctx, aichatratelimit.DefaultConfig())
+		aichatGRPCService := aichatapi.NewAIChatService(
+			llmClient,
+			ragSearcher,
+			chatCfg,
+			accountClient,
+			featureClient,
+			logger,
+			aichatapi.WithGRPCRateLimiter(rateLimiter),
+		)
+		aichatServer = rpc.NewServer(aichatGRPCService, *s.certPath, *s.keyPath,
+			"aichat-server",
+			rpc.WithPort(*s.aichatServicePort),
+			rpc.WithVerifier(verifier),
+			rpc.WithMetrics(registerer),
+			rpc.WithLogger(logger),
+		)
+		go aichatServer.Run()
+		// Chat HTTP service for dashboard REST server (SSE streaming)
+		chatHTTPSvc := aichatapi.NewChatHTTPService(
+			llmClient, ragSearcher, chatCfg,
+			verifier, accountClient, featureClient,
+			logger,
+			aichatapi.WithRateLimiter(rateLimiter),
+		)
+		dashboardRestOpts = append(dashboardRestOpts, rest.WithService(chatHTTPSvc))
+		logger.Info("AI Chat service enabled",
+			zap.String("model", *s.aichatModel),
+			zap.Int("port", *s.aichatServicePort),
+		)
+	} else {
+		logger.Info("AI Chat service disabled (no OpenAI API key configured)")
+	}
+
+	// Start the dashboard servers
+	dashboardServer := rest.NewServer(
+		*s.certPath, *s.keyPath,
+		dashboardRestOpts...,
 	)
 	go dashboardServer.Run()
 
@@ -994,8 +1175,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create web gRPC gateway: %w", err)
 	}
 
-	if err := webGrpcGateway.Start(ctx, s.createGatewayHandlers()...); err != nil {
-		return fmt.Errorf("failed to start web gRPC gateway: %w", err)
+	gatewayHandlers := s.createGatewayHandlers()
+	if aichatServer != nil {
+		gatewayHandlers = append(gatewayHandlers,
+			func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+				aichatGrpcAddr := fmt.Sprintf("localhost:%d", *s.aichatServicePort)
+				return aichatproto.RegisterAIChatServiceHandlerFromEndpoint(ctx, mux, aichatGrpcAddr, opts)
+			},
+		)
+	}
+	if err := webGrpcGateway.Start(ctx, gatewayHandlers...); err != nil {
+		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
 	}
 
 	defer func() {
@@ -1052,6 +1242,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			teamServer,
 			insightsServer,
 		}
+		if aichatServer != nil {
+			servers = append(servers, aichatServer)
+		}
 
 		for _, server := range servers {
 			wg.Add(1)
@@ -1069,6 +1262,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go mysqlClient.Close()
 		if postgresClient != nil {
 			go postgresClient.Close()
+		}
+		if dwhCloser != nil {
+			go func() { _ = dwhCloser.Close() }()
 		}
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
@@ -1214,8 +1410,12 @@ func (s *server) readOAuthConfig(
 }
 
 func (s *server) createAuthService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
 	accountClient accountclient.Client,
+	accountStorage v2as.AccountStorage,
+	orgStorage v2es.OrganizationStorage,
+	projectStorage v2es.ProjectStorage,
+	environmentStorage v2es.EnvironmentStorage,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	logger *zap.Logger,
@@ -1242,16 +1442,24 @@ func (s *server) createAuthService(
 		config.Audience,
 		signer,
 		verifier,
-		mysqlClient,
+		dbClient,
 		accountClient,
+		accountStorage,
+		orgStorage,
+		projectStorage,
+		environmentStorage,
 		config,
 		serviceOptions...,
 	), nil
 }
 
 func (s *server) createEnvironmentService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
 	accountClient accountclient.Client,
+	projectStorage v2es.ProjectStorage,
+	orgStorage v2es.OrganizationStorage,
+	environmentStorage v2es.EnvironmentStorage,
+	accountStorage v2as.AccountStorage,
 	domainTopicPublisher publisher.Publisher,
 	oAuthConfig *auth.OAuthConfig,
 	verifier token.Verifier,
@@ -1276,7 +1484,11 @@ func (s *server) createEnvironmentService(
 
 	return environmentapi.NewEnvironmentService(
 		accountClient,
-		mysqlClient,
+		dbClient,
+		projectStorage,
+		orgStorage,
+		environmentStorage,
+		accountStorage,
 		domainTopicPublisher,
 		oAuthConfig,
 		config.Issuer,
@@ -1439,30 +1651,124 @@ func (s *server) readDataWarehouseConfig(
 	return config, nil
 }
 
-func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *eventcounterapi.DataWarehouseConfig {
-	return &eventcounterapi.DataWarehouseConfig{
-		Type:      config.Type,
-		BatchSize: config.BatchSize,
-		Timezone:  config.Timezone,
-		MySQL: eventcounterapi.DataWarehouseMySQLConfig{
-			UseMainConnection: config.MySQL.UseMainConnection,
-			Host:              config.MySQL.Host,
-			Port:              config.MySQL.Port,
-			User:              config.MySQL.User,
-			Password:          config.MySQL.Password,
-			Database:          config.MySQL.Database,
-		},
-		BigQuery: eventcounterapi.DataWarehouseBigQueryConfig{
-			Project:  config.BigQuery.Project,
-			Dataset:  config.BigQuery.Dataset,
-			Location: config.BigQuery.Location,
-		},
-		Postgres: eventcounterapi.DataWarehousePostgresConfig{
-			Host:     config.Postgres.Host,
-			Port:     config.Postgres.Port,
-			User:     config.Postgres.User,
-			Password: config.Postgres.Password,
-			Database: config.Postgres.Database,
-		},
+// createDWHEventStorage builds the eventcounter EventStorage backed by the configured data warehouse.
+func (s *server) createDWHEventStorage(
+	ctx context.Context,
+	config *DataWarehouseConfig,
+	bigQueryQuerier bqquerier.Client,
+	bigQueryDataSet string,
+	logger *zap.Logger,
+) (dwhdatabase.EventStorage, io.Closer, error) {
+	switch config.Type {
+	case "mysql":
+		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		client, err := s.createDWHMySQLClient(clientCtx, config.MySQL, logger)
+		if err != nil {
+			logger.Error("Failed to create MySQL client for data warehouse",
+				zap.Error(err),
+			)
+			return nil, nil, err
+		}
+		return dwhmysql.NewMySQLEventStorage(client, logger), client, nil
+	case "postgres":
+		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		client, err := s.createDWHPostgresClient(clientCtx, config.Postgres, logger)
+		if err != nil {
+			logger.Error("Failed to create Postgres client for data warehouse",
+				zap.Error(err),
+				zap.String("host", config.Postgres.Host),
+				zap.String("database", config.Postgres.Database),
+			)
+			return nil, nil, err
+		}
+		return dwhpostgres.NewPostgresEventStorage(client, logger), client, nil
+	case "bigquery":
+		return dwhbigquery.NewBigQueryEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil, nil
+	default:
+		// Default to BigQuery for backward compatibility
+		return dwhbigquery.NewBigQueryEventStorage(bigQueryQuerier, bigQueryDataSet, logger), nil, nil
 	}
+}
+
+// createDWHMySQLClient opens a fresh MySQL pool dedicated to the data warehouse.
+func (s *server) createDWHMySQLClient(
+	ctx context.Context,
+	config DataWarehouseMySQLConfig,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	user := config.User
+	password := config.Password
+	host := config.Host
+	port := config.Port
+	database := config.Database
+	if config.UseMainConnection {
+		user = *s.mysqlUser
+		password = *s.mysqlPass
+		host = *s.mysqlHost
+		port = *s.mysqlPort
+		database = *s.mysqlDBName
+	}
+	if host == "" || database == "" || user == "" {
+		return nil, fmt.Errorf("mysql host, database, and user are required for data warehouse connection")
+	}
+	if port == 0 {
+		port = 3306
+	}
+	client, err := mysql.NewClient(
+		ctx,
+		user,
+		password,
+		host,
+		port,
+		database,
+		mysql.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create data warehouse MySQL client: %w", err)
+	}
+	logger.Info("Created dedicated MySQL client for data warehouse",
+		zap.String("host", host),
+		zap.Int("port", port),
+		zap.String("database", database),
+		zap.String("user", user),
+		zap.Bool("useMainConnection", config.UseMainConnection),
+	)
+	return client, nil
+}
+
+// createDWHPostgresClient builds a fresh Postgres client/pool dedicated to the
+// data warehouse, independent of the operational postgresClient.
+func (s *server) createDWHPostgresClient(
+	ctx context.Context,
+	config DataWarehousePostgresConfig,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("postgres host, database, and user are required for data warehouse connection")
+	}
+	port := config.Port
+	if port == 0 {
+		port = 5432
+	}
+	client, err := postgres.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		postgres.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create data warehouse Postgres client: %w", err)
+	}
+	logger.Info("Created Postgres client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+	return client, nil
 }

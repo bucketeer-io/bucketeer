@@ -2,9 +2,7 @@ import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
-import { invalidateGoalDetails } from '@queries/goal-details';
-import { invalidateGoals } from '@queries/goals';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
@@ -23,7 +21,6 @@ const PageContent = ({ goal }: { goal: Goal }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
   const { notify, errorNotify } = useToast();
-  const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -43,7 +40,6 @@ const PageContent = ({ goal }: { goal: Goal }) => {
     },
     onSuccess: () => {
       onCloseDeleteModal();
-      invalidateGoals(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
@@ -60,11 +56,6 @@ const PageContent = ({ goal }: { goal: Goal }) => {
     },
     onSuccess: () => {
       onCloseConfirmModal();
-      invalidateGoalDetails(queryClient, {
-        id: goal.id,
-        environmentId: currentEnvironment.id
-      });
-      invalidateGoals(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),

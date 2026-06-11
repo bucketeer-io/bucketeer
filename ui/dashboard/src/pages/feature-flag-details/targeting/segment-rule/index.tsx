@@ -1,28 +1,31 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Trans } from 'react-i18next';
 import {
-  IconArrowDownwardFilled,
-  IconArrowUpwardFilled,
-  IconUndoOutlined
-} from 'react-icons-material-design';
-import { Fragment } from 'react/jsx-runtime';
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable';
 import { useQueryAttributeKeys } from '@queries/attribute-keys';
 import { useQueryUserSegments } from '@queries/user-segments';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { IconClose, IconInfo } from '@icons';
-import Icon from 'components/icon';
-import { Tooltip } from 'components/tooltip';
 import { TargetingDivider } from '..';
-import Card from '../../elements/card';
 import AddRule from '../add-rule';
 import { RuleSchema, TargetingSchema } from '../form-schema';
 import { DiscardChangesType, RuleCategory } from '../types';
-import RuleForm from './rule';
-import SegmentVariation from './variation';
+import SortableCard, { DragOverlayCard } from './sortable-card';
 
 interface RuleSchemaFields extends RuleSchema {
   segmentId: string;
@@ -37,6 +40,7 @@ interface Props {
   onAddRule: (rule: RuleCategory, index?: number) => void;
   segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
+  segmentRulesMove: (fromIndex: number, toIndex: number) => void;
   handleDiscardChanges: (type: DiscardChangesType, index?: number) => void;
   handleCheckEdit: (type: RuleCategory, index?: number) => boolean;
 }
@@ -50,15 +54,14 @@ const TargetSegmentRule = ({
   onAddRule,
   segmentRulesRemove,
   segmentRulesSwap,
+  segmentRulesMove,
   handleDiscardChanges,
   handleCheckEdit
 }: Props) => {
-  const { t } = useTranslation(['table', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const methods = useFormContext<TargetingSchema>();
-  const { watch } = methods;
+  useFormContext<TargetingSchema>();
 
   const { data: segmentCollection } = useQueryUserSegments({
     params: {
@@ -74,12 +77,15 @@ const TargetSegmentRule = ({
     }
   });
 
-  const segmentRulesWatch = watch('segmentRules');
   const userSegments = segmentCollection?.segments || [];
   const sdkAttributeKeys = keysCollection?.userAttributeKeys || [];
-  const editSegmentRule = (index: number) => {
-    return handleCheckEdit(RuleCategory.CUSTOM, index);
-  };
+
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [activeDragHeight, setActiveDragHeight] = useState<number | null>(null);
+
+  const editSegmentRule = (index: number) =>
+    handleCheckEdit(RuleCategory.CUSTOM, index);
+
   const handleChangeIndexRule = useCallback(
     (type: 'increase' | 'decrease', currentIndex: number) => {
       segmentRulesSwap(
@@ -87,132 +93,118 @@ const TargetSegmentRule = ({
         type === 'increase' ? currentIndex + 1 : currentIndex - 1
       );
     },
-
-    [segmentRulesWatch, segmentRulesSwap]
+    [segmentRulesSwap]
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+    setActiveDragHeight(null);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveDragId(null);
+      setActiveDragHeight(null);
+      if (!over || active.id === over.id) return;
+      const fromIndex = segmentRules.findIndex(r => r.segmentId === active.id);
+      const toIndex = segmentRules.findIndex(r => r.segmentId === over.id);
+      if (fromIndex !== -1 && toIndex !== -1) {
+        segmentRulesMove(fromIndex, toIndex);
+      }
+    },
+    [segmentRules, segmentRulesMove]
+  );
+
+  const activeDragIndex = activeDragId
+    ? segmentRules.findIndex(r => r.segmentId === activeDragId)
+    : -1;
+  const activeDragSegment =
+    activeDragIndex !== -1 ? segmentRules[activeDragIndex] : null;
+
+  const sortableIds = segmentRules.map(r => r.segmentId);
+
+  if (segmentRules.length === 0) return null;
+
+  const sharedCardProps = {
+    feature,
+    features,
+    segmentRules,
+    userSegments,
+    sdkAttributeKeys,
+    editSegmentRule,
+    handleChangeIndexRule,
+    handleDiscardChanges,
+    segmentRulesRemove
+  };
+
   return (
-    segmentRules.length > 0 && (
-      <div className="flex flex-col w-full">
-        {segmentRules.map((segment, segmentIndex) => (
-          <div key={segment?.segmentId} className="flex flex-col w-full">
-            {segmentIndex !== 0 && (
-              <>
-                <TargetingDivider />
-                <AddRule
-                  isDisableAddIndividualRules={isDisableAddIndividualRules}
-                  isDisableAddPrerequisite={isDisableAddPrerequisite}
-                  onAddRule={onAddRule}
-                  indexInsertSegmentRule={segmentIndex}
-                  isInsertSegmentRule={true}
-                />
-                <TargetingDivider />
-              </>
-            )}
-            <Card>
-              <div className="w-full h-8 flex items-center justify-between">
-                <div className="flex items-center gap-x-2">
-                  <p className="typo-para-medium leading-5 text-gray-700">
-                    <Trans
-                      i18nKey={'table:feature-flags.rule-index'}
-                      values={{
-                        index: segmentIndex + 1
-                      }}
-                    />
-                  </p>
-                  <Tooltip
-                    align="start"
-                    alignOffset={-68}
-                    content={t('form:targeting.tooltip.custom-rules')}
-                    trigger={
-                      <div className="flex-center size-fit">
-                        <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
-                      </div>
-                    }
-                    className="max-w-[400px]"
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={sortableIds}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="flex flex-col w-full">
+          {segmentRules.map((segment, segmentIndex) => (
+            <div key={segment.segmentId} className="flex flex-col w-full">
+              {segmentIndex !== 0 && (
+                <>
+                  <TargetingDivider />
+                  <AddRule
+                    isDisableAddIndividualRules={isDisableAddIndividualRules}
+                    isDisableAddPrerequisite={isDisableAddPrerequisite}
+                    onAddRule={onAddRule}
+                    indexInsertSegmentRule={segmentIndex}
+                    isInsertSegmentRule={true}
                   />
-                </div>
-                <div className="flex items-center gap-x-2">
-                  {editSegmentRule(segmentIndex) && (
-                    <div
-                      className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
-                      onClick={() =>
-                        handleDiscardChanges(
-                          DiscardChangesType.CUSTOM,
-                          segmentIndex
-                        )
-                      }
-                    >
-                      <Icon
-                        icon={IconUndoOutlined}
-                        size={'sm'}
-                        className="flex-center text-gray-500 group-hover:text-gray-700"
-                      />
-                    </div>
-                  )}
-                  {segmentRules.length > 1 && (
-                    <div className="flex items-center gap-x-1">
-                      {segmentIndex !== segmentRules.length - 1 && (
-                        <div
-                          className="flex-center group cursor-pointer"
-                          onClick={() =>
-                            handleChangeIndexRule('increase', segmentIndex)
-                          }
-                        >
-                          <Icon
-                            icon={IconArrowDownwardFilled}
-                            size={'sm'}
-                            className="text-gray-500 group-hover:text-gray-700"
-                          />
-                        </div>
-                      )}
-                      {segmentIndex !== 0 && (
-                        <div
-                          className="flex-center group cursor-pointer"
-                          onClick={() =>
-                            handleChangeIndexRule('decrease', segmentIndex)
-                          }
-                        >
-                          <Icon
-                            icon={IconArrowUpwardFilled}
-                            size={'sm'}
-                            className="text-gray-500 group-hover:text-gray-700"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div
-                    className="flex-center cursor-pointer group"
-                    onClick={() => segmentRulesRemove(segmentIndex)}
-                  >
-                    <Icon
-                      icon={IconClose}
-                      size={'sm'}
-                      className="flex-center text-gray-500 group-hover:text-gray-700"
-                    />
-                  </div>
-                </div>
-              </div>
-              <Fragment>
-                <RuleForm
-                  feature={feature}
-                  features={features}
-                  segmentIndex={segmentIndex}
-                  userSegments={userSegments}
-                  sdkAttributeKeys={sdkAttributeKeys}
-                />
-                <SegmentVariation
-                  feature={feature}
-                  segmentIndex={segmentIndex}
-                  segmentRules={segmentRules}
-                />
-              </Fragment>
-            </Card>
+                  <TargetingDivider />
+                </>
+              )}
+              <SortableCard
+                segment={segment}
+                segmentIndex={segmentIndex}
+                ghostHeight={activeDragHeight}
+                {...sharedCardProps}
+              />
+            </div>
+          ))}
+        </div>
+      </SortableContext>
+      <DragOverlay>
+        {activeDragSegment && activeDragIndex !== -1 && (
+          <div
+            className="opacity-95 shadow-lg"
+            ref={el => {
+              if (el && activeDragHeight === null)
+                setActiveDragHeight(el.getBoundingClientRect().height);
+            }}
+          >
+            <DragOverlayCard
+              segment={activeDragSegment}
+              segmentIndex={activeDragIndex}
+              feature={feature}
+              features={features}
+              userSegments={userSegments}
+              sdkAttributeKeys={sdkAttributeKeys}
+            />
           </div>
-        ))}
-      </div>
-    )
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 };
 

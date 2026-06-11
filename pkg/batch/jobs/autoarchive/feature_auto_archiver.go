@@ -28,7 +28,6 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -46,8 +45,9 @@ type featureAutoArchiver struct {
 
 // NewFeatureAutoArchiver creates a new feature auto-archiver batch job.
 func NewFeatureAutoArchiver(
-	mysqlClient mysql.Client,
+	envStorage environmentstorage.EnvironmentStorage,
 	ftStorage featurestorage.FeatureStorage,
+	codeRefStorage coderefstorage.CodeReferenceStorage,
 	featureClient featureclient.Client,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -58,9 +58,8 @@ func NewFeatureAutoArchiver(
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	codeRefStorage := coderefstorage.NewCodeReferenceStorage(mysqlClient)
 	return &featureAutoArchiver{
-		envStorage:     environmentstorage.NewEnvironmentStorage(mysqlClient),
+		envStorage:     envStorage,
 		ftStorage:      ftStorage,
 		codeRefStorage: codeRefStorage,
 		evaluator:      domain.NewArchivabilityEvaluator(codeRefStorage),

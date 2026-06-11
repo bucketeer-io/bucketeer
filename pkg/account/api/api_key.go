@@ -26,7 +26,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -81,7 +80,7 @@ func (s *AccountService) CreateAPIKey(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		return s.accountStorage.CreateAPIKey(contextWithTx, key, req.EnvironmentId)
 	})
 	if err != nil {
@@ -198,74 +197,35 @@ func (s *AccountService) ListAPIKeys(
 	if req.OrganizationId == "" {
 		return nil, statusInvalidListAPIKeyRequest.Err()
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_v2.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationId,
-		},
-	}
-	var inFilters []*mysql.InFilter
-	if len(filterEnvironmentIDs) > 0 {
-		environmentIds := make([]interface{}, 0, len(filterEnvironmentIDs))
-		for _, id := range filterEnvironmentIDs {
-			environmentIds = append(environmentIds, id)
-		}
-		inFilters = append(inFilters, &mysql.InFilter{
-			Column: "api_key.environment_id",
-			Values: environmentIds,
-		})
-	}
-	if req.Disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "api_key.disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Disabled.Value,
-		})
-	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"api_key.name"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	if req.MaintainerEmail != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "api_key.maintainer",
-			Operator: mysql.OperatorEqual,
-			Value:    req.MaintainerEmail,
-		})
-	}
-	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
 	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
-	listOptions := &mysql.ListOptions{
-		Filters:     filters,
-		InFilters:   inFilters,
-		SearchQuery: searchQuery,
-		Limit:       limit,
-		Offset:      offset,
-		Orders:      orders,
-		NullFilters: nil,
-		JSONFilters: nil,
+
+	params := v2as.ListAPIKeysParams{
+		OrganizationID:  req.OrganizationId,
+		EnvironmentIDs:  filterEnvironmentIDs,
+		SearchKeyword:   req.SearchKeyword,
+		OrderBy:         req.OrderBy,
+		OrderDirection:  req.OrderDirection,
+		PageSize:        limit,
+		Cursor:          cursor,
+		MaintainerEmail: req.MaintainerEmail,
 	}
-	apiKeys, nextCursor, totalCount, err := s.accountStorage.ListAPIKeys(ctx, listOptions)
+	if req.Disabled != nil {
+		disabled := req.Disabled.Value
+		params.Disabled = &disabled
+	}
+
+	apiKeys, nextCursor, totalCount, err := s.accountStorage.ListAPIKeys(ctx, params)
 	if err != nil {
+		if errors.Is(err, v2as.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list api keys",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -314,37 +274,6 @@ func (s *AccountService) getAllowedEnvironments(
 		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
 	}
 	return filterEnvironmentIDs
-}
-
-func (s *AccountService) newAPIKeyListOrders(
-	orderBy proto.ListAPIKeysRequest_OrderBy,
-	orderDirection proto.ListAPIKeysRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListAPIKeysRequest_DEFAULT,
-		proto.ListAPIKeysRequest_NAME:
-		column = "api_key.name"
-	case proto.ListAPIKeysRequest_CREATED_AT:
-		column = "api_key.created_at"
-	case proto.ListAPIKeysRequest_UPDATED_AT:
-		column = "api_key.updated_at"
-	case proto.ListAPIKeysRequest_ROLE:
-		column = "api_key.role"
-	case proto.ListAPIKeysRequest_ENVIRONMENT:
-		column = "environment_v2.name"
-	case proto.ListAPIKeysRequest_STATE:
-		column = "api_key.disabled"
-	case proto.ListAPIKeysRequest_LAST_USED_AT:
-		column = "api_key.last_used_at"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == proto.ListAPIKeysRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *AccountService) GetEnvironmentAPIKey(
@@ -398,7 +327,7 @@ func (s *AccountService) UpdateAPIKey(
 	}
 
 	var prev, current *proto.APIKey
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err

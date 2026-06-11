@@ -44,6 +44,15 @@ env:
     mode: auto
   oldestEventTimestamp:
   furthestEventTimestamp:
+  # Grace window applied to the diff filters for:
+  #   - GetFeatureFlags: UpdatedAt >= RequestedAt - grace
+  #   - GetEvaluations: UpdatedAt > evaluatedAt - grace
+  # Re-includes recently updated flags that the previous diff response may
+  # have missed due to L2 cache propagation lag under rapid back-to-back
+  # updates (partial-diff trap). Leave unset to use the server default
+  # (10m). Increase if SDK pods continue to observe stale flags; decrease
+  # to reduce diff response size.
+  featureFlagDiffGracePeriod:
   # Bounded worker pool for processing metrics events. Leave unset to use
   # the Go defaults (4 workers, 4096-batch buffered queue). Increase
   # metricsWorkers if bucketeer_gateway_api_metrics_overflow_total is

@@ -11,18 +11,14 @@ import {
   experimentUpdater
 } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import {
-  invalidateExperimentDetails,
-  useQueryExperimentDetails
-} from '@queries/experiment-details';
-import { invalidateExperiments } from '@queries/experiments';
-import { useQueryFeatures } from '@queries/features';
+import { useQueryExperimentDetails } from '@queries/experiment-details';
+import { useQueryFeature } from '@queries/feature-details';
 import { useQueryGoals } from '@queries/goals';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
+import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
@@ -109,7 +105,6 @@ const ExperimentCreateUpdateModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
-  const queryClient = useQueryClient();
 
   const [
     isOpenCreateGoalModal,
@@ -152,6 +147,20 @@ const ExperimentCreateUpdateModal = ({
     [experiment]
   );
 
+  // Fetch the experiment's feature when in edit mode to ensure we have the feature name
+  const { data: experimentFeatureData } = useQueryFeature({
+    params: {
+      id: experiment?.featureId as string,
+      environmentId: currentEnvironment.id
+    },
+    enabled: Boolean(experiment?.featureId && isEdit)
+  });
+
+  const experimentFeature = useMemo(
+    () => experimentFeatureData?.feature,
+    [experimentFeatureData]
+  );
+
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
@@ -169,27 +178,6 @@ const ExperimentCreateUpdateModal = ({
         })) || []
     );
   }, [goalCollection]);
-
-  const { data: featureCollection, isLoading: isLoadingFeature } =
-    useQueryFeatures({
-      params: {
-        cursor: String(0),
-        environmentId: currentEnvironment.id
-      }
-    });
-
-  const featureFlagOptions = useMemo(
-    () =>
-      (featureCollection?.features || []).map(feature => {
-        return {
-          value: feature.id,
-          label: feature.name,
-          enabled: feature.enabled,
-          variations: feature.variations
-        };
-      }),
-    [featureCollection]
-  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -224,19 +212,48 @@ const ExperimentCreateUpdateModal = ({
   });
   const featureId = watch('featureId');
 
-  const variationOptions = useMemo(
+  const {
+    allAvailableFlags,
+    remainingFlagOptions,
+    isLoadingMore,
+    isSearching: isSearchingFeature,
+    isInitialLoading: isLoadingFeature,
+    hasMore,
+    onSearchChange,
+    loadMore
+  } = useFeatureFlagsLoader({
+    environmentId: currentEnvironment.id,
+    selectedFlagIds: featureId ? [featureId] : [],
+    filterSelected: !isEdit
+  });
+
+  const featureFlagOptions = useMemo(
     () =>
-      featureFlagOptions
-        ?.find(item => item.value === featureId)
-        ?.variations?.map((item, index) => ({
-          label: (
-            <VariationLabel label={item.name || item.value} index={index} />
-          ),
-          value: item.id
-        })) || [],
-    [featureFlagOptions, featureId]
+      allAvailableFlags.map(feature => {
+        return {
+          value: feature.id,
+          label: feature.name,
+          enabled: feature.enabled,
+          disabled: featureId === feature.id
+        };
+      }),
+    [allAvailableFlags]
   );
-  const flagsSelected: string = watch('featureId');
+
+  const variationOptions = useMemo(() => {
+    // In edit mode, use variations from fetched experiment feature or experiment data
+    const variations =
+      isEdit && (experimentFeature || experiment)
+        ? experimentFeature?.variations || experiment?.variations
+        : allAvailableFlags?.find(item => item.id === featureId)?.variations;
+
+    return (
+      variations?.map((item, index) => ({
+        label: <VariationLabel label={item.name || item.value} index={index} />,
+        value: item.id
+      })) || []
+    );
+  }, [isEdit, experimentFeature, experiment, allAvailableFlags, featureId]);
 
   // const startOptions = [
   //   {
@@ -292,11 +309,6 @@ const ExperimentCreateUpdateModal = ({
               collection: t('common:source-type.experiment'),
               action: t(isEdit ? 'common:updated' : 'common:created')
             })
-          });
-          invalidateExperiments(queryClient);
-          invalidateExperimentDetails(queryClient, {
-            id: experimentId as string,
-            environmentId: currentEnvironment.id
           });
           onClose();
         }
@@ -557,18 +569,20 @@ const ExperimentCreateUpdateModal = ({
                         disabled={!!isEdit || disabled}
                         hidden={isOpenCreateFlagModal}
                         isLoading={isLoadingFeature}
+                        isLoadingMore={isLoadingMore}
+                        isSearching={isSearchingFeature}
+                        isHasMore={hasMore || isLoadingMore}
+                        onSearchChange={onSearchChange}
+                        onHasMoreOptions={loadMore}
                         placeholder={t(`experiments.select-flag`)}
                         label={
-                          featureFlagOptions.find(
-                            item => item.value === field.value
-                          )?.label || ''
+                          (isEdit && experimentFeature
+                            ? experimentFeature.name
+                            : featureFlagOptions.find(
+                                item => item.value === field.value
+                              )?.label) || ''
                         }
-                        options={featureFlagOptions?.map(flag => ({
-                          label: flag.label,
-                          value: flag.value,
-                          enabled: flag.enabled,
-                          disabled: flagsSelected.includes(flag.value)
-                        }))}
+                        options={remainingFlagOptions}
                         selectedOptions={[field.value]}
                         additionalElement={item => (
                           <FeatureFlagStatus

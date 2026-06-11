@@ -22,6 +22,34 @@ import Overview from './overview';
 import SortBy from './sort-by';
 import { FlagActionType, FlagFilters, StatusFilterType } from './types';
 
+const booleanFilterKeys = [
+  'enabled',
+  'hasActiveAutoOps',
+  'hasFinishedAutoOps',
+  'hasExperiment',
+  'hasFeatureFlagAsRule',
+  'hasPrerequisites'
+] as const;
+
+const searchFiltersFromParams = (searchOptions: Record<string, unknown>) =>
+  Object.entries(searchOptions).reduce((acc, [key, value]) => {
+    if (
+      (booleanFilterKeys as readonly string[]).includes(key) &&
+      typeof value === 'string'
+    ) {
+      if (value === 'true' || value === '1') {
+        acc[key as keyof FlagFilters] = true as never;
+        return acc;
+      }
+      if (value === 'false' || value === '0') {
+        acc[key as keyof FlagFilters] = false as never;
+        return acc;
+      }
+    }
+    acc[key as keyof FlagFilters] = value as never;
+    return acc;
+  }, {} as Partial<FlagFilters>);
+
 const PageContent = ({
   onAdd,
   onHandleActions
@@ -41,7 +69,7 @@ const PageContent = ({
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
-  const searchFilters: Partial<FlagFilters> = searchOptions;
+  const searchFilters = searchFiltersFromParams(searchOptions);
 
   const defaultFilters = {
     page: 1,
@@ -61,7 +89,9 @@ const PageContent = ({
       'enabled',
       'tags',
       'status',
-      'hasFeatureFlagAsRule'
+      'hasFeatureFlagAsRule',
+      'hasActiveAutoOps',
+      'hasFinishedAutoOps'
     ];
     const count = filterKeys.reduce((acc, curr) => {
       if (isNotEmpty(filters[curr as keyof FlagFilters])) ++acc;
@@ -98,7 +128,9 @@ const PageContent = ({
       tags: undefined,
       tab: 'ACTIVE',
       status: undefined,
-      hasFeatureFlagAsRule: undefined
+      hasFeatureFlagAsRule: undefined,
+      hasActiveAutoOps: undefined,
+      hasFinishedAutoOps: undefined
     });
     onCloseFilterModal();
   }, [filters]);
@@ -129,7 +161,11 @@ const PageContent = ({
         enabled: undefined,
         archived: undefined,
         tags: undefined,
-        tab: 'ACTIVE'
+        tab: 'ACTIVE',
+        status: undefined,
+        hasFeatureFlagAsRule: undefined,
+        hasActiveAutoOps: undefined,
+        hasFinishedAutoOps: undefined
       });
     }
   }, [location]);

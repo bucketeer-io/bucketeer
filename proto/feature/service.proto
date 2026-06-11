@@ -86,6 +86,14 @@ message ListFeaturesRequest {
   string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
   FeatureLastUsedInfo.Status status = 14;
   google.protobuf.BoolValue has_feature_flag_as_rule = 15;
+  reserved 16;  // has_auto_ops
+  reserved "has_auto_ops";
+  // Matches flags that have at least one auto ops rule or progressive rollout
+  // with status WAITING or RUNNING.
+  google.protobuf.BoolValue has_active_auto_ops = 17;
+  // Matches flags that have at least one auto ops rule or progressive rollout
+  // with status FINISHED or STOPPED.
+  google.protobuf.BoolValue has_finished_auto_ops = 18;
 }
 
 message FeatureSummary {
@@ -290,6 +298,29 @@ message CloneFeatureRequest {
 }
 
 message CloneFeatureResponse {}
+
+message BulkCloneFeatureRequest {
+  string id = 1;
+  string environment_id = 2;
+  repeated string target_environment_ids = 3;
+}
+
+enum BulkCloneFeatureStatus {
+  BULK_CLONE_FEATURE_STATUS_UNSPECIFIED = 0;
+  BULK_CLONE_FEATURE_STATUS_SUCCESS = 1;
+  BULK_CLONE_FEATURE_STATUS_ALREADY_EXISTS = 2;
+  BULK_CLONE_FEATURE_STATUS_FAILED = 3;
+}
+
+message BulkCloneFeatureResult {
+  string environment_id = 1;
+  BulkCloneFeatureStatus status = 2;
+  string error = 3;
+}
+
+message BulkCloneFeatureResponse {
+  repeated BulkCloneFeatureResult results = 1;
+}
 
 message CreateSegmentRequest {
   reserved 1;  // CreateSegmentCommand
@@ -1047,6 +1078,52 @@ service FeatureService {
       description: "Clone a feature flag. To call this API, you need an EDITOR role in the specified environment.",
       tags: "Feature",
       operation_id: "web.v1.feature.clone",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc BulkCloneFeature(BulkCloneFeatureRequest)
+      returns (BulkCloneFeatureResponse) {
+    option (google.api.http) = {
+      post: "/v1/feature/bulk_clone"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Bulk Clone Feature Flag",
+      description: "Clone a feature flag to multiple target environments in a single operation. To call this API, you need an EDITOR role in all specified target environments.",
+      tags: "Feature",
+      operation_id: "web.v1.feature.bulk_clone",
       responses: {
         key: "400"
         value: {

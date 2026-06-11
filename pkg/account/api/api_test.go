@@ -31,7 +31,7 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	teamstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 )
@@ -48,7 +48,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewAccountService(t *testing.T) {
 	t.Parallel()
-	g := NewAccountService(nil, nil, nil, nil)
+	g := NewAccountService(nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &AccountService{}, g)
 }
 
@@ -57,7 +57,7 @@ func createAccountService(t *testing.T, mockController *gomock.Controller, db st
 	logger := zap.NewNop()
 	return &AccountService{
 		environmentClient:    ecmock.NewMockClient(mockController),
-		mysqlClient:          mysqlmock.NewMockClient(mockController),
+		dbClient:             dbmock.NewMockClient(mockController),
 		accountStorage:       storagemock.NewMockAccountStorage(mockController),
 		teamStorage:          teamstoragemock.NewMockTeamStorage(mockController),
 		adminAuditLogStorage: auditlogstoragemock.NewMockAdminAuditLogStorage(mockController),

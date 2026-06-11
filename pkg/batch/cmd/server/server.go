@@ -27,6 +27,9 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	acclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
+	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/api"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -44,7 +47,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	coderefstorage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
+	coderefmysql "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mysql"
+	coderefpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/postgres"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	environmentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mysql"
+	environmentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/postgres"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
@@ -61,6 +70,9 @@ import (
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor"
+	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
+	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
+	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
@@ -314,9 +326,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	var accountStorage accstorage.AccountStorage
 	var featureStorage v2fs.FeatureStorage
 	var segmentStorage v2fs.SegmentStorage
 	var tagStorage tagstorage.TagStorage
+	var envStorage v2es.EnvironmentStorage
+	var opsCountStorage v2os.OpsCountStorage
+	var codeRefStorage coderefstorage.CodeReferenceStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -326,13 +342,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			return err
 		}
 		defer postgresClient.Close()
+		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
+		envStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
+		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
+		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
 	} else {
+		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
+		envStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
+		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
+		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -562,7 +586,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		opsevent.NewEventCountWatcher(
-			mysqlClient,
+			opsCountStorage,
 			environmentClient,
 			autoOpsClient,
 			eventCounterClient,
@@ -572,7 +596,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		opsevent.NewProgressiveRolloutWacher(
+		opsevent.NewProgressiveRolloutWatcher(
 			environmentClient,
 			autoOpsClient,
 			progressiveRolloutExecutor,
@@ -610,7 +634,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewAPIKeyCacher(
-			mysqlClient,
+			accountStorage,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
@@ -635,8 +659,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		autoarchive.NewFeatureAutoArchiver(
-			mysqlClient,
+			envStorage,
 			featureStorage,
+			codeRefStorage,
 			featureClient,
 			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),

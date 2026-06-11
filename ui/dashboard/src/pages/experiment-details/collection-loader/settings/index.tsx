@@ -7,11 +7,9 @@ import {
 } from 'react-hook-form';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateExperimentDetails } from '@queries/experiment-details';
-import { invalidateExperiments } from '@queries/experiments';
 import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
@@ -62,8 +60,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
-
-  const queryClient = useQueryClient();
 
   const isEnabledEdit = useMemo(
     () => ['WAITING', 'NOT_STARTED'].includes(experiment?.status as string),
@@ -166,11 +162,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       return experimentUpdater(params);
     },
     onSuccess: data => {
-      invalidateExperimentDetails(queryClient, {
-        id: data.experiment.id,
-        environmentId: currentEnvironment.id
-      });
-      invalidateExperiments(queryClient);
       notify({
         message: t('message:collection-action-success', {
           collection: t('common:source-type.experiment'),

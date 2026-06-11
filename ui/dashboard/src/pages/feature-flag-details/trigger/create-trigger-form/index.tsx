@@ -4,8 +4,6 @@ import { Trans } from 'react-i18next';
 import { triggerCreator } from '@api/trigger';
 import { triggerUpdate } from '@api/trigger/triggers-update';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateTriggers } from '@queries/triggers';
-import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
@@ -41,7 +39,6 @@ const CreateTriggerForm = forwardRef(
     ref: Ref<HTMLDivElement>
   ) => {
     const { t } = useTranslation(['table', 'form', 'common', 'message']);
-    const queryClient = useQueryClient();
 
     const { notify, errorNotify } = useToast();
 
@@ -51,7 +48,7 @@ const CreateTriggerForm = forwardRef(
           label: (
             <div className="flex items-center w-full gap-x-2">
               <Icon icon={IconWebhook} />
-              <p className="text-gray-600 typo-para-medium">{`${t('trigger.dropdown-desc')}`}</p>
+              <p className="text-gray-600 typo-para-medium truncate">{`${t('trigger.dropdown-desc')}`}</p>
             </div>
           ),
           value: TriggerType.WEBHOOK
@@ -128,7 +125,6 @@ const CreateTriggerForm = forwardRef(
             }
 
             if (resp) {
-              invalidateTriggers(queryClient);
               notify({
                 message: t('message:collection-action-success', {
                   collection: t('feature-flags.trigger'),

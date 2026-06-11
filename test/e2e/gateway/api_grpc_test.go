@@ -49,6 +49,14 @@ const (
 	prefixTestName        = "e2e-test"
 	timeout               = 60 * time.Second
 	deadlockRetryAttempts = 3
+	// evaluatedAtGracePeriodSeconds mirrors the API server's
+	// --feature-flag-diff-grace-period default (10 minutes). The
+	// GetEvaluations diff filter applies it as
+	//   feature.UpdatedAt > evaluatedAt - evaluatedAtGracePeriodSeconds
+	// (see pkg/api/api/api_grpc.go and
+	// manifests/bucketeer/charts/api/values.yaml). If the server default
+	// changes, update this constant so the e2e tests stay aligned.
+	evaluatedAtGracePeriodSeconds int64 = 600
 )
 
 var (
@@ -160,13 +168,21 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.Equal(t, 0, len(noneResponse.ArchivedFeatureFlagIds))
 	assert.False(t, noneResponse.ForceUpdate)
 
-	// Find feature with tag, with the different features ID, and requested at
+	// Mismatched FeatureFlagsId with a recent RequestedAt: the diff filter
+	// (`UpdatedAt >= RequestedAt - featureFlagDiffGracePeriod`, default 10m)
+	// re-includes both flags because they were created within the grace
+	// window. This is a regular Diff response (ForceUpdate=false) — not the
+	// empty-diff ForceUpdate fallback, which only fires when even the
+	// grace-widened filter excludes every flag.
 	var diffResponse *gatewayproto.GetFeatureFlagsResponse
 	require.Eventually(t, func() bool {
 		baseline := grpcGetFeatureFlags(t, tag, "", 0)
 		ffid = baseline.FeatureFlagsId
 		diffResponse = grpcGetFeatureFlags(t, tag, "random-id", baseline.RequestedAt)
-		return len(diffResponse.Features) == 0
+		return len(diffResponse.Features) == 2 &&
+			findFeatureByID(t, req1.Id, diffResponse.Features) &&
+			findFeatureByID(t, req3.Id, diffResponse.Features) &&
+			!diffResponse.ForceUpdate
 	}, 30*time.Second, 2*time.Second, "cache should stabilize for different featuresId")
 	assert.Equal(t, ffid, diffResponse.FeatureFlagsId)
 	assert.Equal(t, 0, len(diffResponse.ArchivedFeatureFlagIds))
@@ -332,6 +348,105 @@ func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
 	assert.True(t, response.ForceUpdate)
 }
 
+// TestGrpcGetFeatureFlagsPartialDiffTrap verifies the grace window fix for
+// the partial-diff trap, the production failure mode where SOME flags pass
+// the diff filter (keeping the diff non-empty so the ForceUpdate fallback
+// does NOT fire) while OTHER flags are silently dropped because the SDK's
+// RequestedAt cursor has advanced past their UpdatedAt under L2
+// propagation lag.
+//
+// Setup recreates the trap deterministically:
+//  1. Create flag A → A.UpdatedAt = T_A.
+//  2. Anchor RequestedAt = T_req between T_A and T_B (T_A < T_req < T_B).
+//  3. Create flag B → B.UpdatedAt = T_B.
+//  4. Send a Diff request with random ffID + RequestedAt = T_req.
+//
+// Without the grace window:
+//   - A: UpdatedAt < RequestedAt → EXCLUDED
+//   - B: UpdatedAt >= RequestedAt → INCLUDED
+//   - updatedFeatures = [B] → non-empty → empty-diff fallback NOT triggered
+//   - SDK silently misses A (trap).
+//
+// With the grace window (default 10m, sized to the test's few-second gap):
+//   - A: UpdatedAt >= RequestedAt - 10m → INCLUDED
+//   - B: UpdatedAt >= RequestedAt - 10m → INCLUDED
+//   - SDK reconciles both flags in a regular Diff (ForceUpdate=false).
+func TestGrpcGetFeatureFlagsPartialDiffTrap(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+
+	// Create flag A and ensure it is cached.
+	featureIDA := newFeatureID(t, uuid)
+	reqA := createFeatureWithTag(t, tag, featureIDA)
+
+	// Derive simulatedRequestedAt from flag A's server-side UpdatedAt
+	// rather than the test runner's time.Now(). This avoids client/server
+	// clock skew: if the runner's clock were ahead of the API server, a
+	// time.Now()-based RequestedAt could trigger the future-RequestedAt
+	// "All" path (ForceUpdate=true) instead of the Diff path under test.
+	var simulatedRequestedAt int64
+	require.Eventually(t, func() bool {
+		resp := grpcGetFeatureFlags(t, tag, "", 0)
+		for _, f := range resp.Features {
+			if f.Id == reqA.Id {
+				// +1 places RequestedAt strictly after A.UpdatedAt so A
+				// is filtered out without the grace window.
+				simulatedRequestedAt = f.UpdatedAt + 1
+				return true
+			}
+		}
+		return false
+	}, 30*time.Second, 2*time.Second, "flag A should be visible to derive UpdatedAt")
+
+	// Sleep so flag B's UpdatedAt is strictly greater than
+	// simulatedRequestedAt (1-second UpdatedAt resolution + safety margin).
+	time.Sleep(2 * time.Second)
+
+	// Create flag B and ensure it is cached.
+	uuid2 := newUUID(t)
+	featureIDB := newFeatureID(t, uuid2)
+	reqB := createFeatureWithTag(t, tag, featureIDB)
+
+	// Wait until both flags are visible via the gateway (cache propagated).
+	require.Eventually(t, func() bool {
+		baseline := grpcGetFeatureFlags(t, tag, "", 0)
+		return findFeatureByID(t, reqA.Id, baseline.Features) &&
+			findFeatureByID(t, reqB.Id, baseline.Features)
+	}, 30*time.Second, 2*time.Second, "both flags A and B should be visible after cache propagation")
+
+	// Diff request that recreates the partial-diff trap:
+	//   - random ffID (mismatched → Diff path)
+	//   - RequestedAt = T_req, between A.UpdatedAt and B.UpdatedAt
+	// The grace window must re-include A even though A.UpdatedAt < T_req,
+	// otherwise A would be silently dropped (B alone keeps the diff
+	// non-empty, sidestepping the empty-diff ForceUpdate fallback).
+	var diffResp *gatewayproto.GetFeatureFlagsResponse
+	require.Eventually(t, func() bool {
+		diffResp = grpcGetFeatureFlags(t, tag, "random-id", simulatedRequestedAt)
+		return len(diffResp.Features) == 2 &&
+			findFeatureByID(t, reqA.Id, diffResp.Features) &&
+			findFeatureByID(t, reqB.Id, diffResp.Features)
+	}, 30*time.Second, 2*time.Second,
+		"grace window should re-include flag A (UpdatedAt < RequestedAt) "+
+			"alongside flag B (UpdatedAt >= RequestedAt), so the SDK does "+
+			"not silently lose A to the partial-diff trap")
+
+	// This is the regular Diff path with grace re-inclusion, NOT the
+	// empty-diff fallback (which would set ForceUpdate=true). Verifying
+	// ForceUpdate=false ensures the grace window — not the fallback —
+	// is what recovered flag A.
+	assert.False(t, diffResp.ForceUpdate,
+		"grace re-includes flags within the window; the empty-diff fallback should NOT fire here")
+	assert.Equal(t, 0, len(diffResp.ArchivedFeatureFlagIds))
+	assert.True(t, diffResp.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.NotEqual(t, "random-id", diffResp.FeatureFlagsId,
+		"server returns the actual current FeatureFlagsId, not the SDK-supplied one")
+}
+
 func findFeatureByID(t *testing.T, id string, features []*featureproto.Feature) bool {
 	t.Helper()
 	for _, f := range features {
@@ -459,15 +574,28 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
+	fc := newFeatureClient(t)
+	defer fc.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // Wait for cache propagation
+	// Read feature 1's server-side UpdatedAt so prevEvalAt can be anchored
+	// to the server clock, independent of any client/server clock skew.
+	feature1UpdatedAt := getFeature(t, featureID, fc).UpdatedAt
+	time.Sleep(3 * time.Second) // ensure feature 2's UpdatedAt > feature 1's
 	featureID2 := newFeatureID(t, newUUID(t))
 	req := createFeatureWithTag(t, tag, featureID2)
-	prevEvalAt := time.Now().Unix()
+	// Place prevEvalAt so the server-side diff filter
+	//   feature.UpdatedAt > evaluatedAt - evaluatedAtGracePeriodSeconds
+	// lands strictly between the two features:
+	//   adjusted = feature1.UpdatedAt + 1
+	//     feature 1: UpdatedAt > adjusted is false -> EXCLUDED
+	//     feature 2: UpdatedAt > adjusted is true  -> INCLUDED
+	// This keeps the "older feature is filtered out" assertion meaningful
+	// even with the wider featureFlagDiffGracePeriod (10 min by default).
+	prevEvalAt := feature1UpdatedAt + evaluatedAtGracePeriodSeconds + 1
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
@@ -519,7 +647,11 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	addTag(t, tag, featureID, fc)
 	enableFeature(t, featureID, fc)
 	archiveFeature(t, featureID, fc)
-	time.Sleep(10 * time.Second) // Wait for cache propagation
+	// Capture feature 1's post-archive UpdatedAt so prevEvalAt can be
+	// anchored to the server clock (see comment in
+	// TestGrpcGetEvaluationsByEvaluatedAt for details).
+	feature1UpdatedAt := getFeature(t, featureID, fc).UpdatedAt
+	time.Sleep(3 * time.Second) // ensure feature 2's UpdatedAt > feature 1's
 
 	uuid2 := newUUID(t)
 	featureID2 := newFeatureID(t, uuid2)
@@ -532,7 +664,10 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
 
-	prevEvalAt := time.Now().Unix()
+	// adjusted = feature1.UpdatedAt + 1, so feature 1 is excluded and
+	// feature 2 (created >=3s later) is included by the diff filter
+	// even with the wider featureFlagDiffGracePeriod (10 min default).
+	prevEvalAt := feature1UpdatedAt + evaluatedAtGracePeriodSeconds + 1
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
@@ -565,15 +700,24 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
+	fc := newFeatureClient(t)
+	defer fc.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(10 * time.Second) // Wait for cache propagation
+	// Anchor prevEvalAt to feature 1's server-side UpdatedAt so the diff
+	// filter excludes feature 1 regardless of the configured
+	// featureFlagDiffGracePeriod (see TestGrpcGetEvaluationsByEvaluatedAt
+	// for the full explanation). With userAttributesUpdated=true the
+	// server still excludes flags that (a) fall outside the grace window
+	// and (b) have no rules, so feature 1 (no rules) must be dropped.
+	feature1UpdatedAt := getFeature(t, featureID, fc).UpdatedAt
+	time.Sleep(3 * time.Second) // ensure feature 2's UpdatedAt > feature 1's
 	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithRule(t, tag, featureID2)
-	prevEvalAt := time.Now().Unix()
+	prevEvalAt := feature1UpdatedAt + evaluatedAtGracePeriodSeconds + 1
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, true)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)

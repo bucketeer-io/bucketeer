@@ -2,7 +2,7 @@ import {
   environmentResultDetailsFetcher,
   EnvironmentResultDetailsFetcherParams
 } from '@api/environment-result/environment-result-details';
-import { QueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { EnvironmentResponse, QueryOptionsRespond } from '@types';
 
 type QueryOptions = QueryOptionsRespond<EnvironmentResponse> & {
@@ -21,10 +21,4 @@ export const useQueryEnvironmentDetails = (options?: QueryOptions) => {
     ...queryOptions
   });
   return query;
-};
-
-export const invalidateEnvironmentDetails = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({
-    queryKey: [ENVIRONMENTS_DETAILS_QUERY_KEY]
-  });
 };

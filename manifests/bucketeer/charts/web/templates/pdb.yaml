@@ -9,4 +9,5 @@ spec:
   selector:
     matchLabels:
       app: {{ template "web.name" . }}
+      release: {{ template "web.fullname" . }}
 {{ end }}

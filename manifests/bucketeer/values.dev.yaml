@@ -686,7 +686,7 @@ subscriber:
       domainEventProject: bucketeer-dev
       domainEventTopic: domain
       flushSize: 10
-      flushInterval: 5
+      flushInterval: 1
       # PubSub configuration
       pubSubType: ${global.pubsub.type}
       redisServerName: ${global.pubsub.redis.serverName}

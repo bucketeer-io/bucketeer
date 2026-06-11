@@ -284,6 +284,7 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*pgstorage.ListOp
 			})
 		}
 	}
+	existsFilters, orFilters := listFeaturesAutoOpsFilters(p.HasActiveAutoOps, p.HasFinishedAutoOps)
 
 	var nullFilters []*pgstorage.NullFilter
 	switch p.Status {
@@ -343,14 +344,75 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*pgstorage.ListOp
 	}
 
 	return &pgstorage.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		JSONFilters: jsonFilters,
-		NullFilters: nullFilters,
-		InFilters:   inFilters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
+		Limit:         limit,
+		Offset:        offset,
+		Filters:       filters,
+		JSONFilters:   jsonFilters,
+		NullFilters:   nullFilters,
+		ExistsFilters: existsFilters,
+		InFilters:     inFilters,
+		OrFilters:     orFilters,
+		SearchQuery:   searchQuery,
+		Orders:        orders,
+	}, nil
+}
+
+// Status sets used to classify auto operations.
+//   - active:   WAITING (0), RUNNING (1)   -> still going to fire or firing now
+//   - finished: FINISHED (2), STOPPED (3)  -> will not fire again
+//
+// Both AutoOpsRule.auto_ops_status and ProgressiveRollout.status share these
+// integer values and are stored in the `status` column.
+const (
+	autoOpsActiveStatuses   = "(0, 1)"
+	autoOpsFinishedStatuses = "(2, 3)"
+)
+
+func listFeaturesAutoOpsFilters(
+	hasActive *bool,
+	hasFinished *bool,
+) ([]*pgstorage.ExistsFilter, []*pgstorage.OrFilter) {
+	var existsFilters []*pgstorage.ExistsFilter
+	var orFilters []*pgstorage.OrFilter
+	if hasActive != nil {
+		ex, or := buildAutoOpsStatusFilter(*hasActive, autoOpsActiveStatuses)
+		existsFilters = append(existsFilters, ex...)
+		orFilters = append(orFilters, or...)
+	}
+	if hasFinished != nil {
+		ex, or := buildAutoOpsStatusFilter(*hasFinished, autoOpsFinishedStatuses)
+		existsFilters = append(existsFilters, ex...)
+		orFilters = append(orFilters, or...)
+	}
+	return existsFilters, orFilters
+}
+
+func buildAutoOpsStatusFilter(
+	want bool,
+	statuses string,
+) ([]*pgstorage.ExistsFilter, []*pgstorage.OrFilter) {
+	autoOpsRuleSubquery := "SELECT 1 FROM auto_ops_rule aor " +
+		"WHERE aor.feature_id = feature.id " +
+		"AND aor.environment_id = feature.environment_id " +
+		"AND aor.deleted = FALSE " +
+		"AND aor.status IN " + statuses
+	progressiveRolloutSubquery := "SELECT 1 FROM ops_progressive_rollout opr " +
+		"WHERE opr.feature_id = feature.id " +
+		"AND opr.environment_id = feature.environment_id " +
+		"AND opr.status IN " + statuses
+	if want {
+		return nil, []*pgstorage.OrFilter{
+			{
+				Queries: []pgstorage.WherePart{
+					&pgstorage.ExistsFilter{Subquery: autoOpsRuleSubquery},
+					&pgstorage.ExistsFilter{Subquery: progressiveRolloutSubquery},
+				},
+			},
+		}
+	}
+	return []*pgstorage.ExistsFilter{
+		{Subquery: autoOpsRuleSubquery, NotExists: true},
+		{Subquery: progressiveRolloutSubquery, NotExists: true},
 	}, nil
 }
 
@@ -372,7 +434,9 @@ func listFeaturesOrders(
 	case proto.ListFeaturesRequest_ENABLED:
 		column = "feature.enabled"
 	case proto.ListFeaturesRequest_AUTO_OPS:
-		column = "(progressive_rollout_count + schedule_count + kill_switch_count)"
+		column = "(COALESCE(auto_ops_counts.progressive_rollout_count, 0) + " +
+			"COALESCE(auto_ops_counts.schedule_count, 0) + " +
+			"COALESCE(auto_ops_counts.kill_switch_count, 0))"
 	default:
 		return nil, v2fs.ErrInvalidListFeaturesOrderBy
 	}

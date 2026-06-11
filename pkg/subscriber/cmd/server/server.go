@@ -25,6 +25,11 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
+	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
+	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	auditlogmysql "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mysql"
+	auditlogpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/postgres"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -253,6 +258,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var segmentStorage v2fs.SegmentStorage
 	var segmentUserStorage v2fs.SegmentUserStorage
 	var fluiStorage v2fs.FeatureLastUsedInfoStorage
+	var accountStorage accstorage.AccountStorage
+	var auditLogStorage v2als.AuditLogStorage
+	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -266,12 +274,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
+		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
+		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
+		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = pushstorage.NewMySQLPushStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
+		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
+		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
+		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -416,6 +430,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage,
 		fluiStorage,
 		pushStorage,
+		auditLogStorage,
+		adminAuditLogStorage,
+		accountStorage,
 		persistentRedisClient,
 		nonPersistentRedisClient,
 		experimentClient,
@@ -745,6 +762,9 @@ func (s *server) registerPubSubProcessorMap(
 	segmentUserStorage v2fs.SegmentUserStorage,
 	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	pushStorage pushstorage.PushStorage,
+	auditLogStorage v2als.AuditLogStorage,
+	adminAuditLogStorage v2als.AdminAuditLogStorage,
+	accountStorage accstorage.AccountStorage,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
@@ -771,7 +791,8 @@ func (s *server) registerPubSubProcessorMap(
 		}
 		auditLogPersister, err := processor.NewAuditLogPersister(
 			processorsConfigMap[processor.AuditLogPersisterName],
-			mysqlClient,
+			auditLogStorage,
+			adminAuditLogStorage,
 			logger,
 		)
 		if err != nil {
@@ -791,7 +812,7 @@ func (s *server) registerPubSubProcessorMap(
 				ftClient,
 				exClient,
 				opsClient,
-				accstorage.NewAccountStorage(mysqlClient),
+				accountStorage,
 				cachev3.NewFeaturesCache(nonPersistentRedisCache, 0),
 				cachev3.NewSegmentUsersCache(nonPersistentRedisCache, 0),
 				cachev3.NewEnvironmentAPIKeyCache(nonPersistentRedisCache, 0),

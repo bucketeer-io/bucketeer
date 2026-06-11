@@ -9,8 +9,6 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryOrganizationDetails } from '@queries/organization-details';
-import { invalidateOrganizations } from '@queries/organizations';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
@@ -68,7 +66,6 @@ const OrganizationCreateUpdateModal = ({
   onClose,
   organization
 }: OrganizationCreateUpdateModalProps) => {
-  const queryClient = useQueryClient();
   const { refreshOrganizations } = useAuth();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
@@ -141,7 +138,6 @@ const OrganizationCreateUpdateModal = ({
               action: t(organization ? 'updated' : 'created')
             })
           });
-          invalidateOrganizations(queryClient);
           refreshOrganizations();
           onClose();
         }

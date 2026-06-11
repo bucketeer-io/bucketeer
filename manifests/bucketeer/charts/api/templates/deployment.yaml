@@ -173,6 +173,10 @@ spec:
             - name: BUCKETEER_API_SEGMENT_USERS_MEMORY_CACHE_TTL
               value: "{{ .Values.env.segmentUsersMemoryCacheTTL }}"
             {{- end }}
+            {{- if .Values.env.featureFlagDiffGracePeriod }}
+            - name: BUCKETEER_API_FEATURE_FLAG_DIFF_GRACE_PERIOD
+              value: "{{ .Values.env.featureFlagDiffGracePeriod }}"
+            {{- end }}
             {{- if .Values.env.cacheInvalidationTopic }}
             - name: BUCKETEER_API_CACHE_INVALIDATION_TOPIC
               value: "{{ .Values.env.cacheInvalidationTopic }}"
