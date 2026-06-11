@@ -77,11 +77,16 @@ const FilterMemberPopup = ({
                     item => item.value === value
                   );
                   if (selected) {
-                    selectedFilters[filterIndex] = {
-                      ...selected,
-                      filterValue: value === FilterTypes.TEAMS ? [] : ''
-                    };
-                    setSelectedFilters([...selectedFilters]);
+                    setSelectedFilters(prev =>
+                      prev.map((item, i) =>
+                        i === filterIndex
+                          ? {
+                              ...selected,
+                              filterValue: value === FilterTypes.TEAMS ? [] : ''
+                            }
+                          : item
+                      )
+                    );
                   }
                 }}
               />
