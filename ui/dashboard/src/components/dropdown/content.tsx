@@ -4,9 +4,7 @@ import { cn } from 'utils/style';
 
 export type DropdownMenuContentProps = ComponentPropsWithoutRef<
   typeof DropdownMenuPrimitive.Content
-> & {
-  isExpand?: boolean;
-};
+>;
 
 export const DropdownMenuContent = forwardRef<
   HTMLDivElement,

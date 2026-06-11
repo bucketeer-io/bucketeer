@@ -36,7 +36,7 @@ const PageContent = ({
 
   const defaultFilters = {
     page: 1,
-    orderBy: 'EMAIL',
+    orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
     ...searchFilters
   } as MembersFilters;

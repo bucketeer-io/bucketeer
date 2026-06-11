@@ -116,7 +116,13 @@ const EntityTypeDropdown = memo(
           options={optionCustom}
           value={Number(entityType)}
           labelCustom={label}
+          cleanable
           placeholder={placeholder}
+          onClear={() =>
+            onChangeFilters({
+              entityType: undefined
+            })
+          }
           onChange={value =>
             onChangeFilters({
               entityType: +value

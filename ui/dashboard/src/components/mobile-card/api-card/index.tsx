@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
-import { IconEditOutlined } from 'react-icons-material-design';
+import {
+  IconEditOutlined,
+  IconMoreVertOutlined
+} from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -144,6 +147,7 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
       >
         <Card.Action>
           <DisabledPopoverTooltip
+            icon={IconMoreVertOutlined}
             isNeedAdminAccess
             options={compact([
               {

@@ -366,6 +366,10 @@ const useOptions = () => {
         value: 'ENVIRONMENT'
       },
       {
+        label: translation('last-used-at', 'table'),
+        value: 'LAST_USED_AT'
+      },
+      {
         label: translation('created-at', 'table'),
         value: 'CREATED_AT'
       },
@@ -414,8 +418,16 @@ const useOptions = () => {
         value: 'ORGANIZATION_ROLE'
       },
       {
+        label: translation('teams'),
+        value: 'TEAMS'
+      },
+      {
         label: translation('last-seen'),
         value: 'LAST_SEEN'
+      },
+      {
+        label: translation('state'),
+        value: 'STATE'
       }
     ],
     [language]

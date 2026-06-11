@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
+import { useScreen } from 'hooks/use-screen';
 import { useTranslation } from 'i18n';
 import { OrderBy, OrderDirection } from '@types';
 import Dropdown, { DropdownOption } from 'components/dropdown';
@@ -22,7 +23,12 @@ const SortBy = <T extends SortedState>({
   sortByOptions,
   sortDirectionOptions
 }: SortByProps<T>) => {
-  useTranslation(['common', 'table', 'form']);
+  const { t } = useTranslation(['common', 'table', 'form']);
+  const { isMobile } = useScreen();
+
+  const triggerWidthCls = isMobile
+    ? 'w-[200px] min-w-[200px] max-w-[200px]'
+    : 'w-fit';
 
   const currentOption = useMemo(
     () => sortByOptions.find(item => item.value === filters.orderBy),
@@ -46,15 +52,14 @@ const SortBy = <T extends SortedState>({
               sortBy: currentOption.label
             }}
           />
-        ) : (
-          ''
-        )
+        ) : undefined
       }
+      placeholder={t('common:sort-by-placeholder')}
       options={sortByOptions}
       value={filters.orderBy}
       onChange={value => handleSorting({ orderBy: value as OrderBy })}
-      wrapTriggerStyle="w-fit"
-      className="w-fit"
+      wrapTriggerStyle={triggerWidthCls}
+      className={triggerWidthCls}
       contentClassName="!max-h-fit !divide-y"
       additionalOptions={sortDirectionOptions}
       additionalValue={filters.orderDirection}
