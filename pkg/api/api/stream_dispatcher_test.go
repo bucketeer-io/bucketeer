@@ -135,7 +135,10 @@ func TestStreamDispatcherDeregister(t *testing.T) {
 			for env, tagConns := range tc.conns {
 				for tag := range tagConns {
 					for i := 0; i < tagConns[tag]; i++ {
-						_, cancels[testConnSpec{env, tag}] = d.register(env, tag)
+						var cancel func()
+						_, cancel = d.register(env, tag)
+						defer cancel()
+						cancels[testConnSpec{env, tag}] = cancel
 					}
 				}
 			}

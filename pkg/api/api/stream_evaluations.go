@@ -28,8 +28,11 @@ import (
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
+// To prevent excessive memory use.
+const sseMaxRequestBodyBytes = 64 * 1024
+
 func (s *gatewayService) streamEvaluations(w http.ResponseWriter, httpReq *http.Request) {
-	envAPIKey, req, err := s.checkStreamEvaluationsRequest(httpReq)
+	envAPIKey, req, err := s.checkStreamEvaluationsRequest(w, httpReq)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
 		return
@@ -66,12 +69,13 @@ func (s *gatewayService) streamEvaluations(w http.ResponseWriter, httpReq *http.
 }
 
 func (s *gatewayService) checkStreamEvaluationsRequest(
+	w http.ResponseWriter,
 	httpReq *http.Request,
 ) (*accountproto.EnvironmentAPIKey, *gatewayproto.StreamEvaluationsRequest, error) {
 	if httpReq.Method != http.MethodPost {
 		return nil, nil, errInvalidHttpMethod
 	}
-	rawBody, err := io.ReadAll(httpReq.Body)
+	rawBody, err := io.ReadAll(http.MaxBytesReader(w, httpReq.Body, sseMaxRequestBodyBytes))
 	if err != nil {
 		s.logger.Error(
 			"Failed to read stream evaluations request body",

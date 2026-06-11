@@ -167,7 +167,10 @@ func WithFurthestEventTimestamp(d time.Duration) Option {
 
 func WithSSEHeartbeatInterval(d time.Duration) Option {
 	return func(opts *options) {
-		opts.sseHeartbeatInterval = d
+		// Ignore non-positive intervals to keep the default; time.NewTicker panics on them.
+		if d > 0 {
+			opts.sseHeartbeatInterval = d
+		}
 	}
 }
 
