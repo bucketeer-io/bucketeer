@@ -1,7 +1,7 @@
 import { useScreen } from 'hooks';
 import { MembersFilters } from 'pages/members/types';
 import FilterNotificationPopup from './popup-filter';
-import FilterNotificationSlide from './side-filter';
+import FilterNotificationSlide from './slide-filter';
 
 export type FilterProps = {
   onSubmit: (v: Partial<MembersFilters>) => void;

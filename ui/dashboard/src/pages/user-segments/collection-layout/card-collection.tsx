@@ -6,7 +6,7 @@ import { UserSegmentsActionsType } from '../types';
 
 interface CardCollectionProps {
   data: UserSegment[];
-  getUploadingStatus: (segmet: UserSegment) => boolean | undefined;
+  getUploadingStatus: (segment: UserSegment) => boolean | undefined;
   onActions: (value: UserSegment, type: UserSegmentsActionsType) => void;
   emptyCollection?: ReactElement;
   isLoading?: boolean;
@@ -24,12 +24,12 @@ export const CardCollection = ({
   ) : (
     <div className="flex flex-col gap-3">
       {data.length
-        ? data.map(project => (
+        ? data.map(segment => (
             <UserSegmentCard
-              key={project.id}
+              key={segment.id}
               getUploadingStatus={getUploadingStatus}
               onActionHandler={onActions}
-              data={project}
+              data={segment}
             />
           ))
         : emptyCollection}
