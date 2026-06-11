@@ -36,7 +36,7 @@ const useFilterSegmentLogic = (
       setSelectedFilterType(undefined);
       setValueOption(undefined);
     }
-  }, [filters]);
+  }, [filters, filterStatusOptions, segmentStatusOptions]);
 
   return {
     selectedFilterType,

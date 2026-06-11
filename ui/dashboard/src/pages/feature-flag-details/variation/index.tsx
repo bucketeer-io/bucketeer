@@ -230,7 +230,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
             {waitingRunningRollouts.length > 0 && (
               <div className="flex items-center gap-x-3 p-4 rounded bg-accent-blue-50 border-l-4 border-accent-blue-500 text-accent-blue-500 typo-para-medium">
                 <Icon icon={IconInfoFilled} color="accent-blue-500" size="sm" />
-                <div className="inline items-center [&>a]:ml-1">
+                <div className="inline-flex [&>a]:ml-1">
                   <Trans
                     i18nKey={'form:variation.rollout-running-message'}
                     components={{

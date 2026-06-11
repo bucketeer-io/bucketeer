@@ -1,6 +1,7 @@
 import {
   IconArchiveOutlined,
-  IconEditOutlined
+  IconEditOutlined,
+  IconMoreVertOutlined
 } from 'react-icons-material-design';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
@@ -55,6 +56,7 @@ export const EnvironmentCard: React.FC<EnvCardProps> = ({
       >
         <Card.Action>
           <DisabledPopoverTooltip
+            icon={IconMoreVertOutlined}
             isNeedAdminAccess
             content={
               isDisabled ? t('table:disabled-archive-current-env') : undefined

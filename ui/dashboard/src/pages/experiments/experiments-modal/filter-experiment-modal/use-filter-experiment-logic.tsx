@@ -106,44 +106,39 @@ const useExperimentFilterLogic = (
       const filterOption = selectedFilters[filterIndex];
       const { value: filterType, filterValue } = filterOption;
       const isStatusOption = filterType === FilterTypes.STATUSES;
-      if (isStatusOption) {
-        if (Array.isArray(value) && isEmpty(value)) {
-          selectedFilters[filterIndex] = {
-            ...selectedFilters[filterIndex],
-            filterValue: []
-          };
-          return setSelectedFilters([...selectedFilters]);
-        }
-        const values = filterValue as string[];
-        const isExisted = values.find(item => item === value);
-        const newValue: string[] = isExisted
-          ? values.filter(item => item !== value)
-          : [...values, value as string];
-        selectedFilters[filterIndex] = {
-          ...selectedFilters[filterIndex],
-          filterValue: newValue
-        };
-        return setSelectedFilters([...selectedFilters]);
-      }
-      selectedFilters[filterIndex] = {
-        ...selectedFilters[filterIndex],
-        filterValue: value
-      };
-      setSelectedFilters([...selectedFilters]);
+
+      setSelectedFilters(prev =>
+        prev.map((item, i) => {
+          if (i !== filterIndex) return item;
+          if (isStatusOption) {
+            if (Array.isArray(value) && isEmpty(value)) {
+              return { ...item, filterValue: [] };
+            }
+            const values = filterValue as string[];
+            const isExisted = values.find(v => v === value);
+            const newValue: string[] = isExisted
+              ? values.filter(v => v !== value)
+              : [...values, value as string];
+            return { ...item, filterValue: newValue };
+          }
+          return { ...item, filterValue: value };
+        })
+      );
     },
     [selectedFilters]
   );
   const handleChangeOption = (value: DropdownValue, filterIndex: number) => {
-    {
-      const selectedOption = experimentFilterOptions.find(
-        item => item.value === value
+    const selectedOption = experimentFilterOptions.find(
+      item => item.value === value
+    );
+    if (selectedOption) {
+      const filterValue =
+        selectedOption.value === FilterTypes.STATUSES ? [] : '';
+      setSelectedFilters(prev =>
+        prev.map((item, i) =>
+          i === filterIndex ? { ...selectedOption, filterValue } : item
+        )
       );
-      if (selectedOption) {
-        const filterValue =
-          selectedOption.value === FilterTypes.STATUSES ? [] : '';
-        selectedFilters[filterIndex] = { ...selectedOption, filterValue };
-        setSelectedFilters([...selectedFilters]);
-      }
     }
   };
   const onConfirmHandler = () => {

@@ -222,6 +222,7 @@
   "see-more": "See more",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
+  "sort-by-placeholder": "Sort by",
   "sort-asc": "Ascending",
   "sort-desc": "Descending",
   "no-options-found": "No options found",

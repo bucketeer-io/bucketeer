@@ -22,12 +22,8 @@ export const CardCollection = ({
   ) : (
     <div className="flex flex-col gap-3">
       {data.length
-        ? data.map(experiment => (
-            <ApiCard
-              key={experiment.id}
-              onActions={onActions}
-              data={experiment}
-            />
+        ? data.map(apiKey => (
+            <ApiCard key={apiKey.id} onActions={onActions} data={apiKey} />
           ))
         : emptyCollection}
     </div>

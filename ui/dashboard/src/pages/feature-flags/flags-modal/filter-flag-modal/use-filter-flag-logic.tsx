@@ -90,7 +90,7 @@ const useFilterFlagLogic = (
 
       return booleanOptions;
     },
-    [accounts, tags]
+    [accounts, tags, flagStatusOptions, booleanOptions]
   );
 
   const handleSetFilterOnInit = useCallback(() => {
@@ -102,23 +102,26 @@ const useFilterFlagLogic = (
         enabled,
         tags,
         status,
-        hasFeatureFlagAsRule
+        hasFeatureFlagAsRule,
+        hasActiveAutoOps,
+        hasFinishedAutoOps
       } = filters || {};
       const filterTypeArr: FilterOption[] = [];
       const addFilterOption = (
-        index: number,
+        filterType: FilterTypes,
         value: FilterOption['filterValue']
       ) => {
-        if (!isEmpty(value)) {
-          const option = flagFilterOptions[index];
-
+        const option = flagFilterOptions.find(
+          item => item.value === filterType
+        );
+        if (option && !isEmpty(value)) {
           filterTypeArr.push({
             ...option,
             filterValue: [
               FilterTypes.TAGS,
               FilterTypes.MAINTAINER,
               FilterTypes.STATUS
-            ].includes(option.value as FilterTypes)
+            ].includes(filterType)
               ? value
               : value
                 ? 1
@@ -126,19 +129,21 @@ const useFilterFlagLogic = (
           });
         }
       };
-      addFilterOption(0, hasPrerequisites);
-      addFilterOption(1, hasFeatureFlagAsRule);
-      addFilterOption(2, hasExperiment);
-      addFilterOption(3, enabled);
-      addFilterOption(4, tags);
-      addFilterOption(5, status);
-      addFilterOption(6, maintainer);
+      addFilterOption(FilterTypes.HAS_PREREQUISITES, hasPrerequisites);
+      addFilterOption(FilterTypes.HAS_RULE, hasFeatureFlagAsRule);
+      addFilterOption(FilterTypes.HAS_ACTIVE_AUTO_OPS, hasActiveAutoOps);
+      addFilterOption(FilterTypes.HAS_FINISHED_AUTO_OPS, hasFinishedAutoOps);
+      addFilterOption(FilterTypes.HAS_EXPERIMENT, hasExperiment);
+      addFilterOption(FilterTypes.ENABLED, enabled);
+      addFilterOption(FilterTypes.TAGS, tags);
+      addFilterOption(FilterTypes.STATUS, status);
+      addFilterOption(FilterTypes.MAINTAINER, maintainer);
 
       setSelectedFilters(
         filterTypeArr.length ? filterTypeArr : [flagFilterOptions[0]]
       );
     }
-  }, [filters]);
+  }, [filters, flagFilterOptions]);
 
   const handleGetLabelFilterValue = useCallback(
     (filterOption?: FilterOption) => {
@@ -163,7 +168,7 @@ const useFilterFlagLogic = (
       }
       return '';
     },
-    [tags]
+    [tags, flagStatusOptions, booleanOptions]
   );
 
   const handleChangeFilterValue = useCallback(
@@ -171,30 +176,24 @@ const useFilterFlagLogic = (
       const filterOption = selectedFilters[filterIndex];
       const { value: filterType, filterValue } = filterOption;
       const isTagOption = filterType === FilterTypes.TAGS;
-      if (isTagOption) {
-        const values = filterValue as string[];
-        if (Array.isArray(value) && isEmpty(value)) {
-          selectedFilters[filterIndex] = {
-            ...selectedFilters[filterIndex],
-            filterValue: value
-          };
-          return setSelectedFilters([...selectedFilters]);
-        }
-        const isExisted = values.find(item => item === value);
-        const newValue: string[] = isExisted
-          ? values.filter(item => item !== value)
-          : [...values, value as string];
-        selectedFilters[filterIndex] = {
-          ...selectedFilters[filterIndex],
-          filterValue: newValue
-        };
-        return setSelectedFilters([...selectedFilters]);
-      }
-      selectedFilters[filterIndex] = {
-        ...selectedFilters[filterIndex],
-        filterValue: value
-      };
-      setSelectedFilters([...selectedFilters]);
+
+      setSelectedFilters(prev =>
+        prev.map((item, i) => {
+          if (i !== filterIndex) return item;
+          if (isTagOption) {
+            const values = filterValue as string[];
+            if (Array.isArray(value) && isEmpty(value)) {
+              return { ...item, filterValue: value };
+            }
+            const isExisted = values.find(v => v === value);
+            const newValue: string[] = isExisted
+              ? values.filter(v => v !== value)
+              : [...values, value as string];
+            return { ...item, filterValue: newValue };
+          }
+          return { ...item, filterValue: value };
+        })
+      );
     },
     [selectedFilters]
   );
@@ -203,12 +202,11 @@ const useFilterFlagLogic = (
     const selectedOption = flagFilterOptions.find(item => item.value === value);
     if (selectedOption) {
       const filterValue = selectedOption.value === FilterTypes.TAGS ? [] : '';
-
-      selectedFilters[filterIndex] = {
-        ...selectedOption,
-        filterValue
-      };
-      setSelectedFilters([...selectedFilters]);
+      setSelectedFilters(prev =>
+        prev.map((item, i) =>
+          i === filterIndex ? { ...selectedOption, filterValue } : item
+        )
+      );
     }
   };
 
@@ -220,7 +218,9 @@ const useFilterFlagLogic = (
       enabled: undefined,
       tags: undefined,
       status: undefined,
-      hasFeatureFlagAsRule: undefined
+      hasFeatureFlagAsRule: undefined,
+      hasActiveAutoOps: undefined,
+      hasFinishedAutoOps: undefined
     };
 
     const newFilters = {};
@@ -242,7 +242,7 @@ const useFilterFlagLogic = (
       ...defaultFilters,
       ...newFilters
     });
-  }, [selectedFilters]);
+  }, [selectedFilters, onSubmit]);
 
   useEffect(() => {
     handleSetFilterOnInit();
