@@ -49,7 +49,7 @@ const PageContent = ({
 
   const defaultFilters = {
     page: 1,
-    orderBy: 'NAME',
+    orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
     ...searchFilters
   } as UserSegmentsFilters;

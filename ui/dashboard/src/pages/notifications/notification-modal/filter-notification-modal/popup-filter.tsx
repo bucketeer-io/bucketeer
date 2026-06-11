@@ -83,11 +83,11 @@ const FilterNotificationPopup = ({
                   );
                   const filterValue =
                     selected?.value === FilterTypes.ENVIRONMENT_IDs ? [] : '';
-                  selectedFilters[filterIndex] = {
-                    ...selected!,
-                    filterValue
-                  };
-                  setSelectedFilters([...selectedFilters]);
+                  setSelectedFilters(prev =>
+                    prev.map((item, i) =>
+                      i === filterIndex ? { ...selected!, filterValue } : item
+                    )
+                  );
                 }}
                 placeholder={t(`select-filter`)}
                 className="w-full truncate"

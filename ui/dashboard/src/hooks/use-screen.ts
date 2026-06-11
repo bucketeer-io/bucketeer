@@ -1,7 +1,7 @@
 import { useMediaQuery } from 'react-responsive';
 
 export const useScreen = () => {
-  // true when width >= 600px (tablet/desktop); use !fromMobileScreen to detect mobile
+  // true when width >= 600px (tablet/desktop, matches Tailwind sm); use !fromMobileScreen to detect mobile (<600px)
   const fromMobileScreen = useMediaQuery({ minWidth: 600 });
   const fromTabletScreen = useMediaQuery({ minWidth: 900 });
   const fromXLScreen = useMediaQuery({ minWidth: 1440 });
