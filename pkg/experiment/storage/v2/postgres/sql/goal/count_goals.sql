@@ -6,7 +6,7 @@ SELECT
                 FROM experiment
                 WHERE
                     experiment.environment_id = goal.environment_id AND
-                    experiment.goal_ids::jsonb @> to_jsonb(goal.id)
+                    jsonb_exists(experiment.goal_ids, goal.id)
             ) %s
         END
     )

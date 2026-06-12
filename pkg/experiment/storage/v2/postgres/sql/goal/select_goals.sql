@@ -14,7 +14,7 @@ SELECT * FROM (
                 FROM experiment ex1
                 WHERE
                     ex1.environment_id = goal.environment_id AND
-                    ex1.goal_ids::jsonb @> to_jsonb(goal.id)
+                    jsonb_exists(ex1.goal_ids, goal.id)
             ) > 0 THEN TRUE ELSE FALSE
         END AS is_in_use_status,
         (
@@ -33,7 +33,7 @@ SELECT * FROM (
                 AND ex2.environment_id = ft.environment_id
             WHERE
                 ex2.environment_id = goal.environment_id AND
-                ex2.goal_ids::jsonb @> to_jsonb(goal.id)
+                jsonb_exists(ex2.goal_ids, goal.id)
         ) AS experiments
     FROM
         goal

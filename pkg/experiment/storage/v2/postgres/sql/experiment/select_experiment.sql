@@ -24,7 +24,7 @@ SELECT
         FROM
             goal
         WHERE
-            ex.goal_ids::jsonb @> to_jsonb(goal.id) AND
+            jsonb_exists(ex.goal_ids, goal.id) AND
             goal.environment_id = ex.environment_id
     ) AS goals
 FROM
