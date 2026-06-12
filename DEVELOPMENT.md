@@ -227,7 +227,7 @@ E2E API calls authenticate as four accounts that exercise the real RBAC path:
 | Account | Organization (role) | Environment role | Token |
 |---------|---------------------|------------------|-------|
 | `sysadmin@bucketeer.io` | `e2e` (`OWNER`) | — | system admin |
-| `orgadmin@bucketeer.io` | `default` (`ADMIN`) + `e2e` (`ADMIN`) | — | org admin |
+| `orgowner@bucketeer.io` | `default` (`OWNER`) + `e2e` (`OWNER`) | — | org owner (default + e2e orgs) |
 | `envwrite@bucketeer.io` | `default` (`MEMBER`) | `EDITOR` on the `e2e` environment | env editor |
 | `envread@bucketeer.io` | `default` (`MEMBER`) | `VIEWER` on the `e2e` environment | env viewer |
 
@@ -241,7 +241,7 @@ make create-dev-container-e2e-accounts
 
 The target connects to the Minikube MySQL pod, upserts into `account_v2`
 with `INSERT ... ON DUPLICATE KEY UPDATE`, and writes the four access tokens
-to `tools/dev/cert/{sys-admin,org-admin,env-editor,env-viewer}-token`, so it
+to `tools/dev/cert/{sys-admin,org-owner-default,org-owner-e2e,env-editor,env-viewer}-token`, so it
 is safe to run repeatedly (re-run it after `make delete-dev-container-mysql-data`
 or against a cluster where the init SQL never ran).
 
@@ -283,7 +283,8 @@ GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 SYS_ADMIN_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/sys-admin-token \
-ORG_ADMIN_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/org-admin-token \
+ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/org-owner-default-token \
+ORG_OWNER_E2E_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/org-owner-e2e-token \
 ENV_EDITOR_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/env-editor-token \
 ENV_VIEWER_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/env-viewer-token \
 ENVIRONMENT_ID=e2e \
@@ -306,7 +307,7 @@ When using Docker Compose instead of Minikube, you can run E2E tests with modifi
 ### Bootstrap the e2e accounts (required before running E2E)
 
 Bootstrap the four e2e accounts (`sysadmin@bucketeer.io`,
-`orgadmin@bucketeer.io`, `envwrite@bucketeer.io`, `envread@bucketeer.io`) and
+`orgowner@bucketeer.io`, `envwrite@bucketeer.io`, `envread@bucketeer.io`) and
 their access tokens before running E2E. `make e2e` no longer does this for you;
 run it explicitly:
 
@@ -317,7 +318,7 @@ make docker-compose-create-e2e-accounts
 The target connects to the Docker Compose MySQL on `localhost:3306`, upserts
 into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE`, and writes the
 four access tokens to
-`tools/dev/cert/{sys-admin,org-admin,env-editor,env-viewer}-token`, so it is
+`tools/dev/cert/{sys-admin,org-owner-default,org-owner-e2e,env-editor,env-viewer}-token`, so it is
 safe to run repeatedly (re-run it after `make docker-compose-delete-data` or
 any time the `account_v2` rows are wiped).
 See [`hack/create-e2e-accounts/README.md`](./hack/create-e2e-accounts/README.md)
@@ -366,7 +367,8 @@ GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=$PWD/tools/dev/cert/api_key_server \
 SYS_ADMIN_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/sys-admin-token \
-ORG_ADMIN_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/org-admin-token \
+ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/org-owner-default-token \
+ORG_OWNER_E2E_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/org-owner-e2e-token \
 ENV_EDITOR_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/env-editor-token \
 ENV_VIEWER_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/env-viewer-token \
 ENVIRONMENT_ID=e2e \

@@ -34,21 +34,22 @@ const (
 
 var (
 	// FIXME: To avoid compiling the test many times, webGatewayAddr, webGatewayPort & apiKey has been also added here to prevent from getting: "flag provided but not defined" error during the test. These 3 are being use in the Gateway test
-	webGatewayAddr           = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort           = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert           = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath               = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath         = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr              = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort              = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert              = flag.String("gateway-cert", "", "Gateway crt file")
-	sysAdminAccessTokenPath  = flag.String("sys-admin-access-token", "", "System admin access token path")
-	orgAdminAccessTokenPath  = flag.String("org-admin-access-token", "", "Organization admin access token path")
-	envEditorAccessTokenPath = flag.String("env-editor-access-token", "", "Environment editor access token path")
-	envViewerAccessTokenPath = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
-	environmentID            = flag.String("environment-id", "", "Environment id")
-	organizationID           = flag.String("organization-id", "", "Organization ID")
-	testID                   = flag.String("test-id", "", "test ID")
+	webGatewayAddr                 = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort                 = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert                 = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath                     = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath               = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr                    = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort                    = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert                    = flag.String("gateway-cert", "", "Gateway crt file")
+	sysAdminAccessTokenPath        = flag.String("sys-admin-access-token", "", "System admin access token path")
+	orgOwnerDefaultAccessTokenPath = flag.String("org-owner-default-access-token", "", "Organization admin access token path")
+	orgOwnerE2EAccessTokenPath     = flag.String("org-owner-e2e-access-token", "", "Organization admin (e2e org) access token path")
+	envEditorAccessTokenPath       = flag.String("env-editor-access-token", "", "Environment editor access token path")
+	envViewerAccessTokenPath       = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
+	environmentID                  = flag.String("environment-id", "", "Environment id")
+	organizationID                 = flag.String("organization-id", "", "Organization ID")
+	testID                         = flag.String("test-id", "", "test ID")
 )
 
 const (
@@ -58,7 +59,7 @@ const (
 func TestGetEnvironmentV2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
 	id := getEnvironmentID(t)
 	resp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
@@ -76,7 +77,7 @@ func TestGetEnvironmentV2(t *testing.T) {
 func TestListEnvironmentsV2ByProject(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{ProjectId: defaultProjectID})
 	if err != nil {
@@ -95,7 +96,7 @@ func TestListEnvironmentsV2ByProject(t *testing.T) {
 func TestListEnvironmentsV2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	pageSize := int64(1)
 	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{PageSize: pageSize})
@@ -111,7 +112,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 func TestUpdateEnvironmentV2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
 	id := getEnvironmentID(t)
 	newDesc := fmt.Sprintf("This environment is for local development (Updated at %d)", time.Now().Unix())
@@ -145,9 +146,9 @@ func getEnvironmentID(t *testing.T) string {
 	return *environmentID
 }
 
-func newEnvironmentClient(t *testing.T) environmentclient.Client {
+func newEnvironmentClient(t *testing.T, tokenPath string) environmentclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*orgAdminAccessTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(tokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}

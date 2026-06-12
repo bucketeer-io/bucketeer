@@ -43,27 +43,28 @@ const (
 )
 
 var (
-	webGatewayAddr           = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort           = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert           = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath               = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath         = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr              = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort              = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert              = flag.String("gateway-cert", "", "Gateway crt file")
-	sysAdminAccessTokenPath  = flag.String("sys-admin-access-token", "", "System admin access token path")
-	orgAdminAccessTokenPath  = flag.String("org-admin-access-token", "", "Organization admin access token path")
-	envEditorAccessTokenPath = flag.String("env-editor-access-token", "", "Environment editor access token path")
-	envViewerAccessTokenPath = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
-	environmentID            = flag.String("environment-id", "", "Environment id")
-	organizationID           = flag.String("organization-id", "", "Organization ID")
-	testID                   = flag.String("test-id", "", "test ID")
+	webGatewayAddr                 = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort                 = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert                 = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath                     = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath               = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr                    = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort                    = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert                    = flag.String("gateway-cert", "", "Gateway crt file")
+	sysAdminAccessTokenPath        = flag.String("sys-admin-access-token", "", "System admin access token path")
+	orgOwnerDefaultAccessTokenPath = flag.String("org-owner-default-access-token", "", "Organization admin access token path")
+	orgOwnerE2EAccessTokenPath     = flag.String("org-owner-e2e-access-token", "", "Organization admin (e2e org) access token path")
+	envEditorAccessTokenPath       = flag.String("env-editor-access-token", "", "Environment editor access token path")
+	envViewerAccessTokenPath       = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
+	environmentID                  = flag.String("environment-id", "", "Environment id")
+	organizationID                 = flag.String("organization-id", "", "Organization ID")
+	testID                         = flag.String("test-id", "", "test ID")
 )
 
 func TestGetAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -104,7 +105,7 @@ func TestGetAccount(t *testing.T) {
 func TestCreateAccountV2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
@@ -178,7 +179,7 @@ func TestCreateAccountV2(t *testing.T) {
 func TestCreateAccountV2Admin(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
@@ -222,7 +223,7 @@ func TestCreateAccountV2Admin(t *testing.T) {
 func TestListAccounts(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -263,7 +264,7 @@ func TestUpdateAccountThenDeleteAccount(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -390,7 +391,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	// create account
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
@@ -464,7 +465,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 func TestEnableAndDisableAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -529,7 +530,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 func TestDeleteAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -575,348 +576,9 @@ func TestDeleteAccount(t *testing.T) {
 	}
 }
 
-func TestCreateSearchFilter(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		Tags:             []string{"tag"},
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
-
-	requestSearchFilter := &accountproto.SearchFilter{
-		Name:             "name",
-		Query:            "query",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             requestSearchFilter.Name,
-			Query:            requestSearchFilter.Query,
-			FilterTargetType: requestSearchFilter.FilterTargetType,
-			EnvironmentId:    requestSearchFilter.EnvironmentId,
-			DefaultFilter:    requestSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(account.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	if account.Account.SearchFilters[0].Name != requestSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", requestSearchFilter.Name, account.Account.SearchFilters[0].Name)
-	}
-	if account.Account.SearchFilters[0].Query != requestSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, account.Account.SearchFilters[0].Query)
-	}
-	if account.Account.SearchFilters[0].FilterTargetType != requestSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
-	}
-	if account.Account.SearchFilters[0].DefaultFilter != requestSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
-	}
-}
-
-func TestUpdateSearchFilter(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		Tags:             []string{"tag"},
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
-	initialSearchFilter := &accountproto.SearchFilter{
-		Name:             "name",
-		Query:            "query",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initialSearchFilter.Name,
-			Query:            initialSearchFilter.Query,
-			FilterTargetType: initialSearchFilter.FilterTargetType,
-			EnvironmentId:    initialSearchFilter.EnvironmentId,
-			DefaultFilter:    initialSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(account.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	if account.Account.SearchFilters[0].Name != initialSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, account.Account.SearchFilters[0].Name)
-	}
-	if account.Account.SearchFilters[0].Query != initialSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, account.Account.SearchFilters[0].Query)
-	}
-	if account.Account.SearchFilters[0].FilterTargetType != initialSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
-	}
-	if account.Account.SearchFilters[0].DefaultFilter != initialSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
-	}
-
-	requestSearchFilter := &accountproto.SearchFilter{
-		Name:             "new-name",
-		Query:            "new-query",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    true,
-		EnvironmentId:    "environment-id",
-	}
-
-	_, err = c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		EnvironmentId:  requestSearchFilter.EnvironmentId,
-		ChangeNameCommand: &accountproto.ChangeSearchFilterNameCommand{
-			Id:   account.Account.SearchFilters[0].Id,
-			Name: requestSearchFilter.Name,
-		},
-		ChangeQueryCommand: &accountproto.ChangeSearchFilterQueryCommand{
-			Id:    account.Account.SearchFilters[0].Id,
-			Query: requestSearchFilter.Query,
-		},
-		ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
-			Id:            account.Account.SearchFilters[0].Id,
-			DefaultFilter: requestSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	updateAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(updateAccount.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	updateSearchFilter := updateAccount.Account.SearchFilters[0]
-	if updateSearchFilter.Name != requestSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, requestSearchFilter.Name)
-	}
-	if updateSearchFilter.Query != requestSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, requestSearchFilter.Query)
-	}
-	if updateSearchFilter.FilterTargetType != requestSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, requestSearchFilter.FilterTargetType)
-	}
-	if updateSearchFilter.DefaultFilter != requestSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, requestSearchFilter.DefaultFilter)
-	}
-}
-
-func TestDeleteSearchFilter(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		Tags:             []string{"tag"},
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
-
-	initial1SearchFilter := &accountproto.SearchFilter{
-		Name:             "name1",
-		Query:            "query1",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initial1SearchFilter.Name,
-			Query:            initial1SearchFilter.Query,
-			FilterTargetType: initial1SearchFilter.FilterTargetType,
-			EnvironmentId:    initial1SearchFilter.EnvironmentId,
-			DefaultFilter:    initial1SearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	initial2SearchFilter := &accountproto.SearchFilter{
-		Name:             "name2",
-		Query:            "query2",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initial2SearchFilter.Name,
-			Query:            initial2SearchFilter.Query,
-			FilterTargetType: initial2SearchFilter.FilterTargetType,
-			EnvironmentId:    initial2SearchFilter.EnvironmentId,
-			DefaultFilter:    initial2SearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	updatedAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(updatedAccount.Account.SearchFilters) != 2 {
-		t.Fatalf("different count of filters, expected: 2, actual: %v", len(updatedAccount.Account.SearchFilters))
-	}
-
-	deleteFilterID := updatedAccount.Account.SearchFilters[0].Id
-	_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.DeleteSearchFilterCommand{
-			Id: deleteFilterID,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	filterRemovalAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(filterRemovalAccount.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(filterRemovalAccount.Account.SearchFilters))
-	}
-	for _, f := range filterRemovalAccount.Account.SearchFilters {
-		if f.Id == deleteFilterID {
-			t.Fatalf("search filter is not deleted")
-		}
-	}
-}
-
-func newAccountClient(t *testing.T) accountclient.Client {
+func newAccountClient(t *testing.T, token *string) accountclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*orgAdminAccessTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*token)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}

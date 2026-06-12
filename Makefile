@@ -34,11 +34,12 @@ LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 # token. All paths can be overridden by the caller (e.g. CI).
 CERT_DIR ?= tools/dev/cert
 SYS_ADMIN_EMAIL ?= sysadmin@bucketeer.io
-ORG_ADMIN_EMAIL ?= orgadmin@bucketeer.io
+ORG_OWNER_EMAIL ?= orgowner@bucketeer.io
 ENV_WRITE_EMAIL ?= envwrite@bucketeer.io
 ENV_READ_EMAIL ?= envread@bucketeer.io
 SYS_ADMIN_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/sys-admin-token
-ORG_ADMIN_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/org-admin-token
+ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/org-owner-default-token
+ORG_OWNER_E2E_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/org-owner-e2e-token
 ENV_EDITOR_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/env-editor-token
 ENV_VIEWER_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/env-viewer-token
 
@@ -266,7 +267,7 @@ endif
 		--mysql-port=${MYSQL_PORT} \
 		--mysql-db-name=${MYSQL_DB_NAME} \
 		--sys-admin-email=${SYS_ADMIN_EMAIL} \
-		--org-admin-email=${ORG_ADMIN_EMAIL} \
+		--org-owner-email=${ORG_OWNER_EMAIL} \
 		--env-write-email=${ENV_WRITE_EMAIL} \
 		--env-read-email=${ENV_READ_EMAIL} \
 		--default-organization-id=${DEFAULT_ORGANIZATION_ID} \
@@ -275,7 +276,8 @@ endif
 		--oauth-key=${OAUTH_KEY_PATH} \
 		--issuer=${ISSUER} \
 		--sys-admin-token-output=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
-		--org-admin-token-output=${ORG_ADMIN_ACCESS_TOKEN_PATH} \
+		--org-owner-default-token-output=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
+		--org-owner-e2e-token-output=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \
 		--env-write-token-output=${ENV_EDITOR_ACCESS_TOKEN_PATH} \
 		--env-read-token-output=${ENV_VIEWER_ACCESS_TOKEN_PATH} \
 		--no-profile \
@@ -358,7 +360,8 @@ e2e-l4:
 		-gateway-port=9000 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
 		-sys-admin-access-token=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
-		-org-admin-access-token=${ORG_ADMIN_ACCESS_TOKEN_PATH} \
+		-org-owner-default-access-token=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
+		-org-owner-e2e-access-token=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \
 		-env-editor-access-token=${ENV_EDITOR_ACCESS_TOKEN_PATH} \
 		-env-viewer-access-token=${ENV_VIEWER_ACCESS_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \
@@ -368,7 +371,7 @@ e2e-l4:
 e2e:
 	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
 		--format pkgname \
-		-- -v ./test/e2e/... --- -args \
+		-- -v ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
@@ -378,7 +381,8 @@ e2e:
 		-gateway-port=443 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
 		-sys-admin-access-token=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
-		-org-admin-access-token=${ORG_ADMIN_ACCESS_TOKEN_PATH} \
+		-org-owner-default-access-token=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
+		-org-owner-e2e-access-token=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \
 		-env-editor-access-token=${ENV_EDITOR_ACCESS_TOKEN_PATH} \
 		-env-viewer-access-token=${ENV_VIEWER_ACCESS_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \

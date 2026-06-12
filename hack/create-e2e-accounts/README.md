@@ -7,7 +7,7 @@ an access token for each of them. It upserts rows directly into the
 | Account | Organization (role) | Environment role | Access token |
 |---------|---------------------|------------------|--------------|
 | `--sys-admin-email` | e2e org (`OWNER`) | — | `--sys-admin-token-output` (system admin) |
-| `--org-admin-email` | default org (`ADMIN`) + e2e org (`ADMIN`) | — (org `ADMIN` implies access to every environment in the org) | `--org-admin-token-output` |
+| `--org-owner-email` | default org (`OWNER`) + e2e org (`OWNER`) | — (org `OWNER` implies access to every environment in the org) | `--org-owner-default-token-output` (scoped to default org) + `--org-owner-e2e-token-output` (scoped to e2e org) |
 | `--env-write-email` | default org (`MEMBER`) | `EDITOR` on the e2e environment (`--e2e-environment-id`) | `--env-write-token-output` |
 | `--env-read-email` | default org (`MEMBER`) | `VIEWER` on the e2e environment (`--e2e-environment-id`) | `--env-read-token-output` |
 
@@ -22,8 +22,8 @@ so re-running against a DB that already has the rows is safe.
 The system admin token is scoped to the e2e organization and is minted with
 `is_system_admin=true`, so it can call system-admin-only APIs and read across
 organizations. The other three tokens are scoped to the default organization
-and are **not** system admins: the org admin relies on its organization
-`ADMIN` role and the editor/viewer rely on their environment roles, so they
+and are **not** system admins: the org owner relies on its organization
+`OWNER` role and the editor/viewer rely on their environment roles, so they
 exercise the real RBAC path. None of the tokens is a service token, and all
 are minted with a far-future expiry.
 
@@ -37,7 +37,7 @@ go run ./hack/create-e2e-accounts create \
   --mysql-port=<MYSQL_PORT> \
   --mysql-db-name=<MYSQL_DB_NAME> \
   --sys-admin-email=<SYS_ADMIN_EMAIL> \
-  --org-admin-email=<ORG_ADMIN_EMAIL> \
+  --org-owner-email=<ORG_OWNER_EMAIL> \
   --env-write-email=<ENV_WRITE_EMAIL> \
   --env-read-email=<ENV_READ_EMAIL> \
   --default-organization-id=<DEFAULT_ORGANIZATION_ID> \
@@ -46,7 +46,8 @@ go run ./hack/create-e2e-accounts create \
   --oauth-key=<OAUTH_PRIVATE_KEY_PATH> \
   --issuer=<ISSUER> \
   --sys-admin-token-output=<SYS_ADMIN_TOKEN_PATH> \
-  --org-admin-token-output=<ORG_ADMIN_TOKEN_PATH> \
+  --org-owner-default-token-output=<ORG_OWNER_DEFAULT_TOKEN_PATH> \
+  --org-owner-e2e-token-output=<ORG_OWNER_E2E_TOKEN_PATH> \
   --env-write-token-output=<ENV_EDITOR_TOKEN_PATH> \
   --env-read-token-output=<ENV_VIEWER_TOKEN_PATH> \
   --no-profile \
@@ -63,17 +64,18 @@ go run ./hack/create-e2e-accounts create \
 | `--mysql-port` | MySQL port. |
 | `--mysql-db-name` | MySQL database name. |
 | `--sys-admin-email` | Email of the system admin account (`OWNER` of the e2e org; its token is a system admin). |
-| `--org-admin-email` | Email of the organization admin account (`ADMIN` in the default and e2e orgs). |
+| `--org-owner-email` | Email of the organization owner account (`OWNER` in the default and e2e orgs). |
 | `--env-write-email` | Email of the environment editor account (`MEMBER` of default org, `EDITOR` on the e2e environment). |
 | `--env-read-email` | Email of the environment viewer account (`MEMBER` of default org, `VIEWER` on the e2e environment). |
 | `--default-organization-id` | ID of the default organization that owns the e2e environment. |
-| `--e2e-organization-id` | ID of the e2e organization where the org admin account also gets `ADMIN`. |
+| `--e2e-organization-id` | ID of the e2e organization where the org owner account also gets `OWNER`. |
 | `--e2e-environment-id` | ID of the e2e environment used for the editor/viewer environment roles. |
 | `--oauth-key` | Path to the OAuth RSA private key used to sign the access tokens. |
 | `--issuer` | Issuer URL set in the generated access tokens (must match the gateway config). |
 | `--audience` | OAuth audience set in the generated access tokens (default `bucketeer`). |
 | `--sys-admin-token-output` | Path of the file to write the system admin access token. |
-| `--org-admin-token-output` | Path of the file to write the org admin access token. |
+| `--org-owner-default-token-output` | Path of the file to write the org owner access token (scoped to the default organization). |
+| `--org-owner-e2e-token-output` | Path of the file to write the org owner access token scoped to the e2e organization. |
 | `--env-write-token-output` | Path of the file to write the environment editor access token. |
 | `--env-read-token-output` | Path of the file to write the environment viewer access token. |
 

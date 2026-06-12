@@ -34,7 +34,7 @@ const (
 func TestGetProject(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
 	id := defaultProjectID
 	resp, err := c.GetProject(ctx, &environmentproto.GetProjectRequest{Id: id})
@@ -49,7 +49,7 @@ func TestGetProject(t *testing.T) {
 func TestListProjects(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	pageSize := int64(1)
 	resp, err := c.ListProjects(ctx, &environmentproto.ListProjectsRequest{PageSize: pageSize})
@@ -65,7 +65,7 @@ func TestListProjects(t *testing.T) {
 func TestListProjectsRequestOrganizations(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	pageSize := int64(2)
 
@@ -100,7 +100,7 @@ func TestListProjectsRequestOrganizations(t *testing.T) {
 func TestUpdateProject(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
 	id := defaultProjectID
 	newDesc := fmt.Sprintf("Description %v", time.Now().Unix())

@@ -46,7 +46,7 @@ const (
 
 	// Org roles >= ADMIN already grant access to every environment in the org
 	// (see pkg/account/domain/account.go: ChangeOrganizationRole), so the
-	// org-admin rows carry an empty environment_roles array.
+	// org-owner rows carry an empty environment_roles array.
 	emptyEnvironmentRolesJSON = "[]"
 
 	// Access tokens are minted with a far-future expiry so a single bootstrap
@@ -79,31 +79,32 @@ var upsertAccountV2SQL string
 
 type command struct {
 	*kingpin.CmdClause
-	mysqlUser             *string
-	mysqlPass             *string
-	mysqlHost             *string
-	mysqlPort             *int
-	mysqlDBName           *string
-	sysAdminEmail         *string
-	orgAdminEmail         *string
-	envWriteEmail         *string
-	envReadEmail          *string
-	defaultOrganizationID *string
-	e2eOrganizationID     *string
-	e2eEnvironmentID      *string
-	oauthKeyPath          *string
-	issuer                *string
-	audience              *string
-	sysAdminTokenOutput   *string
-	orgAdminTokenOutput   *string
-	envWriteTokenOutput   *string
-	envReadTokenOutput    *string
+	mysqlUser                  *string
+	mysqlPass                  *string
+	mysqlHost                  *string
+	mysqlPort                  *int
+	mysqlDBName                *string
+	sysAdminEmail              *string
+	orgOwnerEmail              *string
+	envWriteEmail              *string
+	envReadEmail               *string
+	defaultOrganizationID      *string
+	e2eOrganizationID          *string
+	e2eEnvironmentID           *string
+	oauthKeyPath               *string
+	issuer                     *string
+	audience                   *string
+	sysAdminTokenOutput        *string
+	orgOwnerDefaultTokenOutput *string
+	orgOwnerE2ETokenOutput     *string
+	envWriteTokenOutput        *string
+	envReadTokenOutput         *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	cmd := p.Command(
 		"create",
-		"Bootstrap the local/e2e accounts (system admin, org admin, environment "+
+		"Bootstrap the local/e2e accounts (system admin, org owner, environment "+
 			"editor, environment viewer) and generate their access tokens",
 	)
 	command := &command{
@@ -117,9 +118,9 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 			"sys-admin-email",
 			"Email of the system admin account (OWNER of the e2e/system-admin organization; its token is a system admin).",
 		).Required().String(),
-		orgAdminEmail: cmd.Flag(
-			"org-admin-email",
-			"Email of the organization admin account (ADMIN in both the default and e2e organizations).",
+		orgOwnerEmail: cmd.Flag(
+			"org-owner-email",
+			"Email of the organization owner account (OWNER in both the default and e2e organizations).",
 		).Required().String(),
 		envWriteEmail: cmd.Flag(
 			"env-write-email",
@@ -135,7 +136,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		).Required().String(),
 		e2eOrganizationID: cmd.Flag(
 			"e2e-organization-id",
-			"ID of the e2e organization where the org admin account also gets ADMIN role.",
+			"ID of the e2e organization where the org owner account also gets OWNER role.",
 		).Required().String(),
 		e2eEnvironmentID: cmd.Flag(
 			"e2e-environment-id",
@@ -157,9 +158,13 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 			"sys-admin-token-output",
 			"Path of the file to write the system admin access token.",
 		).Required().String(),
-		orgAdminTokenOutput: cmd.Flag(
-			"org-admin-token-output",
-			"Path of the file to write the org admin access token.",
+		orgOwnerDefaultTokenOutput: cmd.Flag(
+			"org-owner-default-token-output",
+			"Path of the file to write the org owner access token (scoped to the default organization).",
+		).Required().String(),
+		orgOwnerE2ETokenOutput: cmd.Flag(
+			"org-owner-e2e-token-output",
+			"Path of the file to write the org owner access token scoped to the e2e organization.",
 		).Required().String(),
 		envWriteTokenOutput: cmd.Flag(
 			"env-write-token-output",
@@ -204,20 +209,20 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		return err
 	}
 
-	// Org admin: ADMIN of the default org (which owns the e2e environment) and
-	// ADMIN of the e2e org. Org role >= ADMIN implies access to every
+	// Org owner: OWNER of the default org (which owns the e2e environment) and
+	// OWNER of the e2e org. Org role >= ADMIN implies access to every
 	// environment in the org, so environment_roles stays empty.
 	if err := c.upsertAccount(
 		ctx, client, logger,
-		*c.orgAdminEmail, *c.defaultOrganizationID,
-		roleOrganizationADMIN, emptyEnvironmentRolesJSON, now,
+		*c.orgOwnerEmail, *c.defaultOrganizationID,
+		roleOrganizationOWNER, emptyEnvironmentRolesJSON, now,
 	); err != nil {
 		return err
 	}
 	if err := c.upsertAccount(
 		ctx, client, logger,
-		*c.orgAdminEmail, *c.e2eOrganizationID,
-		roleOrganizationADMIN, emptyEnvironmentRolesJSON, now,
+		*c.orgOwnerEmail, *c.e2eOrganizationID,
+		roleOrganizationOWNER, emptyEnvironmentRolesJSON, now,
 	); err != nil {
 		return err
 	}
@@ -242,8 +247,8 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 
 	// Mint an access token per account. The system admin token is scoped to the
 	// e2e (system-admin) org and carries is_system_admin=true. The other three
-	// are scoped to the default org and are NOT system admins — the org admin
-	// relies on its org ADMIN role and the editor/viewer rely on their
+	// are scoped to the default org and are NOT system admins — the org owner
+	// relies on its org OWNER role and the editor/viewer rely on their
 	// environment roles, exercising the real RBAC path.
 	signer, err := token.NewSigner(*c.oauthKeyPath)
 	if err != nil {
@@ -257,7 +262,8 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		isSystemAdmin  bool
 	}{
 		{*c.sysAdminEmail, *c.sysAdminTokenOutput, *c.e2eOrganizationID, true},
-		{*c.orgAdminEmail, *c.orgAdminTokenOutput, *c.defaultOrganizationID, false},
+		{*c.orgOwnerEmail, *c.orgOwnerDefaultTokenOutput, *c.defaultOrganizationID, false},
+		{*c.orgOwnerEmail, *c.orgOwnerE2ETokenOutput, *c.e2eOrganizationID, false},
 		{*c.envWriteEmail, *c.envWriteTokenOutput, *c.defaultOrganizationID, false},
 		{*c.envReadEmail, *c.envReadTokenOutput, *c.defaultOrganizationID, false},
 	} {
@@ -269,7 +275,7 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 	logger.Info(
 		"Accounts and access tokens are ready",
 		zap.String("sysAdminEmail", *c.sysAdminEmail),
-		zap.String("orgAdminEmail", *c.orgAdminEmail),
+		zap.String("orgOwnerEmail", *c.orgOwnerEmail),
 		zap.String("envWriteEmail", *c.envWriteEmail),
 		zap.String("envReadEmail", *c.envReadEmail),
 		zap.String("defaultOrganizationId", *c.defaultOrganizationID),

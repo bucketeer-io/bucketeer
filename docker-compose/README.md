@@ -306,7 +306,7 @@ E2E tests authenticate as four accounts that exercise the real RBAC path:
 | Account | Organization (role) | Environment role | Token |
 |---------|---------------------|------------------|-------|
 | `sysadmin@bucketeer.io` | `e2e` (`OWNER`) | — | system admin |
-| `orgadmin@bucketeer.io` | `default` (`ADMIN`) + `e2e` (`ADMIN`) | — | org admin |
+| `orgowner@bucketeer.io` | `default` (`OWNER`) + `e2e` (`OWNER`) | — | org owner |
 | `envwrite@bucketeer.io` | `default` (`MEMBER`) | `EDITOR` on the `e2e` environment | env editor |
 | `envread@bucketeer.io` | `default` (`MEMBER`) | `VIEWER` on the `e2e` environment | env viewer |
 

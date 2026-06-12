@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Permission tests for the four e2e accounts bootstrapped by
-// hack/create-e2e-accounts (system admin, org admin, environment editor,
+// hack/create-e2e-accounts (system admin, org owner, environment editor,
 // environment viewer), each authenticating with its own access token.
 
 package account
@@ -37,16 +37,16 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-func TestOrganizationAdminPermissions(t *testing.T) {
-	requireAccessToken(t, *orgAdminAccessTokenPath, "org admin")
+func TestOrganizationOwnerPermissions(t *testing.T) {
+	requireAccessToken(t, *orgOwnerDefaultAccessTokenPath, "org owner")
 
 	t.Run("cannot create organization", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
-		c := newEnvironmentClientWithToken(t, *orgAdminAccessTokenPath)
+		c := newEnvironmentClientWithToken(t, *orgOwnerDefaultAccessTokenPath)
 		defer c.Close()
 		_, err := c.CreateOrganization(ctx, newCreateOrganizationReq(ownerEmail()))
-		requirePermissionDenied(t, err, "org admin CreateOrganization")
+		requirePermissionDenied(t, err, "org owner CreateOrganization")
 	})
 }
 
