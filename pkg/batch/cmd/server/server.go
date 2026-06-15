@@ -67,6 +67,8 @@ import (
 	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
+	insightsmysql "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mysql"
+	insightspostgres "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
@@ -337,6 +339,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var opsCountStorage v2os.OpsCountStorage
 	var codeRefStorage coderefstorage.CodeReferenceStorage
 	var experimentResultStorage v2ecrs.ExperimentResultStorage
+	var monthlySummaryStorage insightsstorage.MonthlySummaryStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -354,6 +357,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
 		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
 		experimentResultStorage = experimentcalcpostgres.NewExperimentResultStorage(postgresClient)
+		monthlySummaryStorage = insightspostgres.NewMonthlySummaryStorage(postgresClient)
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
@@ -363,6 +367,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
 		experimentResultStorage = experimentcalcmysql.NewExperimentResultStorage(mysqlClient)
+		monthlySummaryStorage = insightsmysql.NewMonthlySummaryStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -681,7 +686,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		monthlysummary.NewMonthlySummarizer(
 			environmentClient,
 			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
-			insightsstorage.NewMonthlySummaryStorage(mysqlClient),
+			monthlySummaryStorage,
 			promClient,
 			jobs.WithLogger(logger),
 		),
