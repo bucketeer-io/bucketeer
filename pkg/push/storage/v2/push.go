@@ -33,10 +33,6 @@ var (
 	)
 
 	ErrInvalidListPushesCursor = errors.New("push storage: invalid list pushes cursor")
-
-	// ErrPushMySQLOnly is intentionally referenced only by the MySQL
-	// implementation to demonstrate the storage parity test failing.
-	ErrPushMySQLOnly = errors.New("push storage: mysql only")
 )
 
 // ListPushesParams carries list intent for ListPushes without database-specific types.

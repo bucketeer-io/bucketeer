@@ -47,7 +47,6 @@ type mysqlPushStorage struct {
 
 // NewMySQLPushStorage returns push persistence backed by MySQL.
 func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage {
-	_ = ErrPushMySQLOnly // demo: referenced by mysql only, not postgres
 	return &mysqlPushStorage{qe: qe}
 }
 
