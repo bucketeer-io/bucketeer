@@ -29,7 +29,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -83,126 +82,36 @@ func (s *experimentService) ListExperiments(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
+	params := v2es.ListExperimentsParams{
+		EnvironmentID:  req.EnvironmentId,
+		FeatureID:      req.FeatureId,
+		StartAt:        req.StartAt,
+		StopAt:         req.StopAt,
+		Maintainer:     req.Maintainer,
+		Statuses:       req.Statuses,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
 	}
 	if req.Archived != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "archived",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Archived.Value,
-		})
-	}
-	if req.FeatureId != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.FeatureId,
-		})
+		params.Archived = &req.Archived.Value
 	}
 	if req.FeatureVersion != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_version",
-			Operator: mysql.OperatorEqual,
-			Value:    req.FeatureVersion.Value,
-		})
-	}
-	if req.StartAt != 0 {
-		// When a start timestamp is provided,
-		// use it as the lower bound for filtering.
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "start_at",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.StartAt,
-		})
-	}
-	if req.StopAt != 0 {
-		// When a stop timestamp is provided:
-		// - If req.StartAt is also provided, treat req.StopAt as an absolute upper bound.
-		// (This selects experiments with stop_at <= req.StopAt.)
-		// - If req.StartAt is not provided, treat req.StopAt as a relative cutoff timestamp.
-		// (This selects experiments with stop_at >= req.StopAt.)
-		// It treats it as a relative duration when the `startAt` is not provide
-		if req.StartAt != 0 {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "stop_at",
-				Operator: mysql.OperatorLessThanOrEqual,
-				Value:    req.StopAt,
-			})
-		} else {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "stop_at",
-				Operator: mysql.OperatorGreaterThanOrEqual,
-				Value:    req.StopAt,
-			})
-		}
-	}
-	if req.Maintainer != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "maintainer",
-			Operator: mysql.OperatorEqual,
-			Value:    req.Maintainer,
-		})
-	}
-	var inFilters []*mysql.InFilter
-	if len(req.Statuses) > 0 {
-		statuses := make([]interface{}, 0, len(req.Statuses))
-		for _, sts := range req.Statuses {
-			statuses = append(statuses, sts)
-		}
-		inFilters = append(inFilters, &mysql.InFilter{
-			Column: "status",
-			Values: statuses,
-		})
-	}
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"name", "description"},
-			Keyword: req.SearchKeyword,
-		}
-	}
-	orders, err := s.newExperimentListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		Orders:      orders,
-		InFilters:   inFilters,
-		SearchQuery: searchQuery,
-		NullFilters: nil,
-		JSONFilters: nil,
+		params.FeatureVersion = &req.FeatureVersion.Value
 	}
 	experiments, nextCursor, totalCount, err := s.experimentStorage.ListExperiments(
 		ctx,
-		options,
+		params,
 	)
 	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2es.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list experiments",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -235,37 +144,6 @@ func (s *experimentService) ListExperiments(
 			TotalStoppedCount: summary.TotalStoppedCount,
 		},
 	}, nil
-}
-
-func (s *experimentService) newExperimentListOrders(
-	orderBy proto.ListExperimentsRequest_OrderBy,
-	orderDirection proto.ListExperimentsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListExperimentsRequest_DEFAULT,
-		proto.ListExperimentsRequest_NAME:
-		column = "ex.name"
-	case proto.ListExperimentsRequest_CREATED_AT:
-		column = "ex.created_at"
-	case proto.ListExperimentsRequest_UPDATED_AT:
-		column = "ex.updated_at"
-	case proto.ListExperimentsRequest_START_AT:
-		column = "ex.start_at"
-	case proto.ListExperimentsRequest_STOP_AT:
-		column = "ex.stop_at"
-	case proto.ListExperimentsRequest_STATUS:
-		column = "ex.status"
-	case proto.ListExperimentsRequest_GOALS_COUNT:
-		column = "JSON_LENGTH(ex.goal_ids)"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == proto.ListExperimentsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *experimentService) CreateExperiment(
@@ -324,7 +202,7 @@ func (s *experimentService) CreateExperiment(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		for _, gid := range req.GoalIds {
 			goal, err := s.getGoalMySQL(ctxWithTx, gid, req.EnvironmentId)
 			if err != nil {
@@ -445,7 +323,7 @@ func (s *experimentService) UpdateExperiment(
 	}
 
 	var experimentPb *proto.Experiment
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		experiment, err := s.experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -556,7 +434,7 @@ func (s *experimentService) DeleteExperiment(
 	}
 
 	var experimentPb *domain.Experiment
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		experiment, err := s.experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(

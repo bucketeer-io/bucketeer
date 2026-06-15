@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
@@ -24,50 +24,51 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
-func TestNewExperimentStorage(t *testing.T) {
+func TestNewGoalStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	db := NewExperimentStorage(mock.NewMockClient(mockController))
-	assert.IsType(t, &experimentStorage{}, db)
+	db := NewGoalStorage(mock.NewMockClient(mockController))
+	assert.IsType(t, &goalStorage{}, db)
 }
 
-func TestCreateExperiment(t *testing.T) {
+func TestCreateGoal(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup         func(*experimentStorage)
-		input         *domain.Experiment
+		setup         func(*goalStorage)
+		input         *domain.Goal
 		environmentId string
 		expectedErr   error
 	}{
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
-			input: &domain.Experiment{
-				Experiment: &proto.Experiment{Id: "id-0"},
+			input: &domain.Goal{
+				Goal: &proto.Goal{Id: "id-0"},
 			},
 			environmentId: "ns0",
-			expectedErr:   ErrExperimentAlreadyExists,
+			expectedErr:   v2es.ErrGoalAlreadyExists,
 		},
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
-			input: &domain.Experiment{
-				Experiment: &proto.Experiment{Id: "id-1"},
+			input: &domain.Goal{
+				Goal: &proto.Goal{Id: "id-1"},
 			},
 			environmentId: "ns0",
 			expectedErr:   nil,
@@ -76,79 +77,79 @@ func TestCreateExperiment(t *testing.T) {
 	for _, p := range patterns {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		db := newExperimentStorageWithMock(t, mockController)
+		db := newGoalStorageWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(db)
 		}
-		err := db.CreateExperiment(ctx, p.input, p.environmentId)
+		err := db.CreateGoal(ctx, p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
 
-func TestUpdateExperiment(t *testing.T) {
+func TestUpdateGoal(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup         func(*experimentStorage)
-		input         *domain.Experiment
+		setup         func(*goalStorage)
+		input         *domain.Goal
 		environmentId string
 		expectedErr   error
 	}{
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
-			input: &domain.Experiment{
-				Experiment: &proto.Experiment{Id: "id-0"},
+			input: &domain.Goal{
+				Goal: &proto.Goal{Id: "id-0"},
 			},
 			environmentId: "ns",
-			expectedErr:   ErrExperimentUnexpectedAffectedRows,
+			expectedErr:   v2es.ErrGoalUnexpectedAffectedRows,
 		},
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
-			input: &domain.Experiment{
-				Experiment: &proto.Experiment{Id: "id-0"},
+			input: &domain.Goal{
+				Goal: &proto.Goal{Id: "id-0"},
 			},
 			environmentId: "ns",
 			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
-		storage := newExperimentStorageWithMock(t, mockController)
+		storage := newGoalStorageWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.UpdateExperiment(context.Background(), p.input, p.environmentId)
+		err := storage.UpdateGoal(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
 
-func TestGetExperiment(t *testing.T) {
+func TestGetGoal(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup         func(*experimentStorage)
+		setup         func(*goalStorage)
 		input         string
 		environmentId string
-		expected      *domain.Experiment
+		expected      *domain.Goal
 		expectedErr   error
 	}{
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
@@ -158,10 +159,10 @@ func TestGetExperiment(t *testing.T) {
 			input:         "",
 			environmentId: "ns0",
 			expected:      nil,
-			expectedErr:   ErrExperimentNotFound,
+			expectedErr:   v2es.ErrGoalNotFound,
 		},
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
@@ -170,46 +171,60 @@ func TestGetExperiment(t *testing.T) {
 			},
 			input:         "id-0",
 			environmentId: "ns0",
-			expected: &domain.Experiment{
-				Experiment: &proto.Experiment{Id: "id-0"},
+			expected: &domain.Goal{
+				Goal: &proto.Goal{Id: "id-0"},
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
-		storage := newExperimentStorageWithMock(t, mockController)
+		storage := newGoalStorageWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		_, err := storage.GetExperiment(context.Background(), p.input, p.environmentId)
+		_, err := storage.GetGoal(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
 
-func TestListExperiments(t *testing.T) {
+func TestListGoals(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		setup          func(*experimentStorage)
-		options        *mysql.ListOptions
-		expected       []*proto.Experiment
+		setup          func(*goalStorage)
+		params         v2es.ListGoalsParams
+		expected       []*proto.Goal
 		expectedCursor int
 		expectedErr    error
 	}{
 		{
-			setup: func(s *experimentStorage) {
+			setup:          nil,
+			params:         v2es.ListGoalsParams{Cursor: "invalid"},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    v2es.ErrInvalidCursor,
+		},
+		{
+			setup:          nil,
+			params:         v2es.ListGoalsParams{OrderBy: proto.ListGoalsRequest_OrderBy(-1)},
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    v2es.ErrInvalidOrderBy,
+		},
+		{
+			setup: func(s *goalStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params:         v2es.ListGoalsParams{},
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
 		{
-			setup: func(s *experimentStorage) {
+			setup: func(s *goalStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
@@ -223,92 +238,32 @@ func TestListExperiments(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Limit:  10,
-				Offset: 5,
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "num",
-						Operator: mysql.OperatorGreaterThanOrEqual,
-						Value:    5,
-					},
-				},
-				Orders: []*mysql.Order{
-					{
-						Column:    "id",
-						Direction: mysql.OrderDirectionAsc,
-					},
-				},
+			params: v2es.ListGoalsParams{
+				EnvironmentID: "ns0",
+				PageSize:      10,
+				Cursor:        "5",
 			},
-			expected:       []*proto.Experiment{},
+			expected:       []*proto.Goal{},
 			expectedCursor: 5,
 			expectedErr:    nil,
 		},
 	}
 	for _, p := range patterns {
-		storage := newExperimentStorageWithMock(t, mockController)
+		storage := newGoalStorageWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		experiments, cursor, _, err := storage.ListExperiments(
+		goals, cursor, _, err := storage.ListGoals(
 			context.Background(),
-			p.options,
+			p.params,
 		)
-		assert.Equal(t, p.expected, experiments)
+		assert.Equal(t, p.expected, goals)
 		assert.Equal(t, p.expectedCursor, cursor)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
 
-func TestCountExperimentByStatus(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []struct {
-		desc        string
-		setup       func(*experimentStorage)
-		expected    *ExperimentSummary
-		expectedErr error
-	}{
-		{
-			desc: "error",
-			setup: func(s *experimentStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-			},
-			expected:    nil,
-			expectedErr: errors.New("error"),
-		},
-		{
-			desc: "success",
-			setup: func(s *experimentStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-			},
-			expected:    &ExperimentSummary{},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			storage := newExperimentStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			summary, err := storage.GetExperimentSummary(context.Background(), "ns0")
-			assert.Equal(t, p.expectedErr, err)
-			assert.Equal(t, p.expected, summary)
-		})
-	}
-}
-
-func newExperimentStorageWithMock(t *testing.T, mockController *gomock.Controller) *experimentStorage {
+func newGoalStorageWithMock(t *testing.T, mockController *gomock.Controller) *goalStorage {
 	t.Helper()
-	return &experimentStorage{mock.NewMockQueryExecer(mockController)}
+	return &goalStorage{mock.NewMockQueryExecer(mockController)}
 }

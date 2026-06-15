@@ -28,7 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -50,7 +50,7 @@ type experimentService struct {
 	featureClient     featureclient.Client
 	accountClient     accountclient.Client
 	autoOpsClient     autoopsclient.Client
-	mysqlClient       mysql.Client
+	dbClient          database.Client
 	experimentStorage storage.ExperimentStorage
 	goalStorage       storage.GoalStorage
 	publisher         publisher.Publisher
@@ -62,7 +62,9 @@ func NewExperimentService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	autoOpsClient autoopsclient.Client,
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	experimentStorage storage.ExperimentStorage,
+	goalStorage storage.GoalStorage,
 	publisher publisher.Publisher,
 	opts ...Option,
 ) rpc.Service {
@@ -76,9 +78,9 @@ func NewExperimentService(
 		featureClient:     featureClient,
 		accountClient:     accountClient,
 		autoOpsClient:     autoOpsClient,
-		mysqlClient:       mysqlClient,
-		experimentStorage: storage.NewExperimentStorage(mysqlClient),
-		goalStorage:       storage.NewGoalStorage(mysqlClient),
+		dbClient:          dbClient,
+		experimentStorage: experimentStorage,
+		goalStorage:       goalStorage,
 		publisher:         publisher,
 		opts:              dopts,
 		logger:            dopts.logger.Named("api"),

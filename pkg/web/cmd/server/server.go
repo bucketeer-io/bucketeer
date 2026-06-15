@@ -70,10 +70,13 @@ import (
 	dwhmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mysql"
 	dwhpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/postgres"
 	v2er "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
-	experimentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/mysql"
-	experimentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/postgres"
+	eventcountermysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/mysql"
+	eventcounterpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database/postgres"
 	experimentapi "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	v2exs "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
+	experimentmysql "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mysql"
+	experimentpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/postgres"
 	featureapi "github.com/bucketeer-io/bucketeer/v2/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
@@ -597,6 +600,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var codeRefStorage coderefstorage.CodeReferenceStorage
 	var autoOpsStorage v2aos.AutoOpsRuleStorage
 	var prStorage v2aos.ProgressiveRolloutStorage
+	var experimentStorage v2exs.ExperimentStorage
+	var goalStorage v2exs.GoalStorage
 	var experimentResultStorage v2er.ExperimentResultStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
@@ -624,7 +629,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
 		autoOpsStorage = autoopspostgres.NewAutoOpsRuleStorage(postgresClient)
 		prStorage = autoopspostgres.NewProgressiveRolloutStorage(postgresClient)
-		experimentResultStorage = experimentpostgres.NewExperimentResultStorage(postgresClient)
+		experimentStorage = experimentpostgres.NewExperimentStorage(postgresClient)
+		goalStorage = experimentpostgres.NewGoalStorage(postgresClient)
+		experimentResultStorage = eventcounterpostgres.NewExperimentResultStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -644,7 +651,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 		autoOpsStorage = autoopsmysql.NewAutoOpsRuleStorage(mysqlClient)
 		prStorage = autoopsmysql.NewProgressiveRolloutStorage(mysqlClient)
-		experimentResultStorage = experimentmysql.NewExperimentResultStorage(mysqlClient)
+		experimentResultStorage = eventcountermysql.NewExperimentResultStorage(mysqlClient)
+		experimentStorage = experimentmysql.NewExperimentStorage(mysqlClient)
+		goalStorage = experimentmysql.NewGoalStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -941,7 +950,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient,
 		accountClient,
 		autoOpsClient,
-		mysqlClient,
+		dbClient,
+		experimentStorage,
+		goalStorage,
 		domainTopicPublisher,
 		experimentapi.WithLogger(logger),
 	)

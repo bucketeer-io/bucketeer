@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
@@ -87,9 +87,9 @@ func (mr *MockGoalStorageMockRecorder) GetGoal(ctx, id, environmentId any) *gomo
 }
 
 // ListGoals mocks base method.
-func (m *MockGoalStorage) ListGoals(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentId string) ([]*experiment.Goal, int, int64, error) {
+func (m *MockGoalStorage) ListGoals(ctx context.Context, params v2.ListGoalsParams) ([]*experiment.Goal, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListGoals", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
+	ret := m.ctrl.Call(m, "ListGoals", ctx, params)
 	ret0, _ := ret[0].([]*experiment.Goal)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -98,9 +98,9 @@ func (m *MockGoalStorage) ListGoals(ctx context.Context, whereParts []mysql.Wher
 }
 
 // ListGoals indicates an expected call of ListGoals.
-func (mr *MockGoalStorageMockRecorder) ListGoals(ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId any) *gomock.Call {
+func (mr *MockGoalStorageMockRecorder) ListGoals(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGoals", reflect.TypeOf((*MockGoalStorage)(nil).ListGoals), ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGoals", reflect.TypeOf((*MockGoalStorage)(nil).ListGoals), ctx, params)
 }
 
 // UpdateGoal mocks base method.

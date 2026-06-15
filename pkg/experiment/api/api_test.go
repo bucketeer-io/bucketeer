@@ -30,7 +30,7 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -43,14 +43,18 @@ func TestNewExperimentService(t *testing.T) {
 	featureClientMock := featureclientmock.NewMockClient(mockController)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	autoOpsClientMock := autoopsclientmock.NewMockClient(mockController)
-	mysqlClient := mysqlmock.NewMockClient(mockController)
+	dbClientMock := dbmock.NewMockClient(mockController)
+	experimentStorageMock := storagemock.NewMockExperimentStorage(mockController)
+	goalStorageMock := storagemock.NewMockGoalStorage(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	s := NewExperimentService(
 		featureClientMock,
 		accountClientMock,
 		autoOpsClientMock,
-		mysqlClient,
+		dbClientMock,
+		experimentStorageMock,
+		goalStorageMock,
 		p,
 		WithLogger(logger),
 	)
@@ -123,14 +127,14 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	autoOpsClientMock := autoopsclientmock.NewMockClient(c)
-	mysqlClient := mysqlmock.NewMockClient(c)
+	dbClientMock := dbmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &experimentService{
 		featureClient:     featureClientMock,
 		accountClient:     accountClientMock,
 		autoOpsClient:     autoOpsClientMock,
-		mysqlClient:       mysqlClient,
+		dbClient:          dbClientMock,
 		experimentStorage: storagemock.NewMockExperimentStorage(c),
 		goalStorage:       storagemock.NewMockGoalStorage(c),
 		publisher:         p,

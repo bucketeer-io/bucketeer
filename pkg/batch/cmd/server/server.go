@@ -57,6 +57,9 @@ import (
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	v2ecrs "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
+	experimentcalcmysql "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2/mysql"
+	experimentcalcpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2/postgres"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
@@ -333,6 +336,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var envStorage v2es.EnvironmentStorage
 	var opsCountStorage v2os.OpsCountStorage
 	var codeRefStorage coderefstorage.CodeReferenceStorage
+	var experimentResultStorage v2ecrs.ExperimentResultStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -349,6 +353,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		envStorage = environmentpostgres.NewEnvironmentStorage(postgresClient)
 		opsCountStorage = opseventpostgres.NewOpsCountStorage(postgresClient)
 		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
+		experimentResultStorage = experimentcalcpostgres.NewExperimentResultStorage(postgresClient)
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
@@ -357,6 +362,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		envStorage = environmentmysql.NewEnvironmentStorage(mysqlClient)
 		opsCountStorage = opseventmysql.NewOpsCountStorage(mysqlClient)
 		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
+		experimentResultStorage = experimentcalcmysql.NewExperimentResultStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -616,7 +622,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			experimentClient,
 			eventCounterClient,
-			mysqlClient,
+			experimentResultStorage,
 			calculator.NewExperimentLock(nonPersistentRedisClient, *s.experimentLockTTL),
 			location,
 			jobs.WithTimeout(30*time.Minute),

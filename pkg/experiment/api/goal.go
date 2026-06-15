@@ -28,7 +28,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -90,50 +89,29 @@ func (s *experimentService) ListGoals(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+	params := v2es.ListGoalsParams{
+		EnvironmentID:  req.EnvironmentId,
+		SearchKeyword:  req.SearchKeyword,
+		ConnectionType: req.ConnectionType,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
 	}
 	if req.Archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
+		params.Archived = &req.Archived.Value
 	}
-	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, req.SearchKeyword))
-	}
-	if req.ConnectionType != proto.Goal_UNKNOWN {
-		whereParts = append(whereParts, mysql.NewFilter("connection_type", "=", req.ConnectionType))
-	}
-	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	var isInUseStatus *bool
 	if req.IsInUseStatus != nil {
-		isInUseStatus = &req.IsInUseStatus.Value
+		params.IsInUseStatus = &req.IsInUseStatus.Value
 	}
-	goals, nextCursor, totalCount, err := s.goalStorage.ListGoals(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-		isInUseStatus,
-		req.EnvironmentId,
-	)
+	goals, nextCursor, totalCount, err := s.goalStorage.ListGoals(ctx, params)
 	if err != nil {
+		if errors.Is(err, v2es.ErrInvalidCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2es.ErrInvalidOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list goals",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -154,31 +132,6 @@ func (s *experimentService) ListGoals(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
-}
-
-func (s *experimentService) newGoalListOrders(
-	orderBy proto.ListGoalsRequest_OrderBy,
-	orderDirection proto.ListGoalsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListGoalsRequest_DEFAULT,
-		proto.ListGoalsRequest_NAME:
-		column = "name"
-	case proto.ListGoalsRequest_CREATED_AT:
-		column = "created_at"
-	case proto.ListGoalsRequest_UPDATED_AT:
-		column = "updated_at"
-	case proto.ListGoalsRequest_CONNECTION_TYPE:
-		column = "connection_type"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == proto.ListGoalsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *experimentService) mapConnectedOperations(
@@ -246,7 +199,7 @@ func (s *experimentService) CreateGoal(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_GOAL,
@@ -319,7 +272,7 @@ func (s *experimentService) UpdateGoal(
 		return nil, err
 	}
 	var updatedGoal *proto.Goal
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -398,7 +351,7 @@ func (s *experimentService) DeleteGoal(
 	if req.Id == "" {
 		return nil, statusGoalIDRequired.Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err

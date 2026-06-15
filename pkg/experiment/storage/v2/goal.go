@@ -17,12 +17,9 @@ package v2
 
 import (
 	"context"
-	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
@@ -30,28 +27,7 @@ var (
 	ErrGoalAlreadyExists          = errors.New("goal: already exists")
 	ErrGoalNotFound               = errors.New("goal: not found")
 	ErrGoalUnexpectedAffectedRows = errors.New("goal: unexpected affected rows")
-
-	//go:embed sql/goal/select_goals.sql
-	selectGoalsSQL string
-	//go:embed sql/goal/select_goal.sql
-	selectGoalSQL string
-	//go:embed sql/goal/count_goals.sql
-	countGoalSQL string
-	//go:embed sql/goal/insert_goal.sql
-	insertGoalSQL string
-	//go:embed sql/goal/update_goal.sql
-	updateGoalSQL string
-	//go:embed sql/goal/delete_goal.sql
-	deleteGoalSQL string
 )
-
-type experimentRef struct {
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	FeatureId   string `json:"feature_id"`
-	FeatureName string `json:"feature_name"`
-	Status      int32  `json:"status"`
-}
 
 type GoalStorage interface {
 	CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error
@@ -59,216 +35,19 @@ type GoalStorage interface {
 	GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error)
 	ListGoals(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-		isInUseStatus *bool,
-		environmentId string,
+		params ListGoalsParams,
 	) ([]*proto.Goal, int, int64, error)
 	DeleteGoal(ctx context.Context, id, environmentId string) error
 }
 
-type goalStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewGoalStorage(qe mysql.QueryExecer) GoalStorage {
-	return &goalStorage{qe: qe}
-}
-
-func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertGoalSQL,
-		g.Id,
-		g.Name,
-		g.Description,
-		g.ConnectionType,
-		g.Archived,
-		g.Deleted,
-		g.CreatedAt,
-		g.UpdatedAt,
-		environmentId,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrGoalAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateGoalSQL,
-		g.Name,
-		g.Description,
-		g.Archived,
-		g.Deleted,
-		g.CreatedAt,
-		g.UpdatedAt,
-		g.Id,
-		environmentId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrGoalUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
-	goal := proto.Goal{}
-	var connectionType int32
-	var experiments []experimentRef
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectGoalSQL,
-		environmentId, // Case query
-		environmentId, // Subquery
-		id,
-		environmentId,
-	).Scan(
-		&goal.Id,
-		&goal.Name,
-		&goal.Description,
-		&connectionType,
-		&goal.Archived,
-		&goal.Deleted,
-		&goal.CreatedAt,
-		&goal.UpdatedAt,
-		&goal.IsInUseStatus,
-		&mysql.JSONObject{Val: &goal.Experiments},
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrGoalNotFound
-		}
-		return nil, err
-	}
-	goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
-	for i := range experiments {
-		goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
-			Id:          experiments[i].Id,
-			Name:        experiments[i].Name,
-			FeatureId:   experiments[i].FeatureId,
-			FeatureName: experiments[i].FeatureName,
-			Status:      proto.Experiment_Status(experiments[i].Status),
-		})
-	}
-	return &domain.Goal{Goal: &goal}, nil
-}
-
-func (s *goalStorage) ListGoals(
-	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
-	isInUseStatus *bool,
-	environmentId string,
-) ([]*proto.Goal, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	prepareArgs := make([]interface{}, 0, len(whereArgs)+2)
-	prepareArgs = append(prepareArgs, environmentId) // Case query
-	prepareArgs = append(prepareArgs, environmentId) // Subquery
-	prepareArgs = append(prepareArgs, whereArgs...)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	var isInUseStatusSQL string
-	if isInUseStatus != nil {
-		if *isInUseStatus {
-			isInUseStatusSQL = "HAVING is_in_use_status = TRUE"
-		} else {
-			isInUseStatusSQL = "HAVING is_in_use_status = FALSE"
-		}
-	}
-	query := fmt.Sprintf(selectGoalsSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	goals := make([]*proto.Goal, 0, limit)
-
-	for rows.Next() {
-		goal := proto.Goal{}
-		var connectionType int32
-		var experiments []experimentRef
-		err := rows.Scan(
-			&goal.Id,
-			&goal.Name,
-			&goal.Description,
-			&connectionType,
-			&goal.Archived,
-			&goal.Deleted,
-			&goal.CreatedAt,
-			&goal.UpdatedAt,
-			&goal.IsInUseStatus,
-			&mysql.JSONObject{Val: &experiments},
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
-		for i := range experiments {
-			goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
-				Id:          experiments[i].Id,
-				Name:        experiments[i].Name,
-				FeatureId:   experiments[i].FeatureId,
-				FeatureName: experiments[i].FeatureName,
-				Status:      proto.Experiment_Status(experiments[i].Status),
-			})
-		}
-		goals = append(goals, &goal)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(goals)
-	var totalCount int64
-	countConditionSQL := "> 0 THEN 1 ELSE 1"
-	if isInUseStatus != nil {
-		if *isInUseStatus {
-			countConditionSQL = "> 0 THEN 1 ELSE NULL"
-		} else {
-			countConditionSQL = "> 0 THEN NULL ELSE 1"
-		}
-	}
-	prepareCountArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareCountArgs = append(prepareCountArgs, environmentId)
-	prepareCountArgs = append(prepareCountArgs, whereArgs...)
-	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return goals, nextOffset, totalCount, nil
-}
-
-func (s *goalStorage) DeleteGoal(ctx context.Context, id, environmentId string) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		deleteGoalSQL,
-		id,
-		environmentId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrGoalUnexpectedAffectedRows
-	}
-	return nil
+type ListGoalsParams struct {
+	EnvironmentID  string
+	Archived       *bool
+	SearchKeyword  string
+	ConnectionType proto.Goal_ConnectionType
+	IsInUseStatus  *bool
+	OrderBy        proto.ListGoalsRequest_OrderBy
+	OrderDirection proto.ListGoalsRequest_OrderDirection
+	PageSize       int
+	Cursor         string
 }

@@ -28,8 +28,8 @@ import (
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2/mock"
 	metricsmock "github.com/bucketeer-io/bucketeer/v2/pkg/metrics/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -52,7 +52,7 @@ func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCal
 		envclient.NewMockClient(mockController),
 		ecclient.NewMockClient(mockController),
 		experimentclient.NewMockClient(mockController),
-		mysqlmock.NewMockClient(mockController),
+		storagemock.NewMockExperimentResultStorage(mockController),
 		registerer,
 		jpLocation,
 		zap.NewNop(),

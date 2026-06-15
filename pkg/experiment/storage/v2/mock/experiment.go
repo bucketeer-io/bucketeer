@@ -17,7 +17,6 @@ import (
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
@@ -89,9 +88,9 @@ func (mr *MockExperimentStorageMockRecorder) GetExperimentSummary(ctx, environme
 }
 
 // ListExperiments mocks base method.
-func (m *MockExperimentStorage) ListExperiments(ctx context.Context, options *mysql.ListOptions) ([]*experiment.Experiment, int, int64, error) {
+func (m *MockExperimentStorage) ListExperiments(ctx context.Context, params v2.ListExperimentsParams) ([]*experiment.Experiment, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListExperiments", ctx, options)
+	ret := m.ctrl.Call(m, "ListExperiments", ctx, params)
 	ret0, _ := ret[0].([]*experiment.Experiment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -100,9 +99,9 @@ func (m *MockExperimentStorage) ListExperiments(ctx context.Context, options *my
 }
 
 // ListExperiments indicates an expected call of ListExperiments.
-func (mr *MockExperimentStorageMockRecorder) ListExperiments(ctx, options any) *gomock.Call {
+func (mr *MockExperimentStorageMockRecorder) ListExperiments(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExperiments", reflect.TypeOf((*MockExperimentStorage)(nil).ListExperiments), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExperiments", reflect.TypeOf((*MockExperimentStorage)(nil).ListExperiments), ctx, params)
 }
 
 // UpdateExperiment mocks base method.
