@@ -40,6 +40,7 @@ const (
 // pair is a storage package whose MySQL and PostgreSQL implementations must
 // stay in sync. Register packages that provide both implementations and expose
 // the shared interfaces / error sentinels in the parent directory.
+type pair struct {
 	dir    string // module-root-relative directory of the storage package
 	layout layout
 }
