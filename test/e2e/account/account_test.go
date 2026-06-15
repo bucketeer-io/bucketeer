@@ -43,24 +43,28 @@ const (
 )
 
 var (
-	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentID    = flag.String("environment-id", "", "Environment id")
-	organizationID   = flag.String("organization-id", "", "Organization ID")
-	testID           = flag.String("test-id", "", "test ID")
+	webGatewayAddr                 = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort                 = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert                 = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath                     = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath               = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr                    = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort                    = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert                    = flag.String("gateway-cert", "", "Gateway crt file")
+	sysAdminAccessTokenPath        = flag.String("sys-admin-access-token", "", "System admin access token path")
+	orgOwnerDefaultAccessTokenPath = flag.String("org-owner-default-access-token", "", "Organization admin access token path")
+	orgOwnerE2EAccessTokenPath     = flag.String("org-owner-e2e-access-token", "", "Organization admin (e2e org) access token path")
+	envEditorAccessTokenPath       = flag.String("env-editor-access-token", "", "Environment editor access token path")
+	envViewerAccessTokenPath       = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
+	environmentID                  = flag.String("environment-id", "", "Environment id")
+	organizationID                 = flag.String("organization-id", "", "Organization ID")
+	testID                         = flag.String("test-id", "", "test ID")
 )
 
 func TestGetAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -101,7 +105,7 @@ func TestGetAccount(t *testing.T) {
 func TestCreateAccountV2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
@@ -175,7 +179,7 @@ func TestCreateAccountV2(t *testing.T) {
 func TestCreateAccountV2Admin(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
@@ -219,7 +223,7 @@ func TestCreateAccountV2Admin(t *testing.T) {
 func TestListAccounts(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -260,7 +264,7 @@ func TestUpdateAccountThenDeleteAccount(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -387,7 +391,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	// create account
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
@@ -461,7 +465,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 func TestEnableAndDisableAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -526,7 +530,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 func TestDeleteAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -575,7 +579,7 @@ func TestDeleteAccount(t *testing.T) {
 func TestCreateSearchFilter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -618,6 +622,7 @@ func TestCreateSearchFilter(t *testing.T) {
 	}
 	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
+		EnvironmentId:  *environmentID,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
 			Name:             requestSearchFilter.Name,
@@ -658,7 +663,7 @@ func TestCreateSearchFilter(t *testing.T) {
 func TestUpdateSearchFilter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -701,6 +706,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
+		EnvironmentId:  *environmentID,
 		Command: &accountproto.CreateSearchFilterCommand{
 			Name:             initialSearchFilter.Name,
 			Query:            initialSearchFilter.Query,
@@ -741,7 +747,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 		Query:            "new-query",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    true,
-		EnvironmentId:    "environment-id",
+		EnvironmentId:    *environmentID,
 	}
 
 	_, err = c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
@@ -792,7 +798,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 func TestDeleteSearchFilter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t)
+	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
@@ -835,6 +841,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 	}
 	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
+		EnvironmentId:  *environmentID,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
 			Name:             initial1SearchFilter.Name,
@@ -852,11 +859,12 @@ func TestDeleteSearchFilter(t *testing.T) {
 		Query:            "query2",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
+		EnvironmentId:    *environmentID,
 	}
 	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
+		EnvironmentId:  *environmentID,
 		Command: &accountproto.CreateSearchFilterCommand{
 			Name:             initial2SearchFilter.Name,
 			Query:            initial2SearchFilter.Query,
@@ -885,6 +893,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 	_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
+		EnvironmentId:  *environmentID,
 		Command: &accountproto.DeleteSearchFilterCommand{
 			Id: deleteFilterID,
 		},
@@ -911,9 +920,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 	}
 }
 
-func newAccountClient(t *testing.T) accountclient.Client {
+func newAccountClient(t *testing.T, token *string) accountclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*token)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}

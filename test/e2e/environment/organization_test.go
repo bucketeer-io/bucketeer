@@ -18,7 +18,7 @@ const (
 func TestGetOrganization(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
 	id := defaultOrganizationID
 	resp, err := c.GetOrganization(ctx, &environmentproto.GetOrganizationRequest{Id: id})
@@ -33,7 +33,7 @@ func TestGetOrganization(t *testing.T) {
 func TestListOrganizations(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	pageSize := int64(1)
 	resp, err := c.ListOrganizations(ctx, &environmentproto.ListOrganizationsRequest{PageSize: pageSize})
@@ -49,7 +49,7 @@ func TestListOrganizations(t *testing.T) {
 func TestUpdateOrganization(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 	id := defaultOrganizationID
 	newDesc := fmt.Sprintf("This organization is for organization e2e tests (Updated at %d)", time.Now().Unix())
@@ -80,7 +80,7 @@ func TestUpdateOrganization(t *testing.T) {
 func TestEnableAndDisableOrganization(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	id := defaultOrganizationID
 	_, err := c.DisableOrganization(ctx, &environmentproto.DisableOrganizationRequest{
@@ -115,7 +115,7 @@ func TestEnableAndDisableOrganization(t *testing.T) {
 func TestArchiveAndUnarchiveOrganization(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newEnvironmentClient(t)
+	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	id := defaultOrganizationID
 	_, err := c.ArchiveOrganization(ctx, &environmentproto.ArchiveOrganizationRequest{

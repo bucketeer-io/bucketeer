@@ -28,6 +28,21 @@ LDFLAGS_VERSION := $(LDFLAGS_PACKAGE).Version
 LDFLAGS_HASH := $(LDFLAGS_PACKAGE).Hash
 LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 
+# e2e accounts and their generated access tokens. The create-e2e-accounts
+# tool bootstraps these four accounts and writes their access tokens to
+# $(CERT_DIR); the e2e tests then authenticate with them instead of a service
+# token. All paths can be overridden by the caller (e.g. CI).
+CERT_DIR ?= tools/dev/cert
+SYS_ADMIN_EMAIL ?= sysadmin@bucketeer.io
+ORG_OWNER_EMAIL ?= orgowner@bucketeer.io
+ENV_WRITE_EMAIL ?= envwrite@bucketeer.io
+ENV_READ_EMAIL ?= envread@bucketeer.io
+SYS_ADMIN_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/sys-admin-token
+ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/org-owner-default-token
+ORG_OWNER_E2E_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/org-owner-e2e-token
+ENV_EDITOR_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/env-editor-token
+ENV_VIEWER_ACCESS_TOKEN_PATH ?= $(CERT_DIR)/env-viewer-token
+
 #############################
 # Go
 #############################
@@ -238,23 +253,33 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
-.PHONY: create-localenv-account
-create-localenv-account:
+.PHONY: create-e2e-accounts
+create-e2e-accounts:
 ifeq ($(GOOS), darwin)
-	make -C hack/create-localenv-account clean build-darwin
+	make -C hack/create-e2e-accounts clean build-darwin
 else
-	make -C hack/create-localenv-account clean build
+	make -C hack/create-e2e-accounts clean build
 endif
-	./hack/create-localenv-account/create-localenv-account create \
+	./hack/create-e2e-accounts/create-e2e-accounts create \
 		--mysql-user=${MYSQL_USER} \
 		--mysql-pass=${MYSQL_PASS} \
 		--mysql-host=${MYSQL_HOST} \
 		--mysql-port=${MYSQL_PORT} \
 		--mysql-db-name=${MYSQL_DB_NAME} \
-		--email=${EMAIL} \
+		--sys-admin-email=${SYS_ADMIN_EMAIL} \
+		--org-owner-email=${ORG_OWNER_EMAIL} \
+		--env-write-email=${ENV_WRITE_EMAIL} \
+		--env-read-email=${ENV_READ_EMAIL} \
 		--default-organization-id=${DEFAULT_ORGANIZATION_ID} \
 		--e2e-organization-id=${E2E_ORGANIZATION_ID} \
 		--e2e-environment-id=${E2E_ENVIRONMENT_ID} \
+		--oauth-key=${OAUTH_KEY_PATH} \
+		--issuer=${ISSUER} \
+		--sys-admin-token-output=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
+		--org-owner-default-token-output=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
+		--org-owner-e2e-token-output=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \
+		--env-write-token-output=${ENV_EDITOR_ACCESS_TOKEN_PATH} \
+		--env-read-token-output=${ENV_VIEWER_ACCESS_TOKEN_PATH} \
 		--no-profile \
 		--no-gcp-trace-enabled
 
@@ -334,7 +359,11 @@ e2e-l4:
 		-gateway-addr=${GATEWAY_URL} \
 		-gateway-port=9000 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
-		-service-token=${SERVICE_TOKEN_PATH} \
+		-sys-admin-access-token=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
+		-org-owner-default-access-token=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
+		-org-owner-e2e-access-token=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \
+		-env-editor-access-token=${ENV_EDITOR_ACCESS_TOKEN_PATH} \
+		-env-viewer-access-token=${ENV_VIEWER_ACCESS_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \
 		-test-id=${TEST_ID}
 
@@ -351,7 +380,11 @@ e2e:
 		-gateway-addr=${GATEWAY_URL} \
 		-gateway-port=443 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
-		-service-token=${SERVICE_TOKEN_PATH} \
+		-sys-admin-access-token=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
+		-org-owner-default-access-token=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
+		-org-owner-e2e-access-token=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \
+		-env-editor-access-token=${ENV_EDITOR_ACCESS_TOKEN_PATH} \
+		-env-viewer-access-token=${ENV_VIEWER_ACCESS_TOKEN_PATH} \
 		-environment-id=${ENVIRONMENT_ID} \
 		-organization-id=${ORGANIZATION_ID} \
 		-test-id=${TEST_ID}
@@ -365,18 +398,19 @@ delete-dev-container-mysql-data:
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
 
-.PHONY: create-dev-container-localenv-account
-create-dev-container-localenv-account:
+.PHONY: create-dev-container-e2e-accounts
+create-dev-container-e2e-accounts:
 	MYSQL_USER=bucketeer \
 	MYSQL_PASS=bucketeer \
 	MYSQL_HOST=$$(minikube ip) \
 	MYSQL_PORT=32000 \
 	MYSQL_DB_NAME=bucketeer \
-	EMAIL=localenv@bucketeer.io \
 	DEFAULT_ORGANIZATION_ID=default \
 	E2E_ORGANIZATION_ID=e2e \
 	E2E_ENVIRONMENT_ID=e2e \
-	make -C ./ create-localenv-account
+	OAUTH_KEY_PATH=tools/dev/cert/oauth-private.pem \
+	ISSUER=https://localhost \
+	make -C ./ create-e2e-accounts
 
 .PHONY: update-copyright
 update-copyright:
@@ -791,19 +825,20 @@ docker-compose-delete-data:
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
 
-.PHONY: docker-compose-create-localenv-account
-docker-compose-create-localenv-account:
+.PHONY: docker-compose-create-e2e-accounts
+docker-compose-create-e2e-accounts:
 	@echo "Bootstrapping localenv account in Docker Compose MySQL..."
 	MYSQL_USER=bucketeer \
 	MYSQL_PASS=bucketeer \
 	MYSQL_HOST=localhost \
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
-	EMAIL=localenv@bucketeer.io \
 	DEFAULT_ORGANIZATION_ID=default \
 	E2E_ORGANIZATION_ID=e2e \
 	E2E_ENVIRONMENT_ID=e2e \
-	make -C ./ create-localenv-account
+	OAUTH_KEY_PATH=tools/dev/cert/oauth-private.pem \
+	ISSUER=https://localhost \
+	make -C ./ create-e2e-accounts
 
 .PHONY: docker-compose-create-mysql-event-tables
 docker-compose-create-mysql-event-tables:

@@ -220,23 +220,30 @@ make stop-httpstan
 To run E2E tests you must create API Keys for Server and Client SDKs.
 Please note that you only need to create them once.
 
-### Bootstrap the localenv account (only if needed)
+### Bootstrap the e2e accounts (required before running E2E)
 
-The MySQL init SQL that ships with `make start-minikube` pre-seeds the
-`localenv@bucketeer.io` account in two organizations (`default` with `ADMIN` +
-EDITOR on `e2e`, and `e2e` with `OWNER`). E2E API calls authenticate as that
-account, so they fail if the rows are missing — for example after running
-`make delete-dev-container-mysql-data`, or against a cluster where the init
-SQL never ran.
+E2E API calls authenticate as four accounts that exercise the real RBAC path:
 
-To re-seed the account, run:
+| Account | Organization (role) | Environment role | Token |
+|---------|---------------------|------------------|-------|
+| `sysadmin@bucketeer.io` | `e2e` (`OWNER`) | — | system admin |
+| `orgowner@bucketeer.io` | `default` (`OWNER`) + `e2e` (`OWNER`) | — | org owner (default + e2e orgs) |
+| `envwrite@bucketeer.io` | `default` (`MEMBER`) | `EDITOR` on the `e2e` environment | env editor |
+| `envread@bucketeer.io` | `default` (`MEMBER`) | `VIEWER` on the `e2e` environment | env viewer |
+
+Bootstrap them — and generate an access token for each under
+`tools/dev/cert/` — before running E2E. `make e2e` no longer does this for
+you; run it explicitly:
 
 ```shell
-make create-dev-container-localenv-account
+make create-dev-container-e2e-accounts
 ```
 
-The target connects to the Minikube MySQL pod and upserts into `account_v2`
-with `INSERT ... ON DUPLICATE KEY UPDATE`, so it is safe to run repeatedly.
+The target connects to the Minikube MySQL pod, upserts into `account_v2`
+with `INSERT ... ON DUPLICATE KEY UPDATE`, and writes the four access tokens
+to `tools/dev/cert/{sys-admin,org-owner-default,org-owner-e2e,env-editor,env-viewer}-token`, so it
+is safe to run repeatedly (re-run it after `make delete-dev-container-mysql-data`
+or against a cluster where the init SQL never ran).
 
 ### Create API keys
 
@@ -264,14 +271,22 @@ make create-api-key
 
 ### Run E2E tests
 
+The tests authenticate with the four access tokens written by
+`make create-dev-container-e2e-accounts` (run that first — see above); they no
+longer take a service token. Point the run at those token files:
+
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 GATEWAY_URL=api-gateway.bucketeer.io \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
+SYS_ADMIN_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/sys-admin-token \
+ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/org-owner-default-token \
+ORG_OWNER_E2E_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/org-owner-e2e-token \
+ENV_EDITOR_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/env-editor-token \
+ENV_VIEWER_ACCESS_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/env-viewer-token \
 ENVIRONMENT_ID=e2e \
 ORGANIZATION_ID=default \
 make e2e
@@ -289,23 +304,24 @@ make delete-redis-retry-keys
 
 When using Docker Compose instead of Minikube, you can run E2E tests with modified endpoints:
 
-### Bootstrap the localenv account (only if needed)
+### Bootstrap the e2e accounts (required before running E2E)
 
-`docker-compose/init-db/mysql_dump.sql` already seeds `localenv@bucketeer.io`
-in both the `default` and `e2e` organizations at container startup, so a
-freshly-started stack does not need any manual step here.
-
-If you ran `make docker-compose-delete-data` (or otherwise wiped the
-`account_v2` rows), re-create the account with:
+Bootstrap the four e2e accounts (`sysadmin@bucketeer.io`,
+`orgowner@bucketeer.io`, `envwrite@bucketeer.io`, `envread@bucketeer.io`) and
+their access tokens before running E2E. `make e2e` no longer does this for you;
+run it explicitly:
 
 ```shell
-make docker-compose-create-localenv-account
+make docker-compose-create-e2e-accounts
 ```
 
-The target connects to the Docker Compose MySQL on `localhost:3306` and
-upserts into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE`, so it is
-safe to run repeatedly. See
-[`hack/create-localenv-account/README.md`](./hack/create-localenv-account/README.md)
+The target connects to the Docker Compose MySQL on `localhost:3306`, upserts
+into `account_v2` with `INSERT ... ON DUPLICATE KEY UPDATE`, and writes the
+four access tokens to
+`tools/dev/cert/{sys-admin,org-owner-default,org-owner-e2e,env-editor,env-viewer}-token`, so it is
+safe to run repeatedly (re-run it after `make docker-compose-delete-data` or
+any time the `account_v2` rows are wiped).
+See [`hack/create-e2e-accounts/README.md`](./hack/create-e2e-accounts/README.md)
 for details and the prebuilt Docker image option.
 
 ### Create API Keys for Docker Compose
@@ -337,6 +353,10 @@ make create-api-key
 
 ### Run E2E Tests Against Docker Compose
 
+The tests authenticate with the four access tokens written by
+`make docker-compose-create-e2e-accounts` (run that first — see above); they no
+longer take a service token. Point the run at those token files:
+
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 GATEWAY_URL=api-gateway.bucketeer.io \
@@ -344,9 +364,13 @@ WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
-SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=$PWD/tools/dev/cert/api_key_server \
+SYS_ADMIN_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/sys-admin-token \
+ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/org-owner-default-token \
+ORG_OWNER_E2E_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/org-owner-e2e-token \
+ENV_EDITOR_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/env-editor-token \
+ENV_VIEWER_ACCESS_TOKEN_PATH=$PWD/tools/dev/cert/env-viewer-token \
 ENVIRONMENT_ID=e2e \
 ORGANIZATION_ID=default \
 make e2e

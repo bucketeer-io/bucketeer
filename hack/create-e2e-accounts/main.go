@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	name    = "create-localenv-account"
+	name    = "create-e2e-accounts"
 	version = ""
 	build   = ""
 )

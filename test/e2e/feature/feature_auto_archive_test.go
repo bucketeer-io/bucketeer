@@ -343,7 +343,7 @@ type autoArchiveSettings struct {
 
 func newEnvironmentClient(t *testing.T) environmentclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*orgOwnerDefaultAccessTokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
@@ -362,7 +362,7 @@ func newEnvironmentClient(t *testing.T) environmentclient.Client {
 
 func newBatchClient(t *testing.T) btclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(*orgOwnerDefaultAccessTokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}

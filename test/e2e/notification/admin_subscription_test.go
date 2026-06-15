@@ -31,7 +31,7 @@ func TestCreateGetDeleteAdminSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *sysAdminAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
@@ -98,7 +98,7 @@ func TestCreateListDeleteAdminSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *sysAdminAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
@@ -166,7 +166,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *sysAdminAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))

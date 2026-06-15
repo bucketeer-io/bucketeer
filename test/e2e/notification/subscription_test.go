@@ -39,25 +39,29 @@ const (
 )
 
 var (
-	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentID    = flag.String("environment-id", "", "Environment id")
-	organizationID   = flag.String("organization-id", "", "Organization ID")
-	testID           = flag.String("test-id", "", "test ID")
+	webGatewayAddr                 = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort                 = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert                 = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath                     = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath               = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr                    = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort                    = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert                    = flag.String("gateway-cert", "", "Gateway crt file")
+	sysAdminAccessTokenPath        = flag.String("sys-admin-access-token", "", "System admin access token path")
+	orgOwnerDefaultAccessTokenPath = flag.String("org-owner-default-access-token", "", "Organization admin access token path")
+	orgOwnerE2EAccessTokenPath     = flag.String("org-owner-e2e-access-token", "", "Organization admin (e2e org) access token path")
+	envEditorAccessTokenPath       = flag.String("env-editor-access-token", "", "Environment editor access token path")
+	envViewerAccessTokenPath       = flag.String("env-viewer-access-token", "", "Environment viewer access token path")
+	environmentID                  = flag.String("environment-id", "", "Environment id")
+	organizationID                 = flag.String("organization-id", "", "Organization ID")
+	testID                         = flag.String("test-id", "", "test ID")
 )
 
 func TestCreateListSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
@@ -126,7 +130,7 @@ func TestCreateUpdateSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
@@ -203,7 +207,7 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
@@ -277,7 +281,7 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t)
+	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
 	defer notificationClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
@@ -347,9 +351,9 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	}
 }
 
-func newNotificationClient(t *testing.T) notificationclient.Client {
+func newNotificationClient(t *testing.T, tokenPath string) notificationclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	creds, err := rpcclient.NewPerRPCCredentials(tokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
