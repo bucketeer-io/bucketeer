@@ -27,7 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
@@ -65,7 +64,7 @@ func (s *NotificationService) CreateSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		return s.subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId)
 	})
 	if err != nil {
@@ -168,7 +167,7 @@ func (s *NotificationService) updateSubscriptionMySQL(
 ) (*notificationproto.Subscription, error) {
 	var updatedSubscription *notificationproto.Subscription
 	var event *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err := s.subscriptionStorage.GetSubscription(contextWithTx, ID, environmentID)
 		if err != nil {
 			return err
@@ -245,7 +244,7 @@ func (s *NotificationService) DeleteSubscription(
 
 	var subscription *domain.Subscription
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err = s.subscriptionStorage.GetSubscription(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -349,29 +348,24 @@ func (s *NotificationService) ListSubscriptions(
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 
-	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
 	var disabled *bool
 	if req.Disabled != nil {
 		disabled = &req.Disabled.Value
 	}
 
-	subscriptions, cursor, totalCount, err := s.listSubscriptionsMySQL(
+	subscriptions, cursor, totalCount, err := s.listSubscriptions(
 		ctx,
-		req.OrganizationId,
-		filterEnvironmentIDs,
-		req.SourceTypes,
-		disabled,
-		req.SearchKeyword,
-		orders,
-		req.PageSize,
-		req.Cursor,
+		v2ss.ListSubscriptionsParams{
+			OrganizationID: req.OrganizationId,
+			EnvironmentIDs: filterEnvironmentIDs,
+			SourceTypes:    req.SourceTypes,
+			Disabled:       disabled,
+			SearchKeyword:  req.SearchKeyword,
+			OrderBy:        req.OrderBy,
+			OrderDirection: req.OrderDirection,
+			PageSize:       req.PageSize,
+			Cursor:         req.Cursor,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -411,33 +405,6 @@ func (s *NotificationService) getAllowedEnvironments(
 	return filterEnvironmentIDs
 }
 
-func (s *NotificationService) newSubscriptionListOrders(
-	orderBy notificationproto.ListSubscriptionsRequest_OrderBy,
-	orderDirection notificationproto.ListSubscriptionsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case notificationproto.ListSubscriptionsRequest_DEFAULT,
-		notificationproto.ListSubscriptionsRequest_NAME:
-		column = "sub.name"
-	case notificationproto.ListSubscriptionsRequest_CREATED_AT:
-		column = "sub.created_at"
-	case notificationproto.ListSubscriptionsRequest_UPDATED_AT:
-		column = "sub.updated_at"
-	case notificationproto.ListSubscriptionsRequest_ENVIRONMENT:
-		column = "env.name"
-	case notificationproto.ListSubscriptionsRequest_STATE:
-		column = "sub.disabled"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == notificationproto.ListSubscriptionsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
 func (s *NotificationService) ListEnabledSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListEnabledSubscriptionsRequest,
@@ -449,16 +416,15 @@ func (s *NotificationService) ListEnabledSubscriptions(
 		return nil, err
 	}
 	var disabled = false
-	subscriptions, cursor, _, err := s.listSubscriptionsMySQL(
+	subscriptions, cursor, _, err := s.listSubscriptions(
 		ctx,
-		"",
-		[]string{req.EnvironmentId},
-		req.SourceTypes,
-		&disabled,
-		"",
-		nil,
-		req.PageSize,
-		req.Cursor,
+		v2ss.ListSubscriptionsParams{
+			EnvironmentIDs: []string{req.EnvironmentId},
+			SourceTypes:    req.SourceTypes,
+			Disabled:       &disabled,
+			PageSize:       req.PageSize,
+			Cursor:         req.Cursor,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -469,95 +435,18 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	}, nil
 }
 
-func (s *NotificationService) listSubscriptionsMySQL(
+func (s *NotificationService) listSubscriptions(
 	ctx context.Context,
-	organizationId string,
-	environmentIDs []string,
-	sourceTypes []notificationproto.Subscription_SourceType,
-	disabled *bool,
-	searchKeyword string,
-	orders []*mysql.Order,
-	pageSize int64,
-	cursor string,
+	params v2ss.ListSubscriptionsParams,
 ) ([]*notificationproto.Subscription, string, int64, error) {
-	var filters []*mysql.FilterV2
-	var inFilters []*mysql.InFilter
-	if organizationId != "" {
-		// console v3
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "env.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    organizationId,
-		})
-		if len(environmentIDs) > 0 {
-			envIDs := make([]interface{}, 0, len(environmentIDs))
-			for _, id := range environmentIDs {
-				envIDs = append(envIDs, id)
-			}
-			inFilters = append(inFilters, &mysql.InFilter{
-				Column: "sub.environment_id",
-				Values: envIDs,
-			})
-		}
-	} else {
-		// console v2
-		if len(environmentIDs) > 0 {
-			filters = append(filters, &mysql.FilterV2{
-				Column:   "sub.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    environmentIDs[0],
-			})
-		}
-	}
-	if disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "sub.disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    disabled,
-		})
-	}
-	var seachQuery *mysql.SearchQuery
-	if searchKeyword != "" {
-		seachQuery = &mysql.SearchQuery{
-			Columns: []string{"sub.name"},
-			Keyword: searchKeyword,
-		}
-	}
-	sourceTypesValues := make([]interface{}, len(sourceTypes))
-	for i, st := range sourceTypes {
-		sourceTypesValues[i] = int32(st)
-	}
-	var jsonFilters []*mysql.JSONFilter
-	if len(sourceTypesValues) > 0 {
-		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-			Column: "sub.source_types",
-			Func:   mysql.JSONContainsNumber,
-			Values: sourceTypesValues,
-		})
-	}
-	limit := int(pageSize)
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
+	subscriptions, nextCursor, totalCount, err := s.subscriptionStorage.ListSubscriptions(ctx, params)
 	if err != nil {
-		return nil, "", 0, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		InFilters:   inFilters,
-		NullFilters: nil,
-		JSONFilters: jsonFilters,
-		SearchQuery: seachQuery,
-		Orders:      orders,
-	}
-
-	subscriptions, nextCursor, totalCount, err := s.subscriptionStorage.ListSubscriptions(
-		ctx, options,
-	)
-	if err != nil {
+		if errors.Is(err, v2ss.ErrInvalidCursor) {
+			return nil, "", 0, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, v2ss.ErrInvalidOrderBy) {
+			return nil, "", 0, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list subscriptions",
 			log.FieldsFromIncomingContext(ctx).AddFields(

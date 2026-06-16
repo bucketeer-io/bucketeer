@@ -90,6 +90,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
+	v2ns "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
+	notificationmysql "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mysql"
+	notificationpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/postgres"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
 	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
@@ -606,6 +609,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var goalStorage v2exs.GoalStorage
 	var experimentResultStorage v2er.ExperimentResultStorage
 	var monthlySummaryStorage insightsstorage.MonthlySummaryStorage
+	var subscriptionStorage v2ns.SubscriptionStorage
+	var adminSubscriptionStorage v2ns.AdminSubscriptionStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -636,6 +641,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		goalStorage = experimentpostgres.NewGoalStorage(postgresClient)
 		experimentResultStorage = eventcounterpostgres.NewExperimentResultStorage(postgresClient)
 		monthlySummaryStorage = insightspostgres.NewMonthlySummaryStorage(postgresClient)
+		subscriptionStorage = notificationpostgres.NewSubscriptionStorage(postgresClient)
+		adminSubscriptionStorage = notificationpostgres.NewAdminSubscriptionStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -659,6 +666,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentStorage = experimentmysql.NewExperimentStorage(mysqlClient)
 		goalStorage = experimentmysql.NewGoalStorage(mysqlClient)
 		monthlySummaryStorage = insightsmysql.NewMonthlySummaryStorage(mysqlClient)
+		subscriptionStorage = notificationmysql.NewSubscriptionStorage(mysqlClient)
+		adminSubscriptionStorage = notificationmysql.NewAdminSubscriptionStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -1005,7 +1014,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
-		mysqlClient,
+		dbClient,
+		adminSubscriptionStorage,
+		subscriptionStorage,
 		accountClient,
 		domainTopicPublisher,
 		notificationapi.WithLogger(logger),

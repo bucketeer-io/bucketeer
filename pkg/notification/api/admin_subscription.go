@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -27,7 +28,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
@@ -56,7 +56,7 @@ func (s *NotificationService) CreateAdminSubscription(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		if err := s.adminSubscriptionStorage.CreateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
 		}
@@ -248,7 +248,7 @@ func (s *NotificationService) updateAdminSubscription(
 	editor *eventproto.Editor,
 ) error {
 	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, id)
 		if err != nil {
 			return err
@@ -305,7 +305,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 		return nil, err
 	}
 	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
 		if err != nil {
 			return err
@@ -425,23 +425,18 @@ func (s *NotificationService) ListAdminSubscriptions(
 	if req.Disabled != nil {
 		disabled = &req.Disabled.Value
 	}
-	orders, err := s.newAdminSubscriptionListOrders(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
 
-	subscriptions, cursor, totalCount, err := s.listAdminSubscriptionsMySQL(
+	subscriptions, cursor, totalCount, err := s.listAdminSubscriptions(
 		ctx,
-		req.SourceTypes,
-		disabled,
-		req.SearchKeyword,
-		orders,
-		req.PageSize,
-		req.Cursor,
+		v2ss.ListAdminSubscriptionsParams{
+			SourceTypes:    req.SourceTypes,
+			Disabled:       disabled,
+			SearchKeyword:  req.SearchKeyword,
+			OrderBy:        req.OrderBy,
+			OrderDirection: req.OrderDirection,
+			PageSize:       req.PageSize,
+			Cursor:         req.Cursor,
+		},
 	)
 
 	if err != nil {
@@ -454,29 +449,6 @@ func (s *NotificationService) ListAdminSubscriptions(
 	}, nil
 }
 
-func (s *NotificationService) newAdminSubscriptionListOrders(
-	orderBy notificationproto.ListAdminSubscriptionsRequest_OrderBy,
-	orderDirection notificationproto.ListAdminSubscriptionsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case notificationproto.ListAdminSubscriptionsRequest_DEFAULT,
-		notificationproto.ListAdminSubscriptionsRequest_NAME:
-		column = "name"
-	case notificationproto.ListAdminSubscriptionsRequest_CREATED_AT:
-		column = "created_at"
-	case notificationproto.ListAdminSubscriptionsRequest_UPDATED_AT:
-		column = "updated_at"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == notificationproto.ListAdminSubscriptionsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
 func (s *NotificationService) ListEnabledAdminSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListEnabledAdminSubscriptionsRequest,
@@ -486,14 +458,14 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 		return nil, err
 	}
 	var disabled = false
-	subscriptions, cursor, _, err := s.listAdminSubscriptionsMySQL(
+	subscriptions, cursor, _, err := s.listAdminSubscriptions(
 		ctx,
-		req.SourceTypes,
-		&disabled,
-		"",
-		nil,
-		req.PageSize,
-		req.Cursor,
+		v2ss.ListAdminSubscriptionsParams{
+			SourceTypes: req.SourceTypes,
+			Disabled:    &disabled,
+			PageSize:    req.PageSize,
+			Cursor:      req.Cursor,
+		},
 	)
 
 	if err != nil {
@@ -505,66 +477,18 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 	}, nil
 }
 
-func (s *NotificationService) listAdminSubscriptionsMySQL(
+func (s *NotificationService) listAdminSubscriptions(
 	ctx context.Context,
-	sourceTypes []notificationproto.Subscription_SourceType,
-	disabled *bool,
-	searchKeyword string,
-	orders []*mysql.Order,
-	pageSize int64,
-	cursor string,
+	params v2ss.ListAdminSubscriptionsParams,
 ) ([]*notificationproto.Subscription, string, int64, error) {
-	var filters []*mysql.FilterV2
-	if disabled != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "disabled",
-			Operator: mysql.OperatorEqual,
-			Value:    disabled,
-		})
-	}
-	sourceTypesValues := make([]interface{}, len(sourceTypes))
-	for i, st := range sourceTypes {
-		sourceTypesValues[i] = int32(st)
-	}
-	var jsonFilters []*mysql.JSONFilter
-	if len(sourceTypesValues) > 0 {
-		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
-			Column: "source_types",
-			Func:   mysql.JSONContainsNumber,
-			Values: sourceTypesValues,
-		})
-	}
-	var seachQuery *mysql.SearchQuery
-	if searchKeyword != "" {
-		seachQuery = &mysql.SearchQuery{
-			Columns: []string{"name"},
-			Keyword: searchKeyword,
+	subscriptions, nextCursor, totalCount, err := s.adminSubscriptionStorage.ListAdminSubscriptions(ctx, params)
+	if err != nil {
+		if errors.Is(err, v2ss.ErrInvalidCursor) {
+			return nil, "", 0, statusInvalidCursor.Err()
 		}
-	}
-	limit := int(pageSize)
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, "", 0, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		InFilters:   nil,
-		NullFilters: nil,
-		JSONFilters: jsonFilters,
-		SearchQuery: seachQuery,
-		Orders:      orders,
-	}
-
-	subscriptions, nextCursor, totalCount, err := s.adminSubscriptionStorage.ListAdminSubscriptions(
-		ctx,
-		options,
-	)
-	if err != nil {
+		if errors.Is(err, v2ss.ErrInvalidOrderBy) {
+			return nil, "", 0, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list admin subscriptions",
 			log.FieldsFromIncomingContext(ctx).AddFields(

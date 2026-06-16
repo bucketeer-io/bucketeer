@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
 	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
@@ -87,9 +87,9 @@ func (mr *MockAdminSubscriptionStorageMockRecorder) GetAdminSubscription(ctx, id
 }
 
 // ListAdminSubscriptions mocks base method.
-func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Context, options *mysql.ListOptions) ([]*notification.Subscription, int, int64, error) {
+func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Context, params v2.ListAdminSubscriptionsParams) ([]*notification.Subscription, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAdminSubscriptions", ctx, options)
+	ret := m.ctrl.Call(m, "ListAdminSubscriptions", ctx, params)
 	ret0, _ := ret[0].([]*notification.Subscription)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -98,9 +98,9 @@ func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Contex
 }
 
 // ListAdminSubscriptions indicates an expected call of ListAdminSubscriptions.
-func (mr *MockAdminSubscriptionStorageMockRecorder) ListAdminSubscriptions(ctx, options any) *gomock.Call {
+func (mr *MockAdminSubscriptionStorageMockRecorder) ListAdminSubscriptions(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminSubscriptions", reflect.TypeOf((*MockAdminSubscriptionStorage)(nil).ListAdminSubscriptions), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminSubscriptions", reflect.TypeOf((*MockAdminSubscriptionStorage)(nil).ListAdminSubscriptions), ctx, params)
 }
 
 // UpdateAdminSubscription mocks base method.

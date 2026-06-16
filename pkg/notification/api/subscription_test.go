@@ -28,8 +28,7 @@ import (
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
@@ -119,10 +118,10 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -186,10 +185,10 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2ss.ErrSubscriptionNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(v2ss.ErrSubscriptionNotFound)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -214,10 +213,10 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -248,10 +247,10 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
@@ -285,10 +284,10 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 						Disabled: false,
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -348,10 +347,10 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 						Id: "key-0",
 					},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					_ = fn(ctx)
 				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),

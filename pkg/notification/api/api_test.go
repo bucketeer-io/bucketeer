@@ -34,7 +34,7 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
@@ -48,11 +48,18 @@ func TestNewNotificationService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mysqlClient := mysqlmock.NewMockClient(mockController)
+	dbClient := dbmock.NewMockClient(mockController)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	pm := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
-	s := NewNotificationService(mysqlClient, accountClientMock, pm, WithLogger(logger))
+	s := NewNotificationService(
+		dbClient,
+		v2mock.NewMockAdminSubscriptionStorage(mockController),
+		v2mock.NewMockSubscriptionStorage(mockController),
+		accountClientMock,
+		pm,
+		WithLogger(logger),
+	)
 	assert.IsType(t, &NotificationService{}, s)
 }
 
@@ -74,7 +81,7 @@ func newNotificationServiceWithMock(
 		}, nil,
 	).AnyTimes()
 	return &NotificationService{
-		mysqlClient:              mysqlmock.NewMockClient(c),
+		dbClient:                 dbmock.NewMockClient(c),
 		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
 		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
 		accountClient:            accountClientMock,
@@ -117,11 +124,11 @@ func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string
 		},
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	mysqlClient := mysqlmock.NewMockClient(c)
+	dbClient := dbmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &NotificationService{
-		mysqlClient:              mysqlClient,
+		dbClient:                 dbClient,
 		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
 		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
 		accountClient:            accountClientMock,
