@@ -239,7 +239,7 @@ func listSubscriptionsOptions(params v2ns.ListSubscriptionsParams) (*postgres.Li
 		filters = append(filters, &postgres.Filter{
 			Column:   "sub.disabled",
 			Operator: postgres.OperatorEqual,
-			Value:    params.Disabled,
+			Value:    *params.Disabled,
 		})
 	}
 	var searchQuery *postgres.SearchQuery

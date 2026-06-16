@@ -187,7 +187,7 @@ func listAdminSubscriptionsOptions(params v2ns.ListAdminSubscriptionsParams) (*m
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "disabled",
 			Operator: mysql.OperatorEqual,
-			Value:    params.Disabled,
+			Value:    *params.Disabled,
 		})
 	}
 	var jsonFilters []*mysql.JSONFilter

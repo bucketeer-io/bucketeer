@@ -187,7 +187,7 @@ func listAdminSubscriptionsOptions(params v2ns.ListAdminSubscriptionsParams) (*p
 		filters = append(filters, &postgres.Filter{
 			Column:   "disabled",
 			Operator: postgres.OperatorEqual,
-			Value:    params.Disabled,
+			Value:    *params.Disabled,
 		})
 	}
 	var jsonFilters []*postgres.JSONFilter

@@ -239,7 +239,7 @@ func listSubscriptionsOptions(params v2ns.ListSubscriptionsParams) (*mysql.ListO
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "sub.disabled",
 			Operator: mysql.OperatorEqual,
-			Value:    params.Disabled,
+			Value:    *params.Disabled,
 		})
 	}
 	var searchQuery *mysql.SearchQuery
