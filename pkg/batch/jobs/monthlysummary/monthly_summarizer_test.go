@@ -157,6 +157,7 @@ func TestListSourceIDs(t *testing.T) {
 	t.Parallel()
 	ids := listSourceIDs()
 	expected := []string{
+		"UNKNOWN",
 		"ANDROID",
 		"IOS",
 		"WEB",
