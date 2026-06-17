@@ -17,11 +17,9 @@ package storage
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
@@ -32,19 +30,8 @@ var (
 		bkterr.TeamPackageName,
 		"unexpected affected rows",
 	)
-
-	//go:embed sql/insert_team.sql
-	insertTeamSQL string
-	//go:embed sql/select_team.sql
-	selectTeamSQL string
-	//go:embed sql/select_team_by_name.sql
-	selectTeamByNameSQL string
-	//go:embed sql/select_teams.sql
-	selectTeamsSQL string
-	//go:embed sql/count_teams.sql
-	countTeamsSQL string
-	//go:embed sql/delete_team.sql
-	deleteTeamSQL string
+	ErrInvalidListTeamsCursor  = errors.New("team storage: invalid list teams cursor")
+	ErrInvalidListTeamsOrderBy = errors.New("team storage: invalid list teams order by")
 )
 
 type TeamStorage interface {
@@ -53,149 +40,16 @@ type TeamStorage interface {
 	GetTeamByName(ctx context.Context, name, organizationID string) (*domain.Team, error)
 	ListTeams(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListTeamsParams,
 	) ([]*proto.Team, int, int64, error)
 	DeleteTeam(ctx context.Context, id string) error
 }
 
-type teamStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewTeamStorage(qe mysql.QueryExecer) TeamStorage {
-	return &teamStorage{
-		qe: qe,
-	}
-}
-
-func (t *teamStorage) UpsertTeam(ctx context.Context, team *domain.Team) error {
-	_, err := t.qe.ExecContext(
-		ctx,
-		insertTeamSQL,
-		team.Id,
-		team.Name,
-		team.Description,
-		team.OrganizationId,
-		team.CreatedAt,
-		team.UpdatedAt,
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *teamStorage) GetTeam(ctx context.Context, id, organizationID string) (*domain.Team, error) {
-	team := proto.Team{}
-	err := t.qe.QueryRowContext(
-		ctx,
-		selectTeamSQL,
-		id,
-		organizationID,
-	).Scan(
-		&team.Id,
-		&team.Name,
-		&team.Description,
-		&team.CreatedAt,
-		&team.UpdatedAt,
-		&team.OrganizationId,
-		&team.OrganizationName,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrTeamNotFound
-		}
-		return nil, err
-	}
-	return &domain.Team{
-		Team: &team,
-	}, nil
-}
-
-func (t *teamStorage) GetTeamByName(ctx context.Context, name, organizationID string) (*domain.Team, error) {
-	team := proto.Team{}
-	err := t.qe.QueryRowContext(
-		ctx,
-		selectTeamByNameSQL,
-		name,
-		organizationID,
-	).Scan(
-		&team.Id,
-		&team.Name,
-		&team.Description,
-		&team.CreatedAt,
-		&team.UpdatedAt,
-		&team.OrganizationId,
-		&team.OrganizationName,
-	)
-	if err != nil {
-		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrTeamNotFound
-		}
-		return nil, err
-	}
-	return &domain.Team{
-		Team: &team,
-	}, nil
-}
-
-func (t *teamStorage) ListTeams(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.Team, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectTeamsSQL, options)
-
-	rows, err := t.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	var limit, offset int
-	if options != nil {
-		limit = options.Limit
-		offset = options.Offset
-	}
-	teams := make([]*proto.Team, 0, limit)
-	for rows.Next() {
-		team := proto.Team{}
-		err := rows.Scan(
-			&team.Id,
-			&team.Name,
-			&team.Description,
-			&team.CreatedAt,
-			&team.UpdatedAt,
-			&team.OrganizationId,
-			&team.OrganizationName,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		teams = append(teams, &team)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(teams)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countTeamsSQL, options)
-	err = t.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return teams, nextOffset, totalCount, nil
-}
-
-func (t *teamStorage) DeleteTeam(ctx context.Context, id string) error {
-	result, err := t.qe.ExecContext(ctx, deleteTeamSQL, id)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrTeamUnexpectedAffectedRows
-	}
-	return nil
+type ListTeamsParams struct {
+	OrganizationID string
+	SearchKeyword  string
+	OrderBy        proto.ListTeamsRequest_OrderBy
+	OrderDirection proto.ListTeamsRequest_OrderDirection
+	PageSize       int
+	Cursor         string
 }

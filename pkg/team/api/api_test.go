@@ -27,8 +27,7 @@ import (
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	teamstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/mock"
@@ -41,12 +40,14 @@ func TestNewTeamService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mysqlClientMock := mysqlmock.NewMockClient(mockController)
+	dbClientMock := databasemock.NewMockClient(mockController)
+	teamStorageMock := teamstoragemock.NewMockTeamStorage(mockController)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	s := NewTeamService(
-		mysqlClientMock,
+		dbClientMock,
+		teamStorageMock,
 		accountClientMock,
 		p,
 		WithLogger(logger),
@@ -92,11 +93,11 @@ func TestTeamService_CreateTeam(t *testing.T) {
 			desc: "success: insert team",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeamByName(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, storage.ErrTeamNotFound)
@@ -125,11 +126,11 @@ func TestTeamService_CreateTeam(t *testing.T) {
 			desc: "success: team already exists",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().UpsertTeam(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -194,6 +195,11 @@ func TestTeamService_ListTeams(t *testing.T) {
 		{
 			desc: "err: invalid cursor",
 			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().ListTeams(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), storage.ErrInvalidListTeamsCursor)
+			},
 			req: &proto.ListTeamsRequest{
 				OrganizationId: "ns0",
 				Cursor:         "invalid",
@@ -204,6 +210,11 @@ func TestTeamService_ListTeams(t *testing.T) {
 		{
 			desc: "err: invalid order_by",
 			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().ListTeams(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), storage.ErrInvalidListTeamsOrderBy)
+			},
 			req: &proto.ListTeamsRequest{
 				OrganizationId: "ns0",
 				OrderBy:        proto.ListTeamsRequest_OrderBy(999),
@@ -313,9 +324,9 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 			desc: "err: team not found",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
 					return storage.ErrTeamNotFound
 				})
 			},
@@ -330,10 +341,10 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 			desc: "err: team is in use",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
-					return fn(ctx, nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
 				})
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeam(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -366,11 +377,11 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 			desc: "success",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeam(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Team{
@@ -411,7 +422,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 }
 
 func createTeamService(c *gomock.Controller) *TeamService {
-	mysqlClientMock := mysqlmock.NewMockClient(c)
+	dbClientMock := databasemock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2Response{
 		Account: &accountproto.AccountV2{
@@ -423,7 +434,7 @@ func createTeamService(c *gomock.Controller) *TeamService {
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &TeamService{
-		mysqlClient:   mysqlClientMock,
+		dbClient:      dbClientMock,
 		teamStorage:   teamstoragemock.NewMockTeamStorage(c),
 		accountClient: accountClientMock,
 		publisher:     p,
