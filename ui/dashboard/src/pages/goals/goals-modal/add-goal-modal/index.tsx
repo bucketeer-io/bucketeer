@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { goalCreator } from '@api/goal';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -55,6 +56,8 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
 
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
+
+  const isIdEdited = useRef(false);
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -118,16 +121,13 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       onChange={value => {
-                        const isIdDirty = form.getFieldState('id').isDirty;
-                        const id = form.getValues('id');
                         field.onChange(value);
-                        form.setValue(
-                          'id',
-                          isIdDirty ? id : onGenerateSlug(value),
-                          isIdDirty
-                            ? { shouldDirty: true }
-                            : { shouldDirty: false }
-                        );
+                        if (!isIdEdited.current) {
+                          form.setValue('id', onGenerateSlug(value), {
+                            shouldDirty: false,
+                            shouldValidate: true
+                          });
+                        }
                       }}
                       name="goal-name"
                     />
@@ -160,6 +160,11 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                       placeholder={`${t('form:placeholder-goal-id')}`}
                       {...field}
                       name="goal-id"
+                      autoComplete="off"
+                      onChange={value => {
+                        isIdEdited.current = value !== '';
+                        field.onChange(value);
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />
