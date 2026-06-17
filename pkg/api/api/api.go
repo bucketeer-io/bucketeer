@@ -155,8 +155,7 @@ func (s *gatewayService) Register(mux *http.ServeMux) {
 	s.regist(mux, pingAPI, s.ping)
 	s.regist(mux, evaluationsAPI, s.getEvaluations)
 	s.regist(mux, evaluationAPI, s.getEvaluation)
-	// TODO: Expose the endpoint after streamEvaluations is fully implemented.
-	_ = s.streamEvaluations
+	s.regist(mux, streamEvaluationsAPI, s.streamEvaluations)
 	s.regist(mux, eventAPI, s.registerEvents)
 }
 

@@ -308,7 +308,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
 				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
-				"announcement and notifies active SSE streams",
+				"announcement, reloads them from the warm L2 cache, and notifies "+
+				"active SSE streams.",
 		).Default("cache-invalidation").String(),
 		sseHeartbeatInterval: cmd.Flag("sse-heartbeat-interval",
 			"Interval between SSE heartbeat comments on the stream_evaluations "+

@@ -71,14 +71,16 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 		ci.logger.Warn("Failed to unmarshal domain event", zap.Error(err))
 		return
 	}
-	ci.evict(event)
+	if err := ci.evict(event); err != nil {
+		return
+	}
 	// Dispatch after eviction so SSE patches are computed from fresh data.
 	if ci.streamDispatcher != nil {
 		ci.streamDispatcher.handleEvent(event)
 	}
 }
 
-func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
+func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 	switch event.EntityType {
 	case domaineventproto.Event_FEATURE:
 		if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
@@ -88,7 +90,7 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
 				zap.String("entityId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
-			return
+			return err
 		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
@@ -106,7 +108,7 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
 				zap.String("segmentId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
-			return
+			return err
 		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
@@ -135,11 +137,11 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
 					zap.String("entityId", event.EntityId),
 					zap.String("type", event.Type.String()),
 				)
-				return
+				return err
 			}
 		}
 		if len(secrets) == 0 {
-			return
+			return nil
 		}
 		for _, s := range secrets {
 			if err := ci.environmentAPIKeyCache.Evict(s); err != nil {
@@ -149,7 +151,7 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
 					zap.String("entityId", event.EntityId),
 					zap.String("type", event.Type.String()),
 				)
-				return
+				return err
 			}
 		}
 		cacheInvalidationCounter.WithLabelValues(
@@ -161,4 +163,5 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) {
 			zap.String("type", event.Type.String()),
 		)
 	}
+	return nil
 }
