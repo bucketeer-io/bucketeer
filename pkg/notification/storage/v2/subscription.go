@@ -17,7 +17,6 @@ package v2
 
 import (
 	"context"
-	"errors"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
@@ -38,12 +37,6 @@ var (
 		err.NotificationPackageName,
 		"subscription unexpected affected rows",
 	)
-)
-
-// Shared list-query errors returned by the storage implementations.
-var (
-	ErrInvalidCursor  = errors.New("notification/storage/v2: invalid cursor")
-	ErrInvalidOrderBy = errors.New("notification/storage/v2: invalid order by")
 )
 
 // ListSubscriptionsParams carries list intent without database-specific types.
