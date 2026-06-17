@@ -43,6 +43,7 @@
   "close": "閉じる",
   "select-filter": "フィルターを選択",
   "select-value": "値を選択",
+  "select-condition": "条件を選択",
   "new-project": "新規プロジェクト",
   "update-project": "プロジェクトを更新",
   "create-project": "プロジェクトを作成",
