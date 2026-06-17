@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package stream
 
 import (
 	"encoding/json"
@@ -36,7 +36,7 @@ type testConnSpec struct {
 
 // snapshotConnCounts captures d.conns as env -> tag -> conn count under lock so tests
 // can assert the internal shape without races.
-func snapshotConnCounts(d *StreamDispatcher) map[string]map[string]int {
+func snapshotConnCounts(d *Dispatcher) map[string]map[string]int {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	out := map[string]map[string]int{}
@@ -50,7 +50,7 @@ func snapshotConnCounts(d *StreamDispatcher) map[string]map[string]int {
 	return out
 }
 
-func TestStreamDispatcherRegister(t *testing.T) {
+func TestDispatcherRegister(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name           string
@@ -84,7 +84,7 @@ func TestStreamDispatcherRegister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewStreamDispatcher(zap.NewNop())
+			d := NewDispatcher(zap.NewNop())
 			for _, r := range tc.clients {
 				_, cancel := d.register(r.envID, r.tag)
 				defer cancel()
@@ -94,7 +94,7 @@ func TestStreamDispatcherRegister(t *testing.T) {
 	}
 }
 
-func TestStreamDispatcherDeregister(t *testing.T) {
+func TestDispatcherDeregister(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name           string
@@ -130,7 +130,7 @@ func TestStreamDispatcherDeregister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewStreamDispatcher(zap.NewNop())
+			d := NewDispatcher(zap.NewNop())
 			cancels := make(map[testConnSpec]func())
 			for env, tagConns := range tc.conns {
 				for tag := range tagConns {
@@ -148,45 +148,45 @@ func TestStreamDispatcherDeregister(t *testing.T) {
 	}
 }
 
-func TestStreamDispatcherDispatch(t *testing.T) {
+func TestDispatcherDispatch(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name  string
 		conns []testConnSpec
-		event streamEvent
+		event event
 		// expected: parallel to conns; true if the conn at the same index should receive the event
 		wantRecv []bool
 	}{
 		{
 			name:     "matches env+tag",
 			conns:    []testConnSpec{{"env-1", "tag-A"}},
-			event:    streamEvent{environmentID: "env-1", tags: []string{"tag-A"}},
+			event:    event{environmentID: "env-1", tags: []string{"tag-A"}},
 			wantRecv: []bool{true},
 		},
 		{
 			name:     "other env not reached",
 			conns:    []testConnSpec{{"env-1", "tag-A"}, {"env-2", "tag-A"}},
-			event:    streamEvent{environmentID: "env-1", tags: []string{"tag-A"}},
+			event:    event{environmentID: "env-1", tags: []string{"tag-A"}},
 			wantRecv: []bool{true, false},
 		},
 		{
 			name:     "empty tags fan out within env",
 			conns:    []testConnSpec{{"env-1", "tag-A"}, {"env-1", "tag-B"}},
-			event:    streamEvent{environmentID: "env-1"},
+			event:    event{environmentID: "env-1"},
 			wantRecv: []bool{true, true},
 		},
 		{
 			name:     "other tag not reached",
 			conns:    []testConnSpec{{"env-1", "tag-A"}, {"env-1", "tag-B"}},
-			event:    streamEvent{environmentID: "env-1", tags: []string{"tag-A"}},
+			event:    event{environmentID: "env-1", tags: []string{"tag-A"}},
 			wantRecv: []bool{true, false},
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewStreamDispatcher(zap.NewNop())
-			chs := make([]<-chan streamEvent, len(tc.conns))
+			d := NewDispatcher(zap.NewNop())
+			chs := make([]<-chan event, len(tc.conns))
 			for i, c := range tc.conns {
 				ch, cancel := d.register(c.envID, c.tag)
 				defer cancel()
@@ -215,7 +215,7 @@ func TestStreamDispatcherDispatch(t *testing.T) {
 	}
 }
 
-func TestStreamDispatcherHandleEvent(t *testing.T) {
+func TestDispatcherHandleEvent(t *testing.T) {
 	t.Parallel()
 	const envID = "env-1"
 	patterns := []struct {
@@ -347,11 +347,11 @@ func TestStreamDispatcherHandleEvent(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			d := NewStreamDispatcher(zap.NewNop())
+			d := NewDispatcher(zap.NewNop())
 			ch, cancel := d.register(envID, p.clientTag)
 			defer cancel()
 
-			d.handleEvent(p.event)
+			d.HandleEvent(p.event)
 
 			select {
 			case got := <-ch:
@@ -375,7 +375,7 @@ func segmentStatusData(t *testing.T, status featureproto.Segment_Status) *anypb.
 	return data
 }
 
-func TestStreamDispatcherAffectedTags(t *testing.T) {
+func TestDispatcherAffectedTags(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc     string
@@ -420,7 +420,7 @@ func TestStreamDispatcherAffectedTags(t *testing.T) {
 			expected: nil,
 		},
 	}
-	d := &StreamDispatcher{logger: zap.NewNop()}
+	d := &Dispatcher{logger: zap.NewNop()}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			got := d.affectedTags(&domaineventproto.Event{

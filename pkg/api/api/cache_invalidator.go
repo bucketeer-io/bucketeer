@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
@@ -30,7 +31,7 @@ type cacheInvalidator struct {
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
-	streamDispatcher       *StreamDispatcher
+	streamDispatcher       *stream.Dispatcher
 	logger                 *zap.Logger
 }
 
@@ -38,7 +39,7 @@ func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
-	streamDispatcher *StreamDispatcher,
+	streamDispatcher *stream.Dispatcher,
 	logger *zap.Logger,
 ) *cacheInvalidator {
 	return &cacheInvalidator{
@@ -76,7 +77,7 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 	}
 	// Dispatch after eviction so SSE patches are computed from fresh data.
 	if ci.streamDispatcher != nil {
-		ci.streamDispatcher.handleEvent(event)
+		ci.streamDispatcher.HandleEvent(event)
 	}
 }
 

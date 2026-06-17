@@ -19,6 +19,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
@@ -351,24 +352,11 @@ var (
 			Name:      "api_cache_invalidation_total",
 			Help:      "Total number of in-memory cache invalidations triggered by domain events",
 		}, []string{"entity_type", "event_type", "environment_id"})
-	sseActiveConnectionsGauge = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Namespace: "bucketeer",
-			Subsystem: "gateway",
-			Name:      "sse_active_connections",
-			Help:      "Current number of active SSE connections held in the stream dispatcher.",
-		}, []string{"environment_id", "tag"})
-	sseDispatchDroppedCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "gateway",
-			Name:      "sse_dispatch_dropped_total",
-			Help:      "Total dispatched events dropped because a connection's buffer was full.",
-		}, []string{"environment_id", "tag"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	registerOnce.Do(func() {
+		stream.RegisterMetrics(r)
 		r.MustRegister(
 			cacheCounter,
 			eventCounter,
@@ -390,8 +378,6 @@ func registerMetrics(r metrics.Registerer) {
 			handledSecondsHistogram,
 			apiErrorCounter,
 			cacheInvalidationCounter,
-			sseActiveConnectionsGauge,
-			sseDispatchDroppedCounter,
 		)
 	})
 }

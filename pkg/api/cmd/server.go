@@ -33,6 +33,7 @@ import (
 	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
 	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -558,7 +559,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cachev3.WithEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 	)
 
-	streamDispatcher := api.NewStreamDispatcher(logger)
+	streamDispatcher := stream.NewDispatcher(logger)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()
 	var stopInvalidatorOnce sync.Once
@@ -836,7 +837,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
-	dispatcher *api.StreamDispatcher,
+	dispatcher *stream.Dispatcher,
 	inMemoryCache *cachev3.InMemoryCache,
 	topic string,
 	logger *zap.Logger,

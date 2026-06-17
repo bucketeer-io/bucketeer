@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package stream
 
 import (
 	"testing"
@@ -51,10 +51,9 @@ func TestValidateStreamEvaluationsRequest(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	gs := &gatewayService{}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			assert.Equal(t, p.expectedErr, gs.validateStreamEvaluationsRequest(p.req))
+			assert.Equal(t, p.expectedErr, validateStreamEvaluationsRequest(p.req))
 		})
 	}
 }

@@ -33,6 +33,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -120,7 +121,7 @@ type options struct {
 	metricsWorkers                    int
 	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
-	streamDispatcher                  *StreamDispatcher
+	streamDispatcher                  *stream.Dispatcher
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
 }
@@ -247,7 +248,7 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
-func WithStreamDispatcher(d *StreamDispatcher) Option {
+func WithStreamDispatcher(d *stream.Dispatcher) Option {
 	return func(opts *options) {
 		opts.streamDispatcher = d
 	}

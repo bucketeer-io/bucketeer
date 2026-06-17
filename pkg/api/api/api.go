@@ -32,6 +32,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -62,7 +63,8 @@ type gatewayService struct {
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	flightgroup                 singleflight.Group
-	streamDispatcher            *StreamDispatcher
+	streamDispatcher            *stream.Dispatcher
+	streamEvalHandler           *stream.EvaluationsHandler
 	opts                        *options
 	logger                      *zap.Logger
 }
@@ -94,9 +96,9 @@ func NewGatewayService(
 	}
 	streamDispatcher := options.streamDispatcher
 	if streamDispatcher == nil {
-		streamDispatcher = NewStreamDispatcher(options.logger)
+		streamDispatcher = stream.NewDispatcher(options.logger)
 	}
-	return &gatewayService{
+	s := &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,
 		accountStorage:              accountStorage,
@@ -115,6 +117,14 @@ func NewGatewayService(
 		opts:                        &options,
 		logger:                      options.logger.Named("api"),
 	}
+	s.streamEvalHandler = stream.NewEvaluationsHandler(
+		streamDispatcher,
+		options.sseHeartbeatInterval,
+		s.checkRequest,
+		requestTotal,
+		options.logger,
+	)
+	return s
 }
 
 const (
@@ -155,8 +165,8 @@ func (s *gatewayService) Register(mux *http.ServeMux) {
 	s.regist(mux, pingAPI, s.ping)
 	s.regist(mux, evaluationsAPI, s.getEvaluations)
 	s.regist(mux, evaluationAPI, s.getEvaluation)
-	s.regist(mux, streamEvaluationsAPI, s.streamEvaluations)
 	s.regist(mux, eventAPI, s.registerEvents)
+	s.regist(mux, streamEvaluationsAPI, s.streamEvalHandler.Handle)
 }
 
 func (*gatewayService) regist(mux *http.ServeMux, path string, handler func(http.ResponseWriter, *http.Request)) {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package stream
 
 import (
 	"encoding/json"
@@ -24,48 +24,48 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-// StreamDispatcher forwards relevant domain events to SSE connections.
-type StreamDispatcher struct {
+// Dispatcher forwards relevant domain events to SSE connections.
+type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns  map[string]map[string]map[*streamConn]struct{}
+	conns  map[string]map[string]map[*conn]struct{}
 	logger *zap.Logger
 }
 
-type streamEvent struct {
+type event struct {
 	environmentID string
 	tags          []string
 }
 
-type streamConn struct {
-	ch  chan streamEvent
+type conn struct {
+	ch  chan event
 	tag string
 }
 
-func NewStreamDispatcher(logger *zap.Logger) *StreamDispatcher {
-	return &StreamDispatcher{
-		conns:  make(map[string]map[string]map[*streamConn]struct{}),
+func NewDispatcher(logger *zap.Logger) *Dispatcher {
+	return &Dispatcher{
+		conns:  make(map[string]map[string]map[*conn]struct{}),
 		logger: logger.Named("stream-dispatcher"),
 	}
 }
 
 // register adds a connection to the dispatcher. The caller must invoke the returned
 // deregister func on disconnect to free the slot.
-func (d *StreamDispatcher) register(envID, tag string) (events <-chan streamEvent, deregister func()) {
-	c := &streamConn{
+func (d *Dispatcher) register(envID, tag string) (events <-chan event, deregister func()) {
+	c := &conn{
 		// Only the latest event is needed to evaluate with the latest config.
-		ch:  make(chan streamEvent, 1),
+		ch:  make(chan event, 1),
 		tag: tag,
 	}
 	d.mu.Lock()
 	tagConns, ok := d.conns[envID]
 	if !ok {
-		tagConns = make(map[string]map[*streamConn]struct{})
+		tagConns = make(map[string]map[*conn]struct{})
 		d.conns[envID] = tagConns
 	}
 	conns, ok := tagConns[tag]
 	if !ok {
-		conns = make(map[*streamConn]struct{})
+		conns = make(map[*conn]struct{})
 		tagConns[tag] = conns
 	}
 	conns[c] = struct{}{}
@@ -77,7 +77,7 @@ func (d *StreamDispatcher) register(envID, tag string) (events <-chan streamEven
 	return c.ch, func() { d.deregister(envID, c) }
 }
 
-func (d *StreamDispatcher) deregister(envID string, target *streamConn) {
+func (d *Dispatcher) deregister(envID string, target *conn) {
 	d.mu.Lock()
 	tagConns, ok := d.conns[envID]
 	if !ok {
@@ -105,30 +105,30 @@ func (d *StreamDispatcher) deregister(envID string, target *streamConn) {
 	// race with dispatch and panic. The handler exits via ctx.Done().
 }
 
-// handleEvent dispatches a domain event to the affected connections if it can
+// HandleEvent dispatches a domain event to the affected connections if it can
 // change evaluation results.
-func (d *StreamDispatcher) handleEvent(event *domaineventproto.Event) {
-	switch event.EntityType {
+func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
+	switch e.EntityType {
 	case domaineventproto.Event_FEATURE:
-		if event.Type != domaineventproto.Event_FEATURE_UPDATED &&
-			event.Type != domaineventproto.Event_FEATURE_ENABLED &&
-			event.Type != domaineventproto.Event_FEATURE_DISABLED {
+		if e.Type != domaineventproto.Event_FEATURE_UPDATED &&
+			e.Type != domaineventproto.Event_FEATURE_ENABLED &&
+			e.Type != domaineventproto.Event_FEATURE_DISABLED {
 			return
 		}
-		d.dispatch(streamEvent{
-			environmentID: event.EnvironmentId,
-			tags:          d.affectedTags(event),
+		d.dispatch(event{
+			environmentID: e.EnvironmentId,
+			tags:          d.affectedTags(e),
 		})
 	case domaineventproto.Event_SEGMENT:
 		// Segment membership only changes through a bulk upload.
-		if event.Type != domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED {
+		if e.Type != domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED {
 			return
 		}
-		if event.Data == nil {
+		if e.Data == nil {
 			return
 		}
 		payload := &domaineventproto.SegmentBulkUploadUsersStatusChangedEvent{}
-		if err := event.Data.UnmarshalTo(payload); err != nil {
+		if err := e.Data.UnmarshalTo(payload); err != nil {
 			d.logger.Warn("Failed to unmarshal segment bulk upload event", zap.Error(err))
 			return
 		}
@@ -138,8 +138,8 @@ func (d *StreamDispatcher) handleEvent(event *domaineventproto.Event) {
 		}
 		// TODO: resolve the affected tags from the segment.
 		// Currently, it fans out env-wide (all tags).
-		d.dispatch(streamEvent{
-			environmentID: event.EnvironmentId,
+		d.dispatch(event{
+			environmentID: e.EnvironmentId,
 		})
 	}
 }
@@ -148,10 +148,10 @@ func (d *StreamDispatcher) handleEvent(event *domaineventproto.Event) {
 // removing a tag still notifies that tag's subscribers.
 //
 // TODO: also pull the tags of flags that depend on this one.
-func (d *StreamDispatcher) affectedTags(event *domaineventproto.Event) []string {
+func (d *Dispatcher) affectedTags(e *domaineventproto.Event) []string {
 	seen := make(map[string]struct{})
 	var tags []string
-	for _, data := range []string{event.EntityData, event.PreviousEntityData} {
+	for _, data := range []string{e.EntityData, e.PreviousEntityData} {
 		for _, tag := range d.parseTags(data) {
 			if _, ok := seen[tag]; ok {
 				continue
@@ -163,7 +163,7 @@ func (d *StreamDispatcher) affectedTags(event *domaineventproto.Event) []string 
 	return tags
 }
 
-func (d *StreamDispatcher) parseTags(data string) []string {
+func (d *Dispatcher) parseTags(data string) []string {
 	if data == "" {
 		return nil
 	}
@@ -180,7 +180,7 @@ func (d *StreamDispatcher) parseTags(data string) []string {
 // dispatch fans an event out to matching tag connections in the environment, or to
 // all of them when tags is empty.
 // Sends are non-blocking.
-func (d *StreamDispatcher) dispatch(ev streamEvent) {
+func (d *Dispatcher) dispatch(ev event) {
 	d.mu.Lock()
 	tagConns := d.conns[ev.environmentID]
 	if len(tagConns) == 0 {
@@ -189,13 +189,13 @@ func (d *StreamDispatcher) dispatch(ev streamEvent) {
 	}
 
 	// Snapshot conns to release the lock early to avoid blocking register/deregister.
-	var targetConns []*streamConn
+	var targetConns []*conn
 	if len(ev.tags) == 0 {
 		n := 0
 		for _, conns := range tagConns {
 			n += len(conns)
 		}
-		targetConns = make([]*streamConn, 0, n)
+		targetConns = make([]*conn, 0, n)
 		for _, conns := range tagConns {
 			for c := range conns {
 				targetConns = append(targetConns, c)
@@ -206,7 +206,7 @@ func (d *StreamDispatcher) dispatch(ev streamEvent) {
 		for _, t := range ev.tags {
 			n += len(tagConns[t])
 		}
-		targetConns = make([]*streamConn, 0, n)
+		targetConns = make([]*conn, 0, n)
 		for _, t := range ev.tags {
 			for c := range tagConns[t] {
 				targetConns = append(targetConns, c)
