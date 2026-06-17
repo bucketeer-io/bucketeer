@@ -112,6 +112,7 @@ func (s *grpcGatewayService) CreateFeature(
 		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: req.OnVariationIndex},
 		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: req.OffVariationIndex},
 		VariationType:            req.VariationType,
+		VariationValueSchema:     req.VariationValueSchema,
 	})
 	if err != nil {
 		return nil, err
@@ -222,22 +223,24 @@ func (s *grpcGatewayService) UpdateFeature(
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	res, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Comment:             req.Comment,
-		EnvironmentId:       envAPIKey.Environment.Id,
-		Id:                  req.Id,
-		Name:                req.Name,
-		Description:         req.Description,
-		Tags:                req.Tags,
-		Enabled:             req.Enabled,
-		Archived:            req.Archived,
-		DefaultStrategy:     req.DefaultStrategy,
-		OffVariation:        req.OffVariation,
-		ResetSamplingSeed:   req.ResetSamplingSeed,
-		VariationChanges:    req.VariationChanges,
-		RuleChanges:         req.RuleChanges,
-		PrerequisiteChanges: req.PrerequisiteChanges,
-		TargetChanges:       req.TargetChanges,
-		TagChanges:          req.TagChanges,
+		Comment:                   req.Comment,
+		EnvironmentId:             envAPIKey.Environment.Id,
+		Id:                        req.Id,
+		Name:                      req.Name,
+		Description:               req.Description,
+		Tags:                      req.Tags,
+		Enabled:                   req.Enabled,
+		Archived:                  req.Archived,
+		DefaultStrategy:           req.DefaultStrategy,
+		OffVariation:              req.OffVariation,
+		ResetSamplingSeed:         req.ResetSamplingSeed,
+		VariationChanges:          req.VariationChanges,
+		RuleChanges:               req.RuleChanges,
+		PrerequisiteChanges:       req.PrerequisiteChanges,
+		TargetChanges:             req.TargetChanges,
+		TagChanges:                req.TagChanges,
+		VariationValueSchema:      req.VariationValueSchema,
+		ClearVariationValueSchema: req.ClearVariationValueSchema,
 	})
 	if err != nil {
 		return nil, err

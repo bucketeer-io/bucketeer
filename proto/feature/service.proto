@@ -134,6 +134,7 @@ message CreateFeatureRequest {
   google.protobuf.Int32Value default_on_variation_index = 9;
   google.protobuf.Int32Value default_off_variation_index = 10;
   Feature.VariationType variation_type = 11;
+  VariationValueSchema variation_value_schema = 12;
 }
 
 message CreateFeatureResponse {
@@ -170,6 +171,8 @@ message UpdateFeatureRequest {
   repeated TagChange tag_changes = 17;
   google.protobuf.StringValue maintainer = 18;
   repeated string ordered_rule_ids = 19;
+  VariationValueSchema variation_value_schema = 20;
+  google.protobuf.BoolValue clear_variation_value_schema = 21;
 }
 
 message UpdateFeatureResponse {

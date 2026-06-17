@@ -29332,6 +29332,26 @@
                 "integer": 4
               }
             ]
+          },
+          {
+            "name": "VariationValueSchema.Type",
+            "enum_fields": [
+              {
+                "name": "TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "ENUM",
+                "integer": 1
+              },
+              {
+                "name": "REGEX",
+                "integer": 2
+              },
+              {
+                "name": "JSON_SCHEMA",
+                "integer": 3
+              }
+            ]
           }
         ],
         "messages": [
@@ -29463,6 +29483,74 @@
                 "id": 23,
                 "name": "auto_ops_summary",
                 "type": "AutoOpsSummary"
+              },
+              {
+                "id": 24,
+                "name": "variation_value_schema",
+                "type": "VariationValueSchema"
+              }
+            ]
+          },
+          {
+            "name": "VariationValueSchema",
+            "fields": [
+              {
+                "id": 1,
+                "name": "type",
+                "type": "Type"
+              },
+              {
+                "id": 2,
+                "name": "enum_validator",
+                "type": "EnumValidator"
+              },
+              {
+                "id": 3,
+                "name": "regex_validator",
+                "type": "RegexValidator"
+              },
+              {
+                "id": 4,
+                "name": "json_schema_validator",
+                "type": "JsonSchemaValidator"
+              },
+              {
+                "id": 5,
+                "name": "description",
+                "type": "string"
+              }
+            ],
+            "messages": [
+              {
+                "name": "EnumValidator",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "values",
+                    "type": "string",
+                    "is_repeated": true
+                  }
+                ]
+              },
+              {
+                "name": "RegexValidator",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "pattern",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "JsonSchemaValidator",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "schema",
+                    "type": "string"
+                  }
+                ]
               }
             ]
           },
@@ -31150,6 +31238,11 @@
                 "id": 11,
                 "name": "variation_type",
                 "type": "Feature.VariationType"
+              },
+              {
+                "id": 12,
+                "name": "variation_value_schema",
+                "type": "VariationValueSchema"
               }
             ],
             "reserved_ids": [
@@ -31282,6 +31375,16 @@
                 "name": "ordered_rule_ids",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 20,
+                "name": "variation_value_schema",
+                "type": "VariationValueSchema"
+              },
+              {
+                "id": 21,
+                "name": "clear_variation_value_schema",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
@@ -37748,6 +37851,11 @@
                 "id": 8,
                 "name": "off_variation_index",
                 "type": "int32"
+              },
+              {
+                "id": 9,
+                "name": "variation_value_schema",
+                "type": "feature.VariationValueSchema"
               }
             ]
           },
@@ -37930,6 +38038,16 @@
                 "name": "tag_changes",
                 "type": "feature.TagChange",
                 "is_repeated": true
+              },
+              {
+                "id": 17,
+                "name": "variation_value_schema",
+                "type": "feature.VariationValueSchema"
+              },
+              {
+                "id": 18,
+                "name": "clear_variation_value_schema",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },

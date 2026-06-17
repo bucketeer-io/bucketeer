@@ -420,6 +420,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			nil,   // tagChanges
 			nil,   // maintainer
 			nil,   // ruleOrder
+			nil,   // variationValueSchemaUpdate
 		)
 		if err != nil {
 			return err

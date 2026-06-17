@@ -9307,6 +9307,23 @@ definitions:
         type: object
         additionalProperties:
           type: string
+  VariationValueSchemaEnumValidator:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: string
+  VariationValueSchemaJsonSchemaValidator:
+    type: object
+    properties:
+      schema:
+        type: string
+  VariationValueSchemaRegexValidator:
+    type: object
+    properties:
+      pattern:
+        type: string
   accountAPIKey:
     type: object
     properties:
@@ -12354,6 +12371,8 @@ definitions:
         format: int32
       variationType:
         $ref: '#/definitions/FeatureVariationType'
+      variationValueSchema:
+        $ref: '#/definitions/featureVariationValueSchema'
     required:
       - environmentId
       - id
@@ -12590,6 +12609,8 @@ definitions:
         type: string
       autoOpsSummary:
         $ref: '#/definitions/featureAutoOpsSummary'
+      variationValueSchema:
+        $ref: '#/definitions/featureVariationValueSchema'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -13266,6 +13287,10 @@ definitions:
         type: array
         items:
           type: string
+      variationValueSchema:
+        $ref: '#/definitions/featureVariationValueSchema'
+      clearVariationValueSchema:
+        type: boolean
     required:
       - environmentId
       - id
@@ -13382,6 +13407,27 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
+  featureVariationValueSchema:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/featureVariationValueSchemaType'
+      enumValidator:
+        $ref: '#/definitions/VariationValueSchemaEnumValidator'
+      regexValidator:
+        $ref: '#/definitions/VariationValueSchemaRegexValidator'
+      jsonSchemaValidator:
+        $ref: '#/definitions/VariationValueSchemaJsonSchemaValidator'
+      description:
+        type: string
+  featureVariationValueSchemaType:
+    type: string
+    enum:
+      - TYPE_UNSPECIFIED
+      - ENUM
+      - REGEX
+      - JSON_SCHEMA
+    default: TYPE_UNSPECIFIED
   googlerpcStatus:
     type: object
     properties:

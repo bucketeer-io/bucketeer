@@ -1,5 +1,10 @@
 import axiosClient from '@api/axios-client';
-import { Feature, FeatureVariation, FeatureVariationType } from '@types';
+import {
+  Feature,
+  FeatureVariation,
+  FeatureVariationType,
+  VariationValueSchema
+} from '@types';
 
 export interface FeatureCreatorParams {
   environmentId: string;
@@ -10,6 +15,7 @@ export interface FeatureCreatorParams {
   defaultOnVariationIndex: number;
   defaultOffVariationIndex: number;
   variationType: FeatureVariationType;
+  variationValueSchema?: VariationValueSchema;
   description?: string;
 }
 

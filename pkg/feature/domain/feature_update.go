@@ -27,6 +27,11 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
+type VariationValueSchemaUpdate struct {
+	Schema *feature.VariationValueSchema
+	Clear  *wrapperspb.BoolValue
+}
+
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
@@ -43,6 +48,7 @@ func (f *Feature) Update(
 	tagChanges []*feature.TagChange,
 	maintainer *wrapperspb.StringValue,
 	ruleOrder []string,
+	variationValueSchemaUpdate *VariationValueSchemaUpdate,
 ) (*Feature, error) {
 	// Use copier.CopyWithOption with DeepCopy: true to standardize empty slices as []
 	// This ensures consistent JSON serialization in both API responses and audit logs
@@ -113,6 +119,8 @@ func (f *Feature) Update(
 	); err != nil {
 		return nil, err
 	}
+
+	updated.applyVariationValueSchemaUpdate(variationValueSchemaUpdate)
 
 	if err := updated.applyGranularCRUDChanges(
 		prerequisiteChanges,
@@ -249,6 +257,19 @@ func (f *Feature) applyGeneralUpdates(
 		f.Maintainer = maintainer.Value
 	}
 	return nil
+}
+
+func (f *Feature) applyVariationValueSchemaUpdate(update *VariationValueSchemaUpdate) {
+	if update == nil {
+		return
+	}
+	if update.Clear.GetValue() {
+		f.VariationValueSchema = nil
+		return
+	}
+	if update.Schema != nil {
+		f.VariationValueSchema = update.Schema
+	}
 }
 
 // applyVariationChanges handles only variation creations, updates, and deletions.
