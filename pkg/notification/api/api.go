@@ -28,7 +28,7 @@ import (
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
@@ -47,7 +47,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type NotificationService struct {
-	mysqlClient              mysql.Client
+	dbClient                 database.Client
 	adminSubscriptionStorage v2.AdminSubscriptionStorage
 	subscriptionStorage      v2.SubscriptionStorage
 	accountClient            accountclient.Client
@@ -57,7 +57,9 @@ type NotificationService struct {
 }
 
 func NewNotificationService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	adminSubscriptionStorage v2.AdminSubscriptionStorage,
+	subscriptionStorage v2.SubscriptionStorage,
 	accountClient accountclient.Client,
 	domainEventPublisher publisher.Publisher,
 	opts ...Option,
@@ -69,9 +71,9 @@ func NewNotificationService(
 		opt(dopts)
 	}
 	return &NotificationService{
-		mysqlClient:              mysqlClient,
-		adminSubscriptionStorage: v2.NewAdminSubscriptionStorage(mysqlClient),
-		subscriptionStorage:      v2.NewSubscriptionStorage(mysqlClient),
+		dbClient:                 dbClient,
+		adminSubscriptionStorage: adminSubscriptionStorage,
+		subscriptionStorage:      subscriptionStorage,
 		accountClient:            accountClient,
 		domainEventPublisher:     domainEventPublisher,
 		opts:                     dopts,

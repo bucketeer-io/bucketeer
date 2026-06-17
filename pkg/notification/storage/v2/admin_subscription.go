@@ -17,11 +17,9 @@ package v2
 
 import (
 	"context"
-	_ "embed"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
@@ -39,20 +37,18 @@ var (
 		err.NotificationPackageName,
 		"admin subscription unexpected affected rows",
 	)
-
-	//go:embed sql/admin_subscription/insert_admin_subscription_v2.sql
-	insertAdminSubscriptionV2SQLQuery string
-	//go:embed sql/admin_subscription/update_admin_subscription_v2.sql
-	updateAdminSubscriptionV2SQLQuery string
-	//go:embed sql/admin_subscription/delete_admin_subscription_v2.sql
-	deleteAdminSubscriptionV2SQLQuery string
-	//go:embed sql/admin_subscription/select_admin_subscription_v2_any.sql
-	selectAdminSubscriptionV2AnySQLQuery string
-	//go:embed sql/admin_subscription/select_admin_subscription_v2.sql
-	selectAdminSubscriptionV2SQLQuery string
-	//go:embed sql/admin_subscription/select_admin_subscription_v2_count.sql
-	selectAdminSubscriptionV2CountSQLQuery string
 )
+
+// ListAdminSubscriptionsParams carries list intent without database-specific types.
+type ListAdminSubscriptionsParams struct {
+	SourceTypes    []proto.Subscription_SourceType
+	Disabled       *bool
+	SearchKeyword  string
+	OrderBy        proto.ListAdminSubscriptionsRequest_OrderBy
+	OrderDirection proto.ListAdminSubscriptionsRequest_OrderDirection
+	PageSize       int64
+	Cursor         string
+}
 
 type AdminSubscriptionStorage interface {
 	CreateAdminSubscription(ctx context.Context, e *domain.Subscription) error
@@ -61,152 +57,6 @@ type AdminSubscriptionStorage interface {
 	GetAdminSubscription(ctx context.Context, id string) (*domain.Subscription, error)
 	ListAdminSubscriptions(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		params ListAdminSubscriptionsParams,
 	) ([]*proto.Subscription, int, int64, error)
-}
-
-type adminSubscriptionStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewAdminSubscriptionStorage(qe mysql.QueryExecer) AdminSubscriptionStorage {
-	return &adminSubscriptionStorage{qe}
-}
-
-func (s *adminSubscriptionStorage) CreateAdminSubscription(ctx context.Context, e *domain.Subscription) error {
-	_, err := s.qe.ExecContext(
-		ctx,
-		insertAdminSubscriptionV2SQLQuery,
-		e.Id,
-		e.CreatedAt,
-		e.UpdatedAt,
-		e.Disabled,
-		mysql.JSONObject{Val: e.SourceTypes},
-		mysql.JSONObject{Val: e.Recipient},
-		e.Name,
-	)
-	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
-			return ErrAdminSubscriptionAlreadyExists
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *adminSubscriptionStorage) UpdateAdminSubscription(ctx context.Context, e *domain.Subscription) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		updateAdminSubscriptionV2SQLQuery,
-		e.UpdatedAt,
-		e.Disabled,
-		mysql.JSONObject{Val: e.SourceTypes},
-		mysql.JSONObject{Val: e.Recipient},
-		e.Name,
-		e.Id,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrAdminSubscriptionUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *adminSubscriptionStorage) DeleteAdminSubscription(ctx context.Context, id string) error {
-	result, err := s.qe.ExecContext(
-		ctx,
-		deleteAdminSubscriptionV2SQLQuery,
-		id,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrAdminSubscriptionUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (s *adminSubscriptionStorage) GetAdminSubscription(ctx context.Context, id string) (*domain.Subscription, error) {
-	subscription := proto.Subscription{}
-	err := s.qe.QueryRowContext(
-		ctx,
-		selectAdminSubscriptionV2SQLQuery,
-		id,
-	).Scan(
-		&subscription.Id,
-		&subscription.CreatedAt,
-		&subscription.UpdatedAt,
-		&subscription.Disabled,
-		&mysql.JSONObject{Val: &subscription.SourceTypes},
-		&mysql.JSONObject{Val: &subscription.Recipient},
-		&subscription.Name,
-	)
-	if err != nil {
-		if err == mysql.ErrNoRows {
-			return nil, ErrAdminSubscriptionNotFound
-		}
-		return nil, err
-	}
-	return &domain.Subscription{Subscription: &subscription}, nil
-}
-
-func (s *adminSubscriptionStorage) ListAdminSubscriptions(
-	ctx context.Context,
-	options *mysql.ListOptions,
-) ([]*proto.Subscription, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAdminSubscriptionV2AnySQLQuery, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	var offset int
-	var limit int
-	if options != nil {
-		offset = options.Offset
-		limit = options.Limit
-	}
-	subscriptions := make([]*proto.Subscription, 0, limit)
-	for rows.Next() {
-		subscription := proto.Subscription{}
-		err := rows.Scan(
-			&subscription.Id,
-			&subscription.CreatedAt,
-			&subscription.UpdatedAt,
-			&subscription.Disabled,
-			&mysql.JSONObject{Val: &subscription.SourceTypes},
-			&mysql.JSONObject{Val: &subscription.Recipient},
-			&subscription.Name,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		subscriptions = append(subscriptions, &subscription)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(subscriptions)
-	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(
-		selectAdminSubscriptionV2CountSQLQuery,
-		options,
-	)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return subscriptions, nextOffset, totalCount, nil
 }

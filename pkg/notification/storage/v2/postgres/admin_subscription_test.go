@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	v2ns "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
@@ -56,12 +58,12 @@ func TestCreateAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, mysql.ErrDuplicateEntry)
+				).Return(nil, postgres.ErrDuplicateEntry)
 			},
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: "id-0"},
 			},
-			expectedErr: ErrAdminSubscriptionAlreadyExists,
+			expectedErr: v2ns.ErrAdminSubscriptionAlreadyExists,
 		},
 		{
 			desc: "Error",
@@ -82,7 +84,7 @@ func TestCreateAdminSubscription(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name,
+					id, int64(1), int64(2), false, postgres.JSONObject{Val: sourceTypes}, postgres.JSONObject{Val: recipient}, name,
 				).Return(nil, nil)
 			},
 			input: &domain.Subscription{
@@ -130,7 +132,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id},
 			},
-			expectedErr: ErrAdminSubscriptionUnexpectedAffectedRows,
+			expectedErr: v2ns.ErrAdminSubscriptionUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -153,7 +155,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, id,
+					int64(2), false, postgres.JSONObject{Val: sourceTypes}, postgres.JSONObject{Val: recipient}, name, id,
 				).Return(result, nil)
 			},
 			input: &domain.Subscription{
@@ -194,7 +196,7 @@ func TestDeleteAdminSubscription(t *testing.T) {
 				).Return(result, nil)
 			},
 			id:          "id-0",
-			expectedErr: ErrAdminSubscriptionUnexpectedAffectedRows,
+			expectedErr: v2ns.ErrAdminSubscriptionUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -248,13 +250,13 @@ func TestGetAdminSubscription(t *testing.T) {
 			desc: "ErrAdminSubscriptionNotFound",
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
 			id:          "id-0",
-			expectedErr: ErrAdminSubscriptionNotFound,
+			expectedErr: v2ns.ErrAdminSubscriptionNotFound,
 		},
 		{
 			desc: "Error",
@@ -308,17 +310,30 @@ func TestListAdminSubscriptions(t *testing.T) {
 
 	getSize := 2
 	offset := 5
-	limit := 10
-	updatedAt := 8
-	disable := false
 	patterns := []struct {
 		desc           string
 		setup          func(*adminSubscriptionStorage)
-		listOpts       *mysql.ListOptions
+		params         v2ns.ListAdminSubscriptionsParams
 		expectedCount  int
 		expectedCursor int
 		expectedErr    error
 	}{
+		{
+			desc:           "ErrInvalidCursor",
+			setup:          nil,
+			params:         v2ns.ListAdminSubscriptionsParams{Cursor: "invalid"},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    v2ns.ErrInvalidCursor,
+		},
+		{
+			desc:           "ErrInvalidOrderBy",
+			setup:          nil,
+			params:         v2ns.ListAdminSubscriptionsParams{OrderBy: proto.ListAdminSubscriptionsRequest_OrderBy(-1)},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    v2ns.ErrInvalidOrderBy,
+		},
 		{
 			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
@@ -326,7 +341,7 @@ func TestListAdminSubscriptions(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			listOpts:       nil,
+			params:         v2ns.ListAdminSubscriptionsParams{},
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -344,54 +359,24 @@ func TestListAdminSubscriptions(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(),
-					gomock.Any(),
-					updatedAt, disable,
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(),
-					gomock.Any(),
-					updatedAt, disable,
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			listOpts: &mysql.ListOptions{
-				Limit:  limit,
-				Offset: offset,
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "updated_at",
-						Operator: mysql.OperatorGreaterThanOrEqual,
-						Value:    updatedAt,
-					},
-					{
-						Column:   "disabled",
-						Operator: mysql.OperatorEqual,
-						Value:    disable,
-					},
-				},
-				Orders: []*mysql.Order{
-					{
-						Column:    "id",
-						Direction: mysql.OrderDirectionAsc,
-					},
-					{
-						Column:    "create_at",
-						Direction: mysql.OrderDirectionDesc,
-					},
-				},
-				InFilters:   nil,
-				NullFilters: nil,
-				JSONFilters: nil,
-				SearchQuery: nil,
+			params: v2ns.ListAdminSubscriptionsParams{
+				Disabled: boolPtr(false),
+				Cursor:   strconv.Itoa(offset),
 			},
 			expectedCount:  getSize,
 			expectedCursor: offset + getSize,
 			expectedErr:    nil,
 		},
 		{
-			desc: "Success:No wereParts and no orderParts and no limit and no offset",
+			desc: "Success: no filters",
 			setup: func(s *adminSubscriptionStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -399,19 +384,15 @@ func TestListAdminSubscriptions(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(),
-					gomock.Any(),
-					[]interface{}{},
+					gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(),
-					gomock.Any(),
-					[]interface{}{},
+					gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			listOpts:       nil,
+			params:         v2ns.ListAdminSubscriptionsParams{},
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    nil,
@@ -425,7 +406,7 @@ func TestListAdminSubscriptions(t *testing.T) {
 			}
 			subscriptions, cursor, _, err := storage.ListAdminSubscriptions(
 				context.Background(),
-				p.listOpts,
+				p.params,
 			)
 			assert.Equal(t, p.expectedCount, len(subscriptions))
 			if len(subscriptions) > 0 {
@@ -436,6 +417,8 @@ func TestListAdminSubscriptions(t *testing.T) {
 		})
 	}
 }
+
+func boolPtr(b bool) *bool { return &b }
 
 func newAdminSubscriptionStorageWithMock(t *testing.T, mockController *gomock.Controller) *adminSubscriptionStorage {
 	t.Helper()
