@@ -5515,7 +5515,7 @@ definitions:
           $ref: '#/definitions/autoopsProgressiveRolloutSchedule'
       variationId:
         type: string
-        description: 'Deprecated: Use controlVariationId and targetVariationId instead.'
+        description: 'Deprecated: Use control_variation_id and target_variation_id instead.'
       controlVariationId:
         type: string
       targetVariationId:
