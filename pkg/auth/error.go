@@ -45,4 +45,47 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "missing password", "password"))
 	StatusAccessDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied"))
+
+	StatusPasswordTooWeak = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "password too weak", "password"))
+	StatusPasswordMismatch = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "password mismatch", "password"))
+	StatusPasswordAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.AuthPackageName, "password already exists"))
+	StatusPasswordNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "password not found", "password"))
+	StatusMissingCurrentPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "current password must not be empty", "currentPassword"))
+	StatusMissingNewPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "new password must not be empty", "newPassword"))
+	StatusPasswordsIdentical = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName,
+			"new password must be different from current password", "newPassword"))
+
+	StatusInvalidResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid reset token", "resetToken"))
+	StatusExpiredResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.AuthPackageName, "reset token expired"))
+	StatusResetTokenNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "reset token not found", "resetToken"))
+	StatusMissingResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "reset token must not be empty", "resetToken"))
+
+	StatusEmailServiceUnavailable = api.NewGRPCStatus(
+		pkgErr.NewErrorUnavailable(pkgErr.AuthPackageName, "email service unavailable"))
+	StatusTooManyEmailRequests = api.NewGRPCStatus(
+		pkgErr.NewErrorAborted(pkgErr.AuthPackageName, "too many email requests"))
+	StatusInvalidEmailConfig = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid email configuration", "emailConfig"))
+	StatusMissingEmail = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "email"))
+
+	StatusInvalidArguments = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid arguments", "arguments"))
+	StatusAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.AuthPackageName, "already exists"))
+	StatusNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "not found", "resource"))
+	StatusPermissionDenied = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "permission denied"))
 )
