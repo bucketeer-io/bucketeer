@@ -33,7 +33,6 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -117,11 +116,9 @@ type options struct {
 	oldestEventTimestamp              time.Duration
 	furthestEventTimestamp            time.Duration
 	featureFlagDiffGracePeriod        time.Duration
-	sseHeartbeatInterval              time.Duration
 	metricsWorkers                    int
 	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
-	streamDispatcher                  *stream.Dispatcher
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
 }
@@ -145,11 +142,9 @@ var defaultOptions = options{
 	// flag values after an unrelated update advances its time cursor past
 	// a still-stale flag's UpdatedAt.
 	featureFlagDiffGracePeriod: 10 * time.Minute,
-	// Shorter than typical proxy idle-timeout (~60s).
-	sseHeartbeatInterval: 25 * time.Second,
-	logger:               zap.NewNop(),
-	metricsWorkers:       4,
-	metricsQueueSize:     4096,
+	logger:                     zap.NewNop(),
+	metricsWorkers:             4,
+	metricsQueueSize:           4096,
 }
 
 type Option func(*options)
@@ -163,15 +158,6 @@ func WithOldestEventTimestamp(d time.Duration) Option {
 func WithFurthestEventTimestamp(d time.Duration) Option {
 	return func(opts *options) {
 		opts.furthestEventTimestamp = d
-	}
-}
-
-func WithSSEHeartbeatInterval(d time.Duration) Option {
-	return func(opts *options) {
-		// Ignore non-positive intervals to keep the default; time.NewTicker panics on them.
-		if d > 0 {
-			opts.sseHeartbeatInterval = d
-		}
 	}
 }
 
@@ -245,12 +231,6 @@ func WithMetricsQueueSize(n int) Option {
 func WithLogger(l *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = l
-	}
-}
-
-func WithStreamDispatcher(d *stream.Dispatcher) Option {
-	return func(opts *options) {
-		opts.streamDispatcher = d
 	}
 }
 

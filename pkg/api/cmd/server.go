@@ -707,6 +707,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		metricsPublisher,
 		accountStorage,
 		redisV3Cache,
+		streamDispatcher,
+		*s.sseHeartbeatInterval,
 		api.WithInMemoryCache(inMemoryCache),
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
@@ -717,8 +719,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
 		api.WithLogger(logger),
-		api.WithStreamDispatcher(streamDispatcher),
-		api.WithSSEHeartbeatInterval(*s.sseHeartbeatInterval),
 	)
 
 	httpServer := rest.NewServer(

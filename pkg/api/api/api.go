@@ -79,6 +79,8 @@ func NewGatewayService(
 	mp publisher.Publisher,
 	accountStorage accstorage.AccountStorage,
 	redisV3Cache cache.MultiGetCache,
+	dispatcher *stream.Dispatcher,
+	sseHeartbeatInterval time.Duration,
 	opts ...Option,
 ) *gatewayService {
 	options := defaultOptions
@@ -93,10 +95,6 @@ func NewGatewayService(
 		inMemoryCache = cachev3.NewInMemoryCache(
 			cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
 		)
-	}
-	streamDispatcher := options.streamDispatcher
-	if streamDispatcher == nil {
-		streamDispatcher = stream.NewDispatcher(options.logger)
 	}
 	s := &gatewayService{
 		featureClient:               featureClient,
@@ -113,13 +111,13 @@ func NewGatewayService(
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		environmentAPIKeyRedisCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache, 0),
-		streamDispatcher:            streamDispatcher,
+		streamDispatcher:            dispatcher,
 		opts:                        &options,
 		logger:                      options.logger.Named("api"),
 	}
 	s.streamEvalHandler = stream.NewEvaluationsHandler(
-		streamDispatcher,
-		options.sseHeartbeatInterval,
+		dispatcher,
+		sseHeartbeatInterval,
 		s.checkRequest,
 		requestTotal,
 		options.logger,

@@ -41,7 +41,6 @@ var (
 // sseUnmarshalOpts ignores unknown fields like the polling endpoints' encoding/json decoder.
 var sseUnmarshalOpts = protojson.UnmarshalOptions{DiscardUnknown: true}
 
-// CheckRequestFunc authenticates an HTTP request and returns the EnvironmentAPIKey.
 type CheckRequestFunc func(ctx context.Context, req *http.Request) (*accountproto.EnvironmentAPIKey, error)
 
 // EvaluationsHandler handles the SSE stream_evaluations endpoint.
@@ -60,6 +59,10 @@ func NewEvaluationsHandler(
 	requestCounter *prometheus.CounterVec,
 	logger *zap.Logger,
 ) *EvaluationsHandler {
+	if heartbeatInterval <= 0 {
+		heartbeatInterval = 25 * time.Second
+	}
+
 	return &EvaluationsHandler{
 		dispatcher:        dispatcher,
 		heartbeatInterval: heartbeatInterval,
