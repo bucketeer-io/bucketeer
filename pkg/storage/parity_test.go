@@ -38,8 +38,12 @@ const (
 )
 
 // pair is a storage package whose MySQL and PostgreSQL implementations must
-// stay in sync. Register packages that provide both implementations and expose
-// the shared interfaces / error sentinels in the parent directory.
+// stay in sync.
+//
+// Only register domain storage packages that keep their shared interfaces and
+// error sentinels in the parent directory (parsed as `parent` below). Do NOT
+// register the low-level driver layer at pkg/storage/v2/{mysql,postgres}: it
+// has no parent interface/error package, so the parity assumptions don't hold.
 type pair struct {
 	dir    string // module-root-relative directory of the storage package
 	layout layout
@@ -118,8 +122,8 @@ func checkErrorParity(t *testing.T, src sources) {
 	if len(parentErrs) == 0 {
 		return
 	}
-	mysqlRefs := referencedIdents(src.mysql)
-	pgRefs := referencedIdents(src.pg)
+	mysqlRefs := referencedErrorNames(src.mysql, parentErrs)
+	pgRefs := referencedErrorNames(src.pg, parentErrs)
 
 	// Group parent errors by normalized name; an error is "used" by an
 	// implementation when any member of its group is referenced there.
@@ -262,14 +266,72 @@ func parentErrorNames(files []*ast.File) []string {
 	return names
 }
 
-// referencedIdents returns the set of identifier names referenced in the files
-// (selector targets included, e.g. the Sel in v2as.ErrFoo).
-func referencedIdents(files []*ast.File) map[string]bool {
+// referencedErrorNames returns the subset of candidate error names that the
+// files genuinely reference as the shared sentinel — not merely an identifier
+// that happens to share the name.
+//
+// A candidate counts as referenced when it appears either:
+//   - as a qualified selector target (e.g. v2as.ErrFoo), which can only be a
+//     reference to another package's exported symbol; or
+//   - as a bare identifier that is NOT declared locally in these files.
+//
+// This excludes the case the parity check could otherwise be fooled by: a local
+// variable, parameter, or field that coincidentally shares a sentinel's name.
+// Such a local declaration is recorded in declaredNames and therefore ignored,
+// so the bare-identifier path only matches same-package sentinels (the sameDir
+// layout) that are declared in the parent file rather than the impl files.
+func referencedErrorNames(files []*ast.File, candidates []string) map[string]bool {
+	declared := declaredNames(files)
+	allIdents := map[string]bool{}
+	selectorTargets := map[string]bool{}
+	for _, f := range files {
+		ast.Inspect(f, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.SelectorExpr:
+				selectorTargets[x.Sel.Name] = true
+			case *ast.Ident:
+				allIdents[x.Name] = true
+			}
+			return true
+		})
+	}
+	out := map[string]bool{}
+	for _, c := range candidates {
+		if selectorTargets[c] || (allIdents[c] && !declared[c]) {
+			out[c] = true
+		}
+	}
+	return out
+}
+
+// declaredNames returns identifier names introduced as declarations in the
+// given files: short var definitions, var/const specs, type names, function
+// names, and field/parameter/result names.
+func declaredNames(files []*ast.File) map[string]bool {
 	out := map[string]bool{}
 	for _, f := range files {
 		ast.Inspect(f, func(n ast.Node) bool {
-			if id, ok := n.(*ast.Ident); ok {
-				out[id.Name] = true
+			switch x := n.(type) {
+			case *ast.AssignStmt:
+				if x.Tok == token.DEFINE {
+					for _, lhs := range x.Lhs {
+						if id, ok := lhs.(*ast.Ident); ok {
+							out[id.Name] = true
+						}
+					}
+				}
+			case *ast.ValueSpec:
+				for _, id := range x.Names {
+					out[id.Name] = true
+				}
+			case *ast.TypeSpec:
+				out[x.Name.Name] = true
+			case *ast.FuncDecl:
+				out[x.Name.Name] = true
+			case *ast.Field:
+				for _, id := range x.Names {
+					out[id.Name] = true
+				}
 			}
 			return true
 		})
