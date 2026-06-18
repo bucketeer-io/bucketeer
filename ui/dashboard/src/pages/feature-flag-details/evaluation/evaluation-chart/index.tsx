@@ -117,9 +117,10 @@ export const EvaluationChart = forwardRef(
               return tooltipItems[0].label;
             },
             label: context => {
+              const parsedY = context.parsed.y ?? 0;
               const displayValue = useSymlog
-                ? symlogInverse(context.parsed.y ?? 0, 1, logBase)
-                : (context.parsed.y ?? 0);
+                ? symlogInverse(parsedY, 1, logBase)
+                : parsedY;
               return `${context.dataset.label ?? ''} : ${displayValue.toLocaleString()}`;
             }
           }

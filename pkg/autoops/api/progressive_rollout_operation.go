@@ -16,16 +16,9 @@ package api
 
 import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
-	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-)
-
-var errVariationNotFound = err.NewErrorNotFound(
-	err.AutoopsPackageName,
-	"a variation for a progressive rollout is not found",
-	"variation_id",
 )
 
 const totalVariationWeight = int32(100000)
@@ -35,7 +28,17 @@ func ExecuteProgressiveRolloutOperation(
 	feature *ftdomain.Feature,
 	scheduleID string,
 ) (*featureproto.Strategy, error) {
-	var variationID string
+	// Extract control and target variation IDs
+	controlVariationID, err := progressiveRollout.GetControlVariationID(feature)
+	if err != nil {
+		return nil, err
+	}
+	targetVariationID, err := progressiveRollout.GetTargetVariationID()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get weight for this schedule
 	var weight int32
 	switch progressiveRollout.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
@@ -43,8 +46,6 @@ func ExecuteProgressiveRolloutOperation(
 		if err := progressiveRollout.Clause.UnmarshalTo(c); err != nil {
 			return nil, err
 		}
-		variationID = c.VariationId
-		var err error
 		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
 			return nil, err
@@ -54,8 +55,6 @@ func ExecuteProgressiveRolloutOperation(
 		if err := progressiveRollout.Clause.UnmarshalTo(c); err != nil {
 			return nil, err
 		}
-		variationID = c.VariationId
-		var err error
 		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
 			return nil, err
@@ -63,10 +62,12 @@ func ExecuteProgressiveRolloutOperation(
 	default:
 		return nil, domain.ErrProgressiveRolloutInvalidType
 	}
+
 	return newRolloutStrategy(
+		controlVariationID,
+		targetVariationID,
 		weight,
 		feature,
-		variationID,
 	)
 }
 
@@ -83,14 +84,12 @@ func getTargetWeight(
 }
 
 func newRolloutStrategy(
+	controlVariationID string,
+	targetVariationID string,
 	weight int32,
 	feature *ftdomain.Feature,
-	targetVariationID string,
 ) (*featureproto.Strategy, error) {
-	variations, err := getRolloutStrategyVariations(feature, weight, targetVariationID)
-	if err != nil {
-		return nil, err
-	}
+	variations := getRolloutStrategyVariations(controlVariationID, targetVariationID, weight, feature.Variations)
 	strategy := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
 		RolloutStrategy: &featureproto.RolloutStrategy{
@@ -101,34 +100,32 @@ func newRolloutStrategy(
 }
 
 func getRolloutStrategyVariations(
-	feature *ftdomain.Feature,
-	weight int32,
+	controlVariationID string,
 	targetVariationID string,
-) ([]*featureproto.RolloutStrategy_Variation, error) {
-	nonTargetVariationID, err := findNonTargetVariationID(feature, targetVariationID)
-	if err != nil {
-		return nil, err
-	}
-	return []*featureproto.RolloutStrategy_Variation{
-		{
-			Variation: targetVariationID,
-			Weight:    weight,
-		},
-		{
-			Variation: nonTargetVariationID,
-			Weight:    totalVariationWeight - weight,
-		},
-	}, nil
-}
+	weight int32,
+	variations []*featureproto.Variation,
+) []*featureproto.RolloutStrategy_Variation {
+	// Create variations for all feature variations
+	// Control and target get their calculated weights, all others get 0
+	strategyVariations := make([]*featureproto.RolloutStrategy_Variation, 0, len(variations))
 
-func findNonTargetVariationID(
-	feature *ftdomain.Feature,
-	variationID string,
-) (string, error) {
-	for _, v := range feature.Variations {
-		if v.Id != variationID {
-			return v.Id, nil
+	for _, v := range variations {
+		var varWeight int32
+		switch v.Id {
+		case targetVariationID:
+			varWeight = weight
+		case controlVariationID:
+			varWeight = totalVariationWeight - weight
+		default:
+			// All other variations are reset to 0
+			varWeight = 0
 		}
+
+		strategyVariations = append(strategyVariations, &featureproto.RolloutStrategy_Variation{
+			Variation: v.Id,
+			Weight:    varWeight,
+		})
 	}
-	return "", errVariationNotFound
+
+	return strategyVariations
 }
