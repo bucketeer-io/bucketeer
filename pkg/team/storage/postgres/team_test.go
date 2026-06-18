@@ -404,7 +404,6 @@ func TestGetTeamByName(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
 			storage := newTeamStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
