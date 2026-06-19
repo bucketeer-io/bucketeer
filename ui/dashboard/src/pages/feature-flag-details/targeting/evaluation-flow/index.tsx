@@ -121,7 +121,6 @@ export const FlowStep = ({
       <FlowNode kind={kind} align={align} tone={resolvedTone} />
       {stepLabel && (
         <span
-          aria-hidden
           className={cn(
             'absolute z-10 uppercase tracking-wide typo-head-bold-tiny',
             'px-1.5 py-0.5 rounded select-none whitespace-nowrap',
