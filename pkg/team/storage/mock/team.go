@@ -15,8 +15,8 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	storage "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	team "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
@@ -88,9 +88,9 @@ func (mr *MockTeamStorageMockRecorder) GetTeamByName(ctx, name, organizationID a
 }
 
 // ListTeams mocks base method.
-func (m *MockTeamStorage) ListTeams(ctx context.Context, options *mysql.ListOptions) ([]*team.Team, int, int64, error) {
+func (m *MockTeamStorage) ListTeams(ctx context.Context, params storage.ListTeamsParams) ([]*team.Team, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTeams", ctx, options)
+	ret := m.ctrl.Call(m, "ListTeams", ctx, params)
 	ret0, _ := ret[0].([]*team.Team)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockTeamStorage) ListTeams(ctx context.Context, options *mysql.ListOpti
 }
 
 // ListTeams indicates an expected call of ListTeams.
-func (mr *MockTeamStorageMockRecorder) ListTeams(ctx, options any) *gomock.Call {
+func (mr *MockTeamStorageMockRecorder) ListTeams(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTeams", reflect.TypeOf((*MockTeamStorage)(nil).ListTeams), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTeams", reflect.TypeOf((*MockTeamStorage)(nil).ListTeams), ctx, params)
 }
 
 // UpsertTeam mocks base method.

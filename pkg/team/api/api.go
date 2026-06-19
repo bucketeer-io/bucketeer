@@ -32,7 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -72,7 +72,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type TeamService struct {
-	mysqlClient   mysql.Client
+	dbClient      database.Client
 	teamStorage   storage.TeamStorage
 	accountClient accclient.Client
 	publisher     publisher.Publisher
@@ -81,7 +81,8 @@ type TeamService struct {
 }
 
 func NewTeamService(
-	mysqlClient mysql.Client,
+	dbClient database.Client,
+	teamStorage storage.TeamStorage,
 	accountClient accclient.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
@@ -93,8 +94,8 @@ func NewTeamService(
 		opt(dopts)
 	}
 	return &TeamService{
-		mysqlClient:   mysqlClient,
-		teamStorage:   storage.NewTeamStorage(mysqlClient),
+		dbClient:      dbClient,
+		teamStorage:   teamStorage,
 		accountClient: accountClient,
 		publisher:     publisher,
 		opts:          dopts,
@@ -147,7 +148,7 @@ func (s *TeamService) CreateTeam(
 
 	var event *eventproto.Event
 	var actualTeam *domain.Team
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		// Check if team exists before upsert to determine if it's create or update
 		existingTeam, err := s.teamStorage.GetTeamByName(ctxWithTx, team.Name, req.OrganizationId)
 		isCreate := err != nil && errors.Is(err, storage.ErrTeamNotFound)
@@ -256,7 +257,7 @@ func (s *TeamService) DeleteTeam(
 		)
 		return nil, err
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		team, err := s.teamStorage.GetTeam(ctxWithTx, req.Id, req.OrganizationId)
 		if err != nil {
 			return err
@@ -364,55 +365,22 @@ func (s *TeamService) ListTeams(
 		return nil, err
 	}
 
-	filters := make([]*mysql.FilterV2, 0)
-	filters = append(filters, &mysql.FilterV2{
-		Column:   "team.organization_id",
-		Operator: mysql.OperatorEqual,
-		Value:    req.OrganizationId,
-	})
-
-	var searchQuery *mysql.SearchQuery
-	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"team.name, team.description"},
-			Keyword: req.SearchKeyword,
+	params := storage.ListTeamsParams{
+		OrganizationID: req.OrganizationId,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
+	}
+	teams, nextOffset, totalCount, err := s.teamStorage.ListTeams(ctx, params)
+	if err != nil {
+		if errors.Is(err, storage.ErrInvalidListTeamsCursor) {
+			return nil, statusInvalidCursor.Err()
 		}
-	}
-
-	orders, err := s.newListTeamsOrdersMySQL(req.OrderBy, req.OrderDirection)
-	if err != nil {
-		s.logger.Error(
-			"Failed to valid list teams API. Invalid argument.",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-			)...,
-		)
-		return nil, err
-	}
-
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Limit:       limit,
-		Offset:      offset,
-		JSONFilters: nil,
-		InFilters:   nil,
-		NullFilters: nil,
-		OrFilters:   nil,
-	}
-	teams, nextOffset, totalCount, err := s.teamStorage.ListTeams(ctx, options)
-	if err != nil {
+		if errors.Is(err, storage.ErrInvalidListTeamsOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		s.logger.Error(
 			"Failed to list teams",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -427,31 +395,6 @@ func (s *TeamService) ListTeams(
 		TotalCount: totalCount,
 		NextCursor: strconv.Itoa(nextOffset),
 	}, nil
-}
-
-func (s *TeamService) newListTeamsOrdersMySQL(
-	orderBy proto.ListTeamsRequest_OrderBy,
-	orderDirection proto.ListTeamsRequest_OrderDirection,
-) ([]*mysql.Order, error) {
-	var column string
-	switch orderBy {
-	case proto.ListTeamsRequest_DEFAULT,
-		proto.ListTeamsRequest_NAME:
-		column = "team.name"
-	case proto.ListTeamsRequest_CREATED_AT:
-		column = "team.created_at"
-	case proto.ListTeamsRequest_UPDATED_AT:
-		column = "team.updated_at"
-	case proto.ListTeamsRequest_ORGANIZATION:
-		column = "team.organization_id"
-	default:
-		return nil, statusInvalidOrderBy.Err()
-	}
-	direction := mysql.OrderDirectionAsc
-	if orderDirection == proto.ListTeamsRequest_DESC {
-		direction = mysql.OrderDirectionDesc
-	}
-	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
 func (s *TeamService) checkOrganizationRole(

@@ -116,6 +116,8 @@ import (
 	tagpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/postgres"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
 	teamstorage "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
+	teammysql "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/mysql"
+	teampostgres "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
@@ -611,6 +613,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var monthlySummaryStorage insightsstorage.MonthlySummaryStorage
 	var subscriptionStorage v2ns.SubscriptionStorage
 	var adminSubscriptionStorage v2ns.AdminSubscriptionStorage
+	var teamStorage teamstorage.TeamStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -643,6 +646,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		monthlySummaryStorage = insightspostgres.NewMonthlySummaryStorage(postgresClient)
 		subscriptionStorage = notificationpostgres.NewSubscriptionStorage(postgresClient)
 		adminSubscriptionStorage = notificationpostgres.NewAdminSubscriptionStorage(postgresClient)
+		teamStorage = teampostgres.NewTeamStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -668,6 +672,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		monthlySummaryStorage = insightsmysql.NewMonthlySummaryStorage(mysqlClient)
 		subscriptionStorage = notificationmysql.NewSubscriptionStorage(mysqlClient)
 		adminSubscriptionStorage = notificationmysql.NewAdminSubscriptionStorage(mysqlClient)
+		teamStorage = teammysql.NewTeamStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -837,9 +842,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go authServer.Run()
-
-	// TODO: move to DB-agnostic storage after postgres support is added
-	teamStorage := teamstorage.NewTeamStorage(mysqlClient)
 
 	// accountService
 	accountService := accountapi.NewAccountService(
@@ -1086,7 +1088,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// teamService
 	teamService := teamapi.NewTeamService(
-		mysqlClient,
+		dbClient,
+		teamStorage,
 		accountClient,
 		domainTopicPublisher,
 		teamapi.WithLogger(logger),

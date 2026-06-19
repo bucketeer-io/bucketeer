@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package postgres
 
 import (
 	"context"
@@ -22,9 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	teamstorage "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
@@ -52,12 +53,12 @@ func TestUpsertTeam(t *testing.T) {
 			setup: func(s *teamStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, mysql.ErrDuplicateEntry)
+				).Return(nil, pgstorage.ErrDuplicateEntry)
 			},
 			input: &domain.Team{
 				Team: &proto.Team{Id: "team-id-0"},
 			},
-			expectedErr: mysql.ErrDuplicateEntry,
+			expectedErr: pgstorage.ErrDuplicateEntry,
 		},
 		{
 			desc: "Error",
@@ -127,7 +128,7 @@ func TestGetTeam(t *testing.T) {
 			desc: "ErrTeamNotFound",
 			setup: func(s *teamStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				row.EXPECT().Scan(gomock.Any()).Return(pgstorage.ErrNoRows)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
@@ -135,7 +136,7 @@ func TestGetTeam(t *testing.T) {
 			id:             "team-id-0",
 			organizationId: "org-0",
 			expectedTeam:   nil,
-			expectedErr:    ErrTeamNotFound,
+			expectedErr:    teamstorage.ErrTeamNotFound,
 		},
 		{
 			desc: "Error",
@@ -218,7 +219,7 @@ func TestListTeams(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*teamStorage)
-		options        *mysql.ListOptions
+		params         teamstorage.ListTeamsParams
 		expectedCount  int
 		expectedCursor int
 		expectedErr    error
@@ -231,7 +232,7 @@ func TestListTeams(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			params:         teamstorage.ListTeamsParams{},
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -278,26 +279,9 @@ func TestListTeams(t *testing.T) {
 					gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "team.organization_id",
-						Operator: mysql.OperatorEqual,
-						Value:    "org-0",
-					},
-				},
-				Orders: []*mysql.Order{
-					{
-						Column:    "team.name",
-						Direction: mysql.OrderDirectionAsc,
-					},
-				},
-				Offset:      0,
-				Limit:       10,
-				JSONFilters: nil,
-				InFilters:   nil,
-				NullFilters: nil,
-				SearchQuery: nil,
+			params: teamstorage.ListTeamsParams{
+				OrganizationID: "org-0",
+				PageSize:       10,
 			},
 			expectedCount:  1,
 			expectedCursor: 1,
@@ -321,7 +305,7 @@ func TestListTeams(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			teams, cursor, _, err := storage.ListTeams(context.Background(), p.options)
+			teams, cursor, _, err := storage.ListTeams(context.Background(), p.params)
 			assert.Equal(t, p.expectedCount, len(teams))
 			if teams != nil {
 				assert.IsType(t, []*proto.Team{}, teams)
@@ -350,7 +334,7 @@ func TestGetTeamByName(t *testing.T) {
 			desc: "ErrTeamNotFound",
 			setup: func(s *teamStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				row.EXPECT().Scan(gomock.Any()).Return(pgstorage.ErrNoRows)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
@@ -358,7 +342,7 @@ func TestGetTeamByName(t *testing.T) {
 			name:           "test-team",
 			organizationID: "env-0",
 			expectedTeam:   nil,
-			expectedErr:    ErrTeamNotFound,
+			expectedErr:    teamstorage.ErrTeamNotFound,
 		},
 		{
 			desc: "Error",
@@ -420,7 +404,6 @@ func TestGetTeamByName(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
 			storage := newTeamStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
