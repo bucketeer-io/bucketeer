@@ -21,6 +21,17 @@ export const FLOW_LABELS = {
   otherwise: 'Otherwise'
 } as const;
 
+/**
+ * Horizontal offset (in px) for nodes/markers placed on the EvaluationFlow
+ * spine but rendered outside `<FlowNode>` (e.g. the clickable plus inside
+ * `<AddRule>`). Kept here so the value stays in lock-step with the spine x
+ * position (14 px from the wrapper's left) and the FlowStep gutter (pl-14 →
+ * 56 px). Reused via import to avoid magic numbers in callers.
+ *
+ * Math: spine_x − node_radius − pl_left = 14 − 10 − 56 = −52
+ */
+export const ADD_NODE_LEFT_OFFSET_PX = -52;
+
 export type FlowKind =
   | 'start'
   | 'gate'
@@ -37,7 +48,9 @@ export type FlowKind =
  * so that every step (audience traffic, flag switch, prerequisites, rules,
  * default rule) reads as a single top-to-bottom evaluation pipeline.
  *
- * Each direct child should be a `<FlowStep>` so its node aligns with the spine.
+ * Steps should be wrapped in `<FlowStep>` (directly or nested inside another
+ * component such as `<TargetSegmentRule>`) so their nodes align with the
+ * spine. Non-FlowStep children render in the column without a spine node.
  */
 export const EvaluationFlow = ({
   children,
@@ -200,7 +213,7 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
   // Spine is at x=14px from EvaluationFlow's left edge. FlowStep starts at
   // x=56px (pl-14), so to center a 28px-wide node on the spine its left edge
   // sits at -56px relative to FlowStep (14 - 14 - 56 = -56). The smaller add
-  // node (20px) uses -52px to stay centered (14 - 10 - 56 = -52).
+  // node uses ADD_NODE_LEFT_OFFSET_PX (also exported for reuse in <AddRule>).
   const nodeOffsetByKind: Record<FlowKind, number> = {
     start: -56,
     gate: -56,
@@ -209,7 +222,7 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
     individual: -56,
     rule: -56,
     default: -56,
-    add: -52
+    add: ADD_NODE_LEFT_OFFSET_PX
   };
 
   return (

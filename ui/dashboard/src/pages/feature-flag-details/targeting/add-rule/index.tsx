@@ -7,9 +7,10 @@ import {
   IconSetting,
   IconUserOutlined
 } from '@icons';
-import Dropdown from 'components/dropdown';
+import Dropdown, { DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import { ADD_NODE_LEFT_OFFSET_PX } from '../evaluation-flow';
 import { RuleCategory } from '../types';
 
 const AddRule = ({
@@ -69,7 +70,7 @@ const AddRule = ({
     options,
     disabled: !editable,
     showArrow: false,
-    onChange: (value: string | number) =>
+    onChange: (value: DropdownValue | DropdownValue[]) =>
       getRuleCategoryCall(value as RuleCategory)
   };
 
@@ -80,7 +81,7 @@ const AddRule = ({
           positioned to align with the EvaluationFlow spine. */}
       <div
         className="absolute top-1/2 -translate-y-1/2 z-10"
-        style={{ left: '-52px' }}
+        style={{ left: `${ADD_NODE_LEFT_OFFSET_PX}px` }}
       >
         <Dropdown
           {...sharedDropdownProps}
@@ -96,10 +97,10 @@ const AddRule = ({
               align="center"
               hidden={editable}
               trigger={
-                <span
-                  aria-label={t('table:feature-flags.add-rule')}
-                  className="flex size-5 items-center justify-center rounded-full bg-white border border-dashed border-gray-400 ring-4 ring-white hover:border-primary-500 hover:text-primary-500 transition-colors cursor-pointer"
-                >
+                <span className="flex size-5 items-center justify-center rounded-full bg-white border border-dashed border-gray-400 ring-4 ring-white hover:border-primary-500 hover:text-primary-500 transition-colors cursor-pointer">
+                  <span className="sr-only">
+                    {t('table:feature-flags.add-rule')}
+                  </span>
                   <Icon icon={IconPlus} size="xxs" color="gray-500" />
                 </span>
               }
