@@ -17,6 +17,7 @@ package experimentcalc
 
 import (
 	"context"
+	"math/rand/v2"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,8 +29,10 @@ func TestNormalInverseGamma(t *testing.T) {
 	t.Parallel()
 	v1Mean, v1Sd := 12.0, 10.0
 	v2Mean, v2Sd := 15.0, 12.0
-	v1Dist := distuv.Normal{Mu: v1Mean, Sigma: v1Sd}
-	v2Dist := distuv.Normal{Mu: v2Mean, Sigma: v2Sd}
+	// Seed local RNG sources so the generated data is deterministic and the test
+	// stays stable under t.Parallel() regardless of other concurrent tests.
+	v1Dist := distuv.Normal{Mu: v1Mean, Sigma: v1Sd, Src: rand.NewPCG(1, 2)}
+	v2Dist := distuv.Normal{Mu: v2Mean, Sigma: v2Sd, Src: rand.NewPCG(3, 4)}
 	sampleNum := 20000
 	v1 := make([]float64, sampleNum)
 	v2 := make([]float64, sampleNum)
@@ -92,8 +95,9 @@ func TestNormalInverseGamma(t *testing.T) {
 func TestNormalInverseGammaHeavyTailed(t *testing.T) {
 	t.Parallel()
 	// True means are exp(mu + sigma^2/2): ~12.18 for vid1 and ~16.44 for vid2.
-	v1Dist := distuv.LogNormal{Mu: 2.0, Sigma: 1.0}
-	v2Dist := distuv.LogNormal{Mu: 2.3, Sigma: 1.0}
+	// Seed local RNG sources for deterministic, parallel-safe sampling.
+	v1Dist := distuv.LogNormal{Mu: 2.0, Sigma: 1.0, Src: rand.NewPCG(5, 6)}
+	v2Dist := distuv.LogNormal{Mu: 2.3, Sigma: 1.0, Src: rand.NewPCG(7, 8)}
 	sampleNum := 20000
 	v1 := make([]float64, sampleNum)
 	v2 := make([]float64, sampleNum)
