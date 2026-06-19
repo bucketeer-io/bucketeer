@@ -1,13 +1,14 @@
 import { useTranslation } from 'i18n';
-import { IconInfo, IconMember } from '@icons';
+import { IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 
 const AudienceTraffic = () => {
   const { t } = useTranslation(['form']);
   return (
-    <div className="flex-center w-full gap-x-2">
-      <Icon icon={IconMember} size="sm" color="gray-500" />
+    // Left-aligned to match the visual rhythm of the cards below: the title
+    // sits flush with the card column, anchored to the start node on the spine.
+    <div className="flex items-center w-full gap-x-2">
       <p className="typo-para-medium text-gray-700">
         {t('targeting.all-audience-traffic')}
       </p>

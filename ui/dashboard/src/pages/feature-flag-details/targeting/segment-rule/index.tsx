@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   DndContext,
@@ -21,8 +21,8 @@ import { useQueryUserSegments } from '@queries/user-segments';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { Feature } from '@types';
-import { TargetingDivider } from '..';
 import AddRule from '../add-rule';
+import { FLOW_LABELS, FlowStep } from '../evaluation-flow';
 import { RuleSchema, TargetingSchema } from '../form-schema';
 import { DiscardChangesType, RuleCategory } from '../types';
 import SortableCard, { DragOverlayCard } from './sortable-card';
@@ -37,6 +37,12 @@ interface Props {
   segmentRules: RuleSchemaFields[];
   isDisableAddIndividualRules: boolean;
   isDisableAddPrerequisite: boolean;
+  /**
+   * Whether an individual-targeting step precedes this section. When true, the
+   * first segment rule still uses "Else if" since the first match wins
+   * starting from individual targeting.
+   */
+  hasIndividualRules?: boolean;
   onAddRule: (rule: RuleCategory, index?: number) => void;
   segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
@@ -51,6 +57,7 @@ const TargetSegmentRule = ({
   segmentRules,
   isDisableAddIndividualRules,
   isDisableAddPrerequisite,
+  hasIndividualRules = false,
   onAddRule,
   segmentRulesRemove,
   segmentRulesSwap,
@@ -158,30 +165,39 @@ const TargetSegmentRule = ({
         items={sortableIds}
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex flex-col w-full">
-          {segmentRules.map((segment, segmentIndex) => (
-            <div key={segment.segmentId} className="flex flex-col w-full">
-              {segmentIndex !== 0 && (
-                <>
-                  <TargetingDivider />
-                  <AddRule
-                    isDisableAddIndividualRules={isDisableAddIndividualRules}
-                    isDisableAddPrerequisite={isDisableAddPrerequisite}
-                    onAddRule={onAddRule}
-                    indexInsertSegmentRule={segmentIndex}
-                    isInsertSegmentRule={true}
+        <div className="flex flex-col w-full gap-y-8">
+          {segmentRules.map((segment, segmentIndex) => {
+            const isFirstMatchStep =
+              segmentIndex === 0 && !hasIndividualRules;
+            return (
+              <Fragment key={segment.segmentId}>
+                {segmentIndex !== 0 && (
+                  <FlowStep kind="add" align="center">
+                    <AddRule
+                      isDisableAddIndividualRules={isDisableAddIndividualRules}
+                      isDisableAddPrerequisite={isDisableAddPrerequisite}
+                      onAddRule={onAddRule}
+                      indexInsertSegmentRule={segmentIndex}
+                      isInsertSegmentRule={true}
+                    />
+                  </FlowStep>
+                )}
+                <FlowStep
+                  kind="rule"
+                  stepLabel={
+                    isFirstMatchStep ? FLOW_LABELS.if : FLOW_LABELS.elseIf
+                  }
+                >
+                  <SortableCard
+                    segment={segment}
+                    segmentIndex={segmentIndex}
+                    ghostHeight={activeDragHeight}
+                    {...sharedCardProps}
                   />
-                  <TargetingDivider />
-                </>
-              )}
-              <SortableCard
-                segment={segment}
-                segmentIndex={segmentIndex}
-                ghostHeight={activeDragHeight}
-                {...sharedCardProps}
-              />
-            </div>
-          ))}
+                </FlowStep>
+              </Fragment>
+            );
+          })}
         </div>
       </SortableContext>
       <DragOverlay>
