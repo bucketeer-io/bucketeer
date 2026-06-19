@@ -249,8 +249,9 @@ func TestEnableFeature(t *testing.T) {
 		aoCLient,
 		req.Id,
 		&aoproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: f.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: f.Variations[0].Id,
+			TargetVariationId:  f.Variations[1].Id,
 		},
 		nil,
 	)
@@ -683,7 +684,8 @@ func TestListFeaturesFilterAutoOps(t *testing.T) {
 					ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
 				},
 			},
-			VariationId: progressiveRolloutFeature.Variations[0].Id,
+			ControlVariationId: progressiveRolloutFeature.Variations[0].Id,
+			TargetVariationId:  progressiveRolloutFeature.Variations[1].Id,
 		},
 		nil,
 	)
