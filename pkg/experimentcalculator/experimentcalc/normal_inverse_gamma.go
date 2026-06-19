@@ -16,9 +16,9 @@
 package experimentcalc
 
 import (
-	"context"
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"time"
 
 	"github.com/go-gota/gota/dataframe"
@@ -31,7 +31,7 @@ import (
 
 const (
 	priorMean  = 30
-	priorVar   = 2
+	priorKappa = 2
 	priorSize  = 20
 	priorAlpha = 10
 	priorBeta  = 1000
@@ -45,8 +45,11 @@ type distr struct {
 	n     int
 }
 
+// normalInverseGamma computes the value-metric posterior summaries. src seeds
+// the Monte Carlo sampling; pass nil to use the global RNG (production) or a
+// seeded source for deterministic tests.
 func normalInverseGamma(
-	ctx context.Context,
+	src rand.Source,
 	vids []string,
 	means, vars []float64,
 	sizes []int64,
@@ -63,11 +66,11 @@ func normalInverseGamma(
 			vars[i],
 			priorSize,
 			priorMean,
-			priorVar,
+			priorKappa,
 			priorAlpha,
 			priorBeta,
 		)
-		nums := generateNormalGamma(postGenNum, post.mu, post.nu, post.alpha, post.beta)
+		nums := generateNormalGamma(src, postGenNum, post.mu, post.nu, post.alpha, post.beta)
 		sampleSeries = append(sampleSeries, series.Floats(nums))
 	}
 	samples := dataframe.New(sampleSeries...)
@@ -117,17 +120,18 @@ func calcPosterior(
 	}
 }
 
-func generateNormalGamma(n int, mu float64, lambda float64, alpha float64, beta float64) []float64 {
-	tauDist := distuv.Gamma{Alpha: alpha, Beta: beta}
+func generateNormalGamma(src rand.Source, n int, mu float64, lambda float64, alpha float64, beta float64) []float64 {
+	tauDist := distuv.Gamma{Alpha: alpha, Beta: beta, Src: src}
 
 	tauSamples := make([]float64, n)
 	for i := 0; i < n; i++ {
 		tauSamples[i] = tauDist.Rand()
 	}
 
+	normDist := distuv.Normal{Mu: 0, Sigma: 1, Src: src}
 	x := make([]float64, n)
 	for i, tau := range tauSamples {
-		x[i] = mu + math.Sqrt(1/(tau*lambda))*distuv.Normal{Mu: 0, Sigma: 1}.Rand()
+		x[i] = mu + math.Sqrt(1/(tau*lambda))*normDist.Rand()
 	}
 
 	return x

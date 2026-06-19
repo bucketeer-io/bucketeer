@@ -16,7 +16,6 @@
 package experimentcalc
 
 import (
-	"context"
 	"math/rand/v2"
 	"testing"
 
@@ -55,7 +54,7 @@ func TestNormalInverseGamma(t *testing.T) {
 	vars := []float64{stat.Variance(v1, nil), stat.Variance(v2, nil)}
 	sizes := []int64{int64(len(v1)), int64(len(v2))}
 	baselineIdx := 0
-	vrs := normalInverseGamma(context.TODO(), vids, means, vars, sizes, baselineIdx, 25000)
+	vrs := normalInverseGamma(rand.NewPCG(9, 10), vids, means, vars, sizes, baselineIdx, 25000)
 
 	// With the conjugate update using the real sample size, the posterior for the
 	// mean concentrates around the observed per-user mean and the 95% credible
@@ -111,7 +110,7 @@ func TestNormalInverseGammaHeavyTailed(t *testing.T) {
 	vars := []float64{stat.Variance(v1, nil), stat.Variance(v2, nil)}
 	sizes := []int64{int64(len(v1)), int64(len(v2))}
 	baselineIdx := 0
-	vrs := normalInverseGamma(context.TODO(), vids, means, vars, sizes, baselineIdx, 25000)
+	vrs := normalInverseGamma(rand.NewPCG(11, 12), vids, means, vars, sizes, baselineIdx, 25000)
 
 	vid1 := vrs["vid1"]
 	// Posterior median tracks the observed per-user mean.
