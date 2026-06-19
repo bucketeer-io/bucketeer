@@ -32,7 +32,6 @@ import (
 const (
 	priorMean  = 30
 	priorKappa = 2
-	priorSize  = 20
 	priorAlpha = 10
 	priorBeta  = 1000
 )
@@ -42,7 +41,6 @@ type distr struct {
 	nu    float64
 	alpha float64
 	beta  float64
-	n     int
 }
 
 // normalInverseGamma computes the value-metric posterior summaries. src seeds
@@ -64,7 +62,6 @@ func normalInverseGamma(
 			sizes[i],
 			means[i],
 			vars[i],
-			priorSize,
 			priorMean,
 			priorKappa,
 			priorAlpha,
@@ -98,7 +95,6 @@ func normalInverseGamma(
 func calcPosterior(
 	thisN int64,
 	thisMu, thisVar float64,
-	priorN int64,
 	priorMu, priorKappa, priorAlpha, priorBeta float64) distr {
 	n := float64(thisN)
 	kappaN := priorKappa + n
@@ -116,7 +112,6 @@ func calcPosterior(
 		nu:    kappaN,
 		alpha: postAlpha,
 		beta:  postBeta,
-		n:     int(thisN + priorN),
 	}
 }
 
