@@ -88,25 +88,32 @@ func normalInverseGamma(
 	return variationResults
 }
 
+// calcPosterior performs the conjugate Normal-Inverse-Gamma update.
+// priorKappa is the prior pseudo-count for the mean (kappa_0); thisVar is the
+// per-user sample variance (divided by n-1), so the sum of squared deviations
+// is (n-1) * thisVar.
 func calcPosterior(
 	thisN int64,
-	thisMu, thisSigma float64,
+	thisMu, thisVar float64,
 	priorN int64,
-	priorMu, priorNu, priorAlpha, priorBeta float64) distr {
-	retN := thisN + priorN
-	n2 := math.Log(float64(thisN)) / math.Log(1.1)
-	postMu := (priorNu*priorMu + n2*thisMu) / (priorNu + n2)
-	postNu := priorNu + n2
-	postAlpha := priorAlpha + (n2 / 2)
+	priorMu, priorKappa, priorAlpha, priorBeta float64) distr {
+	n := float64(thisN)
+	kappaN := priorKappa + n
+	postMu := (priorKappa*priorMu + n*thisMu) / kappaN
+	postAlpha := priorAlpha + (n / 2)
+	sumSquaredDev := 0.0
+	if thisN > 1 {
+		sumSquaredDev = float64(thisN-1) * thisVar
+	}
 	postBeta := priorBeta +
-		(0.5 * thisSigma * thisSigma * n2) +
-		((n2 * priorNu / (priorNu * n2)) * ((thisMu - priorMu) * (thisMu - priorMu)) / 2)
+		(0.5 * sumSquaredDev) +
+		((priorKappa * n / kappaN) * (thisMu - priorMu) * (thisMu - priorMu) / 2)
 	return distr{
 		mu:    postMu,
-		nu:    postNu,
+		nu:    kappaN,
 		alpha: postAlpha,
 		beta:  postBeta,
-		n:     int(retN),
+		n:     int(thisN + priorN),
 	}
 }
 
