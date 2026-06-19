@@ -52,7 +52,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 0)
 	assert.IsType(t, &gatewayService{}, g)
 }
 

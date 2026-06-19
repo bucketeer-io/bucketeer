@@ -19,6 +19,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
@@ -354,6 +355,7 @@ var (
 
 func registerMetrics(r metrics.Registerer) {
 	registerOnce.Do(func() {
+		stream.RegisterMetrics(r)
 		r.MustRegister(
 			cacheCounter,
 			eventCounter,

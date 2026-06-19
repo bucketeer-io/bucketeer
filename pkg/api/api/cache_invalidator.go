@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
@@ -30,6 +31,7 @@ type cacheInvalidator struct {
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	streamDispatcher       *stream.Dispatcher
 	logger                 *zap.Logger
 }
 
@@ -37,12 +39,14 @@ func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	streamDispatcher *stream.Dispatcher,
 	logger *zap.Logger,
 ) *cacheInvalidator {
 	return &cacheInvalidator{
 		featuresCache:          featuresCache,
 		segmentUsersCache:      segmentUsersCache,
 		environmentAPIKeyCache: environmentAPIKeyCache,
+		streamDispatcher:       streamDispatcher,
 		logger:                 logger.Named("cache-invalidator"),
 	}
 }
@@ -68,6 +72,16 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 		ci.logger.Warn("Failed to unmarshal domain event", zap.Error(err))
 		return
 	}
+	if err := ci.evict(event); err != nil {
+		return
+	}
+	// Dispatch after eviction so SSE patches are computed from fresh data.
+	if ci.streamDispatcher != nil {
+		ci.streamDispatcher.HandleEvent(event)
+	}
+}
+
+func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 	switch event.EntityType {
 	case domaineventproto.Event_FEATURE:
 		if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
@@ -77,7 +91,7 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 				zap.String("entityId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
-			return
+			return err
 		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
@@ -95,7 +109,7 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 				zap.String("segmentId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
-			return
+			return err
 		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
@@ -124,11 +138,11 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 					zap.String("entityId", event.EntityId),
 					zap.String("type", event.Type.String()),
 				)
-				return
+				return err
 			}
 		}
 		if len(secrets) == 0 {
-			return
+			return nil
 		}
 		for _, s := range secrets {
 			if err := ci.environmentAPIKeyCache.Evict(s); err != nil {
@@ -138,7 +152,7 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 					zap.String("entityId", event.EntityId),
 					zap.String("type", event.Type.String()),
 				)
-				return
+				return err
 			}
 		}
 		cacheInvalidationCounter.WithLabelValues(
@@ -150,4 +164,5 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 			zap.String("type", event.Type.String()),
 		)
 	}
+	return nil
 }
