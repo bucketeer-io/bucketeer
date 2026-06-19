@@ -212,17 +212,17 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
 
   // Spine is at x=14px from EvaluationFlow's left edge. FlowStep starts at
   // x=56px (pl-14), so to center a 28px-wide node on the spine its left edge
-  // sits at -56px relative to FlowStep (14 - 14 - 56 = -56). The smaller add
-  // node uses ADD_NODE_LEFT_OFFSET_PX (also exported for reuse in <AddRule>).
-  const nodeOffsetByKind: Record<FlowKind, number> = {
+  // sits at -56px relative to FlowStep (14 - 14 - 56 = -56). The 'add' kind
+  // returns early above (its plus is rendered inside <AddRule>), so it is
+  // intentionally excluded from this map.
+  const nodeOffsetByKind: Record<Exclude<FlowKind, 'add'>, number> = {
     start: -56,
     gate: -56,
     'gate-off': -56,
     prerequisite: -56,
     individual: -56,
     rule: -56,
-    default: -56,
-    add: ADD_NODE_LEFT_OFFSET_PX
+    default: -56
   };
 
   return (

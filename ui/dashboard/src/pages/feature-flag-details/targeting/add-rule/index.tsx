@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import {
   IconPlus,
   IconPrerequisite,
@@ -97,11 +98,18 @@ const AddRule = ({
               align="center"
               hidden={editable}
               trigger={
-                <span className="flex size-5 items-center justify-center rounded-full bg-white border border-dashed border-gray-400 ring-4 ring-white hover:border-primary-500 hover:text-primary-500 transition-colors cursor-pointer">
+                <span
+                  className={cn(
+                    'flex size-5 items-center justify-center rounded-full bg-white border border-dashed ring-4 ring-white transition-colors',
+                    editable
+                      ? 'border-gray-400 text-gray-500 cursor-pointer hover:border-primary-500 hover:text-primary-500'
+                      : 'border-gray-300 text-gray-400 cursor-not-allowed opacity-60'
+                  )}
+                >
                   <span className="sr-only">
                     {t('table:feature-flags.add-rule')}
                   </span>
-                  <Icon icon={IconPlus} size="xxs" color="gray-500" />
+                  <Icon icon={IconPlus} size="xxs" />
                 </span>
               }
             />
