@@ -814,10 +814,7 @@ const TargetingPage = ({
             <FlowStep kind="start" align="center">
               <AudienceTraffic />
             </FlowStep>
-            <FlowStep
-              kind={enabledWatch ? 'gate' : 'gate-off'}
-              align="center"
-            >
+            <FlowStep kind={enabledWatch ? 'gate' : 'gate-off'} align="center">
               <FlagSwitch
                 feature={feature}
                 setIsShowRules={setIsShowRules}

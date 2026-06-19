@@ -167,8 +167,7 @@ const TargetSegmentRule = ({
       >
         <div className="flex flex-col w-full gap-y-8">
           {segmentRules.map((segment, segmentIndex) => {
-            const isFirstMatchStep =
-              segmentIndex === 0 && !hasIndividualRules;
+            const isFirstMatchStep = segmentIndex === 0 && !hasIndividualRules;
             return (
               <Fragment key={segment.segmentId}>
                 {segmentIndex !== 0 && (

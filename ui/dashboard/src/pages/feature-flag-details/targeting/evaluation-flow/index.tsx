@@ -158,9 +158,7 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
     case 'start':
       sizeClass = 'size-7';
       extraClass = 'bg-primary-500 text-white border-0';
-      content = (
-        <Icon icon={IconMember} size="xxs" className="!text-white" />
-      );
+      content = <Icon icon={IconMember} size="xxs" className="!text-white" />;
       break;
     case 'gate':
       sizeClass = 'size-7';
@@ -230,4 +228,3 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
     </span>
   );
 };
-
