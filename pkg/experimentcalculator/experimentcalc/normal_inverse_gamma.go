@@ -90,20 +90,20 @@ func normalInverseGamma(
 
 func calcPosterior(
 	thisN int64,
-	thisMu, thisSigma float64,
+	thisMu, thisVar float64,
 	priorN int64,
-	priorMu, priorNu, priorAlpha, priorBeta float64) distr {
+	priorMu, priorKappa, priorAlpha, priorBeta float64) distr {
 	retN := thisN + priorN
-	n2 := math.Log(float64(thisN)) / math.Log(1.1)
-	postMu := (priorNu*priorMu + n2*thisMu) / (priorNu + n2)
-	postNu := priorNu + n2
-	postAlpha := priorAlpha + (n2 / 2)
+	n := float64(thisN)
+	postKappa := priorKappa + n
+	postMu := (priorKappa*priorMu + n*thisMu) / postKappa
+	postAlpha := priorAlpha + (n / 2)
 	postBeta := priorBeta +
-		(0.5 * thisSigma * thisSigma * n2) +
-		((n2 * priorNu / (priorNu * n2)) * ((thisMu - priorMu) * (thisMu - priorMu)) / 2)
+		(0.5 * (n - 1) * thisVar) +
+		((priorKappa * n / postKappa) * ((thisMu - priorMu) * (thisMu - priorMu)) / 2)
 	return distr{
 		mu:    postMu,
-		nu:    postNu,
+		nu:    postKappa,
 		alpha: postAlpha,
 		beta:  postBeta,
 		n:     int(retN),
