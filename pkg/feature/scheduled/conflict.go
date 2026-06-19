@@ -23,7 +23,7 @@ import (
 
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -507,38 +507,19 @@ func (d *ConflictDetector) listCrossFlagSchedules(
 	ctx context.Context,
 	excludeFeatureID, environmentID string,
 ) ([]*proto.ScheduledFlagChange, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentID,
+	params := v2fs.ListScheduledFlagChangesParams{
+		EnvironmentID:    environmentID,
+		ExcludeFeatureID: excludeFeatureID,
+		Statuses: []proto.ScheduledFlagChangeStatus{
+			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
 		},
-		{
-			Column:   "feature_id",
-			Operator: mysql.OperatorNotEqual,
-			Value:    excludeFeatureID,
-		},
-	}
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "status",
-			Values: []interface{}{
-				int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING),
-				int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
-			},
-		},
-	}
-	options := &mysql.ListOptions{
-		Filters:   filters,
-		InFilters: inFilters,
-		Orders: []*mysql.Order{
-			mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc),
-		},
-		Limit:  maxCrossFlagSchedulesToCheck,
-		Offset: mysql.QueryNoOffset,
+		OrderBy:  proto.ListScheduledFlagChangesRequest_SCHEDULED_AT,
+		PageSize: maxCrossFlagSchedulesToCheck,
+		Offset:   database.QueryNoOffset,
 	}
 	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(
-		ctx, options,
+		ctx, params,
 	)
 	return sfcs, err
 }
@@ -547,27 +528,18 @@ func (d *ConflictDetector) listPendingAndConflictSchedules(
 	ctx context.Context,
 	featureID, environmentID string,
 ) ([]*proto.ScheduledFlagChange, error) {
-	filters := []*mysql.FilterV2{
-		{Column: "environment_id", Operator: mysql.OperatorEqual, Value: environmentID},
-		{Column: "feature_id", Operator: mysql.OperatorEqual, Value: featureID},
-	}
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "status",
-			Values: []interface{}{
-				int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING),
-				int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
-			},
+	params := v2fs.ListScheduledFlagChangesParams{
+		EnvironmentID: environmentID,
+		FeatureID:     featureID,
+		Statuses: []proto.ScheduledFlagChangeStatus{
+			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
 		},
+		OrderBy:  proto.ListScheduledFlagChangesRequest_SCHEDULED_AT,
+		PageSize: database.QueryNoLimit,
+		Offset:   database.QueryNoOffset,
 	}
-	options := &mysql.ListOptions{
-		Filters:   filters,
-		InFilters: inFilters,
-		Orders:    []*mysql.Order{mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc)},
-		Limit:     mysql.QueryNoLimit,
-		Offset:    mysql.QueryNoOffset,
-	}
-	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(ctx, options)
+	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(ctx, params)
 	return sfcs, err
 }
 

@@ -614,6 +614,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var subscriptionStorage v2ns.SubscriptionStorage
 	var adminSubscriptionStorage v2ns.AdminSubscriptionStorage
 	var teamStorage teamstorage.TeamStorage
+	var scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -647,6 +648,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		subscriptionStorage = notificationpostgres.NewSubscriptionStorage(postgresClient)
 		adminSubscriptionStorage = notificationpostgres.NewAdminSubscriptionStorage(postgresClient)
 		teamStorage = teampostgres.NewTeamStorage(postgresClient)
+		scheduledFlagChangeStorage = featurepostgres.NewScheduledFlagChangeStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
@@ -673,6 +675,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		subscriptionStorage = notificationmysql.NewSubscriptionStorage(mysqlClient)
 		adminSubscriptionStorage = notificationmysql.NewAdminSubscriptionStorage(mysqlClient)
 		teamStorage = teammysql.NewTeamStorage(mysqlClient)
+		scheduledFlagChangeStorage = featuremysql.NewScheduledFlagChangeStorage(mysqlClient)
 	}
 
 	// persistentRedisClient
@@ -990,6 +993,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagStorage,
 		flagTriggerStorage,
 		fluiStorage,
+		scheduledFlagChangeStorage,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -999,7 +1003,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,
-		mysqlClient,
 		logger,
 	)
 	if err != nil {
@@ -1536,6 +1539,7 @@ func (s *server) createFeatureService(
 	tagStorage tagstorage.TagStorage,
 	flagTriggerStorage v2fs.FlagTriggerStorage,
 	fluiStorage v2fs.FeatureLastUsedInfoStorage,
+	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1545,7 +1549,6 @@ func (s *server) createFeatureService(
 	persistentRedisV3Cache cache.MultiGetDeleteCountCache,
 	segmentUsersPublisher publisher.Publisher,
 	domainTopicPublisher publisher.Publisher,
-	mysqlClient mysql.Client,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	featureService := featureapi.NewFeatureService(
@@ -1556,7 +1559,7 @@ func (s *server) createFeatureService(
 		tagStorage,
 		flagTriggerStorage,
 		fluiStorage,
-		mysqlClient,
+		scheduledFlagChangeStorage,
 		accountClient,
 		experimentClient,
 		autoOpsClient,

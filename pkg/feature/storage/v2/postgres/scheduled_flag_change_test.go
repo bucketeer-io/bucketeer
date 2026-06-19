@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
@@ -23,8 +23,9 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -68,7 +69,7 @@ func TestScheduledFlagChangeStorageCreateScheduledFlagChange(t *testing.T) {
 			setup: func(s *scheduledFlagChangeStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, mysql.ErrDuplicateEntry)
+				).Return(nil, pgstorage.ErrDuplicateEntry)
 			},
 			scheduledFlagChange: &domain.ScheduledFlagChange{
 				ScheduledFlagChange: &proto.ScheduledFlagChange{
@@ -77,7 +78,7 @@ func TestScheduledFlagChangeStorageCreateScheduledFlagChange(t *testing.T) {
 					EnvironmentId: "env-1",
 				},
 			},
-			expectedErr: ErrScheduledFlagChangeAlreadyExists,
+			expectedErr: v2fs.ErrScheduledFlagChangeAlreadyExists,
 		},
 		{
 			desc: "success",
@@ -150,7 +151,7 @@ func TestScheduledFlagChangeStorageUpdateScheduledFlagChange(t *testing.T) {
 					EnvironmentId: "env-1",
 				},
 			},
-			expectedErr: ErrScheduledFlagChangeUnexpectedAffectedRows,
+			expectedErr: v2fs.ErrScheduledFlagChangeUnexpectedAffectedRows,
 		},
 		{
 			desc: "success",
@@ -216,7 +217,7 @@ func TestScheduledFlagChangeStorageDeleteScheduledFlagChange(t *testing.T) {
 			},
 			id:            "sfc-1",
 			environmentID: "env-1",
-			expectedErr:   ErrScheduledFlagChangeUnexpectedAffectedRows,
+			expectedErr:   v2fs.ErrScheduledFlagChangeUnexpectedAffectedRows,
 		},
 		{
 			desc: "success",
@@ -274,11 +275,11 @@ func TestScheduledFlagChangeStorageGetScheduledFlagChange(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				row.EXPECT().Scan(gomock.Any()).Return(pgstorage.ErrNoRows)
 			},
 			id:            "sfc-1",
 			environmentID: "env-1",
-			expectedErr:   ErrScheduledFlagChangeNotFound,
+			expectedErr:   v2fs.ErrScheduledFlagChangeNotFound,
 		},
 		{
 			desc: "success",
@@ -312,7 +313,7 @@ func TestScheduledFlagChangeStorageListScheduledFlagChanges(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(storage *scheduledFlagChangeStorage)
-		options        *mysql.ListOptions
+		params         v2fs.ListScheduledFlagChangesParams
 		expected       []*proto.ScheduledFlagChange
 		expectedCursor int
 		expectedErr    error
@@ -324,7 +325,7 @@ func TestScheduledFlagChangeStorageListScheduledFlagChanges(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:     nil,
+			params:      v2fs.ListScheduledFlagChangesParams{},
 			expected:    nil,
 			expectedErr: errors.New("error"),
 		},
@@ -344,12 +345,7 @@ func TestScheduledFlagChangeStorageListScheduledFlagChanges(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Limit:   0,
-				Offset:  0,
-				Filters: []*mysql.FilterV2{},
-				Orders:  []*mysql.Order{},
-			},
+			params:         v2fs.ListScheduledFlagChangesParams{},
 			expected:       []*proto.ScheduledFlagChange{},
 			expectedCursor: 0,
 			expectedErr:    nil,
@@ -359,7 +355,7 @@ func TestScheduledFlagChangeStorageListScheduledFlagChanges(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &scheduledFlagChangeStorage{qe: mock.NewMockQueryExecer(mockController)}
 			p.setup(storage)
-			expected, nextOffset, _, err := storage.ListScheduledFlagChanges(context.Background(), p.options)
+			expected, nextOffset, _, err := storage.ListScheduledFlagChanges(context.Background(), p.params)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, expected)
 			assert.Equal(t, p.expectedCursor, nextOffset)

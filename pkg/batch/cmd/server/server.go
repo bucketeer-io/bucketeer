@@ -340,6 +340,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var codeRefStorage coderefstorage.CodeReferenceStorage
 	var experimentResultStorage v2ecrs.ExperimentResultStorage
 	var monthlySummaryStorage insightsstorage.MonthlySummaryStorage
+	var scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -358,6 +359,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		codeRefStorage = coderefpostgres.NewCodeReferenceStorage(postgresClient)
 		experimentResultStorage = experimentcalcpostgres.NewExperimentResultStorage(postgresClient)
 		monthlySummaryStorage = insightspostgres.NewMonthlySummaryStorage(postgresClient)
+		scheduledFlagChangeStorage = featurepostgres.NewScheduledFlagChangeStorage(postgresClient)
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
@@ -368,6 +370,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		codeRefStorage = coderefmysql.NewCodeReferenceStorage(mysqlClient)
 		experimentResultStorage = experimentcalcmysql.NewExperimentResultStorage(mysqlClient)
 		monthlySummaryStorage = insightsmysql.NewMonthlySummaryStorage(mysqlClient)
+		scheduledFlagChangeStorage = featuremysql.NewScheduledFlagChangeStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -678,7 +681,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		scheduledflagchange.NewScheduledFlagChangeExecutor(
-			mysqlClient,
+			scheduledFlagChangeStorage,
 			featureClient,
 			jobs.WithTimeout(50*time.Second),
 			jobs.WithLogger(logger),
