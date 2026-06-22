@@ -388,6 +388,30 @@ After observing data with sample mean x̄ and sample variance s²:
 3. Sample mean: μ ~ Normal(μ_n, σ²/κ_n)
 ```
 
+### Prior Choice: Pooled Empirical Bayes
+
+Bucketeer cannot assume what scale a customer's value-metric lives on (sub-unit
+conversions, dollars, yen, seconds, …), so the NIG prior is derived from the
+observed data at calculation time rather than hardcoded:
+
+```
+μ₀ = pooled (sample-size-weighted) mean across variations
+κ₀ = 1                                          // 1 pseudo-observation
+α₀ = 1                                          // 1 pseudo-dof
+β₀ = pooled within-variation sample variance    // Σ(n_i − 1)·s_i² / Σ(n_i − 1)
+```
+
+Pooling across variations (rather than anchoring the prior at the baseline)
+keeps the prior symmetric — it does not silently pull treatment posteriors
+toward control. The pseudo-counts `κ₀ = α₀ = 1` give the prior ~50% weight at
+n=1, ~9% at n=10, and ~1% at n=99, so small samples are anchored at the data's
+natural scale while moderate and large samples converge to the data-driven
+posterior recovered by Fix #1.
+
+If every variation has n ≤ 1 (so the pooled within-variation variance is
+undefined), Bucketeer falls back to a weak generic prior
+(`μ₀=0, κ₀=α₀=β₀=1`) to avoid degenerate posteriors.
+
 ---
 
 ## 9. Credible Intervals

@@ -29,11 +29,28 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
+// Fallback priors used only when the observed inputs are too degenerate to
+// derive an empirical-Bayes prior from (e.g. every variation has n ≤ 1 so the
+// pooled within-variation variance is undefined). These are deliberately weak:
+// a single pseudo-observation centred at 0 with unit variance, dying off as
+// 1/(1+n) for the mean and even faster for the variance.
 const (
-	priorMean  = 30
-	priorKappa = 2
-	priorAlpha = 10
-	priorBeta  = 1000
+	fallbackPriorMean  = 0.0
+	fallbackPriorKappa = 1.0
+	fallbackPriorAlpha = 1.0
+	fallbackPriorBeta  = 1.0
+)
+
+// Pseudo-count weights for the empirical-Bayes prior. We use one pseudo
+// observation for the mean (kappa0) and a matched one-degree-of-freedom prior
+// for the variance (alpha0=1, beta0=pooled_var). With these weights the prior
+// influence is ~50% at n=1, ~17% at n=5, ~9% at n=10, and ~1% at n=99, so the
+// prior anchors small-sample estimates at the data's own scale without
+// distorting moderate or large samples — and recovers Fix #1's large-n
+// concentration behaviour exactly.
+const (
+	empiricalPriorKappa = 1.0
+	empiricalPriorAlpha = 1.0
 )
 
 type distr struct {
@@ -57,12 +74,17 @@ func normalInverseGamma(
 	variationNum := len(means)
 	variationResults := make(map[string]*eventcounter.VariationResult, variationNum)
 	sampleSeries := make([]series.Series, 0, variationNum)
+	// Derive the prior from the observed data (empirical Bayes) so the prior
+	// auto-adapts to whatever scale this metric lives on (sub-unit conversions,
+	// dollars, yen, seconds, …) instead of being anchored to an arbitrary
+	// hardcoded constant.
+	priorMu, priorKappa, priorAlpha, priorBeta := computeEmpiricalBayesPriors(means, vars, sizes)
 	for i := 0; i < variationNum; i++ {
 		post := calcPosterior(
 			sizes[i],
 			means[i],
 			vars[i],
-			priorMean,
+			priorMu,
 			priorKappa,
 			priorAlpha,
 			priorBeta,
@@ -113,6 +135,59 @@ func calcPosterior(
 		alpha: postAlpha,
 		beta:  postBeta,
 	}
+}
+
+// computeEmpiricalBayesPriors derives weakly-informative Normal-Inverse-Gamma
+// prior hyper-parameters from the observed per-variation summaries:
+//
+//	mu0    = pooled (sample-size-weighted) mean across variations
+//	kappa0 = 1                              // 1 pseudo-observation for the mean
+//	alpha0 = 1                              // 1 pseudo-dof for the variance
+//	beta0  = pooled within-variation sample variance
+//	         = Σ(n_i - 1) · s_i² / Σ(n_i - 1)
+//
+// Inputs `vars[i]` are already sample variances (divisor n_i - 1, as enforced
+// by Fix #1's VAR_SAMP standardisation), so Σ(n_i - 1) · s_i² recovers the
+// classical pooled sum of squared deviations.
+//
+// We pool across all variations rather than using the baseline so the prior is
+// symmetric and does not silently pull treatment posteriors toward control.
+//
+// If the inputs are too degenerate to estimate from (no usable sample-size or
+// no within-variation variance, e.g. every variation has n ≤ 1 or s_i² = 0),
+// fall back to the weak generic prior in `fallback…` constants so callers
+// never see a NaN or a divide-by-zero downstream.
+func computeEmpiricalBayesPriors(
+	means, vars []float64,
+	sizes []int64,
+) (mu, kappa, alpha, beta float64) {
+	var totalN int64
+	var sumNX float64
+	var pooledSS float64
+	var pooledDoF int64
+	for i, n := range sizes {
+		if n <= 0 {
+			continue
+		}
+		totalN += n
+		sumNX += float64(n) * means[i]
+		if n > 1 {
+			pooledSS += float64(n-1) * vars[i]
+			pooledDoF += n - 1
+		}
+	}
+	if totalN == 0 {
+		return fallbackPriorMean, fallbackPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	pooledMean := sumNX / float64(totalN)
+	if pooledDoF == 0 {
+		return pooledMean, empiricalPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	pooledVar := pooledSS / float64(pooledDoF)
+	if pooledVar <= 0 {
+		return pooledMean, empiricalPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	return pooledMean, empiricalPriorKappa, empiricalPriorAlpha, pooledVar
 }
 
 func generateNormalGamma(src rand.Source, n int, mu float64, lambda float64, alpha float64, beta float64) []float64 {
