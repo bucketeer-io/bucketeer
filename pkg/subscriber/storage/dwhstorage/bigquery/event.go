@@ -44,6 +44,12 @@ type queryClient struct {
 	batchSize int
 }
 
+// Close closes the underlying BigQuery managed writer. It is promoted to the
+// evalEventWriter/goalEventWriter types so the server can close them on shutdown.
+func (q *queryClient) Close() error {
+	return q.writer.Close()
+}
+
 // NewEvaluationEventWriter creates a BigQuery-backed evaluation event writer.
 func NewEvaluationEventWriter(
 	ctx context.Context,

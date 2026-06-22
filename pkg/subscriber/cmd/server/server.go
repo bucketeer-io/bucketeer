@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -779,10 +780,25 @@ func (s *server) initDataWarehouseStorages(
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
+		cleanup := func() {
+			if c, ok := evalWriter.(io.Closer); ok {
+				if err := c.Close(); err != nil {
+					logger.Error("subscriber: failed to close evaluation event writer", zap.Error(err))
+				}
+			}
+			if c, ok := goalWriter.(io.Closer); ok {
+				if err := c.Close(); err != nil {
+					logger.Error("subscriber: failed to close goal event writer", zap.Error(err))
+				}
+			}
+			if err := eventQuerier.Close(); err != nil {
+				logger.Error("subscriber: failed to close data warehouse querier", zap.Error(err))
+			}
+		}
 		return evalWriter,
 			goalWriter,
 			ecbigquery.NewBigQueryEventStorage(eventQuerier, dataset, logger),
-			func() { eventQuerier.Close() },
+			cleanup,
 			nil
 	}
 }
