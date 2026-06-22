@@ -33,7 +33,6 @@ const (
 	MetricsEventPersisterName            = "metricsEventPersister"
 	PushSenderName                       = "pushSender"
 	SegmentUserPersisterName             = "segmentUserPersister"
-	UserEventPersisterName               = "userEventPersister"
 	DemoOrganizationCreationNotifierName = "demoOrganizationCreationNotifier"
 	CacheRefresherName                   = "cacheRefresher"
 )

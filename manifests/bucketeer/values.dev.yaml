@@ -559,20 +559,6 @@ subscriber:
       pullerMaxOutstandingBytes: 1000000000
       maxMps: 50
       workerNum: 1
-    userEventPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      redisMode: ${global.pubsub.redis.mode}
-      project: ${global.pubsub.project}
-      topic: user
-      subscription: user-sub
-      pullerNumGoroutines: 5
-      pullerMaxOutstandingMessages: 1000
-      pullerMaxOutstandingBytes: 1000000000
-      maxMps: 50
-      workerNum: 1
     demoOrganizationCreationNotifier:
       pubSubType: ${global.pubsub.type}
       redisAddr: ${global.pubsub.redis.addr}
@@ -696,9 +682,6 @@ subscriber:
       redisPartitionCount: ${global.pubsub.redis.partitionCount}
       redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
-    userEventPersister:
-      flushSize: 10
-      flushInterval: 5
     demoOrganizationCreationNotifier:
       notifier:
         slack:

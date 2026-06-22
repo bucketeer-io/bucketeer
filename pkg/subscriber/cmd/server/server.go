@@ -840,19 +840,6 @@ func (s *server) registerPubSubProcessorMap(
 			segmentPersister,
 		)
 
-		userEventPersister, err := processor.NewUserEventPersister(
-			processorsConfigMap[processor.UserEventPersisterName],
-			mysqlClient,
-			logger,
-		)
-		if err != nil {
-			return nil, err
-		}
-		processors.RegisterProcessor(
-			processor.UserEventPersisterName,
-			userEventPersister,
-		)
-
 		if *s.demoSiteEnabled {
 			demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
 				processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
