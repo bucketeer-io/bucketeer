@@ -5140,6 +5140,23 @@ definitions:
         type: object
         additionalProperties:
           type: string
+  VariationValueSchemaEnumValidator:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: string
+  VariationValueSchemaJsonSchemaValidator:
+    type: object
+    properties:
+      schema:
+        type: string
+  VariationValueSchemaRegexValidator:
+    type: object
+    properties:
+      pattern:
+        type: string
   accountAccountV2:
     type: object
     properties:
@@ -5879,6 +5896,8 @@ definitions:
       offVariationIndex:
         type: integer
         format: int32
+      variationValueSchema:
+        $ref: '#/definitions/featureVariationValueSchema'
   bucketeergatewayCreateFeatureResponse:
     type: object
     properties:
@@ -6644,6 +6663,10 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureTagChange'
+      variationValueSchema:
+        $ref: '#/definitions/featureVariationValueSchema'
+      clearVariationValueSchema:
+        type: boolean
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:
@@ -7718,6 +7741,8 @@ definitions:
         type: string
       autoOpsSummary:
         $ref: '#/definitions/featureAutoOpsSummary'
+      variationValueSchema:
+        $ref: '#/definitions/featureVariationValueSchema'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -8045,6 +8070,27 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
+  featureVariationValueSchema:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/featureVariationValueSchemaType'
+      enumValidator:
+        $ref: '#/definitions/VariationValueSchemaEnumValidator'
+      regexValidator:
+        $ref: '#/definitions/VariationValueSchemaRegexValidator'
+      jsonSchemaValidator:
+        $ref: '#/definitions/VariationValueSchemaJsonSchemaValidator'
+      description:
+        type: string
+  featureVariationValueSchemaType:
+    type: string
+    enum:
+      - TYPE_UNSPECIFIED
+      - ENUM
+      - REGEX
+      - JSON_SCHEMA
+    default: TYPE_UNSPECIFIED
   gatewayGetEvaluationRequest:
     type: object
     properties:

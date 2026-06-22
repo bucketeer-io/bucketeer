@@ -12,6 +12,7 @@ SET
     created_at = ?,
     updated_at = ?,
     variation_type = ?,
+    variation_value_schema = ?,
     variations = ?,
     targets = ?,
     rules = ?,

@@ -10,6 +10,7 @@ SELECT
     ft.created_at AS feature_created_at,
     ft.updated_at AS feature_updated_at,
     ft.variation_type AS feature_variation_type,
+    ft.variation_value_schema AS feature_variation_value_schema,
     ft.variations AS feature_variations,
     ft.targets AS feature_targets,
     ft.rules AS feature_rules,

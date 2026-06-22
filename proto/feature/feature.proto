@@ -55,6 +55,37 @@ message Feature {
   repeated Prerequisite prerequisites = 21;
   string sampling_seed = 22;
   AutoOpsSummary auto_ops_summary = 23;
+  VariationValueSchema variation_value_schema = 24;
+}
+
+message VariationValueSchema {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    ENUM = 1;
+    REGEX = 2;
+    JSON_SCHEMA = 3;
+  }
+
+  message EnumValidator {
+    repeated string values = 1;
+  }
+
+  message RegexValidator {
+    string pattern = 1;
+  }
+
+  message JsonSchemaValidator {
+    string schema = 1;
+  }
+
+  Type type = 1;
+
+  oneof validator {
+    EnumValidator enum_validator = 2;
+    RegexValidator regex_validator = 3;
+    JsonSchemaValidator json_schema_validator = 4;
+  }
+  string description = 5;
 }
 
 message AutoOpsSummary {

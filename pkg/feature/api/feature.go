@@ -500,6 +500,7 @@ func (s *FeatureService) CreateFeature(
 		req.Name,
 		req.Description,
 		req.VariationType,
+		req.VariationValueSchema,
 		req.Variations,
 		req.Tags,
 		int(req.DefaultOnVariationIndex.Value),
@@ -792,6 +793,10 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 		req.TagChanges,
 		req.Maintainer,
 		req.OrderedRuleIds,
+		&domain.VariationValueSchemaUpdate{
+			Schema: req.VariationValueSchema,
+			Clear:  req.ClearVariationValueSchema,
+		},
 	)
 	if err != nil {
 		return nil, nil, err

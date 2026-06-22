@@ -33,6 +33,26 @@ export interface FeatureVariation {
   description?: string;
 }
 
+export type VariationValueSchemaType =
+  | 'TYPE_UNSPECIFIED'
+  | 'ENUM'
+  | 'REGEX'
+  | 'JSON_SCHEMA';
+
+export interface VariationValueSchema {
+  type: VariationValueSchemaType;
+  description?: string;
+  enumValidator?: {
+    values: string[];
+  };
+  regexValidator?: {
+    pattern: string;
+  };
+  jsonSchemaValidator?: {
+    schema: string;
+  };
+}
+
 export interface FeatureTarget {
   variation: string;
   users: string[];
@@ -118,6 +138,7 @@ export interface Feature {
   prerequisites: FeaturePrerequisite[];
   samplingSeed: string;
   autoOpsSummary: AutoOpsSummary;
+  variationValueSchema?: VariationValueSchema;
 }
 
 export interface AutoOpsSummary {
@@ -185,6 +206,8 @@ export interface FeatureUpdaterParams {
   prerequisiteChanges: PrerequisiteChange[];
   targetChanges: TargetChange[];
   tagChanges: TagChange[];
+  variationValueSchema?: VariationValueSchema;
+  clearVariationValueSchema?: boolean;
 }
 
 export interface AttributeKeysResponse {
