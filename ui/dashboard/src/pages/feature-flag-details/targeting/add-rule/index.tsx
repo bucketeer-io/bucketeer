@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import {
   IconPlus,
   IconPrerequisite,
   IconSetting,
   IconUserOutlined
 } from '@icons';
-import Dropdown from 'components/dropdown';
+import Dropdown, { DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import { ADD_NODE_LEFT_OFFSET_PX } from '../evaluation-flow';
 import { RuleCategory } from '../types';
 
 const AddRule = ({
@@ -64,28 +66,76 @@ const AddRule = ({
     return onAddRule(value);
   };
 
+  const sharedDropdownProps = {
+    isTooltip: true,
+    options,
+    disabled: !editable,
+    showArrow: false,
+    onChange: (value: DropdownValue | DropdownValue[]) =>
+      getRuleCategoryCall(value as RuleCategory)
+  };
+
   return (
-    <Dropdown
-      trigger={
-        <DisabledButtonTooltip
-          align="center"
-          hidden={editable}
+    <>
+      {/* Spine plus — its own dropdown so the menu opens *below the plus
+          circle*, not below the centred "+ Add Rule" button. Absolutely
+          positioned to align with the EvaluationFlow spine. */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 z-10"
+        style={{ left: `${ADD_NODE_LEFT_OFFSET_PX}px` }}
+      >
+        <Dropdown
+          {...sharedDropdownProps}
+          isTruncate={false}
+          alignContent="start"
+          wrapTriggerStyle="!w-fit"
+          // `[&>div]:overflow-visible` lets the spine plus's `ring-4 ring-white`
+          // halo (which masks the spine line behind it) extend beyond the
+          // dropdown trigger's default overflow-hidden.
+          className="!w-fit !p-0 !border-0 !shadow-none !bg-transparent [&>div]:overflow-visible"
           trigger={
-            <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500">
-              <Icon icon={IconPlus} size={'md'} />
-              {t('table:feature-flags.add-rule')}
-            </div>
+            <DisabledButtonTooltip
+              align="center"
+              hidden={editable}
+              trigger={
+                <span
+                  className={cn(
+                    'flex size-5 items-center justify-center rounded-full bg-white border border-dashed ring-4 ring-white transition-colors',
+                    editable
+                      ? 'border-gray-400 text-gray-500 cursor-pointer hover:border-primary-500 hover:text-primary-500'
+                      : 'border-gray-300 text-gray-400 cursor-not-allowed opacity-60'
+                  )}
+                >
+                  <span className="sr-only">
+                    {t('table:feature-flags.add-rule')}
+                  </span>
+                  <Icon icon={IconPlus} size="xxs" />
+                </span>
+              }
+            />
           }
         />
-      }
-      isTooltip={true}
-      options={options}
-      disabled={!editable}
-      showArrow={false}
-      onChange={value => getRuleCategoryCall(value as RuleCategory)}
-      alignContent="center"
-      className="w-full [&>div]:flex-center border-dashed !shadow-none"
-    />
+      </div>
+
+      {/* Visible "+ Add Rule" dashed button. */}
+      <Dropdown
+        {...sharedDropdownProps}
+        alignContent="center"
+        className="w-full [&>div]:flex-center border-dashed !shadow-none"
+        trigger={
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500">
+                <Icon icon={IconPlus} size={'md'} />
+                {t('table:feature-flags.add-rule')}
+              </div>
+            }
+          />
+        }
+      />
+    </>
   );
 };
 
