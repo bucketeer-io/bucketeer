@@ -177,12 +177,7 @@ const Navigation = ({
             : 'w-[60px] md:w-[248px] py-4 px-2 md:px-6 md:py-8'
       )}
     >
-      <div
-        className={cn(
-          'flex flex-col size-full relative pt-4 md:pt-0',
-          isOpenSwitchOrg ? 'overflow-visible' : 'overflow-hidden'
-        )}
-      >
+      <div className="flex flex-col size-full relative pt-4 md:pt-0 overflow-hidden">
         {!fromTabletScreen && !forceExpanded && (
           <button
             onClick={() =>
