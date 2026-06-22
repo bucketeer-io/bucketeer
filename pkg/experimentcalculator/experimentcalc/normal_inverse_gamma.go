@@ -29,11 +29,20 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
-// Fallback priors used only when the observed inputs are too degenerate to
-// derive an empirical-Bayes prior from (e.g. every variation has n ≤ 1 so the
-// pooled within-variation variance is undefined). These are deliberately weak:
-// a single pseudo-observation centred at 0 with unit variance, dying off as
-// 1/(1+n) for the mean and even faster for the variance.
+// Fallback prior hyper-parameters used when the observed inputs are too
+// degenerate to derive a full empirical-Bayes prior:
+//   - `fallbackPriorMean` (=0) is only used when no variation has any usable
+//     sample (totalN == 0) or the pooled mean is non-finite. Whenever any
+//     usable sample exists, `computeEmpiricalBayesPriors` keeps μ₀ at the
+//     pooled observed mean.
+//   - `fallbackPriorAlpha` / `fallbackPriorBeta` (=1, =1) are used when a
+//     usable mean exists but the pooled within-variation variance is
+//     undefined or non-positive (e.g. every variation has n ≤ 1, or every
+//     within-variation sample variance is 0).
+//
+// All fallback values are deliberately weak (1 pseudo-observation, unit
+// variance) so the prior dies off as 1/(1+n) for the mean and even faster
+// for the variance.
 const (
 	fallbackPriorMean  = 0.0
 	fallbackPriorKappa = 1.0
@@ -153,10 +162,17 @@ func calcPosterior(
 // We pool across all variations rather than using the baseline so the prior is
 // symmetric and does not silently pull treatment posteriors toward control.
 //
-// If the inputs are too degenerate to estimate from (no usable sample-size or
-// no within-variation variance, e.g. every variation has n ≤ 1 or s_i² = 0),
-// fall back to the weak generic prior in `fallback…` constants so callers
-// never see a NaN or a divide-by-zero downstream.
+// Fallback layers (the function never returns NaN, Inf, or a non-positive
+// variance — downstream NIG sampling would blow up on any of those):
+//
+//   - per-variation: skip variations with n ≤ 0 or with non-finite mean /
+//     variance, so a single bad row cannot poison the pooled estimate;
+//   - mean: if no variation contributes a usable sample (totalN == 0) or the
+//     pooled mean is non-finite, fall back to the full generic prior;
+//   - variance: if the pooled within-variation variance is undefined
+//     (pooledDoF == 0) or non-positive / non-finite, keep μ₀ at the pooled
+//     mean but fall back to fallbackPriorAlpha / fallbackPriorBeta for the
+//     variance prior.
 func computeEmpiricalBayesPriors(
 	means, vars []float64,
 	sizes []int64,
@@ -169,10 +185,18 @@ func computeEmpiricalBayesPriors(
 		if n <= 0 {
 			continue
 		}
+		m := means[i]
+		if math.IsNaN(m) || math.IsInf(m, 0) {
+			continue
+		}
 		totalN += n
-		sumNX += float64(n) * means[i]
+		sumNX += float64(n) * m
 		if n > 1 {
-			pooledSS += float64(n-1) * vars[i]
+			v := vars[i]
+			if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+				continue
+			}
+			pooledSS += float64(n-1) * v
 			pooledDoF += n - 1
 		}
 	}
@@ -180,11 +204,14 @@ func computeEmpiricalBayesPriors(
 		return fallbackPriorMean, fallbackPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
 	}
 	pooledMean := sumNX / float64(totalN)
+	if math.IsNaN(pooledMean) || math.IsInf(pooledMean, 0) {
+		return fallbackPriorMean, fallbackPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
 	if pooledDoF == 0 {
 		return pooledMean, empiricalPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
 	}
 	pooledVar := pooledSS / float64(pooledDoF)
-	if pooledVar <= 0 {
+	if pooledVar <= 0 || math.IsNaN(pooledVar) || math.IsInf(pooledVar, 0) {
 		return pooledMean, empiricalPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
 	}
 	return pooledMean, empiricalPriorKappa, empiricalPriorAlpha, pooledVar

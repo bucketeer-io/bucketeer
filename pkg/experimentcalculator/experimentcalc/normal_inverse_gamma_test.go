@@ -314,6 +314,26 @@ func TestComputeEmpiricalBayesPriors(t *testing.T) {
 			wantAlpha: 1.0,
 			wantBeta:  (49*4.0 + 49*9.0) / 98,
 		},
+		{
+			name:      "ignores variations with NaN/Inf mean (does not poison pooled estimate)",
+			means:     []float64{math.NaN(), 10.0, math.Inf(1)},
+			vars:      []float64{4.0, 4.0, 4.0},
+			sizes:     []int64{50, 50, 50},
+			wantMu:    10.0,
+			wantKappa: 1.0,
+			wantAlpha: 1.0,
+			wantBeta:  4.0, // only the middle variation contributes; (49*4)/49 = 4.0
+		},
+		{
+			name:      "ignores variations with NaN/Inf/negative variance but still pools their mean",
+			means:     []float64{10.0, 20.0, 30.0},
+			vars:      []float64{math.NaN(), math.Inf(1), -1.0},
+			sizes:     []int64{50, 50, 50},
+			wantMu:    20.0, // (50*10 + 50*20 + 50*30)/150 = 20
+			wantKappa: 1.0,
+			wantAlpha: fallbackPriorAlpha, // no usable per-variation variance -> variance fallback
+			wantBeta:  fallbackPriorBeta,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
