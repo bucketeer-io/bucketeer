@@ -40,9 +40,10 @@ import (
 //     undefined or non-positive (e.g. every variation has n ≤ 1, or every
 //     within-variation sample variance is 0).
 //
-// All fallback values are deliberately weak (1 pseudo-observation, unit
-// variance) so the prior dies off as 1/(1+n) for the mean and even faster
-// for the variance.
+// All fallback values are deliberately weak (1 pseudo-observation for the
+// mean; an Inv-Gamma(1, 1) variance prior — undefined mean, mode 0.5 — i.e. a
+// scale-1, scale-only "weak/unit-scale" prior, not a fixed unit variance) so
+// the prior dies off as 1/(1+n) for the mean and even faster for the variance.
 const (
 	fallbackPriorMean  = 0.0
 	fallbackPriorKappa = 1.0
@@ -165,8 +166,10 @@ func calcPosterior(
 // Fallback layers (the function never returns NaN, Inf, or a non-positive
 // variance — downstream NIG sampling would blow up on any of those):
 //
-//   - per-variation: skip variations with n ≤ 0 or with non-finite mean /
-//     variance, so a single bad row cannot poison the pooled estimate;
+//   - per-variation: skip variations with n ≤ 0 or with non-finite mean
+//     entirely; for variance pooling, additionally skip variations with
+//     non-finite or negative variance (their mean still contributes), so a
+//     single bad row cannot poison the pooled estimate;
 //   - mean: if no variation contributes a usable sample (totalN == 0) or the
 //     pooled mean is non-finite, fall back to the full generic prior;
 //   - variance: if the pooled within-variation variance is undefined
