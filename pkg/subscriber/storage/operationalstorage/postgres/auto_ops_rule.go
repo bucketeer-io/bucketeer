@@ -12,35 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
 	_ "embed"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	operationalstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage"
 )
 
 var (
-	//go:embed sql/count_experiment.sql
-	countExperimentSql string
+	//go:embed sql/count_auto_ops_rules.sql
+	countAutoOpsRulesSql string
 )
 
-type ExperimentStorage interface {
-	CountRunningExperiments(ctx context.Context) (int, error)
+type autoOpsRuleStorage struct {
+	qe pgstorage.QueryExecer
 }
 
-type experimentStorage struct {
-	qe mysql.QueryExecer
+func NewAutoOpsRuleStorage(qe pgstorage.QueryExecer) operationalstorage.AutoOpsRuleStorage {
+	return &autoOpsRuleStorage{qe: qe}
 }
 
-func NewExperimentStorage(qe mysql.QueryExecer) ExperimentStorage {
-	return &experimentStorage{qe: qe}
-}
-
-func (e experimentStorage) CountRunningExperiments(ctx context.Context) (int, error) {
+func (s autoOpsRuleStorage) CountOpsEventRate(ctx context.Context) (int, error) {
 	var count int
-	err := e.qe.QueryRowContext(ctx, countExperimentSql).Scan(&count)
+	err := s.qe.QueryRowContext(ctx, countAutoOpsRulesSql).Scan(&count)
 	if err != nil {
 		return 0, err
 	}

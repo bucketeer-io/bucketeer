@@ -12,37 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package dwhstorage
 
 import (
 	"context"
 	"encoding/json"
 
-	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
-type mysqlEvalEventWriter struct {
-	storage storagev2.EvaluationEventStorageV2
+// sqlEvalEventWriter adapts an SQL EvaluationEventStorageV2 (mysql/postgres) to the
+// EvalEventWriter contract: it converts proto events to params and performs a batch insert.
+type sqlEvalEventWriter struct {
+	storage EvaluationEventStorageV2
 }
 
-type mysqlGoalEventWriter struct {
-	storage storagev2.GoalEventStorageV2
+// NewEvalEventWriter returns an EvalEventWriter backed by an SQL evaluation-event storage.
+func NewEvalEventWriter(storage EvaluationEventStorageV2) EvalEventWriter {
+	return &sqlEvalEventWriter{storage: storage}
 }
 
-func NewMysqlEvalEventWriter(storage storagev2.EvaluationEventStorageV2) EvalEventWriter {
-	return &mysqlEvalEventWriter{
-		storage: storage,
-	}
-}
-
-func NewMysqlGoalEventWriter(storage storagev2.GoalEventStorageV2) GoalEventWriter {
-	return &mysqlGoalEventWriter{
-		storage: storage,
-	}
-}
-
-func (w *mysqlEvalEventWriter) AppendRows(
+func (w *sqlEvalEventWriter) AppendRows(
 	ctx context.Context,
 	events []*epproto.EvaluationEvent,
 ) (map[string]bool, error) {
@@ -54,17 +44,15 @@ func (w *mysqlEvalEventWriter) AppendRows(
 	}
 
 	// Prepare batch parameters
-	batchEvents := make([]storagev2.EvaluationEventParams, 0, len(events))
-	idToIndex := make(map[string]int, len(events))
-
-	for i, evt := range events {
+	batchEvents := make([]EvaluationEventParams, 0, len(events))
+	for _, evt := range events {
 		userData, err := json.Marshal(evt.UserData)
 		if err != nil {
 			fails[evt.Id] = true
 			continue
 		}
 
-		batchEvents = append(batchEvents, storagev2.EvaluationEventParams{
+		batchEvents = append(batchEvents, EvaluationEventParams{
 			ID:             evt.Id,
 			EnvironmentID:  evt.EnvironmentId,
 			Timestamp:      evt.Timestamp,
@@ -77,13 +65,11 @@ func (w *mysqlEvalEventWriter) AppendRows(
 			Tag:            evt.Tag,
 			SourceID:       evt.SourceId,
 		})
-		idToIndex[evt.Id] = i
 	}
 
 	// Execute batch insert
 	if len(batchEvents) > 0 {
-		err := w.storage.CreateEvaluationEvents(ctx, batchEvents)
-		if err != nil {
+		if err := w.storage.CreateEvaluationEvents(ctx, batchEvents); err != nil {
 			// If batch fails, mark all events as failed
 			for _, evt := range events {
 				fails[evt.Id] = true
@@ -94,7 +80,17 @@ func (w *mysqlEvalEventWriter) AppendRows(
 	return fails, nil
 }
 
-func (w *mysqlGoalEventWriter) AppendRows(
+// sqlGoalEventWriter adapts an SQL GoalEventStorageV2 (mysql/postgres) to the GoalEventWriter contract.
+type sqlGoalEventWriter struct {
+	storage GoalEventStorageV2
+}
+
+// NewGoalEventWriter returns a GoalEventWriter backed by an SQL goal-event storage.
+func NewGoalEventWriter(storage GoalEventStorageV2) GoalEventWriter {
+	return &sqlGoalEventWriter{storage: storage}
+}
+
+func (w *sqlGoalEventWriter) AppendRows(
 	ctx context.Context,
 	events []*epproto.GoalEvent,
 ) (map[string]bool, error) {
@@ -106,17 +102,15 @@ func (w *mysqlGoalEventWriter) AppendRows(
 	}
 
 	// Prepare batch parameters
-	batchEvents := make([]storagev2.GoalEventParams, 0, len(events))
-	idToIndex := make(map[string]int, len(events))
-
-	for i, evt := range events {
+	batchEvents := make([]GoalEventParams, 0, len(events))
+	for _, evt := range events {
 		userData, err := json.Marshal(evt.UserData)
 		if err != nil {
 			fails[evt.Id] = true
 			continue
 		}
 
-		batchEvents = append(batchEvents, storagev2.GoalEventParams{
+		batchEvents = append(batchEvents, GoalEventParams{
 			ID:             evt.Id,
 			EnvironmentID:  evt.EnvironmentId,
 			Timestamp:      evt.Timestamp,
@@ -131,13 +125,11 @@ func (w *mysqlGoalEventWriter) AppendRows(
 			VariationID:    evt.VariationId,
 			Reason:         evt.Reason,
 		})
-		idToIndex[evt.Id] = i
 	}
 
 	// Execute batch insert
 	if len(batchEvents) > 0 {
-		err := w.storage.CreateGoalEvents(ctx, batchEvents)
-		if err != nil {
+		if err := w.storage.CreateGoalEvents(ctx, batchEvents); err != nil {
 			// If batch fails, mark all events as failed
 			for _, evt := range events {
 				fails[evt.Id] = true

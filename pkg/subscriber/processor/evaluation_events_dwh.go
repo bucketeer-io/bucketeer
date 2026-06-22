@@ -27,24 +27,18 @@ import (
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage"
-	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 const (
-	day                  = 24 * time.Hour
-	evaluationEventTable = "evaluation_event"
+	day = 24 * time.Hour
 )
 
 type evalEvtWriter struct {
-	writer           storage.EvalEventWriter
+	writer           dwhstorage.EvalEventWriter
 	experimentClient ec.Client
 	cache            cachev3.ExperimentsCache
 	flightgroup      singleflight.Group
@@ -52,85 +46,22 @@ type evalEvtWriter struct {
 	logger           *zap.Logger
 }
 
-type EvalEventWriterOption struct {
-	DataWarehouseType string
-	MySQLClient       mysql.Client
-	PostgresClient    postgres.Client
-	BatchSize         int
-}
-
+// NewEvalEventWriter wraps an already-initialized data-warehouse evaluation-event writer
+// (built in the server) with experiment-linking enrichment.
 func NewEvalEventWriter(
-	ctx context.Context,
 	l *zap.Logger,
 	exClient ec.Client,
 	cache cachev3.ExperimentsCache,
-	project, ds string,
-	size int,
 	location *time.Location,
-	registerer metrics.Registerer,
-	options ...EvalEventWriterOption,
-) (Writer, error) {
-	var option EvalEventWriterOption
-	if len(options) > 0 {
-		option = options[0]
-	}
-
-	switch option.DataWarehouseType {
-	case "mysql":
-		if option.MySQLClient == nil {
-			return nil, errors.New("mysql client is required when using MySQL storage")
-		}
-
-		evalStorage := storagev2.NewMysqlEvaluationEventStorage(option.MySQLClient)
-
-		return &evalEvtWriter{
-			writer:           storage.NewMysqlEvalEventWriter(evalStorage),
-			experimentClient: exClient,
-			cache:            cache,
-			location:         location,
-			logger:           l,
-		}, nil
-	case "postgres":
-		if option.PostgresClient == nil {
-			return nil, errors.New("postgres client is required when using Postgres storage")
-		}
-
-		evalStorage := storagev2.NewPostgresEvaluationEventStorage(option.PostgresClient)
-
-		return &evalEvtWriter{
-			writer:           storage.NewPostgresEvalEventWriter(evalStorage),
-			experimentClient: exClient,
-			cache:            cache,
-			location:         location,
-			logger:           l,
-		}, nil
-	case "bigquery":
-		// Fall through to BigQuery implementation below
-	default:
-		// Default to BigQuery for backward compatibility
-	}
-
-	// BigQuery implementation
-	evt := epproto.EvaluationEvent{}
-	evalQuery, err := writer.NewWriter(
-		ctx,
-		project,
-		ds,
-		evaluationEventTable,
-		evt.ProtoReflect().Descriptor(),
-		writer.WithLogger(l),
-		writer.WithMetrics(registerer),
-	)
-	if err != nil {
-		return nil, err
-	}
+	evalWriter dwhstorage.EvalEventWriter,
+) Writer {
 	return &evalEvtWriter{
-		writer:           storage.NewEvalEventWriter(evalQuery, size),
+		writer:           evalWriter,
 		experimentClient: exClient,
 		cache:            cache,
 		location:         location,
 		logger:           l,
-	}, nil
+	}
 }
 
 func (w *evalEvtWriter) Write(

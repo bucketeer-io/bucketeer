@@ -36,12 +36,17 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	ecbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/bigquery"
+	ecmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mysql"
+	ecpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/postgres"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
 	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
@@ -52,11 +57,19 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/processor"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
+	dwhbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage/bigquery"
+	dwhmysql "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage/mysql"
+	dwhpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage"
+	opmysql "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage/mysql"
+	oppostgres "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage/postgres"
 )
 
 const (
@@ -252,6 +265,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	// Operational-database storages (separate from the data-warehouse clients).
 	var dbClient database.Client
 	var postgresClient postgres.Client
 	var pushStorage pushstorage.PushStorage
@@ -261,6 +275,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var accountStorage accstorage.AccountStorage
 	var auditLogStorage v2als.AuditLogStorage
 	var adminAuditLogStorage v2als.AdminAuditLogStorage
+	var experimentStorage operationalstorage.ExperimentStorage
+	var autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -277,6 +293,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
 		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
+		experimentStorage = oppostgres.NewExperimentStorage(postgresClient)
+		autoOpsRuleStorage = oppostgres.NewAutoOpsRuleStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = pushstorage.NewMySQLPushStorage(mysqlClient)
@@ -286,6 +304,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
 		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
+		experimentStorage = opmysql.NewExperimentStorage(mysqlClient)
+		autoOpsRuleStorage = opmysql.NewAutoOpsRuleStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -421,7 +441,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		defer cacheInvalidationCleanup()
 	}
 
-	pubSubProcessors, err := s.registerPubSubProcessorMap(
+	pubSubProcessors, dwhCleanup, err := s.registerPubSubProcessorMap(
 		ctx,
 		environmentClient,
 		mysqlClient,
@@ -433,6 +453,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		auditLogStorage,
 		adminAuditLogStorage,
 		accountStorage,
+		experimentStorage,
+		autoOpsRuleStorage,
 		persistentRedisClient,
 		nonPersistentRedisClient,
 		experimentClient,
@@ -446,6 +468,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	if err != nil {
 		return err
+	}
+	if dwhCleanup != nil {
+		defer dwhCleanup()
 	}
 
 	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, subscriberConfigs, registerer, logger)
@@ -690,6 +715,156 @@ func (s *server) createPostgresClient(
 	)
 }
 
+// initDataWarehouseStorages initializes every data-warehouse storage based on the resolved
+// data-warehouse config. The data warehouse is always separate from the operational database;
+// the processor receives ready storage interfaces and depends on no DWH client or dialect.
+// Returns the evaluation/goal event writers, the goal event storage (for retries), and a
+// cleanup closing any dedicated client. cleanup is nil when nothing needs closing.
+func (s *server) initDataWarehouseStorages(
+	ctx context.Context,
+	dwhConfig DataWarehouseConfig,
+	mainMySQLClient mysql.Client,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (dwhstorage.EvalEventWriter, dwhstorage.GoalEventWriter, ecdwh.EventStorage, func(), error) {
+	switch dwhConfig.Type {
+	case "mysql":
+		client := mainMySQLClient
+		var cleanup func()
+		if dwhConfig.MySQL.UseMainConnection {
+			logger.Info("Using main MySQL connection for data warehouse")
+		} else {
+			dedicated, err := createDWHMySQLClient(ctx, &dwhConfig.MySQL, logger)
+			if err != nil {
+				return nil, nil, nil, nil, fmt.Errorf("failed to create dedicated MySQL client: %w", err)
+			}
+			client = dedicated
+			cleanup = func() { dedicated.Close() }
+		}
+		return dwhstorage.NewEvalEventWriter(dwhmysql.NewEvaluationEventStorage(client)),
+			dwhstorage.NewGoalEventWriter(dwhmysql.NewGoalEventStorage(client)),
+			ecmysql.NewMySQLEventStorage(client, logger),
+			cleanup,
+			nil
+	case "postgres":
+		client, err := createDWHPostgresClient(ctx, &dwhConfig.Postgres, logger)
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("failed to create dedicated Postgres client: %w", err)
+		}
+		return dwhstorage.NewEvalEventWriter(dwhpostgres.NewEvaluationEventStorage(client)),
+			dwhstorage.NewGoalEventWriter(dwhpostgres.NewGoalEventStorage(client)),
+			ecpostgres.NewPostgresEventStorage(client, logger),
+			func() { client.Close() },
+			nil
+	default:
+		// BigQuery (default)
+		project := dwhConfig.BigQuery.Project
+		dataset := dwhConfig.BigQuery.Dataset
+		batchSize := dwhConfig.BatchSize
+		evalWriter, err := dwhbigquery.NewEvaluationEventWriter(ctx, logger, project, dataset, batchSize, registerer)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+		goalWriter, err := dwhbigquery.NewGoalEventWriter(ctx, logger, project, dataset, batchSize, registerer)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+		eventQuerier, err := bqquerier.NewClient(
+			ctx,
+			project,
+			dwhConfig.BigQuery.Location,
+			bqquerier.WithLogger(logger),
+			bqquerier.WithMetrics(registerer),
+		)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+		return evalWriter,
+			goalWriter,
+			ecbigquery.NewBigQueryEventStorage(eventQuerier, dataset, logger),
+			func() { eventQuerier.Close() },
+			nil
+	}
+}
+
+// createDWHMySQLClient creates a dedicated MySQL client for the data warehouse.
+func createDWHMySQLClient(
+	ctx context.Context,
+	config *MySQLConfig,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	if config == nil {
+		return nil, fmt.Errorf("mysql config is nil")
+	}
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("mysql host, database, and user are required for dedicated connection")
+	}
+	port := config.Port
+	if port == 0 {
+		port = 3306 // Default MySQL port
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	client, err := mysql.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		mysql.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create MySQL client: %w", err)
+	}
+	logger.Info("Created dedicated MySQL client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+	return client, nil
+}
+
+// createDWHPostgresClient creates a dedicated Postgres client for the data warehouse.
+func createDWHPostgresClient(
+	ctx context.Context,
+	config *PostgresConfig,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	if config == nil {
+		return nil, fmt.Errorf("postgres config is nil")
+	}
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("postgres host, database, and user are required for dedicated connection")
+	}
+	port := config.Port
+	if port == 0 {
+		port = 5432 // Default Postgres port
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	client, err := postgres.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		postgres.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Postgres client: %w", err)
+	}
+	logger.Info("Created dedicated Postgres client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+	return client, nil
+}
+
 func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.PubSubProcessors,
@@ -765,6 +940,8 @@ func (s *server) registerPubSubProcessorMap(
 	auditLogStorage v2als.AuditLogStorage,
 	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	accountStorage accstorage.AccountStorage,
+	experimentStorage operationalstorage.ExperimentStorage,
+	autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
@@ -775,8 +952,10 @@ func (s *server) registerPubSubProcessorMap(
 	cacheInvalidationPublisher publisher.Publisher,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
-) (*processor.PubSubProcessors, error) {
+) (*processor.PubSubProcessors, func(), error) {
 	processors := processor.NewPubSubProcessors(registerer)
+	// dwhCleanup closes any dedicated data-warehouse client created below.
+	var dwhCleanup func()
 
 	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)
 	if err != nil {
@@ -787,7 +966,7 @@ func (s *server) registerPubSubProcessorMap(
 			logger.Error("subscriber: failed to unmarshal processors config",
 				zap.Error(err),
 			)
-			return nil, err
+			return nil, nil, err
 		}
 		auditLogPersister, err := processor.NewAuditLogPersister(
 			processorsConfigMap[processor.AuditLogPersisterName],
@@ -796,7 +975,7 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(processor.AuditLogPersisterName, auditLogPersister)
 
@@ -833,7 +1012,7 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(
 			processor.SegmentUserPersisterName,
@@ -846,7 +1025,7 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(
 			processor.UserEventPersisterName,
@@ -868,12 +1047,12 @@ func (s *server) registerPubSubProcessorMap(
 		// Email service
 		emailConfig, err := s.readEmailConfig(logger)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		emailService, err := email.NewService(*emailConfig, logger)
 		if err != nil {
 			logger.Error("Failed to create email service", zap.Error(err))
-			return nil, err
+			return nil, nil, err
 		}
 
 		// Email sender processor
@@ -891,7 +1070,6 @@ func (s *server) registerPubSubProcessorMap(
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 			ctx,
 			processorsConfigMap[processor.EvaluationCountEventPersisterName],
-			mysqlClient,
 			fluiStorage,
 			redisCache,
 			cachev3.NewUserAttributesCache(redisCache),
@@ -899,7 +1077,7 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(
 			processor.EvaluationCountEventPersisterName,
@@ -934,23 +1112,50 @@ func (s *server) registerPubSubProcessorMap(
 			logger.Error("subscriber: failed to unmarshal onDemand processors config",
 				zap.Error(err),
 			)
-			return nil, err
+			return nil, nil, err
 		}
+
+		// Initialize the data-warehouse client(s) here, separately from the operational
+		// database client. The DWH backend (bigquery, mysql, postgres) is resolved from
+		// the events DWH persister config; eval and goal persisters share it.
+		dwhConfig, err := parseDWHConfig(
+			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
+		)
+		if err != nil {
+			logger.Error("subscriber: failed to parse data warehouse config", zap.Error(err))
+			return nil, nil, err
+		}
+		dwhLocation, err := locale.GetLocation(dwhConfig.Timezone)
+		if err != nil {
+			logger.Error("subscriber: failed to resolve data warehouse timezone", zap.Error(err))
+			return nil, nil, err
+		}
+		evalEventWriter, goalEventWriter, goalEventStorage, cleanup, err := s.initDataWarehouseStorages(
+			ctx, dwhConfig, mysqlClient, registerer, logger,
+		)
+		if err != nil {
+			logger.Error("subscriber: failed to initialize data warehouse storages", zap.Error(err))
+			return nil, nil, err
+		}
+		dwhCleanup = cleanup
 
 		evaluationEventsDWHPersister, err := processor.NewEventsDWHPersister(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
-			mysqlClient,
+			evalEventWriter,
+			goalEventWriter,
+			goalEventStorage,
+			experimentStorage,
+			dwhLocation,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			persistentRedisClient,    // use persistent redis instance here for goal retry events
 			exClient,
 			ftClient,
 			processor.EvaluationCountEventDWHPersisterName,
-			registerer,
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(
 			processor.EvaluationCountEventDWHPersisterName,
@@ -960,17 +1165,20 @@ func (s *server) registerPubSubProcessorMap(
 		goalEventsDWHPersister, err := processor.NewEventsDWHPersister(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
-			mysqlClient,
+			evalEventWriter,
+			goalEventWriter,
+			goalEventStorage,
+			experimentStorage,
+			dwhLocation,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			persistentRedisClient,    // use persistent redis instance here for goal retry events
 			exClient,
 			ftClient,
 			processor.GoalCountEventDWHPersisterName,
-			registerer,
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(
 			processor.GoalCountEventDWHPersisterName,
@@ -980,7 +1188,7 @@ func (s *server) registerPubSubProcessorMap(
 		evaluationEventsOPSPersister, err := processor.NewEventsOPSPersister(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventOPSPersisterName],
-			mysqlClient,
+			autoOpsRuleStorage,
 			persistentRedisClient, // use persistent redis instance here
 			opsClient,
 			ftClient,
@@ -988,14 +1196,14 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(processor.EvaluationCountEventOPSPersisterName, evaluationEventsOPSPersister)
 
 		goalEventsOPSPersister, err := processor.NewEventsOPSPersister(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventOPSPersisterName],
-			mysqlClient,
+			autoOpsRuleStorage,
 			persistentRedisClient, // use persistent redis instance here
 			opsClient,
 			ftClient,
@@ -1003,12 +1211,12 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
 	}
 
-	return processors, nil
+	return processors, dwhCleanup, nil
 }
 
 func (s *server) readEmailConfig(

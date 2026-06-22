@@ -12,28 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"strings"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 )
 
-type postgresEvaluationEventStorage struct {
-	qe postgres.QueryExecer
+const evaluationBatchSize = 1000
+
+var (
+	//go:embed sql/evaluation_event.sql
+	evaluationEventSql string
+)
+
+type evaluationEventStorage struct {
+	qe pgstorage.QueryExecer
 }
 
-func NewPostgresEvaluationEventStorage(qe postgres.QueryExecer) EvaluationEventStorageV2 {
-	return &postgresEvaluationEventStorage{qe: qe}
+func NewEvaluationEventStorage(qe pgstorage.QueryExecer) dwhstorage.EvaluationEventStorageV2 {
+	return &evaluationEventStorage{qe: qe}
 }
 
-func (s *postgresEvaluationEventStorage) CreateEvaluationEvents(
+func (s *evaluationEventStorage) CreateEvaluationEvents(
 	ctx context.Context,
-	events []EvaluationEventParams,
+	events []dwhstorage.EvaluationEventParams,
 ) error {
 	// Process in batches to avoid exceeding max SQL parameter limits
 	for i := 0; i < len(events); i += evaluationBatchSize {
@@ -48,9 +57,9 @@ func (s *postgresEvaluationEventStorage) CreateEvaluationEvents(
 	return nil
 }
 
-func (s *postgresEvaluationEventStorage) createEvaluationEventsBatch(
+func (s *evaluationEventStorage) createEvaluationEventsBatch(
 	ctx context.Context,
-	events []EvaluationEventParams,
+	events []dwhstorage.EvaluationEventParams,
 ) error {
 	var query strings.Builder
 	query.WriteString(evaluationEventSql)
@@ -63,7 +72,7 @@ func (s *postgresEvaluationEventStorage) createEvaluationEventsBatch(
 		if i > 0 {
 			query.WriteString(",")
 		}
-		query.WriteString(postgres.WritePlaceHolder(
+		query.WriteString(pgstorage.WritePlaceHolder(
 			"($%d, $%d, TO_TIMESTAMP($%d), $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			argCounter+1,
 			fieldsPerEvent,

@@ -12,69 +12,79 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package mysql
 
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"strings"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 )
 
-type mysqlEvaluationEventStorage struct {
-	qe mysql.QueryExecer
+const goalBatchSize = 1000
+
+var (
+	//go:embed sql/goal_event.sql
+	goalEventSql string
+)
+
+type goalEventStorage struct {
+	qe mysqlstorage.QueryExecer
 }
 
-func NewMysqlEvaluationEventStorage(qe mysql.QueryExecer) EvaluationEventStorageV2 {
-	return &mysqlEvaluationEventStorage{qe: qe}
+func NewGoalEventStorage(qe mysqlstorage.QueryExecer) dwhstorage.GoalEventStorageV2 {
+	return &goalEventStorage{qe: qe}
 }
 
-func (s *mysqlEvaluationEventStorage) CreateEvaluationEvents(
+func (s *goalEventStorage) CreateGoalEvents(
 	ctx context.Context,
-	events []EvaluationEventParams,
+	events []dwhstorage.GoalEventParams,
 ) error {
 	// Process in batches to avoid exceeding max SQL parameter limits
-	for i := 0; i < len(events); i += evaluationBatchSize {
-		j := i + evaluationBatchSize
+	for i := 0; i < len(events); i += goalBatchSize {
+		j := i + goalBatchSize
 		if j > len(events) {
 			j = len(events)
 		}
-		if err := s.createEvaluationEventsBatch(ctx, events[i:j]); err != nil {
+		if err := s.createGoalEventsBatch(ctx, events[i:j]); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *mysqlEvaluationEventStorage) createEvaluationEventsBatch(
+func (s *goalEventStorage) createGoalEventsBatch(
 	ctx context.Context,
-	events []EvaluationEventParams,
+	events []dwhstorage.GoalEventParams,
 ) error {
 	var query strings.Builder
-	query.WriteString(evaluationEventSql)
+	query.WriteString(goalEventSql)
 
-	args := make([]interface{}, 0, len(events)*11) // 11 fields per event
+	args := make([]interface{}, 0, len(events)*13) // 13 fields per event
 
 	for i, event := range events {
 		if i > 0 {
 			query.WriteString(",")
 		}
-		query.WriteString("(?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?)")
+		query.WriteString("(?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
 		// Validate required fields
-		if event.ID == "" || event.EnvironmentID == "" || event.FeatureID == "" || event.UserID == "" {
-			return fmt.Errorf("missing required fields: id=%s, envId=%s, featureId=%s, userId=%s",
-				event.ID, event.EnvironmentID, event.FeatureID, event.UserID)
+		if event.ID == "" || event.EnvironmentID == "" || event.GoalID == "" || event.UserID == "" {
+			return fmt.Errorf("missing required fields: id=%s, envId=%s, goalId=%s, userId=%s",
+				event.ID, event.EnvironmentID, event.GoalID, event.UserID)
 		}
 
 		// Handle potentially null fields
 		userData := sql.NullString{String: event.UserData, Valid: event.UserData != ""}
-		variationID := sql.NullString{String: event.VariationID, Valid: event.VariationID != ""}
-		reason := sql.NullString{String: event.Reason, Valid: event.Reason != ""}
 		tag := sql.NullString{String: event.Tag, Valid: event.Tag != ""}
 		sourceID := sql.NullString{String: event.SourceID, Valid: event.SourceID != ""}
+		featureID := sql.NullString{String: event.FeatureID, Valid: event.FeatureID != ""}
+		variationID := sql.NullString{String: event.VariationID, Valid: event.VariationID != ""}
+		reason := sql.NullString{String: event.Reason, Valid: event.Reason != ""}
 
 		// Convert timestamp from microseconds to seconds
 		timestampSeconds := event.Timestamp / 1000000
@@ -84,14 +94,16 @@ func (s *mysqlEvaluationEventStorage) createEvaluationEventsBatch(
 			event.ID,
 			event.EnvironmentID,
 			timestampSeconds,
-			event.FeatureID,
-			event.FeatureVersion,
+			event.GoalID,
+			event.Value,
 			event.UserID,
 			userData,
-			variationID,
-			reason,
 			tag,
 			sourceID,
+			featureID,
+			event.FeatureVersion,
+			variationID,
+			reason,
 		)
 	}
 

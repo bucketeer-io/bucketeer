@@ -28,9 +28,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
-	storage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	operationalstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
@@ -42,7 +41,7 @@ type eventsOPSPersisterConfig struct {
 
 type eventsOPSPersister struct {
 	eventsOPSPersisterConfig eventsOPSPersisterConfig
-	mysqlClient              mysql.Client
+	autoOpsRuleStorage       operationalstorage.AutoOpsRuleStorage
 	updater                  Updater
 	subscriberType           string
 	logger                   *zap.Logger
@@ -51,7 +50,7 @@ type eventsOPSPersister struct {
 func NewEventsOPSPersister(
 	ctx context.Context,
 	config interface{},
-	mysqlClient mysql.Client,
+	autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage,
 	redisClient redisv3.Client,
 	opsClient autoopsclient.Client,
 	ftClient featureclient.Client,
@@ -76,7 +75,7 @@ func NewEventsOPSPersister(
 	}
 	e := &eventsOPSPersister{
 		eventsOPSPersisterConfig: persisterConfig,
-		mysqlClient:              mysqlClient,
+		autoOpsRuleStorage:       autoOpsRuleStorage,
 		logger:                   logger,
 	}
 	switch persisterName {
@@ -150,8 +149,7 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 }
 
 func (e eventsOPSPersister) Switch(ctx context.Context) (bool, error) {
-	autoOpsRuleStorage := storage.NewAutoOpsRuleStorage(e.mysqlClient)
-	autoOpsRuleCount, err := autoOpsRuleStorage.CountOpsEventRate(ctx)
+	autoOpsRuleCount, err := e.autoOpsRuleStorage.CountOpsEventRate(ctx)
 	if err != nil {
 		return false, err
 	}

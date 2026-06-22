@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package bigquery
 
 import (
 	"context"
 
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
+	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
-type EvalEventWriter interface {
-	AppendRows(ctx context.Context, events []*epproto.EvaluationEvent) (map[string]bool, error)
-}
-
-type GoalEventWriter interface {
-	AppendRows(ctx context.Context, events []*epproto.GoalEvent) (map[string]bool, error)
-}
+const (
+	evaluationEventTable = "evaluation_event"
+	goalEventTable       = "goal_event"
+)
 
 type evalEventWriter struct {
 	*queryClient
@@ -44,22 +44,62 @@ type queryClient struct {
 	batchSize int
 }
 
-func NewEvalEventWriter(q writer.Writer, size int) EvalEventWriter {
+// NewEvaluationEventWriter creates a BigQuery-backed evaluation event writer.
+func NewEvaluationEventWriter(
+	ctx context.Context,
+	logger *zap.Logger,
+	project, dataset string,
+	batchSize int,
+	registerer metrics.Registerer,
+) (dwhstorage.EvalEventWriter, error) {
+	evt := epproto.EvaluationEvent{}
+	w, err := writer.NewWriter(
+		ctx,
+		project,
+		dataset,
+		evaluationEventTable,
+		evt.ProtoReflect().Descriptor(),
+		writer.WithLogger(logger),
+		writer.WithMetrics(registerer),
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &evalEventWriter{
 		queryClient: &queryClient{
-			writer:    q,
-			batchSize: size,
+			writer:    w,
+			batchSize: batchSize,
 		},
-	}
+	}, nil
 }
 
-func NewGoalEventWriter(q writer.Writer, size int) GoalEventWriter {
+// NewGoalEventWriter creates a BigQuery-backed goal event writer.
+func NewGoalEventWriter(
+	ctx context.Context,
+	logger *zap.Logger,
+	project, dataset string,
+	batchSize int,
+	registerer metrics.Registerer,
+) (dwhstorage.GoalEventWriter, error) {
+	evt := epproto.GoalEvent{}
+	w, err := writer.NewWriter(
+		ctx,
+		project,
+		dataset,
+		goalEventTable,
+		evt.ProtoReflect().Descriptor(),
+		writer.WithLogger(logger),
+		writer.WithMetrics(registerer),
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &goalEventWriter{
 		queryClient: &queryClient{
-			writer:    q,
-			batchSize: size,
+			writer:    w,
+			batchSize: batchSize,
 		},
-	}
+	}, nil
 }
 
 func (ew *evalEventWriter) AppendRows(

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package dwhstorage_test
 
 import (
 	"context"
@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
-	mockv2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2/mock"
+	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
+	mock "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage/mock"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
@@ -34,14 +34,14 @@ func TestPostgresEvalEventWriterAppendRows(t *testing.T) {
 	patterns := []struct {
 		desc          string
 		events        []*epproto.EvaluationEvent
-		setupMock     func(m *mockv2.MockEvaluationEventStorageV2)
+		setupMock     func(m *mock.MockEvaluationEventStorageV2)
 		expectedFails map[string]bool
 		expectedErr   error
 	}{
 		{
 			desc:   "empty events: no storage call, empty fails",
 			events: []*epproto.EvaluationEvent{},
-			setupMock: func(m *mockv2.MockEvaluationEventStorageV2) {
+			setupMock: func(m *mock.MockEvaluationEventStorageV2) {
 				// no calls expected
 			},
 			expectedFails: map[string]bool{},
@@ -64,7 +64,7 @@ func TestPostgresEvalEventWriterAppendRows(t *testing.T) {
 					SourceId:       "src-1",
 				},
 			},
-			setupMock: func(m *mockv2.MockEvaluationEventStorageV2) {
+			setupMock: func(m *mock.MockEvaluationEventStorageV2) {
 				m.EXPECT().CreateEvaluationEvents(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedFails: map[string]bool{},
@@ -76,7 +76,7 @@ func TestPostgresEvalEventWriterAppendRows(t *testing.T) {
 				{Id: "eval-1", EnvironmentId: "env-1", Timestamp: 100, FeatureId: "f-1", FeatureVersion: 1, UserId: "u-1", VariationId: "v-1", Reason: "default", Tag: "t-1", SourceId: "s-1"},
 				{Id: "eval-2", EnvironmentId: "env-2", Timestamp: 200, FeatureId: "f-2", FeatureVersion: 2, UserId: "u-2", VariationId: "v-2", Reason: "rule", Tag: "t-2", SourceId: "s-2"},
 			},
-			setupMock: func(m *mockv2.MockEvaluationEventStorageV2) {
+			setupMock: func(m *mock.MockEvaluationEventStorageV2) {
 				m.EXPECT().CreateEvaluationEvents(gomock.Any(), gomock.Len(2)).Return(nil)
 			},
 			expectedFails: map[string]bool{},
@@ -88,7 +88,7 @@ func TestPostgresEvalEventWriterAppendRows(t *testing.T) {
 				{Id: "eval-1", EnvironmentId: "env-1"},
 				{Id: "eval-2", EnvironmentId: "env-2"},
 			},
-			setupMock: func(m *mockv2.MockEvaluationEventStorageV2) {
+			setupMock: func(m *mock.MockEvaluationEventStorageV2) {
 				m.EXPECT().CreateEvaluationEvents(gomock.Any(), gomock.Any()).Return(errStorage)
 			},
 			expectedFails: map[string]bool{
@@ -102,9 +102,9 @@ func TestPostgresEvalEventWriterAppendRows(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
-			mockStorage := mockv2.NewMockEvaluationEventStorageV2(mockCtrl)
+			mockStorage := mock.NewMockEvaluationEventStorageV2(mockCtrl)
 			p.setupMock(mockStorage)
-			writer := NewPostgresEvalEventWriter(mockStorage)
+			writer := dwhstorage.NewEvalEventWriter(mockStorage)
 			fails, err := writer.AppendRows(context.Background(), p.events)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expectedFails, fails)
@@ -131,7 +131,7 @@ func TestPostgresEvalEventWriterAppendRows_VerifyParams(t *testing.T) {
 		SourceId:       "sdk",
 	}
 
-	expectedParams := []storagev2.EvaluationEventParams{
+	expectedParams := []dwhstorage.EvaluationEventParams{
 		{
 			ID:             "eval-1",
 			EnvironmentID:  "env-1",
@@ -147,12 +147,12 @@ func TestPostgresEvalEventWriterAppendRows_VerifyParams(t *testing.T) {
 		},
 	}
 
-	mockStorage := mockv2.NewMockEvaluationEventStorageV2(mockCtrl)
+	mockStorage := mock.NewMockEvaluationEventStorageV2(mockCtrl)
 	mockStorage.EXPECT().
 		CreateEvaluationEvents(gomock.Any(), expectedParams).
 		Return(nil)
 
-	writer := NewPostgresEvalEventWriter(mockStorage)
+	writer := dwhstorage.NewEvalEventWriter(mockStorage)
 	fails, err := writer.AppendRows(context.Background(), []*epproto.EvaluationEvent{evt})
 	require.NoError(t, err)
 	assert.Empty(t, fails)
@@ -164,14 +164,14 @@ func TestPostgresGoalEventWriterAppendRows(t *testing.T) {
 	patterns := []struct {
 		desc          string
 		events        []*epproto.GoalEvent
-		setupMock     func(m *mockv2.MockGoalEventStorageV2)
+		setupMock     func(m *mock.MockGoalEventStorageV2)
 		expectedFails map[string]bool
 		expectedErr   error
 	}{
 		{
 			desc:   "empty events: no storage call, empty fails",
 			events: []*epproto.GoalEvent{},
-			setupMock: func(m *mockv2.MockGoalEventStorageV2) {
+			setupMock: func(m *mock.MockGoalEventStorageV2) {
 				// no calls expected
 			},
 			expectedFails: map[string]bool{},
@@ -196,7 +196,7 @@ func TestPostgresGoalEventWriterAppendRows(t *testing.T) {
 					Reason:         "rule",
 				},
 			},
-			setupMock: func(m *mockv2.MockGoalEventStorageV2) {
+			setupMock: func(m *mock.MockGoalEventStorageV2) {
 				m.EXPECT().CreateGoalEvents(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedFails: map[string]bool{},
@@ -209,7 +209,7 @@ func TestPostgresGoalEventWriterAppendRows(t *testing.T) {
 				{Id: "goal-2", EnvironmentId: "env-2", GoalId: "g-2", Value: 2.0},
 				{Id: "goal-3", EnvironmentId: "env-3", GoalId: "g-3", Value: 3.0},
 			},
-			setupMock: func(m *mockv2.MockGoalEventStorageV2) {
+			setupMock: func(m *mock.MockGoalEventStorageV2) {
 				m.EXPECT().CreateGoalEvents(gomock.Any(), gomock.Len(3)).Return(nil)
 			},
 			expectedFails: map[string]bool{},
@@ -222,7 +222,7 @@ func TestPostgresGoalEventWriterAppendRows(t *testing.T) {
 				{Id: "goal-2", EnvironmentId: "env-2"},
 				{Id: "goal-3", EnvironmentId: "env-3"},
 			},
-			setupMock: func(m *mockv2.MockGoalEventStorageV2) {
+			setupMock: func(m *mock.MockGoalEventStorageV2) {
 				m.EXPECT().CreateGoalEvents(gomock.Any(), gomock.Any()).Return(errStorage)
 			},
 			expectedFails: map[string]bool{
@@ -237,9 +237,9 @@ func TestPostgresGoalEventWriterAppendRows(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
-			mockStorage := mockv2.NewMockGoalEventStorageV2(mockCtrl)
+			mockStorage := mock.NewMockGoalEventStorageV2(mockCtrl)
 			p.setupMock(mockStorage)
-			writer := NewPostgresGoalEventWriter(mockStorage)
+			writer := dwhstorage.NewGoalEventWriter(mockStorage)
 			fails, err := writer.AppendRows(context.Background(), p.events)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expectedFails, fails)
@@ -268,7 +268,7 @@ func TestPostgresGoalEventWriterAppendRows_VerifyParams(t *testing.T) {
 		Reason:         "rule",
 	}
 
-	expectedParams := []storagev2.GoalEventParams{
+	expectedParams := []dwhstorage.GoalEventParams{
 		{
 			ID:             "goal-1",
 			EnvironmentID:  "env-1",
@@ -286,12 +286,12 @@ func TestPostgresGoalEventWriterAppendRows_VerifyParams(t *testing.T) {
 		},
 	}
 
-	mockStorage := mockv2.NewMockGoalEventStorageV2(mockCtrl)
+	mockStorage := mock.NewMockGoalEventStorageV2(mockCtrl)
 	mockStorage.EXPECT().
 		CreateGoalEvents(gomock.Any(), expectedParams).
 		Return(nil)
 
-	writer := NewPostgresGoalEventWriter(mockStorage)
+	writer := dwhstorage.NewGoalEventWriter(mockStorage)
 	fails, err := writer.AppendRows(context.Background(), []*epproto.GoalEvent{evt})
 	require.NoError(t, err)
 	assert.Empty(t, fails)

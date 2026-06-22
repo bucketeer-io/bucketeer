@@ -13,38 +13,18 @@
 // limitations under the License.
 
 //go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package v2
+package operationalstorage
 
 import (
 	"context"
-	_ "embed"
 )
 
-var (
-	//go:embed sql/goal_event.sql
-	goalEventSql string
-)
-
-const (
-	goalBatchSize = 1000
-)
-
-type GoalEventStorageV2 interface {
-	CreateGoalEvents(ctx context.Context, events []GoalEventParams) error
+// ExperimentStorage counts running experiments in the operational database.
+type ExperimentStorage interface {
+	CountRunningExperiments(ctx context.Context) (int, error)
 }
 
-type GoalEventParams struct {
-	ID             string
-	EnvironmentID  string
-	Timestamp      int64
-	GoalID         string
-	Value          float32
-	UserID         string
-	UserData       string
-	Tag            string
-	SourceID       string
-	FeatureID      string
-	FeatureVersion int32
-	VariationID    string
-	Reason         string
+// AutoOpsRuleStorage counts event-rate auto ops rules in the operational database.
+type AutoOpsRuleStorage interface {
+	CountOpsEventRate(ctx context.Context) (int, error)
 }
