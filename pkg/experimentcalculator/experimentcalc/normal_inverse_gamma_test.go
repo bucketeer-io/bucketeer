@@ -249,7 +249,7 @@ func TestComputeEmpiricalBayesPriors(t *testing.T) {
 			means:     []float64{10.0, 20.0},
 			vars:      []float64{4.0, 9.0},
 			sizes:     []int64{50, 50},
-			wantMu:    15.0,               // (50*10 + 50*20)/100
+			wantMu:    15.0, // (50*10 + 50*20)/100
 			wantKappa: 1.0,
 			wantAlpha: 1.0,
 			wantBeta:  (49*4.0 + 49*9.0) / 98, // pooled within-variation var
