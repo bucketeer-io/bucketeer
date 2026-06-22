@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -102,9 +102,9 @@ func (mr *MockScheduledFlagChangeStorageMockRecorder) ListDueScheduledFlagChange
 }
 
 // ListScheduledFlagChanges mocks base method.
-func (m *MockScheduledFlagChangeStorage) ListScheduledFlagChanges(ctx context.Context, options *mysql.ListOptions) ([]*feature.ScheduledFlagChange, int, int64, error) {
+func (m *MockScheduledFlagChangeStorage) ListScheduledFlagChanges(ctx context.Context, params v2.ListScheduledFlagChangesParams) ([]*feature.ScheduledFlagChange, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListScheduledFlagChanges", ctx, options)
+	ret := m.ctrl.Call(m, "ListScheduledFlagChanges", ctx, params)
 	ret0, _ := ret[0].([]*feature.ScheduledFlagChange)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -113,9 +113,9 @@ func (m *MockScheduledFlagChangeStorage) ListScheduledFlagChanges(ctx context.Co
 }
 
 // ListScheduledFlagChanges indicates an expected call of ListScheduledFlagChanges.
-func (mr *MockScheduledFlagChangeStorageMockRecorder) ListScheduledFlagChanges(ctx, options any) *gomock.Call {
+func (mr *MockScheduledFlagChangeStorageMockRecorder) ListScheduledFlagChanges(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListScheduledFlagChanges", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).ListScheduledFlagChanges), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListScheduledFlagChanges", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).ListScheduledFlagChanges), ctx, params)
 }
 
 // TryLock mocks base method.

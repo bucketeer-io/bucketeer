@@ -27,8 +27,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -115,7 +114,7 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 
 	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_EDITOR)
 
-	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
@@ -133,9 +132,9 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 	}
 
 	// Mock transaction - execute the function passed to it
-	mysqlClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
-			return f(ctx, nil)
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
 		},
 	)
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
@@ -178,7 +177,7 @@ func TestCreateScheduledFlagChange_WithDetectedConflictsStoredAsConflict(t *test
 		accountproto.AccountV2_Role_Environment_EDITOR,
 	)
 
-	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
@@ -194,9 +193,9 @@ func TestCreateScheduledFlagChange_WithDetectedConflictsStoredAsConflict(t *test
 		},
 	}
 
-	mysqlClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
-			return f(ctx, nil)
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
 		},
 	)
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
@@ -374,7 +373,7 @@ func TestDeleteScheduledFlagChange_Success(t *testing.T) {
 
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
-	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	dbClient := service.dbClient.(*databasemock.MockClient)
 	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
 
 	sfc := &domain.ScheduledFlagChange{
@@ -393,9 +392,9 @@ func TestDeleteScheduledFlagChange_Success(t *testing.T) {
 		},
 	}
 
-	mysqlClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
-			return f(ctx, nil)
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
 		},
 	)
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").Return(sfc, nil)
@@ -806,7 +805,7 @@ func TestCreateScheduledFlagChange_ScheduleGapTooClose(t *testing.T) {
 		accountproto.AccountV2_Role_Environment_EDITOR,
 	)
 
-	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 
@@ -832,14 +831,14 @@ func TestCreateScheduledFlagChange_ScheduleGapTooClose(t *testing.T) {
 		Status:      featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
 	}
 
-	mysqlClient.EXPECT().RunInTransactionV2(
+	dbClient.EXPECT().RunInTransactionV2(
 		gomock.Any(), gomock.Any(),
 	).DoAndReturn(
 		func(
 			ctx context.Context,
-			f func(context.Context, mysql.Transaction) error,
+			f func(context.Context) error,
 		) error {
-			return f(ctx, nil)
+			return f(ctx)
 		},
 	)
 	featureStorage.EXPECT().GetFeature(
@@ -1058,19 +1057,19 @@ func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
 				accountproto.AccountV2_Role_Environment_EDITOR,
 			)
 
-			mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+			dbClient := service.dbClient.(*databasemock.MockClient)
 			featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 			scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 			domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
 
-			mysqlClient.EXPECT().RunInTransactionV2(
+			dbClient.EXPECT().RunInTransactionV2(
 				gomock.Any(), gomock.Any(),
 			).DoAndReturn(
 				func(
 					ctx context.Context,
-					f func(context.Context, mysql.Transaction) error,
+					f func(context.Context) error,
 				) error {
-					return f(ctx, nil)
+					return f(ctx)
 				},
 			)
 			p.setupMocks(featureStorage, scheduledStorage, domainPublisher)

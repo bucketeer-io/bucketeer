@@ -37,7 +37,6 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -125,7 +124,6 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		mock.NewMockSegmentUserStorage(c),
 		mock.NewMockScheduledFlagChangeStorage(c),
 		tagstoragemock.NewMockTagStorage(c),
-		mysqlmock.NewMockClient(c),
 		databasemock.NewMockClient(c),
 		a,
 		e,
@@ -171,7 +169,6 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		segmentStorage:             mock.NewMockSegmentStorage(c),
 		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
 		scheduledFlagChangeStorage: mock.NewMockScheduledFlagChangeStorage(c),
-		mysqlClient:                mysqlmock.NewMockClient(c),
 		dbClient:                   databasemock.NewMockClient(c),
 		tagStorage:                 tagstoragemock.NewMockTagStorage(c),
 		accountClient:              a,
@@ -214,7 +211,6 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 		segmentUsersCache:          cachev3mock.NewMockSegmentUsersCache(c),
 		segmentStorage:             mock.NewMockSegmentStorage(c),
 		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
-		mysqlClient:                mysqlmock.NewMockClient(c),
 		dbClient:                   databasemock.NewMockClient(c),
 		accountClient:              a,
 		autoOpsClient:              aoclientmock.NewMockClient(c),

@@ -37,7 +37,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -62,7 +61,6 @@ type FeatureService struct {
 	segmentUserStorage         v2fs.SegmentUserStorage
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
 	tagStorage                 v2ts.TagStorage
-	mysqlClient                mysql.Client
 	dbClient                   database.Client
 	accountClient              accountclient.Client
 	experimentClient           experimentclient.Client
@@ -88,7 +86,7 @@ func NewFeatureService(
 	tagStorage v2ts.TagStorage,
 	flagTriggerStorage v2fs.FlagTriggerStorage,
 	fluiStorage v2fs.FeatureLastUsedInfoStorage,
-	mysqlClient mysql.Client,
+	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -113,9 +111,8 @@ func NewFeatureService(
 		featureStorage:             featureStorage,
 		segmentStorage:             segmentStorage,
 		segmentUserStorage:         segmentUserStorage,
-		scheduledFlagChangeStorage: v2fs.NewScheduledFlagChangeStorage(mysqlClient),
+		scheduledFlagChangeStorage: scheduledFlagChangeStorage,
 		tagStorage:                 tagStorage,
-		mysqlClient:                mysqlClient,
 		dbClient:                   dbClient,
 		accountClient:              accountClient,
 		experimentClient:           experimentClient,
