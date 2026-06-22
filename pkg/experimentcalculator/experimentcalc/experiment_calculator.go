@@ -358,7 +358,8 @@ func (e ExperimentCalculator) calcGoalResult(
 			return goalResult
 		}
 	}
-	valueResult := normalInverseGamma(ctx, vids, valueMeans, valueVars, goalUc, baseLineIdx, 25000)
+	// nil src uses the global RNG; tests inject a seeded source for determinism.
+	valueResult := normalInverseGamma(nil, vids, valueMeans, valueVars, goalUc, baseLineIdx, 25000)
 	for vid, vr := range valueResult {
 		vrs[vid].GoalValueSumPerUserProb = copyDistributionSummary(vr.GoalValueSumPerUserProb)
 		vrs[vid].GoalValueSumPerUserProbBest = copyDistributionSummary(vr.GoalValueSumPerUserProbBest)

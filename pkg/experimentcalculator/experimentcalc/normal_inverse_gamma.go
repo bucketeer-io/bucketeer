@@ -16,9 +16,9 @@
 package experimentcalc
 
 import (
-	"context"
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"time"
 
 	"github.com/go-gota/gota/dataframe"
@@ -31,8 +31,7 @@ import (
 
 const (
 	priorMean  = 30
-	priorVar   = 2
-	priorSize  = 20
+	priorKappa = 2
 	priorAlpha = 10
 	priorBeta  = 1000
 )
@@ -42,11 +41,13 @@ type distr struct {
 	nu    float64
 	alpha float64
 	beta  float64
-	n     int
 }
 
+// normalInverseGamma computes the value-metric posterior summaries. src seeds
+// the Monte Carlo sampling; pass nil to use the global RNG (production) or a
+// seeded source for deterministic tests.
 func normalInverseGamma(
-	ctx context.Context,
+	src rand.Source,
 	vids []string,
 	means, vars []float64,
 	sizes []int64,
@@ -61,13 +62,12 @@ func normalInverseGamma(
 			sizes[i],
 			means[i],
 			vars[i],
-			priorSize,
 			priorMean,
-			priorVar,
+			priorKappa,
 			priorAlpha,
 			priorBeta,
 		)
-		nums := generateNormalGamma(postGenNum, post.mu, post.nu, post.alpha, post.beta)
+		nums := generateNormalGamma(src, postGenNum, post.mu, post.nu, post.alpha, post.beta)
 		sampleSeries = append(sampleSeries, series.Floats(nums))
 	}
 	samples := dataframe.New(sampleSeries...)
@@ -88,39 +88,45 @@ func normalInverseGamma(
 	return variationResults
 }
 
+// calcPosterior performs the conjugate Normal-Inverse-Gamma update.
+// priorKappa is the prior pseudo-count for the mean (kappa_0); thisVar is the
+// per-user sample variance (divided by n-1), so the sum of squared deviations
+// is (n-1) * thisVar.
 func calcPosterior(
 	thisN int64,
-	thisMu, thisSigma float64,
-	priorN int64,
-	priorMu, priorNu, priorAlpha, priorBeta float64) distr {
-	retN := thisN + priorN
-	n2 := math.Log(float64(thisN)) / math.Log(1.1)
-	postMu := (priorNu*priorMu + n2*thisMu) / (priorNu + n2)
-	postNu := priorNu + n2
-	postAlpha := priorAlpha + (n2 / 2)
+	thisMu, thisVar float64,
+	priorMu, priorKappa, priorAlpha, priorBeta float64) distr {
+	n := float64(thisN)
+	kappaN := priorKappa + n
+	postMu := (priorKappa*priorMu + n*thisMu) / kappaN
+	postAlpha := priorAlpha + (n / 2)
+	sumSquaredDev := 0.0
+	if thisN > 1 {
+		sumSquaredDev = float64(thisN-1) * thisVar
+	}
 	postBeta := priorBeta +
-		(0.5 * thisSigma * thisSigma * n2) +
-		((n2 * priorNu / (priorNu * n2)) * ((thisMu - priorMu) * (thisMu - priorMu)) / 2)
+		(0.5 * sumSquaredDev) +
+		((priorKappa * n / kappaN) * (thisMu - priorMu) * (thisMu - priorMu) / 2)
 	return distr{
 		mu:    postMu,
-		nu:    postNu,
+		nu:    kappaN,
 		alpha: postAlpha,
 		beta:  postBeta,
-		n:     int(retN),
 	}
 }
 
-func generateNormalGamma(n int, mu float64, lambda float64, alpha float64, beta float64) []float64 {
-	tauDist := distuv.Gamma{Alpha: alpha, Beta: beta}
+func generateNormalGamma(src rand.Source, n int, mu float64, lambda float64, alpha float64, beta float64) []float64 {
+	tauDist := distuv.Gamma{Alpha: alpha, Beta: beta, Src: src}
 
 	tauSamples := make([]float64, n)
 	for i := 0; i < n; i++ {
 		tauSamples[i] = tauDist.Rand()
 	}
 
+	normDist := distuv.Normal{Mu: 0, Sigma: 1, Src: src}
 	x := make([]float64, n)
 	for i, tau := range tauSamples {
-		x[i] = mu + math.Sqrt(1/(tau*lambda))*distuv.Normal{Mu: 0, Sigma: 1}.Rand()
+		x[i] = mu + math.Sqrt(1/(tau*lambda))*normDist.Rand()
 	}
 
 	return x
