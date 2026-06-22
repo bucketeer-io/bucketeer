@@ -239,7 +239,6 @@ api:
     project: ${global.pubsub.project}
     goalTopic: goal
     evaluationTopic: evaluation
-    userTopic: user
     metricsTopic: metrics
     publishNumGoroutines: 200
     publishTimeout: 1m

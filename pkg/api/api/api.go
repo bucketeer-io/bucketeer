@@ -54,7 +54,6 @@ type gatewayService struct {
 	pushClient                  pushclient.Client
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
-	userPublisher               publisher.Publisher
 	metricsPublisher            publisher.Publisher
 	segmentUsersCache           cachev3.SegmentUsersCache
 	segmentUsersRedisCache      cachev3.SegmentUsersCache
@@ -75,7 +74,6 @@ func NewGatewayService(
 	pushClient pushclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
-	up publisher.Publisher,
 	mp publisher.Publisher,
 	accountStorage accstorage.AccountStorage,
 	redisV3Cache cache.MultiGetCache,
@@ -103,7 +101,6 @@ func NewGatewayService(
 		pushClient:                  pushClient,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
-		userPublisher:               up,
 		metricsPublisher:            mp,
 		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
 		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
