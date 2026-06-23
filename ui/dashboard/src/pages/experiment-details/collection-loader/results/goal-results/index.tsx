@@ -59,8 +59,13 @@ const GoalResultItem = ({
     useToggleOpen(false);
 
   // Keep the confidence banner and rollout suggestion aligned with the metric
-  // the user is currently viewing: the value-per-user posterior drives the
-  // value charts, conversion rate drives everything else.
+  // the conversion-rate table shows on the same view. That table treats every
+  // non-`conversion-rate` chart (both `value-total` and `value-user`) as a
+  // value metric and reads the per-user value posterior for its probability
+  // columns — there is no separate total-value posterior, the Bayesian model
+  // is per-user only. Mirror that here so the banner never contradicts the
+  // table: value charts use the value best-variations, everything else (CVR
+  // chart and the evaluation tab) uses the conversion-rate list.
   const activeBestVariations = useMemo(() => {
     const isValueChart =
       goalResultState?.chartType === 'value-user' ||
