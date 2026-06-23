@@ -383,9 +383,9 @@ func TestExpectedLossWithBinomialModelSamples(t *testing.T) {
 func TestBuildGetFeatureRequestForSRM(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name                string
-		experiment          *experimentproto.Experiment
-		wantFeatureVersion  *int32 // nil → request must omit FeatureVersion
+		name               string
+		experiment         *experimentproto.Experiment
+		wantFeatureVersion *int32 // nil → request must omit FeatureVersion
 	}{
 		{
 			name: "explicit positive version is forwarded as a wrapped value",
