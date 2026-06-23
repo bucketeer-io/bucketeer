@@ -25,6 +25,7 @@ import (
 	operationaldatabase "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/operational_database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
+	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 func TestNewExperimentResultStoragePostgres(t *testing.T) {
@@ -102,4 +103,76 @@ func TestGetExperimentResultPostgres(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+// TestGetExperimentResultPostgres_PropagatesAllProtoFields locks in that every
+// proto field of ExperimentResult round-trips through the read storage.
+// GetExperimentResult scans the top-level columns (Id, ExperimentId,
+// UpdatedAt) into the result directly and the rest of the proto out of a
+// JSON blob into a side-by-side struct (erForGoalResults), then has to
+// manually copy each non-top-level field onto the returned object. Forgetting
+// to copy a field is a silent footgun — the field is in the JSON blob but
+// gets dropped on the floor (this was the cause of an e2e regression that
+// surfaced after SrmResult was added to ExperimentResult).
+//
+// This test populates each field via the JSON blob path and asserts every
+// one is present on the returned domain object, so any future ExperimentResult
+// field addition fails this test until the field copy is added to
+// GetExperimentResult.
+func TestGetExperimentResultPostgres_PropagatesAllProtoFields(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	expectedGoalResults := []*ecproto.GoalResult{
+		{GoalId: "goal-1"}, {GoalId: "goal-2"},
+	}
+	const expectedTotalEvalUsers = int64(12345)
+	expectedSRM := &ecproto.SrmResult{
+		Status:    ecproto.SrmResult_OK,
+		PValue:    0.42,
+		Threshold: 0.001,
+	}
+
+	row := mock.NewMockRow(mockController)
+	row.EXPECT().Scan(
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(args ...interface{}) error {
+		*args[0].(*string) = "exp-1"
+		*args[1].(*string) = "exp-1"
+		*args[2].(*int64) = 1700000000
+		// args[3] is *postgres.JSONObject{Val: *ecproto.ExperimentResult};
+		// populate the inner proto exactly as the JSON unmarshal would, so
+		// the field-copy logic in GetExperimentResult has something to
+		// propagate.
+		target := args[3].(*postgres.JSONObject).Val.(*ecproto.ExperimentResult)
+		target.GoalResults = expectedGoalResults
+		target.TotalEvaluationUserCount = expectedTotalEvalUsers
+		target.SrmResult = expectedSRM
+		return nil
+	})
+
+	qe := mock.NewMockTransaction(mockController)
+	qe.EXPECT().QueryRowContext(
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(row)
+
+	storage := &experimentResultStorage{qe: qe}
+	got, err := storage.GetExperimentResult(context.Background(), "exp-1", "env-1")
+	if !assert.NoError(t, err) || !assert.NotNil(t, got) || !assert.NotNil(t, got.ExperimentResult) {
+		return
+	}
+	er := got.ExperimentResult
+	assert.Equal(t, "exp-1", er.Id, "top-level Id column")
+	assert.Equal(t, "exp-1", er.ExperimentId, "top-level ExperimentId column")
+	assert.EqualValues(t, 1700000000, er.UpdatedAt, "top-level UpdatedAt column")
+	assert.Equal(t, expectedGoalResults, er.GoalResults,
+		"GoalResults must be copied from the JSON blob — without the copy "+
+			"line in GetExperimentResult this returns nil")
+	assert.Equal(t, expectedTotalEvalUsers, er.TotalEvaluationUserCount,
+		"TotalEvaluationUserCount must be copied from the JSON blob")
+	assert.Equal(t, expectedSRM, er.SrmResult,
+		"SrmResult must be copied from the JSON blob — failure here means a "+
+			"new proto field was added to ExperimentResult without updating "+
+			"the field-copy block in GetExperimentResult")
 }
