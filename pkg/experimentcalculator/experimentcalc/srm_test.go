@@ -268,6 +268,23 @@ func TestComputeSRM_Skipped(t *testing.T) {
 			wantHint: "below the minimum required",
 		},
 		{
+			// 99/1 split with totalObserved=150 easily clears the
+			// minSRMSampleSize floor but produces an expected count of
+			// just 1.5 in the small cell — far below the chi-square
+			// "all expected >= 5" reliability floor. The check must
+			// SKIP rather than emit a p-value the user shouldn't trust.
+			name: "skewed split with small expected cell",
+			feature: newRolloutFeature(t, struct {
+				id     string
+				weight int32
+			}{"vid1", 99}, struct {
+				id     string
+				weight int32
+			}{"vid2", 1}),
+			results:  []*eventcounter.VariationResult{vr("vid1", 148), vr("vid2", 2)},
+			wantHint: "smallest expected = 1.50",
+		},
+		{
 			name: "single variation gives df < 1",
 			feature: newRolloutFeature(t, struct {
 				id     string

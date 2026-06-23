@@ -297,15 +297,31 @@ func (e ExperimentCalculator) getFeatureForSRM(
 	environmentID string,
 	experiment *experiment.Experiment,
 ) (*featureproto.Feature, error) {
-	resp, err := e.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		Id:             experiment.FeatureId,
-		EnvironmentId:  environmentID,
-		FeatureVersion: wrapperspb.Int32(experiment.FeatureVersion),
-	})
+	resp, err := e.featureClient.GetFeature(ctx, buildGetFeatureRequestForSRM(environmentID, experiment))
 	if err != nil {
 		return nil, err
 	}
 	return resp.Feature, nil
+}
+
+// buildGetFeatureRequestForSRM constructs the GetFeature request for an SRM
+// check. FeatureVersion is left nil — meaning "the current version" — when
+// the experiment carries no explicit version (legacy / unset). Sending an
+// explicit wrapperspb.Int32(0) would force a lookup for version 0, which
+// does not exist and would NotFound the request, needlessly degrading SRM
+// to SKIPPED.
+func buildGetFeatureRequestForSRM(
+	environmentID string,
+	experiment *experiment.Experiment,
+) *featureproto.GetFeatureRequest {
+	req := &featureproto.GetFeatureRequest{
+		Id:            experiment.FeatureId,
+		EnvironmentId: environmentID,
+	}
+	if experiment.FeatureVersion > 0 {
+		req.FeatureVersion = wrapperspb.Int32(experiment.FeatureVersion)
+	}
+	return req
 }
 
 func (e ExperimentCalculator) getEvaluationCount(

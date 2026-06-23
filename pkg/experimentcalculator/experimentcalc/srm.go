@@ -18,6 +18,7 @@ package experimentcalc
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 
 	"gonum.org/v1/gonum/stat/distuv"
@@ -30,8 +31,7 @@ const (
 	// DefaultSRMThreshold is the p-value threshold below which a Sample Ratio
 	// Mismatch is flagged. The 0.001 cutoff is the long-standing default in
 	// the experimentation literature (see Fabijan et al., "Diagnosing Sample
-	// Ratio Mismatch in Online Controlled Experiments", KDD 2019) and is what
-	// Eppo, GrowthBook and Microsoft ExP use as their out-of-the-box default.
+	// Ratio Mismatch in Online Controlled Experiments", KDD 2019).
 	DefaultSRMThreshold = 0.001
 
 	// minSRMSampleSize is the smallest total observed user count for which we
@@ -40,6 +40,15 @@ const (
 	// asymptotic distribution misbehaves; report SKIPPED instead of a
 	// potentially misleading p-value.
 	minSRMSampleSize = 100
+
+	// minExpectedCellCount is the textbook reliability floor for the
+	// chi-square goodness-of-fit approximation: every expected cell count
+	// should be at least 5 (Cochran, 1954). minSRMSampleSize alone is not
+	// sufficient — a very skewed rollout (e.g. 99/1 with total=100 gives an
+	// expected count of 1 in the small cell) can still violate this floor.
+	// When violated we report SKIPPED rather than a p-value the user
+	// shouldn't trust.
+	minExpectedCellCount = 5.0
 )
 
 var (
@@ -52,6 +61,8 @@ var (
 	errSRMInsufficientSamples = errors.New(
 		"total observed users below the minimum required for a reliable chi-square test")
 	errSRMTooFewExpectedCells = errors.New("fewer than 2 variations with positive expected user counts")
+	errSRMSmallExpectedCell   = errors.New(
+		"smallest expected per-variation count below the chi-square reliability floor")
 )
 
 // computeSRM runs a chi-square goodness-of-fit test comparing each variation's
@@ -160,6 +171,23 @@ func computeSRM(
 		res.Status = eventcounter.SrmResult_SKIPPED
 		res.SkipReason = fmt.Sprintf("%s (got %d, need >= %d)",
 			errSRMInsufficientSamples.Error(), totalObserved, minSRMSampleSize)
+		return res
+	}
+
+	// Per-cell reliability floor. We only require expected >= 5 on cells
+	// the chi-square sum will actually use — cells with expected == 0
+	// (unknown/leaked variations) are excluded from the sum below, so they
+	// don't constrain reliability here.
+	minExpected := math.Inf(1)
+	for _, v := range perVariation {
+		if v.ExpectedUserCount > 0 && v.ExpectedUserCount < minExpected {
+			minExpected = v.ExpectedUserCount
+		}
+	}
+	if !math.IsInf(minExpected, 1) && minExpected < minExpectedCellCount {
+		res.Status = eventcounter.SrmResult_SKIPPED
+		res.SkipReason = fmt.Sprintf("%s (smallest expected = %.2f, need >= %.0f)",
+			errSRMSmallExpectedCell.Error(), minExpected, minExpectedCellCount)
 		return res
 	}
 

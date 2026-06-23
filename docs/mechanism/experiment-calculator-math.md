@@ -552,7 +552,7 @@ expected count). The p-value is `1 − CDF_{χ²(df)}(χ²)`.
 | Status | Meaning |
 |---|---|
 | `OK` | `p_value ≥ threshold` — observed split is consistent with intended. |
-| `MISMATCH` | `p_value < threshold` — surface a warning. Default threshold = 0.001 (the field-standard cutoff used by Microsoft ExP, Eppo, GrowthBook). |
+| `MISMATCH` | `p_value < threshold` — surface a warning. Default threshold = 0.001 (the long-standing field-standard cutoff in the experimentation literature). |
 | `SKIPPED` | Inputs unusable — see `skip_reason`. |
 
 `SKIPPED` reasons include:

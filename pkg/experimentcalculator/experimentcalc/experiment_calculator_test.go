@@ -373,3 +373,63 @@ func TestExpectedLossWithBinomialModelSamples(t *testing.T) {
 	t.Logf("vid1 expected loss: %.2f%%", variationResults[0].ExpectedLoss)
 	t.Logf("vid2 expected loss: %.2f%%", variationResults[1].ExpectedLoss)
 }
+
+// TestBuildGetFeatureRequestForSRM verifies that the GetFeature request used
+// to fetch the feature definition for the SRM check only pins FeatureVersion
+// when the experiment carries an explicit positive version. Sending an
+// explicit wrapperspb.Int32(0) on a legacy/unset experiment would force a
+// lookup for "version 0", which does not exist, NotFound the request, and
+// needlessly degrade the SRM result to SKIPPED.
+func TestBuildGetFeatureRequestForSRM(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name                string
+		experiment          *experimentproto.Experiment
+		wantFeatureVersion  *int32 // nil → request must omit FeatureVersion
+	}{
+		{
+			name: "explicit positive version is forwarded as a wrapped value",
+			experiment: &experimentproto.Experiment{
+				FeatureId:      "feature-1",
+				FeatureVersion: 3,
+			},
+			wantFeatureVersion: int32Ptr(3),
+		},
+		{
+			name: "zero version is treated as unset (request omits FeatureVersion → fetch current)",
+			experiment: &experimentproto.Experiment{
+				FeatureId:      "feature-1",
+				FeatureVersion: 0,
+			},
+			wantFeatureVersion: nil,
+		},
+		{
+			name: "negative version (defensive: should never happen, but must not be forwarded)",
+			experiment: &experimentproto.Experiment{
+				FeatureId:      "feature-1",
+				FeatureVersion: -1,
+			},
+			wantFeatureVersion: nil,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			req := buildGetFeatureRequestForSRM("env-1", tt.experiment)
+			assert.Equal(t, "feature-1", req.Id)
+			assert.Equal(t, "env-1", req.EnvironmentId)
+			if tt.wantFeatureVersion == nil {
+				assert.Nil(t, req.FeatureVersion,
+					"FeatureVersion must be nil when experiment version is non-positive, "+
+						"otherwise we force a lookup for an explicit version that doesn't exist")
+				return
+			}
+			if assert.NotNil(t, req.FeatureVersion) {
+				assert.Equal(t, *tt.wantFeatureVersion, req.FeatureVersion.Value)
+			}
+		})
+	}
+}
+
+func int32Ptr(v int32) *int32 { return &v }

@@ -7408,11 +7408,11 @@ definitions:
     default: UNKNOWN
     description: |2-
        - OK: p_value >= threshold; observed split is consistent with intended split.
-       - MISMATCH: p_value < threshold; observed split differs from intended — results
-      may be invalid until the mismatch is investigated.
-       - SKIPPED: The check could not be computed (no rollout strategy, weights all
-      zero, sample size below the chi-square approximation's reliable
-      floor, etc.). See skip_reason for details.
+       - MISMATCH: p_value < threshold; observed split differs from intended (results may be
+      invalid until investigated).
+       - SKIPPED: The check could not be computed (e.g. no rollout strategy, weights all
+      zero, sample size below the chi-square approximation's reliable floor).
+      See skip_reason.
   eventcounterSrmVariation:
     type: object
     properties:

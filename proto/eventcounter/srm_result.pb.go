@@ -40,12 +40,12 @@ const (
 	SrmResult_UNKNOWN SrmResult_Status = 0
 	// p_value >= threshold; observed split is consistent with intended split.
 	SrmResult_OK SrmResult_Status = 1
-	// p_value < threshold; observed split differs from intended — results
-	// may be invalid until the mismatch is investigated.
+	// p_value < threshold; observed split differs from intended (results may be
+	// invalid until investigated).
 	SrmResult_MISMATCH SrmResult_Status = 2
-	// The check could not be computed (no rollout strategy, weights all
-	// zero, sample size below the chi-square approximation's reliable
-	// floor, etc.). See skip_reason for details.
+	// The check could not be computed (e.g. no rollout strategy, weights all
+	// zero, sample size below the chi-square approximation's reliable floor).
+	// See skip_reason.
 	SrmResult_SKIPPED SrmResult_Status = 3
 )
 
