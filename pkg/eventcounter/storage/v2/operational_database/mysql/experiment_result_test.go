@@ -105,25 +105,35 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	}
 }
 
-// TestGetExperimentResultMySQL_PropagatesAllProtoFields locks in that every
-// proto field of ExperimentResult round-trips through the read storage.
-// GetExperimentResult scans the top-level columns (Id, ExperimentId,
-// UpdatedAt) into the result directly and the rest of the proto out of a
-// JSON blob into a side-by-side struct (erForGoalResults), then has to
-// manually copy each non-top-level field onto the returned object. Forgetting
-// to copy a field is a silent footgun — the field is in the JSON blob but
-// gets dropped on the floor (this was the cause of an e2e regression that
-// surfaced after SrmResult was added to ExperimentResult).
+// TestGetExperimentResultMySQL_PropagatesAllProtoFields locks in that the
+// non-top-level ExperimentResult fields currently round-trip through the
+// read storage. GetExperimentResult scans the top-level columns (Id,
+// ExperimentId, UpdatedAt) into the result directly and the rest of the
+// proto out of a JSON blob into a side-by-side struct (erForGoalResults),
+// then has to manually copy each non-top-level field onto the returned
+// object. Forgetting to copy a field is a silent footgun — the field is in
+// the JSON blob but gets dropped on the floor (this was the cause of an e2e
+// regression that surfaced after SrmResult was added to ExperimentResult).
 //
-// This test populates each field via the JSON blob path and asserts every
-// one is present on the returned domain object, so any future ExperimentResult
-// field addition fails this test until the field copy is added to
-// GetExperimentResult.
+// NOTE: this is a sentinel test, not a reflection-based exhaustive check. If
+// a new field is added to ExperimentResult, add it to BOTH the JSON-blob
+// setup and the assertions here so the test enforces the copy for the new
+// field too. The test will not auto-detect missing coverage for unknown
+// fields.
+//
+// Top-level columns use distinct values (Id != ExperimentId, recognisable
+// UpdatedAt) so a regression where Scan destinations get swapped or the SQL
+// column order changes is caught.
 func TestGetExperimentResultMySQL_PropagatesAllProtoFields(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	const (
+		expectedID           = "result-row-id-1"
+		expectedExperimentID = "experiment-id-2"
+		expectedUpdatedAt    = int64(1700000000)
+	)
 	expectedGoalResults := []*ecproto.GoalResult{
 		{GoalId: "goal-1"}, {GoalId: "goal-2"},
 	}
@@ -138,9 +148,9 @@ func TestGetExperimentResultMySQL_PropagatesAllProtoFields(t *testing.T) {
 	row.EXPECT().Scan(
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(args ...interface{}) error {
-		*args[0].(*string) = "exp-1"
-		*args[1].(*string) = "exp-1"
-		*args[2].(*int64) = 1700000000
+		*args[0].(*string) = expectedID
+		*args[1].(*string) = expectedExperimentID
+		*args[2].(*int64) = expectedUpdatedAt
 		// args[3] is *mysql.JSONPBObject{Val: *ecproto.ExperimentResult};
 		// populate the inner proto exactly as the JSON unmarshal would, so
 		// the field-copy logic in GetExperimentResult has something to
@@ -158,21 +168,22 @@ func TestGetExperimentResultMySQL_PropagatesAllProtoFields(t *testing.T) {
 	).Return(row)
 
 	storage := &experimentResultStorage{qe: qe}
-	got, err := storage.GetExperimentResult(context.Background(), "exp-1", "env-1")
+	got, err := storage.GetExperimentResult(context.Background(), expectedID, "env-1")
 	if !assert.NoError(t, err) || !assert.NotNil(t, got) || !assert.NotNil(t, got.ExperimentResult) {
 		return
 	}
 	er := got.ExperimentResult
-	assert.Equal(t, "exp-1", er.Id, "top-level Id column")
-	assert.Equal(t, "exp-1", er.ExperimentId, "top-level ExperimentId column")
-	assert.EqualValues(t, 1700000000, er.UpdatedAt, "top-level UpdatedAt column")
+	assert.Equal(t, expectedID, er.Id, "top-level Id column")
+	assert.Equal(t, expectedExperimentID, er.ExperimentId,
+		"top-level ExperimentId column — distinct from Id so a Scan-destination "+
+			"swap would be caught here")
+	assert.Equal(t, expectedUpdatedAt, er.UpdatedAt, "top-level UpdatedAt column")
 	assert.Equal(t, expectedGoalResults, er.GoalResults,
 		"GoalResults must be copied from the JSON blob — without the copy "+
 			"line in GetExperimentResult this returns nil")
 	assert.Equal(t, expectedTotalEvalUsers, er.TotalEvaluationUserCount,
 		"TotalEvaluationUserCount must be copied from the JSON blob")
 	assert.Equal(t, expectedSRM, er.SrmResult,
-		"SrmResult must be copied from the JSON blob — failure here means a "+
-			"new proto field was added to ExperimentResult without updating "+
-			"the field-copy block in GetExperimentResult")
+		"SrmResult must be copied from the JSON blob — failure here means the "+
+			"field-copy block in GetExperimentResult is missing the SrmResult line")
 }
