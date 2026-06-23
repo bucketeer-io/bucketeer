@@ -8,6 +8,31 @@ export interface ExperimentResult {
   updatedAt: string;
   goalResults: GoalResult[];
   totalEvaluationUserCount: string;
+  srmResult?: SrmResult;
+}
+
+export enum SrmStatus {
+  Unknown = 'UNKNOWN',
+  Ok = 'OK',
+  Mismatch = 'MISMATCH',
+  Skipped = 'SKIPPED'
+}
+
+export interface SrmResult {
+  status: SrmStatus;
+  pValue: number;
+  chiSquare: number;
+  degreesOfFreedom: string;
+  threshold: number;
+  skipReason: string;
+  variations: SrmVariation[];
+}
+
+export interface SrmVariation {
+  variationId: string;
+  observedUserCount: string;
+  expectedUserCount: number;
+  expectedWeight: number;
 }
 
 export interface GoalResult {

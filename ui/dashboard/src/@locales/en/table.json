@@ -172,7 +172,39 @@
     "choose-variant": "Choose which variant you want to proceed with.",
     "variant-percent": "{{name}}: {{percent}}%",
     "total-users-use": "Total users: <bold>{{value}}</bold>",
-    "expected-loss-tooltip": "The average opportunity cost of choosing this variation compared to the best possible variation. A lower expected loss indicates less risk of missing out on better performance."
+    "expected-loss-tooltip": "The average opportunity cost of choosing this variation instead of the best-performing variation. A lower expected loss indicates a lower risk of missing out on better performance.",
+    "srm": {
+      "mismatch-title": "Traffic allocation mismatch detected — results may be invalid",
+      "mismatch-desc": "Observed user counts differ significantly from the configured rollout allocation (chi-square p = {{pValue}}, threshold = {{threshold}}). Inspect the per-variation breakdown to identify which variations are affected.",
+      "mismatch-desc-leak": "One or more variations are receiving traffic despite being allocated 0% in the configured rollout. Inspect the per-variation breakdown to identify which variations are affected.",
+      "view-details": "View per-variation details",
+      "hide-details": "Hide per-variation details",
+      "skipped-prefix": "SRM check not performed: {{reason}}",
+      "advanced": "Advanced diagnostics",
+      "ok-summary": "SRM check passed (p = {{pValue}})",
+      "table": {
+        "variation": "Variation",
+        "observed-users": "Observed users",
+        "observed-users-tooltip": "Number of unique users assigned to this variation during the experiment window.",
+        "expected-users": "Expected users",
+        "expected-users-tooltip": "Expected user count under the configured rollout allocation, calculated as (total observed users × expected weight).",
+        "expected-weight": "Expected weight",
+        "expected-weight-tooltip": "Expected share of traffic allocated to this variation under the configured rollout, accounting for any audience traffic allocation (users excluded from the audience are credited to the audience default variation). Sums to 100% across variations."
+      },
+      "reason": {
+        "feature-missing": "feature definition not available",
+        "feature-fetch-failed": "could not fetch the feature definition",
+        "no-goal-results": "no goal results available to derive the observed traffic allocation",
+        "no-default-strategy": "feature has no default strategy",
+        "not-rollout-strategy": "feature default strategy is not a rollout (no per-variation weights to test against)",
+        "no-rollout-variations": "feature rollout strategy has no variations",
+        "all-zero-weights": "all rollout weights are zero",
+        "audience-default-not-in-rollout": "audience default variation is not one of the rollout variations (cannot compute expected allocation)",
+        "insufficient-samples": "total observed users below the minimum required for a reliable chi-square test",
+        "small-expected-cell": "smallest expected variation count is below the minimum threshold for a reliable chi-square test",
+        "too-few-cells": "the rollout is sending all traffic to a single variation, so there is no split to test"
+      }
+    }
   },
   "feature-flags": {
     "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
