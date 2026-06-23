@@ -748,7 +748,7 @@ func TestComputeSRM_AudienceAware(t *testing.T) {
 		assert.InDelta(t, 0.5, got.Variations[1].ExpectedWeight, 1e-9)
 	})
 
-	t.Run("audience-aware combined with unknown-variation leak: still MISMATCH", func(t *testing.T) {
+	t.Run("audience-aware combined with unknown-variation leak: still MISMATCH (leak detector)", func(t *testing.T) {
 		t.Parallel()
 		// Compose the previous round's "leaked variation" fix with the
 		// audience-aware fix: audience=50% default=A on a 50/50 A/B
@@ -778,5 +778,222 @@ func TestComputeSRM_AudienceAware(t *testing.T) {
 			assert.InDelta(t, 0.0, got.Variations[2].ExpectedWeight, 1e-9)
 			assert.EqualValues(t, 1000, got.Variations[2].ObservedUserCount)
 		}
+	})
+}
+
+// TestComputeSRM_ZeroExpectedCellLeakDetection covers the dedicated leak
+// detector that runs alongside chi-square. Any variation with
+// expected_weight == 0 (either an explicit zero-weight in the rollout or a
+// variation absent from the rollout entirely) receiving non-trivial observed
+// traffic is a bucketing bug — the SDK routed users somewhere the rollout
+// says should get 0%. Chi-square can't model expected=0 cells, so this
+// detector exists to close that gap.
+//
+// Threshold semantics: MISMATCH fires when leaked observed users strictly
+// exceed max(leakNoiseFloor=5, leakRateFloor=0.0001 * totalObserved).
+func TestComputeSRM_ZeroExpectedCellLeakDetection(t *testing.T) {
+	t.Parallel()
+
+	t.Run("zero-weight rollout variation getting traffic: MISMATCH (formerly silently SKIPPED)", func(t *testing.T) {
+		t.Parallel()
+		// Rollout says [A:100, B:0, C:0] — only A should receive any
+		// traffic at all. Before this fix, B/C receiving traffic
+		// triggered df=0 → SKIPPED "too few cells", hiding the bug.
+		// The leak detector now catches it.
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 100}, struct {
+				id     string
+				weight int32
+			}{"B", 0}, struct {
+				id     string
+				weight int32
+			}{"C", 0})
+		results := []*eventcounter.VariationResult{
+			vr("A", 9000), vr("B", 50), vr("C", 50),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+
+		assert.Equal(t, eventcounter.SrmResult_MISMATCH, got.Status,
+			"100 users routed to variations explicitly weighted 0 must be flagged")
+		// Per-variation breakdown still surfaces the offending cells.
+		// Sort order: A, B, C.
+		if assert.Len(t, got.Variations, 3) {
+			assert.Equal(t, "A", got.Variations[0].VariationId)
+			assert.InDelta(t, 1.0, got.Variations[0].ExpectedWeight, 1e-9)
+			assert.Equal(t, "B", got.Variations[1].VariationId)
+			assert.InDelta(t, 0.0, got.Variations[1].ExpectedWeight, 1e-9)
+			assert.EqualValues(t, 50, got.Variations[1].ObservedUserCount)
+			assert.Equal(t, "C", got.Variations[2].VariationId)
+			assert.InDelta(t, 0.0, got.Variations[2].ExpectedWeight, 1e-9)
+			assert.EqualValues(t, 50, got.Variations[2].ObservedUserCount)
+		}
+		// chi-square has only 1 positive-expected cell (A), so df=0 and
+		// the chi-square fields stay at zero values — but the leak
+		// detector still produced a MISMATCH.
+		assert.EqualValues(t, 0, got.DegreesOfFreedom,
+			"with only one positive-expected cell, chi-square has df=0 and is not reported")
+		assert.Empty(t, got.SkipReason,
+			"MISMATCH should not populate skip_reason")
+	})
+
+	t.Run("small leak on top of well-balanced rollout: MISMATCH (formerly silently OK)", func(t *testing.T) {
+		t.Parallel()
+		// Rollout [A:50, B:50]. Observed perfectly balances A and B
+		// (4975/4975 → chi-square ≈ 0.25, p ≈ 0.62, would be OK), but
+		// 50 users leaked to unconfigured variation D. Chi-square
+		// passes; the leak detector catches it.
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			vr("A", 4975), vr("B", 4975), vr("D", 50),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+
+		assert.Equal(t, eventcounter.SrmResult_MISMATCH, got.Status,
+			"a small leak to an unconfigured variation must NOT be hidden by a balanced main split")
+		// Chi-square is still reported alongside the leak signal. With
+		// the small deviation (4975 vs expected 4987.5), p should be
+		// comfortably above the 0.001 threshold — proving the MISMATCH
+		// came from the leak detector, not chi-square.
+		assert.Greater(t, got.PValue, 0.001,
+			"chi-square should pass; the MISMATCH must come from the leak detector")
+		assert.EqualValues(t, 1, got.DegreesOfFreedom,
+			"chi-square stays visible (df=1) alongside the leak signal")
+	})
+
+	t.Run("tiny leak below noise floor: still OK (no false positive)", func(t *testing.T) {
+		t.Parallel()
+		// Same shape, but only 3 leaked users — below the absolute
+		// noise floor of 5. Could be a transient race during config
+		// rollout, stale SDK cache, etc. Don't false-positive on this.
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			vr("A", 4998), vr("B", 4999), vr("D", 3),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+		assert.Equal(t, eventcounter.SrmResult_OK, got.Status,
+			"3 leaked users below the 5-user noise floor must not trigger MISMATCH")
+	})
+
+	t.Run("leak exactly at threshold: still OK (strict-greater semantics)", func(t *testing.T) {
+		t.Parallel()
+		// Leaked = 5 (exactly the noise floor for small n). The
+		// detector uses strict-greater (>) not >=, so the threshold
+		// itself is treated as "still in noise territory".
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			vr("A", 4998), vr("B", 4997), vr("D", 5),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+		assert.Equal(t, eventcounter.SrmResult_OK, got.Status,
+			"leak == noise floor (5) must NOT trigger MISMATCH; threshold uses >, not >=")
+	})
+
+	t.Run("leak threshold scales with totalObserved: 50 leaked out of 1M is OK", func(t *testing.T) {
+		t.Parallel()
+		// n = 1,000,000 → rate floor (0.01%) yields 100, which exceeds
+		// the noise floor of 5 → effective threshold = 100. A 50-user
+		// leak is below the rate floor so must NOT MISMATCH.
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			vr("A", 499975), vr("B", 499975), vr("D", 50),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+		assert.Equal(t, eventcounter.SrmResult_OK, got.Status,
+			"50 leaked out of 1M (0.005%) is below the 0.01%% rate floor")
+	})
+
+	t.Run("leak threshold scales with totalObserved: 200 leaked out of 1M is MISMATCH", func(t *testing.T) {
+		t.Parallel()
+		// Same n=1M but 200 leaked users → 0.02%, above the rate floor.
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			vr("A", 499900), vr("B", 499900), vr("D", 200),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+		assert.Equal(t, eventcounter.SrmResult_MISMATCH, got.Status,
+			"200 leaked out of 1M (0.02%%) exceeds the 0.01%% rate floor")
+	})
+
+	t.Run("chi-square mismatch AND leak: MISMATCH with chi-square still reported", func(t *testing.T) {
+		t.Parallel()
+		// Both detectors fire. Verify chi-square fields stay populated
+		// so the UI can show both signals to the user.
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			// Main split badly skewed (chi-square will MISMATCH) AND
+			// 1000 users leaked to D.
+			vr("A", 3000), vr("B", 6000), vr("D", 1000),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+
+		assert.Equal(t, eventcounter.SrmResult_MISMATCH, got.Status)
+		// Chi-square stayed visible.
+		assert.Greater(t, got.ChiSquare, 0.0,
+			"chi-square statistic must stay reported when both checks fire")
+		assert.EqualValues(t, 1, got.DegreesOfFreedom)
+		assert.Less(t, got.PValue, DefaultSRMThreshold,
+			"chi-square's own p-value should be below threshold here too")
+	})
+
+	t.Run("no leak, balanced rollout: OK (sanity)", func(t *testing.T) {
+		t.Parallel()
+		feature := newRolloutFeature(t,
+			struct {
+				id     string
+				weight int32
+			}{"A", 50}, struct {
+				id     string
+				weight int32
+			}{"B", 50})
+		results := []*eventcounter.VariationResult{
+			vr("A", 5000), vr("B", 5000),
+		}
+		got := computeSRM(results, feature, DefaultSRMThreshold)
+		assert.Equal(t, eventcounter.SrmResult_OK, got.Status)
 	})
 }

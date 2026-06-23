@@ -530,6 +530,10 @@ catches this.
 
 ### The Test
 
+SRM uses **two detection mechanisms running in parallel**:
+
+#### 1. Chi-square goodness-of-fit (the standard SRM test)
+
 A standard **chi-square goodness-of-fit test** compares each variation's
 observed user count against the expected count under the intended split:
 
@@ -545,8 +549,66 @@ Where:
   for variation *i* (see "Audience-aware expected fractions" below). Sums to
   exactly 1 across the rollout's variations.
 
-Degrees of freedom = K − 1 (where K = number of variations with positive
+Degrees of freedom = K − 1 (where K = number of variations with **positive**
 expected count). The p-value is `1 − CDF_{χ²(df)}(χ²)`.
+
+#### 2. Zero-expected-cell leak detector
+
+The chi-square sum can only include cells with `Eᵢ > 0` — the `(O − E)² / E`
+term is undefined when E = 0. But a variation with `expected_fraction = 0`
+receiving observed traffic is, by configuration, a real bucketing bug:
+
+- **Explicit zero-weight in the rollout** (e.g. `[A: 100, B: 0, C: 0]`): the
+  rollout says B and C must receive 0%, so any traffic to them is a leak.
+- **Variation not in the rollout at all** (schema drift, leaked traffic from
+  a stale bucketing decision): same kind of bug.
+
+These cases would otherwise pass silently: a 100-weight-all-on-A rollout
+with leaked traffic to B and C has only one positive-expected cell, so
+chi-square reports `df = 0` → SKIPPED. A 50/50 rollout with a small leak to
+an unconfigured D inflates `totalObserved` enough to perturb A and B
+slightly but typically not enough for chi-square to flip OK → MISMATCH.
+
+The leak detector closes this gap. Let `L = Σ Oᵢ over variations with Eᵢ = 0`.
+We trigger MISMATCH when:
+
+```
+L > max(leakNoiseFloor, leakRateFloor · total_observed)
+```
+
+with `leakNoiseFloor = 5` and `leakRateFloor = 0.0001` (0.01%). The two
+floors give us:
+
+- **Small experiments** (n < 50,000): the 5-user absolute floor dominates,
+  preventing false positives from transient races during config rollout or
+  stale SDK caches.
+- **Large experiments** (n ≥ 50,000): the rate floor dominates and scales
+  with n — e.g. 100 leaked out of 1M (0.01%) is the trigger, while 50 out
+  of 1M (0.005%) stays OK.
+
+Real production bucketing bugs (broken hash function, wrong sampling seed,
+config-cache deserialization bug, etc.) typically leak >> 1% of traffic, so
+the 0.01% floor sits comfortably below realistic noise rates while still
+above the trickle of users that may genuinely land on a stale variation
+during a rollout edit. The strict-greater inequality (`>`, not `≥`) treats
+the floor itself as "still in noise territory".
+
+#### How the two mechanisms combine
+
+| chi-square verdict | leak verdict | reported status |
+|---|---|---|
+| OK (or not applicable: df < 1) | no leak | **OK** |
+| OK (or not applicable: df < 1) | leak detected | **MISMATCH** |
+| MISMATCH | no leak | **MISMATCH** |
+| MISMATCH | leak detected | **MISMATCH** |
+| df < 1 | no leak | **SKIPPED** (too few cells) |
+
+The chi-square statistic, p-value, and degrees of freedom are reported on
+the result whenever the chi-square is applicable (`df ≥ 1`), **regardless**
+of which mechanism produced the final MISMATCH status. This lets the UI
+show "main split looks fine (p=0.62), but variation C is receiving traffic
+the rollout says it shouldn't" rather than collapsing both signals into a
+single opaque verdict.
 
 ### Audience-aware expected fractions
 
@@ -612,7 +674,10 @@ in this case for the same reason.
 - Smallest expected per-variation count < 5 — violates the chi-square
   per-cell reliability floor (Cochran, 1954), even when the total sample
   clears the 100-user floor (e.g. on highly skewed rollouts like 99/1).
-- Fewer than 2 cells have positive expected counts.
+- Fewer than 2 cells have positive expected counts AND the zero-expected
+  leak detector did not fire either. (When the leak detector fires on a
+  one-positive-cell rollout, status is MISMATCH rather than SKIPPED — see
+  "Zero-expected-cell leak detector" above.)
 - Feature could not be fetched (network / auth / NotFound) — the calculator
   degrades gracefully instead of blocking experiment results.
 

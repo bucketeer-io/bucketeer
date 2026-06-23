@@ -49,6 +49,28 @@ const (
 	// When violated we report SKIPPED rather than a p-value the user
 	// shouldn't trust.
 	minExpectedCellCount = 5.0
+
+	// leakNoiseFloor and leakRateFloor define the zero-expected-cell leak
+	// detector that runs alongside the chi-square test. Any variation with
+	// expected_weight == 0 (a variation explicitly weighted 0 in the rollout,
+	// OR a "leaked" variation that's not in the rollout at all) receiving
+	// non-zero observed traffic is, by configuration, traffic going somewhere
+	// the SDK should never have routed it. Chi-square can't model this
+	// (its (O - E)² / E term is undefined when E = 0), so it would silently
+	// pass — a real bucketing-bug class that SRM exists to catch.
+	//
+	// We trigger MISMATCH when the total zero-expected observed user count
+	// strictly exceeds max(leakNoiseFloor, leakRateFloor * totalObserved):
+	//   - leakNoiseFloor (= 5) prevents false-positives at small n where a
+	//     single misrouted user would otherwise trip the rate floor.
+	//   - leakRateFloor (= 0.0001, i.e. 0.01%) scales the threshold for
+	//     large experiments. It's intentionally aligned in spirit with the
+	//     chi-square p < 0.001 threshold — both say "we're confidently sure
+	//     this isn't noise". Real production bucketing bugs (broken hash
+	//     function, stale config) typically leak >> 1% of traffic, so this
+	//     floor leaves comfortable headroom above realistic noise rates.
+	leakNoiseFloor = int64(5)
+	leakRateFloor  = 0.0001
 )
 
 var (
@@ -67,24 +89,44 @@ var (
 		"smallest expected per-variation count below the chi-square reliability floor")
 )
 
-// computeSRM runs a chi-square goodness-of-fit test comparing each variation's
-// observed user count (from VariationResult.evaluation_count.user_count) against
-// the intended traffic split defined by the feature's default rollout strategy.
+// computeSRM compares each variation's observed user count (from
+// VariationResult.evaluation_count.user_count) against the intended traffic
+// split defined by the feature's default rollout strategy, using two
+// detection mechanisms in parallel:
+//
+//  1. A chi-square goodness-of-fit test over the variations with positive
+//     expected counts (the standard SRM test).
+//  2. A zero-expected-cell leak detector over the variations with
+//     expected_weight == 0 — these are variations the rollout says should
+//     receive 0% of traffic, either because they're explicitly weighted 0
+//     in the rollout or because they're not in the rollout at all
+//     ("leaked"). Chi-square can't include these cells (its denominator
+//     would be 0), but any non-trivial observed traffic on a zero-expected
+//     variation is by definition a bucketing bug. See leakNoiseFloor /
+//     leakRateFloor for the noise thresholds.
+//
+// Status is MISMATCH when either mechanism fires. The chi-square statistic
+// is still reported (when df >= 1) even if the leak detector triggered, so
+// the UI can show both signals.
+//
 // The expected split is audience-aware (see extractExpectedFractions): the
-// Audience Traffic Allocation's out-of-audience users are correctly attributed
-// to audience.default_variation rather than being treated as a bucketing bug.
+// Audience Traffic Allocation's out-of-audience users are correctly
+// attributed to audience.default_variation rather than being treated as a
+// bucketing bug.
+//
 // The result is always non-nil and always populated with the per-variation
 // observed/expected breakdown (when available), so the UI can render a
 // meaningful diagnostic in both the OK and SKIPPED cases.
 //
 // Status semantics:
-//   - OK       — p_value >= threshold; observed split matches intended split.
-//   - MISMATCH — p_value < threshold; warn the user, results may be invalid.
+//   - OK       — both chi-square (when applicable) and leak detector pass.
+//   - MISMATCH — chi-square's p_value < threshold OR a zero-expected
+//     variation received observed traffic above the leak floor.
 //   - SKIPPED  — inputs are unusable (no rollout strategy, weights all zero,
 //     audience default_variation not in the rollout, total sample below the
 //     chi-square's reliable floor, smallest expected cell below the per-cell
 //     reliability floor, or fewer than two cells have positive expected
-//     counts). skip_reason explains which.
+//     counts AND no leak was detected). skip_reason explains which.
 //
 // Known caveat (documented in docs/mechanism/experiment-calculator-math.md):
 //
@@ -191,6 +233,27 @@ func computeSRM(
 		return res
 	}
 
+	// Zero-expected-cell leak detection. Any variation with expected = 0
+	// receiving non-zero observed traffic is, by configuration, traffic
+	// going somewhere the SDK should never have routed it. Chi-square
+	// can't model this (its (O - E)² / E term is undefined for E = 0),
+	// so this check runs independently. We trigger MISMATCH when the
+	// total leaked observed count strictly exceeds the noise floor
+	// (max of the absolute floor and the rate floor scaled by
+	// totalObserved). Strict-greater rather than >= so the threshold
+	// itself is treated as still-noise, not as a leak.
+	var leakedObserved int64
+	for _, v := range perVariation {
+		if v.ExpectedUserCount == 0 && v.ObservedUserCount > 0 {
+			leakedObserved += v.ObservedUserCount
+		}
+	}
+	leakThreshold := leakNoiseFloor
+	if scaled := int64(leakRateFloor * float64(totalObserved)); scaled > leakThreshold {
+		leakThreshold = scaled
+	}
+	leakDetected := leakedObserved > leakThreshold
+
 	// Chi-square goodness-of-fit: Σ (O - E)² / E, summed only over cells with
 	// positive expected counts. Each contributing cell adds 1 to df; the
 	// final df is K_pos - 1 (one parameter consumed by the totalObserved
@@ -206,22 +269,34 @@ func computeSRM(
 		posCells++
 	}
 	df := posCells - 1
-	if df < 1 {
-		res.Status = eventcounter.SrmResult_SKIPPED
-		res.SkipReason = errSRMTooFewExpectedCells.Error()
-		return res
+
+	// If chi-square has enough cells to run, report its statistic
+	// regardless of which check fires for the final status. This keeps the
+	// chi-square / p-value / df fields populated so the UI can show the
+	// main-rollout test result alongside any leak signal.
+	chiSquareApplicable := df >= 1
+	var pValue float64
+	if chiSquareApplicable {
+		cs := distuv.ChiSquared{K: float64(df)}
+		pValue = 1.0 - cs.CDF(chiSq)
+		res.ChiSquare = chiSq
+		res.DegreesOfFreedom = df
+		res.PValue = pValue
 	}
 
-	cs := distuv.ChiSquared{K: float64(df)}
-	pValue := 1.0 - cs.CDF(chiSq)
-
-	res.ChiSquare = chiSq
-	res.DegreesOfFreedom = df
-	res.PValue = pValue
-	if pValue < threshold {
+	// Final status. MISMATCH if either check fires. SKIPPED only if neither
+	// the chi-square (because there aren't enough cells) nor the leak
+	// detector (because the leak didn't exceed the noise floor) has
+	// anything to say.
+	chiSquareMismatch := chiSquareApplicable && pValue < threshold
+	switch {
+	case chiSquareMismatch || leakDetected:
 		res.Status = eventcounter.SrmResult_MISMATCH
-	} else {
+	case chiSquareApplicable:
 		res.Status = eventcounter.SrmResult_OK
+	default:
+		res.Status = eventcounter.SrmResult_SKIPPED
+		res.SkipReason = errSRMTooFewExpectedCells.Error()
 	}
 	return res
 }
