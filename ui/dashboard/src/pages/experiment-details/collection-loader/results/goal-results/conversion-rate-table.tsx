@@ -168,13 +168,13 @@ const ConversionRateTable = ({
             const isSameVariationId =
               item.variationId === experiment.baseVariationId;
 
-          const improvementValueConversionRate = isSameVariationId
-            ? t('table:baseline')
-            : formatRelativeLift(conversionRate, baseConversionRate);
+            const improvementValueConversionRate = isSameVariationId
+              ? t('table:baseline')
+              : formatRelativeLift(conversionRate, baseConversionRate);
 
-          const improvementValuePerUser = isSameVariationId
-            ? t('table:baseline')
-            : formatRelativeLift(valuePerUser, baseValuePerUser);
+            const improvementValuePerUser = isSameVariationId
+              ? t('table:baseline')
+              : formatRelativeLift(valuePerUser, baseValuePerUser);
 
             const probBeatBaseline = isConversionRateChart
               ? cvrProbBeatBaseline

@@ -13,10 +13,10 @@ import {
 
 interface RowWithDataProps {
   options: DropdownOption[];
-  itemSelected?: string;
+  itemSelected?: DropdownValue;
   selectedFieldValue?: string;
   isMultiselect?: boolean;
-  selectedOptions?: string[];
+  selectedOptions?: DropdownValue[];
   className?: string;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
@@ -41,14 +41,17 @@ const RowWithData = ({
     onSelectOption
   } = data;
   const currentItem = options[index];
+  const currentFieldValue = currentItem?.[
+    selectedFieldValue as keyof DropdownOption
+  ] as DropdownValue;
 
   return (
     <DropdownMenuItem
       key={index}
       style={style}
-      isSelectedItem={itemSelected === currentItem?.value}
-      isSelected={selectedOptions?.includes(
-        currentItem[selectedFieldValue as keyof DropdownOption] as string
+      isSelectedItem={String(itemSelected) === String(currentItem?.value)}
+      isSelected={selectedOptions?.some(
+        option => String(option) === String(currentFieldValue)
       )}
       isMultiselect={isMultiselect}
       value={currentItem?.value}
@@ -57,18 +60,13 @@ const RowWithData = ({
       icon={currentItem?.icon}
       disabled={currentItem?.disabled}
       additionalElement={additionalElement && additionalElement(currentItem)}
-      onSelectOption={() =>
-        onSelectOption(
-          currentItem[selectedFieldValue as keyof DropdownOption] as string
-        )
-      }
+      onSelectOption={() => onSelectOption(currentFieldValue)}
       className={className}
     />
   );
 };
 
 interface DropdownListProps extends RowWithDataProps {
-  itemSelected?: string;
   height?: number;
   maxHeight?: number;
   width?: string | number;
