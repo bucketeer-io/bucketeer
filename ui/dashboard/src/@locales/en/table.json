@@ -193,6 +193,8 @@
       },
       "reason": {
         "feature-missing": "feature definition not available",
+        "feature-fetch-failed": "could not fetch the feature definition",
+        "no-goal-results": "no goal results available to derive the observed traffic allocation",
         "no-default-strategy": "feature has no default strategy",
         "not-rollout-strategy": "feature default strategy is not a rollout (no per-variation weights to test against)",
         "no-rollout-variations": "feature rollout strategy has no variations",

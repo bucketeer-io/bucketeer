@@ -31,7 +31,11 @@ const SrmVariationsTable = ({
 
   const headerList = useMemo(
     () => [
-      { name: 'variation', tooltipKey: '', minSize: VARIATION_MIN_SIZE },
+      {
+        name: 'srm.table.variation',
+        tooltipKey: '',
+        minSize: VARIATION_MIN_SIZE
+      },
       {
         name: 'srm.table.observed-users',
         tooltipKey: 'srm.table.observed-users-tooltip',

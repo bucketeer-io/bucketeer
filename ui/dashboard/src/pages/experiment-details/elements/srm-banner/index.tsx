@@ -17,11 +17,28 @@ const SKIP_REASON_KEYS: { prefix: string; key: string }[] = [
     key: 'table:results.srm.reason.feature-missing'
   },
   {
+    prefix: 'could not fetch feature definition',
+    key: 'table:results.srm.reason.feature-fetch-failed'
+  },
+  {
+    prefix: 'no goal results available to derive observed traffic split',
+    key: 'table:results.srm.reason.no-goal-results'
+  },
+  {
     prefix: 'feature has no default strategy',
     key: 'table:results.srm.reason.no-default-strategy'
   },
   {
-    prefix: 'feature default strategy is not a rollout',
+    // Full canonical string (including the fixed parenthetical) — the
+    // backend's errSRM* strings carry these clarifiers as static text,
+    // not as dynamic context. Matching only the leading portion would
+    // leave the clarifier dangling in English after the localized
+    // translation, producing mixed-language output. Only the
+    // *insufficient-samples* and *small-expected-cell* skip reasons
+    // append genuinely dynamic numeric context — they keep prefix-only
+    // matches below.
+    prefix:
+      'feature default strategy is not a rollout (no per-variation weights to test against)',
     key: 'table:results.srm.reason.not-rollout-strategy'
   },
   {
@@ -33,7 +50,8 @@ const SKIP_REASON_KEYS: { prefix: string; key: string }[] = [
     key: 'table:results.srm.reason.all-zero-weights'
   },
   {
-    prefix: 'audience default_variation is not one of the rollout variations',
+    prefix:
+      'audience default_variation is not one of the rollout variations (cannot compute expected split)',
     key: 'table:results.srm.reason.audience-default-not-in-rollout'
   },
   {

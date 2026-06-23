@@ -193,6 +193,8 @@
       },
       "reason": {
         "feature-missing": "フィーチャー定義が利用できません",
+        "feature-fetch-failed": "フィーチャー定義を取得できませんでした",
+        "no-goal-results": "観測されたトラフィック配分を算出するためのゴール結果が利用できません",
         "no-default-strategy": "フィーチャーにデフォルト戦略が設定されていません",
         "not-rollout-strategy": "フィーチャーのデフォルト戦略がロールアウトではありません（比較対象となる配分比率がありません）",
         "no-rollout-variations": "ロールアウト戦略にバリエーションが含まれていません",
