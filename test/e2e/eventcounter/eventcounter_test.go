@@ -2656,13 +2656,22 @@ func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult,
 }
 
 // checkExperimentSrmResult asserts that the SRM check ran end-to-end (proto
-// field populated by the calculator and serialized through the API). The
-// fixture above intentionally uses only 5 users total (3 in A + 2 in B), well
-// below the calculator's minSRMSampleSize floor of 100, so the expected
-// outcome here is Status == SKIPPED regardless of the feature's default
-// strategy shape. This is enough to catch wiring regressions (feature client
-// not injected, proto field not exposed, calculator path not executed) without
-// requiring a large fixture.
+// field populated by the calculator and serialized through the API).
+//
+// The fixture above creates the feature via CreateFeatureRequest with
+// DefaultOnVariationIndex/DefaultOffVariationIndex, which produces a FIXED
+// default strategy (no rollout weights to test against). The calculator's
+// SRM path therefore short-circuits in extractRolloutWeights with
+// "default strategy is not a rollout" before any sample-size check runs, so
+// the expected outcome here is Status == SKIPPED with a non-empty
+// skip_reason. (For the same reason, the 5-user fixture size never reaches
+// the minSRMSampleSize=100 floor either — both branches would yield
+// SKIPPED, the strategy check just wins first.)
+//
+// This is enough to catch wiring regressions (feature client not injected,
+// proto field not exposed, calculator path not executed) without requiring
+// a rollout-strategy feature or a large fixture; the in-process tests in
+// srm_test.go cover the per-branch SKIPPED reasons directly.
 func checkExperimentSrmResult(t *testing.T, er *ecproto.ExperimentResult) {
 	t.Helper()
 	if er.SrmResult == nil {
