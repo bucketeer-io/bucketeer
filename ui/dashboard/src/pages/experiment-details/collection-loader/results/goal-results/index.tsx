@@ -58,14 +58,13 @@ const GoalResultItem = ({
   const [isOpenRolloutVariant, onOpenRolloutVariant, onCloseRolloutVariant] =
     useToggleOpen(false);
 
-  // Keep the confidence banner and rollout suggestion aligned with the metric
-  // the conversion-rate table shows on the same view. That table treats every
-  // non-`conversion-rate` chart (both `value-total` and `value-user`) as a
-  // value metric and reads the per-user value posterior for its probability
-  // columns — there is no separate total-value posterior, the Bayesian model
-  // is per-user only. Mirror that here so the banner never contradicts the
-  // table: value charts use the value best-variations, everything else (CVR
-  // chart and the evaluation tab) uses the conversion-rate list.
+  // Pick the best-variations list matching the currently selected chart type
+  // (driven by chartType, not the tab — value charts are reachable from both
+  // tabs). The value charts (`value-user`, `value-total`) use the per-user
+  // value posterior: the conversion-rate table applies the same rule for its
+  // probability columns, and there is no separate total-value posterior (the
+  // Bayesian model is per-user only). All other chart types (`conversion-rate`
+  // and the evaluation count charts) use the conversion-rate list.
   const activeBestVariations = useMemo(() => {
     const isValueChart =
       goalResultState?.chartType === 'value-user' ||

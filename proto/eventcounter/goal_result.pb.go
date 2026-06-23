@@ -105,8 +105,9 @@ type Summary struct {
 	BestVariations []*Summary_Variation `protobuf:"bytes,1,rep,name=best_variations,json=bestVariations,proto3" json:"best_variations"`
 	GoalUserCount  int64                `protobuf:"varint,2,opt,name=goal_user_count,json=goalUserCount,proto3" json:"goal_user_count"`
 	// Best variations derived from the value-per-user metric posterior, so the
-	// confidence banner can stay metric-aware when the user is on the
-	// Value/User tab. best_variations (field 1) remains the conversion-rate list.
+	// confidence banner can stay metric-aware when the user is viewing a value
+	// chart (Value/User or Value/Total). best_variations (field 1) remains the
+	// conversion-rate list.
 	BestVariationsValue []*Summary_Variation `protobuf:"bytes,3,rep,name=best_variations_value,json=bestVariationsValue,proto3" json:"best_variations_value"`
 }
 

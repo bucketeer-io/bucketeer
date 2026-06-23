@@ -160,7 +160,7 @@
     "conversion-rate-tooltip": "Calculated as (number of unique users who fired the goal event / number of unique users for whom a variation was returned).",
     "value-total-tooltip": "The total number of values assigned to a goal event. This value is different for each goal.",
     "value-user-tooltip": "The total number of values assigned to the goal event per user. It is calculated as (the sum of the numbers assigned to the goal event / the number of unique users who fired the goal event).",
-    "improvement-tooltip": "Relative lift of this variation versus the baseline (also called a control group), calculated as (variation − baseline) / baseline. It reflects the metric currently displayed, and shows an em dash when the baseline is zero.",
+    "improvement-tooltip": "Relative lift of this variation versus the baseline (also called a control group), calculated as (variation − baseline) / baseline. It reflects the metric currently displayed, and shows an em dash when the baseline is zero or the values are not finite.",
     "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
     "probability-to-be-best-tooltip": "The probability of being the best-performing variation outperforming all other variations. We recommend using a threshold of at least 95%.",
     "expected-loss": "Expected Loss",

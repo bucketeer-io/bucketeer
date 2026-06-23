@@ -10647,8 +10647,9 @@ definitions:
           $ref: '#/definitions/eventcounterSummaryVariation'
         description: |-
           Best variations derived from the value-per-user metric posterior, so the
-          confidence banner can stay metric-aware when the user is on the
-          Value/User tab. best_variations (field 1) remains the conversion-rate list.
+          confidence banner can stay metric-aware when the user is viewing a value
+          chart (Value/User or Value/Total). best_variations (field 1) remains the
+          conversion-rate list.
   bucketeerfeatureChangeType:
     type: string
     enum:
