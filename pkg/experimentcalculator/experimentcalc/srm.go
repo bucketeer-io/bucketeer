@@ -278,7 +278,14 @@ func computeSRM(
 	var pValue float64
 	if chiSquareApplicable {
 		cs := distuv.ChiSquared{K: float64(df)}
-		pValue = 1.0 - cs.CDF(chiSq)
+		// Use Survival (= P(X > chiSq) = 1 - CDF) directly rather than
+		// computing 1 - CDF in user code. For large chi-square values the
+		// CDF rounds to exactly 1.0 and the subtraction underflows to 0.0,
+		// even though the true tail probability is a tiny non-zero number.
+		// MISMATCH would still fire (any p < threshold triggers it), but
+		// the p-value surfaced to the API / UI would be a misleading 0.0
+		// instead of the real underflow value.
+		pValue = cs.Survival(chiSq)
 		res.ChiSquare = chiSq
 		res.DegreesOfFreedom = df
 		res.PValue = pValue
