@@ -538,4 +538,3 @@ func TestComputeExperimentSRM_FeatureFetchFailure_DoesNotLeakError(t *testing.T)
 		assert.InDelta(t, DefaultSRMThreshold, res.Threshold, 1e-9)
 	}
 }
-
