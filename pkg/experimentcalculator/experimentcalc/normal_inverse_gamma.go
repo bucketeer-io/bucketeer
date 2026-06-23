@@ -29,11 +29,38 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
+// Fallback prior hyper-parameters used when the observed inputs are too
+// degenerate to derive a full empirical-Bayes prior:
+//   - `fallbackPriorMean` (=0) is only used when no variation has any usable
+//     sample (totalN == 0) or the pooled mean is non-finite. Whenever any
+//     usable sample exists, `computeEmpiricalBayesPriors` keeps μ₀ at the
+//     pooled observed mean.
+//   - `fallbackPriorAlpha` / `fallbackPriorBeta` (=1, =1) are used when a
+//     usable mean exists but the pooled within-variation variance is
+//     undefined or non-positive (e.g. every variation has n ≤ 1, or every
+//     within-variation sample variance is 0).
+//
+// All fallback values are deliberately weak (1 pseudo-observation for the
+// mean; an Inv-Gamma(1, 1) variance prior — undefined mean, mode 0.5 — i.e. a
+// scale-1, scale-only "weak/unit-scale" prior, not a fixed unit variance) so
+// the prior dies off as 1/(1+n) for the mean and even faster for the variance.
 const (
-	priorMean  = 30
-	priorKappa = 2
-	priorAlpha = 10
-	priorBeta  = 1000
+	fallbackPriorMean  = 0.0
+	fallbackPriorKappa = 1.0
+	fallbackPriorAlpha = 1.0
+	fallbackPriorBeta  = 1.0
+)
+
+// Pseudo-count weights for the empirical-Bayes prior. We use one pseudo
+// observation for the mean (kappa0) and a matched one-degree-of-freedom prior
+// for the variance (alpha0=1, beta0=pooled_var). With these weights the prior
+// influence is ~50% at n=1, ~17% at n=5, ~9% at n=10, and ~1% at n=99, so the
+// prior anchors small-sample estimates at the data's own scale without
+// distorting moderate or large samples — and recovers Fix #1's large-n
+// concentration behaviour exactly.
+const (
+	empiricalPriorKappa = 1.0
+	empiricalPriorAlpha = 1.0
 )
 
 type distr struct {
@@ -57,12 +84,17 @@ func normalInverseGamma(
 	variationNum := len(means)
 	variationResults := make(map[string]*eventcounter.VariationResult, variationNum)
 	sampleSeries := make([]series.Series, 0, variationNum)
+	// Derive the prior from the observed data (empirical Bayes) so the prior
+	// auto-adapts to whatever scale this metric lives on (sub-unit conversions,
+	// dollars, yen, seconds, …) instead of being anchored to an arbitrary
+	// hardcoded constant.
+	priorMu, priorKappa, priorAlpha, priorBeta := computeEmpiricalBayesPriors(means, vars, sizes)
 	for i := 0; i < variationNum; i++ {
 		post := calcPosterior(
 			sizes[i],
 			means[i],
 			vars[i],
-			priorMean,
+			priorMu,
 			priorKappa,
 			priorAlpha,
 			priorBeta,
@@ -113,6 +145,79 @@ func calcPosterior(
 		alpha: postAlpha,
 		beta:  postBeta,
 	}
+}
+
+// computeEmpiricalBayesPriors derives weakly-informative Normal-Inverse-Gamma
+// prior hyper-parameters from the observed per-variation summaries:
+//
+//	mu0    = pooled (sample-size-weighted) mean across variations
+//	kappa0 = 1                              // 1 pseudo-observation for the mean
+//	alpha0 = 1                              // 1 pseudo-dof for the variance
+//	beta0  = pooled within-variation sample variance
+//	         = Σ(n_i - 1) · s_i² / Σ(n_i - 1)
+//
+// Inputs `vars[i]` are already sample variances (divisor n_i - 1, as enforced
+// by Fix #1's VAR_SAMP standardisation), so Σ(n_i - 1) · s_i² recovers the
+// classical pooled sum of squared deviations.
+//
+// We pool across all variations rather than using the baseline so the prior is
+// symmetric and does not silently pull treatment posteriors toward control.
+//
+// Fallback layers (the function never returns NaN, Inf, or a non-positive
+// variance — downstream NIG sampling would blow up on any of those):
+//
+//   - per-variation: skip variations with n ≤ 0 or with non-finite mean
+//     entirely; for variance pooling, additionally skip variations with
+//     non-finite or negative variance (their mean still contributes), so a
+//     single bad row cannot poison the pooled estimate;
+//   - mean: if no variation contributes a usable sample (totalN == 0) or the
+//     pooled mean is non-finite, fall back to the full generic prior;
+//   - variance: if the pooled within-variation variance is undefined
+//     (pooledDoF == 0) or non-positive / non-finite, keep μ₀ at the pooled
+//     mean but fall back to fallbackPriorAlpha / fallbackPriorBeta for the
+//     variance prior.
+func computeEmpiricalBayesPriors(
+	means, vars []float64,
+	sizes []int64,
+) (mu, kappa, alpha, beta float64) {
+	var totalN int64
+	var sumNX float64
+	var pooledSS float64
+	var pooledDoF int64
+	for i, n := range sizes {
+		if n <= 0 {
+			continue
+		}
+		m := means[i]
+		if math.IsNaN(m) || math.IsInf(m, 0) {
+			continue
+		}
+		totalN += n
+		sumNX += float64(n) * m
+		if n > 1 {
+			v := vars[i]
+			if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+				continue
+			}
+			pooledSS += float64(n-1) * v
+			pooledDoF += n - 1
+		}
+	}
+	if totalN == 0 {
+		return fallbackPriorMean, fallbackPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	pooledMean := sumNX / float64(totalN)
+	if math.IsNaN(pooledMean) || math.IsInf(pooledMean, 0) {
+		return fallbackPriorMean, fallbackPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	if pooledDoF == 0 {
+		return pooledMean, empiricalPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	pooledVar := pooledSS / float64(pooledDoF)
+	if pooledVar <= 0 || math.IsNaN(pooledVar) || math.IsInf(pooledVar, 0) {
+		return pooledMean, empiricalPriorKappa, fallbackPriorAlpha, fallbackPriorBeta
+	}
+	return pooledMean, empiricalPriorKappa, empiricalPriorAlpha, pooledVar
 }
 
 func generateNormalGamma(src rand.Source, n int, mu float64, lambda float64, alpha float64, beta float64) []float64 {
