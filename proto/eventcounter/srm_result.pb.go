@@ -38,14 +38,11 @@ type SrmResult_Status int32
 
 const (
 	SrmResult_UNKNOWN SrmResult_Status = 0
-	// p_value >= threshold; observed split is consistent with intended split.
+	// p_value >= threshold; observed split matches intended split.
 	SrmResult_OK SrmResult_Status = 1
-	// p_value < threshold; observed split differs from intended (results may be
-	// invalid until investigated).
+	// p_value < threshold; observed split differs from intended.
 	SrmResult_MISMATCH SrmResult_Status = 2
-	// The check could not be computed (e.g. no rollout strategy, weights all
-	// zero, sample size below the chi-square approximation's reliable floor).
-	// See skip_reason.
+	// Check could not be computed; see skip_reason for the cause.
 	SrmResult_SKIPPED SrmResult_Status = 3
 )
 
@@ -97,7 +94,11 @@ func (SrmResult_Status) EnumDescriptor() ([]byte, []int) {
 // count against the intended traffic split (the feature's default rollout
 // strategy weights). An SRM silently invalidates A/B test conclusions, so
 // the calculator computes this once per experiment-calculation cycle and
-// surfaces a warning when p_value < threshold.
+// surfaces a warning when p_value < threshold. Status SKIPPED is returned
+// when the inputs are unusable (no rollout strategy, weights all zero,
+// total observed sample below the chi-square reliability floor, smallest
+// expected cell below the reliability floor, etc.); skip_reason explains
+// the specific cause.
 type SrmResult struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

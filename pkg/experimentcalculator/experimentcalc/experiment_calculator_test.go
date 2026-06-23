@@ -17,12 +17,15 @@ package experimentcalc
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
@@ -433,3 +436,106 @@ func TestBuildGetFeatureRequestForSRM(t *testing.T) {
 }
 
 func int32Ptr(v int32) *int32 { return &v }
+
+// TestComputeExperimentSRM_NoGoalResults_ReturnsSkippedWithReason covers the
+// early-return path in computeExperimentSRM when the calculator hands it an
+// empty []*GoalResult (e.g. every goal produced an empty per-variation list,
+// or the calculator hit one of the early-skip branches in calcGoalResult for
+// every goal). The SRM result must still be non-nil with a stable, exact
+// skip_reason — the dashboard renders this string verbatim, so it's
+// effectively part of the API contract and any change should be a deliberate
+// test update.
+func TestComputeExperimentSRM_NoGoalResults_ReturnsSkippedWithReason(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	calc := creatExperimentCalculator(mockController)
+	// No EXPECT on the feature client — the empty-goalResults branch must
+	// short-circuit before calling it.
+	exp := &experimentproto.Experiment{Id: "exp-1", FeatureId: "feature-1", FeatureVersion: 3}
+
+	res := calc.computeExperimentSRM(context.Background(), "env-1", exp, nil)
+
+	if assert.NotNil(t, res) {
+		assert.Equal(t, eventcounter.SrmResult_SKIPPED, res.Status)
+		assert.Equal(t,
+			"no goal results available to derive observed traffic split",
+			res.SkipReason,
+			"skip_reason for the empty-goalResults early-return must be a "+
+				"stable, exact string — the UI renders it verbatim")
+		assert.InDelta(t, DefaultSRMThreshold, res.Threshold, 1e-9)
+		assert.Empty(t, res.Variations,
+			"no goal results → no per-variation breakdown to surface")
+	}
+}
+
+// TestComputeExperimentSRM_FeatureFetchFailure_DoesNotLeakError verifies that
+// when the feature client returns an error (network, NotFound, auth, etc.),
+// the SRM result returned to the API does NOT echo the raw error string. The
+// underlying error can carry internal backend details (gRPC status metadata,
+// internal error chains, stack hints) that we must not expose to external API
+// consumers; the detailed error is logged at Warn level instead.
+func TestComputeExperimentSRM_FeatureFetchFailure_DoesNotLeakError(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	registerer := metricsmock.NewMockRegisterer(mockController)
+	registerer.EXPECT().MustRegister(gomock.Any()).Return().AnyTimes()
+
+	mockFeatureClient := featureclient.NewMockClient(mockController)
+	// Sensitive-looking internal error string we must not echo back.
+	internalErr := status.Error(codes.Internal,
+		"internal: backend db connection refused (host=db-internal-01:3306, user=admin)")
+	mockFeatureClient.EXPECT().
+		GetFeature(gomock.Any(), gomock.Any()).
+		Return(nil, internalErr).
+		Times(1)
+
+	calc := NewExperimentCalculator(
+		stan.NewStan("localhost", "8080", registerer, zap.NewNop()),
+		stanModelID,
+		envclient.NewMockClient(mockController),
+		ecclient.NewMockClient(mockController),
+		experimentclient.NewMockClient(mockController),
+		mockFeatureClient,
+		storagemock.NewMockExperimentResultStorage(mockController),
+		registerer,
+		jpLocation,
+		zap.NewNop(),
+	)
+
+	// Minimum-viable experiment + a single goal result so the path reaches
+	// the feature fetch (computeExperimentSRM early-returns when goalResults
+	// is empty before calling the feature client).
+	exp := &experimentproto.Experiment{
+		Id:             "exp-1",
+		FeatureId:      "feature-1",
+		FeatureVersion: 3,
+	}
+	goalResults := []*eventcounter.GoalResult{{
+		VariationResults: []*eventcounter.VariationResult{
+			{VariationId: "vid1", EvaluationCount: &eventcounter.VariationCount{UserCount: 5000}},
+			{VariationId: "vid2", EvaluationCount: &eventcounter.VariationCount{UserCount: 5000}},
+		},
+	}}
+
+	res := calc.computeExperimentSRM(context.Background(), "env-1", exp, goalResults)
+
+	if assert.NotNil(t, res) {
+		assert.Equal(t, eventcounter.SrmResult_SKIPPED, res.Status)
+		assert.Equal(t, "could not fetch feature definition", res.SkipReason,
+			"skip_reason must be a fixed generic string — the raw gRPC error "+
+				"can carry internal backend detail and must not be exposed via the API")
+		// Defense-in-depth: explicitly assert that none of the sensitive
+		// substrings from the internal error leaked into the API field.
+		for _, leak := range []string{"db-internal-01", "admin", "connection refused", "Internal"} {
+			assert.False(t,
+				strings.Contains(res.SkipReason, leak),
+				"skip_reason must not leak internal error substring %q (got %q)",
+				leak, res.SkipReason)
+		}
+		assert.InDelta(t, DefaultSRMThreshold, res.Threshold, 1e-9)
+	}
+}
+

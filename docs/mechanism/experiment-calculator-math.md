@@ -562,7 +562,12 @@ expected count). The p-value is `1 − CDF_{χ²(df)}(χ²)`.
 - All rollout weights are zero.
 - Total observed users < 100 — chi-square's asymptotic approximation is
   unreliable when expected cell counts are small.
+- Smallest expected per-variation count < 5 — violates the chi-square
+  per-cell reliability floor (Cochran, 1954), even when the total sample
+  clears the 100-user floor (e.g. on highly skewed rollouts like 99/1).
 - Fewer than 2 cells have positive expected counts.
+- Feature could not be fetched (network / auth / NotFound) — the calculator
+  degrades gracefully instead of blocking experiment results.
 
 ### Caveats
 

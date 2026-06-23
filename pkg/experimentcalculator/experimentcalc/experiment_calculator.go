@@ -283,10 +283,14 @@ func (e ExperimentCalculator) computeExperimentSRM(
 				zap.Error(err),
 			)...,
 		)
+		// Generic message — skip_reason is exposed via the API. The
+		// underlying gRPC error can carry internal backend details (status
+		// metadata, stack hints, etc.) that we don't want to leak to API
+		// consumers; the full error is already in the Warn log above.
 		return &eventcounter.SrmResult{
 			Status:     eventcounter.SrmResult_SKIPPED,
 			Threshold:  DefaultSRMThreshold,
-			SkipReason: fmt.Sprintf("could not fetch feature definition: %v", err),
+			SkipReason: "could not fetch feature definition",
 		}
 	}
 	return computeSRM(goalResults[0].VariationResults, feature, DefaultSRMThreshold)
