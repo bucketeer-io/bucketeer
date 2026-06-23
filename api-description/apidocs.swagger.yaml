@@ -7365,7 +7365,9 @@ definitions:
       pValue:
         type: number
         format: double
-        description: Two-tailed p-value of the chi-square goodness-of-fit statistic.
+        description: |-
+          Right-tail p-value of the chi-square goodness-of-fit statistic:
+          p = P(X >= chi_square) where X ~ ChiSquared(degrees_of_freedom).
       chiSquare:
         type: number
         format: double
