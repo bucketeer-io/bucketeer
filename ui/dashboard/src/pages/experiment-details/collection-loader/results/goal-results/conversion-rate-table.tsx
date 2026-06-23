@@ -14,8 +14,12 @@ const formatRelativeLift = (value: number, base: number) => {
     return '—';
   const lift = ((value - base) / base) * 100;
   if (!Number.isFinite(lift)) return '—';
-  const sign = lift > 0 ? '+' : '';
-  return `${sign}${lift.toFixed(1)}%`;
+  // Round before formatting and normalize -0 so small negative lifts that
+  // round to zero render as "0.0%" rather than a confusing "-0.0%".
+  let rounded = Math.round(lift * 10) / 10;
+  if (Object.is(rounded, -0)) rounded = 0;
+  const sign = rounded > 0 ? '+' : '';
+  return `${sign}${rounded.toFixed(1)}%`;
 };
 
 const ConversionRateTable = ({
