@@ -194,40 +194,47 @@ const Strategy = ({
 
   return (
     <div className="px-2">
-      {label && (
-        <Form.Label
-          required={isRequired}
-          className={cn('relative w-fit mb-2 ml-14 text-gray-700')}
-        >
-          {label}
-        </Form.Label>
-      )}
-      <div className="flex items-start w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase shrink-0">
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-end">
+        <p className="typo-para-small text-gray-600 uppercase shrink-0 pb-0 sm:pb-3">
           {t('feature-flags.serve')}
         </p>
-        <Form.Field
-          control={control}
-          name={`${rootName}.currentOption`}
-          render={({ field }) => {
-            return (
-              <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
-                <Form.Control>
-                  <Dropdown
-                    value={currentOption}
-                    options={options}
-                    onChange={val => handleChangeStrategy(val, field.onChange)}
-                    disabled={isDisabled}
-                    wrapTriggerStyle="flex flex-col gap-y-2 w-full"
-                    contentClassName="min-w-[200px] w-full max-w-[300px]"
-                    className="w-full"
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            );
-          }}
-        />
+
+        <div className="flex items-start w-full gap-x-4">
+          <div className="w-full">
+            {label && (
+              <Form.Label
+                required={isRequired}
+                className={cn('relative w-fit mb-2 text-gray-700')}
+              >
+                {label}
+              </Form.Label>
+            )}
+            <Form.Field
+              control={control}
+              name={`${rootName}.currentOption`}
+              render={({ field }) => {
+                return (
+                  <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
+                    <Form.Control>
+                      <Dropdown
+                        value={currentOption}
+                        options={options}
+                        onChange={val =>
+                          handleChangeStrategy(val, field.onChange)
+                        }
+                        disabled={isDisabled}
+                        wrapTriggerStyle="flex flex-col gap-y-2 w-full"
+                        contentClassName="min-w-[200px] w-full max-w-[300px]"
+                        className="w-full"
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {isShowPercentage && (

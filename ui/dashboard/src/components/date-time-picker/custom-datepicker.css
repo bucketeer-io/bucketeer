@@ -115,10 +115,10 @@
     @apply w-full;
   }
   .react-datepicker__time-list {
-    @apply !h-auto flex flex-wrap gap-2 overflow-visible p-3;
+    @apply !h-auto grid grid-cols-3 gap-2 overflow-visible p-3;
   }
   .react-datepicker__time-list-item {
-    @apply !h-auto shrink-0 rounded-md border border-gray-200 px-3 py-2;
+    @apply !h-auto w-full min-w-0 rounded-md border border-gray-200 px-3 py-2 text-center;
   }
   .react-datepicker__time-box {
     @apply !w-full;
