@@ -890,8 +890,8 @@ func (e ExperimentCalculator) calculateSummary(
 	}
 
 	// Build a best-variations list per metric so the confidence banner can stay
-	// metric-aware: CVR drives the conversion-rate tab, value-per-user drives
-	// the Value/User tab.
+	// metric-aware: CVR drives the conversion-rate chart, value-per-user drives
+	// the value charts (Value/User and Value/Total).
 	cvrBestVariations := pickBestVariations(
 		goalResult.VariationResults,
 		func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
