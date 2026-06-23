@@ -7324,6 +7324,14 @@ definitions:
       totalEvaluationUserCount:
         type: string
         format: int64
+      srmResult:
+        $ref: '#/definitions/eventcounterSrmResult'
+        description: |-
+          Sample Ratio Mismatch (SRM) check over the experiment's evaluation
+          user counts vs the feature's intended rollout weights. Computed once
+          per calculation cycle; status SKIPPED with a reason when the inputs
+          are not usable. See proto/eventcounter/srm_result.proto for the
+          status semantics.
   eventcounterGoalResult:
     type: object
     properties:
@@ -7349,6 +7357,81 @@ definitions:
         items:
           type: number
           format: double
+  eventcounterSrmResult:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/eventcounterSrmResultStatus'
+      pValue:
+        type: number
+        format: double
+        description: Two-tailed p-value of the chi-square goodness-of-fit statistic.
+      chiSquare:
+        type: number
+        format: double
+        description: 'Chi-square test statistic: Σ (observed - expected)² / expected.'
+      degreesOfFreedom:
+        type: string
+        format: int64
+        description: |-
+          Degrees of freedom (K - 1 where K = number of variations with
+          expected_user_count > 0).
+      threshold:
+        type: number
+        format: double
+        description: p_value threshold below which the status flips to MISMATCH.
+      skipReason:
+        type: string
+        description: Human-readable reason this check was SKIPPED. Empty otherwise.
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterSrmVariation'
+        description: Per-variation observed vs expected breakdown.
+    description: |-
+      SrmResult reports the outcome of a Sample Ratio Mismatch (SRM) check: a
+      chi-square goodness-of-fit test comparing each variation's observed user
+      count against the intended traffic split (the feature's default rollout
+      strategy weights). An SRM silently invalidates A/B test conclusions, so
+      the calculator computes this once per experiment-calculation cycle and
+      surfaces a warning when p_value < threshold.
+  eventcounterSrmResultStatus:
+    type: string
+    enum:
+      - UNKNOWN
+      - OK
+      - MISMATCH
+      - SKIPPED
+    default: UNKNOWN
+    description: |2-
+       - OK: p_value >= threshold; observed split is consistent with intended split.
+       - MISMATCH: p_value < threshold; observed split differs from intended — results
+      may be invalid until the mismatch is investigated.
+       - SKIPPED: The check could not be computed (no rollout strategy, weights all
+      zero, sample size below the chi-square approximation's reliable
+      floor, etc.). See skip_reason for details.
+  eventcounterSrmVariation:
+    type: object
+    properties:
+      variationId:
+        type: string
+      observedUserCount:
+        type: string
+        format: int64
+        description: |-
+          Number of unique users assigned to this variation during the experiment
+          window (VariationResult.evaluation_count.user_count).
+      expectedUserCount:
+        type: number
+        format: double
+        description: |-
+          Expected number of users under the intended split:
+          total_observed_users * expected_weight.
+      expectedWeight:
+        type: number
+        format: double
+        description: Normalized intended traffic weight in [0, 1].
   eventcounterSummaryVariation:
     type: object
     properties:
