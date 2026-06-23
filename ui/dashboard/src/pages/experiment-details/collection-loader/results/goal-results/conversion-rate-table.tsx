@@ -10,9 +10,10 @@ import { DatasetReduceType } from './timeseries-area-line-chart';
 // percentage. Returns an em dash when the baseline is zero or the inputs
 // are not finite, since relative lift is undefined there.
 const formatRelativeLift = (value: number, base: number) => {
-  if (!isNumber(value) || !isNumber(base) || base === 0) return '—';
+  if (!Number.isFinite(value) || !Number.isFinite(base) || base === 0)
+    return '—';
   const lift = ((value - base) / base) * 100;
-  if (!isNumber(lift)) return '—';
+  if (!Number.isFinite(lift)) return '—';
   const sign = lift > 0 ? '+' : '';
   return `${sign}${lift.toFixed(1)}%`;
 };
