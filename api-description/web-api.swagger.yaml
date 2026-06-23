@@ -11896,7 +11896,13 @@ definitions:
       expectedWeight:
         type: number
         format: double
-        description: Normalized intended traffic weight in [0, 1].
+        description: |-
+          Audience-aware expected fraction of total traffic for this variation,
+          in [0, 1]. Sums to 1 across the rollout's variations. Accounts for the
+          rollout strategy's Audience Traffic Allocation: when audience.percentage
+          is in 1-99 and audience.default_variation is set, the default variation
+          receives (1 - audience_fraction) extra share to credit the
+          out-of-audience users that the SDK routes to it.
   eventcounterSummaryVariation:
     type: object
     properties:

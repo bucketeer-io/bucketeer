@@ -214,7 +214,12 @@ type SrmVariation struct {
 	// Expected number of users under the intended split:
 	// total_observed_users * expected_weight.
 	ExpectedUserCount float64 `protobuf:"fixed64,3,opt,name=expected_user_count,json=expectedUserCount,proto3" json:"expected_user_count"`
-	// Normalized intended traffic weight in [0, 1].
+	// Audience-aware expected fraction of total traffic for this variation,
+	// in [0, 1]. Sums to 1 across the rollout's variations. Accounts for the
+	// rollout strategy's Audience Traffic Allocation: when audience.percentage
+	// is in 1-99 and audience.default_variation is set, the default variation
+	// receives (1 - audience_fraction) extra share to credit the
+	// out-of-audience users that the SDK routes to it.
 	ExpectedWeight float64 `protobuf:"fixed64,4,opt,name=expected_weight,json=expectedWeight,proto3" json:"expected_weight"`
 }
 

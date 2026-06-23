@@ -56,8 +56,10 @@ var (
 	errSRMNoDefaultStrategy  = errors.New("feature has no default strategy")
 	errSRMNotRolloutStrategy = errors.New(
 		"feature default strategy is not a rollout (no per-variation weights to test against)")
-	errSRMNoRolloutVariations = errors.New("feature rollout strategy has no variations")
-	errSRMAllWeightsZero      = errors.New("all rollout weights are zero")
+	errSRMNoRolloutVariations         = errors.New("feature rollout strategy has no variations")
+	errSRMAllWeightsZero              = errors.New("all rollout weights are zero")
+	errSRMAudienceDefaultNotInRollout = errors.New(
+		"audience default_variation is not one of the rollout variations (cannot compute expected split)")
 	errSRMInsufficientSamples = errors.New(
 		"total observed users below the minimum required for a reliable chi-square test")
 	errSRMTooFewExpectedCells = errors.New("fewer than 2 variations with positive expected user counts")
@@ -67,25 +69,33 @@ var (
 
 // computeSRM runs a chi-square goodness-of-fit test comparing each variation's
 // observed user count (from VariationResult.evaluation_count.user_count) against
-// the intended traffic split defined by the feature's default rollout strategy
-// weights. The result is always non-nil and always populated with the
-// per-variation observed/expected breakdown (when available), so the UI can
-// render a meaningful diagnostic in both the OK and SKIPPED cases.
+// the intended traffic split defined by the feature's default rollout strategy.
+// The expected split is audience-aware (see extractExpectedFractions): the
+// Audience Traffic Allocation's out-of-audience users are correctly attributed
+// to audience.default_variation rather than being treated as a bucketing bug.
+// The result is always non-nil and always populated with the per-variation
+// observed/expected breakdown (when available), so the UI can render a
+// meaningful diagnostic in both the OK and SKIPPED cases.
 //
 // Status semantics:
 //   - OK       — p_value >= threshold; observed split matches intended split.
 //   - MISMATCH — p_value < threshold; warn the user, results may be invalid.
 //   - SKIPPED  — inputs are unusable (no rollout strategy, weights all zero,
-//     total sample below the chi-square's reliable floor, or fewer than two
-//     cells have positive expected counts). skip_reason explains which.
+//     audience default_variation not in the rollout, total sample below the
+//     chi-square's reliable floor, smallest expected cell below the per-cell
+//     reliability floor, or fewer than two cells have positive expected
+//     counts). skip_reason explains which.
 //
-// Known caveats (documented in docs/mechanism/experiment-calculator-math.md):
-//   - When the feature has targeting rules or individual overrides, some users
-//     may be assigned by rule rather than by the rollout split. The reported
-//     SRM will then include rule-matched users and may flag mismatches that
-//     reflect targeting rather than a real bucketing bug. MVP intentionally
-//     errs on the side of false positives (recoverable) over false negatives
-//     (silently invalid experiments).
+// Known caveat (documented in docs/mechanism/experiment-calculator-math.md):
+//
+//	When the feature has rule-based targeting or individual overrides, some
+//	users may be assigned by rule rather than by the rollout. The reported
+//	SRM will then include rule-matched users and may flag mismatches that
+//	reflect targeting rather than a real bucketing bug. The MVP intentionally
+//	errs on the side of false positives (recoverable) over false negatives
+//	(silently invalid experiments). The Audience-Traffic-Allocation case is
+//	handled correctly above — only per-user / per-segment targeting remains
+//	a residual caveat.
 func computeSRM(
 	variationResults []*eventcounter.VariationResult,
 	feature *featureproto.Feature,
@@ -96,7 +106,7 @@ func computeSRM(
 	}
 	res := &eventcounter.SrmResult{Threshold: threshold}
 
-	weights, err := extractRolloutWeights(feature)
+	fractions, err := extractExpectedFractions(feature)
 	if err != nil {
 		res.Status = eventcounter.SrmResult_SKIPPED
 		res.SkipReason = err.Error()
@@ -111,18 +121,19 @@ func computeSRM(
 		observedByID[vr.VariationId] = vr.EvaluationCount.UserCount
 	}
 
-	// Build the variation set as the union of (a) the rollout-strategy weights
-	// and (b) the observed variation IDs. Iterating only the weights would
-	// silently drop any user assigned to a variation that's not in the
-	// rollout — which can happen with experiment schema drift (a variation
-	// removed from the rollout but stale assignments still in flight) or with
-	// genuinely leaked traffic. Those users still belong in totalObserved, and
-	// the per-variation breakdown should still surface them (with
-	// expected_weight=0) so the UI can show "unknown variation X received N
-	// users". Sorting yields a deterministic per-variation order across runs.
-	seen := make(map[string]struct{}, len(weights)+len(observedByID))
-	vids := make([]string, 0, len(weights)+len(observedByID))
-	for vid := range weights {
+	// Build the variation set as the union of (a) the rollout-strategy
+	// expected fractions and (b) the observed variation IDs. Iterating only
+	// the fractions would silently drop any user assigned to a variation
+	// that's not in the rollout — which can happen with experiment schema
+	// drift (a variation removed from the rollout but stale assignments
+	// still in flight) or with genuinely leaked traffic. Those users still
+	// belong in totalObserved, and the per-variation breakdown should still
+	// surface them (with expected_weight=0) so the UI can show "unknown
+	// variation X received N users". Sorting yields a deterministic
+	// per-variation order across runs.
+	seen := make(map[string]struct{}, len(fractions)+len(observedByID))
+	vids := make([]string, 0, len(fractions)+len(observedByID))
+	for vid := range fractions {
 		if _, ok := seen[vid]; ok {
 			continue
 		}
@@ -139,31 +150,20 @@ func computeSRM(
 	sort.Strings(vids)
 
 	var totalObserved int64
-	var totalWeight int64
 	perVariation := make([]*eventcounter.SrmVariation, 0, len(vids))
 	for _, vid := range vids {
-		w := weights[vid] // 0 for variations observed but absent from rollout
+		f := fractions[vid] // 0 for variations observed but absent from rollout
 		observed := observedByID[vid]
 		totalObserved += observed
-		totalWeight += w
 		perVariation = append(perVariation, &eventcounter.SrmVariation{
 			VariationId:       vid,
 			ObservedUserCount: observed,
-			// ExpectedWeight stored as raw weight here; normalized below
-			// once totalWeight is known.
-			ExpectedWeight: float64(w),
+			ExpectedWeight:    f,
 		})
 	}
 	res.Variations = perVariation
 
-	if totalWeight <= 0 {
-		res.Status = eventcounter.SrmResult_SKIPPED
-		res.SkipReason = errSRMAllWeightsZero.Error()
-		return res
-	}
-
 	for _, v := range perVariation {
-		v.ExpectedWeight = v.ExpectedWeight / float64(totalWeight)
 		v.ExpectedUserCount = v.ExpectedWeight * float64(totalObserved)
 	}
 
@@ -226,10 +226,46 @@ func computeSRM(
 	return res
 }
 
-// extractRolloutWeights returns the intended per-variation traffic weights
-// from the feature's default rollout strategy. Returns an error (mapped 1:1
-// to an SrmResult SKIPPED reason by computeSRM) when no usable rollout exists.
-func extractRolloutWeights(feature *featureproto.Feature) (map[string]int64, error) {
+// extractExpectedFractions returns the audience-adjusted expected fraction
+// of total observed traffic for each variation in the feature's default
+// rollout strategy. The returned fractions sum to exactly 1.0 (modulo
+// floating-point rounding) over the rollout's variations.
+//
+// Bucketeer's rollout strategy has two independent layers:
+//
+//  1. Audience Traffic Allocation (audience.percentage, in 1-99): a fraction
+//     of users is excluded from the experiment and served
+//     audience.default_variation. Per pkg/.../strategy_evaluator.go's
+//     rollout() function, those excluded users still emit EvaluationEvents
+//     (with the default variation's id), so they count toward the SRM
+//     observed user counts.
+//  2. Variation Allocation (per-variation weight): the in-audience traffic
+//     is split between variations according to these weights.
+//
+// For each variation V_i with rollout weight w_i (in-audience fraction
+// p_i = w_i / Σw) and audience fraction a (= audience.percentage / 100,
+// or 1.0 when no audience config or audience.percentage in {0, 100}; see
+// strategy_evaluator.go which only filters when 0 < pct < 100):
+//
+//	expected_fraction(V_i) = a · p_i              if V_i != D
+//	expected_fraction(D)   = a · p_D + (1 - a)
+//
+// where D = audience.default_variation. The sum across all V_i is
+// a · Σp + (1 - a) = a + (1 - a) = 1.
+//
+// When D is empty (audience.default_variation unset), excluded users emit
+// no EvaluationEvent — observed counts only contain in-audience users — and
+// the raw per-variation weights are the correct expected fractions. We
+// model this by treating a as 1.0 for the SRM calculation: it is
+// mathematically equivalent.
+//
+// Returns an error (mapped 1:1 to an SrmResult SKIPPED reason by computeSRM)
+// when no usable rollout exists, when all weights are zero, or when
+// audience.default_variation is set but is not one of the rollout's
+// variations (shouldn't happen per UI validation, but defensive — we
+// refuse to compute SRM rather than silently mis-attributing the excluded
+// traffic).
+func extractExpectedFractions(feature *featureproto.Feature) (map[string]float64, error) {
 	if feature == nil {
 		return nil, errSRMFeatureMissing
 	}
@@ -240,12 +276,68 @@ func extractRolloutWeights(feature *featureproto.Feature) (map[string]int64, err
 	if strat.Type != featureproto.Strategy_ROLLOUT || strat.RolloutStrategy == nil {
 		return nil, errSRMNotRolloutStrategy
 	}
-	if len(strat.RolloutStrategy.Variations) == 0 {
+	rs := strat.RolloutStrategy
+	if len(rs.Variations) == 0 {
 		return nil, errSRMNoRolloutVariations
 	}
-	weights := make(map[string]int64, len(strat.RolloutStrategy.Variations))
-	for _, v := range strat.RolloutStrategy.Variations {
-		weights[v.Variation] = int64(v.Weight)
+
+	var totalWeight int64
+	for _, v := range rs.Variations {
+		totalWeight += int64(v.Weight)
 	}
-	return weights, nil
+	if totalWeight <= 0 {
+		return nil, errSRMAllWeightsZero
+	}
+
+	// Determine the audience adjustment. The audience filter is only
+	// observable to SRM when ALL three conditions hold:
+	//   - audience != nil
+	//   - 0 < audience.percentage < 100 (strategy_evaluator.go only
+	//     filters in this range; outside it, every user goes through
+	//     the variation weights as if no audience were configured)
+	//   - audience.default_variation != "" (when empty, rollout()
+	//     returns ErrVariationNotFound for excluded users so the SDK
+	//     never fires an EvaluationEvent for them; observed counts then
+	//     reflect only in-audience users and the raw weights are
+	//     correct, equivalent to treating a as 1.0 here)
+	// Outside those conditions the adjustment is a no-op (a = 1.0,
+	// defaultVariation = ""), which is exactly the pre-audience-aware
+	// behavior.
+	audienceFraction := 1.0
+	defaultVariation := ""
+	if a := rs.Audience; a != nil {
+		if a.Percentage > 0 && a.Percentage < 100 && a.DefaultVariation != "" {
+			audienceFraction = float64(a.Percentage) / 100.0
+			defaultVariation = a.DefaultVariation
+		}
+	}
+
+	// Defensive: if audience.default_variation is set but is not one of the
+	// rollout's variations, we can't correctly attribute the out-of-audience
+	// users. UI validation should prevent this, but if a misconfigured flag
+	// reaches the calculator we want to surface a SKIP rather than silently
+	// distort the expected counts.
+	if defaultVariation != "" {
+		found := false
+		for _, v := range rs.Variations {
+			if v.Variation == defaultVariation {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, errSRMAudienceDefaultNotInRollout
+		}
+	}
+
+	fractions := make(map[string]float64, len(rs.Variations))
+	for _, v := range rs.Variations {
+		pi := float64(v.Weight) / float64(totalWeight)
+		ef := audienceFraction * pi
+		if v.Variation == defaultVariation {
+			ef += 1.0 - audienceFraction
+		}
+		fractions[v.Variation] = ef
+	}
+	return fractions, nil
 }
