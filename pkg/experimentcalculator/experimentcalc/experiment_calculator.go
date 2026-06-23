@@ -26,16 +26,20 @@ import (
 	"github.com/go-gota/gota/dataframe"
 	"go.uber.org/zap"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (
@@ -56,6 +60,7 @@ type ExperimentCalculator struct {
 	environmentClient       envclient.Client
 	eventCounterClient      ecclient.Client
 	experimentClient        experimentclient.Client
+	featureClient           featureclient.Client
 	experimentResultStorage v2es.ExperimentResultStorage
 	metrics                 metrics.Registerer
 
@@ -69,6 +74,7 @@ func NewExperimentCalculator(
 	environmentClient envclient.Client,
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
+	featureClient featureclient.Client,
 	experimentResultStorage v2es.ExperimentResultStorage,
 	metrics metrics.Registerer,
 	loc *time.Location,
@@ -81,6 +87,7 @@ func NewExperimentCalculator(
 		environmentClient:       environmentClient,
 		eventCounterClient:      eventCounterClient,
 		experimentClient:        experimentClient,
+		featureClient:           featureClient,
 		experimentResultStorage: experimentResultStorage,
 		metrics:                 metrics,
 		location:                loc,
@@ -232,7 +239,69 @@ func (e ExperimentCalculator) createExperimentResult(
 
 	experimentResult.TotalEvaluationUserCount = totalEvaluationUserCount
 
+	// Compute Sample Ratio Mismatch (SRM) against the feature's intended
+	// rollout weights. SRM is naturally per-experiment, not per-goal, since
+	// evaluation user counts are shared across goals; reuse the first goal
+	// result's variation breakdown.
+	experimentResult.SrmResult = e.computeExperimentSRM(ctx, envNamespace, experiment, experimentResult.GoalResults)
+
 	return experimentResult, nil
+}
+
+// computeExperimentSRM fetches the feature definition for `experiment` and runs
+// the chi-square SRM check against the first goal's variation evaluation
+// counts. Always returns a non-nil result so the UI can render a meaningful
+// diagnostic; on a feature-fetch error or missing goal data, the result is
+// SKIPPED with an explanatory reason rather than nil.
+func (e ExperimentCalculator) computeExperimentSRM(
+	ctx context.Context,
+	environmentID string,
+	experiment *experiment.Experiment,
+	goalResults []*eventcounter.GoalResult,
+) *eventcounter.SrmResult {
+	if len(goalResults) == 0 {
+		return &eventcounter.SrmResult{
+			Status:     eventcounter.SrmResult_SKIPPED,
+			Threshold:  DefaultSRMThreshold,
+			SkipReason: "no goal results available to derive observed traffic split",
+		}
+	}
+	feature, err := e.getFeatureForSRM(ctx, environmentID, experiment)
+	if err != nil {
+		// Log at info level (not error) — SRM is best-effort diagnostic
+		// metadata, not the primary calculator output. A failure to fetch
+		// the feature should not block experiment results.
+		e.logger.Error("SRM check: failed to fetch feature, marking SKIPPED",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("environmentId", environmentID),
+				zap.String("featureId", experiment.FeatureId),
+				zap.Int32("featureVersion", experiment.FeatureVersion),
+				zap.Error(err),
+			)...,
+		)
+		return &eventcounter.SrmResult{
+			Status:     eventcounter.SrmResult_SKIPPED,
+			Threshold:  DefaultSRMThreshold,
+			SkipReason: fmt.Sprintf("could not fetch feature definition: %v", err),
+		}
+	}
+	return computeSRM(goalResults[0].VariationResults, feature, DefaultSRMThreshold)
+}
+
+func (e ExperimentCalculator) getFeatureForSRM(
+	ctx context.Context,
+	environmentID string,
+	experiment *experiment.Experiment,
+) (*featureproto.Feature, error) {
+	resp, err := e.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		Id:             experiment.FeatureId,
+		EnvironmentId:  environmentID,
+		FeatureVersion: wrapperspb.Int32(experiment.FeatureVersion),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Feature, nil
 }
 
 func (e ExperimentCalculator) getEvaluationCount(

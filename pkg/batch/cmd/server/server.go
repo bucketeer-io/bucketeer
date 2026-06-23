@@ -630,6 +630,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			experimentClient,
 			eventCounterClient,
+			featureClient,
 			experimentResultStorage,
 			calculator.NewExperimentLock(nonPersistentRedisClient, *s.experimentLockTTL),
 			location,

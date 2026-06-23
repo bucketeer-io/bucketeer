@@ -29,6 +29,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2/mock"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	metricsmock "github.com/bucketeer-io/bucketeer/v2/pkg/metrics/mock"
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -52,6 +53,7 @@ func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCal
 		envclient.NewMockClient(mockController),
 		ecclient.NewMockClient(mockController),
 		experimentclient.NewMockClient(mockController),
+		featureclient.NewMockClient(mockController),
 		storagemock.NewMockExperimentResultStorage(mockController),
 		registerer,
 		jpLocation,

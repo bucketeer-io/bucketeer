@@ -521,6 +521,64 @@ Expected Loss(B) = 0.02%  (choosing B costs almost nothing)
 
 ---
 
+## 11. Sample Ratio Mismatch (SRM) Detection
+
+Even a perfect statistical model is meaningless if the **traffic split is
+wrong**. If a 50/50 experiment silently runs 53/47 (broken bucketing, bot
+traffic, redirect bug, etc.), every conclusion is invalid. SRM detection
+catches this.
+
+### The Test
+
+A standard **chi-square goodness-of-fit test** compares each variation's
+observed user count against the expected count under the intended split:
+
+```
+χ² = Σ (Oᵢ − Eᵢ)² / Eᵢ
+```
+
+Where:
+
+- **Oᵢ** = observed users in variation *i* (`VariationResult.evaluation_count.user_count`)
+- **Eᵢ** = expected users in variation *i* = `total_observed × intended_weightᵢ`
+- **intended_weightᵢ** = normalized weight from the feature's default
+  rollout strategy (`feature.default_strategy.rollout_strategy.variations[].weight`)
+
+Degrees of freedom = K − 1 (where K = number of variations with positive
+expected count). The p-value is `1 − CDF_{χ²(df)}(χ²)`.
+
+### Status Semantics
+
+| Status | Meaning |
+|---|---|
+| `OK` | `p_value ≥ threshold` — observed split is consistent with intended. |
+| `MISMATCH` | `p_value < threshold` — surface a warning. Default threshold = 0.001 (the field-standard cutoff used by Microsoft ExP, Eppo, GrowthBook). |
+| `SKIPPED` | Inputs unusable — see `skip_reason`. |
+
+`SKIPPED` reasons include:
+
+- Feature has no default strategy / strategy is `FIXED` / strategy has no variations
+  → no per-variation weights to test against.
+- All rollout weights are zero.
+- Total observed users < 100 — chi-square's asymptotic approximation is
+  unreliable when expected cell counts are small.
+- Fewer than 2 cells have positive expected counts.
+
+### Caveats
+
+- **Targeting rules and individual overrides:** when the feature has
+  per-user targets or rule-based assignments, some users are assigned by
+  rule rather than by the rollout split. The reported SRM then includes
+  rule-matched users and may flag mismatches that reflect targeting rather
+  than a real bucketing bug. The MVP intentionally errs on the side of
+  false positives (recoverable: the user can investigate and dismiss) over
+  false negatives (silent invalidation).
+- **Per-experiment, not per-goal:** evaluation user counts are shared
+  across all goals in an experiment, so SRM lives on `ExperimentResult`,
+  not `GoalResult`. Computed once per calculation cycle.
+
+---
+
 ## Related Documents
 
 - [Experiment Calculator: Code Implementation](./experiment-calculator-code.md) - How these concepts are implemented in Bucketeer's codebase
