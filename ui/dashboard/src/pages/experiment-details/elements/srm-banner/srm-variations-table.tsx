@@ -72,6 +72,25 @@ const SrmVariationsTable = ({
     return v?.name || v?.value || variationId;
   };
 
+  // The backend (computeSRM in srm.go) sorts variations by variation_id
+  // for deterministic output. The conversion-rate table sitting below
+  // this one renders variations in experiment.variations order, so the
+  // two would otherwise disagree on row order even though colors align.
+  // Reorder here to match: experiment-defined variations first (in
+  // experiment order), then any unknown/leaked variations appended
+  // after, in stable alphabetical order so the output is still
+  // deterministic across runs.
+  const orderedVariations = useMemo(() => {
+    return [...variations].sort((a, b) => {
+      const ia = variationIndexById.get(a.variationId);
+      const ib = variationIndexById.get(b.variationId);
+      if (typeof ia === 'number' && typeof ib === 'number') return ia - ib;
+      if (typeof ia === 'number') return -1;
+      if (typeof ib === 'number') return 1;
+      return a.variationId.localeCompare(b.variationId);
+    });
+  }, [variations, variationIndexById]);
+
   return (
     <div className={cn('min-w-fit', className)}>
       <div className="flex w-full">
@@ -88,7 +107,7 @@ const SrmVariationsTable = ({
         ))}
       </div>
       <div className="divide-y divide-gray-300">
-        {variations.map((v, rowIndex) => {
+        {orderedVariations.map((v, rowIndex) => {
           const name = resolveName(v.variationId);
           // Prefer the variation's position in experiment.variations so
           // colors stay aligned with the conversion-rate table. Fall back

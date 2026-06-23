@@ -6,11 +6,17 @@ import { IconAlert, IconChevronDown, IconInfoFilled } from '@icons';
 import Icon from 'components/icon';
 import SrmVariationsTable from './srm-variations-table';
 
-// Canonical skip-reason prefixes emitted by the backend SRM check
-// (see pkg/experimentcalculator/experimentcalc/srm.go). Reasons with
-// dynamic suffixes (e.g. "... (got 37, need >= 100)") are matched by
-// prefix and the suffix is appended verbatim, so the locale key
-// translates the canonical part and the numeric context is preserved.
+// Canonical skip-reason prefixes emitted by the backend SRM pipeline.
+// Reasons live in two files:
+//   - pkg/experimentcalculator/experimentcalc/srm.go            (errSRM*)
+//   - pkg/experimentcalculator/experimentcalc/experiment_calculator.go
+//     (no-goal-results / feature-fetch-failed pre-checks)
+// Most entries match the full canonical string so the localized text is
+// shown verbatim. Only `insufficient-samples` and `small-expected-cell`
+// append a genuinely dynamic numeric suffix (e.g. "... (got 37, need >=
+// 100)"); for those the prefix matches only the canonical part and the
+// suffix is appended verbatim. When extending this list, mirror the
+// matching strategy to whichever style the backend emits.
 const SKIP_REASON_KEYS: { prefix: string; key: string }[] = [
   {
     prefix: 'feature definition not available',
