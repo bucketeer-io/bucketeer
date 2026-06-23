@@ -525,6 +525,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 			}
 			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
 			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
+			checkExperimentSrmResult(t, er)
 			break
 		}
 	}
@@ -701,6 +702,7 @@ func TestExperimentResult(t *testing.T) {
 			}
 			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
 			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
+			checkExperimentSrmResult(t, er)
 			break
 		}
 	}
@@ -2650,5 +2652,39 @@ func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult,
 	// value sum per user prob beat baseline
 	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBeatBaseline.Mean, 0.34, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBeatBaseline.Mean)
+	}
+}
+
+// checkExperimentSrmResult asserts that the SRM check ran end-to-end (proto
+// field populated by the calculator and serialized through the API).
+//
+// The fixture above creates the feature via CreateFeatureRequest with
+// DefaultOnVariationIndex/DefaultOffVariationIndex, which produces a FIXED
+// default strategy (no rollout weights to test against). The calculator's
+// SRM path therefore short-circuits in extractRolloutWeights with
+// "default strategy is not a rollout" before any sample-size check runs, so
+// the expected outcome here is Status == SKIPPED with a non-empty
+// skip_reason. (For the same reason, the 5-user fixture size never reaches
+// the minSRMSampleSize=100 floor either — both branches would yield
+// SKIPPED, the strategy check just wins first.)
+//
+// This is enough to catch wiring regressions (feature client not injected,
+// proto field not exposed, calculator path not executed) without requiring
+// a rollout-strategy feature or a large fixture; the in-process tests in
+// srm_test.go cover the per-branch SKIPPED reasons directly.
+func checkExperimentSrmResult(t *testing.T, er *ecproto.ExperimentResult) {
+	t.Helper()
+	if er.SrmResult == nil {
+		t.Fatalf("SRM result should be populated on every ExperimentResult, got nil")
+	}
+	if er.SrmResult.Status != ecproto.SrmResult_SKIPPED {
+		t.Fatalf("with only 5 users in the fixture, SRM status should be SKIPPED, got %v (skip_reason=%q)",
+			er.SrmResult.Status, er.SrmResult.SkipReason)
+	}
+	if er.SrmResult.SkipReason == "" {
+		t.Fatalf("SRM SKIPPED status must come with a non-empty skip_reason")
+	}
+	if diff := cmp.Diff(er.SrmResult.Threshold, 0.001, compareFloatOpt); diff != "" {
+		t.Fatalf("SRM threshold should default to 0.001, got %f", er.SrmResult.Threshold)
 	}
 }

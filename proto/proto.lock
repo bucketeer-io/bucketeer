@@ -24225,6 +24225,11 @@
                 "id": 5,
                 "name": "total_evaluation_user_count",
                 "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "srm_result",
+                "type": "SrmResult"
               }
             ]
           }
@@ -24232,6 +24237,9 @@
         "imports": [
           {
             "path": "proto/eventcounter/goal_result.proto"
+          },
+          {
+            "path": "proto/eventcounter/srm_result.proto"
           }
         ],
         "package": {
@@ -26141,6 +26149,110 @@
           },
           {
             "path": "proto/eventcounter/variation_count.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.eventcounter"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "eventcounter:/:srm_result.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "SrmResult.Status",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "OK",
+                "integer": 1
+              },
+              {
+                "name": "MISMATCH",
+                "integer": 2
+              },
+              {
+                "name": "SKIPPED",
+                "integer": 3
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "SrmResult",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "Status"
+              },
+              {
+                "id": 2,
+                "name": "p_value",
+                "type": "double"
+              },
+              {
+                "id": 3,
+                "name": "chi_square",
+                "type": "double"
+              },
+              {
+                "id": 4,
+                "name": "degrees_of_freedom",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "threshold",
+                "type": "double"
+              },
+              {
+                "id": 6,
+                "name": "skip_reason",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "variations",
+                "type": "SrmVariation",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "SrmVariation",
+            "fields": [
+              {
+                "id": 1,
+                "name": "variation_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "observed_user_count",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "expected_user_count",
+                "type": "double"
+              },
+              {
+                "id": 4,
+                "name": "expected_weight",
+                "type": "double"
+              }
+            ]
           }
         ],
         "package": {

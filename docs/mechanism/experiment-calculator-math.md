@@ -521,6 +521,202 @@ Expected Loss(B) = 0.02%  (choosing B costs almost nothing)
 
 ---
 
+## 11. Sample Ratio Mismatch (SRM) Detection
+
+Even a perfect statistical model is meaningless if the **traffic split is
+wrong**. If a 50/50 experiment silently runs 53/47 (broken bucketing, bot
+traffic, redirect bug, etc.), every conclusion is invalid. SRM detection
+catches this.
+
+### The Test
+
+SRM uses **two detection mechanisms running in parallel**:
+
+#### 1. Chi-square goodness-of-fit (the standard SRM test)
+
+A standard **chi-square goodness-of-fit test** compares each variation's
+observed user count against the expected count under the intended split:
+
+```
+χ² = Σ (Oᵢ − Eᵢ)² / Eᵢ
+```
+
+Where:
+
+- **Oᵢ** = observed users in variation *i* (`VariationResult.evaluation_count.user_count`)
+- **Eᵢ** = expected users in variation *i* = `total_observed × expected_fractionᵢ`
+- **expected_fractionᵢ** = audience-aware expected fraction of total traffic
+  for variation *i* (see "Audience-aware expected fractions" below). Sums to
+  exactly 1 across the rollout's variations.
+
+Degrees of freedom = K − 1 (where K = number of variations with **positive**
+expected count). The p-value is `1 − CDF_{χ²(df)}(χ²)`.
+
+#### 2. Zero-expected-cell leak detector
+
+The chi-square sum can only include cells with `Eᵢ > 0` — the `(O − E)² / E`
+term is undefined when E = 0. But a variation with `expected_fraction = 0`
+receiving observed traffic is, by configuration, a real bucketing bug:
+
+- **Explicit zero-weight in the rollout** (e.g. `[A: 100, B: 0, C: 0]`): the
+  rollout says B and C must receive 0%, so any traffic to them is a leak.
+- **Variation not in the rollout at all** (schema drift, leaked traffic from
+  a stale bucketing decision): same kind of bug.
+
+These cases would otherwise pass silently: a 100-weight-all-on-A rollout
+with leaked traffic to B and C has only one positive-expected cell, so
+chi-square reports `df = 0` → SKIPPED. A 50/50 rollout with a small leak to
+an unconfigured D inflates `totalObserved` enough to perturb A and B
+slightly but typically not enough for chi-square to flip OK → MISMATCH.
+
+The leak detector closes this gap. Let `L = Σ Oᵢ over variations with Eᵢ = 0`.
+We trigger MISMATCH when:
+
+```
+L > max(leakNoiseFloor, leakRateFloor · total_observed)
+```
+
+with `leakNoiseFloor = 5` and `leakRateFloor = 0.0001` (0.01%). The two
+floors give us:
+
+- **Small experiments** (n < 50,000): the 5-user absolute floor dominates,
+  preventing false positives from transient races during config rollout or
+  stale SDK caches.
+- **Large experiments** (n ≥ 50,000): the rate floor dominates and scales
+  with n — e.g. 100 leaked out of 1M (0.01%) is the trigger, while 50 out
+  of 1M (0.005%) stays OK.
+
+Real production bucketing bugs (broken hash function, wrong sampling seed,
+config-cache deserialization bug, etc.) typically leak >> 1% of traffic, so
+the 0.01% floor sits comfortably below realistic noise rates while still
+above the trickle of users that may genuinely land on a stale variation
+during a rollout edit. The strict-greater inequality (`>`, not `≥`) treats
+the floor itself as "still in noise territory".
+
+#### How the two mechanisms combine
+
+| chi-square verdict | leak verdict | reported status |
+|---|---|---|
+| OK (or not applicable: df < 1) | no leak | **OK** |
+| OK (or not applicable: df < 1) | leak detected | **MISMATCH** |
+| MISMATCH | no leak | **MISMATCH** |
+| MISMATCH | leak detected | **MISMATCH** |
+| df < 1 | no leak | **SKIPPED** (too few cells) |
+
+The chi-square statistic, p-value, and degrees of freedom are reported on
+the result whenever the chi-square is applicable (`df ≥ 1`), **regardless**
+of which mechanism produced the final MISMATCH status. This lets the UI
+show "main split looks fine (p=0.62), but variation C is receiving traffic
+the rollout says it shouldn't" rather than collapsing both signals into a
+single opaque verdict.
+
+### Audience-aware expected fractions
+
+Bucketeer's rollout strategy has **two independent layers** that both affect
+the observed traffic split:
+
+1. **Audience Traffic Allocation** (`audience.percentage`, 1–99): a fraction
+   of users is excluded from the experiment and served `audience.default_variation`.
+   The excluded users still emit `EvaluationEvent`s (the strategy evaluator
+   returns the default variation's id), so they count toward the observed
+   user counts that SRM compares against.
+2. **Variation Allocation** (per-variation `weight`): the in-audience traffic
+   is split between variations according to these weights.
+
+If we naively compared observed counts against the per-variation weights
+alone, we'd false-positive on every flag with `audience < 100%` whose default
+variation is one of the experiment variations (which is the structural case
+the UI validation enforces). For a 50% audience with `default = Control` and
+weights 50/50 A/Control on 10k users, the observed split is 2,500 A / 7,500
+Control — perfectly correct, but a "raw-weights" SRM would report a 25%/75%
+vs 50%/50% MISMATCH with χ² ≈ 2,500.
+
+The fix: combine the two layers. For each variation *V<sub>i</sub>* with
+in-audience fraction *pᵢ* = *wᵢ* / Σ*w* and audience fraction *a*:
+
+\[
+\text{expected\_fraction}(V_i) =
+\begin{cases}
+a \cdot p_i + (1 - a) & \text{if } V_i = \text{audience.default\_variation} \\
+a \cdot p_i           & \text{otherwise}
+\end{cases}
+\]
+
+The fractions sum to *a* · Σ*p* + (1 − *a*) = *a* + (1 − *a*) = 1.
+
+When `audience.percentage` is 100 (or 0, or the audience block is absent),
+*a* = 1 and the formula degenerates to the raw weights — so the
+audience-aware path is a strict no-op for the simple 100%-audience case.
+When `audience.default_variation` is empty, the strategy evaluator returns
+`ErrVariationNotFound` for excluded users (no `EvaluationEvent` fires), so
+observed counts only contain in-audience users and the raw weights are
+again the correct expected fractions; the implementation treats *a* as 1
+in this case for the same reason.
+
+### Status Semantics
+
+| Status | Meaning |
+|---|---|
+| `OK` | `p_value ≥ threshold` — observed split is consistent with intended. |
+| `MISMATCH` | `p_value < threshold` — surface a warning. Default threshold = 0.001 (the long-standing field-standard cutoff in the experimentation literature). |
+| `SKIPPED` | Inputs unusable — see `skip_reason`. |
+
+`SKIPPED` reasons include:
+
+- Feature has no default strategy / strategy is `FIXED` / strategy has no variations
+  → no per-variation weights to test against.
+- All rollout weights are zero.
+- `audience.default_variation` is set but is not one of the rollout's
+  variations — defensive against UI-validation drift; we refuse to compute
+  SRM rather than silently mis-attribute the out-of-audience traffic.
+- Total observed users < 100 — chi-square's asymptotic approximation is
+  unreliable when expected cell counts are small.
+- Smallest expected per-variation count < 5 — violates the chi-square
+  per-cell reliability floor (Cochran, 1954), even when the total sample
+  clears the 100-user floor (e.g. on highly skewed rollouts like 99/1).
+- Fewer than 2 cells have positive expected counts AND the zero-expected
+  leak detector did not fire either. (When the leak detector fires on a
+  one-positive-cell rollout, status is MISMATCH rather than SKIPPED — see
+  "Zero-expected-cell leak detector" above.)
+- Feature could not be fetched (network / auth / NotFound) — the calculator
+  degrades gracefully instead of blocking experiment results.
+
+### Caveats
+
+- **Rule-based targeting and individual overrides:** when the feature has
+  per-user targets or rule-based assignments, some users are assigned by
+  rule rather than by the rollout split. The reported SRM then includes
+  rule-matched users and may flag mismatches that reflect targeting rather
+  than a real bucketing bug. The MVP intentionally errs on the side of
+  false positives (recoverable: the user can investigate and dismiss) over
+  false negatives (silent invalidation). **Audience Traffic Allocation is
+  not a caveat** — it's handled correctly above via the audience-aware
+  expected-fraction formula.
+- **Per-experiment, not per-goal:** evaluation user counts are shared
+  across all goals in an experiment, so SRM lives on `ExperimentResult`,
+  not `GoalResult`. Computed once per calculation cycle.
+
+### Confirmed non-issues
+
+These are concerns that look like they might affect SRM correctness but
+don't, documented here so future reviewers don't have to re-derive them.
+
+- **Default evaluation events do not pollute SRM.** When the SDK fires
+  `PushDefaultEvaluationEvent` (init race, network failure, removed flag,
+  wrong type, etc.), the resulting event carries `variation_id = ""` and
+  `feature_version = 0`. The DWH evaluation-count query
+  (`pkg/eventcounter/storage/v2/dwh_database/{mysql,postgres,bigquery}/sql/`)
+  filters by the experiment's pinned `feature_version` (always ≥ 1 in
+  practice), so default events never reach the variation counts that SRM
+  operates on. If a malformed `variation_id = ""` somehow appeared with
+  the experiment's real `feature_version`, it would surface in the
+  per-variation breakdown as a leaked variation with `expected_weight = 0`
+  (see the audience-aware section's note on observed-only variations)
+  and would correctly contribute to a `MISMATCH` if the count is
+  non-trivial — there'd be a real problem worth investigating.
+
+---
+
 ## Related Documents
 
 - [Experiment Calculator: Code Implementation](./experiment-calculator-code.md) - How these concepts are implemented in Bucketeer's codebase
