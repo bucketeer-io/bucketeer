@@ -24291,6 +24291,12 @@
                 "id": 2,
                 "name": "goal_user_count",
                 "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "best_variations_value",
+                "type": "Variation",
+                "is_repeated": true
               }
             ],
             "messages": [

@@ -73,7 +73,7 @@ const ConfidenceVariants = ({
               className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600 whitespace-nowrap"
             >
               <Trans
-                i18nKey={'table:results.variant-outperformed-percent'}
+                i18nKey={'table:results.variant-likely-beats-baseline'}
                 values={{
                   name: variation?.name || variation?.value,
                   percent: getPercentage(item.probability)
@@ -102,7 +102,7 @@ const ConfidenceVariants = ({
                   return (
                     <div key={index} className="typo-para-medium text-white">
                       <Trans
-                        i18nKey={'table:results.variant-outperformed-percent'}
+                        i18nKey={'table:results.variant-likely-beats-baseline'}
                         values={{
                           name: variation?.name || variation?.value,
                           percent: getPercentage(item.probability)

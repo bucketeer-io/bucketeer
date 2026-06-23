@@ -889,36 +889,21 @@ func (e ExperimentCalculator) calculateSummary(
 		return
 	}
 
-	// 1. Find best variations (cvr_prob_beat_baseline.mean > 95%)
-	var bestVariations []*eventcounter.Summary_Variation
-	var maxProbability float64
-	var maxProbabilityVariationID string
-
-	for _, vr := range goalResult.VariationResults {
-		if vr.CvrProbBeatBaseline != nil && vr.CvrProbBeatBaseline.Mean > 0.95 {
-			probability := vr.CvrProbBeatBaseline.Mean
-			bestVar := &eventcounter.Summary_Variation{
-				Id:          vr.VariationId,
-				Probability: probability,
-				IsBest:      false,
-			}
-
-			// Track which variation has the highest probability
-			if probability > maxProbability {
-				maxProbability = probability
-				maxProbabilityVariationID = vr.VariationId
-			}
-
-			bestVariations = append(bestVariations, bestVar)
-		}
-	}
-
-	// Mark the variation with highest probability as outperformed
-	for _, bestVar := range bestVariations {
-		if bestVar.Id == maxProbabilityVariationID {
-			bestVar.IsBest = true
-		}
-	}
+	// Build a best-variations list per metric so the confidence banner can stay
+	// metric-aware: CVR drives the conversion-rate tab, value-per-user drives
+	// the Value/User tab.
+	cvrBestVariations := pickBestVariations(
+		goalResult.VariationResults,
+		func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+			return vr.CvrProbBeatBaseline
+		},
+	)
+	valueBestVariations := pickBestVariations(
+		goalResult.VariationResults,
+		func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+			return vr.GoalValueSumPerUserProbBeatBaseline
+		},
+	)
 
 	// Calculate total goal user count by summing across all variations
 	var totalGoalUserCount int64
@@ -929,8 +914,49 @@ func (e ExperimentCalculator) calculateSummary(
 	}
 
 	// Set the summary values
-	goalResult.Summary.BestVariations = bestVariations
+	goalResult.Summary.BestVariations = cvrBestVariations
+	goalResult.Summary.BestVariationsValue = valueBestVariations
 	goalResult.Summary.GoalUserCount = totalGoalUserCount
+}
+
+// pickBestVariations returns the variations whose probability-to-beat-baseline
+// (selected by probFn) exceeds 95%, marking the single highest-probability one
+// as the best. The per-metric probFn lets the same selection logic serve both
+// the CVR and value-per-user posteriors.
+func pickBestVariations(
+	variationResults []*eventcounter.VariationResult,
+	probFn func(*eventcounter.VariationResult) *eventcounter.DistributionSummary,
+) []*eventcounter.Summary_Variation {
+	var bestVariations []*eventcounter.Summary_Variation
+	var maxProbability float64
+	var maxProbabilityVariationID string
+
+	for _, vr := range variationResults {
+		prob := probFn(vr)
+		if prob != nil && prob.Mean > 0.95 {
+			probability := prob.Mean
+			bestVar := &eventcounter.Summary_Variation{
+				Id:          vr.VariationId,
+				Probability: probability,
+				IsBest:      false,
+			}
+
+			if probability > maxProbability {
+				maxProbability = probability
+				maxProbabilityVariationID = vr.VariationId
+			}
+
+			bestVariations = append(bestVariations, bestVar)
+		}
+	}
+
+	for _, bestVar := range bestVariations {
+		if bestVar.Id == maxProbabilityVariationID {
+			bestVar.IsBest = true
+		}
+	}
+
+	return bestVariations
 }
 
 // calculateExpectedLoss computes the posterior expected loss (regret) for each variation

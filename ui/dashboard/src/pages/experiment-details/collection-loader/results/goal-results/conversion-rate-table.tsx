@@ -6,6 +6,17 @@ import { GoalResultState } from '..';
 import { ResultHeaderCell, ResultCell } from './goal-results-table-element';
 import { DatasetReduceType } from './timeseries-area-line-chart';
 
+// Relative lift vs baseline: (value − base) / base, shown as a signed
+// percentage. Returns an em dash when the baseline is zero or the inputs
+// are not finite, since relative lift is undefined there.
+const formatRelativeLift = (value: number, base: number) => {
+  if (!isNumber(value) || !isNumber(base) || base === 0) return '—';
+  const lift = ((value - base) / base) * 100;
+  if (!isNumber(lift)) return '—';
+  const sign = lift > 0 ? '+' : '';
+  return `${sign}${lift.toFixed(1)}%`;
+};
+
 const ConversionRateTable = ({
   goalResultState,
   experiment,
@@ -153,17 +164,11 @@ const ConversionRateTable = ({
 
           const improvementValueConversionRate = isSameVariationId
             ? t('table:baseline')
-            : (isNumber(conversionRate - baseConversionRate)
-                ? conversionRate - baseConversionRate
-                : 0
-              ).toFixed(1) + '%';
+            : formatRelativeLift(conversionRate, baseConversionRate);
 
           const improvementValuePerUser = isSameVariationId
             ? t('table:baseline')
-            : (isNumber(valuePerUser - baseValuePerUser)
-                ? valuePerUser - baseValuePerUser
-                : 0
-              ).toFixed(1);
+            : formatRelativeLift(valuePerUser, baseValuePerUser);
 
           const probBeatBaseline = isConversionRateChart
             ? cvrProbBeatBaseline

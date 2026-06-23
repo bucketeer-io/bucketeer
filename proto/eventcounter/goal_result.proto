@@ -33,4 +33,8 @@ message Summary {
   }
   repeated Variation best_variations = 1;
   int64 goal_user_count = 2;
+  // Best variations derived from the value-per-user metric posterior, so the
+  // confidence banner can stay metric-aware when the user is on the
+  // Value/User tab. best_variations (field 1) remains the conversion-rate list.
+  repeated Variation best_variations_value = 3;
 }

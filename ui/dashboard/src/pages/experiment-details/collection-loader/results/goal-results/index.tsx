@@ -58,6 +58,20 @@ const GoalResultItem = ({
   const [isOpenRolloutVariant, onOpenRolloutVariant, onCloseRolloutVariant] =
     useToggleOpen(false);
 
+  // Keep the confidence banner and rollout suggestion aligned with the metric
+  // the user is currently viewing: the value-per-user posterior drives the
+  // value charts, conversion rate drives everything else.
+  const activeBestVariations = useMemo(() => {
+    const isValueChart =
+      goalResultState?.chartType === 'value-user' ||
+      goalResultState?.chartType === 'value-total';
+    return (
+      (isValueChart
+        ? goalResult?.summary?.bestVariationsValue
+        : goalResult?.summary?.bestVariations) ?? []
+    );
+  }, [goalResult, goalResultState]);
+
   const variationValues = useMemo(
     () =>
       goalResult?.variationResults?.map(vr => {
@@ -138,9 +152,9 @@ const GoalResultItem = ({
           />
         </div>
       </div>
-      {goalResult?.summary?.bestVariations?.length > 0 && (
+      {activeBestVariations.length > 0 && (
         <ConfidenceVariants
-          bestVariations={goalResult.summary.bestVariations}
+          bestVariations={activeBestVariations}
           variations={experiment.variations}
           onOpenRolloutVariant={onOpenRolloutVariant}
         />
@@ -150,7 +164,7 @@ const GoalResultItem = ({
           isOpen={isOpenRolloutVariant}
           variations={experiment.variations}
           defaultStrategy={feature?.defaultStrategy}
-          bestVariations={goalResult?.summary?.bestVariations}
+          bestVariations={activeBestVariations}
           isRequireComment={isRequireComment}
           onClose={onCloseRolloutVariant}
           onSubmit={onSubmitRolloutVariation}
