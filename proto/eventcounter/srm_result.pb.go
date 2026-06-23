@@ -104,7 +104,8 @@ type SrmResult struct {
 	unknownFields protoimpl.UnknownFields
 
 	Status SrmResult_Status `protobuf:"varint,1,opt,name=status,proto3,enum=bucketeer.eventcounter.SrmResult_Status" json:"status"`
-	// Two-tailed p-value of the chi-square goodness-of-fit statistic.
+	// Right-tail p-value of the chi-square goodness-of-fit statistic:
+	// p = P(X >= chi_square) where X ~ ChiSquared(degrees_of_freedom).
 	PValue float64 `protobuf:"fixed64,2,opt,name=p_value,json=pValue,proto3" json:"p_value"`
 	// Chi-square test statistic: Σ (observed - expected)² / expected.
 	ChiSquare float64 `protobuf:"fixed64,3,opt,name=chi_square,json=chiSquare,proto3" json:"chi_square"`

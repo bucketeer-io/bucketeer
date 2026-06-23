@@ -268,10 +268,14 @@ func (e ExperimentCalculator) computeExperimentSRM(
 	}
 	feature, err := e.getFeatureForSRM(ctx, environmentID, experiment)
 	if err != nil {
-		// Log at info level (not error) — SRM is best-effort diagnostic
-		// metadata, not the primary calculator output. A failure to fetch
-		// the feature should not block experiment results.
-		e.logger.Error("SRM check: failed to fetch feature, marking SKIPPED",
+		// Log at warn level — the SRM check is best-effort diagnostic
+		// metadata, not the primary calculator output, and we gracefully
+		// degrade to a SKIPPED SrmResult so the failure does not block
+		// experiment results. Error would falsely inflate the calculator's
+		// error-rate metric; Info would hide a recurring misconfiguration
+		// (stale feature_version, auth/network issue, etc.) that an
+		// operator should investigate.
+		e.logger.Warn("SRM check: failed to fetch feature, marking SKIPPED",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentId", environmentID),
 				zap.String("featureId", experiment.FeatureId),

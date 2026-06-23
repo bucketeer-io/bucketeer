@@ -301,6 +301,54 @@ func TestComputeSRM_Skipped(t *testing.T) {
 	}
 }
 
+func TestComputeSRM_IncludesUnexpectedVariationFromObserved(t *testing.T) {
+	t.Parallel()
+	// Rollout intends a 50/50 split between vid1 and vid2, but observed
+	// traffic also contains 2000 users on `vid-leak` — a variation that
+	// isn't in the rollout (experiment schema drift, leaked traffic from a
+	// stale bucketing decision, etc.). The leaked users must count toward
+	// totalObserved so the expected counts for the known variations reflect
+	// the real denominator (and the mismatch isn't silently hidden), and
+	// the per-variation breakdown must surface the unknown variation with
+	// expected_weight = 0 so the UI can show it.
+	feature := newRolloutFeature(t,
+		struct {
+			id     string
+			weight int32
+		}{"vid1", 50}, struct {
+			id     string
+			weight int32
+		}{"vid2", 50},
+	)
+	results := []*eventcounter.VariationResult{
+		vr("vid1", 4000), vr("vid2", 4000), vr("vid-leak", 2000),
+	}
+	got := computeSRM(results, feature, DefaultSRMThreshold)
+
+	// totalObserved = 10000 (includes the leaked 2000), so each known
+	// variation's expected count is 5000, well above the 4000 observed →
+	// large chi-square, MISMATCH.
+	assert.Equal(t, eventcounter.SrmResult_MISMATCH, got.Status,
+		"leaked traffic to an unknown variation must not be silently dropped from totalObserved")
+	if assert.Len(t, got.Variations, 3) {
+		// Deterministic order: sorted by variation_id → vid-leak, vid1, vid2.
+		assert.Equal(t, "vid-leak", got.Variations[0].VariationId)
+		assert.EqualValues(t, 2000, got.Variations[0].ObservedUserCount)
+		assert.InDelta(t, 0.0, got.Variations[0].ExpectedWeight, 1e-9,
+			"unknown variation must surface with expected_weight=0")
+		assert.InDelta(t, 0.0, got.Variations[0].ExpectedUserCount, 1e-9)
+
+		assert.Equal(t, "vid1", got.Variations[1].VariationId)
+		assert.EqualValues(t, 4000, got.Variations[1].ObservedUserCount)
+		assert.InDelta(t, 5000.0, got.Variations[1].ExpectedUserCount, 1e-9,
+			"expected count for known variations must use totalObserved=10000")
+	}
+	// dof = K_pos - 1 = 2 - 1 = 1 (only the two cells with positive
+	// expected counts contribute; the leaked variation is excluded from the
+	// chi-square sum because dividing by expected=0 is undefined).
+	assert.EqualValues(t, 1, got.DegreesOfFreedom)
+}
+
 func TestComputeSRM_HandlesMissingObservedCount(t *testing.T) {
 	t.Parallel()
 	feature := newRolloutFeature(t,

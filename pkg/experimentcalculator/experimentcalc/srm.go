@@ -43,12 +43,14 @@ const (
 )
 
 var (
-	errSRMFeatureMissing      = errors.New("feature definition not available")
-	errSRMNoDefaultStrategy   = errors.New("feature has no default strategy")
-	errSRMNotRolloutStrategy  = errors.New("feature default strategy is not a rollout (no per-variation weights to test against)")
+	errSRMFeatureMissing     = errors.New("feature definition not available")
+	errSRMNoDefaultStrategy  = errors.New("feature has no default strategy")
+	errSRMNotRolloutStrategy = errors.New(
+		"feature default strategy is not a rollout (no per-variation weights to test against)")
 	errSRMNoRolloutVariations = errors.New("feature rollout strategy has no variations")
 	errSRMAllWeightsZero      = errors.New("all rollout weights are zero")
-	errSRMInsufficientSamples = errors.New("total observed users below the minimum required for a reliable chi-square test")
+	errSRMInsufficientSamples = errors.New(
+		"total observed users below the minimum required for a reliable chi-square test")
 	errSRMTooFewExpectedCells = errors.New("fewer than 2 variations with positive expected user counts")
 )
 
@@ -98,10 +100,29 @@ func computeSRM(
 		observedByID[vr.VariationId] = vr.EvaluationCount.UserCount
 	}
 
-	// Iterate weights in a deterministic order so the per-variation list in
-	// the proto (and any downstream comparisons) is stable across runs.
-	vids := make([]string, 0, len(weights))
+	// Build the variation set as the union of (a) the rollout-strategy weights
+	// and (b) the observed variation IDs. Iterating only the weights would
+	// silently drop any user assigned to a variation that's not in the
+	// rollout — which can happen with experiment schema drift (a variation
+	// removed from the rollout but stale assignments still in flight) or with
+	// genuinely leaked traffic. Those users still belong in totalObserved, and
+	// the per-variation breakdown should still surface them (with
+	// expected_weight=0) so the UI can show "unknown variation X received N
+	// users". Sorting yields a deterministic per-variation order across runs.
+	seen := make(map[string]struct{}, len(weights)+len(observedByID))
+	vids := make([]string, 0, len(weights)+len(observedByID))
 	for vid := range weights {
+		if _, ok := seen[vid]; ok {
+			continue
+		}
+		seen[vid] = struct{}{}
+		vids = append(vids, vid)
+	}
+	for vid := range observedByID {
+		if _, ok := seen[vid]; ok {
+			continue
+		}
+		seen[vid] = struct{}{}
 		vids = append(vids, vid)
 	}
 	sort.Strings(vids)
@@ -110,7 +131,7 @@ func computeSRM(
 	var totalWeight int64
 	perVariation := make([]*eventcounter.SrmVariation, 0, len(vids))
 	for _, vid := range vids {
-		w := weights[vid]
+		w := weights[vid] // 0 for variations observed but absent from rollout
 		observed := observedByID[vid]
 		totalObserved += observed
 		totalWeight += w

@@ -38,7 +38,8 @@ message SrmResult {
   }
 
   Status status = 1;
-  // Two-tailed p-value of the chi-square goodness-of-fit statistic.
+  // Right-tail p-value of the chi-square goodness-of-fit statistic:
+  // p = P(X >= chi_square) where X ~ ChiSquared(degrees_of_freedom).
   double p_value = 2;
   // Chi-square test statistic: Σ (observed - expected)² / expected.
   double chi_square = 3;
