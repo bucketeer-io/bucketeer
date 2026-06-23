@@ -39,8 +39,8 @@ export const OptionsList = memo(
       return (
         <DropdownList
           isMultiselect={multiselect}
-          itemSelected={value as string}
-          selectedOptions={(Array.isArray(value) ? value : []) as string[]}
+          itemSelected={Array.isArray(value) ? undefined : value}
+          selectedOptions={Array.isArray(value) ? value : []}
           additionalElement={additionalElement}
           options={options}
           onSelectOption={val => onChange?.(val)}
