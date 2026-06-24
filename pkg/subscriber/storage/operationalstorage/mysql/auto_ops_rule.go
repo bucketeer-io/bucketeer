@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package v2
+package mysql
 
 import (
 	"context"
 	_ "embed"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	operationalstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage"
 )
 
 var (
@@ -27,15 +27,11 @@ var (
 	countAutoOpsRulesSql string
 )
 
-type AutoOpsRuleStorage interface {
-	CountOpsEventRate(ctx context.Context) (int, error)
-}
-
 type autoOpsRuleStorage struct {
-	qe mysql.QueryExecer
+	qe mysqlstorage.QueryExecer
 }
 
-func NewAutoOpsRuleStorage(qe mysql.QueryExecer) AutoOpsRuleStorage {
+func NewAutoOpsRuleStorage(qe mysqlstorage.QueryExecer) operationalstorage.AutoOpsRuleStorage {
 	return &autoOpsRuleStorage{qe: qe}
 }
 

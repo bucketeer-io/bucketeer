@@ -27,32 +27,22 @@ import (
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
-	ecbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/bigquery"
-	ecmysql "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mysql"
-	ecpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/postgres"
 	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
-	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage"
-	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 const (
-	goalEventTable                = "goal_event"
 	defaultRetryGoalEventInterval = 5 * time.Minute
 	minLockTTL                    = 15 * time.Second
 )
 
 type goalEvtWriter struct {
-	writer                  storage.GoalEventWriter
+	writer                  dwhstorage.GoalEventWriter
 	eventStorage            ecdwh.EventStorage
 	experimentClient        ec.Client
 	featureClient           ft.Client
@@ -66,136 +56,21 @@ type goalEvtWriter struct {
 	retryGoalEventInterval  time.Duration
 }
 
-type GoalEventWriterOption struct {
-	DataWarehouseType string
-	MySQLClient       mysql.Client
-	PostgresClient    postgres.Client
-	BatchSize         int
-}
-
+// NewGoalEventWriter wraps an already-initialized data-warehouse goal-event writer and
+// event storage (both built in the server) with experiment linking and goal retry logic.
 func NewGoalEventWriter(
 	ctx context.Context,
 	logger *zap.Logger,
 	exClient ec.Client,
 	ftClient ft.Client,
 	cache cachev3.ExperimentsCache,
-	project, bigQueryDataSet, bigQueryDataLocation string,
-	bigQueryBatchSize int,
 	location *time.Location,
 	redisClient redisv3.Client,
 	maxRetryGoalEventPeriod time.Duration,
 	retryGoalEventInterval time.Duration,
-	registerer metrics.Registerer,
-	options ...GoalEventWriterOption,
-) (Writer, error) {
-	var option GoalEventWriterOption
-	if len(options) > 0 {
-		option = options[0]
-	}
-
-	switch option.DataWarehouseType {
-	case "mysql":
-		if option.MySQLClient == nil {
-			return nil, errors.New("mysql client is required when using MySQL storage")
-		}
-
-		goalStorage := storagev2.NewMysqlGoalEventStorage(option.MySQLClient)
-		mysqlEventStorage := ecmysql.NewMySQLEventStorage(option.MySQLClient, logger)
-
-		// Calculate lock TTL as 80% of retry interval
-		if retryGoalEventInterval == 0 {
-			retryGoalEventInterval = defaultRetryGoalEventInterval
-		}
-		lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
-
-		// Ensure lock TTL is at least 15 seconds to allow time for:
-		// - listExperiments() network call
-		// - linkGoalEventByExperiment() MySQL query
-		// - writer.AppendRows() MySQL write
-		// Increased to 15s to handle server load and retry processing
-		originalLockTTL := lockTTL
-		if lockTTL < minLockTTL {
-			lockTTL = minLockTTL
-			logger.Info("Adjusted lock TTL to minimum",
-				zap.Duration("original", originalLockTTL),
-				zap.Duration("adjusted", lockTTL),
-			)
-		}
-
-		w := &goalEvtWriter{
-			writer:                  storage.NewMysqlGoalEventWriter(goalStorage),
-			eventStorage:            mysqlEventStorage,
-			experimentClient:        exClient,
-			featureClient:           ftClient,
-			redisClient:             redisClient,
-			locker:                  NewGoalEventLocker(redisClient, lockTTL),
-			cache:                   cache,
-			location:                location,
-			logger:                  logger,
-			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
-			retryGoalEventInterval:  retryGoalEventInterval,
-		}
-		w.StartRetryProcessor(ctx)
-		return w, nil
-	case "postgres":
-		if option.PostgresClient == nil {
-			return nil, errors.New("postgres client is required when using Postgres storage")
-		}
-
-		goalStorage := storagev2.NewPostgresGoalEventStorage(option.PostgresClient)
-		postgresEventStorage := ecpostgres.NewPostgresEventStorage(option.PostgresClient, logger)
-
-		// Calculate lock TTL as 80% of retry interval
-		if retryGoalEventInterval == 0 {
-			retryGoalEventInterval = defaultRetryGoalEventInterval
-		}
-		lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
-
-		w := &goalEvtWriter{
-			writer:                  storage.NewPostgresGoalEventWriter(goalStorage),
-			eventStorage:            postgresEventStorage,
-			experimentClient:        exClient,
-			featureClient:           ftClient,
-			redisClient:             redisClient,
-			locker:                  NewGoalEventLocker(redisClient, lockTTL),
-			cache:                   cache,
-			location:                location,
-			logger:                  logger,
-			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
-			retryGoalEventInterval:  retryGoalEventInterval,
-		}
-		w.StartRetryProcessor(ctx)
-		return w, nil
-	case "bigquery":
-		// Fall through to BigQuery implementation below
-	default:
-		// Default to BigQuery for backward compatibility
-	}
-
-	// BigQuery implementation
-	evt := epproto.GoalEvent{}
-	goalWriter, err := writer.NewWriter(
-		ctx,
-		project,
-		bigQueryDataSet,
-		goalEventTable,
-		evt.ProtoReflect().Descriptor(),
-		writer.WithLogger(logger),
-		writer.WithMetrics(registerer),
-	)
-	if err != nil {
-		return nil, err
-	}
-	eventQuerier, err := bqquerier.NewClient(
-		ctx,
-		project,
-		bigQueryDataLocation,
-		bqquerier.WithLogger(logger),
-		bqquerier.WithMetrics(registerer),
-	)
-	if err != nil {
-		return nil, err
-	}
+	goalWriter dwhstorage.GoalEventWriter,
+	eventStorage ecdwh.EventStorage,
+) Writer {
 	if retryGoalEventInterval == 0 {
 		retryGoalEventInterval = defaultRetryGoalEventInterval
 	}
@@ -204,8 +79,8 @@ func NewGoalEventWriter(
 
 	// Ensure lock TTL is at least 15 seconds to allow time for:
 	// - listExperiments() network call
-	// - linkGoalEventByExperiment() BigQuery query
-	// - writer.AppendRows() BigQuery write
+	// - linkGoalEventByExperiment() query
+	// - writer.AppendRows() write
 	// Increased to 15s to handle server load and retry processing
 	originalLockTTL := lockTTL
 	if lockTTL < minLockTTL {
@@ -217,8 +92,8 @@ func NewGoalEventWriter(
 	}
 
 	w := &goalEvtWriter{
-		writer:                  storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),
-		eventStorage:            ecbigquery.NewBigQueryEventStorage(eventQuerier, bigQueryDataSet, logger),
+		writer:                  goalWriter,
+		eventStorage:            eventStorage,
 		experimentClient:        exClient,
 		featureClient:           ftClient,
 		redisClient:             redisClient,
@@ -230,7 +105,7 @@ func NewGoalEventWriter(
 		retryGoalEventInterval:  retryGoalEventInterval,
 	}
 	w.StartRetryProcessor(ctx)
-	return w, nil
+	return w
 }
 
 func (w *goalEvtWriter) Write(

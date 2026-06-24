@@ -12,28 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package postgres
 
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"strings"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	pgstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 )
 
-type postgresGoalEventStorage struct {
-	qe postgres.QueryExecer
+const goalBatchSize = 1000
+
+var (
+	//go:embed sql/goal_event.sql
+	goalEventSql string
+)
+
+type goalEventStorage struct {
+	qe pgstorage.QueryExecer
 }
 
-func NewPostgresGoalEventStorage(qe postgres.QueryExecer) GoalEventStorageV2 {
-	return &postgresGoalEventStorage{qe: qe}
+func NewGoalEventStorage(qe pgstorage.QueryExecer) dwhstorage.GoalEventStorageV2 {
+	return &goalEventStorage{qe: qe}
 }
 
-func (s *postgresGoalEventStorage) CreateGoalEvents(
+func (s *goalEventStorage) CreateGoalEvents(
 	ctx context.Context,
-	events []GoalEventParams,
+	events []dwhstorage.GoalEventParams,
 ) error {
 	// Process in batches to avoid exceeding max SQL parameter limits
 	for i := 0; i < len(events); i += goalBatchSize {
@@ -48,9 +57,9 @@ func (s *postgresGoalEventStorage) CreateGoalEvents(
 	return nil
 }
 
-func (s *postgresGoalEventStorage) createGoalEventsBatch(
+func (s *goalEventStorage) createGoalEventsBatch(
 	ctx context.Context,
-	events []GoalEventParams,
+	events []dwhstorage.GoalEventParams,
 ) error {
 	var query strings.Builder
 	query.WriteString(goalEventSql)
@@ -63,7 +72,7 @@ func (s *postgresGoalEventStorage) createGoalEventsBatch(
 		if i > 0 {
 			query.WriteString(",")
 		}
-		query.WriteString(postgres.WritePlaceHolder(
+		query.WriteString(pgstorage.WritePlaceHolder(
 			"($%d, $%d, TO_TIMESTAMP($%d), $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			argCounter+1,
 			fieldsPerEvent,
