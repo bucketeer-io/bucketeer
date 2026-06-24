@@ -51,12 +51,11 @@ type MySQLConfig struct {
 
 // PostgresConfig is the Postgres-specific data-warehouse configuration.
 type PostgresConfig struct {
-	UseMainConnection bool   `json:"useMainConnection"`
-	Host              string `json:"host"`
-	Port              int    `json:"port"`
-	User              string `json:"user"`
-	Password          string `json:"password"`
-	Database          string `json:"database"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Database string `json:"database"`
 }
 
 // parseDWHConfig extracts and validates the data-warehouse configuration from a raw

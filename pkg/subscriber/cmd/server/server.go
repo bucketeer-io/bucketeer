@@ -716,6 +716,16 @@ func (s *server) createPostgresClient(
 	)
 }
 
+// closeDWHWriter closes a data-warehouse event writer if it implements io.Closer,
+// logging any error. BigQuery writers hold a live managed stream and must be closed.
+func closeDWHWriter(w interface{}, name string, logger *zap.Logger) {
+	if c, ok := w.(io.Closer); ok {
+		if err := c.Close(); err != nil {
+			logger.Error("subscriber: failed to close "+name, zap.Error(err))
+		}
+	}
+}
+
 // initDataWarehouseStorages initializes every data-warehouse storage based on the resolved
 // data-warehouse config. The data warehouse is always separate from the operational database;
 // the processor receives ready storage interfaces and depends on no DWH client or dialect.
@@ -768,6 +778,8 @@ func (s *server) initDataWarehouseStorages(
 		}
 		goalWriter, err := dwhbigquery.NewGoalEventWriter(ctx, logger, project, dataset, batchSize, registerer)
 		if err != nil {
+			// evalWriter already holds a live BigQuery managed stream; close it before bailing out.
+			closeDWHWriter(evalWriter, "evaluation event writer", logger)
 			return nil, nil, nil, nil, err
 		}
 		eventQuerier, err := bqquerier.NewClient(
@@ -778,19 +790,14 @@ func (s *server) initDataWarehouseStorages(
 			bqquerier.WithMetrics(registerer),
 		)
 		if err != nil {
+			// Both writers are open at this point; close them before bailing out.
+			closeDWHWriter(evalWriter, "evaluation event writer", logger)
+			closeDWHWriter(goalWriter, "goal event writer", logger)
 			return nil, nil, nil, nil, err
 		}
 		cleanup := func() {
-			if c, ok := evalWriter.(io.Closer); ok {
-				if err := c.Close(); err != nil {
-					logger.Error("subscriber: failed to close evaluation event writer", zap.Error(err))
-				}
-			}
-			if c, ok := goalWriter.(io.Closer); ok {
-				if err := c.Close(); err != nil {
-					logger.Error("subscriber: failed to close goal event writer", zap.Error(err))
-				}
-			}
+			closeDWHWriter(evalWriter, "evaluation event writer", logger)
+			closeDWHWriter(goalWriter, "goal event writer", logger)
 			if err := eventQuerier.Close(); err != nil {
 				logger.Error("subscriber: failed to close data warehouse querier", zap.Error(err))
 			}
@@ -1158,6 +1165,9 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
+			if dwhCleanup != nil {
+				dwhCleanup()
+			}
 			return nil, nil, err
 		}
 		processors.RegisterProcessor(
@@ -1181,6 +1191,9 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
+			if dwhCleanup != nil {
+				dwhCleanup()
+			}
 			return nil, nil, err
 		}
 		processors.RegisterProcessor(
@@ -1199,6 +1212,9 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
+			if dwhCleanup != nil {
+				dwhCleanup()
+			}
 			return nil, nil, err
 		}
 		processors.RegisterProcessor(processor.EvaluationCountEventOPSPersisterName, evaluationEventsOPSPersister)
@@ -1214,6 +1230,9 @@ func (s *server) registerPubSubProcessorMap(
 			logger,
 		)
 		if err != nil {
+			if dwhCleanup != nil {
+				dwhCleanup()
+			}
 			return nil, nil, err
 		}
 		processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
