@@ -18,7 +18,7 @@ GROUP BY
 ),
 cap_level AS (
     -- Winsorization threshold: the configurable percentile
-    -- (@valueCapPercentile, an integer in [0,100]) of per-user value_sum pooled
+    -- (@valueCapPercentile, an integer in [1,100]) of per-user value_sum pooled
     -- across all variations. APPROX_QUANTILES(value_sum, 100) returns an array
     -- of 101 elements (quantiles 0..100). We UNNEST WITH OFFSET and select the
     -- requested element via a WHERE predicate rather than @param inside
