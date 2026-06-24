@@ -2537,6 +2537,428 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 	}
 }
 
+func TestEvaluateFeaturesForStream(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+
+	user := &userproto.User{Id: "user-id-1"}
+	envID := "env1"
+	tag := "test"
+
+	patterns := []struct {
+		desc        string
+		setup       func(*gatewayService)
+		evaluatedAt int64
+		expectedErr bool
+		expected    *featureproto.UserEvaluations
+	}{
+		{
+			desc: "success: full evaluation with segment from cache",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name true", Value: "true"},
+									{Id: "variation-b", Name: "variation name false", Value: "false"},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type:          featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values:    []string{"seg-1"},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-a"},
+								},
+								Tags: []string{"test"},
+							},
+						},
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					&featureproto.SegmentUsers{
+						SegmentId: "seg-1",
+						Users: []*featureproto.SegmentUser{
+							{
+								SegmentId: "seg-1",
+								UserId:    "user-id-1",
+								State:     featureproto.SegmentUser_INCLUDED,
+								Deleted:   false,
+							},
+							{
+								SegmentId: "seg-1",
+								UserId:    "user-id-2",
+								State:     featureproto.SegmentUser_INCLUDED,
+								Deleted:   false,
+							},
+						},
+					}, nil)
+			},
+
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(2),
+						VariationId:    "variation-b",
+						VariationName:  "variation name false",
+						VariationValue: "false",
+						Variation: &featureproto.Variation{
+							Id:    "variation-b",
+							Name:  "variation name false",
+							Value: "false",
+						},
+						Reason: &featureproto.Reason{
+							Type:   featureproto.Reason_RULE,
+							RuleId: "rule-1",
+						},
+					},
+				},
+				ForceUpdate: true,
+			},
+		},
+		{
+			desc: "success: full evaluation with segment from storage",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name true", Value: "true"},
+									{Id: "variation-b", Name: "variation name false", Value: "false"},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type:          featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values:    []string{"seg-1"},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+								},
+								Tags: []string{"test"},
+							},
+						},
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("cache miss"))
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListSegmentUsersResponse{}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(2),
+						VariationId:    "variation-b",
+						VariationName:  "variation name false",
+						VariationValue: "false",
+						Variation: &featureproto.Variation{
+							Id:    "variation-b",
+							Name:  "variation name false",
+							Value: "false",
+						},
+						Reason: &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+					},
+				},
+				ForceUpdate: true,
+			},
+		},
+		{
+			desc: "success: full evaluation (no segments)",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name true", Value: "true"},
+									{Id: "variation-b", Name: "variation name false", Value: "false"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+								},
+								Tags: []string{"test"},
+							},
+						},
+					}, nil)
+			},
+
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(2),
+						VariationId:    "variation-b",
+						VariationName:  "variation name false",
+						VariationValue: "false",
+						Variation: &featureproto.Variation{
+							Id:    "variation-b",
+							Name:  "variation name false",
+							Value: "false",
+						},
+						Reason: &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+					},
+				},
+				ForceUpdate: true,
+			},
+		},
+		{
+			desc: "success: empty features",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{},
+					}, nil)
+			},
+
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{},
+			},
+		},
+		{
+			desc: "success: diff evaluation returns only updated features",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name true", Value: "true"},
+									{Id: "variation-b", Name: "variation name false", Value: "false"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-3 * time.Minute).Unix(),
+							},
+							{
+								Id:      "feature-id-2",
+								Version: int32(3),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-c", Name: "variation name c", Value: "c-val"},
+									{Id: "variation-d", Name: "variation name d", Value: "d-val"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-d"},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-99 * time.Minute).Unix(),
+							},
+						},
+					}, nil)
+			},
+			evaluatedAt: now.Add(-5 * time.Minute).Unix(),
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(2),
+						VariationId:    "variation-b",
+						VariationName:  "variation name false",
+						VariationValue: "false",
+						Variation: &featureproto.Variation{
+							Id:    "variation-b",
+							Name:  "variation name false",
+							Value: "false",
+						},
+						Reason: &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+					},
+				},
+			},
+		},
+		{
+			desc: "success: evaluatedAt older than 30 days triggers full re-evaluation",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name true", Value: "true"},
+									{Id: "variation-b", Name: "variation name false", Value: "false"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-40 * 24 * time.Hour).Unix(),
+							},
+							{
+								Id:       "feature-id-2",
+								Version:  int32(3),
+								Archived: true,
+								Variations: []*featureproto.Variation{
+									{Id: "variation-c", Name: "variation name c", Value: "c-val"},
+									{Id: "variation-d", Name: "variation name d", Value: "d-val"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-d"},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-5 * time.Minute).Unix(),
+							},
+						},
+					}, nil)
+			},
+			evaluatedAt: now.Add(-31 * 24 * time.Hour).Unix(),
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(2),
+						VariationId:    "variation-b",
+						VariationName:  "variation name false",
+						VariationValue: "false",
+						Variation: &featureproto.Variation{
+							Id:    "variation-b",
+							Name:  "variation name false",
+							Value: "false",
+						},
+						Reason: &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+					},
+				},
+				ArchivedFeatureIds: []string{"feature-id-2"},
+				ForceUpdate:        true,
+			},
+		},
+		{
+			desc: "error: segment users error",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name true", Value: "true"},
+									{Id: "variation-b", Name: "variation name false", Value: "false"},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type:          featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values:    []string{"seg-1"},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+								},
+								Tags: []string{"test"},
+							},
+						},
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("cache error"))
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("db error"))
+			},
+
+			expectedErr: true,
+		},
+		{
+			desc: "error: feature cache error",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("db error"))
+			},
+
+			expectedErr: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			mc := gomock.NewController(t)
+			defer mc.Finish()
+			gs := newGatewayServiceWithMock(t, mc)
+			p.setup(gs)
+			got, err := gs.evaluateFeaturesForStream(
+				context.Background(),
+				user,
+				envID,
+				tag,
+				p.evaluatedAt,
+			)
+			if p.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, p.expected.Evaluations, got.Evaluations)
+			assert.ElementsMatch(t, p.expected.ArchivedFeatureIds, got.ArchivedFeatureIds)
+			assert.Equal(t, p.expected.ForceUpdate, got.ForceUpdate)
+		})
+	}
+}
+
 func emptyUserEvaluationsForREST(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
