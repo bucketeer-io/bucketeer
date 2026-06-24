@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import cloneDeep from 'lodash/cloneDeep';
 import { Experiment, ExperimentResult, Feature } from '@types';
+import SrmBanner from 'pages/experiment-details/elements/srm-banner';
 import PageLayout from 'elements/page-layout';
 import GoalResultItem from './goal-results';
 import { EmptyCollection } from './results-empty';
@@ -90,6 +91,10 @@ const Results = ({
     <EmptyCollection />
   ) : (
     <div className="flex flex-col w-full gap-y-6">
+      <SrmBanner
+        experiment={experiment}
+        srmResult={experimentResult?.srmResult}
+      />
       {experimentResult?.goalResults?.map((item, index) => (
         <GoalResultItem
           key={index}

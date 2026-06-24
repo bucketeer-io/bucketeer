@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	goproto "google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
@@ -37,6 +38,37 @@ func TestNewFeatureStorage(t *testing.T) {
 	defer mockController.Finish()
 	storage := NewFeatureStorage(pgmock.NewMockQueryExecer(mockController))
 	assert.IsType(t, &featureStorage{}, storage)
+}
+
+func TestVariationValueSchemaJSON(t *testing.T) {
+	t.Parallel()
+	schema := &proto.VariationValueSchema{
+		Type: proto.VariationValueSchema_ENUM,
+		Validator: &proto.VariationValueSchema_EnumValidator_{
+			EnumValidator: &proto.VariationValueSchema_EnumValidator{
+				Values: []string{"small", "large"},
+			},
+		},
+	}
+	value, err := v2fs.VariationValueSchemaJSON{Val: schema}.Value()
+	assert.NoError(t, err)
+
+	var scanned *proto.VariationValueSchema
+	err = v2fs.VariationValueSchemaJSONScanner{Val: &scanned}.Scan(value)
+	assert.NoError(t, err)
+	assert.True(t, goproto.Equal(schema, scanned))
+
+	err = v2fs.VariationValueSchemaJSONScanner{Val: &scanned}.Scan([]byte(`{"type":"ENUM","enumValidator":{"values":["small","large"]},"futureField":"ignored"}`))
+	assert.NoError(t, err)
+	assert.True(t, goproto.Equal(schema, scanned))
+
+	err = v2fs.VariationValueSchemaJSONScanner{Val: &scanned}.Scan(nil)
+	assert.NoError(t, err)
+	assert.Nil(t, scanned)
+
+	assert.Nil(t, v2fs.VariationValueSchemaJSONValue(nil))
+	assert.Nil(t, v2fs.VariationValueSchemaJSONValue(&proto.VariationValueSchema{}))
+	assert.NotNil(t, v2fs.VariationValueSchemaJSONValue(schema))
 }
 
 func TestCreateFeature(t *testing.T) {

@@ -28,7 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -55,7 +55,7 @@ func (s *FeatureService) CreateScheduledFlagChange(
 
 	// Feature lookup, count check, and create must be atomic to prevent race conditions
 	// Without transaction, concurrent requests could exceed the max schedules limit
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		// Get the feature to validate it exists and get its version
 		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.FeatureId, req.EnvironmentId)
 		if err != nil {
@@ -291,7 +291,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 	var previousScheduledAt int64
 	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -479,7 +479,7 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 	var sfc *domain.ScheduledFlagChange
 	var featureName string
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -559,72 +559,6 @@ func (s *FeatureService) ListScheduledFlagChanges(
 		return nil, err
 	}
 
-	// Build filters
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-
-	if req.FeatureId != "" {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "feature_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.FeatureId,
-		})
-	}
-
-	if req.FromScheduledAt > 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "scheduled_at",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.FromScheduledAt,
-		})
-	}
-
-	if req.ToScheduledAt > 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "scheduled_at",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.ToScheduledAt,
-		})
-	}
-
-	// Status filter
-	var inFilters []*mysql.InFilter
-	if len(req.Statuses) > 0 {
-		statusValues := make([]interface{}, 0, len(req.Statuses))
-		for _, status := range req.Statuses {
-			statusValues = append(statusValues, int32(status))
-		}
-		inFilters = append(inFilters, &mysql.InFilter{
-			Column: "status",
-			Values: statusValues,
-		})
-	}
-
-	// Order
-	var orders []*mysql.Order
-	switch req.OrderBy {
-	case ftproto.ListScheduledFlagChangesRequest_SCHEDULED_AT:
-		direction := mysql.OrderDirectionAsc
-		if req.OrderDirection == ftproto.ListScheduledFlagChangesRequest_DESC {
-			direction = mysql.OrderDirectionDesc
-		}
-		orders = append(orders, mysql.NewOrder("scheduled_at", direction))
-	case ftproto.ListScheduledFlagChangesRequest_CREATED_AT:
-		direction := mysql.OrderDirectionAsc
-		if req.OrderDirection == ftproto.ListScheduledFlagChangesRequest_DESC {
-			direction = mysql.OrderDirectionDesc
-		}
-		orders = append(orders, mysql.NewOrder("created_at", direction))
-	default:
-		// Default: order by scheduled_at ASC
-		orders = append(orders, mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc))
-	}
-
 	// Pagination
 	limit := int(req.PageSize)
 	if limit <= 0 || limit > maxPageSizePerRequest {
@@ -643,15 +577,19 @@ func (s *FeatureService) ListScheduledFlagChanges(
 		}
 	}
 
-	options := &mysql.ListOptions{
-		Filters:   filters,
-		InFilters: inFilters,
-		Orders:    orders,
-		Limit:     limit,
-		Offset:    offset,
+	params := v2fs.ListScheduledFlagChangesParams{
+		EnvironmentID:   req.EnvironmentId,
+		FeatureID:       req.FeatureId,
+		FromScheduledAt: req.FromScheduledAt,
+		ToScheduledAt:   req.ToScheduledAt,
+		Statuses:        req.Statuses,
+		OrderBy:         req.OrderBy,
+		OrderDirection:  req.OrderDirection,
+		PageSize:        limit,
+		Offset:          offset,
 	}
 
-	sfcs, nextOffset, totalCount, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, options)
+	sfcs, nextOffset, totalCount, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, params)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list scheduled flag changes",
@@ -708,7 +646,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	var sfc *domain.ScheduledFlagChange
 	var event *eventproto.Event
 
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -812,38 +750,19 @@ func (s *FeatureService) GetScheduledFlagChangeSummary(
 	}
 
 	// Get all pending and conflict schedules for this feature
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
+	params := v2fs.ListScheduledFlagChangesParams{
+		EnvironmentID: req.EnvironmentId,
+		FeatureID:     req.FeatureId,
+		Statuses: []ftproto.ScheduledFlagChangeStatus{
+			ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
 		},
-		{
-			Column:   "feature_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.FeatureId,
-		},
+		OrderBy:  ftproto.ListScheduledFlagChangesRequest_SCHEDULED_AT,
+		PageSize: database.QueryNoLimit,
+		Offset:   database.QueryNoOffset,
 	}
 
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "status",
-			Values: []interface{}{
-				int32(ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING),
-				int32(ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
-			},
-		},
-	}
-
-	options := &mysql.ListOptions{
-		Filters:   filters,
-		InFilters: inFilters,
-		Orders:    []*mysql.Order{mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc)},
-		Limit:     mysql.QueryNoLimit,
-		Offset:    mysql.QueryNoOffset,
-	}
-
-	sfcs, _, _, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, options)
+	sfcs, _, _, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, params)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get scheduled flag change summary",
@@ -1055,38 +974,19 @@ func (s *FeatureService) listPendingSchedulesForFeature(
 	ctx context.Context,
 	featureID, environmentID string,
 ) ([]*ftproto.ScheduledFlagChange, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentID,
+	params := v2fs.ListScheduledFlagChangesParams{
+		EnvironmentID: environmentID,
+		FeatureID:     featureID,
+		Statuses: []ftproto.ScheduledFlagChangeStatus{
+			ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
 		},
-		{
-			Column:   "feature_id",
-			Operator: mysql.OperatorEqual,
-			Value:    featureID,
-		},
-	}
-
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "status",
-			Values: []interface{}{
-				int32(ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING),
-				int32(ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
-			},
-		},
-	}
-
-	options := &mysql.ListOptions{
-		Filters:   filters,
-		InFilters: inFilters,
-		Limit:     mysql.QueryNoLimit,
-		Offset:    mysql.QueryNoOffset,
+		PageSize: database.QueryNoLimit,
+		Offset:   database.QueryNoOffset,
 	}
 
 	sfcs, _, _, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(
-		ctx, options,
+		ctx, params,
 	)
 	if err != nil {
 		return nil, err
@@ -1149,37 +1049,18 @@ func (s *FeatureService) cancelPendingScheduledFlagChanges(
 	ctx context.Context,
 	featureID, environmentID, cancelledBy, reason string,
 ) error {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentID,
+	params := v2fs.ListScheduledFlagChangesParams{
+		EnvironmentID: environmentID,
+		FeatureID:     featureID,
+		Statuses: []ftproto.ScheduledFlagChangeStatus{
+			ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
 		},
-		{
-			Column:   "feature_id",
-			Operator: mysql.OperatorEqual,
-			Value:    featureID,
-		},
+		PageSize: database.QueryNoLimit,
+		Offset:   database.QueryNoOffset,
 	}
 
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "status",
-			Values: []interface{}{
-				int32(ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING),
-				int32(ftproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
-			},
-		},
-	}
-
-	options := &mysql.ListOptions{
-		Filters:   filters,
-		InFilters: inFilters,
-		Limit:     mysql.QueryNoLimit,
-		Offset:    mysql.QueryNoOffset,
-	}
-
-	sfcs, _, _, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, options)
+	sfcs, _, _, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, params)
 	if err != nil {
 		return err
 	}

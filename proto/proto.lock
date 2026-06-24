@@ -23889,77 +23889,6 @@
       }
     },
     {
-      "protopath": "event:/:service:/:user.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "UserEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "tag",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "user_id",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "last_seen",
-                "type": "int64"
-              },
-              {
-                "id": 9,
-                "name": "source_id",
-                "type": "bucketeer.event.client.SourceId"
-              },
-              {
-                "id": 10,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "maps": [
-              {
-                "key_type": "string",
-                "field": {
-                  "id": 8,
-                  "name": "data",
-                  "type": "string"
-                }
-              }
-            ],
-            "reserved_ids": [
-              2,
-              3,
-              4
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/event/client/event.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.event.service"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "eventcounter:/:distribution_summary.proto",
       "def": {
         "messages": [
@@ -24225,6 +24154,11 @@
                 "id": 5,
                 "name": "total_evaluation_user_count",
                 "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "srm_result",
+                "type": "SrmResult"
               }
             ]
           }
@@ -24232,6 +24166,9 @@
         "imports": [
           {
             "path": "proto/eventcounter/goal_result.proto"
+          },
+          {
+            "path": "proto/eventcounter/srm_result.proto"
           }
         ],
         "package": {
@@ -24283,6 +24220,12 @@
                 "id": 2,
                 "name": "goal_user_count",
                 "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "best_variations_value",
+                "type": "Variation",
+                "is_repeated": true
               }
             ],
             "messages": [
@@ -26141,6 +26084,110 @@
           },
           {
             "path": "proto/eventcounter/variation_count.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.eventcounter"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "eventcounter:/:srm_result.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "SrmResult.Status",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "OK",
+                "integer": 1
+              },
+              {
+                "name": "MISMATCH",
+                "integer": 2
+              },
+              {
+                "name": "SKIPPED",
+                "integer": 3
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "SrmResult",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "Status"
+              },
+              {
+                "id": 2,
+                "name": "p_value",
+                "type": "double"
+              },
+              {
+                "id": 3,
+                "name": "chi_square",
+                "type": "double"
+              },
+              {
+                "id": 4,
+                "name": "degrees_of_freedom",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "threshold",
+                "type": "double"
+              },
+              {
+                "id": 6,
+                "name": "skip_reason",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "variations",
+                "type": "SrmVariation",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "SrmVariation",
+            "fields": [
+              {
+                "id": 1,
+                "name": "variation_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "observed_user_count",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "expected_user_count",
+                "type": "double"
+              },
+              {
+                "id": 4,
+                "name": "expected_weight",
+                "type": "double"
+              }
+            ]
           }
         ],
         "package": {
@@ -29364,6 +29411,26 @@
                 "integer": 4
               }
             ]
+          },
+          {
+            "name": "VariationValueSchema.Type",
+            "enum_fields": [
+              {
+                "name": "TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "ENUM",
+                "integer": 1
+              },
+              {
+                "name": "REGEX",
+                "integer": 2
+              },
+              {
+                "name": "JSON_SCHEMA",
+                "integer": 3
+              }
+            ]
           }
         ],
         "messages": [
@@ -29495,6 +29562,74 @@
                 "id": 23,
                 "name": "auto_ops_summary",
                 "type": "AutoOpsSummary"
+              },
+              {
+                "id": 24,
+                "name": "variation_value_schema",
+                "type": "VariationValueSchema"
+              }
+            ]
+          },
+          {
+            "name": "VariationValueSchema",
+            "fields": [
+              {
+                "id": 1,
+                "name": "type",
+                "type": "Type"
+              },
+              {
+                "id": 2,
+                "name": "enum_validator",
+                "type": "EnumValidator"
+              },
+              {
+                "id": 3,
+                "name": "regex_validator",
+                "type": "RegexValidator"
+              },
+              {
+                "id": 4,
+                "name": "json_schema_validator",
+                "type": "JsonSchemaValidator"
+              },
+              {
+                "id": 5,
+                "name": "description",
+                "type": "string"
+              }
+            ],
+            "messages": [
+              {
+                "name": "EnumValidator",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "values",
+                    "type": "string",
+                    "is_repeated": true
+                  }
+                ]
+              },
+              {
+                "name": "RegexValidator",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "pattern",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "JsonSchemaValidator",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "schema",
+                    "type": "string"
+                  }
+                ]
               }
             ]
           },
@@ -31182,6 +31317,11 @@
                 "id": 11,
                 "name": "variation_type",
                 "type": "Feature.VariationType"
+              },
+              {
+                "id": 12,
+                "name": "variation_value_schema",
+                "type": "VariationValueSchema"
               }
             ],
             "reserved_ids": [
@@ -31314,6 +31454,16 @@
                 "name": "ordered_rule_ids",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 20,
+                "name": "variation_value_schema",
+                "type": "VariationValueSchema"
+              },
+              {
+                "id": 21,
+                "name": "clear_variation_value_schema",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
@@ -37780,6 +37930,11 @@
                 "id": 8,
                 "name": "off_variation_index",
                 "type": "int32"
+              },
+              {
+                "id": 9,
+                "name": "variation_value_schema",
+                "type": "feature.VariationValueSchema"
               }
             ]
           },
@@ -37962,6 +38117,16 @@
                 "name": "tag_changes",
                 "type": "feature.TagChange",
                 "is_repeated": true
+              },
+              {
+                "id": 17,
+                "name": "variation_value_schema",
+                "type": "feature.VariationValueSchema"
+              },
+              {
+                "id": 18,
+                "name": "clear_variation_value_schema",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },

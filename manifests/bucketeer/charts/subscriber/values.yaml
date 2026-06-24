@@ -209,16 +209,6 @@ subscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
-  userEventPersister:
-    pubSubType: google
-    project:
-    topic:
-    subscription:
-    pullerNumGoroutines: 10
-    pullerMaxOutstandingMessages: 10000
-    pullerMaxOutstandingBytes: 100000000
-    maxMps: 1000
-    workerNum: 5
   demoOrganizationCreationNotifier:
     pubSubType: google
     project:
@@ -314,9 +304,6 @@ processors:
     redisPartitionCount: 16
     redisMode: auto
     project: ""
-  userEventPersister:
-    flushSize: 200
-    flushInterval: 5
   demoOrganizationCreationNotifier:
     notifier:
       slack:

@@ -84,7 +84,8 @@ const strategySchema = yup.object().shape({
           .reduce((total, current) => {
             return total + (current || 0);
           }, 0);
-        if (total !== 100)
+        // Round before comparing to absorb floating-point summation drift
+        if (Math.round(total * 100) / 100 !== 100)
           return this.createError({
             message: translation('message:validation.should-be-percent'),
             path: `${this.path}.variations`
@@ -165,7 +166,8 @@ export const defaultRuleSchema = yup.object().shape({
           .reduce((total, current) => {
             return total + (current || 0);
           }, 0);
-        if (total !== 100)
+        // Round before comparing to absorb floating-point summation drift
+        if (Math.round(total * 100) / 100 !== 100)
           return this.createError({
             message: translation('message:validation.should-be-percent'),
             path: `${this.path}.variations`

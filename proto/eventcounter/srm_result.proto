@@ -1,0 +1,73 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.eventcounter;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter";
+
+// SrmResult reports the outcome of a Sample Ratio Mismatch (SRM) check: a
+// chi-square goodness-of-fit test comparing each variation's observed user
+// count against the intended traffic split (the feature's default rollout
+// strategy weights). An SRM silently invalidates A/B test conclusions, so
+// the calculator computes this once per experiment-calculation cycle and
+// surfaces a warning when p_value < threshold. Status SKIPPED is returned
+// when the inputs are unusable (no rollout strategy, weights all zero,
+// total observed sample below the chi-square reliability floor, smallest
+// expected cell below the reliability floor, etc.); skip_reason explains
+// the specific cause.
+message SrmResult {
+  enum Status {
+    UNKNOWN = 0;
+    // p_value >= threshold; observed split matches intended split.
+    OK = 1;
+    // p_value < threshold; observed split differs from intended.
+    MISMATCH = 2;
+    // Check could not be computed; see skip_reason for the cause.
+    SKIPPED = 3;
+  }
+
+  Status status = 1;
+  // Right-tail p-value of the chi-square goodness-of-fit statistic:
+  // p = P(X >= chi_square) where X ~ ChiSquared(degrees_of_freedom).
+  double p_value = 2;
+  // Chi-square test statistic: Σ (observed - expected)² / expected.
+  double chi_square = 3;
+  // Degrees of freedom (K - 1 where K = number of variations with
+  // expected_user_count > 0).
+  int64 degrees_of_freedom = 4;
+  // p_value threshold below which the status flips to MISMATCH.
+  double threshold = 5;
+  // Human-readable reason this check was SKIPPED. Empty otherwise.
+  string skip_reason = 6;
+  // Per-variation observed vs expected breakdown.
+  repeated SrmVariation variations = 7;
+}
+
+message SrmVariation {
+  string variation_id = 1;
+  // Number of unique users assigned to this variation during the experiment
+  // window (VariationResult.evaluation_count.user_count).
+  int64 observed_user_count = 2;
+  // Expected number of users under the intended split:
+  // total_observed_users * expected_weight.
+  double expected_user_count = 3;
+  // Audience-aware expected fraction of total traffic for this variation,
+  // in [0, 1]. Sums to 1 across the rollout's variations. Accounts for the
+  // rollout strategy's Audience Traffic Allocation: when audience.percentage
+  // is in 1-99 and audience.default_variation is set, the default variation
+  // receives (1 - audience_fraction) extra share to credit the
+  // out-of-audience users that the SDK routes to it.
+  double expected_weight = 4;
+}

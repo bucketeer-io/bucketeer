@@ -26,16 +26,20 @@ import (
 	"github.com/go-gota/gota/dataframe"
 	"go.uber.org/zap"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (
@@ -56,6 +60,7 @@ type ExperimentCalculator struct {
 	environmentClient       envclient.Client
 	eventCounterClient      ecclient.Client
 	experimentClient        experimentclient.Client
+	featureClient           featureclient.Client
 	experimentResultStorage v2es.ExperimentResultStorage
 	metrics                 metrics.Registerer
 
@@ -69,6 +74,7 @@ func NewExperimentCalculator(
 	environmentClient envclient.Client,
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
+	featureClient featureclient.Client,
 	experimentResultStorage v2es.ExperimentResultStorage,
 	metrics metrics.Registerer,
 	loc *time.Location,
@@ -81,6 +87,7 @@ func NewExperimentCalculator(
 		environmentClient:       environmentClient,
 		eventCounterClient:      eventCounterClient,
 		experimentClient:        experimentClient,
+		featureClient:           featureClient,
 		experimentResultStorage: experimentResultStorage,
 		metrics:                 metrics,
 		location:                loc,
@@ -232,7 +239,93 @@ func (e ExperimentCalculator) createExperimentResult(
 
 	experimentResult.TotalEvaluationUserCount = totalEvaluationUserCount
 
+	// Compute Sample Ratio Mismatch (SRM) against the feature's intended
+	// rollout weights. SRM is naturally per-experiment, not per-goal, since
+	// evaluation user counts are shared across goals; reuse the first goal
+	// result's variation breakdown.
+	experimentResult.SrmResult = e.computeExperimentSRM(ctx, envNamespace, experiment, experimentResult.GoalResults)
+
 	return experimentResult, nil
+}
+
+// computeExperimentSRM fetches the feature definition for `experiment` and runs
+// the chi-square SRM check against the first goal's variation evaluation
+// counts. Always returns a non-nil result so the UI can render a meaningful
+// diagnostic; on a feature-fetch error or missing goal data, the result is
+// SKIPPED with an explanatory reason rather than nil.
+func (e ExperimentCalculator) computeExperimentSRM(
+	ctx context.Context,
+	environmentID string,
+	experiment *experiment.Experiment,
+	goalResults []*eventcounter.GoalResult,
+) *eventcounter.SrmResult {
+	if len(goalResults) == 0 {
+		return &eventcounter.SrmResult{
+			Status:     eventcounter.SrmResult_SKIPPED,
+			Threshold:  DefaultSRMThreshold,
+			SkipReason: "no goal results available to derive observed traffic split",
+		}
+	}
+	feature, err := e.getFeatureForSRM(ctx, environmentID, experiment)
+	if err != nil {
+		// Log at warn level — the SRM check is best-effort diagnostic
+		// metadata, not the primary calculator output, and we gracefully
+		// degrade to a SKIPPED SrmResult so the failure does not block
+		// experiment results. Error would falsely inflate the calculator's
+		// error-rate metric; Info would hide a recurring misconfiguration
+		// (stale feature_version, auth/network issue, etc.) that an
+		// operator should investigate.
+		e.logger.Warn("SRM check: failed to fetch feature, marking SKIPPED",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("environmentId", environmentID),
+				zap.String("featureId", experiment.FeatureId),
+				zap.Int32("featureVersion", experiment.FeatureVersion),
+				zap.Error(err),
+			)...,
+		)
+		// Generic message — skip_reason is exposed via the API. The
+		// underlying gRPC error can carry internal backend details (status
+		// metadata, stack hints, etc.) that we don't want to leak to API
+		// consumers; the full error is already in the Warn log above.
+		return &eventcounter.SrmResult{
+			Status:     eventcounter.SrmResult_SKIPPED,
+			Threshold:  DefaultSRMThreshold,
+			SkipReason: "could not fetch feature definition",
+		}
+	}
+	return computeSRM(goalResults[0].VariationResults, feature, DefaultSRMThreshold)
+}
+
+func (e ExperimentCalculator) getFeatureForSRM(
+	ctx context.Context,
+	environmentID string,
+	experiment *experiment.Experiment,
+) (*featureproto.Feature, error) {
+	resp, err := e.featureClient.GetFeature(ctx, buildGetFeatureRequestForSRM(environmentID, experiment))
+	if err != nil {
+		return nil, err
+	}
+	return resp.Feature, nil
+}
+
+// buildGetFeatureRequestForSRM constructs the GetFeature request for an SRM
+// check. FeatureVersion is left nil — meaning "the current version" — when
+// the experiment carries no explicit version (legacy / unset). Sending an
+// explicit wrapperspb.Int32(0) would force a lookup for version 0, which
+// does not exist and would NotFound the request, needlessly degrading SRM
+// to SKIPPED.
+func buildGetFeatureRequestForSRM(
+	environmentID string,
+	experiment *experiment.Experiment,
+) *featureproto.GetFeatureRequest {
+	req := &featureproto.GetFeatureRequest{
+		Id:            experiment.FeatureId,
+		EnvironmentId: environmentID,
+	}
+	if experiment.FeatureVersion > 0 {
+		req.FeatureVersion = wrapperspb.Int32(experiment.FeatureVersion)
+	}
+	return req
 }
 
 func (e ExperimentCalculator) getEvaluationCount(
@@ -358,7 +451,8 @@ func (e ExperimentCalculator) calcGoalResult(
 			return goalResult
 		}
 	}
-	valueResult := normalInverseGamma(ctx, vids, valueMeans, valueVars, goalUc, baseLineIdx, 25000)
+	// nil src uses the global RNG; tests inject a seeded source for determinism.
+	valueResult := normalInverseGamma(nil, vids, valueMeans, valueVars, goalUc, baseLineIdx, 25000)
 	for vid, vr := range valueResult {
 		vrs[vid].GoalValueSumPerUserProb = copyDistributionSummary(vr.GoalValueSumPerUserProb)
 		vrs[vid].GoalValueSumPerUserProbBest = copyDistributionSummary(vr.GoalValueSumPerUserProbBest)
@@ -795,36 +889,21 @@ func (e ExperimentCalculator) calculateSummary(
 		return
 	}
 
-	// 1. Find best variations (cvr_prob_beat_baseline.mean > 95%)
-	var bestVariations []*eventcounter.Summary_Variation
-	var maxProbability float64
-	var maxProbabilityVariationID string
-
-	for _, vr := range goalResult.VariationResults {
-		if vr.CvrProbBeatBaseline != nil && vr.CvrProbBeatBaseline.Mean > 0.95 {
-			probability := vr.CvrProbBeatBaseline.Mean
-			bestVar := &eventcounter.Summary_Variation{
-				Id:          vr.VariationId,
-				Probability: probability,
-				IsBest:      false,
-			}
-
-			// Track which variation has the highest probability
-			if probability > maxProbability {
-				maxProbability = probability
-				maxProbabilityVariationID = vr.VariationId
-			}
-
-			bestVariations = append(bestVariations, bestVar)
-		}
-	}
-
-	// Mark the variation with highest probability as outperformed
-	for _, bestVar := range bestVariations {
-		if bestVar.Id == maxProbabilityVariationID {
-			bestVar.IsBest = true
-		}
-	}
+	// Build a best-variations list per metric so the confidence banner can stay
+	// metric-aware: CVR drives the conversion-rate chart, value-per-user drives
+	// the value charts (Value/User and Value/Total).
+	cvrBestVariations := pickBestVariations(
+		goalResult.VariationResults,
+		func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+			return vr.CvrProbBeatBaseline
+		},
+	)
+	valueBestVariations := pickBestVariations(
+		goalResult.VariationResults,
+		func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+			return vr.GoalValueSumPerUserProbBeatBaseline
+		},
+	)
 
 	// Calculate total goal user count by summing across all variations
 	var totalGoalUserCount int64
@@ -835,8 +914,49 @@ func (e ExperimentCalculator) calculateSummary(
 	}
 
 	// Set the summary values
-	goalResult.Summary.BestVariations = bestVariations
+	goalResult.Summary.BestVariations = cvrBestVariations
+	goalResult.Summary.BestVariationsValue = valueBestVariations
 	goalResult.Summary.GoalUserCount = totalGoalUserCount
+}
+
+// pickBestVariations returns the variations whose probability-to-beat-baseline
+// (selected by probFn) exceeds 95%, marking the single highest-probability one
+// as the best. The per-metric probFn lets the same selection logic serve both
+// the CVR and value-per-user posteriors.
+func pickBestVariations(
+	variationResults []*eventcounter.VariationResult,
+	probFn func(*eventcounter.VariationResult) *eventcounter.DistributionSummary,
+) []*eventcounter.Summary_Variation {
+	var bestVariations []*eventcounter.Summary_Variation
+	var maxProbability float64
+	var maxProbabilityVariationID string
+
+	for _, vr := range variationResults {
+		prob := probFn(vr)
+		if prob != nil && prob.Mean > 0.95 {
+			probability := prob.Mean
+			bestVar := &eventcounter.Summary_Variation{
+				Id:          vr.VariationId,
+				Probability: probability,
+				IsBest:      false,
+			}
+
+			if probability > maxProbability {
+				maxProbability = probability
+				maxProbabilityVariationID = vr.VariationId
+			}
+
+			bestVariations = append(bestVariations, bestVar)
+		}
+	}
+
+	for _, bestVar := range bestVariations {
+		if bestVar.Id == maxProbabilityVariationID {
+			bestVar.IsBest = true
+		}
+	}
+
+	return bestVariations
 }
 
 // calculateExpectedLoss computes the posterior expected loss (regret) for each variation

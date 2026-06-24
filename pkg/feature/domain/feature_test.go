@@ -140,6 +140,7 @@ func TestNewFeature(t *testing.T) {
 		name                     string
 		description              string
 		variationType            ftproto.Feature_VariationType
+		variationValueSchema     *ftproto.VariationValueSchema
 		variations               []*ftproto.Variation
 		tags                     []string
 		defaultOnVariationIndex  int
@@ -220,6 +221,17 @@ func TestNewFeature(t *testing.T) {
 			name:          "test feature",
 			description:   "test feature description",
 			variationType: ftproto.Feature_BOOLEAN,
+			variationValueSchema: &ftproto.VariationValueSchema{
+				Type: ftproto.VariationValueSchema_ENUM,
+				Validator: &ftproto.VariationValueSchema_EnumValidator_{
+					EnumValidator: &ftproto.VariationValueSchema_EnumValidator{
+						Values: []string{
+							"true",
+							"false",
+						},
+					},
+				},
+			},
 			variations: []*ftproto.Variation{
 				{
 					Value:       "true",
@@ -247,6 +259,7 @@ func TestNewFeature(t *testing.T) {
 				p.name,
 				p.description,
 				p.variationType,
+				p.variationValueSchema,
 				p.variations,
 				p.tags,
 				p.defaultOnVariationIndex,
@@ -259,6 +272,7 @@ func TestNewFeature(t *testing.T) {
 				assert.Equal(t, p.name, f.Name)
 				assert.Equal(t, p.description, f.Description)
 				assert.Equal(t, p.variationType, f.VariationType)
+				assert.Equal(t, p.variationValueSchema, f.VariationValueSchema)
 				assert.Equal(t, p.tags, f.Tags)
 				assert.Equal(t, p.maintainer, f.Maintainer)
 				assert.Equal(t, int32(1), f.Version)
@@ -3305,6 +3319,7 @@ func TestUpdate(t *testing.T) {
 				p.tagChanges,
 				p.maintainer,
 				nil, // ruleOrder
+				nil, // variationValueSchemaUpdate
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -3498,6 +3513,7 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
 				p.prerequisiteChanges, nil, nil, nil, nil, nil, nil,
+				nil,
 			)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if err == nil {
@@ -3670,6 +3686,7 @@ func TestUpdateTargetsGranular(t *testing.T) {
 			actual, err := p.setupFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
 				nil, p.targetChanges, nil, nil, nil, nil, nil,
+				nil,
 			)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Nil(t, actual)
@@ -3964,6 +3981,7 @@ func TestUpdateRulesGranular(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
 				nil, nil, p.ruleChanges, nil, nil, nil, nil, // granular change lists
+				nil,
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4179,6 +4197,7 @@ func TestUpdateVariationsGranular(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
 				nil, nil, nil, p.variationChanges, nil, nil, nil, // granular change lists
+				nil,
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4278,6 +4297,7 @@ func TestUpdateTagsGranular(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
 				nil, nil, nil, nil, p.tagChanges, nil, nil,
+				nil,
 			)
 			if p.expectedErr != nil {
 				assert.Error(t, err, p.desc)

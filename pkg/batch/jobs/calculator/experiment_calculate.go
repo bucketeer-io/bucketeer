@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/experimentcalc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	v2ecs "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -60,6 +61,7 @@ func NewExperimentCalculate(
 	environmentClient environmentclient.Client,
 	experimentClient experimentclient.Client,
 	ecClient ecclient.Client,
+	featureClient featureclient.Client,
 	experimentResultStorage v2ecs.ExperimentResultStorage,
 	experimentLock *ExperimentLock,
 	location *time.Location,
@@ -78,6 +80,7 @@ func NewExperimentCalculate(
 		environmentClient,
 		ecClient,
 		experimentClient,
+		featureClient,
 		experimentResultStorage,
 		dopts.Metrics,
 		location,

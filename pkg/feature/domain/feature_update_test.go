@@ -142,6 +142,7 @@ func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {
 				nil,         // tagChanges
 				nil,         // maintainer
 				nil,         // ruleOrder
+				nil,         // variationValueSchemaUpdate
 			)
 
 			require.NoError(t, err)
@@ -175,6 +176,44 @@ func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpdateVariationValueSchema(t *testing.T) {
+	t.Parallel()
+	schema := &feature.VariationValueSchema{
+		Type:        feature.VariationValueSchema_ENUM,
+		Description: "Allowed size values",
+		Validator: &feature.VariationValueSchema_EnumValidator_{
+			EnumValidator: &feature.VariationValueSchema_EnumValidator{
+				Values: []string{"small", "large"},
+			},
+		},
+	}
+	t.Run("set schema", func(t *testing.T) {
+		t.Parallel()
+		original := makeFeature("test-feature")
+		updated, err := original.Update(
+			nil, nil, nil, nil, nil, nil, nil, false,
+			nil, nil, nil, nil, nil, nil, nil,
+			&VariationValueSchemaUpdate{Schema: schema},
+		)
+		require.NoError(t, err)
+		assert.True(t, proto.Equal(schema, updated.VariationValueSchema))
+		assert.Equal(t, original.Version+1, updated.Version)
+	})
+	t.Run("clear schema", func(t *testing.T) {
+		t.Parallel()
+		original := makeFeature("test-feature")
+		original.VariationValueSchema = schema
+		updated, err := original.Update(
+			nil, nil, nil, nil, nil, nil, nil, false,
+			nil, nil, nil, nil, nil, nil, nil,
+			&VariationValueSchemaUpdate{Clear: wrapperspb.Bool(true)},
+		)
+		require.NoError(t, err)
+		assert.Nil(t, updated.VariationValueSchema)
+		assert.Equal(t, original.Version+1, updated.Version)
+	})
 }
 
 func TestUpdateWithIdenticalDefaultStrategy(t *testing.T) {
@@ -243,6 +282,7 @@ func TestUpdateWithIdenticalDefaultStrategy(t *testing.T) {
 		nil,                            // tagChanges
 		nil,                            // maintainer
 		nil,                            // ruleOrder
+		nil,                            // variationValueSchemaUpdate
 	)
 
 	require.NoError(t, err)
@@ -524,6 +564,7 @@ func TestUpdateMaintainer(t *testing.T) {
 				nil,          // tagChanges
 				p.maintainer, // maintainer
 				nil,          // ruleOrder
+				nil,          // variationValueSchemaUpdate
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -1839,6 +1880,7 @@ func TestUpdateCompleteNoChangesScenario(t *testing.T) {
 		nil, // tagChanges - no changes
 		nil, // maintainer - no changes
 		nil, // ruleOrder - no changes
+		nil, // variationValueSchemaUpdate - no changes
 	)
 
 	require.NoError(t, err)
@@ -1903,7 +1945,7 @@ func TestUpdateWithActualChangesIncrementsVersionAndTimestamp(t *testing.T) {
 	// Make an actual change (different name)
 	updated, err := originalFeature.Update(
 		wrapperspb.String("Updated Name"), // CHANGED - different from original
-		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	require.NoError(t, err)
@@ -2319,6 +2361,7 @@ func TestUpdateRuleOrder(t *testing.T) {
 				nil, nil, nil, nil, nil, nil, nil, false,
 				nil, nil, nil, nil, nil, nil,
 				p.ruleOrder,
+				nil,
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -2590,6 +2633,7 @@ func TestUpdateRuleOrderWithRuleChanges(t *testing.T) {
 				nil, // tagChanges
 				nil, // maintainer
 				ruleOrder,
+				nil, // variationValueSchemaUpdate
 			)
 
 			if p.expectedErr != nil {

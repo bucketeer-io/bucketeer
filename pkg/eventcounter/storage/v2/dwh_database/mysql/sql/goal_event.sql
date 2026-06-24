@@ -22,7 +22,7 @@ SELECT
     SUM(event_count) as goalTotal,
     SUM(value_sum) as goalValueTotal,
     AVG(value_sum) as goalValueMean,
-    IFNULL(VARIANCE(value_sum), 0) as goalValueVariance
+    IFNULL(VAR_SAMP(value_sum), 0) as goalValueVariance
 FROM
     grouped_by_user_evaluation
 GROUP BY

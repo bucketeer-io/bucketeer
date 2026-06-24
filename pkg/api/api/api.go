@@ -32,6 +32,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -53,7 +54,6 @@ type gatewayService struct {
 	pushClient                  pushclient.Client
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
-	userPublisher               publisher.Publisher
 	metricsPublisher            publisher.Publisher
 	segmentUsersCache           cachev3.SegmentUsersCache
 	segmentUsersRedisCache      cachev3.SegmentUsersCache
@@ -62,6 +62,8 @@ type gatewayService struct {
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	flightgroup                 singleflight.Group
+	streamDispatcher            *stream.Dispatcher
+	streamEvalHandler           *stream.EvaluationsHandler
 	opts                        *options
 	logger                      *zap.Logger
 }
@@ -72,10 +74,11 @@ func NewGatewayService(
 	pushClient pushclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
-	up publisher.Publisher,
 	mp publisher.Publisher,
 	accountStorage accstorage.AccountStorage,
 	redisV3Cache cache.MultiGetCache,
+	dispatcher *stream.Dispatcher,
+	sseHeartbeatInterval time.Duration,
 	opts ...Option,
 ) *gatewayService {
 	options := defaultOptions
@@ -91,14 +94,13 @@ func NewGatewayService(
 			cachev3.WithEvictionInterval(options.apiKeyMemoryCacheEvictionInterval),
 		)
 	}
-	return &gatewayService{
+	s := &gatewayService{
 		featureClient:               featureClient,
 		accountClient:               accountClient,
 		accountStorage:              accountStorage,
 		pushClient:                  pushClient,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
-		userPublisher:               up,
 		metricsPublisher:            mp,
 		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
 		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
@@ -106,19 +108,29 @@ func NewGatewayService(
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
 		environmentAPIKeyRedisCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache, 0),
+		streamDispatcher:            dispatcher,
 		opts:                        &options,
 		logger:                      options.logger.Named("api"),
 	}
+	s.streamEvalHandler = stream.NewEvaluationsHandler(
+		dispatcher,
+		sseHeartbeatInterval,
+		s.checkRequest,
+		requestTotal,
+		options.logger,
+	)
+	return s
 }
 
 const (
-	Version          = "/v1"
-	Service          = "/gateway"
-	pingAPI          = "/ping"
-	evaluationsAPI   = "/evaluations"
-	evaluationAPI    = "/evaluation"
-	eventAPI         = "/events"
-	authorizationKey = "authorization"
+	Version              = "/v1"
+	Service              = "/gateway"
+	pingAPI              = "/ping"
+	evaluationsAPI       = "/evaluations"
+	evaluationAPI        = "/evaluation"
+	streamEvaluationsAPI = "/stream_evaluations"
+	eventAPI             = "/events"
+	authorizationKey     = "authorization"
 )
 
 var (
@@ -149,6 +161,7 @@ func (s *gatewayService) Register(mux *http.ServeMux) {
 	s.regist(mux, evaluationsAPI, s.getEvaluations)
 	s.regist(mux, evaluationAPI, s.getEvaluation)
 	s.regist(mux, eventAPI, s.registerEvents)
+	s.regist(mux, streamEvaluationsAPI, s.streamEvalHandler.Handle)
 }
 
 func (*gatewayService) regist(mux *http.ServeMux, path string, handler func(http.ResponseWriter, *http.Request)) {

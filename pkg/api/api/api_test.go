@@ -52,7 +52,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil, 0)
 	assert.IsType(t, &gatewayService{}, g)
 }
 
@@ -681,8 +681,6 @@ func TestGetEvaluationsValidation(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -749,8 +747,6 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -956,7 +952,6 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -994,7 +989,6 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1034,7 +1028,6 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1073,7 +1066,6 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1111,7 +1103,6 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1266,7 +1257,6 @@ func testGetEvaluationsNoSegmentList(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1388,8 +1378,6 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
@@ -1485,8 +1473,6 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1573,8 +1559,6 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
 			},
@@ -1639,8 +1623,6 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1725,8 +1707,6 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1848,8 +1828,6 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1944,8 +1922,6 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
@@ -2023,7 +1999,6 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -2523,7 +2498,6 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 		accountClient:               accountclientmock.NewMockClient(mockController),
 		accountStorage:              accountstoragemock.NewMockAccountStorage(mockController),
 		goalPublisher:               publishermock.NewMockPublisher(mockController),
-		userPublisher:               publishermock.NewMockPublisher(mockController),
 		metricsPublisher:            publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:         publishermock.NewMockPublisher(mockController),
 		featuresCache:               cachev3mock.NewMockFeaturesCache(mockController),

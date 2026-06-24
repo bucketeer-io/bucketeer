@@ -25,9 +25,5 @@
     "redisPartitionCount": 16,
     "redisMode": "auto",
     "project": "bucketeer-dev"
-  },
-  "userEventPersister": {
-    "flushSize": 10,
-    "flushInterval": 1
   }
 } 

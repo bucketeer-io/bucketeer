@@ -33,6 +33,7 @@ import (
 	accountmysql "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mysql"
 	accountpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/stream"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -95,7 +96,6 @@ type server struct {
 	goalTopicProject                  *string
 	evaluationTopic                   *string
 	evaluationTopicProject            *string
-	userTopic                         *string
 	metricsTopic                      *string
 	publishNumGoroutines              *int
 	publishTimeout                    *time.Duration
@@ -136,6 +136,7 @@ type server struct {
 	pubSubRedisPartitionCount *int
 	pubSubRedisMode           *string
 	cacheInvalidationTopic    *string
+	sseHeartbeatInterval      *time.Duration
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -170,8 +171,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"evaluation-topic-project",
 			"GCP Project id to use for PubSub to publish EvaluationEvent.",
 		).String(),
-		// FIXME: This flag will be required once user feature is fully released.
-		userTopic:    cmd.Flag("user-topic", "Topic to use for publishing UserEvent.").String(),
 		metricsTopic: cmd.Flag("metrics-topic", "Topic to use for publishing MetricsEvent.").String(),
 		publishNumGoroutines: cmd.Flag(
 			"publish-num-goroutines",
@@ -307,8 +306,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
 				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
-				"announcement so the next request reloads from the (now warm) L2.",
+				"announcement, reloads them from the warm L2 cache, and notifies "+
+				"active SSE streams.",
 		).Default("cache-invalidation").String(),
+		sseHeartbeatInterval: cmd.Flag("sse-heartbeat-interval",
+			"Interval between SSE heartbeat comments on the stream_evaluations "+
+				"endpoint. Must be shorter than the idle timeout of any reverse "+
+				"proxy or load balancer in front of the gateway.",
+		).Default("25s").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -376,15 +381,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	if err != nil {
 		return nil
-	}
-
-	// FIXME: This condition won't be necessary once user feature is fully released.
-	var userPublisher publisher.Publisher
-	if *s.userTopic != "" {
-		userPublisher, err = pubsubClient.CreatePublisherInProject(*s.userTopic, *s.project)
-		if err != nil {
-			return err
-		}
 	}
 
 	// FIXME: This condition won't be necessary once user feature is fully released.
@@ -551,6 +547,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cachev3.WithEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 	)
 
+	streamDispatcher := stream.NewDispatcher(logger)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()
 	var stopInvalidatorOnce sync.Once
@@ -569,7 +566,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// configured cache-invalidation topic for that purpose.
 	if *s.cacheInvalidationTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
-			invalidatorCtx, pubsubClient, inMemoryCache, *s.cacheInvalidationTopic, logger,
+			invalidatorCtx, pubsubClient, streamDispatcher, inMemoryCache, *s.cacheInvalidationTopic, logger,
 		)
 		if err != nil {
 			return err
@@ -613,7 +610,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountStorage,
 		goalPublisher,
 		evaluationPublisher,
-		userPublisher,
 		redisV3Cache,
 		api.WithInMemoryCache(inMemoryCache),
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
@@ -694,10 +690,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushClient,
 		goalPublisher,
 		evaluationPublisher,
-		userPublisher,
 		metricsPublisher,
 		accountStorage,
 		redisV3Cache,
+		streamDispatcher,
+		*s.sseHeartbeatInterval,
 		api.WithInMemoryCache(inMemoryCache),
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
 		api.WithAPIKeyMemoryCacheEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
@@ -771,9 +768,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// These are fast cleanup operations that can run asynchronously.
 		go goalPublisher.Stop()
 		go evaluationPublisher.Stop()
-		if userPublisher != nil {
-			go userPublisher.Stop()
-		}
 		if metricsPublisher != nil {
 			go metricsPublisher.Stop()
 		}
@@ -809,8 +803,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 // startCacheInvalidator subscribes to the cache-invalidation announcement
 // topic and evicts L1 in-memory cache entries when feature flags, segments,
-// or API keys are updated. Each pod uses a unique consumer group (based on
-// hostname) so every pod receives every event.
+// or API keys are updated. After each eviction it forwards the event to the
+// StreamDispatcher so active SSE connections compute patches from fresh data.
+// Each pod uses a unique consumer group (based on hostname) so every pod
+// receives every event.
 //
 // The L2 (Redis) cache is *not* evicted here — by the time the
 // announcement arrives, the subscriber service has already refreshed L2
@@ -824,6 +820,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 func (s *server) startCacheInvalidator(
 	ctx context.Context,
 	pubsubClient factory.Client,
+	dispatcher *stream.Dispatcher,
 	inMemoryCache *cachev3.InMemoryCache,
 	topic string,
 	logger *zap.Logger,
@@ -860,6 +857,7 @@ func (s *server) startCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
 		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
+		dispatcher,
 		logger,
 	)
 	go func() {

@@ -480,7 +480,8 @@ export const isEquallyVariations = (
   const remainder = Math.round((100 - base * count) * 100);
 
   return variations.every((item, index) => {
-    const expected = index < remainder ? base + 0.01 : base;
+    const expected =
+      Math.round((index < remainder ? base + 0.01 : base) * 100) / 100;
     return Math.abs(item.weight - expected) < 0.0001;
   });
 };

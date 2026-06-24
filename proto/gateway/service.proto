@@ -205,6 +205,7 @@ message CreateFeatureRequest {
   repeated string tags = 6;
   int32 on_variation_index = 7;
   int32 off_variation_index = 8;
+  feature.VariationValueSchema variation_value_schema = 9;
 }
 
 message CreateFeatureResponse {
@@ -252,6 +253,8 @@ message UpdateFeatureRequest {
   repeated feature.PrerequisiteChange prerequisite_changes = 14;
   repeated feature.TargetChange target_changes = 15;
   repeated feature.TagChange tag_changes = 16;
+  feature.VariationValueSchema variation_value_schema = 17;
+  google.protobuf.BoolValue clear_variation_value_schema = 18;
 }
 
 message UpdateFeatureResponse {

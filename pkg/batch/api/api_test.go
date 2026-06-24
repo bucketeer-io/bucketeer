@@ -721,6 +721,7 @@ func newBatchService(t *testing.T,
 	featureStorageMock := featurestoragemock.NewMockFeatureStorage(mockController)
 	segmentStorageMock := featurestoragemock.NewMockSegmentStorage(mockController)
 	tagStorageMock := tagstoragemock.NewMockTagStorage(mockController)
+	scheduledFlagChangeStorageMock := featurestoragemock.NewMockScheduledFlagChangeStorage(mockController)
 
 	setupMock(
 		accountMockClient,
@@ -829,7 +830,7 @@ func newBatchService(t *testing.T,
 			jobs.WithLogger(logger),
 		),
 		scheduledflagchange.NewScheduledFlagChangeExecutor(
-			mysqlMockClient,
+			scheduledFlagChangeStorageMock,
 			featureMockClient,
 			jobs.WithTimeout(50*time.Second),
 			jobs.WithLogger(logger),
