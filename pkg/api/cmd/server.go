@@ -96,7 +96,6 @@ type server struct {
 	goalTopicProject                  *string
 	evaluationTopic                   *string
 	evaluationTopicProject            *string
-	userTopic                         *string
 	metricsTopic                      *string
 	publishNumGoroutines              *int
 	publishTimeout                    *time.Duration
@@ -172,8 +171,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"evaluation-topic-project",
 			"GCP Project id to use for PubSub to publish EvaluationEvent.",
 		).String(),
-		// FIXME: This flag will be required once user feature is fully released.
-		userTopic:    cmd.Flag("user-topic", "Topic to use for publishing UserEvent.").String(),
 		metricsTopic: cmd.Flag("metrics-topic", "Topic to use for publishing MetricsEvent.").String(),
 		publishNumGoroutines: cmd.Flag(
 			"publish-num-goroutines",
@@ -384,15 +381,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	if err != nil {
 		return nil
-	}
-
-	// FIXME: This condition won't be necessary once user feature is fully released.
-	var userPublisher publisher.Publisher
-	if *s.userTopic != "" {
-		userPublisher, err = pubsubClient.CreatePublisherInProject(*s.userTopic, *s.project)
-		if err != nil {
-			return err
-		}
 	}
 
 	// FIXME: This condition won't be necessary once user feature is fully released.
@@ -622,7 +610,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountStorage,
 		goalPublisher,
 		evaluationPublisher,
-		userPublisher,
 		redisV3Cache,
 		api.WithInMemoryCache(inMemoryCache),
 		api.WithAPIKeyMemoryCacheTTL(*s.apiKeyMemoryCacheTTL),
@@ -703,7 +690,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushClient,
 		goalPublisher,
 		evaluationPublisher,
-		userPublisher,
 		metricsPublisher,
 		accountStorage,
 		redisV3Cache,
@@ -782,9 +768,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// These are fast cleanup operations that can run asynchronously.
 		go goalPublisher.Stop()
 		go evaluationPublisher.Stop()
-		if userPublisher != nil {
-			go userPublisher.Stop()
-		}
 		if metricsPublisher != nil {
 			go metricsPublisher.Stop()
 		}

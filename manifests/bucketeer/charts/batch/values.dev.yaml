@@ -168,15 +168,6 @@ subscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
-  userEventPersister:
-    project: bucketeer-dev
-    topic: user
-    subscription: user-sub
-    pullerNumGoroutines: 5
-    pullerMaxOutstandingMessages: 1000
-    pullerMaxOutstandingBytes: 1000000000
-    maxMps: 50
-    workerNum: 1
 
 onDemandSubscribers:
   evaluationCountEventDWHPersister:
@@ -237,9 +228,6 @@ processors:
   segmentUserPersister:
     domainEventProject: bucketeer-dev
     domainEventTopic: domain
-    flushSize: 100
-    flushInterval: 10
-  userEventPersister:
     flushSize: 100
     flushInterval: 10
 

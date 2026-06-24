@@ -106,7 +106,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(context.Background(), nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(context.Background(), nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -2274,8 +2274,6 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input:       &gwproto.GetEvaluationsRequest{User: &userproto.User{Id: "id-0"}},
 			expected:    nil,
@@ -2314,8 +2312,6 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
@@ -2368,8 +2364,6 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
@@ -2573,7 +2567,6 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag: "android",
@@ -2605,7 +2598,6 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag: "android",
@@ -2639,7 +2631,6 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag: "android",
@@ -2672,7 +2663,6 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag:               "android",
@@ -2703,7 +2693,6 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag:               "android",
@@ -2855,7 +2844,6 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "ios", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
@@ -2965,8 +2953,6 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
@@ -3056,8 +3042,6 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
@@ -3151,8 +3135,6 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
@@ -3226,8 +3208,6 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
@@ -3321,8 +3301,6 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
@@ -3464,8 +3442,6 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag:               "test",
@@ -3571,8 +3547,6 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag:               "test",
@@ -3676,8 +3650,6 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag:               "test",
@@ -3781,8 +3753,6 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
 				Tag:               "test",
@@ -3949,8 +3919,6 @@ func TestGrpcGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input:       &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-3"},
 			expectedErr: ErrFeatureNotFound,
@@ -4037,8 +4005,6 @@ func TestGrpcGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
@@ -4110,8 +4076,6 @@ func TestGrpcGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "user-id-2"}, FeatureId: "feature-id-2"},
 			expected: &featureproto.Evaluation{
@@ -4496,7 +4460,6 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		experimentClient:            experimentclientmock.NewMockClient(mockController),
 		eventCounterClient:          eventcounterclientmock.NewMockClient(mockController),
 		environmentClient:           environmentclientmock.NewMockClient(mockController),
-		userPublisher:               publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:         publishermock.NewMockPublisher(mockController),
 		featuresCache:               cachev3mock.NewMockFeaturesCache(mockController),
 		featuresRedisCache:          redisFeaturesCache,
