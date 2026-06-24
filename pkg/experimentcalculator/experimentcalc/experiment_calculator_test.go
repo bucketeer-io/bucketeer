@@ -538,3 +538,58 @@ func TestComputeExperimentSRM_FeatureFetchFailure_DoesNotLeakError(t *testing.T)
 		assert.InDelta(t, DefaultSRMThreshold, res.Threshold, 1e-9)
 	}
 }
+
+func TestPickBestVariations(t *testing.T) {
+	t.Parallel()
+
+	// CVR favors vid2; value-per-user favors vid1. Asserting both lists
+	// independently confirms the banner can stay metric-aware.
+	variationResults := []*eventcounter.VariationResult{
+		{
+			VariationId:                         "vid1",
+			CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.90},
+			GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.99},
+		},
+		{
+			VariationId:                         "vid2",
+			CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.97},
+			GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.50},
+		},
+		{
+			// nil summaries must be skipped, not panic.
+			VariationId: "vid3",
+		},
+	}
+
+	cvrBest := pickBestVariations(variationResults, func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+		return vr.CvrProbBeatBaseline
+	})
+	if assert.Len(t, cvrBest, 1) {
+		assert.Equal(t, "vid2", cvrBest[0].Id)
+		assert.True(t, cvrBest[0].IsBest)
+		assert.InDelta(t, 0.97, cvrBest[0].Probability, 1e-9)
+	}
+
+	valueBest := pickBestVariations(variationResults, func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+		return vr.GoalValueSumPerUserProbBeatBaseline
+	})
+	if assert.Len(t, valueBest, 1) {
+		assert.Equal(t, "vid1", valueBest[0].Id)
+		assert.True(t, valueBest[0].IsBest)
+		assert.InDelta(t, 0.99, valueBest[0].Probability, 1e-9)
+	}
+}
+
+func TestPickBestVariations_NoneAboveThreshold(t *testing.T) {
+	t.Parallel()
+
+	variationResults := []*eventcounter.VariationResult{
+		{VariationId: "vid1", CvrProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.80}},
+		{VariationId: "vid2", CvrProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.95}},
+	}
+
+	best := pickBestVariations(variationResults, func(vr *eventcounter.VariationResult) *eventcounter.DistributionSummary {
+		return vr.CvrProbBeatBaseline
+	})
+	assert.Empty(t, best, "0.95 is not strictly greater than the 0.95 threshold")
+}

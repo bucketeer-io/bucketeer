@@ -43,6 +43,7 @@ export interface GoalResult {
 
 export interface GoalResultSummary {
   bestVariations: BestVariation[];
+  bestVariationsValue?: BestVariation[];
   totalGoalUserCount: string;
 }
 

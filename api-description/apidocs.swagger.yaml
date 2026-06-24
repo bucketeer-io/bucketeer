@@ -5692,6 +5692,16 @@ definitions:
       goalUserCount:
         type: string
         format: int64
+      bestVariationsValue:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterSummaryVariation'
+        description: |-
+          Best variations derived from the value-per-user metric posterior, so the
+          confidence banner can stay metric-aware when the user is viewing a value
+          chart (Value/User or Value/Total). best_variations (field 1) remains the
+          conversion-rate list.
   bucketeerfeatureChangeType:
     type: string
     enum:
