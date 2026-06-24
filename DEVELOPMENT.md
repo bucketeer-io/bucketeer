@@ -294,9 +294,18 @@ make e2e
 
 ### Delete E2E data
 
+Use the target that matches your database type.
+
+For MySQL:
 ```shell
 make delete-dev-container-mysql-data
 make delete-mysql-data-warehouse-data
+make delete-redis-retry-keys
+```
+
+For Postgres:
+```shell
+make delete-dev-container-postgres-data
 make delete-redis-retry-keys
 ```
 
@@ -375,3 +384,23 @@ ENVIRONMENT_ID=e2e \
 ORGANIZATION_ID=default \
 make e2e
 ```
+
+### Delete E2E data (Docker Compose)
+
+Use the target that matches your database type.
+
+For MySQL:
+```shell
+make docker-compose-delete-data
+make docker-compose-delete-mysql-data-warehouse-data
+make docker-compose-delete-redis-retry-keys
+```
+
+For Postgres:
+```shell
+make docker-compose-delete-data-postgres
+make docker-compose-delete-redis-retry-keys
+```
+
+After deleting the data, re-run `make docker-compose-create-e2e-accounts` to
+recreate the e2e accounts before running E2E again.
