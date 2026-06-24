@@ -28,6 +28,14 @@ const (
 	DataTypeGoalEvent       = "goal_event"
 )
 
+// DefaultValueCapPercentile is the percentile (1–100) at which per-user goal
+// values are winsorized before the value-metric aggregation, to keep the
+// Normal value model robust to heavy tails (whales). It is bound into the goal
+// query as a parameter rather than hardcoded in the SQL so it has a single
+// source of truth and can later be sourced from config / per-experiment
+// settings. 100 effectively disables capping (cap = max).
+const DefaultValueCapPercentile = 99
+
 var (
 	ErrBQUnexpectedMultipleResults = pkgErr.NewErrorInternal(
 		pkgErr.EventCounterPackageName,

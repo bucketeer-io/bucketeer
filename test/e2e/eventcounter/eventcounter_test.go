@@ -717,6 +717,145 @@ func TestExperimentResult(t *testing.T) {
 	}
 }
 
+// TestExperimentGoalCountWinsorization verifies the per-user p99 winsorization
+// applied in the goal-count DWH query (goal_event.sql / goal_count.sql). The
+// cap only bites once there are enough users for the top 1% to exclude the
+// whale (NTILE(100) needs >= 100 rows on MySQL), so this fixture uses 120
+// users: 119 normal goal values plus one "whale" several orders of magnitude
+// larger. The whale's per-user value sits in the top percentile and must be
+// capped down to the bulk level before aggregation.
+//
+//	capped   ValueSum ≈ 119*10 + cap(=10) = 1,200
+//	uncapped ValueSum ≈ 119*10 + 100,000  = 101,190
+//
+// We wait until all 120 users are linked (so the whale is definitely counted)
+// and then assert ValueSum is far below the uncapped figure. The threshold is
+// deliberately loose (< 50,000) so it holds across all three DWH backends,
+// whose percentile implementations differ slightly — only an uncapped result
+// could exceed it.
+func TestExperimentGoalCountWinsorization(t *testing.T) {
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	experimentClient := newExperimentClient(t)
+	defer experimentClient.Close()
+	ecClient := newEventCounterClient(t)
+	defer ecClient.Close()
+	uuid := newUUID(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	const (
+		totalUsers  = 120
+		normalValue = float64(10)
+		whaleValue  = float64(100000)
+	)
+
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userIDs := make([]string, 0, totalUsers)
+	for i := 0; i < totalUsers; i++ {
+		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
+	}
+	featureID := createFeatureID(t, uuid)
+
+	createFeature(t, featureClient, featureID, tag, "a", "b")
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
+
+	// Route every user to variation A via individual targeting (one update for
+	// the whole list), so all goal values land in a single pooled distribution
+	// with a known per-user breakdown and a TARGET evaluation reason.
+	reason := &featureproto.Reason{Type: featureproto.Reason_TARGET}
+	addFeatureIndividualTargetingBulk(t, featureID, f.Variations[0].Id, userIDs, featureClient)
+
+	updateFeatueFlagCache(t)
+
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
+
+	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := time.Now().Add(2 * time.Hour)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestExperimentGoalCountWinsorization", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
+
+	variationIDs := make([]string, 0, len(experiment.Variations))
+	for _, v := range experiment.Variations {
+		variationIDs = append(variationIDs, v.Id)
+	}
+
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
+
+	// Evaluation events must be sent (and land) before goal events so the
+	// subscriber can link each goal event to the user's evaluation.
+	registerEvaluationEventsBatch(t, featureID, experiment.FeatureVersion, userIDs, f.Variations[0].Id, tag, reason)
+
+	// Wait a few seconds so the evaluations become available for linking.
+	time.Sleep(10 * time.Second)
+
+	// One goal event per user: the last user is the whale.
+	goalValues := make(map[string]float64, totalUsers)
+	for i, userID := range userIDs {
+		if i == totalUsers-1 {
+			goalValues[userID] = whaleValue
+		} else {
+			goalValues[userID] = normalValue
+		}
+	}
+	registerGoalEventsBatch(t, goalIDs[0], tag, goalValues, time.Now().Unix())
+
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout after %d attempts", retryTimes)
+		}
+		time.Sleep(10 * time.Second)
+
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			}
+			continue
+		}
+		if resp == nil || len(resp.VariationCounts) == 0 {
+			continue
+		}
+		vcA := getVariationCount(resp.VariationCounts, f.Variations[0].Id)
+		if vcA == nil {
+			continue
+		}
+		// Wait until every user (including the whale) has been linked, so the
+		// whale's value is part of the aggregate we assert on.
+		if vcA.UserCount != totalUsers {
+			t.Logf("Retry %d/%d: linked users %d/%d", i+1, retryTimes, vcA.UserCount, totalUsers)
+			continue
+		}
+		// With the whale present, an uncapped ValueSum would be ~101,190; the
+		// winsorized ValueSum is ~1,200. Anything below 50,000 proves the whale
+		// was capped.
+		if vcA.ValueSum >= 50000 {
+			t.Fatalf(
+				"winsorization did not cap the whale: ValueSum=%f (expected ~1200 capped, ~101190 uncapped)",
+				vcA.ValueSum,
+			)
+		}
+		t.Logf("winsorization OK: capped ValueSum=%f for %d users", vcA.ValueSum, vcA.UserCount)
+		break
+	}
+}
+
 func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
@@ -2051,6 +2190,135 @@ func registerEvaluationEvent(
 	response := util.RegisterEvents(t, events, *gatewayAddr, *apiKeyPath)
 	if len(response.Errors) > 0 {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+}
+
+// registerEventsInChunks registers events in batches so large fixtures don't
+// require one gateway round-trip per event.
+func registerEventsInChunks(t *testing.T, events []util.Event) {
+	t.Helper()
+	const chunkSize = 50
+	for start := 0; start < len(events); start += chunkSize {
+		end := start + chunkSize
+		if end > len(events) {
+			end = len(events)
+		}
+		response := util.RegisterEvents(t, events[start:end], *gatewayAddr, *apiKeyPath)
+		if len(response.Errors) > 0 {
+			t.Fatalf("Failed to register events. Error: %v", response.Errors)
+		}
+	}
+}
+
+// registerEvaluationEventsBatch registers one evaluation event per user (all
+// mapped to variationID) in batched gateway calls.
+func registerEvaluationEventsBatch(
+	t *testing.T,
+	featureID string,
+	featureVersion int32,
+	userIDs []string,
+	variationID, tag string,
+	reason *featureproto.Reason,
+) {
+	t.Helper()
+	if reason == nil {
+		reason = &featureproto.Reason{}
+	}
+	events := make([]util.Event, 0, len(userIDs))
+	for _, userID := range userIDs {
+		evaluation, err := protojson.Marshal(&eventproto.EvaluationEvent{
+			Timestamp:      time.Now().Unix(),
+			FeatureId:      featureID,
+			FeatureVersion: featureVersion,
+			UserId:         userID,
+			VariationId:    variationID,
+			User: &userproto.User{
+				Id:   userID,
+				Data: map[string]string{"appVersion": "0.1.0"}},
+			Reason: reason,
+			Tag:    tag,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		events = append(events, util.Event{
+			ID:    newUUID(t),
+			Event: evaluation,
+			Type:  gwapi.EvaluationEventType,
+		})
+	}
+	registerEventsInChunks(t, events)
+}
+
+// registerGoalEventsBatch registers one goal event per user (value taken from
+// userValues) in batched gateway calls.
+func registerGoalEventsBatch(
+	t *testing.T,
+	goalID, tag string,
+	userValues map[string]float64,
+	timestamp int64,
+) {
+	t.Helper()
+	events := make([]util.Event, 0, len(userValues))
+	for userID, value := range userValues {
+		goal, err := protojson.Marshal(&eventproto.GoalEvent{
+			Timestamp: timestamp,
+			GoalId:    goalID,
+			UserId:    userID,
+			Value:     value,
+			User: &userproto.User{
+				Id:   userID,
+				Data: map[string]string{"appVersion": "0.1.0"}},
+			Tag: tag,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		events = append(events, util.Event{
+			ID:    newUUID(t),
+			Event: goal,
+			Type:  gwapi.GoalEventType,
+		})
+	}
+	registerEventsInChunks(t, events)
+}
+
+// addFeatureIndividualTargetingBulk sets the full individual-targeting user
+// list for a variation in a single UpdateFeature call (instead of one call per
+// user, which is prohibitive for large fixtures).
+func addFeatureIndividualTargetingBulk(
+	t *testing.T,
+	featureID, variationID string,
+	users []string,
+	client featureclient.Client,
+) {
+	t.Helper()
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			TargetChanges: []*featureproto.TargetChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Target: &featureproto.Target{
+						Variation: variationID,
+						Users:     users,
+					},
+				},
+			},
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addFeatureIndividualTargetingBulk (attempt %d/%d) for %s: %v",
+				i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		t.Fatalf("Failed to bulk add individual targeting for feature %s: %v", featureID, err)
 	}
 }
 

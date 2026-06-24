@@ -419,6 +419,39 @@ variance reach the NIG sampler):
   or the pooled mean comes out non-finite — does it fall back to the full
   generic prior `μ₀=0, κ₀=α₀=β₀=1`.
 
+### Heavy-Tail Robustness: Per-User Winsorization
+
+The NIG model assumes per-user values are approximately Normal. Revenue and
+similar value metrics are heavy-tailed — a few "whales" spend orders of
+magnitude more than typical users. Left unchecked, those few users dominate the
+sample mean and variance, so the posterior becomes both **overconfident** and
+**unstable**: a decisive `ProbBeatBaseline` can be driven by a handful of
+extreme observations and would flip had those users landed in another
+variation.
+
+To guard against this, each user's total value is **winsorized (capped) at the
+99th percentile** of the pooled (across variations) per-user value
+distribution, *before* the mean and variance are aggregated:
+
+```
+cap        = p99 of per-user value_sum, pooled across all variations
+value_capᵢ = min(value_sumᵢ, cap)
+```
+
+The cap is computed and applied **in the DWH aggregation SQL** (the calculator
+only receives the aggregated mean/variance/n, never per-user rows), pooled
+across variations to stay symmetric — consistent with the empirical-Bayes
+prior above. Only value metrics are affected; the conversion-rate (binomial)
+path is unchanged.
+
+This is the standard heavy-tail treatment for online experiments (Kohavi, Tang
+& Xu, *Trustworthy Online Controlled Experiments*, 2020, §4). Trade-off:
+capping deliberately discards extreme tail value, so the reported absolute
+value-per-user is biased slightly low; this is accepted in exchange for stable,
+non-overconfident verdicts. (A log-normal value model is an alternative for
+metrics where the median is the business question, but it estimates the
+geometric mean and is not the default.)
+
 ---
 
 ## 9. Credible Intervals
