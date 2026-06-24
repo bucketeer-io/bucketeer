@@ -7,7 +7,7 @@ go run ./hack/delete-e2e-data-postgres delete \
   --postgres-host=<POSTGRES_HOST> \
   --postgres-port=<POSTGRES_PORT> \
   --postgres-db-name=<POSTGRES_DB_NAME> \
-  --test-id=<TEST_ID> \ # optional
+  --test-id=<TEST_ID> \
   --no-profile \
   --no-gcp-trace-enabled
 ```
