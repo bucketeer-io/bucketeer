@@ -16,12 +16,82 @@ package rest
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
+
+func TestLogServerMiddleware(t *testing.T) {
+	t.Parallel()
+
+	handlerFor := func(logger *zap.Logger) http.Handler {
+		return LogServerMiddleware(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/redirect":
+				w.WriteHeader(http.StatusMovedPermanently)
+			case "/not-found":
+				w.WriteHeader(http.StatusNotFound)
+			default:
+				w.WriteHeader(http.StatusOK)
+			}
+		}))
+	}
+
+	patterns := []struct {
+		desc          string
+		path          string
+		expectedCount int
+	}{
+		{
+			desc:          "success: skip logging for 200",
+			path:          "/ok",
+			expectedCount: 0,
+		},
+		{
+			desc:          "success: skip logging for 301 redirect",
+			path:          "/redirect",
+			expectedCount: 0,
+		},
+		{
+			desc:          "warn: log 404",
+			path:          "/not-found",
+			expectedCount: 1,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			var buf bytes.Buffer
+			core := zapcore.NewCore(
+				zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+				zapcore.AddSync(&buf),
+				zapcore.WarnLevel,
+			)
+			handler := handlerFor(zap.New(core))
+
+			req := httptest.NewRequest(http.MethodGet, p.path, nil)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+
+			if p.expectedCount == 0 {
+				assert.Empty(t, buf.String())
+				return
+			}
+			require.NotEmpty(t, buf.String())
+			var logEntry map[string]interface{}
+			require.NoError(t, json.Unmarshal(buf.Bytes(), &logEntry))
+			assert.Equal(t, float64(http.StatusNotFound), logEntry["statusCode"])
+		})
+	}
+}
 
 func TestDecodeBody(t *testing.T) {
 	t.Parallel()
