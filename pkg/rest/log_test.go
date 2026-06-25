@@ -81,13 +81,17 @@ func TestLogServerMiddleware(t *testing.T) {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
 
+			out := strings.TrimSpace(buf.String())
+			var logLines []string
+			if out != "" {
+				logLines = strings.Split(out, "\n")
+			}
+			require.Len(t, logLines, p.expectedCount)
 			if p.expectedCount == 0 {
-				assert.Empty(t, buf.String())
 				return
 			}
-			require.NotEmpty(t, buf.String())
-			var logEntry map[string]interface{}
-			require.NoError(t, json.Unmarshal(buf.Bytes(), &logEntry))
+			var logEntry map[string]any
+			require.NoError(t, json.Unmarshal([]byte(logLines[0]), &logEntry))
 			assert.Equal(t, float64(http.StatusNotFound), logEntry["statusCode"])
 		})
 	}

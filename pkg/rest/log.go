@@ -40,7 +40,7 @@ func LogServerMiddleware(logger *zap.Logger) middleware {
 						body:           new(bytes.Buffer),
 					}
 					next.ServeHTTP(rr, r)
-					// Skip logging for successful and redirect responses.
+					// Skip logging for 200 OK and redirect (3xx) responses.
 					if rr.statusCode == http.StatusOK || (rr.statusCode >= 300 && rr.statusCode < 400) {
 						return
 					}
