@@ -110,14 +110,14 @@ type Summary struct {
 	// conversion-rate list.
 	BestVariationsValue []*Summary_Variation `protobuf:"bytes,3,rep,name=best_variations_value,json=bestVariationsValue,proto3" json:"best_variations_value"`
 	// cvr_safe_to_stop is true when at least one treatment variation's
-	// cvrSequentialBayesFactor >= 20.0 (default threshold). When true the
+	// cvr_sequential_bayes_factor >= 20.0 (default threshold). When true the
 	// sequential evidence criterion is met for CVR: the result is robust to
 	// the optional-stopping / peeking pattern.
 	// False does NOT mean the experiment is inconclusive — it means more data
 	// are needed before a reliable CVR verdict can be made.
 	CvrSafeToStop bool `protobuf:"varint,4,opt,name=cvr_safe_to_stop,json=cvrSafeToStop,proto3" json:"cvr_safe_to_stop"`
 	// value_safe_to_stop is the value-per-user analogue of cvr_safe_to_stop,
-	// using valueSequentialBayesFactor >= 20.0 as the threshold.
+	// using value_sequential_bayes_factor >= 20.0 as the threshold.
 	ValueSafeToStop bool `protobuf:"varint,5,opt,name=value_safe_to_stop,json=valueSafeToStop,proto3" json:"value_safe_to_stop"`
 }
 

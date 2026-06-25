@@ -257,6 +257,56 @@ func TestFillSequentialBayesFactors_NilVariationSkipped(t *testing.T) {
 	})
 }
 
+// TestFillSequentialBayesFactors_MultiArmValueSkippedWhenOneArmHasZeroStats
+// mirrors the calcGoalResult all-or-nothing guard: if any variation in the
+// goal has zero value stats, the value posterior is skipped for all variations.
+// The value BF must be 1.0 for all treatment arms in that case, even if the
+// treatment arm being examined has non-zero stats.
+func TestFillSequentialBayesFactors_MultiArmValueSkippedWhenOneArmHasZeroStats(t *testing.T) {
+	t.Parallel()
+	vrs := []*eventcounter.VariationResult{
+		{
+			VariationId:     "baseline",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				UserCount: 50, ValueSumPerUserMean: 10.0, ValueSumPerUserVariance: 2.0,
+			},
+		},
+		{
+			VariationId:     "treatment-A",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				// Good stats — value BF would be large if computed in isolation.
+				UserCount: 70, ValueSumPerUserMean: 14.0, ValueSumPerUserVariance: 2.0,
+			},
+		},
+		{
+			VariationId:     "treatment-B",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				// Zero variance: calcGoalResult would skip value for the whole goal.
+				UserCount: 60, ValueSumPerUserMean: 12.0, ValueSumPerUserVariance: 0.0,
+			},
+		},
+	}
+	fillSequentialBayesFactors(vrs, "baseline")
+
+	vrA := vrs[1]
+	vrB := vrs[2]
+
+	// CVR BFs are unaffected by value stats.
+	assert.Greater(t, vrA.CvrSequentialBayesFactor, 1.0,
+		"treatment-A with higher CVR should still have CVR BF > 1")
+
+	// Value BFs must both be 1.0 because treatment-B has zero variance —
+	// the value posterior was skipped for the whole goal, so no value BF
+	// should fire and set ValueSafeToStop=true.
+	assert.Equal(t, 1.0, vrA.ValueSequentialBayesFactor,
+		"treatment-A value BF must be 1.0 when any arm has zero variance (goal-wide skip)")
+	assert.Equal(t, 1.0, vrB.ValueSequentialBayesFactor,
+		"treatment-B value BF must be 1.0 (zero-variance arm)")
+}
+
 // ---------------------------------------------------------------------------
 // computeSafeToStop unit tests
 // ---------------------------------------------------------------------------

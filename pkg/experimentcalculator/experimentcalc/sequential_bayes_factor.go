@@ -207,6 +207,25 @@ func fillSequentialBayesFactors(
 		}
 	}
 
+	// calcGoalResult skips value inference for the entire goal if ANY
+	// variation has zero/empty value sufficient statistics. Mirror that
+	// all-or-nothing guard here: only compute value BFs when every variation
+	// that has goal users also has non-zero mean and variance. This prevents
+	// a decisive value BF for one arm from setting ValueSafeToStop=true in a
+	// multi-arm experiment where another arm's value posterior was skipped.
+	valueEnabled := true
+	for _, vr := range vrs {
+		if vr == nil || vr.ExperimentCount == nil {
+			continue
+		}
+		if vr.ExperimentCount.UserCount > 0 &&
+			(vr.ExperimentCount.ValueSumPerUserMean == 0 ||
+				vr.ExperimentCount.ValueSumPerUserVariance == 0) {
+			valueEnabled = false
+			break
+		}
+	}
+
 	for _, vr := range vrs {
 		if vr == nil {
 			continue
@@ -233,10 +252,9 @@ func fillSequentialBayesFactors(
 		// their respective trial counts (eval users).
 		vr.CvrSequentialBayesFactor = cvrBayesFactor(goalN, evalN, baseGoalN, baseEvalN)
 
-		// Value BF: valid only when both arms have non-zero sufficient
-		// stats (the calculator skips value analysis when these are zero,
-		// matching the guard in calcGoalResult).
-		if goalN > 0 && mean != 0 && variance != 0 &&
+		// Value BF: only when the goal-wide value posterior ran (all
+		// variations have non-zero stats) and this pair has sufficient data.
+		if valueEnabled && goalN > 0 && mean != 0 && variance != 0 &&
 			baseGoalN > 0 && baseMean != 0 && baseVar != 0 {
 			vr.ValueSequentialBayesFactor = valueBayesFactor(
 				goalN, mean, variance,
