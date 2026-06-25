@@ -61,6 +61,16 @@ const (
 
 const defaultVariationID = "default"
 
+// experimentResultUsersPerVariation is the per-arm sample size for
+// TestExperimentResult / TestGrpcExperimentResult. At n=50 the empirical-Bayes
+// prior weight is ~2%, so value-metric goldens reflect posterior signal from
+// the 10 vs 15 per-user means rather than prior arithmetic.
+const (
+	experimentResultUsersPerVariation = 50
+	experimentResultValueVariationA   = 10.0
+	experimentResultValueVariationB   = 15.0
+)
+
 var (
 	webGatewayAddr                 = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
 	webGatewayPort                 = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
@@ -376,10 +386,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
+	userIDsA, userIDsB := makeExperimentResultUserIDs(t, uuid)
 	featureID := createFeatureID(t, uuid)
 
 	createFeature(t, featureClient, featureID, tag, "a", "b")
@@ -388,23 +395,14 @@ func TestGrpcExperimentResult(t *testing.T) {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 	}
 
-	// Because we set the user to the individual targeting when creating the flag,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
 	reason := &featureproto.Reason{
 		Type: featureproto.Reason_TARGET,
 	}
-	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
+	addFeatureIndividualTargetingBulkSplit(
+		t, featureID, f.Variations[0].Id, f.Variations[1].Id, userIDsA, userIDsB, featureClient)
 
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
 	updateFeatueFlagCache(t)
 
-	// Get the latest version after all changes in the feature flag
 	f, err = getFeature(t, featureClient, featureID)
 	if err != nil {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
@@ -421,114 +419,20 @@ func TestGrpcExperimentResult(t *testing.T) {
 		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
 	})
 
-	// Wait for the on-demand subscriber to create PubSub subscriptions.
 	time.Sleep(15 * time.Second)
 
-	// CVRs is 3/4
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for the user index 1, 2 and 3
-	// Register variation a
-	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
-	// where the feature version changes between getFeature() and createExperiment()
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[2], experiment.Variations[0].Id, tag, reason)
-	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEventsBatch(
+		t, featureID, experiment.FeatureVersion, userIDsA, f.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEventsBatch(
+		t, featureID, experiment.FeatureVersion, userIDsB, f.Variations[1].Id, tag, reason)
 
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
 
-	// Register goal variation
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+	goalTimestamp := time.Now().Unix()
+	grpcRegisterGoalEventsBatch(t, goalIDs[0], tag, goalValuesForUsers(userIDsA, experimentResultValueVariationA), goalTimestamp)
+	grpcRegisterGoalEventsBatch(t, goalIDs[0], tag, goalValuesForUsers(userIDsB, experimentResultValueVariationB), goalTimestamp)
 
-	// CVRs is 2/3
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for the user index 4 and 5
-	// Register variation
-	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], experiment.Variations[1].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[4], experiment.Variations[1].Id, tag, reason)
-	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], experiment.Variations[1].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-
-	// Register goal
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout after %d attempts", retryTimes)
-		}
-		time.Sleep(10 * time.Second)
-		triggerExperimentCalculator(t)
-
-		resp, err := getExperimentResult(t, ecClient, experiment.Id)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
-				continue
-			}
-		}
-
-		if resp != nil {
-			er := resp.ExperimentResult
-			if er.Id != experiment.Id {
-				t.Fatalf("experiment ID is not correct: %s", er.Id)
-			}
-			if len(er.GoalResults) == 0 {
-				continue
-			}
-			if len(er.GoalResults) != 1 {
-				t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
-			}
-			gr := er.GoalResults[0]
-			if gr.GoalId != goalIDs[0] {
-				t.Fatalf("goal ID is not correct: %s", gr.GoalId)
-			}
-			if len(gr.VariationResults) != 2 {
-				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
-			}
-			vsA := gr.VariationResults[0]
-			vsB := gr.VariationResults[1]
-			// These counts are based on the number of events sent earlier
-			if vsA.EvaluationCount.EventCount != 4 || // variation A
-				vsA.EvaluationCount.UserCount != 3 ||
-				vsB.EvaluationCount.EventCount != 3 || // variation B
-				vsB.EvaluationCount.UserCount != 2 {
-				continue
-			}
-			// These counts are based on the number of events sent earlier
-			if vsA.ExperimentCount.EventCount != 5 || // variation A
-				vsA.ExperimentCount.UserCount != 3 ||
-				vsB.ExperimentCount.EventCount != 4 || // variation B
-				vsB.ExperimentCount.UserCount != 2 {
-				continue
-			}
-			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
-			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
-			checkExperimentSrmResult(t, er)
-			break
-		}
-	}
+	waitAndCheckExperimentResult(t, ecClient, experiment, goalIDs[0])
 	res, err := getExperiment(t, experimentClient, experiment.Id)
 	if err != nil {
 		t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
@@ -554,10 +458,7 @@ func TestExperimentResult(t *testing.T) {
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
+	userIDsA, userIDsB := makeExperimentResultUserIDs(t, uuid)
 	featureID := createFeatureID(t, uuid)
 
 	createFeature(t, featureClient, featureID, tag, "a", "b")
@@ -566,23 +467,14 @@ func TestExperimentResult(t *testing.T) {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 	}
 
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
 	reason := &featureproto.Reason{
 		Type: featureproto.Reason_TARGET,
 	}
-	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
+	addFeatureIndividualTargetingBulkSplit(
+		t, featureID, f.Variations[0].Id, f.Variations[1].Id, userIDsA, userIDsB, featureClient)
 
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
 	updateFeatueFlagCache(t)
 
-	// Get the latest version after all changes in the feature flag
 	f, err = getFeature(t, featureClient, featureID)
 	if err != nil {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
@@ -599,113 +491,20 @@ func TestExperimentResult(t *testing.T) {
 		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
 	})
 
-	// Wait for the on-demand subscriber to create PubSub subscriptions.
 	time.Sleep(15 * time.Second)
 
-	// CVRs is 3/4
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for user 1, 2 and 3
-	// Register variation a
-	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
-	// where the feature version changes between getFeature() and createExperiment()
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[2], f.Variations[0].Id, tag, reason)
-	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEventsBatch(
+		t, featureID, experiment.FeatureVersion, userIDsA, f.Variations[0].Id, tag, reason)
+	registerEvaluationEventsBatch(
+		t, featureID, experiment.FeatureVersion, userIDsB, f.Variations[1].Id, tag, reason)
 
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
 
-	// Register goal variation
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+	goalTimestamp := time.Now().Unix()
+	registerGoalEventsBatch(t, goalIDs[0], tag, goalValuesForUsers(userIDsA, experimentResultValueVariationA), goalTimestamp)
+	registerGoalEventsBatch(t, goalIDs[0], tag, goalValuesForUsers(userIDsB, experimentResultValueVariationB), goalTimestamp)
 
-	// CVRs is 2/3
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for user 4 and 5
-	// Register variation
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], f.Variations[1].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[4], f.Variations[1].Id, tag, reason)
-	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], f.Variations[1].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-
-	// Register goal
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout after %d attempts", retryTimes)
-		}
-		time.Sleep(10 * time.Second)
-		triggerExperimentCalculator(t)
-
-		resp, err := getExperimentResult(t, ecClient, experiment.Id)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
-				continue
-			}
-		}
-
-		if resp != nil {
-			er := resp.ExperimentResult
-			if er.Id != experiment.Id {
-				t.Fatalf("experiment ID is not correct: %s", er.Id)
-			}
-			if len(er.GoalResults) == 0 {
-				continue
-			}
-			if len(er.GoalResults) != 1 {
-				t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
-			}
-			gr := er.GoalResults[0]
-			if gr.GoalId != goalIDs[0] {
-				t.Fatalf("goal ID is not correct: %s", gr.GoalId)
-			}
-			if len(gr.VariationResults) != 2 {
-				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
-			}
-			vsA := gr.VariationResults[0]
-			vsB := gr.VariationResults[1]
-			// These counts are based on the number of events sent earlier
-			if vsA.EvaluationCount.EventCount != 4 || // variation A
-				vsA.EvaluationCount.UserCount != 3 ||
-				vsB.EvaluationCount.EventCount != 3 || // variation B
-				vsB.EvaluationCount.UserCount != 2 {
-				continue
-			}
-			// These counts are based on the number of events sent earlier
-			if vsA.ExperimentCount.EventCount != 5 || // variation A
-				vsA.ExperimentCount.UserCount != 3 ||
-				vsB.ExperimentCount.EventCount != 4 || // variation B
-				vsB.ExperimentCount.UserCount != 2 {
-				continue
-			}
-			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
-			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
-			checkExperimentSrmResult(t, er)
-			break
-		}
-	}
+	waitAndCheckExperimentResult(t, ecClient, experiment, goalIDs[0])
 	res, err := getExperiment(t, experimentClient, experiment.Id)
 	if err != nil {
 		t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
@@ -2154,6 +1953,96 @@ func grpcRegisterEvaluationEvent(
 	}
 }
 
+func grpcRegisterEventsInChunks(t *testing.T, events []*eventproto.Event) {
+	t.Helper()
+	c := newGatewayClient(t)
+	defer c.Close()
+	const chunkSize = 50
+	for start := 0; start < len(events); start += chunkSize {
+		end := start + chunkSize
+		if end > len(events) {
+			end = len(events)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+		req := &gatewayproto.RegisterEventsRequest{Events: events[start:end]}
+		response, err := c.RegisterEvents(ctx, req)
+		cancel()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(response.Errors) > 0 {
+			t.Fatalf("Failed to register events. Error: %v", response.Errors)
+		}
+	}
+}
+
+func grpcRegisterEvaluationEventsBatch(
+	t *testing.T,
+	featureID string,
+	featureVersion int32,
+	userIDs []string,
+	variationID, tag string,
+	reason *featureproto.Reason,
+) {
+	t.Helper()
+	if reason == nil {
+		reason = &featureproto.Reason{}
+	}
+	events := make([]*eventproto.Event, 0, len(userIDs))
+	for _, userID := range userIDs {
+		evaluation, err := anypb.New(&eventproto.EvaluationEvent{
+			Timestamp:      time.Now().Unix(),
+			FeatureId:      featureID,
+			FeatureVersion: featureVersion,
+			UserId:         userID,
+			VariationId:    variationID,
+			User: &userproto.User{
+				Id:   userID,
+				Data: map[string]string{"appVersion": "0.1.0"}},
+			Reason: reason,
+			Tag:    tag,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		events = append(events, &eventproto.Event{
+			Id:    newUUID(t),
+			Event: evaluation,
+		})
+	}
+	grpcRegisterEventsInChunks(t, events)
+}
+
+func grpcRegisterGoalEventsBatch(
+	t *testing.T,
+	goalID, tag string,
+	userValues map[string]float64,
+	timestamp int64,
+) {
+	t.Helper()
+	events := make([]*eventproto.Event, 0, len(userValues))
+	for userID, value := range userValues {
+		goal, err := anypb.New(&eventproto.GoalEvent{
+			Timestamp: timestamp,
+			GoalId:    goalID,
+			UserId:    userID,
+			Value:     value,
+			User: &userproto.User{
+				Id:   userID,
+				Data: map[string]string{"appVersion": "0.1.0"}},
+			Tag: tag,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		events = append(events, &eventproto.Event{
+			Id:    newUUID(t),
+			Event: goal,
+		})
+	}
+	grpcRegisterEventsInChunks(t, events)
+}
+
 func registerEvaluationEvent(
 	t *testing.T,
 	featureID string,
@@ -2319,6 +2208,208 @@ func addFeatureIndividualTargetingBulk(
 			continue
 		}
 		t.Fatalf("Failed to bulk add individual targeting for feature %s: %v", featureID, err)
+	}
+}
+
+func makeExperimentResultUserIDs(t *testing.T, uuid string) (userIDsA, userIDsB []string) {
+	t.Helper()
+	base := createUserID(t, uuid)
+	userIDsA = make([]string, 0, experimentResultUsersPerVariation)
+	userIDsB = make([]string, 0, experimentResultUsersPerVariation)
+	for i := 0; i < experimentResultUsersPerVariation; i++ {
+		userIDsA = append(userIDsA, fmt.Sprintf("%s-a-%d", base, i))
+		userIDsB = append(userIDsB, fmt.Sprintf("%s-b-%d", base, i))
+	}
+	return userIDsA, userIDsB
+}
+
+func goalValuesForUsers(userIDs []string, value float64) map[string]float64 {
+	out := make(map[string]float64, len(userIDs))
+	for i, userID := range userIDs {
+		// Alternate by 0.1 so VAR_SAMP > 0 (the calculator skips value metrics
+		// when per-variation variance is exactly zero). The spread is tiny
+		// relative to the 10 vs 15 arm separation and stays well below any
+		// winsorization cap.
+		out[userID] = value + float64(i%2)*0.1
+	}
+	return out
+}
+
+func experimentResultExpectedValueSum(baseValue float64) float64 {
+	n := float64(experimentResultUsersPerVariation)
+	half := n / 2
+	return baseValue*n + 0.1*half
+}
+
+func addFeatureIndividualTargetingBulkSplit(
+	t *testing.T,
+	featureID, variationAID, variationBID string,
+	usersA, usersB []string,
+	client featureclient.Client,
+) {
+	t.Helper()
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			TargetChanges: []*featureproto.TargetChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Target: &featureproto.Target{
+						Variation: variationAID,
+						Users:     usersA,
+					},
+				},
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Target: &featureproto.Target{
+						Variation: variationBID,
+						Users:     usersB,
+					},
+				},
+			},
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addFeatureIndividualTargetingBulkSplit (attempt %d/%d) for %s: %v",
+				i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		t.Fatalf("Failed to bulk add split individual targeting for feature %s: %v", featureID, err)
+	}
+}
+
+func experimentResultCountsReady(vsA, vsB *ecproto.VariationResult) bool {
+	if vsA.EvaluationCount == nil || vsA.ExperimentCount == nil ||
+		vsB.EvaluationCount == nil || vsB.ExperimentCount == nil {
+		return false
+	}
+	n := int64(experimentResultUsersPerVariation)
+	return vsA.EvaluationCount.EventCount == n &&
+		vsA.EvaluationCount.UserCount == n &&
+		vsB.EvaluationCount.EventCount == n &&
+		vsB.EvaluationCount.UserCount == n &&
+		vsA.ExperimentCount.EventCount == n &&
+		vsA.ExperimentCount.UserCount == n &&
+		vsB.ExperimentCount.EventCount == n &&
+		vsB.ExperimentCount.UserCount == n
+}
+
+// experimentResultProbFieldsReady reports whether the calculator has populated
+// the CVR and value-metric distribution summaries for a variation.
+func experimentResultProbFieldsReady(vr *ecproto.VariationResult) bool {
+	return vr.CvrProbBest != nil &&
+		vr.CvrProbBeatBaseline != nil &&
+		vr.GoalValueSumPerUserProbBest != nil &&
+		vr.GoalValueSumPerUserProbBeatBaseline != nil
+}
+
+func requireDistributionSummary(
+	t *testing.T,
+	variationValue, fieldName string,
+	ds *ecproto.DistributionSummary,
+) *ecproto.DistributionSummary {
+	t.Helper()
+	if ds == nil {
+		t.Fatalf("variation: %s: %s should be populated, got nil", variationValue, fieldName)
+	}
+	return ds
+}
+
+func requireVariationCounts(t *testing.T, variationValue string, vr *ecproto.VariationResult) {
+	t.Helper()
+	if vr.EvaluationCount == nil {
+		t.Fatalf("variation: %s: evaluation count should be populated, got nil", variationValue)
+	}
+	if vr.ExperimentCount == nil {
+		t.Fatalf("variation: %s: experiment count should be populated, got nil", variationValue)
+	}
+}
+
+func getVariationResult(vrs []*ecproto.VariationResult, id string) *ecproto.VariationResult {
+	for _, vr := range vrs {
+		if vr.VariationId == id {
+			return vr
+		}
+	}
+	return nil
+}
+
+func waitAndCheckExperimentResult(
+	t *testing.T,
+	ecClient ecclient.Client,
+	experiment *experimentproto.Experiment,
+	goalID string,
+) {
+	t.Helper()
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout after %d attempts", retryTimes)
+		}
+		time.Sleep(10 * time.Second)
+		triggerExperimentCalculator(t)
+
+		resp, err := getExperimentResult(t, ecClient, experiment.Id)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
+			}
+			t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
+			continue
+		}
+		if resp == nil {
+			continue
+		}
+		er := resp.ExperimentResult
+		if er.Id != experiment.Id {
+			t.Fatalf("experiment ID is not correct: %s", er.Id)
+		}
+		if len(er.GoalResults) == 0 {
+			continue
+		}
+		if len(er.GoalResults) != 1 {
+			t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
+		}
+		gr := er.GoalResults[0]
+		if gr.GoalId != goalID {
+			t.Fatalf("goal ID is not correct: %s", gr.GoalId)
+		}
+		if len(gr.VariationResults) != 2 {
+			t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
+		}
+		vsA := getVariationResult(gr.VariationResults, experiment.Variations[0].Id)
+		vsB := getVariationResult(gr.VariationResults, experiment.Variations[1].Id)
+		if vsA == nil || vsB == nil {
+			t.Fatalf("missing variation result for experiment variations")
+		}
+		if !experimentResultCountsReady(vsA, vsB) {
+			linkedA, linkedB := int64(0), int64(0)
+			if vsA.ExperimentCount != nil {
+				linkedA = vsA.ExperimentCount.UserCount
+			}
+			if vsB.ExperimentCount != nil {
+				linkedB = vsB.ExperimentCount.UserCount
+			}
+			t.Logf("Retry %d/%d: waiting for linked users A=%d/%d B=%d/%d",
+				i+1, retryTimes, linkedA, experimentResultUsersPerVariation,
+				linkedB, experimentResultUsersPerVariation)
+			continue
+		}
+		if !experimentResultProbFieldsReady(vsA) || !experimentResultProbFieldsReady(vsB) {
+			t.Logf("Retry %d/%d: waiting for calculator prob fields on both variations", i+1, retryTimes)
+			continue
+		}
+		checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
+		checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
+		checkExperimentSummary(t, gr, experiment.Variations[1].Id)
+		checkExperimentSrmResult(t, er)
+		return
 	}
 }
 
@@ -2823,103 +2914,139 @@ func createUserID(t *testing.T, uuid string) string {
 	return fmt.Sprintf("%s-user-id-%s", prefixTestName, uuid)
 }
 
-// This check the result for variation A
+// checkExperimentVariationResultA validates variation A for the 50-user-per-arm
+// experiment-result fixture (baseline: per-user value 10 vs treatment 15).
 func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult, variationValue string) {
 	t.Helper()
-	// Evaluation
-	if vsA.EvaluationCount.EventCount != 4 {
+	requireVariationCounts(t, variationValue, vsA)
+	n := int64(experimentResultUsersPerVariation)
+	valueSum := experimentResultExpectedValueSum(experimentResultValueVariationA)
+	if vsA.EvaluationCount.EventCount != n {
 		t.Fatalf("variation: %s: evaluation event count is not correct: %d", variationValue, vsA.EvaluationCount.EventCount)
 	}
-	if vsA.EvaluationCount.UserCount != 3 {
+	if vsA.EvaluationCount.UserCount != n {
 		t.Fatalf("variation: %s: evaluation user count is not correct: %d", variationValue, vsA.EvaluationCount.UserCount)
 	}
-	// Experiment
-	if vsA.ExperimentCount.EventCount != 5 {
+	if vsA.ExperimentCount.EventCount != n {
 		t.Fatalf("variation: %s: experiment event count is not correct: %d", variationValue, vsA.ExperimentCount.EventCount)
 	}
-	if vsA.ExperimentCount.UserCount != 3 {
+	if vsA.ExperimentCount.UserCount != n {
 		t.Fatalf("variation: %s: experiment user count is not correct: %d", variationValue, vsA.ExperimentCount.UserCount)
 	}
-	if diff := cmp.Diff(vsA.ExperimentCount.ValueSum, 1.0, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsA.ExperimentCount.ValueSum, valueSum, compareFloatOpt); diff != "" {
 		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsA.ExperimentCount.ValueSum)
 	}
-	// cvr prob best
-	if diff := cmp.Diff(vsA.CvrProbBest.Mean, 0.57, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsA.CvrProbBest.Mean)
+	cvrProbBest := requireDistributionSummary(t, variationValue, "cvr_prob_best", vsA.CvrProbBest)
+	if diff := cmp.Diff(cvrProbBest.Mean, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, cvrProbBest.Mean)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBest.Sd, 0.49, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsA.CvrProbBest.Sd)
+	if diff := cmp.Diff(cvrProbBest.Sd, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, cvrProbBest.Sd)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsA.CvrProbBest.Rhat)
+	if diff := cmp.Diff(cvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, cvrProbBest.Rhat)
 	}
-	// cvr prob beat baseline
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Mean)
+	cvrProbBeatBaseline := requireDistributionSummary(t, variationValue, "cvr_prob_beat_baseline", vsA.CvrProbBeatBaseline)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, cvrProbBeatBaseline.Mean)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Sd, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Sd)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Sd, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, cvrProbBeatBaseline.Sd)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Rhat, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Rhat)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Rhat, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, cvrProbBeatBaseline.Rhat)
 	}
-	// value sum per user prob best
-	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBest.Mean, 0.66, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBest.Mean)
+	valueProbBest := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_best", vsA.GoalValueSumPerUserProbBest)
+	if diff := cmp.Diff(valueProbBest.Mean, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, valueProbBest.Mean)
 	}
-	// value sum per user prob beat baseline
-	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBeatBaseline.Mean)
+	valueProbBeatBaseline := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_beat_baseline", vsA.GoalValueSumPerUserProbBeatBaseline)
+	if diff := cmp.Diff(valueProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, valueProbBeatBaseline.Mean)
 	}
 }
 
-// This check the result for variation B
+// checkExperimentVariationResultB validates variation B for the 50-user-per-arm
+// experiment-result fixture (treatment: per-user value 15 vs baseline 10).
 func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult, variationValue string) {
 	t.Helper()
-	// Evaluation
-	if vsB.EvaluationCount.EventCount != 3 {
+	requireVariationCounts(t, variationValue, vsB)
+	n := int64(experimentResultUsersPerVariation)
+	valueSum := experimentResultExpectedValueSum(experimentResultValueVariationB)
+	if vsB.EvaluationCount.EventCount != n {
 		t.Fatalf("variation: %s: evaluation event count is not correct: %d", variationValue, vsB.EvaluationCount.EventCount)
 	}
-	if vsB.EvaluationCount.UserCount != 2 {
+	if vsB.EvaluationCount.UserCount != n {
 		t.Fatalf("variation: %s: evaluation user count is not correct: %d", variationValue, vsB.EvaluationCount.UserCount)
 	}
-	// Experiment
-	if vsB.ExperimentCount.EventCount != 4 {
+	if vsB.ExperimentCount.EventCount != n {
 		t.Fatalf("variation: %s: experiment event count is not correct: %d", variationValue, vsB.ExperimentCount.EventCount)
 	}
-	if vsB.ExperimentCount.UserCount != 2 {
+	if vsB.ExperimentCount.UserCount != n {
 		t.Fatalf("variation: %s: experiment user count is not correct: %d", variationValue, vsB.ExperimentCount.UserCount)
 	}
-	if diff := cmp.Diff(vsB.ExperimentCount.ValueSum, 0.50, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsB.ExperimentCount.ValueSum, valueSum, compareFloatOpt); diff != "" {
 		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsB.ExperimentCount.ValueSum)
 	}
-	// cvr prob best
-	if diff := cmp.Diff(vsB.CvrProbBest.Mean, 0.42, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsB.CvrProbBest.Mean)
+	cvrProbBest := requireDistributionSummary(t, variationValue, "cvr_prob_best", vsB.CvrProbBest)
+	if diff := cmp.Diff(cvrProbBest.Mean, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, cvrProbBest.Mean)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBest.Sd, 0.49, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsB.CvrProbBest.Sd)
+	if diff := cmp.Diff(cvrProbBest.Sd, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, cvrProbBest.Sd)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsB.CvrProbBest.Rhat)
+	if diff := cmp.Diff(cvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, cvrProbBest.Rhat)
 	}
-	// cvr prob beat baseline
-	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Mean, 0.42, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Mean)
+	cvrProbBeatBaseline := requireDistributionSummary(t, variationValue, "cvr_prob_beat_baseline", vsB.CvrProbBeatBaseline)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Mean, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, cvrProbBeatBaseline.Mean)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Sd, 0.49, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Sd)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Sd, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, cvrProbBeatBaseline.Sd)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Rhat, 0.99, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Rhat)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Rhat, 0.99, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, cvrProbBeatBaseline.Rhat)
 	}
-	// value sum per user prob best
-	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBest.Mean, 0.34, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBest.Mean)
+	valueProbBest := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_best", vsB.GoalValueSumPerUserProbBest)
+	if diff := cmp.Diff(valueProbBest.Mean, 1.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, valueProbBest.Mean)
 	}
-	// value sum per user prob beat baseline
-	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBeatBaseline.Mean, 0.34, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBeatBaseline.Mean)
+	valueProbBeatBaseline := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_beat_baseline", vsB.GoalValueSumPerUserProbBeatBaseline)
+	if diff := cmp.Diff(valueProbBeatBaseline.Mean, 1.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, valueProbBeatBaseline.Mean)
+	}
+}
+
+// checkExperimentSummary asserts the metric-aware best-variations lists end to
+// end (Follow-up E). With this fixture the value-per-user metric is decisive
+// (treatment ~15 vs baseline ~10) while CVR is a tie (100% conversion in both
+// arms), so the value list must contain the treatment as the winner and the
+// CVR list must be empty. This exercises the `best_variations_value` proto
+// field through calculator → storage → API, complementing the in-process
+// TestPickBestVariations unit coverage.
+func checkExperimentSummary(t *testing.T, gr *ecproto.GoalResult, treatmentVariationID string) {
+	t.Helper()
+	if gr.Summary == nil {
+		t.Fatalf("goal result summary should be populated, got nil")
+	}
+	// CVR is a tie, so no variation clears the 0.95 best-variation threshold.
+	if len(gr.Summary.BestVariations) != 0 {
+		t.Fatalf("expected no CVR best variations (CVR is a tie), got %d", len(gr.Summary.BestVariations))
+	}
+	// The value metric is decisive: the treatment is the value winner.
+	if len(gr.Summary.BestVariationsValue) != 1 {
+		t.Fatalf("expected exactly 1 value best variation, got %d", len(gr.Summary.BestVariationsValue))
+	}
+	best := gr.Summary.BestVariationsValue[0]
+	if best.Id != treatmentVariationID {
+		t.Fatalf("value winner should be treatment %s, got %s", treatmentVariationID, best.Id)
+	}
+	if !best.IsBest {
+		t.Fatalf("value winner should be marked IsBest")
+	}
+	if best.Probability < 0.95 {
+		t.Fatalf("value winner probability should exceed 0.95, got %f", best.Probability)
 	}
 }
 
@@ -2932,9 +3059,8 @@ func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult,
 // SRM path therefore short-circuits in extractRolloutWeights with
 // "default strategy is not a rollout" before any sample-size check runs, so
 // the expected outcome here is Status == SKIPPED with a non-empty
-// skip_reason. (For the same reason, the 5-user fixture size never reaches
-// the minSRMSampleSize=100 floor either — both branches would yield
-// SKIPPED, the strategy check just wins first.)
+// skip_reason. (The minSRMSampleSize=100 floor is also satisfied by this
+// fixture, but the strategy check wins first.)
 //
 // This is enough to catch wiring regressions (feature client not injected,
 // proto field not exposed, calculator path not executed) without requiring
@@ -2946,7 +3072,7 @@ func checkExperimentSrmResult(t *testing.T, er *ecproto.ExperimentResult) {
 		t.Fatalf("SRM result should be populated on every ExperimentResult, got nil")
 	}
 	if er.SrmResult.Status != ecproto.SrmResult_SKIPPED {
-		t.Fatalf("with only 5 users in the fixture, SRM status should be SKIPPED, got %v (skip_reason=%q)",
+		t.Fatalf("with a FIXED default strategy, SRM status should be SKIPPED, got %v (skip_reason=%q)",
 			er.SrmResult.Status, er.SrmResult.SkipReason)
 	}
 	if er.SrmResult.SkipReason == "" {
