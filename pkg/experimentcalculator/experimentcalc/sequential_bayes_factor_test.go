@@ -257,6 +257,48 @@ func TestFillSequentialBayesFactors_NilVariationSkipped(t *testing.T) {
 	})
 }
 
+// TestFillSequentialBayesFactors_ValueSkippedWhenOneArmHasZeroUserCount covers
+// the case where a variation has UserCount==0 (no goal events). calcGoalResult
+// returns early on goalUc[i]==0, so the value posterior never ran. The value
+// BF for all treatment arms must be 1.0 even if other arms have non-zero stats.
+func TestFillSequentialBayesFactors_ValueSkippedWhenOneArmHasZeroUserCount(t *testing.T) {
+	t.Parallel()
+	vrs := []*eventcounter.VariationResult{
+		{
+			VariationId:     "baseline",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				UserCount: 50, ValueSumPerUserMean: 10.0, ValueSumPerUserVariance: 2.0,
+			},
+		},
+		{
+			VariationId:     "treatment-A",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				// Good stats — would fire if only this pair were checked.
+				UserCount: 70, ValueSumPerUserMean: 14.0, ValueSumPerUserVariance: 2.0,
+			},
+		},
+		{
+			VariationId:     "treatment-B",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				// Zero users — calcGoalResult returns early for the whole goal.
+				UserCount: 0, ValueSumPerUserMean: 0.0, ValueSumPerUserVariance: 0.0,
+			},
+		},
+	}
+	fillSequentialBayesFactors(vrs, "baseline")
+
+	assert.Equal(t, 1.0, vrs[1].ValueSequentialBayesFactor,
+		"treatment-A value BF must be 1.0 when treatment-B has zero user count (goal-wide skip)")
+	assert.Equal(t, 1.0, vrs[2].ValueSequentialBayesFactor,
+		"treatment-B value BF must be 1.0 (zero user count arm)")
+	// CVR unaffected.
+	assert.Greater(t, vrs[1].CvrSequentialBayesFactor, 1.0,
+		"CVR BF should still be computed for treatment-A")
+}
+
 // TestFillSequentialBayesFactors_MultiArmValueSkippedWhenOneArmHasZeroStats
 // mirrors the calcGoalResult all-or-nothing guard: if any variation in the
 // goal has zero value stats, the value posterior is skipped for all variations.

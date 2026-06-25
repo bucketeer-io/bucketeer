@@ -689,7 +689,7 @@ func TestCalculateSummary_SafeToStopFlags(t *testing.T) {
 			"baseline-only result must have ValueSafeToStop=false")
 	})
 
-	t.Run("safe_to_stop_true_when_prob_high_but_bf_is_decisive", func(t *testing.T) {
+	t.Run("safe_to_stop_false_when_prob_high_but_bf_below_threshold", func(t *testing.T) {
 		t.Parallel()
 		// This sub-test exercises the dual-signal UX intent: ProbBeatBaseline can
 		// be high (e.g. 0.97) while safe_to_stop is false (BF < 20) — the banner

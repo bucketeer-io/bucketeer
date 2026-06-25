@@ -208,19 +208,20 @@ func fillSequentialBayesFactors(
 	}
 
 	// calcGoalResult skips value inference for the entire goal if ANY
-	// variation has zero/empty value sufficient statistics. Mirror that
-	// all-or-nothing guard here: only compute value BFs when every variation
-	// that has goal users also has non-zero mean and variance. This prevents
-	// a decisive value BF for one arm from setting ValueSafeToStop=true in a
-	// multi-arm experiment where another arm's value posterior was skipped.
+	// variation has zero/empty value sufficient statistics (including
+	// UserCount==0). Mirror that all-or-nothing guard here: only compute
+	// value BFs when every variation has non-zero user count, mean, and
+	// variance. This prevents a decisive value BF for one arm from setting
+	// ValueSafeToStop=true in a multi-arm experiment where another arm's
+	// value posterior was skipped.
 	valueEnabled := true
 	for _, vr := range vrs {
 		if vr == nil || vr.ExperimentCount == nil {
 			continue
 		}
-		if vr.ExperimentCount.UserCount > 0 &&
-			(vr.ExperimentCount.ValueSumPerUserMean == 0 ||
-				vr.ExperimentCount.ValueSumPerUserVariance == 0) {
+		if vr.ExperimentCount.UserCount == 0 ||
+			vr.ExperimentCount.ValueSumPerUserMean == 0 ||
+			vr.ExperimentCount.ValueSumPerUserVariance == 0 {
 			valueEnabled = false
 			break
 		}
