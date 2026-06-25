@@ -93,7 +93,7 @@ func cvrBayesFactor(sA, nA, sB, nB int64) float64 {
 	if math.IsNaN(logBF) || math.IsInf(logBF, 0) {
 		return 1.0
 	}
-	return math.Exp(logBF)
+	return expBF(logBF)
 }
 
 // logBetaFn returns log B(a, b) = logΓ(a) + logΓ(b) − logΓ(a+b).
@@ -168,7 +168,7 @@ func valueBayesFactor(nA int64, meanA, varA float64, nB int64, meanB, varB float
 	if !isFiniteFloat(logBF) {
 		return 1.0
 	}
-	return math.Exp(logBF)
+	return expBF(logBF)
 }
 
 // fillSequentialBayesFactors populates CvrSequentialBayesFactor and
@@ -269,6 +269,19 @@ func computeSafeToStop(
 		}
 	}
 	return false
+}
+
+// expBF exponentiates a log-Bayes-Factor, clamping the result to
+// math.MaxFloat64 rather than returning +Inf. +Inf is not representable in
+// JSON (proto float64 fields are JSON-encoded) and can break downstream
+// consumers; clamping is safe because any finite BF >> 20 already satisfies
+// the stopping criterion.
+func expBF(logBF float64) float64 {
+	// math.Log(math.MaxFloat64) ≈ 709.78; beyond this Exp overflows to +Inf.
+	if logBF >= math.Log(math.MaxFloat64) {
+		return math.MaxFloat64
+	}
+	return math.Exp(logBF)
 }
 
 // isFiniteFloat reports whether v is a real finite number (not NaN or ±Inf).
