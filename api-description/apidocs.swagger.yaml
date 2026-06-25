@@ -5702,6 +5702,18 @@ definitions:
           confidence banner can stay metric-aware when the user is viewing a value
           chart (Value/User or Value/Total). best_variations (field 1) remains the
           conversion-rate list.
+      cvrSafeToStop:
+        type: boolean
+        description: |-
+          cvr_safe_to_stop is true when at least one treatment variation's
+          cvr_sequential_bayes_factor >= DefaultSequentialBFThreshold (20). When
+          true the sequential evidence criterion is met for CVR: the result is
+          robust to the optional-stopping / peeking pattern.
+          False does NOT mean the experiment is inconclusive — it means more data
+          are needed before a reliable CVR verdict can be made.
+      valueSafeToStop:
+        type: boolean
+        description: value_safe_to_stop is the value-per-user analogue of cvr_safe_to_stop.
   bucketeerfeatureChangeType:
     type: string
     enum:
@@ -7562,6 +7574,19 @@ definitions:
         items:
           type: number
           format: double
+      cvrSequentialBayesFactor:
+        type: number
+        format: double
+        description: |-
+          Sequential Bayes Factor for CVR vs baseline at the current look.
+          Always 1.0 for the baseline variation. See Summary.cvr_safe_to_stop for
+          the stopping decision derived from this field.
+      valueSequentialBayesFactor:
+        type: number
+        format: double
+        description: |-
+          Sequential Bayes Factor for value-per-user vs baseline at the current
+          look. Always 1.0 for the baseline variation or when value data are absent.
   eventcounterVariationTimeseries:
     type: object
     properties:
