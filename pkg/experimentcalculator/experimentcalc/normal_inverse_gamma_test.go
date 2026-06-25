@@ -232,6 +232,87 @@ func TestNormalInverseGammaSmallNSubUnit(t *testing.T) {
 	}
 }
 
+// TestWinsorizationRobustness is a regression guard for the per-user p99 cap
+// applied in the DWH aggregation SQL (goal_event.sql / goal_count.sql).
+//
+// The SQL caps each user's total goal value at the 99th percentile of the
+// pooled per-user distribution before computing AVG / VAR_SAMP. This test
+// verifies that the NIG posterior is overconfident when fed uncapped aggregates
+// from a heavy-tailed distribution (3 whales dominate) and non-decisive when
+// fed the post-cap aggregates that the updated SQL produces.
+//
+// Derivation of test constants — scenario: n=1,000 users per variation.
+//
+//	Baseline A:   1,000 users spending ~$10 each (mean=10.0, VAR_SAMP=9.0).
+//	Treatment B:  997 users at $10; 3 whales at $10,000.
+//
+// Uncapped B aggregates (old SQL):
+//
+//	mean = (997×10 + 3×10000)/1000 = 39.97
+//	VAR_SAMP: SS = 997×(10−39.97)² + 3×(10000−39.97)² ≈ 298,499,397
+//	          VAR_SAMP = SS/999 ≈ 298,798
+//
+// Capped B aggregates (new SQL, p99 cap ≈ $15 in this distribution):
+//
+//	mean = (997×10 + 3×15)/1000 = 10.015
+//	VAR_SAMP: SS = 997×(10−10.015)² + 3×(15−10.015)² ≈ 74.775
+//	          VAR_SAMP = SS/999 ≈ 0.0748
+//
+// The EB-prior pooled variance for the uncapped case is dominated by B's
+// whale variance (~149k), inflating A's posterior noise estimate as well.
+// Even so, the mean gap (40 vs 10) produces ProbBeatBaseline ≈ 0.96.
+// After capping the mean gap shrinks to 0.015, giving ProbBeatBaseline ≈ 0.56.
+func TestWinsorizationRobustness(t *testing.T) {
+	t.Parallel()
+
+	const n = int64(1000)
+	const numSamples = 25000
+	vids := []string{"vid_baseline", "vid_treatment"}
+	baselineIdx := 0
+
+	// Pre-computed DWH aggregates WITHOUT the per-user cap (old SQL behaviour).
+	// 3 whales at $10,000 inflate treatment mean from $10 to ~$40 and drive
+	// VAR_SAMP to ~299k, making the NIG posterior falsely decisive.
+	uncappedResult := normalInverseGamma(
+		rand.NewPCG(25, 0),
+		vids,
+		[]float64{10.0, 39.97},
+		[]float64{9.0, 298798.0},
+		[]int64{n, n},
+		baselineIdx,
+		numSamples,
+	)
+	// The whale-inflated mean difference produces overconfident inference:
+	// 3 users out of 1,000 flip the verdict to "treatment wins decisively".
+	assert.Greater(
+		t,
+		uncappedResult["vid_treatment"].GoalValueSumPerUserProbBeatBaseline.Mean,
+		0.90,
+		"uncapped whale scenario must be overconfident (ProbBeatBaseline > 0.90)",
+	)
+
+	// Pre-computed DWH aggregates AFTER the per-user p99 cap (new SQL behaviour).
+	// The 3 whales are capped at $15; the treatment mean shifts from $39.97
+	// to $10.015 — a 1.5-cent lift that is not business-meaningful.
+	cappedResult := normalInverseGamma(
+		rand.NewPCG(26, 0),
+		vids,
+		[]float64{10.0, 10.015},
+		[]float64{9.0, 0.0748},
+		[]int64{n, n},
+		baselineIdx,
+		numSamples,
+	)
+	// After capping the result is non-decisive: whales no longer drive the
+	// posterior and the tiny residual lift is within normal noise.
+	assert.Less(
+		t,
+		cappedResult["vid_treatment"].GoalValueSumPerUserProbBeatBaseline.Mean,
+		0.80,
+		"capped whale scenario must be non-decisive (ProbBeatBaseline < 0.80)",
+	)
+}
+
 func TestComputeEmpiricalBayesPriors(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

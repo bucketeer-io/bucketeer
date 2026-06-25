@@ -125,6 +125,9 @@ func (es *eventStorage) QueryGoalCount(
 		{Name: "goalID", Value: goalID},
 		{Name: "featureID", Value: featureID},
 		{Name: "featureVersion", Value: featureVersion},
+		// Winsorization percentile (integer in [1,100]) for the APPROX_QUANTILES
+		// array offset (100 effectively disables capping).
+		{Name: "valueCapPercentile", Value: dwhdatabase.DefaultValueCapPercentile},
 	}
 	es.logger.Debug("query goal count",
 		zap.String("query", query),
