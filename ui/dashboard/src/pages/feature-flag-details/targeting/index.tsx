@@ -47,6 +47,7 @@ import { initialPrerequisite } from './constants';
 import CreateDebuggerForm from './debugger/create-form';
 import TargetingDebuggerResults from './debugger/results';
 import DefaultRule from './default-rule';
+import { EvaluationFlow, FLOW_LABELS, FlowStep } from './evaluation-flow';
 import FlagOffDescription from './flag-off-description';
 import FlagSwitch from './flag-switch';
 import { formSchema, TargetingSchema } from './form-schema';
@@ -82,20 +83,6 @@ import {
   normalizeSegmentRules,
   reorderWithReset
 } from './utils';
-
-export const TargetingDivider = () => (
-  <div className="flex-center py-3 text-gray-400" aria-hidden="true">
-    <svg width="12" height="24" viewBox="0 0 12 24" fill="none">
-      <path
-        d="M6 1v18M2 15l4 4 4-4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  </div>
-);
 
 const TargetingPage = ({
   feature,
@@ -805,7 +792,7 @@ const TargetingPage = ({
       <FormProvider {...form}>
         <Form
           onSubmit={form.handleSubmit(values => onSubmit(values))}
-          className="flex flex-col w-full items-center"
+          className="flex flex-col w-full"
         >
           {(SCHEDULED_FLAG_CHANGES_ENABLED ||
             hasPrerequisiteFlags?.length > 0) && (
@@ -823,111 +810,137 @@ const TargetingPage = ({
               )}
             </div>
           )}
-          <AudienceTraffic />
-          <TargetingDivider />
-          <FlagSwitch
-            feature={feature}
-            setIsShowRules={setIsShowRules}
-            editable={editable}
-          />
+          <EvaluationFlow muted={!enabledWatch}>
+            <FlowStep kind="start" align="center">
+              <AudienceTraffic />
+            </FlowStep>
+            <FlowStep kind={enabledWatch ? 'gate' : 'gate-off'} align="center">
+              <FlagSwitch
+                feature={feature}
+                setIsShowRules={setIsShowRules}
+                editable={editable}
+              />
+            </FlowStep>
+            {isShowRules && (
+              <>
+                {prerequisites?.length > 0 && (
+                  <FlowStep
+                    kind="prerequisite"
+                    stepLabel={FLOW_LABELS.required}
+                    tone="muted"
+                  >
+                    <PrerequisiteRule
+                      currentEnvironment={currentEnvironment}
+                      isDisableAddPrerequisite={isDisableAddPrerequisite}
+                      features={activeFeatures}
+                      feature={feature}
+                      prerequisites={prerequisites}
+                      onRemovePrerequisite={prerequisiteRemove}
+                      handleDiscardChanges={handleDiscardChanges}
+                      handleCheckEdit={checkEditRule}
+                      onAddPrerequisite={() =>
+                        onAddRule(RuleCategory.PREREQUISITE)
+                      }
+                    />
+                  </FlowStep>
+                )}
+                {(!prerequisitesWatch?.length || !individualRules?.length) && (
+                  <FlowStep kind="add" align="center">
+                    <AddRule
+                      isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
+                      isDisableAddIndividualRules={individualRules?.length > 0}
+                      isInsertSegmentRule={true}
+                      indexInsertSegmentRule={0}
+                      onAddRule={onAddRule}
+                    />
+                  </FlowStep>
+                )}
+                {individualRules?.length > 0 && (
+                  <>
+                    <FlowStep kind="individual" stepLabel={FLOW_LABELS.if}>
+                      <IndividualRule
+                        individualRules={individualRules}
+                        handleDiscardChanges={handleDiscardChanges}
+                        handleCheckEdit={checkEditRule}
+                      />
+                    </FlowStep>
+                    <FlowStep kind="add" align="center">
+                      <AddRule
+                        isDisableAddPrerequisite={
+                          prerequisitesWatch?.length > 0
+                        }
+                        isDisableAddIndividualRules={
+                          individualRules?.length > 0
+                        }
+                        isInsertSegmentRule={true}
+                        indexInsertSegmentRule={0}
+                        onAddRule={onAddRule}
+                      />
+                    </FlowStep>
+                  </>
+                )}
+                {segmentRules.length > 0 && (
+                  <>
+                    <TargetSegmentRule
+                      feature={feature}
+                      features={activeFeatures}
+                      segmentRules={segmentRules}
+                      isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
+                      isDisableAddIndividualRules={individualRules?.length > 0}
+                      onAddRule={onAddRule}
+                      segmentRulesRemove={handleSegmentRuleRemove}
+                      segmentRulesSwap={handleSwapSegmentRule}
+                      segmentRulesMove={handleMoveSegmentRule}
+                      handleDiscardChanges={handleDiscardChanges}
+                      handleCheckEdit={checkEditRule}
+                      hasIndividualRules={individualRules?.length > 0}
+                    />
+                    <FlowStep kind="add" align="center">
+                      <AddRule
+                        isDisableAddPrerequisite={
+                          prerequisitesWatch?.length > 0
+                        }
+                        isDisableAddIndividualRules={
+                          individualRules?.length > 0
+                        }
+                        isInsertSegmentRule={true}
+                        indexInsertSegmentRule={segmentRulesWatch.length + 1}
+                        onAddRule={onAddRule}
+                      />
+                    </FlowStep>
+                  </>
+                )}
+              </>
+            )}
+            {isShowRules && (
+              <FlowStep
+                kind="default"
+                stepLabel={FLOW_LABELS.otherwise}
+                tone="muted"
+              >
+                <DefaultRule
+                  editable={editable}
+                  urlCode={currentEnvironment.urlCode}
+                  feature={feature}
+                  waitingRunningRollouts={waitingRunningRollouts}
+                  handleDiscardChanges={handleDiscardChanges}
+                  handleCheckEdit={checkEditRule}
+                />
+              </FlowStep>
+            )}
+          </EvaluationFlow>
           {!enabledWatch && (
             <FlagOffDescription
               isShowRules={isShowRules}
               setIsShowRules={setIsShowRules}
             />
           )}
-          {isShowRules && (
-            <>
-              {prerequisites?.length > 0 && (
-                <>
-                  <TargetingDivider />
-                  <PrerequisiteRule
-                    currentEnvironment={currentEnvironment}
-                    isDisableAddPrerequisite={isDisableAddPrerequisite}
-                    features={activeFeatures}
-                    feature={feature}
-                    prerequisites={prerequisites}
-                    onRemovePrerequisite={prerequisiteRemove}
-                    handleDiscardChanges={handleDiscardChanges}
-                    handleCheckEdit={checkEditRule}
-                    onAddPrerequisite={() =>
-                      onAddRule(RuleCategory.PREREQUISITE)
-                    }
-                  />
-                </>
-              )}
-              {(!prerequisitesWatch?.length || !individualRules?.length) && (
-                <>
-                  <TargetingDivider />
-                  <AddRule
-                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
-                    isDisableAddIndividualRules={individualRules?.length > 0}
-                    isInsertSegmentRule={true}
-                    indexInsertSegmentRule={0}
-                    onAddRule={onAddRule}
-                  />
-                </>
-              )}
-              {individualRules?.length > 0 && (
-                <>
-                  <TargetingDivider />
-                  <IndividualRule
-                    individualRules={individualRules}
-                    handleDiscardChanges={handleDiscardChanges}
-                    handleCheckEdit={checkEditRule}
-                  />
-                  <TargetingDivider />
-                  <AddRule
-                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
-                    isDisableAddIndividualRules={individualRules?.length > 0}
-                    isInsertSegmentRule={true}
-                    indexInsertSegmentRule={0}
-                    onAddRule={onAddRule}
-                  />
-                </>
-              )}
-              {segmentRules.length > 0 && (
-                <>
-                  <TargetingDivider />
-                  <TargetSegmentRule
-                    feature={feature}
-                    features={activeFeatures}
-                    segmentRules={segmentRules}
-                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
-                    isDisableAddIndividualRules={individualRules?.length > 0}
-                    onAddRule={onAddRule}
-                    segmentRulesRemove={handleSegmentRuleRemove}
-                    segmentRulesSwap={handleSwapSegmentRule}
-                    segmentRulesMove={handleMoveSegmentRule}
-                    handleDiscardChanges={handleDiscardChanges}
-                    handleCheckEdit={checkEditRule}
-                  />
-                  <TargetingDivider />
-                  <AddRule
-                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
-                    isDisableAddIndividualRules={individualRules?.length > 0}
-                    isInsertSegmentRule={true}
-                    indexInsertSegmentRule={segmentRulesWatch.length + 1}
-                    onAddRule={onAddRule}
-                  />
-                </>
-              )}
-            </>
-          )}
-          {isShowRules && (
-            <>
-              <TargetingDivider />
-              <DefaultRule
-                editable={editable}
-                urlCode={currentEnvironment.urlCode}
-                feature={feature}
-                waitingRunningRollouts={waitingRunningRollouts}
-                handleDiscardChanges={handleDiscardChanges}
-                handleCheckEdit={checkEditRule}
-              />
-            </>
-          )}
           <ButtonBar
+            // The top divider line is only meaningful when the flag is OFF —
+            // it separates the off-variation notice from the action buttons.
+            // When the flag is ON, the spine already terminates at the default
+            // rule and no extra divider is needed.
+            className={enabledWatch ? 'border-t-0' : undefined}
             primaryButton={
               <Tooltip
                 side="top"

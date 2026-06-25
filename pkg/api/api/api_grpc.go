@@ -250,7 +250,6 @@ type grpcGatewayService struct {
 	accountStorage              accstorage.AccountStorage
 	goalPublisher               publisher.Publisher
 	evaluationPublisher         publisher.Publisher
-	userPublisher               publisher.Publisher
 	featuresCache               cachev3.FeaturesCache
 	featuresRedisCache          cachev3.FeaturesCache
 	segmentUsersCache           cachev3.SegmentUsersCache
@@ -285,7 +284,6 @@ func NewGrpcGatewayService(
 	accountStorage accstorage.AccountStorage,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
-	up publisher.Publisher,
 	redisV3Cache cache.MultiGetCache,
 	opts ...Option,
 ) rpc.Service {
@@ -318,7 +316,6 @@ func NewGrpcGatewayService(
 		accountStorage:              accountStorage,
 		goalPublisher:               gp,
 		evaluationPublisher:         ep,
-		userPublisher:               up,
 		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
 		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
 		segmentUsersCache:           cachev3.NewSegmentUsersCache(inMemoryCache, options.segmentUsersMemoryCacheTTL),

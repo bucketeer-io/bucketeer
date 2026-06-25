@@ -85,8 +85,6 @@ spec:
               value: "{{ .Values.env.goalTopic }}"
             - name: BUCKETEER_API_EVALUATION_TOPIC
               value: "{{ .Values.env.evaluationTopic }}"
-            - name: BUCKETEER_API_USER_TOPIC
-              value: "{{ .Values.env.userTopic }}"
             - name: BUCKETEER_API_METRICS_TOPIC
               value: "{{ .Values.env.metricsTopic }}"
             - name: BUCKETEER_API_PUBLISH_NUM_GOROUTINES

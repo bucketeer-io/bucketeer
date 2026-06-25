@@ -25,7 +25,7 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -50,7 +50,7 @@ type scheduledFlagChangeExecutor struct {
 
 // NewScheduledFlagChangeExecutor creates a new scheduled flag change executor batch job.
 func NewScheduledFlagChangeExecutor(
-	mysqlClient mysql.Client,
+	sfcStorage v2fs.ScheduledFlagChangeStorage,
 	featureClient featureclient.Client,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -62,7 +62,7 @@ func NewScheduledFlagChangeExecutor(
 		opt(dopts)
 	}
 	return &scheduledFlagChangeExecutor{
-		sfcStorage:    v2fs.NewScheduledFlagChangeStorage(mysqlClient),
+		sfcStorage:    sfcStorage,
 		featureClient: featureClient,
 		opts:          dopts,
 		logger:        dopts.Logger.Named("scheduled-flag-change-executor"),
@@ -267,24 +267,15 @@ func (e *scheduledFlagChangeExecutor) listDueConflictSchedules(
 	ctx context.Context,
 	now int64,
 ) ([]*featureproto.ScheduledFlagChange, error) {
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "status",
-			Operator: mysql.OperatorEqual,
-			Value:    int32(featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
+	params := v2fs.ListScheduledFlagChangesParams{
+		ToScheduledAt: now,
+		Statuses: []featureproto.ScheduledFlagChangeStatus{
+			featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
 		},
-		{
-			Column:   "scheduled_at",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    now,
-		},
+		OrderBy:  featureproto.ListScheduledFlagChangesRequest_SCHEDULED_AT,
+		PageSize: maxDueScheduleBatchSize,
+		Offset:   database.QueryNoOffset,
 	}
-	options := &mysql.ListOptions{
-		Filters: filters,
-		Orders:  []*mysql.Order{mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc)},
-		Limit:   maxDueScheduleBatchSize,
-		Offset:  mysql.QueryNoOffset,
-	}
-	sfcs, _, _, err := e.sfcStorage.ListScheduledFlagChanges(ctx, options)
+	sfcs, _, _, err := e.sfcStorage.ListScheduledFlagChanges(ctx, params)
 	return sfcs, err
 }

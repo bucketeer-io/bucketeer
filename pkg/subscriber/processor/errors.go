@@ -23,7 +23,6 @@ var (
 	errAuditLogInvalidConfig                     = errors.New("auditLog: invalid config")
 	ErrSegmentInvalidConfig                      = errors.New("segment: invalid config")
 	ErrSegmentExceededMaxUserIDLength            = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength) //nolint:lll
-	ErrUserEventInvalidConfig                    = errors.New("user event: invalid config")
 	ErrEvaluationCountInvalidConfig              = errors.New("evaluation count: invalid config")
 	ErrEventsDWHPersisterInvalidConfig           = errors.New("eventpersister: invalid config")
 	ErrEventsOPSPersisterInvalidConfig           = errors.New("eventpersister: invalid config")

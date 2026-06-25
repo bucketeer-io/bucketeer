@@ -60,9 +60,12 @@ var registry = []pair{
 	{"pkg/experiment/storage/v2", subPkg},
 	{"pkg/experimentcalculator/storage/v2", subPkg},
 	{"pkg/feature/storage/v2", subPkg},
+	{"pkg/insights/storage/v2", subPkg},
+	{"pkg/notification/storage/v2", subPkg},
 	{"pkg/opsevent/storage/v2", subPkg},
 	{"pkg/push/storage/v2", sameDir},
 	{"pkg/tag/storage", subPkg},
+	{"pkg/team/storage", subPkg},
 }
 
 // dialectTokens are stripped from identifiers before comparing them across the

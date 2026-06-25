@@ -56,6 +56,12 @@ const Strategy = ({
   const experimentPercentage = rolloutStrategy?.audience?.percentage || 0;
   const variations = (rolloutStrategy?.variations as StrategyVariation) || [];
 
+  const weightedVariationCount = variations.filter(
+    item => Number(item.weight) > 0
+  ).length;
+  const showPercentageBar =
+    weightedVariationCount > 0 || percentageValueCount > 0;
+
   const [isCustomExperiment, setIsCustomExperiment] = useState(false);
   const [splitOptionType, setSplitOptionType] = useState<SplitOptionType>();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +73,8 @@ const Strategy = ({
         return acc + (current || 0);
       }, 0);
 
-    if (total !== 100) {
+    // Round to 2 decimals before comparing so floating-point summation drift
+    if (Math.round((total || 0) * 100) / 100 !== 100) {
       return setError(`${rootName}.${strategyName}.variations`, {
         message: t('message:validation.should-be-percent')
       });
@@ -144,7 +151,8 @@ const Strategy = ({
 
       const equallyVariations = variations.map((item, index) => ({
         ...item,
-        weight: index < remainder ? base + 0.01 : base
+        // Round to 2 decimals to avoid floating-point drift
+        weight: Math.round((index < remainder ? base + 0.01 : base) * 100) / 100
       }));
 
       setValue(`${rootName}.${strategyName}.variations`, equallyVariations, {
@@ -419,15 +427,15 @@ const Strategy = ({
                 <Form.Item className="flex flex-col w-full gap-y-2">
                   <Form.Control>
                     <div>
-                      {percentageValueCount > 0 && (
+                      {showPercentageBar && (
                         <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
-                          {rolloutStrategy?.variations?.map(
+                          {(field.value as RuleStrategyVariation[])?.map(
                             (item: RuleStrategyVariation, index: number) => (
                               <PercentageBar
                                 key={index}
                                 weight={item.weight}
                                 currentIndex={index}
-                                isRoundedFull={percentageValueCount === 1}
+                                isRoundedFull={weightedVariationCount === 1}
                               />
                             )
                           )}
@@ -451,14 +459,14 @@ const Strategy = ({
                               name={`${rootName}.${strategyName}.variations.${index}.weight`}
                               variationId={rollout.variation}
                               handleChangeRolloutWeight={value => {
-                                field.value[index] = {
-                                  ...field.value[index],
-                                  weight: +value
-                                };
-                                field.onChange(field.value, {
+                                const updated = field.value.map(
+                                  (v: RuleStrategyVariation, i: number) =>
+                                    i === index ? { ...v, weight: +value } : v
+                                );
+                                field.onChange(updated, {
                                   shouldValidate: true
                                 });
-                                handleCheckError(field.value);
+                                handleCheckError(updated);
                               }}
                             />
                           )

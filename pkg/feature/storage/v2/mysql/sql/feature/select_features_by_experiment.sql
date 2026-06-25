@@ -11,6 +11,7 @@ SELECT DISTINCT
     feature.created_at,
     feature.updated_at,
     feature.variation_type,
+    feature.variation_value_schema,
     feature.variations,
     feature.targets,
     feature.rules,

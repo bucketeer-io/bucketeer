@@ -32,7 +32,6 @@ import (
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -72,7 +71,6 @@ type EvaluationCountEventPersisterConfig struct {
 
 type evaluationCountEventPersister struct {
 	evaluationCountEventPersisterConfig EvaluationCountEventPersisterConfig
-	mysqlClient                         mysql.Client
 	fluiStorage                         ftstorage.FeatureLastUsedInfoStorage
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
@@ -89,7 +87,6 @@ type evaluationCountEventPersister struct {
 func NewEvaluationCountEventPersister(
 	ctx context.Context,
 	config interface{},
-	mysqlClient mysql.Client,
 	fluiStorage ftstorage.FeatureLastUsedInfoStorage,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	userAttributesCacher cachev3.UserAttributesCache,
@@ -114,7 +111,6 @@ func NewEvaluationCountEventPersister(
 	}
 	e := &evaluationCountEventPersister{
 		evaluationCountEventPersisterConfig: evaluationCountEventPersisterConfig,
-		mysqlClient:                         mysqlClient,
 		fluiStorage:                         fluiStorage,
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,

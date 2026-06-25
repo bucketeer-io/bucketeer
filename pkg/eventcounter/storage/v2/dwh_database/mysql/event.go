@@ -125,6 +125,8 @@ func (es *eventStorage) QueryGoalCount(
 		goalID,
 		featureID,
 		featureVersion,
+		// Winsorization percentile (integer in [1,100]) for the NTILE cap.
+		dwhdatabase.DefaultValueCapPercentile,
 	)
 	if err != nil {
 		es.logger.Error(

@@ -27,7 +27,6 @@ env:
   pubsubEmulatorHost:
   goalTopic:
   evaluationTopic:
-  userTopic:
   metricsTopic:
   publishNumGoroutines: 200
   publishTimeout: 1m
