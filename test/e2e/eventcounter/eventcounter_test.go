@@ -2285,6 +2285,10 @@ func addFeatureIndividualTargetingBulkSplit(
 }
 
 func experimentResultCountsReady(vsA, vsB *ecproto.VariationResult) bool {
+	if vsA.EvaluationCount == nil || vsA.ExperimentCount == nil ||
+		vsB.EvaluationCount == nil || vsB.ExperimentCount == nil {
+		return false
+	}
 	n := int64(experimentResultUsersPerVariation)
 	return vsA.EvaluationCount.EventCount == n &&
 		vsA.EvaluationCount.UserCount == n &&
@@ -2294,6 +2298,37 @@ func experimentResultCountsReady(vsA, vsB *ecproto.VariationResult) bool {
 		vsA.ExperimentCount.UserCount == n &&
 		vsB.ExperimentCount.EventCount == n &&
 		vsB.ExperimentCount.UserCount == n
+}
+
+// experimentResultProbFieldsReady reports whether the calculator has populated
+// the CVR and value-metric distribution summaries for a variation.
+func experimentResultProbFieldsReady(vr *ecproto.VariationResult) bool {
+	return vr.CvrProbBest != nil &&
+		vr.CvrProbBeatBaseline != nil &&
+		vr.GoalValueSumPerUserProbBest != nil &&
+		vr.GoalValueSumPerUserProbBeatBaseline != nil
+}
+
+func requireDistributionSummary(
+	t *testing.T,
+	variationValue, fieldName string,
+	ds *ecproto.DistributionSummary,
+) *ecproto.DistributionSummary {
+	t.Helper()
+	if ds == nil {
+		t.Fatalf("variation: %s: %s should be populated, got nil", variationValue, fieldName)
+	}
+	return ds
+}
+
+func requireVariationCounts(t *testing.T, variationValue string, vr *ecproto.VariationResult) {
+	t.Helper()
+	if vr.EvaluationCount == nil {
+		t.Fatalf("variation: %s: evaluation count should be populated, got nil", variationValue)
+	}
+	if vr.ExperimentCount == nil {
+		t.Fatalf("variation: %s: experiment count should be populated, got nil", variationValue)
+	}
 }
 
 func getVariationResult(vrs []*ecproto.VariationResult, id string) *ecproto.VariationResult {
@@ -2354,20 +2389,20 @@ func waitAndCheckExperimentResult(
 			t.Fatalf("missing variation result for experiment variations")
 		}
 		if !experimentResultCountsReady(vsA, vsB) {
+			linkedA, linkedB := int64(0), int64(0)
+			if vsA.ExperimentCount != nil {
+				linkedA = vsA.ExperimentCount.UserCount
+			}
+			if vsB.ExperimentCount != nil {
+				linkedB = vsB.ExperimentCount.UserCount
+			}
 			t.Logf("Retry %d/%d: waiting for linked users A=%d/%d B=%d/%d",
-				i+1, retryTimes,
-				vsA.ExperimentCount.UserCount, experimentResultUsersPerVariation,
-				vsB.ExperimentCount.UserCount, experimentResultUsersPerVariation)
+				i+1, retryTimes, linkedA, experimentResultUsersPerVariation,
+				linkedB, experimentResultUsersPerVariation)
 			continue
 		}
-		if vsB.GoalValueSumPerUserProbBest == nil ||
-			vsB.GoalValueSumPerUserProbBest.Mean < 0.5 {
-			probBest := 0.0
-			if vsB.GoalValueSumPerUserProbBest != nil {
-				probBest = vsB.GoalValueSumPerUserProbBest.Mean
-			}
-			t.Logf("Retry %d/%d: value-metric probs not ready yet (B probBest=%f)",
-				i+1, retryTimes, probBest)
+		if !experimentResultProbFieldsReady(vsA) || !experimentResultProbFieldsReady(vsB) {
+			t.Logf("Retry %d/%d: waiting for calculator prob fields on both variations", i+1, retryTimes)
 			continue
 		}
 		checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
@@ -2883,6 +2918,7 @@ func createUserID(t *testing.T, uuid string) string {
 // experiment-result fixture (baseline: per-user value 10 vs treatment 15).
 func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult, variationValue string) {
 	t.Helper()
+	requireVariationCounts(t, variationValue, vsA)
 	n := int64(experimentResultUsersPerVariation)
 	valueSum := experimentResultExpectedValueSum(experimentResultValueVariationA)
 	if vsA.EvaluationCount.EventCount != n {
@@ -2900,29 +2936,33 @@ func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult,
 	if diff := cmp.Diff(vsA.ExperimentCount.ValueSum, valueSum, compareFloatOpt); diff != "" {
 		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsA.ExperimentCount.ValueSum)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBest.Mean, 0.50, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsA.CvrProbBest.Mean)
+	cvrProbBest := requireDistributionSummary(t, variationValue, "cvr_prob_best", vsA.CvrProbBest)
+	if diff := cmp.Diff(cvrProbBest.Mean, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, cvrProbBest.Mean)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBest.Sd, 0.50, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsA.CvrProbBest.Sd)
+	if diff := cmp.Diff(cvrProbBest.Sd, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, cvrProbBest.Sd)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsA.CvrProbBest.Rhat)
+	if diff := cmp.Diff(cvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, cvrProbBest.Rhat)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Mean)
+	cvrProbBeatBaseline := requireDistributionSummary(t, variationValue, "cvr_prob_beat_baseline", vsA.CvrProbBeatBaseline)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, cvrProbBeatBaseline.Mean)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Sd, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Sd)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Sd, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, cvrProbBeatBaseline.Sd)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Rhat, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Rhat)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Rhat, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, cvrProbBeatBaseline.Rhat)
 	}
-	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBest.Mean, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBest.Mean)
+	valueProbBest := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_best", vsA.GoalValueSumPerUserProbBest)
+	if diff := cmp.Diff(valueProbBest.Mean, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, valueProbBest.Mean)
 	}
-	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBeatBaseline.Mean)
+	valueProbBeatBaseline := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_beat_baseline", vsA.GoalValueSumPerUserProbBeatBaseline)
+	if diff := cmp.Diff(valueProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, valueProbBeatBaseline.Mean)
 	}
 }
 
@@ -2930,6 +2970,7 @@ func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult,
 // experiment-result fixture (treatment: per-user value 15 vs baseline 10).
 func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult, variationValue string) {
 	t.Helper()
+	requireVariationCounts(t, variationValue, vsB)
 	n := int64(experimentResultUsersPerVariation)
 	valueSum := experimentResultExpectedValueSum(experimentResultValueVariationB)
 	if vsB.EvaluationCount.EventCount != n {
@@ -2947,29 +2988,33 @@ func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult,
 	if diff := cmp.Diff(vsB.ExperimentCount.ValueSum, valueSum, compareFloatOpt); diff != "" {
 		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsB.ExperimentCount.ValueSum)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBest.Mean, 0.50, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsB.CvrProbBest.Mean)
+	cvrProbBest := requireDistributionSummary(t, variationValue, "cvr_prob_best", vsB.CvrProbBest)
+	if diff := cmp.Diff(cvrProbBest.Mean, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, cvrProbBest.Mean)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBest.Sd, 0.50, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsB.CvrProbBest.Sd)
+	if diff := cmp.Diff(cvrProbBest.Sd, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, cvrProbBest.Sd)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsB.CvrProbBest.Rhat)
+	if diff := cmp.Diff(cvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, cvrProbBest.Rhat)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Mean, 0.50, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Mean)
+	cvrProbBeatBaseline := requireDistributionSummary(t, variationValue, "cvr_prob_beat_baseline", vsB.CvrProbBeatBaseline)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Mean, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, cvrProbBeatBaseline.Mean)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Sd, 0.50, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Sd)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Sd, 0.50, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, cvrProbBeatBaseline.Sd)
 	}
-	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Rhat, 0.99, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Rhat)
+	if diff := cmp.Diff(cvrProbBeatBaseline.Rhat, 0.99, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, cvrProbBeatBaseline.Rhat)
 	}
-	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBest.Mean, 1.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBest.Mean)
+	valueProbBest := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_best", vsB.GoalValueSumPerUserProbBest)
+	if diff := cmp.Diff(valueProbBest.Mean, 1.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, valueProbBest.Mean)
 	}
-	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBeatBaseline.Mean, 1.0, compareFloatBayesian); diff != "" {
-		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBeatBaseline.Mean)
+	valueProbBeatBaseline := requireDistributionSummary(t, variationValue, "goal_value_sum_per_user_prob_beat_baseline", vsB.GoalValueSumPerUserProbBeatBaseline)
+	if diff := cmp.Diff(valueProbBeatBaseline.Mean, 1.0, compareFloatBayesian); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, valueProbBeatBaseline.Mean)
 	}
 }
 
