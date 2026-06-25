@@ -79,7 +79,7 @@ func TestSendSSEEvent(t *testing.T) {
 	err := sendSSEEvent(&buf, stubFlusher{}, "put", msg)
 	require.NoError(t, err)
 	expected := "event: put\ndata: " +
-		`{"evaluations":{"id":"test", "evaluations":[], "createdAt":"0", "archivedFeatureIds":[], "forceUpdate":false}}` +
+		`{"evaluations":{"id":"test","evaluations":[],"createdAt":"0","archivedFeatureIds":[],"forceUpdate":false}}` +
 		"\n\n"
 	assert.Equal(t, expected, buf.String())
 }
@@ -97,7 +97,7 @@ func TestSendErrorEvent(t *testing.T) {
 	var buf bytes.Buffer
 	sendErrorEvent(&buf, stubFlusher{}, gatewayproto.StreamErrorEvent_INTERNAL, "something broke")
 	expected := "event: error\ndata: " +
-		`{"code":"INTERNAL", "message":"something broke"}` +
+		`{"code":"INTERNAL","message":"something broke"}` +
 		"\n\n"
 	assert.Equal(t, expected, buf.String())
 }
@@ -118,7 +118,7 @@ func TestInitialPut(t *testing.T) {
 				Evaluations: []*featureproto.Evaluation{},
 			},
 			expectEvent: "event: put\ndata: " +
-				`{"evaluations":{"id":"eval-1", "evaluations":[], "createdAt":"0", "archivedFeatureIds":[], "forceUpdate":false}}` +
+				`{"evaluations":{"id":"eval-1","evaluations":[],"createdAt":"0","archivedFeatureIds":[],"forceUpdate":false}}` +
 				"\n\n",
 		},
 		{
@@ -136,7 +136,7 @@ func TestInitialPut(t *testing.T) {
 				},
 			}
 			var buf bytes.Buffer
-			evalAt, err := h.sendInitialPut(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1")
+			evalAt, err := h.sendInitialPut(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1")
 			if p.expectErr {
 				assert.Error(t, err)
 				return
@@ -166,7 +166,7 @@ func TestPatch(t *testing.T) {
 				Evaluations: []*featureproto.Evaluation{},
 			},
 			expectEvent: "event: patch\ndata: " +
-				`{"evaluations":{"id":"eval-2", "evaluations":[], "createdAt":"0", "archivedFeatureIds":[], "forceUpdate":false}}` +
+				`{"evaluations":{"id":"eval-2","evaluations":[],"createdAt":"0","archivedFeatureIds":[],"forceUpdate":false}}` +
 				"\n\n",
 		},
 		{
@@ -185,7 +185,7 @@ func TestPatch(t *testing.T) {
 				},
 			}
 			var buf bytes.Buffer
-			newEvalAt, err := h.sendPatch(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", p.evaluatedAt)
+			newEvalAt, err := h.sendPatch(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1", p.evaluatedAt)
 			if p.expectErr {
 				assert.Error(t, err)
 				return
