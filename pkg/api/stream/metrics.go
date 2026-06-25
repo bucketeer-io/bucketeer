@@ -50,9 +50,8 @@ var (
 			Namespace: "bucketeer",
 			Subsystem: "gateway",
 			Name:      "sse_connection_duration_seconds",
-			Help: "Duration of SSE connections from register to deregister." +
-				" Only recorded on client-initiated disconnect.",
-			Buckets: []float64{1, 5, 15, 30, 60, 300, 600, 1800, 3600, 7200, 21600, 86400},
+			Help:      "Duration of SSE connections from register to deregister.",
+			Buckets:   []float64{1, 5, 15, 30, 60, 300, 600, 1800, 3600, 7200, 21600, 86400},
 		}, []string{"environment_id", "tag", "source_id"})
 	sseDispatchTagsHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{

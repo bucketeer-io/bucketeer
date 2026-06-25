@@ -18,10 +18,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -78,10 +81,9 @@ func TestSendSSEEvent(t *testing.T) {
 	}
 	err := sendSSEEvent(&buf, stubFlusher{}, "put", msg)
 	require.NoError(t, err)
-	expected := "event: put\ndata: " +
-		`{"evaluations":{"id":"test","evaluations":[],"createdAt":"0","archivedFeatureIds":[],"forceUpdate":false}}` +
-		"\n\n"
-	assert.Equal(t, expected, buf.String())
+	data, err := sseMarshalOpts.Marshal(msg)
+	require.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("event: put\ndata: %s\n\n", data), buf.String())
 }
 
 func TestSendHeartbeat(t *testing.T) {
@@ -96,20 +98,21 @@ func TestSendErrorEvent(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
 	sendErrorEvent(&buf, stubFlusher{}, gatewayproto.StreamErrorEvent_INTERNAL, "something broke")
-	expected := "event: error\ndata: " +
-		`{"code":"INTERNAL","message":"something broke"}` +
-		"\n\n"
-	assert.Equal(t, expected, buf.String())
+	data, err := sseMarshalOpts.Marshal(&gatewayproto.StreamErrorEvent{
+		Code:    gatewayproto.StreamErrorEvent_INTERNAL,
+		Message: "something broke",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("event: error\ndata: %s\n\n", data), buf.String())
 }
 
 func TestInitialPut(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc        string
-		evals       *featureproto.UserEvaluations
-		evalErr     error
-		expectErr   bool
-		expectEvent string
+		desc      string
+		evals     *featureproto.UserEvaluations
+		evalErr   error
+		expectErr bool
 	}{
 		{
 			desc: "success",
@@ -117,9 +120,6 @@ func TestInitialPut(t *testing.T) {
 				Id:          "eval-1",
 				Evaluations: []*featureproto.Evaluation{},
 			},
-			expectEvent: "event: put\ndata: " +
-				`{"evaluations":{"id":"eval-1","evaluations":[],"createdAt":"0","archivedFeatureIds":[],"forceUpdate":false}}` +
-				"\n\n",
 		},
 		{
 			desc:      "evaluate error",
@@ -143,7 +143,11 @@ func TestInitialPut(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Greater(t, evalAt, int64(0))
-			assert.Equal(t, p.expectEvent, buf.String())
+			lines := strings.SplitN(buf.String(), "\n", 3)
+			assert.Equal(t, "event: put", lines[0])
+			var got gatewayproto.StreamEvaluationsEvent
+			require.NoError(t, sseUnmarshalOpts.Unmarshal([]byte(strings.TrimPrefix(lines[1], "data: ")), &got))
+			assert.True(t, proto.Equal(p.evals, got.Evaluations))
 		})
 	}
 }
@@ -156,7 +160,6 @@ func TestPatch(t *testing.T) {
 		evals       *featureproto.UserEvaluations
 		evalErr     error
 		expectErr   bool
-		expectEvent string
 	}{
 		{
 			desc:        "success",
@@ -165,9 +168,6 @@ func TestPatch(t *testing.T) {
 				Id:          "eval-2",
 				Evaluations: []*featureproto.Evaluation{},
 			},
-			expectEvent: "event: patch\ndata: " +
-				`{"evaluations":{"id":"eval-2","evaluations":[],"createdAt":"0","archivedFeatureIds":[],"forceUpdate":false}}` +
-				"\n\n",
 		},
 		{
 			desc:        "evaluate error",
@@ -192,7 +192,11 @@ func TestPatch(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Greater(t, newEvalAt, p.evaluatedAt)
-			assert.Equal(t, p.expectEvent, buf.String())
+			lines := strings.SplitN(buf.String(), "\n", 3)
+			assert.Equal(t, "event: patch", lines[0])
+			var got gatewayproto.StreamEvaluationsEvent
+			require.NoError(t, sseUnmarshalOpts.Unmarshal([]byte(strings.TrimPrefix(lines[1], "data: ")), &got))
+			assert.True(t, proto.Equal(p.evals, got.Evaluations))
 		})
 	}
 }
