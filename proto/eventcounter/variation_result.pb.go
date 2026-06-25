@@ -65,11 +65,14 @@ type VariationResult struct {
 	ExpectedLoss                               float64              `protobuf:"fixed64,24,opt,name=expected_loss,json=expectedLoss,proto3" json:"expected_loss"`
 	CvrSamples                                 []float64            `protobuf:"fixed64,25,rep,packed,name=cvr_samples,json=cvrSamples,proto3" json:"cvr_samples"`
 	// Sequential Bayes Factor for CVR vs baseline at the current look.
-	// Always 1.0 for the baseline variation. See Summary.cvr_safe_to_stop for
-	// the stopping decision derived from this field.
+	// Always 1.0 for the baseline variation. Reaches 20.0 (the default
+	// stopping threshold) when there is strong evidence that the CVR of
+	// this variation differs from the baseline. See Summary.cvr_safe_to_stop.
 	CvrSequentialBayesFactor float64 `protobuf:"fixed64,26,opt,name=cvr_sequential_bayes_factor,json=cvrSequentialBayesFactor,proto3" json:"cvr_sequential_bayes_factor"`
 	// Sequential Bayes Factor for value-per-user vs baseline at the current
 	// look. Always 1.0 for the baseline variation or when value data are absent.
+	// Reaches 20.0 (the default stopping threshold) when there is strong
+	// evidence of a value-per-user difference. See Summary.value_safe_to_stop.
 	ValueSequentialBayesFactor float64 `protobuf:"fixed64,27,opt,name=value_sequential_bayes_factor,json=valueSequentialBayesFactor,proto3" json:"value_sequential_bayes_factor"`
 }
 

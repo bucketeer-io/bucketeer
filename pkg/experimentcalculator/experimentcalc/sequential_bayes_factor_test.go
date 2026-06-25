@@ -338,7 +338,7 @@ func TestComputeSafeToStop_ExactlyAtThreshold(t *testing.T) {
 //
 //   This is a Bayesian-averaged bound, NOT a per-θ worst-case bound. At fixed
 //   extreme θ values the per-θ error may deviate from 1/K. We test a grid of
-//   θ values and flag (but do not fail) deviations outside the per-θ tolerances
+//   θ values and FAIL the test if any per-θ FPR exceeds the relaxed tolerance,
 //   so that we can detect when a GROW/e-variable construction is needed.
 //
 // Baseline comparison (demonstrates the problem we are solving):

@@ -53,6 +53,14 @@ const (
 	// MUST be a fixed constant — deriving it from experiment data would void
 	// the always-valid guarantee.
 	valueBFEffectSizeScale = 1.0
+
+	// minValueBFSampleSize is the minimum per-arm sample size required before
+	// valueBayesFactor returns a meaningful BF. Below this floor the Normal
+	// approximation to the t-distribution is unreliable: E[BF | H₀] > 1 by
+	// a non-trivial amount that can cause spurious ValueSafeToStop=true
+	// decisions on noisy early data. The FPR simulations are validated at
+	// n_per_arm >= 30, matching this floor.
+	minValueBFSampleSize = int64(30)
 )
 
 // cvrBayesFactor computes the Beta-Binomial Bayes Factor for the comparison
@@ -127,10 +135,17 @@ func logBetaFn(a, b float64) float64 {
 // The always-valid FPR guarantee requires valueBFEffectSizeScale to be a
 // fixed constant — never derive it from experiment data.
 //
-// Returns 1.0 when either arm has no data, the SE is zero (no within-arm
-// variance), or any computation is non-finite.
+// Returns 1.0 when either arm has fewer than minValueBFSampleSize users (the
+// t-approximation is unreliable below this floor), when the SE is zero (no
+// within-arm variance), or when any computation is non-finite.
 func valueBayesFactor(nA int64, meanA, varA float64, nB int64, meanB, varB float64) float64 {
-	if nA <= 0 || nB <= 0 {
+	// The t-statistic BF is only approximately always-valid for sufficiently
+	// large per-arm sample sizes (validated in tests at n_per_arm >= 30).
+	// Below this floor the t-distribution tails are heavy enough that
+	// E[BF | H₀] > 1 non-trivially, which can trigger ValueSafeToStop=true
+	// on noisy early data. Return 1.0 (no evidence) until n is large enough.
+	const minN = minValueBFSampleSize
+	if nA < minN || nB < minN {
 		return 1.0
 	}
 
