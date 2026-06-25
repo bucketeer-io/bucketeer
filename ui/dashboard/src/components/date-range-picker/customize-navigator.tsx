@@ -5,9 +5,13 @@ import { IconChevronRight } from '@icons';
 import Button from 'components/button';
 import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
+import { StaticRangeOption } from '.';
 
 interface Props {
   currFocusedDate: Date;
+  staticRanges: StaticRangeOption[];
+  selectedLabel?: string;
+  handleStaticRangeClick: (range: StaticRangeOption) => void;
   changeShownDate: (
     value: Date | number | string,
     mode?: 'set' | 'setYear' | 'setMonth' | 'monthOffset'
@@ -24,7 +28,13 @@ const years = Array.from(
 );
 
 const CustomizeNavigator = memo(
-  ({ currFocusedDate, changeShownDate }: Props) => {
+  ({
+    currFocusedDate,
+    staticRanges,
+    selectedLabel,
+    handleStaticRangeClick,
+    changeShownDate
+  }: Props) => {
     const prevMonthButtonDisabled = useMemo(
       () =>
         currFocusedDate.getMonth() === 0 &&
@@ -40,6 +50,20 @@ const CustomizeNavigator = memo(
 
     return (
       <div className={cn('w-full relative z-[1000] p-5 pb-0')}>
+        <div className="md:hidden w-full mb-3">
+          <Dropdown
+            options={staticRanges.map(r => ({
+              label: r.label,
+              value: r.label
+            }))}
+            value={selectedLabel ?? ''}
+            onChange={value => {
+              const found = staticRanges.find(r => r.label === value);
+              if (found) handleStaticRangeClick(found);
+            }}
+            isExpand
+          />
+        </div>
         <div className="flex items-center justify-between w-full border-b border-gray-200 pb-5">
           <Button
             type="button"
@@ -60,6 +84,7 @@ const CustomizeNavigator = memo(
               color="gray-500"
             />
           </Button>
+
           <div className="flex items-center gap-x-2">
             <Dropdown
               options={months.map((item, index) => ({

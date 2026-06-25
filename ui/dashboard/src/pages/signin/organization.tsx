@@ -4,6 +4,7 @@ import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { jwtDecode } from 'jwt-decode';
@@ -25,6 +26,7 @@ const SelectOrganization = () => {
   const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
   const { myOrganizations, onMeFetcher } = useAuth();
+  const { errorNotify } = useToast();
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -60,7 +62,7 @@ const SelectOrganization = () => {
         }
       }
     } catch (error) {
-      console.log(error);
+      errorNotify(error);
     }
   };
 
@@ -93,7 +95,7 @@ const SelectOrganization = () => {
                     }}
                     placeholder={t(`organization-placeholder`)}
                     className="w-full"
-                    contentClassName="w-[442px]"
+                    contentClassName="w-[var(--radix-dropdown-menu-trigger-width)]"
                   />
                 </Form.Control>
                 <Form.Message />

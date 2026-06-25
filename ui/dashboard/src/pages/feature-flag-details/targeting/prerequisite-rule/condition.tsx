@@ -109,93 +109,103 @@ const ConditionForm = forwardRef(
     }, [currentFeatureId, currentFeature, methods.setValue, commonName]);
 
     return (
-      <div ref={ref} className="flex items-center w-full gap-x-4">
-        <div
-          className={cn(
-            'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
-            {
-              'bg-accent-pink-50 text-accent-pink-500': type === 'if',
-              'bg-gray-200 text-gray-600': type === 'and'
-            }
-          )}
-        >
-          {type === 'if' ? t('common:if') : t('common:and')}
+      <div
+        ref={ref}
+        className="flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-x-4"
+      >
+        <div className="flex flex-col gap-2 items-center">
+          <div
+            className={cn(
+              'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
+              {
+                'bg-accent-pink-50 text-accent-pink-500': type === 'if',
+                'bg-gray-200 text-gray-600': type === 'and'
+              }
+            )}
+          >
+            {type === 'if' ? t('common:if') : t('common:and')}
+          </div>
         </div>
-        <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500">
-          <div className="flex w-full gap-x-4">
-            <Form.Field
-              control={control}
-              name={`${commonName}.featureId`}
-              render={({ field }) => (
-                <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
-                  <Form.Label required>{t('feature-flags.flag')}</Form.Label>
-                  <Form.Control>
-                    <DropdownMenuWithSearch
-                      label={truncateBySide(currentFeature?.name || '', 50)}
-                      placeholder={t('experiments.select-flag')}
-                      isLoadingMore={isLoadingMore}
-                      isSearching={isSearchingFeature}
-                      isLoading={isLoadingFeature}
-                      isHasMore={hasMore || isLoadingMore}
-                      onSearchChange={onSearchChange}
-                      onHasMoreOptions={loadMore}
-                      isExpand
-                      options={remainingFlagOptions}
-                      selectedOptions={field.value}
-                      additionalElement={item => (
-                        <FeatureFlagStatus
-                          status={t(
-                            item.enabled ? 'experiments.on' : 'experiments.off'
-                          )}
-                          enabled={item.enabled as boolean}
-                        />
-                      )}
-                      onSelectOption={value => {
-                        field.onChange(value);
-                      }}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <div className="flex-center size-fit min-w-fit px-3 py-3.5 mt-6 rounded bg-gray-100 typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
-              <Trans
-                i18nKey={'form:feature-flags.receiving-state'}
-                values={{
-                  state: t('form:experiments.on').toUpperCase()
-                }}
+        <div className="flex min-w-0 max-w-full items-center w-full flex-1 pl-0 sm:pl-4 border-l-0 sm:border-l border-primary-500">
+          <div className="flex min-w-0 max-w-full items-center w-full gap-x-4">
+            <div className="w-full min-w-0 flex flex-col lg:flex-row gap-2 lg:gap-4">
+              <Form.Field
+                control={control}
+                name={`${commonName}.featureId`}
+                render={({ field }) => (
+                  <Form.Item className="flex min-w-0 max-w-full flex-col flex-1 self-stretch py-0">
+                    <Form.Label required>{t('feature-flags.flag')}</Form.Label>
+                    <Form.Control>
+                      <DropdownMenuWithSearch
+                        label={truncateBySide(currentFeature?.name || '', 50)}
+                        placeholder={t('experiments.select-flag')}
+                        isLoadingMore={isLoadingMore}
+                        isSearching={isSearchingFeature}
+                        isLoading={isLoadingFeature}
+                        isHasMore={hasMore || isLoadingMore}
+                        onSearchChange={onSearchChange}
+                        onHasMoreOptions={loadMore}
+                        isExpand
+                        options={remainingFlagOptions}
+                        selectedOptions={field.value}
+                        triggerClassName="max-w-full"
+                        additionalElement={item => (
+                          <FeatureFlagStatus
+                            status={t(
+                              item.enabled
+                                ? 'experiments.on'
+                                : 'experiments.off'
+                            )}
+                            enabled={item.enabled as boolean}
+                          />
+                        )}
+                        onSelectOption={value => {
+                          field.onChange(value);
+                        }}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              <div className="flex-center size-fit min-w-fit px-3 py-2 sm:py-3.5 mt-0 md:mt-6 rounded bg-gray-100 typo-para-small sm:typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
+                <Trans
+                  i18nKey={'form:feature-flags.receiving-state'}
+                  values={{
+                    state: t('form:experiments.on').toUpperCase()
+                  }}
+                />
+              </div>
+              <Form.Field
+                control={control}
+                name={`${commonName}.variationId`}
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
+                    <Form.Label required>
+                      {t('table:feature-flags.variation')}
+                    </Form.Label>
+                    <Form.Control>
+                      <Dropdown
+                        options={variationOptions}
+                        value={currentVariationId}
+                        labelCustom={
+                          variationOptions?.find(
+                            item => currentVariationId === item.value
+                          )?.label || variationOptions?.[0]?.label
+                        }
+                        onChange={field.onChange}
+                        placeholder={t('experiments.select-variation')}
+                        disabled={!variationOptions?.length}
+                        className="w-full"
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
               />
             </div>
-            <Form.Field
-              control={control}
-              name={`${commonName}.variationId`}
-              render={({ field }) => (
-                <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
-                  <Form.Label required>
-                    {t('table:feature-flags.variation')}
-                  </Form.Label>
-                  <Form.Control>
-                    <Dropdown
-                      options={variationOptions}
-                      value={currentVariationId}
-                      labelCustom={
-                        variationOptions?.find(
-                          item => currentVariationId === item.value
-                        )?.label || variationOptions?.[0]?.label
-                      }
-                      onChange={field.onChange}
-                      placeholder={t('experiments.select-variation')}
-                      disabled={!variationOptions?.length}
-                      className="w-full"
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
 
-            <div className="flex items-end self-stretch">
+            <div className="flex items-center sm:items-end self-stretch">
               <Button
                 type="button"
                 variant={'grey'}

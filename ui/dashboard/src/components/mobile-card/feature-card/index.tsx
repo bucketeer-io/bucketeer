@@ -1,0 +1,227 @@
+import { useMemo } from 'react';
+import { Trans } from 'react-i18next';
+import { IconMoreVertOutlined, MDIcon } from 'react-icons-material-design';
+import { Link } from 'react-router';
+import { PAGE_PATH_FEATURES } from 'constants/routing';
+import { useScreen, useToast } from 'hooks';
+import { useTranslation } from 'i18n';
+import { AutoOpsRule, Environment, Feature, Rollout } from '@types';
+import { truncateBySide } from 'utils/converts';
+import { useFormatDateTime } from 'utils/date-time';
+import { copyToClipBoard } from 'utils/function';
+import { cn } from 'utils/style';
+import { IconCopy, IconUserSettings, IconWatch } from '@icons';
+import {
+  FlagIconWrapper,
+  FlagOperationsElement,
+  FlagStatus,
+  FlagVariationsElement
+} from 'pages/feature-flags/collection-layout/elements';
+import {
+  getDataTypeIcon,
+  getFlagStatus
+} from 'pages/feature-flags/collection-layout/elements/utils';
+import { FlagActionType } from 'pages/feature-flags/types';
+import Icon from 'components/icon';
+import Switch from 'components/switch';
+import { Tooltip } from 'components/tooltip';
+import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
+import ExpandableTag from 'elements/expandable-tag';
+import NameWithTooltip from 'elements/name-with-tooltip';
+import { Card } from '../elements';
+
+interface FeatureCardProps {
+  data: Feature;
+  filterTags?: string[];
+  rollouts: Rollout[];
+  autoOpsRules: AutoOpsRule[];
+  popoverOptions: {
+    label: string;
+    icon: MDIcon;
+    value: string;
+  }[];
+  currentEnvironment: Environment;
+  editable: boolean;
+  handleGetMaintainerInfo: (email: string) => string;
+  handleTagFilters: (tag: string) => void;
+  onActions: (item: Feature, type: FlagActionType) => void;
+}
+
+const FlagIdElement = ({ id }: { id: string }) => {
+  const { t } = useTranslation(['message']);
+  const { notify } = useToast();
+
+  const handleCopyId = (id: string) => {
+    copyToClipBoard(id);
+    notify({
+      message: t('copied')
+    });
+  };
+  return (
+    <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
+      <p className="truncate">{truncateBySide(id, 55)}</p>
+      <div onClick={() => handleCopyId(id)}>
+        <Icon
+          icon={IconCopy}
+          size={'sm'}
+          className="opacity-0 group-hover:opacity-100 cursor-pointer"
+        />
+      </div>
+    </div>
+  );
+};
+
+export const FeatureCard: React.FC<FeatureCardProps> = ({
+  data,
+  rollouts,
+  autoOpsRules,
+  currentEnvironment,
+  popoverOptions,
+  handleGetMaintainerInfo,
+  editable,
+  filterTags,
+  handleTagFilters,
+  onActions
+}) => {
+  const { t } = useTranslation(['common', 'table']);
+  const { fromXLScreen } = useScreen();
+  const formatDateTime = useFormatDateTime();
+
+  const maintainer = useMemo(
+    () => handleGetMaintainerInfo(data.maintainer),
+    [data]
+  );
+
+  return (
+    <Card>
+      <Card.Header
+        icon={<Icon icon={getDataTypeIcon(data.variationType)} />}
+        title={data.name}
+        subtitle={data.id}
+        trigger={
+          <div className="flex flex-col gap-y-1">
+            <NameWithTooltip
+              id={data.id}
+              content={
+                <NameWithTooltip.Content content={data.name} id={data.id} />
+              }
+              trigger={
+                <Link
+                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${data.id}/targeting`}
+                >
+                  <NameWithTooltip.Trigger
+                    id={data.id}
+                    name={data.name}
+                    maxLines={1}
+                  />
+                </Link>
+              }
+              maxLines={1}
+            />
+            {<FlagIdElement id={data.id} />}
+          </div>
+        }
+      >
+        <Card.Action>
+          <DisabledPopoverTooltip
+            icon={IconMoreVertOutlined}
+            onClick={value => onActions(data, value as FlagActionType)}
+            options={popoverOptions}
+          />
+        </Card.Action>
+      </Card.Header>
+
+      <Card.Meta>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {maintainer && (
+              <Tooltip
+                asChild={false}
+                align="start"
+                trigger={<FlagIconWrapper icon={IconUserSettings} />}
+                content={maintainer}
+              />
+            )}
+            {getFlagStatus(data) && (
+              <Tooltip
+                asChild={false}
+                align="start"
+                trigger={<FlagStatus status={getFlagStatus(data)} />}
+                content={t(`feature-flags.${getFlagStatus(data)}-description`)}
+                className="max-w-[300px]"
+              />
+            )}
+          </div>
+          <DisabledButtonTooltip
+            hidden={editable}
+            trigger={
+              <div className="flex-center">
+                <Switch
+                  disabled={!editable}
+                  checked={data.enabled}
+                  onCheckedChange={() =>
+                    onActions(data, data.enabled ? 'INACTIVE' : 'ACTIVE')
+                  }
+                />
+              </div>
+            }
+          />
+        </div>
+        <div className="flex flex-col gap-2 rounded-lg bg-gray-100 p-3 my-2">
+          <div className="flex items-start justify-between bg-gray-100 rounded-lg">
+            <div
+              id="variations-wrapper"
+              className="flex flex-col gap-y-3 col-span-4 flex-1"
+            >
+              <FlagVariationsElement variations={data.variations} />
+            </div>
+          </div>
+          <div className="flex items-center flex-wrap w-full gap-2 rounded-lg">
+            <ExpandableTag
+              tags={data.tags}
+              filterTags={filterTags}
+              rowId={data.id}
+              className={cn('!max-w-[220px] truncate cursor-pointer', {
+                '!max-w-[350px]': fromXLScreen
+              })}
+              wrapperClassName="w-fit"
+              maxSize={fromXLScreen ? 382 : 232}
+              onTagClick={tag => handleTagFilters(tag)}
+            />
+            <FlagOperationsElement
+              autoOpsRules={autoOpsRules}
+              rollouts={rollouts}
+              featureId={data.id}
+            />
+          </div>
+        </div>
+      </Card.Meta>
+      <Card.Footer
+        left={
+          <div className="flex-center gap-2">
+            <Icon icon={IconWatch} size={'xxs'} />
+            <DateTooltip
+              trigger={
+                <div className="text-gray-500 typo-para-small whitespace-nowrap">
+                  {Number(data.updatedAt) === 0 ? (
+                    t('never')
+                  ) : (
+                    <Trans
+                      i18nKey={'common:time-updated'}
+                      values={{
+                        time: formatDateTime(data.updatedAt)
+                      }}
+                    />
+                  )}
+                </div>
+              }
+              date={Number(data.updatedAt) === 0 ? null : data.updatedAt}
+            />
+          </div>
+        }
+      />
+    </Card>
+  );
+};

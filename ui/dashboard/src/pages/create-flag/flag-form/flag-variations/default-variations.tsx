@@ -45,13 +45,13 @@ const DefaultVariations = () => {
     t('feature-flags.variation', { index: index + 1 });
 
   return (
-    <div className="flex items-center w-full gap-x-4 pb-6">
+    <div className="flex flex-col sm:flex-row items-center w-full gap-4 pb-6">
       <Form.Field
         control={control}
         name={`defaultOnVariation`}
         render={({ field }) => {
           return (
-            <Form.Item className="py-0 flex-1">
+            <Form.Item className="py-0 w-full flex-1">
               <Form.Label>
                 <Trans
                   i18nKey={'form:feature-flags.serve-targeting'}
@@ -86,7 +86,7 @@ const DefaultVariations = () => {
         name={`defaultOffVariation`}
         render={({ field }) => {
           return (
-            <Form.Item className="py-0 flex-1">
+            <Form.Item className="py-0 w-full flex-1">
               <Form.Label>
                 <Trans
                   i18nKey={'form:feature-flags.serve-targeting'}
