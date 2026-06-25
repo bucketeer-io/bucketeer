@@ -5706,7 +5706,7 @@ definitions:
         type: boolean
         description: |-
           cvr_safe_to_stop is true when at least one treatment variation's
-          cvr_sequential_bayes_factor >= 20.0 (default threshold). When true the
+          cvrSequentialBayesFactor >= 20.0 (default threshold). When true the
           sequential evidence criterion is met for CVR: the result is robust to
           the optional-stopping / peeking pattern.
           False does NOT mean the experiment is inconclusive — it means more data
@@ -5715,7 +5715,7 @@ definitions:
         type: boolean
         description: |-
           value_safe_to_stop is the value-per-user analogue of cvr_safe_to_stop,
-          using value_sequential_bayes_factor >= 20.0 as the threshold.
+          using valueSequentialBayesFactor >= 20.0 as the threshold.
   bucketeerfeatureChangeType:
     type: string
     enum:
@@ -7583,15 +7583,17 @@ definitions:
           Sequential Bayes Factor for CVR vs baseline at the current look.
           Always 1.0 for the baseline variation. Reaches 20.0 (the default
           stopping threshold) when there is strong evidence that the CVR of
-          this variation differs from the baseline. See Summary.cvr_safe_to_stop.
+          this variation differs from the baseline. See Summary.cvrSafeToStop.
       valueSequentialBayesFactor:
         type: number
         format: double
         description: |-
           Sequential Bayes Factor for value-per-user vs baseline at the current
-          look. Always 1.0 for the baseline variation or when value data are absent.
-          Reaches 20.0 (the default stopping threshold) when there is strong
-          evidence of a value-per-user difference. See Summary.value_safe_to_stop.
+          look. Always 1.0 for the baseline variation, when value analysis is
+          skipped (e.g. zero mean/variance), or until both arms have >= 30 users
+          (the minimum sample size for a reliable approximation). Reaches 20.0
+          (the default stopping threshold) when there is strong evidence of a
+          value-per-user difference. See Summary.valueSafeToStop.
   eventcounterVariationTimeseries:
     type: object
     properties:
