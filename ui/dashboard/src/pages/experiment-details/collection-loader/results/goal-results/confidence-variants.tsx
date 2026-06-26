@@ -15,10 +15,12 @@ import { Tooltip } from 'components/tooltip';
 const ConfidenceVariants = ({
   bestVariations,
   variations,
+  safeToStop,
   onOpenRolloutVariant
 }: {
   bestVariations: BestVariation[];
   variations: FeatureVariation[];
+  safeToStop: boolean;
   onOpenRolloutVariant: () => void;
 }) => {
   const { t } = useTranslation(['table']);
@@ -38,7 +40,6 @@ const ConfidenceVariants = ({
         results.push(item);
       }
     });
-
     return results;
   }, [bestVariations, bestVariation]);
 
@@ -46,25 +47,47 @@ const ConfidenceVariants = ({
     (id?: string) => {
       if (!id) return null;
       const variation = variations.find(item => item.id === id);
-      return {
-        name: variation?.name,
-        value: variation?.value
-      };
+      return { name: variation?.name, value: variation?.value };
     },
     [variations]
   );
+
   return (
     <div className="flex items-center justify-between w-full gap-x-2 px-4 py-2 rounded-lg bg-gray-100">
-      <div className="flex items-center gap-x-3">
-        <div className="flex items-center gap-x-2 typo-head-bold-small text-gray-700 whitespace-nowrap">
-          <Icon icon={IconExperiment} color="primary-500" size={'sm'} />
-          <Trans
-            i18nKey={'table:results.confidence-percent'}
-            values={{
-              percent: getPercentage(bestVariation?.probability)
-            }}
+      {/* flex-1 min-w-0 allows the left section to shrink when space is tight */}
+      <div className="flex items-center gap-x-3 flex-1 min-w-0">
+        {/* ── Status badge — primary signal ── */}
+        {safeToStop ? (
+          <span className="flex items-center gap-x-2 typo-head-bold-small text-primary-500 whitespace-nowrap">
+            <Icon icon={IconExperiment} color="primary-500" size={'sm'} />
+            {t('results.status-safe')}
+          </span>
+        ) : (
+          <Tooltip
+            content={
+              <p className="typo-para-small text-white max-w-xs">
+                <Trans
+                  i18nKey={'table:results.monitoring-tooltip'}
+                  values={{
+                    percent: getPercentage(bestVariation?.probability)
+                  }}
+                />
+              </p>
+            }
+            trigger={
+              <button
+                type="button"
+                className="flex items-center gap-x-2 typo-head-bold-small text-gray-600 whitespace-nowrap cursor-default bg-transparent border-0 p-0"
+              >
+                <Icon icon={IconExperiment} color="gray-600" size={'sm'} />
+                {t('results.status-monitoring')}
+                <Icon icon={IconInfo} size="xxs" color="gray-600" />
+              </button>
+            }
           />
-        </div>
+        )}
+
+        {/* ── Per-variation chips — probability once, clearly labeled ── */}
         {variants?.slice(0, 2)?.map((item, index) => {
           const variation = getVariationName(item?.id);
           return (
@@ -73,7 +96,7 @@ const ConfidenceVariants = ({
               className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600 whitespace-nowrap"
             >
               <Trans
-                i18nKey={'table:results.variant-likely-beats-baseline'}
+                i18nKey={'table:results.variant-chance-beats-baseline'}
                 values={{
                   name: variation?.name || variation?.value,
                   percent: getPercentage(item.probability)
@@ -98,11 +121,10 @@ const ConfidenceVariants = ({
               <div>
                 {variants.slice(2, variants.length).map((item, index) => {
                   const variation = getVariationName(item?.id);
-
                   return (
                     <div key={index} className="typo-para-medium text-white">
                       <Trans
-                        i18nKey={'table:results.variant-likely-beats-baseline'}
+                        i18nKey={'table:results.variant-chance-beats-baseline'}
                         values={{
                           name: variation?.name || variation?.value,
                           percent: getPercentage(item.probability)
@@ -127,14 +149,40 @@ const ConfidenceVariants = ({
           />
         )}
       </div>
-      <Button
-        variant={'text'}
-        onClick={onOpenRolloutVariant}
-        className="typo-para-small"
-      >
-        <Icon icon={IconOperationArrow} color="primary-500" size={'sm'} />
-        {t('results.rollout-variant')}
-      </Button>
+
+      {/* ── Rollout CTA — shrink-0 keeps it fixed regardless of left width ── */}
+      <div className="shrink-0">
+        {safeToStop ? (
+          <Button
+            variant={'text'}
+            onClick={onOpenRolloutVariant}
+            className="typo-para-small"
+          >
+            <Icon icon={IconOperationArrow} color="primary-500" size={'sm'} />
+            {t('results.rollout-variant')}
+          </Button>
+        ) : (
+          <Tooltip
+            content={
+              <p className="typo-para-small text-white max-w-xs">
+                {t('results.rollout-not-safe-tooltip', {
+                  percent: getPercentage(bestVariation?.probability)
+                })}
+              </p>
+            }
+            trigger={
+              <Button
+                variant={'text'}
+                aria-disabled="true"
+                className="typo-para-small text-gray-500 cursor-not-allowed hover:text-gray-500"
+              >
+                <Icon icon={IconOperationArrow} color="gray-600" size={'sm'} />
+                {t('results.rollout-variant')}
+              </Button>
+            }
+          />
+        )}
+      </div>
     </div>
   );
 };

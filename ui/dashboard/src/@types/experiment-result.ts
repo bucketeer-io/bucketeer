@@ -45,6 +45,11 @@ export interface GoalResultSummary {
   bestVariations: BestVariation[];
   bestVariationsValue?: BestVariation[];
   totalGoalUserCount: string;
+  // Sequential Bayes Factor stopping signals.
+  // True when the always-valid evidence threshold has been met for the
+  // respective metric; false means more data are needed.
+  cvrSafeToStop?: boolean;
+  valueSafeToStop?: boolean;
 }
 
 export interface BestVariation {
@@ -80,6 +85,8 @@ export interface VariationResult {
   conversionRate: number;
   expectedLoss: number;
   cvrSamples: number[];
+  cvrSequentialBayesFactor?: number;
+  valueSequentialBayesFactor?: number;
 }
 
 export interface Timeseries {
