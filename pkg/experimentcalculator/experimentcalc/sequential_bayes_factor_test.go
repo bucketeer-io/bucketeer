@@ -257,6 +257,49 @@ func TestFillSequentialBayesFactors_NilVariationSkipped(t *testing.T) {
 	})
 }
 
+// TestFillSequentialBayesFactors_ValueDisabledWhenOneArmHasNilExperimentCount
+// covers the case where calcGoalResult returned early for one variation (e.g.
+// its ID was missing from evalVariationCounts), leaving ExperimentCount nil on
+// that entry. A nil ExperimentCount must disable value BF for the whole goal —
+// not be silently skipped — so a decisive BF from another arm cannot set
+// ValueSafeToStop=true when the value posterior was never run.
+func TestFillSequentialBayesFactors_ValueDisabledWhenOneArmHasNilExperimentCount(t *testing.T) {
+	t.Parallel()
+	vrs := []*eventcounter.VariationResult{
+		{
+			VariationId:     "baseline",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				UserCount: 50, ValueSumPerUserMean: 10.0, ValueSumPerUserVariance: 2.0,
+			},
+		},
+		{
+			VariationId:     "treatment-A",
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: &eventcounter.VariationCount{
+				// Good stats — would give decisive value BF in isolation.
+				UserCount: 70, ValueSumPerUserMean: 14.0, ValueSumPerUserVariance: 2.0,
+			},
+		},
+		{
+			VariationId: "treatment-B",
+			// ExperimentCount is nil: calcGoalResult returned early for this
+			// variation (missing from evalVariationCounts).
+			EvaluationCount: &eventcounter.VariationCount{UserCount: 100},
+			ExperimentCount: nil,
+		},
+	}
+	fillSequentialBayesFactors(vrs, "baseline")
+
+	// Value BF must be 1.0 for all treatment arms — the goal-wide skip fires.
+	assert.Equal(t, 1.0, vrs[1].ValueSequentialBayesFactor,
+		"treatment-A value BF must be 1.0 when treatment-B has nil ExperimentCount")
+	// CVR unaffected (CVR BF reads from EvaluationCount / ExperimentCount.UserCount
+	// which treatment-A has, and treatment-B's nil is not in the CVR path).
+	assert.Greater(t, vrs[1].CvrSequentialBayesFactor, 1.0,
+		"CVR BF for treatment-A should still be computed")
+}
+
 // TestFillSequentialBayesFactors_ValueSkippedWhenOneArmHasZeroUserCount covers
 // the case where a variation has UserCount==0 (no goal events). calcGoalResult
 // returns early on goalUc[i]==0, so the value posterior never ran. The value
