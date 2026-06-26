@@ -5,7 +5,7 @@ import VariationsSwitch from './variations-switch';
 
 const FlagVariations = () => {
   return (
-    <div className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card">
+    <div className="flex flex-col w-full p-5 gap-y-6 bg-white dark:bg-dark-black-800 rounded-lg shadow-card dark:shadow-dark-card">
       <VariationsSwitch />
       <FlagType />
       <Variations />

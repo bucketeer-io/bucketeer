@@ -26,7 +26,7 @@ const LogoutConfirmModal = ({
     >
       <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
         <IconLogoutConfirm />
-        <div className="typo-para-big text-gray-700 text-center">
+        <div className="typo-para-big text-gray-700 dark:text-dark-gray-300 text-center">
           {t(`auth:logout-description`)}
         </div>
       </div>

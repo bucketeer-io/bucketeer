@@ -26,8 +26,8 @@ const PageDetailsHeader = ({
         <div className="flex items-start gap-4">
           <button
             className={cn(
-              'size-6 min-w-6 flex-center rounded hover:shadow-border-gray-500',
-              'shadow-border-gray-400 text-gray-600'
+              'size-6 min-w-6 flex-center rounded hover:shadow-border-gray-500 dark:hover:shadow-border-gray-500',
+              'shadow-border-gray-400 dark:shadow-border-gray-500 text-gray-600 dark:text-dark-gray-300'
             )}
             onClick={onBack}
           >
@@ -35,7 +35,7 @@ const PageDetailsHeader = ({
           </button>
           <div className="flex items-start gap-x-2">
             {title && (
-              <h1 className="text-gray-900 flex-1 typo-head-bold-huge -mt-1.5">
+              <h1 className="text-gray-900 dark:text-dark-gray-400 flex-1 typo-head-bold-huge -mt-1.5">
                 {title}
               </h1>
             )}

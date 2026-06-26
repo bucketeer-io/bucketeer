@@ -56,7 +56,7 @@ const EditScheduleDialog = ({
       <div className="flex flex-col w-full items-start px-5 py-8">
         <div className="flex gap-x-4">
           <div>
-            <p className="typo-para-small text-gray-700 mb-1">
+            <p className="typo-para-small text-gray-700 dark:text-dark-gray-300 mb-1">
               {t('form:feature-flags.update-date')}
               <span className="text-accent-red-500 ml-0.5">*</span>
             </p>
@@ -82,7 +82,7 @@ const EditScheduleDialog = ({
             />
           </div>
           <div>
-            <p className="typo-para-small text-gray-700 mb-1">
+            <p className="typo-para-small text-gray-700 dark:text-dark-gray-300 mb-1">
               {t('form:feature-flags.update-time')}
               <span className="text-accent-red-500 ml-0.5">*</span>
             </p>

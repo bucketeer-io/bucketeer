@@ -36,14 +36,14 @@ const CreateDemoPage = () => {
         >
           <Icon icon={IconBackspace} size="sm" />
         </Button>
-        <h1 className="text-gray-900 typo-head-bold-huge mt-8">
+        <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge mt-8">
           {t('auth:demo-organization')}
         </h1>
 
-        <h3 className="text-gray-900 typo-head-light-medium mt-6">
+        <h3 className="text-gray-900 dark:text-dark-gray-400 typo-head-light-medium mt-6">
           {t('auth:privacy-notice')}
         </h3>
-        <div className="text-gray-600 typo-para-medium mt-2">
+        <div className="text-gray-600 dark:text-dark-gray-200 typo-para-medium mt-2">
           <Trans
             i18nKey="message:demo-privacy-description"
             components={{

@@ -44,6 +44,30 @@ const colors = {
     100: '#FAFAFC',
     50: '#FFFFFF'
   },
+  dark: {
+    black: {
+      950: '#0D0917',
+      900: '#110D1C',
+      800: '#171321',
+      700: '#1B1725',
+      600: '#1f1f1f'
+    },
+    purple: {
+      100: '#2B1F45',
+      200: '#6C46D9',
+      300: '#7B4FF5',
+      400: '#8B5CF6',
+      500: '#9A6FFF',
+      600: '#B58CFF',
+      700: '#B88EFF'
+    },
+    gray: {
+      100: '#7D768E',
+      200: '#B5B0C2',
+      300: '#B7B6BB',
+      400: '#F2EDF7'
+    }
+  },
   accent: {
     pink: {
       900: '#463154',
@@ -133,12 +157,18 @@ const theme = {
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
     'border-primary-700': `inset 0 0 0 1px ${colors.primary[700]}`,
+    'border-primary-glow': `0 0 0 1px ${colors.primary[600]}, 0 0 20px rgba(139,91,246,0.15)`,
+    'button-primary-glow': `0 4px 15px rgba(139,91,246,0.35)`,
     'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,
     'border-gray-300': `inset 0 0 0 1px ${colors.gray[300]}`,
     'border-gray-400': `inset 0 0 0 1px ${colors.gray[400]}`,
     'border-gray-500': `inset 0 0 0 1px ${colors.gray[500]}`,
     'border-accent-red-500': `inset 0 0 0 1px ${colors.accent.red[500]}`,
     none: 'none',
+    'dark-card': '0px 4px 8px 1px rgba(0, 0, 0, 0.4)',
+    'dark-glow': '0 4px 15px rgba(154, 111, 255, 0.4)',
+    'border-dark-purple-300': `inset 0 0 0 1px #7B4FF5`,
+    'border-dark-black-700': `inset 0 0 0 1px ${colors.dark.black[700]}`,
     tooltip:
       'rgba(29, 29, 29, 0.35) 0px 10px 38px -10px, rgba(29, 29, 29, 0.20) 0px 10px 20px -15px'
   },
@@ -418,6 +448,7 @@ const iconSize = plugin(({ addComponents }) => {
 
 export default {
   mode: 'jit',
+  darkMode: 'class',
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme,
   plugins: [tailwindCssForm, container, typography, iconSize],

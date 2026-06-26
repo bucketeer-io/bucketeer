@@ -11,15 +11,17 @@ import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
 const cellVariant = cva(
-  ['min-w-8 h-8 p-1 rounded-lg flex items-center justify-center text-gray-500'],
+  [
+    'min-w-8 h-8 p-1 rounded-lg flex items-center justify-center text-gray-500 dark:text-dark-gray-200'
+  ],
   {
     variants: {
       variant: {
-        number: ['bg-white'],
-        next: ['border'],
-        previous: ['border'],
-        first: ['border'],
-        last: ['border']
+        number: ['bg-white dark:bg-dark-black-800'],
+        next: ['border dark:border-dark-black-700'],
+        previous: ['border dark:border-dark-black-700'],
+        first: ['border dark:border-dark-black-700'],
+        last: ['border dark:border-dark-black-700']
       }
     },
     defaultVariants: {
@@ -44,7 +46,7 @@ export type PaginationCellProps = {
 };
 
 const PaginationIcon = ({ icon }: { icon: FunctionComponent }) => (
-  <div className="flex-center text-gray-500">
+  <div className="flex-center text-gray-500 dark:text-dark-gray-200">
     <Icon icon={icon} />
   </div>
 );

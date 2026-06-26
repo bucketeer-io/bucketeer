@@ -29,8 +29,8 @@ const ListItem = ({
       id={value || urlCode}
       className={cn(
         'flex items-center justify-between cursor-default',
-        'rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100',
-        selected && 'bg-gray-100',
+        'rounded-lg px-3 py-2 text-gray-700 dark:text-dark-gray-400 hover:bg-gray-100 dark:hover:bg-dark-purple-100',
+        selected && 'bg-gray-100 dark:bg-dark-purple-200/20',
         className
       )}
       onClick={() => onSelect?.(value)}

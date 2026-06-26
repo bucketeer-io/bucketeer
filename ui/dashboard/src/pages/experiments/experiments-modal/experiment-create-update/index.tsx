@@ -86,7 +86,7 @@ const CreateNewOptionButton = ({
   <Button
     type="button"
     variant="text"
-    className="h-10 self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
+    className="h-10 self-center w-full bg-white dark:bg-dark-black-800 hover:bg-gray-100 dark:hover:bg-dark-purple-100 sticky left-0 right-0 bottom-0 border-t border-gray-200 dark:border-dark-black-700"
     onClick={onClick}
   >
     <Icon icon={IconPlus} color="primary-500" size={'xs'} />
@@ -368,7 +368,7 @@ const ExperimentCreateUpdateModal = ({
         <FormLoading />
       ) : (
         <div className="p-5 pb-28">
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('general-info')}
           </p>
           <FormProvider {...form}>
@@ -429,7 +429,7 @@ const ExperimentCreateUpdateModal = ({
                             <RadioGroupItem value={value} id={value} />
                             <label
                               htmlFor={value}
-                              className="typo-para-medium leading-4 text-gray-600 cursor-pointer"
+                              className="typo-para-medium leading-4 text-gray-600 dark:text-dark-gray-200 cursor-pointer"
                             >
                               {label}
                             </label>
@@ -555,7 +555,7 @@ const ExperimentCreateUpdateModal = ({
                 />
               </div>
               <Divider className="mt-3 mb-4" />
-              <p className="text-gray-800 typo-head-bold-small mb-1">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small mb-1">
                 {t('common:flag')}
               </p>
               <Form.Field
@@ -635,7 +635,7 @@ const ExperimentCreateUpdateModal = ({
                 />
               )}
               <Divider className="mt-3 mb-4" />
-              <p className="text-gray-800 typo-head-bold-small mb-1">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small mb-1">
                 {t('common:goals')}
               </p>
               <Form.Field
@@ -699,7 +699,7 @@ const ExperimentCreateUpdateModal = ({
                   </Form.Item>
                 )}
               />
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button type="button" variant="secondary" onClick={onClose}>

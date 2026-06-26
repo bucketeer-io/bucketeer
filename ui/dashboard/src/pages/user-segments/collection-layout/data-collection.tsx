@@ -68,7 +68,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const segment = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {segment.includedUserCount}
           </div>
         );
@@ -83,7 +83,7 @@ export const useColumns = ({
         return (
           <div
             className={cn(
-              'flex-center w-fit px-2 py-1.5 rounded bg-primary-50 text-primary-500 typo-para-medium',
+              'flex-center w-fit px-2 py-1.5 rounded bg-primary-50 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-700 typo-para-medium',
               {
                 'cursor-pointer': segment?.features?.length
               }
@@ -110,10 +110,12 @@ export const useColumns = ({
         return (
           <div
             className={cn(
-              'typo-para-small text-accent-green-500 bg-accent-green-50 px-2 py-[3px] w-fit text-center whitespace-nowrap rounded',
+              'typo-para-small text-accent-green-500 bg-accent-green-50 dark:bg-accent-green-900/30 px-2 py-[3px] w-fit text-center whitespace-nowrap rounded',
               {
-                'bg-gray-200 text-gray-600': !segment.isInUseStatus,
-                'bg-accent-orange-50 text-accent-orange-500': isUploading
+                'bg-gray-200 dark:bg-dark-black-700 text-gray-600 dark:text-dark-gray-200':
+                  !segment.isInUseStatus,
+                'bg-accent-orange-50 dark:bg-accent-orange-900/30 text-accent-orange-500':
+                  isUploading
               }
             )}
           >
@@ -136,7 +138,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {Number(segment.updatedAt) === 0
                   ? t('never')
                   : formatDateTime(segment.updatedAt)}

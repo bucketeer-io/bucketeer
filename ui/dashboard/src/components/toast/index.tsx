@@ -20,16 +20,19 @@ const toastVariants = cva(
   {
     variants: {
       toastType: {
-        toast: 'sm:max-w-[460px] p-4 rounded-xl border text-gray-700',
+        toast:
+          'sm:max-w-[460px] p-4 rounded-xl border text-gray-700 dark:text-dark-gray-300',
         'info-message': cn(otherToastCls, 'sm:max-w-[490px] gap-y-2'),
         'prerequisite-message': cn(otherToastCls, 'sm:max-w-[79.5%] gap-y-3')
       },
       messageType: {
-        success: 'bg-accent-green-50 border-accent-green-500',
-        error: 'bg-accent-red-50 border-accent-red-500',
-        info: 'bg-accent-blue-50 border-accent-blue-500 text-accent-blue-500',
+        success:
+          'bg-accent-green-50 dark:bg-accent-green-900/30 border-accent-green-500',
+        error:
+          'bg-accent-red-50 dark:bg-accent-red-900/30 border-accent-red-500',
+        info: 'bg-accent-blue-50 dark:bg-accent-blue-900/30 border-accent-blue-500 text-accent-blue-500',
         warning:
-          'bg-accent-yellow-50 border-accent-yellow-500 text-accent-yellow-500'
+          'bg-accent-yellow-50 dark:bg-accent-yellow-900/30 border-accent-yellow-500 text-accent-yellow-500'
       }
     }
   }
@@ -78,7 +81,7 @@ const ToastMessage = ({
       {toastType === 'prerequisite-message' && (
         <div className="flex flex-col w-full pl-6">
           <div
-            className="flex items-center gap-x-2 text-gray-700 cursor-pointer"
+            className="flex items-center gap-x-2 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
             onClick={() => setIsExpand(!isExpand)}
           >
             <p className="typo-para-medium">See more</p>
