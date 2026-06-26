@@ -107,7 +107,13 @@
     "on": "On",
     "off": "Off",
     "goals-tooltip": "The goal is the event you track to measure which variation performs better.",
-    "baseline-variation-tooltip": "The baseline variation is the control group used as a reference to compare other variations in the experiment."
+    "baseline-variation-tooltip": "The baseline variation is the control group used as a reference to compare other variations in the experiment.",
+    "goals-selected_one": "{{count}} goal",
+    "goals-selected_other": "{{count}} goals",
+    "selected-goals": "Selected goals",
+    "primary-goal": "Primary",
+    "primary-goal-tooltip": "The primary goal decides the experiment outcome — it drives the \"Ready to roll out\" recommendation and rollout suggestion. The other goals are still measured for insight but don't affect the decision. The first goal in the list is the primary goal.",
+    "remove-goal": "Remove goal"
   },
   "advanced": "Advanced",
   "link": "Link",

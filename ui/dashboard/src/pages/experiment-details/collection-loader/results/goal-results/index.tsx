@@ -5,9 +5,10 @@ import { useToast, useToggleOpen } from 'hooks';
 import { Experiment, Feature, GoalResult, StrategyType } from '@types';
 import { getData, getTimeSeries } from 'utils/chart';
 import { cn } from 'utils/style';
-import { IconChevronDown } from '@icons';
+import { IconChevronDown, IconInfo, IconOutperformed } from '@icons';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import { Tooltip } from 'components/tooltip';
 import { ChartDataType, GoalResultState, GoalResultTab } from '..';
 import ChartDataTypeDropdown from '../chart-data-type-dropdown';
 import ConfidenceVariants from './confidence-variants';
@@ -23,6 +24,7 @@ import TimeSeriesLineChart from './timeseries-line-chart';
 
 const GoalResultItem = ({
   isNarrow,
+  isPrimary,
   experiment,
   feature,
   goalResult,
@@ -33,6 +35,7 @@ const GoalResultItem = ({
   handleNarrowGoalResult
 }: {
   isNarrow: boolean;
+  isPrimary: boolean;
   experiment: Experiment;
   feature?: Feature;
   goalResult: GoalResult;
@@ -42,7 +45,7 @@ const GoalResultItem = ({
   onChangeResultState: (tab?: GoalResultTab, chartType?: ChartDataType) => void;
   handleNarrowGoalResult: (goalId: string) => void;
 }) => {
-  const { t } = useTranslation(['common', 'form', 'message']);
+  const { t } = useTranslation(['common', 'form', 'message', 'table']);
 
   const conversionRateChartRef = useRef<ChartToggleLegendRef>(null);
   const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
@@ -148,10 +151,29 @@ const GoalResultItem = ({
       )}
     >
       <div className="flex items-center justify-between w-full">
-        <p className="text-gray-800 typo-head-bold-small">
-          {experiment?.goals?.find(goal => goal.id === goalResult?.goalId)
-            ?.name || ''}
-        </p>
+        <div className="flex items-center gap-x-3 min-w-0">
+          <p className="text-gray-800 typo-head-bold-small truncate">
+            {experiment?.goals?.find(goal => goal.id === goalResult?.goalId)
+              ?.name || ''}
+          </p>
+          {isPrimary && (
+            <Tooltip
+              content={t('table:results.primary-badge-tooltip')}
+              trigger={
+                <span className="flex items-center gap-x-1 shrink-0 px-2 py-0.5 rounded bg-primary-100/30 typo-para-small font-medium text-primary-500 whitespace-nowrap">
+                  <Icon
+                    icon={IconOutperformed}
+                    size="xxs"
+                    color="primary-500"
+                  />
+                  {t('table:results.primary-badge')}
+                  <Icon icon={IconInfo} size="xxs" color="gray-500" />
+                </span>
+              }
+              className="max-w-xs"
+            />
+          )}
+        </div>
         <div
           className={cn(
             'flex-center cursor-pointer rounded hover:bg-gray-200 transition-all duration-300',
@@ -169,15 +191,24 @@ const GoalResultItem = ({
           />
         </div>
       </div>
-      {activeBestVariations.length > 0 && (
-        <ConfidenceVariants
-          bestVariations={activeBestVariations}
-          variations={experiment.variations}
-          safeToStop={safeToStop}
-          onOpenRolloutVariant={onOpenRolloutVariant}
-        />
-      )}
-      {isOpenRolloutVariant && (
+      {isPrimary
+        ? activeBestVariations.length > 0 && (
+            <ConfidenceVariants
+              bestVariations={activeBestVariations}
+              variations={experiment.variations}
+              safeToStop={safeToStop}
+              onOpenRolloutVariant={onOpenRolloutVariant}
+            />
+          )
+        : !isNarrow && (
+            <div className="flex items-center w-full gap-x-2 rounded-lg border-l-4 border-gray-300 bg-gray-100 px-4 py-2">
+              <Icon icon={IconInfo} size="xxs" color="gray-600" />
+              <p className="typo-para-small text-gray-600">
+                {t('table:results.secondary-note')}
+              </p>
+            </div>
+          )}
+      {isPrimary && isOpenRolloutVariant && (
         <RolloutVariantModal
           isOpen={isOpenRolloutVariant}
           variations={experiment.variations}
