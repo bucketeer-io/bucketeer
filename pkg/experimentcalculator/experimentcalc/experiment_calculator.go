@@ -217,8 +217,12 @@ func (e ExperimentCalculator) createExperimentResult(
 			vr.CvrSamples = nil
 		}
 
+		// Compute sequential Bayes Factors using the final accumulated
+		// sufficient statistics, then derive the safe-to-stop flags.
+		fillSequentialBayesFactors(goalResult.VariationResults, experiment.BaseVariationId)
+
 		// Calculate Summary for this goal result
-		e.calculateSummary(ctx, goalResult)
+		e.calculateSummary(ctx, goalResult, experiment.BaseVariationId)
 
 		experimentResult.GoalResults = append(experimentResult.GoalResults, goalResult)
 	}
@@ -880,10 +884,15 @@ func contactSamples(samples []dataframe.DataFrame) dataframe.DataFrame {
 	return df
 }
 
-// calculateSummary sets the Summary field of the GoalResult
+// calculateSummary sets the Summary field of the GoalResult, including the
+// metric-aware best-variation lists and the sequential safe-to-stop flags.
+//
+// baselineVariationID identifies the control arm so it is excluded from the
+// safe-to-stop check (the baseline's BF is 1 by construction).
 func (e ExperimentCalculator) calculateSummary(
 	ctx context.Context,
 	goalResult *eventcounter.GoalResult,
+	baselineVariationID string,
 ) {
 	if len(goalResult.VariationResults) == 0 {
 		return
@@ -913,10 +922,30 @@ func (e ExperimentCalculator) calculateSummary(
 		}
 	}
 
+	// Derive the sequential always-valid stopping signals from the BFs
+	// computed by fillSequentialBayesFactors. A true flag means the
+	// sequential evidence criterion has been met for that metric — the
+	// result is robust to peeking. A false flag means more data are needed;
+	// it does NOT mean the experiment is inconclusive.
+	cvrSafeToStop := computeSafeToStop(
+		goalResult.VariationResults,
+		func(vr *eventcounter.VariationResult) float64 { return vr.CvrSequentialBayesFactor },
+		baselineVariationID,
+		DefaultSequentialBFThreshold,
+	)
+	valueSafeToStop := computeSafeToStop(
+		goalResult.VariationResults,
+		func(vr *eventcounter.VariationResult) float64 { return vr.ValueSequentialBayesFactor },
+		baselineVariationID,
+		DefaultSequentialBFThreshold,
+	)
+
 	// Set the summary values
 	goalResult.Summary.BestVariations = cvrBestVariations
 	goalResult.Summary.BestVariationsValue = valueBestVariations
 	goalResult.Summary.GoalUserCount = totalGoalUserCount
+	goalResult.Summary.CvrSafeToStop = cvrSafeToStop
+	goalResult.Summary.ValueSafeToStop = valueSafeToStop
 }
 
 // pickBestVariations returns the variations whose probability-to-beat-baseline

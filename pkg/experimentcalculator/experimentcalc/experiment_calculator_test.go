@@ -593,3 +593,135 @@ func TestPickBestVariations_NoneAboveThreshold(t *testing.T) {
 	})
 	assert.Empty(t, best, "0.95 is not strictly greater than the 0.95 threshold")
 }
+
+// TestCalculateSummary_SafeToStopFlags verifies that calculateSummary correctly
+// derives CvrSafeToStop and ValueSafeToStop from the BFs already populated by
+// fillSequentialBayesFactors, and that the baseline is excluded.
+func TestCalculateSummary_SafeToStopFlags(t *testing.T) {
+	t.Parallel()
+	logger := zap.NewNop()
+	calc := ExperimentCalculator{logger: logger}
+
+	t.Run("safe_to_stop_true_when_treatment_bf_above_threshold", func(t *testing.T) {
+		t.Parallel()
+		goalResult := &eventcounter.GoalResult{
+			Summary: &eventcounter.Summary{},
+			VariationResults: []*eventcounter.VariationResult{
+				{
+					VariationId:                         "baseline",
+					CvrSequentialBayesFactor:            1.0,
+					ValueSequentialBayesFactor:          1.0,
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.0},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.0},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+				{
+					VariationId:                         "treatment",
+					CvrSequentialBayesFactor:            25.0,  // above threshold
+					ValueSequentialBayesFactor:          100.0, // above threshold
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.98},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.99},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+			},
+		}
+		calc.calculateSummary(context.Background(), goalResult, "baseline")
+
+		assert.True(t, goalResult.Summary.CvrSafeToStop,
+			"CvrSafeToStop must be true when treatment CVR BF >= threshold")
+		assert.True(t, goalResult.Summary.ValueSafeToStop,
+			"ValueSafeToStop must be true when treatment value BF >= threshold")
+	})
+
+	t.Run("safe_to_stop_false_when_bf_below_threshold", func(t *testing.T) {
+		t.Parallel()
+		goalResult := &eventcounter.GoalResult{
+			Summary: &eventcounter.Summary{},
+			VariationResults: []*eventcounter.VariationResult{
+				{
+					VariationId:                         "baseline",
+					CvrSequentialBayesFactor:            1.0,
+					ValueSequentialBayesFactor:          1.0,
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.0},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.0},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+				{
+					VariationId:                         "treatment",
+					CvrSequentialBayesFactor:            3.0, // below threshold
+					ValueSequentialBayesFactor:          5.0, // below threshold
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.90},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.85},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+			},
+		}
+		calc.calculateSummary(context.Background(), goalResult, "baseline")
+
+		assert.False(t, goalResult.Summary.CvrSafeToStop,
+			"CvrSafeToStop must be false when all treatment CVR BFs < threshold")
+		assert.False(t, goalResult.Summary.ValueSafeToStop,
+			"ValueSafeToStop must be false when all treatment value BFs < threshold")
+	})
+
+	t.Run("baseline_bf_never_triggers_safe_to_stop", func(t *testing.T) {
+		t.Parallel()
+		// Even with an artificially high baseline BF, safe-to-stop must be false
+		// because the baseline is excluded from the check.
+		goalResult := &eventcounter.GoalResult{
+			Summary: &eventcounter.Summary{},
+			VariationResults: []*eventcounter.VariationResult{
+				{
+					VariationId:                         "baseline",
+					CvrSequentialBayesFactor:            9999.0, // must be ignored
+					ValueSequentialBayesFactor:          9999.0,
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.0},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.0},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+			},
+		}
+		calc.calculateSummary(context.Background(), goalResult, "baseline")
+
+		assert.False(t, goalResult.Summary.CvrSafeToStop,
+			"baseline-only result must have CvrSafeToStop=false")
+		assert.False(t, goalResult.Summary.ValueSafeToStop,
+			"baseline-only result must have ValueSafeToStop=false")
+	})
+
+	t.Run("safe_to_stop_false_when_prob_high_but_bf_below_threshold", func(t *testing.T) {
+		t.Parallel()
+		// This sub-test exercises the dual-signal UX intent: ProbBeatBaseline can
+		// be high (e.g. 0.97) while safe_to_stop is false (BF < 20) — the banner
+		// should show "trending, continue monitoring" in that state. Conversely,
+		// when BF >= 20 the banner shows "safe to decide".
+		goalResult := &eventcounter.GoalResult{
+			Summary: &eventcounter.Summary{},
+			VariationResults: []*eventcounter.VariationResult{
+				{
+					VariationId:                         "baseline",
+					CvrSequentialBayesFactor:            1.0,
+					ValueSequentialBayesFactor:          1.0,
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.0},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.0},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+				{
+					VariationId:                         "treatment",
+					CvrSequentialBayesFactor:            12.0, // high prob, but BF < 20
+					ValueSequentialBayesFactor:          1.5,
+					CvrProbBeatBaseline:                 &eventcounter.DistributionSummary{Mean: 0.97},
+					GoalValueSumPerUserProbBeatBaseline: &eventcounter.DistributionSummary{Mean: 0.60},
+					ExperimentCount:                     &eventcounter.VariationCount{},
+				},
+			},
+		}
+		calc.calculateSummary(context.Background(), goalResult, "baseline")
+
+		// Prob is high enough for BestVariations but BF is below threshold.
+		assert.Len(t, goalResult.Summary.BestVariations, 1,
+			"treatment with prob>0.95 should appear in BestVariations")
+		assert.False(t, goalResult.Summary.CvrSafeToStop,
+			"CVR BF=12 < 20: safe_to_stop must be false even though prob=0.97")
+	})
+}

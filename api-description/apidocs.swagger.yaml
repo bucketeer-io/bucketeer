@@ -5702,6 +5702,20 @@ definitions:
           confidence banner can stay metric-aware when the user is viewing a value
           chart (Value/User or Value/Total). best_variations (field 1) remains the
           conversion-rate list.
+      cvrSafeToStop:
+        type: boolean
+        description: |-
+          cvr_safe_to_stop is true when at least one treatment variation's
+          cvr_sequential_bayes_factor >= 20.0 (default threshold). When true the
+          sequential evidence criterion is met for CVR: the result is robust to
+          the optional-stopping / peeking pattern.
+          False does NOT mean the experiment is inconclusive — it means more data
+          are needed before a reliable CVR verdict can be made.
+      valueSafeToStop:
+        type: boolean
+        description: |-
+          value_safe_to_stop is the value-per-user analogue of cvr_safe_to_stop,
+          using value_sequential_bayes_factor >= 20.0 as the threshold.
   bucketeerfeatureChangeType:
     type: string
     enum:
@@ -7562,6 +7576,25 @@ definitions:
         items:
           type: number
           format: double
+      cvrSequentialBayesFactor:
+        type: number
+        format: double
+        description: |-
+          Sequential Bayes Factor for CVR vs baseline at the current look.
+          Always 1.0 for the baseline variation. Reaches 20.0 (the default
+          stopping threshold) when there is strong evidence that the CVR of
+          this variation differs from the baseline. See Summary.cvr_safe_to_stop.
+      valueSequentialBayesFactor:
+        type: number
+        format: double
+        description: |-
+          Sequential Bayes Factor for value-per-user vs baseline at the current
+          look. Always 1.0 for the baseline variation, when value analysis is
+          skipped (e.g. zero mean/variance for any variation in the goal), or
+          until both arms have >= 30 goal users (users who fired the goal event;
+          the minimum sample size for a reliable approximation). Reaches 20.0 (the
+          default stopping threshold) when there is strong evidence of a
+          value-per-user difference. See Summary.value_safe_to_stop.
   eventcounterVariationTimeseries:
     type: object
     properties:

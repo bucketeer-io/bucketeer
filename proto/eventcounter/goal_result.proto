@@ -38,4 +38,14 @@ message Summary {
   // chart (Value/User or Value/Total). best_variations (field 1) remains the
   // conversion-rate list.
   repeated Variation best_variations_value = 3;
+  // cvr_safe_to_stop is true when at least one treatment variation's
+  // cvr_sequential_bayes_factor >= 20.0 (default threshold). When true the
+  // sequential evidence criterion is met for CVR: the result is robust to
+  // the optional-stopping / peeking pattern.
+  // False does NOT mean the experiment is inconclusive — it means more data
+  // are needed before a reliable CVR verdict can be made.
+  bool cvr_safe_to_stop = 4;
+  // value_safe_to_stop is the value-per-user analogue of cvr_safe_to_stop,
+  // using value_sequential_bayes_factor >= 20.0 as the threshold.
+  bool value_safe_to_stop = 5;
 }

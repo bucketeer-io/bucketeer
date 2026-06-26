@@ -2964,6 +2964,13 @@ func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult,
 	if diff := cmp.Diff(valueProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, valueProbBeatBaseline.Mean)
 	}
+	// Baseline variation: BFs are 1 by construction (baseline vs itself).
+	if diff := cmp.Diff(vsA.CvrSequentialBayesFactor, 1.0, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: baseline CVR BF must be exactly 1, got %f", variationValue, vsA.CvrSequentialBayesFactor)
+	}
+	if diff := cmp.Diff(vsA.ValueSequentialBayesFactor, 1.0, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: baseline value BF must be exactly 1, got %f", variationValue, vsA.ValueSequentialBayesFactor)
+	}
 }
 
 // checkExperimentVariationResultB validates variation B for the 50-user-per-arm
@@ -3016,6 +3023,17 @@ func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult,
 	if diff := cmp.Diff(valueProbBeatBaseline.Mean, 1.0, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, valueProbBeatBaseline.Mean)
 	}
+	// CVR is a tie (100% in both arms): BF should be << 1, not triggering safe-to-stop.
+	if vsB.CvrSequentialBayesFactor >= 1.0 {
+		t.Fatalf("variation: %s: CVR BF should be < 1 when both arms have 100%% conversion (strong H₀), got %f",
+			variationValue, vsB.CvrSequentialBayesFactor)
+	}
+	// Value metric is decisive (mean B ~15 vs A ~10 at n=50): value BF must
+	// decisively exceed the DefaultSequentialBFThreshold (20).
+	if vsB.ValueSequentialBayesFactor < 20.0 {
+		t.Fatalf("variation: %s: value BF should be >> 20 for decisive value difference, got %f",
+			variationValue, vsB.ValueSequentialBayesFactor)
+	}
 }
 
 // checkExperimentSummary asserts the metric-aware best-variations lists end to
@@ -3047,6 +3065,14 @@ func checkExperimentSummary(t *testing.T, gr *ecproto.GoalResult, treatmentVaria
 	}
 	if best.Probability < 0.95 {
 		t.Fatalf("value winner probability should exceed 0.95, got %f", best.Probability)
+	}
+	// Sequential safe-to-stop flags: CVR is a tie so CvrSafeToStop must be
+	// false; value is decisive so ValueSafeToStop must be true.
+	if gr.Summary.CvrSafeToStop {
+		t.Fatalf("CvrSafeToStop should be false when CVR is a tie (100%% in both arms)")
+	}
+	if !gr.Summary.ValueSafeToStop {
+		t.Fatalf("ValueSafeToStop should be true: value BF is decisively >> 20 for this fixture")
 	}
 }
 

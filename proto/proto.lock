@@ -24226,6 +24226,16 @@
                 "name": "best_variations_value",
                 "type": "Variation",
                 "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "cvr_safe_to_stop",
+                "type": "bool"
+              },
+              {
+                "id": 5,
+                "name": "value_safe_to_stop",
+                "type": "bool"
               }
             ],
             "messages": [
@@ -26466,6 +26476,16 @@
                 "name": "cvr_samples",
                 "type": "double",
                 "is_repeated": true
+              },
+              {
+                "id": 26,
+                "name": "cvr_sequential_bayes_factor",
+                "type": "double"
+              },
+              {
+                "id": 27,
+                "name": "value_sequential_bayes_factor",
+                "type": "double"
               }
             ]
           }
