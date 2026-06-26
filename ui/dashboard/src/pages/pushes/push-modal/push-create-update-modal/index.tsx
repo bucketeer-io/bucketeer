@@ -100,9 +100,10 @@ const PushCreateUpdateModal = ({
 
   const { watch } = form;
 
-  const isEnabledTags = !!watch('environmentId');
+  const environmentId = watch('environmentId');
+  const isEnabledTags = !!environmentId;
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    environmentId: checkEnvironmentEmptyId(watch('environmentId')),
+    environmentId: checkEnvironmentEmptyId(environmentId),
     entityType: 'FEATURE_FLAG',
     options: {
       enabled: isEnabledTags,

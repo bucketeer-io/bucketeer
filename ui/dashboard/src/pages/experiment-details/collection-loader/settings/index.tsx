@@ -3,7 +3,8 @@ import {
   ControllerRenderProps,
   FormProvider,
   SubmitHandler,
-  useForm
+  useForm,
+  useWatch
 } from 'react-hook-form';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -124,13 +125,12 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   });
 
   const {
-    watch,
     formState: { isDirty, isValid, isSubmitting }
   } = form;
   useUnsavedLeavePage({
     isShow: isDirty && !isSubmitting
   });
-  const featureId = watch('featureId');
+  const featureId = useWatch({ control: form.control, name: 'featureId' });
 
   const variationOptions =
     featureFlagOptions
