@@ -550,6 +550,22 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+.PHONY: delete-postgres-data-warehouse-data
+delete-postgres-data-warehouse-data:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-postgres-data-warehouse clean build-darwin
+else
+	make -C hack/delete-postgres-data-warehouse clean build
+endif
+	./hack/delete-postgres-data-warehouse/delete-postgres-data-warehouse truncate \
+		--postgres-user=bucketeer \
+		--postgres-pass=bucketeer \
+		--postgres-host=$$(minikube ip) \
+		--postgres-port=32100 \
+		--postgres-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled
+
 .PHONY: delete-redis-retry-keys
 delete-redis-retry-keys:
 ifeq ($(GOOS), darwin)
@@ -873,5 +889,21 @@ endif
 		--mysql-host=localhost \
 		--mysql-port=3306 \
 		--mysql-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: docker-compose-delete-postgres-data-warehouse-data
+docker-compose-delete-postgres-data-warehouse-data:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-postgres-data-warehouse clean build-darwin
+else
+	make -C hack/delete-postgres-data-warehouse clean build
+endif
+	./hack/delete-postgres-data-warehouse/delete-postgres-data-warehouse truncate \
+		--postgres-user=bucketeer \
+		--postgres-pass=bucketeer \
+		--postgres-host=localhost \
+		--postgres-port=5432 \
+		--postgres-db-name=bucketeer \
 		--no-profile \
 		--no-gcp-trace-enabled
