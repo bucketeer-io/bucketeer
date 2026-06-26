@@ -20,7 +20,7 @@ const ConfidenceVariants = ({
 }: {
   bestVariations: BestVariation[];
   variations: FeatureVariation[];
-  safeToStop?: boolean;
+  safeToStop: boolean;
   onOpenRolloutVariant: () => void;
 }) => {
   const { t } = useTranslation(['table']);
@@ -75,11 +75,14 @@ const ConfidenceVariants = ({
               </p>
             }
             trigger={
-              <span className="flex items-center gap-x-2 typo-head-bold-small text-gray-600 whitespace-nowrap cursor-default">
+              <button
+                type="button"
+                className="flex items-center gap-x-2 typo-head-bold-small text-gray-600 whitespace-nowrap cursor-default bg-transparent border-0 p-0"
+              >
                 <Icon icon={IconExperiment} color="gray-600" size={'sm'} />
                 {t('results.status-monitoring')}
-                <Icon icon={IconInfo} size="xxs" color="gray-400" />
-              </span>
+                <Icon icon={IconInfo} size="xxs" color="gray-600" />
+              </button>
             }
           />
         )}
@@ -168,16 +171,21 @@ const ConfidenceVariants = ({
               </p>
             }
             trigger={
-              <div>
+              <span
+                tabIndex={0}
+                role="button"
+                aria-disabled="true"
+                className="inline-block"
+              >
                 <Button variant={'text'} disabled className="typo-para-small">
                   <Icon
                     icon={IconOperationArrow}
-                    color="gray-400"
+                    color="gray-600"
                     size={'sm'}
                   />
                   {t('results.rollout-variant')}
                 </Button>
-              </div>
+              </span>
             }
           />
         )}
