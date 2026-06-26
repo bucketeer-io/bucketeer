@@ -38,6 +38,11 @@ const Results = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  // The primary goal drives the experiment verdict (banner + rollout CTA). It
+  // is the first goal attached to the experiment, which the calculator emits
+  // as the first goalResult (it iterates experiment.goalIds in order).
+  const primaryGoalId = experimentResult?.goalResults?.[0]?.goalId;
+
   const [goalResultState, setGoalResultState] = useState<GoalResultState[]>([]);
   const [goalsNarrow, setGoalsNarrow] = useState<string[]>([]);
 
@@ -99,6 +104,7 @@ const Results = ({
         <GoalResultItem
           key={index}
           isNarrow={goalsNarrow.includes(item.goalId)}
+          isPrimary={item.goalId === primaryGoalId}
           experiment={experiment}
           feature={feature}
           environmentId={currentEnvironment.id}
