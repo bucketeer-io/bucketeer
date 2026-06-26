@@ -253,6 +253,23 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+.PHONY: delete-e2e-data-postgres
+delete-e2e-data-postgres:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-e2e-data-postgres clean build-darwin
+else
+	make -C hack/delete-e2e-data-postgres clean build
+endif
+	./hack/delete-e2e-data-postgres/delete-e2e-data-postgres delete \
+		--postgres-user=${POSTGRES_USER} \
+		--postgres-pass=${POSTGRES_PASS} \
+		--postgres-host=${POSTGRES_HOST} \
+		--postgres-port=${POSTGRES_PORT} \
+		--postgres-db-name=${POSTGRES_DB_NAME} \
+		--test-id=${TEST_ID} \
+		--no-profile \
+		--no-gcp-trace-enabled
+
 .PHONY: create-e2e-accounts
 create-e2e-accounts:
 ifeq ($(GOOS), darwin)
@@ -397,6 +414,15 @@ delete-dev-container-mysql-data:
 	MYSQL_PORT=32000 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
+
+.PHONY: delete-dev-container-postgres-data
+delete-dev-container-postgres-data:
+	POSTGRES_USER=bucketeer \
+	POSTGRES_PASS=bucketeer \
+	POSTGRES_HOST=$$(minikube ip) \
+	POSTGRES_PORT=32100 \
+	POSTGRES_DB_NAME=bucketeer \
+	make -C ./ delete-e2e-data-postgres
 
 .PHONY: create-dev-container-e2e-accounts
 create-dev-container-e2e-accounts:
@@ -841,6 +867,16 @@ docker-compose-delete-data:
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
 
+.PHONY: docker-compose-delete-data-postgres
+docker-compose-delete-data-postgres:
+	@echo "Deleting E2E test data from Docker Compose Postgres..."
+	POSTGRES_USER=bucketeer \
+	POSTGRES_PASS=bucketeer \
+	POSTGRES_HOST=localhost \
+	POSTGRES_PORT=5432 \
+	POSTGRES_DB_NAME=bucketeer \
+	make -C ./ delete-e2e-data-postgres
+
 .PHONY: docker-compose-create-e2e-accounts
 docker-compose-create-e2e-accounts:
 	@echo "Bootstrapping localenv account in Docker Compose MySQL..."
@@ -889,6 +925,19 @@ endif
 		--mysql-host=localhost \
 		--mysql-port=3306 \
 		--mysql-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: docker-compose-delete-redis-retry-keys
+docker-compose-delete-redis-retry-keys:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-redis-retry-keys clean build-darwin
+else
+	make -C hack/delete-redis-retry-keys clean build
+endif
+	./hack/delete-redis-retry-keys/delete-redis-retry-keys delete \
+		--redis-addr=localhost:6379 \
+		--environment-id=e2e \
 		--no-profile \
 		--no-gcp-trace-enabled
 
