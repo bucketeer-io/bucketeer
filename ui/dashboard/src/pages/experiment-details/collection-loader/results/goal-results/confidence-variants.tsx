@@ -171,21 +171,14 @@ const ConfidenceVariants = ({
               </p>
             }
             trigger={
-              <span
-                tabIndex={0}
-                role="button"
+              <Button
+                variant={'text'}
                 aria-disabled="true"
-                className="inline-block"
+                className="typo-para-small text-gray-500 cursor-not-allowed hover:text-gray-500"
               >
-                <Button variant={'text'} disabled className="typo-para-small">
-                  <Icon
-                    icon={IconOperationArrow}
-                    color="gray-600"
-                    size={'sm'}
-                  />
-                  {t('results.rollout-variant')}
-                </Button>
-              </span>
+                <Icon icon={IconOperationArrow} color="gray-600" size={'sm'} />
+                {t('results.rollout-variant')}
+              </Button>
             }
           />
         )}

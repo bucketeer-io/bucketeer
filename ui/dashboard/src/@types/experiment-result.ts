@@ -45,7 +45,7 @@ export interface GoalResultSummary {
   bestVariations: BestVariation[];
   bestVariationsValue?: BestVariation[];
   totalGoalUserCount: string;
-  // Sequential Bayes Factor stopping signals (Follow-up K).
+  // Sequential Bayes Factor stopping signals.
   // True when the always-valid evidence threshold has been met for the
   // respective metric; false means more data are needed.
   cvrSafeToStop?: boolean;
