@@ -58,23 +58,36 @@ const GoalResultItem = ({
   const [isOpenRolloutVariant, onOpenRolloutVariant, onCloseRolloutVariant] =
     useToggleOpen(false);
 
-  // Pick the best-variations list matching the currently selected chart type
-  // (driven by chartType, not the tab — value charts are reachable from both
-  // tabs). The value charts (`value-user`, `value-total`) use the per-user
-  // value posterior: the conversion-rate table applies the same rule for its
-  // probability columns, and there is no separate total-value posterior (the
-  // Bayesian model is per-user only). All other chart types (`conversion-rate`
-  // and the evaluation count charts) use the conversion-rate list.
-  const activeBestVariations = useMemo(() => {
-    const isValueChart =
+  // Pick the best-variations list and the safe-to-stop flag that match the
+  // currently selected chart type (driven by chartType, not the tab — value
+  // charts are reachable from both tabs). The value charts (`value-user`,
+  // `value-total`) use the per-user value posterior; all other chart types
+  // use the conversion-rate list.
+  const isValueChart = useMemo(
+    () =>
       goalResultState?.chartType === 'value-user' ||
-      goalResultState?.chartType === 'value-total';
-    return (
+      goalResultState?.chartType === 'value-total',
+    [goalResultState]
+  );
+
+  const activeBestVariations = useMemo(
+    () =>
       (isValueChart
         ? goalResult?.summary?.bestVariationsValue
-        : goalResult?.summary?.bestVariations) ?? []
-    );
-  }, [goalResult, goalResultState]);
+        : goalResult?.summary?.bestVariations) ?? [],
+    [goalResult, isValueChart]
+  );
+
+  // safeToStop reflects the sequential Bayes Factor verdict for the active
+  // metric. When false the evidence threshold has not been met yet and the
+  // rollout CTA should be disabled with an explanatory tooltip.
+  const safeToStop = useMemo(
+    () =>
+      isValueChart
+        ? (goalResult?.summary?.valueSafeToStop ?? false)
+        : (goalResult?.summary?.cvrSafeToStop ?? false),
+    [goalResult, isValueChart]
+  );
 
   const variationValues = useMemo(
     () =>
@@ -160,6 +173,7 @@ const GoalResultItem = ({
         <ConfidenceVariants
           bestVariations={activeBestVariations}
           variations={experiment.variations}
+          safeToStop={safeToStop}
           onOpenRolloutVariant={onOpenRolloutVariant}
         />
       )}
