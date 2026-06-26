@@ -4,7 +4,7 @@ import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
-import { allowNavigation, useConfirm } from 'hooks/use-unsaved-leave-page';
+import { useConfirm } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { clearCurrentEnvIdStorage } from 'storage/environment';
 import {
@@ -67,7 +67,13 @@ const SwitchOrganization = ({
   const { t } = useTranslation(['common', 'form']);
   const { myOrganizations, onMeFetcher } = useAuth();
   const { errorNotify } = useToast();
-  const { isShow: showConfirm, setIsShow, confirm, options } = useConfirm();
+  const {
+    isShow: showConfirm,
+    setIsShow,
+    confirm,
+    options,
+    allowNavigation
+  } = useConfirm();
   const organizationId = getOrgIdStorage();
   const [searchValue, setSearchValue] = useState('');
   const [currentOrganization, setCurrentOrganization] = useState(
