@@ -72,10 +72,10 @@ type VariationResult struct {
 	// Sequential Bayes Factor for value-per-user vs baseline at the current
 	// look. Always 1.0 for the baseline variation, when value analysis is
 	// skipped (e.g. zero mean/variance for any variation in the goal), or
-	// until both arms have >= 30 users (the minimum sample size for a reliable
-	// approximation). Reaches 20.0 (the default stopping threshold) when there
-	// is strong evidence of a value-per-user difference.
-	// See Summary.value_safe_to_stop.
+	// until both arms have >= 30 goal users (users who fired the goal event;
+	// the minimum sample size for a reliable approximation). Reaches 20.0 (the
+	// default stopping threshold) when there is strong evidence of a
+	// value-per-user difference. See Summary.value_safe_to_stop.
 	ValueSequentialBayesFactor float64 `protobuf:"fixed64,27,opt,name=value_sequential_bayes_factor,json=valueSequentialBayesFactor,proto3" json:"value_sequential_bayes_factor"`
 }
 

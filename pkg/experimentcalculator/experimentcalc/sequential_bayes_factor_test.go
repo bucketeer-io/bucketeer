@@ -50,7 +50,7 @@ func TestCvrBayesFactor_EqualArms_NullFavoured(t *testing.T) {
 	t.Parallel()
 	// Both arms identical (50% CVR each) → data strongly favour H₀ → BF < 1.
 	bf := cvrBayesFactor(50, 100, 50, 100)
-	assert.True(t, bf < 1.0, "equal arms should give BF < 1 (H₀ favoured), got %f", bf)
+	assert.Truef(t, bf < 1.0, "equal arms should give BF < 1 (H₀ favoured), got %f", bf)
 	assert.True(t, bf > 0.0, "BF must be positive")
 }
 
@@ -104,7 +104,7 @@ func TestValueBayesFactor_EqualArms_NullFavoured(t *testing.T) {
 	t.Parallel()
 	// Both arms identical — data should favour H₀ → BF < 1.
 	bf := valueBayesFactor(100, 10.0, 2.0, 100, 10.0, 2.0)
-	assert.True(t, bf < 1.0, "equal arms should give BF < 1 (H₀ favoured), got %f", bf)
+	assert.Truef(t, bf < 1.0, "equal arms should give BF < 1 (H₀ favoured), got %f", bf)
 	assert.True(t, bf > 0.0, "BF must be positive")
 }
 

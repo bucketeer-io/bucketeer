@@ -216,8 +216,14 @@ func fillSequentialBayesFactors(
 	// value posterior was skipped.
 	valueEnabled := true
 	for _, vr := range vrs {
+		// A nil variation or nil ExperimentCount means calcGoalResult
+		// returned early for that entry (e.g. variation missing from
+		// evalVariationCounts). Treat it as a goal-wide skip rather than
+		// silently ignoring it — otherwise a decisive BF from another arm
+		// could set ValueSafeToStop=true even though this arm has no data.
 		if vr == nil || vr.ExperimentCount == nil {
-			continue
+			valueEnabled = false
+			break
 		}
 		if vr.ExperimentCount.UserCount == 0 ||
 			vr.ExperimentCount.ValueSumPerUserMean == 0 ||
