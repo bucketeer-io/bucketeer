@@ -306,6 +306,7 @@ make delete-redis-retry-keys
 For Postgres:
 ```shell
 make delete-dev-container-postgres-data
+make delete-postgres-data-warehouse-data
 make delete-redis-retry-keys
 ```
 
@@ -399,6 +400,7 @@ make docker-compose-delete-redis-retry-keys
 For Postgres:
 ```shell
 make docker-compose-delete-data-postgres
+make docker-compose-delete-postgres-data-warehouse-data
 make docker-compose-delete-redis-retry-keys
 ```
 
