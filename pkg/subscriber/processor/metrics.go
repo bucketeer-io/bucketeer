@@ -32,7 +32,6 @@ const (
 	subscriberMetricsEvent          = "MetricsEvent"
 	subscriberPushSender            = "PushSender"
 	subscriberSegmentUser           = "SegmentUser"
-	subscriberUserEvent             = "UserEvent"
 	subscriberDemoOrganizationEvent = "DemoOrganizationEvent"
 	subscriberCacheRefresher        = "CacheRefresher"
 )

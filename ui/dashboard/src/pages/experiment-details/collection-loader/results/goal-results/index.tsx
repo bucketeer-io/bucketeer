@@ -58,6 +58,24 @@ const GoalResultItem = ({
   const [isOpenRolloutVariant, onOpenRolloutVariant, onCloseRolloutVariant] =
     useToggleOpen(false);
 
+  // Pick the best-variations list matching the currently selected chart type
+  // (driven by chartType, not the tab — value charts are reachable from both
+  // tabs). The value charts (`value-user`, `value-total`) use the per-user
+  // value posterior: the conversion-rate table applies the same rule for its
+  // probability columns, and there is no separate total-value posterior (the
+  // Bayesian model is per-user only). All other chart types (`conversion-rate`
+  // and the evaluation count charts) use the conversion-rate list.
+  const activeBestVariations = useMemo(() => {
+    const isValueChart =
+      goalResultState?.chartType === 'value-user' ||
+      goalResultState?.chartType === 'value-total';
+    return (
+      (isValueChart
+        ? goalResult?.summary?.bestVariationsValue
+        : goalResult?.summary?.bestVariations) ?? []
+    );
+  }, [goalResult, goalResultState]);
+
   const variationValues = useMemo(
     () =>
       goalResult?.variationResults?.map(vr => {
@@ -138,9 +156,9 @@ const GoalResultItem = ({
           />
         </div>
       </div>
-      {goalResult?.summary?.bestVariations?.length > 0 && (
+      {activeBestVariations.length > 0 && (
         <ConfidenceVariants
-          bestVariations={goalResult.summary.bestVariations}
+          bestVariations={activeBestVariations}
           variations={experiment.variations}
           onOpenRolloutVariant={onOpenRolloutVariant}
         />
@@ -150,7 +168,7 @@ const GoalResultItem = ({
           isOpen={isOpenRolloutVariant}
           variations={experiment.variations}
           defaultStrategy={feature?.defaultStrategy}
-          bestVariations={goalResult?.summary?.bestVariations}
+          bestVariations={activeBestVariations}
           isRequireComment={isRequireComment}
           onClose={onCloseRolloutVariant}
           onSubmit={onSubmitRolloutVariation}

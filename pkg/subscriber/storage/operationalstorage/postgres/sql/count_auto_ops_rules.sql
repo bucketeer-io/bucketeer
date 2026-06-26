@@ -1,0 +1,10 @@
+SELECT COUNT(*)
+FROM auto_ops_rule
+LEFT JOIN feature
+ON auto_ops_rule.feature_id = feature.id
+AND auto_ops_rule.environment_id = feature.environment_id
+WHERE feature.archived = false
+  AND auto_ops_rule.status IN (0, 1) -- 0: WAITING, 1: RUNNING
+  AND auto_ops_rule.deleted = false
+  AND auto_ops_rule.ops_type = 3 -- 3: EVENT_RATE, 2: SCHEDULE
+  -- Schedule operation is not based on events, so we don't include in the count
