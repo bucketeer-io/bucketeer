@@ -37726,16 +37726,11 @@
               },
               {
                 "id": 3,
-                "name": "user_evaluations_id",
-                "type": "string"
-              },
-              {
-                "id": 4,
                 "name": "source_id",
                 "type": "bucketeer.event.client.SourceId"
               },
               {
-                "id": 5,
+                "id": 4,
                 "name": "sdk_version",
                 "type": "string"
               }
@@ -37748,11 +37743,6 @@
                 "id": 1,
                 "name": "evaluations",
                 "type": "feature.UserEvaluations"
-              },
-              {
-                "id": 2,
-                "name": "user_evaluations_id",
-                "type": "string"
               }
             ]
           },

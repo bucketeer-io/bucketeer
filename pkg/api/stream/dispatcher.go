@@ -17,6 +17,7 @@ package stream
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -35,11 +36,15 @@ type Dispatcher struct {
 type event struct {
 	environmentID string
 	tags          []string
+	eventType     domaineventproto.Event_Type
+	dispatchedAt  time.Time
 }
 
 type conn struct {
-	ch  chan event
-	tag string
+	ch        chan event
+	tag       string
+	sourceID  string
+	createdAt time.Time
 }
 
 func NewDispatcher(logger *zap.Logger) *Dispatcher {
@@ -51,11 +56,13 @@ func NewDispatcher(logger *zap.Logger) *Dispatcher {
 
 // register adds a connection to the dispatcher. The caller must invoke the returned
 // deregister func on disconnect to free the slot.
-func (d *Dispatcher) register(envID, tag string) (events <-chan event, deregister func()) {
+func (d *Dispatcher) register(envID, tag, sourceID string) (events <-chan event, deregister func()) {
 	c := &conn{
 		// Only the latest event is needed to evaluate with the latest config.
-		ch:  make(chan event, 1),
-		tag: tag,
+		ch:        make(chan event, 1),
+		tag:       tag,
+		sourceID:  sourceID,
+		createdAt: time.Now(),
 	}
 	d.mu.Lock()
 	tagConns, ok := d.conns[envID]
@@ -69,9 +76,8 @@ func (d *Dispatcher) register(envID, tag string) (events <-chan event, deregiste
 		tagConns[tag] = conns
 	}
 	conns[c] = struct{}{}
-	// Update the gauge inside the lock so a concurrent last-conn deregister
-	// cannot delete the series after this Inc.
-	sseActiveConnectionsGauge.WithLabelValues(envID, tag).Inc()
+	// Update the gauge inside the lock so it stays consistent with the conn map.
+	sseActiveConnectionsGauge.WithLabelValues(envID, tag, sourceID).Inc()
 	d.mu.Unlock()
 
 	return c.ch, func() { d.deregister(envID, c) }
@@ -90,16 +96,17 @@ func (d *Dispatcher) deregister(envID string, target *conn) {
 		return
 	}
 	delete(conns, target)
+	sseActiveConnectionsGauge.WithLabelValues(envID, target.tag, target.sourceID).Dec()
 	if len(conns) == 0 {
 		delete(tagConns, target.tag)
-		sseActiveConnectionsGauge.DeleteLabelValues(envID, target.tag)
-	} else {
-		sseActiveConnectionsGauge.WithLabelValues(envID, target.tag).Dec()
 	}
 	if len(tagConns) == 0 {
 		delete(d.conns, envID)
 	}
 	d.mu.Unlock()
+
+	sseConnectionDurationHistogram.WithLabelValues(envID, target.tag, target.sourceID).
+		Observe(time.Since(target.createdAt).Seconds())
 
 	// target.ch is intentionally not closed because closing it here would
 	// race with dispatch and panic. The handler exits via ctx.Done().
@@ -117,6 +124,7 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 		}
 		d.dispatch(event{
 			environmentID: e.EnvironmentId,
+			eventType:     e.Type,
 			tags:          d.affectedTags(e),
 		})
 	case domaineventproto.Event_SEGMENT:
@@ -140,6 +148,7 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 		// Currently, it fans out env-wide (all tags).
 		d.dispatch(event{
 			environmentID: e.EnvironmentId,
+			eventType:     e.Type,
 		})
 	}
 }
@@ -190,7 +199,9 @@ func (d *Dispatcher) dispatch(ev event) {
 
 	// Snapshot conns to release the lock early to avoid blocking register/deregister.
 	var targetConns []*conn
+	var dispatchTagCount float64
 	if len(ev.tags) == 0 {
+		dispatchTagCount = float64(len(tagConns))
 		n := 0
 		for _, conns := range tagConns {
 			n += len(conns)
@@ -202,6 +213,7 @@ func (d *Dispatcher) dispatch(ev event) {
 			}
 		}
 	} else {
+		dispatchTagCount = float64(len(ev.tags))
 		n := 0
 		for _, t := range ev.tags {
 			n += len(tagConns[t])
@@ -215,11 +227,15 @@ func (d *Dispatcher) dispatch(ev event) {
 	}
 	d.mu.Unlock()
 
+	sseDispatchTagsHistogram.WithLabelValues(ev.environmentID, ev.eventType.String()).
+		Observe(dispatchTagCount)
+
+	ev.dispatchedAt = time.Now()
 	for _, c := range targetConns {
 		select {
 		case c.ch <- ev:
 		default:
-			sseDispatchDroppedCounter.WithLabelValues(ev.environmentID, c.tag).Inc()
+			sseDispatchDroppedCounter.WithLabelValues(ev.environmentID, c.tag, c.sourceID).Inc()
 		}
 	}
 }
