@@ -26,7 +26,7 @@ const ConfirmModal = ({
 
   return (
     <DialogModal
-      className="w-[500px]"
+      className="max-w-[500px]"
       title={title}
       isOpen={isOpen}
       onClose={onClose}

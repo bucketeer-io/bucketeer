@@ -6,13 +6,12 @@ const TableRoot = React.forwardRef<
   React.HTMLAttributes<HTMLTableElement>
 >(({ ...props }, ref) => (
   <table
-    className="border-separate border-spacing-y-2 w-full mb-6"
+    className="table-fixed border-separate border-spacing-y-2 w-full mb-6"
     ref={ref}
     {...props}
   />
 ));
 TableRoot.displayName = 'Table';
-
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
@@ -58,7 +57,7 @@ const TableCell = React.forwardRef<
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ ...props }, ref) => (
   <td
-    className="px-4 py-2 h-[60px] first:rounded-l-lg last:rounded-r-lg"
+    className="px-4 py-2 h-[60px] min-h-[60px] first:rounded-l-lg last:rounded-r-lg"
     ref={ref}
     {...props}
   />

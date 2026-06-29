@@ -38,6 +38,7 @@
   "yes": "はい",
   "no": "いいえ",
   "if": "IF",
+  "is": "は",
   "clear": "クリア",
   "confirm": "確認",
   "close": "閉じる",
@@ -120,6 +121,7 @@
     "feature-flag": "フィーチャーフラグ",
     "feature-flag-description": "フラグが追加または更新されたときに通知されます",
     "goal": "ゴール",
+    "goal-value": "{{value}} ゴール",
     "goal-description": "ゴールが追加または更新されたときに通知されます",
     "mau-count": "月間アクティブユーザー数",
     "mau-count-description": "毎月1日に月間アクティブユーザー数の通知されます",
@@ -220,6 +222,7 @@
   "see-more": "もっと見る",
   "default": "デフォルト",
   "sort-by": "並び替え: {{sortBy}}",
+  "sort-by-placeholder": "並び替え",
   "sort-asc": "昇順",
   "sort-desc": "降順",
   "no-options-found": "オプションが見つかりません",
@@ -383,7 +386,10 @@
           "all": "<b>all:</b> すべての評価結果を返し、SDK キャッシュ全体を更新します。"
         }
       }
-  }
-},
-  "load-more": "もっと読み込む"
+    }
+  },
+  "detail": "詳細",
+  "last-seen": "最終アクセス日時",
+  "time-stop": "終了日時",
+  "time-start": "開始日時"
 }

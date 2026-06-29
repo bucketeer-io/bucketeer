@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useScreen } from 'hooks/use-screen';
 import PaginationCell from './pagination-cell';
 import PaginationGroup from './pagination-group';
 
@@ -15,9 +16,10 @@ const PaginationActions = ({
   pageIndex,
   onPageChange
 }: PaginationActionsProps) => {
+  const { isMobile } = useScreen();
   const [currentPage, setCurrentPage] = useState(pageIndex);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const maxVisibleButtons = 5;
+  const maxVisibleButtons = isMobile ? 3 : 5;
 
   const cells = () => {
     let startPage, endPage;
@@ -79,7 +81,7 @@ const PaginationActions = ({
   const renderCell = cells();
 
   return (
-    <div className="flex gap-4">
+    <div className="w-full flex justify-center gap-2 sm:gap-4">
       <PaginationGroup>
         <PaginationCell
           variant="first"
