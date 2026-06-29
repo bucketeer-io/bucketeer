@@ -59,8 +59,9 @@ type EvaluateFunc func(
 	ctx context.Context,
 	user *userproto.User,
 	environmentID, tag string,
+	prevUEID string,
 	evaluatedAt int64,
-) (*featureproto.UserEvaluations, error)
+) (ueid string, evals *featureproto.UserEvaluations, err error)
 
 // EvaluationsHandler handles the SSE stream_evaluations endpoint.
 type EvaluationsHandler struct {
@@ -127,7 +128,9 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 	events, deregister := h.dispatcher.register(envID, req.Tag, sourceID)
 	defer deregister()
 
-	evaluatedAt, err := h.sendInitialPut(ctx, w, flusher, req.User, envID, req.Tag, sourceID)
+	prevUEID := req.GetUserEvaluationsId()
+	evaluatedAt := req.GetEvaluatedAt()
+	ueid, newEvalAt, err := h.sendInitialPut(ctx, w, flusher, req.User, envID, req.Tag, sourceID, prevUEID, evaluatedAt)
 	if err != nil {
 		h.logger.Error("Failed to send initial put",
 			zap.Error(err),
@@ -138,6 +141,7 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 		sendErrorEvent(w, flusher, gatewayproto.StreamErrorEvent_INTERNAL, "evaluation failed")
 		return
 	}
+	evaluatedAt = newEvalAt
 	sseInitialPutDurationHistogram.WithLabelValues(envID, req.Tag, sourceID).
 		Observe(time.Since(requestStart).Seconds())
 
@@ -154,7 +158,7 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 				return
 			}
 		case ev := <-events:
-			newEvalAt, err := h.sendPatch(ctx, w, flusher, req.User, envID, req.Tag, sourceID, evaluatedAt)
+			newUEID, newEvalAt, err := h.sendPatch(ctx, w, flusher, req.User, envID, req.Tag, sourceID, ueid, evaluatedAt)
 			if err != nil {
 				h.logger.Error("Failed to send patch",
 					zap.Error(err),
@@ -167,6 +171,7 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 			}
 			sseDispatchToSendDurationHistogram.WithLabelValues(envID, req.Tag, sourceID).
 				Observe(time.Since(ev.dispatchedAt).Seconds())
+			ueid = newUEID
 			evaluatedAt = newEvalAt
 		}
 	}
@@ -178,23 +183,26 @@ func (h *EvaluationsHandler) sendInitialPut(
 	flusher http.Flusher,
 	user *userproto.User,
 	envID, tag, sourceID string,
-) (evaluatedAt int64, err error) {
-	evaluatedAt = time.Now().Unix()
+	prevUEID string,
+	prevEvaluatedAt int64,
+) (ueid string, evaluatedAt int64, err error) {
 	start := time.Now()
-	evals, err := h.evaluate(ctx, user, envID, tag, 0)
+	evaluatedAt = start.Unix()
+	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt)
 	sseEvaluationDurationHistogram.WithLabelValues(envID, tag, sourceID, eventTypePut).
 		Observe(time.Since(start).Seconds())
 	if err != nil {
 		sseErrorsCounter.WithLabelValues(envID, tag, sourceID, errorTypeEvaluationPut).Inc()
-		return 0, err
+		return "", 0, err
 	}
 	evt := &gatewayproto.StreamEvaluationsEvent{
-		Evaluations: evals,
+		Evaluations:       evals,
+		UserEvaluationsId: ueid,
 	}
 	if err := sendSSEEvent(w, flusher, eventTypePut, evt); err != nil {
-		return 0, err
+		return "", 0, err
 	}
-	return evaluatedAt, nil
+	return ueid, evaluatedAt, nil
 }
 
 func (h *EvaluationsHandler) sendPatch(
@@ -203,30 +211,32 @@ func (h *EvaluationsHandler) sendPatch(
 	flusher http.Flusher,
 	user *userproto.User,
 	envID, tag, sourceID string,
+	prevUEID string,
 	prevEvaluatedAt int64,
-) (newEvaluatedAt int64, err error) {
-	newEvaluatedAt = time.Now().Unix()
+) (ueid string, newEvaluatedAt int64, err error) {
 	start := time.Now()
-	evals, err := h.evaluate(ctx, user, envID, tag, prevEvaluatedAt)
+	newEvaluatedAt = start.Unix()
+	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt)
 	sseEvaluationDurationHistogram.WithLabelValues(envID, tag, sourceID, eventTypePatch).
 		Observe(time.Since(start).Seconds())
 	if err != nil {
 		sseErrorsCounter.WithLabelValues(envID, tag, sourceID, errorTypeEvaluationPatch).Inc()
-		return 0, err
+		return "", 0, err
 	}
 	if len(evals.Evaluations) == 0 && len(evals.ArchivedFeatureIds) == 0 {
 		// Skip sending when no diff.
 		ssePatchCounter.WithLabelValues(envID, tag, sourceID, patchCodeNone).Inc()
-		return newEvaluatedAt, nil
+		return ueid, newEvaluatedAt, nil
 	}
 	ssePatchCounter.WithLabelValues(envID, tag, sourceID, patchCodeDiff).Inc()
 	evt := &gatewayproto.StreamEvaluationsEvent{
-		Evaluations: evals,
+		Evaluations:       evals,
+		UserEvaluationsId: ueid,
 	}
 	if err := sendSSEEvent(w, flusher, eventTypePatch, evt); err != nil {
-		return 0, err
+		return "", 0, err
 	}
-	return newEvaluatedAt, nil
+	return ueid, newEvaluatedAt, nil
 }
 
 func sendSSEEvent(w io.Writer, flusher http.Flusher, eventType string, msg proto.Message) error {

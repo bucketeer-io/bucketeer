@@ -37713,6 +37713,16 @@
                 "id": 4,
                 "name": "sdk_version",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "user_evaluations_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "evaluated_at",
+                "type": "int64"
               }
             ]
           },
@@ -37723,6 +37733,11 @@
                 "id": 1,
                 "name": "evaluations",
                 "type": "feature.UserEvaluations"
+              },
+              {
+                "id": 2,
+                "name": "user_evaluations_id",
+                "type": "string"
               }
             ]
           },

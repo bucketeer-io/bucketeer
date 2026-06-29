@@ -397,17 +397,18 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	ctx context.Context,
 	user *userproto.User,
 	environmentID, tag string,
+	prevUEID string,
 	evaluatedAt int64,
-) (*featureproto.UserEvaluations, error) {
-	f, err, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
+) (ueid string, evals *featureproto.UserEvaluations, err error) {
+	f, e, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
 		return s.getFeatures(ctx, environmentID)
 	})
-	if err != nil {
-		return nil, err
+	if e != nil {
+		return "", nil, e
 	}
 	features := f.([]*featureproto.Feature)
 	if len(features) == 0 {
-		return s.emptyUserEvaluations(), nil
+		return "", s.emptyUserEvaluations(), nil
 	}
 
 	evaluator := evaluation.NewEvaluator(
@@ -432,20 +433,18 @@ func (s *gatewayService) evaluateFeaturesForStream(
 				)...,
 			)
 		}
-		return nil, err
+		return "", nil, err
 	}
 
-	// prevUEID must be non-empty to enter the diff path inside
-	// EvaluateFeaturesByEvaluatedAt; the value itself is unused.
 	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
 		features, user, segmentUsersMap,
-		"dummy_ueid", evaluatedAt, false, tag,
+		prevUEID, evaluatedAt, false, tag,
 	)
 	if err != nil {
-
-		return nil, err
+		return "", nil, err
 	}
-	return evaluations, nil
+	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features)
+	return ueid, evaluations, nil
 }
 
 func (s *gatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {

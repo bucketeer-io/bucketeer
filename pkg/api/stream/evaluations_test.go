@@ -130,24 +130,27 @@ func TestInitialPut(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			h := &EvaluationsHandler{
-				evaluate: func(_ context.Context, _ *userproto.User, _, _ string, evaluatedAt int64) (*featureproto.UserEvaluations, error) {
+				evaluate: func(_ context.Context, _ *userproto.User, _, _ string, prevUEID string, evaluatedAt int64) (string, *featureproto.UserEvaluations, error) {
+					assert.Equal(t, "", prevUEID)
 					assert.Equal(t, int64(0), evaluatedAt)
-					return p.evals, p.evalErr
+					return "ueid-1", p.evals, p.evalErr
 				},
 			}
 			var buf bytes.Buffer
-			evalAt, err := h.sendInitialPut(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1")
+			ueid, evalAt, err := h.sendInitialPut(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1", "", 0)
 			if p.expectErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			assert.Equal(t, "ueid-1", ueid)
 			assert.Greater(t, evalAt, int64(0))
 			lines := strings.SplitN(buf.String(), "\n", 3)
 			assert.Equal(t, "event: put", lines[0])
 			var got gatewayproto.StreamEvaluationsEvent
 			require.NoError(t, sseUnmarshalOpts.Unmarshal([]byte(strings.TrimPrefix(lines[1], "data: ")), &got))
 			assert.True(t, proto.Equal(p.evals, got.Evaluations))
+			assert.Equal(t, "ueid-1", got.GetUserEvaluationsId())
 		})
 	}
 }
@@ -192,18 +195,20 @@ func TestPatch(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			h := &EvaluationsHandler{
-				evaluate: func(_ context.Context, _ *userproto.User, _, _ string, evaluatedAt int64) (*featureproto.UserEvaluations, error) {
+				evaluate: func(_ context.Context, _ *userproto.User, _, _ string, prevUEID string, evaluatedAt int64) (string, *featureproto.UserEvaluations, error) {
+					assert.Equal(t, "prev-ueid", prevUEID)
 					assert.Equal(t, p.evaluatedAt, evaluatedAt)
-					return p.evals, p.evalErr
+					return "new-ueid", p.evals, p.evalErr
 				},
 			}
 			var buf bytes.Buffer
-			newEvalAt, err := h.sendPatch(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1", p.evaluatedAt)
+			ueid, newEvalAt, err := h.sendPatch(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1", "prev-ueid", p.evaluatedAt)
 			if p.expectErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			assert.Equal(t, "new-ueid", ueid)
 			assert.Greater(t, newEvalAt, p.evaluatedAt)
 			if !p.expectSend {
 				assert.Empty(t, buf.String())
@@ -214,6 +219,7 @@ func TestPatch(t *testing.T) {
 			var got gatewayproto.StreamEvaluationsEvent
 			require.NoError(t, sseUnmarshalOpts.Unmarshal([]byte(strings.TrimPrefix(lines[1], "data: ")), &got))
 			assert.True(t, proto.Equal(p.evals, got.Evaluations))
+			assert.Equal(t, "new-ueid", got.GetUserEvaluationsId())
 		})
 	}
 }

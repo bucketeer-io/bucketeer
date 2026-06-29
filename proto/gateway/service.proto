@@ -136,6 +136,10 @@ message StreamEvaluationsRequest {
   user.User user = 2;
   bucketeer.event.client.SourceId source_id = 3;
   string sdk_version = 4;
+  // On reconnect, the client sends its last known UEID and evaluated_at
+  // so the server can resume with a diff instead of a full snapshot.
+  string user_evaluations_id = 5;
+  int64 evaluated_at = 6;
 }
 
 // Payload of the SSE `put` and `patch` events. The event kind is conveyed by
@@ -145,6 +149,7 @@ message StreamEvaluationsRequest {
 // - `patch`: delta since the last snapshot.
 message StreamEvaluationsEvent {
   feature.UserEvaluations evaluations = 1;
+  string user_evaluations_id = 2;
 }
 
 // Payload of the SSE `error` event. Sent immediately before the server closes

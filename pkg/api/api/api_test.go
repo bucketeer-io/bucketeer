@@ -2522,6 +2522,7 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*gatewayService)
+		prevUEID    string
 		evaluatedAt int64
 		expectedErr bool
 		expected    *featureproto.UserEvaluations
@@ -2732,7 +2733,8 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 			},
 		},
 		{
-			desc: "success: diff evaluation returns only updated features",
+			desc:     "success: diff evaluation returns only updated features",
+			prevUEID: "prev-ueid",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -2790,7 +2792,8 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 			},
 		},
 		{
-			desc: "success: evaluatedAt older than 30 days triggers full re-evaluation",
+			desc:     "success: evaluatedAt older than 30 days triggers full re-evaluation",
+			prevUEID: "prev-ueid",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -2914,11 +2917,12 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 			defer mc.Finish()
 			gs := newGatewayServiceWithMock(t, mc)
 			p.setup(gs)
-			got, err := gs.evaluateFeaturesForStream(
+			_, got, err := gs.evaluateFeaturesForStream(
 				context.Background(),
 				user,
 				envID,
 				tag,
+				p.prevUEID,
 				p.evaluatedAt,
 			)
 			if p.expectedErr {
