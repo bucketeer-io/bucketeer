@@ -160,14 +160,27 @@ func TestPatch(t *testing.T) {
 		evals       *featureproto.UserEvaluations
 		evalErr     error
 		expectErr   bool
+		expectSend  bool
 	}{
 		{
-			desc:        "success",
+			desc:        "diff: sends patch event",
+			evaluatedAt: 1000,
+			evals: &featureproto.UserEvaluations{
+				Id: "eval-2",
+				Evaluations: []*featureproto.Evaluation{
+					{FeatureId: "f1"},
+				},
+			},
+			expectSend: true,
+		},
+		{
+			desc:        "none: skips sending",
 			evaluatedAt: 1000,
 			evals: &featureproto.UserEvaluations{
 				Id:          "eval-2",
 				Evaluations: []*featureproto.Evaluation{},
 			},
+			expectSend: false,
 		},
 		{
 			desc:        "evaluate error",
@@ -192,6 +205,10 @@ func TestPatch(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Greater(t, newEvalAt, p.evaluatedAt)
+			if !p.expectSend {
+				assert.Empty(t, buf.String())
+				return
+			}
 			lines := strings.SplitN(buf.String(), "\n", 3)
 			assert.Equal(t, "event: patch", lines[0])
 			var got gatewayproto.StreamEvaluationsEvent

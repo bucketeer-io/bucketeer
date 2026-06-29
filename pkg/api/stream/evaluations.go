@@ -214,11 +214,12 @@ func (h *EvaluationsHandler) sendPatch(
 		sseErrorsCounter.WithLabelValues(envID, tag, sourceID, errorTypeEvaluationPatch).Inc()
 		return 0, err
 	}
-	if len(evals.Evaluations) > 0 || len(evals.ArchivedFeatureIds) > 0 {
-		ssePatchCounter.WithLabelValues(envID, tag, sourceID, patchCodeDiff).Inc()
-	} else {
+	if len(evals.Evaluations) == 0 && len(evals.ArchivedFeatureIds) == 0 {
+		// Skip sending when no diff.
 		ssePatchCounter.WithLabelValues(envID, tag, sourceID, patchCodeNone).Inc()
+		return newEvaluatedAt, nil
 	}
+	ssePatchCounter.WithLabelValues(envID, tag, sourceID, patchCodeDiff).Inc()
 	evt := &gatewayproto.StreamEvaluationsEvent{
 		Evaluations: evals,
 	}
