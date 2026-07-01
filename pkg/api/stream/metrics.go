@@ -23,8 +23,9 @@ import (
 const (
 	methodStreamEvaluations = "StreamEvaluations"
 
-	errorTypeEvaluationPut   = "evaluation_put"
-	errorTypeEvaluationPatch = "evaluation_patch"
+	errorTypeEvaluationPut            = "evaluation_put"
+	errorTypeEvaluationPatch          = "evaluation_patch"
+	errorTypeConnectionRefusedByLimit = "connection_refused_by_limit"
 
 	patchCodeDiff = "Diff"
 	patchCodeNone = "None"
