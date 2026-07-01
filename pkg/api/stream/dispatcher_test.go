@@ -86,7 +86,7 @@ func TestDispatcherRegister(t *testing.T) {
 			t.Parallel()
 			d := NewDispatcher(zap.NewNop())
 			for _, r := range tc.clients {
-				_, cancel := d.register(r.envID, r.tag)
+				_, cancel := d.register(r.envID, r.tag, "source1")
 				defer cancel()
 			}
 			assert.Equal(t, tc.wantConnCounts, snapshotConnCounts(d))
@@ -136,7 +136,7 @@ func TestDispatcherDeregister(t *testing.T) {
 				for tag := range tagConns {
 					for i := 0; i < tagConns[tag]; i++ {
 						var cancel func()
-						_, cancel = d.register(env, tag)
+						_, cancel = d.register(env, tag, "source1")
 						defer cancel()
 						cancels[testConnSpec{env, tag}] = cancel
 					}
@@ -188,7 +188,7 @@ func TestDispatcherDispatch(t *testing.T) {
 			d := NewDispatcher(zap.NewNop())
 			chs := make([]<-chan event, len(tc.conns))
 			for i, c := range tc.conns {
-				ch, cancel := d.register(c.envID, c.tag)
+				ch, cancel := d.register(c.envID, c.tag, "source1")
 				defer cancel()
 				chs[i] = ch
 			}
@@ -199,7 +199,9 @@ func TestDispatcherDispatch(t *testing.T) {
 				if tc.wantRecv[i] {
 					select {
 					case got := <-chs[i]:
-						assert.Equal(t, tc.event, got)
+						assert.Equal(t, tc.event.environmentID, got.environmentID)
+						assert.Equal(t, tc.event.tags, got.tags)
+						assert.False(t, got.dispatchedAt.IsZero())
 					case <-time.After(time.Second):
 						t.Fatalf("conn[%d] (env=%s tag=%s) expected event", i, c.envID, c.tag)
 					}
@@ -348,7 +350,7 @@ func TestDispatcherHandleEvent(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			d := NewDispatcher(zap.NewNop())
-			ch, cancel := d.register(envID, p.clientTag)
+			ch, cancel := d.register(envID, p.clientTag, "source1")
 			defer cancel()
 
 			d.HandleEvent(p.event)

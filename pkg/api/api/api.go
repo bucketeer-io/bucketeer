@@ -115,6 +115,7 @@ func NewGatewayService(
 	s.streamEvalHandler = stream.NewEvaluationsHandler(
 		dispatcher,
 		sseHeartbeatInterval,
+		s.evaluateFeaturesForStream,
 		s.checkRequest,
 		requestTotal,
 		options.logger,
@@ -390,6 +391,60 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 			Evaluation: eval,
 		},
 	)
+}
+
+func (s *gatewayService) evaluateFeaturesForStream(
+	ctx context.Context,
+	user *userproto.User,
+	environmentID, tag string,
+	prevUEID string,
+	evaluatedAt int64,
+) (ueid string, evals *featureproto.UserEvaluations, err error) {
+	f, e, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
+		return s.getFeatures(ctx, environmentID)
+	})
+	if e != nil {
+		return "", nil, e
+	}
+	features := f.([]*featureproto.Feature)
+	if len(features) == 0 {
+		return "", s.emptyUserEvaluations(), nil
+	}
+
+	evaluator := evaluation.NewEvaluator(
+		evaluation.WithSecondsForAdjustment(int64(s.opts.featureFlagDiffGracePeriod / time.Second)),
+	)
+
+	// The same process of getting segment users as grpcGatewayService.getSegmentUsersMap()
+	mapIDs := make(map[string]struct{})
+	for _, feat := range features {
+		for _, id := range evaluator.ListSegmentIDs(feat) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	segmentUsersMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentID)
+	if err != nil {
+		if !isCallerContextErr(err) {
+			s.logger.Error(
+				"Failed to list segments",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)...,
+			)
+		}
+		return "", nil, err
+	}
+
+	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
+		features, user, segmentUsersMap,
+		prevUEID, evaluatedAt, false, tag,
+	)
+	if err != nil {
+		return "", nil, err
+	}
+	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features)
+	return ueid, evaluations, nil
 }
 
 func (s *gatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
