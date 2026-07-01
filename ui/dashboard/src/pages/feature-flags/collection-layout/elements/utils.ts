@@ -8,6 +8,7 @@ import {
   IconFlagSwitch,
   IconFlagYaml
 } from '@icons';
+import { RECENT_TRAFFIC_DAYS } from 'pages/feature-flags/constants';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
 
 export const getDataTypeIcon = (type: FeatureVariationType) => {
@@ -29,7 +30,9 @@ export function getFlagStatus(feature: Feature): FeatureActivityStatus {
     const _lastUsedAt = new Date(+lastUsedAt * 1000);
     const daysDifference = dayjs(_lastUsedAt).diff(dayjs(), 'day');
 
-    if (daysDifference > -7) return FeatureActivityStatus.RECEIVING_TRAFFIC;
+    if (daysDifference > -RECENT_TRAFFIC_DAYS) {
+      return FeatureActivityStatus.RECEIVING_TRAFFIC;
+    }
   }
   return FeatureActivityStatus.NO_RECENT_TRAFFIC;
 }
