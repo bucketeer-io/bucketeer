@@ -151,6 +151,8 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 		select {
 		case <-ctx.Done():
 			return
+		case <-h.dispatcher.shutdownCh:
+			return
 		case <-ticker.C:
 			if err := sendHeartbeat(w, flusher); err != nil {
 				// We cannot send an error event here because

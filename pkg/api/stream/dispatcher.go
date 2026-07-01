@@ -29,8 +29,10 @@ import (
 type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns  map[string]map[string]map[*conn]struct{}
-	logger *zap.Logger
+	conns        map[string]map[string]map[*conn]struct{}
+	shutdownCh   chan struct{}
+	shutdownOnce sync.Once
+	logger       *zap.Logger
 }
 
 type event struct {
@@ -50,8 +52,14 @@ type conn struct {
 func NewDispatcher(logger *zap.Logger) *Dispatcher {
 	return &Dispatcher{
 		conns:  make(map[string]map[string]map[*conn]struct{}),
+		shutdownCh: make(chan struct{}),
 		logger: logger.Named("stream-dispatcher"),
 	}
+}
+
+// Shutdown signals all active SSE handlers to exit immediately.
+func (d *Dispatcher) Shutdown() {
+	d.shutdownOnce.Do(func() { close(d.shutdownCh) })
 }
 
 // register adds a connection to the dispatcher. The caller must invoke the returned
