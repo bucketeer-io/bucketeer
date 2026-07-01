@@ -137,6 +137,7 @@ type server struct {
 	pubSubRedisMode           *string
 	cacheInvalidationTopic    *string
 	sseHeartbeatInterval      *time.Duration
+	sseMaxConnections         *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -314,6 +315,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 				"endpoint. Must be shorter than the idle timeout of any reverse "+
 				"proxy or load balancer in front of the gateway.",
 		).Default("25s").Duration(),
+		sseMaxConnections: cmd.Flag("sse-max-connections",
+			"Maximum number of concurrent SSE connections per pod.",
+		).Default("10000").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -547,7 +551,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cachev3.WithEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 	)
 
-	streamDispatcher := stream.NewDispatcher(logger)
+	streamDispatcher := stream.NewDispatcher(*s.sseMaxConnections, logger)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()
 	var stopInvalidatorOnce sync.Once
@@ -735,6 +739,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.
 		time.Sleep(propagationDelay)
+
+		// Close all active SSE connections so httpServer.Shutdown returns promptly.
+		streamDispatcher.Shutdown()
 
 		// Shutdown order matters due to dependencies:
 		// 1. apiGateway/httpServer make gRPC calls to the backend server

@@ -179,6 +179,14 @@ spec:
             - name: BUCKETEER_API_CACHE_INVALIDATION_TOPIC
               value: "{{ .Values.env.cacheInvalidationTopic }}"
             {{- end }}
+            {{- if .Values.env.sseHeartbeatInterval }}
+            - name: BUCKETEER_API_SSE_HEARTBEAT_INTERVAL
+              value: "{{ .Values.env.sseHeartbeatInterval }}"
+            {{- end }}
+            {{- if .Values.env.sseMaxConnections }}
+            - name: BUCKETEER_API_SSE_MAX_CONNECTIONS
+              value: "{{ .Values.env.sseMaxConnections }}"
+            {{- end }}
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT

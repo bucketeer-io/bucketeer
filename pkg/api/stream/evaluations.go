@@ -41,11 +41,12 @@ const (
 )
 
 var (
-	errInvalidHttpMethod = rest.NewErrStatus(http.StatusMethodNotAllowed, "gateway: invalid http method")
-	errInternal          = rest.NewErrStatus(http.StatusInternalServerError, "gateway: internal")
-	errTagRequired       = rest.NewErrStatus(http.StatusBadRequest, "gateway: tag is required")
-	errUserRequired      = rest.NewErrStatus(http.StatusBadRequest, "gateway: user is required")
-	errUserIDRequired    = rest.NewErrStatus(http.StatusBadRequest, "gateway: user id is required")
+	errInvalidHttpMethod  = rest.NewErrStatus(http.StatusMethodNotAllowed, "gateway: invalid http method")
+	errInternal           = rest.NewErrStatus(http.StatusInternalServerError, "gateway: internal")
+	errTagRequired        = rest.NewErrStatus(http.StatusBadRequest, "gateway: tag is required")
+	errUserRequired       = rest.NewErrStatus(http.StatusBadRequest, "gateway: user is required")
+	errUserIDRequired     = rest.NewErrStatus(http.StatusBadRequest, "gateway: user id is required")
+	errServiceUnavailable = rest.NewErrStatus(http.StatusServiceUnavailable, "gateway: SSE connection limit reached")
 )
 
 // sseUnmarshalOpts ignores unknown fields like the polling endpoints' encoding/json decoder.
@@ -109,6 +110,15 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 		envID, envAPIKey.Environment.UrlCode,
 		methodStreamEvaluations, sourceID).Inc()
 
+	// Register before writing headers so we can still return an HTTP error on
+	// connection limit.
+	events, deregister, err := h.dispatcher.register(envID, req.Tag, sourceID)
+	if err != nil {
+		rest.ReturnFailureResponse(w, errServiceUnavailable)
+		return
+	}
+	defer deregister()
+
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		rest.ReturnFailureResponse(w, errInternal)
@@ -122,11 +132,6 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 	flusher.Flush()
 
 	ctx := httpReq.Context()
-
-	// Register before the initial `put` so updates dispatched during the PUT
-	// computation are delivered as the first patch.
-	events, deregister := h.dispatcher.register(envID, req.Tag, sourceID)
-	defer deregister()
 
 	prevUEID := req.GetUserEvaluationsId()
 	evaluatedAt := req.GetEvaluatedAt()
@@ -150,6 +155,8 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-h.dispatcher.shutdownCh:
 			return
 		case <-ticker.C:
 			if err := sendHeartbeat(w, flusher); err != nil {
