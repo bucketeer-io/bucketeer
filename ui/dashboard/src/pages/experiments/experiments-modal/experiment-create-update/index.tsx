@@ -42,6 +42,7 @@ import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
 import FormLoading from 'elements/form-loading';
+import SelectedGoalsList from 'elements/selected-goals-list';
 import VariationLabel from 'elements/variation-label';
 
 interface ExperimentCreateUpdateModalProps {
@@ -178,6 +179,17 @@ const ExperimentCreateUpdateModal = ({
         })) || []
     );
   }, [goalCollection]);
+
+  // Resolve a goal id to its display name, falling back to the experiment's
+  // own goals (covers edit mode / goals outside the first goals page) and
+  // finally the raw id so a row is never blank.
+  const getGoalName = useCallback(
+    (id: string) =>
+      goalOptions.find(goal => goal.value === id)?.label ||
+      experiment?.goals?.find(goal => goal.id === id)?.name ||
+      id,
+    [goalOptions, experiment]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -665,13 +677,11 @@ const ExperimentCreateUpdateModal = ({
                         isLoading={isLoadingGoals}
                         placeholder={t(`experiments.select-goal`)}
                         label={
-                          field.value
-                            ?.map(
-                              item =>
-                                goalOptions.find(goal => goal.value === item)
-                                  ?.label
-                            )
-                            ?.join(', ') || ''
+                          field.value?.length
+                            ? t('experiments.goals-selected', {
+                                count: field.value.length
+                              })
+                            : ''
                         }
                         options={goalOptions}
                         selectedOptions={field.value as string[]}
@@ -695,6 +705,16 @@ const ExperimentCreateUpdateModal = ({
                         }}
                       />
                     </Form.Control>
+                    <SelectedGoalsList
+                      goalIds={field.value as string[]}
+                      getGoalName={getGoalName}
+                      editable={!isEdit && !disabled}
+                      onRemove={id =>
+                        field.onChange(
+                          (field.value as string[])?.filter(item => item !== id)
+                        )
+                      }
+                    />
                     <Form.Message />
                   </Form.Item>
                 )}

@@ -750,6 +750,153 @@ don't, documented here so future reviewers don't have to re-derive them.
 
 ---
 
+## §12 — Sequential (Always-Valid) Inference
+
+### §12.1 The peeking problem
+
+Standard Bayesian experiment analysis — including a fixed `ProbBeatBaseline`
+threshold such as 0.95 — is calibrated for a **single look** at the data.
+When users watch the dashboard daily and stop the experiment as soon as the
+threshold is crossed, they are running an implicit **sequential test** with a
+single-look calibrated stopping rule. This silently inflates the false-positive
+rate (FPR): even under a true null effect, the running maximum of
+`ProbBeatBaseline` will eventually exceed 0.95 given enough looks. In
+simulation, 28 daily looks on a null experiment inflate the FPR from the
+nominal 5% to ~20–25% (and higher with more frequent peeking) — see the
+naive-rule comparison in `sequential_bayes_factor_test.go`.
+
+The sequential Bayes Factor layer closes this gap by providing a stopping
+criterion whose FPR is controlled under **any** stopping rule, including daily
+peeking.
+
+### §12.2 Bayesian sequential Bayes Factors — core guarantee
+
+A Bayes Factor BF₁₀(t) at look t compares the marginal likelihood of the
+accumulated data under H₁ (treatment differs from control) to that under H₀:
+
+```
+BF₁₀(t) = P(data₁,...,dataₜ | H₁) / P(data₁,...,dataₜ | H₀)
+```
+
+Under H₀, the sequence {BF₁₀(t)} is a **non-negative martingale** with
+E[BF₁₀(t) | H₀ prior-predictive] = 1 at every look. Ville's inequality (the
+continuous-time extension of Doob's optional stopping theorem) then gives:
+
+```
+P(max_{t≥1} BF₁₀(t) ≥ K  |  H₀, θ integrated over H₀ prior) ≤ 1/K
+```
+
+The platform uses K = 20, giving a **Bayesian-averaged FPR ≤ 5%** under any
+stopping rule.
+
+**Important caveats:**
+
+- The guarantee is **Bayesian-averaged** (integrated over the H₀ prior on θ),
+  not a per-θ worst-case bound. At extreme fixed θ values the per-θ FPR may
+  deviate from 5%. The multi-θ simulation in `sequential_bayes_factor_test.go`
+  audits θ ∈ {0.01, 0.05, 0.10, 0.30, 0.50}.
+- The BF controls error **per comparison** (each treatment vs baseline arm).
+  With k treatment arms the family-wise FPR inflates roughly linearly.
+  Full multiple-comparisons correction is deferred to a future phase.
+
+References: Grünwald, De Heide & Koolen, "Safe testing", JRSS-B 2024;
+Turner et al., "A tutorial on Bayesian sequential tests using Bayes factors",
+Psychonomic Bulletin & Review 2022; De Heide & Grünwald, "Why optional
+stopping can be harmless for the Bayesian", 2021.
+
+### §12.3 CVR — Beta-Binomial Bayes Factor
+
+For a two-arm CVR comparison (sA successes from nA trials; sB from nB):
+
+```
+H₀: θ_A = θ_B = θ,  θ ~ Beta(1,1)           (no effect; pooled)
+H₁: θ_A ~ Beta(1,1), θ_B ~ Beta(1,1)         (independent arms)
+
+BF₁₀ = B(sA+1, nA−sA+1) · B(sB+1, nB−sB+1)
+        ─────────────────────────────────────────
+        B(sA+sB+1, nA+nB−sA−sB+1)
+```
+
+where B(a,b) = Γ(a)Γ(b)/Γ(a+b), computed in log-space via `math.Lgamma`.
+The Beta(1,1) alternative prior must be fixed before seeing data — deriving it
+from the experiment's own data would void the always-valid guarantee.
+
+### §12.4 Value/user — Normal-Normal Bayes Factor
+
+A direct NIG marginal-likelihood ratio with absolute prior mean μ₀ = 0 suffers
+from Bartlett's paradox: when both arm means are far from 0, H₀ is
+systematically preferred because it pays the prior-mean penalty once. The
+t-statistic approach tests the *difference* δ = x̄_B − x̄_A instead:
+
+```
+H₀: δ = 0              (no treatment effect on the mean difference)
+H₁: δ ~ Normal(0, r²)  (unit-information prior; r = 1.0, fixed)
+
+SE    = sqrt(s²_A/nA + s²_B/nB)       Welch standard error
+t     = (x̄_B − x̄_A) / SE
+n_eff = nA · nB / (nA + nB)
+
+BF₁₀ = sqrt(1/(1 + n_eff·r²)) · exp(t² · n_eff·r² / (2·(1 + n_eff·r²)))
+```
+
+For t ~ N(0,1) under H₀ (large-n limit): E[BF | H₀] = 1 exactly (martingale).
+For finite n the heavier t-distribution tails make it mildly anti-conservative.
+A minimum of **30 goal users per arm** (`minValueBFSampleSize`) is enforced;
+below this threshold the function returns 1.0 (no evidence) to prevent
+spurious stopping decisions on noisy early data.
+
+Reference: Kass & Wasserman, "A reference Bayesian test for nested hypotheses",
+JASA 1995, §5.
+
+### §12.5 Multi-arm all-or-nothing guard
+
+`calcGoalResult` skips value posterior inference for the **entire goal** if
+any variation has zero user count, mean, or variance. `fillSequentialBayesFactors`
+mirrors this: the value BF is set to 1.0 for **all** arms unless every arm
+(including nil/missing entries) has valid sufficient statistics. This prevents
+a decisive BF from one arm from triggering `ValueSafeToStop=true` in a
+multi-arm experiment where another arm's value posterior was skipped.
+
+### §12.6 Power trade-off
+
+| Property | Sequential BF (K=20) | Fixed-horizon (prob > 0.95) |
+|---|---|---|
+| FPR under daily peeking (28 looks, null) | ≤ 5% Bayesian-averaged | ~20–25% |
+| Avg n to decide, small effect | ~1.2–1.3× fixed-horizon | N₀ |
+| Avg n to decide, large effect | ~0.8× (early stop) | N₀ |
+
+The sequential test costs roughly 20–30% more average n for small effects in
+exchange for the always-valid FPR guarantee. For large effects it can terminate
+earlier than a fixed horizon. `safe_to_stop = false` means "more data are
+needed for a peek-proof verdict," not "the experiment is inconclusive."
+`ProbBeatBaseline` continues to show the single-look posterior probability as
+informational context.
+
+### §12.7 Dashboard surface
+
+The `cvr_safe_to_stop` and `value_safe_to_stop` booleans on
+`GoalResult.Summary` drive the confidence banner per goal result:
+
+- **Ready to roll out** (BF ≥ 20): rollout CTA enabled.
+- **Collecting data** (BF < 20): rollout CTA disabled. A tooltip on the ℹ
+  icon explains that the displayed probability is a single-look snapshot and
+  the sequential threshold has not yet been met.
+
+The raw BF values (`cvr_sequential_bayes_factor`, `value_sequential_bayes_factor`
+on `VariationResult`) are exposed in the API for analysts who need the
+underlying number. The banner shows the human-readable verdict only.
+
+### §12.8 Relationship to frequentist confidence sequences
+
+A frequentist complement — mixture sequential probability ratio tests /
+always-valid p-values (Howard et al., "Time-uniform, nonparametric,
+nonasymptotic confidence sequences", AoS 2021; Johari et al., "Always Valid
+Inference", Management Science 2022) — produces always-valid confidence
+intervals and p-values for the lift. This approach pairs naturally with a
+future frequentist analysis option and is deferred until that feature ships.
+
+---
+
 ## Related Documents
 
 - [Experiment Calculator: Code Implementation](./experiment-calculator-code.md) - How these concepts are implemented in Bucketeer's codebase

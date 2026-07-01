@@ -19,7 +19,6 @@ import { Experiment } from '@types';
 import { IconInfo } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
-import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
@@ -28,6 +27,8 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import SelectedGoalsList from 'elements/selected-goals-list';
 import VariationLabel from 'elements/variation-label';
 
 export interface ExperimentSettingsForm {
@@ -81,6 +82,16 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       })) || []
     );
   }, [goalCollection]);
+
+  // Resolve a goal id to its display name, falling back to the experiment's
+  // own goals (covers goals outside the first goals page) and finally the id.
+  const getGoalName = useMemo(
+    () => (id: string) =>
+      goalOptions.find(goal => goal.value === id)?.label ||
+      experiment?.goals?.find(goal => goal.id === id)?.name ||
+      id,
+    [goalOptions, experiment]
+  );
 
   const { data: featureCollection } = useQueryFeatures({
     params: {
@@ -437,25 +448,36 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       />
                     </Form.Label>
                     <Form.Control>
-                      <Form.Control>
-                        <CreatableSelect
-                          disabled
-                          loading={isLoadingGoals}
-                          value={goalOptions.filter(item =>
-                            field.value.includes(item.value)
-                          )}
-                          placeholder={t(`experiments.select-goal`)}
-                          options={goalOptions?.map(goal => ({
-                            label: goal.label,
-                            value: goal.value
-                          }))}
-                          onChange={value =>
-                            field.onChange(value.map(goal => goal.value))
-                          }
-                          onCreateOption={() => {}}
-                        />
-                      </Form.Control>
+                      <DropdownMenuWithSearch
+                        isMultiselect
+                        disabled
+                        isLoading={isLoadingGoals}
+                        placeholder={t(`experiments.select-goal`)}
+                        label={
+                          field.value?.length
+                            ? t('experiments.goals-selected', {
+                                count: field.value.length
+                              })
+                            : ''
+                        }
+                        options={goalOptions}
+                        selectedOptions={field.value as string[]}
+                        onSelectOption={value => {
+                          const isExisted = field.value?.find(
+                            item => item === value
+                          );
+                          field.onChange(
+                            isExisted
+                              ? field.value?.filter(item => item !== value)
+                              : [...field.value, value]
+                          );
+                        }}
+                      />
                     </Form.Control>
+                    <SelectedGoalsList
+                      goalIds={field.value as string[]}
+                      getGoalName={getGoalName}
+                    />
                     <Form.Message />
                   </Form.Item>
                 )}
