@@ -60,6 +60,7 @@ import (
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	uuid "github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
@@ -551,7 +552,30 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cachev3.WithEvictionInterval(*s.apiKeyMemoryCacheEvictionInterval),
 	)
 
-	streamDispatcher := stream.NewDispatcher(*s.sseMaxConnections, logger)
+	// L1→L2 cascade: after CI evicts L1, this repopulates it for subsequent evaluations.
+	featuresL1Cache := cachev3.NewFeaturesCache(inMemoryCache, *s.featuresMemoryCacheTTL)
+	featuresL2Cache := cachev3.NewFeaturesCache(redisV3Cache, 0)
+	streamDispatcher := stream.NewDispatcher(
+		*s.sseMaxConnections,
+		func(envID string) ([]*featureproto.Feature, error) {
+			fs, err := featuresL1Cache.Get(envID)
+			if err == nil {
+				return fs.Features, nil
+			}
+			fs, err = featuresL2Cache.Get(envID)
+			if err != nil {
+				return nil, err
+			}
+			if putErr := featuresL1Cache.Put(fs, envID); putErr != nil {
+				logger.Warn("Failed to repopulate L1 features cache",
+					zap.String("environmentId", envID),
+					zap.Error(putErr),
+				)
+			}
+			return fs.Features, nil
+		},
+		logger,
+	)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()
 	var stopInvalidatorOnce sync.Once

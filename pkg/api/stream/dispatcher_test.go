@@ -84,7 +84,7 @@ func TestDispatcherRegister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(10000, zap.NewNop())
+			d := NewDispatcher(10000, nil, zap.NewNop())
 			for _, r := range tc.clients {
 				_, cancel, err := d.register(r.envID, r.tag, "source1")
 				require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestDispatcherRegisterMaxConns(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(tc.maxConns, zap.NewNop())
+			d := NewDispatcher(tc.maxConns, nil, zap.NewNop())
 			var errCount int
 			for i := 0; i < tc.register; i++ {
 				_, cancel, err := d.register("env-1", "tag-A", "source1")
@@ -138,7 +138,7 @@ func TestDispatcherRegisterMaxConns(t *testing.T) {
 func TestDispatcherRegisterSlotFreedByDeregister(t *testing.T) {
 	t.Parallel()
 	maxConns := 1
-	d := NewDispatcher(maxConns, zap.NewNop())
+	d := NewDispatcher(maxConns, nil, zap.NewNop())
 	_, cancel1, err := d.register("env-1", "tag-A", "source1")
 	require.NoError(t, err)
 
@@ -188,7 +188,7 @@ func TestDispatcherDeregister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(10000, zap.NewNop())
+			d := NewDispatcher(10000, nil, zap.NewNop())
 			cancels := make(map[testConnSpec]func())
 			for env, tagConns := range tc.conns {
 				for tag := range tagConns {
@@ -243,7 +243,7 @@ func TestDispatcherDispatch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(10000, zap.NewNop())
+			d := NewDispatcher(10000, nil, zap.NewNop())
 			chs := make([]<-chan event, len(tc.conns))
 			for i, c := range tc.conns {
 				ch, cancel, err := d.register(c.envID, c.tag, "source1")
@@ -408,7 +408,7 @@ func TestDispatcherHandleEvent(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			d := NewDispatcher(10000, zap.NewNop())
+			d := NewDispatcher(10000, nil, zap.NewNop())
 			ch, cancel, err := d.register(envID, p.clientTag, "source1")
 			require.NoError(t, err)
 			defer cancel()
@@ -488,6 +488,72 @@ func TestDispatcherAffectedTags(t *testing.T) {
 			got := d.affectedTags(&domaineventproto.Event{
 				EntityData:         p.entity,
 				PreviousEntityData: p.previous,
+			})
+			sort.Strings(got)
+			sort.Strings(p.expected)
+			assert.Equal(t, p.expected, got)
+		})
+	}
+}
+
+func TestDispatcherAffectedTagsWithPrerequisites(t *testing.T) {
+	t.Parallel()
+	// dependency: C -> B -> A
+	flagA := &featureproto.Feature{
+		Id:   "flag-A",
+		Tags: []string{"server", "web"},
+	}
+	flagB := &featureproto.Feature{
+		Id:   "flag-B",
+		Tags: []string{"ios", "server"},
+		Prerequisites: []*featureproto.Prerequisite{
+			{FeatureId: "flag-A", VariationId: "var-1"},
+		},
+	}
+	flagC := &featureproto.Feature{
+		Id:   "flag-C",
+		Tags: []string{"android"},
+		Prerequisites: []*featureproto.Prerequisite{
+			{FeatureId: "flag-B", VariationId: "var-1"},
+		},
+	}
+	allFeatures := []*featureproto.Feature{flagA, flagB, flagC}
+	fetcher := func(envID string) ([]*featureproto.Feature, error) {
+		return allFeatures, nil
+	}
+
+	patterns := []struct {
+		desc     string
+		entityID string
+		entity   string
+		expected []string
+	}{
+		{
+			desc:     "includes tags of transitive dependents without duplicates",
+			entityID: "flag-A",
+			entity:   featureTagsJSON(t, "server"),
+			expected: []string{"android", "ios", "server", "web"},
+		},
+		{
+			desc:     "includes tags of direct dependent",
+			entityID: "flag-B",
+			entity:   featureTagsJSON(t, "ios"),
+			expected: []string{"android", "ios", "server"},
+		},
+		{
+			desc:     "no dependents returns only own tags",
+			entityID: "flag-C",
+			entity:   featureTagsJSON(t, "android"),
+			expected: []string{"android"},
+		},
+	}
+	d := &Dispatcher{fetchFeatures: fetcher, logger: zap.NewNop()}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			got := d.affectedTags(&domaineventproto.Event{
+				EntityId:      p.entityID,
+				EnvironmentId: "env-1",
+				EntityData:    p.entity,
 			})
 			sort.Strings(got)
 			sort.Strings(p.expected)
