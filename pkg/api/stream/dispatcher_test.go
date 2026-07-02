@@ -94,6 +94,22 @@ func TestDispatcherRegister(t *testing.T) {
 	}
 }
 
+func TestDispatcherShutdown(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(zap.NewNop())
+
+	d.Shutdown()
+	// Second call must not panic.
+	d.Shutdown()
+
+	select {
+	case <-d.shutdownCh:
+		// Success: shutdownCh is closed, so receivers are unblocked.
+	default:
+		t.Fatal("shutdownCh must be closed after Shutdown")
+	}
+}
+
 func TestDispatcherDeregister(t *testing.T) {
 	t.Parallel()
 	cases := []struct {

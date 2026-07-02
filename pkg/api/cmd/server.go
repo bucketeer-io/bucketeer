@@ -736,6 +736,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// This prevents "context deadline exceeded" errors during high traffic.
 		time.Sleep(propagationDelay)
 
+		// Close all active SSE connections so httpServer.Shutdown returns promptly.
+		streamDispatcher.Shutdown()
+
 		// Shutdown order matters due to dependencies:
 		// 1. apiGateway/httpServer make gRPC calls to the backend server
 		// 2. We MUST drain them BEFORE stopping the backend sever

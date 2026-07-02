@@ -19,13 +19,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
@@ -222,4 +230,66 @@ func TestPatch(t *testing.T) {
 			assert.Equal(t, "new-ueid", got.GetUserEvaluationsId())
 		})
 	}
+}
+
+// Handle blocks in its event loop while the SSE connection is active.
+// Shutdown must unblock it so httpServer.Shutdown is not delayed.
+func TestHandleExitsOnDispatcherShutdown(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(zap.NewNop())
+	handleReturned := startBlockedStreamHandle(t, d)
+
+	d.Shutdown()
+
+	select {
+	case <-handleReturned:
+		// Success: Shutdown unblocked the handler.
+	case <-time.After(time.Second):
+		t.Fatal("Handle is still blocked in its event loop after Dispatcher.Shutdown")
+	}
+}
+
+// startBlockedStreamHandle runs Handle for one SSE connection in a goroutine and waits
+// until the connection is registered. The returned channel is closed when Handle returns.
+func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
+	t.Helper()
+	h := NewEvaluationsHandler(
+		d,
+		time.Hour, // ensure the heartbeat ticker never fires during the test
+		func(_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64) (string, *featureproto.UserEvaluations, error) {
+			return "ueid-1", &featureproto.UserEvaluations{
+				Id:          "ueid-1",
+				Evaluations: []*featureproto.Evaluation{},
+			}, nil
+		},
+		func(_ context.Context, _ *http.Request) (*accountproto.EnvironmentAPIKey, error) {
+			return &accountproto.EnvironmentAPIKey{
+				Environment: &environmentproto.EnvironmentV2{Id: "env-1"},
+			}, nil
+		},
+		prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_request_total"},
+			[]string{"organization_id", "project_id", "project_url_code",
+				"environment_id", "environment_url_code", "method", "source_id"}),
+		zap.NewNop(),
+	)
+
+	body, err := protojson.Marshal(&gatewayproto.StreamEvaluationsRequest{
+		Tag:  "tag-A",
+		User: &userproto.User{Id: "u-1"},
+	})
+	require.NoError(t, err)
+	httpReq := httptest.NewRequest(http.MethodPost, "/stream_evaluations", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	handleReturned := make(chan struct{})
+	go func() {
+		defer close(handleReturned)
+		h.Handle(rec, httpReq)
+	}()
+
+	require.Eventually(t, func() bool {
+		return len(snapshotConnCounts(d)) > 0
+	}, time.Second, 10*time.Millisecond)
+
+	return handleReturned
 }
