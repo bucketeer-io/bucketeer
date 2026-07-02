@@ -152,6 +152,21 @@ func TestDispatcherRegisterSlotFreedByDeregister(t *testing.T) {
 	defer cancel3()
 }
 
+func TestDispatcherShutdown(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, nil, zap.NewNop())
+
+	d.Shutdown()
+	// Second call must not panic.
+	d.Shutdown()
+
+	select {
+	case <-d.shutdownCh:
+	default:
+		t.Fatal("shutdownCh must be closed after Shutdown")
+	}
+}
+
 func TestDispatcherDeregister(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
