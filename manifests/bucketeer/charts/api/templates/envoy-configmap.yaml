@@ -237,6 +237,13 @@ data:
                             route:
                               cluster: api
                               timeout: 60s
+                          # SSE: long-lived stream, no retry
+                          - match:
+                              prefix: /v1/gateway/stream_evaluations
+                            route:
+                              cluster: api-rest-v1
+                              timeout: 0s # hard deadline disabled
+                              idle_timeout: 300s # dead connection cleanup; reset by heartbeat
                           # API REST v1 Gateway routes (Deprecated)
                           - match:
                               prefix: /v1/gateway
