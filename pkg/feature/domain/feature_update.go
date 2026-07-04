@@ -85,6 +85,8 @@ func (f *Feature) Update(
 		}
 	}
 
+	updated.applyVariationValueSchemaUpdate(variationValueSchemaUpdate)
+
 	if err := updated.validateVariationChanges(variationCreationsAndUpdates); err != nil {
 		return nil, err
 	}
@@ -120,8 +122,6 @@ func (f *Feature) Update(
 		return nil, err
 	}
 
-	updated.applyVariationValueSchemaUpdate(variationValueSchemaUpdate)
-
 	if err := updated.applyGranularCRUDChanges(
 		prerequisiteChanges,
 		targetChanges,
@@ -144,6 +144,10 @@ func (f *Feature) Update(
 		return nil, err
 	}
 	if err := updated.applyVariationChanges(variationDeletions); err != nil {
+		return nil, err
+	}
+
+	if err := updated.validateAllVariationValuesAgainstSchema(); err != nil {
 		return nil, err
 	}
 

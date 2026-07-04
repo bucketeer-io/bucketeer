@@ -189,6 +189,7 @@ func TestCreateScheduledFlagChange_WithDetectedConflictsStoredAsConflict(t *test
 			Version: 1,
 			Variations: []*featureproto.Variation{
 				{Id: "var-1", Name: "Variation 1", Value: "true"},
+				{Id: "var-2", Name: "Variation 2", Value: "control"},
 			},
 		},
 	}
@@ -792,6 +793,57 @@ func TestValidateScheduleGap(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateScheduledChangePayloadVariationValueSchema(t *testing.T) {
+	t.Parallel()
+	service := &FeatureService{}
+	feature := &featureproto.Feature{
+		Id:            "feature-id",
+		VariationType: featureproto.Feature_STRING,
+		Variations: []*featureproto.Variation{
+			{Id: "variation-A", Name: "Variation A", Value: "A"},
+			{Id: "variation-B", Name: "Variation B", Value: "B"},
+		},
+		Targets: []*featureproto.Target{
+			{Variation: "variation-A", Users: []string{}},
+			{Variation: "variation-B", Users: []string{}},
+		},
+		DefaultStrategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_FIXED,
+			FixedStrategy: &featureproto.FixedStrategy{
+				Variation: "variation-A",
+			},
+		},
+		OffVariation: "variation-B",
+		VariationValueSchema: &featureproto.VariationValueSchema{
+			Type: featureproto.VariationValueSchema_ENUM,
+			Validator: &featureproto.VariationValueSchema_EnumValidator_{
+				EnumValidator: &featureproto.VariationValueSchema_EnumValidator{
+					Values: []string{"A", "B"},
+				},
+			},
+		},
+	}
+	err := service.validateScheduledChangePayload(
+		context.Background(),
+		&featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Variation: &featureproto.Variation{
+						Id:    "variation-B",
+						Name:  "Variation B",
+						Value: "C",
+					},
+				},
+			},
+		},
+		feature,
+		"ns0",
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "variation value does not match schema")
 }
 
 func TestCreateScheduledFlagChange_ScheduleGapTooClose(t *testing.T) {

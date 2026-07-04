@@ -185,7 +185,7 @@ func TestUpdateVariationValueSchema(t *testing.T) {
 		Description: "Allowed size values",
 		Validator: &feature.VariationValueSchema_EnumValidator_{
 			EnumValidator: &feature.VariationValueSchema_EnumValidator{
-				Values: []string{"small", "large"},
+				Values: []string{"A", "B", "C"},
 			},
 		},
 	}

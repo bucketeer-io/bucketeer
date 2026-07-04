@@ -96,6 +96,12 @@ var (
 		pkgErr.FeaturePackageName, "feature: variation not found", "variation")
 	errVariationTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
 		pkgErr.FeaturePackageName, "feature: variation value and type are unmatched", "variation")
+	errVariationValueSchemaInvalid = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value schema is invalid", "variation_value_schema")
+	errVariationValueSchemaTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value schema and type are unmatched", "variation_value_schema")
+	errVariationValueSchemaViolation = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "variation_value_schema")
 	errStrategyRequired = pkgErr.NewErrorInvalidArgEmpty(
 		pkgErr.FeaturePackageName, "feature: strategy required", "strategy")
 	errUnsupportedStrategy = pkgErr.NewErrorInvalidArgNotMatchFormat(
@@ -185,6 +191,9 @@ func NewFeature(
 	}}
 	if len(variations) < 2 {
 		return nil, errVariationsMustHaveAtLeastTwoVariations
+	}
+	if err := f.validateVariationValueSchema(); err != nil {
+		return nil, err
 	}
 	if defaultOnVariationIndex < 0 || defaultOnVariationIndex >= len(variations) {
 		return nil, errInvalidDefaultOnVariationIndex
@@ -760,7 +769,7 @@ func (f *Feature) validateVariationValue(id, value string) error {
 		}
 	}
 
-	return nil
+	return f.validateVariationValueAgainstSchema(value)
 }
 
 // normalizeJSON parses JSON and returns a canonical representation.

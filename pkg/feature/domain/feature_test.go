@@ -220,7 +220,7 @@ func TestNewFeature(t *testing.T) {
 			id:            "test-feature",
 			name:          "test feature",
 			description:   "test feature description",
-			variationType: ftproto.Feature_BOOLEAN,
+			variationType: ftproto.Feature_STRING,
 			variationValueSchema: &ftproto.VariationValueSchema{
 				Type: ftproto.VariationValueSchema_ENUM,
 				Validator: &ftproto.VariationValueSchema_EnumValidator_{
