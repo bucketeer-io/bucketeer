@@ -97,9 +97,9 @@ Notes:
 
 | RPC | HTTP | Description |
 |---|---|---|
-| `ListNotifications` | `GET /v1/notifications` | Lists notifications with keyword search, read/unread filter, published date range filter, sorting, and pagination. Non-admins always receive published notifications only; system admins can additionally filter by `status` to browse drafts. |
+| `ListNotifications` | `GET /v1/notifications` | Lists published notifications with keyword search, read/unread filter (`read_status`), published date range filter, sorting, and pagination; returns the list and its total count. The notification page calls it once per tab (unread, then read) and uses each `total_count` for the tab counters. |
 | `GetNotification` | `GET /v1/notification?id=` | Gets a single notification for the detail panel. Drafts are visible to system admins only. |
-| `GetNotificationUnreadCount` | `GET /v1/notifications/unread_count` | Returns the viewer's unread count, used for the bell badge and the "Unread (n)" tab counter. |
+| `GetNotificationUnreadCount` | `GET /v1/notifications/unread_count` | Returns the viewer's unread count, used for the bell badge. |
 | `MarkNotificationsAsRead` | `POST /v1/notifications/mark_as_read` | Marks the given notification ids as read for the viewer. Idempotent. |
 | `MarkAllNotificationsAsRead` | `POST /v1/notifications/mark_all_as_read` | Marks all published notifications as read for the viewer. |
 
@@ -107,12 +107,11 @@ Notes:
 
 | RPC | HTTP | Description |
 |---|---|---|
+| `ListDraftNotifications` | `GET /v1/notifications/drafts` | Lists draft notifications with keyword search, sorting, and pagination; returns the list and its total count. Backs the drafts panel in the "Publish notification" tab; ordered by `created_at` or `updated_at` since drafts have no `published_at`. |
 | `CreateNotification` | `POST /v1/notification` | Creates a draft with title, Markdown content, and tags. |
 | `UpdateNotification` | `PATCH /v1/notification` | Updates a draft's title, content, or tags; published notifications cannot be edited. |
 | `PublishNotification` | `POST /v1/notification/publish` | Publishes a draft; sets `published_at` and `published_by`. |
 | `DeleteNotification` | `DELETE /v1/notification?id=` | Deletes a notification along with its read markers. |
-
-The drafts panel in the "Publish notification" tab is backed by `ListNotifications` with the admin-only `status=DRAFT` filter. Since drafts have `published_at = 0`, the draft listing orders by `created_at` or `updated_at` instead of `published_at`.
 
 ### 4.3 Sequence Diagrams
 
