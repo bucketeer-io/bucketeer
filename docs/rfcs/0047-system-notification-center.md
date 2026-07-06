@@ -52,7 +52,7 @@ pkg/notification/
 
 ### 4.1 Database Design
 
-Two tables, added to both `migration/mysql/` and `migration/postgres/` (Atlas, `YYYYMMDDHHMMSS_create_notification_tables.sql`).
+Two tables, added to both `migration/mysql/` and `migration/postgres/` (Atlas, `YYYYMMDDHHMMSS_create_notification_tables.sql`). The DDL below is the MySQL version; the PostgreSQL migration uses the equivalent types and syntax (`text` instead of `mediumtext`, `jsonb` instead of `json`, no backticks, and separate `CREATE INDEX` statements instead of inline `KEY`).
 
 ```sql
 CREATE TABLE `notification` (
@@ -86,7 +86,7 @@ CREATE TABLE `notification_read` (
 Notes:
 
 - **`tags` as JSON** keeps the schema simple; the tag palette (name + color pairs shown in the mockup) is a fixed set defined in the console for v1. If tags later need server-side management, a `notification_tag` master table can be added without touching this schema.
-- **`email` as viewer identity**: accounts are keyed by email across organizations (`account_v2.email`), and the JWT carries `Email`, so read state naturally spans organizations for the same person.
+- **`email` as viewer identity**: `account_v2` is keyed by `(email, organization_id)`, so one person has one account row per organization — but all of them share the same email, and the access token carries a single `Email` for the person. Keying read state by email therefore gives one shared read state across organizations for the same person.
 - **Growth**: `notification` grows by human-authored rows (tens per month). `notification_read` grows by at most `users × notifications` and only when a user actually reads — negligible at Bucketeer's console-user scale.
 - Deleting a notification cascades its read markers. (If we prefer avoiding FKs like the `team` table does, the storage layer deletes both rows in one transaction instead.)
 
@@ -190,4 +190,4 @@ Phases 2 and 3 can proceed in parallel once the proto contract (phase 1) is merg
 - **Tag management**: currently no table split.
 - **Targeting**: maybe in the future.
 - **Retention**: no automatic expiry. If the inbox grows noisy, add an `archived` status and a batch job later; the "Last 30 days" default filter mitigates this in the UI.
-- **Auditlog**: the `notification` table has `created_by`, `last_edited_by`, and `published_by` columns, which are sufficient for auditing. But in the future we will develop admin audit log so this will be added.
+- **Auditlog**: for v1, the `created_by`, `last_edited_by`, and `published_by` columns on the `notification` table are sufficient for auditing. Once the admin audit log is developed, this domain will also emit audit-log events for admin mutations (create, update, publish, delete).
