@@ -1,9 +1,9 @@
-import { useTranslation } from 'i18n';
+import { Trans } from 'react-i18next';
+import { FEATURE_RECENT_TRAFFIC_DAYS } from 'constants/feature-flag';
 import { IconToastWarning } from '@icons';
 import Icon from 'components/icon';
 
 const ArchiveWarning = () => {
-  const { t } = useTranslation(['table']);
   return (
     <div className="flex items-center w-full p-4 gap-x-2 rounded-xl bg-accent-yellow-50 text-accent-yellow-500 typo-para-medium">
       <Icon
@@ -12,7 +12,13 @@ const ArchiveWarning = () => {
         color="accent-yellow-500"
         className="flex-center"
       />
-      <div>{t('feature-flags.archive-warning')}</div>
+      <div>
+        <Trans
+          i18nKey="table:feature-flags.archive-warning"
+          values={{ days: FEATURE_RECENT_TRAFFIC_DAYS }}
+          components={{ text: <span /> }}
+        />
+      </div>
     </div>
   );
 };
