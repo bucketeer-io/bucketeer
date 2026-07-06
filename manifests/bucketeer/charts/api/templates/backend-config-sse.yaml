@@ -1,0 +1,21 @@
+{{- if .Values.env.gcpEnabled }}
+# Mirrors backend-config.yaml; only timeoutSec differs.
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: {{ template "api.fullname" . }}-sse
+  namespace: {{ .Values.namespace }}
+spec:
+  healthCheck:
+    requestPath: /health
+    type: HTTP2
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 1
+  # Hard deadline; NOT reset by heartbeat.
+  # https://docs.cloud.google.com/load-balancing/docs/backend-service#timeout-setting
+  timeoutSec: {{ .Values.sse.backendConfig.timeoutSec }}
+  connectionDraining:
+    drainingTimeoutSec: 60
+{{- end }}

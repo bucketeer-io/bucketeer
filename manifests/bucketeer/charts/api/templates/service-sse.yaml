@@ -1,0 +1,26 @@
+# Mirrors service.yaml with changes:
+# backendConfig->api-sse, no metrics/admin ports, no envoy/metrics labels.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "api.fullname" . }}-sse
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cloud.google.com/app-protocols: '{"service":"HTTP2"}'
+    cloud.google.com/neg: '{"ingress": true}'
+    beta.cloud.google.com/backend-config: '{"default": "{{ template "api.fullname" . }}-sse"}'
+  labels:
+    app: {{ template "api.name" . }}
+    chart: {{ template "api.chart" . }}
+    release: {{ template "api.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: service
+      port: {{ .Values.service.externalPort }}
+      targetPort: {{ .Values.envoy.port }}
+      protocol: TCP
+  selector:
+    app: {{ template "api.name" . }}
+    release: {{ template "api.fullname" . }}

@@ -123,11 +123,21 @@ envoy:
 service:
   type: ClusterIP
   externalPort: 9000
+sse:
+  backendConfig:
+    timeoutSec: 86400
 ingress:
   name: api
   host:
   staticIPName:
   rulePaths:
+    - path: /v1/gateway/stream_evaluations
+      pathType: ImplementationSpecific
+      backend:
+        service:
+          name: api-sse
+          port:
+            number: 9000
     - pathType: ImplementationSpecific
       backend:
         service:
@@ -158,12 +168,18 @@ gcpMultiCluster:
   enabled: false
   service:
     name: api-multi-cluster-service
+  sseService:
+    name: api-sse-multi-cluster-service
   ingress:
     name: api-multi-cluster-ingress
     host:
     staticIPName:
     secretName:
     rulePaths:
+      - path: /v1/gateway/stream_evaluations
+        backend:
+          serviceName: api-sse-multi-cluster-service
+          servicePort: 9000
       - path: /
         backend:
           serviceName: api-multi-cluster-service
