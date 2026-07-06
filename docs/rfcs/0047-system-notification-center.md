@@ -97,9 +97,8 @@ Notes:
 
 | RPC | HTTP | Description |
 |---|---|---|
-| `ListNotifications` | `GET /v1/notifications` | Lists published notifications with keyword search, read/unread filter (`read_status`), published date range filter, sorting, and pagination; returns the list and its total count. The notification page calls it once per tab (unread, then read) and uses each `total_count` for the tab counters. |
+| `ListNotifications` | `GET /v1/notifications` | Lists published notifications with keyword search, read/unread filter (`read_status`), published date range filter, sorting, and pagination; returns the list and its total count. The notification page calls it once per tab (unread, then read) and uses each `total_count` for the tab counters; the bell badge uses the unread call's `total_count`. |
 | `GetNotification` | `GET /v1/notification?id=` | Gets a single notification for the detail panel. Drafts are visible to system admins only. |
-| `GetNotificationUnreadCount` | `GET /v1/notifications/unread_count` | Returns the viewer's unread count, used for the bell badge. |
 | `MarkNotificationsAsRead` | `POST /v1/notifications/mark_as_read` | Marks the given notification ids as read for the viewer. Idempotent. |
 | `MarkAllNotificationsAsRead` | `POST /v1/notifications/mark_all_as_read` | Marks all published notifications as read for the viewer. |
 
@@ -156,13 +155,10 @@ sequenceDiagram
 
     rect rgb(230, 240, 255)
     Note over C,DB: 1. Bell badge + dropdown
-    C->>GW: GET /v1/notifications/unread_count
-    GW->>S: GetNotificationUnreadCount
-    S->>DB: COUNT published LEFT JOIN read WHERE read.email IS NULL
-    S-->>C: {count: 3}
     C->>GW: GET /v1/notifications?read_status=UNREAD&page_size=5
+    GW->>S: ListNotifications
     S->>DB: anti-join list, ORDER BY published_at DESC
-    S-->>C: latest unread notifications
+    S-->>C: latest unread notifications + total_count (badge)
     end
 
     rect rgb(230, 250, 235)
