@@ -46,7 +46,7 @@ pkg/notification/
 ```
 
 - Registered in `pkg/web/cmd/server/server.go` as a new gRPC service plus a grpc-gateway handler (`RegisterNotificationServiceHandlerFromEndpoint`), exposed under `/v1/notification*` on the web gateway.
-- Read state is a per-user marker row; **unread = published notification without a marker row for the viewer's email**. No fan-out rows are written at publish time, so publishing is O(1) regardless of user count.
+- Read state is a per-user marker row; **unread = published notification without a marker row for the viewer's email**, limited to notifications published after the viewer's account was created. No fan-out rows are written at publish time, so publishing is O(1) regardless of user count.
 
 ## 4. Design Details
 
@@ -87,6 +87,7 @@ Notes:
 
 - **`tags` as JSON** keeps the schema simple; the tag palette (name + color pairs shown in the mockup) is a fixed set defined in the console for v1. If tags later need server-side management, a `notification_tag` master table can be added without touching this schema.
 - **`email` as viewer identity**: `account_v2` is keyed by `(email, organization_id)`, so one person has one account row per organization — but all of them share the same email, and the access token carries a single `Email` for the person. Keying read state by email therefore gives one shared read state across organizations for the same person.
+- **New users do not inherit history**: the unread definition (badge count and Unread tab) only considers notifications published after the viewer's earliest `account_v2.created_at`. Without this bound, someone joining after a year of announcements would start with hundreds of unread items and a meaningless badge.
 - **Growth**: `notification` grows by human-authored rows (tens per month). `notification_read` grows by at most `users × notifications` and only when a user actually reads — negligible at Bucketeer's console-user scale.
 - Deleting a notification cascades its read markers. (If we prefer avoiding FKs like the `team` table does, the storage layer deletes both rows in one transaction instead.)
 
@@ -96,7 +97,7 @@ Notes:
 
 | RPC | HTTP | Description |
 |---|---|---|
-| `ListNotifications` | `GET /v1/notifications` | Lists notifications with keyword search, read/unread filter, published date range filter, sorting, and pagination. |
+| `ListNotifications` | `GET /v1/notifications` | Lists notifications with keyword search, read/unread filter, published date range filter, sorting, and pagination. Non-admins always receive published notifications only; system admins can additionally filter by `status` to browse drafts. |
 | `GetNotification` | `GET /v1/notification?id=` | Gets a single notification for the detail panel. Drafts are visible to system admins only. |
 | `GetNotificationUnreadCount` | `GET /v1/notifications/unread_count` | Returns the viewer's unread count, used for the bell badge and the "Unread (n)" tab counter. |
 | `MarkNotificationsAsRead` | `POST /v1/notifications/mark_as_read` | Marks the given notification ids as read for the viewer. Idempotent. |
@@ -110,6 +111,8 @@ Notes:
 | `UpdateNotification` | `PATCH /v1/notification` | Updates a draft's title, content, or tags; published notifications cannot be edited. |
 | `PublishNotification` | `POST /v1/notification/publish` | Publishes a draft; sets `published_at` and `published_by`. |
 | `DeleteNotification` | `DELETE /v1/notification?id=` | Deletes a notification along with its read markers. |
+
+The drafts panel in the "Publish notification" tab is backed by `ListNotifications` with the admin-only `status=DRAFT` filter. Since drafts have `published_at = 0`, the draft listing orders by `created_at` or `updated_at` instead of `published_at`.
 
 ### 4.3 Sequence Diagrams
 
