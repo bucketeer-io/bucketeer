@@ -241,7 +241,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("feature:9090").String(),
 		subscriptionService: cmd.Flag(
 			"notification-service",
-			"bucketeer-notification-service address.",
+			"bucketeer-subscription-service address.",
 		).Default("notification:9090").String(),
 		experimentCalculatorService: cmd.Flag(
 			"experiment-calculator-service",

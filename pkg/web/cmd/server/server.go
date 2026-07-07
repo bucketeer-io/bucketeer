@@ -380,7 +380,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("9098").Int(),
 		subscriptionServicePort: cmd.Flag(
 			"notification-service-port",
-			"Port to bind to notification service.",
+			"Port to bind to subscription service.",
 		).Default("9100").Int(),
 		pushServicePort: cmd.Flag(
 			"push-service-port",
@@ -1027,7 +1027,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		subscriptionapi.WithLogger(logger),
 	)
 	subscriptionServer := rpc.NewServer(subscriptionService, *s.certPath, *s.keyPath,
-		"notification-server",
+		"subscription-server",
 		rpc.WithPort(*s.subscriptionServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
