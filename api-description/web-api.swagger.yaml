@@ -8308,7 +8308,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/notificationGetSubscriptionResponse'
+            $ref: '#/definitions/subscriptionGetSubscriptionResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -8359,7 +8359,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/notificationDeleteSubscriptionResponse'
+            $ref: '#/definitions/subscriptionDeleteSubscriptionResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -8419,7 +8419,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/notificationCreateSubscriptionResponse'
+            $ref: '#/definitions/subscriptionCreateSubscriptionResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -8456,7 +8456,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/notificationCreateSubscriptionRequest'
+            $ref: '#/definitions/subscriptionCreateSubscriptionRequest'
       tags:
         - subscription
     patch:
@@ -8467,7 +8467,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/notificationUpdateSubscriptionResponse'
+            $ref: '#/definitions/subscriptionUpdateSubscriptionResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -8504,7 +8504,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/notificationUpdateSubscriptionRequest'
+            $ref: '#/definitions/subscriptionUpdateSubscriptionRequest'
       tags:
         - subscription
   /v1/subscriptions:
@@ -8516,7 +8516,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/notificationListSubscriptionsResponse'
+            $ref: '#/definitions/subscriptionListSubscriptionsResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -13660,244 +13660,6 @@ definitions:
           type: object
           $ref: '#/definitions/insightsMonthlySummaryDataPoint'
         title: Sorted by yearmonth ascending
-  notificationAddAdminSubscriptionSourceTypesCommand:
-    type: object
-    properties:
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-  notificationCreateAdminSubscriptionCommand:
-    type: object
-    properties:
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-      recipient:
-        $ref: '#/definitions/notificationRecipient'
-      name:
-        type: string
-  notificationCreateAdminSubscriptionResponse:
-    type: object
-  notificationCreateSubscriptionRequest:
-    type: object
-    properties:
-      environmentId:
-        type: string
-      name:
-        type: string
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-      recipient:
-        $ref: '#/definitions/notificationRecipient'
-      featureFlagTags:
-        type: array
-        items:
-          type: string
-    required:
-      - environmentId
-      - name
-      - sourceTypes
-      - recipient
-  notificationCreateSubscriptionResponse:
-    type: object
-    properties:
-      subscription:
-        $ref: '#/definitions/notificationSubscription'
-  notificationDeleteAdminSubscriptionCommand:
-    type: object
-  notificationDeleteAdminSubscriptionResponse:
-    type: object
-  notificationDeleteAdminSubscriptionSourceTypesCommand:
-    type: object
-    properties:
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-  notificationDeleteSubscriptionResponse:
-    type: object
-  notificationDisableAdminSubscriptionCommand:
-    type: object
-  notificationDisableAdminSubscriptionResponse:
-    type: object
-  notificationEnableAdminSubscriptionCommand:
-    type: object
-  notificationEnableAdminSubscriptionResponse:
-    type: object
-  notificationGetAdminSubscriptionResponse:
-    type: object
-    properties:
-      subscription:
-        $ref: '#/definitions/notificationSubscription'
-  notificationGetSubscriptionResponse:
-    type: object
-    properties:
-      subscription:
-        $ref: '#/definitions/notificationSubscription'
-  notificationListAdminSubscriptionsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - NAME
-      - CREATED_AT
-      - UPDATED_AT
-    default: DEFAULT
-  notificationListAdminSubscriptionsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
-  notificationListAdminSubscriptionsResponse:
-    type: object
-    properties:
-      subscriptions:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationSubscription'
-      cursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
-  notificationListEnabledAdminSubscriptionsResponse:
-    type: object
-    properties:
-      subscriptions:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationSubscription'
-      cursor:
-        type: string
-  notificationListEnabledSubscriptionsResponse:
-    type: object
-    properties:
-      subscriptions:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationSubscription'
-      cursor:
-        type: string
-  notificationListSubscriptionsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - NAME
-      - CREATED_AT
-      - UPDATED_AT
-      - ENVIRONMENT
-      - STATE
-    default: DEFAULT
-  notificationListSubscriptionsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
-  notificationListSubscriptionsResponse:
-    type: object
-    properties:
-      subscriptions:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationSubscription'
-      cursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
-  notificationRecipient:
-    type: object
-    properties:
-      type:
-        $ref: '#/definitions/notificationRecipientType'
-      slackChannelRecipient:
-        $ref: '#/definitions/notificationSlackChannelRecipient'
-      language:
-        $ref: '#/definitions/RecipientLanguage'
-  notificationRecipientType:
-    type: string
-    enum:
-      - SlackChannel
-    default: SlackChannel
-  notificationRenameAdminSubscriptionCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  notificationSlackChannelRecipient:
-    type: object
-    properties:
-      webhookUrl:
-        type: string
-  notificationSubscription:
-    type: object
-    properties:
-      id:
-        type: string
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      disabled:
-        type: boolean
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-      recipient:
-        $ref: '#/definitions/notificationRecipient'
-      name:
-        type: string
-      environmentId:
-        type: string
-      environmentName:
-        type: string
-      featureFlagTags:
-        type: array
-        items:
-          type: string
-  notificationUpdateAdminSubscriptionResponse:
-    type: object
-  notificationUpdateSubscriptionRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      environmentId:
-        type: string
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-      name:
-        type: string
-      disabled:
-        type: boolean
-        description: if true, the subscription is disabled, otherwise enabled.
-        title: disabled
-      featureFlagTags:
-        type: array
-        items:
-          type: string
-    required:
-      - id
-      - environmentId
-  notificationUpdateSubscriptionResponse:
-    type: object
-    properties:
-      subscription:
-        $ref: '#/definitions/notificationSubscription'
   protobufAny:
     type: object
     properties:
@@ -14128,6 +13890,244 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  subscriptionAddAdminSubscriptionSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  subscriptionCreateAdminSubscriptionCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/subscriptionRecipient'
+      name:
+        type: string
+  subscriptionCreateAdminSubscriptionResponse:
+    type: object
+  subscriptionCreateSubscriptionRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      name:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/subscriptionRecipient'
+      featureFlagTags:
+        type: array
+        items:
+          type: string
+    required:
+      - environmentId
+      - name
+      - sourceTypes
+      - recipient
+  subscriptionCreateSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/subscriptionSubscription'
+  subscriptionDeleteAdminSubscriptionCommand:
+    type: object
+  subscriptionDeleteAdminSubscriptionResponse:
+    type: object
+  subscriptionDeleteAdminSubscriptionSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  subscriptionDeleteSubscriptionResponse:
+    type: object
+  subscriptionDisableAdminSubscriptionCommand:
+    type: object
+  subscriptionDisableAdminSubscriptionResponse:
+    type: object
+  subscriptionEnableAdminSubscriptionCommand:
+    type: object
+  subscriptionEnableAdminSubscriptionResponse:
+    type: object
+  subscriptionGetAdminSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/subscriptionSubscription'
+  subscriptionGetSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/subscriptionSubscription'
+  subscriptionListAdminSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  subscriptionListAdminSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  subscriptionListAdminSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/subscriptionSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  subscriptionListEnabledAdminSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/subscriptionSubscription'
+      cursor:
+        type: string
+  subscriptionListEnabledSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/subscriptionSubscription'
+      cursor:
+        type: string
+  subscriptionListSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - ENVIRONMENT
+      - STATE
+    default: DEFAULT
+  subscriptionListSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  subscriptionListSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/subscriptionSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  subscriptionRecipient:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/subscriptionRecipientType'
+      slackChannelRecipient:
+        $ref: '#/definitions/subscriptionSlackChannelRecipient'
+      language:
+        $ref: '#/definitions/RecipientLanguage'
+  subscriptionRecipientType:
+    type: string
+    enum:
+      - SlackChannel
+    default: SlackChannel
+  subscriptionRenameAdminSubscriptionCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  subscriptionSlackChannelRecipient:
+    type: object
+    properties:
+      webhookUrl:
+        type: string
+  subscriptionSubscription:
+    type: object
+    properties:
+      id:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      disabled:
+        type: boolean
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/subscriptionRecipient'
+      name:
+        type: string
+      environmentId:
+        type: string
+      environmentName:
+        type: string
+      featureFlagTags:
+        type: array
+        items:
+          type: string
+  subscriptionUpdateAdminSubscriptionResponse:
+    type: object
+  subscriptionUpdateSubscriptionRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      name:
+        type: string
+      disabled:
+        type: boolean
+        description: if true, the subscription is disabled, otherwise enabled.
+        title: disabled
+      featureFlagTags:
+        type: array
+        items:
+          type: string
+    required:
+      - id
+      - environmentId
+  subscriptionUpdateSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/subscriptionSubscription'
   tagCreateTagRequest:
     type: object
     properties:

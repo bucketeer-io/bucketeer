@@ -32,8 +32,8 @@ import "proto/account/api_key.proto";
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
 import "proto/autoops/service.proto";
-import "proto/notification/subscription.proto";
-import "proto/notification/recipient.proto";
+import "proto/subscription/subscription.proto";
+import "proto/subscription/recipient.proto";
 import "proto/feature/prerequisite.proto";
 import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
@@ -1017,8 +1017,8 @@ message PushUpdatedEvent {
 }
 
 message SubscriptionCreatedEvent {
-  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
-  bucketeer.notification.Recipient recipient = 2;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 1;
+  bucketeer.subscription.Recipient recipient = 2;
   string name = 3;
   repeated string feature_flag_tags = 4;
 }
@@ -1030,11 +1030,11 @@ message SubscriptionEnabledEvent {}
 message SubscriptionDisabledEvent {}
 
 message SubscriptionSourceTypesAddedEvent {
-  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 1;
 }
 
 message SubscriptionSourceTypesDeletedEvent {
-  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 1;
 }
 
 message SubscriptionRenamedEvent {
@@ -1048,14 +1048,14 @@ message SubscriptionFeatureFlagTagsUpdatedEvent {
 message SubscriptionUpdatedEvent {
   string id = 1;
   google.protobuf.StringValue name = 2;
-  repeated bucketeer.notification.Subscription.SourceType source_types = 3;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 3;
   google.protobuf.BoolValue disabled = 4;
   repeated string feature_flag_tags = 5;
 }
 
 message AdminSubscriptionCreatedEvent {
-  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
-  bucketeer.notification.Recipient recipient = 2;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 1;
+  bucketeer.subscription.Recipient recipient = 2;
   string name = 3;
 }
 
@@ -1066,11 +1066,11 @@ message AdminSubscriptionEnabledEvent {}
 message AdminSubscriptionDisabledEvent {}
 
 message AdminSubscriptionSourceTypesAddedEvent {
-  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 1;
 }
 
 message AdminSubscriptionSourceTypesDeletedEvent {
-  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+  repeated bucketeer.subscription.Subscription.SourceType source_types = 1;
 }
 
 message AdminSubscriptionRenamedEvent {

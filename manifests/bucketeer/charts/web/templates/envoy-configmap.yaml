@@ -719,7 +719,7 @@ data:
                                   retry_on: 5xx
                                   num_retries: 3
                             - match:
-                                prefix: /bucketeer.notification.NotificationService
+                                prefix: /bucketeer.subscription.SubscriptionService
                               route:
                                 cluster: notification
                                 timeout: 60s
@@ -932,7 +932,7 @@ data:
                                   retry_on: 5xx
                                   num_retries: 3
                             - match:
-                                prefix: /bucketeer.notification.NotificationService
+                                prefix: /bucketeer.subscription.SubscriptionService
                               route:
                                 cluster: notification
                                 timeout: 60s

@@ -1,0 +1,462 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package postgres
+
+import (
+	"context"
+	"errors"
+	"strconv"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
+	v2ns "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+)
+
+func TestNewSubscriptionStorage(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	client := mock.NewMockClient(mockController)
+	storage := NewSubscriptionStorage(client)
+	assert.IsType(t, &subscriptionStorage{}, storage)
+}
+
+func TestCreateSubscription(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "id-0"
+	sourceTypes := []proto.Subscription_SourceType{5}
+	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
+	name := "name-0"
+	featureFlagTags := []string{"tag"}
+	envNamespace := "ns"
+	patterns := []struct {
+		desc          string
+		setup         func(*subscriptionStorage)
+		input         *domain.Subscription
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc: "ErrSubscriptionAlreadyExists",
+			setup: func(s *subscriptionStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, postgres.ErrDuplicateEntry)
+
+			},
+			input: &domain.Subscription{
+				Subscription: &proto.Subscription{Id: id},
+			},
+			environmentId: "ns",
+			expectedErr:   v2ns.ErrSubscriptionAlreadyExists,
+		},
+		{
+			desc: "Error",
+			setup: func(s *subscriptionStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+
+			},
+			input: &domain.Subscription{
+				Subscription: &proto.Subscription{Id: id},
+			},
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *subscriptionStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					gomock.Any(),
+					id, int64(1), int64(2), false, postgres.JSONObject{Val: sourceTypes}, postgres.JSONObject{Val: recipient}, name, postgres.JSONObject{Val: featureFlagTags}, envNamespace,
+				).Return(nil, nil)
+			},
+			input: &domain.Subscription{
+				Subscription: &proto.Subscription{
+					Id:          id,
+					CreatedAt:   1,
+					UpdatedAt:   2,
+					Disabled:    false,
+					SourceTypes: sourceTypes,
+					Recipient:   recipient,
+					Name:        name, FeatureFlagTags: featureFlagTags,
+				},
+			},
+			environmentId: envNamespace,
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newsubscriptionStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.CreateSubscription(context.Background(), p.input, p.environmentId)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateSubscription(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "id-0"
+	sourceTypes := []proto.Subscription_SourceType{5}
+	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
+	name := "name-0"
+	featureFlagTags := []string{"tag"}
+	envNamespace := "ns"
+	patterns := []struct {
+		desc          string
+		setup         func(*subscriptionStorage)
+		input         *domain.Subscription
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc: "ErrSubscriptionUnexpectedAffectedRows",
+			setup: func(s *subscriptionStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			input: &domain.Subscription{
+				Subscription: &proto.Subscription{Id: id},
+			},
+			environmentId: envNamespace,
+			expectedErr:   v2ns.ErrSubscriptionUnexpectedAffectedRows,
+		},
+		{
+			desc: "Error",
+			setup: func(s *subscriptionStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			input: &domain.Subscription{
+				Subscription: &proto.Subscription{Id: id},
+			},
+			environmentId: envNamespace,
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *subscriptionStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					gomock.Any(),
+					int64(2), false, postgres.JSONObject{Val: sourceTypes}, postgres.JSONObject{Val: recipient}, name, postgres.JSONObject{Val: featureFlagTags}, id, envNamespace,
+				).Return(result, nil)
+			},
+			input: &domain.Subscription{
+				Subscription: &proto.Subscription{
+					Id:              id,
+					CreatedAt:       1,
+					UpdatedAt:       2,
+					Disabled:        false,
+					SourceTypes:     sourceTypes,
+					Recipient:       recipient,
+					Name:            name,
+					FeatureFlagTags: featureFlagTags,
+				},
+			},
+			environmentId: envNamespace,
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newsubscriptionStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.UpdateSubscription(context.Background(), p.input, p.environmentId)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestDeleteSubscription(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "id-0"
+	envNamespace := "ns"
+	patterns := []struct {
+		desc          string
+		setup         func(*subscriptionStorage)
+		id            string
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc: "ErrSubscriptionUnexpectedAffectedRows",
+			setup: func(s *subscriptionStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   v2ns.ErrSubscriptionUnexpectedAffectedRows,
+		},
+		{
+			desc: "Error",
+			setup: func(s *subscriptionStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+
+			},
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *subscriptionStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					gomock.Any(),
+					id, envNamespace,
+				).Return(result, nil)
+			},
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newsubscriptionStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.DeleteSubscription(context.Background(), p.id, p.environmentId)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestGetSubscription(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "id-0"
+	envNamespace := "ns"
+	patterns := []struct {
+		desc          string
+		setup         func(*subscriptionStorage)
+		id            string
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc: "ErrSubscriptionNotFound",
+			setup: func(s *subscriptionStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   v2ns.ErrSubscriptionNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *subscriptionStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+
+			},
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *subscriptionStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Any(),
+					id, envNamespace,
+				).Return(row)
+			},
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newsubscriptionStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			_, err := storage.GetSubscription(context.Background(), p.id, p.environmentId)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestListSubscriptions(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	getSize := 2
+	offset := 5
+	patterns := []struct {
+		desc           string
+		setup          func(*subscriptionStorage)
+		params         v2ns.ListSubscriptionsParams
+		expectedCount  int
+		expectedCursor int
+		expectedErr    error
+	}{
+		{
+			desc:           "ErrInvalidCursor",
+			setup:          nil,
+			params:         v2ns.ListSubscriptionsParams{Cursor: "invalid"},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    v2ns.ErrInvalidCursor,
+		},
+		{
+			desc:           "ErrInvalidOrderBy",
+			setup:          nil,
+			params:         v2ns.ListSubscriptionsParams{OrderBy: proto.ListSubscriptionsRequest_OrderBy(-1)},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    v2ns.ErrInvalidOrderBy,
+		},
+		{
+			desc: "Error",
+			setup: func(s *subscriptionStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			params:         v2ns.ListSubscriptionsParams{},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *subscriptionStorage) {
+				var nextCallCount = 0
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					nextCallCount++
+					return nextCallCount <= getSize
+				}).Times(getSize + 1)
+				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mock.NewMockRow(mockController)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+			},
+			params: v2ns.ListSubscriptionsParams{
+				EnvironmentIDs: []string{"ns0"},
+				Cursor:         strconv.Itoa(offset),
+			},
+			expectedCount:  getSize,
+			expectedCursor: offset + getSize,
+			expectedErr:    nil,
+		},
+		{
+			desc: "Success: no filters",
+			setup: func(s *subscriptionStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			params:         v2ns.ListSubscriptionsParams{},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newsubscriptionStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			subscriptions, cursor, _, err := storage.ListSubscriptions(
+				context.Background(),
+				p.params,
+			)
+			assert.Equal(t, p.expectedCount, len(subscriptions))
+			if subscriptions != nil {
+				assert.IsType(t, []*proto.Subscription{}, subscriptions)
+			}
+			assert.Equal(t, p.expectedCursor, cursor)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func newsubscriptionStorageWithMock(t *testing.T, mockController *gomock.Controller) *subscriptionStorage {
+	t.Helper()
+	return &subscriptionStorage{mock.NewMockQueryExecer(mockController)}
+}

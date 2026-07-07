@@ -264,7 +264,7 @@ data:
                                   - name: content-type
                                     string_match:
                                       exact: application/grpc
-                                prefix: /bucketeer.notification.NotificationService
+                                prefix: /bucketeer.subscription.SubscriptionService
                               route:
                                 cluster: web
                                 retry_policy:

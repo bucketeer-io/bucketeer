@@ -6025,7 +6025,7 @@ definitions:
         items:
           $ref: '#/definitions/SubscriptionSourceType'
       recipient:
-        $ref: '#/definitions/notificationRecipient'
+        $ref: '#/definitions/subscriptionRecipient'
       featureFlagTags:
         type: array
         items:
@@ -6038,7 +6038,7 @@ definitions:
     type: object
     properties:
       subscription:
-        $ref: '#/definitions/notificationSubscription'
+        $ref: '#/definitions/subscriptionSubscription'
   bucketeergatewayCreateTagRequest:
     type: object
     properties:
@@ -6279,7 +6279,7 @@ definitions:
     type: object
     properties:
       subscription:
-        $ref: '#/definitions/notificationSubscription'
+        $ref: '#/definitions/subscriptionSubscription'
   bucketeergatewayListAccountsV2Response:
     type: object
     properties:
@@ -6470,7 +6470,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/notificationSubscription'
+          $ref: '#/definitions/subscriptionSubscription'
       cursor:
         type: string
       totalCount:
@@ -8375,70 +8375,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/protobufAny'
-  notificationListSubscriptionsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - NAME
-      - CREATED_AT
-      - UPDATED_AT
-      - ENVIRONMENT
-      - STATE
-    default: DEFAULT
-  notificationListSubscriptionsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
-  notificationRecipient:
-    type: object
-    properties:
-      type:
-        $ref: '#/definitions/notificationRecipientType'
-      slackChannelRecipient:
-        $ref: '#/definitions/notificationSlackChannelRecipient'
-      language:
-        $ref: '#/definitions/RecipientLanguage'
-  notificationRecipientType:
-    type: string
-    enum:
-      - SlackChannel
-    default: SlackChannel
-  notificationSlackChannelRecipient:
-    type: object
-    properties:
-      webhookUrl:
-        type: string
-  notificationSubscription:
-    type: object
-    properties:
-      id:
-        type: string
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      disabled:
-        type: boolean
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-      recipient:
-        $ref: '#/definitions/notificationRecipient'
-      name:
-        type: string
-      environmentId:
-        type: string
-      environmentName:
-        type: string
-      featureFlagTags:
-        type: array
-        items:
-          type: string
   protobufAny:
     type: object
     properties:
@@ -8602,6 +8538,70 @@ definitions:
         type: string
       environmentName:
         type: string
+  subscriptionListSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - ENVIRONMENT
+      - STATE
+    default: DEFAULT
+  subscriptionListSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  subscriptionRecipient:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/subscriptionRecipientType'
+      slackChannelRecipient:
+        $ref: '#/definitions/subscriptionSlackChannelRecipient'
+      language:
+        $ref: '#/definitions/RecipientLanguage'
+  subscriptionRecipientType:
+    type: string
+    enum:
+      - SlackChannel
+    default: SlackChannel
+  subscriptionSlackChannelRecipient:
+    type: object
+    properties:
+      webhookUrl:
+        type: string
+  subscriptionSubscription:
+    type: object
+    properties:
+      id:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      disabled:
+        type: boolean
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/subscriptionRecipient'
+      name:
+        type: string
+      environmentId:
+        type: string
+      environmentName:
+        type: string
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   tagTagEntityType:
     type: string
     enum:

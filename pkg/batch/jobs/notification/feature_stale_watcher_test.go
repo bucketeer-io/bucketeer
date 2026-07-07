@@ -26,7 +26,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
-	sendermock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
+	sendermock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/mock"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
