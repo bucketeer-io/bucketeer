@@ -16,6 +16,7 @@ package stream
 
 import (
 	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
@@ -25,11 +26,15 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
+var errTooManyConnections = errors.New("stream: too many connections")
+
 // Dispatcher forwards relevant domain events to SSE connections.
 type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
 	conns        map[string]map[string]map[*conn]struct{}
+	totalConns   int
+	maxConns     int
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
 	logger       *zap.Logger
@@ -49,9 +54,10 @@ type conn struct {
 	createdAt time.Time
 }
 
-func NewDispatcher(logger *zap.Logger) *Dispatcher {
+func NewDispatcher(maxConns int, logger *zap.Logger) *Dispatcher {
 	return &Dispatcher{
 		conns:      make(map[string]map[string]map[*conn]struct{}),
+		maxConns:   maxConns,
 		shutdownCh: make(chan struct{}),
 		logger:     logger.Named("stream-dispatcher"),
 	}
@@ -64,15 +70,20 @@ func (d *Dispatcher) Shutdown() {
 
 // register adds a connection to the dispatcher. The caller must invoke the returned
 // deregister func on disconnect to free the slot.
-func (d *Dispatcher) register(envID, tag, sourceID string) (events <-chan event, deregister func()) {
+// Returns errTooManyConnections when maxConns is set and already reached.
+func (d *Dispatcher) register(envID, tag, sourceID string) (events <-chan event, deregister func(), err error) {
+	d.mu.Lock()
+	if d.totalConns >= d.maxConns {
+		d.mu.Unlock()
+		sseErrorsCounter.WithLabelValues(envID, tag, sourceID, errorTypeConnectionRefusedByLimit).Inc()
+		return nil, nil, errTooManyConnections
+	}
 	c := &conn{
-		// Only the latest event is needed to evaluate with the latest config.
 		ch:        make(chan event, 1),
 		tag:       tag,
 		sourceID:  sourceID,
 		createdAt: time.Now(),
 	}
-	d.mu.Lock()
 	tagConns, ok := d.conns[envID]
 	if !ok {
 		tagConns = make(map[string]map[*conn]struct{})
@@ -84,11 +95,12 @@ func (d *Dispatcher) register(envID, tag, sourceID string) (events <-chan event,
 		tagConns[tag] = conns
 	}
 	conns[c] = struct{}{}
+	d.totalConns++
 	// Update the gauge inside the lock so it stays consistent with the conn map.
 	sseActiveConnectionsGauge.WithLabelValues(envID, tag, sourceID).Inc()
 	d.mu.Unlock()
 
-	return c.ch, func() { d.deregister(envID, c) }
+	return c.ch, func() { d.deregister(envID, c) }, nil
 }
 
 func (d *Dispatcher) deregister(envID string, target *conn) {
@@ -104,6 +116,7 @@ func (d *Dispatcher) deregister(envID string, target *conn) {
 		return
 	}
 	delete(conns, target)
+	d.totalConns--
 	sseActiveConnectionsGauge.WithLabelValues(envID, target.tag, target.sourceID).Dec()
 	if len(conns) == 0 {
 		delete(tagConns, target.tag)

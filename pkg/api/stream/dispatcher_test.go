@@ -84,9 +84,10 @@ func TestDispatcherRegister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(zap.NewNop())
+			d := NewDispatcher(10000, zap.NewNop())
 			for _, r := range tc.clients {
-				_, cancel := d.register(r.envID, r.tag, "source1")
+				_, cancel, err := d.register(r.envID, r.tag, "source1")
+				require.NoError(t, err)
 				defer cancel()
 			}
 			assert.Equal(t, tc.wantConnCounts, snapshotConnCounts(d))
@@ -94,9 +95,66 @@ func TestDispatcherRegister(t *testing.T) {
 	}
 }
 
+func TestDispatcherRegisterMaxConns(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc       string
+		maxConns   int
+		register   int
+		wantErrors int
+	}{
+		{
+			desc:       "within limit",
+			maxConns:   3,
+			register:   3,
+			wantErrors: 0,
+		},
+		{
+			desc:       "exceeds limit",
+			maxConns:   2,
+			register:   5,
+			wantErrors: 3,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			d := NewDispatcher(tc.maxConns, zap.NewNop())
+			var errCount int
+			for i := 0; i < tc.register; i++ {
+				_, cancel, err := d.register("env-1", "tag-A", "source1")
+				if err != nil {
+					errCount++
+					assert.ErrorIs(t, err, errTooManyConnections)
+				} else {
+					defer cancel()
+				}
+			}
+			assert.Equal(t, tc.wantErrors, errCount)
+		})
+	}
+}
+
+func TestDispatcherRegisterSlotFreedByDeregister(t *testing.T) {
+	t.Parallel()
+	maxConns := 1
+	d := NewDispatcher(maxConns, zap.NewNop())
+	_, cancel1, err := d.register("env-1", "tag-A", "source1")
+	require.NoError(t, err)
+
+	_, _, err = d.register("env-1", "tag-A", "source1")
+	assert.ErrorIs(t, err, errTooManyConnections)
+
+	cancel1() // conns: 1->0
+
+	_, cancel3, err := d.register("env-1", "tag-A", "source1")
+	require.NoError(t, err)
+	defer cancel3()
+}
+
 func TestDispatcherShutdown(t *testing.T) {
 	t.Parallel()
-	d := NewDispatcher(zap.NewNop())
+	d := NewDispatcher(10000, zap.NewNop())
 
 	d.Shutdown()
 	// Second call must not panic.
@@ -146,13 +204,13 @@ func TestDispatcherDeregister(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(zap.NewNop())
+			d := NewDispatcher(10000, zap.NewNop())
 			cancels := make(map[testConnSpec]func())
 			for env, tagConns := range tc.conns {
 				for tag := range tagConns {
 					for i := 0; i < tagConns[tag]; i++ {
-						var cancel func()
-						_, cancel = d.register(env, tag, "source1")
+						_, cancel, err := d.register(env, tag, "source1")
+						require.NoError(t, err)
 						defer cancel()
 						cancels[testConnSpec{env, tag}] = cancel
 					}
@@ -201,10 +259,11 @@ func TestDispatcherDispatch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			d := NewDispatcher(zap.NewNop())
+			d := NewDispatcher(10000, zap.NewNop())
 			chs := make([]<-chan event, len(tc.conns))
 			for i, c := range tc.conns {
-				ch, cancel := d.register(c.envID, c.tag, "source1")
+				ch, cancel, err := d.register(c.envID, c.tag, "source1")
+				require.NoError(t, err)
 				defer cancel()
 				chs[i] = ch
 			}
@@ -365,8 +424,9 @@ func TestDispatcherHandleEvent(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			d := NewDispatcher(zap.NewNop())
-			ch, cancel := d.register(envID, p.clientTag, "source1")
+			d := NewDispatcher(10000, zap.NewNop())
+			ch, cancel, err := d.register(envID, p.clientTag, "source1")
+			require.NoError(t, err)
 			defer cancel()
 
 			d.HandleEvent(p.event)
