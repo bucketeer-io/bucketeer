@@ -16,6 +16,7 @@ package domain
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -54,40 +55,20 @@ func validateVariationValueSchemaDefinition(
 	}
 	switch schema.Type {
 	case featureproto.VariationValueSchema_ENUM:
-		if variationType != featureproto.Feature_STRING && variationType != featureproto.Feature_NUMBER {
-			return errVariationValueSchemaTypeUnmatched
-		}
-		validator := schema.GetEnumValidator()
-		if validator == nil || len(validator.Values) == 0 {
-			return errVariationValueSchemaInvalid
-		}
-		if variationType == featureproto.Feature_NUMBER {
-			for _, value := range validator.Values {
-				if _, err := strconv.ParseFloat(value, 64); err != nil {
-					return errVariationValueSchemaInvalid
-				}
-			}
-		}
-		return nil
+		return validateEnumSchemaDefinition(variationType, schema.GetEnumValidator())
 	case featureproto.VariationValueSchema_REGEX:
-		if variationType != featureproto.Feature_STRING {
-			return errVariationValueSchemaTypeUnmatched
-		}
 		validator := schema.GetRegexValidator()
-		if validator == nil || validator.Pattern == "" {
-			return errVariationValueSchemaInvalid
+		if err := validateRegexSchemaDefinition(variationType, validator); err != nil {
+			return err
 		}
-		if _, err := regexp.Compile(validator.Pattern); err != nil {
+		if _, err := compileRegexVariationValueValidator(validator); err != nil {
 			return errVariationValueSchemaInvalid
 		}
 		return nil
 	case featureproto.VariationValueSchema_JSON_SCHEMA:
-		if variationType != featureproto.Feature_JSON {
-			return errVariationValueSchemaTypeUnmatched
-		}
 		validator := schema.GetJsonSchemaValidator()
-		if validator == nil || validator.Schema == "" {
-			return errVariationValueSchemaInvalid
+		if err := validateJSONSchemaDefinition(variationType, validator); err != nil {
+			return err
 		}
 		if _, err := compileJSONSchema(validator.Schema); err != nil {
 			return errVariationValueSchemaInvalid
@@ -111,17 +92,21 @@ func (f *Feature) newVariationValueValidator() (func(string) error, error) {
 	if schema == nil {
 		return func(string) error { return nil }, nil
 	}
-	if err := f.validateVariationValueSchema(); err != nil {
-		return nil, err
-	}
 	switch schema.Type {
 	case featureproto.VariationValueSchema_ENUM:
 		validator := schema.GetEnumValidator()
+		if err := validateEnumSchemaDefinition(f.VariationType, validator); err != nil {
+			return nil, err
+		}
 		return func(value string) error {
 			return f.validateEnumVariationValue(validator, value)
 		}, nil
 	case featureproto.VariationValueSchema_REGEX:
-		pattern, err := compileRegexVariationValueValidator(schema.GetRegexValidator())
+		validator := schema.GetRegexValidator()
+		if err := validateRegexSchemaDefinition(f.VariationType, validator); err != nil {
+			return nil, err
+		}
+		pattern, err := compileRegexVariationValueValidator(validator)
 		if err != nil {
 			return nil, err
 		}
@@ -132,9 +117,13 @@ func (f *Feature) newVariationValueValidator() (func(string) error, error) {
 			return nil
 		}, nil
 	case featureproto.VariationValueSchema_JSON_SCHEMA:
-		compiled, err := compileJSONSchemaVariationValueValidator(schema.GetJsonSchemaValidator())
-		if err != nil {
+		validator := schema.GetJsonSchemaValidator()
+		if err := validateJSONSchemaDefinition(f.VariationType, validator); err != nil {
 			return nil, err
+		}
+		compiled, err := compileJSONSchema(validator.Schema)
+		if err != nil {
+			return nil, errVariationValueSchemaInvalid
 		}
 		return func(value string) error {
 			jsonValue, err := jsonschema.UnmarshalJSON(strings.NewReader(value))
@@ -151,6 +140,26 @@ func (f *Feature) newVariationValueValidator() (func(string) error, error) {
 	}
 }
 
+func validateEnumSchemaDefinition(
+	variationType featureproto.Feature_VariationType,
+	validator *featureproto.VariationValueSchema_EnumValidator,
+) error {
+	if variationType != featureproto.Feature_STRING && variationType != featureproto.Feature_NUMBER {
+		return errVariationValueSchemaTypeUnmatched
+	}
+	if validator == nil || len(validator.Values) == 0 {
+		return errVariationValueSchemaInvalid
+	}
+	if variationType == featureproto.Feature_NUMBER {
+		for _, value := range validator.Values {
+			if _, err := parseFiniteFloat(value); err != nil {
+				return errVariationValueSchemaInvalid
+			}
+		}
+	}
+	return nil
+}
+
 func (f *Feature) validateEnumVariationValue(
 	validator *featureproto.VariationValueSchema_EnumValidator,
 	value string,
@@ -160,12 +169,12 @@ func (f *Feature) validateEnumVariationValue(
 	}
 	switch f.VariationType {
 	case featureproto.Feature_NUMBER:
-		target, err := strconv.ParseFloat(value, 64)
+		target, err := parseFiniteFloat(value)
 		if err != nil {
 			return errVariationTypeUnmatched
 		}
 		for _, enumValue := range validator.Values {
-			allowed, err := strconv.ParseFloat(enumValue, 64)
+			allowed, err := parseFiniteFloat(enumValue)
 			if err != nil {
 				return errVariationValueSchemaInvalid
 			}
@@ -183,6 +192,30 @@ func (f *Feature) validateEnumVariationValue(
 	return errVariationValueSchemaViolation
 }
 
+func validateRegexSchemaDefinition(
+	variationType featureproto.Feature_VariationType,
+	validator *featureproto.VariationValueSchema_RegexValidator,
+) error {
+	if variationType != featureproto.Feature_STRING {
+		return errVariationValueSchemaTypeUnmatched
+	}
+	if validator == nil || validator.Pattern == "" {
+		return errVariationValueSchemaInvalid
+	}
+	return nil
+}
+
+func parseFiniteFloat(value string) (float64, error) {
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0, err
+	}
+	if math.IsNaN(parsed) || math.IsInf(parsed, 0) {
+		return 0, fmt.Errorf("feature: number must be finite")
+	}
+	return parsed, nil
+}
+
 func compileRegexVariationValueValidator(
 	validator *featureproto.VariationValueSchema_RegexValidator,
 ) (*regexp.Regexp, error) {
@@ -196,17 +229,20 @@ func compileRegexVariationValueValidator(
 	return pattern, nil
 }
 
-func compileJSONSchemaVariationValueValidator(
+func validateJSONSchemaDefinition(
+	variationType featureproto.Feature_VariationType,
 	validator *featureproto.VariationValueSchema_JsonSchemaValidator,
-) (*jsonschema.Schema, error) {
+) error {
+	if variationType != featureproto.Feature_JSON {
+		return errVariationValueSchemaTypeUnmatched
+	}
 	if validator == nil {
-		return nil, errVariationValueSchemaInvalid
+		return errVariationValueSchemaInvalid
 	}
-	schema, err := compileJSONSchema(validator.Schema)
-	if err != nil {
-		return nil, errVariationValueSchemaInvalid
+	if validator.Schema == "" {
+		return errVariationValueSchemaInvalid
 	}
-	return schema, nil
+	return nil
 }
 
 func compileJSONSchema(schema string) (*jsonschema.Schema, error) {

@@ -82,6 +82,12 @@ func TestValidateVariationValueSchemaDefinition(t *testing.T) {
 			expected:      errVariationValueSchemaInvalid,
 		},
 		{
+			desc:          "number enum rejects NaN option",
+			variationType: featureproto.Feature_NUMBER,
+			schema:        enumSchema("NaN"),
+			expected:      errVariationValueSchemaInvalid,
+		},
+		{
 			desc:          "boolean enum is not supported",
 			variationType: featureproto.Feature_BOOLEAN,
 			schema:        enumSchema("true", "false"),
@@ -162,6 +168,13 @@ func TestValidateVariationValueAgainstSchema(t *testing.T) {
 			variationType: featureproto.Feature_NUMBER,
 			schema:        enumSchema("1", "2"),
 			value:         "1.0",
+		},
+		{
+			desc:          "number enum rejects NaN value",
+			variationType: featureproto.Feature_NUMBER,
+			schema:        enumSchema("1", "2"),
+			value:         "NaN",
+			expected:      errVariationTypeUnmatched,
 		},
 		{
 			desc:          "regex accepts matching string",
