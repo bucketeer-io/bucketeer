@@ -15,6 +15,7 @@
 package rest
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -65,6 +66,55 @@ func TestHandle(t *testing.T) {
 	assert.True(t, firstRun)
 	assert.True(t, secondRun)
 	assert.True(t, handlerRun)
+}
+
+func TestDisableBodyRecording(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		disable  bool
+		wantBody string
+	}{
+		{
+			desc:     "body is recorded by default",
+			disable:  false,
+			wantBody: "test data",
+		},
+		{
+			desc:     "body recording is disabled",
+			disable:  true,
+			wantBody: "",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			w := httptest.NewRecorder()
+			rr := &responseRecorder{
+				ResponseWriter: w,
+				body:           new(bytes.Buffer),
+			}
+			if p.disable {
+				DisableBodyRecording(rr)
+			}
+			rr.WriteHeader(http.StatusOK)
+			rr.Write([]byte("test data"))
+			assert.Equal(t, p.wantBody, rr.body.String())
+			assert.Equal(t, "test data", w.Body.String())
+		})
+	}
+}
+
+func TestDisableBodyRecordingNestedRecorders(t *testing.T) {
+	t.Parallel()
+	w := httptest.NewRecorder()
+	inner := &responseRecorder{ResponseWriter: w, body: new(bytes.Buffer)}
+	outer := &responseRecorder{ResponseWriter: inner, body: new(bytes.Buffer)}
+	DisableBodyRecording(outer)
+	outer.Write([]byte("hello"))
+	assert.Equal(t, "", outer.body.String())
+	assert.Equal(t, "", inner.body.String()) // also not written
+	assert.Equal(t, "hello", w.Body.String())
 }
 
 func TestSplitURLPath(t *testing.T) {

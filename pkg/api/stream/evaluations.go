@@ -128,6 +128,7 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 	w.Header().Set("Cache-Control", "no-cache")
 	// Disable proxy buffering so heartbeat and patch events reach the client immediately.
 	w.Header().Set("X-Accel-Buffering", "no")
+	rest.DisableBodyRecording(w)
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
 

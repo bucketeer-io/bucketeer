@@ -45,8 +45,9 @@ func (ms *middlewares) Handle(handler http.Handler) http.Handler {
 
 type responseRecorder struct {
 	http.ResponseWriter
-	statusCode int
-	body       *bytes.Buffer
+	statusCode    int
+	body          *bytes.Buffer
+	skipBodyWrite bool
 }
 
 func (rr *responseRecorder) WriteHeader(statusCode int) {
@@ -55,8 +56,23 @@ func (rr *responseRecorder) WriteHeader(statusCode int) {
 }
 
 func (rr *responseRecorder) Write(b []byte) (int, error) {
-	rr.body.Write(b)
+	if !rr.skipBodyWrite {
+		rr.body.Write(b)
+	}
 	return rr.ResponseWriter.Write(b)
+}
+
+// DisableBodyRecording stops accumulating response bytes in this recorder
+// and any wrapped responseRecorder in the chain.
+func DisableBodyRecording(w http.ResponseWriter) {
+	for {
+		rr, ok := w.(*responseRecorder)
+		if !ok {
+			return
+		}
+		rr.skipBodyWrite = true
+		w = rr.ResponseWriter
+	}
 }
 
 // Flush implements http.Flusher by delegating to the underlying ResponseWriter
