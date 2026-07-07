@@ -30,14 +30,15 @@ func (f *Feature) validateVariationValueSchema() error {
 }
 
 func (f *Feature) validateAllVariationValuesAgainstSchema() error {
-	if err := f.validateVariationValueSchema(); err != nil {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
 		return err
 	}
 	for _, variation := range f.Variations {
 		if variation == nil {
 			return errVariationRequired
 		}
-		if err := f.validateVariationValueAgainstSchema(variation.Value); err != nil {
+		if err := validateValue(variation.Value); err != nil {
 			return err
 		}
 	}
@@ -98,22 +99,55 @@ func validateVariationValueSchemaDefinition(
 }
 
 func (f *Feature) validateVariationValueAgainstSchema(value string) error {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return err
+	}
+	return validateValue(value)
+}
+
+func (f *Feature) newVariationValueValidator() (func(string) error, error) {
 	schema := f.VariationValueSchema
 	if schema == nil {
-		return nil
+		return func(string) error { return nil }, nil
 	}
 	if err := f.validateVariationValueSchema(); err != nil {
-		return err
+		return nil, err
 	}
 	switch schema.Type {
 	case featureproto.VariationValueSchema_ENUM:
-		return f.validateEnumVariationValue(schema.GetEnumValidator(), value)
+		validator := schema.GetEnumValidator()
+		return func(value string) error {
+			return f.validateEnumVariationValue(validator, value)
+		}, nil
 	case featureproto.VariationValueSchema_REGEX:
-		return validateRegexVariationValue(schema.GetRegexValidator(), value)
+		pattern, err := compileRegexVariationValueValidator(schema.GetRegexValidator())
+		if err != nil {
+			return nil, err
+		}
+		return func(value string) error {
+			if !pattern.MatchString(value) {
+				return errVariationValueSchemaViolation
+			}
+			return nil
+		}, nil
 	case featureproto.VariationValueSchema_JSON_SCHEMA:
-		return validateJSONSchemaVariationValue(schema.GetJsonSchemaValidator(), value)
+		compiled, err := compileJSONSchemaVariationValueValidator(schema.GetJsonSchemaValidator())
+		if err != nil {
+			return nil, err
+		}
+		return func(value string) error {
+			jsonValue, err := jsonschema.UnmarshalJSON(strings.NewReader(value))
+			if err != nil {
+				return errVariationTypeUnmatched
+			}
+			if err := compiled.Validate(jsonValue); err != nil {
+				return errVariationValueSchemaViolation
+			}
+			return nil
+		}, nil
 	default:
-		return errVariationValueSchemaInvalid
+		return nil, errVariationValueSchemaInvalid
 	}
 }
 
@@ -149,42 +183,30 @@ func (f *Feature) validateEnumVariationValue(
 	return errVariationValueSchemaViolation
 }
 
-func validateRegexVariationValue(
+func compileRegexVariationValueValidator(
 	validator *featureproto.VariationValueSchema_RegexValidator,
-	value string,
-) error {
+) (*regexp.Regexp, error) {
 	if validator == nil {
-		return errVariationValueSchemaInvalid
+		return nil, errVariationValueSchemaInvalid
 	}
-	matched, err := regexp.MatchString(validator.Pattern, value)
+	pattern, err := regexp.Compile(validator.Pattern)
 	if err != nil {
-		return errVariationValueSchemaInvalid
+		return nil, errVariationValueSchemaInvalid
 	}
-	if !matched {
-		return errVariationValueSchemaViolation
-	}
-	return nil
+	return pattern, nil
 }
 
-func validateJSONSchemaVariationValue(
+func compileJSONSchemaVariationValueValidator(
 	validator *featureproto.VariationValueSchema_JsonSchemaValidator,
-	value string,
-) error {
+) (*jsonschema.Schema, error) {
 	if validator == nil {
-		return errVariationValueSchemaInvalid
+		return nil, errVariationValueSchemaInvalid
 	}
 	schema, err := compileJSONSchema(validator.Schema)
 	if err != nil {
-		return errVariationValueSchemaInvalid
+		return nil, errVariationValueSchemaInvalid
 	}
-	jsonValue, err := jsonschema.UnmarshalJSON(strings.NewReader(value))
-	if err != nil {
-		return errVariationTypeUnmatched
-	}
-	if err := schema.Validate(jsonValue); err != nil {
-		return errVariationValueSchemaViolation
-	}
-	return nil
+	return schema, nil
 }
 
 func compileJSONSchema(schema string) (*jsonschema.Schema, error) {
