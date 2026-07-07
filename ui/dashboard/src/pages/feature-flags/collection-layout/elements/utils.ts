@@ -1,3 +1,4 @@
+import { FEATURE_RECENT_TRAFFIC_DAYS } from 'constants/feature-flag';
 import dayjs from 'dayjs';
 import isNumber from 'lodash/isNumber';
 import { Feature, FeatureVariationType } from '@types';
@@ -29,7 +30,9 @@ export function getFlagStatus(feature: Feature): FeatureActivityStatus {
     const _lastUsedAt = new Date(+lastUsedAt * 1000);
     const daysDifference = dayjs(_lastUsedAt).diff(dayjs(), 'day');
 
-    if (daysDifference > -7) return FeatureActivityStatus.RECEIVING_TRAFFIC;
+    if (daysDifference > -FEATURE_RECENT_TRAFFIC_DAYS) {
+      return FeatureActivityStatus.RECEIVING_TRAFFIC;
+    }
   }
   return FeatureActivityStatus.NO_RECENT_TRAFFIC;
 }
