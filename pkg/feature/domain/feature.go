@@ -1623,7 +1623,6 @@ func GetDependentsOfTargets(
 		return false
 	}
 	for _, f := range all {
-		// Skip if the f is target feature.
 		dfs(f)
 	}
 	return evals

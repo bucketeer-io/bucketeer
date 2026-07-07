@@ -4809,6 +4809,32 @@ func TestGetDependentsOfTargets(t *testing.T) {
 			},
 			expectedIDs: []string{"flag-A"},
 		},
+		{
+			desc: "dependent via FEATURE_FLAG clause",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {Id: "flag-A"},
+				"flag-B": {
+					Id: "flag-B",
+					Rules: []*ftproto.Rule{
+						{
+							Id: "rule-1",
+							Clauses: []*ftproto.Clause{
+								{
+									Id:        "clause-1",
+									Attribute: "flag-A",
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Values:    []string{"variation-1"},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedIDs: []string{"flag-A", "flag-B"},
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
