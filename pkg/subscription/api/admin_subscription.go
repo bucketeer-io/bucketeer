@@ -29,13 +29,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
-func (s *NotificationService) CreateAdminSubscription(
+func (s *SubscriptionService) CreateAdminSubscription(
 	ctx context.Context,
-	req *notificationproto.CreateAdminSubscriptionRequest,
-) (*notificationproto.CreateAdminSubscriptionResponse, error) {
+	req *subscriptionproto.CreateAdminSubscriptionRequest,
+) (*subscriptionproto.CreateAdminSubscriptionResponse, error) {
 	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -90,11 +90,11 @@ func (s *NotificationService) CreateAdminSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &notificationproto.CreateAdminSubscriptionResponse{}, nil
+	return &subscriptionproto.CreateAdminSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) validateCreateAdminSubscriptionRequest(
-	req *notificationproto.CreateAdminSubscriptionRequest,
+func (s *SubscriptionService) validateCreateAdminSubscriptionRequest(
+	req *subscriptionproto.CreateAdminSubscriptionRequest,
 ) error {
 	if req.Command == nil {
 		return statusNoCommand.Err()
@@ -111,10 +111,10 @@ func (s *NotificationService) validateCreateAdminSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) UpdateAdminSubscription(
+func (s *SubscriptionService) UpdateAdminSubscription(
 	ctx context.Context,
-	req *notificationproto.UpdateAdminSubscriptionRequest,
-) (*notificationproto.UpdateAdminSubscriptionResponse, error) {
+	req *subscriptionproto.UpdateAdminSubscriptionRequest,
+) (*subscriptionproto.UpdateAdminSubscriptionResponse, error) {
 	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -135,11 +135,11 @@ func (s *NotificationService) UpdateAdminSubscription(
 		}
 		return nil, err
 	}
-	return &notificationproto.UpdateAdminSubscriptionResponse{}, nil
+	return &subscriptionproto.UpdateAdminSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) validateUpdateAdminSubscriptionRequest(
-	req *notificationproto.UpdateAdminSubscriptionRequest,
+func (s *SubscriptionService) validateUpdateAdminSubscriptionRequest(
+	req *subscriptionproto.UpdateAdminSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -159,18 +159,18 @@ func (s *NotificationService) validateUpdateAdminSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) isNoUpdateAdminSubscriptionCommand(
-	req *notificationproto.UpdateAdminSubscriptionRequest,
+func (s *SubscriptionService) isNoUpdateAdminSubscriptionCommand(
+	req *subscriptionproto.UpdateAdminSubscriptionRequest,
 ) bool {
 	return req.AddSourceTypesCommand == nil &&
 		req.DeleteSourceTypesCommand == nil &&
 		req.RenameSubscriptionCommand == nil
 }
 
-func (s *NotificationService) EnableAdminSubscription(
+func (s *SubscriptionService) EnableAdminSubscription(
 	ctx context.Context,
-	req *notificationproto.EnableAdminSubscriptionRequest,
-) (*notificationproto.EnableAdminSubscriptionResponse, error) {
+	req *subscriptionproto.EnableAdminSubscriptionRequest,
+) (*subscriptionproto.EnableAdminSubscriptionResponse, error) {
 	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -189,11 +189,11 @@ func (s *NotificationService) EnableAdminSubscription(
 		}
 		return nil, err
 	}
-	return &notificationproto.EnableAdminSubscriptionResponse{}, nil
+	return &subscriptionproto.EnableAdminSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) validateEnableAdminSubscriptionRequest(
-	req *notificationproto.EnableAdminSubscriptionRequest,
+func (s *SubscriptionService) validateEnableAdminSubscriptionRequest(
+	req *subscriptionproto.EnableAdminSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -204,10 +204,10 @@ func (s *NotificationService) validateEnableAdminSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) DisableAdminSubscription(
+func (s *SubscriptionService) DisableAdminSubscription(
 	ctx context.Context,
-	req *notificationproto.DisableAdminSubscriptionRequest,
-) (*notificationproto.DisableAdminSubscriptionResponse, error) {
+	req *subscriptionproto.DisableAdminSubscriptionRequest,
+) (*subscriptionproto.DisableAdminSubscriptionResponse, error) {
 	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -226,11 +226,11 @@ func (s *NotificationService) DisableAdminSubscription(
 		}
 		return nil, err
 	}
-	return &notificationproto.DisableAdminSubscriptionResponse{}, nil
+	return &subscriptionproto.DisableAdminSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) validateDisableAdminSubscriptionRequest(
-	req *notificationproto.DisableAdminSubscriptionRequest,
+func (s *SubscriptionService) validateDisableAdminSubscriptionRequest(
+	req *subscriptionproto.DisableAdminSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -241,7 +241,7 @@ func (s *NotificationService) validateDisableAdminSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) updateAdminSubscription(
+func (s *SubscriptionService) updateAdminSubscription(
 	ctx context.Context,
 	commands []command.Command,
 	id string,
@@ -293,10 +293,10 @@ func (s *NotificationService) updateAdminSubscription(
 	return nil
 }
 
-func (s *NotificationService) DeleteAdminSubscription(
+func (s *SubscriptionService) DeleteAdminSubscription(
 	ctx context.Context,
-	req *notificationproto.DeleteAdminSubscriptionRequest,
-) (*notificationproto.DeleteAdminSubscriptionResponse, error) {
+	req *subscriptionproto.DeleteAdminSubscriptionRequest,
+) (*subscriptionproto.DeleteAdminSubscriptionResponse, error) {
 	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -345,11 +345,11 @@ func (s *NotificationService) DeleteAdminSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &notificationproto.DeleteAdminSubscriptionResponse{}, nil
+	return &subscriptionproto.DeleteAdminSubscriptionResponse{}, nil
 }
 
 func validateDeleteAdminSubscriptionRequest(
-	req *notificationproto.DeleteAdminSubscriptionRequest,
+	req *subscriptionproto.DeleteAdminSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -360,8 +360,8 @@ func validateDeleteAdminSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) createUpdateAdminSubscriptionCommands(
-	req *notificationproto.UpdateAdminSubscriptionRequest,
+func (s *SubscriptionService) createUpdateAdminSubscriptionCommands(
+	req *subscriptionproto.UpdateAdminSubscriptionRequest,
 ) []command.Command {
 	commands := make([]command.Command, 0)
 	if req.AddSourceTypesCommand != nil {
@@ -376,10 +376,10 @@ func (s *NotificationService) createUpdateAdminSubscriptionCommands(
 	return commands
 }
 
-func (s *NotificationService) GetAdminSubscription(
+func (s *SubscriptionService) GetAdminSubscription(
 	ctx context.Context,
-	req *notificationproto.GetAdminSubscriptionRequest,
-) (*notificationproto.GetAdminSubscriptionResponse, error) {
+	req *subscriptionproto.GetAdminSubscriptionRequest,
+) (*subscriptionproto.GetAdminSubscriptionResponse, error) {
 	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -401,11 +401,11 @@ func (s *NotificationService) GetAdminSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &notificationproto.GetAdminSubscriptionResponse{Subscription: subscription.Subscription}, nil
+	return &subscriptionproto.GetAdminSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
 
 func validateGetAdminSubscriptionRequest(
-	req *notificationproto.GetAdminSubscriptionRequest,
+	req *subscriptionproto.GetAdminSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -413,10 +413,10 @@ func validateGetAdminSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) ListAdminSubscriptions(
+func (s *SubscriptionService) ListAdminSubscriptions(
 	ctx context.Context,
-	req *notificationproto.ListAdminSubscriptionsRequest,
-) (*notificationproto.ListAdminSubscriptionsResponse, error) {
+	req *subscriptionproto.ListAdminSubscriptionsRequest,
+) (*subscriptionproto.ListAdminSubscriptionsResponse, error) {
 	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -442,17 +442,17 @@ func (s *NotificationService) ListAdminSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	return &notificationproto.ListAdminSubscriptionsResponse{
+	return &subscriptionproto.ListAdminSubscriptionsResponse{
 		Subscriptions: subscriptions,
 		Cursor:        cursor,
 		TotalCount:    totalCount,
 	}, nil
 }
 
-func (s *NotificationService) ListEnabledAdminSubscriptions(
+func (s *SubscriptionService) ListEnabledAdminSubscriptions(
 	ctx context.Context,
-	req *notificationproto.ListEnabledAdminSubscriptionsRequest,
-) (*notificationproto.ListEnabledAdminSubscriptionsResponse, error) {
+	req *subscriptionproto.ListEnabledAdminSubscriptionsRequest,
+) (*subscriptionproto.ListEnabledAdminSubscriptionsResponse, error) {
 	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -471,16 +471,16 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	return &notificationproto.ListEnabledAdminSubscriptionsResponse{
+	return &subscriptionproto.ListEnabledAdminSubscriptionsResponse{
 		Subscriptions: subscriptions,
 		Cursor:        cursor,
 	}, nil
 }
 
-func (s *NotificationService) listAdminSubscriptions(
+func (s *SubscriptionService) listAdminSubscriptions(
 	ctx context.Context,
 	params v2ss.ListAdminSubscriptionsParams,
-) ([]*notificationproto.Subscription, string, int64, error) {
+) ([]*subscriptionproto.Subscription, string, int64, error) {
 	subscriptions, nextCursor, totalCount, err := s.adminSubscriptionStorage.ListAdminSubscriptions(ctx, params)
 	if err != nil {
 		if errors.Is(err, v2ss.ErrInvalidCursor) {

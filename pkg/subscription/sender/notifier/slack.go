@@ -31,9 +31,9 @@ import (
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	notificationdomain "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
+	subscriptiondomain "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	domainproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -93,10 +93,10 @@ func NewSlackNotifier(webURL string, opts ...Option) Notifier {
 func (n *slackNotifier) Notify(
 	ctx context.Context,
 	notification *senderproto.Notification,
-	recipient *notificationproto.Recipient,
-	language notificationproto.Recipient_Language,
+	recipient *subscriptionproto.Recipient,
+	language subscriptionproto.Recipient_Language,
 ) error {
-	if recipient.Type != notificationproto.Recipient_SlackChannel {
+	if recipient.Type != subscriptionproto.Recipient_SlackChannel {
 		return nil
 	}
 	receivedCounter.WithLabelValues(typeSlack).Inc()
@@ -114,8 +114,8 @@ func (n *slackNotifier) Notify(
 func (n *slackNotifier) notify(
 	ctx context.Context,
 	notification *senderproto.Notification,
-	slackRecipient *notificationproto.SlackChannelRecipient,
-	language notificationproto.Recipient_Language,
+	slackRecipient *subscriptionproto.SlackChannelRecipient,
+	language subscriptionproto.Recipient_Language,
 ) error {
 	localizer, err := n.newLocalizer(ctx, language)
 	if err != nil {
@@ -134,13 +134,13 @@ func (n *slackNotifier) notify(
 
 func (n *slackNotifier) newLocalizer(
 	ctx context.Context,
-	language notificationproto.Recipient_Language,
+	language subscriptionproto.Recipient_Language,
 ) (locale.Localizer, error) {
 	var l string
 	switch language {
-	case notificationproto.Recipient_JAPANESE:
+	case subscriptionproto.Recipient_JAPANESE:
 		l = locale.Ja
-	case notificationproto.Recipient_ENGLISH:
+	case subscriptionproto.Recipient_ENGLISH:
 		l = locale.En
 	default:
 		return nil, ErrInvalidLanguage
@@ -153,7 +153,7 @@ func (n *slackNotifier) newLocalizer(
 
 func (n *slackNotifier) createMessage(
 	notification *senderproto.Notification,
-	slackRecipient *notificationproto.SlackChannelRecipient,
+	slackRecipient *subscriptionproto.SlackChannelRecipient,
 	localizer locale.Localizer,
 ) (*slack.WebhookMessage, error) {
 	attachment, err := n.createAttachment(notification, localizer)
@@ -353,7 +353,7 @@ func (n *slackNotifier) postWebhook(ctx context.Context, msg *slack.WebhookMessa
 		n.logger.Error("Failed to post a message",
 			zap.Error(err),
 			// Avoid logging a webhook URL which contains secret.
-			zap.String("slackRecipientId", notificationdomain.SlackChannelRecipientID(webhookURL)),
+			zap.String("slackRecipientId", subscriptiondomain.SlackChannelRecipientID(webhookURL)),
 		)
 		return err
 	}

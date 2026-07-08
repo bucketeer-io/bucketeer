@@ -44,7 +44,7 @@ const (
 	subscriptionKind      = "Subscription"
 )
 
-func TestNewNotificationService(t *testing.T) {
+func TestNewSubscriptionService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -52,7 +52,7 @@ func TestNewNotificationService(t *testing.T) {
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	pm := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
-	s := NewNotificationService(
+	s := NewSubscriptionService(
 		dbClient,
 		v2mock.NewMockAdminSubscriptionStorage(mockController),
 		v2mock.NewMockSubscriptionStorage(mockController),
@@ -60,13 +60,13 @@ func TestNewNotificationService(t *testing.T) {
 		pm,
 		WithLogger(logger),
 	)
-	assert.IsType(t, &NotificationService{}, s)
+	assert.IsType(t, &SubscriptionService{}, s)
 }
 
-func newNotificationServiceWithMock(
+func newSubscriptionServiceWithMock(
 	t *testing.T,
 	c *gomock.Controller,
-) *NotificationService {
+) *SubscriptionService {
 	t.Helper()
 	accountClientMock := accountclientmock.NewMockClient(c)
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(
@@ -80,7 +80,7 @@ func newNotificationServiceWithMock(
 			},
 		}, nil,
 	).AnyTimes()
-	return &NotificationService{
+	return &SubscriptionService{
 		dbClient:                 dbmock.NewMockClient(c),
 		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
 		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
@@ -90,7 +90,7 @@ func newNotificationServiceWithMock(
 	}
 }
 
-func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *NotificationService {
+func newSubscriptionService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *SubscriptionService {
 	var or accountproto.AccountV2_Role_Organization
 	var er accountproto.AccountV2_Role_Environment
 	var envId string
@@ -127,7 +127,7 @@ func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string
 	dbClient := dbmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	return &NotificationService{
+	return &SubscriptionService{
 		dbClient:                 dbClient,
 		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
 		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),

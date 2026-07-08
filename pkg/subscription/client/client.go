@@ -23,12 +23,12 @@ import (
 )
 
 type Client interface {
-	proto.NotificationServiceClient
+	proto.SubscriptionServiceClient
 	Close()
 }
 
 type client struct {
-	proto.NotificationServiceClient
+	proto.SubscriptionServiceClient
 	address    string
 	connection *grpc.ClientConn
 }
@@ -39,7 +39,7 @@ func NewClient(addr, certPath string, opts ...rpcclient.Option) (Client, error) 
 		return nil, err
 	}
 	return &client{
-		NotificationServiceClient: proto.NewNotificationServiceClient(conn),
+		SubscriptionServiceClient: proto.NewSubscriptionServiceClient(conn),
 		address:                   addr,
 		connection:                conn,
 	}, nil

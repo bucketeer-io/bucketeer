@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	notification "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscription "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	sender "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -43,7 +43,7 @@ func (m *MockNotifier) EXPECT() *MockNotifierMockRecorder {
 }
 
 // Notify mocks base method.
-func (m *MockNotifier) Notify(ctx context.Context, notification *sender.Notification, recipient *notification.Recipient, language notification.Recipient_Language) error {
+func (m *MockNotifier) Notify(ctx context.Context, notification *sender.Notification, recipient *subscription.Recipient, language subscription.Recipient_Language) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Notify", ctx, notification, recipient, language)
 	ret0, _ := ret[0].(error)

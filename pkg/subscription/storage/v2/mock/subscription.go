@@ -17,7 +17,7 @@ import (
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
-	notification "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscription "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
 // MockSubscriptionStorage is a mock of SubscriptionStorage interface.
@@ -87,10 +87,10 @@ func (mr *MockSubscriptionStorageMockRecorder) GetSubscription(ctx, id, environm
 }
 
 // ListSubscriptions mocks base method.
-func (m *MockSubscriptionStorage) ListSubscriptions(ctx context.Context, params v2.ListSubscriptionsParams) ([]*notification.Subscription, int, int64, error) {
+func (m *MockSubscriptionStorage) ListSubscriptions(ctx context.Context, params v2.ListSubscriptionsParams) ([]*subscription.Subscription, int, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSubscriptions", ctx, params)
-	ret0, _ := ret[0].([]*notification.Subscription)
+	ret0, _ := ret[0].([]*subscription.Subscription)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
 	ret3, _ := ret[3].(error)

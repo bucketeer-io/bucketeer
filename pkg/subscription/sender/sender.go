@@ -22,10 +22,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
+	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/notifier"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -63,14 +63,14 @@ type Sender interface {
 }
 
 type sender struct {
-	notificationClient notificationclient.Client
+	subscriptionClient subscriptionclient.Client
 	notifiers          []notifier.Notifier
 	opts               *options
 	logger             *zap.Logger
 }
 
 func NewSender(
-	notificationClient notificationclient.Client,
+	subscriptionClient subscriptionclient.Client,
 	notifiers []notifier.Notifier,
 	opts ...Option) Sender {
 
@@ -82,7 +82,7 @@ func NewSender(
 		registerMetrics(options.metrics)
 	}
 	return &sender{
-		notificationClient: notificationClient,
+		subscriptionClient: subscriptionClient,
 		notifiers:          notifiers,
 		opts:               &options,
 		logger:             options.logger.Named("sender"),
@@ -91,7 +91,7 @@ func NewSender(
 
 func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.NotificationEvent) error {
 	receivedCounter.Inc()
-	subscriptions := []*notificationproto.Subscription{}
+	subscriptions := []*subscriptionproto.Subscription{}
 	if notificationEvent.IsAdminEvent {
 		adminSubs, err := s.listEnabledAdminSubscriptions(ctx, notificationEvent.SourceType)
 		if err != nil {
@@ -154,8 +154,8 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 func (s *sender) send(
 	ctx context.Context,
 	notification *senderproto.Notification,
-	recipient *notificationproto.Recipient,
-	language notificationproto.Recipient_Language,
+	recipient *subscriptionproto.Recipient,
+	language subscriptionproto.Recipient_Language,
 ) error {
 	for _, notifier := range s.notifiers {
 		if err := notifier.Notify(ctx, notification, recipient, language); err != nil {
@@ -168,14 +168,14 @@ func (s *sender) send(
 func (s *sender) listEnabledSubscriptions(
 	ctx context.Context,
 	environmentId string,
-	sourceType notificationproto.Subscription_SourceType) ([]*notificationproto.Subscription, error) {
+	sourceType subscriptionproto.Subscription_SourceType) ([]*subscriptionproto.Subscription, error) {
 
-	subscriptions := []*notificationproto.Subscription{}
+	subscriptions := []*subscriptionproto.Subscription{}
 	cursor := ""
 	for {
-		resp, err := s.notificationClient.ListEnabledSubscriptions(ctx, &notificationproto.ListEnabledSubscriptionsRequest{
+		resp, err := s.subscriptionClient.ListEnabledSubscriptions(ctx, &subscriptionproto.ListEnabledSubscriptionsRequest{
 			EnvironmentId: environmentId,
-			SourceTypes:   []notificationproto.Subscription_SourceType{sourceType},
+			SourceTypes:   []subscriptionproto.Subscription_SourceType{sourceType},
 			PageSize:      listRequestSize,
 			Cursor:        cursor,
 		})
@@ -193,15 +193,15 @@ func (s *sender) listEnabledSubscriptions(
 
 func (s *sender) listEnabledAdminSubscriptions(
 	ctx context.Context,
-	sourceType notificationproto.Subscription_SourceType) ([]*notificationproto.Subscription, error) {
+	sourceType subscriptionproto.Subscription_SourceType) ([]*subscriptionproto.Subscription, error) {
 
-	subscriptions := []*notificationproto.Subscription{}
+	subscriptions := []*subscriptionproto.Subscription{}
 	cursor := ""
 	for {
-		resp, err := s.notificationClient.ListEnabledAdminSubscriptions(
+		resp, err := s.subscriptionClient.ListEnabledAdminSubscriptions(
 			ctx,
-			&notificationproto.ListEnabledAdminSubscriptionsRequest{
-				SourceTypes: []notificationproto.Subscription_SourceType{sourceType},
+			&subscriptionproto.ListEnabledAdminSubscriptionsRequest{
+				SourceTypes: []subscriptionproto.Subscription_SourceType{sourceType},
 				PageSize:    listRequestSize,
 				Cursor:      cursor,
 			},
@@ -220,12 +220,12 @@ func (s *sender) listEnabledAdminSubscriptions(
 
 // When a flag changes it must be checked before sending notifications
 func (s *sender) checkForFeatureDomainEvent(
-	sub *notificationproto.Subscription,
-	sourceType notificationproto.Subscription_SourceType,
+	sub *subscriptionproto.Subscription,
+	sourceType subscriptionproto.Subscription_SourceType,
 	entityData string,
 ) bool {
 	// Different domain event
-	if sourceType != notificationproto.Subscription_DOMAIN_EVENT_FEATURE ||
+	if sourceType != subscriptionproto.Subscription_DOMAIN_EVENT_FEATURE ||
 		len(sub.FeatureFlagTags) == 0 {
 		s.logger.Debug(
 			"Sending notification. The source type is not a feature domain event or the subscription's tags are empty",

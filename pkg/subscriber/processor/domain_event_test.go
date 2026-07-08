@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -57,7 +57,7 @@ func TestCreateNotificationEvent(t *testing.T) {
 			expected: &senderproto.NotificationEvent{
 				Id:            "id",
 				EnvironmentId: "ns0",
-				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				SourceType:    subscriptionproto.Subscription_DOMAIN_EVENT_FEATURE,
 				Notification: &senderproto.Notification{
 					Type: senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{
@@ -89,7 +89,7 @@ func TestCreateNotificationEvent(t *testing.T) {
 			expected: &senderproto.NotificationEvent{
 				Id:            "id",
 				EnvironmentId: "",
-				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
+				SourceType:    subscriptionproto.Subscription_DOMAIN_EVENT_PROJECT,
 				Notification: &senderproto.Notification{
 					Type: senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{

@@ -106,10 +106,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
-	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/api"
+	subscriptionapi "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/api"
 	v2ns "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
-	notificationmysql "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/mysql"
-	notificationpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/postgres"
+	subscriptionmysql "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/mysql"
+	subscriptionpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/postgres"
 	tagapi "github.com/bucketeer-io/bucketeer/v2/pkg/tag/api"
 	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	tagmysql "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mysql"
@@ -131,7 +131,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 	teamproto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
@@ -200,7 +200,7 @@ type server struct {
 	eventCounterServicePort         *int
 	experimentServicePort           *int
 	featureServicePort              *int
-	notificationServicePort         *int
+	subscriptionServicePort         *int
 	pushServicePort                 *int
 	dashboardServicePort            *int
 	tagServicePort                  *int
@@ -378,9 +378,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"feature-service-port",
 			"Port to bind to feature service.",
 		).Default("9098").Int(),
-		notificationServicePort: cmd.Flag(
+		subscriptionServicePort: cmd.Flag(
 			"notification-service-port",
-			"Port to bind to notification service.",
+			"Port to bind to subscription service.",
 		).Default("9100").Int(),
 		pushServicePort: cmd.Flag(
 			"push-service-port",
@@ -645,8 +645,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		goalStorage = experimentpostgres.NewGoalStorage(postgresClient)
 		experimentResultStorage = eventcounterpostgres.NewExperimentResultStorage(postgresClient)
 		monthlySummaryStorage = insightspostgres.NewMonthlySummaryStorage(postgresClient)
-		subscriptionStorage = notificationpostgres.NewSubscriptionStorage(postgresClient)
-		adminSubscriptionStorage = notificationpostgres.NewAdminSubscriptionStorage(postgresClient)
+		subscriptionStorage = subscriptionpostgres.NewSubscriptionStorage(postgresClient)
+		adminSubscriptionStorage = subscriptionpostgres.NewAdminSubscriptionStorage(postgresClient)
 		teamStorage = teampostgres.NewTeamStorage(postgresClient)
 		scheduledFlagChangeStorage = featurepostgres.NewScheduledFlagChangeStorage(postgresClient)
 	} else {
@@ -672,8 +672,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentStorage = experimentmysql.NewExperimentStorage(mysqlClient)
 		goalStorage = experimentmysql.NewGoalStorage(mysqlClient)
 		monthlySummaryStorage = insightsmysql.NewMonthlySummaryStorage(mysqlClient)
-		subscriptionStorage = notificationmysql.NewSubscriptionStorage(mysqlClient)
-		adminSubscriptionStorage = notificationmysql.NewAdminSubscriptionStorage(mysqlClient)
+		subscriptionStorage = subscriptionmysql.NewSubscriptionStorage(mysqlClient)
+		adminSubscriptionStorage = subscriptionmysql.NewAdminSubscriptionStorage(mysqlClient)
 		teamStorage = teammysql.NewTeamStorage(mysqlClient)
 		scheduledFlagChangeStorage = featuremysql.NewScheduledFlagChangeStorage(mysqlClient)
 	}
@@ -1017,23 +1017,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go featureServer.Run()
 
-	// notificationService
-	notificationService := notificationapi.NewNotificationService(
+	// subscriptionService
+	subscriptionService := subscriptionapi.NewSubscriptionService(
 		dbClient,
 		adminSubscriptionStorage,
 		subscriptionStorage,
 		accountClient,
 		domainTopicPublisher,
-		notificationapi.WithLogger(logger),
+		subscriptionapi.WithLogger(logger),
 	)
-	notificationServer := rpc.NewServer(notificationService, *s.certPath, *s.keyPath,
-		"notification-server",
-		rpc.WithPort(*s.notificationServicePort),
+	subscriptionServer := rpc.NewServer(subscriptionService, *s.certPath, *s.keyPath,
+		"subscription-server",
+		rpc.WithPort(*s.subscriptionServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	go notificationServer.Run()
+	go subscriptionServer.Run()
 
 	// pushService
 	pushService := pushapi.NewPushService(
@@ -1267,7 +1267,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			experimentServer,
 			eventCounterServer,
 			featureServer,
-			notificationServer,
+			subscriptionServer,
 			pushServer,
 			tagServer,
 			codeReferenceServer,
@@ -1611,8 +1611,8 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 			return featureproto.RegisterFeatureServiceHandlerFromEndpoint(ctx, mux, featureGrpcAddr, opts)
 		},
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
-			notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
-			return notificationproto.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationGrpcAddr, opts)
+			subscriptionGrpcAddr := fmt.Sprintf("localhost:%d", *s.subscriptionServicePort)
+			return subscriptionproto.RegisterSubscriptionServiceHandlerFromEndpoint(ctx, mux, subscriptionGrpcAddr, opts)
 		},
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			pushGrpcAddr := fmt.Sprintf("localhost:%d", *s.pushServicePort)

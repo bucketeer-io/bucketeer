@@ -17,7 +17,7 @@ import (
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
-	notification "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscription "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
 // MockAdminSubscriptionStorage is a mock of AdminSubscriptionStorage interface.
@@ -87,10 +87,10 @@ func (mr *MockAdminSubscriptionStorageMockRecorder) GetAdminSubscription(ctx, id
 }
 
 // ListAdminSubscriptions mocks base method.
-func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Context, params v2.ListAdminSubscriptionsParams) ([]*notification.Subscription, int, int64, error) {
+func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Context, params v2.ListAdminSubscriptionsParams) ([]*subscription.Subscription, int, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAdminSubscriptions", ctx, params)
-	ret0, _ := ret[0].([]*notification.Subscription)
+	ret0, _ := ret[0].([]*subscription.Subscription)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
 	ret3, _ := ret[3].(error)

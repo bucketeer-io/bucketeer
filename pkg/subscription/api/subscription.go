@@ -29,13 +29,13 @@ import (
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
-func (s *NotificationService) CreateSubscription(
+func (s *SubscriptionService) CreateSubscription(
 	ctx context.Context,
-	req *notificationproto.CreateSubscriptionRequest,
-) (*notificationproto.CreateSubscriptionResponse, error) {
+	req *subscriptionproto.CreateSubscriptionRequest,
+) (*subscriptionproto.CreateSubscriptionResponse, error) {
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId)
@@ -118,15 +118,15 @@ func (s *NotificationService) CreateSubscription(
 		)
 		return nil, err
 	}
-	return &notificationproto.CreateSubscriptionResponse{
+	return &subscriptionproto.CreateSubscriptionResponse{
 		Subscription: subscription.Subscription,
 	}, nil
 }
 
-func (s *NotificationService) UpdateSubscription(
+func (s *SubscriptionService) UpdateSubscription(
 	ctx context.Context,
-	req *notificationproto.UpdateSubscriptionRequest,
-) (*notificationproto.UpdateSubscriptionResponse, error) {
+	req *subscriptionproto.UpdateSubscriptionRequest,
+) (*subscriptionproto.UpdateSubscriptionResponse, error) {
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId)
@@ -151,21 +151,21 @@ func (s *NotificationService) UpdateSubscription(
 		return nil, err
 	}
 
-	return &notificationproto.UpdateSubscriptionResponse{
+	return &subscriptionproto.UpdateSubscriptionResponse{
 		Subscription: updatedSubscription,
 	}, nil
 }
 
-func (s *NotificationService) updateSubscriptionMySQL(
+func (s *SubscriptionService) updateSubscriptionMySQL(
 	ctx context.Context,
 	ID, environmentID string,
 	name *wrapperspb.StringValue,
-	sourceTypes []notificationproto.Subscription_SourceType,
+	sourceTypes []subscriptionproto.Subscription_SourceType,
 	disabled *wrapperspb.BoolValue,
 	featureFlagTags []string,
 	editor *eventproto.Editor,
-) (*notificationproto.Subscription, error) {
-	var updatedSubscription *notificationproto.Subscription
+) (*subscriptionproto.Subscription, error) {
+	var updatedSubscription *subscriptionproto.Subscription
 	var event *eventproto.Event
 	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err := s.subscriptionStorage.GetSubscription(contextWithTx, ID, environmentID)
@@ -228,10 +228,10 @@ func (s *NotificationService) updateSubscriptionMySQL(
 	return updatedSubscription, nil
 }
 
-func (s *NotificationService) DeleteSubscription(
+func (s *SubscriptionService) DeleteSubscription(
 	ctx context.Context,
-	req *notificationproto.DeleteSubscriptionRequest,
-) (*notificationproto.DeleteSubscriptionResponse, error) {
+	req *subscriptionproto.DeleteSubscriptionRequest,
+) (*subscriptionproto.DeleteSubscriptionResponse, error) {
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId)
@@ -290,13 +290,13 @@ func (s *NotificationService) DeleteSubscription(
 		)
 		return nil, err
 	}
-	return &notificationproto.DeleteSubscriptionResponse{}, nil
+	return &subscriptionproto.DeleteSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) GetSubscription(
+func (s *SubscriptionService) GetSubscription(
 	ctx context.Context,
-	req *notificationproto.GetSubscriptionRequest,
-) (*notificationproto.GetSubscriptionResponse, error) {
+	req *subscriptionproto.GetSubscriptionRequest,
+) (*subscriptionproto.GetSubscriptionResponse, error) {
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)
@@ -320,13 +320,13 @@ func (s *NotificationService) GetSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &notificationproto.GetSubscriptionResponse{Subscription: subscription.Subscription}, nil
+	return &subscriptionproto.GetSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
 
-func (s *NotificationService) ListSubscriptions(
+func (s *SubscriptionService) ListSubscriptions(
 	ctx context.Context,
-	req *notificationproto.ListSubscriptionsRequest,
-) (*notificationproto.ListSubscriptionsResponse, error) {
+	req *subscriptionproto.ListSubscriptionsRequest,
+) (*subscriptionproto.ListSubscriptionsResponse, error) {
 	var filterEnvironmentIDs []string
 	if req.OrganizationId != "" {
 		// console v3
@@ -370,14 +370,14 @@ func (s *NotificationService) ListSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	return &notificationproto.ListSubscriptionsResponse{
+	return &subscriptionproto.ListSubscriptionsResponse{
 		Subscriptions: subscriptions,
 		Cursor:        cursor,
 		TotalCount:    totalCount,
 	}, nil
 }
 
-func (s *NotificationService) getAllowedEnvironments(
+func (s *SubscriptionService) getAllowedEnvironments(
 	reqEnvironmentIDs []string,
 	editor *eventproto.Editor,
 ) []string {
@@ -405,10 +405,10 @@ func (s *NotificationService) getAllowedEnvironments(
 	return filterEnvironmentIDs
 }
 
-func (s *NotificationService) ListEnabledSubscriptions(
+func (s *SubscriptionService) ListEnabledSubscriptions(
 	ctx context.Context,
-	req *notificationproto.ListEnabledSubscriptionsRequest,
-) (*notificationproto.ListEnabledSubscriptionsResponse, error) {
+	req *subscriptionproto.ListEnabledSubscriptionsRequest,
+) (*subscriptionproto.ListEnabledSubscriptionsResponse, error) {
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)
@@ -429,16 +429,16 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	return &notificationproto.ListEnabledSubscriptionsResponse{
+	return &subscriptionproto.ListEnabledSubscriptionsResponse{
 		Subscriptions: subscriptions,
 		Cursor:        cursor,
 	}, nil
 }
 
-func (s *NotificationService) listSubscriptions(
+func (s *SubscriptionService) listSubscriptions(
 	ctx context.Context,
 	params v2ss.ListSubscriptionsParams,
-) ([]*notificationproto.Subscription, string, int64, error) {
+) ([]*subscriptionproto.Subscription, string, int64, error) {
 	subscriptions, nextCursor, totalCount, err := s.subscriptionStorage.ListSubscriptions(ctx, params)
 	if err != nil {
 		if errors.Is(err, v2ss.ErrInvalidCursor) {

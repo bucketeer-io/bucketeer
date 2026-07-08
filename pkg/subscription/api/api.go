@@ -31,7 +31,7 @@ import (
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
 type options struct {
@@ -46,7 +46,7 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
-type NotificationService struct {
+type SubscriptionService struct {
 	dbClient                 database.Client
 	adminSubscriptionStorage v2.AdminSubscriptionStorage
 	subscriptionStorage      v2.SubscriptionStorage
@@ -56,21 +56,21 @@ type NotificationService struct {
 	logger                   *zap.Logger
 }
 
-func NewNotificationService(
+func NewSubscriptionService(
 	dbClient database.Client,
 	adminSubscriptionStorage v2.AdminSubscriptionStorage,
 	subscriptionStorage v2.SubscriptionStorage,
 	accountClient accountclient.Client,
 	domainEventPublisher publisher.Publisher,
 	opts ...Option,
-) *NotificationService {
+) *SubscriptionService {
 	dopts := &options{
 		logger: zap.NewNop(),
 	}
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	return &NotificationService{
+	return &SubscriptionService{
 		dbClient:                 dbClient,
 		adminSubscriptionStorage: adminSubscriptionStorage,
 		subscriptionStorage:      subscriptionStorage,
@@ -81,11 +81,11 @@ func NewNotificationService(
 	}
 }
 
-func (s *NotificationService) Register(server *grpc.Server) {
-	notificationproto.RegisterNotificationServiceServer(server, s)
+func (s *SubscriptionService) Register(server *grpc.Server) {
+	subscriptionproto.RegisterSubscriptionServiceServer(server, s)
 }
 
-func (s *NotificationService) checkSystemAdminRole(
+func (s *SubscriptionService) checkSystemAdminRole(
 	ctx context.Context,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckSystemAdminRole(ctx)
@@ -114,7 +114,7 @@ func (s *NotificationService) checkSystemAdminRole(
 	return editor, nil
 }
 
-func (s *NotificationService) checkEnvironmentRole(
+func (s *SubscriptionService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentId string,
@@ -140,7 +140,7 @@ func (s *NotificationService) checkEnvironmentRole(
 	)
 }
 
-func (s *NotificationService) checkOrganizationRole(
+func (s *SubscriptionService) checkOrganizationRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Organization,
 	organizationID string,
@@ -166,7 +166,7 @@ func (s *NotificationService) checkOrganizationRole(
 	)
 }
 
-func (s *NotificationService) publishDomainEvents(ctx context.Context, events []*eventproto.Event) map[string]error {
+func (s *SubscriptionService) publishDomainEvents(ctx context.Context, events []*eventproto.Event) map[string]error {
 	messages := make([]publisher.Message, 0, len(events))
 	for _, event := range events {
 		messages = append(messages, event)

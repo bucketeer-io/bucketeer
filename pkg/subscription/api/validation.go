@@ -15,11 +15,11 @@
 package api
 
 import (
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
-func (s *NotificationService) validateCreateSubscriptionRequest(
-	req *notificationproto.CreateSubscriptionRequest,
+func (s *SubscriptionService) validateCreateSubscriptionRequest(
+	req *subscriptionproto.CreateSubscriptionRequest,
 ) error {
 	if req.Name == "" {
 		return statusNameRequired.Err()
@@ -31,7 +31,7 @@ func (s *NotificationService) validateCreateSubscriptionRequest(
 	if req.FeatureFlagTags != nil {
 		var found bool
 		for _, sourceType := range req.SourceTypes {
-			if sourceType == notificationproto.Subscription_DOMAIN_EVENT_FEATURE {
+			if sourceType == subscriptionproto.Subscription_DOMAIN_EVENT_FEATURE {
 				found = true
 				break
 			}
@@ -46,20 +46,20 @@ func (s *NotificationService) validateCreateSubscriptionRequest(
 	return nil
 }
 
-func (s *NotificationService) validateRecipient(
-	recipient *notificationproto.Recipient,
+func (s *SubscriptionService) validateRecipient(
+	recipient *subscriptionproto.Recipient,
 ) error {
 	if recipient == nil {
 		return statusRecipientRequired.Err()
 	}
-	if recipient.Type == notificationproto.Recipient_SlackChannel {
+	if recipient.Type == subscriptionproto.Recipient_SlackChannel {
 		return s.validateSlackRecipient(recipient.SlackChannelRecipient)
 	}
 	return statusUnknownRecipient.Err()
 }
 
-func (s *NotificationService) validateSlackRecipient(
-	sr *notificationproto.SlackChannelRecipient,
+func (s *SubscriptionService) validateSlackRecipient(
+	sr *subscriptionproto.SlackChannelRecipient,
 ) error {
 	// TODO: Check ping to the webhook URL?
 	if sr == nil {
@@ -71,8 +71,8 @@ func (s *NotificationService) validateSlackRecipient(
 	return nil
 }
 
-func (s *NotificationService) validateUpdateSubscriptionRequest(
-	req *notificationproto.UpdateSubscriptionRequest,
+func (s *SubscriptionService) validateUpdateSubscriptionRequest(
+	req *subscriptionproto.UpdateSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -84,7 +84,7 @@ func (s *NotificationService) validateUpdateSubscriptionRequest(
 }
 
 func validateDeleteSubscriptionRequest(
-	req *notificationproto.DeleteSubscriptionRequest,
+	req *subscriptionproto.DeleteSubscriptionRequest,
 ) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
@@ -92,7 +92,7 @@ func validateDeleteSubscriptionRequest(
 	return nil
 }
 
-func validateGetSubscriptionRequest(req *notificationproto.GetSubscriptionRequest) error {
+func validateGetSubscriptionRequest(req *subscriptionproto.GetSubscriptionRequest) error {
 	if req.Id == "" {
 		return statusIDRequired.Err()
 	}

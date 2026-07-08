@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package autoops
+package subscription
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
+	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
@@ -248,7 +248,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 func createAdminSubscription(
 	ctx context.Context,
 	t *testing.T,
-	client notificationclient.Client,
+	client subscriptionclient.Client,
 	name string,
 	sourceTypes []proto.Subscription_SourceType,
 	recipient *proto.Recipient) {
@@ -277,7 +277,7 @@ func newCreateAdminSubscriptionCommand(
 
 func listAdminSubscriptions(
 	t *testing.T,
-	client notificationclient.Client,
+	client subscriptionclient.Client,
 	sourceTypes []proto.Subscription_SourceType) []*proto.Subscription {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

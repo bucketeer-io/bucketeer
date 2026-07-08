@@ -46,7 +46,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*NotificationService)
+		setup       func(*SubscriptionService)
 		input       *proto.CreateSubscriptionRequest
 		expectedErr error
 	}{
@@ -117,7 +117,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
@@ -147,7 +147,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, true)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -170,7 +170,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*NotificationService)
+		setup       func(*SubscriptionService)
 		input       *proto.UpdateSubscriptionRequest
 		expectedErr error
 	}{
@@ -181,7 +181,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "err: ErrNotFound",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2ss.ErrSubscriptionNotFound)
@@ -202,7 +202,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success: update SourceTypes",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -236,7 +236,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success: rename",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -272,7 +272,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success: disable",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -306,7 +306,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, true)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -328,7 +328,7 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*NotificationService)
+		setup       func(*SubscriptionService)
 		input       *proto.DeleteSubscriptionRequest
 		expectedErr error
 	}{
@@ -339,7 +339,7 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -368,7 +368,7 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, true)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -393,7 +393,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 		orgRole       *accountproto.AccountV2_Role_Organization
 		envRole       *accountproto.AccountV2_Role_Environment
 		isSystemAdmin bool
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		input         *proto.GetSubscriptionRequest
 		expectedErr   error
 	}{
@@ -416,7 +416,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			isSystemAdmin: false,
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -431,7 +431,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newNotificationService(mockController, nil, p.orgRole, p.envRole)
+			service := newSubscriptionService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -462,7 +462,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 		orgRole       *accountproto.AccountV2_Role_Organization
 		envRole       *accountproto.AccountV2_Role_Environment
 		isSystemAdmin bool
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		input         *proto.ListSubscriptionsRequest
 		expected      *proto.ListSubscriptionsResponse
 		expectedErr   error
@@ -488,7 +488,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			isSystemAdmin: false,
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&accountproto.GetAccountV2Response{
@@ -551,7 +551,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			isSystemAdmin: false,
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 0, int64(0), nil)
@@ -571,7 +571,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newNotificationService(mockController, nil, p.orgRole, p.envRole)
+			s := newSubscriptionService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -600,7 +600,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 		orgRole       *accountproto.AccountV2_Role_Organization
 		envRole       *accountproto.AccountV2_Role_Environment
 		isSystemAdmin bool
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		input         *proto.ListEnabledSubscriptionsRequest
 		expected      *proto.ListEnabledSubscriptionsResponse
 		expectedErr   error
@@ -626,7 +626,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 			isSystemAdmin: false,
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 1, int64(1), nil)
@@ -646,7 +646,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newNotificationService(mockController, nil, p.orgRole, p.envRole)
+			s := newSubscriptionService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}

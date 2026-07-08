@@ -29,7 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -110,7 +110,7 @@ func (w *featureStaleWatcher) createNotificationEvent(
 	ne := &senderproto.NotificationEvent{
 		Id:            id.String(),
 		EnvironmentId: environment.Id,
-		SourceType:    notificationproto.Subscription_FEATURE_STALE,
+		SourceType:    subscriptionproto.Subscription_FEATURE_STALE,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_FeatureStale,
 			FeatureStaleNotification: &senderproto.FeatureStaleNotification{

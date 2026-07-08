@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
-	mocknotificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client/mock"
+	mocksubscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -71,7 +71,7 @@ func TestGrpcGatewayService_GetSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().
 					GetSubscription(gomock.Any(), gomock.Any()).
 					Return(nil, ErrInternal)
 			},
@@ -91,7 +91,7 @@ func TestGrpcGatewayService_GetSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().
 					GetSubscription(gomock.Any(), gomock.Any()).
 					Return(&subscription.GetSubscriptionResponse{
 						Subscription: &subscription.Subscription{
@@ -191,7 +191,7 @@ func TestGrpcGatewayService_ListSubscriptions(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().ListSubscriptions(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, ErrInternal)
 			},
@@ -210,7 +210,7 @@ func TestGrpcGatewayService_ListSubscriptions(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().ListSubscriptions(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return(&subscription.ListSubscriptionsResponse{
 					Subscriptions: []*subscription.Subscription{
@@ -318,7 +318,7 @@ func TestGrpcGatewayService_CreateSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().CreateSubscription(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().CreateSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, ErrInternal)
 			},
@@ -338,7 +338,7 @@ func TestGrpcGatewayService_CreateSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().CreateSubscription(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().CreateSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&subscription.CreateSubscriptionResponse{
 					Subscription: &subscription.Subscription{
@@ -437,7 +437,7 @@ func TestGrpcGatewayService_DeleteSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().DeleteSubscription(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().DeleteSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, ErrInternal)
 			},
@@ -456,7 +456,7 @@ func TestGrpcGatewayService_DeleteSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().DeleteSubscription(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().DeleteSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&subscription.DeleteSubscriptionResponse{}, nil)
 			},
@@ -518,7 +518,7 @@ func TestGrpcGatewayService_UpdateSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().UpdateSubscription(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().UpdateSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, ErrInternal)
 			},
@@ -537,7 +537,7 @@ func TestGrpcGatewayService_UpdateSubscription(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.notificationClient.(*mocknotificationclient.MockClient).EXPECT().UpdateSubscription(
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().UpdateSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&subscription.UpdateSubscriptionResponse{}, nil)
 			},

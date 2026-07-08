@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package bucketeer.notification;
+package bucketeer.subscription;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/subscription";
 
 import "proto/subscription/subscription.proto";

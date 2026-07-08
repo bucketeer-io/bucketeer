@@ -28,7 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -103,7 +103,7 @@ func (w *experimentRunningWatcher) createNotificationEvent(
 	ne := &senderproto.NotificationEvent{
 		Id:            id.String(),
 		EnvironmentId: environment.Id,
-		SourceType:    notificationproto.Subscription_EXPERIMENT_RUNNING,
+		SourceType:    subscriptionproto.Subscription_EXPERIMENT_RUNNING,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_ExperimentRunning,
 			ExperimentRunningNotification: &senderproto.ExperimentRunningNotification{

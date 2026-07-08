@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package autoops
+package subscription
 
 import (
 	"context"
@@ -27,7 +27,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
+	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
@@ -351,13 +351,13 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	}
 }
 
-func newNotificationClient(t *testing.T, tokenPath string) notificationclient.Client {
+func newNotificationClient(t *testing.T, tokenPath string) subscriptionclient.Client {
 	t.Helper()
 	creds, err := rpcclient.NewPerRPCCredentials(tokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
-	client, err := notificationclient.NewClient(
+	client, err := subscriptionclient.NewClient(
 		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
 		*webGatewayCert,
 		rpcclient.WithPerRPCCredentials(creds),
@@ -381,7 +381,7 @@ func newUUID(t *testing.T) string {
 
 func listSubscriptions(
 	t *testing.T,
-	client notificationclient.Client,
+	client subscriptionclient.Client,
 	sourceTypes []proto.Subscription_SourceType) []*proto.Subscription {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -399,7 +399,7 @@ func listSubscriptions(
 
 func listEnabledSubscriptions(
 	t *testing.T,
-	client notificationclient.Client,
+	client subscriptionclient.Client,
 	sourceTypes []proto.Subscription_SourceType) []*proto.Subscription {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -418,7 +418,7 @@ func listEnabledSubscriptions(
 func createSubscription(
 	ctx context.Context,
 	t *testing.T,
-	client notificationclient.Client,
+	client subscriptionclient.Client,
 	name string,
 	sourceTypes []proto.Subscription_SourceType,
 	recipient *proto.Recipient,
@@ -439,7 +439,7 @@ func createSubscription(
 
 func listSubscriptionsByOrganizationID(
 	t *testing.T,
-	client notificationclient.Client,
+	client subscriptionclient.Client,
 	sourceTypes []proto.Subscription_SourceType,
 	organizationID string,
 ) []*proto.Subscription {

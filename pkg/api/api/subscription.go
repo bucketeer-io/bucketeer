@@ -49,7 +49,7 @@ func (s *grpcGatewayService) GetSubscription(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetSubscription, "").Inc()
 
-	res, err := s.notificationClient.GetSubscription(ctx, &subscription.GetSubscriptionRequest{
+	res, err := s.subscriptionClient.GetSubscription(ctx, &subscription.GetSubscriptionRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
 		Id:            req.Id,
 	})
@@ -97,7 +97,7 @@ func (s *grpcGatewayService) ListSubscriptions(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListSubscriptions, "").Inc()
 
-	res, err := s.notificationClient.ListSubscriptions(ctx, &subscription.ListSubscriptionsRequest{
+	res, err := s.subscriptionClient.ListSubscriptions(ctx, &subscription.ListSubscriptionsRequest{
 		PageSize:       req.PageSize,
 		Cursor:         req.Cursor,
 		OrderBy:        req.OrderBy,
@@ -158,7 +158,7 @@ func (s *grpcGatewayService) CreateSubscription(
 		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
-	res, err := s.notificationClient.CreateSubscription(ctx, &subscription.CreateSubscriptionRequest{
+	res, err := s.subscriptionClient.CreateSubscription(ctx, &subscription.CreateSubscriptionRequest{
 		EnvironmentId:   envAPIKey.Environment.Id,
 		Name:            req.Name,
 		SourceTypes:     req.SourceTypes,
@@ -215,7 +215,7 @@ func (s *grpcGatewayService) DeleteSubscription(
 		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
-	_, err = s.notificationClient.DeleteSubscription(ctx, &subscription.DeleteSubscriptionRequest{
+	_, err = s.subscriptionClient.DeleteSubscription(ctx, &subscription.DeleteSubscriptionRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
 		Id:            req.Id,
 	})
@@ -259,7 +259,7 @@ func (s *grpcGatewayService) UpdateSubscription(
 		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
-	_, err = s.notificationClient.UpdateSubscription(ctx, &subscription.UpdateSubscriptionRequest{
+	_, err = s.subscriptionClient.UpdateSubscription(ctx, &subscription.UpdateSubscriptionRequest{
 		EnvironmentId:   envAPIKey.Environment.Id,
 		Id:              req.Id,
 		Name:            req.Name,

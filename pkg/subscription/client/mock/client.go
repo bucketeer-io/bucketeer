@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"
 
-	notification "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscription "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
 // MockClient is a mock of Client interface.
@@ -55,14 +55,14 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 }
 
 // CreateAdminSubscription mocks base method.
-func (m *MockClient) CreateAdminSubscription(ctx context.Context, in *notification.CreateAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.CreateAdminSubscriptionResponse, error) {
+func (m *MockClient) CreateAdminSubscription(ctx context.Context, in *subscription.CreateAdminSubscriptionRequest, opts ...grpc.CallOption) (*subscription.CreateAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateAdminSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.CreateAdminSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.CreateAdminSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -75,14 +75,14 @@ func (mr *MockClientMockRecorder) CreateAdminSubscription(ctx, in any, opts ...a
 }
 
 // CreateSubscription mocks base method.
-func (m *MockClient) CreateSubscription(ctx context.Context, in *notification.CreateSubscriptionRequest, opts ...grpc.CallOption) (*notification.CreateSubscriptionResponse, error) {
+func (m *MockClient) CreateSubscription(ctx context.Context, in *subscription.CreateSubscriptionRequest, opts ...grpc.CallOption) (*subscription.CreateSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.CreateSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.CreateSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -95,14 +95,14 @@ func (mr *MockClientMockRecorder) CreateSubscription(ctx, in any, opts ...any) *
 }
 
 // DeleteAdminSubscription mocks base method.
-func (m *MockClient) DeleteAdminSubscription(ctx context.Context, in *notification.DeleteAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.DeleteAdminSubscriptionResponse, error) {
+func (m *MockClient) DeleteAdminSubscription(ctx context.Context, in *subscription.DeleteAdminSubscriptionRequest, opts ...grpc.CallOption) (*subscription.DeleteAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "DeleteAdminSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.DeleteAdminSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.DeleteAdminSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -115,14 +115,14 @@ func (mr *MockClientMockRecorder) DeleteAdminSubscription(ctx, in any, opts ...a
 }
 
 // DeleteSubscription mocks base method.
-func (m *MockClient) DeleteSubscription(ctx context.Context, in *notification.DeleteSubscriptionRequest, opts ...grpc.CallOption) (*notification.DeleteSubscriptionResponse, error) {
+func (m *MockClient) DeleteSubscription(ctx context.Context, in *subscription.DeleteSubscriptionRequest, opts ...grpc.CallOption) (*subscription.DeleteSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "DeleteSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.DeleteSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.DeleteSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -135,14 +135,14 @@ func (mr *MockClientMockRecorder) DeleteSubscription(ctx, in any, opts ...any) *
 }
 
 // DisableAdminSubscription mocks base method.
-func (m *MockClient) DisableAdminSubscription(ctx context.Context, in *notification.DisableAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.DisableAdminSubscriptionResponse, error) {
+func (m *MockClient) DisableAdminSubscription(ctx context.Context, in *subscription.DisableAdminSubscriptionRequest, opts ...grpc.CallOption) (*subscription.DisableAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "DisableAdminSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.DisableAdminSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.DisableAdminSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -155,14 +155,14 @@ func (mr *MockClientMockRecorder) DisableAdminSubscription(ctx, in any, opts ...
 }
 
 // EnableAdminSubscription mocks base method.
-func (m *MockClient) EnableAdminSubscription(ctx context.Context, in *notification.EnableAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.EnableAdminSubscriptionResponse, error) {
+func (m *MockClient) EnableAdminSubscription(ctx context.Context, in *subscription.EnableAdminSubscriptionRequest, opts ...grpc.CallOption) (*subscription.EnableAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "EnableAdminSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.EnableAdminSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.EnableAdminSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -175,14 +175,14 @@ func (mr *MockClientMockRecorder) EnableAdminSubscription(ctx, in any, opts ...a
 }
 
 // GetAdminSubscription mocks base method.
-func (m *MockClient) GetAdminSubscription(ctx context.Context, in *notification.GetAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.GetAdminSubscriptionResponse, error) {
+func (m *MockClient) GetAdminSubscription(ctx context.Context, in *subscription.GetAdminSubscriptionRequest, opts ...grpc.CallOption) (*subscription.GetAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAdminSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.GetAdminSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.GetAdminSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -195,14 +195,14 @@ func (mr *MockClientMockRecorder) GetAdminSubscription(ctx, in any, opts ...any)
 }
 
 // GetSubscription mocks base method.
-func (m *MockClient) GetSubscription(ctx context.Context, in *notification.GetSubscriptionRequest, opts ...grpc.CallOption) (*notification.GetSubscriptionResponse, error) {
+func (m *MockClient) GetSubscription(ctx context.Context, in *subscription.GetSubscriptionRequest, opts ...grpc.CallOption) (*subscription.GetSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.GetSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.GetSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -215,14 +215,14 @@ func (mr *MockClientMockRecorder) GetSubscription(ctx, in any, opts ...any) *gom
 }
 
 // ListAdminSubscriptions mocks base method.
-func (m *MockClient) ListAdminSubscriptions(ctx context.Context, in *notification.ListAdminSubscriptionsRequest, opts ...grpc.CallOption) (*notification.ListAdminSubscriptionsResponse, error) {
+func (m *MockClient) ListAdminSubscriptions(ctx context.Context, in *subscription.ListAdminSubscriptionsRequest, opts ...grpc.CallOption) (*subscription.ListAdminSubscriptionsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListAdminSubscriptions", varargs...)
-	ret0, _ := ret[0].(*notification.ListAdminSubscriptionsResponse)
+	ret0, _ := ret[0].(*subscription.ListAdminSubscriptionsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -235,14 +235,14 @@ func (mr *MockClientMockRecorder) ListAdminSubscriptions(ctx, in any, opts ...an
 }
 
 // ListEnabledAdminSubscriptions mocks base method.
-func (m *MockClient) ListEnabledAdminSubscriptions(ctx context.Context, in *notification.ListEnabledAdminSubscriptionsRequest, opts ...grpc.CallOption) (*notification.ListEnabledAdminSubscriptionsResponse, error) {
+func (m *MockClient) ListEnabledAdminSubscriptions(ctx context.Context, in *subscription.ListEnabledAdminSubscriptionsRequest, opts ...grpc.CallOption) (*subscription.ListEnabledAdminSubscriptionsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListEnabledAdminSubscriptions", varargs...)
-	ret0, _ := ret[0].(*notification.ListEnabledAdminSubscriptionsResponse)
+	ret0, _ := ret[0].(*subscription.ListEnabledAdminSubscriptionsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -255,14 +255,14 @@ func (mr *MockClientMockRecorder) ListEnabledAdminSubscriptions(ctx, in any, opt
 }
 
 // ListEnabledSubscriptions mocks base method.
-func (m *MockClient) ListEnabledSubscriptions(ctx context.Context, in *notification.ListEnabledSubscriptionsRequest, opts ...grpc.CallOption) (*notification.ListEnabledSubscriptionsResponse, error) {
+func (m *MockClient) ListEnabledSubscriptions(ctx context.Context, in *subscription.ListEnabledSubscriptionsRequest, opts ...grpc.CallOption) (*subscription.ListEnabledSubscriptionsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListEnabledSubscriptions", varargs...)
-	ret0, _ := ret[0].(*notification.ListEnabledSubscriptionsResponse)
+	ret0, _ := ret[0].(*subscription.ListEnabledSubscriptionsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -275,14 +275,14 @@ func (mr *MockClientMockRecorder) ListEnabledSubscriptions(ctx, in any, opts ...
 }
 
 // ListSubscriptions mocks base method.
-func (m *MockClient) ListSubscriptions(ctx context.Context, in *notification.ListSubscriptionsRequest, opts ...grpc.CallOption) (*notification.ListSubscriptionsResponse, error) {
+func (m *MockClient) ListSubscriptions(ctx context.Context, in *subscription.ListSubscriptionsRequest, opts ...grpc.CallOption) (*subscription.ListSubscriptionsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListSubscriptions", varargs...)
-	ret0, _ := ret[0].(*notification.ListSubscriptionsResponse)
+	ret0, _ := ret[0].(*subscription.ListSubscriptionsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -295,14 +295,14 @@ func (mr *MockClientMockRecorder) ListSubscriptions(ctx, in any, opts ...any) *g
 }
 
 // UpdateAdminSubscription mocks base method.
-func (m *MockClient) UpdateAdminSubscription(ctx context.Context, in *notification.UpdateAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.UpdateAdminSubscriptionResponse, error) {
+func (m *MockClient) UpdateAdminSubscription(ctx context.Context, in *subscription.UpdateAdminSubscriptionRequest, opts ...grpc.CallOption) (*subscription.UpdateAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "UpdateAdminSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.UpdateAdminSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.UpdateAdminSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -315,14 +315,14 @@ func (mr *MockClientMockRecorder) UpdateAdminSubscription(ctx, in any, opts ...a
 }
 
 // UpdateSubscription mocks base method.
-func (m *MockClient) UpdateSubscription(ctx context.Context, in *notification.UpdateSubscriptionRequest, opts ...grpc.CallOption) (*notification.UpdateSubscriptionResponse, error) {
+func (m *MockClient) UpdateSubscription(ctx context.Context, in *subscription.UpdateSubscriptionRequest, opts ...grpc.CallOption) (*subscription.UpdateSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "UpdateSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.UpdateSubscriptionResponse)
+	ret0, _ := ret[0].(*subscription.UpdateSubscriptionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

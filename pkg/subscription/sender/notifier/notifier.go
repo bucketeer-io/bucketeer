@@ -18,7 +18,7 @@ package notifier
 import (
 	"context"
 
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -26,7 +26,7 @@ type Notifier interface {
 	Notify(
 		ctx context.Context,
 		notification *senderproto.Notification,
-		recipient *notificationproto.Recipient,
-		language notificationproto.Recipient_Language,
+		recipient *subscriptionproto.Recipient,
+		language subscriptionproto.Recipient_Language,
 	) error
 }

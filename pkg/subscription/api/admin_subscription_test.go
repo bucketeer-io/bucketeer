@@ -46,7 +46,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.CreateAdminSubscriptionRequest
 		expectedErr   error
@@ -151,7 +151,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
@@ -184,7 +184,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, p.isSystemAdmin)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -207,7 +207,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.UpdateAdminSubscriptionRequest
 		expectedErr   error
@@ -252,7 +252,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "err: ErrNotFound",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2ss.ErrAdminSubscriptionNotFound)
@@ -276,7 +276,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success: addSourceTypes",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -309,7 +309,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success: deleteSourceTypes",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -346,7 +346,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success: all commands",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -393,7 +393,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, p.isSystemAdmin)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -415,7 +415,7 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.EnableAdminSubscriptionRequest
 		expectedErr   error
@@ -442,7 +442,7 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -474,7 +474,7 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, p.isSystemAdmin)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -497,7 +497,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.DisableAdminSubscriptionRequest
 		expectedErr   error
@@ -518,7 +518,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -550,7 +550,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, p.isSystemAdmin)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -572,7 +572,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.DeleteAdminSubscriptionRequest
 		expectedErr   error
@@ -593,7 +593,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -624,7 +624,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(t, ctx, p.isSystemAdmin)
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -646,7 +646,7 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.GetAdminSubscriptionRequest
 		expectedErr   error
@@ -665,7 +665,7 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Subscription{
@@ -681,7 +681,7 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -707,7 +707,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.ListAdminSubscriptionsRequest
 		expected      *proto.ListAdminSubscriptionsResponse
@@ -723,7 +723,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 0, int64(0), nil)
@@ -744,7 +744,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newNotificationServiceWithMock(t, mockController)
+			s := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -768,7 +768,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		setup         func(*NotificationService)
+		setup         func(*SubscriptionService)
 		isSystemAdmin bool
 		input         *proto.ListEnabledAdminSubscriptionsRequest
 		expected      *proto.ListEnabledAdminSubscriptionsResponse
@@ -784,7 +784,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(s *NotificationService) {
+			setup: func(s *SubscriptionService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 1, int64(1), nil)
@@ -804,7 +804,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newNotificationServiceWithMock(t, mockController)
+			s := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}

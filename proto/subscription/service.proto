@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package bucketeer.notification;
+package bucketeer.subscription;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/subscription";
 
 import "google/protobuf/wrappers.proto";
@@ -209,7 +209,7 @@ message UpdateSubscriptionResponse {
   Subscription subscription = 1;
 }
 
-service NotificationService {
+service SubscriptionService {
   rpc GetAdminSubscription(GetAdminSubscriptionRequest)
       returns (GetAdminSubscriptionResponse) {}
   rpc ListAdminSubscriptions(ListAdminSubscriptionsRequest)

@@ -31,7 +31,7 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_NotificationService_GetAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_GetAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -44,7 +44,7 @@ func request_NotificationService_GetAdminSubscription_0(ctx context.Context, mar
 
 }
 
-func local_request_NotificationService_GetAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_GetAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -57,7 +57,7 @@ func local_request_NotificationService_GetAdminSubscription_0(ctx context.Contex
 
 }
 
-func request_NotificationService_ListAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_ListAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListAdminSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -70,7 +70,7 @@ func request_NotificationService_ListAdminSubscriptions_0(ctx context.Context, m
 
 }
 
-func local_request_NotificationService_ListAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_ListAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListAdminSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -83,7 +83,7 @@ func local_request_NotificationService_ListAdminSubscriptions_0(ctx context.Cont
 
 }
 
-func request_NotificationService_ListEnabledAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_ListEnabledAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListEnabledAdminSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -96,7 +96,7 @@ func request_NotificationService_ListEnabledAdminSubscriptions_0(ctx context.Con
 
 }
 
-func local_request_NotificationService_ListEnabledAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_ListEnabledAdminSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListEnabledAdminSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -109,7 +109,7 @@ func local_request_NotificationService_ListEnabledAdminSubscriptions_0(ctx conte
 
 }
 
-func request_NotificationService_CreateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_CreateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -122,7 +122,7 @@ func request_NotificationService_CreateAdminSubscription_0(ctx context.Context, 
 
 }
 
-func local_request_NotificationService_CreateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_CreateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -135,7 +135,7 @@ func local_request_NotificationService_CreateAdminSubscription_0(ctx context.Con
 
 }
 
-func request_NotificationService_DeleteAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_DeleteAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -148,7 +148,7 @@ func request_NotificationService_DeleteAdminSubscription_0(ctx context.Context, 
 
 }
 
-func local_request_NotificationService_DeleteAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_DeleteAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -161,7 +161,7 @@ func local_request_NotificationService_DeleteAdminSubscription_0(ctx context.Con
 
 }
 
-func request_NotificationService_EnableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_EnableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq EnableAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -174,7 +174,7 @@ func request_NotificationService_EnableAdminSubscription_0(ctx context.Context, 
 
 }
 
-func local_request_NotificationService_EnableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_EnableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq EnableAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -187,7 +187,7 @@ func local_request_NotificationService_EnableAdminSubscription_0(ctx context.Con
 
 }
 
-func request_NotificationService_DisableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_DisableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DisableAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -200,7 +200,7 @@ func request_NotificationService_DisableAdminSubscription_0(ctx context.Context,
 
 }
 
-func local_request_NotificationService_DisableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_DisableAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DisableAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -213,7 +213,7 @@ func local_request_NotificationService_DisableAdminSubscription_0(ctx context.Co
 
 }
 
-func request_NotificationService_UpdateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_UpdateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -226,7 +226,7 @@ func request_NotificationService_UpdateAdminSubscription_0(ctx context.Context, 
 
 }
 
-func local_request_NotificationService_UpdateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_UpdateAdminSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateAdminSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -240,17 +240,17 @@ func local_request_NotificationService_UpdateAdminSubscription_0(ctx context.Con
 }
 
 var (
-	filter_NotificationService_GetSubscription_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_SubscriptionService_GetSubscription_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_NotificationService_GetSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_GetSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NotificationService_GetSubscription_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SubscriptionService_GetSubscription_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -259,14 +259,14 @@ func request_NotificationService_GetSubscription_0(ctx context.Context, marshale
 
 }
 
-func local_request_NotificationService_GetSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_GetSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NotificationService_GetSubscription_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SubscriptionService_GetSubscription_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -276,17 +276,17 @@ func local_request_NotificationService_GetSubscription_0(ctx context.Context, ma
 }
 
 var (
-	filter_NotificationService_ListSubscriptions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_SubscriptionService_ListSubscriptions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_NotificationService_ListSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_ListSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NotificationService_ListSubscriptions_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SubscriptionService_ListSubscriptions_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -295,14 +295,14 @@ func request_NotificationService_ListSubscriptions_0(ctx context.Context, marsha
 
 }
 
-func local_request_NotificationService_ListSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_ListSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NotificationService_ListSubscriptions_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SubscriptionService_ListSubscriptions_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -311,7 +311,7 @@ func local_request_NotificationService_ListSubscriptions_0(ctx context.Context, 
 
 }
 
-func request_NotificationService_ListEnabledSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_ListEnabledSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListEnabledSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -324,7 +324,7 @@ func request_NotificationService_ListEnabledSubscriptions_0(ctx context.Context,
 
 }
 
-func local_request_NotificationService_ListEnabledSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_ListEnabledSubscriptions_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListEnabledSubscriptionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -337,7 +337,7 @@ func local_request_NotificationService_ListEnabledSubscriptions_0(ctx context.Co
 
 }
 
-func request_NotificationService_CreateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_CreateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -350,7 +350,7 @@ func request_NotificationService_CreateSubscription_0(ctx context.Context, marsh
 
 }
 
-func local_request_NotificationService_CreateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_CreateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -364,17 +364,17 @@ func local_request_NotificationService_CreateSubscription_0(ctx context.Context,
 }
 
 var (
-	filter_NotificationService_DeleteSubscription_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_SubscriptionService_DeleteSubscription_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_NotificationService_DeleteSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_DeleteSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NotificationService_DeleteSubscription_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SubscriptionService_DeleteSubscription_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -383,14 +383,14 @@ func request_NotificationService_DeleteSubscription_0(ctx context.Context, marsh
 
 }
 
-func local_request_NotificationService_DeleteSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_DeleteSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NotificationService_DeleteSubscription_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SubscriptionService_DeleteSubscription_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -399,7 +399,7 @@ func local_request_NotificationService_DeleteSubscription_0(ctx context.Context,
 
 }
 
-func request_NotificationService_UpdateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client NotificationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_SubscriptionService_UpdateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -412,7 +412,7 @@ func request_NotificationService_UpdateSubscription_0(ctx context.Context, marsh
 
 }
 
-func local_request_NotificationService_UpdateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server NotificationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_SubscriptionService_UpdateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, server SubscriptionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateSubscriptionRequest
 	var metadata runtime.ServerMetadata
 
@@ -425,13 +425,13 @@ func local_request_NotificationService_UpdateSubscription_0(ctx context.Context,
 
 }
 
-// RegisterNotificationServiceHandlerServer registers the http handlers for service NotificationService to "mux".
-// UnaryRPC     :call NotificationServiceServer directly.
+// RegisterSubscriptionServiceHandlerServer registers the http handlers for service SubscriptionService to "mux".
+// UnaryRPC     :call SubscriptionServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterNotificationServiceHandlerFromEndpoint instead.
-func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server NotificationServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterSubscriptionServiceHandlerFromEndpoint instead.
+func RegisterSubscriptionServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server SubscriptionServiceServer) error {
 
-	mux.Handle("POST", pattern_NotificationService_GetAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_GetAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -439,12 +439,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/GetAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/GetAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/GetAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/GetAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_GetAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_GetAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -452,11 +452,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_GetAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_GetAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_ListAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_ListAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -464,12 +464,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/ListAdminSubscriptions"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/ListAdminSubscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_ListAdminSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_ListAdminSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -477,11 +477,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_ListAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_ListEnabledAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_ListEnabledAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -489,12 +489,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListEnabledAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/ListEnabledAdminSubscriptions"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListEnabledAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/ListEnabledAdminSubscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_ListEnabledAdminSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_ListEnabledAdminSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -502,11 +502,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_ListEnabledAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListEnabledAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_CreateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_CreateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -514,12 +514,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/CreateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/CreateAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/CreateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/CreateAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_CreateAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_CreateAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -527,11 +527,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_CreateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_CreateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_DeleteAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_DeleteAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -539,12 +539,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/DeleteAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/DeleteAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/DeleteAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/DeleteAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_DeleteAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_DeleteAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -552,11 +552,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_DeleteAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_DeleteAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_EnableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_EnableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -564,12 +564,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/EnableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/EnableAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/EnableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/EnableAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_EnableAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_EnableAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -577,11 +577,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_EnableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_EnableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_DisableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_DisableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -589,12 +589,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/DisableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/DisableAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/DisableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/DisableAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_DisableAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_DisableAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -602,11 +602,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_DisableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_DisableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_UpdateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_UpdateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -614,12 +614,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/UpdateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/UpdateAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/UpdateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/UpdateAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_UpdateAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_UpdateAdminSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -627,11 +627,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_UpdateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_UpdateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_NotificationService_GetSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SubscriptionService_GetSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -639,12 +639,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/GetSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/GetSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_GetSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_GetSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -652,11 +652,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_GetSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_GetSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_NotificationService_ListSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SubscriptionService_ListSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -664,12 +664,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListSubscriptions", runtime.WithHTTPPathPattern("/v1/subscriptions"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListSubscriptions", runtime.WithHTTPPathPattern("/v1/subscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_ListSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_ListSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -677,11 +677,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_ListSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_ListEnabledSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_ListEnabledSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -689,12 +689,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListEnabledSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/ListEnabledSubscriptions"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListEnabledSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/ListEnabledSubscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_ListEnabledSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_ListEnabledSubscriptions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -702,11 +702,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_ListEnabledSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListEnabledSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_CreateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_CreateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -714,12 +714,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/CreateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/CreateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_CreateSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_CreateSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -727,11 +727,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_CreateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_CreateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_NotificationService_DeleteSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_SubscriptionService_DeleteSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -739,12 +739,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/DeleteSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/DeleteSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_DeleteSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_DeleteSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -752,11 +752,11 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_DeleteSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_DeleteSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PATCH", pattern_NotificationService_UpdateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_SubscriptionService_UpdateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -764,12 +764,12 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/UpdateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/UpdateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_UpdateSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SubscriptionService_UpdateSubscription_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -777,16 +777,16 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_NotificationService_UpdateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_UpdateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterNotificationServiceHandlerFromEndpoint is same as RegisterNotificationServiceHandler but
+// RegisterSubscriptionServiceHandlerFromEndpoint is same as RegisterSubscriptionServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterNotificationServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterSubscriptionServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
@@ -806,327 +806,327 @@ func RegisterNotificationServiceHandlerFromEndpoint(ctx context.Context, mux *ru
 		}()
 	}()
 
-	return RegisterNotificationServiceHandler(ctx, mux, conn)
+	return RegisterSubscriptionServiceHandler(ctx, mux, conn)
 }
 
-// RegisterNotificationServiceHandler registers the http handlers for service NotificationService to "mux".
+// RegisterSubscriptionServiceHandler registers the http handlers for service SubscriptionService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterNotificationServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterNotificationServiceHandlerClient(ctx, mux, NewNotificationServiceClient(conn))
+func RegisterSubscriptionServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterSubscriptionServiceHandlerClient(ctx, mux, NewSubscriptionServiceClient(conn))
 }
 
-// RegisterNotificationServiceHandlerClient registers the http handlers for service NotificationService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "NotificationServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "NotificationServiceClient"
+// RegisterSubscriptionServiceHandlerClient registers the http handlers for service SubscriptionService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "SubscriptionServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "SubscriptionServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "NotificationServiceClient" to call the correct interceptors.
-func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client NotificationServiceClient) error {
+// "SubscriptionServiceClient" to call the correct interceptors.
+func RegisterSubscriptionServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client SubscriptionServiceClient) error {
 
-	mux.Handle("POST", pattern_NotificationService_GetAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_GetAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/GetAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/GetAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/GetAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/GetAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_GetAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_GetAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_GetAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_GetAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_ListAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_ListAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/ListAdminSubscriptions"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/ListAdminSubscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_ListAdminSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_ListAdminSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_ListAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_ListEnabledAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_ListEnabledAdminSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListEnabledAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/ListEnabledAdminSubscriptions"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListEnabledAdminSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/ListEnabledAdminSubscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_ListEnabledAdminSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_ListEnabledAdminSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_ListEnabledAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListEnabledAdminSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_CreateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_CreateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/CreateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/CreateAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/CreateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/CreateAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_CreateAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_CreateAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_CreateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_CreateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_DeleteAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_DeleteAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/DeleteAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/DeleteAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/DeleteAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/DeleteAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_DeleteAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_DeleteAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_DeleteAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_DeleteAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_EnableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_EnableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/EnableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/EnableAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/EnableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/EnableAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_EnableAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_EnableAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_EnableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_EnableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_DisableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_DisableAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/DisableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/DisableAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/DisableAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/DisableAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_DisableAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_DisableAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_DisableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_DisableAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_UpdateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_UpdateAdminSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/UpdateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/UpdateAdminSubscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/UpdateAdminSubscription", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/UpdateAdminSubscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_UpdateAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_UpdateAdminSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_UpdateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_UpdateAdminSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_NotificationService_GetSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SubscriptionService_GetSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/GetSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/GetSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_GetSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_GetSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_GetSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_GetSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_NotificationService_ListSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SubscriptionService_ListSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListSubscriptions", runtime.WithHTTPPathPattern("/v1/subscriptions"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListSubscriptions", runtime.WithHTTPPathPattern("/v1/subscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_ListSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_ListSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_ListSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_ListEnabledSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_ListEnabledSubscriptions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListEnabledSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.notification.NotificationService/ListEnabledSubscriptions"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/ListEnabledSubscriptions", runtime.WithHTTPPathPattern("/bucketeer.subscription.SubscriptionService/ListEnabledSubscriptions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_ListEnabledSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_ListEnabledSubscriptions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_ListEnabledSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_ListEnabledSubscriptions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_NotificationService_CreateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SubscriptionService_CreateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/CreateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/CreateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_CreateSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_CreateSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_CreateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_CreateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_NotificationService_DeleteSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_SubscriptionService_DeleteSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/DeleteSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/DeleteSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_DeleteSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_DeleteSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_DeleteSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_DeleteSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PATCH", pattern_NotificationService_UpdateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_SubscriptionService_UpdateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/UpdateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.subscription.SubscriptionService/UpdateSubscription", runtime.WithHTTPPathPattern("/v1/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_UpdateSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SubscriptionService_UpdateSubscription_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_NotificationService_UpdateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SubscriptionService_UpdateSubscription_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1134,61 +1134,61 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 }
 
 var (
-	pattern_NotificationService_GetAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "GetAdminSubscription"}, ""))
+	pattern_SubscriptionService_GetAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "GetAdminSubscription"}, ""))
 
-	pattern_NotificationService_ListAdminSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "ListAdminSubscriptions"}, ""))
+	pattern_SubscriptionService_ListAdminSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "ListAdminSubscriptions"}, ""))
 
-	pattern_NotificationService_ListEnabledAdminSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "ListEnabledAdminSubscriptions"}, ""))
+	pattern_SubscriptionService_ListEnabledAdminSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "ListEnabledAdminSubscriptions"}, ""))
 
-	pattern_NotificationService_CreateAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "CreateAdminSubscription"}, ""))
+	pattern_SubscriptionService_CreateAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "CreateAdminSubscription"}, ""))
 
-	pattern_NotificationService_DeleteAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "DeleteAdminSubscription"}, ""))
+	pattern_SubscriptionService_DeleteAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "DeleteAdminSubscription"}, ""))
 
-	pattern_NotificationService_EnableAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "EnableAdminSubscription"}, ""))
+	pattern_SubscriptionService_EnableAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "EnableAdminSubscription"}, ""))
 
-	pattern_NotificationService_DisableAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "DisableAdminSubscription"}, ""))
+	pattern_SubscriptionService_DisableAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "DisableAdminSubscription"}, ""))
 
-	pattern_NotificationService_UpdateAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "UpdateAdminSubscription"}, ""))
+	pattern_SubscriptionService_UpdateAdminSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "UpdateAdminSubscription"}, ""))
 
-	pattern_NotificationService_GetSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
+	pattern_SubscriptionService_GetSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
 
-	pattern_NotificationService_ListSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscriptions"}, ""))
+	pattern_SubscriptionService_ListSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscriptions"}, ""))
 
-	pattern_NotificationService_ListEnabledSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.notification.NotificationService", "ListEnabledSubscriptions"}, ""))
+	pattern_SubscriptionService_ListEnabledSubscriptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.subscription.SubscriptionService", "ListEnabledSubscriptions"}, ""))
 
-	pattern_NotificationService_CreateSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
+	pattern_SubscriptionService_CreateSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
 
-	pattern_NotificationService_DeleteSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
+	pattern_SubscriptionService_DeleteSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
 
-	pattern_NotificationService_UpdateSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
+	pattern_SubscriptionService_UpdateSubscription_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "subscription"}, ""))
 )
 
 var (
-	forward_NotificationService_GetAdminSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_GetAdminSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_ListAdminSubscriptions_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_ListAdminSubscriptions_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_ListEnabledAdminSubscriptions_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_ListEnabledAdminSubscriptions_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_CreateAdminSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_CreateAdminSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_DeleteAdminSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_DeleteAdminSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_EnableAdminSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_EnableAdminSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_DisableAdminSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_DisableAdminSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_UpdateAdminSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_UpdateAdminSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_GetSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_GetSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_ListSubscriptions_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_ListSubscriptions_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_ListEnabledSubscriptions_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_ListEnabledSubscriptions_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_CreateSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_CreateSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_DeleteSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_DeleteSubscription_0 = runtime.ForwardResponseMessage
 
-	forward_NotificationService_UpdateSubscription_0 = runtime.ForwardResponseMessage
+	forward_SubscriptionService_UpdateSubscription_0 = runtime.ForwardResponseMessage
 )

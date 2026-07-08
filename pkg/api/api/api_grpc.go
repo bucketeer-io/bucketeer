@@ -48,7 +48,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
+	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -243,7 +243,7 @@ type grpcGatewayService struct {
 	autoOpsClient               autoopsclient.Client
 	tagClient                   tagclient.Client
 	teamClient                  teamclient.Client
-	notificationClient          notificationclient.Client
+	subscriptionClient          subscriptionclient.Client
 	experimentClient            experimentclient.Client
 	eventCounterClient          eventcounterclient.Client
 	environmentClient           environmentclient.Client
@@ -277,7 +277,7 @@ func NewGrpcGatewayService(
 	autoOpsClient autoopsclient.Client,
 	tagClient tagclient.Client,
 	teamClient teamclient.Client,
-	notificationClient notificationclient.Client,
+	subscriptionClient subscriptionclient.Client,
 	experimentClient experimentclient.Client,
 	eventCounterClient eventcounterclient.Client,
 	environmentClient environmentclient.Client,
@@ -309,7 +309,7 @@ func NewGrpcGatewayService(
 		autoOpsClient:               autoOpsClient,
 		tagClient:                   tagClient,
 		teamClient:                  teamClient,
-		notificationClient:          notificationClient,
+		subscriptionClient:          subscriptionClient,
 		experimentClient:            experimentClient,
 		eventCounterClient:          eventCounterClient,
 		environmentClient:           environmentClient,

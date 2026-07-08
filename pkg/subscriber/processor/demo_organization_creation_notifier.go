@@ -28,7 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/notifier"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -136,10 +136,10 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 		return
 	}
 
-	recipient := &notificationproto.Recipient{
-		Type:     notificationproto.Recipient_SlackChannel,
-		Language: notificationproto.Recipient_ENGLISH,
-		SlackChannelRecipient: &notificationproto.SlackChannelRecipient{
+	recipient := &subscriptionproto.Recipient{
+		Type:     subscriptionproto.Recipient_SlackChannel,
+		Language: subscriptionproto.Recipient_ENGLISH,
+		SlackChannelRecipient: &subscriptionproto.SlackChannelRecipient{
 			WebhookUrl: d.demoOrganizationCreationNotifierConfig.Notifier.Slack.WebHookURL,
 		},
 	}

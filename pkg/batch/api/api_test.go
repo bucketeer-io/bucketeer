@@ -55,7 +55,7 @@ import (
 	opsexecutor "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
 	opseventstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
-	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/mock"
+	subscriptionsender "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/mock"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	batchproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
@@ -72,7 +72,7 @@ type setupMockFunc func(
 	experimentMockClient *experimentclient.MockClient,
 	featureMockClient *featureclientmock.MockClient,
 	eventCounterMockClient *ecclient.MockClient,
-	notificationMockSender *notificationsender.MockSender,
+	notificationMockSender *subscriptionsender.MockSender,
 	mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 	mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 	mysqlMockClient *mysqlmock.MockClient,
@@ -95,7 +95,7 @@ func TestExperimentStatusUpdater(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -147,7 +147,7 @@ func TestExperimentRunningWatcher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -196,7 +196,7 @@ func TestFeatureStaleWatcher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -245,7 +245,7 @@ func TestDatetimeWatcher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -302,7 +302,7 @@ func TestEventCountWatcher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -412,7 +412,7 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -484,7 +484,7 @@ func TestFeatureFlagCacher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -519,7 +519,7 @@ func TestSegmentUserCacher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -554,7 +554,7 @@ func TestAPIKeyCacher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -585,7 +585,7 @@ func TestExperimentCacher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -637,7 +637,7 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
+		notificationMockSender *subscriptionsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
 		mysqlMockClient *mysqlmock.MockClient,
@@ -704,7 +704,7 @@ func newBatchService(t *testing.T,
 	experimentMockClient := experimentclient.NewMockClient(mockController)
 	featureMockClient := featureclientmock.NewMockClient(mockController)
 	eventCounterMockClient := ecclient.NewMockClient(mockController)
-	notificationMockSender := notificationsender.NewMockSender(mockController)
+	notificationMockSender := subscriptionsender.NewMockSender(mockController)
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	mockProgressiveRolloutExecutor := opsexecutor.NewMockProgressiveRolloutExecutor(mockController)
 	cacheMock := redismock.NewMockMultiGetDeleteCountCache(mockController)

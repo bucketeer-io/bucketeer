@@ -760,15 +760,15 @@ message GetSubscriptionRequest {
 }
 
 message GetSubscriptionResponse {
-  notification.Subscription subscription = 1;
+  subscription.Subscription subscription = 1;
 }
 
 message ListSubscriptionsRequest {
   int64 page_size = 1;
   string cursor = 2;
-  repeated notification.Subscription.SourceType source_types = 3;
-  notification.ListSubscriptionsRequest.OrderBy order_by = 4;
-  notification.ListSubscriptionsRequest.OrderDirection order_direction = 5;
+  repeated subscription.Subscription.SourceType source_types = 3;
+  subscription.ListSubscriptionsRequest.OrderBy order_by = 4;
+  subscription.ListSubscriptionsRequest.OrderDirection order_direction = 5;
   string search_keyword = 6;
   google.protobuf.BoolValue disabled = 7;
   string organization_id = 8 [(google.api.field_behavior) = REQUIRED];
@@ -776,21 +776,21 @@ message ListSubscriptionsRequest {
 }
 
 message ListSubscriptionsResponse {
-  repeated notification.Subscription subscriptions = 1;
+  repeated subscription.Subscription subscriptions = 1;
   string cursor = 2;
   int64 total_count = 3;
 }
 
 message CreateSubscriptionRequest {
   string name = 1 [(google.api.field_behavior) = REQUIRED];
-  repeated notification.Subscription.SourceType source_types = 2
+  repeated subscription.Subscription.SourceType source_types = 2
       [(google.api.field_behavior) = REQUIRED];
-  notification.Recipient recipient = 3 [(google.api.field_behavior) = REQUIRED];
+  subscription.Recipient recipient = 3 [(google.api.field_behavior) = REQUIRED];
   repeated string feature_flag_tags = 4;
 }
 
 message CreateSubscriptionResponse {
-  notification.Subscription subscription = 1;
+  subscription.Subscription subscription = 1;
 }
 
 message DeleteSubscriptionRequest {
@@ -801,7 +801,7 @@ message DeleteSubscriptionResponse {}
 
 message UpdateSubscriptionRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  repeated notification.Subscription.SourceType source_types = 2;
+  repeated subscription.Subscription.SourceType source_types = 2;
   google.protobuf.StringValue name = 3;
   google.protobuf.BoolValue disabled = 4
       [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
