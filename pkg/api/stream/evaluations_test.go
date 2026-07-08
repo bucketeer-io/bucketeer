@@ -236,7 +236,7 @@ func TestPatch(t *testing.T) {
 // Shutdown must unblock it so httpServer.Shutdown is not delayed.
 func TestHandleExitsOnDispatcherShutdown(t *testing.T) {
 	t.Parallel()
-	d := NewDispatcher(zap.NewNop())
+	d := NewDispatcher(10000, zap.NewNop())
 	handleReturned := startBlockedStreamHandle(t, d)
 
 	d.Shutdown()

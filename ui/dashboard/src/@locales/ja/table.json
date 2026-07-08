@@ -217,7 +217,7 @@
   "feature-flags": {
     "confirm-archive-desc": "これによりアーカイブされ、すべてのユーザーに対してコードで定義されたデフォルト値が返されます。アーカイブする前に、アプリケーションから「<text>{{name}}</text>」へのコードリファレンスを削除することをお勧めします。",
     "confirm-unarchive-desc": "フィーチャーフラグ「<text>{{name}}</text>」のアーカイブを解除してもよろしいですか？",
-    "archive-warning": "過去<text>{{days}}</text>にリクエストを受信しています。",
+    "archive-warning": "過去<text>{{days}}日間</text>にリクエストを受信しています。",
     "confirm-required": "確認が必要です",
     "confirm-required-desc": "これによりフラグが変更され、バージョンが増加します。",
     "targeting": "ターゲティング",

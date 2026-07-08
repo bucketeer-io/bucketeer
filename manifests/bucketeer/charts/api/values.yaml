@@ -65,6 +65,8 @@ env:
   # (Google Pub/Sub and Redis Streams) auto-create the topic on first
   # publish, so no pre-provisioning step is required.
   cacheInvalidationTopic:
+  sseHeartbeatInterval: 25s
+  sseMaxConnections: 10000
   logLevel: info
   grpcGatewayPort: 9089
   port: 9090
