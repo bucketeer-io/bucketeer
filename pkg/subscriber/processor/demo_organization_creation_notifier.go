@@ -23,13 +23,13 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/notifier"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
 type DemoOrganizationCreationNotifierConfig struct {

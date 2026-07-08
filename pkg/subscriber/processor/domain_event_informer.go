@@ -25,15 +25,15 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
 var (

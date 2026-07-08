@@ -26,7 +26,7 @@ import (
 	coderef "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	subscription "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	tag "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -8539,8 +8539,8 @@ type SubscriptionCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes     []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
-	Recipient       *notification.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
+	SourceTypes     []subscription.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient       *subscription.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
 	Name            string                                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 	FeatureFlagTags []string                               `protobuf:"bytes,4,rep,name=feature_flag_tags,json=featureFlagTags,proto3" json:"feature_flag_tags"`
 }
@@ -8577,14 +8577,14 @@ func (*SubscriptionCreatedEvent) Descriptor() ([]byte, []int) {
 	return file_proto_event_domain_event_proto_rawDescGZIP(), []int{125}
 }
 
-func (x *SubscriptionCreatedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *SubscriptionCreatedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
 	return nil
 }
 
-func (x *SubscriptionCreatedEvent) GetRecipient() *notification.Recipient {
+func (x *SubscriptionCreatedEvent) GetRecipient() *subscription.Recipient {
 	if x != nil {
 		return x.Recipient
 	}
@@ -8724,7 +8724,7 @@ type SubscriptionSourceTypesAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	SourceTypes []subscription.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *SubscriptionSourceTypesAddedEvent) Reset() {
@@ -8759,7 +8759,7 @@ func (*SubscriptionSourceTypesAddedEvent) Descriptor() ([]byte, []int) {
 	return file_proto_event_domain_event_proto_rawDescGZIP(), []int{129}
 }
 
-func (x *SubscriptionSourceTypesAddedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *SubscriptionSourceTypesAddedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
@@ -8771,7 +8771,7 @@ type SubscriptionSourceTypesDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	SourceTypes []subscription.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *SubscriptionSourceTypesDeletedEvent) Reset() {
@@ -8806,7 +8806,7 @@ func (*SubscriptionSourceTypesDeletedEvent) Descriptor() ([]byte, []int) {
 	return file_proto_event_domain_event_proto_rawDescGZIP(), []int{130}
 }
 
-func (x *SubscriptionSourceTypesDeletedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *SubscriptionSourceTypesDeletedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
@@ -8914,7 +8914,7 @@ type SubscriptionUpdatedEvent struct {
 
 	Id              string                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 	Name            *wrapperspb.StringValue                `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
-	SourceTypes     []notification.Subscription_SourceType `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	SourceTypes     []subscription.Subscription_SourceType `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 	Disabled        *wrapperspb.BoolValue                  `protobuf:"bytes,4,opt,name=disabled,proto3" json:"disabled"`
 	FeatureFlagTags []string                               `protobuf:"bytes,5,rep,name=feature_flag_tags,json=featureFlagTags,proto3" json:"feature_flag_tags"`
 }
@@ -8965,7 +8965,7 @@ func (x *SubscriptionUpdatedEvent) GetName() *wrapperspb.StringValue {
 	return nil
 }
 
-func (x *SubscriptionUpdatedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *SubscriptionUpdatedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
@@ -8991,8 +8991,8 @@ type AdminSubscriptionCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
-	Recipient   *notification.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
+	SourceTypes []subscription.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient   *subscription.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
 	Name        string                                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
@@ -9028,14 +9028,14 @@ func (*AdminSubscriptionCreatedEvent) Descriptor() ([]byte, []int) {
 	return file_proto_event_domain_event_proto_rawDescGZIP(), []int{134}
 }
 
-func (x *AdminSubscriptionCreatedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *AdminSubscriptionCreatedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
 	return nil
 }
 
-func (x *AdminSubscriptionCreatedEvent) GetRecipient() *notification.Recipient {
+func (x *AdminSubscriptionCreatedEvent) GetRecipient() *subscription.Recipient {
 	if x != nil {
 		return x.Recipient
 	}
@@ -9168,7 +9168,7 @@ type AdminSubscriptionSourceTypesAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	SourceTypes []subscription.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *AdminSubscriptionSourceTypesAddedEvent) Reset() {
@@ -9203,7 +9203,7 @@ func (*AdminSubscriptionSourceTypesAddedEvent) Descriptor() ([]byte, []int) {
 	return file_proto_event_domain_event_proto_rawDescGZIP(), []int{138}
 }
 
-func (x *AdminSubscriptionSourceTypesAddedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *AdminSubscriptionSourceTypesAddedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
@@ -9215,7 +9215,7 @@ type AdminSubscriptionSourceTypesDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	SourceTypes []subscription.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *AdminSubscriptionSourceTypesDeletedEvent) Reset() {
@@ -9250,7 +9250,7 @@ func (*AdminSubscriptionSourceTypesDeletedEvent) Descriptor() ([]byte, []int) {
 	return file_proto_event_domain_event_proto_rawDescGZIP(), []int{139}
 }
 
-func (x *AdminSubscriptionSourceTypesDeletedEvent) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *AdminSubscriptionSourceTypesDeletedEvent) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
@@ -13290,10 +13290,10 @@ var file_proto_event_domain_event_proto_rawDesc = []byte{
 	0x2f, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2f, 0x63, 0x6c, 0x61, 0x75, 0x73, 0x65, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1b, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x75, 0x74,
 	0x6f, 0x6f, 0x70, 0x73, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x1a, 0x25, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69,
-	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
+	0x74, 0x6f, 0x1a, 0x25, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72,
+	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
 	0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x22, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x2f, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x72, 0x65,
+	0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x72, 0x65,
 	0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x20, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2f, 0x70, 0x72, 0x65,
 	0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
@@ -15587,8 +15587,8 @@ var file_proto_event_domain_event_proto_goTypes = []interface{}{
 	(*autoops.DatetimeClause)(nil),                            // 222: bucketeer.autoops.DatetimeClause
 	(*autoops.OpsEventRateClauseChange)(nil),                  // 223: bucketeer.autoops.OpsEventRateClauseChange
 	(*autoops.DatetimeClauseChange)(nil),                      // 224: bucketeer.autoops.DatetimeClauseChange
-	(notification.Subscription_SourceType)(0),                 // 225: bucketeer.notification.Subscription.SourceType
-	(*notification.Recipient)(nil),                            // 226: bucketeer.notification.Recipient
+	(subscription.Subscription_SourceType)(0),                 // 225: bucketeer.notification.Subscription.SourceType
+	(*subscription.Recipient)(nil),                            // 226: bucketeer.notification.Recipient
 	(autoops.ProgressiveRollout_Type)(0),                      // 227: bucketeer.autoops.ProgressiveRollout.Type
 	(autoops.ProgressiveRollout_Status)(0),                    // 228: bucketeer.autoops.ProgressiveRollout.Status
 	(autoops.ProgressiveRollout_StoppedBy)(0),                 // 229: bucketeer.autoops.ProgressiveRollout.StoppedBy

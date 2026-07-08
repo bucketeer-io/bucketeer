@@ -49,9 +49,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
-	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushstorage "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
@@ -71,6 +68,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage"
 	opmysql "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage/mysql"
 	oppostgres "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage/postgres"
+	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
+	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/notifier"
 )
 
 const (

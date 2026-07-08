@@ -24,12 +24,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
 const (

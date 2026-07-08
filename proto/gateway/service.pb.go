@@ -32,8 +32,8 @@ import (
 	eventcounter "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 	push "github.com/bucketeer-io/bucketeer/v2/proto/push"
+	subscription "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	tag "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 	team "github.com/bucketeer-io/bucketeer/v2/proto/team"
 	user "github.com/bucketeer-io/bucketeer/v2/proto/user"
@@ -7063,7 +7063,7 @@ type GetSubscriptionResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscription *notification.Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription"`
+	Subscription *subscription.Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription"`
 }
 
 func (x *GetSubscriptionResponse) Reset() {
@@ -7098,7 +7098,7 @@ func (*GetSubscriptionResponse) Descriptor() ([]byte, []int) {
 	return file_proto_gateway_service_proto_rawDescGZIP(), []int{114}
 }
 
-func (x *GetSubscriptionResponse) GetSubscription() *notification.Subscription {
+func (x *GetSubscriptionResponse) GetSubscription() *subscription.Subscription {
 	if x != nil {
 		return x.Subscription
 	}
@@ -7112,9 +7112,9 @@ type ListSubscriptionsRequest struct {
 
 	PageSize       int64                                                `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
 	Cursor         string                                               `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
-	SourceTypes    []notification.Subscription_SourceType               `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
-	OrderBy        notification.ListSubscriptionsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderBy" json:"order_by"`
-	OrderDirection notification.ListSubscriptionsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderDirection" json:"order_direction"`
+	SourceTypes    []subscription.Subscription_SourceType               `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	OrderBy        subscription.ListSubscriptionsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderBy" json:"order_by"`
+	OrderDirection subscription.ListSubscriptionsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderDirection" json:"order_direction"`
 	SearchKeyword  string                                               `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
 	Disabled       *wrapperspb.BoolValue                                `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled"`
 	OrganizationId string                                               `protobuf:"bytes,8,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
@@ -7167,25 +7167,25 @@ func (x *ListSubscriptionsRequest) GetCursor() string {
 	return ""
 }
 
-func (x *ListSubscriptionsRequest) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *ListSubscriptionsRequest) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
 	return nil
 }
 
-func (x *ListSubscriptionsRequest) GetOrderBy() notification.ListSubscriptionsRequest_OrderBy {
+func (x *ListSubscriptionsRequest) GetOrderBy() subscription.ListSubscriptionsRequest_OrderBy {
 	if x != nil {
 		return x.OrderBy
 	}
-	return notification.ListSubscriptionsRequest_DEFAULT
+	return subscription.ListSubscriptionsRequest_DEFAULT
 }
 
-func (x *ListSubscriptionsRequest) GetOrderDirection() notification.ListSubscriptionsRequest_OrderDirection {
+func (x *ListSubscriptionsRequest) GetOrderDirection() subscription.ListSubscriptionsRequest_OrderDirection {
 	if x != nil {
 		return x.OrderDirection
 	}
-	return notification.ListSubscriptionsRequest_ASC
+	return subscription.ListSubscriptionsRequest_ASC
 }
 
 func (x *ListSubscriptionsRequest) GetSearchKeyword() string {
@@ -7221,7 +7221,7 @@ type ListSubscriptionsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscriptions []*notification.Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions"`
+	Subscriptions []*subscription.Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions"`
 	Cursor        string                       `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 	TotalCount    int64                        `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
@@ -7258,7 +7258,7 @@ func (*ListSubscriptionsResponse) Descriptor() ([]byte, []int) {
 	return file_proto_gateway_service_proto_rawDescGZIP(), []int{116}
 }
 
-func (x *ListSubscriptionsResponse) GetSubscriptions() []*notification.Subscription {
+func (x *ListSubscriptionsResponse) GetSubscriptions() []*subscription.Subscription {
 	if x != nil {
 		return x.Subscriptions
 	}
@@ -7285,8 +7285,8 @@ type CreateSubscriptionRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	Name            string                                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
-	SourceTypes     []notification.Subscription_SourceType `protobuf:"varint,2,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
-	Recipient       *notification.Recipient                `protobuf:"bytes,3,opt,name=recipient,proto3" json:"recipient"`
+	SourceTypes     []subscription.Subscription_SourceType `protobuf:"varint,2,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient       *subscription.Recipient                `protobuf:"bytes,3,opt,name=recipient,proto3" json:"recipient"`
 	FeatureFlagTags []string                               `protobuf:"bytes,4,rep,name=feature_flag_tags,json=featureFlagTags,proto3" json:"feature_flag_tags"`
 }
 
@@ -7329,14 +7329,14 @@ func (x *CreateSubscriptionRequest) GetName() string {
 	return ""
 }
 
-func (x *CreateSubscriptionRequest) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *CreateSubscriptionRequest) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
 	return nil
 }
 
-func (x *CreateSubscriptionRequest) GetRecipient() *notification.Recipient {
+func (x *CreateSubscriptionRequest) GetRecipient() *subscription.Recipient {
 	if x != nil {
 		return x.Recipient
 	}
@@ -7355,7 +7355,7 @@ type CreateSubscriptionResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscription *notification.Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription"`
+	Subscription *subscription.Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription"`
 }
 
 func (x *CreateSubscriptionResponse) Reset() {
@@ -7390,7 +7390,7 @@ func (*CreateSubscriptionResponse) Descriptor() ([]byte, []int) {
 	return file_proto_gateway_service_proto_rawDescGZIP(), []int{118}
 }
 
-func (x *CreateSubscriptionResponse) GetSubscription() *notification.Subscription {
+func (x *CreateSubscriptionResponse) GetSubscription() *subscription.Subscription {
 	if x != nil {
 		return x.Subscription
 	}
@@ -7488,7 +7488,7 @@ type UpdateSubscriptionRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	Id              string                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
-	SourceTypes     []notification.Subscription_SourceType `protobuf:"varint,2,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	SourceTypes     []subscription.Subscription_SourceType `protobuf:"varint,2,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 	Name            *wrapperspb.StringValue                `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 	Disabled        *wrapperspb.BoolValue                  `protobuf:"bytes,4,opt,name=disabled,proto3" json:"disabled"`
 	FeatureFlagTags []string                               `protobuf:"bytes,5,rep,name=feature_flag_tags,json=featureFlagTags,proto3" json:"feature_flag_tags"`
@@ -7533,7 +7533,7 @@ func (x *UpdateSubscriptionRequest) GetId() string {
 	return ""
 }
 
-func (x *UpdateSubscriptionRequest) GetSourceTypes() []notification.Subscription_SourceType {
+func (x *UpdateSubscriptionRequest) GetSourceTypes() []subscription.Subscription_SourceType {
 	if x != nil {
 		return x.SourceTypes
 	}
@@ -10880,12 +10880,12 @@ var file_proto_gateway_service_proto_rawDesc = []byte{
 	0x18, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x74, 0x65, 0x61, 0x6d, 0x2f, 0x73, 0x65, 0x72, 0x76,
 	0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x15, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x74, 0x65, 0x61, 0x6d, 0x2f, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x1a, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61,
+	0x1a, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70,
 	0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x1a, 0x25, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69,
-	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
+	0x74, 0x6f, 0x1a, 0x25, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72,
+	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
 	0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x22, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x2f, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x72, 0x65,
+	0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x72, 0x65,
 	0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x20, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2f, 0x66, 0x6c, 0x61,
 	0x67, 0x5f, 0x74, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
@@ -14559,11 +14559,11 @@ var file_proto_gateway_service_proto_goTypes = []interface{}{
 	(*team.Team)(nil),                                               // 243: bucketeer.team.Team
 	(team.ListTeamsRequest_OrderBy)(0),                              // 244: bucketeer.team.ListTeamsRequest.OrderBy
 	(team.ListTeamsRequest_OrderDirection)(0),                       // 245: bucketeer.team.ListTeamsRequest.OrderDirection
-	(*notification.Subscription)(nil),                               // 246: bucketeer.notification.Subscription
-	(notification.Subscription_SourceType)(0),                       // 247: bucketeer.notification.Subscription.SourceType
-	(notification.ListSubscriptionsRequest_OrderBy)(0),              // 248: bucketeer.notification.ListSubscriptionsRequest.OrderBy
-	(notification.ListSubscriptionsRequest_OrderDirection)(0),       // 249: bucketeer.notification.ListSubscriptionsRequest.OrderDirection
-	(*notification.Recipient)(nil),                                  // 250: bucketeer.notification.Recipient
+	(*subscription.Subscription)(nil),                               // 246: bucketeer.notification.Subscription
+	(subscription.Subscription_SourceType)(0),                       // 247: bucketeer.notification.Subscription.SourceType
+	(subscription.ListSubscriptionsRequest_OrderBy)(0),              // 248: bucketeer.notification.ListSubscriptionsRequest.OrderBy
+	(subscription.ListSubscriptionsRequest_OrderDirection)(0),       // 249: bucketeer.notification.ListSubscriptionsRequest.OrderDirection
+	(*subscription.Recipient)(nil),                                  // 250: bucketeer.notification.Recipient
 	(feature.FlagTrigger_Type)(0),                                   // 251: bucketeer.feature.FlagTrigger.Type
 	(feature.FlagTrigger_Action)(0),                                 // 252: bucketeer.feature.FlagTrigger.Action
 	(*feature.FlagTrigger)(nil),                                     // 253: bucketeer.feature.FlagTrigger

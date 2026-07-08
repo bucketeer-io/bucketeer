@@ -61,7 +61,7 @@ var registry = []pair{
 	{"pkg/experimentcalculator/storage/v2", subPkg},
 	{"pkg/feature/storage/v2", subPkg},
 	{"pkg/insights/storage/v2", subPkg},
-	{"pkg/notification/storage/v2", subPkg},
+	{"pkg/subscription/storage/v2", subPkg},
 	{"pkg/opsevent/storage/v2", subPkg},
 	{"pkg/push/storage/v2", sameDir},
 	{"pkg/tag/storage", subPkg},
