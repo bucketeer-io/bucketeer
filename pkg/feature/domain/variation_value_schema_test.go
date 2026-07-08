@@ -224,7 +224,9 @@ func TestValidateVariationValueAgainstSchema(t *testing.T) {
 				VariationType:        p.variationType,
 				VariationValueSchema: p.schema,
 			}}
-			err := f.validateVariationValueAgainstSchema(p.value)
+			validateValue, err := f.newVariationValueValidator()
+			require.NoError(t, err)
+			err = validateValue(p.value)
 			assert.Equal(t, p.expected, err)
 		})
 	}

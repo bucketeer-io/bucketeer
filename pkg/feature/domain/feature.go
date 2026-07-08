@@ -1422,14 +1422,6 @@ func validateRules(rules []*feature.Rule, variations []*feature.Variation) error
 	return nil
 }
 
-func (f *Feature) validateVariationChanges(variationChanges []*feature.VariationChange) error {
-	validateValue, err := f.newVariationValueValidator()
-	if err != nil {
-		return err
-	}
-	return f.validateVariationChangesWithValidator(variationChanges, validateValue)
-}
-
 func (f *Feature) validateVariationChangesWithValidator(
 	variationChanges []*feature.VariationChange,
 	validateValue func(string) error,

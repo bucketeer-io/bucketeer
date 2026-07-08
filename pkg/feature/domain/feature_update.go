@@ -294,17 +294,6 @@ func (f *Feature) applyVariationValueSchemaUpdate(update *VariationValueSchemaUp
 	}
 }
 
-// applyVariationChanges handles only variation creations, updates, and deletions.
-func (f *Feature) applyVariationChanges(
-	variationChanges []*feature.VariationChange,
-) error {
-	validateValue, err := f.newVariationValueValidator()
-	if err != nil {
-		return err
-	}
-	return f.applyVariationChangesWithValidator(variationChanges, validateValue)
-}
-
 func (f *Feature) applyVariationChangesWithValidator(
 	variationChanges []*feature.VariationChange,
 	validateValue func(string) error,
@@ -445,14 +434,6 @@ func (f *Feature) updateUnarchive() error {
 	return nil
 }
 
-func (f *Feature) updateAddVariation(id, value, name, description string) error {
-	validateValue, err := f.newVariationValueValidator()
-	if err != nil {
-		return err
-	}
-	return f.updateAddVariationWithValidator(id, value, name, description, validateValue)
-}
-
 func (f *Feature) updateAddVariationWithValidator(
 	id, value, name, description string,
 	validateValue func(string) error,
@@ -482,14 +463,6 @@ func (f *Feature) updateAddVariationWithValidator(
 	f.updateAddVariationToRules(id)
 	f.updateAddVariationToDefaultStrategy(id)
 	return nil
-}
-
-func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
-	validateValue, err := f.newVariationValueValidator()
-	if err != nil {
-		return err
-	}
-	return f.updateChangeVariationWithValidator(variation, validateValue)
 }
 
 func (f *Feature) updateChangeVariationWithValidator(

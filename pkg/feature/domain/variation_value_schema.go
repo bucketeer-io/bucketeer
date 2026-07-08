@@ -79,14 +79,6 @@ func validateVariationValueSchemaDefinition(
 	}
 }
 
-func (f *Feature) validateVariationValueAgainstSchema(value string) error {
-	validateValue, err := f.newVariationValueValidator()
-	if err != nil {
-		return err
-	}
-	return validateValue(value)
-}
-
 func (f *Feature) newVariationValueValidator() (func(string) error, error) {
 	schema := f.VariationValueSchema
 	if schema == nil {
