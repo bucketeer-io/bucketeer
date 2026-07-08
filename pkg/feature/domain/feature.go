@@ -1598,17 +1598,18 @@ func GetDependentsOfTargets(
 		evals[f.Id] = f
 	}
 
-	// Tracks visited nodes to prevent infinite loops on cyclic prerequisites.
-	visited := make(map[string]struct{})
+	// Tracks nodes on the current DFS stack to prevent infinite loops on cyclic prerequisites.
+	visiting := make(map[string]struct{})
 	var dfs func(f *feature.Feature) bool
 	dfs = func(f *feature.Feature) bool {
 		if _, ok := evals[f.Id]; ok {
 			return true
 		}
-		if _, ok := visited[f.Id]; ok {
+		if _, ok := visiting[f.Id]; ok {
 			return false
 		}
-		visited[f.Id] = struct{}{}
+		visiting[f.Id] = struct{}{}
+		defer delete(visiting, f.Id)
 		dmn := &Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
 			// Check if the dependency exists in the all map

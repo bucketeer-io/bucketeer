@@ -4810,6 +4810,29 @@ func TestGetDependentsOfTargets(t *testing.T) {
 			expectedIDs: []string{"flag-A"},
 		},
 		{
+			desc: "cycle where target is outside the cycle: A<->B, A depends on C (target)",
+			targets: []*ftproto.Feature{
+				{Id: "flag-C"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+						{FeatureId: "flag-C", VariationId: "v1"},
+					},
+				},
+				"flag-B": {
+					Id: "flag-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+				"flag-C": {Id: "flag-C"},
+			},
+			expectedIDs: []string{"flag-A", "flag-B", "flag-C"},
+		},
+		{
 			desc: "dependent via FEATURE_FLAG clause",
 			targets: []*ftproto.Feature{
 				{Id: "flag-A"},
