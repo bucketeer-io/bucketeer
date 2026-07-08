@@ -32,6 +32,7 @@ The current `notification` domain is misnamed — its RPCs (`CreateSubscription`
 
 - Per-organization / per-environment targeting, maybe in the future
 - Scheduled publishing (publish-at-future-time).
+- External delivery channels (email, Slack, RSS). The in-console badge assumes users open the console regularly, so time-sensitive messages (e.g. maintenance windows) can be missed by users who do not log in for days. Acknowledged as a limitation of v1; external delivery is scoped as a future phase.
 
 ## 3. Design Overview
 
@@ -97,7 +98,7 @@ Notes:
 
 | RPC | HTTP | Description |
 |---|---|---|
-| `ListNotifications` | `GET /v1/notifications` | Lists published notifications with keyword search, read/unread filter (`read_status`), published date range filter, sorting, and pagination; returns the list and its total count. The notification page calls it once per tab (unread, then read) and uses each `total_count` for the tab counters. |
+| `ListNotifications` | `GET /v1/notifications` | Lists published notifications with keyword search, read/unread filter (`read_status`), published date range filter, sorting, and pagination; returns the list and its total count. The notification page calls it once per tab (unread, then read) and uses each `total_count` for the tab counters. Never returns drafts; drafts are listed only via the admin-only `ListDraftNotifications`. |
 | `GetNotification` | `GET /v1/notification?id=` | Gets a single notification for the detail panel. Drafts are visible to system admins only. |
 | `GetNotificationUnreadCount` | `GET /v1/notifications/unread_count` | Returns the viewer's unread count, used for the bell badge. |
 | `MarkNotificationsAsRead` | `POST /v1/notifications/mark_as_read` | Marks the given notification ids as read for the viewer. Idempotent. |
@@ -161,6 +162,7 @@ sequenceDiagram
     S->>DB: COUNT published LEFT JOIN read WHERE read.email IS NULL
     S-->>C: {count: 3}
     C->>GW: GET /v1/notifications?read_status=UNREAD&page_size=5
+    GW->>S: ListNotifications
     S->>DB: anti-join list, ORDER BY published_at DESC
     S-->>C: latest unread notifications
     end
@@ -168,6 +170,7 @@ sequenceDiagram
     rect rgb(230, 250, 235)
     Note over C,DB: 2. Open detail and mark read
     C->>GW: GET /v1/notification?id=X
+    GW->>S: GetNotification
     S-->>C: full Markdown content
     C->>GW: POST /v1/notifications/mark_as_read {ids:[X]}
     GW->>S: MarkNotificationsAsRead
