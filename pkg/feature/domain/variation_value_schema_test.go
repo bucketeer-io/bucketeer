@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -287,5 +288,18 @@ func TestUpdateVariationValueSchemaValidatesFinalValues(t *testing.T) {
 		)
 		require.NoError(t, err)
 		assert.Equal(t, "D", updated.Variations[2].Value)
+	})
+	t.Run("skips final value validation for unrelated updates", func(t *testing.T) {
+		t.Parallel()
+		original := makeFeature("test-feature")
+		original.VariationValueSchema = enumSchema("A")
+		updated, err := original.Update(
+			wrapperspb.String("updated name"),
+			nil, nil, nil, nil, nil, nil, false,
+			nil, nil, nil, nil, nil, nil, nil,
+			nil,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "updated name", updated.Name)
 	})
 }

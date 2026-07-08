@@ -690,6 +690,14 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 }
 
 func (f *Feature) validateVariationValue(id, value string) error {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return err
+	}
+	return f.validateVariationValueWithValidator(id, value, validateValue)
+}
+
+func (f *Feature) validateVariationValueWithValidator(id, value string, validateValue func(string) error) error {
 	if value == "" {
 		return errVariationValueRequired
 	}
@@ -769,7 +777,7 @@ func (f *Feature) validateVariationValue(id, value string) error {
 		}
 	}
 
-	return f.validateVariationValueAgainstSchema(value)
+	return validateValue(value)
 }
 
 // normalizeJSON parses JSON and returns a canonical representation.
@@ -1415,6 +1423,17 @@ func validateRules(rules []*feature.Rule, variations []*feature.Variation) error
 }
 
 func (f *Feature) validateVariationChanges(variationChanges []*feature.VariationChange) error {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return err
+	}
+	return f.validateVariationChangesWithValidator(variationChanges, validateValue)
+}
+
+func (f *Feature) validateVariationChangesWithValidator(
+	variationChanges []*feature.VariationChange,
+	validateValue func(string) error,
+) error {
 	for _, change := range variationChanges {
 		// For individual variation changes, only validate the variation value and type
 		if change.Variation == nil {
@@ -1429,7 +1448,11 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 			if change.Variation.Name == "" {
 				return errVariationNameRequired
 			}
-			if err := f.validateVariationValue(change.Variation.Id, change.Variation.Value); err != nil {
+			if err := f.validateVariationValueWithValidator(
+				change.Variation.Id,
+				change.Variation.Value,
+				validateValue,
+			); err != nil {
 				return err
 			}
 		case feature.ChangeType_UPDATE:
@@ -1443,7 +1466,11 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 			if change.Variation.Name == "" {
 				return errVariationNameRequired
 			}
-			if err := f.validateVariationValue(change.Variation.Id, change.Variation.Value); err != nil {
+			if err := f.validateVariationValueWithValidator(
+				change.Variation.Id,
+				change.Variation.Value,
+				validateValue,
+			); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
