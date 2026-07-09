@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 
@@ -4663,6 +4664,213 @@ func TestRemoveVariationMinimumVariationConstraint(t *testing.T) {
 	// Verify we still have 2 variations (removal should have failed)
 	if len(f.Variations) != 2 {
 		t.Fatalf("Expected 2 variations after failed removal attempts, got %d", len(f.Variations))
+	}
+}
+
+func TestGetDependentsOfTargets(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		targets     []*ftproto.Feature
+		all         map[string]*ftproto.Feature
+		expectedIDs []string
+	}{
+		{
+			desc: "no dependents returns only target",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {Id: "flag-A"},
+				"flag-B": {Id: "flag-B"},
+			},
+			expectedIDs: []string{"flag-A"},
+		},
+		{
+			desc: "direct dependent: B depends on A",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {Id: "flag-A"},
+				"flag-B": {
+					Id: "flag-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+			},
+			expectedIDs: []string{"flag-A", "flag-B"},
+		},
+		{
+			desc: "transitive: C -> B -> A",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {Id: "flag-A"},
+				"flag-B": {
+					Id: "flag-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+				"flag-C": {
+					Id: "flag-C",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+					},
+				},
+			},
+			expectedIDs: []string{"flag-A", "flag-B", "flag-C"},
+		},
+		{
+			desc: "dependency of target is not a dependent: A depends on B",
+			targets: []*ftproto.Feature{
+				{
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+					},
+				},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+					},
+				},
+				"flag-B": {Id: "flag-B"},
+			},
+			expectedIDs: []string{"flag-A"},
+		},
+		{
+			desc: "two-node cycle: A -> B -> A",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+					},
+				},
+				"flag-B": {
+					Id: "flag-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+			},
+			expectedIDs: []string{"flag-A", "flag-B"},
+		},
+		{
+			desc: "three-node cycle: A -> B -> C -> A",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-C", VariationId: "v1"},
+					},
+				},
+				"flag-B": {
+					Id: "flag-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+				"flag-C": {
+					Id: "flag-C",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+					},
+				},
+			},
+			expectedIDs: []string{"flag-A", "flag-B", "flag-C"},
+		},
+		{
+			desc: "self-referencing prerequisite",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+				"flag-B": {Id: "flag-B"},
+			},
+			expectedIDs: []string{"flag-A"},
+		},
+		{
+			desc: "cycle where target is outside the cycle: A<->B, A depends on C (target)",
+			targets: []*ftproto.Feature{
+				{Id: "flag-C"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {
+					Id: "flag-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-B", VariationId: "v1"},
+						{FeatureId: "flag-C", VariationId: "v1"},
+					},
+				},
+				"flag-B": {
+					Id: "flag-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "flag-A", VariationId: "v1"},
+					},
+				},
+				"flag-C": {Id: "flag-C"},
+			},
+			expectedIDs: []string{"flag-A", "flag-B", "flag-C"},
+		},
+		{
+			desc: "dependent via FEATURE_FLAG clause",
+			targets: []*ftproto.Feature{
+				{Id: "flag-A"},
+			},
+			all: map[string]*ftproto.Feature{
+				"flag-A": {Id: "flag-A"},
+				"flag-B": {
+					Id: "flag-B",
+					Rules: []*ftproto.Rule{
+						{
+							Id: "rule-1",
+							Clauses: []*ftproto.Clause{
+								{
+									Id:        "clause-1",
+									Attribute: "flag-A",
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Values:    []string{"variation-1"},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedIDs: []string{"flag-A", "flag-B"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			result := GetDependentsOfTargets(p.targets, p.all)
+			gotIDs := make([]string, 0, len(result))
+			for id := range result {
+				gotIDs = append(gotIDs, id)
+			}
+			sort.Strings(gotIDs)
+			sort.Strings(p.expectedIDs)
+			assert.Equal(t, p.expectedIDs, gotIDs)
+		})
 	}
 }
 

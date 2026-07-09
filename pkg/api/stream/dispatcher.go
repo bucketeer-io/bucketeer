@@ -22,22 +22,27 @@ import (
 
 	"go.uber.org/zap"
 
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var errTooManyConnections = errors.New("stream: too many connections")
 
+// FeaturesFetcher returns all features for the given environment.
+type FeaturesFetcher func(envID string) ([]*featureproto.Feature, error)
+
 // Dispatcher forwards relevant domain events to SSE connections.
 type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns        map[string]map[string]map[*conn]struct{}
-	totalConns   int
-	maxConns     int
-	shutdownCh   chan struct{}
-	shutdownOnce sync.Once
-	logger       *zap.Logger
+	conns         map[string]map[string]map[*conn]struct{}
+	totalConns    int
+	maxConns      int
+	fetchFeatures FeaturesFetcher
+	shutdownCh    chan struct{}
+	shutdownOnce  sync.Once
+	logger        *zap.Logger
 }
 
 type event struct {
@@ -54,12 +59,13 @@ type conn struct {
 	createdAt time.Time
 }
 
-func NewDispatcher(maxConns int, logger *zap.Logger) *Dispatcher {
+func NewDispatcher(maxConns int, fetchFeatures FeaturesFetcher, logger *zap.Logger) *Dispatcher {
 	return &Dispatcher{
-		conns:      make(map[string]map[string]map[*conn]struct{}),
-		maxConns:   maxConns,
-		shutdownCh: make(chan struct{}),
-		logger:     logger.Named("stream-dispatcher"),
+		conns:         make(map[string]map[string]map[*conn]struct{}),
+		maxConns:      maxConns,
+		fetchFeatures: fetchFeatures,
+		shutdownCh:    make(chan struct{}),
+		logger:        logger.Named("stream-dispatcher"),
 	}
 }
 
@@ -176,19 +182,52 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 
 // affectedTags unions the flag's tags before and after the update so that
 // removing a tag still notifies that tag's subscribers.
-//
-// TODO: also pull the tags of flags that depend on this one.
+// And the result includes the tags of flags that transitively depend on this one.
 func (d *Dispatcher) affectedTags(e *domaineventproto.Event) []string {
 	seen := make(map[string]struct{})
-	var tags []string
 	for _, data := range []string{e.EntityData, e.PreviousEntityData} {
 		for _, tag := range d.parseTags(data) {
-			if _, ok := seen[tag]; ok {
-				continue
-			}
 			seen[tag] = struct{}{}
-			tags = append(tags, tag)
 		}
+	}
+	for _, tag := range d.dependentTags(e.EnvironmentId, e.EntityId) {
+		seen[tag] = struct{}{}
+	}
+	if len(seen) == 0 {
+		return nil
+	}
+	tags := make([]string, 0, len(seen))
+	for tag := range seen {
+		tags = append(tags, tag)
+	}
+	return tags
+}
+
+func (d *Dispatcher) dependentTags(envID, entityID string) []string {
+	if d.fetchFeatures == nil {
+		return nil
+	}
+	features, err := d.fetchFeatures(envID)
+	if err != nil {
+		d.logger.Warn("Failed to fetch features for tag propagation",
+			zap.Error(err),
+			zap.String("environmentID", envID),
+		)
+		return nil
+	}
+	featuresMap := make(map[string]*featureproto.Feature, len(features))
+	for _, f := range features {
+		featuresMap[f.Id] = f
+	}
+	target := featuresMap[entityID]
+	if target == nil {
+		return nil
+	}
+	var tags []string
+	for _, f := range ftdomain.GetDependentsOfTargets(
+		[]*featureproto.Feature{target}, featuresMap,
+	) {
+		tags = append(tags, f.Tags...)
 	}
 	return tags
 }

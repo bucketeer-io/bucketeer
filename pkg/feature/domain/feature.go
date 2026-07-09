@@ -1577,27 +1577,20 @@ func GetFeaturesDependedOnTargets(
 	return evals
 }
 
-// getFeaturesDependsOnTargets returns the features that depend on the target features.
-// targetFeatures are included in the result.
-// This function ensures complete transitive closure for incremental evaluation.
+// GetDependentsOfTargets returns the features that transitively depend on
+// the target features (downstream in the prerequisite / FEATURE_FLAG clause graph).
+// Target features are included in the result.
 //
 // Example scenario:
 //
 //	Feature Dependencies: A ← B ← C, A ← D, E ← D
 //	Target: [C] (recently updated)
 //
-// Step 1 - DFS finds direct/transitive dependents of targets:
-//   - A depends on B, B depends on C (target) → Add A, B
-//   - E depends on D, D doesn't depend on C → Skip E
-//     Result: {C, A, B}
-//
-// Step 2 - Find dependencies of discovered dependents:
-//   - A depends on D (new!) → Add D
-//     Result: {C, A, B, D}
-//
-// Without Step 2: Evaluating A would fail with "feature D not found"
-// With Step 2: Complete closure ensures all dependencies are available
-func GetFeaturesDependsOnTargets(
+//	DFS finds direct/transitive dependents of targets:
+//	  - A depends on B, B depends on C (target) → Add A, B
+//	  - E depends on D, D doesn't depend on C → Skip E
+//	    Result: {C, A, B}
+func GetDependentsOfTargets(
 	targets []*feature.Feature, all map[string]*feature.Feature,
 ) map[string]*feature.Feature {
 	evals := make(map[string]*feature.Feature)
@@ -1605,11 +1598,18 @@ func GetFeaturesDependsOnTargets(
 		evals[f.Id] = f
 	}
 
+	// Tracks nodes on the current DFS stack to prevent infinite loops on cyclic prerequisites.
+	visiting := make(map[string]struct{})
 	var dfs func(f *feature.Feature) bool
 	dfs = func(f *feature.Feature) bool {
 		if _, ok := evals[f.Id]; ok {
 			return true
 		}
+		if _, ok := visiting[f.Id]; ok {
+			return false
+		}
+		visiting[f.Id] = struct{}{}
+		defer delete(visiting, f.Id)
 		dmn := &Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
 			// Check if the dependency exists in the all map
@@ -1624,12 +1624,38 @@ func GetFeaturesDependsOnTargets(
 		return false
 	}
 	for _, f := range all {
-		// Skip if the f is target feature.
 		dfs(f)
 	}
+	return evals
+}
+
+// getFeaturesDependsOnTargets returns the features that depend on the target features
+// plus all of their transitive dependencies, forming a complete evaluation closure.
+// targetFeatures are included in the result.
+//
+// Example scenario:
+//
+//	Feature Dependencies: A ← B ← C, A ← D, E ← D
+//	Target: [C] (recently updated)
+//
+// Step 1 (GetDependentsOfTargets) - DFS finds direct/transitive dependents of targets:
+//   - A depends on B, B depends on C (target) → Add A, B
+//   - E depends on D, D doesn't depend on C → Skip E
+//     Result: {C, A, B}
+//
+// Step 2 - Find dependencies of discovered dependents:
+//   - A depends on D (new!) → Add D
+//     Result: {C, A, B, D}
+//
+// Without Step 2: Evaluating A would fail with "feature D not found"
+// With Step 2: Complete closure ensures all dependencies are available
+func GetFeaturesDependsOnTargets(
+	targets []*feature.Feature, all map[string]*feature.Feature,
+) map[string]*feature.Feature {
+	evals := GetDependentsOfTargets(targets, all)
 
 	// Step 2: Ensure complete transitive closure
-	// The DFS above finds dependents (who depends on targets), but misses dependencies of those dependents.
+	// GetDependentsOfTargets finds dependents (who depends on targets), but misses dependencies of those dependents.
 	// Example: If target C → dependent A → dependency D, we found A but missed D.
 	// Efficiently process only newly discovered features in each iteration.
 	processed := make(map[string]struct{})
