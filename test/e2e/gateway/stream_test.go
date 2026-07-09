@@ -438,7 +438,7 @@ func readAPIKey(t *testing.T, path string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return string(data)
+	return strings.TrimSpace(string(data))
 }
 
 func streamRequest(
@@ -459,11 +459,14 @@ func streamRequest(
 		cancel()
 		t.Fatal(err)
 	}
-	req.Header.Add("authorization", apiKey)
+	if apiKey != "" {
+		req.Header.Add("authorization", apiKey)
+	}
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+			ResponseHeaderTimeout: initialPutTimeout,
 		},
 	}
 	resp, err := client.Do(req)
@@ -480,10 +483,12 @@ func connectStream(t *testing.T, body map[string]any) *sseStream {
 	if resp.StatusCode != http.StatusOK {
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(resp.Body)
+		resp.Body.Close()
 		cancel()
 		t.Fatalf("Failed to connect stream. Status: %d, body: %s", resp.StatusCode, buf.String())
 	}
 	if ct := resp.Header.Get("Content-Type"); ct != "text/event-stream" {
+		resp.Body.Close()
 		cancel()
 		t.Fatalf("Wrong content type. Expected: text/event-stream, actual: %s", ct)
 	}
