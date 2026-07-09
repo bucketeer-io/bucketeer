@@ -32,7 +32,7 @@ env:
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
   accountService: localhost:9001
-  notificationService: localhost:9001
+  subscriptionService: localhost:9001
   environmentService: localhost:9001
   pushService: localhost:9001
   autoOpsService: localhost:9001
