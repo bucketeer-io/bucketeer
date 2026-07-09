@@ -31,8 +31,8 @@ func TestCreateGetDeleteAdminSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *sysAdminAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *sysAdminAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -47,8 +47,8 @@ func TestCreateGetDeleteAdminSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
-	resp, err := notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+	createAdminSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient)
+	resp, err := subscriptionClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -76,14 +76,14 @@ func TestCreateGetDeleteAdminSubscription(t *testing.T) {
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
-	_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
+	_, err = subscriptionClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
 		Id:      id,
 		Command: &proto.DeleteAdminSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+	_, err = subscriptionClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -98,8 +98,8 @@ func TestCreateListDeleteAdminSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *sysAdminAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *sysAdminAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -114,8 +114,8 @@ func TestCreateListDeleteAdminSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
-	subscriptions := listAdminSubscriptions(t, notificationClient, []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT})
+	createAdminSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient)
+	subscriptions := listAdminSubscriptions(t, subscriptionClient, []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT})
 	var subscription *proto.Subscription
 	for _, s := range subscriptions {
 		if s.Id == id {
@@ -144,14 +144,14 @@ func TestCreateListDeleteAdminSubscription(t *testing.T) {
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
-	_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
+	_, err = subscriptionClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
 		Id:      id,
 		Command: &proto.DeleteAdminSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+	_, err = subscriptionClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -166,8 +166,8 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *sysAdminAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *sysAdminAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -182,8 +182,8 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
-	_, err = notificationClient.UpdateAdminSubscription(ctx, &proto.UpdateAdminSubscriptionRequest{
+	createAdminSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient)
+	_, err = subscriptionClient.UpdateAdminSubscription(ctx, &proto.UpdateAdminSubscriptionRequest{
 		Id: id,
 		AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
 			SourceTypes: []proto.Subscription_SourceType{
@@ -199,7 +199,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+	resp, err := subscriptionClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -227,14 +227,14 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
-	_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
+	_, err = subscriptionClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
 		Id:      id,
 		Command: &proto.DeleteAdminSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
+	_, err = subscriptionClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
 		Id: id,
 	})
 	if err != nil {

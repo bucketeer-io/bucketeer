@@ -21,53 +21,53 @@ import (
 
 var (
 	statusIDRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "id must be specified", "ID"),
+		err.NewErrorInvalidArgEmpty(err.SubscriptionPackageName, "id must be specified", "ID"),
 	)
 	statusNameRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "name must be specified", "Name"),
+		err.NewErrorInvalidArgEmpty(err.SubscriptionPackageName, "name must be specified", "Name"),
 	)
 	statusSourceTypesRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"notification types must be specified",
 		"NotificationType",
 	))
 	statusUnknownRecipient = api.NewGRPCStatus(
-		err.NewErrorInvalidArgUnknown(err.NotificationPackageName, "unknown recipient", "NotificationRecipient"),
+		err.NewErrorInvalidArgUnknown(err.SubscriptionPackageName, "unknown recipient", "NotificationRecipient"),
 	)
 	statusRecipientRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"recipient must be specified",
 		"NotificationRecipient",
 	))
 	statusSlackRecipientRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"slack recipient must be specified",
 		"NotificationSlackRecipient",
 	))
 	statusSlackRecipientWebhookURLRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"webhook URL must be specified",
 		"WebhookURL",
 	))
 	statusInvalidCursor = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "cursor is invalid", "Cursor"),
+		err.NewErrorInvalidArgNotMatchFormat(err.SubscriptionPackageName, "cursor is invalid", "Cursor"),
 	)
 	statusNoCommand = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "no command", "Command"),
+		err.NewErrorInvalidArgEmpty(err.SubscriptionPackageName, "no command", "Command"),
 	)
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "order_by is invalid", "OrderBy"),
+		err.NewErrorInvalidArgNotMatchFormat(err.SubscriptionPackageName, "order_by is invalid", "OrderBy"),
 	)
 	statusNotFound = api.NewGRPCStatus(
-		err.NewErrorNotFound(err.NotificationPackageName, "not found", "Notification"),
+		err.NewErrorNotFound(err.SubscriptionPackageName, "not found", "Notification"),
 	)
 	statusAlreadyExists = api.NewGRPCStatus(
-		err.NewErrorAlreadyExists(err.NotificationPackageName, "already exists"),
+		err.NewErrorAlreadyExists(err.SubscriptionPackageName, "already exists"),
 	)
 	statusUnauthenticated = api.NewGRPCStatus(
-		err.NewErrorUnauthenticated(err.NotificationPackageName, "unauthenticated"),
+		err.NewErrorUnauthenticated(err.SubscriptionPackageName, "unauthenticated"),
 	)
 	statusPermissionDenied = api.NewGRPCStatus(
-		err.NewErrorPermissionDenied(err.NotificationPackageName, "permission denied"),
+		err.NewErrorPermissionDenied(err.SubscriptionPackageName, "permission denied"),
 	)
 )

@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	errUnknownCommand = err.NewErrorInvalidArgUnknown(err.NotificationPackageName, "unknown command", "command")
+	errUnknownCommand = err.NewErrorInvalidArgUnknown(err.SubscriptionPackageName, "unknown command", "command")
 )
 
 type Command interface{}

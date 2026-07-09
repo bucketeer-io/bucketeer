@@ -25,16 +25,16 @@ import (
 
 var (
 	ErrSubscriptionAlreadyExists = err.NewErrorAlreadyExists(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"subscription already exists",
 	)
 	ErrSubscriptionNotFound = err.NewErrorNotFound(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"subscription not found",
 		"subscription",
 	)
 	ErrSubscriptionUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"subscription unexpected affected rows",
 	)
 )

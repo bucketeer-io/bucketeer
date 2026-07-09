@@ -29,23 +29,23 @@ import (
 
 var (
 	ErrUnknownRecipient = err.NewErrorInvalidArgUnknown(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"unknown recipient",
 		"recipient",
 	)
 	ErrSourceTypesMustHaveAtLeastOne = err.NewErrorInvalidArgNotMatchFormat(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"notification types must have at least one",
 		"notification_types",
 	)
 	ErrSourceTypeNotFound = err.NewErrorNotFound(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"notification not found", "notification_type",
 	)
-	ErrAlreadyEnabled              = err.NewErrorAlreadyExists(err.NotificationPackageName, "already enabled")
-	ErrAlreadyDisabled             = err.NewErrorAlreadyExists(err.NotificationPackageName, "already disabled")
+	ErrAlreadyEnabled              = err.NewErrorAlreadyExists(err.SubscriptionPackageName, "already enabled")
+	ErrAlreadyDisabled             = err.NewErrorAlreadyExists(err.SubscriptionPackageName, "already disabled")
 	ErrCannotUpdateFeatureFlagTags = err.NewErrorNotFound(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"cannot update the feature flag tags when there is feature source type",
 		"feature_source_type",
 	)

@@ -25,16 +25,16 @@ import (
 
 var (
 	ErrAdminSubscriptionAlreadyExists = err.NewErrorAlreadyExists(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"admin subscription already exists",
 	)
 	ErrAdminSubscriptionNotFound = err.NewErrorNotFound(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"admin subscription not found",
 		"admin_subscription",
 	)
 	ErrAdminSubscriptionUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
-		err.NotificationPackageName,
+		err.SubscriptionPackageName,
 		"admin subscription unexpected affected rows",
 	)
 )

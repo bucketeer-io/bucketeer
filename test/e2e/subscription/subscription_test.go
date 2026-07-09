@@ -61,8 +61,8 @@ func TestCreateListSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *orgOwnerDefaultAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -79,11 +79,11 @@ func TestCreateListSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
+	createSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient, featureFlagTags)
 	var subscription *proto.Subscription
 	subscriptions := listSubscriptionsByOrganizationID(
 		t,
-		notificationClient,
+		subscriptionClient,
 		[]proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT},
 		*organizationID,
 	)
@@ -117,7 +117,7 @@ func TestCreateListSubscription(t *testing.T) {
 	if !reflect.DeepEqual(subscription.FeatureFlagTags, featureFlagTags) {
 		t.Fatalf("Incorrect feature flag tags. Expected: %v actual: %v", featureFlagTags, subscription.FeatureFlagTags)
 	}
-	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
+	_, err = subscriptionClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
@@ -130,8 +130,8 @@ func TestCreateUpdateSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *orgOwnerDefaultAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -148,7 +148,7 @@ func TestCreateUpdateSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
+	createSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient, featureFlagTags)
 
 	updatedName := fmt.Sprintf("%s-updated-name-%s", prefixTestName, newUUID(t))
 	updatedSourceTypes := []proto.Subscription_SourceType{
@@ -157,7 +157,7 @@ func TestCreateUpdateSubscription(t *testing.T) {
 		proto.Subscription_DOMAIN_EVENT_FEATURE,
 	}
 	updatedFeatureFlagTags := []string{"android", "ios", "web"}
-	resp, err := notificationClient.UpdateSubscription(ctx, &proto.UpdateSubscriptionRequest{
+	resp, err := subscriptionClient.UpdateSubscription(ctx, &proto.UpdateSubscriptionRequest{
 		EnvironmentId:   *environmentID,
 		Id:              id,
 		SourceTypes:     updatedSourceTypes,
@@ -194,7 +194,7 @@ func TestCreateUpdateSubscription(t *testing.T) {
 	if !reflect.DeepEqual(subscription.FeatureFlagTags, updatedFeatureFlagTags) {
 		t.Fatalf("Incorrect feature flag tags. Expected: %v actual: %v", updatedFeatureFlagTags, subscription.FeatureFlagTags)
 	}
-	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
+	_, err = subscriptionClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
@@ -207,8 +207,8 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *orgOwnerDefaultAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -225,8 +225,8 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
-	resp, err := notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
+	createSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient, featureFlagTags)
+	resp, err := subscriptionClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
@@ -258,14 +258,14 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
-	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
+	_, err = subscriptionClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
+	_, err = subscriptionClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
@@ -281,8 +281,8 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	notificationClient := newNotificationClient(t, *orgOwnerDefaultAccessTokenPath)
-	defer notificationClient.Close()
+	subscriptionClient := newSubscriptionClient(t, *orgOwnerDefaultAccessTokenPath)
+	defer subscriptionClient.Close()
 
 	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
 	sourceTypes := []proto.Subscription_SourceType{
@@ -299,8 +299,8 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
-	subscriptions := listSubscriptions(t, notificationClient, []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT})
+	createSubscription(ctx, t, subscriptionClient, name, sourceTypes, recipient, featureFlagTags)
+	subscriptions := listSubscriptions(t, subscriptionClient, []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT})
 	var subscription *proto.Subscription
 	for _, s := range subscriptions {
 		if s.Id == id {
@@ -332,14 +332,14 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
-	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
+	_, err = subscriptionClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
+	_, err = subscriptionClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
 	})
@@ -351,7 +351,7 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	}
 }
 
-func newNotificationClient(t *testing.T, tokenPath string) subscriptionclient.Client {
+func newSubscriptionClient(t *testing.T, tokenPath string) subscriptionclient.Client {
 	t.Helper()
 	creds, err := rpcclient.NewPerRPCCredentials(tokenPath)
 	if err != nil {
