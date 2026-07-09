@@ -406,10 +406,14 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	if e != nil {
 		return "", nil, e
 	}
-	features := f.([]*featureproto.Feature)
-	if len(features) == 0 {
+	shared := f.([]*featureproto.Feature)
+	if len(shared) == 0 {
 		return "", s.emptyUserEvaluations(), nil
 	}
+	// singleflight shares the same slice across concurrent callers.
+	// Copy to avoid data races from in-place sort in UserEvaluationsID.
+	features := make([]*featureproto.Feature, len(shared))
+	copy(features, shared)
 
 	evaluator := evaluation.NewEvaluator(
 		evaluation.WithSecondsForAdjustment(int64(s.opts.featureFlagDiffGracePeriod / time.Second)),
