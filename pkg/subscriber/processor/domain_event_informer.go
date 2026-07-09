@@ -25,15 +25,15 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
 var (
@@ -195,48 +195,48 @@ func (d domainEventInformer) unmarshalMessage(msg *puller.Message) (*domainevent
 
 func (d domainEventInformer) convSourceType(
 	entityType domaineventproto.Event_EntityType,
-) (notificationproto.Subscription_SourceType, error) {
+) (subscriptionproto.Subscription_SourceType, error) {
 	switch entityType {
 	case domaineventproto.Event_FEATURE:
-		return notificationproto.Subscription_DOMAIN_EVENT_FEATURE, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_FEATURE, nil
 	case domaineventproto.Event_GOAL:
-		return notificationproto.Subscription_DOMAIN_EVENT_GOAL, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_GOAL, nil
 	case domaineventproto.Event_EXPERIMENT:
-		return notificationproto.Subscription_DOMAIN_EVENT_EXPERIMENT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_EXPERIMENT, nil
 	case domaineventproto.Event_ACCOUNT:
-		return notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_ACCOUNT, nil
 	case domaineventproto.Event_APIKEY:
-		return notificationproto.Subscription_DOMAIN_EVENT_APIKEY, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_APIKEY, nil
 	case domaineventproto.Event_SEGMENT:
-		return notificationproto.Subscription_DOMAIN_EVENT_SEGMENT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_SEGMENT, nil
 	case domaineventproto.Event_ENVIRONMENT:
-		return notificationproto.Subscription_DOMAIN_EVENT_ENVIRONMENT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_ENVIRONMENT, nil
 	case domaineventproto.Event_ADMIN_ACCOUNT:
-		return notificationproto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT, nil
 	case domaineventproto.Event_AUTOOPS_RULE:
-		return notificationproto.Subscription_DOMAIN_EVENT_AUTOOPS_RULE, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_AUTOOPS_RULE, nil
 	case domaineventproto.Event_PUSH:
-		return notificationproto.Subscription_DOMAIN_EVENT_PUSH, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_PUSH, nil
 	case domaineventproto.Event_SUBSCRIPTION:
-		return notificationproto.Subscription_DOMAIN_EVENT_SUBSCRIPTION, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_SUBSCRIPTION, nil
 	case domaineventproto.Event_ADMIN_SUBSCRIPTION:
-		return notificationproto.Subscription_DOMAIN_EVENT_ADMIN_SUBSCRIPTION, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_ADMIN_SUBSCRIPTION, nil
 	case domaineventproto.Event_PROJECT:
-		return notificationproto.Subscription_DOMAIN_EVENT_PROJECT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_PROJECT, nil
 	case domaineventproto.Event_PROGRESSIVE_ROLLOUT:
-		return notificationproto.Subscription_DOMAIN_EVENT_PROGRESSIVE_ROLLOUT, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_PROGRESSIVE_ROLLOUT, nil
 	case domaineventproto.Event_ORGANIZATION:
-		return notificationproto.Subscription_DOMAIN_EVENT_ORGANIZATION, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_ORGANIZATION, nil
 	case domaineventproto.Event_FLAG_TRIGGER:
-		return notificationproto.Subscription_DOMAIN_EVENT_FLAG_TRIGGER, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_FLAG_TRIGGER, nil
 	case domaineventproto.Event_TAG:
-		return notificationproto.Subscription_DOMAIN_EVENT_TAG, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_TAG, nil
 	case domaineventproto.Event_CODEREF:
-		return notificationproto.Subscription_DOMAIN_EVENT_CODEREF, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_CODEREF, nil
 	case domaineventproto.Event_TEAM:
-		return notificationproto.Subscription_DOMAIN_EVENT_TEAM, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_TEAM, nil
 	case domaineventproto.Event_SCHEDULED_FLAG_CHANGE:
-		return notificationproto.Subscription_DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE, nil
+		return subscriptionproto.Subscription_DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE, nil
 	}
-	return notificationproto.Subscription_SourceType(0), ErrUnknownSourceType
+	return subscriptionproto.Subscription_SourceType(0), ErrUnknownSourceType
 }

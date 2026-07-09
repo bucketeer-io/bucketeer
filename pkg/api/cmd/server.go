@@ -45,7 +45,6 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
@@ -57,6 +56,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
+	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	uuid "github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -108,7 +108,7 @@ type server struct {
 	auditLogService                   *string
 	tagService                        *string
 	teamService                       *string
-	notificationService               *string
+	subscriptionService               *string
 	experimentService                 *string
 	environmentService                *string
 	eventCounterService               *string
@@ -217,9 +217,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"team-service",
 			"bucketeer-team-service address.",
 		).Default("team:9090").String(),
-		notificationService: cmd.Flag(
+		subscriptionService: cmd.Flag(
 			"notification-service",
-			"bucketeer-notification-service address.",
+			"bucketeer-subscription-service address.",
 		).Default("notification:9090").String(),
 		experimentService: cmd.Flag(
 			"experiment-service",
@@ -489,7 +489,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	notificationClient, err := notificationclient.NewClient(*s.notificationService, *s.certPath,
+	subscriptionClient, err := subscriptionclient.NewClient(*s.subscriptionService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
 		client.WithBlock(),
@@ -607,7 +607,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		autoOpsClient,
 		tagClient,
 		teamClient,
-		notificationClient,
+		subscriptionClient,
 		experimentClient,
 		eventCounterClient,
 		environmentClient,
@@ -786,7 +786,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go autoOpsClient.Close()
 		go tagClient.Close()
 		go teamClient.Close()
-		go notificationClient.Close()
+		go subscriptionClient.Close()
 		go experimentClient.Close()
 		go eventCounterClient.Close()
 		go environmentClient.Close()

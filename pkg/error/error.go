@@ -24,7 +24,7 @@ import (
 const (
 	AccountPackageName      = "account"
 	FeaturePackageName      = "feature"
-	NotificationPackageName = "notification"
+	SubscriptionPackageName = "subscription"
 	PushPackageName         = "push"
 	TagPackageName          = "tag"
 	EventCounterPackageName = "eventcounter"

@@ -48,9 +48,9 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	notificationclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pushclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/push/client/mock"
+	subscriptionclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client/mock"
 	tagclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client/mock"
 	teamclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/team/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -4456,7 +4456,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		goalPublisher:               publishermock.NewMockPublisher(mockController),
 		tagClient:                   tagclientmock.NewMockClient(mockController),
 		teamClient:                  teamclientmock.NewMockClient(mockController),
-		notificationClient:          notificationclientmock.NewMockClient(mockController),
+		subscriptionClient:          subscriptionclientmock.NewMockClient(mockController),
 		experimentClient:            experimentclientmock.NewMockClient(mockController),
 		eventCounterClient:          eventcounterclientmock.NewMockClient(mockController),
 		environmentClient:           environmentclientmock.NewMockClient(mockController),

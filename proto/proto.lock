@@ -22051,13 +22051,13 @@
               {
                 "id": 1,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               },
               {
                 "id": 2,
                 "name": "recipient",
-                "type": "bucketeer.notification.Recipient"
+                "type": "bucketeer.subscription.Recipient"
               },
               {
                 "id": 3,
@@ -22087,7 +22087,7 @@
               {
                 "id": 1,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               }
             ]
@@ -22098,7 +22098,7 @@
               {
                 "id": 1,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               }
             ]
@@ -22140,7 +22140,7 @@
               {
                 "id": 3,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               },
               {
@@ -22162,13 +22162,13 @@
               {
                 "id": 1,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               },
               {
                 "id": 2,
                 "name": "recipient",
-                "type": "bucketeer.notification.Recipient"
+                "type": "bucketeer.subscription.Recipient"
               },
               {
                 "id": 3,
@@ -22192,7 +22192,7 @@
               {
                 "id": 1,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               }
             ]
@@ -22203,7 +22203,7 @@
               {
                 "id": 1,
                 "name": "source_types",
-                "type": "bucketeer.notification.Subscription.SourceType",
+                "type": "bucketeer.subscription.Subscription.SourceType",
                 "is_repeated": true
               }
             ]
@@ -23704,10 +23704,10 @@
             "path": "proto/autoops/service.proto"
           },
           {
-            "path": "proto/notification/subscription.proto"
+            "path": "proto/subscription/subscription.proto"
           },
           {
-            "path": "proto/notification/recipient.proto"
+            "path": "proto/subscription/recipient.proto"
           },
           {
             "path": "proto/feature/prerequisite.proto"
@@ -39912,7 +39912,7 @@
               {
                 "id": 1,
                 "name": "subscription",
-                "type": "notification.Subscription"
+                "type": "subscription.Subscription"
               }
             ]
           },
@@ -39932,18 +39932,18 @@
               {
                 "id": 3,
                 "name": "source_types",
-                "type": "notification.Subscription.SourceType",
+                "type": "subscription.Subscription.SourceType",
                 "is_repeated": true
               },
               {
                 "id": 4,
                 "name": "order_by",
-                "type": "notification.ListSubscriptionsRequest.OrderBy"
+                "type": "subscription.ListSubscriptionsRequest.OrderBy"
               },
               {
                 "id": 5,
                 "name": "order_direction",
-                "type": "notification.ListSubscriptionsRequest.OrderDirection"
+                "type": "subscription.ListSubscriptionsRequest.OrderDirection"
               },
               {
                 "id": 6,
@@ -39980,7 +39980,7 @@
               {
                 "id": 1,
                 "name": "subscriptions",
-                "type": "notification.Subscription",
+                "type": "subscription.Subscription",
                 "is_repeated": true
               },
               {
@@ -40012,7 +40012,7 @@
               {
                 "id": 2,
                 "name": "source_types",
-                "type": "notification.Subscription.SourceType",
+                "type": "subscription.Subscription.SourceType",
                 "is_repeated": true,
                 "options": [
                   {
@@ -40024,7 +40024,7 @@
               {
                 "id": 3,
                 "name": "recipient",
-                "type": "notification.Recipient",
+                "type": "subscription.Recipient",
                 "options": [
                   {
                     "name": "(google.api.field_behavior)",
@@ -40046,7 +40046,7 @@
               {
                 "id": 1,
                 "name": "subscription",
-                "type": "notification.Subscription"
+                "type": "subscription.Subscription"
               }
             ]
           },
@@ -40080,7 +40080,7 @@
               {
                 "id": 2,
                 "name": "source_types",
-                "type": "notification.Subscription.SourceType",
+                "type": "subscription.Subscription.SourceType",
                 "is_repeated": true
               },
               {
@@ -44785,13 +44785,13 @@
             "path": "proto/team/team.proto"
           },
           {
-            "path": "proto/notification/service.proto"
+            "path": "proto/subscription/service.proto"
           },
           {
-            "path": "proto/notification/subscription.proto"
+            "path": "proto/subscription/subscription.proto"
           },
           {
-            "path": "proto/notification/recipient.proto"
+            "path": "proto/subscription/recipient.proto"
           },
           {
             "path": "proto/feature/flag_trigger.proto"
@@ -45918,2054 +45918,6 @@
       }
     },
     {
-      "protopath": "notification:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreateAdminSubscriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "recipient",
-                "type": "Recipient"
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AddAdminSubscriptionSourceTypesCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeleteAdminSubscriptionSourceTypesCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "EnableAdminSubscriptionCommand"
-          },
-          {
-            "name": "DisableAdminSubscriptionCommand"
-          },
-          {
-            "name": "DeleteAdminSubscriptionCommand"
-          },
-          {
-            "name": "RenameAdminSubscriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/notification/subscription.proto"
-          },
-          {
-            "path": "proto/notification/recipient.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.notification"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "notification:/:recipient.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "Recipient.Type",
-            "enum_fields": [
-              {
-                "name": "SlackChannel"
-              }
-            ]
-          },
-          {
-            "name": "Recipient.Language",
-            "enum_fields": [
-              {
-                "name": "ENGLISH"
-              },
-              {
-                "name": "JAPANESE",
-                "integer": 1
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "Recipient",
-            "fields": [
-              {
-                "id": 1,
-                "name": "type",
-                "type": "Type"
-              },
-              {
-                "id": 2,
-                "name": "slack_channel_recipient",
-                "type": "SlackChannelRecipient"
-              },
-              {
-                "id": 3,
-                "name": "language",
-                "type": "Language"
-              }
-            ]
-          },
-          {
-            "name": "SlackChannelRecipient",
-            "fields": [
-              {
-                "id": 1,
-                "name": "webhook_url",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "bucketeer.notification"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "notification:/:sender:/:notification.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "Notification.Type",
-            "enum_fields": [
-              {
-                "name": "DomainEvent"
-              },
-              {
-                "name": "FeatureStale",
-                "integer": 1
-              },
-              {
-                "name": "ExperimentRunning",
-                "integer": 2
-              },
-              {
-                "name": "MauCount",
-                "integer": 3
-              },
-              {
-                "name": "DemoOrganizationCreation",
-                "integer": 4
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "Notification",
-            "fields": [
-              {
-                "id": 1,
-                "name": "type",
-                "type": "Type"
-              },
-              {
-                "id": 2,
-                "name": "domain_event_notification",
-                "type": "DomainEventNotification"
-              },
-              {
-                "id": 3,
-                "name": "feature_stale_notification",
-                "type": "FeatureStaleNotification"
-              },
-              {
-                "id": 4,
-                "name": "experiment_running_notification",
-                "type": "ExperimentRunningNotification"
-              },
-              {
-                "id": 5,
-                "name": "mau_count_notification",
-                "type": "MauCountNotification"
-              },
-              {
-                "id": 6,
-                "name": "demo_organization_creation_notification",
-                "type": "DemoOrganizationCreationNotification"
-              }
-            ]
-          },
-          {
-            "name": "DomainEventNotification",
-            "fields": [
-              {
-                "id": 2,
-                "name": "editor",
-                "type": "bucketeer.event.domain.Editor"
-              },
-              {
-                "id": 3,
-                "name": "entity_type",
-                "type": "bucketeer.event.domain.Event.EntityType"
-              },
-              {
-                "id": 4,
-                "name": "entity_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "type",
-                "type": "bucketeer.event.domain.Event.Type"
-              },
-              {
-                "id": 7,
-                "name": "environment_name",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "environment_url_code",
-                "type": "string"
-              },
-              {
-                "id": 9,
-                "name": "entity_data",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1,
-              6
-            ]
-          },
-          {
-            "name": "FeatureStaleNotification",
-            "fields": [
-              {
-                "id": 2,
-                "name": "features",
-                "type": "bucketeer.feature.Feature",
-                "is_repeated": true
-              },
-              {
-                "id": 4,
-                "name": "environment_name",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "environment_url_code",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1,
-              3
-            ]
-          },
-          {
-            "name": "ExperimentRunningNotification",
-            "fields": [
-              {
-                "id": 3,
-                "name": "experiments",
-                "type": "bucketeer.experiment.Experiment",
-                "is_repeated": true
-              },
-              {
-                "id": 4,
-                "name": "environment_name",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "environment_url_code",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1,
-              2
-            ]
-          },
-          {
-            "name": "MauCountNotification",
-            "fields": [
-              {
-                "id": 2,
-                "name": "event_count",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "user_count",
-                "type": "int64"
-              },
-              {
-                "id": 4,
-                "name": "month",
-                "type": "int32"
-              },
-              {
-                "id": 5,
-                "name": "environment_name",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "environment_url_code",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "DemoOrganizationCreationNotification",
-            "fields": [
-              {
-                "id": 1,
-                "name": "owner_email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "organization_name",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/event/domain/event.proto"
-          },
-          {
-            "path": "proto/feature/feature.proto"
-          },
-          {
-            "path": "proto/experiment/experiment.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.notification.sender"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "notification:/:sender:/:notification_event.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "NotificationEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "source_type",
-                "type": "bucketeer.notification.Subscription.SourceType"
-              },
-              {
-                "id": 4,
-                "name": "notification",
-                "type": "Notification"
-              },
-              {
-                "id": 5,
-                "name": "is_admin_event",
-                "type": "bool"
-              },
-              {
-                "id": 6,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              2
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/notification/sender/notification.proto"
-          },
-          {
-            "path": "proto/notification/subscription.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.notification.sender"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "notification:/:service.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "ListAdminSubscriptionsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "NAME",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              }
-            ]
-          },
-          {
-            "name": "ListAdminSubscriptionsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
-            "name": "ListSubscriptionsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "NAME",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              },
-              {
-                "name": "ENVIRONMENT",
-                "integer": 4
-              },
-              {
-                "name": "STATE",
-                "integer": 5
-              }
-            ]
-          },
-          {
-            "name": "ListSubscriptionsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "GetAdminSubscriptionRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetAdminSubscriptionResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscription",
-                "type": "Subscription"
-              }
-            ]
-          },
-          {
-            "name": "ListAdminSubscriptionsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 4,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 5,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 6,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "disabled",
-                "type": "google.protobuf.BoolValue"
-              }
-            ]
-          },
-          {
-            "name": "ListAdminSubscriptionsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscriptions",
-                "type": "Subscription",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "ListEnabledAdminSubscriptionsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "ListEnabledAdminSubscriptionsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscriptions",
-                "type": "Subscription",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "CreateAdminSubscriptionRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "command",
-                "type": "CreateAdminSubscriptionCommand"
-              }
-            ]
-          },
-          {
-            "name": "CreateAdminSubscriptionResponse"
-          },
-          {
-            "name": "DeleteAdminSubscriptionRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteAdminSubscriptionCommand"
-              }
-            ]
-          },
-          {
-            "name": "DeleteAdminSubscriptionResponse"
-          },
-          {
-            "name": "EnableAdminSubscriptionRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "EnableAdminSubscriptionCommand"
-              }
-            ]
-          },
-          {
-            "name": "EnableAdminSubscriptionResponse"
-          },
-          {
-            "name": "DisableAdminSubscriptionRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DisableAdminSubscriptionCommand"
-              }
-            ]
-          },
-          {
-            "name": "DisableAdminSubscriptionResponse"
-          },
-          {
-            "name": "UpdateAdminSubscriptionRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "add_source_types_command",
-                "type": "AddAdminSubscriptionSourceTypesCommand"
-              },
-              {
-                "id": 3,
-                "name": "delete_source_types_command",
-                "type": "DeleteAdminSubscriptionSourceTypesCommand"
-              },
-              {
-                "id": 4,
-                "name": "rename_subscription_command",
-                "type": "RenameAdminSubscriptionCommand"
-              }
-            ]
-          },
-          {
-            "name": "UpdateAdminSubscriptionResponse"
-          },
-          {
-            "name": "GetSubscriptionRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "environment_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "GetSubscriptionResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscription",
-                "type": "Subscription"
-              }
-            ]
-          },
-          {
-            "name": "ListSubscriptionsRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 5,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 6,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 7,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "disabled",
-                "type": "google.protobuf.BoolValue"
-              },
-              {
-                "id": 9,
-                "name": "environment_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 10,
-                "name": "organization_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 11,
-                "name": "environment_ids",
-                "type": "string",
-                "is_repeated": true
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "ListSubscriptionsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscriptions",
-                "type": "Subscription",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "ListEnabledSubscriptionsRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 5,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "ListEnabledSubscriptionsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscriptions",
-                "type": "Subscription",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "CreateSubscriptionRequest",
-            "fields": [
-              {
-                "id": 3,
-                "name": "environment_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "name",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 6,
-                "name": "recipient",
-                "type": "Recipient",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 7,
-                "name": "feature_flag_tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ],
-            "reserved_ids": [
-              1,
-              2
-            ]
-          },
-          {
-            "name": "CreateSubscriptionResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscription",
-                "type": "Subscription"
-              }
-            ]
-          },
-          {
-            "name": "DeleteSubscriptionRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1,
-              3
-            ]
-          },
-          {
-            "name": "DeleteSubscriptionResponse"
-          },
-          {
-            "name": "UpdateSubscriptionRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 6,
-                "name": "environment_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 7,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 8,
-                "name": "name",
-                "type": "google.protobuf.StringValue"
-              },
-              {
-                "id": 9,
-                "name": "disabled",
-                "type": "google.protobuf.BoolValue",
-                "options": [
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "title",
-                        "value": "disabled"
-                      },
-                      {
-                        "name": "description",
-                        "value": "if true, the subscription is disabled, otherwise enabled."
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 10,
-                "name": "feature_flag_tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ],
-            "reserved_ids": [
-              1,
-              3,
-              4,
-              5,
-              11
-            ]
-          },
-          {
-            "name": "UpdateSubscriptionResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "subscription",
-                "type": "Subscription"
-              }
-            ]
-          }
-        ],
-        "services": [
-          {
-            "name": "NotificationService",
-            "rpcs": [
-              {
-                "name": "GetAdminSubscription",
-                "in_type": "GetAdminSubscriptionRequest",
-                "out_type": "GetAdminSubscriptionResponse"
-              },
-              {
-                "name": "ListAdminSubscriptions",
-                "in_type": "ListAdminSubscriptionsRequest",
-                "out_type": "ListAdminSubscriptionsResponse"
-              },
-              {
-                "name": "ListEnabledAdminSubscriptions",
-                "in_type": "ListEnabledAdminSubscriptionsRequest",
-                "out_type": "ListEnabledAdminSubscriptionsResponse"
-              },
-              {
-                "name": "CreateAdminSubscription",
-                "in_type": "CreateAdminSubscriptionRequest",
-                "out_type": "CreateAdminSubscriptionResponse"
-              },
-              {
-                "name": "DeleteAdminSubscription",
-                "in_type": "DeleteAdminSubscriptionRequest",
-                "out_type": "DeleteAdminSubscriptionResponse"
-              },
-              {
-                "name": "EnableAdminSubscription",
-                "in_type": "EnableAdminSubscriptionRequest",
-                "out_type": "EnableAdminSubscriptionResponse"
-              },
-              {
-                "name": "DisableAdminSubscription",
-                "in_type": "DisableAdminSubscriptionRequest",
-                "out_type": "DisableAdminSubscriptionResponse"
-              },
-              {
-                "name": "UpdateAdminSubscription",
-                "in_type": "UpdateAdminSubscriptionRequest",
-                "out_type": "UpdateAdminSubscriptionResponse"
-              },
-              {
-                "name": "GetSubscription",
-                "in_type": "GetSubscriptionRequest",
-                "out_type": "GetSubscriptionResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "/v1/subscription"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Get"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Get subscription."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "subscription"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.subscription.get"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "ListSubscriptions",
-                "in_type": "ListSubscriptionsRequest",
-                "out_type": "ListSubscriptionsResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "/v1/subscriptions"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "List"
-                      },
-                      {
-                        "name": "description",
-                        "value": "List subscriptions."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "subscription"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.subscription.list"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "ListEnabledSubscriptions",
-                "in_type": "ListEnabledSubscriptionsRequest",
-                "out_type": "ListEnabledSubscriptionsResponse"
-              },
-              {
-                "name": "CreateSubscription",
-                "in_type": "CreateSubscriptionRequest",
-                "out_type": "CreateSubscriptionResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "post",
-                        "value": "/v1/subscription"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Create"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Create subscription."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "subscription"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.subscription.create"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "DeleteSubscription",
-                "in_type": "DeleteSubscriptionRequest",
-                "out_type": "DeleteSubscriptionResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "delete",
-                        "value": "/v1/subscription"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Delete"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Delete a subscription."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "subscription"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.subscription.delete"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "404"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned when the subscription is not found."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "UpdateSubscription",
-                "in_type": "UpdateSubscriptionRequest",
-                "out_type": "UpdateSubscriptionResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "patch",
-                        "value": "/v1/subscription"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Update"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Update subscription."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "subscription"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.subscription.update"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "google/protobuf/wrappers.proto"
-          },
-          {
-            "path": "google/api/annotations.proto"
-          },
-          {
-            "path": "google/api/field_behavior.proto"
-          },
-          {
-            "path": "protoc-gen-openapiv2/options/annotations.proto"
-          },
-          {
-            "path": "proto/notification/subscription.proto"
-          },
-          {
-            "path": "proto/notification/recipient.proto"
-          },
-          {
-            "path": "proto/notification/command.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.notification"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "notification:/:subscription.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "Subscription.SourceType",
-            "enum_fields": [
-              {
-                "name": "DOMAIN_EVENT_FEATURE"
-              },
-              {
-                "name": "DOMAIN_EVENT_GOAL",
-                "integer": 1
-              },
-              {
-                "name": "DOMAIN_EVENT_EXPERIMENT",
-                "integer": 2
-              },
-              {
-                "name": "DOMAIN_EVENT_ACCOUNT",
-                "integer": 3
-              },
-              {
-                "name": "DOMAIN_EVENT_APIKEY",
-                "integer": 4
-              },
-              {
-                "name": "DOMAIN_EVENT_SEGMENT",
-                "integer": 5
-              },
-              {
-                "name": "DOMAIN_EVENT_ENVIRONMENT",
-                "integer": 6
-              },
-              {
-                "name": "DOMAIN_EVENT_ADMIN_ACCOUNT",
-                "integer": 7
-              },
-              {
-                "name": "DOMAIN_EVENT_AUTOOPS_RULE",
-                "integer": 8
-              },
-              {
-                "name": "DOMAIN_EVENT_PUSH",
-                "integer": 9
-              },
-              {
-                "name": "DOMAIN_EVENT_SUBSCRIPTION",
-                "integer": 10
-              },
-              {
-                "name": "DOMAIN_EVENT_ADMIN_SUBSCRIPTION",
-                "integer": 11
-              },
-              {
-                "name": "DOMAIN_EVENT_PROJECT",
-                "integer": 12
-              },
-              {
-                "name": "DOMAIN_EVENT_WEBHOOK",
-                "integer": 13
-              },
-              {
-                "name": "DOMAIN_EVENT_PROGRESSIVE_ROLLOUT",
-                "integer": 14
-              },
-              {
-                "name": "DOMAIN_EVENT_ORGANIZATION",
-                "integer": 15
-              },
-              {
-                "name": "DOMAIN_EVENT_FLAG_TRIGGER",
-                "integer": 16
-              },
-              {
-                "name": "DOMAIN_EVENT_TAG",
-                "integer": 17
-              },
-              {
-                "name": "DOMAIN_EVENT_CODEREF",
-                "integer": 18
-              },
-              {
-                "name": "DOMAIN_EVENT_TEAM",
-                "integer": 19
-              },
-              {
-                "name": "DOMAIN_EVENT_DEMO_ORGANIZATION",
-                "integer": 20
-              },
-              {
-                "name": "DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE",
-                "integer": 21
-              },
-              {
-                "name": "FEATURE_STALE",
-                "integer": 100
-              },
-              {
-                "name": "EXPERIMENT_RUNNING",
-                "integer": 200
-              },
-              {
-                "name": "MAU_COUNT",
-                "integer": 300
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "Subscription",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "updated_at",
-                "type": "int64"
-              },
-              {
-                "id": 4,
-                "name": "disabled",
-                "type": "bool"
-              },
-              {
-                "id": 5,
-                "name": "source_types",
-                "type": "SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 6,
-                "name": "recipient",
-                "type": "Recipient"
-              },
-              {
-                "id": 7,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
-                "id": 9,
-                "name": "environment_name",
-                "type": "string"
-              },
-              {
-                "id": 10,
-                "name": "feature_flag_tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/notification/recipient.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.notification"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "openapi:/:web_default_settings.proto",
       "def": {
         "imports": [
@@ -47974,7 +45926,7 @@
           }
         ],
         "package": {
-          "name": "bucketeer.notification"
+          "name": "bucketeer.insights"
         },
         "options": [
           {
@@ -49233,6 +47185,2054 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/v2/proto/push"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "subscription:/:command.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "CreateAdminSubscriptionCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "recipient",
+                "type": "Recipient"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AddAdminSubscriptionSourceTypesCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "DeleteAdminSubscriptionSourceTypesCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "EnableAdminSubscriptionCommand"
+          },
+          {
+            "name": "DisableAdminSubscriptionCommand"
+          },
+          {
+            "name": "DeleteAdminSubscriptionCommand"
+          },
+          {
+            "name": "RenameAdminSubscriptionCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/subscription/subscription.proto"
+          },
+          {
+            "path": "proto/subscription/recipient.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.subscription"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "subscription:/:recipient.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "Recipient.Type",
+            "enum_fields": [
+              {
+                "name": "SlackChannel"
+              }
+            ]
+          },
+          {
+            "name": "Recipient.Language",
+            "enum_fields": [
+              {
+                "name": "ENGLISH"
+              },
+              {
+                "name": "JAPANESE",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "Recipient",
+            "fields": [
+              {
+                "id": 1,
+                "name": "type",
+                "type": "Type"
+              },
+              {
+                "id": 2,
+                "name": "slack_channel_recipient",
+                "type": "SlackChannelRecipient"
+              },
+              {
+                "id": 3,
+                "name": "language",
+                "type": "Language"
+              }
+            ]
+          },
+          {
+            "name": "SlackChannelRecipient",
+            "fields": [
+              {
+                "id": 1,
+                "name": "webhook_url",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.subscription"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "subscription:/:sender:/:notification.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "Notification.Type",
+            "enum_fields": [
+              {
+                "name": "DomainEvent"
+              },
+              {
+                "name": "FeatureStale",
+                "integer": 1
+              },
+              {
+                "name": "ExperimentRunning",
+                "integer": 2
+              },
+              {
+                "name": "MauCount",
+                "integer": 3
+              },
+              {
+                "name": "DemoOrganizationCreation",
+                "integer": 4
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "Notification",
+            "fields": [
+              {
+                "id": 1,
+                "name": "type",
+                "type": "Type"
+              },
+              {
+                "id": 2,
+                "name": "domain_event_notification",
+                "type": "DomainEventNotification"
+              },
+              {
+                "id": 3,
+                "name": "feature_stale_notification",
+                "type": "FeatureStaleNotification"
+              },
+              {
+                "id": 4,
+                "name": "experiment_running_notification",
+                "type": "ExperimentRunningNotification"
+              },
+              {
+                "id": 5,
+                "name": "mau_count_notification",
+                "type": "MauCountNotification"
+              },
+              {
+                "id": 6,
+                "name": "demo_organization_creation_notification",
+                "type": "DemoOrganizationCreationNotification"
+              }
+            ]
+          },
+          {
+            "name": "DomainEventNotification",
+            "fields": [
+              {
+                "id": 2,
+                "name": "editor",
+                "type": "bucketeer.event.domain.Editor"
+              },
+              {
+                "id": 3,
+                "name": "entity_type",
+                "type": "bucketeer.event.domain.Event.EntityType"
+              },
+              {
+                "id": 4,
+                "name": "entity_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "type",
+                "type": "bucketeer.event.domain.Event.Type"
+              },
+              {
+                "id": 7,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_url_code",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "entity_data",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1,
+              6
+            ]
+          },
+          {
+            "name": "FeatureStaleNotification",
+            "fields": [
+              {
+                "id": 2,
+                "name": "features",
+                "type": "bucketeer.feature.Feature",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "environment_url_code",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "name": "ExperimentRunningNotification",
+            "fields": [
+              {
+                "id": 3,
+                "name": "experiments",
+                "type": "bucketeer.experiment.Experiment",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "environment_url_code",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "name": "MauCountNotification",
+            "fields": [
+              {
+                "id": 2,
+                "name": "event_count",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "user_count",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "month",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "environment_url_code",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1
+            ]
+          },
+          {
+            "name": "DemoOrganizationCreationNotification",
+            "fields": [
+              {
+                "id": 1,
+                "name": "owner_email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_name",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/event/domain/event.proto"
+          },
+          {
+            "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/experiment/experiment.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.subscription.sender"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "subscription:/:sender:/:notification_event.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "NotificationEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_type",
+                "type": "bucketeer.subscription.Subscription.SourceType"
+              },
+              {
+                "id": 4,
+                "name": "notification",
+                "type": "Notification"
+              },
+              {
+                "id": 5,
+                "name": "is_admin_event",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              2
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/subscription/sender/notification.proto"
+          },
+          {
+            "path": "proto/subscription/subscription.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.subscription.sender"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "subscription:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "ListAdminSubscriptionsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "NAME",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "ListAdminSubscriptionsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "ListSubscriptionsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "NAME",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ListSubscriptionsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "GetAdminSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAdminSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
+          },
+          {
+            "name": "ListAdminSubscriptionsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              }
+            ]
+          },
+          {
+            "name": "ListAdminSubscriptionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscriptions",
+                "type": "Subscription",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ListEnabledAdminSubscriptionsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ListEnabledAdminSubscriptionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscriptions",
+                "type": "Subscription",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateAdminSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "CreateAdminSubscriptionCommand"
+              }
+            ]
+          },
+          {
+            "name": "CreateAdminSubscriptionResponse"
+          },
+          {
+            "name": "DeleteAdminSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "DeleteAdminSubscriptionCommand"
+              }
+            ]
+          },
+          {
+            "name": "DeleteAdminSubscriptionResponse"
+          },
+          {
+            "name": "EnableAdminSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "EnableAdminSubscriptionCommand"
+              }
+            ]
+          },
+          {
+            "name": "EnableAdminSubscriptionResponse"
+          },
+          {
+            "name": "DisableAdminSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "DisableAdminSubscriptionCommand"
+              }
+            ]
+          },
+          {
+            "name": "DisableAdminSubscriptionResponse"
+          },
+          {
+            "name": "UpdateAdminSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "add_source_types_command",
+                "type": "AddAdminSubscriptionSourceTypesCommand"
+              },
+              {
+                "id": 3,
+                "name": "delete_source_types_command",
+                "type": "DeleteAdminSubscriptionSourceTypesCommand"
+              },
+              {
+                "id": 4,
+                "name": "rename_subscription_command",
+                "type": "RenameAdminSubscriptionCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAdminSubscriptionResponse"
+          },
+          {
+            "name": "GetSubscriptionRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ],
+            "reserved_ids": [
+              1
+            ]
+          },
+          {
+            "name": "GetSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
+          },
+          {
+            "name": "ListSubscriptionsRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 6,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 7,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 9,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 11,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "reserved_ids": [
+              1
+            ]
+          },
+          {
+            "name": "ListSubscriptionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscriptions",
+                "type": "Subscription",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ListEnabledSubscriptionsRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1
+            ]
+          },
+          {
+            "name": "ListEnabledSubscriptionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscriptions",
+                "type": "Subscription",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateSubscriptionRequest",
+            "fields": [
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "recipient",
+                "type": "Recipient",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 7,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "reserved_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "name": "CreateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSubscriptionRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "name": "DeleteSubscriptionResponse"
+          },
+          {
+            "name": "UpdateSubscriptionRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 7,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "disabled"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the subscription is disabled, otherwise enabled."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "reserved_ids": [
+              1,
+              3,
+              4,
+              5,
+              11
+            ]
+          },
+          {
+            "name": "UpdateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "SubscriptionService",
+            "rpcs": [
+              {
+                "name": "GetAdminSubscription",
+                "in_type": "GetAdminSubscriptionRequest",
+                "out_type": "GetAdminSubscriptionResponse"
+              },
+              {
+                "name": "ListAdminSubscriptions",
+                "in_type": "ListAdminSubscriptionsRequest",
+                "out_type": "ListAdminSubscriptionsResponse"
+              },
+              {
+                "name": "ListEnabledAdminSubscriptions",
+                "in_type": "ListEnabledAdminSubscriptionsRequest",
+                "out_type": "ListEnabledAdminSubscriptionsResponse"
+              },
+              {
+                "name": "CreateAdminSubscription",
+                "in_type": "CreateAdminSubscriptionRequest",
+                "out_type": "CreateAdminSubscriptionResponse"
+              },
+              {
+                "name": "DeleteAdminSubscription",
+                "in_type": "DeleteAdminSubscriptionRequest",
+                "out_type": "DeleteAdminSubscriptionResponse"
+              },
+              {
+                "name": "EnableAdminSubscription",
+                "in_type": "EnableAdminSubscriptionRequest",
+                "out_type": "EnableAdminSubscriptionResponse"
+              },
+              {
+                "name": "DisableAdminSubscription",
+                "in_type": "DisableAdminSubscriptionRequest",
+                "out_type": "DisableAdminSubscriptionResponse"
+              },
+              {
+                "name": "UpdateAdminSubscription",
+                "in_type": "UpdateAdminSubscriptionRequest",
+                "out_type": "UpdateAdminSubscriptionResponse"
+              },
+              {
+                "name": "GetSubscription",
+                "in_type": "GetSubscriptionRequest",
+                "out_type": "GetSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/subscription"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListSubscriptions",
+                "in_type": "ListSubscriptionsRequest",
+                "out_type": "ListSubscriptionsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/subscriptions"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List subscriptions."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListEnabledSubscriptions",
+                "in_type": "ListEnabledSubscriptionsRequest",
+                "out_type": "ListEnabledSubscriptionsResponse"
+              },
+              {
+                "name": "CreateSubscription",
+                "in_type": "CreateSubscriptionRequest",
+                "out_type": "CreateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/subscription"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteSubscription",
+                "in_type": "DeleteSubscriptionRequest",
+                "out_type": "DeleteSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/subscription"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the subscription is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateSubscription",
+                "in_type": "UpdateSubscriptionRequest",
+                "out_type": "UpdateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/subscription"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
+          {
+            "path": "proto/subscription/subscription.proto"
+          },
+          {
+            "path": "proto/subscription/recipient.proto"
+          },
+          {
+            "path": "proto/subscription/command.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.subscription"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "subscription:/:subscription.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "Subscription.SourceType",
+            "enum_fields": [
+              {
+                "name": "DOMAIN_EVENT_FEATURE"
+              },
+              {
+                "name": "DOMAIN_EVENT_GOAL",
+                "integer": 1
+              },
+              {
+                "name": "DOMAIN_EVENT_EXPERIMENT",
+                "integer": 2
+              },
+              {
+                "name": "DOMAIN_EVENT_ACCOUNT",
+                "integer": 3
+              },
+              {
+                "name": "DOMAIN_EVENT_APIKEY",
+                "integer": 4
+              },
+              {
+                "name": "DOMAIN_EVENT_SEGMENT",
+                "integer": 5
+              },
+              {
+                "name": "DOMAIN_EVENT_ENVIRONMENT",
+                "integer": 6
+              },
+              {
+                "name": "DOMAIN_EVENT_ADMIN_ACCOUNT",
+                "integer": 7
+              },
+              {
+                "name": "DOMAIN_EVENT_AUTOOPS_RULE",
+                "integer": 8
+              },
+              {
+                "name": "DOMAIN_EVENT_PUSH",
+                "integer": 9
+              },
+              {
+                "name": "DOMAIN_EVENT_SUBSCRIPTION",
+                "integer": 10
+              },
+              {
+                "name": "DOMAIN_EVENT_ADMIN_SUBSCRIPTION",
+                "integer": 11
+              },
+              {
+                "name": "DOMAIN_EVENT_PROJECT",
+                "integer": 12
+              },
+              {
+                "name": "DOMAIN_EVENT_WEBHOOK",
+                "integer": 13
+              },
+              {
+                "name": "DOMAIN_EVENT_PROGRESSIVE_ROLLOUT",
+                "integer": 14
+              },
+              {
+                "name": "DOMAIN_EVENT_ORGANIZATION",
+                "integer": 15
+              },
+              {
+                "name": "DOMAIN_EVENT_FLAG_TRIGGER",
+                "integer": 16
+              },
+              {
+                "name": "DOMAIN_EVENT_TAG",
+                "integer": 17
+              },
+              {
+                "name": "DOMAIN_EVENT_CODEREF",
+                "integer": 18
+              },
+              {
+                "name": "DOMAIN_EVENT_TEAM",
+                "integer": 19
+              },
+              {
+                "name": "DOMAIN_EVENT_DEMO_ORGANIZATION",
+                "integer": 20
+              },
+              {
+                "name": "DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE",
+                "integer": 21
+              },
+              {
+                "name": "FEATURE_STALE",
+                "integer": 100
+              },
+              {
+                "name": "EXPERIMENT_RUNNING",
+                "integer": 200
+              },
+              {
+                "name": "MAU_COUNT",
+                "integer": 300
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "Subscription",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 5,
+                "name": "source_types",
+                "type": "SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "recipient",
+                "type": "Recipient"
+              },
+              {
+                "id": 7,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/subscription/recipient.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.subscription"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
           }
         ]
       }

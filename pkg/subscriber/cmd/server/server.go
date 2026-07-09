@@ -49,9 +49,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
-	notificationsender "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushstorage "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
@@ -71,6 +68,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage"
 	opmysql "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage/mysql"
 	oppostgres "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/operationalstorage/postgres"
+	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
+	subscriptionsender "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/notifier"
 )
 
 const (
@@ -112,7 +112,7 @@ type server struct {
 	eventCounterService         *string
 	pushService                 *string
 	featureService              *string
-	notificationService         *string
+	subscriptionService         *string
 	experimentCalculatorService *string
 	batchService                *string
 	// PubSub config
@@ -183,9 +183,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"feature-service",
 			"bucketeer-feature-service address.",
 		).Default("feature:9090").String(),
-		notificationService: cmd.Flag(
+		subscriptionService: cmd.Flag(
 			"notification-service",
-			"bucketeer-notification-service address.",
+			"bucketeer-subscription-service address.",
 		).Default("notification:9090").String(),
 		experimentCalculatorService: cmd.Flag(
 			"experiment-calculator-service",
@@ -314,7 +314,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	notificationClient, err := notificationclient.NewClient(*s.notificationService, *s.certPath,
+	subscriptionClient, err := subscriptionclient.NewClient(*s.subscriptionService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
 		client.WithBlock(),
@@ -397,11 +397,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
-	notificationSender := notificationsender.NewSender(
-		notificationClient,
+	notificationSender := subscriptionsender.NewSender(
+		subscriptionClient,
 		[]notifier.Notifier{slackNotifier},
-		notificationsender.WithMetrics(registerer),
-		notificationsender.WithLogger(logger),
+		subscriptionsender.WithMetrics(registerer),
+		subscriptionsender.WithLogger(logger),
 	)
 
 	// batchClient
@@ -514,7 +514,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
-		go notificationClient.Close()
+		go subscriptionClient.Close()
 		go experimentClient.Close()
 		go environmentClient.Close()
 		go featureClient.Close()
@@ -971,7 +971,7 @@ func (s *server) registerPubSubProcessorMap(
 	ftClient featureclient.Client,
 	batchClient btclient.Client,
 	opsClient autoopsclient.Client,
-	sender notificationsender.Sender,
+	sender subscriptionsender.Sender,
 	cacheInvalidationPublisher publisher.Publisher,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
