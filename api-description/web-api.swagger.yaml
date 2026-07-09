@@ -6600,6 +6600,631 @@ paths:
           format: int64
       tags:
         - insights
+  /v1/notification:
+    get:
+      summary: Get
+      description: Get a notification. Drafts are visible to system admins only; system admins receive all localizations.
+      operationId: web.v1.notification.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationGetNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: language
+          description: |-
+            BCP 47 language code the tags, title, and content resolve to,
+            falling back to English, then to whichever localization exists.
+          in: query
+          required: false
+          type: string
+      tags:
+        - notification
+    delete:
+      summary: Delete
+      description: Delete a notification along with its read markers. System admin only.
+      operationId: web.v1.notification.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationDeleteNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - notification
+    post:
+      summary: Create
+      description: Create a draft notification. System admin only.
+      operationId: web.v1.notification.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationCreateNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationCreateNotificationRequest'
+      tags:
+        - notification
+    patch:
+      summary: Update
+      description: Update a draft notification's localizations. Published notifications cannot be edited. System admin only.
+      operationId: web.v1.notification.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationUpdateNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationUpdateNotificationRequest'
+      tags:
+        - notification
+  /v1/notification/publish:
+    post:
+      summary: Publish
+      description: Publish a draft notification. Requires at least one localization. System admin only.
+      operationId: web.v1.notification.publish
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationPublishNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationPublishNotificationRequest'
+      tags:
+        - notification
+  /v1/notifications:
+    get:
+      summary: List
+      description: List published notifications with keyword search, read/unread filter, published date range filter, sorting, and pagination.
+      operationId: web.v1.notification.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationListNotificationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - PUBLISHED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: readStatus
+          in: query
+          required: false
+          type: string
+          enum:
+            - ALL
+            - UNREAD
+            - READ
+          default: ALL
+        - name: from
+          description: Published date range filter, epoch seconds.
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: to
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: language
+          description: |-
+            BCP 47 language code the tags, titles, and contents resolve to,
+            falling back to English, then to whichever localization exists.
+          in: query
+          required: true
+          type: string
+      tags:
+        - notification
+  /v1/notifications/drafts:
+    get:
+      summary: List Drafts
+      description: List draft notifications with keyword search, sorting, and pagination. System admin only.
+      operationId: web.v1.notification.list_drafts
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationListDraftNotificationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+      tags:
+        - notification
+  /v1/notifications/mark_all_as_read:
+    post:
+      summary: Mark All As Read
+      description: Mark all published notifications as read for the requesting user.
+      operationId: web.v1.notification.mark_all_as_read
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationMarkAllNotificationsAsReadResponse'
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationMarkAllNotificationsAsReadRequest'
+      tags:
+        - notification
+  /v1/notifications/mark_as_read:
+    post:
+      summary: Mark As Read
+      description: Mark the given notifications as read for the requesting user. Idempotent.
+      operationId: web.v1.notification.mark_as_read
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationMarkNotificationsAsReadResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationMarkNotificationsAsReadRequest'
+      tags:
+        - notification
+  /v1/notifications/unread_count:
+    get:
+      summary: Get Unread Count
+      description: Get the requesting user's unread notification count, used for the bell badge.
+      operationId: web.v1.notification.unread_count
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationGetNotificationUnreadCountResponse'
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      tags:
+        - notification
   /v1/ops_evaluation_user_count:
     get:
       summary: Get Ops Evaluation User Count
@@ -9185,6 +9810,13 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  ListNotificationsRequestReadStatus:
+    type: string
+    enum:
+      - ALL
+      - UNREAD
+      - READ
+    default: ALL
   PageContextPageType:
     type: string
     enum:
@@ -13660,6 +14292,197 @@ definitions:
           type: object
           $ref: '#/definitions/insightsMonthlySummaryDataPoint'
         title: Sorted by yearmonth ascending
+  notificationCreateNotificationRequest:
+    type: object
+    properties:
+      localizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationLocalization'
+    required:
+      - localizations
+  notificationCreateNotificationResponse:
+    type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
+  notificationDeleteNotificationResponse:
+    type: object
+  notificationGetNotificationResponse:
+    type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
+  notificationGetNotificationUnreadCountResponse:
+    type: object
+    properties:
+      count:
+        type: string
+        format: int64
+  notificationListDraftNotificationsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListDraftNotificationsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationListDraftNotificationsResponse:
+    type: object
+    properties:
+      notifications:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotification'
+      nextCursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  notificationListNotificationsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - PUBLISHED_AT
+    default: DEFAULT
+  notificationListNotificationsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationListNotificationsResponse:
+    type: object
+    properties:
+      notifications:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotification'
+      nextCursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  notificationMarkAllNotificationsAsReadRequest:
+    type: object
+  notificationMarkAllNotificationsAsReadResponse:
+    type: object
+  notificationMarkNotificationsAsReadRequest:
+    type: object
+    properties:
+      ids:
+        type: array
+        items:
+          type: string
+    required:
+      - ids
+  notificationMarkNotificationsAsReadResponse:
+    type: object
+  notificationNotification:
+    type: object
+    properties:
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/notificationNotificationStatus'
+      createdBy:
+        type: string
+      lastEditedBy:
+        type: string
+      publishedBy:
+        type: string
+      publishedAt:
+        type: string
+        format: int64
+        description: Epoch seconds; 0 while draft.
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      localization:
+        $ref: '#/definitions/notificationNotificationLocalization'
+        description: |-
+          Localization resolved to the requested language, falling back to
+          English, then to whichever localization exists.
+      localizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationLocalization'
+        description: All localizations; populated only for system admins (editor).
+      read:
+        type: boolean
+        description: Whether the requesting user has read this notification.
+  notificationNotificationLocalization:
+    type: object
+    properties:
+      language:
+        type: string
+        description: BCP 47 language code, e.g. "en", "ja".
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationTag'
+      title:
+        type: string
+      content:
+        type: string
+        description: Markdown source.
+  notificationNotificationStatus:
+    type: string
+    enum:
+      - DRAFT
+      - PUBLISHED
+    default: DRAFT
+  notificationNotificationTag:
+    type: object
+    properties:
+      name:
+        type: string
+      color:
+        type: string
+  notificationPublishNotificationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+    required:
+      - id
+  notificationPublishNotificationResponse:
+    type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
+  notificationUpdateNotificationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      localizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationLocalization'
+        description: Replaces the draft's localizations.
+    required:
+      - id
+      - localizations
+  notificationUpdateNotificationResponse:
+    type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
   protobufAny:
     type: object
     properties:

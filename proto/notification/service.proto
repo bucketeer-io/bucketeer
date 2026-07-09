@@ -1,0 +1,576 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.notification;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/notification";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+import "proto/notification/notification.proto";
+
+message ListNotificationsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    PUBLISHED_AT = 1;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  enum ReadStatus {
+    ALL = 0;
+    UNREAD = 1;
+    READ = 2;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  ReadStatus read_status = 6;
+  // Published date range filter, epoch seconds.
+  int64 from = 7;
+  int64 to = 8;
+  // BCP 47 language code the tags, titles, and contents resolve to,
+  // falling back to English, then to whichever localization exists.
+  string language = 9 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  string next_cursor = 2;
+  int64 total_count = 3;
+}
+
+message GetNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  // BCP 47 language code the tags, title, and content resolve to,
+  // falling back to English, then to whichever localization exists.
+  string language = 2;
+}
+
+message GetNotificationResponse {
+  Notification notification = 1;
+}
+
+message GetNotificationUnreadCountRequest {}
+
+message GetNotificationUnreadCountResponse {
+  int64 count = 1;
+}
+
+message MarkNotificationsAsReadRequest {
+  repeated string ids = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message MarkNotificationsAsReadResponse {}
+
+message MarkAllNotificationsAsReadRequest {}
+
+message MarkAllNotificationsAsReadResponse {}
+
+message ListDraftNotificationsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    UPDATED_AT = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  string search_keyword = 5;
+}
+
+message ListDraftNotificationsResponse {
+  repeated Notification notifications = 1;
+  string next_cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateNotificationRequest {
+  repeated NotificationLocalization localizations = 1
+      [(google.api.field_behavior) = REQUIRED];
+}
+
+message CreateNotificationResponse {
+  Notification notification = 1;
+}
+
+message UpdateNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  // Replaces the draft's localizations.
+  repeated NotificationLocalization localizations = 2
+      [(google.api.field_behavior) = REQUIRED];
+}
+
+message UpdateNotificationResponse {
+  Notification notification = 1;
+}
+
+message PublishNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message PublishNotificationResponse {
+  Notification notification = 1;
+}
+
+message DeleteNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteNotificationResponse {}
+
+service NotificationService {
+  rpc ListNotifications(ListNotificationsRequest)
+      returns (ListNotificationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/notifications"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List published notifications with keyword search, read/unread filter, published date range filter, sorting, and pagination.",
+      tags: "notification",
+      operation_id: "web.v1.notification.list",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetNotification(GetNotificationRequest)
+      returns (GetNotificationResponse) {
+    option (google.api.http) = {
+      get: "/v1/notification"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a notification. Drafts are visible to system admins only; system admins receive all localizations.",
+      tags: "notification",
+      operation_id: "web.v1.notification.get",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the notification is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetNotificationUnreadCount(GetNotificationUnreadCountRequest)
+      returns (GetNotificationUnreadCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/notifications/unread_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Unread Count",
+      description: "Get the requesting user's unread notification count, used for the bell badge.",
+      tags: "notification",
+      operation_id: "web.v1.notification.unread_count",
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc MarkNotificationsAsRead(MarkNotificationsAsReadRequest)
+      returns (MarkNotificationsAsReadResponse) {
+    option (google.api.http) = {
+      post: "/v1/notifications/mark_as_read"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Mark As Read",
+      description: "Mark the given notifications as read for the requesting user. Idempotent.",
+      tags: "notification",
+      operation_id: "web.v1.notification.mark_as_read",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc MarkAllNotificationsAsRead(MarkAllNotificationsAsReadRequest)
+      returns (MarkAllNotificationsAsReadResponse) {
+    option (google.api.http) = {
+      post: "/v1/notifications/mark_all_as_read"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Mark All As Read",
+      description: "Mark all published notifications as read for the requesting user.",
+      tags: "notification",
+      operation_id: "web.v1.notification.mark_all_as_read",
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ListDraftNotifications(ListDraftNotificationsRequest)
+      returns (ListDraftNotificationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/notifications/drafts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Drafts",
+      description: "List draft notifications with keyword search, sorting, and pagination. System admin only.",
+      tags: "notification",
+      operation_id: "web.v1.notification.list_drafts",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "403"
+        value: {
+          description: "Returned when the user is not a system admin."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc CreateNotification(CreateNotificationRequest)
+      returns (CreateNotificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/notification"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a draft notification. System admin only.",
+      tags: "notification",
+      operation_id: "web.v1.notification.create",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "403"
+        value: {
+          description: "Returned when the user is not a system admin."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc UpdateNotification(UpdateNotificationRequest)
+      returns (UpdateNotificationResponse) {
+    option (google.api.http) = {
+      patch: "/v1/notification"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a draft notification's localizations. Published notifications cannot be edited. System admin only.",
+      tags: "notification",
+      operation_id: "web.v1.notification.update",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "403"
+        value: {
+          description: "Returned when the user is not a system admin."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the notification is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc PublishNotification(PublishNotificationRequest)
+      returns (PublishNotificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/notification/publish"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Publish",
+      description: "Publish a draft notification. Requires at least one localization. System admin only.",
+      tags: "notification",
+      operation_id: "web.v1.notification.publish",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "403"
+        value: {
+          description: "Returned when the user is not a system admin."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the notification is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc DeleteNotification(DeleteNotificationRequest)
+      returns (DeleteNotificationResponse) {
+    option (google.api.http) = {
+      delete: "/v1/notification"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a notification along with its read markers. System admin only.",
+      tags: "notification",
+      operation_id: "web.v1.notification.delete",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "403"
+        value: {
+          description: "Returned when the user is not a system admin."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      },
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the notification is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+}
