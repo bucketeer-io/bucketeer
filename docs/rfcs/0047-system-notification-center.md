@@ -24,6 +24,7 @@ The current `notification` domain is misnamed — its RPCs (`CreateSubscription`
 - Draft / edit / publish / delete announcements — system admin only.
 - Markdown content (rendered client-side; images via external links).
 - Per-user read/unread state, unread count for the bell badge and tab counters.
+- Multi-language content (i18n): admins write the console-language version and can optionally add the other language, each with its own tags, title, and description; viewers get their console language, falling back to English, then to whichever localization exists.
 - Announcements are **global** (all organizations, all environments).
 - MySQL and PostgreSQL support (same as other `storage/v2` domains).
 - Rename the legacy domain to `subscription` first (see Background).
@@ -58,9 +59,6 @@ Two tables, added to both `migration/mysql/` and `migration/postgres/` (Atlas, `
 ```sql
 CREATE TABLE `notification` (
     `id`             varchar(255) NOT NULL,            -- UUID
-    `title`          varchar(511) NOT NULL,
-    `content`        mediumtext   NOT NULL,            -- Markdown source
-    `tags`           json         DEFAULT NULL,        -- [{"name": "Announcement", "color": "#3B82F6"}]
     `status`         int          NOT NULL DEFAULT 0,  -- 0: DRAFT, 1: PUBLISHED
     `created_by`     varchar(255) NOT NULL,            -- editor email
     `last_edited_by` varchar(255) NOT NULL,
@@ -70,6 +68,18 @@ CREATE TABLE `notification` (
     `updated_at`     bigint       NOT NULL,
     PRIMARY KEY (`id`),
     KEY `idx_status_published_at` (`status`, `published_at`)
+);
+
+CREATE TABLE `notification_localization` (
+    `notification_id` varchar(255) NOT NULL,
+    `language`        varchar(10)  NOT NULL,    -- BCP 47 code: 'en', 'ja'
+    `tags`            json         DEFAULT NULL, -- [{"name": "Announcement", "color": "#3B82F6"}]
+    `title`           varchar(511) NOT NULL,
+    `content`         mediumtext   NOT NULL,    -- Markdown source
+    PRIMARY KEY (`notification_id`, `language`),
+    CONSTRAINT `fk_notification_localization`
+        FOREIGN KEY (`notification_id`)
+        REFERENCES `notification` (`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE `notification_read` (
@@ -86,6 +96,7 @@ CREATE TABLE `notification_read` (
 
 Notes:
 
+- **i18n**: tags, title, and content live in `notification_localization`, one row per language, each language authored separately. The editor opens in the admin's console language, with an option to add the other language (English console offers adding Japanese, and vice versa); at least one localization is required to publish. Viewer APIs resolve to the console language, falling back to English, then to whichever localization exists; keyword search matches the resolved language. Adding a language later is a data change only, no schema change.
 - **`tags` as JSON** keeps the schema simple; the tag palette (name + color pairs shown in the mockup) is a fixed set defined in the console for v1. If tags later need server-side management, a `notification_tag` master table can be added without touching this schema.
 - **`email` as viewer identity**: `account_v2` is keyed by `(email, organization_id)`, so one person has one account row per organization — but all of them share the same email, and the access token carries a single `Email` for the person. Keying read state by email therefore gives one shared read state across organizations for the same person.
 - **New users do not inherit history**: the unread definition (badge count and Unread tab) only considers notifications published after the viewer's earliest `account_v2.created_at`. Without this bound, someone joining after a year of announcements would start with hundreds of unread items and a meaningless badge.
@@ -94,12 +105,12 @@ Notes:
 
 ### 4.2 API List
 
-**Viewer APIs** - any authenticated console user (identity = `token.Email` from the access token):
+**Viewer APIs** - any authenticated console user (identity = `token.Email` from the access token). Requests carry the console UI `language`; tags, titles, and contents resolve to it, falling back to English, then to whichever localization exists:
 
 | RPC | HTTP | Description |
 |---|---|---|
 | `ListNotifications` | `GET /v1/notifications` | Lists published notifications with keyword search, read/unread filter (`read_status`), published date range filter, sorting, and pagination; returns the list and its total count. The notification page calls it once per tab (unread, then read) and uses each `total_count` for the tab counters. Never returns drafts; drafts are listed only via the admin-only `ListDraftNotifications`. |
-| `GetNotification` | `GET /v1/notification?id=` | Gets a single notification for the detail panel. Drafts are visible to system admins only. |
+| `GetNotification` | `GET /v1/notification?id=` | Gets a single notification for the detail panel. Drafts are visible to system admins only; system admins receive all localizations (for the editor). |
 | `GetNotificationUnreadCount` | `GET /v1/notifications/unread_count` | Returns the viewer's unread count, used for the bell badge. |
 | `MarkNotificationsAsRead` | `POST /v1/notifications/mark_as_read` | Marks the given notification ids as read for the viewer. Idempotent. |
 | `MarkAllNotificationsAsRead` | `POST /v1/notifications/mark_all_as_read` | Marks all published notifications as read for the viewer. |
@@ -109,9 +120,9 @@ Notes:
 | RPC | HTTP | Description |
 |---|---|---|
 | `ListDraftNotifications` | `GET /v1/notifications/drafts` | Lists draft notifications with keyword search, sorting, and pagination; returns the list and its total count. Backs the drafts panel in the "Publish notification" tab; ordered by `created_at` or `updated_at` since drafts have no `published_at`. |
-| `CreateNotification` | `POST /v1/notification` | Creates a draft with title, Markdown content, and tags. |
-| `UpdateNotification` | `PATCH /v1/notification` | Updates a draft's title, content, or tags; published notifications cannot be edited. |
-| `PublishNotification` | `POST /v1/notification/publish` | Publishes a draft; sets `published_at` and `published_by`. |
+| `CreateNotification` | `POST /v1/notification` | Creates a draft in the console language (tags, title, Markdown content); the other language can be added optionally. |
+| `UpdateNotification` | `PATCH /v1/notification` | Updates a draft's localizations (tags, title, content per language); published notifications cannot be edited. |
+| `PublishNotification` | `POST /v1/notification/publish` | Publishes a draft; sets `published_at` and `published_by`. Requires at least one localization. |
 | `DeleteNotification` | `DELETE /v1/notification?id=` | Deletes a notification along with its read markers. |
 
 ### 4.3 Sequence Diagrams
@@ -184,7 +195,7 @@ sequenceDiagram
 0. **Rename legacy domain** — rename `proto/notification` to `proto/subscription` and `pkg/notification` to `pkg/subscription`, update in-repo clients, protolock, regenerated dashboard client. No external REST or schema change. Must merge before phase 1.
 1. **Proto + migration** — new `proto/notification/*`, MySQL + Postgres migrations (`make proto-all`, `migration-validate`).
 2. **Backend** — `domain/`, `storage/` (mysql + postgres + tests), `api/` (auth, validation), web server wiring, mocks (`make mockgen`).
-3. **Console** — bell + dropdown, Notifications page (Unread/Read/Publish tabs), Markdown editor with preview, detail panel; generated API client from OpenAPI spec.
+3. **Console** — bell + dropdown, Notifications page (Unread/Read/Publish tabs), Markdown editor with preview that opens in the console language and offers adding the other language (each with its own tags, title, and description), detail panel; generated API client from OpenAPI spec.
 4. **Docs** — user docs for the publishing workflow.
 
 Phases 2 and 3 can proceed in parallel once the proto contract (phase 1) is merged.
