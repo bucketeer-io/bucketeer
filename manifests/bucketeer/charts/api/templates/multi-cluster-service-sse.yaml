@@ -1,6 +1,6 @@
 {{- if and .Values.gcpMultiCluster.enabled .Values.gcpMultiCluster.configCluster }}
-# Mirrors multi-cluster-service.yaml with changes: 
-# backendConfig->api-sse, no metrics/admin ports.
+# Mirrors multi-cluster-service.yaml with changes:
+# use '-sse' for backendConfig, no metrics/admin ports.
 apiVersion: networking.gke.io/v1
 kind: MultiClusterService
 metadata:

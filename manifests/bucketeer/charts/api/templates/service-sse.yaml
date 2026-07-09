@@ -1,5 +1,5 @@
 # Mirrors service.yaml with changes:
-# backendConfig->api-sse, no metrics/admin ports, no envoy/metrics labels.
+# use '-sse' for backendConfig, no metrics/admin ports, no envoy/metrics labels.
 apiVersion: v1
 kind: Service
 metadata:
