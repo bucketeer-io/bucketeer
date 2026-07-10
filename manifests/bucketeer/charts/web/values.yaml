@@ -73,6 +73,7 @@ env:
   dashboardServicePort: 9103
   tagServicePort: 9104
   coderefServicePort: 9105
+  teamServicePort: 9107
   insightsServicePort: 9108
   unifiedGatewayPort: 9106
   metricsPort: 9002
