@@ -379,7 +379,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Port to bind to feature service.",
 		).Default("9098").Int(),
 		subscriptionServicePort: cmd.Flag(
-			"notification-service-port",
+			"subscription-service-port",
 			"Port to bind to subscription service.",
 		).Default("9100").Int(),
 		pushServicePort: cmd.Flag(
