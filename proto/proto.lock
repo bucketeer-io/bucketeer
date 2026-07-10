@@ -46052,214 +46052,27 @@
     {
       "protopath": "notification:/:service.proto",
       "def": {
-        "enums": [
-          {
-            "name": "ListNotificationsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "PUBLISHED_AT",
-                "integer": 1
-              }
-            ]
-          },
-          {
-            "name": "ListNotificationsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
-            "name": "ListNotificationsRequest.ReadStatus",
-            "enum_fields": [
-              {
-                "name": "ALL"
-              },
-              {
-                "name": "UNREAD",
-                "integer": 1
-              },
-              {
-                "name": "READ",
-                "integer": 2
-              }
-            ]
-          },
-          {
-            "name": "ListDraftNotificationsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 1
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 2
-              }
-            ]
-          },
-          {
-            "name": "ListDraftNotificationsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          }
-        ],
         "messages": [
           {
-            "name": "ListNotificationsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 4,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 5,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "read_status",
-                "type": "ReadStatus"
-              },
-              {
-                "id": 7,
-                "name": "from",
-                "type": "int64"
-              },
-              {
-                "id": 8,
-                "name": "to",
-                "type": "int64"
-              },
-              {
-                "id": 9,
-                "name": "language",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "ListNotificationsRequest"
           },
           {
-            "name": "ListNotificationsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "notifications",
-                "type": "Notification",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "next_cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
+            "name": "ListNotificationsResponse"
           },
           {
-            "name": "GetNotificationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "language",
-                "type": "string"
-              }
-            ]
+            "name": "GetNotificationRequest"
           },
           {
-            "name": "GetNotificationResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "notification",
-                "type": "Notification"
-              }
-            ]
+            "name": "GetNotificationResponse"
           },
           {
             "name": "GetNotificationUnreadCountRequest"
           },
           {
-            "name": "GetNotificationUnreadCountResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "count",
-                "type": "int64"
-              }
-            ]
+            "name": "GetNotificationUnreadCountResponse"
           },
           {
-            "name": "MarkNotificationsAsReadRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "ids",
-                "type": "string",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "MarkNotificationsAsReadRequest"
           },
           {
             "name": "MarkNotificationsAsReadResponse"
@@ -46271,162 +46084,31 @@
             "name": "MarkAllNotificationsAsReadResponse"
           },
           {
-            "name": "ListDraftNotificationsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 4,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 5,
-                "name": "search_keyword",
-                "type": "string"
-              }
-            ]
+            "name": "ListDraftNotificationsRequest"
           },
           {
-            "name": "ListDraftNotificationsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "notifications",
-                "type": "Notification",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "next_cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
+            "name": "ListDraftNotificationsResponse"
           },
           {
-            "name": "CreateNotificationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "localizations",
-                "type": "NotificationLocalization",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "CreateNotificationRequest"
           },
           {
-            "name": "CreateNotificationResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "notification",
-                "type": "Notification"
-              }
-            ]
+            "name": "CreateNotificationResponse"
           },
           {
-            "name": "UpdateNotificationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "localizations",
-                "type": "NotificationLocalization",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "UpdateNotificationRequest"
           },
           {
-            "name": "UpdateNotificationResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "notification",
-                "type": "Notification"
-              }
-            ]
+            "name": "UpdateNotificationResponse"
           },
           {
-            "name": "PublishNotificationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "PublishNotificationRequest"
           },
           {
-            "name": "PublishNotificationResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "notification",
-                "type": "Notification"
-              }
-            ]
+            "name": "PublishNotificationResponse"
           },
           {
-            "name": "DeleteNotificationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "DeleteNotificationRequest"
           },
           {
             "name": "DeleteNotificationResponse"
@@ -48049,13 +47731,7 @@
             "path": "google/api/annotations.proto"
           },
           {
-            "path": "google/api/field_behavior.proto"
-          },
-          {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
-          },
-          {
-            "path": "proto/notification/notification.proto"
           }
         ],
         "package": {

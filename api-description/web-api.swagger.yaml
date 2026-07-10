@@ -6650,18 +6650,6 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: query
-          required: true
-          type: string
-        - name: language
-          description: |-
-            BCP 47 language code the tags, title, and content resolve to,
-            falling back to English, then to whichever localization exists.
-          in: query
-          required: false
-          type: string
       tags:
         - notification
     delete:
@@ -6722,11 +6710,6 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: query
-          required: true
-          type: string
       tags:
         - notification
     post:
@@ -6960,63 +6943,6 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: pageSize
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: cursor
-          in: query
-          required: false
-          type: string
-        - name: orderBy
-          in: query
-          required: false
-          type: string
-          enum:
-            - DEFAULT
-            - PUBLISHED_AT
-          default: DEFAULT
-        - name: orderDirection
-          in: query
-          required: false
-          type: string
-          enum:
-            - ASC
-            - DESC
-          default: ASC
-        - name: searchKeyword
-          in: query
-          required: false
-          type: string
-        - name: readStatus
-          in: query
-          required: false
-          type: string
-          enum:
-            - ALL
-            - UNREAD
-            - READ
-          default: ALL
-        - name: from
-          description: Published date range filter, epoch seconds.
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: to
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: language
-          description: |-
-            BCP 47 language code the tags, titles, and contents resolve to,
-            falling back to English, then to whichever localization exists.
-          in: query
-          required: true
-          type: string
       tags:
         - notification
   /v1/notifications/drafts:
@@ -7069,37 +6995,6 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: pageSize
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: cursor
-          in: query
-          required: false
-          type: string
-        - name: orderBy
-          in: query
-          required: false
-          type: string
-          enum:
-            - DEFAULT
-            - CREATED_AT
-            - UPDATED_AT
-          default: DEFAULT
-        - name: orderDirection
-          in: query
-          required: false
-          type: string
-          enum:
-            - ASC
-            - DESC
-          default: ASC
-        - name: searchKeyword
-          in: query
-          required: false
-          type: string
       tags:
         - notification
   /v1/notifications/mark_all_as_read:
@@ -9810,13 +9705,6 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
-  ListNotificationsRequestReadStatus:
-    type: string
-    enum:
-      - ALL
-      - UNREAD
-      - READ
-    default: ALL
   PageContextPageType:
     type: string
     enum:
@@ -14294,195 +14182,34 @@ definitions:
         title: Sorted by yearmonth ascending
   notificationCreateNotificationRequest:
     type: object
-    properties:
-      localizations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationNotificationLocalization'
-    required:
-      - localizations
   notificationCreateNotificationResponse:
     type: object
-    properties:
-      notification:
-        $ref: '#/definitions/notificationNotification'
   notificationDeleteNotificationResponse:
     type: object
   notificationGetNotificationResponse:
     type: object
-    properties:
-      notification:
-        $ref: '#/definitions/notificationNotification'
   notificationGetNotificationUnreadCountResponse:
     type: object
-    properties:
-      count:
-        type: string
-        format: int64
-  notificationListDraftNotificationsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - CREATED_AT
-      - UPDATED_AT
-    default: DEFAULT
-  notificationListDraftNotificationsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
   notificationListDraftNotificationsResponse:
     type: object
-    properties:
-      notifications:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationNotification'
-      nextCursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
-  notificationListNotificationsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - PUBLISHED_AT
-    default: DEFAULT
-  notificationListNotificationsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
   notificationListNotificationsResponse:
     type: object
-    properties:
-      notifications:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationNotification'
-      nextCursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
   notificationMarkAllNotificationsAsReadRequest:
     type: object
   notificationMarkAllNotificationsAsReadResponse:
     type: object
   notificationMarkNotificationsAsReadRequest:
     type: object
-    properties:
-      ids:
-        type: array
-        items:
-          type: string
-    required:
-      - ids
   notificationMarkNotificationsAsReadResponse:
     type: object
-  notificationNotification:
-    type: object
-    properties:
-      id:
-        type: string
-      status:
-        $ref: '#/definitions/notificationNotificationStatus'
-      createdBy:
-        type: string
-      lastEditedBy:
-        type: string
-      publishedBy:
-        type: string
-      publishedAt:
-        type: string
-        format: int64
-        description: Epoch seconds; 0 while draft.
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      localization:
-        $ref: '#/definitions/notificationNotificationLocalization'
-        description: |-
-          Localization resolved to the requested language, falling back to
-          English, then to whichever localization exists.
-      localizations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationNotificationLocalization'
-        description: All localizations; populated only for system admins (editor).
-      read:
-        type: boolean
-        description: Whether the requesting user has read this notification.
-  notificationNotificationLocalization:
-    type: object
-    properties:
-      language:
-        type: string
-        description: BCP 47 language code, e.g. "en", "ja".
-      tags:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationNotificationTag'
-      title:
-        type: string
-      content:
-        type: string
-        description: Markdown source.
-  notificationNotificationStatus:
-    type: string
-    enum:
-      - DRAFT
-      - PUBLISHED
-    default: DRAFT
-  notificationNotificationTag:
-    type: object
-    properties:
-      name:
-        type: string
-      color:
-        type: string
   notificationPublishNotificationRequest:
     type: object
-    properties:
-      id:
-        type: string
-    required:
-      - id
   notificationPublishNotificationResponse:
     type: object
-    properties:
-      notification:
-        $ref: '#/definitions/notificationNotification'
   notificationUpdateNotificationRequest:
     type: object
-    properties:
-      id:
-        type: string
-      localizations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/notificationNotificationLocalization'
-        description: Replaces the draft's localizations.
-    required:
-      - id
-      - localizations
   notificationUpdateNotificationResponse:
     type: object
-    properties:
-      notification:
-        $ref: '#/definitions/notificationNotification'
   protobufAny:
     type: object
     properties:

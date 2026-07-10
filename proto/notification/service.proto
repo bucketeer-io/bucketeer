@@ -18,65 +18,24 @@ package bucketeer.notification;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/notification";
 
 import "google/api/annotations.proto";
-import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-import "proto/notification/notification.proto";
+// NOTE: request/response bodies are intentionally left empty for now; fields
+// will be filled in once the notification center design is finalized.
 
-message ListNotificationsRequest {
-  enum OrderBy {
-    DEFAULT = 0;
-    PUBLISHED_AT = 1;
-  }
-  enum OrderDirection {
-    ASC = 0;
-    DESC = 1;
-  }
-  enum ReadStatus {
-    ALL = 0;
-    UNREAD = 1;
-    READ = 2;
-  }
-  int64 page_size = 1;
-  string cursor = 2;
-  OrderBy order_by = 3;
-  OrderDirection order_direction = 4;
-  string search_keyword = 5;
-  ReadStatus read_status = 6;
-  // Published date range filter, epoch seconds.
-  int64 from = 7;
-  int64 to = 8;
-  // BCP 47 language code the tags, titles, and contents resolve to,
-  // falling back to English, then to whichever localization exists.
-  string language = 9 [(google.api.field_behavior) = REQUIRED];
-}
+message ListNotificationsRequest {}
 
-message ListNotificationsResponse {
-  repeated Notification notifications = 1;
-  string next_cursor = 2;
-  int64 total_count = 3;
-}
+message ListNotificationsResponse {}
 
-message GetNotificationRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
-  // BCP 47 language code the tags, title, and content resolve to,
-  // falling back to English, then to whichever localization exists.
-  string language = 2;
-}
+message GetNotificationRequest {}
 
-message GetNotificationResponse {
-  Notification notification = 1;
-}
+message GetNotificationResponse {}
 
 message GetNotificationUnreadCountRequest {}
 
-message GetNotificationUnreadCountResponse {
-  int64 count = 1;
-}
+message GetNotificationUnreadCountResponse {}
 
-message MarkNotificationsAsReadRequest {
-  repeated string ids = 1 [(google.api.field_behavior) = REQUIRED];
-}
+message MarkNotificationsAsReadRequest {}
 
 message MarkNotificationsAsReadResponse {}
 
@@ -84,60 +43,23 @@ message MarkAllNotificationsAsReadRequest {}
 
 message MarkAllNotificationsAsReadResponse {}
 
-message ListDraftNotificationsRequest {
-  enum OrderBy {
-    DEFAULT = 0;
-    CREATED_AT = 1;
-    UPDATED_AT = 2;
-  }
-  enum OrderDirection {
-    ASC = 0;
-    DESC = 1;
-  }
-  int64 page_size = 1;
-  string cursor = 2;
-  OrderBy order_by = 3;
-  OrderDirection order_direction = 4;
-  string search_keyword = 5;
-}
+message ListDraftNotificationsRequest {}
 
-message ListDraftNotificationsResponse {
-  repeated Notification notifications = 1;
-  string next_cursor = 2;
-  int64 total_count = 3;
-}
+message ListDraftNotificationsResponse {}
 
-message CreateNotificationRequest {
-  repeated NotificationLocalization localizations = 1
-      [(google.api.field_behavior) = REQUIRED];
-}
+message CreateNotificationRequest {}
 
-message CreateNotificationResponse {
-  Notification notification = 1;
-}
+message CreateNotificationResponse {}
 
-message UpdateNotificationRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
-  // Replaces the draft's localizations.
-  repeated NotificationLocalization localizations = 2
-      [(google.api.field_behavior) = REQUIRED];
-}
+message UpdateNotificationRequest {}
 
-message UpdateNotificationResponse {
-  Notification notification = 1;
-}
+message UpdateNotificationResponse {}
 
-message PublishNotificationRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
-}
+message PublishNotificationRequest {}
 
-message PublishNotificationResponse {
-  Notification notification = 1;
-}
+message PublishNotificationResponse {}
 
-message DeleteNotificationRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
-}
+message DeleteNotificationRequest {}
 
 message DeleteNotificationResponse {}
 

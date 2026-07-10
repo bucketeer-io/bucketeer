@@ -292,7 +292,7 @@ batch-server:
         openConns: 50
     bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-    notificationService: localhost:9001
+    subscriptionService: localhost:9001
     environmentService: localhost:9001
     autoOpsService: localhost:9001
     experimentService: localhost:9001
@@ -425,7 +425,7 @@ subscriber:
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-    notificationService: localhost:9001
+    subscriptionService: localhost:9001
     environmentService: localhost:9001
     autoOpsService: localhost:9001
     experimentService: localhost:9001
