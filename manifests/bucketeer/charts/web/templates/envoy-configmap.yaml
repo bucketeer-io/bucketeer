@@ -340,13 +340,13 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
-        - name: notification
+        - name: subscription
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
-            cluster_name: notification
+            cluster_name: subscription
             endpoints:
               - lb_endpoints:
                   - endpoint:
@@ -721,7 +721,7 @@ data:
                             - match:
                                 prefix: /bucketeer.subscription.SubscriptionService
                               route:
-                                cluster: notification
+                                cluster: subscription
                                 timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
@@ -934,7 +934,7 @@ data:
                             - match:
                                 prefix: /bucketeer.subscription.SubscriptionService
                               route:
-                                cluster: notification
+                                cluster: subscription
                                 timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx

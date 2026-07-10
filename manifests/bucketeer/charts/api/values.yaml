@@ -78,7 +78,7 @@ env:
   auditLogService: localhost:9001
   tagService: localhost:9001
   teamService: localhost:9001
-  notificationService: localhost:9001
+  subscriptionService: localhost:9001
   experimentService: localhost:9001
   eventCounterService: localhost:9001
   environmentService: localhost:9001

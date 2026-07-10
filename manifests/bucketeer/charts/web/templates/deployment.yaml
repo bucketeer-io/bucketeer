@@ -148,8 +148,8 @@ spec:
               value: "{{ .Values.env.experimentServicePort }}"
             - name: BUCKETEER_WEB_FEATURE_SERVICE_PORT
               value: "{{ .Values.env.featureServicePort }}"
-            - name: BUCKETEER_WEB_NOTIFICATION_SERVICE_PORT
-              value: "{{ .Values.env.notificationServicePort }}"
+            - name: BUCKETEER_WEB_SUBSCRIPTION_SERVICE_PORT
+              value: "{{ .Values.env.subscriptionServicePort }}"
             - name: BUCKETEER_WEB_PUSH_SERVICE_PORT
               value: "{{ .Values.env.pushServicePort }}"
             - name: BUCKETEER_WEB_TAG_SERVICE_PORT
