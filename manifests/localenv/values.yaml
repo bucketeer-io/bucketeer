@@ -86,6 +86,19 @@ prometheus:
     port: 9090
   scrapeInterval: 30s
 
+# Rule config reference: https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/config-walkthrough.md
+prometheus-adapter:
+  prometheus:
+    url: http://localenv-prometheus
+    port: 9090
+  rules:
+    custom:
+      - seriesQuery: "pod:bucketeer_gateway_sse_active_connections:sum"
+        resources:
+          overrides:
+            pod: { resource: "pod" }
+        metricsQuery: "pod:bucketeer_gateway_sse_active_connections:sum{<<.LabelMatchers>>}"
+
 vault:
   server:
     dev:

@@ -101,6 +101,10 @@ hpa:
   metrics:
     cpu:
       targetAverageUtilization:
+    sseConnections:
+      enabled:
+      metricName: pod:bucketeer_gateway_sse_active_connections:sum
+      targetAverageValue:
 tls:
   bucketeerJP:
     secrets:

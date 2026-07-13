@@ -18,4 +18,15 @@ spec:
       target:
         averageUtilization: {{ .Values.hpa.metrics.cpu.targetAverageUtilization }}
         type: Utilization
+  {{- if .Values.hpa.metrics.sseConnections }}
+  {{- if .Values.hpa.metrics.sseConnections.enabled }}
+  - type: Pods
+    pods:
+      metric:
+        name: {{ .Values.hpa.metrics.sseConnections.metricName }}
+      target:
+        type: AverageValue
+        averageValue: "{{ .Values.hpa.metrics.sseConnections.targetAverageValue }}"
+  {{- end }}
+  {{- end }}
 {{ end }}

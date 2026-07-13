@@ -13,3 +13,8 @@ groups:
           / sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_request_total[5m]))
           or
           sum by (environment_id,source_id,method) (rate(bucketeer_gateway_api_request_total[5m])) * 0
+  - name: api-gateway-sse-recording-rules
+    rules:
+      # Used by HPA (via prometheus-adapter) to scale api pods by SSE connection count.
+      - record: pod:bucketeer_gateway_sse_active_connections:sum
+        expr: sum by (pod) (bucketeer_gateway_sse_active_connections)
