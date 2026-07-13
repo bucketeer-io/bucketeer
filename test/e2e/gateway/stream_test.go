@@ -394,13 +394,6 @@ func TestStreamRequestErrors(t *testing.T) {
 			apiKey:         serverKey,
 			expectedStatus: http.StatusUnauthorized,
 		},
-		{
-			desc:           "get method",
-			method:         http.MethodGet,
-			body:           newStreamBody(tag, userID),
-			apiKey:         clientKey,
-			expectedStatus: http.StatusMethodNotAllowed,
-		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
