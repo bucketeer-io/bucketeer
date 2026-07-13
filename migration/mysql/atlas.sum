@@ -1,4 +1,4 @@
-h1:Wol6Sxhp6VzNOL2mGI29dhtDDl/lc1O24NYMSUov3KI=
+h1:lZ6N6pD7g4R1o3ey4lmh5oCyVrOxGtwVjen4h+WqiZo=
 20240626022133_initialization.sql h1:reSmqMhqnsrdIdPU2ezv/PXSL0COlRFX4gQA4U3/wMo=
 20240708065726_update_audit_log_table.sql h1:fi8Xxw4WfSlHDyvq2Ni/8JUiZW8z/0qWWyWm6jFdUy8=
 20240815043128_update_auto_ops_rule_table.sql h1:IKSW9W/XO6SWAYl5WPLJSg6KdsfcZ3rfQhIrf7aOnYc=
@@ -41,3 +41,4 @@ h1:Wol6Sxhp6VzNOL2mGI29dhtDDl/lc1O24NYMSUov3KI=
 20260225053542_create_monthly_summary.sql h1:25DQLI4UJmPuZt1jwRQlTdfI1MzOQ3KJ2Rc0Mntn79g=
 20260316000000_update_auto_archive_default_days.sql h1:pq20H9ieN5314aAbM9JH29xvFPjj93xoUSmluEZICxw=
 20260514000000_update_feature_variation_value_schema.sql h1:ocGacenoNr4+sVeCeWASFDnUn+Sn2n04XmZpSf+82qM=
+20260713000000_create_notification_tables.sql h1:87SKJUcoNMMv48953z5QyaS9c/AxzJamnf+SZ6/SMJU=
