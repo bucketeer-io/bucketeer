@@ -58,7 +58,7 @@ func jsonSchema(schema string) *featureproto.VariationValueSchema {
 	}
 }
 
-func TestValidateVariationValueSchemaDefinition(t *testing.T) {
+func TestNewVariationValueValidatorValidatesSchemaDefinition(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc          string
@@ -136,7 +136,11 @@ func TestValidateVariationValueSchemaDefinition(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			err := validateVariationValueSchemaDefinition(p.variationType, p.schema)
+			f := &Feature{Feature: &featureproto.Feature{
+				VariationType:        p.variationType,
+				VariationValueSchema: p.schema,
+			}}
+			_, err := f.newVariationValueValidator()
 			assert.Equal(t, p.expected, err)
 		})
 	}

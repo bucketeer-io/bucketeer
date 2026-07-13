@@ -192,7 +192,8 @@ func NewFeature(
 	if len(variations) < 2 {
 		return nil, errVariationsMustHaveAtLeastTwoVariations
 	}
-	if err := f.validateVariationValueSchema(); err != nil {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
 		return nil, err
 	}
 	if defaultOnVariationIndex < 0 || defaultOnVariationIndex >= len(variations) {
@@ -206,7 +207,13 @@ func NewFeature(
 		if err != nil {
 			return nil, err
 		}
-		if err = f.AddVariation(id.String(), variation.Value, variation.Name, variation.Description); err != nil {
+		if err = f.addVariationWithValidator(
+			id.String(),
+			variation.Value,
+			variation.Name,
+			variation.Description,
+			validateValue,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -672,7 +679,27 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 	if name == "" {
 		return errVariationNameRequired
 	}
-	if err := f.validateVariationValue(id, value); err != nil {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return err
+	}
+	return f.addVariationWithValidator(id, value, name, description, validateValue)
+}
+
+func (f *Feature) addVariationWithValidator(
+	id string,
+	value string,
+	name string,
+	description string,
+	validateValue func(string) error,
+) error {
+	if id == "" {
+		return errVariationIDRequired
+	}
+	if name == "" {
+		return errVariationNameRequired
+	}
+	if err := f.validateVariationValueWithValidator(id, value, validateValue); err != nil {
 		return err
 	}
 	variation := &feature.Variation{

@@ -26,10 +26,6 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-func (f *Feature) validateVariationValueSchema() error {
-	return validateVariationValueSchemaDefinition(f.VariationType, f.VariationValueSchema)
-}
-
 func (f *Feature) validateAllVariationValuesAgainstSchema() error {
 	validateValue, err := f.newVariationValueValidator()
 	if err != nil {
@@ -44,39 +40,6 @@ func (f *Feature) validateAllVariationValuesAgainstSchema() error {
 		}
 	}
 	return nil
-}
-
-func validateVariationValueSchemaDefinition(
-	variationType featureproto.Feature_VariationType,
-	schema *featureproto.VariationValueSchema,
-) error {
-	if schema == nil {
-		return nil
-	}
-	switch schema.Type {
-	case featureproto.VariationValueSchema_ENUM:
-		return validateEnumSchemaDefinition(variationType, schema.GetEnumValidator())
-	case featureproto.VariationValueSchema_REGEX:
-		validator := schema.GetRegexValidator()
-		if err := validateRegexSchemaDefinition(variationType, validator); err != nil {
-			return err
-		}
-		if _, err := compileRegexVariationValueValidator(validator); err != nil {
-			return errVariationValueSchemaInvalid
-		}
-		return nil
-	case featureproto.VariationValueSchema_JSON_SCHEMA:
-		validator := schema.GetJsonSchemaValidator()
-		if err := validateJSONSchemaDefinition(variationType, validator); err != nil {
-			return err
-		}
-		if _, err := compileJSONSchema(validator.Schema); err != nil {
-			return errVariationValueSchemaInvalid
-		}
-		return nil
-	default:
-		return errVariationValueSchemaInvalid
-	}
 }
 
 func (f *Feature) newVariationValueValidator() (func(string) error, error) {
