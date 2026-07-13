@@ -1,0 +1,29 @@
+{{- if and .Values.gcpMultiCluster.enabled .Values.gcpMultiCluster.configCluster }}
+# Mirrors multi-cluster-service.yaml with changes:
+# use '-sse' for backendConfig, no metrics/admin ports.
+apiVersion: networking.gke.io/v1
+kind: MultiClusterService
+metadata:
+  name: {{ .Values.gcpMultiCluster.sseService.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "api.name" . }}
+    chart: {{ template "api.chart" . }}
+    release: {{ template "api.fullname" . }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    cloud.google.com/backend-config: '{"ports": {"{{ .Values.service.externalPort }}":"{{ template "api.fullname" . }}-sse"}}'
+    networking.gke.io/app-protocols: '{"service":"HTTP2"}'
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  template:
+    spec:
+      selector:
+        app: {{ template "api.name" . }}
+        release: {{ template "api.fullname" . }}
+      ports:
+        - name: service
+          port: {{ .Values.service.externalPort }}
+          targetPort: {{ .Values.envoy.port }}
+          protocol: TCP
+{{- end }}
