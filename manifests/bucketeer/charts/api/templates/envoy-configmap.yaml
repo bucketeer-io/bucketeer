@@ -98,6 +98,43 @@ data:
                     private_key:
                       filename: /usr/local/certs/service/tls.key
           type: strict_dns
+        - name: api-sse
+          connect_timeout: 5s
+          ignore_health_on_host_removal: true
+          circuit_breakers:
+            thresholds:
+              - priority: DEFAULT
+                max_connections: {{ .Values.envoy.sseCircuitBreaker.maxConnections }}
+                max_pending_requests: {{ .Values.envoy.sseCircuitBreaker.maxPendingRequests }}
+                max_requests: {{ .Values.envoy.sseCircuitBreaker.maxRequests }}
+          load_assignment:
+            cluster_name: api-sse
+            endpoints:
+              - lb_endpoints:
+                - endpoint:
+                    address:
+                      socket_address:
+                        address: localhost
+                        port_value: 8000
+          dns_lookup_family: V4_ONLY
+          lb_policy: {{ .Values.envoy.lbPolicy }}
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols: ["h2"]
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          type: strict_dns
         - name: api-grpc-gateway
           connect_timeout: 5s
           ignore_health_on_host_removal: true
@@ -237,11 +274,11 @@ data:
                             route:
                               cluster: api
                               timeout: 60s
-                          # SSE: long-lived stream, no retry
+                          # SSE: long-lived stream, no retry, dedicated cluster for independent circuit breaking
                           - match:
                               prefix: /v1/gateway/stream_evaluations
                             route:
-                              cluster: api-rest-v1
+                              cluster: api-sse
                               timeout: 0s # hard deadline disabled
                               idle_timeout: 300s # dead connection cleanup; reset by heartbeat
                           # API REST v1 Gateway routes (Deprecated)
