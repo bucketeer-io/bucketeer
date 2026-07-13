@@ -125,8 +125,7 @@ envoy:
   sseCircuitBreaker:
     maxRequests: 20000
     maxConnections: 20000
-    # Let clients access another server without pending
-    # because SSE is long-lived.
+    # Reject immediately so the LB routes to another pod
     maxPendingRequests: 0
 service:
   type: ClusterIP

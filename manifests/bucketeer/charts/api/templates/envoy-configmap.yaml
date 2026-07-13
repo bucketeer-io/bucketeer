@@ -107,6 +107,7 @@ data:
                 max_connections: {{ .Values.envoy.sseCircuitBreaker.maxConnections }}
                 max_pending_requests: {{ .Values.envoy.sseCircuitBreaker.maxPendingRequests }}
                 max_requests: {{ .Values.envoy.sseCircuitBreaker.maxRequests }}
+                max_retries: 0
           load_assignment:
             cluster_name: api-sse
             endpoints:
