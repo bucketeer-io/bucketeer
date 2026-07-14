@@ -1,0 +1,42 @@
+/* MDEditor.Markdown (.wmde-markdown) ships its own GitHub-style font stack.
+   Force the app font (Sofia Pro) on the rendered content and its children so
+   it matches the surrounding UI. */
+.markdown-content .wmde-markdown,
+.markdown-content .wmde-markdown * {
+    font-family: 'Sofia Pro', sans-serif;
+}
+
+/* Keep code/pre in a monospace font, as Markdown expects. */
+.markdown-content .wmde-markdown code,
+.markdown-content .wmde-markdown pre,
+.markdown-content .wmde-markdown kbd,
+.markdown-content .wmde-markdown samp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Tailwind's Preflight resets `list-style` and padding on ul/ol, which strips
+   the bullets/numbers from rendered Markdown lists. Restore them for every
+   rendered-Markdown surface — both <MarkdownContent> and the editor's own
+   Preview tab render `.wmde-markdown`, so this is not scoped to
+   `.markdown-content`. */
+.wmde-markdown ul,
+.wmde-markdown ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+.wmde-markdown ul {
+    list-style: disc;
+}
+.wmde-markdown ol {
+    list-style: decimal;
+}
+.wmde-markdown li {
+    display: list-item;
+}
+/* Nested lists: switch the marker style so levels stay distinguishable. */
+.wmde-markdown ul ul {
+    list-style: circle;
+}
+.wmde-markdown ul ul ul {
+    list-style: square;
+}
