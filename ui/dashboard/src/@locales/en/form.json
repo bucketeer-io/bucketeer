@@ -507,5 +507,20 @@
   "add-custom-rule-audience-discard-desc": "Add audience traffic allocation with:",
   "update-custom-rule-audience-discard-desc": "Update audience traffic allocation:",
   "add-new-rule": "<b>IF {{clauseLabel}}</b>, Serve: <variantElement/>",
-  "delete-rule": "<b>IF {{clauseLabel}}</b>, Serve: <variantElement/>"
+  "delete-rule": "<b>IF {{clauseLabel}}</b>, Serve: <variantElement/>",
+  "search-notifications": "Search notifications...",
+  "add-tags": "Add tags...",
+  "description-placeholder": "Write your notification content in Markdown...",
+  "notification-title-placeholder": "Notification title",
+  "insert-mention": "Insert mention",
+  "mention": "Mention",
+  "languages": "Languages",
+  "languages-info": "Add a translation for each language. Viewers see the notification in their console language, falling back to English.",
+  "add-language": "Add language",
+  "remove-language": "Remove language",
+  "content": "Content",
+  "created-by": "Created by",
+  "last-edited-by": "Last edited by",
+  "edit-draft": "Edit Draft",
+  "update-draft": "Update draft"
 }

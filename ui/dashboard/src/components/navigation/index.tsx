@@ -105,6 +105,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`navigation.audit-logs`),
           icon: IconSystem.IconLogs,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`
+        },
+        {
+          label: t(`navigation.notifications`),
+          icon: IconSystem.IconNotifications,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_NOTIFICATION_FEED}`
         }
       ]
     },

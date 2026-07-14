@@ -506,5 +506,20 @@
   "add-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分を追加:",
   "update-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分を更新:",
   "add-new-rule": "<b>IF {{clauseLabel}} の場合</b>、配信: <variantElement/>",
-  "delete-rule": "<b>IF {{clauseLabel}} の場合</b>、配信: <variantElement/>"
+  "delete-rule": "<b>IF {{clauseLabel}} の場合</b>、配信: <variantElement/>",
+  "insert-mention": "メンションを挿入",
+  "mention": "メンション",
+  "search-notifications": "通知を検索...",
+  "add-tags": "タグを追加...",
+  "description-placeholder": "通知の内容を Markdown で入力してください...",
+  "notification-title-placeholder": "通知のタイトル",
+  "languages": "言語",
+  "languages-info": "各言語の翻訳を追加します。閲覧者にはコンソールの言語で表示され、なければ英語で表示されます。",
+  "add-language": "言語を追加",
+  "remove-language": "言語を削除",
+  "content": "内容",
+  "created-by": "作成者",
+  "last-edited-by": "最終編集者",
+  "edit-draft": "下書きを編集",
+  "update-draft": "下書きを更新"
 }

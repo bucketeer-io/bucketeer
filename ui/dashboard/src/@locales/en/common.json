@@ -64,6 +64,7 @@
   "navigation": {
     "my-projects": "My projects",
     "audit-logs": "Audit logs",
+    "notifications": "Notifications",
     "feature-flags": "Feature flags",
     "user-segment": "User segment",
     "debugger": "Debugger",
@@ -207,6 +208,34 @@
   "no-recent-traffic": "No Recent Traffic",
   "receiving-traffic": "Receiving Traffic",
   "notifications": "Notifications",
+  "notifications-subtitle": "Stay up to date with platform updates, announcements and important notices.",
+  "unread": "Unread",
+  "read": "Read",
+  "publish": "Publish",
+  "publish-notification": "Publish notification",
+  "drafts": "Drafts",
+  "new-draft": "New draft",
+  "write": "Write",
+  "preview": "Preview",
+  "title": "Title",
+  "description": "Description",
+  "tag-color": "Tag color",
+  "save-draft": "Save draft",
+  "nothing-to-preview": "Nothing to preview",
+  "no-notifications": "No notifications to show",
+  "no-drafts": "No drafts to show",
+  "mark-all-as-read": "Mark all as read",
+  "mark-selected-as-read": "Mark selected as read",
+  "selected": "{{count}} selected",
+  "clear-selection": "Clear selection",
+  "details": "Details",
+  "draft-status": "Draft",
+  "published-status": "Published",
+  "sort-by-newest": "Sort by: Newest",
+  "sort-by-oldest": "Sort by: Oldest",
+  "last-7-days": "Last 7 days",
+  "last-30-days": "Last 30 days",
+  "last-90-days": "Last 90 days",
   "create-flag": "Create Flag",
   "clone-flag": "Clone Flag",
   "archive-flag": "Archive Flag",
@@ -358,7 +387,7 @@
       "mau": {
         "title": "Estimated number of unique users who sent requests to Bucketeer.",
         "notes": {
-        "first": "The first month may have slight inaccuracies due to the data collection start date.",
+          "first": "The first month may have slight inaccuracies due to the data collection start date.",
           "second": "Today's data is not included (aggregated up to the previous day).",
           "third": "The number count is based on UTC.",
           "fourth": "The number might have around 0.81% errors due to the algorithm."
@@ -367,8 +396,8 @@
       "monthlyRequests": {
         "title": "Total number of API requests from SDKs processed by Bucketeer.",
         "notes": {
-          "first":"The first month may have slight inaccuracies due to the data collection start date.",
-          "second":"Today's data is not included (aggregated up to the previous day).",
+          "first": "The first month may have slight inaccuracies due to the data collection start date.",
+          "second": "Today's data is not included (aggregated up to the previous day).",
           "third": "The number count is based on UTC."
         }
       },
@@ -384,5 +413,5 @@
         }
       }
     }
-    }
+  }
 }
