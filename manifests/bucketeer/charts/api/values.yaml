@@ -122,6 +122,11 @@ envoy:
     maxPendingRequests: 3500
     maxRequests: 3500
     maxConnections: 3500
+  sseCircuitBreaker:
+    maxRequests: 20000
+    maxConnections: 20000
+    # Reject immediately so the LB routes to another pod
+    maxPendingRequests: 0
 service:
   type: ClusterIP
   externalPort: 9000
