@@ -71,5 +71,7 @@
   "leave-page-unsaved-changes": "You have unsaved changes",
   "leave-page-unsaved-changes-content": "If you leave this page, the changes will be lost.",
   "bulk-clone-already-exists": "Feature flag already exists in {{env}}.",
-  "bulk-clone-failed": "Failed to clone to {{env}}."
+  "bulk-clone-failed": "Failed to clone to {{env}}.",
+  "published-successfully": "Notification published successfully.",
+  "draft-saved": "Draft saved."
 }
