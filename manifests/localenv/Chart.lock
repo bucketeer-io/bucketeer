@@ -17,8 +17,11 @@ dependencies:
 - name: prometheus
   repository: file://./dependencies/prometheus
   version: 0.1.0
+- name: prometheus-adapter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 5.3.0
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:b225c735a006210f8ff3a24b25d4ef44a4f05cbf7ed643d0eb7a145aee0398e7
-generated: "2026-04-07T18:58:49.295492+09:00"
+digest: sha256:3711b7a92b956df1f685f31457d6726751357d1f0495a5b7985d0120e15cb45f
+generated: "2026-07-14T15:19:04.433287+09:00"
