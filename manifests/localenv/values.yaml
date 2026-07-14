@@ -93,11 +93,12 @@ prometheus-adapter:
     port: 9090
   rules:
     custom:
-      - seriesQuery: "pod:bucketeer_gateway_sse_active_connections:sum"
+      - seriesQuery: "namespace:pod:bucketeer_gateway_sse_active_connections:sum"
         resources:
           overrides:
+            namespace: { resource: "namespace" }
             pod: { resource: "pod" }
-        metricsQuery: "pod:bucketeer_gateway_sse_active_connections:sum{<<.LabelMatchers>>}"
+        metricsQuery: "namespace:pod:bucketeer_gateway_sse_active_connections:sum{<<.LabelMatchers>>}"
 
 vault:
   server:

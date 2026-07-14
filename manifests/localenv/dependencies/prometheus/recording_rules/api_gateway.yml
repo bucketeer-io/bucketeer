@@ -16,5 +16,6 @@ groups:
   - name: api-gateway-sse-recording-rules
     rules:
       # Used by HPA (via prometheus-adapter) to scale api pods by SSE connection count.
-      - record: pod:bucketeer_gateway_sse_active_connections:sum
-        expr: sum by (pod) (bucketeer_gateway_sse_active_connections)
+      # namespace is required: Custom Metrics API queries are namespace-scoped.
+      - record: namespace:pod:bucketeer_gateway_sse_active_connections:sum
+        expr: sum by (namespace, pod) (bucketeer_gateway_sse_active_connections)
