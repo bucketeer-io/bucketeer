@@ -103,7 +103,7 @@ hpa:
       targetAverageUtilization:
     sseConnections:
       enabled:
-      metricName: namespace:pod:bucketeer_gateway_sse_active_connections:sum
+      metricName: bucketeer_gateway_sse_active_connections_per_pod
       targetAverageValue:
 tls:
   bucketeerJP:
