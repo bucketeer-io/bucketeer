@@ -74,6 +74,7 @@ env:
   tagServicePort: 9104
   coderefServicePort: 9105
   insightsServicePort: 9108
+  notificationServicePort: 9110
   unifiedGatewayPort: 9106
   metricsPort: 9002
   timezone: UTC

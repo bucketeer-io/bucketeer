@@ -158,6 +158,8 @@ spec:
               value: "{{ .Values.env.teamServicePort }}"
             - name: BUCKETEER_WEB_INSIGHTS_SERVICE_PORT
               value: "{{ .Values.env.insightsServicePort }}"
+            - name: BUCKETEER_WEB_NOTIFICATION_SERVICE_PORT
+              value: "{{ .Values.env.notificationServicePort }}"
             - name: BUCKETEER_WEB_DASHBOARD_SERVICE_PORT
               value: "{{ .Values.env.dashboardServicePort }}"
             - name: BUCKETEER_WEB_CODE_REFERENCE_SERVICE_PORT

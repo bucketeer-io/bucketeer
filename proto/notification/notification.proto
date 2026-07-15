@@ -1,0 +1,55 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.notification;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/notification";
+
+message NotificationTag {
+  string name = 1;
+  string color = 2;
+}
+
+message NotificationLocalization {
+  // BCP 47 language code, e.g. "en", "ja".
+  string language = 1;
+  repeated NotificationTag tags = 2;
+  string title = 3;
+  // Markdown source.
+  string content = 4;
+}
+
+message Notification {
+  enum Status {
+    DRAFT = 0;
+    PUBLISHED = 1;
+  }
+  string id = 1;
+  Status status = 2;
+  string created_by = 3;
+  string last_edited_by = 4;
+  string published_by = 5;
+  // Epoch seconds; 0 while draft.
+  int64 published_at = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+  // Localization resolved to the requested language, falling back to
+  // English, then to whichever localization exists.
+  NotificationLocalization localization = 9;
+  // All localizations; populated only for system admins (editor).
+  repeated NotificationLocalization localizations = 10;
+  // Whether the requesting user has read this notification.
+  bool read = 11;
+}

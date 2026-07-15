@@ -89,6 +89,7 @@ import (
 	insightspostgres "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
 	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
@@ -130,6 +131,7 @@ import (
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -207,6 +209,7 @@ type server struct {
 	codeReferenceServicePort        *int
 	teamServicePort                 *int
 	insightsServicePort             *int
+	notificationServicePort         *int
 	prometheusURL                   *string
 	webGrpcGatewayPort              *int
 	accountService                  *string
@@ -406,6 +409,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"insights-service-port",
 			"Port to bind to insights service.",
 		).Default("9108").Int(),
+		notificationServicePort: cmd.Flag(
+			"notification-service-port",
+			"Port to bind to notification service.",
+		).Default("9110").Int(),
 		prometheusURL: cmd.Flag(
 			"prometheus-url",
 			"URL of the Prometheus server. If empty, time-series APIs are disabled.",
@@ -1133,6 +1140,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go insightsServer.Run()
 
+	// notificationService
+	notificationService := notificationapi.NewNotificationService(
+		notificationapi.WithLogger(logger),
+	)
+	notificationServer := rpc.NewServer(notificationService, *s.certPath, *s.keyPath,
+		"notification-server",
+		rpc.WithPort(*s.notificationServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go notificationServer.Run()
+
 	// aichatService (optional — enabled when OpenAI API key is provided)
 	var aichatServer *rpc.Server
 	dashboardRestOpts := []rest.Option{
@@ -1273,6 +1293,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			codeReferenceServer,
 			teamServer,
 			insightsServer,
+			notificationServer,
 		}
 		if aichatServer != nil {
 			servers = append(servers, aichatServer)
@@ -1633,6 +1654,10 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			insightsGrpcAddr := fmt.Sprintf("localhost:%d", *s.insightsServicePort)
 			return insightsproto.RegisterInsightsServiceHandlerFromEndpoint(ctx, mux, insightsGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
+			return notificationproto.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationGrpcAddr, opts)
 		},
 	}
 }
