@@ -72,7 +72,7 @@ jobs:
         if: steps.find-prs.outputs.pr_numbers != ''
         id: app-token
         with:
-          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          client-id: ${{ secrets.RELEASE_BOT_APP_ID }}
           private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
           owner: bucketeer-io
           repositories: bucketeer-docs

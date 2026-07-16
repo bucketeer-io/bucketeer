@@ -214,7 +214,7 @@ jobs:
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token
         with:
-          app-id: ${{ secrets.DEPLOY_DISPATCHER_APP_ID }}
+          client-id: ${{ secrets.DEPLOY_DISPATCHER_APP_ID }}
           private-key: ${{ secrets.DEPLOY_DISPATCHER_APP_PRIVATE_KEY }}
           owner: ${{ secrets.CONFIG_REPO_OWNER }}
           repositories: ${{ secrets.CONFIG_REPO_NAME }}
