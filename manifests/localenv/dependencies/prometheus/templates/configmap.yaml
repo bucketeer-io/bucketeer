@@ -22,10 +22,6 @@ data:
               - web.default.svc:9002
               - batch-server.default.svc:9002
               - subscriber.default.svc:9002
-            labels:
-              # Localenv workaround: static_configs does not add namespace label.
-              # Production kubernetes_sd_config adds it automatically.
-              namespace: default
 
   recording_rules.yml: |
 {{ .Files.Get "recording_rules/api_gateway.yml" | indent 4 }}
