@@ -222,7 +222,7 @@ jobs:
       - name: Workflow Dispatch
         uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
-          repo: ${{ secrets.CONFIG_REPO }}
+          repo: ${{ secrets.CONFIG_REPO_OWNER }}/${{ secrets.CONFIG_REPO_NAME }}
           token: ${{ steps.app-token.outputs.token }}
           workflow: dev-deploy.yaml
           ref: master
