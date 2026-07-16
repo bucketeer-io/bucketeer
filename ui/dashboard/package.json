@@ -83,6 +83,7 @@
     "strip-markdown": "^6.0.0",
     "tailwind-merge": "^2.4.0",
     "timeago.js": "^4.0.2",
+    "unist-util-visit": "^5.1.0",
     "web-vitals": "^4.2.3",
     "yup": "^1.7.1"
   },
@@ -102,6 +103,7 @@
     "@typescript-eslint/parser": "^8.60.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.5.0",
+    "axios-mock-adapter": "^2.1.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.5.6",

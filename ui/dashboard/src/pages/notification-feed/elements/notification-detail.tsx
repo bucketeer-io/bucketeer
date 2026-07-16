@@ -1,14 +1,13 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'i18n';
 import { Pencil } from 'lucide-react';
-import { format } from 'timeago.js';
-import { formatLongDateTime } from 'utils/date-time';
+import { formatLongDateTime, useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import Button from 'components/button';
 import SlideModal from 'components/modal/slide';
+import { NotificationDetail, NotificationStatus } from '../types';
 import { MarkdownContent } from './markdown-content';
 import TagChip from './tag-chip';
-import { NotificationDetail, NotificationStatus } from './types';
 
 interface NotificationDetailModalProps {
   notification?: NotificationDetail;
@@ -17,8 +16,8 @@ interface NotificationDetailModalProps {
   onEditDraft?: (notification: NotificationDetail) => void;
 }
 
-const formatTimestamp = (ms: number) =>
-  formatLongDateTime({ value: String(Math.floor(ms / 1000)) });
+const formatTimestamp = (epochSeconds: string) =>
+  formatLongDateTime({ value: epochSeconds });
 
 const PersonBadge = ({ email }: { email: string }) => {
   const initial = (email.trim()[0] ?? '?').toUpperCase();
@@ -69,11 +68,12 @@ const NotificationDetailModal = ({
   onEditDraft
 }: NotificationDetailModalProps) => {
   const { t } = useTranslation(['common', 'table', 'form']);
+  const formatDateTime = useFormatDateTime();
 
   if (!notification) return null;
 
   const isDraft = notification.status === NotificationStatus.DRAFT;
-  const timestamp = isDraft ? notification.updatedAt : notification.createdAt;
+  const timestamp = isDraft ? notification.updatedAt : notification.publishedAt;
 
   return (
     <SlideModal title={notification.title} isOpen={isOpen} onClose={onClose}>
@@ -85,10 +85,11 @@ const NotificationDetailModal = ({
                 name: isDraft ? t('draft-status') : t('published-status'),
                 color: isDraft ? '#6B7280' : '#5D5FEF'
               }}
+              hideDot
             />
             <span className="text-gray-300">•</span>
             <span className="typo-para-small text-gray-500">
-              {format(timestamp)}
+              {formatDateTime(timestamp)}
             </span>
           </div>
 

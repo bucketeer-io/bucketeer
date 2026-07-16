@@ -6,7 +6,7 @@ import { TFunction } from 'i18next';
 import { AtSign } from 'lucide-react';
 import { cn } from 'utils/style';
 import Button from 'components/button';
-import '../markdown-content.css';
+import '../elements/markdown-content.css';
 import './markdown-editor.css';
 
 interface MarkdownEditorProps {
@@ -31,8 +31,6 @@ const createMention = (t: TFunction): ICommand => ({
   execute: (_state, api) => api.replaceSelection('@')
 });
 
-// The toolbar buttons, grouped and divider-separated to match the design:
-//   Heading | Bold | Italic  ·  Quote | Code | Link  ·  Lists  ·  Attach | @
 const createToolbar = (t: TFunction): ICommand[] => [
   // Text styles
   commands.heading,
@@ -49,13 +47,10 @@ const createToolbar = (t: TFunction): ICommand[] => [
   commands.unorderedListCommand,
   commands.checkedListCommand,
   commands.divider,
-  // Attachments & mentions
   commands.image,
   createMention(t)
 ];
 
-// GitHub-style Markdown editor: a raw-Markdown textarea with a formatting
-// toolbar and a custom Write/Preview tab bar, backed by @uiw/react-md-editor.
 const MarkdownEditor = ({
   value,
   onChange,
@@ -74,7 +69,6 @@ const MarkdownEditor = ({
       data-color-mode="light"
       className="overflow-hidden rounded-lg border border-gray-300"
     >
-      {/* Custom Write/Preview tab bar. Drives the editor's `preview` prop. */}
       <div className="flex items-center gap-1 border-b border-gray-200 px-2 pt-2">
         {tabs.map(tab => (
           <Button
@@ -100,11 +94,7 @@ const MarkdownEditor = ({
         height={320}
         preview={mode}
         visibleDragbar={false}
-        // The custom tab bar above replaces the built-in Edit/Preview toggle,
-        // and removes the trailing help/mode badge on the right.
         extraCommands={[]}
-        // Curated toolbar. Kept visible in preview mode too — the library
-        // automatically renders the buttons in a disabled state there.
         commands={createToolbar(t)}
         textareaProps={{
           placeholder: placeholder ?? t('form:description-placeholder')

@@ -222,6 +222,7 @@
   "no-drafts": "下書きはありません",
   "no-notifications": "通知はありません",
   "mark-all-as-read": "すべて既読にする",
+  "view-all-notifications": "すべての通知を見る",
   "mark-selected-as-read": "選択した項目を既読にする",
   "selected": "{{count}} 件を選択中",
   "clear-selection": "選択を解除",

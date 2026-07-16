@@ -18,7 +18,6 @@ interface NotificationListProps {
   read?: boolean;
   filters: NotificationFilters;
   environmentId: string;
-  onCounts?: (counts: { unreadCount: number; readCount: number }) => void;
   onSelect?: (notification: FeedNotification) => void;
 }
 
@@ -26,7 +25,6 @@ const NotificationList = ({
   read = true,
   filters,
   environmentId,
-  onCounts,
   onSelect
 }: NotificationListProps) => {
   const { t } = useTranslation(['common']);
@@ -44,18 +42,8 @@ const NotificationList = ({
   const markAsRead = useMarkAsRead(environmentId);
   const markManyAsRead = useMarkManyAsRead(environmentId);
 
-  const items = data?.items ?? [];
-  const total = data?.total ?? 0;
-
-  // Surface both tab counts to the parent for the Unread/Read labels.
-  useEffect(() => {
-    if (data) {
-      onCounts?.({
-        unreadCount: data.unreadCount,
-        readCount: data.readCount
-      });
-    }
-  }, [data, onCounts]);
+  const items = data?.notifications ?? [];
+  const total = Number(data?.totalCount ?? 0);
 
   const toggle = (id: string, isSelected: boolean) =>
     setSelected(prev => {
