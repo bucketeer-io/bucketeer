@@ -171,8 +171,30 @@ RUN ARCH=$(dpkg --print-architecture) \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install and configure OpenSSH server (replaces the ghcr.io/devcontainers/features/sshd feature).
+# Host keys must never be baked into this shared base image (every container/Codespace built
+# from it would otherwise share one static key pair), so they are stripped here and regenerated
+# fresh at container startup instead, by docker-init.sh via `ssh-keygen -A`.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssh-server openssh-sftp-server \
+    && mkdir -p /run/sshd \
+    && sed -i -E \
+        -e 's/^#?Port .*/Port 2222/' \
+        -e 's/^#?PasswordAuthentication .*/PasswordAuthentication no/' \
+        -e 's/^#?PubkeyAuthentication .*/PubkeyAuthentication yes/' \
+        -e 's/^#?UsePAM .*/UsePAM yes/' \
+        /etc/ssh/sshd_config \
+    && /usr/sbin/sshd -t \
+    && rm -f /etc/ssh/ssh_host_* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create docker startup script
 RUN echo '#!/bin/bash\n\
+# Regenerate SSH host keys if missing (never baked into the shared image)\n\
+sudo ssh-keygen -A > /dev/null 2>&1\n\
+# Start the SSH daemon (self-daemonizes; do not add -D here)\n\
+sudo /usr/sbin/sshd\n\
 # Start docker daemon in background\n\
 sudo dockerd > /dev/null 2>&1 &\n\
 # Wait for docker to be ready\n\
