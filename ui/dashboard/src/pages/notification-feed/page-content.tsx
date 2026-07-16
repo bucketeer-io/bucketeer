@@ -1,23 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { CalendarDays, CheckCheck } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
+import { IconThreeLines } from '@icons';
 import Button from 'components/button';
 import Dropdown from 'components/dropdown';
-import SearchInput from 'components/search-input';
+import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import {
   useFetchDrafts,
+  useFetchTabCounts,
   useMarkAllAsRead
 } from './collection-loader/use-fetch-notifications';
 import DraftsPanel from './drafts/drafts-panel';
+import NotificationDetailModal from './elements/notification-detail';
 import NotificationList from './feed/notification-list';
-import NotificationDetailModal from './notification-detail';
 import PublishForm from './publisher/publish-form';
 import {
   NotificationDetail,
@@ -30,14 +34,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const PageContent = ({
   disabled,
+  isSystemAdmin,
   environmentId
 }: {
   disabled?: boolean;
+  isSystemAdmin?: boolean;
   environmentId: string;
 }) => {
   const { t } = useTranslation(['common', 'form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const defaultFilters = {
     tab: 'unread',
@@ -49,9 +57,9 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<NotificationFilters>(defaultFilters);
 
-  // Tab counts are reported up by whichever NotificationList is mounted; every
-  // feed response carries both totals, so a single active list keeps them fresh.
-  const [counts, setCounts] = useState({ unreadCount: 0, readCount: 0 });
+  // Sourced independently of whichever NotificationList is mounted, so both
+  // tab badges stay live across tab switches and mutations.
+  const { unreadCount, readCount } = useFetchTabCounts(environmentId);
   const markAllAsRead = useMarkAllAsRead(environmentId);
 
   // The notification/draft shown in the detail SlideModal.
@@ -62,8 +70,8 @@ const PageContent = ({
   // the form always edits current data instead of a stale snapshot taken when
   // "Edit Draft" was clicked.
   const [editingId, setEditingId] = useState<string>();
-  const { data: drafts = [] } = useFetchDrafts(environmentId);
-  const editingDraft = drafts.find(d => d.id === editingId);
+  const { data: draftsData } = useFetchDrafts(environmentId, isSystemAdmin);
+  const editingDraft = draftsData?.notifications.find(d => d.id === editingId);
 
   const onEditDraft = (draft: NotificationDetail) => {
     setDetail(undefined);
@@ -90,13 +98,36 @@ const PageContent = ({
     }
   }, [searchOptions]);
 
+  // Publishing is system admin only: bounce anyone else off the "publish"
+  // tab (e.g. a stale bookmark or shared link with ?tab=publish) so the tab
+  // bar and content never disagree.
+  useEffect(() => {
+    if (!isSystemAdmin && filters.tab === 'publish') {
+      onChangeFilters({ tab: 'unread' });
+    }
+  }, [isSystemAdmin, filters.tab]);
+
+  // Opened via NotificationBell: the clicked notification is handed off
+  // through router state so its detail opens here without an extra fetch.
+  // Cleared right after so a refresh or back-navigation doesn't reopen it.
+  useEffect(() => {
+    const openNotification = (
+      location.state as { notification?: NotificationDetail } | null
+    )?.notification;
+    if (openNotification) {
+      setDetail(openNotification);
+      navigate(location.pathname + location.search, {
+        replace: true,
+        state: null
+      });
+    }
+  }, [location.state]);
+
   const dateFilters = useMemo(() => {
     if (!filters.days) return {};
     const to = Date.now();
     return { from: to - filters.days * DAY_MS, to };
   }, [filters.days]);
-
-  const { unreadCount, readCount } = counts;
 
   const sortOptions = [
     { label: t('sort-by-newest'), value: 'newest' },
@@ -109,38 +140,47 @@ const PageContent = ({
     { label: t('last-90-days'), value: 90 }
   ];
 
+  const dateLabel =
+    dateOptions.find(item => item.value === filters.days)?.label ||
+    t('last-30-days');
+
   return (
     <PageLayout.Content>
-      <div className="mb-6 px-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="w-full md:max-w-[440px]">
-          <SearchInput
-            placeholder={t('form:search-notifications')}
-            value={filters.searchQuery}
-            onChange={searchQuery => onChangeFilters({ searchQuery })}
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <Dropdown
-            className="w-[200px]"
-            isTruncate={false}
-            value={filters.sort}
-            options={sortOptions}
-            onChange={value => onChangeFilters({ sort: value as SortOption })}
-          />
-          <Dropdown
-            className="w-[180px]"
-            value={filters.days}
-            placeholder={
-              <span className="flex items-center gap-2">
-                <CalendarDays size={16} />
-                {t('last-30-days')}
-              </span>
-            }
-            options={dateOptions}
-            onChange={days => onChangeFilters({ days: Number(days) })}
-          />
-        </div>
-      </div>
+      <Filter
+        className="mb-6"
+        isShowDocumentation={false}
+        placeholder={t('form:search-notifications')}
+        name="notifications-search"
+        searchValue={filters.searchQuery}
+        onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
+        action={
+          <>
+            <Dropdown
+              className="w-[200px]"
+              wrapTriggerStyle="w-fit"
+              isTruncate={false}
+              value={filters.sort}
+              options={sortOptions}
+              onChange={value => onChangeFilters({ sort: value as SortOption })}
+            />
+            <Dropdown
+              trigger={
+                <div className="flex items-center gap-x-2">
+                  <Icon icon={IconThreeLines} size="sm" />
+                  <p className="text-gray-600">{dateLabel}</p>
+                </div>
+              }
+              value={filters.days}
+              options={dateOptions}
+              showArrow={false}
+              alignContent="end"
+              className="w-full px-4 py-[11px] justify-center"
+              wrapTriggerStyle="w-fit"
+              onChange={days => onChangeFilters({ days: Number(days) })}
+            />
+          </>
+        }
+      />
 
       <Tabs
         value={filters.tab}
@@ -152,7 +192,7 @@ const PageContent = ({
             'lg:grid-cols-[1fr_360px]': filters.tab === 'publish'
           })}
         >
-          <div className="flex flex-col">
+          <div className="flex flex-col relative">
             <div className="flex items-center justify-between">
               <TabsList className="justify-start">
                 <TabsTrigger value="unread">
@@ -161,15 +201,18 @@ const PageContent = ({
                 <TabsTrigger value="read">
                   {t('read')} ({readCount})
                 </TabsTrigger>
-                <TabsTrigger value="publish">
-                  {t('publish-notification')}
-                </TabsTrigger>
+                {isSystemAdmin && (
+                  <TabsTrigger value="publish">
+                    {t('publish-notification')}
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               {filters.tab === 'unread' && (
                 <Button
                   variant="text"
                   size="sm"
+                  className="absolute right-0 top-0"
                   onClick={() => markAllAsRead.mutate()}
                   disabled={unreadCount === 0}
                   loading={markAllAsRead.isPending}
@@ -185,7 +228,6 @@ const PageContent = ({
                 read={false}
                 filters={{ ...filters, ...dateFilters }}
                 environmentId={environmentId}
-                onCounts={setCounts}
                 onSelect={setDetail}
               />
             </TabsContent>
@@ -193,21 +235,22 @@ const PageContent = ({
               <NotificationList
                 filters={{ ...filters, ...dateFilters }}
                 environmentId={environmentId}
-                onCounts={setCounts}
                 onSelect={setDetail}
               />
             </TabsContent>
-            <TabsContent value="publish">
-              <PublishForm
-                disabled={disabled}
-                environmentId={environmentId}
-                initialDraft={editingDraft}
-                onClear={onClearEdit}
-              />
-            </TabsContent>
+            {isSystemAdmin && (
+              <TabsContent value="publish">
+                <PublishForm
+                  disabled={disabled}
+                  environmentId={environmentId}
+                  initialDraft={editingDraft}
+                  onClear={onClearEdit}
+                />
+              </TabsContent>
+            )}
           </div>
 
-          {filters.tab === 'publish' && (
+          {isSystemAdmin && filters.tab === 'publish' && (
             <aside className="lg:border-l lg:border-gray-200 lg:pl-8">
               <DraftsPanel
                 environmentId={environmentId}

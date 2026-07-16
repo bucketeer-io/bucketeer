@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useToast } from 'hooks';
-import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import useFormSchema from 'hooks/use-form-schema';
 import { getLanguage, Language, useTranslation } from 'i18n';
-import * as yup from 'yup';
 import { IconEnglishFlag, IconJapanFlag } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
@@ -20,6 +19,7 @@ import {
   NotificationStatus,
   PublishNotificationInput
 } from '../types';
+import { formSchema, PublishFormValues } from './form-schema';
 import LanguageTabs from './language-tabs';
 import MarkdownEditor from './markdown-editor';
 import TagSelect from './tag-select';
@@ -42,35 +42,6 @@ const LANGUAGE_META = {
 // Languages the form can author, in the order they appear in the add menu.
 const FORM_LANGUAGES: Language[] = [Language.ENGLISH, Language.JAPANESE];
 
-interface PublishFormValues {
-  localizations: NotificationLocalizationInput[];
-}
-
-// A notification is one or more localizations, each with a title and content.
-const formSchema = ({ requiredMessage }: FormSchemaProps) =>
-  yup.object().shape({
-    localizations: yup
-      .array()
-      .of(
-        yup.object().shape({
-          language: yup.string().required(),
-          title: yup.string().required(requiredMessage),
-          content: yup.string().required(requiredMessage),
-          tags: yup
-            .array()
-            .of(
-              yup.object().shape({
-                name: yup.string().required(),
-                color: yup.string().required()
-              })
-            )
-            .required()
-        })
-      )
-      .min(1)
-      .required()
-  }) as yup.ObjectSchema<PublishFormValues>;
-
 const emptyLocalization = (
   language: string
 ): NotificationLocalizationInput => ({
@@ -88,24 +59,22 @@ const PublishForm = ({
 }: {
   disabled?: boolean;
   environmentId: string;
-  // When set (via "Edit Draft"), the form is seeded with this draft's content.
   initialDraft?: NotificationDetail;
-  // Called when the form leaves edit mode (Clear or a successful submit), so
-  // the parent can drop the draft being edited.
   onClear?: () => void;
 }) => {
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
   // The language the form starts with (the console language). It is only the
-  // initial default — the author may remove it and author another language.
+  // initial default — the author may remove it and author another language —
+  // so it must stay fixed for the component's lifetime and not react to the
+  // console language changing while the form is open, or in-progress input
+  // would be reset out from under the author.
   const defaultLanguage = useMemo(() => {
     const lang = getLanguage();
     return FORM_LANGUAGES.includes(lang) ? lang : Language.ENGLISH;
   }, []);
 
-  // Builds the form's localizations, seeding from a draft's full set of language
-  // versions when editing one, so every language can be edited.
   const buildLocalizations = (
     draft?: NotificationDetail
   ): NotificationLocalizationInput[] => {
@@ -120,8 +89,6 @@ const PublishForm = ({
     return [emptyLocalization(defaultLanguage)];
   };
 
-  // Which language tab to show first for a given set of localizations: the
-  // console default when present, otherwise the first available language.
   const initialActiveLanguage = (
     locs: NotificationLocalizationInput[]
   ): string =>
@@ -193,10 +160,18 @@ const PublishForm = ({
   // does not, since a draft is meant to hold work in progress.
   const canPublish = !disabled && isValid;
   const canSaveDraft = !disabled;
+  // When editing a draft, both "Publish" and "Update draft" submit through the
+  // same `updateMutation`, so its `isPending` alone can't tell which button
+  // triggered it. Track the in-flight action to light up only that button.
+  const [pendingAction, setPendingAction] = useState<
+    'publish' | 'draft' | null
+  >(null);
   const isPublishPending =
-    publishMutation.isPending || updateMutation.isPending;
+    publishMutation.isPending ||
+    (updateMutation.isPending && pendingAction === 'publish');
   const isDraftPending =
-    saveDraftMutation.isPending || updateMutation.isPending;
+    saveDraftMutation.isPending ||
+    (updateMutation.isPending && pendingAction === 'draft');
 
   const addLanguage = (language: string) => {
     if (localizationFields.some(f => f.language === language)) return;
@@ -231,6 +206,7 @@ const PublishForm = ({
     // Captured now, compared against `editingIdRef.current` when the mutation
     // resolves, so switching drafts mid-flight is detected.
     const submittedFor = editingId;
+    setPendingAction('publish');
     const onDone = {
       onSuccess: () => {
         if (editingIdRef.current !== submittedFor) return;
@@ -253,6 +229,7 @@ const PublishForm = ({
   const handleSaveDraft = () => {
     const payload = toInput(NotificationStatus.DRAFT);
     const submittedFor = editingId;
+    setPendingAction('draft');
     const onDone = {
       onSuccess: () => {
         if (editingIdRef.current !== submittedFor) return;

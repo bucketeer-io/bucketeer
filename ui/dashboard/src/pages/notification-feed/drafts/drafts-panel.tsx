@@ -4,7 +4,7 @@ import Pagination from 'components/pagination';
 import Spinner from 'components/spinner';
 import { useFetchDrafts } from '../collection-loader/use-fetch-notifications';
 import { DRAFTS_PAGE_SIZE } from '../constants';
-import { markdownToText } from '../markdown-content';
+import { markdownToText } from '../elements/markdown-content';
 import { NotificationDraft, NotificationFilters } from '../types';
 import DraftCard from './draft-card';
 
@@ -20,15 +20,20 @@ const DraftsPanel = ({
   onSelect
 }: DraftsPanelProps) => {
   const { t } = useTranslation(['common']);
-  const { data: drafts = [], isLoading } = useFetchDrafts(environmentId);
+  const { data, isLoading } = useFetchDrafts(environmentId);
+  const drafts = data?.notifications ?? [];
   const [page, setPage] = useState(1);
   const [activeId, setActiveId] = useState<string>();
 
   const filtered = useMemo(() => {
     const query = (filters?.searchQuery ?? '').trim().toLowerCase();
     return drafts
-      .filter(d => (filters?.from ? d.updatedAt >= filters.from : true))
-      .filter(d => (filters?.to ? d.updatedAt <= filters.to : true))
+      .filter(d =>
+        filters?.from ? Number(d.updatedAt) * 1000 >= filters.from : true
+      )
+      .filter(d =>
+        filters?.to ? Number(d.updatedAt) * 1000 <= filters.to : true
+      )
       .filter(d =>
         query
           ? d.title.toLowerCase().includes(query) ||
@@ -37,8 +42,8 @@ const DraftsPanel = ({
       )
       .sort((a, b) =>
         filters?.sort === 'oldest'
-          ? a.updatedAt - b.updatedAt
-          : b.updatedAt - a.updatedAt
+          ? Number(a.updatedAt) - Number(b.updatedAt)
+          : Number(b.updatedAt) - Number(a.updatedAt)
       );
   }, [drafts, filters]);
 

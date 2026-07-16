@@ -1,15 +1,17 @@
 import { cn } from 'utils/style';
-import { NotificationTag } from './types';
+import { NotificationTag } from '../types';
 
 // Renders a pill for a notification tag: a colored dot (the tag color) followed
 // by the tag name on a soft tinted background, matching the Tag select chips.
 // Tags without a color fall back to a neutral gray dot and background.
 const TagChip = ({
   tag,
-  className
+  className,
+  hideDot = false
 }: {
   tag: NotificationTag;
   className?: string;
+  hideDot?: boolean;
 }) => {
   return (
     <span
@@ -24,10 +26,12 @@ const TagChip = ({
           : undefined
       }
     >
-      <span
-        className={cn('size-1.5 shrink-0 rounded-full', !tag.color && 'bg-gray-400')} // prettier-ignore
-        style={tag.color ? { backgroundColor: tag.color } : undefined}
-      />
+      {!hideDot && (
+        <span
+          className={cn('size-1.5 shrink-0 rounded-full', !tag.color && 'bg-gray-400')} // prettier-ignore
+          style={tag.color ? { backgroundColor: tag.color } : undefined}
+        />
+      )}
       {tag.name}
     </span>
   );
