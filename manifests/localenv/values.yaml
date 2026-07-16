@@ -86,6 +86,24 @@ prometheus:
     port: 9090
   scrapeInterval: 30s
 
+# prometheus-adapter: exposes Prometheus metrics to Kubernetes Custom Metrics API for HPA.
+# Production needs the same rules section; only prometheus.url differs.
+# Rule config reference: https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/config-walkthrough.md
+prometheus-adapter:
+  prometheus:
+    url: http://localenv-prometheus
+    port: 9090
+  rules:
+    custom:
+      - seriesQuery: "bucketeer_gateway_sse_active_connections"
+        resources:
+          overrides:
+            namespace: { resource: "namespace" }
+            pod: { resource: "pod" }
+        name:
+          as: "bucketeer_gateway_sse_active_connections_per_pod"
+        metricsQuery: "sum by (namespace, pod) (bucketeer_gateway_sse_active_connections{<<.LabelMatchers>>})"
+
 vault:
   server:
     dev:
