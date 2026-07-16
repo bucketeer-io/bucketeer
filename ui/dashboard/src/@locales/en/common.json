@@ -225,6 +225,7 @@
   "no-notifications": "No notifications to show",
   "no-drafts": "No drafts to show",
   "mark-all-as-read": "Mark all as read",
+  "view-all-notifications": "View all notifications",
   "mark-selected-as-read": "Mark selected as read",
   "selected": "{{count}} selected",
   "clear-selection": "Clear selection",

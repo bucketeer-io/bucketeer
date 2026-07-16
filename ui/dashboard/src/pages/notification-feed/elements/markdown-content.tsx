@@ -1,6 +1,7 @@
 import MDEditor from '@uiw/react-md-editor';
 import { remark } from 'remark';
 import strip from 'strip-markdown';
+import { visit } from 'unist-util-visit';
 import { cn } from 'utils/style';
 import './markdown-content.css';
 
@@ -34,3 +35,24 @@ const stripProcessor = remark().use(strip);
 
 export const markdownToText = (markdown: string): string =>
   String(stripProcessor.processSync(markdown)).replace(/\s+/g, ' ').trim();
+
+const linkProcessor = remark();
+
+// Finds the first real Markdown link (not an image) in `markdown`, via the
+// same remark AST used by `markdownToText`, so link extraction can't
+// misfire on image syntax, links inside code spans, or reference-style
+// links the way a hand-rolled regex would.
+export const firstMarkdownLink = (
+  markdown: string
+): { label: string; url: string } | null => {
+  const tree = linkProcessor.parse(markdown);
+  let found: { label: string; url: string } | null = null;
+  visit(tree, 'link', node => {
+    if (found) return;
+    const label = node.children
+      .map(child => ('value' in child ? child.value : ''))
+      .join('');
+    found = { label: label || node.url, url: node.url };
+  });
+  return found;
+};
