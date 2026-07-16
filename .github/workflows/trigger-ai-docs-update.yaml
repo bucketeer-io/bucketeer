@@ -19,6 +19,7 @@ jobs:
     permissions:
       contents: read
       issues: read
+      pull-requests: read
     # Only trigger for issues closed as completed (not "not planned")
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -27,7 +28,7 @@ jobs:
       - name: Find linked merged PRs
         id: find-prs
         env:
-          GH_TOKEN: ${{ secrets.REPO_ACCESS_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
           REPO: ${{ github.repository }}
         run: |
@@ -67,12 +68,22 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         if: steps.find-prs.outputs.pr_numbers != ''
 
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        if: steps.find-prs.outputs.pr_numbers != ''
+        id: app-token
+        with:
+          client-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: bucketeer-io
+          repositories: bucketeer-docs
+          permission-actions: write
+
       - name: Trigger AI docs update in bucketeer-docs
         if: steps.find-prs.outputs.pr_numbers != ''
         uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: bucketeer-io/bucketeer-docs
-          token: ${{ secrets.REPO_ACCESS_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           workflow: ai-docs-update.yaml
           ref: main
           inputs: '{"issue_number": "${{ steps.find-prs.outputs.issue_number }}", "pr_numbers": "${{ steps.find-prs.outputs.pr_numbers }}"}'
