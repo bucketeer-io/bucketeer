@@ -517,3 +517,17 @@ if ! docker info > /dev/null 2>&1; then
 else
     echo "✅ Docker daemon already running"
 fi
+
+# Start SSH daemon automatically after main setup is complete.
+# The Dockerfile's own ENTRYPOINT (docker-init.sh) also does this, but Codespaces/devcontainer
+# tooling overrides the container's entrypoint at container-start time, so that logic never
+# actually runs there. This mirrors the Docker daemon fallback above for the same reason.
+if ! pgrep -x sshd > /dev/null 2>&1; then
+    echo "🔑 Starting SSH daemon..."
+    # Regenerate host keys if missing (never baked into the shared image)
+    sudo ssh-keygen -A > /dev/null 2>&1
+    sudo /usr/sbin/sshd
+    echo "✅ SSH daemon started successfully"
+else
+    echo "✅ SSH daemon already running"
+fi
