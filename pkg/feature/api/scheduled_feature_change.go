@@ -967,6 +967,29 @@ func (s *FeatureService) validateScheduledChangePayload(
 		}
 	}
 
+	if len(payload.VariationChanges) > 0 {
+		if _, err := (&domain.Feature{Feature: feature}).Update(
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			false,
+			nil,
+			nil,
+			nil,
+			payload.VariationChanges,
+			nil,
+			nil,
+			nil,
+			nil,
+		); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

@@ -185,7 +185,7 @@ func TestUpdateVariationValueSchema(t *testing.T) {
 		Description: "Allowed size values",
 		Validator: &feature.VariationValueSchema_EnumValidator_{
 			EnumValidator: &feature.VariationValueSchema_EnumValidator{
-				Values: []string{"small", "large"},
+				Values: []string{"A", "B", "C"},
 			},
 		},
 	}
@@ -674,7 +674,15 @@ func TestUpdateAddVariation(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			actual := p.inputFunc()
-			err := actual.updateAddVariation(p.id, p.value, p.name, p.description)
+			validateValue, err := actual.newVariationValueValidator()
+			require.NoError(t, err)
+			err = actual.updateAddVariationWithValidator(
+				p.id,
+				p.value,
+				p.name,
+				p.description,
+				validateValue,
+			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
 			} else {
@@ -799,7 +807,15 @@ func TestUpdateAddVariationToDefaultStrategy(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			actual := p.setupFunc()
-			err := actual.updateAddVariation(p.id, p.value, p.name, p.description)
+			validateValue, err := actual.newVariationValueValidator()
+			require.NoError(t, err)
+			err = actual.updateAddVariationWithValidator(
+				p.id,
+				p.value,
+				p.name,
+				p.description,
+				validateValue,
+			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
 			} else {
@@ -922,7 +938,9 @@ func TestUpdateChangeVariation(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			actual := p.inputFunc()
-			err := actual.updateChangeVariation(p.variation)
+			validateValue, err := actual.newVariationValueValidator()
+			require.NoError(t, err)
+			err = actual.updateChangeVariationWithValidator(p.variation, validateValue)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
 			} else {

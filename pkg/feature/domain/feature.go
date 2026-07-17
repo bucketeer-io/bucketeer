@@ -96,6 +96,12 @@ var (
 		pkgErr.FeaturePackageName, "feature: variation not found", "variation")
 	errVariationTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
 		pkgErr.FeaturePackageName, "feature: variation value and type are unmatched", "variation")
+	errVariationValueSchemaInvalid = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value schema is invalid", "variation_value_schema")
+	errVariationValueSchemaTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value schema and type are unmatched", "variation_value_schema")
+	errVariationValueSchemaViolation = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "variation_value_schema")
 	errStrategyRequired = pkgErr.NewErrorInvalidArgEmpty(
 		pkgErr.FeaturePackageName, "feature: strategy required", "strategy")
 	errUnsupportedStrategy = pkgErr.NewErrorInvalidArgNotMatchFormat(
@@ -186,6 +192,10 @@ func NewFeature(
 	if len(variations) < 2 {
 		return nil, errVariationsMustHaveAtLeastTwoVariations
 	}
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return nil, err
+	}
 	if defaultOnVariationIndex < 0 || defaultOnVariationIndex >= len(variations) {
 		return nil, errInvalidDefaultOnVariationIndex
 	}
@@ -197,7 +207,13 @@ func NewFeature(
 		if err != nil {
 			return nil, err
 		}
-		if err = f.AddVariation(id.String(), variation.Value, variation.Name, variation.Description); err != nil {
+		if err = f.addVariationWithValidator(
+			id.String(),
+			variation.Value,
+			variation.Name,
+			variation.Description,
+			validateValue,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -663,7 +679,27 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 	if name == "" {
 		return errVariationNameRequired
 	}
-	if err := f.validateVariationValue(id, value); err != nil {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return err
+	}
+	return f.addVariationWithValidator(id, value, name, description, validateValue)
+}
+
+func (f *Feature) addVariationWithValidator(
+	id string,
+	value string,
+	name string,
+	description string,
+	validateValue func(string) error,
+) error {
+	if id == "" {
+		return errVariationIDRequired
+	}
+	if name == "" {
+		return errVariationNameRequired
+	}
+	if err := f.validateVariationValueWithValidator(id, value, validateValue); err != nil {
 		return err
 	}
 	variation := &feature.Variation{
@@ -681,6 +717,14 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 }
 
 func (f *Feature) validateVariationValue(id, value string) error {
+	validateValue, err := f.newVariationValueValidator()
+	if err != nil {
+		return err
+	}
+	return f.validateVariationValueWithValidator(id, value, validateValue)
+}
+
+func (f *Feature) validateVariationValueWithValidator(id, value string, validateValue func(string) error) error {
 	if value == "" {
 		return errVariationValueRequired
 	}
@@ -760,7 +804,7 @@ func (f *Feature) validateVariationValue(id, value string) error {
 		}
 	}
 
-	return nil
+	return validateValue(value)
 }
 
 // normalizeJSON parses JSON and returns a canonical representation.
@@ -1405,7 +1449,10 @@ func validateRules(rules []*feature.Rule, variations []*feature.Variation) error
 	return nil
 }
 
-func (f *Feature) validateVariationChanges(variationChanges []*feature.VariationChange) error {
+func (f *Feature) validateVariationChangesWithValidator(
+	variationChanges []*feature.VariationChange,
+	validateValue func(string) error,
+) error {
 	for _, change := range variationChanges {
 		// For individual variation changes, only validate the variation value and type
 		if change.Variation == nil {
@@ -1420,7 +1467,11 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 			if change.Variation.Name == "" {
 				return errVariationNameRequired
 			}
-			if err := f.validateVariationValue(change.Variation.Id, change.Variation.Value); err != nil {
+			if err := f.validateVariationValueWithValidator(
+				change.Variation.Id,
+				change.Variation.Value,
+				validateValue,
+			); err != nil {
 				return err
 			}
 		case feature.ChangeType_UPDATE:
@@ -1434,7 +1485,11 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 			if change.Variation.Name == "" {
 				return errVariationNameRequired
 			}
-			if err := f.validateVariationValue(change.Variation.Id, change.Variation.Value); err != nil {
+			if err := f.validateVariationValueWithValidator(
+				change.Variation.Id,
+				change.Variation.Value,
+				validateValue,
+			); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
