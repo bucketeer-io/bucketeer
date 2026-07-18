@@ -517,7 +517,3 @@ if ! docker info > /dev/null 2>&1; then
 else
     echo "✅ Docker daemon already running"
 fi
-
-# Start SSH daemon if needed. postStartCommand (start-sshd.sh) already does this at every
-# container start; this attach-time call is a safety net in case sshd died mid-session.
-bash "$(dirname "$0")/start-sshd.sh"

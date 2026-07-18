@@ -4,8 +4,7 @@
 # The Dockerfile's own ENTRYPOINT (docker-init.sh) also starts sshd, but Codespaces/
 # devcontainer tooling overrides the container's entrypoint at container-start time,
 # so that logic never runs there. This script is wired to postStartCommand so sshd
-# comes up at every container start — with or without an editor attach — and is called
-# again from setup.sh (postAttachCommand) as a safety net in case sshd died mid-session.
+# comes up at every container start — with or without an editor attach.
 set -e
 
 if pgrep -x sshd > /dev/null 2>&1; then
