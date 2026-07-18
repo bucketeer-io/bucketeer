@@ -192,8 +192,9 @@ RUN apt-get update \
 # Create docker startup script.
 # NOTE: This script is the image's ENTRYPOINT, but Codespaces/devcontainer tooling
 # overrides the entrypoint at container start, so it never runs there — it only
-# runs under plain `docker run`. On Codespaces these daemons are started from
-# .devcontainer/setup.sh (postAttachCommand) instead. Keep both in sync.
+# runs under plain `docker run`. On Codespaces sshd is started by
+# .devcontainer/start-sshd.sh (postStartCommand) and dockerd by
+# .devcontainer/setup.sh (postAttachCommand) instead. Keep these in sync.
 RUN echo '#!/bin/bash\n\
 # Regenerate SSH host keys if missing (never baked into the shared image)\n\
 sudo ssh-keygen -A > /dev/null 2>&1\n\
