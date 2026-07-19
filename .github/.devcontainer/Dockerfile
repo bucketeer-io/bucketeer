@@ -197,7 +197,7 @@ RUN apt-get update \
 # .devcontainer/setup.sh (postAttachCommand) instead. Keep these in sync.
 RUN echo '#!/bin/bash\n\
 # Regenerate SSH host keys if missing (never baked into the shared image)\n\
-sudo ssh-keygen -A > /dev/null 2>&1\n\
+sudo ssh-keygen -A > /dev/null\n\
 # Privilege-separation dir; /run can be tmpfs, wiping the build-time mkdir\n\
 sudo mkdir -p /run/sshd\n\
 # Start the SSH daemon (self-daemonizes; do not add -D here)\n\
