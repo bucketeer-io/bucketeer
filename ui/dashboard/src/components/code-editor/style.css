@@ -6,7 +6,7 @@
 }
 
 .editor-wrapper div .monaco-editor .margin {
-  @apply !w-fit !min-w-10 bg-[#64748B1F];
+  @apply !w-fit !min-w-10 bg-[#64748B1F] dark:bg-dark-purple-100;
 }
 
 .editor-wrapper div .monaco-editor {
@@ -36,7 +36,7 @@
 }
 
 .highlighted-line span {
-  @apply !bg-gray-400;
+  @apply !bg-gray-400 dark:!bg-dark-purple-100;
 }
 
 .editor-wrapper .overflow-guard {

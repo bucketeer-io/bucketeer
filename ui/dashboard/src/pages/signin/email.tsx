@@ -81,7 +81,7 @@ const SignInWithEmail = () => {
     <Button
       type="button"
       variant="grey"
-      className="text-gray-500 size-6"
+      className="text-gray-500 dark:text-dark-gray-200 size-6"
       onClick={() => setShowPassword(!showPassword)}
     >
       <Icon
@@ -102,13 +102,13 @@ const SignInWithEmail = () => {
       >
         <Icon icon={IconBackspace} size="sm" />
       </Button>
-      <h1 className="text-gray-900 typo-head-bold-huge mt-8">
+      <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge mt-8">
         {t('auth:sign-in-title')}
       </h1>
-      <p className="text-gray-600 typo-para-medium mt-4">
+      <p className="text-gray-600 dark:text-dark-gray-200 typo-para-medium mt-4">
         {t(`sign-in.description`)}
       </p>
-      <div className="text-gray-600 typo-para-medium mt-6">
+      <div className="text-gray-600 dark:text-dark-gray-200 typo-para-medium mt-6">
         <p>{`${t('email')}: ${DEMO_SIGN_IN_EMAIL}`}</p>
         <p>{`${t('password')}: ${DEMO_SIGN_IN_PASSWORD}`}</p>
       </div>

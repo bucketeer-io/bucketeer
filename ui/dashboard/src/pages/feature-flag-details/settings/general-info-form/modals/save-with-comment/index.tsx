@@ -93,7 +93,7 @@ const SaveWithCommentModal = ({
                         />
                         <label
                           htmlFor="settings_active_now"
-                          className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                          className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                         >
                           {t('update-now')}
                         </label>
@@ -106,11 +106,11 @@ const SaveWithCommentModal = ({
                         />
                         <label
                           htmlFor="settings_schedule"
-                          className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                          className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                         >
                           {t('form:feature-flags.schedule-the-updates')}
                         </label>
-                        <span className="px-2 py-1.5 rounded-[3px] bg-accent-blue-50 text-accent-blue-500 typo-para-small leading-[14px] whitespace-nowrap uppercase">
+                        <span className="px-2 py-1.5 rounded-[3px] bg-accent-blue-50 dark:bg-accent-blue-900/30 text-accent-blue-500 typo-para-small leading-[14px] whitespace-nowrap uppercase">
                           New
                         </span>
                         <Tooltip

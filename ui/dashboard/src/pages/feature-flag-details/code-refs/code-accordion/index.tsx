@@ -30,14 +30,14 @@ const CodeAccordion = ({
 
   return (
     <Card className="p-5 gap-y-5">
-      <div className="flex items-center divide-x divide-gray-400">
+      <div className="flex items-center divide-x divide-gray-400 dark:divide-dark-black-700">
         <div className="flex items-center gap-x-3 pr-3">
           {repository ? <Icon icon={repository.icon} size="sm" /> : <></>}
-          <p className="typo-para-medium text-gray-700">
+          <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
             {repository?.label || codeRef.repositoryType}
           </p>
         </div>
-        <div className="pl-3 typo-para-medium text-gray-500">
+        <div className="pl-3 typo-para-medium text-gray-500 dark:text-dark-gray-200">
           <Trans
             i18nKey={`table:code-refs.${occurrenceCount > 1 ? 'multiple-refs' : 'single-ref'}`}
             components={{
@@ -59,8 +59,10 @@ const CodeAccordion = ({
         </div>
       </div>
       <div className="flex flex-col w-full rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between w-full p-4 bg-gray-100">
-          <p className="typo-para-medium text-gray-600">{codeRef.filePath}</p>
+        <div className="flex items-center justify-between w-full p-4 bg-gray-100 dark:bg-dark-black-700">
+          <p className="typo-para-medium text-gray-600 dark:text-dark-gray-200">
+            {codeRef.filePath}
+          </p>
           <div className="flex items-center gap-x-4">
             <Link
               target="_blank"
@@ -86,7 +88,10 @@ const CodeAccordion = ({
         <div
           className={cn(
             'overflow-x-auto transition-all duration-300 ease-in-out overflow-y-auto rounded-b-md max-h-0',
-            { 'max-h-60 border-t border-gray-300': isOpen }
+            {
+              'max-h-60 border-t border-gray-300 dark:border-dark-black-700':
+                isOpen
+            }
           )}
         >
           <CodeHighlighter featureId={featureId} codeRef={codeRef} />

@@ -54,16 +54,16 @@ const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 
 const triggerVariants = cva(
   [
-    'flex items-center px-3 py-[11px] gap-x-3 w-fit border rounded-lg bg-white',
-    'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 disabled:!shadow-none'
+    'flex items-center px-3 py-[11px] gap-x-3 w-fit border rounded-lg bg-white dark:bg-dark-black-900',
+    'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 dark:disabled:border-dark-purple-100 dark:disabled:bg-dark-black-700 disabled:!shadow-none'
   ],
   {
     variants: {
       variant: {
         primary:
-          'border-primary-500 hover:shadow-border-primary-500 [&>*]:text-primary-500',
+          'border-primary-500 hover:shadow-border-primary-500 [&>*]:text-primary-500 dark:border-dark-purple-300 dark:hover:shadow-border-primary-glow dark:[&>*]:text-dark-purple-700',
         secondary:
-          'border-gray-400 hover:shadow-border-gray-400 [&_div]:text-gray-700 [&_span]:text-gray-600 [&>i]:text-gray-500'
+          'border-gray-400 hover:shadow-border-gray-400 [&_div]:text-gray-700 [&_span]:text-gray-600 [&>i]:text-gray-500 dark:border-dark-purple-100 dark:hover:shadow-border-dark-purple-300 dark:[&_div]:text-dark-gray-400 dark:[&_span]:text-dark-gray-300 dark:[&>i]:text-dark-gray-200'
       }
     },
     defaultVariants: {
@@ -146,7 +146,9 @@ const DropdownMenuTrigger = forwardRef<
                 {label} {description && <span>{description}</span>}
               </div>
             ) : (
-              <p className={'!text-gray-500'}>{placeholder}</p>
+              <p className={'!text-gray-500 dark:!text-dark-gray-200'}>
+                {placeholder}
+              </p>
             )}
           </div>
           {showClear && label && !loading && (
@@ -162,7 +164,7 @@ const DropdownMenuTrigger = forwardRef<
               <Icon
                 icon={IconClose}
                 size={'md'}
-                className="text-gray-500 hover:text-gray-900"
+                className="text-gray-500 hover:text-gray-900 dark:text-dark-gray-200 dark:hover:text-dark-gray-400"
               />
             </div>
           )}
@@ -193,7 +195,7 @@ const DropdownMenuContent = forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 min-w-[196px] max-h-[252px] overflow-x-hidden overflow-y-auto rounded-lg border bg-white p-1 shadow-dropdown small-scroll',
+        'z-50 min-w-[196px] max-h-[252px] overflow-x-hidden overflow-y-auto rounded-lg border bg-white dark:bg-dark-black-800 dark:border-dark-black-700 p-1 shadow-dropdown dark:shadow-dark-card small-scroll',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         { 'dropdown-menu-expand': isExpand },
         className
@@ -250,8 +252,8 @@ const DropdownMenuItem = forwardRef<
         ref={ref}
         disabled={disabled}
         className={cn(
-          'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-          { '!bg-gray-100': isSelectedItem },
+          'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 dark:hover:bg-dark-purple-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+          { '!bg-gray-100 dark:!bg-dark-purple-200/20': isSelectedItem },
           className
         )}
         onSelect={
@@ -280,7 +282,7 @@ const DropdownMenuItem = forwardRef<
 
         <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
           {isNormalItem ? (
-            <div className="typo-para-medium leading-5 text-gray-700 truncate">
+            <div className="typo-para-medium leading-5 text-gray-700 dark:text-dark-gray-400 truncate">
               {label}
             </div>
           ) : (
@@ -305,7 +307,9 @@ const DropdownMenuItem = forwardRef<
             />
           )}
           {description && (
-            <p className="typo-para-small text-gray-500">{description}</p>
+            <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
+              {description}
+            </p>
           )}
         </div>
         {additionalElement}
@@ -323,17 +327,19 @@ const DropdownMenuSearch = forwardRef(
     ref: Ref<HTMLInputElement>
   ) => {
     return (
-      <div className="sticky top-0 left-0 right-0 flex items-center w-full px-3 py-[11.5px] gap-x-2 border-b border-gray-200 bg-white z-50">
-        <div className="flex-center size-5">
-          <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+      <div className="sticky top-0 left-0 right-0 w-full px-3 py-[11.5px] bg-white dark:bg-dark-black-800 z-50">
+        <div className="flex items-center w-full gap-x-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-dark-purple-100 bg-white dark:bg-dark-black-700 hover:border-gray-400 focus-within:border-primary-500 dark:hover:border-dark-purple-300 dark:focus-within:border-dark-purple-300">
+          <div className="flex-center size-5">
+            <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+          </div>
+          <Input
+            {...props}
+            ref={ref}
+            value={value}
+            onChange={onChange}
+            className="p-0 border-none rounded-none bg-white dark:bg-dark-black-700 hover:shadow-none focus:shadow-none dark:hover:shadow-none dark:focus:shadow-none focus:ring-0 focus:border-none"
+          />
         </div>
-        <Input
-          {...props}
-          ref={ref}
-          value={value}
-          onChange={onChange}
-          className="p-0 border-none rounded-none"
-        />
       </div>
     );
   }
@@ -490,7 +496,7 @@ const Dropdown = ({
         side={menuContentSide}
       >
         {title && (
-          <div className="px-3 py-2 typo-para-small text-gray-500 border-b border-gray-200">
+          <div className="px-3 py-2 typo-para-small text-gray-500 dark:text-dark-gray-200 border-b border-gray-200 dark:border-dark-black-700">
             {title}
           </div>
         )}
@@ -524,7 +530,7 @@ const Dropdown = ({
                     side="right"
                     sideOffset={10}
                     align="start"
-                    className="w-[180px] p-3 bg-white typo-para-small text-gray-600 shadow-card"
+                    className="w-[180px] p-3 bg-white dark:bg-dark-black-800 typo-para-small text-gray-600 dark:text-dark-gray-200 shadow-card dark:shadow-dark-card"
                     key={index}
                     content={opt.tooltip}
                     showArrow={false}
@@ -560,7 +566,7 @@ const Dropdown = ({
               )
             )
           ) : (
-            <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+            <div className="flex-center py-2.5 typo-para-medium text-gray-600 dark:text-dark-gray-300">
               {t('no-options-found')}
             </div>
           )}

@@ -150,7 +150,7 @@ const APIKeyCreateUpdateModal = ({
         <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('form:general-info')}
           </p>
           <FormProvider {...form}>
@@ -192,7 +192,7 @@ const APIKeyCreateUpdateModal = ({
                 )}
               />
 
-              <p className="text-gray-800 typo-head-bold-small">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
                 {t('environment')}
               </p>
               <Form.Field
@@ -214,7 +214,7 @@ const APIKeyCreateUpdateModal = ({
               />
 
               <div className="flex items-center gap-2 mt-4">
-                <p className="text-gray-800 typo-head-bold-small">
+                <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
                   {t('key-role')}
                 </p>
               </div>
@@ -233,7 +233,7 @@ const APIKeyCreateUpdateModal = ({
                           ({ id, label, description, value }) => (
                             <div
                               key={id}
-                              className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
+                              className="flex items-center last:border-b-0 border-b dark:border-dark-black-700 py-4 gap-x-5"
                             >
                               <label
                                 htmlFor={id}
@@ -241,10 +241,10 @@ const APIKeyCreateUpdateModal = ({
                                   'opacity-50': !!apiKey || disabled
                                 })}
                               >
-                                <p className="typo-para-medium text-gray-700">
+                                <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
                                   {label}
                                 </p>
-                                <p className="typo-para-small text-gray-600">
+                                <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
                                   {description}
                                 </p>
                               </label>
@@ -261,7 +261,7 @@ const APIKeyCreateUpdateModal = ({
                   </Form.Item>
                 )}
               />
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button

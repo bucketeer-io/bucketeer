@@ -88,7 +88,7 @@ const ScheduleActionsMenu = ({
       align="end"
       options={options}
       trigger={
-        <span className="flex-center text-gray-500 cursor-pointer">
+        <span className="flex-center text-gray-500 dark:text-dark-gray-200 cursor-pointer">
           <IconMoreHorizOutlined style={{ fontSize: 20 }} />
         </span>
       }
@@ -110,12 +110,12 @@ const ScheduleItemSummary = ({
   const categoryKey = CATEGORY_I18N_KEY[schedule.category] || 'mixed-changes';
 
   return (
-    <li className="flex items-center justify-between w-full typo-para-small text-gray-700 gap-x-2">
+    <li className="flex items-center justify-between w-full typo-para-small text-gray-700 dark:text-dark-gray-300 gap-x-2">
       <div className="flex items-center gap-x-2 min-w-0">
         <span className="whitespace-nowrap text-accent-blue-500 font-medium">
           {formatScheduledDate(schedule.scheduledAt)}
         </span>
-        <span className="text-gray-400">|</span>
+        <span className="text-gray-400 dark:text-dark-gray-100">|</span>
         <span className="truncate">
           {t(`feature-flags.scheduled-banner-${categoryKey}`, {
             count: changeCount
@@ -184,7 +184,7 @@ const ScheduledChangesBanner = ({
 
   return (
     <>
-      <div className="flex flex-col w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50">
+      <div className="flex flex-col w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50 dark:bg-accent-blue-900/30">
         {hasMultiple ? (
           <button
             type="button"

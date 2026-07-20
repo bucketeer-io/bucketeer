@@ -60,7 +60,7 @@ const SignIn = () => {
     <AuthWrapper>
       <div className="grid gap-6">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-gray-900 typo-head-bold-huge">
+          <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge">
             {t(`auth:sign-in-to-bucketeer`)}
           </h1>
           <Dropdown

@@ -42,14 +42,14 @@ type Props = CardIconProps &
 const cardIconVariants = cva('flex-center size-16 p-5 rounded-lg', {
   variants: {
     color: {
-      green: 'bg-accent-green-50',
-      brand: 'bg-primary-50',
-      yellow: 'bg-accent-yellow-50',
-      gray: 'bg-gray-200',
-      pink: 'bg-accent-pink-50',
-      red: 'bg-accent-red-50',
-      orange: 'bg-accent-orange-50',
-      blue: 'bg-accent-blue-50'
+      green: 'bg-accent-green-50 dark:bg-accent-green-900/30',
+      brand: 'bg-primary-50 dark:bg-dark-purple-100',
+      yellow: 'bg-accent-yellow-50 dark:bg-accent-yellow-900/30',
+      gray: 'bg-gray-200 dark:bg-dark-black-700',
+      pink: 'bg-accent-pink-50 dark:bg-accent-pink-900/30',
+      red: 'bg-accent-red-50 dark:bg-accent-red-900/30',
+      orange: 'bg-accent-orange-50 dark:bg-accent-orange-900/30',
+      blue: 'bg-accent-blue-50 dark:bg-accent-blue-900/30'
     }
   }
 });
@@ -93,11 +93,13 @@ const CardDescription = ({
 }: CardDescriptionProps) => {
   return (
     <div className="flex flex-col flex-1 gap-y-1 overflow-hidden">
-      <div className="w-full typo-para-medium text-gray-600 truncate capitalize">
+      <div className="w-full typo-para-medium text-gray-600 dark:text-dark-gray-200 truncate capitalize">
         {title}
       </div>
       {!isNil(count) && (
-        <p className="typo-head-bold-huge leading-6 text-gray-900">{count}</p>
+        <p className="typo-head-bold-huge leading-6 text-gray-900 dark:text-dark-gray-400">
+          {count}
+        </p>
       )}
       {(description || highlightText) && (
         <div className="flex items-center gap-x-2">
@@ -112,7 +114,7 @@ const CardDescription = ({
             </p>
           )}
           {description && (
-            <div className="w-full typo-para-small text-gray-600">
+            <div className="w-full typo-para-small text-gray-600 dark:text-dark-gray-200">
               {description}
             </div>
           )}
@@ -133,7 +135,7 @@ export const CardNote = ({
   return (
     <div
       className={cn(
-        'px-4 py-3 w-full typo-para-small text-gray-700 bg-white shadow-card-note rounded-xl overflow-hidden',
+        'px-4 py-3 w-full typo-para-small text-gray-700 dark:text-dark-gray-300 bg-white dark:bg-dark-black-800 shadow-card-note dark:shadow-dark-card rounded-xl overflow-hidden',
         className
       )}
     >
@@ -155,7 +157,7 @@ const OverviewCard = ({
   return (
     <div
       className={cn(
-        'flex flex-1 items-center p-4 gap-x-4 w-full min-w-[268px] bg-white shadow-card-secondary rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300',
+        'flex flex-1 items-center p-4 gap-x-4 w-full min-w-[268px] bg-white dark:bg-dark-black-800 shadow-card-secondary dark:shadow-dark-card rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300 dark:hover:shadow-dark-glow',
         className
       )}
       onClick={onClick}

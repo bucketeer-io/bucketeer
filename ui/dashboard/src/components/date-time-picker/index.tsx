@@ -57,6 +57,10 @@ export const ReactDatePicker = memo<ReactDatetimePickerProps>(
         )}
         className={cn(
           '!py-[11px] !pl-4 !pr-10 w-full disabled:border-gray-400 disabled:bg-gray-100',
+          'dark:!bg-dark-black-800 dark:!border-dark-purple-100 dark:!text-dark-gray-400',
+          'dark:hover:!border-dark-purple-300 dark:focus:!border-dark-purple-300',
+          'dark:placeholder:!text-dark-gray-200',
+          'dark:disabled:!bg-dark-black-700 dark:disabled:!border-dark-purple-100 dark:disabled:!text-dark-gray-400',
           className
         )}
         timeIntervals={timeIntervals}
