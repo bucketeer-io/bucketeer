@@ -743,14 +743,19 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 // markScheduledFlagChangeFailed persists the FAILED status in its own write,
 // outside any (rolled back) transaction, so the schedule is not retried by
-// the batch executor. The context passed here must NOT carry a transaction.
+// the batch executor. It uses a detached context so the write still succeeds
+// when the caller's context is already cancelled or past its deadline
+// (e.g. the batch executor's timeout).
 func (s *FeatureService) markScheduledFlagChangeFailed(
 	ctx context.Context,
 	sfc *domain.ScheduledFlagChange,
 	reason, environmentID string,
 ) {
+	writeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	sfc.MarkFailed(reason)
-	if err := s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctx, sfc); err != nil {
+	if err := s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(writeCtx, sfc); err != nil {
 		s.logger.Error(
 			"Failed to mark scheduled flag change as failed",
 			log.FieldsFromIncomingContext(ctx).AddFields(

@@ -460,9 +460,14 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 
 	// Simulate real transaction semantics: the callback error propagates
 	// and everything written inside the transaction is rolled back.
+	// A marker is added to the transaction context so we can verify the
+	// FAILED write does NOT happen on it (i.e. not inside the transaction).
+	type txCtxKey struct{}
+	var ctxWithTx context.Context
 	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, f func(context.Context) error) error {
-			return f(ctx)
+			ctxWithTx = context.WithValue(ctx, txCtxKey{}, true)
+			return f(ctxWithTx)
 		},
 	)
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
@@ -473,7 +478,11 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 	// otherwise the rollback would discard it and the batch executor would
 	// retry the same broken schedule forever.
 	scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, updated *domain.ScheduledFlagChange) error {
+		DoAndReturn(func(updateCtx context.Context, updated *domain.ScheduledFlagChange) error {
+			// The write must not use the transaction context, or it would
+			// be rolled back together with the failed transaction.
+			require.NotNil(t, ctxWithTx)
+			assert.Nil(t, updateCtx.Value(txCtxKey{}))
 			assert.Equal(
 				t,
 				featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_FAILED,
