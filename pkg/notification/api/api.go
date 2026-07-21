@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -144,7 +145,36 @@ func (s *NotificationService) ListDraftNotifications(
 	ctx context.Context,
 	req *proto.ListDraftNotificationsRequest,
 ) (*proto.ListDraftNotificationsResponse, error) {
-	return nil, statusNotImplemented
+	_, err := s.checkSystemAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	params := storage.ListDraftNotificationsParams{
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       int(req.PageSize),
+		Cursor:         req.Cursor,
+	}
+	notifications, nextOffset, totalCount, err := s.notificationStorage.ListDraftNotifications(ctx, params)
+	if err != nil {
+		if errors.Is(err, storage.ErrInvalidListDraftNotificationsCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, storage.ErrInvalidListDraftNotificationsOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		s.logger.Error(
+			"Failed to list draft notifications",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.ListDraftNotificationsResponse{
+		Notifications: notifications,
+		NextCursor:    strconv.Itoa(nextOffset),
+		TotalCount:    totalCount,
+	}, nil
 }
 
 func (s *NotificationService) CreateNotification(

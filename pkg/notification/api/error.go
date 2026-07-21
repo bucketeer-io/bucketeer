@@ -56,4 +56,14 @@ var (
 			"Content"))
 	statusNotificationAlreadyExists = api.NewGRPCStatus(
 		bkterr.NewErrorAlreadyExists(bkterr.NotificationPackageName, "already exists"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgNotMatchFormat(
+			bkterr.NotificationPackageName,
+			"cursor is invalid",
+			"Cursor"))
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgNotMatchFormat(
+			bkterr.NotificationPackageName,
+			"order_by is invalid",
+			"OrderBy"))
 )

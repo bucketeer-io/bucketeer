@@ -6995,6 +6995,38 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          description: Keyword matched against localization titles and contents.
+          in: query
+          required: false
+          type: string
       tags:
         - notification
   /v1/notifications/mark_all_as_read:
@@ -14200,8 +14232,33 @@ definitions:
     type: object
   notificationGetNotificationUnreadCountResponse:
     type: object
+  notificationListDraftNotificationsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListDraftNotificationsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   notificationListDraftNotificationsResponse:
     type: object
+    properties:
+      notifications:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotification'
+        description: Drafts with all localizations attached (editor view).
+      nextCursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   notificationListNotificationsResponse:
     type: object
   notificationMarkAllNotificationsAsReadRequest:

@@ -239,3 +239,132 @@ func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	}
 	return context.WithValue(context.TODO(), rpc.AccessTokenKey, accessToken)
 }
+
+func TestNotificationService_ListDraftNotifications(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	adminCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, true),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+	memberCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	drafts := []*proto.Notification{
+		{
+			Id:           "notification-id-0",
+			Status:       proto.Notification_DRAFT,
+			CreatedBy:    "admin@example.com",
+			LastEditedBy: "admin@example.com",
+			CreatedAt:    1,
+			UpdatedAt:    2,
+			Localizations: []*proto.NotificationLocalization{
+				{Language: "en", Title: "New feature", Content: "# New feature"},
+			},
+		},
+	}
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.ListDraftNotificationsRequest
+		expectedRes *proto.ListDraftNotificationsResponse
+		expectedErr error
+	}{
+		{
+			desc:        "err: unauthenticated",
+			ctx:         context.TODO(),
+			req:         &proto.ListDraftNotificationsRequest{},
+			expectedRes: nil,
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc:        "err: permission denied",
+			ctx:         memberCtx,
+			req:         &proto.ListDraftNotificationsRequest{},
+			expectedRes: nil,
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc: "err: invalid cursor",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), storage.ErrInvalidListDraftNotificationsCursor)
+			},
+			req:         &proto.ListDraftNotificationsRequest{Cursor: "invalid"},
+			expectedRes: nil,
+			expectedErr: statusInvalidCursor.Err(),
+		},
+		{
+			desc: "err: invalid order by",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), storage.ErrInvalidListDraftNotificationsOrderBy)
+			},
+			req:         &proto.ListDraftNotificationsRequest{},
+			expectedRes: nil,
+			expectedErr: statusInvalidOrderBy.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
+			},
+			req:         &proto.ListDraftNotificationsRequest{},
+			expectedRes: nil,
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+					gomock.Any(),
+					storage.ListDraftNotificationsParams{
+						SearchKeyword:  "feature",
+						OrderBy:        proto.ListDraftNotificationsRequest_UPDATED_AT,
+						OrderDirection: proto.ListDraftNotificationsRequest_DESC,
+						PageSize:       10,
+						Cursor:         "0",
+					},
+				).Return(drafts, 1, int64(1), nil)
+			},
+			req: &proto.ListDraftNotificationsRequest{
+				PageSize:       10,
+				Cursor:         "0",
+				OrderBy:        proto.ListDraftNotificationsRequest_UPDATED_AT,
+				OrderDirection: proto.ListDraftNotificationsRequest_DESC,
+				SearchKeyword:  "feature",
+			},
+			expectedRes: &proto.ListDraftNotificationsResponse{
+				Notifications: drafts,
+				NextCursor:    "1",
+				TotalCount:    1,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			res, err := s.ListDraftNotifications(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedRes, res)
+		})
+	}
+}

@@ -18,10 +18,12 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"strconv"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	notificationstorage "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
 	mysqlstorage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 var (
@@ -29,6 +31,12 @@ var (
 	insertNotificationSQL string
 	//go:embed sql/insert_notification_localization.sql
 	insertNotificationLocalizationSQL string
+	//go:embed sql/select_draft_notifications.sql
+	selectDraftNotificationsSQL string
+	//go:embed sql/count_draft_notifications.sql
+	countDraftNotificationsSQL string
+	//go:embed sql/select_notification_localizations.sql
+	selectNotificationLocalizationsSQL string
 )
 
 type notificationStorage struct {
@@ -77,4 +85,155 @@ func (s *notificationStorage) CreateNotification(
 		}
 	}
 	return nil
+}
+
+func listDraftNotificationsOrders(
+	orderBy proto.ListDraftNotificationsRequest_OrderBy,
+	orderDirection proto.ListDraftNotificationsRequest_OrderDirection,
+) ([]*mysqlstorage.Order, error) {
+	var column string
+	switch orderBy {
+	case proto.ListDraftNotificationsRequest_DEFAULT,
+		proto.ListDraftNotificationsRequest_CREATED_AT:
+		column = "notification.created_at"
+	case proto.ListDraftNotificationsRequest_UPDATED_AT:
+		column = "notification.updated_at"
+	default:
+		return nil, notificationstorage.ErrInvalidListDraftNotificationsOrderBy
+	}
+	direction := mysqlstorage.OrderDirectionAsc
+	if orderDirection == proto.ListDraftNotificationsRequest_DESC {
+		direction = mysqlstorage.OrderDirectionDesc
+	}
+	return []*mysqlstorage.Order{mysqlstorage.NewOrder(column, direction)}, nil
+}
+
+func (s *notificationStorage) ListDraftNotifications(
+	ctx context.Context,
+	p notificationstorage.ListDraftNotificationsParams,
+) ([]*proto.Notification, int, int64, error) {
+	orders, err := listDraftNotificationsOrders(p.OrderBy, p.OrderDirection)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	filters := []*mysqlstorage.FilterV2{
+		{
+			Column:   "notification.status",
+			Operator: mysqlstorage.OperatorEqual,
+			Value:    int32(proto.Notification_DRAFT),
+		},
+	}
+	var searchQuery *mysqlstorage.SearchQuery
+	if p.SearchKeyword != "" {
+		searchQuery = &mysqlstorage.SearchQuery{
+			Columns: []string{
+				"notification_localization.title",
+				"notification_localization.content",
+			},
+			Keyword: p.SearchKeyword,
+		}
+	}
+	cursor := p.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		return nil, 0, 0, notificationstorage.ErrInvalidListDraftNotificationsCursor
+	}
+	options := &mysqlstorage.ListOptions{
+		Filters:     filters,
+		SearchQuery: searchQuery,
+		Orders:      orders,
+		Limit:       p.PageSize,
+		Offset:      offset,
+	}
+	query, whereArgs := mysqlstorage.ConstructQueryAndWhereArgs(selectDraftNotificationsSQL, options)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	notifications := make([]*proto.Notification, 0, p.PageSize)
+	for rows.Next() {
+		notification := proto.Notification{}
+		var status int32
+		err := rows.Scan(
+			&notification.Id,
+			&status,
+			&notification.CreatedBy,
+			&notification.LastEditedBy,
+			&notification.CreatedAt,
+			&notification.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		notification.Status = proto.Notification_Status(status)
+		notifications = append(notifications, &notification)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, rows.Err()
+	}
+	if err := s.fillLocalizations(ctx, notifications); err != nil {
+		return nil, 0, 0, err
+	}
+	nextOffset := offset + len(notifications)
+	var totalCount int64
+	countQuery, countWhereArgs := mysqlstorage.ConstructCountQuery(countDraftNotificationsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return notifications, nextOffset, totalCount, nil
+}
+
+func (s *notificationStorage) fillLocalizations(
+	ctx context.Context,
+	notifications []*proto.Notification,
+) error {
+	if len(notifications) == 0 {
+		return nil
+	}
+	ids := make([]interface{}, 0, len(notifications))
+	byID := make(map[string]*proto.Notification, len(notifications))
+	for _, n := range notifications {
+		ids = append(ids, n.Id)
+		byID[n.Id] = n
+	}
+	options := &mysqlstorage.ListOptions{
+		InFilters: []*mysqlstorage.InFilter{
+			{
+				Column: "notification_localization.notification_id",
+				Values: ids,
+			},
+		},
+		Orders: []*mysqlstorage.Order{
+			mysqlstorage.NewOrder("notification_localization.language", mysqlstorage.OrderDirectionAsc),
+		},
+	}
+	query, whereArgs := mysqlstorage.ConstructQueryAndWhereArgs(selectNotificationLocalizationsSQL, options)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var notificationID string
+		localization := proto.NotificationLocalization{}
+		err := rows.Scan(
+			&notificationID,
+			&localization.Language,
+			&mysqlstorage.JSONObject{Val: &localization.Tags},
+			&localization.Title,
+			&localization.Content,
+		)
+		if err != nil {
+			return err
+		}
+		if n, ok := byID[notificationID]; ok {
+			n.Localizations = append(n.Localizations, &localization)
+		}
+	}
+	return rows.Err()
 }
