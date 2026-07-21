@@ -686,7 +686,16 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 				failureReason = "Feature not found"
 				return statusFeatureNotFound.Err()
 			}
-			return err
+			s.logger.Error(
+				"Failed to get feature for scheduled change execution",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("featureId", sfc.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
 		}
 
 		// Validate references still exist
