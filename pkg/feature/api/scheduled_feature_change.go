@@ -22,7 +22,10 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
@@ -688,7 +691,9 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 		// Validate references still exist
 		if err := s.validateScheduledChangePayload(ctxWithTx, sfc.Payload, feature.Feature, req.EnvironmentId); err != nil {
-			failureReason = err.Error()
+			if isPermanentScheduledChangeError(err) {
+				failureReason = err.Error()
+			}
 			return err
 		}
 
@@ -698,7 +703,9 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 		event, _, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, updateReq)
 		if err != nil {
-			failureReason = err.Error()
+			if isPermanentScheduledChangeError(err) {
+				failureReason = err.Error()
+			}
 			return err
 		}
 
@@ -739,6 +746,31 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	return &ftproto.ExecuteScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
 	}, nil
+}
+
+// isPermanentScheduledChangeError reports whether an execution error is
+// permanent (caused by the schedule's payload or the flag's current state)
+// as opposed to transient (storage/infrastructure). Only permanent errors
+// should mark the schedule FAILED; transient errors leave it PENDING so the
+// batch executor retries it.
+func isPermanentScheduledChangeError(err error) bool {
+	st, ok := status.FromError(err)
+	if !ok {
+		// Not a gRPC status error: domain validation errors (pkg/error
+		// BktError) are mapped to their equivalent gRPC code; raw storage
+		// errors map to Unknown and are treated as transient.
+		st = api.NewGRPCStatus(err)
+	}
+	switch st.Code() {
+	case codes.InvalidArgument,
+		codes.NotFound,
+		codes.AlreadyExists,
+		codes.FailedPrecondition,
+		codes.OutOfRange:
+		return true
+	default:
+		return false
+	}
 }
 
 // markScheduledFlagChangeFailed persists the FAILED status in its own write,
@@ -963,7 +995,13 @@ func (s *FeatureService) validateScheduledChangePayload(
 			}
 			prereqFeature, err := s.featureStorage.GetFeature(ctx, pc.Prerequisite.FeatureId, environmentID)
 			if err != nil {
-				return statusInvalidPrerequisiteReference.Err()
+				if errors.Is(err, v2fs.ErrFeatureNotFound) {
+					return statusInvalidPrerequisiteReference.Err()
+				}
+				// Transient storage error: don't misreport it as an invalid
+				// reference, or execution would permanently mark the schedule
+				// FAILED instead of retrying.
+				return statusInternal.Err()
 			}
 			if !domain.VariationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
 				return statusInvalidPrerequisiteReference.Err()

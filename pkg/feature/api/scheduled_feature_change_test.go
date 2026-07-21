@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -498,6 +499,74 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 		Id:            "sfc-id",
 	})
 	assert.Equal(t, statusInvalidRuleReference.Err(), err)
+}
+
+func TestExecuteScheduledFlagChange_TransientErrorKeepsSchedulePending(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		ctrl,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Environment_EDITOR,
+	)
+
+	dbClient := service.dbClient.(*databasemock.MockClient)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:      "feature-id",
+			Name:    "Test Feature",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{Id: "var-1", Name: "Variation 1", Value: "true"},
+			},
+		},
+	}
+
+	sfc := &featureproto.ScheduledFlagChange{
+		Id:            "sfc-id",
+		FeatureId:     "feature-id",
+		EnvironmentId: "ns0",
+		ScheduledAt:   time.Now().Add(-time.Minute).Unix(),
+		Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		Payload: &featureproto.ScheduledChangePayload{
+			PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Prerequisite: &featureproto.Prerequisite{
+						FeatureId:   "prereq-feature-id",
+						VariationId: "prereq-var-1",
+					},
+				},
+			},
+		},
+	}
+
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
+		},
+	)
+	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
+		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+	// The prerequisite lookup fails with a transient storage error (not "not found").
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "prereq-feature-id", "ns0").
+		Return(nil, errors.New("db connection lost"))
+
+	// No UpdateScheduledFlagChange expectation: a transient error must NOT
+	// mark the schedule FAILED, so it stays PENDING and is retried later.
+
+	ctx := createContextWithToken()
+	_, err := service.ExecuteScheduledFlagChange(ctx, &featureproto.ExecuteScheduledFlagChangeRequest{
+		EnvironmentId: "ns0",
+		Id:            "sfc-id",
+	})
+	assert.Equal(t, statusInternal.Err(), err)
 }
 
 func TestGetScheduledFlagChangeSummary_Success(t *testing.T) {
