@@ -645,6 +645,13 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 	var sfc *domain.ScheduledFlagChange
 	var event *eventproto.Event
+	// Failure reason for permanent (non-retryable) failures. It must be
+	// persisted OUTSIDE the transaction: returning an error from the
+	// transaction callback rolls back everything, including any status
+	// update written inside it. Persisting FAILED after the rollback
+	// prevents the batch executor from retrying the same broken schedule
+	// forever.
+	var failureReason string
 
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
@@ -673,8 +680,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 		feature, err := s.featureStorage.GetFeature(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2fs.ErrFeatureNotFound) {
-				sfc.MarkFailed("Feature not found")
-				_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+				failureReason = "Feature not found"
 				return statusFeatureNotFound.Err()
 			}
 			return err
@@ -682,8 +688,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 		// Validate references still exist
 		if err := s.validateScheduledChangePayload(ctxWithTx, sfc.Payload, feature.Feature, req.EnvironmentId); err != nil {
-			sfc.MarkFailed(err.Error())
-			_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+			failureReason = err.Error()
 			return err
 		}
 
@@ -693,8 +698,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 		event, _, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, updateReq)
 		if err != nil {
-			sfc.MarkFailed(err.Error())
-			_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+			failureReason = err.Error()
 			return err
 		}
 
@@ -705,6 +709,9 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	})
 
 	if err != nil {
+		if failureReason != "" && sfc != nil {
+			s.markScheduledFlagChangeFailed(ctx, sfc, failureReason, req.EnvironmentId)
+		}
 		s.logger.Error(
 			"Failed to execute scheduled flag change",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -732,6 +739,29 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	return &ftproto.ExecuteScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
 	}, nil
+}
+
+// markScheduledFlagChangeFailed persists the FAILED status in its own write,
+// outside any (rolled back) transaction, so the schedule is not retried by
+// the batch executor. The context passed here must NOT carry a transaction.
+func (s *FeatureService) markScheduledFlagChangeFailed(
+	ctx context.Context,
+	sfc *domain.ScheduledFlagChange,
+	reason, environmentID string,
+) {
+	sfc.MarkFailed(reason)
+	if err := s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctx, sfc); err != nil {
+		s.logger.Error(
+			"Failed to mark scheduled flag change as failed",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", sfc.Id),
+				zap.String("featureId", sfc.FeatureId),
+				zap.String("environmentId", environmentID),
+				zap.String("failureReason", reason),
+			)...,
+		)
+	}
 }
 
 func (s *FeatureService) GetScheduledFlagChangeSummary(
