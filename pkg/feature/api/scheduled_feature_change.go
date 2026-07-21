@@ -783,7 +783,12 @@ func (s *FeatureService) markScheduledFlagChangeFailed(
 	sfc *domain.ScheduledFlagChange,
 	reason, environmentID string,
 ) {
-	writeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// WithoutCancel detaches cancellation/deadline (so the write succeeds
+	// even if the caller's context is already cancelled) while preserving
+	// request-scoped values such as trace IDs. The caller's context never
+	// carries a transaction: RunInTransactionV2 only injects it into the
+	// callback's context, so this write always goes to the pool.
+	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 
 	sfc.MarkFailed(reason)
