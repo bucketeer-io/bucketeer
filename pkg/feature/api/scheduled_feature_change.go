@@ -22,7 +22,10 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
@@ -645,6 +648,13 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 	var sfc *domain.ScheduledFlagChange
 	var event *eventproto.Event
+	// Failure reason for permanent (non-retryable) failures. It must be
+	// persisted OUTSIDE the transaction: returning an error from the
+	// transaction callback rolls back everything, including any status
+	// update written inside it. Persisting FAILED after the rollback
+	// prevents the batch executor from retrying the same broken schedule
+	// forever.
+	var failureReason string
 
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
@@ -673,17 +683,26 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 		feature, err := s.featureStorage.GetFeature(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2fs.ErrFeatureNotFound) {
-				sfc.MarkFailed("Feature not found")
-				_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+				failureReason = "Feature not found"
 				return statusFeatureNotFound.Err()
 			}
-			return err
+			s.logger.Error(
+				"Failed to get feature for scheduled change execution",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("featureId", sfc.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
 		}
 
 		// Validate references still exist
 		if err := s.validateScheduledChangePayload(ctxWithTx, sfc.Payload, feature.Feature, req.EnvironmentId); err != nil {
-			sfc.MarkFailed(err.Error())
-			_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+			if isPermanentScheduledChangeError(err) {
+				failureReason = err.Error()
+			}
 			return err
 		}
 
@@ -693,8 +712,9 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 
 		event, _, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, updateReq)
 		if err != nil {
-			sfc.MarkFailed(err.Error())
-			_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+			if isPermanentScheduledChangeError(err) {
+				failureReason = err.Error()
+			}
 			return err
 		}
 
@@ -705,6 +725,9 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	})
 
 	if err != nil {
+		if failureReason != "" && sfc != nil {
+			s.markScheduledFlagChangeFailed(ctx, sfc, failureReason, req.EnvironmentId)
+		}
 		s.logger.Error(
 			"Failed to execute scheduled flag change",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -732,6 +755,64 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	return &ftproto.ExecuteScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
 	}, nil
+}
+
+// isPermanentScheduledChangeError reports whether an execution error is
+// permanent (caused by the schedule's payload or the flag's current state)
+// as opposed to transient (storage/infrastructure). Only permanent errors
+// should mark the schedule FAILED; transient errors leave it PENDING so the
+// batch executor retries it.
+func isPermanentScheduledChangeError(err error) bool {
+	st, ok := status.FromError(err)
+	if !ok {
+		// Not a gRPC status error: domain validation errors (pkg/error
+		// BktError) are mapped to their equivalent gRPC code; raw storage
+		// errors map to Unknown and are treated as transient.
+		st = api.NewGRPCStatus(err)
+	}
+	switch st.Code() {
+	case codes.InvalidArgument,
+		codes.NotFound,
+		codes.AlreadyExists,
+		codes.FailedPrecondition,
+		codes.OutOfRange:
+		return true
+	default:
+		return false
+	}
+}
+
+// markScheduledFlagChangeFailed persists the FAILED status in its own write,
+// outside any (rolled back) transaction, so the schedule is not retried by
+// the batch executor. It uses a detached context so the write still succeeds
+// when the caller's context is already cancelled or past its deadline
+// (e.g. the batch executor's timeout).
+func (s *FeatureService) markScheduledFlagChangeFailed(
+	ctx context.Context,
+	sfc *domain.ScheduledFlagChange,
+	reason, environmentID string,
+) {
+	// WithoutCancel detaches cancellation/deadline (so the write succeeds
+	// even if the caller's context is already cancelled) while preserving
+	// request-scoped values such as trace IDs. The caller's context never
+	// carries a transaction: RunInTransactionV2 only injects it into the
+	// callback's context, so this write always goes to the pool.
+	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+
+	sfc.MarkFailed(reason)
+	if err := s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(writeCtx, sfc); err != nil {
+		s.logger.Error(
+			"Failed to mark scheduled flag change as failed",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", sfc.Id),
+				zap.String("featureId", sfc.FeatureId),
+				zap.String("environmentId", environmentID),
+				zap.String("failureReason", reason),
+			)...,
+		)
+	}
 }
 
 func (s *FeatureService) GetScheduledFlagChangeSummary(
@@ -928,7 +1009,13 @@ func (s *FeatureService) validateScheduledChangePayload(
 			}
 			prereqFeature, err := s.featureStorage.GetFeature(ctx, pc.Prerequisite.FeatureId, environmentID)
 			if err != nil {
-				return statusInvalidPrerequisiteReference.Err()
+				if errors.Is(err, v2fs.ErrFeatureNotFound) {
+					return statusInvalidPrerequisiteReference.Err()
+				}
+				// Transient storage error: don't misreport it as an invalid
+				// reference, or execution would permanently mark the schedule
+				// FAILED instead of retrying.
+				return statusInternal.Err()
 			}
 			if !domain.VariationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
 				return statusInvalidPrerequisiteReference.Err()
