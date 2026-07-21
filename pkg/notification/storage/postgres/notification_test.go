@@ -182,6 +182,40 @@ func TestListDraftNotifications(t *testing.T) {
 			expectedErr: notificationstorage.ErrInvalidListDraftNotificationsCursor,
 		},
 		{
+			desc: "ErrInvalidListDraftNotificationsCursor: negative",
+			params: notificationstorage.ListDraftNotificationsParams{
+				Cursor: "-1",
+			},
+			expectedErr: notificationstorage.ErrInvalidListDraftNotificationsCursor,
+		},
+		{
+			desc: "Success: negative page size clamped",
+			setup: func(s *notificationStorage) {
+				listRows := mock.NewMockRows(mockController)
+				listRows.EXPECT().Close().Return(nil)
+				listRows.EXPECT().Next().Return(false)
+				listRows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(listRows, nil)
+				countRow := mock.NewMockRow(mockController)
+				countRow.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+					*args[0].(*int64) = int64(0)
+					return nil
+				})
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(countRow)
+			},
+			params: notificationstorage.ListDraftNotificationsParams{
+				PageSize: -1,
+			},
+			expected:       []*proto.Notification{},
+			expectedCursor: 0,
+			expectedCount:  0,
+			expectedErr:    nil,
+		},
+		{
 			desc: "Error",
 			setup: func(s *notificationStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(

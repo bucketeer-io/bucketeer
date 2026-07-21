@@ -138,14 +138,18 @@ func (s *notificationStorage) ListDraftNotifications(
 		cursor = "0"
 	}
 	offset, err := strconv.Atoi(cursor)
-	if err != nil {
+	if err != nil || offset < 0 {
 		return nil, 0, 0, notificationstorage.ErrInvalidListDraftNotificationsCursor
+	}
+	limit := p.PageSize
+	if limit < 0 {
+		limit = 0
 	}
 	options := &mysqlstorage.ListOptions{
 		Filters:     filters,
 		SearchQuery: searchQuery,
 		Orders:      orders,
-		Limit:       p.PageSize,
+		Limit:       limit,
 		Offset:      offset,
 	}
 	query, whereArgs := mysqlstorage.ConstructQueryAndWhereArgs(selectDraftNotificationsSQL, options)
@@ -154,7 +158,7 @@ func (s *notificationStorage) ListDraftNotifications(
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	notifications := make([]*proto.Notification, 0, p.PageSize)
+	notifications := make([]*proto.Notification, 0, limit)
 	for rows.Next() {
 		notification := proto.Notification{}
 		var status int32
