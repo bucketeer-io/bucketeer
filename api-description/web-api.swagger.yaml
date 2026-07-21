@@ -14182,8 +14182,18 @@ definitions:
         title: Sorted by yearmonth ascending
   notificationCreateNotificationRequest:
     type: object
+    properties:
+      localizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationLocalization'
+        description: At least one localization is required; languages must be unique.
   notificationCreateNotificationResponse:
     type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
   notificationDeleteNotificationResponse:
     type: object
   notificationGetNotificationResponse:
@@ -14202,6 +14212,72 @@ definitions:
     type: object
   notificationMarkNotificationsAsReadResponse:
     type: object
+  notificationNotification:
+    type: object
+    properties:
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/notificationNotificationStatus'
+      createdBy:
+        type: string
+      lastEditedBy:
+        type: string
+      publishedBy:
+        type: string
+      publishedAt:
+        type: string
+        format: int64
+        description: Epoch seconds; 0 while draft.
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      localization:
+        $ref: '#/definitions/notificationNotificationLocalization'
+        description: |-
+          Localization resolved to the requested language, falling back to
+          English, then to whichever localization exists.
+      localizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationLocalization'
+        description: All localizations; populated only for system admins (editor).
+      read:
+        type: boolean
+        description: Whether the requesting user has read this notification.
+  notificationNotificationLocalization:
+    type: object
+    properties:
+      language:
+        type: string
+        description: BCP 47 language code, e.g. "en", "ja".
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationTag'
+      title:
+        type: string
+      content:
+        type: string
+        description: Markdown source.
+  notificationNotificationStatus:
+    type: string
+    enum:
+      - DRAFT
+      - PUBLISHED
+    default: DRAFT
+  notificationNotificationTag:
+    type: object
+    properties:
+      name:
+        type: string
+      color:
+        type: string
   notificationPublishNotificationRequest:
     type: object
   notificationPublishNotificationResponse:

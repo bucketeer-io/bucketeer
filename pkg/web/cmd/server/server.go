@@ -90,6 +90,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/v2/pkg/notification/api"
+	notificationstorage "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
+	notificationmysql "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/mysql"
+	notificationpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/postgres"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	opseventmysql "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mysql"
 	opseventpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/postgres"
@@ -621,6 +624,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var subscriptionStorage v2ns.SubscriptionStorage
 	var adminSubscriptionStorage v2ns.AdminSubscriptionStorage
 	var teamStorage teamstorage.TeamStorage
+	var notificationStorage notificationstorage.NotificationStorage
 	var scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
@@ -655,6 +659,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		subscriptionStorage = subscriptionpostgres.NewSubscriptionStorage(postgresClient)
 		adminSubscriptionStorage = subscriptionpostgres.NewAdminSubscriptionStorage(postgresClient)
 		teamStorage = teampostgres.NewTeamStorage(postgresClient)
+		notificationStorage = notificationpostgres.NewNotificationStorage(postgresClient)
 		scheduledFlagChangeStorage = featurepostgres.NewScheduledFlagChangeStorage(postgresClient)
 	} else {
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
@@ -682,6 +687,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		subscriptionStorage = subscriptionmysql.NewSubscriptionStorage(mysqlClient)
 		adminSubscriptionStorage = subscriptionmysql.NewAdminSubscriptionStorage(mysqlClient)
 		teamStorage = teammysql.NewTeamStorage(mysqlClient)
+		notificationStorage = notificationmysql.NewNotificationStorage(mysqlClient)
 		scheduledFlagChangeStorage = featuremysql.NewScheduledFlagChangeStorage(mysqlClient)
 	}
 
@@ -1142,6 +1148,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
+		dbClient,
+		notificationStorage,
 		notificationapi.WithLogger(logger),
 	)
 	notificationServer := rpc.NewServer(notificationService, *s.certPath, *s.keyPath,

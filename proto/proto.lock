@@ -46090,10 +46090,25 @@
             "name": "ListDraftNotificationsResponse"
           },
           {
-            "name": "CreateNotificationRequest"
+            "name": "CreateNotificationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "localizations",
+                "type": "NotificationLocalization",
+                "is_repeated": true
+              }
+            ]
           },
           {
-            "name": "CreateNotificationResponse"
+            "name": "CreateNotificationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "notification",
+                "type": "Notification"
+              }
+            ]
           },
           {
             "name": "UpdateNotificationRequest"
@@ -47732,6 +47747,9 @@
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
+          {
+            "path": "proto/notification/notification.proto"
           }
         ],
         "package": {

@@ -16,16 +16,23 @@ package api
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
-
-var statusNotImplemented = gstatus.Error(codes.Unimplemented, "notification: not implemented")
 
 type options struct {
 	logger *zap.Logger
@@ -40,11 +47,17 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type NotificationService struct {
-	opts   *options
-	logger *zap.Logger
+	dbClient            database.Client
+	notificationStorage storage.NotificationStorage
+	opts                *options
+	logger              *zap.Logger
 }
 
-func NewNotificationService(opts ...Option) *NotificationService {
+func NewNotificationService(
+	dbClient database.Client,
+	notificationStorage storage.NotificationStorage,
+	opts ...Option,
+) *NotificationService {
 	dopts := &options{
 		logger: zap.NewNop(),
 	}
@@ -52,13 +65,44 @@ func NewNotificationService(opts ...Option) *NotificationService {
 		opt(dopts)
 	}
 	return &NotificationService{
-		opts:   dopts,
-		logger: dopts.logger.Named("api"),
+		dbClient:            dbClient,
+		notificationStorage: notificationStorage,
+		opts:                dopts,
+		logger:              dopts.logger.Named("api"),
 	}
 }
 
 func (s *NotificationService) Register(server *grpc.Server) {
 	proto.RegisterNotificationServiceServer(server, s)
+}
+
+func (s *NotificationService) checkSystemAdminRole(
+	ctx context.Context,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckSystemAdminRole(ctx)
+	if err != nil {
+		switch gstatus.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Error(
+				"Unauthenticated",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return nil, statusUnauthenticated.Err()
+		case codes.PermissionDenied:
+			s.logger.Error(
+				"Permission denied",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return nil, statusPermissionDenied.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return nil, api.NewGRPCStatus(err).Err()
+		}
+	}
+	return editor, nil
 }
 
 func (s *NotificationService) ListNotifications(
@@ -107,7 +151,69 @@ func (s *NotificationService) CreateNotification(
 	ctx context.Context,
 	req *proto.CreateNotificationRequest,
 ) (*proto.CreateNotificationResponse, error) {
-	return nil, statusNotImplemented
+	editor, err := s.checkSystemAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateCreateNotificationRequest(req); err != nil {
+		s.logger.Error(
+			"Failed to validate create notification request",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	notification, err := domain.NewNotification(editor.Email, req.Localizations)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create new notification",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		return s.notificationStorage.CreateNotification(ctxWithTx, notification)
+	})
+	if err != nil {
+		if errors.Is(err, storage.ErrNotificationAlreadyExists) {
+			return nil, statusNotificationAlreadyExists.Err()
+		}
+		s.logger.Error(
+			"Failed to create notification",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("notificationId", notification.Id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.CreateNotificationResponse{
+		Notification: notification.Notification,
+	}, nil
+}
+
+func validateCreateNotificationRequest(req *proto.CreateNotificationRequest) error {
+	if len(req.Localizations) == 0 {
+		return statusLocalizationRequired.Err()
+	}
+	languages := make(map[string]struct{}, len(req.Localizations))
+	for _, l := range req.Localizations {
+		l.Language = strings.TrimSpace(l.Language)
+		l.Title = strings.TrimSpace(l.Title)
+		if l.Language == "" {
+			return statusLanguageRequired.Err()
+		}
+		if _, ok := languages[l.Language]; ok {
+			return statusDuplicatedLanguage.Err()
+		}
+		languages[l.Language] = struct{}{}
+		if l.Title == "" {
+			return statusTitleRequired.Err()
+		}
+		if strings.TrimSpace(l.Content) == "" {
+			return statusContentRequired.Err()
+		}
+	}
+	return nil
 }
 
 func (s *NotificationService) UpdateNotification(
