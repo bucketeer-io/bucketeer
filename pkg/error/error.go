@@ -25,6 +25,7 @@ const (
 	AccountPackageName      = "account"
 	FeaturePackageName      = "feature"
 	SubscriptionPackageName = "subscription"
+	NotificationPackageName = "notification"
 	PushPackageName         = "push"
 	TagPackageName          = "tag"
 	EventCounterPackageName = "eventcounter"

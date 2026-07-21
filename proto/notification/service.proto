@@ -20,6 +20,8 @@ option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/notification";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
+import "proto/notification/notification.proto";
+
 // NOTE: request/response bodies are intentionally left empty for now; fields
 // will be filled in once the notification center design is finalized.
 
@@ -47,9 +49,14 @@ message ListDraftNotificationsRequest {}
 
 message ListDraftNotificationsResponse {}
 
-message CreateNotificationRequest {}
+message CreateNotificationRequest {
+  // At least one localization is required; languages must be unique.
+  repeated NotificationLocalization localizations = 1;
+}
 
-message CreateNotificationResponse {}
+message CreateNotificationResponse {
+  Notification notification = 1;
+}
 
 message UpdateNotificationRequest {}
 
