@@ -19,7 +19,7 @@ data:
       address:
         socket_address:
           address: 0.0.0.0
-          port_value: 8001
+          port_value: {{ .Values.envoy.adminPort }}
     static_resources:
       clusters:
         - name: healthcheck
@@ -35,7 +35,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 8000
+                          port_value: {{ .Values.env.healthCheckServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -66,7 +66,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9091
+                          port_value: {{ .Values.env.accountServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -98,7 +98,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9092
+                          port_value: {{ .Values.env.authServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -129,7 +129,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9093
+                          port_value: {{ .Values.env.auditLogServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -161,7 +161,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9094
+                          port_value: {{ .Values.env.autoOpsServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -225,7 +225,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9095
+                          port_value: {{ .Values.env.environmentServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -257,7 +257,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9096
+                          port_value: {{ .Values.env.eventCounterServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -289,7 +289,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9097
+                          port_value: {{ .Values.env.experimentServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -321,7 +321,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9098
+                          port_value: {{ .Values.env.featureServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -353,7 +353,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9100
+                          port_value: {{ .Values.env.subscriptionServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -417,7 +417,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9101
+                          port_value: {{ .Values.env.pushServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -449,7 +449,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9105
+                          port_value: {{ .Values.env.coderefServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -481,7 +481,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9103
+                          port_value: {{ .Values.env.dashboardServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -513,7 +513,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9104
+                          port_value: {{ .Values.env.tagServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -544,7 +544,7 @@ data:
                     address:
                       socket_address:
                         address: localhost
-                        port_value: 9107
+                        port_value: {{ .Values.env.teamServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -576,7 +576,7 @@ data:
                     address:
                       socket_address:
                         address: localhost
-                        port_value: 9108
+                        port_value: {{ .Values.env.insightsServicePort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -632,7 +632,7 @@ data:
           address:
             socket_address:
               address: 0.0.0.0
-              port_value: 9000
+              port_value: {{ .Values.envoy.grpcPort }}
           filter_chains:
             - filters:
                 - name: envoy.filters.network.http_connection_manager
@@ -837,7 +837,7 @@ data:
           address:
             socket_address:
               address: 0.0.0.0
-              port_value: 9003
+              port_value: {{ .Values.envoy.httpPort }}
           filter_chains:
             - filters:
                 - name: envoy.filters.network.http_connection_manager

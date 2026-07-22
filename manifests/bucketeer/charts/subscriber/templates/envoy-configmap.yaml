@@ -20,7 +20,7 @@ data:
       address:
         socket_address:
           address: 0.0.0.0
-          port_value: 8001
+          port_value: {{ .Values.envoy.adminPort }}
     static_resources:
       clusters:
         - name: batch
