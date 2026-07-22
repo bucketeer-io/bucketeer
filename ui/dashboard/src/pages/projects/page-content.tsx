@@ -2,7 +2,8 @@ import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Project } from '@types';
@@ -13,6 +14,7 @@ import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterProjectModal from './project-modal/filter-project-modal';
@@ -26,6 +28,8 @@ const PageContent = ({
   onEdit: (v: Project) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { isMobile } = useScreen();
+  const { projectSortByOptions, flagSortDirectionOptions } = useOptions();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
@@ -57,9 +61,12 @@ const PageContent = ({
     [filters]
   );
 
-  const onActionHandler = useCallback((project: Project) => {
-    onEdit(project);
-  }, []);
+  const onActionHandler = useCallback(
+    (project: Project) => {
+      onEdit(project);
+    },
+    [onEdit]
+  );
 
   const onClearFilters = useCallback(
     () => setFilters({ searchQuery: '', disabled: undefined }),
@@ -80,20 +87,30 @@ const PageContent = ({
         placeholder={t('form:name-email-search-placeholder')}
         name="projects-list-search"
         action={
-          <DisabledButtonTooltip
-            hidden={envEditable && isOrganizationAdmin}
-            type={!isOrganizationAdmin ? 'admin' : 'editor'}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!envEditable || !isOrganizationAdmin}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-project`)}
-              </Button>
-            }
-          />
+          <>
+            {!!isMobile && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={projectSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              hidden={envEditable && isOrganizationAdmin}
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!envEditable || !isOrganizationAdmin}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-project`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

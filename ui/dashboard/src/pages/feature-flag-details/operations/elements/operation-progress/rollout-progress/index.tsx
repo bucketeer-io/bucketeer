@@ -92,8 +92,8 @@ const RolloutProgress = ({
   };
 
   return (
-    <div className="flex flex-col w-full gap-y-4">
-      <div className="flex items-center gap-x-2">
+    <div className="flex flex-col w-full gap-y-4 overflow-x-scroll small-scroll">
+      <div className="flex items-center gap-x-2 min-w-[900px]">
         <OperationDescription
           titleKey={'form:start-date-value'}
           value={
@@ -108,7 +108,6 @@ const RolloutProgress = ({
               titleKey={'form:target-variation-value'}
               value={
                 <VariationLabel
-                  asChild={false}
                   label={targetVariationHash.variation}
                   index={targetVariationHash.index}
                   className="max-w-[200px] mt-[2px]"
@@ -120,7 +119,6 @@ const RolloutProgress = ({
               titleKey={'form:control-variation-value'}
               value={
                 <VariationLabel
-                  asChild={false}
                   label={controlVariationHash.variation}
                   index={controlVariationHash.index}
                   className="max-w-[200px] mt-[2px]"
@@ -132,7 +130,7 @@ const RolloutProgress = ({
         )}
       </div>
       {!!currentAllocationPercentage.length && isActive && (
-        <div className="hover:cursor-pointer typo-para-medium pb-3">
+        <div className="hover:cursor-pointer typo-para-medium pb-3 min-w-[900px]">
           <p className="text-gray-600 pb-2">
             {t('form:operation.current-variation-title')}
           </p>
@@ -190,7 +188,7 @@ const RolloutProgress = ({
           />
         </div>
       )}
-      <div className="p-12 pb-16 bg-gray-100 rounded-lg">
+      <div className="p-12 pb-16 bg-gray-100 rounded-lg min-w-[900px]">
         <div className="flex relative h-1">
           <ProgressDateTimePoint
             displayLabel={`${firstSchedule.weight || 0}%`}

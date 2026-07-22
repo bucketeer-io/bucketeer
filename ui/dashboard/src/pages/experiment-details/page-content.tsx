@@ -14,7 +14,7 @@ const PageContent = ({ experiment }: { experiment: Experiment }) => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout.Content className="p-6">
+    <PageLayout.Content className="p-3 sm:p-6">
       <Tabs
         className="flex-1 flex h-full flex-col"
         value={currentTab}

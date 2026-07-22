@@ -87,7 +87,7 @@ const IndividualRule = ({
         )}
       </div>
       {individualRules.map((item, index) => {
-        const userWatch = individualRulesWatch[index]?.users ?? [];
+        const userWatch = individualRulesWatch?.[index]?.users || [];
         return (
           <div key={index} className="flex flex-col w-full gap-y-4">
             <Form.Field
@@ -102,7 +102,7 @@ const IndividualRule = ({
                       <p>{item?.name}</p>
                     </Form.Label>
                     <Form.Control>
-                      <div className="flex items-center w-full gap-x-2">
+                      <div className="flex items-center w-full min-w-0 gap-x-2">
                         <CreatableSelect
                           value={userWatch.map((item: string) => ({
                             label: item,
@@ -121,7 +121,7 @@ const IndividualRule = ({
                               field.onChange(options.map(o => o.value));
                             }
                           }}
-                          className="w-full"
+                          className="w-full min-w-0 max-w-full"
                           formatCreateLabel={v => {
                             const isAlreadyExisted =
                               getAlreadyTargetedVariation(

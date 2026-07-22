@@ -37,6 +37,7 @@
   "yes": "Yes",
   "no": "No",
   "if": "IF",
+  "is": "is",
   "clear": "Clear",
   "confirm": "Confirm",
   "close": "Close",
@@ -120,6 +121,7 @@
     "feature-flag": "Feature Flag",
     "feature-flag-description": "Get notified when someone adds or updates a feature flag",
     "goal": "Goal",
+    "goal-value": "{{value}} Goal",
     "goal-description": "Get notified when someone adds or updates a goal",
     "mau-count": "Monthly Active Users count",
     "mau-count-description": "Get notified the monthly active users count on the first day of every month",
@@ -220,6 +222,7 @@
   "see-more": "See more",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
+  "sort-by-placeholder": "Sort by",
   "sort-asc": "Ascending",
   "sort-desc": "Descending",
   "no-options-found": "No options found",
@@ -384,5 +387,9 @@
         }
       }
     }
-    }
+    },
+  "detail": "Detail",
+  "last-seen": "Last seen",
+  "time-stop": "Time stop",
+  "time-start": "Time start"
 }

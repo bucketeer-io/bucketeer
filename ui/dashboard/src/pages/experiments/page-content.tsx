@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Experiment, ExperimentCollection, ExperimentStatus } from '@types';
@@ -14,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterExperimentModal from './experiments-modal/filter-experiment-modal';
@@ -37,6 +39,8 @@ const PageContent = ({
   onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { isMobile } = useScreen();
+  const { experimentSortByOptions, flagSortDirectionOptions } = useOptions();
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ExperimentFilters> = searchOptions;
@@ -101,7 +105,7 @@ const PageContent = ({
       maintainer: undefined
     });
     onCloseFilterModal();
-  }, []);
+  }, [onCloseFilterModal]);
 
   const onChangeTab = useCallback(
     (status: ExperimentTab) => {
@@ -155,19 +159,29 @@ const PageContent = ({
         name="experiments-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            hidden={!disabled}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={disabled}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-experiment`)}
-              </Button>
-            }
-          />
+          <>
+            {!!isMobile && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={experimentSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              hidden={!disabled}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={disabled}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-experiment`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}
@@ -207,14 +221,14 @@ const PageContent = ({
         value={filters.status}
         onValueChange={status => onChangeTab(status as ExperimentTab)}
       >
-        <TabsList className={isHiddenTab ? 'hidden' : 'px-6'}>
+        <TabsList className={isHiddenTab ? 'hidden' : 'px-3 sm:px-6'}>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="FINISHED">{t(`finished`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={(filters.status as string) || ''} className="mt-0">
-          <TableListContainer>
+          <TableListContainer className="relative">
             <CollectionLoader
               onAdd={onAdd}
               filters={filters}
