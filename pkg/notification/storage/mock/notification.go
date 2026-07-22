@@ -13,10 +13,11 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "go.uber.org/mock/gomock"
+
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	storage "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
 	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
-	gomock "go.uber.org/mock/gomock"
 )
 
 // MockNotificationStorage is a mock of NotificationStorage interface.
