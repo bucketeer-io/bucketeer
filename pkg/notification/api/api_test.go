@@ -355,6 +355,46 @@ func TestNotificationService_ListDraftAdminNotifications(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: page size defaults to max when not set",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftAdminNotifications(
+					gomock.Any(),
+					storage.ListDraftAdminNotificationsParams{
+						PageSize: maxNotificationPageSize,
+					},
+				).Return(drafts, 1, int64(1), nil)
+			},
+			req: &proto.ListDraftAdminNotificationsRequest{},
+			expectedRes: &proto.ListDraftAdminNotificationsResponse{
+				Notifications: drafts,
+				NextCursor:    "1",
+				TotalCount:    1,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: page size is capped at max",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftAdminNotifications(
+					gomock.Any(),
+					storage.ListDraftAdminNotificationsParams{
+						PageSize: maxNotificationPageSize,
+					},
+				).Return(drafts, 1, int64(1), nil)
+			},
+			req: &proto.ListDraftAdminNotificationsRequest{
+				PageSize: maxNotificationPageSize + 1,
+			},
+			expectedRes: &proto.ListDraftAdminNotificationsResponse{
+				Notifications: drafts,
+				NextCursor:    "1",
+				TotalCount:    1,
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

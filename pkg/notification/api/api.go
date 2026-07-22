@@ -35,6 +35,12 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
+const (
+	// Maximum page size for notifications. Also used as default when page_size
+	// is not set or exceeds this value.
+	maxNotificationPageSize = 200
+)
+
 type options struct {
 	logger *zap.Logger
 }
@@ -149,11 +155,15 @@ func (s *NotificationService) ListDraftAdminNotifications(
 	if err != nil {
 		return nil, err
 	}
+	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxNotificationPageSize {
+		limit = maxNotificationPageSize
+	}
 	params := storage.ListDraftAdminNotificationsParams{
 		SearchKeyword:  req.SearchKeyword,
 		OrderBy:        req.OrderBy,
 		OrderDirection: req.OrderDirection,
-		PageSize:       int(req.PageSize),
+		PageSize:       limit,
 		Cursor:         req.Cursor,
 	}
 	notifications, nextOffset, totalCount, err := s.notificationStorage.ListDraftAdminNotifications(ctx, params)
