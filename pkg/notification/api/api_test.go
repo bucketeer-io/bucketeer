@@ -240,7 +240,7 @@ func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	return context.WithValue(context.TODO(), rpc.AccessTokenKey, accessToken)
 }
 
-func TestNotificationService_ListDraftNotifications(t *testing.T) {
+func TestNotificationService_ListDraftAdminNotifications(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -272,21 +272,21 @@ func TestNotificationService_ListDraftNotifications(t *testing.T) {
 		desc        string
 		ctx         context.Context
 		setup       func(*NotificationService)
-		req         *proto.ListDraftNotificationsRequest
-		expectedRes *proto.ListDraftNotificationsResponse
+		req         *proto.ListDraftAdminNotificationsRequest
+		expectedRes *proto.ListDraftAdminNotificationsResponse
 		expectedErr error
 	}{
 		{
 			desc:        "err: unauthenticated",
 			ctx:         context.TODO(),
-			req:         &proto.ListDraftNotificationsRequest{},
+			req:         &proto.ListDraftAdminNotificationsRequest{},
 			expectedRes: nil,
 			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc:        "err: permission denied",
 			ctx:         memberCtx,
-			req:         &proto.ListDraftNotificationsRequest{},
+			req:         &proto.ListDraftAdminNotificationsRequest{},
 			expectedRes: nil,
 			expectedErr: statusPermissionDenied.Err(),
 		},
@@ -294,11 +294,11 @@ func TestNotificationService_ListDraftNotifications(t *testing.T) {
 			desc: "err: invalid cursor",
 			ctx:  adminCtx,
 			setup: func(s *NotificationService) {
-				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftAdminNotifications(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), storage.ErrInvalidListDraftNotificationsCursor)
+				).Return(nil, 0, int64(0), storage.ErrInvalidListDraftAdminNotificationsCursor)
 			},
-			req:         &proto.ListDraftNotificationsRequest{Cursor: "invalid"},
+			req:         &proto.ListDraftAdminNotificationsRequest{Cursor: "invalid"},
 			expectedRes: nil,
 			expectedErr: statusInvalidCursor.Err(),
 		},
@@ -306,11 +306,11 @@ func TestNotificationService_ListDraftNotifications(t *testing.T) {
 			desc: "err: invalid order by",
 			ctx:  adminCtx,
 			setup: func(s *NotificationService) {
-				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftAdminNotifications(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), storage.ErrInvalidListDraftNotificationsOrderBy)
+				).Return(nil, 0, int64(0), storage.ErrInvalidListDraftAdminNotificationsOrderBy)
 			},
-			req:         &proto.ListDraftNotificationsRequest{},
+			req:         &proto.ListDraftAdminNotificationsRequest{},
 			expectedRes: nil,
 			expectedErr: statusInvalidOrderBy.Err(),
 		},
@@ -318,11 +318,11 @@ func TestNotificationService_ListDraftNotifications(t *testing.T) {
 			desc: "err: internal",
 			ctx:  adminCtx,
 			setup: func(s *NotificationService) {
-				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftAdminNotifications(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
-			req:         &proto.ListDraftNotificationsRequest{},
+			req:         &proto.ListDraftAdminNotificationsRequest{},
 			expectedRes: nil,
 			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
 		},
@@ -330,25 +330,25 @@ func TestNotificationService_ListDraftNotifications(t *testing.T) {
 			desc: "success",
 			ctx:  adminCtx,
 			setup: func(s *NotificationService) {
-				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftNotifications(
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListDraftAdminNotifications(
 					gomock.Any(),
-					storage.ListDraftNotificationsParams{
+					storage.ListDraftAdminNotificationsParams{
 						SearchKeyword:  "feature",
-						OrderBy:        proto.ListDraftNotificationsRequest_UPDATED_AT,
-						OrderDirection: proto.ListDraftNotificationsRequest_DESC,
+						OrderBy:        proto.ListDraftAdminNotificationsRequest_UPDATED_AT,
+						OrderDirection: proto.ListDraftAdminNotificationsRequest_DESC,
 						PageSize:       10,
 						Cursor:         "0",
 					},
 				).Return(drafts, 1, int64(1), nil)
 			},
-			req: &proto.ListDraftNotificationsRequest{
+			req: &proto.ListDraftAdminNotificationsRequest{
 				PageSize:       10,
 				Cursor:         "0",
-				OrderBy:        proto.ListDraftNotificationsRequest_UPDATED_AT,
-				OrderDirection: proto.ListDraftNotificationsRequest_DESC,
+				OrderBy:        proto.ListDraftAdminNotificationsRequest_UPDATED_AT,
+				OrderDirection: proto.ListDraftAdminNotificationsRequest_DESC,
 				SearchKeyword:  "feature",
 			},
-			expectedRes: &proto.ListDraftNotificationsResponse{
+			expectedRes: &proto.ListDraftAdminNotificationsResponse{
 				Notifications: drafts,
 				NextCursor:    "1",
 				TotalCount:    1,
@@ -362,7 +362,7 @@ func TestNotificationService_ListDraftNotifications(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			res, err := s.ListDraftNotifications(p.ctx, p.req)
+			res, err := s.ListDraftAdminNotifications(p.ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expectedRes, res)
 		})

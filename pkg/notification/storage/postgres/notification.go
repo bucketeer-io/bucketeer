@@ -88,35 +88,30 @@ func (s *notificationStorage) CreateNotification(
 	return nil
 }
 
-func listDraftNotificationsOrders(
-	orderBy proto.ListDraftNotificationsRequest_OrderBy,
-	orderDirection proto.ListDraftNotificationsRequest_OrderDirection,
+func listDraftAdminNotificationsOrders(
+	orderBy proto.ListDraftAdminNotificationsRequest_OrderBy,
+	orderDirection proto.ListDraftAdminNotificationsRequest_OrderDirection,
 ) ([]*pgstorage.Order, error) {
 	var column string
 	switch orderBy {
-	case proto.ListDraftNotificationsRequest_DEFAULT,
-		proto.ListDraftNotificationsRequest_CREATED_AT:
+	case proto.ListDraftAdminNotificationsRequest_DEFAULT,
+		proto.ListDraftAdminNotificationsRequest_CREATED_AT:
 		column = "notification.created_at"
-	case proto.ListDraftNotificationsRequest_UPDATED_AT:
+	case proto.ListDraftAdminNotificationsRequest_UPDATED_AT:
 		column = "notification.updated_at"
 	default:
-		return nil, notificationstorage.ErrInvalidListDraftNotificationsOrderBy
+		return nil, notificationstorage.ErrInvalidListDraftAdminNotificationsOrderBy
 	}
 	direction := pgstorage.OrderDirectionAsc
-	if orderDirection == proto.ListDraftNotificationsRequest_DESC {
+	if orderDirection == proto.ListDraftAdminNotificationsRequest_DESC {
 		direction = pgstorage.OrderDirectionDesc
 	}
 	return []*pgstorage.Order{pgstorage.NewOrder(column, direction)}, nil
 }
 
-func (s *notificationStorage) ListDraftNotifications(
-	ctx context.Context,
-	p notificationstorage.ListDraftNotificationsParams,
-) ([]*proto.Notification, int, int64, error) {
-	orders, err := listDraftNotificationsOrders(p.OrderBy, p.OrderDirection)
-	if err != nil {
-		return nil, 0, 0, err
-	}
+func listDraftAdminNotificationsFilters(
+	searchKeyword string,
+) ([]*pgstorage.Filter, *pgstorage.SearchQuery) {
 	filters := []*pgstorage.Filter{
 		{
 			Column:   "notification.status",
@@ -125,22 +120,34 @@ func (s *notificationStorage) ListDraftNotifications(
 		},
 	}
 	var searchQuery *pgstorage.SearchQuery
-	if p.SearchKeyword != "" {
+	if searchKeyword != "" {
 		searchQuery = &pgstorage.SearchQuery{
 			Columns: []string{
 				"notification_localization.title",
 				"notification_localization.content",
 			},
-			Keyword: p.SearchKeyword,
+			Keyword: searchKeyword,
 		}
 	}
+	return filters, searchQuery
+}
+
+func (s *notificationStorage) ListDraftAdminNotifications(
+	ctx context.Context,
+	p notificationstorage.ListDraftAdminNotificationsParams,
+) ([]*proto.Notification, int, int64, error) {
+	orders, err := listDraftAdminNotificationsOrders(p.OrderBy, p.OrderDirection)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	filters, searchQuery := listDraftAdminNotificationsFilters(p.SearchKeyword)
 	cursor := p.Cursor
 	if cursor == "" {
 		cursor = "0"
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil || offset < 0 {
-		return nil, 0, 0, notificationstorage.ErrInvalidListDraftNotificationsCursor
+		return nil, 0, 0, notificationstorage.ErrInvalidListDraftAdminNotificationsCursor
 	}
 	limit := p.PageSize
 	if limit < 0 {

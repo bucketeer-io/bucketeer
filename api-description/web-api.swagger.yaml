@@ -6954,7 +6954,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/notificationListDraftNotificationsResponse'
+            $ref: '#/definitions/notificationListDraftAdminNotificationsResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -14232,20 +14232,20 @@ definitions:
     type: object
   notificationGetNotificationUnreadCountResponse:
     type: object
-  notificationListDraftNotificationsRequestOrderBy:
+  notificationListDraftAdminNotificationsRequestOrderBy:
     type: string
     enum:
       - DEFAULT
       - CREATED_AT
       - UPDATED_AT
     default: DEFAULT
-  notificationListDraftNotificationsRequestOrderDirection:
+  notificationListDraftAdminNotificationsRequestOrderDirection:
     type: string
     enum:
       - ASC
       - DESC
     default: ASC
-  notificationListDraftNotificationsResponse:
+  notificationListDraftAdminNotificationsResponse:
     type: object
     properties:
       notifications:

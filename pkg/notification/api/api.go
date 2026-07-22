@@ -141,27 +141,27 @@ func (s *NotificationService) MarkAllNotificationsAsRead(
 	return nil, statusNotImplemented
 }
 
-func (s *NotificationService) ListDraftNotifications(
+func (s *NotificationService) ListDraftAdminNotifications(
 	ctx context.Context,
-	req *proto.ListDraftNotificationsRequest,
-) (*proto.ListDraftNotificationsResponse, error) {
+	req *proto.ListDraftAdminNotificationsRequest,
+) (*proto.ListDraftAdminNotificationsResponse, error) {
 	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	params := storage.ListDraftNotificationsParams{
+	params := storage.ListDraftAdminNotificationsParams{
 		SearchKeyword:  req.SearchKeyword,
 		OrderBy:        req.OrderBy,
 		OrderDirection: req.OrderDirection,
 		PageSize:       int(req.PageSize),
 		Cursor:         req.Cursor,
 	}
-	notifications, nextOffset, totalCount, err := s.notificationStorage.ListDraftNotifications(ctx, params)
+	notifications, nextOffset, totalCount, err := s.notificationStorage.ListDraftAdminNotifications(ctx, params)
 	if err != nil {
-		if errors.Is(err, storage.ErrInvalidListDraftNotificationsCursor) {
+		if errors.Is(err, storage.ErrInvalidListDraftAdminNotificationsCursor) {
 			return nil, statusInvalidCursor.Err()
 		}
-		if errors.Is(err, storage.ErrInvalidListDraftNotificationsOrderBy) {
+		if errors.Is(err, storage.ErrInvalidListDraftAdminNotificationsOrderBy) {
 			return nil, statusInvalidOrderBy.Err()
 		}
 		s.logger.Error(
@@ -170,7 +170,7 @@ func (s *NotificationService) ListDraftNotifications(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &proto.ListDraftNotificationsResponse{
+	return &proto.ListDraftAdminNotificationsResponse{
 		Notifications: notifications,
 		NextCursor:    strconv.Itoa(nextOffset),
 		TotalCount:    totalCount,

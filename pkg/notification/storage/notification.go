@@ -34,24 +34,24 @@ var (
 		bkterr.NotificationPackageName,
 		"already exists",
 	)
-	ErrInvalidListDraftNotificationsCursor = errors.New(
-		"notification storage: invalid list draft notifications cursor")
-	ErrInvalidListDraftNotificationsOrderBy = errors.New(
-		"notification storage: invalid list draft notifications order by")
+	ErrInvalidListDraftAdminNotificationsCursor = errors.New(
+		"notification storage: invalid list draft admin notifications cursor")
+	ErrInvalidListDraftAdminNotificationsOrderBy = errors.New(
+		"notification storage: invalid list draft admin notifications order by")
 )
 
 type NotificationStorage interface {
 	CreateNotification(ctx context.Context, notification *domain.Notification) error
-	ListDraftNotifications(
+	ListDraftAdminNotifications(
 		ctx context.Context,
-		params ListDraftNotificationsParams,
+		params ListDraftAdminNotificationsParams,
 	) ([]*proto.Notification, int, int64, error)
 }
 
-type ListDraftNotificationsParams struct {
+type ListDraftAdminNotificationsParams struct {
 	SearchKeyword  string
-	OrderBy        proto.ListDraftNotificationsRequest_OrderBy
-	OrderDirection proto.ListDraftNotificationsRequest_OrderDirection
+	OrderBy        proto.ListDraftAdminNotificationsRequest_OrderBy
+	OrderDirection proto.ListDraftAdminNotificationsRequest_OrderDirection
 	PageSize       int
 	Cursor         string
 }

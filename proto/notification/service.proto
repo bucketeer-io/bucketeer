@@ -45,7 +45,7 @@ message MarkAllNotificationsAsReadRequest {}
 
 message MarkAllNotificationsAsReadResponse {}
 
-message ListDraftNotificationsRequest {
+message ListDraftAdminNotificationsRequest {
   enum OrderBy {
     DEFAULT = 0;
     CREATED_AT = 1;
@@ -63,7 +63,7 @@ message ListDraftNotificationsRequest {
   string search_keyword = 5;
 }
 
-message ListDraftNotificationsResponse {
+message ListDraftAdminNotificationsResponse {
   // Drafts with all localizations attached (editor view).
   repeated Notification notifications = 1;
   string next_cursor = 2;
@@ -258,8 +258,8 @@ service NotificationService {
     };
   }
 
-  rpc ListDraftNotifications(ListDraftNotificationsRequest)
-      returns (ListDraftNotificationsResponse) {
+  rpc ListDraftAdminNotifications(ListDraftAdminNotificationsRequest)
+      returns (ListDraftAdminNotificationsResponse) {
     option (google.api.http) = {
       get: "/v1/notifications/drafts"
     };

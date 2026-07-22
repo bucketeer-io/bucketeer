@@ -153,7 +153,7 @@ func TestCreateNotification(t *testing.T) {
 	}
 }
 
-func TestListDraftNotifications(t *testing.T) {
+func TestListDraftAdminNotifications(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -161,32 +161,32 @@ func TestListDraftNotifications(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*notificationStorage)
-		params         notificationstorage.ListDraftNotificationsParams
+		params         notificationstorage.ListDraftAdminNotificationsParams
 		expected       []*proto.Notification
 		expectedCursor int
 		expectedCount  int64
 		expectedErr    error
 	}{
 		{
-			desc: "ErrInvalidListDraftNotificationsOrderBy",
-			params: notificationstorage.ListDraftNotificationsParams{
-				OrderBy: proto.ListDraftNotificationsRequest_OrderBy(99),
+			desc: "ErrInvalidListDraftAdminNotificationsOrderBy",
+			params: notificationstorage.ListDraftAdminNotificationsParams{
+				OrderBy: proto.ListDraftAdminNotificationsRequest_OrderBy(99),
 			},
-			expectedErr: notificationstorage.ErrInvalidListDraftNotificationsOrderBy,
+			expectedErr: notificationstorage.ErrInvalidListDraftAdminNotificationsOrderBy,
 		},
 		{
-			desc: "ErrInvalidListDraftNotificationsCursor",
-			params: notificationstorage.ListDraftNotificationsParams{
+			desc: "ErrInvalidListDraftAdminNotificationsCursor",
+			params: notificationstorage.ListDraftAdminNotificationsParams{
 				Cursor: "invalid",
 			},
-			expectedErr: notificationstorage.ErrInvalidListDraftNotificationsCursor,
+			expectedErr: notificationstorage.ErrInvalidListDraftAdminNotificationsCursor,
 		},
 		{
-			desc: "ErrInvalidListDraftNotificationsCursor: negative",
-			params: notificationstorage.ListDraftNotificationsParams{
+			desc: "ErrInvalidListDraftAdminNotificationsCursor: negative",
+			params: notificationstorage.ListDraftAdminNotificationsParams{
 				Cursor: "-1",
 			},
-			expectedErr: notificationstorage.ErrInvalidListDraftNotificationsCursor,
+			expectedErr: notificationstorage.ErrInvalidListDraftAdminNotificationsCursor,
 		},
 		{
 			desc: "Success: negative page size clamped",
@@ -207,7 +207,7 @@ func TestListDraftNotifications(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(countRow)
 			},
-			params: notificationstorage.ListDraftNotificationsParams{
+			params: notificationstorage.ListDraftAdminNotificationsParams{
 				PageSize: -1,
 			},
 			expected:       []*proto.Notification{},
@@ -222,7 +222,7 @@ func TestListDraftNotifications(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			params:      notificationstorage.ListDraftNotificationsParams{},
+			params:      notificationstorage.ListDraftAdminNotificationsParams{},
 			expectedErr: errors.New("error"),
 		},
 		{
@@ -286,7 +286,7 @@ func TestListDraftNotifications(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(countRow)
 			},
-			params: notificationstorage.ListDraftNotificationsParams{
+			params: notificationstorage.ListDraftAdminNotificationsParams{
 				SearchKeyword: "feature",
 				PageSize:      10,
 			},
@@ -318,7 +318,7 @@ func TestListDraftNotifications(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			notifications, cursor, count, err := storage.ListDraftNotifications(context.Background(), p.params)
+			notifications, cursor, count, err := storage.ListDraftAdminNotifications(context.Background(), p.params)
 			assert.Equal(t, p.expectedErr, err)
 			if p.expectedErr == nil {
 				assert.Equal(t, p.expected, notifications)

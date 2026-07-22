@@ -46054,7 +46054,7 @@
       "def": {
         "enums": [
           {
-            "name": "ListDraftNotificationsRequest.OrderBy",
+            "name": "ListDraftAdminNotificationsRequest.OrderBy",
             "enum_fields": [
               {
                 "name": "DEFAULT"
@@ -46070,7 +46070,7 @@
             ]
           },
           {
-            "name": "ListDraftNotificationsRequest.OrderDirection",
+            "name": "ListDraftAdminNotificationsRequest.OrderDirection",
             "enum_fields": [
               {
                 "name": "ASC"
@@ -46114,7 +46114,7 @@
             "name": "MarkAllNotificationsAsReadResponse"
           },
           {
-            "name": "ListDraftNotificationsRequest",
+            "name": "ListDraftAdminNotificationsRequest",
             "fields": [
               {
                 "id": 1,
@@ -46144,7 +46144,7 @@
             ]
           },
           {
-            "name": "ListDraftNotificationsResponse",
+            "name": "ListDraftAdminNotificationsResponse",
             "fields": [
               {
                 "id": 1,
@@ -46807,9 +46807,9 @@
                 ]
               },
               {
-                "name": "ListDraftNotifications",
-                "in_type": "ListDraftNotificationsRequest",
-                "out_type": "ListDraftNotificationsResponse",
+                "name": "ListDraftAdminNotifications",
+                "in_type": "ListDraftAdminNotificationsRequest",
+                "out_type": "ListDraftAdminNotificationsResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",

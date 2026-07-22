@@ -13,11 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	storage "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
 	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockNotificationStorage is a mock of NotificationStorage interface.
@@ -57,10 +56,10 @@ func (mr *MockNotificationStorageMockRecorder) CreateNotification(ctx, notificat
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockNotificationStorage)(nil).CreateNotification), ctx, notification)
 }
 
-// ListDraftNotifications mocks base method.
-func (m *MockNotificationStorage) ListDraftNotifications(ctx context.Context, params storage.ListDraftNotificationsParams) ([]*notification.Notification, int, int64, error) {
+// ListDraftAdminNotifications mocks base method.
+func (m *MockNotificationStorage) ListDraftAdminNotifications(ctx context.Context, params storage.ListDraftAdminNotificationsParams) ([]*notification.Notification, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListDraftNotifications", ctx, params)
+	ret := m.ctrl.Call(m, "ListDraftAdminNotifications", ctx, params)
 	ret0, _ := ret[0].([]*notification.Notification)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -68,8 +67,8 @@ func (m *MockNotificationStorage) ListDraftNotifications(ctx context.Context, pa
 	return ret0, ret1, ret2, ret3
 }
 
-// ListDraftNotifications indicates an expected call of ListDraftNotifications.
-func (mr *MockNotificationStorageMockRecorder) ListDraftNotifications(ctx, params any) *gomock.Call {
+// ListDraftAdminNotifications indicates an expected call of ListDraftAdminNotifications.
+func (mr *MockNotificationStorageMockRecorder) ListDraftAdminNotifications(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDraftNotifications", reflect.TypeOf((*MockNotificationStorage)(nil).ListDraftNotifications), ctx, params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDraftAdminNotifications", reflect.TypeOf((*MockNotificationStorage)(nil).ListDraftAdminNotifications), ctx, params)
 }
