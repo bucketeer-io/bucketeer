@@ -35,6 +35,7 @@ import {
   PAGE_PATH_MEMBERS,
   PAGE_PATH_NEW,
   PAGE_PATH_NOTIFICATIONS,
+  PAGE_PATH_NOTIFICATION_FEED,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_PUSHES,
@@ -68,6 +69,7 @@ import AccessDemoPage from 'pages/demo';
 import CreateDemoPage from 'pages/demo/demo-create';
 import InsightsPage from 'pages/insights';
 import NotFoundPage from 'pages/not-found';
+import NotificationFeedPage from 'pages/notification-feed';
 import NotificationsPage from 'pages/notifications';
 import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
@@ -279,6 +281,10 @@ export const EnvironmentRoot = memo(
           element={<NotificationsPage />}
         />
         <Route path={`${PAGE_PATH_PUSHES}/*`} element={<PushesPage />} />
+        <Route
+          path={`${PAGE_PATH_NOTIFICATION_FEED}/*`}
+          element={<NotificationFeedPage />}
+        />
         <Route path={`${PAGE_PATH_GOALS}/*`} element={<GoalsRoot />} />
         <Route
           path={`${PAGE_PATH_USER_SEGMENTS}/*`}

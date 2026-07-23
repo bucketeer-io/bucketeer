@@ -64,6 +64,7 @@
   "navigation": {
     "my-projects": "マイプロジェクト",
     "audit-logs": "監査ログ",
+    "notifications": "通知",
     "feature-flags": "フィーチャーフラグ",
     "user-segment": "ユーザーセグメント",
     "debugger": "デバッガー",
@@ -207,6 +208,34 @@
   "no-recent-traffic": "休止中",
   "receiving-traffic": "使用中",
   "notifications": "通知",
+  "notifications-subtitle": "プラットフォームの更新情報、お知らせ、重要なお知らせを確認できます。",
+  "last-7-days": "過去7日間",
+  "last-30-days": "過去30日間",
+  "last-90-days": "過去90日間",
+  "publish-notification": "通知を公開",
+  "read": "既読",
+  "unread": "未読",
+  "sort-by-newest": "並び替え: 新しい順",
+  "sort-by-oldest": "並び替え: 古い順",
+  "drafts": "下書き",
+  "new-draft": "新しい下書き",
+  "no-drafts": "下書きはありません",
+  "no-notifications": "通知はありません",
+  "mark-all-as-read": "すべて既読にする",
+  "view-all-notifications": "すべての通知を見る",
+  "mark-selected-as-read": "選択した項目を既読にする",
+  "selected": "{{count}} 件を選択中",
+  "clear-selection": "選択を解除",
+  "details": "詳細",
+  "draft-status": "下書き",
+  "published-status": "公開済み",
+  "publish": "公開",
+  "save-draft": "下書きを保存",
+  "tag-color": "タグの色",
+  "title": "タイトル",
+  "description": "説明",
+  "write": "編集",
+  "preview": "プレビュー",
   "create-flag": "フラグを作成",
   "clone-flag": "フラグを複製",
   "archive-flag": "フラグをアーカイブ",
@@ -383,7 +412,7 @@
           "all": "<b>all:</b> すべての評価結果を返し、SDK キャッシュ全体を更新します。"
         }
       }
-  }
-},
+    }
+  },
   "load-more": "もっと読み込む"
 }

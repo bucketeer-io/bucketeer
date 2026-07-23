@@ -4,12 +4,20 @@ import { urls } from 'configs';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { refreshTokenFetcher } from './auth';
 import { installCacheInvalidationInterceptor } from './cache-invalidation-interceptor';
+import { installNotificationCenterMockAdapter } from './notification-center/mock-adapter';
 
 let isRefreshing = false;
 
 const axiosClient: AxiosInstance = axios.create({
   baseURL: urls.WEB_API_ENDPOINT
 });
+
+// TEMPORARY: the notification center backend (proto/notification/service.proto)
+// hasn't been implemented yet. This intercepts its endpoints with fake data so
+// the feature can be built against the real request/response shapes ahead of
+// the backend. Remove this call (and @api/notification-center/mock-adapter.ts)
+// once the backend ships — no other file needs to change.
+installNotificationCenterMockAdapter(axiosClient);
 
 axiosClient.interceptors.request.use(
   config => {

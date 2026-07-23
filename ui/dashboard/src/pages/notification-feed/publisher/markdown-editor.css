@@ -1,0 +1,12 @@
+.w-md-editor-toolbar {
+    @apply py-3 !rounded-none;
+}
+.w-md-editor-toolbar > ul{
+    @apply flex gap-x-2;
+}
+.w-md-editor-toolbar-divider{
+    @apply !hidden;
+}
+.w-md-editor-show-edit{
+ @apply !rounded-none;
+}
