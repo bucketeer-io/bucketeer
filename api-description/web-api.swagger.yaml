@@ -1227,6 +1227,90 @@ paths:
           format: int32
       tags:
         - audit_log
+  /v1/admin_notifications/drafts:
+    get:
+      summary: List Drafts
+      description: List draft notifications with keyword search, sorting, and pagination. System admin only.
+      operationId: web.v1.notification.admin.list_drafts
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationListDraftAdminNotificationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          description: Keyword matched against localization titles and contents.
+          in: query
+          required: false
+          type: string
+      tags:
+        - notification
   /v1/aichat/suggestions:
     get:
       summary: Get Suggestions
@@ -6943,90 +7027,6 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      tags:
-        - notification
-  /v1/notifications/drafts:
-    get:
-      summary: List Drafts
-      description: List draft notifications with keyword search, sorting, and pagination. System admin only.
-      operationId: web.v1.notification.list_drafts
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/notificationListDraftAdminNotificationsResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Returned when the user is not a system admin.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: permission denied
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: pageSize
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: cursor
-          in: query
-          required: false
-          type: string
-        - name: orderBy
-          in: query
-          required: false
-          type: string
-          enum:
-            - DEFAULT
-            - CREATED_AT
-            - UPDATED_AT
-          default: DEFAULT
-        - name: orderDirection
-          in: query
-          required: false
-          type: string
-          enum:
-            - ASC
-            - DESC
-          default: ASC
-        - name: searchKeyword
-          description: Keyword matched against localization titles and contents.
-          in: query
-          required: false
-          type: string
       tags:
         - notification
   /v1/notifications/mark_all_as_read:

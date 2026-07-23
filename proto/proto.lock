@@ -46816,7 +46816,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/notifications/drafts"
+                        "value": "/v1/admin_notifications/drafts"
                       }
                     ]
                   },
@@ -46837,7 +46837,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.notification.list_drafts"
+                        "value": "web.v1.notification.admin.list_drafts"
                       },
                       {
                         "name": "responses",

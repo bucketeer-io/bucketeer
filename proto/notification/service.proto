@@ -261,13 +261,13 @@ service NotificationService {
   rpc ListDraftAdminNotifications(ListDraftAdminNotificationsRequest)
       returns (ListDraftAdminNotificationsResponse) {
     option (google.api.http) = {
-      get: "/v1/notifications/drafts"
+      get: "/v1/admin_notifications/drafts"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Drafts",
       description: "List draft notifications with keyword search, sorting, and pagination. System admin only.",
       tags: "notification",
-      operation_id: "web.v1.notification.list_drafts",
+      operation_id: "web.v1.notification.admin.list_drafts",
       responses: {
         key: "400"
         value: {

@@ -408,7 +408,7 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListDraftAdminNotifications", runtime.WithHTTPPathPattern("/v1/notifications/drafts"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListDraftAdminNotifications", runtime.WithHTTPPathPattern("/v1/admin_notifications/drafts"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -682,7 +682,7 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListDraftAdminNotifications", runtime.WithHTTPPathPattern("/v1/notifications/drafts"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.notification.NotificationService/ListDraftAdminNotifications", runtime.WithHTTPPathPattern("/v1/admin_notifications/drafts"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -800,7 +800,7 @@ var (
 
 	pattern_NotificationService_MarkAllNotificationsAsRead_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "notifications", "mark_all_as_read"}, ""))
 
-	pattern_NotificationService_ListDraftAdminNotifications_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "notifications", "drafts"}, ""))
+	pattern_NotificationService_ListDraftAdminNotifications_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "admin_notifications", "drafts"}, ""))
 
 	pattern_NotificationService_CreateNotification_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "notification"}, ""))
 
