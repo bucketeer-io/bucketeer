@@ -45,9 +45,30 @@ message MarkAllNotificationsAsReadRequest {}
 
 message MarkAllNotificationsAsReadResponse {}
 
-message ListDraftNotificationsRequest {}
+message ListDraftAdminNotificationsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    UPDATED_AT = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  // Keyword matched against localization titles and contents.
+  string search_keyword = 5;
+}
 
-message ListDraftNotificationsResponse {}
+message ListDraftAdminNotificationsResponse {
+  // Drafts with all localizations attached (editor view).
+  repeated Notification notifications = 1;
+  string next_cursor = 2;
+  int64 total_count = 3;
+}
 
 message CreateNotificationRequest {
   // At least one localization is required; languages must be unique.
@@ -237,16 +258,16 @@ service NotificationService {
     };
   }
 
-  rpc ListDraftNotifications(ListDraftNotificationsRequest)
-      returns (ListDraftNotificationsResponse) {
+  rpc ListDraftAdminNotifications(ListDraftAdminNotificationsRequest)
+      returns (ListDraftAdminNotificationsResponse) {
     option (google.api.http) = {
-      get: "/v1/notifications/drafts"
+      get: "/v1/admin_notifications/drafts"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Drafts",
       description: "List draft notifications with keyword search, sorting, and pagination. System admin only.",
       tags: "notification",
-      operation_id: "web.v1.notification.list_drafts",
+      operation_id: "web.v1.notification.admin.list_drafts",
       responses: {
         key: "400"
         value: {

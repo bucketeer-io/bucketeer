@@ -46052,6 +46052,36 @@
     {
       "protopath": "notification:/:service.proto",
       "def": {
+        "enums": [
+          {
+            "name": "ListDraftAdminNotificationsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 1
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 2
+              }
+            ]
+          },
+          {
+            "name": "ListDraftAdminNotificationsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "ListNotificationsRequest"
@@ -46084,10 +46114,55 @@
             "name": "MarkAllNotificationsAsReadResponse"
           },
           {
-            "name": "ListDraftNotificationsRequest"
+            "name": "ListDraftAdminNotificationsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              }
+            ]
           },
           {
-            "name": "ListDraftNotificationsResponse"
+            "name": "ListDraftAdminNotificationsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "notifications",
+                "type": "Notification",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "next_cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           },
           {
             "name": "CreateNotificationRequest",
@@ -46732,16 +46807,16 @@
                 ]
               },
               {
-                "name": "ListDraftNotifications",
-                "in_type": "ListDraftNotificationsRequest",
-                "out_type": "ListDraftNotificationsResponse",
+                "name": "ListDraftAdminNotifications",
+                "in_type": "ListDraftAdminNotificationsRequest",
+                "out_type": "ListDraftAdminNotificationsResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/notifications/drafts"
+                        "value": "/v1/admin_notifications/drafts"
                       }
                     ]
                   },
@@ -46762,7 +46837,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.notification.list_drafts"
+                        "value": "web.v1.notification.admin.list_drafts"
                       },
                       {
                         "name": "responses",

@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -32,6 +33,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+)
+
+const (
+	// Maximum page size for notifications. Also used as default when page_size
+	// is not set or exceeds this value.
+	maxNotificationPageSize = 200
 )
 
 type options struct {
@@ -140,11 +147,44 @@ func (s *NotificationService) MarkAllNotificationsAsRead(
 	return nil, statusNotImplemented
 }
 
-func (s *NotificationService) ListDraftNotifications(
+func (s *NotificationService) ListDraftAdminNotifications(
 	ctx context.Context,
-	req *proto.ListDraftNotificationsRequest,
-) (*proto.ListDraftNotificationsResponse, error) {
-	return nil, statusNotImplemented
+	req *proto.ListDraftAdminNotificationsRequest,
+) (*proto.ListDraftAdminNotificationsResponse, error) {
+	_, err := s.checkSystemAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxNotificationPageSize {
+		limit = maxNotificationPageSize
+	}
+	params := storage.ListDraftAdminNotificationsParams{
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       limit,
+		Cursor:         req.Cursor,
+	}
+	notifications, nextOffset, totalCount, err := s.notificationStorage.ListDraftAdminNotifications(ctx, params)
+	if err != nil {
+		if errors.Is(err, storage.ErrInvalidListDraftAdminNotificationsCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, storage.ErrInvalidListDraftAdminNotificationsOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		s.logger.Error(
+			"Failed to list draft notifications",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.ListDraftAdminNotificationsResponse{
+		Notifications: notifications,
+		NextCursor:    strconv.Itoa(nextOffset),
+		TotalCount:    totalCount,
+	}, nil
 }
 
 func (s *NotificationService) CreateNotification(

@@ -16,6 +16,8 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	storage "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
+	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 // MockNotificationStorage is a mock of NotificationStorage interface.
@@ -53,4 +55,21 @@ func (m *MockNotificationStorage) CreateNotification(ctx context.Context, notifi
 func (mr *MockNotificationStorageMockRecorder) CreateNotification(ctx, notification any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockNotificationStorage)(nil).CreateNotification), ctx, notification)
+}
+
+// ListDraftAdminNotifications mocks base method.
+func (m *MockNotificationStorage) ListDraftAdminNotifications(ctx context.Context, params storage.ListDraftAdminNotificationsParams) ([]*notification.Notification, int, int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDraftAdminNotifications", ctx, params)
+	ret0, _ := ret[0].([]*notification.Notification)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(int64)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// ListDraftAdminNotifications indicates an expected call of ListDraftAdminNotifications.
+func (mr *MockNotificationStorageMockRecorder) ListDraftAdminNotifications(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDraftAdminNotifications", reflect.TypeOf((*MockNotificationStorage)(nil).ListDraftAdminNotifications), ctx, params)
 }

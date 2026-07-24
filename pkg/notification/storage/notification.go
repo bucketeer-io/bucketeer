@@ -17,9 +17,11 @@ package storage
 
 import (
 	"context"
+	"errors"
 
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 var (
@@ -32,8 +34,24 @@ var (
 		bkterr.NotificationPackageName,
 		"already exists",
 	)
+	ErrInvalidListDraftAdminNotificationsCursor = errors.New(
+		"notification storage: invalid list draft admin notifications cursor")
+	ErrInvalidListDraftAdminNotificationsOrderBy = errors.New(
+		"notification storage: invalid list draft admin notifications order by")
 )
 
 type NotificationStorage interface {
 	CreateNotification(ctx context.Context, notification *domain.Notification) error
+	ListDraftAdminNotifications(
+		ctx context.Context,
+		params ListDraftAdminNotificationsParams,
+	) ([]*proto.Notification, int, int64, error)
+}
+
+type ListDraftAdminNotificationsParams struct {
+	SearchKeyword  string
+	OrderBy        proto.ListDraftAdminNotificationsRequest_OrderBy
+	OrderDirection proto.ListDraftAdminNotificationsRequest_OrderDirection
+	PageSize       int
+	Cursor         string
 }
