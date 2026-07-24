@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { WALKTHROUGH_TARGETS } from 'hooks';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
 import { useTranslation } from 'i18n';
 import { Tag } from '@types';
 import { onGenerateSlug } from 'utils/converts';

@@ -228,6 +228,10 @@ if (showNewFeature) {
     codeLanguage: 'go',
     install: () => 'go get github.com/bucketeer-io/go-server-sdk',
     code: v => `import (
+  "context"
+  "log"
+  "time"
+
   "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
   "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )

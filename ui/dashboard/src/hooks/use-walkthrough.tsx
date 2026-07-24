@@ -4,24 +4,14 @@ import { apiKeysFetcher } from '@api/api-key';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { WALKTHROUGH_ENABLED } from 'configs';
 import { PAGE_PATH_APIKEYS, PAGE_PATH_FEATURES } from 'constants/routing';
-import { driver, type Config, type Driver } from 'driver.js';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
+import { driver, type Config, type Driver, type DriveStep } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { useTranslation } from 'i18n';
 import {
   clearWalkthroughPendingStorage,
   getWalkthroughPendingStorage
 } from 'storage/walkthrough';
-
-export const WALKTHROUGH_TARGETS = {
-  FEATURE_FLAGS_MENU: 'feature-flags-menu',
-  CREATE_FLAG_BUTTON: 'create-flag-button',
-  FLAG_GENERAL_INFO: 'flag-general-info',
-  FLAG_VARIATIONS: 'flag-variations',
-  SUBMIT_FLAG_BUTTON: 'submit-flag-button',
-  CREATE_APIKEY_BUTTON: 'create-apikey-button',
-  APIKEY_FORM: 'apikey-form',
-  SUBMIT_APIKEY_BUTTON: 'submit-apikey-button'
-} as const;
 
 type WalkthroughStage =
   | 'idle'
@@ -135,6 +125,7 @@ export const useWalkthrough = () => {
         driverInstance.destroy();
       },
       onDestroyed: (_element, step) => {
+        document.removeEventListener('keydown', blockEnterSubmit, true);
         // Ending on the last step's action click hands off to the next stage.
         if (!cancelledRef.current && step?.element === lastStepTarget) {
           setStage(
@@ -151,7 +142,8 @@ export const useWalkthrough = () => {
   );
 
   const startApiKeyTour = useCallback(() => {
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    if (!consoleAccount) return;
+    const currentEnvironment = getCurrentEnvironment(consoleAccount);
 
     cancelledRef.current = false;
     setStage('apikey-tour');
@@ -228,8 +220,8 @@ export const useWalkthrough = () => {
 
   // Poll until the key exists and the "API key created" dialog is closed.
   useEffect(() => {
-    if (stage !== 'await-apikey-created') return;
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    if (stage !== 'await-apikey-created' || !consoleAccount) return;
+    const currentEnvironment = getCurrentEnvironment(consoleAccount);
     const startedAt = Date.now();
     let checking = false;
     const interval = setInterval(async () => {
@@ -255,84 +247,99 @@ export const useWalkthrough = () => {
     return () => clearInterval(interval);
   }, [stage, consoleAccount]);
 
-  const startWalkthrough = useCallback(() => {
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`);
+  const startWalkthrough = useCallback(
+    (options?: { withWelcome?: boolean }) => {
+      if (!consoleAccount) return;
+      const currentEnvironment = getCurrentEnvironment(consoleAccount);
+      navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`);
 
-    cancelledRef.current = false;
-    setStage('flag-tour');
-    driverRef.current?.destroy();
-    driverRef.current = driver({
-      ...buildDriverConfig(
-        'flag-tour',
-        tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON)
-      ),
-      steps: [
-        {
-          element: tourTarget(WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU),
-          disableActiveInteraction: true,
-          popover: {
-            title: t('walkthrough.feature-flags-menu.title'),
-            description: t('walkthrough.feature-flags-menu.description'),
-            side: 'right',
-            showButtons: ['next', 'close']
-          }
-        },
-        {
-          element: tourTarget(WALKTHROUGH_TARGETS.CREATE_FLAG_BUTTON),
-          advanceOnClick: true,
-          popover: {
-            title: t('walkthrough.create-flag-button.title'),
-            description: t('walkthrough.create-flag-button.description'),
-            side: 'bottom',
-            showButtons: ['close']
-          }
-        },
-        {
-          element: tourTarget(WALKTHROUGH_TARGETS.FLAG_GENERAL_INFO),
-          disableActiveInteraction: false,
-          popover: {
-            title: t('walkthrough.flag-general-info.title'),
-            description: t('walkthrough.flag-general-info.description'),
-            side: 'right',
-            showButtons: ['next', 'close']
-          }
-        },
-        {
-          element: tourTarget(WALKTHROUGH_TARGETS.FLAG_VARIATIONS),
-          disableActiveInteraction: false,
-          popover: {
-            title: t('walkthrough.flag-variations.title'),
-            description: t('walkthrough.flag-variations.description'),
-            side: 'right',
-            showButtons: ['next', 'previous', 'close']
-          }
-        },
-        {
-          element: tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON),
-          advanceOnClick: true,
-          popover: {
-            title: t('walkthrough.submit-flag-button.title'),
-            description: t('walkthrough.submit-flag-button.description'),
-            side: 'top',
-            showButtons: ['previous', 'close']
-          }
+      cancelledRef.current = false;
+      setStage('flag-tour');
+      driverRef.current?.destroy();
+      const welcomeStep: DriveStep = {
+        // No element: shown as a centered dialog.
+        popover: {
+          title: t('walkthrough.welcome.title'),
+          description: t('walkthrough.welcome.description'),
+          nextBtnText: t('walkthrough.welcome.start'),
+          showButtons: ['next', 'close']
         }
-      ]
-    });
-    driverRef.current.drive();
-  }, [buildDriverConfig, consoleAccount, navigate, t]);
+      };
+      driverRef.current = driver({
+        ...buildDriverConfig(
+          'flag-tour',
+          tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON)
+        ),
+        steps: [
+          ...(options?.withWelcome ? [welcomeStep] : []),
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU),
+            disableActiveInteraction: true,
+            popover: {
+              title: t('walkthrough.feature-flags-menu.title'),
+              description: t('walkthrough.feature-flags-menu.description'),
+              side: 'right',
+              showButtons: ['next', 'close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.CREATE_FLAG_BUTTON),
+            advanceOnClick: true,
+            popover: {
+              title: t('walkthrough.create-flag-button.title'),
+              description: t('walkthrough.create-flag-button.description'),
+              side: 'bottom',
+              showButtons: ['close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.FLAG_GENERAL_INFO),
+            disableActiveInteraction: false,
+            popover: {
+              title: t('walkthrough.flag-general-info.title'),
+              description: t('walkthrough.flag-general-info.description'),
+              side: 'right',
+              showButtons: ['next', 'close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.FLAG_VARIATIONS),
+            disableActiveInteraction: false,
+            popover: {
+              title: t('walkthrough.flag-variations.title'),
+              description: t('walkthrough.flag-variations.description'),
+              side: 'right',
+              showButtons: ['next', 'previous', 'close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON),
+            advanceOnClick: true,
+            popover: {
+              title: t('walkthrough.submit-flag-button.title'),
+              description: t('walkthrough.submit-flag-button.description'),
+              side: 'top',
+              showButtons: ['previous', 'close']
+            }
+          }
+        ]
+      });
+      driverRef.current.drive();
+    },
+    [buildDriverConfig, consoleAccount, navigate, t]
+  );
 
   // Auto-start once for first-time users (flag set at login).
   const hasAutoStartedRef = useRef(false);
   useEffect(() => {
-    if (hasAutoStartedRef.current || !WALKTHROUGH_ENABLED) return;
+    if (hasAutoStartedRef.current || !WALKTHROUGH_ENABLED || !consoleAccount)
+      return;
     if (getWalkthroughPendingStorage()) {
       hasAutoStartedRef.current = true;
       clearWalkthroughPendingStorage();
-      startWalkthrough();
+      startWalkthrough({ withWelcome: true });
     }
-  }, [startWalkthrough]);
+  }, [startWalkthrough, consoleAccount]);
 
   return {
     startWalkthrough,

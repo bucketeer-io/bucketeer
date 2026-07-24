@@ -1,4 +1,4 @@
-import { WALKTHROUGH_TARGETS } from 'hooks';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
 import DefaultVariations from './default-variations';
 import FlagType from './flag-type';
 import Variations from './variations';

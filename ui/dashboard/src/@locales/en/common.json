@@ -431,6 +431,11 @@
       "title": "Create the key",
       "description": "When the form is complete, click Submit to create your API key."
     },
-    "skip": "Skip walkthrough"
+    "skip": "Skip walkthrough",
+    "welcome": {
+      "title": "👋 Welcome to Bucketeer!",
+      "description": "Bucketeer is a feature flag and experimentation platform. Take a short tour to release your first feature flag — it only takes a few minutes.",
+      "start": "Take the tour"
+    }
   }
 }

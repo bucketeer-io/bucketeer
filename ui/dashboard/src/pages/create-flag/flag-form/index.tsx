@@ -9,7 +9,8 @@ import {
   PAGE_PATH_FEATURE_TARGETING,
   PAGE_PATH_FEATURES
 } from 'constants/routing';
-import { useToast, WALKTHROUGH_TARGETS } from 'hooks';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
+import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
