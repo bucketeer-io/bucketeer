@@ -1,4 +1,4 @@
-name: trivy
+name: pr-trivy
 
 on:
   pull_request:

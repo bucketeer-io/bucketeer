@@ -1,4 +1,4 @@
-name: hadolint
+name: pr-hadolint
 
 on:
   pull_request:
