@@ -1,12 +1,14 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import {
-  BrowserRouter,
+  createBrowserRouter,
+  Outlet,
   Route,
+  RouterProvider,
   Routes,
-  useParams,
+  useLocation,
   useNavigate,
-  useLocation
+  useParams
 } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -94,46 +96,12 @@ export const AppLoading = () => (
   </div>
 );
 
-function App() {
-  return (
-    <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={queryClient}>
-        <ConfirmProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route
-                  path={PAGE_PATH_AUTH_CALLBACK}
-                  element={<AuthCallbackPage />}
-                />
-                <Route
-                  path={PAGE_PATH_AUTH_DEMO_CALLBACK}
-                  element={<AuthDemoCallbackPage />}
-                />
-                <Route
-                  path={PAGE_PATH_AUTH_SIGNIN}
-                  element={<SignInEmailPage />}
-                />
-                <Route
-                  path={PAGE_PATH_DEMO_SITE}
-                  element={<AccessDemoPage />}
-                />
-                <Route
-                  path={`${PAGE_PATH_DEMO_SITE}/new`}
-                  element={<CreateDemoPage />}
-                />
-                <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
-        </ConfirmProvider>
-        {/* {process.env.NODE_ENV === 'development' && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )} */}
-      </QueryClientProvider>
-    </I18nextProvider>
-  );
-}
+// All routes live inside AuthShell so every page can access AuthProvider context
+const AuthShell = () => (
+  <AuthProvider>
+    <Outlet />
+  </AuthProvider>
+);
 
 export const Root = memo(() => {
   const authToken = getTokenStorage();
@@ -143,7 +111,7 @@ export const Root = memo(() => {
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
-  }, [setPageKey]);
+  }, []);
 
   if (isInitialLoading) {
     return <AppLoading />;
@@ -291,11 +259,37 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_AUDIT_LOGS}/*`} element={<AuditLogsPage />} />
         <Route path={`${PAGE_PATH_DEBUGGER}/*`} element={<DebuggerPage />} />
         <Route path={`${PAGE_PATH_INSIGHTS}/*`} element={<InsightsPage />} />
-
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );
   }
 );
+
+// Router is defined after all components to avoid "used before declaration" errors
+const router = createBrowserRouter([
+  {
+    element: <AuthShell />,
+    children: [
+      { path: PAGE_PATH_AUTH_CALLBACK, element: <AuthCallbackPage /> },
+      { path: PAGE_PATH_AUTH_DEMO_CALLBACK, element: <AuthDemoCallbackPage /> },
+      { path: PAGE_PATH_AUTH_SIGNIN, element: <SignInEmailPage /> },
+      { path: PAGE_PATH_DEMO_SITE, element: <AccessDemoPage /> },
+      { path: `${PAGE_PATH_DEMO_SITE}/new`, element: <CreateDemoPage /> },
+      { path: `${PAGE_PATH_ROOT}*`, element: <Root /> }
+    ]
+  }
+]);
+
+function App() {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <QueryClientProvider client={queryClient}>
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+        </ConfirmProvider>
+      </QueryClientProvider>
+    </I18nextProvider>
+  );
+}
 
 export default App;

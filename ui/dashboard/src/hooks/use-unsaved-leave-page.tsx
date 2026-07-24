@@ -2,13 +2,16 @@ import {
   createContext,
   Dispatch,
   ReactNode,
+  RefObject,
   SetStateAction,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router';
+import { type BlockerFunction, useBlocker } from 'react-router';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
@@ -30,7 +33,11 @@ interface ConfirmContextType {
   options: ConfirmOptions | null;
   handleCancel: () => void;
   handleConfirm: () => void;
+  registerProceed: (fn: (() => void) | null) => void;
+  allowNavigation: (action: () => void) => void;
+  bypassRef: RefObject<boolean>;
 }
+
 interface Props {
   title?: string;
   titleStay?: string;
@@ -42,25 +49,6 @@ interface Props {
 }
 
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
-
-let bypassNavigation = false;
-
-export function allowNavigation(action?: () => void) {
-  bypassNavigation = true;
-  if (action) {
-    try {
-      action();
-    } finally {
-      bypassNavigation = false;
-    }
-  } else {
-    // Fallback for existing call sites that do not pass a callback:
-    // ensure the bypass is short-lived and does not leak indefinitely.
-    setTimeout(() => {
-      bypassNavigation = false;
-    }, 0);
-  }
-}
 
 export function useUnsavedLeavePage({
   isShow,
@@ -75,93 +63,56 @@ export function useUnsavedLeavePage({
   titleStay?: string;
   callBackCancel?: () => void;
 }) {
-  const { confirm, setIsShow: setIsShowGlobal, isShow: global } = useConfirm();
-  const navigator = useContext(NavigationContext).navigator;
+  const {
+    confirm,
+    setIsShow: setIsShowGlobal,
+    registerProceed,
+    bypassRef
+  } = useConfirm();
+
+  const blocker = useBlocker(
+    useCallback<BlockerFunction>(
+      ({ currentLocation, nextLocation }) => {
+        if (bypassRef.current) {
+          bypassRef.current = false;
+          return false;
+        }
+        return isShow && currentLocation.pathname !== nextLocation.pathname;
+      },
+      [isShow]
+    )
+  );
 
   useEffect(() => {
     setIsShowGlobal(isShow);
   }, [isShow]);
 
+  // When blocker fires, show the confirmation dialog
   useEffect(() => {
-    if (!global) return;
+    if (blocker.state !== 'blocked') return;
 
-    const push = navigator.push;
-    const replace = navigator.replace;
-
-    navigator.push = (...args: Parameters<typeof push>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return push(...args);
+    confirm({
+      title,
+      message: content,
+      onConfirm: () => {
+        callBackCancel?.();
+        setIsShowGlobal(false);
+        blocker.proceed();
+      },
+      onCancel: () => {
+        blocker.reset();
       }
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return push(...args);
-        }
-      });
-    };
+    });
+  }, [blocker.state]);
 
-    navigator.replace = (...args: Parameters<typeof replace>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return replace(...args);
-      }
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return replace(...args);
-        }
-      });
-    };
-
-    return () => {
-      navigator.push = push;
-      navigator.replace = replace;
-    };
-  }, [global, title, content, navigator]);
-
+  // Register blocker.proceed only when the blocker is actually blocked
   useEffect(() => {
-    if (!global) return;
-    history.pushState(null, '', window.location.href);
+    registerProceed(
+      blocker.state === 'blocked' ? () => blocker.proceed() : null
+    );
+  }, [blocker.state]);
 
-    const handlePopState = () => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return;
-      }
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          history.back();
-        },
-        onCancel: () => {
-          history.pushState(null, '', window.location.href);
-        }
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [global, title, content]);
-
+  // Browser tab close / reload guard
   useEffect(() => {
     if (!isShow) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -171,13 +122,39 @@ export function useUnsavedLeavePage({
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [isShow]);
+
   return { isShow };
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const [isShow, setIsShow] = useState<boolean>(false);
+  const proceedRef = useRef<(() => void) | null>(null);
+  const bypassRef = useRef(false);
+
   const confirm = (opts: ConfirmOptions) => setOptions(opts);
+
+  const registerProceed = useCallback((fn: (() => void) | null) => {
+    proceedRef.current = fn;
+  }, []);
+
+  const allowNavigation = useCallback((action: () => void) => {
+    if (proceedRef.current) {
+      // Blocker is active — proceed through it, then run the action
+      proceedRef.current();
+      action();
+    } else {
+      // Blocker is idle — set a one-shot bypass so the next navigation isn't blocked.
+      bypassRef.current = true;
+      try {
+        action();
+      } finally {
+        queueMicrotask(() => {
+          bypassRef.current = false;
+        });
+      }
+    }
+  }, []);
 
   const handleConfirm = () => {
     options?.onConfirm();
@@ -198,7 +175,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         isShow,
         setIsShow,
         handleCancel,
-        handleConfirm
+        handleConfirm,
+        registerProceed,
+        allowNavigation,
+        bypassRef
       }}
     >
       {children}
