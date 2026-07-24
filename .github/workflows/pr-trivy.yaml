@@ -1,0 +1,31 @@
+name: trivy
+
+on:
+  pull_request:
+    paths:
+      - "**/go.mod"
+      - "**/go.sum"
+      - "**/yarn.lock"
+      - "**/package-lock.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "**/go.mod"
+      - "**/go.sum"
+      - "**/yarn.lock"
+      - "**/package-lock.json"
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Scan for vulnerabilities
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: fs # scan local filesystem (go.mod etc.), not docker images
+          scanners: vuln # check for known CVEs only (not misconfig or secrets)
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
