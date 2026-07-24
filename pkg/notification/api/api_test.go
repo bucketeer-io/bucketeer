@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
 	notificationstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -48,7 +49,7 @@ func TestNewNotificationService(t *testing.T) {
 	assert.IsType(t, &NotificationService{}, s)
 }
 
-func TestNotificationService_CreateNotification(t *testing.T) {
+func TestNotificationService_CreateAdminNotification(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -80,13 +81,13 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 		desc        string
 		ctx         context.Context
 		setup       func(*NotificationService)
-		req         *proto.CreateNotificationRequest
+		req         *proto.CreateAdminNotificationRequest
 		expectedErr error
 	}{
 		{
 			desc: "err: unauthenticated",
 			ctx:  context.TODO(),
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: validLocalizations,
 			},
 			expectedErr: statusUnauthenticated.Err(),
@@ -94,7 +95,7 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 		{
 			desc: "err: permission denied",
 			ctx:  memberCtx,
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: validLocalizations,
 			},
 			expectedErr: statusPermissionDenied.Err(),
@@ -102,13 +103,13 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 		{
 			desc:        "err: localization required",
 			ctx:         adminCtx,
-			req:         &proto.CreateNotificationRequest{},
+			req:         &proto.CreateAdminNotificationRequest{},
 			expectedErr: statusLocalizationRequired.Err(),
 		},
 		{
 			desc: "err: language required",
 			ctx:  adminCtx,
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: []*proto.NotificationLocalization{
 					{Language: " ", Title: "New feature", Content: "# New feature"},
 				},
@@ -118,7 +119,7 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 		{
 			desc: "err: duplicated language",
 			ctx:  adminCtx,
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: []*proto.NotificationLocalization{
 					{Language: "en", Title: "New feature", Content: "# New feature"},
 					{Language: "en", Title: "Another", Content: "# Another"},
@@ -129,7 +130,7 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 		{
 			desc: "err: title required",
 			ctx:  adminCtx,
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: []*proto.NotificationLocalization{
 					{Language: "en", Title: " ", Content: "# New feature"},
 				},
@@ -139,7 +140,7 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 		{
 			desc: "err: content required",
 			ctx:  adminCtx,
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: []*proto.NotificationLocalization{
 					{Language: "en", Title: "New feature", Content: " "},
 				},
@@ -155,11 +156,11 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
 					return fn(ctx)
 				})
-				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().CreateNotification(
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().CreateAdminNotification(
 					gomock.Any(), gomock.Any(),
 				).Return(storage.ErrNotificationAlreadyExists)
 			},
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: validLocalizations,
 			},
 			expectedErr: statusNotificationAlreadyExists.Err(),
@@ -172,7 +173,7 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: validLocalizations,
 			},
 			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
@@ -186,11 +187,11 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
 					return fn(ctx)
 				})
-				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().CreateNotification(
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().CreateAdminNotification(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			req: &proto.CreateNotificationRequest{
+			req: &proto.CreateAdminNotificationRequest{
 				Localizations: validLocalizations,
 			},
 			expectedErr: nil,
@@ -202,7 +203,7 @@ func TestNotificationService_CreateNotification(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			resp, err := s.CreateNotification(p.ctx, p.req)
+			resp, err := s.CreateAdminNotification(p.ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 			if p.expectedErr == nil {
 				assert.NotNil(t, resp)
@@ -405,6 +406,182 @@ func TestNotificationService_ListDraftAdminNotifications(t *testing.T) {
 			res, err := s.ListDraftAdminNotifications(p.ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expectedRes, res)
+		})
+	}
+}
+
+func TestNotificationService_UpdateAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	adminCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, true),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+	memberCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	validLocalizations := []*proto.NotificationLocalization{
+		{
+			Language: "en",
+			Tags:     []*proto.NotificationTag{{Name: "Announcement", Color: "#3B82F6"}},
+			Title:    "Updated title",
+			Content:  "# Updated content",
+		},
+	}
+	draft := func() *domain.Notification {
+		return &domain.Notification{
+			Notification: &proto.Notification{
+				Id:           "notification-id-0",
+				Status:       proto.Notification_DRAFT,
+				CreatedBy:    "admin@example.com",
+				LastEditedBy: "admin@example.com",
+				CreatedAt:    1,
+				UpdatedAt:    1,
+				Localizations: []*proto.NotificationLocalization{
+					{Language: "en", Title: "Old title", Content: "old content"},
+				},
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.UpdateAdminNotificationRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: unauthenticated",
+			ctx:  context.TODO(),
+			req: &proto.UpdateAdminNotificationRequest{
+				Id:            "notification-id-0",
+				Localizations: validLocalizations,
+			},
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc: "err: permission denied",
+			ctx:  memberCtx,
+			req: &proto.UpdateAdminNotificationRequest{
+				Id:            "notification-id-0",
+				Localizations: validLocalizations,
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc: "err: id required",
+			ctx:  adminCtx,
+			req: &proto.UpdateAdminNotificationRequest{
+				Localizations: validLocalizations,
+			},
+			expectedErr: statusNotificationIDRequired.Err(),
+		},
+		{
+			desc: "err: localization required",
+			ctx:  adminCtx,
+			req: &proto.UpdateAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusLocalizationRequired.Err(),
+		},
+		{
+			desc: "err: not found",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(nil, storage.ErrNotificationNotFound)
+			},
+			req: &proto.UpdateAdminNotificationRequest{
+				Id:            "notification-id-0",
+				Localizations: validLocalizations,
+			},
+			expectedErr: statusNotificationNotFound.Err(),
+		},
+		{
+			desc: "err: already published",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				published := draft()
+				published.Status = proto.Notification_PUBLISHED
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(published, nil)
+			},
+			req: &proto.UpdateAdminNotificationRequest{
+				Id:            "notification-id-0",
+				Localizations: validLocalizations,
+			},
+			expectedErr: statusNotificationAlreadyPublished.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &proto.UpdateAdminNotificationRequest{
+				Id:            "notification-id-0",
+				Localizations: validLocalizations,
+			},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(draft(), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().UpdateAdminNotification(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.UpdateAdminNotificationRequest{
+				Id:            "notification-id-0",
+				Localizations: validLocalizations,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.UpdateAdminNotification(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+				assert.Equal(t, "notification-id-0", resp.Notification.Id)
+				assert.Equal(t, "email", resp.Notification.LastEditedBy)
+				assert.Equal(t, "admin@example.com", resp.Notification.CreatedBy)
+				assert.True(t, resp.Notification.UpdatedAt > 1)
+				assert.Equal(t, validLocalizations, resp.Notification.Localizations)
+			}
 		})
 	}
 }

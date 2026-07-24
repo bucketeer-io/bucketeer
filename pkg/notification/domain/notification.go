@@ -25,6 +25,16 @@ type Notification struct {
 	*proto.Notification
 }
 
+// Update replaces the localizations of a draft and stamps the editor.
+func (n *Notification) Update(
+	lastEditedBy string,
+	localizations []*proto.NotificationLocalization,
+) {
+	n.LastEditedBy = lastEditedBy
+	n.UpdatedAt = time.Now().Unix()
+	n.Localizations = localizations
+}
+
 func NewNotification(
 	createdBy string,
 	localizations []*proto.NotificationLocalization,

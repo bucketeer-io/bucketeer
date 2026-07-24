@@ -56,6 +56,17 @@ var (
 			"Content"))
 	statusNotificationAlreadyExists = api.NewGRPCStatus(
 		bkterr.NewErrorAlreadyExists(bkterr.NotificationPackageName, "already exists"))
+	statusNotificationIDRequired = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(
+			bkterr.NotificationPackageName,
+			"notification id must be specified",
+			"Id"))
+	statusNotificationNotFound = api.NewGRPCStatus(
+		bkterr.NewErrorNotFound(bkterr.NotificationPackageName, "not found", "Notification"))
+	statusNotificationAlreadyPublished = api.NewGRPCStatus(
+		bkterr.NewErrorFailedPrecondition(
+			bkterr.NotificationPackageName,
+			"published notifications cannot be edited"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(
 			bkterr.NotificationPackageName,

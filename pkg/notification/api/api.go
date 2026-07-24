@@ -187,15 +187,15 @@ func (s *NotificationService) ListDraftAdminNotifications(
 	}, nil
 }
 
-func (s *NotificationService) CreateNotification(
+func (s *NotificationService) CreateAdminNotification(
 	ctx context.Context,
-	req *proto.CreateNotificationRequest,
-) (*proto.CreateNotificationResponse, error) {
+	req *proto.CreateAdminNotificationRequest,
+) (*proto.CreateAdminNotificationResponse, error) {
 	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateNotificationRequest(req); err != nil {
+	if err := validateCreateAdminNotificationRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to validate create notification request",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
@@ -211,7 +211,7 @@ func (s *NotificationService) CreateNotification(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		return s.notificationStorage.CreateNotification(ctxWithTx, notification)
+		return s.notificationStorage.CreateAdminNotification(ctxWithTx, notification)
 	})
 	if err != nil {
 		if errors.Is(err, storage.ErrNotificationAlreadyExists) {
@@ -226,17 +226,21 @@ func (s *NotificationService) CreateNotification(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &proto.CreateNotificationResponse{
+	return &proto.CreateAdminNotificationResponse{
 		Notification: notification.Notification,
 	}, nil
 }
 
-func validateCreateNotificationRequest(req *proto.CreateNotificationRequest) error {
-	if len(req.Localizations) == 0 {
+func validateCreateAdminNotificationRequest(req *proto.CreateAdminNotificationRequest) error {
+	return validateLocalizations(req.Localizations)
+}
+
+func validateLocalizations(localizations []*proto.NotificationLocalization) error {
+	if len(localizations) == 0 {
 		return statusLocalizationRequired.Err()
 	}
-	languages := make(map[string]struct{}, len(req.Localizations))
-	for _, l := range req.Localizations {
+	languages := make(map[string]struct{}, len(localizations))
+	for _, l := range localizations {
 		l.Language = strings.TrimSpace(l.Language)
 		l.Title = strings.TrimSpace(l.Title)
 		if l.Language == "" {
@@ -256,23 +260,72 @@ func validateCreateNotificationRequest(req *proto.CreateNotificationRequest) err
 	return nil
 }
 
-func (s *NotificationService) UpdateNotification(
+func (s *NotificationService) UpdateAdminNotification(
 	ctx context.Context,
-	req *proto.UpdateNotificationRequest,
-) (*proto.UpdateNotificationResponse, error) {
+	req *proto.UpdateAdminNotificationRequest,
+) (*proto.UpdateAdminNotificationResponse, error) {
+	editor, err := s.checkSystemAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateUpdateAdminNotificationRequest(req); err != nil {
+		s.logger.Error(
+			"Failed to validate update notification request",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	var notification *domain.Notification
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		var err error
+		notification, err = s.notificationStorage.GetAdminNotification(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		if notification.Status != proto.Notification_DRAFT {
+			return statusNotificationAlreadyPublished.Err()
+		}
+		notification.Update(editor.Email, req.Localizations)
+		return s.notificationStorage.UpdateAdminNotification(ctxWithTx, notification)
+	})
+	if err != nil {
+		if errors.Is(err, storage.ErrNotificationNotFound) {
+			return nil, statusNotificationNotFound.Err()
+		}
+		if errors.Is(err, statusNotificationAlreadyPublished.Err()) {
+			return nil, statusNotificationAlreadyPublished.Err()
+		}
+		s.logger.Error(
+			"Failed to update notification",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("notificationId", req.Id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.UpdateAdminNotificationResponse{
+		Notification: notification.Notification,
+	}, nil
+}
+
+func validateUpdateAdminNotificationRequest(req *proto.UpdateAdminNotificationRequest) error {
+	if len(strings.TrimSpace(req.Id)) == 0 {
+		return statusNotificationIDRequired.Err()
+	}
+	return validateLocalizations(req.Localizations)
+}
+
+func (s *NotificationService) PublishAdminNotification(
+	ctx context.Context,
+	req *proto.PublishAdminNotificationRequest,
+) (*proto.PublishAdminNotificationResponse, error) {
 	return nil, statusNotImplemented
 }
 
-func (s *NotificationService) PublishNotification(
+func (s *NotificationService) DeleteAdminNotification(
 	ctx context.Context,
-	req *proto.PublishNotificationRequest,
-) (*proto.PublishNotificationResponse, error) {
-	return nil, statusNotImplemented
-}
-
-func (s *NotificationService) DeleteNotification(
-	ctx context.Context,
-	req *proto.DeleteNotificationRequest,
-) (*proto.DeleteNotificationResponse, error) {
+	req *proto.DeleteAdminNotificationRequest,
+) (*proto.DeleteAdminNotificationResponse, error) {
 	return nil, statusNotImplemented
 }

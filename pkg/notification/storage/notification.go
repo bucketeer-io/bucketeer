@@ -34,6 +34,10 @@ var (
 		bkterr.NotificationPackageName,
 		"already exists",
 	)
+	ErrNotificationUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
+		bkterr.NotificationPackageName,
+		"unexpected affected rows",
+	)
 	ErrInvalidListDraftAdminNotificationsCursor = errors.New(
 		"notification storage: invalid list draft admin notifications cursor")
 	ErrInvalidListDraftAdminNotificationsOrderBy = errors.New(
@@ -41,7 +45,9 @@ var (
 )
 
 type NotificationStorage interface {
-	CreateNotification(ctx context.Context, notification *domain.Notification) error
+	CreateAdminNotification(ctx context.Context, notification *domain.Notification) error
+	GetAdminNotification(ctx context.Context, id string) (*domain.Notification, error)
+	UpdateAdminNotification(ctx context.Context, notification *domain.Notification) error
 	ListDraftAdminNotifications(
 		ctx context.Context,
 		params ListDraftAdminNotificationsParams,

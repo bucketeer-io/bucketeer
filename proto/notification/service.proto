@@ -70,26 +70,33 @@ message ListDraftAdminNotificationsResponse {
   int64 total_count = 3;
 }
 
-message CreateNotificationRequest {
+message CreateAdminNotificationRequest {
   // At least one localization is required; languages must be unique.
   repeated NotificationLocalization localizations = 1;
 }
 
-message CreateNotificationResponse {
+message CreateAdminNotificationResponse {
   Notification notification = 1;
 }
 
-message UpdateNotificationRequest {}
+message UpdateAdminNotificationRequest {
+  string id = 1;
+  // Full replacement of the draft's localizations. At least one localization
+  // is required; languages must be unique.
+  repeated NotificationLocalization localizations = 2;
+}
 
-message UpdateNotificationResponse {}
+message UpdateAdminNotificationResponse {
+  Notification notification = 1;
+}
 
-message PublishNotificationRequest {}
+message PublishAdminNotificationRequest {}
 
-message PublishNotificationResponse {}
+message PublishAdminNotificationResponse {}
 
-message DeleteNotificationRequest {}
+message DeleteAdminNotificationRequest {}
 
-message DeleteNotificationResponse {}
+message DeleteAdminNotificationResponse {}
 
 service NotificationService {
   rpc ListNotifications(ListNotificationsRequest)
@@ -304,17 +311,17 @@ service NotificationService {
     };
   }
 
-  rpc CreateNotification(CreateNotificationRequest)
-      returns (CreateNotificationResponse) {
+  rpc CreateAdminNotification(CreateAdminNotificationRequest)
+      returns (CreateAdminNotificationResponse) {
     option (google.api.http) = {
-      post: "/v1/notification"
+      post: "/v1/admin_notification"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create",
       description: "Create a draft notification. System admin only.",
       tags: "notification",
-      operation_id: "web.v1.notification.create",
+      operation_id: "web.v1.notification.admin.create",
       responses: {
         key: "400"
         value: {
@@ -351,17 +358,17 @@ service NotificationService {
     };
   }
 
-  rpc UpdateNotification(UpdateNotificationRequest)
-      returns (UpdateNotificationResponse) {
+  rpc UpdateAdminNotification(UpdateAdminNotificationRequest)
+      returns (UpdateAdminNotificationResponse) {
     option (google.api.http) = {
-      patch: "/v1/notification"
+      patch: "/v1/admin_notification"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update",
       description: "Update a draft notification's localizations. Published notifications cannot be edited. System admin only.",
       tags: "notification",
-      operation_id: "web.v1.notification.update",
+      operation_id: "web.v1.notification.admin.update",
       responses: {
         key: "400"
         value: {
@@ -409,17 +416,17 @@ service NotificationService {
     };
   }
 
-  rpc PublishNotification(PublishNotificationRequest)
-      returns (PublishNotificationResponse) {
+  rpc PublishAdminNotification(PublishAdminNotificationRequest)
+      returns (PublishAdminNotificationResponse) {
     option (google.api.http) = {
-      post: "/v1/notification/publish"
+      post: "/v1/admin_notification/publish"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Publish",
       description: "Publish a draft notification. Requires at least one localization. System admin only.",
       tags: "notification",
-      operation_id: "web.v1.notification.publish",
+      operation_id: "web.v1.notification.admin.publish",
       responses: {
         key: "400"
         value: {
@@ -467,16 +474,16 @@ service NotificationService {
     };
   }
 
-  rpc DeleteNotification(DeleteNotificationRequest)
-      returns (DeleteNotificationResponse) {
+  rpc DeleteAdminNotification(DeleteAdminNotificationRequest)
+      returns (DeleteAdminNotificationResponse) {
     option (google.api.http) = {
-      delete: "/v1/notification"
+      delete: "/v1/admin_notification"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete",
       description: "Delete a notification along with its read markers. System admin only.",
       tags: "notification",
-      operation_id: "web.v1.notification.delete",
+      operation_id: "web.v1.notification.admin.delete",
       responses: {
         key: "400"
         value: {

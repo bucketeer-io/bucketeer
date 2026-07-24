@@ -37,7 +37,7 @@ func TestNewNotificationStorage(t *testing.T) {
 	assert.IsType(t, &notificationStorage{}, storage)
 }
 
-func TestCreateNotification(t *testing.T) {
+func TestCreateAdminNotification(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -147,7 +147,7 @@ func TestCreateNotification(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.CreateNotification(context.Background(), p.input)
+			err := storage.CreateAdminNotification(context.Background(), p.input)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -325,6 +325,230 @@ func TestListDraftAdminNotifications(t *testing.T) {
 				assert.Equal(t, p.expectedCursor, cursor)
 				assert.Equal(t, p.expectedCount, count)
 			}
+		})
+	}
+}
+
+func TestGetAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		id          string
+		expected    *domain.Notification
+		expectedErr error
+	}{
+		{
+			desc: "ErrNotificationNotFound",
+			setup: func(s *notificationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			id:          "notification-id-0",
+			expectedErr: notificationstorage.ErrNotificationNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *notificationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			id:          "notification-id-0",
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *notificationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+					*args[0].(*string) = "notification-id-0"
+					*args[1].(*int32) = int32(proto.Notification_DRAFT)
+					*args[2].(*string) = "admin@example.com"
+					*args[3].(*string) = "admin@example.com"
+					*args[4].(*string) = ""
+					*args[5].(*int64) = int64(0)
+					*args[6].(*int64) = int64(1)
+					*args[7].(*int64) = int64(2)
+					return nil
+				})
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectNotificationSQL, "notification-id-0",
+				).Return(row)
+				var locNextCallCount = 0
+				locRows := mock.NewMockRows(mockController)
+				locRows.EXPECT().Close().Return(nil)
+				locRows.EXPECT().Next().DoAndReturn(func() bool {
+					locNextCallCount++
+					return locNextCallCount <= 1
+				}).Times(2)
+				locRows.EXPECT().Err().Return(nil)
+				locRows.EXPECT().Scan(
+					gomock.Any(), // notification_id
+					gomock.Any(), // language
+					gomock.Any(), // tags
+					gomock.Any(), // title
+					gomock.Any(), // content
+				).Do(func(args ...interface{}) {
+					*args[0].(*string) = "notification-id-0"
+					*args[1].(*string) = "en"
+					*args[3].(*string) = "New feature"
+					*args[4].(*string) = "# New feature"
+				}).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(locRows, nil)
+			},
+			id: "notification-id-0",
+			expected: &domain.Notification{
+				Notification: &proto.Notification{
+					Id:           "notification-id-0",
+					Status:       proto.Notification_DRAFT,
+					CreatedBy:    "admin@example.com",
+					LastEditedBy: "admin@example.com",
+					CreatedAt:    1,
+					UpdatedAt:    2,
+					Localizations: []*proto.NotificationLocalization{
+						{
+							Language: "en",
+							Title:    "New feature",
+							Content:  "# New feature",
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			notification, err := storage.GetAdminNotification(context.Background(), p.id)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.Equal(t, p.expected, notification)
+			}
+		})
+	}
+}
+
+func TestUpdateAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	notification := &domain.Notification{
+		Notification: &proto.Notification{
+			Id:           "notification-id-0",
+			Status:       proto.Notification_DRAFT,
+			CreatedBy:    "admin@example.com",
+			LastEditedBy: "editor@example.com",
+			CreatedAt:    1,
+			UpdatedAt:    5,
+			Localizations: []*proto.NotificationLocalization{
+				{
+					Language: "en",
+					Tags:     []*proto.NotificationTag{{Name: "Announcement", Color: "#3B82F6"}},
+					Title:    "Updated title",
+					Content:  "# Updated content",
+				},
+			},
+		},
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		input       *domain.Notification
+		expectedErr error
+	}{
+		{
+			desc: "Error: update notification",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			input:       notification,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "ErrNotificationUnexpectedAffectedRows",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			input:       notification,
+			expectedErr: notificationstorage.ErrNotificationUnexpectedAffectedRows,
+		},
+		{
+			desc: "Error: delete localizations",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), updateNotificationSQL, gomock.Any(),
+				).Return(result, nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), deleteNotificationLocalizationsSQL, gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			input:       notification,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					updateNotificationSQL,
+					"editor@example.com",
+					int64(5),
+					"notification-id-0",
+				).Return(result, nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					deleteNotificationLocalizationsSQL,
+					"notification-id-0",
+				).Return(nil, nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					insertNotificationLocalizationSQL,
+					"notification-id-0",
+					"en",
+					mysql.JSONObject{Val: notification.Localizations[0].Tags},
+					"Updated title",
+					"# Updated content",
+				).Return(nil, nil)
+			},
+			input:       notification,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.UpdateAdminNotification(context.Background(), p.input)
+			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
