@@ -76,5 +76,8 @@
     "memory": "8gb",
     "storage": "32gb"
   },
+  // Start sshd at every container start so `gh codespace ssh` works without an editor attach
+  // (postAttachCommand only fires when an editor client attaches)
+  "postStartCommand": "bash .devcontainer/start-sshd.sh",
   "postAttachCommand": "bash .devcontainer/setup.sh"
 }
