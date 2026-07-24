@@ -124,8 +124,10 @@ jobs:
           docker build -f migration/Dockerfile.postgres migration/ -t bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }} --load
       # TODO: change exit-code to 1 after initial triage of existing vulnerabilities
       - name: Install Trivy
+        # trivy-action cannot be used here because we need to scan multiple images in a loop.
+        # Version is pinned explicitly.
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.72.0
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/refs/tags/v0.72.0/contrib/install.sh | sh -s -- -b /usr/local/bin v0.72.0
       - name: Scan go application images with Trivy
         run: |
           for APP in $(ls bin); do
