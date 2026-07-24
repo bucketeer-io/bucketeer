@@ -145,3 +145,16 @@
     font-size: 13px !important;
   }
 }
+
+body.driver-active [data-radix-popper-content-wrapper] {
+  z-index: 10001 !important;
+}
+body.driver-active [data-radix-popper-content-wrapper],
+body.driver-active [data-radix-popper-content-wrapper] * {
+  pointer-events: auto;
+}
+
+body.driver-active .driver-active-element [data-tour='submit-apikey-button'] {
+  pointer-events: none;
+  opacity: 0.5;
+}

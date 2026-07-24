@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   VITE_AUTH_REDIRECT_ENDPOINT: string;
   VITE_API_ENDPOINT: string;
   VITE_OLD_CONSOLE_ENDPOINT: string;
+  VITE_WALKTHROUGH_ENABLED: string;
 }
 
 interface ImportMeta {

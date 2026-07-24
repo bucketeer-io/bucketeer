@@ -3,7 +3,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { apiKeyCreator, APIKeyResponse, apiKeyUpdater } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuthAccess } from 'auth';
-import { useToast } from 'hooks';
+import { useToast, WALKTHROUGH_TARGETS } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
@@ -149,7 +149,10 @@ const APIKeyCreateUpdateModal = ({
       {isLoadingApiKey ? (
         <FormLoading />
       ) : (
-        <div className="w-full p-5 pb-28">
+        <div
+          className="w-full p-5 pb-28"
+          data-tour={WALKTHROUGH_TARGETS.APIKEY_FORM}
+        >
           <p className="text-gray-800 typo-head-bold-small">
             {t('form:general-info')}
           </p>
@@ -281,6 +284,7 @@ const APIKeyCreateUpdateModal = ({
                           type="submit"
                           disabled={!isValid || !isDirty || disabled}
                           loading={isSubmitting}
+                          data-tour={WALKTHROUGH_TARGETS.SUBMIT_APIKEY_BUTTON}
                         >
                           {t(`submit`)}
                         </Button>

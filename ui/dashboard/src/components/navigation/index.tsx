@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
+import { WALKTHROUGH_ENABLED } from 'configs';
 import * as ROUTING from 'constants/routing';
-import { useToggleOpen } from 'hooks';
+import { useToggleOpen, useWalkthrough, WALKTHROUGH_TARGETS } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
@@ -10,6 +11,8 @@ import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+import ConnectSdkModal from 'elements/connect-sdk-modal';
+import MenuItemComponent from './menu-item';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
 import SwitchOrganization from './switch-organization';
@@ -23,6 +26,8 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
+  const { startWalkthrough, closeWalkthrough, createdFlagId, isSdkModalOpen } =
+    useWalkthrough();
 
   const settingMenuSections = [
     {
@@ -84,7 +89,8 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         {
           label: t(`navigation.feature-flags`),
           icon: IconSystem.IconSwitch,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`,
+          tourId: WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU
         },
         {
           label: t(`navigation.user-segment`),
@@ -193,7 +199,17 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </div>
         </div>
 
-        <Divider className="mb-3 bg-primary-50 opacity-10" />
+        {WALKTHROUGH_ENABLED && (
+          <MenuItemComponent
+            icon={IconSystem.IconRocket}
+            label={t(`navigation.get-started`)}
+            onClick={() => {
+              onClickNavLink();
+              startWalkthrough();
+            }}
+          />
+        )}
+        <Divider className="my-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
@@ -217,6 +233,13 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         onCloseSwitchOrg={onCloseSwitchOrg}
         onCloseSetting={onCloseSetting}
       />
+      {isSdkModalOpen && (
+        <ConnectSdkModal
+          isOpen={isSdkModalOpen}
+          flagId={createdFlagId}
+          onClose={closeWalkthrough}
+        />
+      )}
     </div>
   );
 };

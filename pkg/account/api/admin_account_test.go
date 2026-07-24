@@ -245,6 +245,7 @@ func TestGetMeMySQL(t *testing.T) {
 						Disabled:  false,
 						CreatedAt: 0,
 						UpdatedAt: 0,
+						LastSeen:  456,
 						SearchFilters: []*accountproto.SearchFilter{
 							{
 								Id: "search-filter-id",

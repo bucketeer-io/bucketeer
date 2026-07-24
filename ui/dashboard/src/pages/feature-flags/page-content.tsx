@@ -3,7 +3,7 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { useLocation } from 'react-router';
 import { hasEditable, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useToggleOpen, WALKTHROUGH_TARGETS } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, Feature, FeatureCountByStatus } from '@types';
@@ -191,6 +191,7 @@ const PageContent = ({
                   className="flex-1 lg:flex-none"
                   onClick={onAdd}
                   disabled={!editable}
+                  data-tour={WALKTHROUGH_TARGETS.CREATE_FLAG_BUTTON}
                 >
                   <Icon icon={IconAddOutlined} size="sm" />
                   {t(`create-flag`)}

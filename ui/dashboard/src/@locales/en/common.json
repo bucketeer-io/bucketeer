@@ -74,7 +74,8 @@
     "back-to-main": "Back to Main",
     "no-projects": "No projects found",
     "no-organizations": "No organizations found",
-    "insights": "Insights"
+    "insights": "Insights",
+    "get-started": "Get started"
   },
   "analytics": "Analytics",
   "submit": "Submit",
@@ -358,7 +359,7 @@
       "mau": {
         "title": "Estimated number of unique users who sent requests to Bucketeer.",
         "notes": {
-        "first": "The first month may have slight inaccuracies due to the data collection start date.",
+          "first": "The first month may have slight inaccuracies due to the data collection start date.",
           "second": "Today's data is not included (aggregated up to the previous day).",
           "third": "The number count is based on UTC.",
           "fourth": "The number might have around 0.81% errors due to the algorithm."
@@ -367,8 +368,8 @@
       "monthlyRequests": {
         "title": "Total number of API requests from SDKs processed by Bucketeer.",
         "notes": {
-          "first":"The first month may have slight inaccuracies due to the data collection start date.",
-          "second":"Today's data is not included (aggregated up to the previous day).",
+          "first": "The first month may have slight inaccuracies due to the data collection start date.",
+          "second": "Today's data is not included (aggregated up to the previous day).",
           "third": "The number count is based on UTC."
         }
       },
@@ -384,5 +385,52 @@
         }
       }
     }
-    }
+  },
+  "walkthrough": {
+    "next": "Next",
+    "done": "Done",
+    "feature-flags-menu": {
+      "title": "Feature flags",
+      "description": "Everything starts here. This menu lists all feature flags in the current environment."
+    },
+    "create-flag-button": {
+      "title": "Create your first flag",
+      "description": "Click this button to create your first feature flag."
+    },
+    "flag-general-info": {
+      "title": "Describe your flag",
+      "description": "Give the flag a name — the ID is generated for you — and add at least one tag. Tags let SDKs fetch only the flags they need."
+    },
+    "flag-variations": {
+      "title": "Define the variations",
+      "description": "Choose the variation type and what is served when the flag is ON or OFF. A boolean flag is the simplest way to start."
+    },
+    "submit-flag-button": {
+      "title": "Create the flag",
+      "description": "When the form is complete, click this button to create your first feature flag."
+    },
+    "connect-sdk": {
+      "title": "🎉 Your flag is created — now connect an SDK",
+      "description": "Pick your language and copy the starter code into your app. It already contains your API key, endpoint, and the flag you just created.",
+      "install": "Install",
+      "initialize": "Initialize and evaluate your flag"
+    },
+    "flag-created": {
+      "title": "🎉 Your flag is created!",
+      "description": "To let your app evaluate this flag, you need an API key. Let’s create one on the API Keys page."
+    },
+    "create-apikey-button": {
+      "title": "Create an API key",
+      "description": "Click this button to open the API key form."
+    },
+    "apikey-form": {
+      "title": "Describe the key",
+      "description": "Name the key, select the environment, and pick a role: Client SDK for web or mobile apps, Server SDK for backend services."
+    },
+    "submit-apikey-button": {
+      "title": "Create the key",
+      "description": "When the form is complete, click Submit to create your API key."
+    },
+    "skip": "Skip walkthrough"
+  }
 }

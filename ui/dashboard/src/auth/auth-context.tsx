@@ -34,6 +34,7 @@ import {
   getTokenStorage,
   setTokenStorage
 } from 'storage/token';
+import { setWalkthroughPendingStorage } from 'storage/walkthrough';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
 import { onChangeFontWithLocalized } from 'utils/function';
 import { getAccountAccess } from './utils';
@@ -106,8 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setConsoleAccount(response.account);
       setIsLogin(true);
-      if (response.account.lastSeen === '0' || !response.account.lastSeen)
+      if (response.account.lastSeen === '0' || !response.account.lastSeen) {
+        setWalkthroughPendingStorage();
         return setIsLoginFirstTimeStorage(true);
+      }
       const isJapanese = response.account.language === Language.JAPANESE;
       onChangeFontWithLocalized(isJapanese);
 

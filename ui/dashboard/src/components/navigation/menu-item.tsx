@@ -11,6 +11,7 @@ export type MenuItem = {
   href?: string;
   options?: DropdownOption[];
   loading?: boolean;
+  tourId?: string;
   onClick?: () => void;
   onSelectOption?: (value: string) => void;
 };
@@ -22,6 +23,7 @@ const MenuItemComponent = ({
   actIcon,
   options,
   loading,
+  tourId,
   onClick,
   onSelectOption
 }: MenuItem) => {
@@ -65,7 +67,12 @@ const MenuItemComponent = ({
         menuContentSide="right"
       />
     ) : href ? (
-      <NavLink onClick={onClick} className={textClsx} to={href}>
+      <NavLink
+        onClick={onClick}
+        className={textClsx}
+        to={href}
+        data-tour={tourId}
+      >
         {iconEl}
         {label}
       </NavLink>
@@ -73,6 +80,7 @@ const MenuItemComponent = ({
       <button
         className={cn(textClsx, { 'justify-between': actionIcon })}
         onClick={onClick}
+        data-tour={tourId}
       >
         <div className="flex items-center gap-x-2 truncate">
           {iconEl}

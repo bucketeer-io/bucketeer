@@ -2698,6 +2698,11 @@ dot-case@^3.0.4:
     no-case "^3.0.4"
     tslib "^2.0.3"
 
+driver.js@^1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/driver.js/-/driver.js-1.8.0.tgz#928c5bdee5f6dd5cb23e45906d22281835679c89"
+  integrity sha512-+8/IO7h1v14IzWh2GP60N7T3PFZweXwdn5e5POuxRSBoCYUojsBxzqawPeXh3YZIibRy7EehYNEyxe7slwwtdg==
+
 dunder-proto@^1.0.0, dunder-proto@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/dunder-proto/-/dunder-proto-1.0.1.tgz#d7ae667e1dc83482f8b70fd0f6eefc50da30f58a"

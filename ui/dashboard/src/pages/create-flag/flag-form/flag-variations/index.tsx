@@ -1,3 +1,4 @@
+import { WALKTHROUGH_TARGETS } from 'hooks';
 import DefaultVariations from './default-variations';
 import FlagType from './flag-type';
 import Variations from './variations';
@@ -5,7 +6,10 @@ import VariationsSwitch from './variations-switch';
 
 const FlagVariations = () => {
   return (
-    <div className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card">
+    <div
+      className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card"
+      data-tour={WALKTHROUGH_TARGETS.FLAG_VARIATIONS}
+    >
       <VariationsSwitch />
       <FlagType />
       <Variations />
