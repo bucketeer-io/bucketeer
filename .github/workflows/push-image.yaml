@@ -122,6 +122,28 @@ jobs:
         run: |
           docker build -f migration/Dockerfile migration/ -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} --load
           docker build -f migration/Dockerfile.postgres migration/ -t bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }} --load
+      # TODO: change exit-code to 1 after initial triage of existing vulnerabilities
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.72.0
+      - name: Scan go application images with Trivy
+        run: |
+          for APP in $(ls bin); do
+            IMAGE=$(./tools/build/show-image-name.sh $APP)
+            trivy image \
+              --severity CRITICAL,HIGH \
+              --ignore-unfixed \
+              --format table \
+              --exit-code 0 \
+              bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+          done
+      - name: Scan migration images with Trivy
+        if: ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
+        run: |
+          trivy image --severity CRITICAL,HIGH --ignore-unfixed --format table --exit-code 0 \
+            bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          trivy image --severity CRITICAL,HIGH --ignore-unfixed --format table --exit-code 0 \
+            bucketeer-migration-postgres:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Login to GHCR
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
