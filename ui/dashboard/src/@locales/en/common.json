@@ -74,8 +74,7 @@
     "back-to-main": "Back to Main",
     "no-projects": "No projects found",
     "no-organizations": "No organizations found",
-    "insights": "Insights",
-    "get-started": "Get started"
+    "insights": "Insights"
   },
   "analytics": "Analytics",
   "submit": "Submit",
@@ -413,7 +412,9 @@
       "title": "🎉 Your flag is created — now connect an SDK",
       "description": "Pick your language and copy the starter code into your app. It already contains your API key, endpoint, and the flag you just created.",
       "install": "Install",
-      "initialize": "Initialize and evaluate your flag"
+      "initialize": "Initialize and evaluate your flag",
+      "enable-note": "Your new flag is OFF by default. Turn it on in the targeting page to start serving variations to your users.",
+      "go-to-flag": "Go to the flag"
     },
     "flag-created": {
       "title": "🎉 Your flag is created!",
@@ -436,6 +437,9 @@
       "title": "👋 Welcome to Bucketeer!",
       "description": "Bucketeer is a feature flag and experimentation platform. Take a short tour to release your first feature flag — it only takes a few minutes.",
       "start": "Take the tour"
-    }
+    },
+    "tutorial": "Tutorial",
+    "replay": "Replay tutorial",
+    "replay-description": "Take the guided tour again: create a feature flag, create an API key, and connect an SDK."
   }
 }

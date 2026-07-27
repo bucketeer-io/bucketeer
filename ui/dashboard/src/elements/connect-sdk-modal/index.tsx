@@ -1,7 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useQueryFeature } from '@queries/feature-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { urls } from 'configs';
+import {
+  PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { copyToClipBoard } from 'utils/function';
@@ -36,6 +41,7 @@ export type ConnectSdkModalProps = {
 const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
   const { t } = useTranslation(['common', 'message']);
   const { notify } = useToast();
+  const navigate = useNavigate();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -61,6 +67,13 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
   const handleCopy = (text: string) => {
     copyToClipBoard(text);
     notify({ message: t('message:copied') });
+  };
+
+  const handleGoToFlag = () => {
+    onClose();
+    navigate(
+      `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${flagId}${PAGE_PATH_FEATURE_TARGETING}`
+    );
   };
 
   return (
@@ -109,9 +122,15 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
             onCopy={() => handleCopy(selectedSDK.code(snippetVars))}
           />
         </div>
+        <p
+          className="typo-para-small rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
+          role="alert"
+        >
+          {t('walkthrough.connect-sdk.enable-note')}
+        </p>
         <div className="flex justify-end">
-          <Button type="button" variant="primary" onClick={onClose}>
-            {t('walkthrough.done')}
+          <Button type="button" variant="primary" onClick={handleGoToFlag}>
+            {t('walkthrough.connect-sdk.go-to-flag')}
           </Button>
         </div>
       </div>

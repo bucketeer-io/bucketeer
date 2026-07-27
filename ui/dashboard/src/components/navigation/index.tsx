@@ -1,10 +1,10 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
-import { WALKTHROUGH_ENABLED } from 'configs';
 import * as ROUTING from 'constants/routing';
 import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
-import { useToggleOpen, useWalkthrough } from 'hooks';
+import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
@@ -12,8 +12,6 @@ import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
-import ConnectSdkModal from 'elements/connect-sdk-modal';
-import MenuItemComponent from './menu-item';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
 import SwitchOrganization from './switch-organization';
@@ -27,8 +25,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
-  const { startWalkthrough, closeWalkthrough, createdFlagId, isSdkModalOpen } =
-    useWalkthrough();
 
   const settingMenuSections = [
     {
@@ -140,6 +136,16 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
     settingPaths.includes(pathname)
   );
 
+  // Keep the sliding settings panel in sync with programmatic navigation
+  // (e.g. the walkthrough moving between the main and settings areas).
+  useEffect(() => {
+    if (settingPaths.some(path => pathname.startsWith(path))) {
+      onOpenSetting();
+    } else {
+      onCloseSetting();
+    }
+  }, [pathname]);
+
   const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
     useToggleOpen(false);
 
@@ -200,17 +206,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </div>
         </div>
 
-        {WALKTHROUGH_ENABLED && (
-          <MenuItemComponent
-            icon={IconSystem.IconRocket}
-            label={t(`navigation.get-started`)}
-            onClick={() => {
-              onClickNavLink();
-              startWalkthrough();
-            }}
-          />
-        )}
-        <Divider className="my-3 bg-primary-50 opacity-10" />
+        <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
@@ -234,13 +230,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         onCloseSwitchOrg={onCloseSwitchOrg}
         onCloseSetting={onCloseSetting}
       />
-      {isSdkModalOpen && (
-        <ConnectSdkModal
-          isOpen={isSdkModalOpen}
-          flagId={createdFlagId}
-          onClose={closeWalkthrough}
-        />
-      )}
     </div>
   );
 };
