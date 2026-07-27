@@ -1,0 +1,486 @@
+{
+  "description": "Shared conformance fixtures for rule-based segment evaluation. Consumed by both evaluation/go and evaluation/typescript tests so the two engines stay in lockstep. A user belongs to a segment when it is in the included-user list OR matches any of the segment rules. Multiple segment IDs in one clause are evaluated with OR.",
+  "segments": [
+    {
+      "id": "segment-list-only",
+      "rules": []
+    },
+    {
+      "id": "segment-rule-plan",
+      "rules": [
+        {
+          "id": "rule-plan",
+          "clauses": [
+            { "id": "clause-plan", "attribute": "plan", "operator": "EQUALS", "values": ["premium"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-and-clauses",
+      "rules": [
+        {
+          "id": "rule-and",
+          "clauses": [
+            { "id": "clause-and-1", "attribute": "plan", "operator": "EQUALS", "values": ["premium"] },
+            { "id": "clause-and-2", "attribute": "region", "operator": "EQUALS", "values": ["jp"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-or-rules",
+      "rules": [
+        {
+          "id": "rule-or-1",
+          "clauses": [
+            { "id": "clause-or-1", "attribute": "plan", "operator": "EQUALS", "values": ["premium"] }
+          ]
+        },
+        {
+          "id": "rule-or-2",
+          "clauses": [
+            { "id": "clause-or-2", "attribute": "region", "operator": "EQUALS", "values": ["jp"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-equals",
+      "rules": [
+        {
+          "id": "rule-op-equals",
+          "clauses": [
+            { "id": "c-op-equals", "attribute": "attr", "operator": "EQUALS", "values": ["value-1"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-in",
+      "rules": [
+        {
+          "id": "rule-op-in",
+          "clauses": [
+            { "id": "c-op-in", "attribute": "attr", "operator": "IN", "values": ["value-1", "value-2"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-starts-with",
+      "rules": [
+        {
+          "id": "rule-op-starts-with",
+          "clauses": [
+            { "id": "c-op-starts-with", "attribute": "attr", "operator": "STARTS_WITH", "values": ["val"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-ends-with",
+      "rules": [
+        {
+          "id": "rule-op-ends-with",
+          "clauses": [
+            { "id": "c-op-ends-with", "attribute": "attr", "operator": "ENDS_WITH", "values": ["-1"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-greater",
+      "rules": [
+        {
+          "id": "rule-op-greater",
+          "clauses": [
+            { "id": "c-op-greater", "attribute": "age", "operator": "GREATER", "values": ["20"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-greater-or-equal",
+      "rules": [
+        {
+          "id": "rule-op-greater-or-equal",
+          "clauses": [
+            { "id": "c-op-greater-or-equal", "attribute": "age", "operator": "GREATER_OR_EQUAL", "values": ["20"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-less",
+      "rules": [
+        {
+          "id": "rule-op-less",
+          "clauses": [
+            { "id": "c-op-less", "attribute": "age", "operator": "LESS", "values": ["20"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-less-or-equal",
+      "rules": [
+        {
+          "id": "rule-op-less-or-equal",
+          "clauses": [
+            { "id": "c-op-less-or-equal", "attribute": "age", "operator": "LESS_OR_EQUAL", "values": ["20"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-before",
+      "rules": [
+        {
+          "id": "rule-op-before",
+          "clauses": [
+            { "id": "c-op-before", "attribute": "last_seen", "operator": "BEFORE", "values": ["1700000000"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-after",
+      "rules": [
+        {
+          "id": "rule-op-after",
+          "clauses": [
+            { "id": "c-op-after", "attribute": "last_seen", "operator": "AFTER", "values": ["1700000000"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-partially-match",
+      "rules": [
+        {
+          "id": "rule-op-partially-match",
+          "clauses": [
+            { "id": "c-op-partially-match", "attribute": "attr", "operator": "PARTIALLY_MATCH", "values": ["lue-"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-not-equals",
+      "rules": [
+        {
+          "id": "rule-op-not-equals",
+          "clauses": [
+            { "id": "c-op-not-equals", "attribute": "attr", "operator": "NOT_EQUALS", "values": ["value-1"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-segment",
+      "rules": [
+        {
+          "id": "rule-op-segment",
+          "clauses": [
+            { "id": "c-op-segment", "attribute": "", "operator": "SEGMENT", "values": ["segment-list-only"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "segment-op-feature-flag",
+      "rules": [
+        {
+          "id": "rule-op-feature-flag",
+          "clauses": [
+            { "id": "c-op-feature-flag", "attribute": "feature-1", "operator": "FEATURE_FLAG", "values": ["variation-a"] }
+          ]
+        }
+      ]
+    }
+  ],
+  "segmentUsers": [
+    { "segmentId": "segment-list-only", "userId": "listed-user", "state": "INCLUDED" },
+    { "segmentId": "segment-rule-plan", "userId": "listed-user", "state": "INCLUDED" },
+    { "segmentId": "segment-op-segment", "userId": "listed-user-op-segment", "state": "INCLUDED" }
+  ],
+  "testCases": [
+    {
+      "desc": "explicit-only: listed user matches",
+      "segmentIds": ["segment-list-only"],
+      "user": { "id": "listed-user", "data": {} },
+      "expected": true
+    },
+    {
+      "desc": "explicit-only: unlisted user does not match",
+      "segmentIds": ["segment-list-only"],
+      "user": { "id": "other-user", "data": {} },
+      "expected": false
+    },
+    {
+      "desc": "empty rules backward compat: unlisted user with attributes does not match",
+      "segmentIds": ["segment-list-only"],
+      "user": { "id": "other-user", "data": { "plan": "premium" } },
+      "expected": false
+    },
+    {
+      "desc": "rule-only: user matching the rule matches",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "rule-user", "data": { "plan": "premium" } },
+      "expected": true
+    },
+    {
+      "desc": "rule-only: user not matching the rule does not match",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "rule-user", "data": { "plan": "free" } },
+      "expected": false
+    },
+    {
+      "desc": "mixed: listed user matches even when the rule does not",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "listed-user", "data": { "plan": "free" } },
+      "expected": true
+    },
+    {
+      "desc": "mixed: unlisted user matches via the rule",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "other-user", "data": { "plan": "premium" } },
+      "expected": true
+    },
+    {
+      "desc": "mixed: unlisted user without rule match does not match",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "other-user", "data": { "plan": "free" } },
+      "expected": false
+    },
+    {
+      "desc": "multi-clause AND: all clauses match",
+      "segmentIds": ["segment-and-clauses"],
+      "user": { "id": "user-1", "data": { "plan": "premium", "region": "jp" } },
+      "expected": true
+    },
+    {
+      "desc": "multi-clause AND: one clause does not match",
+      "segmentIds": ["segment-and-clauses"],
+      "user": { "id": "user-1", "data": { "plan": "premium", "region": "us" } },
+      "expected": false
+    },
+    {
+      "desc": "multi-rule OR: first rule matches",
+      "segmentIds": ["segment-or-rules"],
+      "user": { "id": "user-1", "data": { "plan": "premium" } },
+      "expected": true
+    },
+    {
+      "desc": "multi-rule OR: second rule matches",
+      "segmentIds": ["segment-or-rules"],
+      "user": { "id": "user-1", "data": { "plan": "free", "region": "jp" } },
+      "expected": true
+    },
+    {
+      "desc": "multi-rule OR: no rule matches",
+      "segmentIds": ["segment-or-rules"],
+      "user": { "id": "user-1", "data": { "plan": "free", "region": "us" } },
+      "expected": false
+    },
+    {
+      "desc": "multi-segment OR in one clause: user only in the first segment",
+      "segmentIds": ["segment-list-only", "segment-rule-plan"],
+      "user": { "id": "listed-user", "data": {} },
+      "expected": true
+    },
+    {
+      "desc": "multi-segment OR in one clause: user only matches the second segment's rule",
+      "segmentIds": ["segment-list-only", "segment-rule-plan"],
+      "user": { "id": "other-user", "data": { "plan": "premium" } },
+      "expected": true
+    },
+    {
+      "desc": "multi-segment OR in one clause: user matches no segment",
+      "segmentIds": ["segment-list-only", "segment-rule-plan"],
+      "user": { "id": "other-user", "data": { "plan": "free" } },
+      "expected": false
+    },
+    {
+      "desc": "missing attribute: rule fails closed",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "user-1", "data": { "region": "jp" } },
+      "expected": false
+    },
+    {
+      "desc": "missing attribute: user with no attributes at all",
+      "segmentIds": ["segment-rule-plan"],
+      "user": { "id": "user-1", "data": {} },
+      "expected": false
+    },
+    {
+      "desc": "operator EQUALS: match",
+      "segmentIds": ["segment-op-equals"],
+      "user": { "id": "user-1", "data": { "attr": "value-1" } },
+      "expected": true
+    },
+    {
+      "desc": "operator EQUALS: no match",
+      "segmentIds": ["segment-op-equals"],
+      "user": { "id": "user-1", "data": { "attr": "value-2" } },
+      "expected": false
+    },
+    {
+      "desc": "operator IN: match",
+      "segmentIds": ["segment-op-in"],
+      "user": { "id": "user-1", "data": { "attr": "value-2" } },
+      "expected": true
+    },
+    {
+      "desc": "operator IN: no match",
+      "segmentIds": ["segment-op-in"],
+      "user": { "id": "user-1", "data": { "attr": "value-3" } },
+      "expected": false
+    },
+    {
+      "desc": "operator STARTS_WITH: match",
+      "segmentIds": ["segment-op-starts-with"],
+      "user": { "id": "user-1", "data": { "attr": "value-1" } },
+      "expected": true
+    },
+    {
+      "desc": "operator STARTS_WITH: no match",
+      "segmentIds": ["segment-op-starts-with"],
+      "user": { "id": "user-1", "data": { "attr": "xvalue-1" } },
+      "expected": false
+    },
+    {
+      "desc": "operator ENDS_WITH: match",
+      "segmentIds": ["segment-op-ends-with"],
+      "user": { "id": "user-1", "data": { "attr": "value-1" } },
+      "expected": true
+    },
+    {
+      "desc": "operator ENDS_WITH: no match",
+      "segmentIds": ["segment-op-ends-with"],
+      "user": { "id": "user-1", "data": { "attr": "value-2" } },
+      "expected": false
+    },
+    {
+      "desc": "operator GREATER: match",
+      "segmentIds": ["segment-op-greater"],
+      "user": { "id": "user-1", "data": { "age": "21" } },
+      "expected": true
+    },
+    {
+      "desc": "operator GREATER: equal value does not match",
+      "segmentIds": ["segment-op-greater"],
+      "user": { "id": "user-1", "data": { "age": "20" } },
+      "expected": false
+    },
+    {
+      "desc": "operator GREATER_OR_EQUAL: equal value matches",
+      "segmentIds": ["segment-op-greater-or-equal"],
+      "user": { "id": "user-1", "data": { "age": "20" } },
+      "expected": true
+    },
+    {
+      "desc": "operator GREATER_OR_EQUAL: smaller value does not match",
+      "segmentIds": ["segment-op-greater-or-equal"],
+      "user": { "id": "user-1", "data": { "age": "19" } },
+      "expected": false
+    },
+    {
+      "desc": "operator LESS: match",
+      "segmentIds": ["segment-op-less"],
+      "user": { "id": "user-1", "data": { "age": "19" } },
+      "expected": true
+    },
+    {
+      "desc": "operator LESS: equal value does not match",
+      "segmentIds": ["segment-op-less"],
+      "user": { "id": "user-1", "data": { "age": "20" } },
+      "expected": false
+    },
+    {
+      "desc": "operator LESS_OR_EQUAL: equal value matches",
+      "segmentIds": ["segment-op-less-or-equal"],
+      "user": { "id": "user-1", "data": { "age": "20" } },
+      "expected": true
+    },
+    {
+      "desc": "operator LESS_OR_EQUAL: greater value does not match",
+      "segmentIds": ["segment-op-less-or-equal"],
+      "user": { "id": "user-1", "data": { "age": "21" } },
+      "expected": false
+    },
+    {
+      "desc": "operator BEFORE: match",
+      "segmentIds": ["segment-op-before"],
+      "user": { "id": "user-1", "data": { "last_seen": "1699999999" } },
+      "expected": true
+    },
+    {
+      "desc": "operator BEFORE: no match",
+      "segmentIds": ["segment-op-before"],
+      "user": { "id": "user-1", "data": { "last_seen": "1700000000" } },
+      "expected": false
+    },
+    {
+      "desc": "operator AFTER: match",
+      "segmentIds": ["segment-op-after"],
+      "user": { "id": "user-1", "data": { "last_seen": "1700000001" } },
+      "expected": true
+    },
+    {
+      "desc": "operator AFTER: no match",
+      "segmentIds": ["segment-op-after"],
+      "user": { "id": "user-1", "data": { "last_seen": "1700000000" } },
+      "expected": false
+    },
+    {
+      "desc": "operator PARTIALLY_MATCH: match",
+      "segmentIds": ["segment-op-partially-match"],
+      "user": { "id": "user-1", "data": { "attr": "value-1" } },
+      "expected": true
+    },
+    {
+      "desc": "operator PARTIALLY_MATCH: no match",
+      "segmentIds": ["segment-op-partially-match"],
+      "user": { "id": "user-1", "data": { "attr": "val" } },
+      "expected": false
+    },
+    {
+      "desc": "operator NOT_EQUALS: match",
+      "segmentIds": ["segment-op-not-equals"],
+      "user": { "id": "user-1", "data": { "attr": "value-2" } },
+      "expected": true
+    },
+    {
+      "desc": "operator NOT_EQUALS: no match",
+      "segmentIds": ["segment-op-not-equals"],
+      "user": { "id": "user-1", "data": { "attr": "value-1" } },
+      "expected": false
+    },
+    {
+      "desc": "fail closed: SEGMENT clause inside a segment rule never matches, even for a listed user of the referenced segment",
+      "segmentIds": ["segment-op-segment"],
+      "user": { "id": "listed-user", "data": {} },
+      "expected": false
+    },
+    {
+      "desc": "fail closed: SEGMENT clause inside a segment rule does not match, but the segment's own include list still works",
+      "segmentIds": ["segment-op-segment"],
+      "user": { "id": "listed-user-op-segment", "data": {} },
+      "expected": true
+    },
+    {
+      "desc": "fail closed: FEATURE_FLAG clause inside a segment rule never matches",
+      "segmentIds": ["segment-op-feature-flag"],
+      "user": { "id": "user-1", "data": { "feature-1": "variation-a" } },
+      "expected": false
+    },
+    {
+      "desc": "unknown segment id: does not match",
+      "segmentIds": ["segment-unknown"],
+      "user": { "id": "listed-user", "data": {} },
+      "expected": false
+    }
+  ]
+}

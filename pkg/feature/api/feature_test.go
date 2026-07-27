@@ -1063,6 +1063,9 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
+				s.segmentStorage.(*mock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{Segment: &featureproto.Segment{Id: "id-0"}}, nil, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1469,6 +1472,9 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
+				s.segmentStorage.(*mock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{Segment: &featureproto.Segment{Id: "id-0"}}, nil, nil)
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
 				FeatureIds:    []string{"feature-id-1"},
@@ -1815,6 +1821,9 @@ func TestEvaluateSingleFeature(t *testing.T) {
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.SegmentUser{}, 0, nil)
+				s.segmentStorage.(*mock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{Segment: &featureproto.Segment{Id: "id-0"}}, nil, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
 				User:          &userproto.User{Id: "user-id"},

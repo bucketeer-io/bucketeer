@@ -31,7 +31,7 @@ test('convertVariationValue: Non-YAML type returns original value', async (t) =>
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -67,7 +67,7 @@ test('convertVariationValue: JSON type returns original value', async (t) => {
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -107,7 +107,7 @@ active: true`;
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -158,7 +158,7 @@ settings:
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -206,7 +206,7 @@ test('convertVariationValue: YAML with arrays converts to JSON', async (t) => {
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -255,7 +255,7 @@ active: true # User is active`;
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -301,7 +301,7 @@ test('convertVariationValue: Invalid YAML returns original value as fallback', a
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -343,7 +343,7 @@ test('convertVariationValue: Top-level YAML array converts to JSON array', async
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -391,7 +391,7 @@ test('convertVariationValue: Top-level YAML array with objects converts to JSON'
   });
 
   const user = createUser('test-user-1', {});
-  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), null, '');
 
   t.is(result.getEvaluationsList().length, 1);
   const evaluation = result.getEvaluationsList()[0];
@@ -447,7 +447,7 @@ test('convertVariationValue: Cache is used across multiple evaluations', async (
 
   // First evaluation
   const user1 = createUser('test-user-1', {});
-  const result1 = await evaluator.evaluateFeatures([feature], user1, new Map(), '');
+  const result1 = await evaluator.evaluateFeatures([feature], user1, new Map(), null, '');
   t.truthy(result1.getEvaluationsList()[0]);
   const value1 = result1.getEvaluationsList()[0]?.getVariationValue();
   t.truthy(value1);
@@ -455,7 +455,7 @@ test('convertVariationValue: Cache is used across multiple evaluations', async (
 
   // Second evaluation with different user (should use cache)
   const user2 = createUser('test-user-2', {});
-  const result2 = await evaluator.evaluateFeatures([feature], user2, new Map(), '');
+  const result2 = await evaluator.evaluateFeatures([feature], user2, new Map(), null, '');
   t.truthy(result2.getEvaluationsList()[0]);
   const value2 = result2.getEvaluationsList()[0]?.getVariationValue();
   t.truthy(value2);
@@ -505,7 +505,7 @@ test('convertVariationValue: Cache invalidates when feature is updated', async (
 
   // First evaluation with original timestamp
   const user1 = createUser('test-user-1', {});
-  const result1 = await evaluator.evaluateFeatures([feature], user1, new Map(), '');
+  const result1 = await evaluator.evaluateFeatures([feature], user1, new Map(), null, '');
   const value1 = result1.getEvaluationsList()[0]?.getVariationValue();
   t.truthy(value1);
   if (!value1) return;
@@ -520,7 +520,7 @@ test('convertVariationValue: Cache invalidates when feature is updated', async (
 
   // Second evaluation with updated timestamp
   const user2 = createUser('test-user-2', {});
-  const result2 = await evaluator.evaluateFeatures([feature], user2, new Map(), '');
+  const result2 = await evaluator.evaluateFeatures([feature], user2, new Map(), null, '');
   const value2 = result2.getEvaluationsList()[0]?.getVariationValue();
   t.truthy(value2);
   if (!value2) return;
@@ -610,6 +610,7 @@ test('convertVariationValue: Mixed variation types in single evaluation', async 
     [yamlFeature, stringFeature, jsonFeature],
     user,
     new Map(),
+    null,
     '',
   );
 

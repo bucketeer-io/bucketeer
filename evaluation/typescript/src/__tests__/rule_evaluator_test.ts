@@ -109,7 +109,8 @@ const testcases: TestCase[] = [
     description: 'TestRuleList.ENDS_WITH',
   },
   {
-    user: createUser('user-id-3', { email: 'bucketeer@gmail.com' }),
+    // user-id-5 is not in any segment, so the SEGMENT rule doesn't match first.
+    user: createUser('user-id-5', { email: 'bucketeer@gmail.com' }),
     expected: TestRuleList.IN,
     description: 'TestRuleList.IN',
   },
@@ -124,14 +125,23 @@ const testcases: TestCase[] = [
     description: 'TestRuleList.SEGMENT - user-id-2',
   },
   {
+    // user-id-3 is only in segment-id-1, but SEGMENT clauses match
+    // when the user is in ANY of the listed segments (OR).
     user: createUser('user-id-3', null),
-    expected: null,
-    description: 'No rule matched - user-id-3',
+    expected: TestRuleList.SEGMENT,
+    description: 'TestRuleList.SEGMENT - user-id-3 (in one of the segments)',
   },
   {
+    // user-id-4 is only in segment-id-2, but SEGMENT clauses match
+    // when the user is in ANY of the listed segments (OR).
     user: createUser('user-id-4', null),
+    expected: TestRuleList.SEGMENT,
+    description: 'TestRuleList.SEGMENT - user-id-4 (in one of the segments)',
+  },
+  {
+    user: createUser('user-id-5', null),
     expected: null,
-    description: 'No rule matched - user-id-4',
+    description: 'No rule matched - user-id-5',
   },
 ];
 
@@ -140,7 +150,7 @@ testcases.forEach(({ user, expected, description }) => {
   test(description, (t) => {
     const ruleEvaluator = new RuleEvaluator();
     const values = newSegmentUserIDs();
-    const actual = ruleEvaluator.evaluate(newTestFeature().getRulesList(), user, values, {});
+    const actual = ruleEvaluator.evaluate(newTestFeature().getRulesList(), user, values, null, {});
     t.deepEqual(actual, expected);
   });
 });

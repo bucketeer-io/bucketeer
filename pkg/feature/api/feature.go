@@ -1053,7 +1053,7 @@ func (s *FeatureService) evaluateFeatures(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	mapSegmentUsers, err := s.listSegmentUsers(ctx, mapIDs, EnvironmentId)
+	mapSegmentUsers, mapSegments, err := s.listSegmentUsers(ctx, mapIDs, EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
@@ -1066,7 +1066,7 @@ func (s *FeatureService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, mapSegments, tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
@@ -1132,11 +1132,12 @@ func (s *FeatureService) listSegmentUsers(
 	ctx context.Context,
 	mapSegmentIDs map[string]struct{},
 	EnvironmentId string,
-) (map[string][]*featureproto.SegmentUser, error) {
+) (map[string][]*featureproto.SegmentUser, map[string]*featureproto.Segment, error) {
 	if len(mapSegmentIDs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	users := make(map[string][]*featureproto.SegmentUser)
+	segments := make(map[string]*featureproto.Segment)
 	for segmentID := range mapSegmentIDs {
 		s, err, _ := s.flightgroup.Do(
 			s.segmentFlightID(EnvironmentId, segmentID),
@@ -1145,12 +1146,17 @@ func (s *FeatureService) listSegmentUsers(
 			},
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		listUsers := s.([]*featureproto.SegmentUser)
-		users[segmentID] = listUsers
+		segmentUsers := s.(*featureproto.SegmentUsers)
+		users[segmentID] = segmentUsers.Users
+		segments[segmentID] = &featureproto.Segment{
+			Id:        segmentID,
+			Rules:     segmentUsers.Rules,
+			UpdatedAt: segmentUsers.UpdatedAt,
+		}
 	}
-	return users, nil
+	return users, segments, nil
 }
 
 func (s *FeatureService) segmentFlightID(EnvironmentId, segmentID string) string {
@@ -1160,10 +1166,10 @@ func (s *FeatureService) segmentFlightID(EnvironmentId, segmentID string) string
 func (s *FeatureService) getSegmentUsers(
 	ctx context.Context,
 	segmentID, EnvironmentId string,
-) ([]*featureproto.SegmentUser, error) {
+) (*featureproto.SegmentUsers, error) {
 	segmentUsers, err := s.segmentUsersCache.Get(segmentID, EnvironmentId)
 	if err == nil {
-		return segmentUsers.Users, nil
+		return segmentUsers, nil
 	}
 	s.logger.Warn(
 		"No cached data for SegmentUsers",
@@ -1189,7 +1195,24 @@ func (s *FeatureService) getSegmentUsers(
 		)
 		return nil, err
 	}
-	return res.Users, nil
+	segment, _, storageErr := s.segmentStorage.GetSegment(ctx, segmentID, EnvironmentId)
+	if storageErr != nil {
+		s.logger.Error(
+			"Failed to retrieve segment from storage",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(storageErr),
+				zap.String("environmentId", EnvironmentId),
+				zap.String("segmentId", segmentID),
+			)...,
+		)
+		return nil, storageErr
+	}
+	return &featureproto.SegmentUsers{
+		SegmentId: segmentID,
+		Users:     res.Users,
+		Rules:     segment.Rules,
+		UpdatedAt: segment.UpdatedAt,
+	}, nil
 }
 
 func (s *FeatureService) setLastUsedInfosToFeatureByChunk(

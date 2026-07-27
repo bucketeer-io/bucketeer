@@ -590,6 +590,7 @@ TestEvaluateFeaturesByEvaluatedAtCases().forEach((p) => {
         p.createFeatures(),
         user,
         segmentUser,
+        null,
         p.prevUEID,
         p.evaluatedAt,
         p.userAttributesUpdated,

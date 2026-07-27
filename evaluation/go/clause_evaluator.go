@@ -21,6 +21,7 @@ import (
 	"github.com/blang/semver"
 
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 type clauseEvaluator struct {
@@ -31,8 +32,9 @@ type clauseEvaluator struct {
 func (c *clauseEvaluator) Evaluate(
 	targetValue string,
 	clause *featureproto.Clause,
-	userID string,
+	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
+	segments map[string]*featureproto.Segment,
 	flagVariations map[string]string,
 ) (bool, error) {
 	switch clause.Operator {
@@ -46,7 +48,7 @@ func (c *clauseEvaluator) Evaluate(
 	case featureproto.Clause_ENDS_WITH:
 		return c.endsWith(targetValue, clause.Values), nil
 	case featureproto.Clause_SEGMENT:
-		return c.segmentEvaluator.Evaluate(clause.Values, userID, segmentUsers), nil
+		return c.segmentEvaluator.Evaluate(clause.Values, user, segments, segmentUsers)
 	case featureproto.Clause_GREATER:
 		return c.greater(targetValue, clause.Values), nil
 	case featureproto.Clause_GREATER_OR_EQUAL:
@@ -60,6 +62,11 @@ func (c *clauseEvaluator) Evaluate(
 	case featureproto.Clause_AFTER:
 		return c.after(targetValue, clause.Values), nil
 	case featureproto.Clause_FEATURE_FLAG:
+		// flagVariations is nil when evaluating segment rules:
+		// fail closed instead of returning an error.
+		if flagVariations == nil {
+			return false, nil
+		}
 		return c.dependencyEvaluator.Evaluate(clause.Attribute, clause.Values, flagVariations)
 	case featureproto.Clause_PARTIALLY_MATCH:
 		return c.partiallyMatches(targetValue, clause.Values), nil

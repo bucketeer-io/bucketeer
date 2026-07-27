@@ -203,7 +203,13 @@ test('EvaluateFeature', async (t) => {
 
     const segmentUser: Map<string, SegmentUser[]> = new Map<string, SegmentUser[]>();
     try {
-      const evaluation = await evaluator.evaluateFeatures([f, f1, f2], user, segmentUser, 'tag1');
+      const evaluation = await evaluator.evaluateFeatures(
+        [f, f1, f2],
+        user,
+        segmentUser,
+        null,
+        'tag1',
+      );
       if (evaluation.getEvaluationsList()) {
         const actual = findEvaluation(evaluation.getEvaluationsList(), f.getId());
         t.deepEqual(p.expected, actual?.toObject());
@@ -292,7 +298,13 @@ config:
 
     const segmentUser: Map<string, SegmentUser[]> = new Map<string, SegmentUser[]>();
     try {
-      const evaluation = await evaluator.evaluateFeatures([yamlFeature], user, segmentUser, 'tag1');
+      const evaluation = await evaluator.evaluateFeatures(
+        [yamlFeature],
+        user,
+        segmentUser,
+        null,
+        'tag1',
+      );
       if (evaluation.getEvaluationsList()) {
         const actual = findEvaluation(evaluation.getEvaluationsList(), yamlFeature.getId());
         t.deepEqual(p.expected, actual?.toObject(), 'YAML should be converted to JSON');

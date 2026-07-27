@@ -271,7 +271,7 @@ config:
 		yamlFeature.OffVariation = p.offVariation
 		yamlFeature.Prerequisites = p.prerequisite
 		segmentUser := map[string][]*ftproto.SegmentUser{}
-		evaluation, err := evaluator.EvaluateFeatures([]*ftproto.Feature{yamlFeature}, user, segmentUser, "tag1")
+		evaluation, err := evaluator.EvaluateFeatures([]*ftproto.Feature{yamlFeature}, user, segmentUser, nil, "tag1")
 		assert.Equal(t, p.expectedError, err)
 		if evaluation != nil {
 			actual, err := findEvaluation(evaluation.Evaluations, yamlFeature.Id)
@@ -292,7 +292,7 @@ config:
 		f.OffVariation = p.offVariation
 		f.Prerequisites = p.prerequisite
 		segmentUser := map[string][]*ftproto.SegmentUser{}
-		evaluation, err := evaluator.EvaluateFeatures([]*ftproto.Feature{f, f1, f2}, user, segmentUser, "tag1")
+		evaluation, err := evaluator.EvaluateFeatures([]*ftproto.Feature{f, f1, f2}, user, segmentUser, nil, "tag1")
 		assert.Equal(t, p.expectedError, err)
 		if evaluation != nil {
 			actual, err := findEvaluation(evaluation.Evaluations, f.Id)
@@ -318,6 +318,7 @@ func TestEvaluateFeaturesByEvaluatedAt_MissingPrerequisite(t *testing.T) {
 		features,
 		user,
 		segmentUsersMap,
+		nil,
 		"prev-ueid",
 		time.Now().Unix(),
 		false,
@@ -877,6 +878,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 				p.createFeatures(),
 				user,
 				segmentUser,
+				nil,
 				p.prevUEID,
 				p.evaluatedAt,
 				p.userAttributesUpdated,
@@ -1499,7 +1501,7 @@ func TestAssignUserOffVariation(t *testing.T) {
 		f.Enabled = p.enabled
 		f.OffVariation = p.offVariation
 		f.Prerequisites = p.prerequisite
-		reason, variation, err := evaluator.assignUser(f, user, nil, p.Flagvariations)
+		reason, variation, err := evaluator.assignUser(f, user, nil, nil, p.Flagvariations)
 		assert.Equal(t, p.expectedReason, reason)
 		assert.Equal(t, p.expectedVariation, variation)
 		assert.Equal(t, p.expectedError, err)
@@ -1537,7 +1539,7 @@ func TestAssignUserTarget(t *testing.T) {
 	}
 	for _, p := range patterns {
 		user := &userproto.User{Id: p.userID}
-		reason, variation, err := evaluator.assignUser(f, user, nil, nil)
+		reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
 		assert.Equal(t, p.expectedReason, reason.Type)
 		assert.Equal(t, p.expectedVariationID, variation.Id)
 		assert.NoError(t, err)
@@ -1551,7 +1553,7 @@ func TestAssignUserRuleSet(t *testing.T) {
 	}
 	f := makeFeature("test-feature")
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1572,7 +1574,7 @@ func TestAssignUserWithNoDefaultStrategy(t *testing.T) {
 	f.DefaultStrategy = nil
 
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
 	if reason != nil {
 		t.Fatalf("Failed to assign user. Reason should be nil: %v", reason)
 	}
@@ -1591,7 +1593,7 @@ func TestAssignUserDefaultStrategy(t *testing.T) {
 	}
 	f := makeFeature("test-feature")
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1630,7 +1632,7 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 		},
 	}
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1642,7 +1644,7 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 	}
 	// Channge sampling seed to change assigned variation.
 	f.SamplingSeed = "sampling-seed"
-	reason, variation, err = evaluator.assignUser(f, user, nil, nil)
+	reason, variation, err = evaluator.assignUser(f, user, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1706,6 +1708,7 @@ func TestEvaluateFeaturesByEvaluatedAt_MissingPrerequisiteActual(t *testing.T) {
 				features,
 				user,
 				segmentUsersMap,
+				nil,
 				p.prevUEID,
 				p.evaluatedAt,
 				p.userAttributesUpdated,
@@ -2182,6 +2185,7 @@ func TestEvaluateFeaturesByEvaluatedAt_TagMismatchScenario(t *testing.T) {
 				features,
 				user,
 				segmentUsersMap,
+				nil,
 				p.prevUEID,
 				p.evaluatedAt,
 				p.userAttributesUpdated,
@@ -2555,6 +2559,7 @@ func TestEvaluateWithYAMLVariation(t *testing.T) {
 			[]*ftproto.Feature{feature},
 			user,
 			map[string][]*ftproto.SegmentUser{},
+			nil,
 			"",
 		)
 
@@ -2605,6 +2610,7 @@ func TestEvaluateWithYAMLVariation(t *testing.T) {
 			[]*ftproto.Feature{feature},
 			user1,
 			map[string][]*ftproto.SegmentUser{},
+			nil,
 			"",
 		)
 		require.NoError(t, err1)
@@ -2616,6 +2622,7 @@ func TestEvaluateWithYAMLVariation(t *testing.T) {
 			[]*ftproto.Feature{feature},
 			user2,
 			map[string][]*ftproto.SegmentUser{},
+			nil,
 			"",
 		)
 		require.NoError(t, err2)
@@ -2880,6 +2887,7 @@ timeout: 30`,
 				features,
 				user,
 				map[string][]*ftproto.SegmentUser{},
+				nil,
 				"",
 			)
 
@@ -2915,6 +2923,7 @@ timeout: 30`,
 				features,
 				user,
 				map[string][]*ftproto.SegmentUser{},
+				nil,
 				"",
 			)
 

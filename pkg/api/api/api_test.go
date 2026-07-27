@@ -1561,6 +1561,8 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{Id: "id-0"}}, nil)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -2651,6 +2653,8 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 					nil, errors.New("cache miss"))
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{Id: "segment-id"}}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
 

@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 func TestGreaterFloat(t *testing.T) {
@@ -135,7 +136,7 @@ func TestGreaterFloat(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -236,7 +237,7 @@ func TestGreaterSemver(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -281,7 +282,7 @@ func TestGreaterString(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -428,7 +429,7 @@ func TestGreaterOrEqualFloat(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -558,7 +559,7 @@ func TestGreaterOrEqualSemver(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -618,7 +619,7 @@ func TestGreaterOrEqualString(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -718,7 +719,7 @@ func TestLessThanSemver(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -835,7 +836,7 @@ func TestLessFloat(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -885,7 +886,7 @@ func TestLessString(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1027,7 +1028,7 @@ func TestLessOrEqualFloat(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1157,7 +1158,7 @@ func TestLessThanOrEqualSemver(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1217,7 +1218,7 @@ func TestLessOrEqualString(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1276,7 +1277,7 @@ func TestBeforeInt(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1335,7 +1336,7 @@ func TestAfterInt(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1425,7 +1426,7 @@ func TestNotEquals(t *testing.T) {
 			Values:   tc.values,
 		}
 		des := fmt.Sprintf("index: %d", i)
-		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
@@ -1613,7 +1614,7 @@ func TestSemverVPrefixNormalization(t *testing.T) {
 				Operator: tc.operator,
 				Values:   tc.values,
 			}
-			res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+			res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 			assert.Equal(t, tc.expected, res)
 		})
 	}
@@ -1737,7 +1738,7 @@ func TestEqualsAndInSemverVPrefixNormalization(t *testing.T) {
 				Operator: tc.operator,
 				Values:   tc.values,
 			}
-			res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+			res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, &userproto.User{Id: "userId"}, nil, nil, nil)
 			assert.Equal(t, tc.expected, res)
 		})
 	}

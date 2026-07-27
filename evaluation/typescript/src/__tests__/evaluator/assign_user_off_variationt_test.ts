@@ -114,7 +114,7 @@ TestCases.forEach((tc, index) => {
 
     const evaluator = new Evaluator();
     try {
-      const [reason, variation] = evaluator.assignUser(f, user, [], tc.flagVariations);
+      const [reason, variation] = evaluator.assignUser(f, user, [], null, tc.flagVariations);
       //TODO: check with deep equal ?
       t.deepEqual(reason, tc.expectedReason);
       t.deepEqual(variation, tc.expectedVariation);

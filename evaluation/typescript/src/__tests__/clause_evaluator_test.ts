@@ -1,9 +1,11 @@
 import test from 'ava';
 import { Clause } from '../proto/feature/clause_pb';
 import { ClauseEvaluator } from '../clauseEvaluator';
+import { createUser } from '../modelFactory';
 import { SegmentEvaluatorTestCases } from './segment_evaluator_test';
 
 const clauseEvaluator = new ClauseEvaluator();
+const testUser = createUser('userId', null);
 
 test('GreaterFloat', (t) => {
   const testCases = [
@@ -35,7 +37,7 @@ test('GreaterFloat', (t) => {
     clause.setOperator(Clause.Operator.GREATER);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -74,7 +76,7 @@ test('GreaterSemver', (t) => {
     clause.setOperator(Clause.Operator.GREATER);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(result, tc.expected, `Test case ${i} failed`);
   });
 });
@@ -115,7 +117,7 @@ test('TestGreaterString', (t) => {
     clause.setOperator(Clause.Operator.GREATER);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -262,7 +264,7 @@ test('TestGreaterOrEqualFloat', (t) => {
     clause.setOperator(Clause.Operator.GREATER_OR_EQUAL); // Greater or Equal operator
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -351,7 +353,7 @@ test('TestGreaterOrEqualSemver', (t) => {
     clause.setOperator(Clause.Operator.GREATER_OR_EQUAL);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -411,7 +413,7 @@ test('TestGreaterOrEqualString', (t) => {
     clause.setOperator(Clause.Operator.GREATER_OR_EQUAL);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -471,7 +473,7 @@ test('TestLessThanSemver', (t) => {
     clause.setOperator(Clause.Operator.LESS);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -588,7 +590,7 @@ test('TestLessFloat', (t) => {
     clause.setOperator(Clause.Operator.LESS);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -638,7 +640,7 @@ test('TestLessString', (t) => {
     clause.setOperator(Clause.Operator.LESS);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -780,7 +782,7 @@ test('TestLessOrEqualFloat', (t) => {
     clause.setOperator(Clause.Operator.LESS_OR_EQUAL);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -855,7 +857,7 @@ test('TestLessThanOrEqualSemver', (t) => {
     clause.setOperator(Clause.Operator.LESS_OR_EQUAL);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -915,7 +917,7 @@ test('TestLessOrEqualString', (t) => {
     clause.setOperator(Clause.Operator.LESS_OR_EQUAL); // LESS_OR_EQUAL operator
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -977,7 +979,7 @@ test('TestBeforeInt', (t) => {
     clause.setOperator(Clause.Operator.BEFORE); // BEFORE operator
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -1035,7 +1037,7 @@ test('TestAfterInt', (t) => {
     clause.setOperator(Clause.Operator.AFTER);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -1117,7 +1119,7 @@ test('TestInOperator', (t) => {
     clause.setOperator(Clause.Operator.IN); // Change operator to 'IN'
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -1232,7 +1234,7 @@ test('TestStartsWithOperator', (t) => {
     clause.setOperator(Clause.Operator.STARTS_WITH); // Change operator to 'STARTS_WITH'
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -1347,7 +1349,7 @@ test('TestEndsWithOperator', (t) => {
     clause.setOperator(Clause.Operator.ENDS_WITH); // Change operator to 'ENDS_WITH'
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -1482,7 +1484,7 @@ test('TestPartiallyMatchesOperator', (t) => {
     clause.setOperator(Clause.Operator.PARTIALLY_MATCH); // Change operator to 'PARTIALLY_MATCH'
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,
@@ -1499,11 +1501,11 @@ test('TestSegementMatchesOperator', (t) => {
     const clause = new Clause();
     clause.setOperator(Clause.Operator.SEGMENT);
     clause.setValuesList(tc.segmentIDs);
-    const result = clauseEvaluator.evaluate('', clause, tc.userID, tc.segmentUsers, {});
+    const result = clauseEvaluator.evaluate('', clause, tc.user, tc.segmentUsers, tc.segments, {});
     t.is(
       result,
       tc.expected,
-      `Test case ${i} failed: userID ${tc.userID} : segmentUsers ${tc.segmentUsers}`,
+      `Test case ${i} failed: userID ${tc.user.getId()} : segmentUsers ${tc.segmentUsers}`,
     );
   });
 });
@@ -1536,7 +1538,7 @@ test('NotEquals', (t) => {
     clause.setOperator(Clause.Operator.NOT_EQUALS);
     clause.setValuesList(tc.values);
 
-    const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
+    const result = clauseEvaluator.evaluate(tc.targetValue, clause, testUser, [], null, {});
     t.is(
       result,
       tc.expected,

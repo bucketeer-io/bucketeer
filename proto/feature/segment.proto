@@ -58,4 +58,7 @@ message SegmentUsers {
   string segment_id = 1;
   repeated SegmentUser users = 2;
   int64 updated_at = 3;
+  // The segment's rule-based membership definition. Delivered to server SDKs
+  // alongside the user list so local evaluation can match users by attribute.
+  repeated Rule rules = 4;
 }

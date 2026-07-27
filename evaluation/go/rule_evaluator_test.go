@@ -53,11 +53,14 @@ func TestRuleEvaluator(t *testing.T) {
 			expected: f.Rules[2],
 		},
 		{
+			// user-id-3 is in segment-id-1: with the OR semantics across the
+			// SEGMENT clause values, the segment rule (Rules[3]) now matches
+			// before the email rule (Rules[4]) is reached.
 			user: &userproto.User{
 				Id:   "user-id-3",
 				Data: map[string]string{"email": "bucketeer@gmail.com"},
 			},
-			expected: f.Rules[4],
+			expected: f.Rules[3],
 		},
 		{
 			user: &userproto.User{
@@ -74,15 +77,25 @@ func TestRuleEvaluator(t *testing.T) {
 			expected: f.Rules[3],
 		},
 		{
+			// In one segment only: matches with the OR semantics (was nil with AND).
 			user: &userproto.User{
 				Id:   "user-id-3",
 				Data: nil,
 			},
-			expected: nil,
+			expected: f.Rules[3],
 		},
 		{
+			// In one segment only: matches with the OR semantics (was nil with AND).
 			user: &userproto.User{
 				Id:   "user-id-4",
+				Data: nil,
+			},
+			expected: f.Rules[3],
+		},
+		{
+			// Not in any segment and no attributes: no rule matches.
+			user: &userproto.User{
+				Id:   "user-id-5",
 				Data: nil,
 			},
 			expected: nil,
@@ -92,7 +105,7 @@ func TestRuleEvaluator(t *testing.T) {
 	ruleEvaluator := &ruleEvaluator{}
 	for i, tc := range testcases {
 		des := fmt.Sprintf("index: %d", i)
-		actual, _ := ruleEvaluator.Evaluate(f.Rules, tc.user, values, nil)
+		actual, _ := ruleEvaluator.Evaluate(f.Rules, tc.user, values, nil, nil)
 		assert.Equal(t, tc.expected, actual, des)
 	}
 }

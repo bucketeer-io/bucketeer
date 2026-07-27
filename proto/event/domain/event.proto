@@ -764,6 +764,8 @@ message SegmentUpdatedEvent {
   string id = 1;
   google.protobuf.StringValue name = 2;
   google.protobuf.StringValue description = 3;
+  // Set when the update replaced the segment's rules.
+  bucketeer.feature.RuleListValue rules = 4;
 }
 
 message SegmentNameChangedEvent {

@@ -426,7 +426,7 @@ func (s *gatewayService) evaluateFeaturesForStream(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	segmentUsersMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentID)
+	segmentUsersMap, segmentsMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentID)
 	if err != nil {
 		if !isCallerContextErr(err) {
 			s.logger.Error(
@@ -441,7 +441,7 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	}
 
 	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
-		features, user, segmentUsersMap,
+		features, user, segmentUsersMap, segmentsMap,
 		prevUEID, evaluatedAt, false, tag,
 	)
 	if err != nil {
@@ -706,7 +706,7 @@ func (s *gatewayService) evaluateFeatures(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	mapSegmentUsers, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentId)
+	mapSegmentUsers, mapSegments, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
@@ -717,7 +717,7 @@ func (s *gatewayService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, mapSegments, tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
@@ -735,22 +735,28 @@ func (s *gatewayService) listSegmentUsers(
 	userID string,
 	mapSegmentIDs map[string]struct{},
 	environmentId string,
-) (map[string][]*featureproto.SegmentUser, error) {
+) (map[string][]*featureproto.SegmentUser, map[string]*featureproto.Segment, error) {
 	if len(mapSegmentIDs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	users := make(map[string][]*featureproto.SegmentUser)
+	segments := make(map[string]*featureproto.Segment)
 	for segmentID := range mapSegmentIDs {
 		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, segmentID), func() (interface{}, error) {
 			return s.getSegmentUsers(ctx, segmentID, environmentId)
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		segmentUsers := s.([]*featureproto.SegmentUser)
-		users[segmentID] = segmentUsers
+		segmentUsers := s.(*featureproto.SegmentUsers)
+		users[segmentID] = segmentUsers.Users
+		segments[segmentID] = &featureproto.Segment{
+			Id:        segmentID,
+			Rules:     segmentUsers.Rules,
+			UpdatedAt: segmentUsers.UpdatedAt,
+		}
 	}
-	return users, nil
+	return users, segments, nil
 }
 
 func (s *gatewayService) segmentFlightID(environmentId, segmentID string) string {
@@ -760,12 +766,12 @@ func (s *gatewayService) segmentFlightID(environmentId, segmentID string) string
 func (s *gatewayService) getSegmentUsers(
 	ctx context.Context,
 	segmentID, environmentId string,
-) ([]*featureproto.SegmentUser, error) {
+) (*featureproto.SegmentUsers, error) {
 	// L1: in-memory cache
 	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
 	if err == nil {
 		restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerInMemory, codeHit).Inc()
-		return segment.Users, nil
+		return segment, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerInMemory, codeMiss).Inc()
 	// L2: Redis cache (kept warm by batch cacher)
@@ -773,7 +779,7 @@ func (s *gatewayService) getSegmentUsers(
 	if err == nil {
 		restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeHit).Inc()
 		putSegmentUsersCache(ctx, segment, environmentId, s.segmentUsersCache, s.logger)
-		return segment.Users, nil
+		return segment, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeMiss).Inc()
 	// L3: feature service (DB)
@@ -801,12 +807,30 @@ func (s *gatewayService) getSegmentUsers(
 		)
 		return nil, errInternal
 	}
+	reqGet := &featureproto.GetSegmentRequest{
+		Id:            segmentID,
+		EnvironmentId: environmentId,
+	}
+	respGet, err := s.featureClient.GetSegment(ctx, reqGet)
+	if err != nil {
+		s.logger.Error(
+			"Failed to retrieve segment from storage",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentID", environmentId),
+				zap.String("segmentId", segmentID),
+			)...,
+		)
+		return nil, errInternal
+	}
 	segmentUsers := &featureproto.SegmentUsers{
 		SegmentId: segmentID,
 		Users:     res.Users,
+		Rules:     respGet.Segment.Rules,
+		UpdatedAt: respGet.Segment.UpdatedAt,
 	}
 	putSegmentUsersCache(ctx, segmentUsers, environmentId, s.segmentUsersCache, s.logger)
-	return res.Users, nil
+	return segmentUsers, nil
 }
 
 func (s *gatewayService) getFeatures(

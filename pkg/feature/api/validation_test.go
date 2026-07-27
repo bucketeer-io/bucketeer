@@ -216,3 +216,174 @@ func TestValidateVariationDeletion(t *testing.T) {
 		})
 	}
 }
+
+func newValidSegmentRule(ruleID, clauseID string) *featureproto.Rule {
+	return &featureproto.Rule{
+		Id: ruleID,
+		Clauses: []*featureproto.Clause{
+			{
+				Id:        clauseID,
+				Attribute: "plan",
+				Operator:  featureproto.Clause_EQUALS,
+				Values:    []string{"premium"},
+			},
+		},
+	}
+}
+
+func TestValidateSegmentRules(t *testing.T) {
+	t.Parallel()
+	// Valid uuid v4 ids.
+	ruleID1 := "b52d3181-e6f0-4d4c-b40f-9891d56a708e"
+	ruleID2 := "d9ce4c22-e763-4a21-8f2f-9fdcaeb7dcf5"
+	clauseID1 := "3ecb45b5-90e4-4d0c-9d4c-468ba9ee2b0c"
+	clauseID2 := "8b3f24e7-2b6e-4bb8-9e78-114df90bc555"
+
+	patterns := []struct {
+		desc     string
+		rules    func() []*featureproto.Rule
+		expected error
+	}{
+		{
+			desc:     "success: no rules",
+			rules:    func() []*featureproto.Rule { return nil },
+			expected: nil,
+		},
+		{
+			desc: "success: valid rules",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses = append(rule.Clauses, &featureproto.Clause{
+					Id:        clauseID2,
+					Attribute: "region",
+					Operator:  featureproto.Clause_IN,
+					Values:    []string{"jp", "us"},
+				})
+				return []*featureproto.Rule{rule, newValidSegmentRule(ruleID2, clauseID2)}
+			},
+			expected: nil,
+		},
+		{
+			desc: "error: too many rules",
+			rules: func() []*featureproto.Rule {
+				rules := make([]*featureproto.Rule, 0, maxSegmentRules+1)
+				for i := 0; i <= maxSegmentRules; i++ {
+					rules = append(rules, newValidSegmentRule(ruleID1, clauseID1))
+				}
+				return rules
+			},
+			expected: statusExceededMaxSegmentRules.Err(),
+		},
+		{
+			desc: "error: invalid rule id",
+			rules: func() []*featureproto.Rule {
+				return []*featureproto.Rule{newValidSegmentRule("not-a-uuid", clauseID1)}
+			},
+			expected: statusInvalidSegmentRuleID.Err(),
+		},
+		{
+			desc: "error: duplicate rule ids",
+			rules: func() []*featureproto.Rule {
+				return []*featureproto.Rule{
+					newValidSegmentRule(ruleID1, clauseID1),
+					newValidSegmentRule(ruleID1, clauseID2),
+				}
+			},
+			expected: statusDuplicateSegmentRuleID.Err(),
+		},
+		{
+			desc: "error: strategy not allowed",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Strategy = &featureproto.Strategy{
+					Type: featureproto.Strategy_FIXED,
+					FixedStrategy: &featureproto.FixedStrategy{
+						Variation: "variation-a",
+					},
+				}
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusSegmentRuleStrategyNotAllowed.Err(),
+		},
+		{
+			desc: "error: rule without clauses",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses = nil
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusSegmentRuleClauseRequired.Err(),
+		},
+		{
+			desc: "error: too many clauses",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses = nil
+				for i := 0; i <= maxSegmentRuleClauses; i++ {
+					rule.Clauses = append(rule.Clauses, newValidSegmentRule(ruleID1, clauseID1).Clauses[0])
+				}
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusExceededMaxSegmentRuleClauses.Err(),
+		},
+		{
+			desc: "error: invalid clause id",
+			rules: func() []*featureproto.Rule {
+				return []*featureproto.Rule{newValidSegmentRule(ruleID1, "not-a-uuid")}
+			},
+			expected: statusInvalidSegmentRuleClauseID.Err(),
+		},
+		{
+			desc: "error: duplicate clause ids",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses = append(rule.Clauses, newValidSegmentRule(ruleID2, clauseID1).Clauses[0])
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusDuplicateSegmentRuleClauseID.Err(),
+		},
+		{
+			desc: "error: SEGMENT operator not allowed",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses[0].Operator = featureproto.Clause_SEGMENT
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusSegmentRuleOperatorNotAllowed.Err(),
+		},
+		{
+			desc: "error: FEATURE_FLAG operator not allowed",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses[0].Operator = featureproto.Clause_FEATURE_FLAG
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusSegmentRuleOperatorNotAllowed.Err(),
+		},
+		{
+			desc: "error: clause without attribute",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses[0].Attribute = ""
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusSegmentRuleClauseAttributeRequired.Err(),
+		},
+		{
+			desc: "error: clause without values",
+			rules: func() []*featureproto.Rule {
+				rule := newValidSegmentRule(ruleID1, clauseID1)
+				rule.Clauses[0].Values = nil
+				return []*featureproto.Rule{rule}
+			},
+			expected: statusSegmentRuleClauseValuesRequired.Err(),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			err := validateSegmentRules(p.rules())
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}

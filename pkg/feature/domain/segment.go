@@ -62,6 +62,12 @@ func (s *Segment) UpdateSegment(
 	return updated, nil
 }
 
+// UpdateRules replaces all the segment rules with the given list.
+func (s *Segment) UpdateRules(rules []*featureproto.Rule) {
+	s.Rules = rules
+	s.UpdatedAt = time.Now().Unix()
+}
+
 func (s *Segment) SetDeleted() error {
 	s.Deleted = true
 	s.UpdatedAt = time.Now().Unix()

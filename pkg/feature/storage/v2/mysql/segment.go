@@ -341,6 +341,7 @@ func (s *segmentStorage) ListAllInUseSegments(
 			&seg.SegmentID,
 			&seg.EnvironmentID,
 			&seg.UpdatedAt,
+			&mysqlstorage.JSONObject{Val: &seg.Rules},
 		)
 		if err != nil {
 			return nil, err

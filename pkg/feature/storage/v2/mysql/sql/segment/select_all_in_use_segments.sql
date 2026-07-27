@@ -1,7 +1,8 @@
 SELECT 
     seg.id AS segment_id,
     seg.environment_id AS environment_id,
-    seg.updated_at AS segment_updated_at
+    seg.updated_at AS segment_updated_at,
+    seg.rules AS segment_rules
 FROM segment AS seg
 WHERE seg.deleted = 0
     AND EXISTS (

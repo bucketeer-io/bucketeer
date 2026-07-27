@@ -1,5 +1,6 @@
 import { Clause } from './proto/feature/clause_pb';
-import { SegmentUser } from './proto/feature/segment_pb';
+import { Segment, SegmentUser } from './proto/feature/segment_pb';
+import { User } from './proto/user/user_pb';
 import { SegmentEvaluator } from './segmentEvaluator';
 import { DependencyEvaluator } from './dependencyEvaluator';
 import * as semver from 'semver';
@@ -16,9 +17,10 @@ class ClauseEvaluator {
   evaluate(
     targetValue: string,
     clause: Clause,
-    userID: string,
+    user: User,
     segmentUsers: SegmentUser[],
-    flagVariations: { [key: string]: string },
+    segments: Map<string, Segment> | null,
+    flagVariations: { [key: string]: string } | null,
   ): boolean {
     try {
       switch (clause.getOperator()) {
@@ -31,7 +33,12 @@ class ClauseEvaluator {
         case Clause.Operator.ENDS_WITH:
           return this.endsWith(targetValue, clause.getValuesList());
         case Clause.Operator.SEGMENT:
-          return this.segmentEvaluator.evaluate(clause.getValuesList(), userID, segmentUsers);
+          return this.segmentEvaluator.evaluate(
+            clause.getValuesList(),
+            user,
+            segments,
+            segmentUsers,
+          );
         case Clause.Operator.GREATER:
           return this.greater(targetValue, clause.getValuesList());
         case Clause.Operator.GREATER_OR_EQUAL:
@@ -45,6 +52,11 @@ class ClauseEvaluator {
         case Clause.Operator.AFTER:
           return this.after(targetValue, clause.getValuesList());
         case Clause.Operator.FEATURE_FLAG:
+          // flagVariations is null when evaluating segment rules:
+          // fail closed instead of throwing an error.
+          if (flagVariations === null) {
+            return false;
+          }
           return this.dependencyEvaluator.evaluate(
             clause.getAttribute(),
             clause.getValuesList(),
