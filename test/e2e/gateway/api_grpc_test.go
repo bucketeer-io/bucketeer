@@ -551,9 +551,10 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 }
 
 // TestGrpcGetEvaluationsRuleBasedSegment verifies the whole rule-based
-// segment flow: a segment whose membership is defined by a rule on a user
-// attribute (no user list), referenced by a feature flag rule, evaluated
-// through the gateway.
+// segment flow through the gateway: a segment with mixed membership — an
+// included-user list AND a rule on a user attribute — referenced by a
+// feature flag rule. A user belongs to the segment when it is in the list
+// OR matches the rule.
 func TestGrpcGetEvaluationsRuleBasedSegment(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
@@ -564,8 +565,7 @@ func TestGrpcGetEvaluationsRuleBasedSegment(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	featureID := newFeatureID(t, uuid)
 
-	// Rule-based segment: membership is defined by a user attribute,
-	// the user list stays empty.
+	// Segment with a rule on a user attribute.
 	attributeValue := fmt.Sprintf("%s-plan-%s", prefixTestName, uuid)
 	segmentName := fmt.Sprintf("%s-segment-%s", prefixTestName, uuid)
 	if *testID != "" {
@@ -590,6 +590,11 @@ func TestGrpcGetEvaluationsRuleBasedSegment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Mixed membership: also upload a user to the segment's include list.
+	// The upload must complete before the first evaluation so the gateway
+	// caches the complete segment state (user list + rules) on first fetch.
+	listedUserID := newUserID(t, fmt.Sprintf("listed-%s", uuid))
+	uploadSegmentUsersAndWait(t, featureClient, segmentRes.Segment.Id, []string{listedUserID})
 
 	// Feature with a rule targeting the segment: matched users get variation B.
 	req := newCreateFeatureReq(featureID)
@@ -612,7 +617,19 @@ func TestGrpcGetEvaluationsRuleBasedSegment(t *testing.T) {
 	assert.Equal(t, featureproto.Reason_RULE, eval.Reason.Type)
 	assert.Equal(t, req.Variations[1].Value, eval.VariationValue)
 
-	// A user without the attribute is not in the segment
+	// The listed user gets variation B even though
+	// its attributes do not match the segment rule.
+	res = grpcGetEvaluationsWithUser(t, tag, &userproto.User{
+		Id: listedUserID,
+	})
+	eval, err = findFeature(res.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, featureproto.Reason_RULE, eval.Reason.Type)
+	assert.Equal(t, req.Variations[1].Value, eval.VariationValue)
+
+	// A user neither listed nor matching the rule is not in the segment
 	// and gets the default variation A.
 	res = grpcGetEvaluationsWithUser(t, tag, &userproto.User{
 		Id: newUserID(t, newUUID(t)),
@@ -1780,6 +1797,45 @@ func addRule(t *testing.T, featureID, variationID string, client featureclient.C
 		}
 		t.Fatal(err)
 	}
+}
+
+// uploadSegmentUsersAndWait uploads the users to the segment's include list
+// and waits until the asynchronous upload completes.
+func uploadSegmentUsersAndWait(
+	t *testing.T,
+	client featureclient.Client,
+	segmentID string,
+	userIDs []string,
+) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	data := []byte(strings.Join(userIDs, "\n") + "\n")
+	_, err := client.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
+		EnvironmentId: *environmentID,
+		SegmentId:     segmentID,
+		Data:          data,
+		State:         featureproto.SegmentUser_INCLUDED,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := &featureproto.ListSegmentUsersRequest{
+		SegmentId:     segmentID,
+		State:         &wrapperspb.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)},
+		EnvironmentId: *environmentID,
+	}
+	for i := 0; i < 25; i++ {
+		if err := ctx.Err(); err != nil {
+			t.Fatalf("uploadSegmentUsersAndWait: context done: %v", err)
+		}
+		res, err := client.ListSegmentUsers(ctx, req)
+		if err == nil && res != nil && len(res.Users) >= len(userIDs) {
+			return
+		}
+		time.Sleep(2 * time.Second)
+	}
+	t.Fatalf("segment users not ready. segmentID: %s", segmentID)
 }
 
 // addSegmentRule adds a fixed-strategy rule with a SEGMENT clause
