@@ -170,3 +170,22 @@ body .driver-popover * {
   align-items: center;
   gap: 8px;
 }
+
+/* The welcome step is a centered dialog — larger than regular tour popovers. */
+.driver-popover.walkthrough-welcome-popover {
+  max-width: 500px;
+  padding: 24px;
+}
+.walkthrough-welcome-popover .driver-popover-title {
+  font-size: 20px;
+}
+.walkthrough-welcome-popover .driver-popover-description {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* driver.js locks the highlighted element's scrollable parent; keep it
+   scrollable — the walkthrough refreshes the spotlight on scroll instead. */
+body .driver-active-element-parent-no-scroll {
+  overflow: auto !important;
+}

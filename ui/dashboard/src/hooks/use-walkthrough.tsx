@@ -44,6 +44,7 @@ const blockEnterSubmit = (event: KeyboardEvent) => {
 };
 const AWAIT_APIKEY_TIMEOUT = 10 * 60 * 1000;
 const AWAIT_APIKEY_POLL_INTERVAL = 2000;
+const PENDING_TOUR_TIMEOUT = 30 * 1000;
 
 const hasUsableSDKKey = async (
   organizationId: string,
@@ -82,6 +83,25 @@ export const useWalkthrough = () => {
     },
     []
   );
+
+  // driver.js only tracks window scrolls and measures targets once, so the
+  // spotlight drifts when nested containers scroll (kept scrollable via a CSS
+  // override) or when panels/modals finish animating in — refresh it on both.
+  useEffect(() => {
+    const refreshSpotlight = () => {
+      if (driverRef.current?.isActive()) {
+        driverRef.current.refresh();
+      }
+    };
+    document.addEventListener('scroll', refreshSpotlight, true);
+    document.addEventListener('transitionend', refreshSpotlight, true);
+    document.addEventListener('animationend', refreshSpotlight, true);
+    return () => {
+      document.removeEventListener('scroll', refreshSpotlight, true);
+      document.removeEventListener('transitionend', refreshSpotlight, true);
+      document.removeEventListener('animationend', refreshSpotlight, true);
+    };
+  }, []);
 
   const closeWalkthrough = useCallback(() => {
     driverRef.current?.destroy();
@@ -256,18 +276,15 @@ export const useWalkthrough = () => {
     return () => clearInterval(interval);
   }, [stage, consoleAccount]);
 
-  const startWalkthrough = useCallback(
-    (options?: { withWelcome?: boolean }) => {
-      if (!consoleAccount) return;
-      const currentEnvironment = getCurrentEnvironment(consoleAccount);
-      navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`);
-
+  const driveFlagTour = useCallback(
+    (withWelcome?: boolean) => {
       cancelledRef.current = false;
       setStage('flag-tour');
       driverRef.current?.destroy();
       const welcomeStep: DriveStep = {
         // No element: shown as a centered dialog.
         popover: {
+          popoverClass: 'walkthrough-welcome-popover',
           title: titleWithIcon(iconRocketRaw, t('walkthrough.welcome.title')),
           description: t('walkthrough.welcome.description'),
           nextBtnText: t('walkthrough.welcome.start'),
@@ -280,7 +297,7 @@ export const useWalkthrough = () => {
           tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON)
         ),
         steps: [
-          ...(options?.withWelcome ? [welcomeStep] : []),
+          ...(withWelcome ? [welcomeStep] : []),
           {
             element: tourTarget(WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU),
             disableActiveInteraction: true,
@@ -335,8 +352,48 @@ export const useWalkthrough = () => {
       });
       driverRef.current.drive();
     },
-    [buildDriverConfig, consoleAccount, navigate, t]
+    [buildDriverConfig, t]
   );
+
+  // Starting the tour away from the flag list first navigates there, which
+  // the unsaved-changes dialog may block — only drive once the page is
+  // actually reached (the request expires if the user stays).
+  const pendingTourRef = useRef<{
+    withWelcome: boolean;
+    requestedAt: number;
+  } | null>(null);
+
+  const startWalkthrough = useCallback(
+    (options?: { withWelcome?: boolean }) => {
+      if (!consoleAccount) return;
+      const currentEnvironment = getCurrentEnvironment(consoleAccount);
+      const featuresPath = `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`;
+      if (pathname === featuresPath) {
+        driveFlagTour(options?.withWelcome);
+        return;
+      }
+      pendingTourRef.current = {
+        withWelcome: !!options?.withWelcome,
+        requestedAt: Date.now()
+      };
+      navigate(featuresPath);
+    },
+    [consoleAccount, driveFlagTour, navigate, pathname]
+  );
+
+  useEffect(() => {
+    const pending = pendingTourRef.current;
+    if (!pending || !consoleAccount) return;
+    if (Date.now() - pending.requestedAt > PENDING_TOUR_TIMEOUT) {
+      pendingTourRef.current = null;
+      return;
+    }
+    const currentEnvironment = getCurrentEnvironment(consoleAccount);
+    if (pathname === `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`) {
+      pendingTourRef.current = null;
+      driveFlagTour(pending.withWelcome);
+    }
+  }, [pathname, consoleAccount, driveFlagTour]);
 
   // Auto-start once for first-time users (flag set at login).
   const hasAutoStartedRef = useRef(false);
