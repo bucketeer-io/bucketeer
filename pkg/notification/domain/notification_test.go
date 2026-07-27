@@ -22,6 +22,25 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
+func TestUpdateNotification(t *testing.T) {
+	t.Parallel()
+	notification, err := NewNotification("admin@example.com", []*proto.NotificationLocalization{
+		{Language: "en", Title: "Old title", Content: "old content"},
+	})
+	assert.Nil(t, err)
+	createdAt := notification.CreatedAt
+	newLocalizations := []*proto.NotificationLocalization{
+		{Language: "en", Title: "New title", Content: "new content"},
+		{Language: "ja", Title: "新タイトル", Content: "新しい内容"},
+	}
+	notification.Update("editor@example.com", newLocalizations)
+	assert.Equal(t, "admin@example.com", notification.CreatedBy)
+	assert.Equal(t, "editor@example.com", notification.LastEditedBy)
+	assert.Equal(t, createdAt, notification.CreatedAt)
+	assert.True(t, notification.UpdatedAt >= createdAt)
+	assert.Equal(t, newLocalizations, notification.Localizations)
+}
+
 func TestNewNotification(t *testing.T) {
 	t.Parallel()
 	localizations := []*proto.NotificationLocalization{

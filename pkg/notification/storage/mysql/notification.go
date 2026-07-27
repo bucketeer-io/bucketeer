@@ -31,6 +31,12 @@ var (
 	insertNotificationSQL string
 	//go:embed sql/insert_notification_localization.sql
 	insertNotificationLocalizationSQL string
+	//go:embed sql/select_notification.sql
+	selectNotificationSQL string
+	//go:embed sql/update_notification.sql
+	updateNotificationSQL string
+	//go:embed sql/delete_notification_localizations.sql
+	deleteNotificationLocalizationsSQL string
 	//go:embed sql/select_draft_notifications.sql
 	selectDraftNotificationsSQL string
 	//go:embed sql/count_draft_notifications.sql
@@ -47,7 +53,7 @@ func NewNotificationStorage(qe mysqlstorage.QueryExecer) notificationstorage.Not
 	return &notificationStorage{qe: qe}
 }
 
-func (s *notificationStorage) CreateNotification(
+func (s *notificationStorage) CreateAdminNotification(
 	ctx context.Context,
 	notification *domain.Notification,
 ) error {
@@ -81,6 +87,84 @@ func (s *notificationStorage) CreateNotification(
 			if errors.Is(err, mysqlstorage.ErrDuplicateEntry) {
 				return notificationstorage.ErrNotificationAlreadyExists
 			}
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *notificationStorage) GetAdminNotification(
+	ctx context.Context,
+	id string,
+) (*domain.Notification, error) {
+	notification := proto.Notification{}
+	var status int32
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectNotificationSQL,
+		id,
+	).Scan(
+		&notification.Id,
+		&status,
+		&notification.CreatedBy,
+		&notification.LastEditedBy,
+		&notification.PublishedBy,
+		&notification.PublishedAt,
+		&notification.CreatedAt,
+		&notification.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysqlstorage.ErrNoRows) {
+			return nil, notificationstorage.ErrNotificationNotFound
+		}
+		return nil, err
+	}
+	notification.Status = proto.Notification_Status(status)
+	if err := s.fillLocalizations(ctx, []*proto.Notification{&notification}); err != nil {
+		return nil, err
+	}
+	return &domain.Notification{Notification: &notification}, nil
+}
+
+func (s *notificationStorage) UpdateAdminNotification(
+	ctx context.Context,
+	notification *domain.Notification,
+) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		updateNotificationSQL,
+		notification.LastEditedBy,
+		notification.UpdatedAt,
+		notification.Id,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return notificationstorage.ErrNotificationUnexpectedAffectedRows
+	}
+	if _, err := s.qe.ExecContext(
+		ctx,
+		deleteNotificationLocalizationsSQL,
+		notification.Id,
+	); err != nil {
+		return err
+	}
+	for _, l := range notification.Localizations {
+		_, err := s.qe.ExecContext(
+			ctx,
+			insertNotificationLocalizationSQL,
+			notification.Id,
+			l.Language,
+			mysqlstorage.JSONObject{Val: l.Tags},
+			l.Title,
+			l.Content,
+		)
+		if err != nil {
 			return err
 		}
 	}

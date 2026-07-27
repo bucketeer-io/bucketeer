@@ -1227,6 +1227,257 @@ paths:
           format: int32
       tags:
         - audit_log
+  /v1/admin_notification:
+    delete:
+      summary: Delete
+      description: Delete a notification along with its read markers. System admin only.
+      operationId: web.v1.notification.admin.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationDeleteAdminNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      tags:
+        - notification
+    post:
+      summary: Create
+      description: Create a draft notification. System admin only.
+      operationId: web.v1.notification.admin.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationCreateAdminNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationCreateAdminNotificationRequest'
+      tags:
+        - notification
+    patch:
+      summary: Update
+      description: Update a draft notification's localizations. Published notifications cannot be edited. System admin only.
+      operationId: web.v1.notification.admin.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationUpdateAdminNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationUpdateAdminNotificationRequest'
+      tags:
+        - notification
+  /v1/admin_notification/publish:
+    post:
+      summary: Publish
+      description: Publish a draft notification. Requires at least one localization. System admin only.
+      operationId: web.v1.notification.admin.publish
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationPublishAdminNotificationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Returned when the user is not a system admin.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: permission denied
+        "404":
+          description: Returned when the notification is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationPublishAdminNotificationRequest'
+      tags:
+        - notification
   /v1/admin_notifications/drafts:
     get:
       summary: List Drafts
@@ -6734,256 +6985,6 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      tags:
-        - notification
-    delete:
-      summary: Delete
-      description: Delete a notification along with its read markers. System admin only.
-      operationId: web.v1.notification.delete
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/notificationDeleteNotificationResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Returned when the user is not a system admin.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: permission denied
-        "404":
-          description: Returned when the notification is not found.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 5
-              details: []
-              message: not found
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      tags:
-        - notification
-    post:
-      summary: Create
-      description: Create a draft notification. System admin only.
-      operationId: web.v1.notification.create
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/notificationCreateNotificationResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Returned when the user is not a system admin.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: permission denied
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/notificationCreateNotificationRequest'
-      tags:
-        - notification
-    patch:
-      summary: Update
-      description: Update a draft notification's localizations. Published notifications cannot be edited. System admin only.
-      operationId: web.v1.notification.update
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/notificationUpdateNotificationResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Returned when the user is not a system admin.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: permission denied
-        "404":
-          description: Returned when the notification is not found.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 5
-              details: []
-              message: not found
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/notificationUpdateNotificationRequest'
-      tags:
-        - notification
-  /v1/notification/publish:
-    post:
-      summary: Publish
-      description: Publish a draft notification. Requires at least one localization. System admin only.
-      operationId: web.v1.notification.publish
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/notificationPublishNotificationResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Returned when the user is not a system admin.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: permission denied
-        "404":
-          description: Returned when the notification is not found.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 5
-              details: []
-              message: not found
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/notificationPublishNotificationRequest'
       tags:
         - notification
   /v1/notifications:
@@ -14212,7 +14213,7 @@ definitions:
           type: object
           $ref: '#/definitions/insightsMonthlySummaryDataPoint'
         title: Sorted by yearmonth ascending
-  notificationCreateNotificationRequest:
+  notificationCreateAdminNotificationRequest:
     type: object
     properties:
       localizations:
@@ -14221,12 +14222,12 @@ definitions:
           type: object
           $ref: '#/definitions/notificationNotificationLocalization'
         description: At least one localization is required; languages must be unique.
-  notificationCreateNotificationResponse:
+  notificationCreateAdminNotificationResponse:
     type: object
     properties:
       notification:
         $ref: '#/definitions/notificationNotification'
-  notificationDeleteNotificationResponse:
+  notificationDeleteAdminNotificationResponse:
     type: object
   notificationGetNotificationResponse:
     type: object
@@ -14335,14 +14336,28 @@ definitions:
         type: string
       color:
         type: string
-  notificationPublishNotificationRequest:
+  notificationPublishAdminNotificationRequest:
     type: object
-  notificationPublishNotificationResponse:
+  notificationPublishAdminNotificationResponse:
     type: object
-  notificationUpdateNotificationRequest:
+  notificationUpdateAdminNotificationRequest:
     type: object
-  notificationUpdateNotificationResponse:
+    properties:
+      id:
+        type: string
+      localizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotificationLocalization'
+        description: |-
+          Full replacement of the draft's localizations. At least one localization
+          is required; languages must be unique.
+  notificationUpdateAdminNotificationResponse:
     type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
   protobufAny:
     type: object
     properties:

@@ -46165,7 +46165,7 @@
             ]
           },
           {
-            "name": "CreateNotificationRequest",
+            "name": "CreateAdminNotificationRequest",
             "fields": [
               {
                 "id": 1,
@@ -46176,7 +46176,7 @@
             ]
           },
           {
-            "name": "CreateNotificationResponse",
+            "name": "CreateAdminNotificationResponse",
             "fields": [
               {
                 "id": 1,
@@ -46186,22 +46186,42 @@
             ]
           },
           {
-            "name": "UpdateNotificationRequest"
+            "name": "UpdateAdminNotificationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "localizations",
+                "type": "NotificationLocalization",
+                "is_repeated": true
+              }
+            ]
           },
           {
-            "name": "UpdateNotificationResponse"
+            "name": "UpdateAdminNotificationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "notification",
+                "type": "Notification"
+              }
+            ]
           },
           {
-            "name": "PublishNotificationRequest"
+            "name": "PublishAdminNotificationRequest"
           },
           {
-            "name": "PublishNotificationResponse"
+            "name": "PublishAdminNotificationResponse"
           },
           {
-            "name": "DeleteNotificationRequest"
+            "name": "DeleteAdminNotificationRequest"
           },
           {
-            "name": "DeleteNotificationResponse"
+            "name": "DeleteAdminNotificationResponse"
           }
         ],
         "services": [
@@ -46979,16 +46999,16 @@
                 ]
               },
               {
-                "name": "CreateNotification",
-                "in_type": "CreateNotificationRequest",
-                "out_type": "CreateNotificationResponse",
+                "name": "CreateAdminNotification",
+                "in_type": "CreateAdminNotificationRequest",
+                "out_type": "CreateAdminNotificationResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/notification"
+                        "value": "/v1/admin_notification"
                       },
                       {
                         "name": "body",
@@ -47013,7 +47033,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.notification.create"
+                        "value": "web.v1.notification.admin.create"
                       },
                       {
                         "name": "responses",
@@ -47155,16 +47175,16 @@
                 ]
               },
               {
-                "name": "UpdateNotification",
-                "in_type": "UpdateNotificationRequest",
-                "out_type": "UpdateNotificationResponse",
+                "name": "UpdateAdminNotification",
+                "in_type": "UpdateAdminNotificationRequest",
+                "out_type": "UpdateAdminNotificationResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/notification"
+                        "value": "/v1/admin_notification"
                       },
                       {
                         "name": "body",
@@ -47189,7 +47209,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.notification.update"
+                        "value": "web.v1.notification.admin.update"
                       },
                       {
                         "name": "responses",
@@ -47376,16 +47396,16 @@
                 ]
               },
               {
-                "name": "PublishNotification",
-                "in_type": "PublishNotificationRequest",
-                "out_type": "PublishNotificationResponse",
+                "name": "PublishAdminNotification",
+                "in_type": "PublishAdminNotificationRequest",
+                "out_type": "PublishAdminNotificationResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/notification/publish"
+                        "value": "/v1/admin_notification/publish"
                       },
                       {
                         "name": "body",
@@ -47410,7 +47430,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.notification.publish"
+                        "value": "web.v1.notification.admin.publish"
                       },
                       {
                         "name": "responses",
@@ -47597,16 +47617,16 @@
                 ]
               },
               {
-                "name": "DeleteNotification",
-                "in_type": "DeleteNotificationRequest",
-                "out_type": "DeleteNotificationResponse",
+                "name": "DeleteAdminNotification",
+                "in_type": "DeleteAdminNotificationRequest",
+                "out_type": "DeleteAdminNotificationResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "delete",
-                        "value": "/v1/notification"
+                        "value": "/v1/admin_notification"
                       }
                     ]
                   },
@@ -47627,7 +47647,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.notification.delete"
+                        "value": "web.v1.notification.admin.delete"
                       },
                       {
                         "name": "responses",
