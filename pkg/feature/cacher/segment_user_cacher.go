@@ -100,6 +100,7 @@ func (c *segmentUserCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 		segUsers := &ftproto.SegmentUsers{
 			SegmentId: seg.SegmentID,
 			Users:     users,
+			Rules:     seg.Rules,
 			UpdatedAt: seg.UpdatedAt,
 		}
 		c.putCache(segUsers, seg.EnvironmentID, len(users))

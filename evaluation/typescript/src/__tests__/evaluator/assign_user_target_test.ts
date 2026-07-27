@@ -39,7 +39,7 @@ TestCases.forEach((tc, index) => {
     const f = newTestFeature('test-feature');
 
     const evaluator = new Evaluator();
-    const [reason, variation] = evaluator.assignUser(f, user, [], {});
+    const [reason, variation] = evaluator.assignUser(f, user, [], null, {});
     //TODO: check with deep equal ?
     t.deepEqual(reason.getType(), tc.expectedReason);
     t.deepEqual(variation.getId(), tc.expectedVariationID);

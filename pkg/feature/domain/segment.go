@@ -33,13 +33,15 @@ func NewSegment(name string, description string) (*Segment, error) {
 	if err != nil {
 		return nil, err
 	}
+	now := time.Now().Unix()
 	return &Segment{
 		Segment: &featureproto.Segment{
 			Id:          id.String(),
 			Name:        name,
 			Description: description,
 			Version:     1,
-			CreatedAt:   time.Now().Unix(),
+			CreatedAt:   now,
+			UpdatedAt:   now,
 		},
 	}, nil
 }
@@ -60,6 +62,12 @@ func (s *Segment) UpdateSegment(
 	}
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
+}
+
+// UpdateRules replaces all the segment rules with the given list.
+func (s *Segment) UpdateRules(rules []*featureproto.Rule) {
+	s.Rules = rules
+	s.UpdatedAt = time.Now().Unix()
 }
 
 func (s *Segment) SetDeleted() error {

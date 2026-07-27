@@ -405,6 +405,7 @@ func (c *cacheRefresher) refreshSegmentUsers(
 	segmentUsers := &featureproto.SegmentUsers{
 		SegmentId: event.EntityId,
 		Users:     listResp.Users,
+		Rules:     getResp.Segment.Rules,
 		UpdatedAt: getResp.Segment.UpdatedAt,
 	}
 	if err := c.segmentUsersCache.Put(segmentUsers, event.EnvironmentId); err != nil {

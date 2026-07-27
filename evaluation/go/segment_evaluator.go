@@ -16,27 +16,58 @@ package evaluation
 
 import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 type segmentEvaluator struct {
 }
 
-func (e *segmentEvaluator) Evaluate(segmentIDs []string, userID string, segmentUsers []*featureproto.SegmentUser) bool {
-	return e.findSegmentUser(segmentIDs, userID, featureproto.SegmentUser_INCLUDED, segmentUsers)
-}
-
-func (e *segmentEvaluator) findSegmentUser(
+// Evaluate reports whether the user belongs to ANY of the given segments (OR).
+func (e *segmentEvaluator) Evaluate(
 	segmentIDs []string,
-	userID string,
-	state featureproto.SegmentUser_State,
+	user *userproto.User,
+	segments map[string]*featureproto.Segment,
 	segmentUsers []*featureproto.SegmentUser,
-) bool {
+) (bool, error) {
 	for _, segmentID := range segmentIDs {
-		if !e.containsSegmentUser(segmentID, userID, state, segmentUsers) {
-			return false
+		inSegment, err := e.isUserInSegment(segmentID, user, segments[segmentID], segmentUsers)
+		if err != nil {
+			return false, err
+		}
+		if inSegment {
+			return true, nil
 		}
 	}
-	return true
+	return false, nil
+}
+
+// isUserInSegment reports whether the user belongs to the segment:
+// the user is in the included-user list OR matches any of the segment rules.
+func (e *segmentEvaluator) isUserInSegment(
+	segmentID string,
+	user *userproto.User,
+	segment *featureproto.Segment,
+	segmentUsers []*featureproto.SegmentUser,
+) (bool, error) {
+	// 1. Explicit include list — existing behavior, unchanged.
+	if e.containsSegmentUser(segmentID, user.Id, featureproto.SegmentUser_INCLUDED, segmentUsers) {
+		return true, nil
+	}
+	// 2. Rules. Segment.Rules is []*featureproto.Rule — the same type as Feature.Rules —
+	// so the flag-side rule evaluator (OR across rules, AND across clauses, attribute
+	// resolution, all operators) runs on it as is.
+	// segmentUsers/segments/flagVariations are nil: validation rejects SEGMENT and
+	// FEATURE_FLAG operators inside segment rules, and nil makes any such clause
+	// fail closed.
+	if segment == nil || len(segment.Rules) == 0 {
+		return false, nil
+	}
+	ruleEval := &ruleEvaluator{} // local value: avoids the embedding cycle
+	matchedRule, err := ruleEval.Evaluate(segment.Rules, user, nil, nil, nil)
+	if err != nil {
+		return false, err
+	}
+	return matchedRule != nil, nil
 }
 
 func (e *segmentEvaluator) containsSegmentUser(

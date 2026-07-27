@@ -102,26 +102,28 @@ func (e *evaluator) EvaluateFeatures(
 	fs []*ftproto.Feature,
 	user *userproto.User,
 	mapSegmentUsers map[string][]*ftproto.SegmentUser,
+	mapSegments map[string]*ftproto.Segment,
 	targetTag string,
 ) (*ftproto.UserEvaluations, error) {
-	return e.evaluate(fs, user, mapSegmentUsers, false, targetTag)
+	return e.evaluate(fs, user, mapSegmentUsers, mapSegments, false, targetTag)
 }
 
 func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	fs []*ftproto.Feature,
 	user *userproto.User,
 	mapSegmentUsers map[string][]*ftproto.SegmentUser,
+	mapSegments map[string]*ftproto.Segment,
 	prevUEID string,
 	evaluatedAt int64,
 	userAttributesUpdated bool,
 	targetTag string,
 ) (*ftproto.UserEvaluations, error) {
 	if prevUEID == "" {
-		return e.evaluate(fs, user, mapSegmentUsers, true, targetTag)
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag)
 	}
 	now := time.Now()
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
-		return e.evaluate(fs, user, mapSegmentUsers, true, targetTag)
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag)
 	}
 	adjustedEvalAt := evaluatedAt - e.secondsForAdjustment
 	updatedFeatures := make([]*ftproto.Feature, 0, len(fs))
@@ -137,19 +139,20 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	// If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
 	// it is considered unusual and a force update should be performed.
 	if len(updatedFeatures) == 0 {
-		return e.evaluate(fs, user, mapSegmentUsers, true, targetTag)
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag)
 	}
 	evalTargets, err := e.getEvalFeatures(updatedFeatures, fs)
 	if err != nil {
 		return nil, err
 	}
-	return e.evaluate(evalTargets, user, mapSegmentUsers, false, targetTag)
+	return e.evaluate(evalTargets, user, mapSegmentUsers, mapSegments, false, targetTag)
 }
 
 func (e *evaluator) evaluate(
 	fs []*ftproto.Feature,
 	user *userproto.User,
 	mapSegmentUsers map[string][]*ftproto.SegmentUser,
+	mapSegments map[string]*ftproto.Segment,
 	forceUpdate bool,
 	targetTag string,
 ) (*ftproto.UserEvaluations, error) {
@@ -167,7 +170,7 @@ func (e *evaluator) evaluate(
 		for _, id := range e.ListSegmentIDs(feature) {
 			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
 		}
-		reason, variation, err := e.assignUser(feature, user, segmentUsers, flagVariations)
+		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations)
 		if err != nil {
 			return nil, err
 		}
@@ -264,6 +267,7 @@ func (e *evaluator) assignUser(
 	feature *ftproto.Feature,
 	user *userproto.User,
 	segmentUsers []*ftproto.SegmentUser,
+	segments map[string]*ftproto.Segment,
 	flagVariations map[string]string,
 ) (*ftproto.Reason, *ftproto.Variation, error) {
 	for _, pf := range feature.Prerequisites {
@@ -292,7 +296,7 @@ func (e *evaluator) assignUser(
 		}
 	}
 	// evaluate ruleset
-	rule, err := e.ruleEvaluator.Evaluate(feature.Rules, user, segmentUsers, flagVariations)
+	rule, err := e.ruleEvaluator.Evaluate(feature.Rules, user, segmentUsers, segments, flagVariations)
 	if err != nil {
 		return nil, nil, err
 	}

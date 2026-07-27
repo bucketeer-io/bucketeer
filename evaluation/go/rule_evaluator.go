@@ -27,10 +27,11 @@ func (e *ruleEvaluator) Evaluate(
 	rules []*featureproto.Rule,
 	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
+	segments map[string]*featureproto.Segment,
 	flagVariations map[string]string,
 ) (*featureproto.Rule, error) {
 	for _, rule := range rules {
-		matched, err := e.evaluateRule(rule, user, segmentUsers, flagVariations)
+		matched, err := e.evaluateRule(rule, user, segmentUsers, segments, flagVariations)
 		if err != nil {
 			return nil, err
 		}
@@ -45,10 +46,11 @@ func (e *ruleEvaluator) evaluateRule(
 	rule *featureproto.Rule,
 	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
+	segments map[string]*featureproto.Segment,
 	flagVariations map[string]string,
 ) (bool, error) {
 	for _, clause := range rule.Clauses {
-		matched, err := e.evaluateClause(clause, user, segmentUsers, flagVariations)
+		matched, err := e.evaluateClause(clause, user, segmentUsers, segments, flagVariations)
 		if err != nil {
 			return false, err
 		}
@@ -63,6 +65,7 @@ func (e *ruleEvaluator) evaluateClause(
 	clause *featureproto.Clause,
 	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
+	segments map[string]*featureproto.Segment,
 	flagVariations map[string]string,
 ) (bool, error) {
 	var targetAttr string
@@ -71,5 +74,5 @@ func (e *ruleEvaluator) evaluateClause(
 	} else {
 		targetAttr = user.Data[clause.Attribute]
 	}
-	return e.clauseEvaluator.Evaluate(targetAttr, clause, user.Id, segmentUsers, flagVariations)
+	return e.clauseEvaluator.Evaluate(targetAttr, clause, user, segmentUsers, segments, flagVariations)
 }

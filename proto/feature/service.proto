@@ -24,6 +24,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/common/string.proto";
 import "proto/feature/feature.proto";
+import "proto/feature/rule.proto";
 import "proto/feature/scheduled_feature_change.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature_last_used_info.proto";
@@ -331,6 +332,9 @@ message CreateSegmentRequest {
   string name = 3 [(google.api.field_behavior) = REQUIRED];
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
   string description = 5;
+  // Rule-based membership definition. A user belongs to the segment when it
+  // is in the included-user list OR matches any of the rules.
+  repeated Rule rules = 6;
 }
 
 message CreateSegmentResponse {
@@ -393,6 +397,9 @@ message UpdateSegmentRequest {
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
+  // Rule-based membership definition.
+  // Absent = unchanged, present = full replacement of the rules list.
+  RuleListValue rules = 7;
 }
 
 message UpdateSegmentResponse {

@@ -46,7 +46,7 @@ type SegmentStorage interface {
 	) ([]*proto.Segment, int, int64, map[string][]string, error)
 	DeleteSegment(ctx context.Context, id string) error
 	// ListAllInUseSegments lists all segments that are in use (referenced by feature flags).
-	// Returns lightweight segment info (id, environment_id, updated_at).
+	// Returns lightweight segment info (id, environment_id, updated_at, rules).
 	ListAllInUseSegments(ctx context.Context) ([]*InUseSegment, error)
 	// ListSegmentUsersBySegment lists all users for a specific segment.
 	// This is called per-segment to avoid loading all users in a single query.
@@ -58,6 +58,7 @@ type InUseSegment struct {
 	SegmentID     string
 	EnvironmentID string
 	UpdatedAt     int64
+	Rules         []*proto.Rule
 }
 
 // ListSegmentsParams carries list intent for ListSegments without database-specific types.

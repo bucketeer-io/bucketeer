@@ -8141,6 +8141,14 @@ definitions:
       updatedAt:
         type: string
         format: int64
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+        description: |-
+          The segment's rule-based membership definition. Delivered to server SDKs
+          alongside the user list so local evaluation can match users by attribute.
   featureStrategy:
     type: object
     properties:

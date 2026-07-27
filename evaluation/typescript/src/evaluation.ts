@@ -3,7 +3,7 @@ import { Clause } from './proto/feature/clause_pb';
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Feature } from './proto/feature/feature_pb';
 import { Reason } from './proto/feature/reason_pb';
-import { SegmentUser } from './proto/feature/segment_pb';
+import { Segment, SegmentUser } from './proto/feature/segment_pb';
 import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
@@ -36,9 +36,10 @@ class Evaluator {
     features: Feature[],
     user: User,
     mapSegmentUsers: Map<string, SegmentUser[]>,
+    mapSegments: Map<string, Segment> | null,
     targetTag: string,
   ): Promise<UserEvaluations> {
-    return this.evaluate(features, user, mapSegmentUsers, false, targetTag);
+    return this.evaluate(features, user, mapSegmentUsers, mapSegments, false, targetTag);
   }
 
   // GetPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
@@ -55,18 +56,19 @@ class Evaluator {
     features: Feature[],
     user: User,
     mapSegmentUsers: Map<string, SegmentUser[]>,
+    mapSegments: Map<string, Segment> | null,
     prevUEID: string,
     evaluatedAt: number,
     userAttributesUpdated: boolean,
     targetTag: string,
   ): UserEvaluations {
     if (prevUEID === '') {
-      return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
+      return this.evaluate(features, user, mapSegmentUsers, mapSegments, true, targetTag);
     }
 
     const now = Math.floor(Date.now() / 1000);
     if (evaluatedAt < now - SECONDS_TO_RE_EVALUATE_ALL) {
-      return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
+      return this.evaluate(features, user, mapSegmentUsers, mapSegments, true, targetTag);
     }
 
     const adjustedEvalAt = evaluatedAt - SECONDS_FOR_ADJUSTMENT;
@@ -79,17 +81,18 @@ class Evaluator {
     // If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
     // it is considered unusual and a force update should be performed.
     if (updatedFeatures.length === 0) {
-      return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
+      return this.evaluate(features, user, mapSegmentUsers, mapSegments, true, targetTag);
     }
 
     const evalTargets = this.getEvalFeatures(updatedFeatures, features);
-    return this.evaluate(evalTargets, user, mapSegmentUsers, false, targetTag);
+    return this.evaluate(evalTargets, user, mapSegmentUsers, mapSegments, false, targetTag);
   }
 
   private evaluate(
     features: Feature[],
     user: User,
     mapSegmentUsers: Map<string, SegmentUser[]>,
+    mapSegments: Map<string, Segment> | null,
     forceUpdate: boolean,
     targetTag: string,
   ): UserEvaluations {
@@ -105,7 +108,13 @@ class Evaluator {
         (id) => mapSegmentUsers.get(id) || [],
       );
 
-      const [reason, variation] = this.assignUser(feature, user, segmentUsers, flagVariations);
+      const [reason, variation] = this.assignUser(
+        feature,
+        user,
+        segmentUsers,
+        mapSegments,
+        flagVariations,
+      );
       // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       // This must be set for ALL features (including archived) for dependency resolution to work
       flagVariations[feature.getId()] = variation.getId();
@@ -192,6 +201,7 @@ class Evaluator {
     feature: Feature,
     user: User,
     segmentUsers: SegmentUser[],
+    segments: Map<string, Segment> | null,
     flagVariations: { [key: string]: string },
   ): [Reason, Variation] {
     for (const pf of feature.getPrerequisitesList()) {
@@ -232,6 +242,7 @@ class Evaluator {
       feature.getRulesList(),
       user,
       segmentUsers,
+      segments,
       flagVariations,
     );
     if (rule) {

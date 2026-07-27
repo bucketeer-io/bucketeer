@@ -21,6 +21,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -28,6 +29,9 @@ import (
 const (
 	maxPageSizePerRequest   = 100
 	maxSegmentUsersDataSize = 2000000 // 2MB
+	// Segment rule limits
+	maxSegmentRules       = 20
+	maxSegmentRuleClauses = 10
 	// Scheduled flag change limits
 	maxSchedulesPerFlag          = 50
 	maxChangesPerSchedule        = 50
@@ -77,6 +81,65 @@ func validateCreateSegmentRequest(
 	if req.Name == "" {
 		return statusMissingName.Err()
 	}
+	return validateSegmentRules(req.Rules)
+}
+
+// validateSegmentRules enforces the segment rule constraints:
+// no strategy, no SEGMENT/FEATURE_FLAG operators (no nesting, no flag cycles),
+// at least one clause per rule with attribute and values set,
+// unique uuid rule/clause ids, and rule/clause count limits.
+// Rule and clause ids must be generated before calling this function.
+func validateSegmentRules(rules []*featureproto.Rule) error {
+	if len(rules) > maxSegmentRules {
+		return statusExceededMaxSegmentRules.Err()
+	}
+	ruleIDs := make(map[string]struct{}, len(rules))
+	for _, rule := range rules {
+		if rule == nil {
+			return statusSegmentRuleRequired.Err()
+		}
+		if err := uuid.ValidateUUID(rule.Id); err != nil {
+			return statusInvalidSegmentRuleID.Err()
+		}
+		if _, ok := ruleIDs[rule.Id]; ok {
+			return statusDuplicateSegmentRuleID.Err()
+		}
+		ruleIDs[rule.Id] = struct{}{}
+		if rule.Strategy != nil {
+			return statusSegmentRuleStrategyNotAllowed.Err()
+		}
+		if len(rule.Clauses) == 0 {
+			return statusSegmentRuleClauseRequired.Err()
+		}
+		if len(rule.Clauses) > maxSegmentRuleClauses {
+			return statusExceededMaxSegmentRuleClauses.Err()
+		}
+		clauseIDs := make(map[string]struct{}, len(rule.Clauses))
+		for _, clause := range rule.Clauses {
+			if clause == nil {
+				return statusSegmentRuleClauseRequired.Err()
+			}
+			if err := uuid.ValidateUUID(clause.Id); err != nil {
+				return statusInvalidSegmentRuleClauseID.Err()
+			}
+			if _, ok := clauseIDs[clause.Id]; ok {
+				return statusDuplicateSegmentRuleClauseID.Err()
+			}
+			clauseIDs[clause.Id] = struct{}{}
+			// No nesting in phase 1: SEGMENT is rejected to avoid segment cycles,
+			// and FEATURE_FLAG to avoid flag -> segment -> flag cycles.
+			if clause.Operator == featureproto.Clause_SEGMENT ||
+				clause.Operator == featureproto.Clause_FEATURE_FLAG {
+				return statusSegmentRuleOperatorNotAllowed.Err()
+			}
+			if clause.Attribute == "" {
+				return statusSegmentRuleClauseAttributeRequired.Err()
+			}
+			if len(clause.Values) == 0 {
+				return statusSegmentRuleClauseValuesRequired.Err()
+			}
+		}
+	}
 	return nil
 }
 
@@ -109,6 +172,9 @@ func validateUpdateSegmentRequest(
 	}
 	if req.Name != nil && req.Name.Value == "" {
 		return statusMissingName.Err()
+	}
+	if req.Rules != nil {
+		return validateSegmentRules(req.Rules.Values)
 	}
 	return nil
 }

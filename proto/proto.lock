@@ -21224,6 +21224,11 @@
                 "id": 3,
                 "name": "description",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "rules",
+                "type": "bucketeer.feature.RuleListValue"
               }
             ]
           },
@@ -30099,6 +30104,17 @@
                 "is_repeated": true
               }
             ]
+          },
+          {
+            "name": "RuleListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "Rule",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "imports": [
@@ -30763,6 +30779,12 @@
                 "id": 3,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "rules",
+                "type": "Rule",
+                "is_repeated": true
               }
             ]
           }
@@ -32009,6 +32031,12 @@
                 "id": 5,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "rules",
+                "type": "Rule",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -32191,6 +32219,11 @@
                 "id": 6,
                 "name": "description",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 7,
+                "name": "rules",
+                "type": "RuleListValue"
               }
             ],
             "reserved_ids": [
@@ -37224,6 +37257,9 @@
           },
           {
             "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/feature/rule.proto"
           },
           {
             "path": "proto/feature/scheduled_feature_change.proto"

@@ -13151,6 +13151,14 @@ definitions:
         type: string
       description:
         type: string
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+        description: |-
+          Rule-based membership definition. A user belongs to the segment when it
+          is in the included-user list OR matches any of the rules.
     required:
       - name
       - environmentId
@@ -13642,6 +13650,18 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       rule:
         $ref: '#/definitions/featureRule'
+  featureRuleListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+    description: |-
+      RuleListValue is a wrapper for a repeated Rule field so that update
+      requests can distinguish "not set" (field is absent) from
+      "replace with an empty list" (field is present with no values).
   featureScheduledChangeCategory:
     type: string
     enum:
@@ -14072,6 +14092,11 @@ definitions:
         type: string
       description:
         type: string
+      rules:
+        $ref: '#/definitions/featureRuleListValue'
+        description: |-
+          Rule-based membership definition.
+          Absent = unchanged, present = full replacement of the rules list.
     required:
       - environmentId
   featureUpdateSegmentResponse:

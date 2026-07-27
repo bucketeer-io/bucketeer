@@ -28,6 +28,7 @@ import (
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -47,6 +48,16 @@ func (s *FeatureService) CreateSegment(
 		req.EnvironmentId)
 	if err != nil {
 		return nil, err
+	}
+	if err := generateSegmentRuleIDs(req.Rules); err != nil {
+		s.logger.Error(
+			"Failed to generate segment rule ids",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err := validateCreateSegmentRequest(req); err != nil {
 		s.logger.Info(
@@ -68,6 +79,9 @@ func (s *FeatureService) CreateSegment(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if len(req.Rules) > 0 {
+		segment.Rules = req.Rules
 	}
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
@@ -253,6 +267,18 @@ func (s *FeatureService) UpdateSegment(
 		)
 		return nil, err
 	}
+	if req.Rules != nil {
+		if err := generateSegmentRuleIDs(req.Rules.Values); err != nil {
+			s.logger.Error(
+				"Failed to generate segment rule ids",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return nil, api.NewGRPCStatus(err).Err()
+		}
+	}
 	err = validateUpdateSegmentRequest(req)
 	if err != nil {
 		s.logger.Error(
@@ -288,16 +314,21 @@ func (s *FeatureService) UpdateSegment(
 			)
 			return err
 		}
+		// Absent = unchanged, present = full replacement of the rules list.
+		if req.Rules != nil {
+			updated.UpdateRules(req.Rules.Values)
+		}
 		updatedSegment = updated.Segment
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_SEGMENT,
 			req.Id,
-			eventproto.Event_SEGMENT_NAME_CHANGED,
+			eventproto.Event_SEGMENT_UPDATED,
 			&eventproto.SegmentUpdatedEvent{
 				Id:          req.Id,
 				Name:        req.Name,
 				Description: req.Description,
+				Rules:       req.Rules,
 			},
 			req.EnvironmentId,
 			updated.Segment,
@@ -324,9 +355,88 @@ func (s *FeatureService) UpdateSegment(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	// Refresh the segment users cache so evaluation and server SDK sync paths
+	// pick up the rule change without waiting for the batch cacher.
+	// The cache refresh is best effort: on failure the batch cacher will
+	// eventually refresh the entry.
+	if req.Rules != nil {
+		s.refreshSegmentUsersCache(ctx, updatedSegment, req.EnvironmentId)
+	}
 	return &featureproto.UpdateSegmentResponse{
 		Segment: updatedSegment,
 	}, nil
+}
+
+// refreshSegmentUsersCache updates the cached SegmentUsers entry with the
+// latest user list and rules so the change propagates immediately.
+func (s *FeatureService) refreshSegmentUsersCache(
+	ctx context.Context,
+	segment *featureproto.Segment,
+	environmentId string,
+) {
+	// The user list is always loaded from storage: reusing the cached list
+	// could write back a stale user list with a fresh updated_at when a
+	// concurrent user upload or the batch cacher updates the entry.
+	// UpdateSegment is a rare admin operation, so the extra read is fine.
+	users, err := s.segmentStorage.ListSegmentUsersBySegment(ctx, segment.Id, environmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list segment users for cache refresh",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("segmentId", segment.Id),
+			)...,
+		)
+		return
+	}
+	segmentUsers := &featureproto.SegmentUsers{
+		SegmentId: segment.Id,
+		Users:     users,
+		Rules:     segment.Rules,
+		UpdatedAt: segment.UpdatedAt,
+	}
+	if err := s.segmentUsersCache.Put(segmentUsers, environmentId); err != nil {
+		s.logger.Error(
+			"Failed to refresh segment users cache",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("segmentId", segment.Id),
+			)...,
+		)
+	}
+}
+
+// generateSegmentRuleIDs assigns a uuid to every rule and clause
+// that doesn't have an id yet. Ids provided by the caller are kept
+// and validated later by validateSegmentRules.
+func generateSegmentRuleIDs(rules []*featureproto.Rule) error {
+	for _, rule := range rules {
+		if rule == nil {
+			continue
+		}
+		if rule.Id == "" {
+			id, err := uuid.NewUUID()
+			if err != nil {
+				return err
+			}
+			rule.Id = id.String()
+		}
+		for _, clause := range rule.Clauses {
+			if clause == nil {
+				continue
+			}
+			if clause.Id == "" {
+				id, err := uuid.NewUUID()
+				if err != nil {
+					return err
+				}
+				clause.Id = id.String()
+			}
+		}
+	}
+	return nil
 }
 
 func (s *FeatureService) GetSegment(

@@ -342,6 +342,7 @@ func (s *segmentStorage) ListAllInUseSegments(
 			&seg.SegmentID,
 			&seg.EnvironmentID,
 			&seg.UpdatedAt,
+			&pgstorage.JSONObject{Val: &seg.Rules},
 		)
 		if err != nil {
 			return nil, err

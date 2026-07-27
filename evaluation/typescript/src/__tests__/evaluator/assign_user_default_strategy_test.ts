@@ -10,7 +10,7 @@ test('no default strategy', (t) => {
   f.clearDefaultStrategy();
   const evalator = new Evaluator();
   try {
-    evalator.assignUser(f, user, [], {});
+    evalator.assignUser(f, user, [], null, {});
     t.fail('should throw an error "evaluator: default strategy not found"');
   } catch (error) {
     t.deepEqual(error, new Error('evaluator: default strategy not found'));
@@ -21,7 +21,7 @@ test('with default strategy', (t) => {
   const user = createUser('user-id1', { name3: 'user3' });
   const f = newTestFeature('test-feature');
   const evalator = new Evaluator();
-  const [reason, variation] = evalator.assignUser(f, user, [], {});
+  const [reason, variation] = evalator.assignUser(f, user, [], null, {});
   t.is(reason.getType(), Reason.Type.DEFAULT);
   t.is(variation.getId(), 'variation-B');
 });

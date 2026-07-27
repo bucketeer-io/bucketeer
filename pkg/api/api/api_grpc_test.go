@@ -798,12 +798,15 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc        string
-		setup       func(*grpcGatewayService)
-		segmentID   string
-		envID       string
-		expected    *featureproto.SegmentUsers
-		expectedErr error
+		desc      string
+		setup     func(*grpcGatewayService)
+		segmentID string
+		envID     string
+		expected  *featureproto.SegmentUsers
+		// The NotFound fallback stamps UpdatedAt with the current time,
+		// so the exact value cannot be asserted.
+		expectedNowUpdatedAt bool
+		expectedErr          error
 	}{
 		{
 			desc: "exists in in-memory cache",
@@ -875,6 +878,28 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 			expectedErr: ErrInternal,
 		},
 		{
+			desc: "success: GetSegment returns NotFound, evaluates without rules",
+			setup: func(gs *grpcGatewayService) {
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.NotFound, "segment not found"))
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			segmentID: "seg-0",
+			envID:     "ns0",
+			expected: &featureproto.SegmentUsers{
+				SegmentId: "seg-0",
+				Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+			},
+			expectedNowUpdatedAt: true,
+			expectedErr:          nil,
+		},
+		{
 			desc: "success from service",
 			setup: func(gs *grpcGatewayService) {
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
@@ -904,6 +929,10 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 			gs.segmentUsersRedisCache = redisSegmentUsersCache
 			p.setup(gs)
 			actual, err := gs.getSegmentUsersBySegmentID(context.Background(), p.segmentID, p.envID)
+			if p.expectedNowUpdatedAt {
+				assert.InDelta(t, time.Now().Unix(), actual.UpdatedAt, 5, "%s", p.desc)
+				p.expected.UpdatedAt = actual.UpdatedAt
+			}
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})

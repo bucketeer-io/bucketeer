@@ -20,6 +20,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -116,9 +118,176 @@ func TestCreateSegment(t *testing.T) {
 	assert.Equal(t, req.Description, res.Segment.Description)
 	assert.Zero(t, res.Segment.Rules)
 	assert.NotZero(t, res.Segment.CreatedAt)
-	assert.Zero(t, res.Segment.UpdatedAt)
+	assert.Equal(t, res.Segment.CreatedAt, res.Segment.UpdatedAt)
 	assert.Equal(t, int64(1), res.Segment.Version)
 	assert.Equal(t, false, res.Segment.Deleted)
+}
+
+func TestCreateSegmentWithRules(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	req := &featureproto.CreateSegmentRequest{
+		EnvironmentId: *environmentID,
+		Name:          newSegmentName(t),
+		Description:   fmt.Sprintf("%s-description", prefixSegment),
+		Rules: []*featureproto.Rule{
+			{
+				Clauses: []*featureproto.Clause{
+					{
+						Attribute: "plan",
+						Operator:  featureproto.Clause_EQUALS,
+						Values:    []string{"premium"},
+					},
+				},
+			},
+		},
+	}
+	res, err := client.CreateSegment(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Segment.Rules) != 1 {
+		t.Fatalf("Wrong rules size. Expected: 1, actual: %d", len(res.Segment.Rules))
+	}
+	rule := res.Segment.Rules[0]
+	// Rule and clause IDs are generated server-side.
+	assert.NotEmpty(t, rule.Id)
+	assert.Nil(t, rule.Strategy)
+	if len(rule.Clauses) != 1 {
+		t.Fatalf("Wrong clauses size. Expected: 1, actual: %d", len(rule.Clauses))
+	}
+	clause := rule.Clauses[0]
+	assert.NotEmpty(t, clause.Id)
+	assert.Equal(t, "plan", clause.Attribute)
+	assert.Equal(t, featureproto.Clause_EQUALS, clause.Operator)
+	assert.Equal(t, []string{"premium"}, clause.Values)
+
+	// GetSegment returns the persisted rules.
+	segment := getSegment(ctx, t, client, res.Segment.Id)
+	if len(segment.Rules) != 1 {
+		t.Fatalf("Wrong stored rules size. Expected: 1, actual: %d", len(segment.Rules))
+	}
+	if !proto.Equal(rule, segment.Rules[0]) {
+		t.Fatalf("Different rules. Expected: %v, actual: %v", rule, segment.Rules[0])
+	}
+
+	_, err = client.DeleteSegment(ctx, &featureproto.DeleteSegmentRequest{
+		Id:            res.Segment.Id,
+		EnvironmentId: *environmentID,
+	})
+	assert.NoError(t, err)
+}
+
+func TestCreateSegmentWithInvalidRules(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	patterns := []struct {
+		desc   string
+		clause *featureproto.Clause
+	}{
+		{
+			desc: "SEGMENT operator is not allowed (no nested segments)",
+			clause: &featureproto.Clause{
+				Operator: featureproto.Clause_SEGMENT,
+				Values:   []string{"some-segment-id"},
+			},
+		},
+		{
+			desc: "FEATURE_FLAG operator is not allowed",
+			clause: &featureproto.Clause{
+				Attribute: "some-feature-id",
+				Operator:  featureproto.Clause_FEATURE_FLAG,
+				Values:    []string{"some-variation-id"},
+			},
+		},
+		{
+			desc: "clause without values is not allowed",
+			clause: &featureproto.Clause{
+				Attribute: "plan",
+				Operator:  featureproto.Clause_EQUALS,
+			},
+		},
+	}
+	for _, p := range patterns {
+		_, err := client.CreateSegment(ctx, &featureproto.CreateSegmentRequest{
+			EnvironmentId: *environmentID,
+			Name:          newSegmentName(t),
+			Description:   fmt.Sprintf("%s-description", prefixSegment),
+			Rules: []*featureproto.Rule{
+				{Clauses: []*featureproto.Clause{p.clause}},
+			},
+		})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err), p.desc)
+	}
+}
+
+func TestUpdateSegmentRules(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	segment := createSegment(ctx, t, client)
+	assert.Empty(t, segment.Rules)
+
+	// Present = full replacement: add a rule via update.
+	updateRes, err := client.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+		Id:            segment.Id,
+		EnvironmentId: *environmentID,
+		Rules: &featureproto.RuleListValue{
+			Values: []*featureproto.Rule{
+				{
+					Clauses: []*featureproto.Clause{
+						{
+							Attribute: "plan",
+							Operator:  featureproto.Clause_EQUALS,
+							Values:    []string{"premium"},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(updateRes.Segment.Rules) != 1 {
+		t.Fatalf("Wrong rules size. Expected: 1, actual: %d", len(updateRes.Segment.Rules))
+	}
+	assert.NotEmpty(t, updateRes.Segment.Rules[0].Id)
+	assert.NotZero(t, updateRes.Segment.UpdatedAt)
+	stored := getSegment(ctx, t, client, segment.Id)
+	if len(stored.Rules) != 1 {
+		t.Fatalf("Wrong stored rules size. Expected: 1, actual: %d", len(stored.Rules))
+	}
+
+	// Absent = unchanged: an update without the rules field keeps the rules.
+	_, err = client.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+		Id:            segment.Id,
+		EnvironmentId: *environmentID,
+		Description:   wrapperspb.String(fmt.Sprintf("%s-rules-unchanged", prefixSegment)),
+	})
+	assert.NoError(t, err)
+	stored = getSegment(ctx, t, client, segment.Id)
+	if len(stored.Rules) != 1 {
+		t.Fatalf("Rules must be unchanged. Expected: 1, actual: %d", len(stored.Rules))
+	}
+
+	// Present with an empty list = clear all the rules.
+	_, err = client.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+		Id:            segment.Id,
+		EnvironmentId: *environmentID,
+		Rules:         &featureproto.RuleListValue{},
+	})
+	assert.NoError(t, err)
+	stored = getSegment(ctx, t, client, segment.Id)
+	assert.Empty(t, stored.Rules)
+
+	_, err = client.DeleteSegment(ctx, &featureproto.DeleteSegmentRequest{
+		Id:            segment.Id,
+		EnvironmentId: *environmentID,
+	})
+	assert.NoError(t, err)
 }
 
 func TestGetSegment(t *testing.T) {

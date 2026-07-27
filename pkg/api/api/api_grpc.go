@@ -554,7 +554,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		}, nil
 	}
 
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
+	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
 		if isCallerContextErr(err) {
 			evaluationsCounter.WithLabelValues(
@@ -595,6 +595,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			features,
 			req.User,
 			segmentUsersMap,
+			segmentsMap,
 			req.Tag,
 		)
 		if err != nil {
@@ -633,6 +634,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			features,
 			req.User,
 			segmentUsersMap,
+			segmentsMap,
 			req.UserEvaluationsId,
 			req.UserEvaluationCondition.EvaluatedAt,
 			req.UserEvaluationCondition.UserAttributesUpdated,
@@ -770,7 +772,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id)
+	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id)
 	if err != nil {
 		if isCallerContextErr(err) {
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -786,7 +788,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	evaluator := evaluation.NewEvaluator()
-	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
+	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, segmentsMap, req.Tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -1460,11 +1462,13 @@ func putFeaturesCache(
 	}
 }
 
+// getSegmentUsersMap returns both the segment users and the segment
+// definitions (id + rules) for all the segments referenced by the features.
 func (s *grpcGatewayService) getSegmentUsersMap(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	environmentId string,
-) (map[string][]*featureproto.SegmentUser, error) {
+) (map[string][]*featureproto.SegmentUser, map[string]*featureproto.Segment, error) {
 	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
@@ -1472,7 +1476,7 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	segmentUsersMap, err := s.listSegmentUsers(ctx, mapIDs, environmentId)
+	segmentUsersMap, segmentsMap, err := s.listSegmentUsers(ctx, mapIDs, environmentId)
 	if err != nil {
 		if !isCallerContextErr(err) {
 			s.logger.Error(
@@ -1483,20 +1487,21 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 				)...,
 			)
 		}
-		return nil, err
+		return nil, nil, err
 	}
-	return segmentUsersMap, nil
+	return segmentUsersMap, segmentsMap, nil
 }
 
 func (s *grpcGatewayService) listSegmentUsers(
 	ctx context.Context,
 	mapSegmentIDs map[string]struct{},
 	environmentId string,
-) (map[string][]*featureproto.SegmentUser, error) {
+) (map[string][]*featureproto.SegmentUser, map[string]*featureproto.Segment, error) {
 	if len(mapSegmentIDs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	users := make(map[string][]*featureproto.SegmentUser)
+	segments := make(map[string]*featureproto.Segment)
 	for segmentID := range mapSegmentIDs {
 		su, err := s.singleflightFetch(
 			ctx,
@@ -1506,12 +1511,17 @@ func (s *grpcGatewayService) listSegmentUsers(
 			},
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		segmentUsers := su.(*featureproto.SegmentUsers)
 		users[segmentID] = segmentUsers.Users
+		segments[segmentID] = &featureproto.Segment{
+			Id:        segmentID,
+			Rules:     segmentUsers.Rules,
+			UpdatedAt: segmentUsers.UpdatedAt,
+		}
 	}
-	return users, nil
+	return users, segments, nil
 }
 
 func (s *grpcGatewayService) segmentFlightID(environmentId, segmentID string) string {
@@ -1568,6 +1578,31 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	}
 	respGet, err := s.featureClient.GetSegment(ctx, reqGet)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			// Stale reference: the segment was deleted while a flag still
+			// references it. Evaluate with the user list only (no rules),
+			// matching the behavior before rules were delivered.
+			s.logger.Warn(
+				"Segment not found, evaluating without rules",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentId),
+					zap.String("segmentId", segmentID),
+				)...,
+			)
+			// UpdatedAt is stamped with the current time so the entry passes
+			// the GetSegmentUsers diff filter and long-running server SDKs
+			// converge to the users-only definition on their next poll,
+			// instead of keeping the stale pre-deletion copy (the batch
+			// cacher excludes deleted segments and never rewrites it).
+			segmentUsers = &featureproto.SegmentUsers{
+				SegmentId: segmentID,
+				Users:     res.Users,
+				UpdatedAt: time.Now().Unix(),
+			}
+			putSegmentUsersCache(ctx, segmentUsers, environmentId, s.segmentUsersCache, s.logger)
+			return segmentUsers, nil
+		}
 		s.logger.Error(
 			"Failed to retrieve segment from storage",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -1581,6 +1616,7 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	segmentUsers = &featureproto.SegmentUsers{
 		SegmentId: segmentID,
 		Users:     res.Users,
+		Rules:     respGet.Segment.Rules,
 		UpdatedAt: respGet.Segment.UpdatedAt,
 	}
 	putSegmentUsersCache(ctx, segmentUsers, environmentId, s.segmentUsersCache, s.logger)

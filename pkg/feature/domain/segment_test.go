@@ -17,6 +17,7 @@ package domain
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,6 +25,45 @@ import (
 
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
+
+func TestNewSegment(t *testing.T) {
+	s, err := NewSegment("name", "description")
+	require.NoError(t, err)
+	assert.NotEmpty(t, s.Id)
+	assert.Equal(t, "name", s.Name)
+	assert.Equal(t, "description", s.Description)
+	assert.Equal(t, int64(1), s.Version)
+	assert.InDelta(t, time.Now().Unix(), s.CreatedAt, 5)
+	assert.Equal(t, s.CreatedAt, s.UpdatedAt)
+}
+
+func TestUpdateRules(t *testing.T) {
+	s, err := NewSegment("name", "description")
+	require.NoError(t, err)
+	createdUpdatedAt := s.UpdatedAt
+	rules := []*featureproto.Rule{
+		{
+			Id: "rule-id-1",
+			Clauses: []*featureproto.Clause{
+				{
+					Id:        "clause-id-1",
+					Attribute: "tier",
+					Operator:  featureproto.Clause_EQUALS,
+					Values:    []string{"gold"},
+				},
+			},
+		},
+	}
+	s.UpdateRules(rules)
+	assert.Equal(t, rules, s.Rules)
+	assert.GreaterOrEqual(t, s.UpdatedAt, createdUpdatedAt)
+	assert.InDelta(t, time.Now().Unix(), s.UpdatedAt, 5)
+
+	// Full replacement: an empty list clears the rules and still bumps UpdatedAt.
+	s.UpdateRules([]*featureproto.Rule{})
+	assert.Empty(t, s.Rules)
+	assert.InDelta(t, time.Now().Unix(), s.UpdatedAt, 5)
+}
 
 func TestUpdateSegment(t *testing.T) {
 	testcases := []struct {

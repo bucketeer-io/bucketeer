@@ -25,3 +25,10 @@ message Rule {
   Strategy strategy = 2;
   repeated Clause clauses = 3;
 }
+
+// RuleListValue is a wrapper for a repeated Rule field so that update
+// requests can distinguish "not set" (field is absent) from
+// "replace with an empty list" (field is present with no values).
+message RuleListValue {
+  repeated Rule values = 1;
+}

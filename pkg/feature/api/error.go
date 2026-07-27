@@ -126,6 +126,77 @@ var (
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment status is not suceeded"))
 	statusSegmentInUse = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment is in use"))
+	// segment rules
+	statusExceededMaxSegmentRules = api.NewGRPCStatus(
+		pkgErr.NewErrorExceededMax(
+			pkgErr.FeaturePackageName,
+			"max number of segment rules exceeded",
+			"SegmentRules",
+			maxSegmentRules,
+		))
+	statusExceededMaxSegmentRuleClauses = api.NewGRPCStatus(
+		pkgErr.NewErrorExceededMax(
+			pkgErr.FeaturePackageName,
+			"max number of clauses per segment rule exceeded",
+			"SegmentRuleClauses",
+			maxSegmentRuleClauses,
+		))
+	statusSegmentRuleRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "segment rule must not be nil", "SegmentRule"))
+	statusInvalidSegmentRuleID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"segment rule id must be a valid uuid",
+			"SegmentRuleId",
+		))
+	statusDuplicateSegmentRuleID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgDuplicated(
+			pkgErr.FeaturePackageName,
+			"segment rule ids must not contain duplicates",
+			"SegmentRuleId",
+		))
+	statusSegmentRuleStrategyNotAllowed = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"strategy must not be set on segment rules",
+			"SegmentRuleStrategy",
+		))
+	statusSegmentRuleClauseRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.FeaturePackageName,
+			"segment rule must have at least one clause",
+			"SegmentRuleClause",
+		))
+	statusInvalidSegmentRuleClauseID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"segment rule clause id must be a valid uuid",
+			"SegmentRuleClauseId",
+		))
+	statusDuplicateSegmentRuleClauseID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgDuplicated(
+			pkgErr.FeaturePackageName,
+			"segment rule clause ids must not contain duplicates",
+			"SegmentRuleClauseId",
+		))
+	statusSegmentRuleOperatorNotAllowed = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgUnknown(
+			pkgErr.FeaturePackageName,
+			"segment and feature flag operators are not allowed in segment rules",
+			"SegmentRuleClauseOperator",
+		))
+	statusSegmentRuleClauseAttributeRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.FeaturePackageName,
+			"segment rule clause attribute must not be empty",
+			"SegmentRuleClauseAttribute",
+		))
+	statusSegmentRuleClauseValuesRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.FeaturePackageName,
+			"segment rule clause values must not be empty",
+			"SegmentRuleClauseValues",
+		))
 	statusUnauthenticated = api.NewGRPCStatus(
 		pkgErr.NewErrorUnauthenticated(pkgErr.FeaturePackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(

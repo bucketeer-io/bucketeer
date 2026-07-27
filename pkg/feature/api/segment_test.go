@@ -27,12 +27,14 @@ import (
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -64,6 +66,52 @@ func TestCreateSegmentMySQL(t *testing.T) {
 			expected: statusMissingName.Err(),
 		},
 		{
+			desc:  "error: rule with SEGMENT operator",
+			setup: nil,
+			req: &featureproto.CreateSegmentRequest{
+				Name:          "name",
+				EnvironmentId: "ns0",
+				Rules: []*featureproto.Rule{
+					{
+						Clauses: []*featureproto.Clause{
+							{
+								Attribute: "",
+								Operator:  featureproto.Clause_SEGMENT,
+								Values:    []string{"segment-id"},
+							},
+						},
+					},
+				},
+			},
+			expected: statusSegmentRuleOperatorNotAllowed.Err(),
+		},
+		{
+			desc:  "error: rule with strategy",
+			setup: nil,
+			req: &featureproto.CreateSegmentRequest{
+				Name:          "name",
+				EnvironmentId: "ns0",
+				Rules: []*featureproto.Rule{
+					{
+						Strategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: "variation-a",
+							},
+						},
+						Clauses: []*featureproto.Clause{
+							{
+								Attribute: "plan",
+								Operator:  featureproto.Clause_EQUALS,
+								Values:    []string{"premium"},
+							},
+						},
+					},
+				},
+			},
+			expected: statusSegmentRuleStrategyNotAllowed.Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *FeatureService) {
 				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
@@ -83,6 +131,38 @@ func TestCreateSegmentMySQL(t *testing.T) {
 			},
 			expected: nil,
 		},
+		{
+			desc: "success with rules: ids are generated server-side",
+			setup: func(s *FeatureService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().CreateSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.CreateSegmentRequest{
+				Name:          "name",
+				Description:   "description",
+				EnvironmentId: "ns0",
+				Rules: []*featureproto.Rule{
+					{
+						// No ids: they must be generated server-side.
+						Clauses: []*featureproto.Clause{
+							{
+								Attribute: "plan",
+								Operator:  featureproto.Clause_EQUALS,
+								Values:    []string{"premium"},
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
 	}
 	for _, tc := range testcases {
 		service := createFeatureService(mockController)
@@ -90,8 +170,17 @@ func TestCreateSegmentMySQL(t *testing.T) {
 			tc.setup(service)
 		}
 		ctx = setToken(ctx)
-		_, err := service.CreateSegment(ctx, tc.req)
+		resp, err := service.CreateSegment(ctx, tc.req)
 		assert.Equal(t, tc.expected, err)
+		if err == nil && len(tc.req.Rules) > 0 {
+			require.Equal(t, len(tc.req.Rules), len(resp.Segment.Rules))
+			for _, rule := range resp.Segment.Rules {
+				assert.NoError(t, uuid.ValidateUUID(rule.Id))
+				for _, clause := range rule.Clauses {
+					assert.NoError(t, uuid.ValidateUUID(clause.Id))
+				}
+			}
+		}
 	}
 }
 
@@ -266,6 +355,119 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 				Description:   wrapperspb.String("new-description"),
 			},
 		},
+		{
+			desc:  "error: invalid rules",
+			setup: nil,
+			req: &featureproto.UpdateSegmentRequest{
+				Id:            "id0",
+				EnvironmentId: "ns0",
+				Rules: &featureproto.RuleListValue{
+					Values: []*featureproto.Rule{
+						{
+							Clauses: []*featureproto.Clause{
+								{
+									Attribute: "plan",
+									Operator:  featureproto.Clause_EQUALS,
+									// Missing values.
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: statusSegmentRuleClauseValuesRequired.Err(),
+		},
+		{
+			desc: "success replace rules: cache is refreshed",
+			setup: func(s *FeatureService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.All(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id0",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegmentUsersBySegment(
+					gomock.Any(), "id0", "ns0",
+				).Return([]*featureproto.SegmentUser{}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Any(), "ns0",
+				).Return(nil)
+			},
+			req: &featureproto.UpdateSegmentRequest{
+				Id:            "id0",
+				EnvironmentId: "ns0",
+				Rules: &featureproto.RuleListValue{
+					Values: []*featureproto.Rule{
+						{
+							Clauses: []*featureproto.Clause{
+								{
+									Attribute: "plan",
+									Operator:  featureproto.Clause_EQUALS,
+									Values:    []string{"premium"},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc: "success clear rules: present with no values replaces with empty list",
+			setup: func(s *FeatureService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+					err := fn(ctx)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.All(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id0",
+						Rules: []*featureproto.Rule{
+							{
+								Id: "b52d3181-e6f0-4d4c-b40f-9891d56a708e",
+								Clauses: []*featureproto.Clause{
+									{
+										Id:        "3ecb45b5-90e4-4d0c-9d4c-468ba9ee2b0c",
+										Attribute: "plan",
+										Operator:  featureproto.Clause_EQUALS,
+										Values:    []string{"premium"},
+									},
+								},
+							},
+						},
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegmentUsersBySegment(
+					gomock.Any(), "id0", "ns0",
+				).Return([]*featureproto.SegmentUser{}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Any(), "ns0",
+				).Return(nil)
+			},
+			req: &featureproto.UpdateSegmentRequest{
+				Id:            "id0",
+				EnvironmentId: "ns0",
+				Rules:         &featureproto.RuleListValue{},
+			},
+			expected: nil,
+		},
 	}
 	for _, tc := range testcases {
 		service := createFeatureService(mockController)
@@ -273,8 +475,12 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			tc.setup(service)
 		}
 		ctx = setToken(ctx)
-		_, err := service.UpdateSegment(ctx, tc.req)
+		resp, err := service.UpdateSegment(ctx, tc.req)
 		assert.Equal(t, tc.expected, err)
+		if err == nil && tc.req.Rules != nil {
+			// Present = full replacement, including replacement with an empty list.
+			assert.Equal(t, len(tc.req.Rules.Values), len(resp.Segment.Rules))
+		}
 	}
 }
 
