@@ -168,17 +168,38 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 							{Id: "user-1", SegmentId: "segment-id-1"},
 						},
 					}, nil)
+				segmentRules := []*featureproto.Rule{
+					{
+						Id: "segment-rule-1",
+						Clauses: []*featureproto.Clause{
+							{
+								Id:        "segment-clause-1",
+								Attribute: "plan",
+								Operator:  featureproto.Clause_EQUALS,
+								Values:    []string{"premium"},
+							},
+						},
+					},
+				}
 				m.featureClient.EXPECT().
 					GetSegment(gomock.Any(), gomock.Any()).
 					Return(&featureproto.GetSegmentResponse{
 						Segment: &featureproto.Segment{
 							Id:        "segment-id-1",
+							Rules:     segmentRules,
 							UpdatedAt: 12345,
 						},
 					}, nil)
 				m.segmentUsersCache.EXPECT().
 					Put(gomock.Any(), "env-1").
-					Return(nil)
+					DoAndReturn(func(su *featureproto.SegmentUsers, envID string) error {
+						// The cached blob must carry the segment rules so
+						// rule-based membership survives the refresh.
+						assert.Equal(t, segmentRules, su.Rules)
+						assert.Equal(t, int64(12345), su.UpdatedAt)
+						assert.Len(t, su.Users, 1)
+						return nil
+					})
 				m.invalidationPublisher.EXPECT().
 					Publish(gomock.Any(), gomock.Any()).
 					Return(nil)
