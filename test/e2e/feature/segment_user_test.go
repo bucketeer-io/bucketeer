@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -131,9 +132,12 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	assert.NotNil(t, uploadRes)
 	// Wait for the background upload to complete by verifying users exist
 	waitForSegmentUsers(ctx, t, client, segmentID, 3, &wrapperspb.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
+	// BulkDownloadSegmentUsers requires the segment status to be SUCEEDED,
+	// which the persister updates after writing the users, so wait for it too.
+	waitForSegmentStatus(ctx, t, client, segmentID, featureproto.Segment_SUCEEDED)
 	// Now download and verify the data
 	downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, string(userIDs), string(downloadRes.Data))
 }
 
@@ -228,6 +232,31 @@ func waitForSegmentUsers(
 		time.Sleep(2 * time.Second)
 	}
 	t.Fatalf("segment users not ready")
+}
+
+func waitForSegmentStatus(
+	ctx context.Context,
+	t *testing.T,
+	client featureclient.Client,
+	segmentID string,
+	status featureproto.Segment_Status,
+) {
+	t.Helper()
+	req := &featureproto.GetSegmentRequest{
+		Id:            segmentID,
+		EnvironmentId: *environmentID,
+	}
+	for i := 0; i < segmentUserRetryTimes; i++ {
+		if err := ctx.Err(); err != nil {
+			t.Fatalf("waitForSegmentStatus: context done: %v", err)
+		}
+		res, err := client.GetSegment(ctx, req)
+		if err == nil && res.Segment != nil && res.Segment.Status == status {
+			return
+		}
+		time.Sleep(2 * time.Second)
+	}
+	t.Fatalf("segment status did not become %v", status)
 }
 
 func newUserID(t *testing.T) string {
