@@ -1139,7 +1139,7 @@ func (s *FeatureService) listSegmentUsers(
 	users := make(map[string][]*featureproto.SegmentUser)
 	segments := make(map[string]*featureproto.Segment)
 	for segmentID := range mapSegmentIDs {
-		s, err, _ := s.flightgroup.Do(
+		res, err, _ := s.flightgroup.Do(
 			s.segmentFlightID(EnvironmentId, segmentID),
 			func() (interface{}, error) {
 				return s.getSegmentUsers(ctx, segmentID, EnvironmentId)
@@ -1148,7 +1148,7 @@ func (s *FeatureService) listSegmentUsers(
 		if err != nil {
 			return nil, nil, err
 		}
-		segmentUsers := s.(*featureproto.SegmentUsers)
+		segmentUsers := res.(*featureproto.SegmentUsers)
 		users[segmentID] = segmentUsers.Users
 		segments[segmentID] = &featureproto.Segment{
 			Id:        segmentID,
