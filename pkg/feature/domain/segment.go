@@ -33,13 +33,15 @@ func NewSegment(name string, description string) (*Segment, error) {
 	if err != nil {
 		return nil, err
 	}
+	now := time.Now().Unix()
 	return &Segment{
 		Segment: &featureproto.Segment{
 			Id:          id.String(),
 			Name:        name,
 			Description: description,
 			Version:     1,
-			CreatedAt:   time.Now().Unix(),
+			CreatedAt:   now,
+			UpdatedAt:   now,
 		},
 	}, nil
 }
