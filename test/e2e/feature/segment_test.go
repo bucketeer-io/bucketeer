@@ -118,7 +118,7 @@ func TestCreateSegment(t *testing.T) {
 	assert.Equal(t, req.Description, res.Segment.Description)
 	assert.Zero(t, res.Segment.Rules)
 	assert.NotZero(t, res.Segment.CreatedAt)
-	assert.Zero(t, res.Segment.UpdatedAt)
+	assert.Equal(t, res.Segment.CreatedAt, res.Segment.UpdatedAt)
 	assert.Equal(t, int64(1), res.Segment.Version)
 	assert.Equal(t, false, res.Segment.Deleted)
 }
