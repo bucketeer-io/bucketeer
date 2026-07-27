@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -379,7 +378,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			expected: statusSegmentRuleClauseValuesRequired.Err(),
 		},
 		{
-			desc: "success replace rules: cache is refreshed reusing the cached user list",
+			desc: "success replace rules: cache is refreshed",
 			setup: func(s *FeatureService) {
 				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -397,13 +396,9 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				// Cache hit: the user list is reused, storage is not queried.
-				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(
-					"id0", "ns0",
-				).Return(&featureproto.SegmentUsers{
-					SegmentId: "id0",
-					Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
-				}, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegmentUsersBySegment(
+					gomock.Any(), "id0", "ns0",
+				).Return([]*featureproto.SegmentUser{}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(
 					gomock.Any(), "ns0",
 				).Return(nil)
@@ -459,10 +454,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				// Cache miss: the user list is loaded from storage.
-				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(
-					"id0", "ns0",
-				).Return(nil, errors.New("cache miss"))
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegmentUsersBySegment(
 					gomock.Any(), "id0", "ns0",
 				).Return([]*featureproto.SegmentUser{}, nil)

@@ -374,26 +374,21 @@ func (s *FeatureService) refreshSegmentUsersCache(
 	segment *featureproto.Segment,
 	environmentId string,
 ) {
-	// The user list is not changed by a rules update: reuse the cached list
-	// (kept warm by the batch cacher) and only fall back to storage on a
-	// cache miss, so updating large segments doesn't load the full user
-	// list from the DB.
-	var users []*featureproto.SegmentUser
-	if cached, err := s.segmentUsersCache.Get(segment.Id, environmentId); err == nil {
-		users = cached.Users
-	} else {
-		users, err = s.segmentStorage.ListSegmentUsersBySegment(ctx, segment.Id, environmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to list segment users for cache refresh",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("segmentId", segment.Id),
-				)...,
-			)
-			return
-		}
+	// The user list is always loaded from storage: reusing the cached list
+	// could write back a stale user list with a fresh updated_at when a
+	// concurrent user upload or the batch cacher updates the entry.
+	// UpdateSegment is a rare admin operation, so the extra read is fine.
+	users, err := s.segmentStorage.ListSegmentUsersBySegment(ctx, segment.Id, environmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list segment users for cache refresh",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("segmentId", segment.Id),
+			)...,
+		)
+		return
 	}
 	segmentUsers := &featureproto.SegmentUsers{
 		SegmentId: segment.Id,
