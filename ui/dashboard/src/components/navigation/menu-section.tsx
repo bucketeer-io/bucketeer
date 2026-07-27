@@ -21,7 +21,14 @@ const SectionMenu = ({
       </div>
 
       {items.map((item, index) => (
-        <MenuItemComponent {...item} key={index} onClick={onClickNavLink} />
+        <MenuItemComponent
+          {...item}
+          key={index}
+          onClick={() => {
+            item.onClick?.();
+            onClickNavLink?.();
+          }}
+        />
       ))}
     </div>
   );

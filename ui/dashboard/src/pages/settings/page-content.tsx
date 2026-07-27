@@ -5,9 +5,7 @@ import { Link } from 'react-router';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
-import { WALKTHROUGH_ENABLED } from 'configs';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { useWalkthroughContext } from 'contexts/walkthrough-context';
 import { useToast } from 'hooks';
 import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -15,7 +13,6 @@ import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
-import { IconRocket } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -42,7 +39,6 @@ export interface PageContentForm {
 
 const PageContent = ({ organization }: { organization: Organization }) => {
   const { notify, errorNotify } = useToast();
-  const { startWalkthrough } = useWalkthroughContext();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
@@ -210,25 +206,6 @@ const PageContent = ({ organization }: { organization: Organization }) => {
           </Form>
         </FormProvider>
       </div>
-      {WALKTHROUGH_ENABLED && (
-        <div className="p-5 shadow-card rounded-lg bg-white mt-6">
-          <p className="text-gray-800 typo-head-bold-small">
-            {t('walkthrough.tutorial')}
-          </p>
-          <p className="typo-para-small text-gray-600 mt-2">
-            {t('walkthrough.replay-description')}
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-4"
-            onClick={() => startWalkthrough()}
-          >
-            <Icon icon={IconRocket} size="sm" />
-            {t('walkthrough.replay')}
-          </Button>
-        </div>
-      )}
     </PageLayout.Content>
   );
 };

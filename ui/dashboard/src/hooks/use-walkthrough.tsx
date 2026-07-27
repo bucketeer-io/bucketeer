@@ -89,9 +89,10 @@ export const useWalkthrough = () => {
   // override) or when panels/modals finish animating in — refresh it on both.
   useEffect(() => {
     const refreshSpotlight = () => {
-      if (driverRef.current?.isActive()) {
-        driverRef.current.refresh();
-      }
+      const activeDriver = driverRef.current;
+      if (!activeDriver?.isActive()) return;
+      if (activeDriver.getState('__transitionCallback')) return;
+      activeDriver.refresh();
     };
     document.addEventListener('scroll', refreshSpotlight, true);
     document.addEventListener('transitionend', refreshSpotlight, true);
