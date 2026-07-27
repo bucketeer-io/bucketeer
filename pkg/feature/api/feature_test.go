@@ -1006,7 +1006,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
 			getExpectedErr: func() error {
-				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error")).Err()
+				// The storage error is returned, not the earlier cache-miss error.
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err()
 			},
 		},
 		{
@@ -1066,6 +1067,83 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.segmentStorage.(*mock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{Segment: &featureproto.Segment{Id: "id-0"}}, nil, nil)
+			},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
+			expected: &featureproto.EvaluateFeaturesResponse{
+				UserEvaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							VariationId: vID2,
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+				},
+			},
+			getExpectedErr: func() error {
+				return nil
+			},
+		},
+		{
+			desc:    "success: segment not found evaluates without rules",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID2,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"id-0",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Tags: []string{"android"},
+							},
+						}}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("random error"))
+				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.SegmentUser{}, 0, nil)
+				// Stale reference: the segment was deleted while the flag
+				// still references it. Evaluation must not fail.
+				s.segmentStorage.(*mock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil, v2fs.ErrSegmentNotFound)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1414,7 +1492,8 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			},
 			expected: nil,
 			getExpectedErr: func() error {
-				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error")).Err()
+				// The storage error is returned, not the earlier cache-miss error.
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err()
 			},
 		},
 		{

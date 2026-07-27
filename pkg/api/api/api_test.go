@@ -31,6 +31,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -2483,6 +2485,30 @@ func renderBody(t *testing.T, res interface{}) io.Reader {
 		t.Fatal(err)
 	}
 	return bytes.NewReader(encoded)
+}
+
+func TestGetSegmentUsersSegmentNotFound(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	gs := newGatewayServiceWithMock(t, mockController)
+	gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+		nil, cache.ErrNotFound)
+	gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+		&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
+	// Stale reference: the segment was deleted while a flag still references
+	// it. Evaluation must continue with the user list only instead of failing.
+	gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+		nil, status.Error(codes.NotFound, "segment not found"))
+	gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+
+	actual, err := gs.getSegmentUsers(context.Background(), "seg-0", "ns0")
+	assert.NoError(t, err)
+	assert.Equal(t, &featureproto.SegmentUsers{
+		SegmentId: "seg-0",
+		Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+	}, actual)
 }
 
 func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) *gatewayService {

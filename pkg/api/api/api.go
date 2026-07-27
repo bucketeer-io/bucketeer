@@ -25,6 +25,8 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -813,6 +815,25 @@ func (s *gatewayService) getSegmentUsers(
 	}
 	respGet, err := s.featureClient.GetSegment(ctx, reqGet)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			// Stale reference: the segment was deleted while a flag still
+			// references it. Evaluate with the user list only (no rules),
+			// matching the behavior before rules were delivered.
+			s.logger.Warn(
+				"Segment not found, evaluating without rules",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentId),
+					zap.String("segmentId", segmentID),
+				)...,
+			)
+			segmentUsers := &featureproto.SegmentUsers{
+				SegmentId: segmentID,
+				Users:     res.Users,
+			}
+			putSegmentUsersCache(ctx, segmentUsers, environmentId, s.segmentUsersCache, s.logger)
+			return segmentUsers, nil
+		}
 		s.logger.Error(
 			"Failed to retrieve segment from storage",
 			log.FieldsFromIncomingContext(ctx).AddFields(

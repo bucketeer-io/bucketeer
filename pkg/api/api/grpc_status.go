@@ -34,11 +34,18 @@ func NewGRPCStatus(err error) *status.Status {
 	var bucketeerErr *pkgErr.BktError
 	if err == nil {
 		return status.New(codes.Unknown, "")
-	} else if errors.As(err, &bucketeerErr) {
-		return convertBktError(bucketeerErr)
-	} else {
-		return convertUnknownError(err)
 	}
+	// Pass through errors that already carry a gRPC status (e.g. errors
+	// returned by another handler) instead of double-wrapping them,
+	// which would degrade the code to codes.Unknown.
+	var grpcErr interface{ GRPCStatus() *status.Status }
+	if errors.As(err, &grpcErr) {
+		return grpcErr.GRPCStatus()
+	}
+	if errors.As(err, &bucketeerErr) {
+		return convertBktError(bucketeerErr)
+	}
+	return convertUnknownError(err)
 }
 
 func convertBktError(bktError *pkgErr.BktError) *status.Status {

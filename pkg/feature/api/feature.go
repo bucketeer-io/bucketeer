@@ -1193,10 +1193,27 @@ func (s *FeatureService) getSegmentUsers(
 				zap.String("segmentId", segmentID),
 			)...,
 		)
-		return nil, err
+		return nil, storageErr
 	}
 	segment, _, storageErr := s.segmentStorage.GetSegment(ctx, segmentID, EnvironmentId)
 	if storageErr != nil {
+		if errors.Is(storageErr, v2fs.ErrSegmentNotFound) {
+			// Stale reference: the segment was deleted while a flag still
+			// references it. Evaluate with the user list only (no rules),
+			// matching the behavior before rules were delivered.
+			s.logger.Warn(
+				"Segment not found, evaluating without rules",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(storageErr),
+					zap.String("environmentId", EnvironmentId),
+					zap.String("segmentId", segmentID),
+				)...,
+			)
+			return &featureproto.SegmentUsers{
+				SegmentId: segmentID,
+				Users:     res.Users,
+			}, nil
+		}
 		s.logger.Error(
 			"Failed to retrieve segment from storage",
 			log.FieldsFromIncomingContext(ctx).AddFields(
