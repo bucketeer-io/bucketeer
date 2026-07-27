@@ -1209,9 +1209,14 @@ func (s *FeatureService) getSegmentUsers(
 					zap.String("segmentId", segmentID),
 				)...,
 			)
+			// UpdatedAt is stamped with the current time so downstream
+			// consumers treat this users-only definition as fresh instead
+			// of stale (the batch cacher excludes deleted segments and
+			// never rewrites the entry).
 			return &featureproto.SegmentUsers{
 				SegmentId: segmentID,
 				Users:     res.Users,
+				UpdatedAt: time.Now().Unix(),
 			}, nil
 		}
 		s.logger.Error(

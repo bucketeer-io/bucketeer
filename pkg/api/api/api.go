@@ -827,9 +827,15 @@ func (s *gatewayService) getSegmentUsers(
 					zap.String("segmentId", segmentID),
 				)...,
 			)
+			// UpdatedAt is stamped with the current time so the entry passes
+			// the GetSegmentUsers diff filter and long-running server SDKs
+			// converge to the users-only definition on their next poll,
+			// instead of keeping the stale pre-deletion copy (the batch
+			// cacher excludes deleted segments and never rewrites it).
 			segmentUsers := &featureproto.SegmentUsers{
 				SegmentId: segmentID,
 				Users:     res.Users,
+				UpdatedAt: time.Now().Unix(),
 			}
 			putSegmentUsersCache(ctx, segmentUsers, environmentId, s.segmentUsersCache, s.logger)
 			return segmentUsers, nil

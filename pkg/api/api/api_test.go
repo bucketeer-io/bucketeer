@@ -2505,9 +2505,13 @@ func TestGetSegmentUsersSegmentNotFound(t *testing.T) {
 
 	actual, err := gs.getSegmentUsers(context.Background(), "seg-0", "ns0")
 	assert.NoError(t, err)
+	// The fallback stamps UpdatedAt with the current time so server SDKs
+	// converge to the users-only definition through the diff sync.
+	assert.InDelta(t, time.Now().Unix(), actual.UpdatedAt, 5)
 	assert.Equal(t, &featureproto.SegmentUsers{
 		SegmentId: "seg-0",
 		Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
+		UpdatedAt: actual.UpdatedAt,
 	}, actual)
 }
 

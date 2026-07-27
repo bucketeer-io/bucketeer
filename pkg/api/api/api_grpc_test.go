@@ -798,12 +798,15 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc        string
-		setup       func(*grpcGatewayService)
-		segmentID   string
-		envID       string
-		expected    *featureproto.SegmentUsers
-		expectedErr error
+		desc      string
+		setup     func(*grpcGatewayService)
+		segmentID string
+		envID     string
+		expected  *featureproto.SegmentUsers
+		// The NotFound fallback stamps UpdatedAt with the current time,
+		// so the exact value cannot be asserted.
+		expectedNowUpdatedAt bool
+		expectedErr          error
 	}{
 		{
 			desc: "exists in in-memory cache",
@@ -893,7 +896,8 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 				SegmentId: "seg-0",
 				Users:     []*featureproto.SegmentUser{{UserId: "user-0"}},
 			},
-			expectedErr: nil,
+			expectedNowUpdatedAt: true,
+			expectedErr:          nil,
 		},
 		{
 			desc: "success from service",
@@ -925,6 +929,10 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 			gs.segmentUsersRedisCache = redisSegmentUsersCache
 			p.setup(gs)
 			actual, err := gs.getSegmentUsersBySegmentID(context.Background(), p.segmentID, p.envID)
+			if p.expectedNowUpdatedAt {
+				assert.InDelta(t, time.Now().Unix(), actual.UpdatedAt, 5, "%s", p.desc)
+				p.expected.UpdatedAt = actual.UpdatedAt
+			}
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})

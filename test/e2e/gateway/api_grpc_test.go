@@ -642,6 +642,108 @@ func TestGrpcGetEvaluationsRuleBasedSegment(t *testing.T) {
 	assert.Equal(t, req.Variations[0].Value, eval.VariationValue)
 }
 
+// TestGrpcGetSegmentUsersRuleBasedSegment covers the server SDK sync path:
+// segment rules must be delivered through GetSegmentUsers, both in the
+// full-state response and in the diff response after a rule update, so
+// server SDKs can evaluate rule-based membership locally.
+func TestGrpcGetSegmentUsersRuleBasedSegment(t *testing.T) {
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+
+	// Segment with a rule on a user attribute.
+	attributeValue := fmt.Sprintf("%s-plan-%s", prefixTestName, uuid)
+	segmentName := fmt.Sprintf("%s-segment-%s", prefixTestName, uuid)
+	if *testID != "" {
+		segmentName = fmt.Sprintf("%s-%s-segment-%s", prefixTestName, *testID, uuid)
+	}
+	segmentRes, err := featureClient.CreateSegment(ctx, &featureproto.CreateSegmentRequest{
+		EnvironmentId: *environmentID,
+		Name:          segmentName,
+		Description:   "e2e-test-gateway-get-segment-users-rule-based-segment",
+		Rules: []*featureproto.Rule{
+			{
+				Clauses: []*featureproto.Clause{
+					{
+						Attribute: "plan",
+						Operator:  featureproto.Clause_EQUALS,
+						Values:    []string{attributeValue},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The segment must be referenced by a flag to be considered in use
+	// and returned by GetSegmentUsers.
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, featureClient, req)
+	addTag(t, tag, featureID, featureClient)
+	feature := getFeature(t, featureID, featureClient)
+	addSegmentRule(t, featureID, feature.Variations[1].Id, segmentRes.Segment.Id, featureClient)
+	enableFeature(t, featureID, featureClient)
+	updateFeatueFlagCache(t)
+
+	// Full-state sync (requestedAt = 0): the segment must be delivered
+	// with its rules.
+	var fullRes *gatewayproto.GetSegmentUsersResponse
+	var segmentUsers *featureproto.SegmentUsers
+	require.Eventually(t, func() bool {
+		fullRes = grpcGetSegmentUsers(t, nil, 0)
+		segmentUsers = findSegmentUsers(fullRes.SegmentUsers, segmentRes.Segment.Id)
+		return segmentUsers != nil
+	}, 30*time.Second, 2*time.Second, "segment should be delivered by GetSegmentUsers")
+	assert.True(t, fullRes.ForceUpdate)
+	require.Len(t, segmentUsers.Rules, 1)
+	require.Len(t, segmentUsers.Rules[0].Clauses, 1)
+	clause := segmentUsers.Rules[0].Clauses[0]
+	assert.Equal(t, "plan", clause.Attribute)
+	assert.Equal(t, featureproto.Clause_EQUALS, clause.Operator)
+	assert.Equal(t, []string{attributeValue}, clause.Values)
+	assert.NotZero(t, segmentUsers.UpdatedAt)
+
+	// A rule change must show up in the diff sync so running server SDKs
+	// converge without a full refresh.
+	newAttributeValue := fmt.Sprintf("%s-plan-updated-%s", prefixTestName, uuid)
+	_, err = featureClient.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+		Id:            segmentRes.Segment.Id,
+		EnvironmentId: *environmentID,
+		Rules: &featureproto.RuleListValue{
+			Values: []*featureproto.Rule{
+				{
+					Clauses: []*featureproto.Clause{
+						{
+							Attribute: "plan",
+							Operator:  featureproto.Clause_EQUALS,
+							Values:    []string{newAttributeValue},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	require.Eventually(t, func() bool {
+		diffRes := grpcGetSegmentUsers(t, []string{segmentRes.Segment.Id}, fullRes.RequestedAt)
+		su := findSegmentUsers(diffRes.SegmentUsers, segmentRes.Segment.Id)
+		if su == nil || len(su.Rules) != 1 || len(su.Rules[0].Clauses) != 1 {
+			return false
+		}
+		values := su.Rules[0].Clauses[0].Values
+		return len(values) == 1 && values[0] == newAttributeValue
+	}, 60*time.Second, 2*time.Second, "updated segment rules should be delivered through the diff sync")
+}
+
 func TestGrpcGetEvaluationsFullState(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t, *apiKeyPath)
@@ -1984,6 +2086,34 @@ func grpcGetFeatureFlags(t *testing.T, tag, featuresID string, requestedAt int64
 		t.Fatal(err)
 	}
 	return response
+}
+
+func grpcGetSegmentUsers(t *testing.T, segmentIDs []string, requestedAt int64) *gatewayproto.GetSegmentUsersResponse {
+	t.Helper()
+	c := newGatewayClient(t, *apiKeyServerPath)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req := &gatewayproto.GetSegmentUsersRequest{
+		SegmentIds:  segmentIDs,
+		RequestedAt: requestedAt,
+		SourceId:    eventproto.SourceId_GO_SERVER,
+		SdkVersion:  "v0.0.1-e2e-test",
+	}
+	response, err := c.GetSegmentUsers(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response
+}
+
+func findSegmentUsers(segmentUsers []*featureproto.SegmentUsers, segmentID string) *featureproto.SegmentUsers {
+	for _, su := range segmentUsers {
+		if su.SegmentId == segmentID {
+			return su
+		}
+	}
+	return nil
 }
 
 func grpcGetEvaluationsByEvaluatedAt(
