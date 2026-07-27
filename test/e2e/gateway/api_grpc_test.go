@@ -550,6 +550,81 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	}
 }
 
+// TestGrpcGetEvaluationsRuleBasedSegment verifies the whole rule-based
+// segment flow: a segment whose membership is defined by a rule on a user
+// attribute (no user list), referenced by a feature flag rule, evaluated
+// through the gateway.
+func TestGrpcGetEvaluationsRuleBasedSegment(t *testing.T) {
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+
+	// Rule-based segment: membership is defined by a user attribute,
+	// the user list stays empty.
+	attributeValue := fmt.Sprintf("%s-plan-%s", prefixTestName, uuid)
+	segmentName := fmt.Sprintf("%s-segment-%s", prefixTestName, uuid)
+	if *testID != "" {
+		segmentName = fmt.Sprintf("%s-%s-segment-%s", prefixTestName, *testID, uuid)
+	}
+	segmentRes, err := featureClient.CreateSegment(ctx, &featureproto.CreateSegmentRequest{
+		EnvironmentId: *environmentID,
+		Name:          segmentName,
+		Description:   "e2e-test-gateway-rule-based-segment",
+		Rules: []*featureproto.Rule{
+			{
+				Clauses: []*featureproto.Clause{
+					{
+						Attribute: "plan",
+						Operator:  featureproto.Clause_EQUALS,
+						Values:    []string{attributeValue},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Feature with a rule targeting the segment: matched users get variation B.
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, featureClient, req)
+	addTag(t, tag, featureID, featureClient)
+	feature := getFeature(t, featureID, featureClient)
+	addSegmentRule(t, featureID, feature.Variations[1].Id, segmentRes.Segment.Id, featureClient)
+	enableFeature(t, featureID, featureClient)
+	updateFeatueFlagCache(t)
+
+	// A user whose attribute matches the segment rule gets variation B.
+	res := grpcGetEvaluationsWithUser(t, tag, &userproto.User{
+		Id:   newUserID(t, uuid),
+		Data: map[string]string{"plan": attributeValue},
+	})
+	eval, err := findFeature(res.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, featureproto.Reason_RULE, eval.Reason.Type)
+	assert.Equal(t, req.Variations[1].Value, eval.VariationValue)
+
+	// A user without the attribute is not in the segment
+	// and gets the default variation A.
+	res = grpcGetEvaluationsWithUser(t, tag, &userproto.User{
+		Id: newUserID(t, newUUID(t)),
+	})
+	eval, err = findFeature(res.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, featureproto.Reason_DEFAULT, eval.Reason.Type)
+	assert.Equal(t, req.Variations[0].Value, eval.VariationValue)
+}
+
 func TestGrpcGetEvaluationsFullState(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t, *apiKeyPath)
@@ -1707,6 +1782,53 @@ func addRule(t *testing.T, featureID, variationID string, client featureclient.C
 	}
 }
 
+// addSegmentRule adds a fixed-strategy rule with a SEGMENT clause
+// referencing the given segment.
+func addSegmentRule(t *testing.T, featureID, variationID, segmentID string, client featureclient.Client) {
+	t.Helper()
+	ruleID, _ := uuid.NewUUID()
+	clauseID, _ := uuid.NewUUID()
+	rule := &featureproto.Rule{
+		Id: ruleID.String(),
+		Strategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_FIXED,
+			FixedStrategy: &featureproto.FixedStrategy{
+				Variation: variationID,
+			},
+		},
+		Clauses: []*featureproto.Clause{
+			{
+				Id:       clauseID.String(),
+				Operator: featureproto.Clause_SEGMENT,
+				Values:   []string{segmentID},
+			},
+		},
+	}
+	for i := 0; i < deadlockRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Id:            featureID,
+			EnvironmentId: *environmentID,
+			RuleChanges: []*featureproto.RuleChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Rule:       rule,
+				},
+			},
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		if i < deadlockRetryAttempts-1 && util.IsDeadlockError(err) {
+			t.Logf("Retrying addSegmentRule (attempt %d/%d) for %s: %v", i+1, deadlockRetryAttempts, featureID, err)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		t.Fatal(err)
+	}
+}
+
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	enableReq := &featureproto.UpdateFeatureRequest{
@@ -1761,6 +1883,25 @@ func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvalu
 	req := &gatewayproto.GetEvaluationsRequest{
 		Tag:  tag,
 		User: &userproto.User{Id: userID},
+	}
+	response, err := c.GetEvaluations(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response
+}
+
+// grpcGetEvaluationsWithUser is like grpcGetEvaluations but accepts a full
+// user object so tests can pass user attributes.
+func grpcGetEvaluationsWithUser(t *testing.T, tag string, user *userproto.User) *gatewayproto.GetEvaluationsResponse {
+	t.Helper()
+	c := newGatewayClient(t, *apiKeyPath)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req := &gatewayproto.GetEvaluationsRequest{
+		Tag:  tag,
+		User: user,
 	}
 	response, err := c.GetEvaluations(ctx, req)
 	if err != nil {
