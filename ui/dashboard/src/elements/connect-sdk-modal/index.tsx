@@ -11,7 +11,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
-import { IconCopy } from '@icons';
+import { IconCopy, IconSwitch } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
@@ -78,7 +78,12 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
 
   return (
     <DialogModal
-      title={t('walkthrough.connect-sdk.title')}
+      title={
+        <div className="flex items-center gap-x-2">
+          <Icon icon={IconSwitch} size="sm" />
+          {t('walkthrough.connect-sdk.title')}
+        </div>
+      }
       isOpen={isOpen}
       onClose={onClose}
       className="w-full max-w-2xl"

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { apiKeysFetcher } from '@api/api-key';
+import iconRocketRaw from '@icons/sidebar-icons/rocket.svg?raw';
+import iconSwitchRaw from '@icons/sidebar-icons/switch.svg?raw';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { WALKTHROUGH_ENABLED } from 'configs';
 import { PAGE_PATH_APIKEYS, PAGE_PATH_FEATURES } from 'constants/routing';
@@ -22,6 +24,10 @@ type WalkthroughStage =
   | 'sdk-modal';
 
 const tourTarget = (id: string) => `[data-tour="${id}"]`;
+
+// Popover titles are rendered as HTML by driver.js.
+const titleWithIcon = (rawIcon: string, title: string) =>
+  `${rawIcon}<span>${title}</span>`;
 
 const TARGETING_PATH_REGEX = /\/features\/([^/]+)\/targeting/;
 
@@ -158,7 +164,10 @@ export const useWalkthrough = () => {
         {
           // No element: shown as a centered dialog.
           popover: {
-            title: t('walkthrough.flag-created.title'),
+            title: titleWithIcon(
+              iconSwitchRaw,
+              t('walkthrough.flag-created.title')
+            ),
             description: t('walkthrough.flag-created.description'),
             showButtons: ['next', 'close'],
             onNextClick: (_element, _step, { driver: driverInstance }) => {
@@ -259,7 +268,7 @@ export const useWalkthrough = () => {
       const welcomeStep: DriveStep = {
         // No element: shown as a centered dialog.
         popover: {
-          title: t('walkthrough.welcome.title'),
+          title: titleWithIcon(iconRocketRaw, t('walkthrough.welcome.title')),
           description: t('walkthrough.welcome.description'),
           nextBtnText: t('walkthrough.welcome.start'),
           showButtons: ['next', 'close']

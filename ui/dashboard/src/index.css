@@ -158,3 +158,15 @@ body.driver-active .driver-active-element [data-tour='submit-apikey-button'] {
   pointer-events: none;
   opacity: 0.5;
 }
+
+/* Match the walkthrough popover to the console font and lay out titles
+   with their inline icon. */
+body .driver-popover,
+body .driver-popover * {
+  font-family: inherit;
+}
+.driver-popover-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

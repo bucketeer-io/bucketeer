@@ -409,7 +409,7 @@
       "description": "When the form is complete, click this button to create your first feature flag."
     },
     "connect-sdk": {
-      "title": "🎉 Your flag is created — now connect an SDK",
+      "title": "Your flag is created — now connect an SDK",
       "description": "Pick your language and copy the starter code into your app. It already contains your API key, endpoint, and the flag you just created.",
       "install": "Install",
       "initialize": "Initialize and evaluate your flag",
@@ -417,7 +417,7 @@
       "go-to-flag": "Go to the flag"
     },
     "flag-created": {
-      "title": "🎉 Your flag is created!",
+      "title": "Your flag is created!",
       "description": "To let your app evaluate this flag, you need an API key. Let’s create one on the API Keys page."
     },
     "create-apikey-button": {
@@ -434,7 +434,7 @@
     },
     "skip": "Skip walkthrough",
     "welcome": {
-      "title": "👋 Welcome to Bucketeer!",
+      "title": "Welcome to Bucketeer!",
       "description": "Bucketeer is a feature flag and experimentation platform. Take a short tour to release your first feature flag — it only takes a few minutes.",
       "start": "Take the tour"
     },
