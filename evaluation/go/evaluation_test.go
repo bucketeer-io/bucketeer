@@ -302,6 +302,126 @@ config:
 	}
 }
 
+// TestEvaluateFeaturesWithRuleBasedSegment covers the full evaluation path
+// for rule-based segments: a flag rule with a SEGMENT clause referencing a
+// segment whose membership is defined by rules on user attributes.
+func TestEvaluateFeaturesWithRuleBasedSegment(t *testing.T) {
+	t.Parallel()
+	f := &ftproto.Feature{
+		Id:            "feature-id",
+		Name:          "test feature",
+		Version:       1,
+		Enabled:       true,
+		CreatedAt:     time.Now().Unix(),
+		VariationType: feature.Feature_STRING,
+		Variations: []*ftproto.Variation{
+			{Id: "variation-A", Value: "A", Name: "Variation A"},
+			{Id: "variation-B", Value: "B", Name: "Variation B"},
+		},
+		Rules: []*ftproto.Rule{
+			{
+				Id: "rule-1",
+				Strategy: &ftproto.Strategy{
+					Type:          ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{Variation: "variation-B"},
+				},
+				Clauses: []*ftproto.Clause{
+					{
+						Id:       "clause-1",
+						Operator: ftproto.Clause_SEGMENT,
+						Values:   []string{"segment-1"},
+					},
+				},
+			},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "variation-A"},
+		},
+	}
+	segments := map[string]*ftproto.Segment{
+		"segment-1": {
+			Id: "segment-1",
+			Rules: []*ftproto.Rule{
+				{
+					Id: "segment-rule-1",
+					Clauses: []*ftproto.Clause{
+						{
+							Id:        "segment-clause-1",
+							Attribute: "plan",
+							Operator:  ftproto.Clause_EQUALS,
+							Values:    []string{"premium"},
+						},
+					},
+				},
+			},
+		},
+	}
+	patterns := []struct {
+		desc              string
+		user              *userproto.User
+		segmentUsers      map[string][]*ftproto.SegmentUser
+		segments          map[string]*ftproto.Segment
+		expectedVariation string
+		expectedReason    *ftproto.Reason
+	}{
+		{
+			desc:              "user matches the segment rule by attribute",
+			user:              &userproto.User{Id: "user-1", Data: map[string]string{"plan": "premium"}},
+			segmentUsers:      map[string][]*ftproto.SegmentUser{},
+			segments:          segments,
+			expectedVariation: "variation-B",
+			expectedReason:    &ftproto.Reason{Type: ftproto.Reason_RULE, RuleId: "rule-1"},
+		},
+		{
+			desc:              "user does not match the segment rule",
+			user:              &userproto.User{Id: "user-1", Data: map[string]string{"plan": "free"}},
+			segmentUsers:      map[string][]*ftproto.SegmentUser{},
+			segments:          segments,
+			expectedVariation: "variation-A",
+			expectedReason:    &ftproto.Reason{Type: ftproto.Reason_DEFAULT},
+		},
+		{
+			desc: "mixed: user in the include list matches even when the rule does not",
+			user: &userproto.User{Id: "listed-user", Data: map[string]string{"plan": "free"}},
+			segmentUsers: map[string][]*ftproto.SegmentUser{
+				"segment-1": {
+					{
+						SegmentId: "segment-1",
+						UserId:    "listed-user",
+						State:     ftproto.SegmentUser_INCLUDED,
+					},
+				},
+			},
+			segments:          segments,
+			expectedVariation: "variation-B",
+			expectedReason:    &ftproto.Reason{Type: ftproto.Reason_RULE, RuleId: "rule-1"},
+		},
+		{
+			desc:              "backward compat: nil segments map evaluates the include list only",
+			user:              &userproto.User{Id: "user-1", Data: map[string]string{"plan": "premium"}},
+			segmentUsers:      map[string][]*ftproto.SegmentUser{},
+			segments:          nil,
+			expectedVariation: "variation-A",
+			expectedReason:    &ftproto.Reason{Type: ftproto.Reason_DEFAULT},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			evaluation, err := evaluator.EvaluateFeatures(
+				[]*ftproto.Feature{f}, p.user, p.segmentUsers, p.segments, "",
+			)
+			assert.NoError(t, err)
+			actual, err := findEvaluation(evaluation.Evaluations, f.Id)
+			assert.NoError(t, err)
+			assert.Equal(t, p.expectedVariation, actual.VariationId)
+			assert.True(t, proto.Equal(p.expectedReason, actual.Reason),
+				"expected %v, actual %v", p.expectedReason, actual.Reason)
+		})
+	}
+}
+
 func TestEvaluateFeaturesByEvaluatedAt_MissingPrerequisite(t *testing.T) {
 	t.Parallel()
 
