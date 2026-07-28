@@ -606,6 +606,8 @@ func TestDeleteAdminNotification(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					deleteNotificationSQL,
+					"editor@example.com",
+					int64(5),
 					"notification-id-0",
 				).Return(result, nil)
 			},
@@ -619,7 +621,7 @@ func TestDeleteAdminNotification(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.DeleteAdminNotification(context.Background(), p.id)
+			err := storage.DeleteAdminNotification(context.Background(), p.id, "editor@example.com", 5)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

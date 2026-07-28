@@ -10,4 +10,5 @@ SELECT
 FROM
     notification
 WHERE
-    id = ?
+    id = ? AND
+    deleted = false

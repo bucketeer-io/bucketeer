@@ -19,6 +19,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -327,7 +328,7 @@ func (s *NotificationService) DeleteAdminNotification(
 	ctx context.Context,
 	req *proto.DeleteAdminNotificationRequest,
 ) (*proto.DeleteAdminNotificationResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +336,7 @@ func (s *NotificationService) DeleteAdminNotification(
 		return nil, statusNotificationIDRequired.Err()
 	}
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		return s.notificationStorage.DeleteAdminNotification(ctxWithTx, req.Id)
+		return s.notificationStorage.DeleteAdminNotification(ctxWithTx, req.Id, editor.Email, time.Now().Unix())
 	})
 	if err != nil {
 		if errors.Is(err, storage.ErrNotificationNotFound) {
