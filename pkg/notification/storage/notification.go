@@ -48,9 +48,9 @@ type NotificationStorage interface {
 	CreateAdminNotification(ctx context.Context, notification *domain.Notification) error
 	GetAdminNotification(ctx context.Context, id string) (*domain.Notification, error)
 	UpdateAdminNotification(ctx context.Context, notification *domain.Notification) error
-	// DeleteAdminNotification deletes a notification; localizations and read
-	// markers are removed by ON DELETE CASCADE.
-	DeleteAdminNotification(ctx context.Context, id string) error
+	// DeleteAdminNotification soft-deletes a notification, recording who
+	// deleted it and when; localizations and read markers stay intact.
+	DeleteAdminNotification(ctx context.Context, id, lastEditedBy string, updatedAt int64) error
 	ListDraftAdminNotifications(
 		ctx context.Context,
 		params ListDraftAdminNotificationsParams,
