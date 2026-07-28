@@ -190,7 +190,7 @@ func (s *notificationStorage) DeleteAdminNotification(
 	if err != nil {
 		return err
 	}
-	if rowsAffected != 1 {
+	if rowsAffected == 0 {
 		return notificationstorage.ErrNotificationNotFound
 	}
 	return nil

@@ -1289,7 +1289,7 @@ paths:
       parameters:
         - name: id
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - notification
