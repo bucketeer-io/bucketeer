@@ -327,5 +327,28 @@ func (s *NotificationService) DeleteAdminNotification(
 	ctx context.Context,
 	req *proto.DeleteAdminNotificationRequest,
 ) (*proto.DeleteAdminNotificationResponse, error) {
-	return nil, statusNotImplemented
+	_, err := s.checkSystemAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(strings.TrimSpace(req.Id)) == 0 {
+		return nil, statusNotificationIDRequired.Err()
+	}
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		return s.notificationStorage.DeleteAdminNotification(ctxWithTx, req.Id)
+	})
+	if err != nil {
+		if errors.Is(err, storage.ErrNotificationNotFound) {
+			return nil, statusNotificationNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to delete notification",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("notificationId", req.Id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.DeleteAdminNotificationResponse{}, nil
 }

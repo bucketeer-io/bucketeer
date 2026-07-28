@@ -94,7 +94,9 @@ message PublishAdminNotificationRequest {}
 
 message PublishAdminNotificationResponse {}
 
-message DeleteAdminNotificationRequest {}
+message DeleteAdminNotificationRequest {
+  string id = 1;
+}
 
 message DeleteAdminNotificationResponse {}
 

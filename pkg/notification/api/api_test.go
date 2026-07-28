@@ -585,3 +585,111 @@ func TestNotificationService_UpdateAdminNotification(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationService_DeleteAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	adminCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, true),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+	memberCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.DeleteAdminNotificationRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: unauthenticated",
+			ctx:  context.TODO(),
+			req: &proto.DeleteAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc: "err: permission denied",
+			ctx:  memberCtx,
+			req: &proto.DeleteAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:        "err: id required",
+			ctx:         adminCtx,
+			req:         &proto.DeleteAdminNotificationRequest{Id: " "},
+			expectedErr: statusNotificationIDRequired.Err(),
+		},
+		{
+			desc: "err: not found",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().DeleteAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(storage.ErrNotificationNotFound)
+			},
+			req: &proto.DeleteAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusNotificationNotFound.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &proto.DeleteAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().DeleteAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(nil)
+			},
+			req: &proto.DeleteAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.DeleteAdminNotification(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+			}
+		})
+	}
+}

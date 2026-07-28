@@ -46254,7 +46254,14 @@
             "name": "PublishAdminNotificationResponse"
           },
           {
-            "name": "DeleteAdminNotificationRequest"
+            "name": "DeleteAdminNotificationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
           },
           {
             "name": "DeleteAdminNotificationResponse"

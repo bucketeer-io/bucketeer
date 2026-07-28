@@ -552,3 +552,75 @@ func TestUpdateAdminNotification(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		id          string
+		expectedErr error
+	}{
+		{
+			desc: "Error: delete notification",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			id:          "notification-id-0",
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "ErrNotificationNotFound",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			id:          "notification-id-0",
+			expectedErr: notificationstorage.ErrNotificationNotFound,
+		},
+		{
+			desc: "Error: rows affected",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			id:          "notification-id-0",
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					deleteNotificationSQL,
+					"notification-id-0",
+				).Return(result, nil)
+			},
+			id:          "notification-id-0",
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.DeleteAdminNotification(context.Background(), p.id)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
