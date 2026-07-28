@@ -46254,7 +46254,20 @@
             "name": "PublishAdminNotificationResponse"
           },
           {
-            "name": "DeleteAdminNotificationRequest"
+            "name": "DeleteAdminNotificationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "DeleteAdminNotificationResponse"
@@ -47875,6 +47888,9 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"

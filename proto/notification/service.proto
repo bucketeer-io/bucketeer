@@ -18,6 +18,7 @@ package bucketeer.notification;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/notification";
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/notification/notification.proto";
@@ -94,7 +95,9 @@ message PublishAdminNotificationRequest {}
 
 message PublishAdminNotificationResponse {}
 
-message DeleteAdminNotificationRequest {}
+message DeleteAdminNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
 
 message DeleteAdminNotificationResponse {}
 

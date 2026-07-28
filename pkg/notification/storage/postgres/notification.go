@@ -38,6 +38,8 @@ var (
 	updateNotificationSQL string
 	//go:embed sql/delete_notification_localizations.sql
 	deleteNotificationLocalizationsSQL string
+	//go:embed sql/delete_notification.sql
+	deleteNotificationSQL string
 	//go:embed sql/select_draft_notifications.sql
 	selectDraftNotificationsSQL string
 	//go:embed sql/count_draft_notifications.sql
@@ -168,6 +170,28 @@ func (s *notificationStorage) UpdateAdminNotification(
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (s *notificationStorage) DeleteAdminNotification(
+	ctx context.Context,
+	id string,
+) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		deleteNotificationSQL,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return notificationstorage.ErrNotificationNotFound
 	}
 	return nil
 }
