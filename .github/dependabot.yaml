@@ -33,7 +33,9 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: "gomod"
-    directory: "/hack"
+    # Each tool under hack/ is its own Go module, so use a glob to match them all.
+    directories:
+      - "/hack/*"
     schedule:
       interval: "monthly"
       time: "10:00"
