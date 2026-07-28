@@ -129,8 +129,10 @@ envoy:
   sseCircuitBreaker:
     maxRequests: 20000
     maxConnections: 20000
-    # Reject immediately so the LB routes to another pod
-    maxPendingRequests: 0
+    # Allow pending requests during H2 connection establishment.
+    # 0 rejects the very first request burst before the upstream
+    # connection is ready, causing 503 overflow on every fresh pod.
+    maxPendingRequests: 100
 service:
   type: ClusterIP
   externalPort: 9000
