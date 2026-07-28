@@ -1,0 +1,31 @@
+id: flutter
+label: Flutter
+kind: client
+installLanguage: yaml
+codeLanguage: dart
+install: |-
+  dependencies:
+    bucketeer_flutter_client_sdk: LATEST_VERSION
+code: |-
+  import 'package:bucketeer_flutter_client_sdk/bucketeer_flutter_client_sdk.dart';
+
+  final config = BKTConfigBuilder()
+    .apiKey("{{apiKey}}")
+    .apiEndpoint("{{apiEndpoint}}")
+    .featureTag("{{featureTag}}")
+    .appVersion("1.0.0")
+    .build();
+
+  final user = BKTUserBuilder()
+    .id("USER_ID")
+    .build();
+
+  await BKTClient.initialize(config: config, user: user);
+  final client = BKTClient.instance;
+
+  final showNewFeature = await client.boolVariation("{{flagId}}", false);
+  if (showNewFeature) {
+    // Show the new feature
+  } else {
+    // Run the default code
+  }

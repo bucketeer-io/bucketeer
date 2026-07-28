@@ -1,0 +1,24 @@
+id: node
+label: Node.js
+kind: server
+installLanguage: bash
+codeLanguage: javascript
+install: npm install @bucketeer/node-server-sdk
+code: |-
+  import { defineBKTConfig, initializeBKTClient } from '@bucketeer/node-server-sdk';
+
+  const config = defineBKTConfig({
+    apiKey: '{{apiKey}}',
+    apiEndpoint: '{{apiEndpoint}}',
+    featureTag: '{{featureTag}}'
+  });
+
+  const client = initializeBKTClient(config);
+
+  const user = { id: 'END_USER_ID', data: {} };
+  const showNewFeature = await client.getBoolVariation(user, '{{flagId}}', false);
+  if (showNewFeature) {
+    // Show the new feature
+  } else {
+    // Run the default code
+  }

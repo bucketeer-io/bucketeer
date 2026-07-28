@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { apiKeysFetcher } from '@api/api-key';
+import iconKeyRaw from '@icons/sidebar-icons/key.svg?raw';
 import iconRocketRaw from '@icons/sidebar-icons/rocket.svg?raw';
 import iconSwitchRaw from '@icons/sidebar-icons/switch.svg?raw';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -201,7 +202,10 @@ export const useWalkthrough = () => {
           element: tourTarget(WALKTHROUGH_TARGETS.CREATE_APIKEY_BUTTON),
           advanceOnClick: true,
           popover: {
-            title: t('walkthrough.create-apikey-button.title'),
+            title: titleWithIcon(
+              iconKeyRaw,
+              t('walkthrough.create-apikey-button.title')
+            ),
             description: t('walkthrough.create-apikey-button.description'),
             side: 'bottom',
             showButtons: ['close']
@@ -217,7 +221,10 @@ export const useWalkthrough = () => {
             document.removeEventListener('keydown', blockEnterSubmit, true);
           },
           popover: {
-            title: t('walkthrough.apikey-form.title'),
+            title: titleWithIcon(
+              iconKeyRaw,
+              t('walkthrough.apikey-form.title')
+            ),
             description: t('walkthrough.apikey-form.description'),
             side: 'left',
             showButtons: ['next', 'close']
@@ -227,7 +234,10 @@ export const useWalkthrough = () => {
           element: tourTarget(WALKTHROUGH_TARGETS.SUBMIT_APIKEY_BUTTON),
           advanceOnClick: true,
           popover: {
-            title: t('walkthrough.submit-apikey-button.title'),
+            title: titleWithIcon(
+              iconKeyRaw,
+              t('walkthrough.submit-apikey-button.title')
+            ),
             description: t('walkthrough.submit-apikey-button.description'),
             side: 'top',
             showButtons: ['previous', 'close']
@@ -303,7 +313,10 @@ export const useWalkthrough = () => {
             element: tourTarget(WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU),
             disableActiveInteraction: true,
             popover: {
-              title: t('walkthrough.feature-flags-menu.title'),
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.feature-flags-menu.title')
+              ),
               description: t('walkthrough.feature-flags-menu.description'),
               side: 'right',
               showButtons: ['next', 'close']
@@ -313,7 +326,10 @@ export const useWalkthrough = () => {
             element: tourTarget(WALKTHROUGH_TARGETS.CREATE_FLAG_BUTTON),
             advanceOnClick: true,
             popover: {
-              title: t('walkthrough.create-flag-button.title'),
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.create-flag-button.title')
+              ),
               description: t('walkthrough.create-flag-button.description'),
               side: 'bottom',
               showButtons: ['close']
@@ -323,7 +339,10 @@ export const useWalkthrough = () => {
             element: tourTarget(WALKTHROUGH_TARGETS.FLAG_GENERAL_INFO),
             disableActiveInteraction: false,
             popover: {
-              title: t('walkthrough.flag-general-info.title'),
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.flag-general-info.title')
+              ),
               description: t('walkthrough.flag-general-info.description'),
               side: 'right',
               showButtons: ['next', 'close']
@@ -333,7 +352,10 @@ export const useWalkthrough = () => {
             element: tourTarget(WALKTHROUGH_TARGETS.FLAG_VARIATIONS),
             disableActiveInteraction: false,
             popover: {
-              title: t('walkthrough.flag-variations.title'),
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.flag-variations.title')
+              ),
               description: t('walkthrough.flag-variations.description'),
               side: 'right',
               showButtons: ['next', 'previous', 'close']
@@ -343,7 +365,10 @@ export const useWalkthrough = () => {
             element: tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON),
             advanceOnClick: true,
             popover: {
-              title: t('walkthrough.submit-flag-button.title'),
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.submit-flag-button.title')
+              ),
               description: t('walkthrough.submit-flag-button.description'),
               side: 'top',
               showButtons: ['previous', 'close']

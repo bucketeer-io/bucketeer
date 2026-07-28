@@ -9,16 +9,31 @@ import {
 } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import { Highlight, themes } from 'prism-react-renderer';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconCopy, IconSwitch } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
-import { SDK_DEFINITIONS, SnippetVars } from './snippets';
+import { renderSnippet, SDK_DEFINITIONS, SnippetVars } from './snippets';
 
-const CodeBlock = ({ code, onCopy }: { code: string; onCopy: () => void }) => (
-  <div className="relative rounded-lg border border-gray-200 bg-gray-100">
+// Languages not bundled with prism-react-renderer fall back to a close one.
+const PRISM_LANGUAGE_FALLBACK: Record<string, string> = {
+  dart: 'clike',
+  groovy: 'clike'
+};
+
+const CodeBlock = ({
+  code,
+  language,
+  onCopy
+}: {
+  code: string;
+  language: string;
+  onCopy: () => void;
+}) => (
+  <div className="relative rounded-lg border border-gray-200 overflow-hidden">
     <button
       type="button"
       onClick={onCopy}
@@ -26,9 +41,26 @@ const CodeBlock = ({ code, onCopy }: { code: string; onCopy: () => void }) => (
     >
       <Icon icon={IconCopy} size="sm" />
     </button>
-    <pre className="typo-para-small overflow-x-auto p-3 pr-10 font-mono text-gray-900">
-      {code}
-    </pre>
+    <Highlight
+      theme={themes.github}
+      code={code}
+      language={PRISM_LANGUAGE_FALLBACK[language] ?? language}
+    >
+      {({ style, tokens, getLineProps, getTokenProps }) => (
+        <pre
+          className="typo-para-small overflow-x-auto p-3 pr-10 font-fira-code"
+          style={style}
+        >
+          {tokens.map((line, lineIndex) => (
+            <div key={lineIndex} {...getLineProps({ line })}>
+              {line.map((token, tokenIndex) => (
+                <span key={tokenIndex} {...getTokenProps({ token })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
   </div>
 );
 
@@ -63,6 +95,8 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
     flagId,
     featureTag: featureCollection?.feature?.tags?.[0] || 'YOUR_FEATURE_TAG'
   };
+  const installSnippet = renderSnippet(selectedSDK.install, snippetVars);
+  const codeSnippet = renderSnippet(selectedSDK.code, snippetVars);
 
   const handleCopy = (text: string) => {
     copyToClipBoard(text);
@@ -114,8 +148,9 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
             {t('walkthrough.connect-sdk.install')}
           </p>
           <CodeBlock
-            code={selectedSDK.install(snippetVars)}
-            onCopy={() => handleCopy(selectedSDK.install(snippetVars))}
+            code={installSnippet}
+            language={selectedSDK.installLanguage}
+            onCopy={() => handleCopy(installSnippet)}
           />
         </div>
         <div className="flex flex-col gap-y-2">
@@ -123,8 +158,9 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
             {t('walkthrough.connect-sdk.initialize')}
           </p>
           <CodeBlock
-            code={selectedSDK.code(snippetVars)}
-            onCopy={() => handleCopy(selectedSDK.code(snippetVars))}
+            code={codeSnippet}
+            language={selectedSDK.codeLanguage}
+            onCopy={() => handleCopy(codeSnippet)}
           />
         </div>
         <p

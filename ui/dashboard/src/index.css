@@ -165,10 +165,14 @@ body .driver-popover,
 body .driver-popover * {
   font-family: inherit;
 }
+/* driver.js sets display:block as an inline style on rendered titles. */
 .driver-popover-title {
-  display: flex;
+  display: flex !important;
   align-items: center;
   gap: 8px;
+}
+.driver-popover-title svg {
+  flex-shrink: 0;
 }
 
 /* The welcome step is a centered dialog — larger than regular tour popovers. */

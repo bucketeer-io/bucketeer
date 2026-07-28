@@ -1,0 +1,32 @@
+id: javascript
+label: JavaScript
+kind: client
+installLanguage: bash
+codeLanguage: javascript
+install: npm install @bucketeer/js-client-sdk
+code: |-
+  import {
+    defineBKTConfig,
+    defineBKTUser,
+    getBKTClient,
+    initializeBKTClient
+  } from '@bucketeer/js-client-sdk';
+
+  const config = defineBKTConfig({
+    apiKey: '{{apiKey}}',
+    apiEndpoint: '{{apiEndpoint}}',
+    featureTag: '{{featureTag}}',
+    appVersion: '1.0.0'
+  });
+
+  const user = defineBKTUser({ id: 'USER_ID' });
+
+  await initializeBKTClient(config, user);
+  const client = getBKTClient();
+
+  const showNewFeature = client?.booleanVariation('{{flagId}}', false);
+  if (showNewFeature) {
+    // Show the new feature
+  } else {
+    // Run the default code
+  }
