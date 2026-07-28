@@ -2,10 +2,8 @@ import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
-import { WALKTHROUGH_ENABLED } from 'configs';
 import * as ROUTING from 'constants/routing';
 import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
-import { useWalkthroughContext } from 'contexts/walkthrough-context';
 import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -27,7 +25,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
-  const { startWalkthrough } = useWalkthroughContext();
 
   const settingMenuSections = [
     {
@@ -47,11 +44,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`projects`),
           icon: IconSystem.IconFolder,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
-        },
-        WALKTHROUGH_ENABLED && {
-          label: t(`walkthrough.tutorial`),
-          icon: IconSystem.IconRocket,
-          onClick: () => startWalkthrough()
         }
       ])
     },

@@ -120,6 +120,7 @@ const ConnectSdkModal = ({ isOpen, flagId, onClose }: ConnectSdkModalProps) => {
       }
       isOpen={isOpen}
       onClose={onClose}
+      closeOnClickOutside={false}
       className="w-full max-w-2xl"
     >
       <div className="flex flex-col gap-y-4 p-5 pb-6">

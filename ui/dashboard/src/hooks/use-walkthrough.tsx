@@ -95,13 +95,23 @@ export const useWalkthrough = () => {
       if (activeDriver.getState('__transitionCallback')) return;
       activeDriver.refresh();
     };
+    // Escape would close the highlighted modal (e.g. the API key panel) and
+    // derail the tour.
+    const blockEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && driverRef.current?.isActive()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
     document.addEventListener('scroll', refreshSpotlight, true);
     document.addEventListener('transitionend', refreshSpotlight, true);
     document.addEventListener('animationend', refreshSpotlight, true);
+    document.addEventListener('keydown', blockEscape, true);
     return () => {
       document.removeEventListener('scroll', refreshSpotlight, true);
       document.removeEventListener('transitionend', refreshSpotlight, true);
       document.removeEventListener('animationend', refreshSpotlight, true);
+      document.removeEventListener('keydown', blockEscape, true);
     };
   }, []);
 
@@ -258,13 +268,16 @@ export const useWalkthrough = () => {
     startApiKeyTour();
   }, [pathname, stage, startApiKeyTour]);
 
-  // Poll until the key exists and the "API key created" dialog is closed.
+  // Wait until the key exists and the "API key created" dialog is closed.
+  // A DOM observer reacts to the dialog closing immediately; the interval is
+  // a fallback and drives the timeout.
   useEffect(() => {
     if (stage !== 'await-apikey-created' || !consoleAccount) return;
     const currentEnvironment = getCurrentEnvironment(consoleAccount);
     const startedAt = Date.now();
     let checking = false;
-    const interval = setInterval(async () => {
+    let hasKey = false;
+    const check = async () => {
       if (Date.now() - startedAt > AWAIT_APIKEY_TIMEOUT) {
         setStage('idle');
         return;
@@ -272,10 +285,12 @@ export const useWalkthrough = () => {
       if (checking) return;
       checking = true;
       try {
-        const hasKey = await hasUsableSDKKey(
-          currentEnvironment.organizationId,
-          currentEnvironment.id
-        );
+        if (!hasKey) {
+          hasKey = await hasUsableSDKKey(
+            currentEnvironment.organizationId,
+            currentEnvironment.id
+          );
+        }
         const isDialogOpen = !!document.querySelector('[role="dialog"]');
         if (hasKey && !isDialogOpen) {
           setStage('sdk-modal');
@@ -283,8 +298,17 @@ export const useWalkthrough = () => {
       } finally {
         checking = false;
       }
-    }, AWAIT_APIKEY_POLL_INTERVAL);
-    return () => clearInterval(interval);
+    };
+    check();
+    // Dialogs portal into <body>, so watching its children catches the
+    // "API key created" dialog being closed.
+    const observer = new MutationObserver(() => check());
+    observer.observe(document.body, { childList: true });
+    const interval = setInterval(check, AWAIT_APIKEY_POLL_INTERVAL);
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
   }, [stage, consoleAccount]);
 
   const driveFlagTour = useCallback(
