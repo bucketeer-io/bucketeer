@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UNSAFE_NavigationContext as NavigationContext } from 'react-router';
+import { LEAVE_PAGE_CANCELLED_EVENT } from 'constants/walkthrough';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
@@ -199,6 +200,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const handleCancel = () => {
     options?.onCancel?.();
     setOptions(null);
+    document.dispatchEvent(new CustomEvent(LEAVE_PAGE_CANCELLED_EVENT));
   };
 
   return (

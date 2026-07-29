@@ -7,7 +7,10 @@ import iconSwitchRaw from '@icons/sidebar-icons/switch.svg?raw';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { WALKTHROUGH_ENABLED } from 'configs';
 import { PAGE_PATH_APIKEYS, PAGE_PATH_FEATURES } from 'constants/routing';
-import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
+import {
+  LEAVE_PAGE_CANCELLED_EVENT,
+  WALKTHROUGH_TARGETS
+} from 'constants/walkthrough';
 import { driver, type Config, type Driver, type DriveStep } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { useTranslation } from 'i18n';
@@ -413,6 +416,20 @@ export const useWalkthrough = () => {
     requestedAt: number;
   } | null>(null);
 
+  // Cancelling the leave-page dialog means the navigation that would start
+  // the tour never happens — drop the request so it can't fire later.
+  useEffect(() => {
+    const cancelPendingTour = () => {
+      pendingTourRef.current = null;
+    };
+    document.addEventListener(LEAVE_PAGE_CANCELLED_EVENT, cancelPendingTour);
+    return () =>
+      document.removeEventListener(
+        LEAVE_PAGE_CANCELLED_EVENT,
+        cancelPendingTour
+      );
+  }, []);
+
   const startWalkthrough = useCallback(
     (options?: { withWelcome?: boolean }) => {
       if (!consoleAccount) return;
@@ -431,16 +448,15 @@ export const useWalkthrough = () => {
     [consoleAccount, driveFlagTour, navigate, pathname]
   );
 
+  // The first navigation consumes the request: the tour starts only when it
+  // lands on the flag list; any other destination discards it.
   useEffect(() => {
     const pending = pendingTourRef.current;
     if (!pending || !consoleAccount) return;
-    if (Date.now() - pending.requestedAt > PENDING_TOUR_TIMEOUT) {
-      pendingTourRef.current = null;
-      return;
-    }
+    pendingTourRef.current = null;
+    if (Date.now() - pending.requestedAt > PENDING_TOUR_TIMEOUT) return;
     const currentEnvironment = getCurrentEnvironment(consoleAccount);
     if (pathname === `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`) {
-      pendingTourRef.current = null;
       driveFlagTour(pending.withWelcome);
     }
   }, [pathname, consoleAccount, driveFlagTour]);
