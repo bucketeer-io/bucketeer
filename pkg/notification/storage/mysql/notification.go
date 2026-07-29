@@ -146,8 +146,8 @@ func (s *notificationStorage) UpdateAdminNotification(
 	if err != nil {
 		return err
 	}
-	if rowsAffected != 1 {
-		return notificationstorage.ErrNotificationUnexpectedAffectedRows
+	if rowsAffected == 0 {
+		return notificationstorage.ErrNotificationNotFound
 	}
 	if _, err := s.qe.ExecContext(
 		ctx,

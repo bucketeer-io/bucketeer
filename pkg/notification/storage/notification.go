@@ -34,10 +34,6 @@ var (
 		bkterr.NotificationPackageName,
 		"already exists",
 	)
-	ErrNotificationUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
-		bkterr.NotificationPackageName,
-		"unexpected affected rows",
-	)
 	ErrInvalidListDraftAdminNotificationsCursor = errors.New(
 		"notification storage: invalid list draft admin notifications cursor")
 	ErrInvalidListDraftAdminNotificationsOrderBy = errors.New(

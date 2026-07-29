@@ -484,7 +484,7 @@ func TestUpdateAdminNotification(t *testing.T) {
 			expectedErr: errors.New("error"),
 		},
 		{
-			desc: "ErrNotificationUnexpectedAffectedRows",
+			desc: "ErrNotificationNotFound: already deleted",
 			setup: func(s *notificationStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -493,7 +493,7 @@ func TestUpdateAdminNotification(t *testing.T) {
 				).Return(result, nil)
 			},
 			input:       notification,
-			expectedErr: notificationstorage.ErrNotificationUnexpectedAffectedRows,
+			expectedErr: notificationstorage.ErrNotificationNotFound,
 		},
 		{
 			desc: "Error: delete localizations",
