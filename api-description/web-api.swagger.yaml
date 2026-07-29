@@ -1230,7 +1230,7 @@ paths:
   /v1/admin_notification:
     delete:
       summary: Delete
-      description: Soft-delete a notification; it disappears from all listings but its data is retained. System admin only.
+      description: Delete system admin notification.
       operationId: web.v1.notification.admin.delete
       responses:
         "200":
