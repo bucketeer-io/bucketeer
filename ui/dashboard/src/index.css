@@ -154,6 +154,9 @@ body.driver-active [data-radix-popper-content-wrapper] * {
   pointer-events: auto;
 }
 
+/* Descendant selector on purpose: locks the submit button while its parent
+   form is the highlighted step, and stops matching once the button itself
+   becomes the highlighted element (its own dedicated step). */
 body.driver-active .driver-active-element [data-tour='submit-apikey-button'] {
   pointer-events: none;
   opacity: 0.5;
