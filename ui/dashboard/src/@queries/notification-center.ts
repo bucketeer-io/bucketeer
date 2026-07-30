@@ -7,6 +7,7 @@ import {
   NotificationUnreadCountFetcherParams
 } from '@api/notification-center';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'i18n';
 import type {
   NotificationCenterDraftCollection,
   NotificationCenterFeedCollection,
@@ -25,8 +26,11 @@ type FeedQueryOptions =
 
 export const useQueryNotificationFeed = (options?: FeedQueryOptions) => {
   const { params, ...queryOptions } = options || {};
+  // i18n.language is included in the query key so switching languages
+  // refetches instead of serving the previously cached localization.
+  const { i18n } = useTranslation('common');
   return useQuery({
-    queryKey: [NOTIFICATION_FEED_QUERY_KEY, params],
+    queryKey: [NOTIFICATION_FEED_QUERY_KEY, params, i18n.language],
     queryFn: () => notificationsFetcher(params),
     ...queryOptions
   });
@@ -39,8 +43,9 @@ type DraftsQueryOptions =
 
 export const useQueryNotificationDrafts = (options?: DraftsQueryOptions) => {
   const { params, ...queryOptions } = options || {};
+  const { i18n } = useTranslation('common');
   return useQuery({
-    queryKey: [NOTIFICATION_DRAFTS_QUERY_KEY, params],
+    queryKey: [NOTIFICATION_DRAFTS_QUERY_KEY, params, i18n.language],
     queryFn: () => notificationDraftsFetcher(params),
     ...queryOptions
   });

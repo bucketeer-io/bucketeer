@@ -92,6 +92,12 @@ const PageContent = ({
     [filters]
   );
 
+  // Resets search + date range only, keeping the current tab and sort order.
+  const onClearFilters = useCallback(
+    () => onChangeFilters({ searchQuery: '', days: undefined }),
+    [onChangeFilters]
+  );
+
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
       setFilters({ ...defaultFilters });
@@ -229,6 +235,7 @@ const PageContent = ({
                 filters={{ ...filters, ...dateFilters }}
                 environmentId={environmentId}
                 onSelect={setDetail}
+                onClearFilters={onClearFilters}
               />
             </TabsContent>
             <TabsContent value="read">
@@ -236,6 +243,7 @@ const PageContent = ({
                 filters={{ ...filters, ...dateFilters }}
                 environmentId={environmentId}
                 onSelect={setDetail}
+                onClearFilters={onClearFilters}
               />
             </TabsContent>
             {isSystemAdmin && (
@@ -256,6 +264,7 @@ const PageContent = ({
                 environmentId={environmentId}
                 filters={{ ...filters, ...dateFilters }}
                 onSelect={setDetail}
+                onClearFilters={onClearFilters}
               />
             </aside>
           )}

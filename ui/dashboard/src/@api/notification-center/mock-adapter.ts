@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import { getLanguage } from 'i18n';
 import type {
   NotificationCenterFeedItem,
   NotificationCenterLocalization,
@@ -424,7 +425,7 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
 
     const published = notifications
       .filter(n => n.status === NotificationCenterStatus.PUBLISHED)
-      .map(n => toFeedItem(n, VIEWER_EMAIL, 'en'));
+      .map(n => toFeedItem(n, VIEWER_EMAIL, getLanguage()));
 
     const unreadCount = published.filter(n => !n.read).length;
     const readCount = published.length - unreadCount;
@@ -465,7 +466,7 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
     const drafts = notifications
       .filter(n => n.status === NotificationCenterStatus.DRAFT)
       .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map(n => toFeedItem(n, VIEWER_EMAIL, 'en'));
+      .map(n => toFeedItem(n, VIEWER_EMAIL, getLanguage()));
 
     const page = drafts.slice(cursor, cursor + pageSize);
 
@@ -500,7 +501,10 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
       localizations: body.localizations
     };
     notifications = [record, ...notifications];
-    return [200, { notification: toFeedItem(record, VIEWER_EMAIL, 'en') }];
+    return [
+      200,
+      { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
+    ];
   });
 
   mock.onPatch('/v1/notification').reply(config => {
@@ -517,7 +521,10 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
         : n
     );
     const record = notifications.find(n => n.id === body.id)!;
-    return [200, { notification: toFeedItem(record, VIEWER_EMAIL, 'en') }];
+    return [
+      200,
+      { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
+    ];
   });
 
   mock.onPost('/v1/notification/publish').reply(config => {
@@ -539,7 +546,10 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
           : n
       );
       const record = notifications.find(n => n.id === body.id)!;
-      return [200, { notification: toFeedItem(record, VIEWER_EMAIL, 'en') }];
+      return [
+        200,
+        { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
+      ];
     }
 
     const record: StoreRecord = {
@@ -554,7 +564,10 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
       localizations: body.localizations
     };
     notifications = [record, ...notifications];
-    return [200, { notification: toFeedItem(record, VIEWER_EMAIL, 'en') }];
+    return [
+      200,
+      { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
+    ];
   });
 
   mock.onDelete(/\/v1\/notification\?/).reply(config => {
