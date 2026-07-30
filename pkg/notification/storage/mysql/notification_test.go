@@ -662,7 +662,7 @@ func TestPublishAdminNotification(t *testing.T) {
 			expectedErr: errors.New("error"),
 		},
 		{
-			desc: "ErrNotificationNotFound: missing or deleted",
+			desc: "ErrNotificationAlreadyPublished: no longer a live draft",
 			setup: func(s *notificationStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -671,7 +671,7 @@ func TestPublishAdminNotification(t *testing.T) {
 				).Return(result, nil)
 			},
 			input:       notification,
-			expectedErr: notificationstorage.ErrNotificationNotFound,
+			expectedErr: notificationstorage.ErrNotificationAlreadyPublished,
 		},
 		{
 			desc: "Error: rows affected",
@@ -698,6 +698,7 @@ func TestPublishAdminNotification(t *testing.T) {
 					int64(5),
 					int64(5),
 					"notification-id-0",
+					int32(proto.Notification_DRAFT),
 				).Return(result, nil)
 			},
 			input:       notification,

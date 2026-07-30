@@ -6,4 +6,5 @@ SET
     updated_at = ?
 WHERE
     id = ? AND
-    deleted = false
+    deleted = false AND
+    status = ?

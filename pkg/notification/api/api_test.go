@@ -812,6 +812,27 @@ func TestNotificationService_PublishAdminNotification(t *testing.T) {
 			expectedErr: statusLocalizationRequired.Err(),
 		},
 		{
+			desc: "err: already published (lost race)",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(draft(), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().PublishAdminNotification(
+					gomock.Any(), gomock.Any(),
+				).Return(storage.ErrNotificationAlreadyPublished)
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusNotificationAlreadyPublished.Err(),
+		},
+		{
 			desc: "err: internal",
 			ctx:  adminCtx,
 			setup: func(s *NotificationService) {

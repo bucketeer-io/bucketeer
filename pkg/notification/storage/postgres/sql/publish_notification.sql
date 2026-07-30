@@ -6,4 +6,5 @@ SET
     updated_at = $4
 WHERE
     id = $5 AND
-    deleted = false
+    deleted = false AND
+    status = $6

@@ -187,6 +187,7 @@ func (s *notificationStorage) PublishAdminNotification(
 		notification.PublishedAt,
 		notification.UpdatedAt,
 		notification.Id,
+		int32(proto.Notification_DRAFT),
 	)
 	if err != nil {
 		return err
@@ -196,7 +197,9 @@ func (s *notificationStorage) PublishAdminNotification(
 		return err
 	}
 	if rowsAffected == 0 {
-		return notificationstorage.ErrNotificationNotFound
+		// The row is no longer a live draft: a concurrent request
+		// published (or soft-deleted) it after our read.
+		return notificationstorage.ErrNotificationAlreadyPublished
 	}
 	return nil
 }

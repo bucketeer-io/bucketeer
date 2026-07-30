@@ -348,7 +348,8 @@ func (s *NotificationService) PublishAdminNotification(
 		if errors.Is(err, storage.ErrNotificationNotFound) {
 			return nil, statusNotificationNotFound.Err()
 		}
-		if errors.Is(err, statusNotificationAlreadyPublished.Err()) {
+		if errors.Is(err, statusNotificationAlreadyPublished.Err()) ||
+			errors.Is(err, storage.ErrNotificationAlreadyPublished) {
 			return nil, statusNotificationAlreadyPublished.Err()
 		}
 		if errors.Is(err, statusLocalizationRequired.Err()) {

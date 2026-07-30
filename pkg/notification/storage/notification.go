@@ -34,6 +34,10 @@ var (
 		bkterr.NotificationPackageName,
 		"already exists",
 	)
+	ErrNotificationAlreadyPublished = bkterr.NewErrorFailedPrecondition(
+		bkterr.NotificationPackageName,
+		"already published",
+	)
 	ErrInvalidListDraftAdminNotificationsCursor = errors.New(
 		"notification storage: invalid list draft admin notifications cursor")
 	ErrInvalidListDraftAdminNotificationsOrderBy = errors.New(
@@ -45,7 +49,9 @@ type NotificationStorage interface {
 	GetAdminNotification(ctx context.Context, id string) (*domain.Notification, error)
 	UpdateAdminNotification(ctx context.Context, notification *domain.Notification) error
 	// PublishAdminNotification persists the publish state transition
-	// (status, published_by, published_at, updated_at).
+	// (status, published_by, published_at, updated_at). The update only
+	// applies to a live draft, so concurrent publishes cannot overwrite
+	// each other; losing the race returns ErrNotificationAlreadyPublished.
 	PublishAdminNotification(ctx context.Context, notification *domain.Notification) error
 	// DeleteAdminNotification soft-deletes a notification, recording who
 	// deleted it and when; localizations and read markers stay intact.
