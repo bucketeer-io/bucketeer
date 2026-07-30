@@ -32,6 +32,7 @@ import (
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
@@ -361,6 +362,198 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 			assert.False(t, nacked, "message should not be nacked on success")
 		})
 	}
+}
+
+// TestCacheRefresherSegmentStaleReadRetriesUntilCommitVisible: a SEGMENT
+// domain event can be delivered before the publisher's MySQL transaction
+// commits. The refresher must detect that the row it read is older than the
+// entity carried by the event and retry, instead of caching (and thereby
+// overwriting the post-commit cache entry with) pre-update rules.
+func TestCacheRefresherSegmentStaleReadRetriesUntilCommitVisible(t *testing.T) {
+	t.Parallel()
+
+	cr, mocks := newCacheRefresherWithMocks(t)
+
+	updatedRules := []*featureproto.Rule{
+		{
+			Id: "segment-rule-1",
+			Clauses: []*featureproto.Clause{
+				{
+					Id:        "segment-clause-1",
+					Attribute: "plan",
+					Operator:  featureproto.Clause_EQUALS,
+					Values:    []string{"enterprise"},
+				},
+			},
+		},
+	}
+	// First read happens before the commit is visible (updated_at 100 < 200);
+	// the second read observes the committed row.
+	gomock.InOrder(
+		mocks.featureClient.EXPECT().
+			ListSegmentUsers(gomock.Any(), gomock.Any()).
+			Return(&featureproto.ListSegmentUsersResponse{}, nil),
+		mocks.featureClient.EXPECT().
+			GetSegment(gomock.Any(), gomock.Any()).
+			Return(&featureproto.GetSegmentResponse{
+				Segment: &featureproto.Segment{
+					Id:        "segment-id-1",
+					UpdatedAt: 100,
+				},
+			}, nil),
+		mocks.featureClient.EXPECT().
+			ListSegmentUsers(gomock.Any(), gomock.Any()).
+			Return(&featureproto.ListSegmentUsersResponse{}, nil),
+		mocks.featureClient.EXPECT().
+			GetSegment(gomock.Any(), gomock.Any()).
+			Return(&featureproto.GetSegmentResponse{
+				Segment: &featureproto.Segment{
+					Id:        "segment-id-1",
+					Rules:     updatedRules,
+					UpdatedAt: 200,
+				},
+			}, nil),
+	)
+	mocks.segmentUsersCache.EXPECT().
+		Put(gomock.Any(), "env-1").
+		DoAndReturn(func(su *featureproto.SegmentUsers, envID string) error {
+			assert.Equal(t, int64(200), su.UpdatedAt)
+			assert.Equal(t, updatedRules, su.Rules)
+			return nil
+		})
+	mocks.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+
+	data, err := proto.Marshal(&domaineventproto.Event{
+		Id:            "evt-segment-stale",
+		EntityType:    domaineventproto.Event_SEGMENT,
+		EntityId:      "segment-id-1",
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_SEGMENT_UPDATED,
+		EntityData:    `{"updated_at": 200}`,
+	})
+	assert.NoError(t, err)
+
+	acked := false
+	nacked := false
+	msg := &puller.Message{
+		Data: data,
+		Ack:  func() { acked = true },
+		Nack: func() { nacked = true },
+	}
+	cr.handleMessage(context.Background(), msg)
+	assert.True(t, acked)
+	assert.False(t, nacked)
+}
+
+// TestCacheRefresherSegmentStaleReadGivesUpAndCachesDBState: if the DB row
+// never catches up with the entity in the event (e.g. the publisher's
+// transaction rolled back after publishing), the refresher must stop
+// retrying after the bounded number of attempts and cache the DB state,
+// because the DB is the source of truth.
+func TestCacheRefresherSegmentStaleReadGivesUpAndCachesDBState(t *testing.T) {
+	t.Parallel()
+
+	cr, mocks := newCacheRefresherWithMocks(t)
+
+	attempts := segmentStaleReadMaxRetries + 1
+	mocks.featureClient.EXPECT().
+		ListSegmentUsers(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListSegmentUsersResponse{}, nil).
+		Times(attempts)
+	mocks.featureClient.EXPECT().
+		GetSegment(gomock.Any(), gomock.Any()).
+		Return(&featureproto.GetSegmentResponse{
+			Segment: &featureproto.Segment{
+				Id:        "segment-id-1",
+				UpdatedAt: 100,
+			},
+		}, nil).
+		Times(attempts)
+	mocks.segmentUsersCache.EXPECT().
+		Put(gomock.Any(), "env-1").
+		DoAndReturn(func(su *featureproto.SegmentUsers, envID string) error {
+			assert.Equal(t, int64(100), su.UpdatedAt)
+			return nil
+		})
+	mocks.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+
+	data, err := proto.Marshal(&domaineventproto.Event{
+		Id:            "evt-segment-rolled-back",
+		EntityType:    domaineventproto.Event_SEGMENT,
+		EntityId:      "segment-id-1",
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_SEGMENT_UPDATED,
+		EntityData:    `{"updated_at": 999}`,
+	})
+	assert.NoError(t, err)
+
+	acked := false
+	nacked := false
+	msg := &puller.Message{
+		Data: data,
+		Ack:  func() { acked = true },
+		Nack: func() { nacked = true },
+	}
+	cr.handleMessage(context.Background(), msg)
+	assert.True(t, acked)
+	assert.False(t, nacked)
+}
+
+func TestSegmentEntityUpdatedAt(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		event    *domaineventproto.Event
+		expected int64
+	}{
+		{
+			desc:     "no entity data disables the check",
+			event:    &domaineventproto.Event{},
+			expected: 0,
+		},
+		{
+			desc:     "malformed entity data disables the check",
+			event:    &domaineventproto.Event{EntityData: `not json`},
+			expected: 0,
+		},
+		{
+			desc:     "entity data without updated_at disables the check",
+			event:    &domaineventproto.Event{EntityData: `{"name": "segment"}`},
+			expected: 0,
+		},
+		{
+			desc:     "entity data with updated_at",
+			event:    &domaineventproto.Event{EntityData: `{"id": "segment-id-1", "updated_at": 12345}`},
+			expected: 12345,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, segmentEntityUpdatedAt(p.event))
+		})
+	}
+}
+
+// TestSegmentEntityUpdatedAtParsesRealEventEntityData verifies the helper
+// against EntityData produced by domainevent.NewEvent, guarding against a
+// change in the marshaling format (e.g. a switch to protojson would emit
+// "updatedAt" instead of "updated_at" and silently disable the check).
+func TestSegmentEntityUpdatedAtParsesRealEventEntityData(t *testing.T) {
+	t.Parallel()
+
+	event, err := domaineventdomain.NewEvent(
+		&domaineventproto.Editor{Email: "test@example.com"},
+		domaineventproto.Event_SEGMENT,
+		"segment-id-1",
+		domaineventproto.Event_SEGMENT_UPDATED,
+		&domaineventproto.SegmentUpdatedEvent{Id: "segment-id-1"},
+		"env-1",
+		&featureproto.Segment{Id: "segment-id-1", UpdatedAt: 54321},
+		nil,
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(54321), segmentEntityUpdatedAt(event))
 }
 
 func TestCacheRefresherHandleMessageNackOnRepeatableError(t *testing.T) {
