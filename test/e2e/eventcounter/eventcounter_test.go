@@ -166,69 +166,8 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
 
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
-
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				continue
-			}
-		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if vcB.ValueSum != float64(0) {
-			continue
-		}
-		if vcB.ValueSumPerUserMean != float64(0.0) {
-			continue
-		}
-		if vcB.ValueSumPerUserVariance != float64(0.0) {
-			continue
-		}
-		break
-	}
+	waitForSingleUserGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs,
+		variations[variationVarA].Id, variations[variationVarB].Id)
 }
 
 func TestExperimentGoalCount(t *testing.T) {
@@ -306,70 +245,85 @@ func TestExperimentGoalCount(t *testing.T) {
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
 
+	waitForSingleUserGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs,
+		variations[variationVarA].Id, variations[variationVarB].Id)
+}
+
+// waitForSingleUserGoalCount polls the experiment goal count until it matches
+// the shared fixture of TestGrpcExperimentGoalCount / TestExperimentGoalCount:
+// one user with two goal events (values 0.2 + 0.3) on variation A and nothing
+// on variation B. It logs progress on every retry so a slow run shows where it
+// is stuck, and fails fast when an event count exceeds the expected total,
+// because DWH rows are append-only and an over-count can never converge back.
+func waitForSingleUserGoalCount(
+	t *testing.T,
+	ecClient ecclient.Client,
+	goalID, featureID string,
+	featureVersion int32,
+	variationIDs []string,
+	variationAID, variationBID string,
+) {
+	t.Helper()
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+			t.Fatalf("retry timeout after %d attempts", retryTimes)
 		}
 		time.Sleep(10 * time.Second)
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalID, featureID, featureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
 				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				continue
 			}
+			t.Logf("Retry %d/%d: experiment goal count not found yet (NotFound error)", i+1, retryTimes)
+			continue
 		}
 
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalId != goalIDs[0] {
+		if resp.GoalId != goalID {
 			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(resp.VariationCounts, variationAID)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(resp.VariationCounts, variationBID)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
-		if vcB.UserCount != 0 {
+		if vcA.EventCount > 2 || vcB.EventCount > 0 {
+			t.Fatalf("goal event count exceeds the expected total (A=%d/2 B=%d/0): "+
+				"events were likely persisted or linked more than once; "+
+				"this can never recover, failing fast",
+				vcA.EventCount, vcB.EventCount)
+		}
+		if !singleUserGoalCountReady(vcA, vcB) {
+			t.Logf("Retry %d/%d: waiting for goal counts: "+
+				"A{users=%d/1 events=%d/2 valueSum=%.2f/0.50} B{users=%d/0 events=%d/0 valueSum=%.2f/0.00}",
+				i+1, retryTimes,
+				vcA.UserCount, vcA.EventCount, vcA.ValueSum,
+				vcB.UserCount, vcB.EventCount, vcB.ValueSum)
 			continue
 		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSumPerUserMean, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		break
+		return
 	}
+}
+
+func singleUserGoalCountReady(vcA, vcB *ecproto.VariationCount) bool {
+	return vcA.UserCount == 1 &&
+		vcA.EventCount == 2 &&
+		cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt) == "" &&
+		cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt) == "" &&
+		cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt) == "" &&
+		vcB.UserCount == 0 &&
+		vcB.EventCount == 0 &&
+		cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt) == "" &&
+		cmp.Diff(vcB.ValueSumPerUserMean, float64(0), compareFloatOpt) == "" &&
+		cmp.Diff(vcB.ValueSumPerUserVariance, float64(0), compareFloatOpt) == ""
 }
 
 func TestGrpcExperimentResult(t *testing.T) {
