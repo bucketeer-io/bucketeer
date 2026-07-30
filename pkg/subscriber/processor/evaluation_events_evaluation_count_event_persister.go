@@ -696,17 +696,23 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 			info = append(info, v)
 		}
 		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentId); err != nil {
-			p.logger.Error("Failed to write feature last-used info", zap.Error(err),
+			// Keep the entries so they are retried on the next cycle.
+			// The Pub/Sub messages were already acked when the evaluation counts
+			// were written to Redis, so dropping the entries here would lose the
+			// last-used info until the next evaluation event arrives for the flag.
+			p.logger.Error("Failed to write feature last-used info, will retry next cycle",
+				zap.Error(err),
 				zap.String("environmentId", environmentId))
 			continue
 		}
+		// Remove only the environments that were successfully written.
+		// The failed ones will remain for the next attempt.
+		delete(p.envLastUsedCache, environmentId)
 		p.logger.Debug("Cache has been written",
 			zap.String("environmentId", environmentId),
 			zap.Int("cacheSize", len(info)),
 		)
 	}
-	// Reset the cache
-	p.envLastUsedCache = make(environmentLastUsedInfoCache)
 }
 
 func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
