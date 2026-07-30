@@ -1,8 +1,5 @@
 export type ScheduleChangeType =
-  | 'CHANGE_UNSPECIFIED'
-  | 'CHANGE_CREATE'
-  | 'CHANGE_UPDATE'
-  | 'CHANGE_DELETE';
+  'CHANGE_UNSPECIFIED' | 'CHANGE_CREATE' | 'CHANGE_UPDATE' | 'CHANGE_DELETE';
 
 export type ScheduleFieldType =
   | 'UNSPECIFIED'

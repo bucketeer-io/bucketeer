@@ -5,11 +5,7 @@ export type ClauseActionType = 'UNKNOWN' | 'ENABLE' | 'DISABLE';
 export type OpsEventRateClauseOperator = 'GREATER_OR_EQUAL' | 'LESS_OR_EQUAL';
 export type AutoOpsChangeType = 'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
 export type RecurrenceFrequency =
-  | 'FREQUENCY_UNSPECIFIED'
-  | 'ONCE'
-  | 'DAILY'
-  | 'WEEKLY'
-  | 'MONTHLY';
+  'FREQUENCY_UNSPECIFIED' | 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 export interface RecurrenceRule {
   frequency: RecurrenceFrequency;

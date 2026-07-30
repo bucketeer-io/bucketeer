@@ -8,14 +8,7 @@ import { IconChevronRight } from '@icons';
 import Icon from 'components/icon';
 
 export type OverviewIconColor =
-  | 'green'
-  | 'brand'
-  | 'yellow'
-  | 'gray'
-  | 'pink'
-  | 'red'
-  | 'orange'
-  | 'blue';
+  'green' | 'brand' | 'yellow' | 'gray' | 'pink' | 'red' | 'orange' | 'blue';
 
 type CardIconProps = {
   icon: FunctionComponent;

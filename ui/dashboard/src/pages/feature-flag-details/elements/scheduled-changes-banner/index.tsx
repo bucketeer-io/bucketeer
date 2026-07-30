@@ -33,10 +33,7 @@ const BANNER_STATUSES = [
 ];
 
 type ScheduleAction =
-  | 'SEE_DETAILS'
-  | 'APPLY_NOW'
-  | 'EDIT_SCHEDULE'
-  | 'CANCEL_SCHEDULE';
+  'SEE_DETAILS' | 'APPLY_NOW' | 'EDIT_SCHEDULE' | 'CANCEL_SCHEDULE';
 
 interface ScheduledChangesBannerProps {
   featureId: string;

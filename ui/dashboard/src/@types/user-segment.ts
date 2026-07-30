@@ -1,10 +1,7 @@
 import { Feature, FeatureRule } from './feature';
 
 export type FeatureSegmentStatus =
-  | 'INITIAL'
-  | 'UPLOADING'
-  | 'SUCEEDED'
-  | 'FAILED';
+  'INITIAL' | 'UPLOADING' | 'SUCEEDED' | 'FAILED';
 
 export interface UserSegment {
   id: string;

@@ -14,9 +14,7 @@ export interface DecodedToken {
 }
 
 export type EnvironmentRoleType =
-  | 'Environment_UNASSIGNED'
-  | 'Environment_EDITOR'
-  | 'Environment_VIEWER';
+  'Environment_UNASSIGNED' | 'Environment_EDITOR' | 'Environment_VIEWER';
 
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;

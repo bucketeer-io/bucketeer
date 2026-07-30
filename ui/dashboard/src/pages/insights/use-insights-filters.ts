@@ -32,8 +32,7 @@ export const useInsightsFilters = (
       projectId: str(searchOptions.projectId) ?? initialProjectId,
       environmentId: str(searchOptions.environmentId) ?? initialEnvironmentId,
       sourceId: (str(searchOptions.sourceId) ?? ALL) as
-        | InsightSourceId
-        | typeof ALL,
+        InsightSourceId | typeof ALL,
       apiId: (str(searchOptions.apiId) ?? ALL) as InsightApiId | typeof ALL,
       timeRange:
         (str(searchOptions.timeRange) as InsightsFilters['timeRange']) ?? '24h',

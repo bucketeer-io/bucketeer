@@ -2,11 +2,7 @@ import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
 
 export type FlagDataType = 'number' | 'string' | 'json' | 'boolean';
 export type FlagActionType =
-  | 'ARCHIVE'
-  | 'UNARCHIVE'
-  | 'CLONE'
-  | 'ACTIVE'
-  | 'INACTIVE';
+  'ARCHIVE' | 'UNARCHIVE' | 'CLONE' | 'ACTIVE' | 'INACTIVE';
 
 export enum StatusFilterType {
   NEVER_USED = 'NEW',

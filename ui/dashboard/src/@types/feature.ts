@@ -18,11 +18,7 @@ export enum FeatureRuleClauseOperator {
 }
 
 export type FeatureVariationType =
-  | 'STRING'
-  | 'BOOLEAN'
-  | 'NUMBER'
-  | 'JSON'
-  | 'YAML';
+  'STRING' | 'BOOLEAN' | 'NUMBER' | 'JSON' | 'YAML';
 
 export type FeatureChangeType = 'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -34,10 +30,7 @@ export interface FeatureVariation {
 }
 
 export type VariationValueSchemaType =
-  | 'TYPE_UNSPECIFIED'
-  | 'ENUM'
-  | 'REGEX'
-  | 'JSON_SCHEMA';
+  'TYPE_UNSPECIFIED' | 'ENUM' | 'REGEX' | 'JSON_SCHEMA';
 
 export interface VariationValueSchema {
   type: VariationValueSchemaType;

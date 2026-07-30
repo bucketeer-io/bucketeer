@@ -29,11 +29,7 @@ const cellVariant = cva(
 );
 
 export type PaginationCellType =
-  | 'number'
-  | 'next'
-  | 'first'
-  | 'previous'
-  | 'last';
+  'number' | 'next' | 'first' | 'previous' | 'last';
 
 export type PaginationCellProps = {
   checked?: boolean;
