@@ -33,6 +33,11 @@ LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 # $(CERT_DIR); the e2e tests then authenticate with them instead of a service
 # token. All paths can be overridden by the caller (e.g. CI).
 CERT_DIR ?= tools/dev/cert
+# Go test binary timeout for the e2e suites. Go's default of 10m is too tight
+# when parallel suites slow down the async event pipeline: it panics the whole
+# binary while slow-but-healthy waits are still within their own retry budgets,
+# killing tests that would otherwise pass.
+E2E_TIMEOUT ?= 30m
 SYS_ADMIN_EMAIL ?= sysadmin@bucketeer.io
 ORG_OWNER_EMAIL ?= orgowner@bucketeer.io
 ENV_WRITE_EMAIL ?= envwrite@bucketeer.io
@@ -368,7 +373,7 @@ create-api-key:
 e2e-l4:
 	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
 		--format pkgname \
-		-- -v ./test/e2e/... -args \
+		-- -v -timeout $(E2E_TIMEOUT) ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
@@ -388,7 +393,7 @@ e2e-l4:
 e2e:
 	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
 		--format pkgname \
-		-- -v ./test/e2e/... -args \
+		-- -v -timeout $(E2E_TIMEOUT) ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
