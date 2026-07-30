@@ -16,7 +16,6 @@ package processor
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"hash/fnv"
 	"net"
@@ -78,14 +77,6 @@ const (
 	// fills, the dispatcher blocks (back-pressuring the puller); we prefer
 	// pull-side back-pressure over dropping events.
 	cacheRefresherWorkerQueueSize = 256
-
-	// segmentStaleReadMaxRetries and segmentStaleReadRetryInterval bound the
-	// wait for the publisher's MySQL transaction to become visible when a
-	// SEGMENT domain event is delivered before the transaction commits
-	// (publish and commit are not atomic). The publish→commit gap is
-	// normally a few milliseconds, so a 1s budget is generous.
-	segmentStaleReadMaxRetries    = 5
-	segmentStaleReadRetryInterval = 200 * time.Millisecond
 )
 
 var errCacheRefresherBadMessage = errors.New("cache refresher bad message")
@@ -397,51 +388,19 @@ func (c *cacheRefresher) refreshSegmentUsers(
 	}
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
-	// Guard against read-before-commit: the event may arrive before the
-	// publisher's transaction commits, in which case the reads below would
-	// return the pre-update segment and overwrite the cache with stale
-	// rules. The event carries the updated entity, so retry briefly until
-	// the row we read is at least as new as the entity in the event. If it
-	// never catches up (e.g. the publisher's transaction rolled back after
-	// publishing), fall through and cache the DB state — the DB is the
-	// source of truth.
-	expectedUpdatedAt := segmentEntityUpdatedAt(event)
-	var listResp *featureproto.ListSegmentUsersResponse
-	var getResp *featureproto.GetSegmentResponse
-	for attempt := 0; ; attempt++ {
-		var err error
-		listResp, err = c.featureClient.ListSegmentUsers(fetchCtx, &featureproto.ListSegmentUsersRequest{
-			SegmentId:     event.EntityId,
-			EnvironmentId: event.EnvironmentId,
-		})
-		if err != nil {
-			return err
-		}
-		getResp, err = c.featureClient.GetSegment(fetchCtx, &featureproto.GetSegmentRequest{
-			Id:            event.EntityId,
-			EnvironmentId: event.EnvironmentId,
-		})
-		if err != nil {
-			return err
-		}
-		if getResp.Segment.UpdatedAt >= expectedUpdatedAt {
-			break
-		}
-		if attempt >= segmentStaleReadMaxRetries {
-			c.logger.Warn("Segment read is still older than the entity in the event; caching DB state",
-				zap.String("environmentId", event.EnvironmentId),
-				zap.String("segmentId", event.EntityId),
-				zap.String("type", event.Type.String()),
-				zap.Int64("segmentUpdatedAt", getResp.Segment.UpdatedAt),
-				zap.Int64("eventEntityUpdatedAt", expectedUpdatedAt),
-			)
-			break
-		}
-		select {
-		case <-fetchCtx.Done():
-			return fetchCtx.Err()
-		case <-time.After(segmentStaleReadRetryInterval):
-		}
+	listResp, err := c.featureClient.ListSegmentUsers(fetchCtx, &featureproto.ListSegmentUsersRequest{
+		SegmentId:     event.EntityId,
+		EnvironmentId: event.EnvironmentId,
+	})
+	if err != nil {
+		return err
+	}
+	getResp, err := c.featureClient.GetSegment(fetchCtx, &featureproto.GetSegmentRequest{
+		Id:            event.EntityId,
+		EnvironmentId: event.EnvironmentId,
+	})
+	if err != nil {
+		return err
 	}
 	segmentUsers := &featureproto.SegmentUsers{
 		SegmentId: event.EntityId,
@@ -459,25 +418,6 @@ func (c *cacheRefresher) refreshSegmentUsers(
 		zap.Int("usersCount", len(segmentUsers.Users)),
 	)
 	return c.publishCacheInvalidation(ctx, event)
-}
-
-// segmentEntityUpdatedAt extracts updated_at from the segment entity JSON
-// attached to SEGMENT domain events (see domainevent.NewEvent: EntityData is
-// the updated entity marshaled with encoding/json, so the field key follows
-// the proto struct tag "updated_at"). Returns 0 — which disables the
-// stale-read check — when the event carries no entity data or the data
-// cannot be parsed.
-func segmentEntityUpdatedAt(event *domaineventproto.Event) int64 {
-	if event.EntityData == "" {
-		return 0
-	}
-	var entity struct {
-		UpdatedAt int64 `json:"updated_at"`
-	}
-	if err := json.Unmarshal([]byte(event.EntityData), &entity); err != nil {
-		return 0
-	}
-	return entity.UpdatedAt
 }
 
 func (c *cacheRefresher) refreshAPIKey(
