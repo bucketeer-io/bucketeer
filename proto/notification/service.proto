@@ -91,9 +91,13 @@ message UpdateAdminNotificationResponse {
   Notification notification = 1;
 }
 
-message PublishAdminNotificationRequest {}
+message PublishAdminNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
 
-message PublishAdminNotificationResponse {}
+message PublishAdminNotificationResponse {
+  Notification notification = 1;
+}
 
 message DeleteAdminNotificationRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];

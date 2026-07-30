@@ -35,6 +35,8 @@ var (
 	selectNotificationSQL string
 	//go:embed sql/update_notification.sql
 	updateNotificationSQL string
+	//go:embed sql/publish_notification.sql
+	publishNotificationSQL string
 	//go:embed sql/delete_notification_localizations.sql
 	deleteNotificationLocalizationsSQL string
 	//go:embed sql/delete_notification.sql
@@ -169,6 +171,32 @@ func (s *notificationStorage) UpdateAdminNotification(
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (s *notificationStorage) PublishAdminNotification(
+	ctx context.Context,
+	notification *domain.Notification,
+) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		publishNotificationSQL,
+		int32(notification.Status),
+		notification.PublishedBy,
+		notification.PublishedAt,
+		notification.UpdatedAt,
+		notification.Id,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return notificationstorage.ErrNotificationNotFound
 	}
 	return nil
 }

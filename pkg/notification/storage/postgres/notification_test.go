@@ -626,3 +626,92 @@ func TestDeleteAdminNotification(t *testing.T) {
 		})
 	}
 }
+
+func TestPublishAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	notification := &domain.Notification{
+		Notification: &proto.Notification{
+			Id:           "notification-id-0",
+			Status:       proto.Notification_PUBLISHED,
+			CreatedBy:    "admin@example.com",
+			LastEditedBy: "admin@example.com",
+			PublishedBy:  "publisher@example.com",
+			PublishedAt:  5,
+			CreatedAt:    1,
+			UpdatedAt:    5,
+		},
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		input       *domain.Notification
+		expectedErr error
+	}{
+		{
+			desc: "Error: publish notification",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			input:       notification,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "ErrNotificationNotFound: missing or deleted",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			input:       notification,
+			expectedErr: notificationstorage.ErrNotificationNotFound,
+		},
+		{
+			desc: "Error: rows affected",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			input:       notification,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *notificationStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					publishNotificationSQL,
+					int32(proto.Notification_PUBLISHED),
+					"publisher@example.com",
+					int64(5),
+					int64(5),
+					"notification-id-0",
+				).Return(result, nil)
+			},
+			input:       notification,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.PublishAdminNotification(context.Background(), p.input)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}

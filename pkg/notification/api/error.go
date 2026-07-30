@@ -66,7 +66,7 @@ var (
 	statusNotificationAlreadyPublished = api.NewGRPCStatus(
 		bkterr.NewErrorFailedPrecondition(
 			bkterr.NotificationPackageName,
-			"published notifications cannot be edited"))
+			"notification is already published"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(
 			bkterr.NotificationPackageName,

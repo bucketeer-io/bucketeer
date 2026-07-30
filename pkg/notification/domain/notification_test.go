@@ -68,3 +68,20 @@ func TestNewNotification(t *testing.T) {
 	assert.Equal(t, notification.CreatedAt, notification.UpdatedAt)
 	assert.Equal(t, localizations, notification.Localizations)
 }
+
+func TestPublishNotification(t *testing.T) {
+	t.Parallel()
+	notification, err := NewNotification("admin@example.com", []*proto.NotificationLocalization{
+		{Language: "en", Title: "New feature", Content: "# New feature"},
+	})
+	assert.Nil(t, err)
+	createdAt := notification.CreatedAt
+	notification.Publish("publisher@example.com")
+	assert.Equal(t, proto.Notification_PUBLISHED, notification.Status)
+	assert.Equal(t, "publisher@example.com", notification.PublishedBy)
+	assert.True(t, notification.PublishedAt >= createdAt)
+	assert.Equal(t, notification.PublishedAt, notification.UpdatedAt)
+	assert.Equal(t, "admin@example.com", notification.CreatedBy)
+	assert.Equal(t, "admin@example.com", notification.LastEditedBy)
+	assert.Equal(t, createdAt, notification.CreatedAt)
+}

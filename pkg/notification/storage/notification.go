@@ -44,6 +44,9 @@ type NotificationStorage interface {
 	CreateAdminNotification(ctx context.Context, notification *domain.Notification) error
 	GetAdminNotification(ctx context.Context, id string) (*domain.Notification, error)
 	UpdateAdminNotification(ctx context.Context, notification *domain.Notification) error
+	// PublishAdminNotification persists the publish state transition
+	// (status, published_by, published_at, updated_at).
+	PublishAdminNotification(ctx context.Context, notification *domain.Notification) error
 	// DeleteAdminNotification soft-deletes a notification, recording who
 	// deleted it and when; localizations and read markers stay intact.
 	DeleteAdminNotification(ctx context.Context, id, lastEditedBy string, updatedAt int64) error
