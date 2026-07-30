@@ -551,6 +551,10 @@ subscriber:
       redisMinIdle: ${global.pubsub.redis.minIdle}
       redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
+      # Reclaim nacked bulk-upload messages quickly (default is 60s idle +
+      # a 30s recovery tick, which exceeds the e2e test wait budget).
+      # Safe for this subscriber because persisting segment users is idempotent.
+      redisIdleTime: 20
       topic: bulk-segment-users-received
       subscription: bulk-segment-users-received-subscription
       pullerNumGoroutines: 5

@@ -32,12 +32,18 @@ import (
 )
 
 const (
-	segmentUserRetryTimes = 25
+	// The wait must cover a full redelivery cycle of the redis-stream pubsub used
+	// in the dev container: a nacked message is only reclaimed by the puller's
+	// recovery loop (30s ticker) after it has been idle for redisIdleTime, plus
+	// the persister's flush interval. 60 retries x 2s = 120s of polling.
+	segmentUserRetryTimes = 60
+	// The default 60s package timeout is too short to cover the polling budget above.
+	segmentUserTimeout = 3 * time.Minute
 )
 
 func TestListSegmentUsersPageSize(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), segmentUserTimeout)
 	defer cancel()
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
@@ -57,7 +63,7 @@ func TestListSegmentUsersPageSize(t *testing.T) {
 
 func TestListSegmentUsersCursor(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), segmentUserTimeout)
 	defer cancel()
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
@@ -99,7 +105,7 @@ func TestListSegmentUsersCursor(t *testing.T) {
 
 func TestListSegmentUsersWithoutState(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), segmentUserTimeout)
 	defer cancel()
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
@@ -115,7 +121,7 @@ func TestListSegmentUsersWithoutState(t *testing.T) {
 
 func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), segmentUserTimeout)
 	defer cancel()
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
@@ -221,17 +227,25 @@ func waitForSegmentUsers(
 		State:         state,
 		EnvironmentId: *environmentID,
 	}
+	var lastCount int
+	var lastErr error
 	for i := 0; i < segmentUserRetryTimes; i++ {
 		if err := ctx.Err(); err != nil {
-			t.Fatalf("waitForSegmentUsers: context done: %v", err)
+			t.Fatalf("waitForSegmentUsers: context done: %v (last count: %d/%d, last error: %v)",
+				err, lastCount, expectedSize, lastErr)
 		}
 		res, err := client.ListSegmentUsers(ctx, req)
-		if err == nil && res != nil && len(res.Users) >= expectedSize {
-			return
+		lastErr = err
+		if err == nil && res != nil {
+			lastCount = len(res.Users)
+			if lastCount >= expectedSize {
+				return
+			}
 		}
 		time.Sleep(2 * time.Second)
 	}
-	t.Fatalf("segment users not ready")
+	t.Fatalf("segment users not ready after %d attempts: segmentID: %s, last count: %d/%d, last error: %v",
+		segmentUserRetryTimes, segmentID, lastCount, expectedSize, lastErr)
 }
 
 func waitForSegmentStatus(
@@ -246,17 +260,25 @@ func waitForSegmentStatus(
 		Id:            segmentID,
 		EnvironmentId: *environmentID,
 	}
+	var lastStatus featureproto.Segment_Status
+	var lastErr error
 	for i := 0; i < segmentUserRetryTimes; i++ {
 		if err := ctx.Err(); err != nil {
-			t.Fatalf("waitForSegmentStatus: context done: %v", err)
+			t.Fatalf("waitForSegmentStatus: context done: %v (last status: %v, last error: %v)",
+				err, lastStatus, lastErr)
 		}
 		res, err := client.GetSegment(ctx, req)
-		if err == nil && res.Segment != nil && res.Segment.Status == status {
-			return
+		lastErr = err
+		if err == nil && res.Segment != nil {
+			lastStatus = res.Segment.Status
+			if lastStatus == status {
+				return
+			}
 		}
 		time.Sleep(2 * time.Second)
 	}
-	t.Fatalf("segment status did not become %v", status)
+	t.Fatalf("segment status did not become %v after %d attempts: segmentID: %s, last status: %v, last error: %v",
+		status, segmentUserRetryTimes, segmentID, lastStatus, lastErr)
 }
 
 func newUserID(t *testing.T) string {

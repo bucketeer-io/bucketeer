@@ -2357,11 +2357,18 @@ func waitAndCheckExperimentResult(
 		resp, err := getExperimentResult(t, ecClient, experiment.Id)
 		if err != nil {
 			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
+			switch st.Code() {
+			case codes.NotFound:
+				t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
+				continue
+			case codes.Unavailable, codes.DeadlineExceeded:
+				// Transient errors happen under parallel test load;
+				// the outer loop already bounds the total wait time.
+				t.Logf("Retry %d/%d: transient error getting ExperimentResult: %v", i+1, retryTimes, err)
+				continue
+			default:
 				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
 			}
-			t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
-			continue
 		}
 		if resp == nil {
 			continue
@@ -2644,8 +2651,6 @@ func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEv
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
 		Tag:  tag,
 		User: &userproto.User{Id: userID},
@@ -2654,12 +2659,15 @@ func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEv
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = c.GetEvaluations(ctx, req)
+		cancel()
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
+		if st.Code() != codes.Unavailable && st.Code() != codes.DeadlineExceeded {
 			return nil, err
 		}
 		fmt.Printf("Failed to get evaluations. Error code: %d. Retrying in 5 seconds.\n", st.Code())
@@ -2673,8 +2681,6 @@ func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEv
 
 func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experimentproto.GetExperimentResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	req := &experimentproto.GetExperimentRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
@@ -2683,12 +2689,15 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experim
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = c.GetExperiment(ctx, req)
+		cancel()
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
+		if st.Code() != codes.Unavailable && st.Code() != codes.DeadlineExceeded {
 			return nil, err
 		}
 		fmt.Printf("Failed to get experiment. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", id, st.Code())
@@ -2702,8 +2711,6 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experim
 
 func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (*ecproto.GetExperimentResultResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	req := &ecproto.GetExperimentResultRequest{
 		ExperimentId:  experimentID,
 		EnvironmentId: *environmentID,
@@ -2712,7 +2719,10 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = c.GetExperimentResult(ctx, req)
+		cancel()
 		if err == nil {
 			break
 		}
@@ -2720,7 +2730,7 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 		// Retry on transient BigQuery emulator errors:
 		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
 		// - "job is not found": job may not be registered yet in the emulator
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded ||
 			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
 				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
@@ -2739,8 +2749,6 @@ func getExperimentEvaluationCount(
 	t *testing.T, c ecclient.Client, featureID string, featureVersion int32, variationIDs []string,
 ) (*ecproto.GetExperimentEvaluationCountResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentEvaluationCountRequest{
 		EnvironmentId:  *environmentID,
@@ -2754,7 +2762,10 @@ func getExperimentEvaluationCount(
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = c.GetExperimentEvaluationCount(ctx, req)
+		cancel()
 		if err == nil {
 			break
 		}
@@ -2762,7 +2773,7 @@ func getExperimentEvaluationCount(
 		// Retry on transient BigQuery emulator errors:
 		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
 		// - "job is not found": job may not be registered yet in the emulator
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded ||
 			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
 				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
@@ -2781,8 +2792,6 @@ func getExperimentGoalCount(
 	t *testing.T, c ecclient.Client, goalID, featureID string, featureVersion int32, variationIDs []string,
 ) (*ecproto.GetExperimentGoalCountResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentGoalCountRequest{
 		EnvironmentId:  *environmentID,
@@ -2797,7 +2806,10 @@ func getExperimentGoalCount(
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = c.GetExperimentGoalCount(ctx, req)
+		cancel()
 		if err == nil {
 			break
 		}
@@ -2805,7 +2817,7 @@ func getExperimentGoalCount(
 		// Retry on transient BigQuery emulator errors:
 		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
 		// - "job is not found": job may not be registered yet in the emulator
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded ||
 			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
 				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
@@ -2826,24 +2838,28 @@ func getFeature(t *testing.T, client featureclient.Client, featureID string) (*f
 		Id:            featureID,
 		EnvironmentId: *environmentID,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	var response *featureproto.GetFeatureResponse
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = client.GetFeature(ctx, getReq)
+		cancel()
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
+		if st.Code() != codes.Unavailable && st.Code() != codes.DeadlineExceeded {
 			return nil, err
 		}
 		fmt.Printf("Failed to get feature. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
 		time.Sleep(5 * time.Second)
 	}
-	return response.Feature, err
+	if err != nil {
+		return nil, err
+	}
+	return response.Feature, nil
 }
 
 func getEvaluationTimeseriesCount(
@@ -2853,8 +2869,6 @@ func getEvaluationTimeseriesCount(
 	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
 	req := &ecproto.GetEvaluationTimeseriesCountRequest{
 		EnvironmentId: *environmentID,
 		FeatureId:     featureID,
@@ -2864,10 +2878,13 @@ func getEvaluationTimeseriesCount(
 	var err error
 	numRetries := 3
 	for i := 0; i < numRetries; i++ {
+		// Use a fresh context per attempt so retries don't run on an expired deadline
+		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		response, err = c.GetEvaluationTimeseriesCount(
 			ctx,
 			req,
 		)
+		cancel()
 		if err == nil {
 			break
 		}
@@ -2875,7 +2892,7 @@ func getEvaluationTimeseriesCount(
 		// Retry on transient BigQuery emulator errors:
 		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
 		// - "job is not found": job may not be registered yet in the emulator
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded ||
 			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
 				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
