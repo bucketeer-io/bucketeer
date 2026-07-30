@@ -7,11 +7,7 @@ export interface AIChatMessage {
 }
 
 export type PageType =
-  | 'feature_flags'
-  | 'targeting'
-  | 'experiments'
-  | 'segments'
-  | 'autoops';
+  'feature_flags' | 'targeting' | 'experiments' | 'segments' | 'autoops';
 
 export interface PageContext {
   pageType: PageType | '';

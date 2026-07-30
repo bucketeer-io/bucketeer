@@ -39,11 +39,7 @@ export type DropdownOption = {
   disabled?: boolean;
   labelText?: string;
   [key: string]:
-    | DropdownValue
-    | boolean
-    | FunctionComponent
-    | undefined
-    | ReactNode;
+    DropdownValue | boolean | FunctionComponent | undefined | ReactNode;
 };
 
 const DropdownMenu = DropdownMenuPrimitive.Root;

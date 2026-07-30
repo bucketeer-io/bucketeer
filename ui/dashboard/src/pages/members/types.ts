@@ -19,8 +19,4 @@ export interface CollectionProps {
 }
 
 export type MemberActionsType =
-  | 'EDIT'
-  | 'DETAILS'
-  | 'DELETE'
-  | 'DISABLE'
-  | 'ENABLE';
+  'EDIT' | 'DETAILS' | 'DELETE' | 'DISABLE' | 'ENABLE';

@@ -8,10 +8,7 @@ export interface RolloutCollection {
 
 export type RolloutType = 'MANUAL_SCHEDULE' | 'TEMPLATE_SCHEDULE';
 export type RolloutStoppedBy =
-  | 'UNKNOWN'
-  | 'USER'
-  | 'OPS_SCHEDULE'
-  | 'OPS_KILL_SWITCH';
+  'UNKNOWN' | 'USER' | 'OPS_SCHEDULE' | 'OPS_KILL_SWITCH';
 export type IntervalType = 'UNKNOWN' | 'HOURLY' | 'DAILY' | 'WEEKLY';
 export interface Rollout {
   id: string;

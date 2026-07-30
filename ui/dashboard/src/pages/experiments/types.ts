@@ -21,10 +21,5 @@ export interface ExperimentFilters {
 export type SummaryType = 'scheduled' | 'running' | 'stopped' | 'not-started';
 
 export type ExperimentActionsType =
-  | 'EDIT'
-  | 'STOP'
-  | 'START'
-  | 'ARCHIVE'
-  | 'UNARCHIVE'
-  | 'GOALS-CONNECTION';
+  'EDIT' | 'STOP' | 'START' | 'ARCHIVE' | 'UNARCHIVE' | 'GOALS-CONNECTION';
 export type ExperimentTab = 'ACTIVE' | 'ARCHIVED' | 'FINISHED';

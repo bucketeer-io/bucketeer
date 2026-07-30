@@ -3,13 +3,7 @@ import { DateTime } from 'luxon';
 import { InsightApiId, InsightSourceId } from '@types';
 
 export type TimeRangePreset =
-  | '1h'
-  | '6h'
-  | '24h'
-  | '7d'
-  | '30d'
-  | 'this_month'
-  | 'date_range';
+  '1h' | '6h' | '24h' | '7d' | '30d' | 'this_month' | 'date_range';
 
 export interface InsightsFilters {
   projectId: string;

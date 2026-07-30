@@ -2,10 +2,7 @@ import axiosClient from '@api/axios-client';
 import { PushResponse } from './push-fetcher';
 
 export type TagChangeActionType =
-  | 'UNSPECIFIED'
-  | 'CREATE'
-  | 'UPDATE'
-  | 'DELETE';
+  'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
 export interface TagChange {
   changeType: TagChangeActionType;
   tag: string;

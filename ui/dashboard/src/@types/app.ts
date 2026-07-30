@@ -52,20 +52,7 @@ export type Color =
   | 'accent-yellow-50';
 
 export type AvatarColor =
-  | 'primary'
-  | 'pink'
-  | 'green'
-  | 'blue'
-  | 'orange'
-  | 'red';
+  'primary' | 'pink' | 'green' | 'blue' | 'orange' | 'red';
 
 export type IconSize =
-  | 'fit'
-  | 'xxs'
-  | 'xs'
-  | 'sm'
-  | 'md'
-  | 'lg'
-  | 'xl'
-  | '2xl'
-  | '3xl';
+  'fit' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';

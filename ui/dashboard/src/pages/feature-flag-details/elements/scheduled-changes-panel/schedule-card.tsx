@@ -22,9 +22,7 @@ import DateTooltip from 'elements/date-tooltip';
 import { formatScheduledDate } from '../scheduled-changes-banner/utils';
 
 export type ScheduleCardAction =
-  | 'APPLY_NOW'
-  | 'EDIT_SCHEDULE'
-  | 'CANCEL_SCHEDULE';
+  'APPLY_NOW' | 'EDIT_SCHEDULE' | 'CANCEL_SCHEDULE';
 
 const STATUS_STYLE: Record<
   string,

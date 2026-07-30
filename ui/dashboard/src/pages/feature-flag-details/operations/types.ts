@@ -7,12 +7,7 @@ export enum ActionTypeMap {
 }
 
 export type OperationActionType =
-  | 'NEW'
-  | 'UPDATE'
-  | 'DETAILS'
-  | 'STOP'
-  | 'DELETE'
-  | 'CLONE';
+  'NEW' | 'UPDATE' | 'DETAILS' | 'STOP' | 'DELETE' | 'CLONE';
 
 export enum OpsTypeMap {
   // TYPE_UNKNOWN = 'TYPE_UNKNOWN',
