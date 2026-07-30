@@ -1,9 +1,14 @@
-WITH grouped_by_user_evaluation AS (
-    SELECT
+WITH deduped_events AS (
+    -- BigQuery has no primary keys, so an at-least-once Pub/Sub redelivery
+    -- can append the same event twice. Deduplicate by event ID before any
+    -- aggregation, otherwise duplicates inflate event_count and value_sum.
+    -- Duplicates are identical rows, so DISTINCT over the used columns is
+    -- equivalent to picking one row per ID.
+    SELECT DISTINCT
+        id,
         user_id,
         variation_id,
-        COUNT(id) as event_count,
-        IFNULL(SUM(value), 0) as value_sum
+        value
     FROM
         `%s`
     WHERE
@@ -12,9 +17,18 @@ WITH grouped_by_user_evaluation AS (
     AND goal_id = @goalID
     AND feature_id = @featureID
     AND feature_version = @featureVersion
-GROUP BY
-    user_id,
-    variation_id
+),
+grouped_by_user_evaluation AS (
+    SELECT
+        user_id,
+        variation_id,
+        COUNT(id) as event_count,
+        IFNULL(SUM(value), 0) as value_sum
+    FROM
+        deduped_events
+    GROUP BY
+        user_id,
+        variation_id
 ),
 cap_level AS (
     -- Winsorization threshold: the configurable percentile
