@@ -438,6 +438,8 @@
       "description": "Bucketeer is a feature flag and experimentation platform. Take a short tour to release your first feature flag — it only takes a few minutes.",
       "start": "Take the tour"
     },
-    "tutorial": "Tutorial"
+    "tutorial": "Tutorial",
+    "previous": "Previous",
+    "progress": "{{current}} of {{total}}"
   }
 }

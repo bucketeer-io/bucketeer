@@ -139,7 +139,14 @@ export const useWalkthrough = () => {
       overlayClickBehavior: () => undefined,
       allowKeyboardControl: false,
       nextBtnText: t('walkthrough.next'),
+      prevBtnText: t('walkthrough.previous'),
       doneBtnText: t('walkthrough.done'),
+      // driver.js substitutes {{current}}/{{total}} itself; pass them through
+      // i18next as literals so its identical interpolation syntax skips them.
+      progressText: t('walkthrough.progress', {
+        current: '{{current}}',
+        total: '{{total}}'
+      }),
       onPopoverRender: (popover, { state }) => {
         const activeElement = state.activeStep?.element;
         if (

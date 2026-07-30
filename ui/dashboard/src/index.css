@@ -168,6 +168,10 @@ body .driver-popover,
 body .driver-popover * {
   font-family: inherit;
 }
+/* Wider than driver.js's 300px default so English and Japanese copy fit. */
+body .driver-popover {
+  max-width: 380px;
+}
 /* driver.js sets display:block as an inline style on rendered titles. */
 .driver-popover-title {
   display: flex !important;
