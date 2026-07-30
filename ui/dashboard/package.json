@@ -50,6 +50,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.21",
+    "driver.js": "^1.8.0",
     "i18next": "^23.14.0",
     "i18next-browser-languagedetector": "^8.2.1",
     "i18next-http-backend": "^3.0.6",

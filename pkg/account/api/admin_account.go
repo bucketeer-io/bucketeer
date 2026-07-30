@@ -89,9 +89,10 @@ func (s *AccountService) GetMe(
 		return nil, err
 	}
 	if sysAdminAccount != nil && !sysAdminAccount.Disabled {
+		// Return the pre-update last seen so clients can detect the first login.
 		lastSeen := sysAdminAccount.LastSeen
 
-		if updated, err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId); err != nil {
+		if _, err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId); err != nil {
 			if errors.Is(err, v2as.ErrAccountNotFound) {
 				s.logger.Warn(
 					"System admin user not found in organization when updating last seen",
@@ -110,8 +111,6 @@ func (s *AccountService) GetMe(
 					)...,
 				)
 			}
-		} else {
-			lastSeen = updated
 		}
 		if req.OrganizationId != sysAdminAccount.OrganizationId {
 			// req.OrganizationId is the org currently being viewed in the console, while
@@ -214,11 +213,9 @@ func (s *AccountService) GetMe(
 		envRoles = s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
 	}
 
-	// update user last seen
+	// Return the pre-update last seen so clients can detect the first login.
 	lastSeen := account.LastSeen
-	var updated int64
-	updated, err = s.updateLastSeen(ctx, account.Email, req.OrganizationId)
-	if err != nil {
+	if _, err = s.updateLastSeen(ctx, account.Email, req.OrganizationId); err != nil {
 		s.logger.Error(
 			"Failed to update user last seen",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -227,8 +224,6 @@ func (s *AccountService) GetMe(
 				zap.String("organizationId", req.OrganizationId),
 			)...,
 		)
-	} else {
-		lastSeen = updated
 	}
 
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{

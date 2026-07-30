@@ -80,6 +80,7 @@ import IconLogs from './sidebar-icons/logs.svg?react';
 import IconMember from './sidebar-icons/member.svg?react';
 import IconNote from './sidebar-icons/note.svg?react';
 import IconProton from './sidebar-icons/proton.svg?react';
+import IconRocket from './sidebar-icons/rocket.svg?react';
 import IconSetting from './sidebar-icons/setting.svg?react';
 import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
@@ -116,6 +117,7 @@ export {
   IconDebugger,
   IconNote,
   IconProton,
+  IconRocket,
   IconKey,
   IconMember,
   IconUsage,

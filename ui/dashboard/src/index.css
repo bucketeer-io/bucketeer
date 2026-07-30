@@ -145,3 +145,58 @@
     font-size: 13px !important;
   }
 }
+
+body.driver-active [data-radix-popper-content-wrapper] {
+  z-index: 10001 !important;
+}
+body.driver-active [data-radix-popper-content-wrapper],
+body.driver-active [data-radix-popper-content-wrapper] * {
+  pointer-events: auto;
+}
+
+/* Descendant selector on purpose: locks the submit button while its parent
+   form is the highlighted step, and stops matching once the button itself
+   becomes the highlighted element (its own dedicated step). */
+body.driver-active .driver-active-element [data-tour='submit-apikey-button'] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Match the walkthrough popover to the console font and lay out titles
+   with their inline icon. */
+body .driver-popover,
+body .driver-popover * {
+  font-family: inherit;
+}
+/* Wider than driver.js's 300px default so English and Japanese copy fit. */
+body .driver-popover {
+  max-width: 380px;
+}
+/* driver.js sets display:block as an inline style on rendered titles. */
+.driver-popover-title {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+.driver-popover-title svg {
+  flex-shrink: 0;
+}
+
+/* The welcome step is a centered dialog — larger than regular tour popovers. */
+.driver-popover.walkthrough-welcome-popover {
+  max-width: 500px;
+  padding: 24px;
+}
+.walkthrough-welcome-popover .driver-popover-title {
+  font-size: 20px;
+}
+.walkthrough-welcome-popover .driver-popover-description {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* driver.js locks the highlighted element's scrollable parent; keep it
+   scrollable — the walkthrough refreshes the spotlight on scroll instead. */
+body .driver-active-element-parent-no-scroll {
+  overflow: auto !important;
+}

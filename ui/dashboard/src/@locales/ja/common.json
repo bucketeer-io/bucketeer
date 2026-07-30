@@ -383,7 +383,64 @@
           "all": "<b>all:</b> すべての評価結果を返し、SDK キャッシュ全体を更新します。"
         }
       }
+    }
+  },
+  "load-more": "もっと読み込む",
+  "walkthrough": {
+    "next": "次へ",
+    "done": "完了",
+    "feature-flags-menu": {
+      "title": "フィーチャーフラグ",
+      "description": "すべてはここから始まります。このメニューには、現在の環境のすべてのフィーチャーフラグが表示されます。"
+    },
+    "create-flag-button": {
+      "title": "最初のフラグを作成",
+      "description": "このボタンをクリックして、最初のフィーチャーフラグを作成しましょう。"
+    },
+    "flag-general-info": {
+      "title": "フラグの情報を入力",
+      "description": "フラグに名前を付けます（IDは自動生成されます）。タグを1つ以上追加してください。タグにより、SDKは必要なフラグのみを取得できます。"
+    },
+    "flag-variations": {
+      "title": "バリエーションを定義",
+      "description": "バリエーションのタイプと、フラグがON/OFFのときに配信される値を選択します。まずはブール型のフラグが最も簡単です。"
+    },
+    "submit-flag-button": {
+      "title": "フラグを作成",
+      "description": "フォームの入力が完了したら、このボタンをクリックして最初のフィーチャーフラグを作成しましょう。"
+    },
+    "connect-sdk": {
+      "title": "フラグが作成されました — SDKを接続しましょう",
+      "description": "言語を選択して、スターターコードをアプリにコピーしてください。APIキー、エンドポイント、作成したフラグがすでに含まれています。",
+      "install": "インストール",
+      "initialize": "初期化してフラグを評価",
+      "enable-note": "作成したフラグはデフォルトでOFFになっています。ターゲティングページでONにすると、ユーザーへのバリエーション配信が開始されます。",
+      "go-to-flag": "フラグへ移動"
+    },
+    "flag-created": {
+      "title": "フラグが作成されました！",
+      "description": "アプリでこのフラグを評価するには、APIキーが必要です。APIキーページで作成しましょう。"
+    },
+    "create-apikey-button": {
+      "title": "APIキーを作成",
+      "description": "このボタンをクリックして、APIキーのフォームを開きます。"
+    },
+    "apikey-form": {
+      "title": "キーの情報を入力",
+      "description": "キーに名前を付け、環境を選択し、ロールを選びます。Web・モバイルアプリにはClient SDK、バックエンドサービスにはServer SDKを選択してください。"
+    },
+    "submit-apikey-button": {
+      "title": "キーを作成",
+      "description": "フォームの入力が完了したら、送信ボタンをクリックしてAPIキーを作成しましょう。"
+    },
+    "skip": "ウォークスルーをスキップ",
+    "welcome": {
+      "title": "Bucketeerへようこそ！",
+      "description": "Bucketeerはフィーチャーフラグと実験のプラットフォームです。短いツアーで最初のフィーチャーフラグをリリースしてみましょう。数分で完了します。",
+      "start": "ツアーを開始"
+    },
+    "tutorial": "チュートリアル",
+    "previous": "前へ",
+    "progress": "{{current}} / {{total}}"
   }
-},
-  "load-more": "もっと読み込む"
 }

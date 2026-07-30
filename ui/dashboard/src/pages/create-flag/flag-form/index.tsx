@@ -9,6 +9,7 @@ import {
   PAGE_PATH_FEATURE_TARGETING,
   PAGE_PATH_FEATURES
 } from 'constants/routing';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
@@ -148,6 +149,7 @@ const FlagForm = () => {
               type="submit"
               disabled={!isDirty || !isValid}
               loading={isSubmitting}
+              data-tour={WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON}
             >
               {t(`create-flag`)}
             </Button>

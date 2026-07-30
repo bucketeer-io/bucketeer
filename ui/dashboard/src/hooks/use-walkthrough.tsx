@@ -1,0 +1,489 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { apiKeysFetcher } from '@api/api-key';
+import iconKeyRaw from '@icons/sidebar-icons/key.svg?raw';
+import iconRocketRaw from '@icons/sidebar-icons/rocket.svg?raw';
+import iconSwitchRaw from '@icons/sidebar-icons/switch.svg?raw';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { WALKTHROUGH_ENABLED } from 'configs';
+import { PAGE_PATH_APIKEYS, PAGE_PATH_FEATURES } from 'constants/routing';
+import {
+  LEAVE_PAGE_CANCELLED_EVENT,
+  WALKTHROUGH_TARGETS
+} from 'constants/walkthrough';
+import { driver, type Config, type Driver, type DriveStep } from 'driver.js';
+import 'driver.js/dist/driver.css';
+import { useTranslation } from 'i18n';
+import {
+  clearWalkthroughPendingStorage,
+  getWalkthroughPendingStorage
+} from 'storage/walkthrough';
+
+type WalkthroughStage =
+  | 'idle'
+  | 'flag-tour'
+  | 'await-flag-created'
+  | 'apikey-tour'
+  | 'await-apikey-created'
+  | 'sdk-modal';
+
+const tourTarget = (id: string) => `[data-tour="${id}"]`;
+
+// Popover titles are rendered as HTML by driver.js.
+const titleWithIcon = (rawIcon: string, title: string) =>
+  `${rawIcon}<span>${title}</span>`;
+
+const TARGETING_PATH_REGEX = /\/features\/([^/]+)\/targeting/;
+
+// Submitting is reserved for the dedicated submit step; textarea keeps Enter.
+const blockEnterSubmit = (event: KeyboardEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (
+    event.key === 'Enter' &&
+    target?.tagName !== 'TEXTAREA' &&
+    target?.closest(tourTarget(WALKTHROUGH_TARGETS.APIKEY_FORM))
+  ) {
+    event.preventDefault();
+  }
+};
+const AWAIT_APIKEY_TIMEOUT = 10 * 60 * 1000;
+const AWAIT_APIKEY_POLL_INTERVAL = 2000;
+const PENDING_TOUR_TIMEOUT = 30 * 1000;
+
+const hasUsableSDKKey = async (
+  organizationId: string,
+  environmentId: string
+) => {
+  try {
+    const collection = await apiKeysFetcher({
+      cursor: String(0),
+      organizationId,
+      environmentIds: [environmentId]
+    });
+    return (
+      collection?.apiKeys?.some(
+        key => ['SDK_CLIENT', 'SDK_SERVER'].includes(key.role) && !key.disabled
+      ) ?? false
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const useWalkthrough = () => {
+  const { t } = useTranslation(['common']);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { consoleAccount } = useAuth();
+  const driverRef = useRef<Driver | null>(null);
+  const cancelledRef = useRef(false);
+  const [stage, setStage] = useState<WalkthroughStage>('idle');
+  const [createdFlagId, setCreatedFlagId] = useState('');
+
+  useEffect(
+    () => () => {
+      driverRef.current?.destroy();
+      driverRef.current = null;
+    },
+    []
+  );
+
+  // driver.js only tracks window scrolls and measures targets once, so the
+  // spotlight drifts when nested containers scroll (kept scrollable via a CSS
+  // override) or when panels/modals finish animating in — refresh it on both.
+  useEffect(() => {
+    const refreshSpotlight = () => {
+      const activeDriver = driverRef.current;
+      if (!activeDriver?.isActive()) return;
+      if (activeDriver.getState('__transitionCallback')) return;
+      activeDriver.refresh();
+    };
+    // Escape would close the highlighted modal (e.g. the API key panel) and
+    // derail the tour.
+    const blockEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && driverRef.current?.isActive()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+    document.addEventListener('scroll', refreshSpotlight, true);
+    document.addEventListener('transitionend', refreshSpotlight, true);
+    document.addEventListener('animationend', refreshSpotlight, true);
+    document.addEventListener('keydown', blockEscape, true);
+    return () => {
+      document.removeEventListener('scroll', refreshSpotlight, true);
+      document.removeEventListener('transitionend', refreshSpotlight, true);
+      document.removeEventListener('animationend', refreshSpotlight, true);
+      document.removeEventListener('keydown', blockEscape, true);
+    };
+  }, []);
+
+  const closeWalkthrough = useCallback(() => {
+    driverRef.current?.destroy();
+    setStage('idle');
+    setCreatedFlagId('');
+  }, []);
+
+  const buildDriverConfig = useCallback(
+    (
+      tourStage: WalkthroughStage,
+      lastStepTarget: string,
+      excludeSkipTargets: string[] = []
+    ): Config => ({
+      showProgress: true,
+      overlayOpacity: 0.6,
+      stagePadding: 6,
+      stageRadius: 8,
+      // Steps may target elements on a page the previous step navigates to.
+      waitForElement: 5000,
+      overlayClickBehavior: () => undefined,
+      allowKeyboardControl: false,
+      nextBtnText: t('walkthrough.next'),
+      prevBtnText: t('walkthrough.previous'),
+      doneBtnText: t('walkthrough.done'),
+      // driver.js substitutes {{current}}/{{total}} itself; pass them through
+      // i18next as literals so its identical interpolation syntax skips them.
+      progressText: t('walkthrough.progress', {
+        current: '{{current}}',
+        total: '{{total}}'
+      }),
+      onPopoverRender: (popover, { state }) => {
+        const activeElement = state.activeStep?.element;
+        if (
+          typeof activeElement === 'string' &&
+          excludeSkipTargets.includes(activeElement)
+        ) {
+          return;
+        }
+        const skipButton = document.createElement('button');
+        skipButton.type = 'button';
+        skipButton.classList.add(
+          'driver-popover-footer-btn',
+          'driver-popover-skip-btn'
+        );
+        skipButton.innerText = t('walkthrough.skip');
+        skipButton.addEventListener('click', () => {
+          cancelledRef.current = true;
+          driverRef.current?.destroy();
+        });
+        popover.footerButtons.insertBefore(skipButton, popover.nextButton);
+      },
+      onCloseClick: (_element, _step, { driver: driverInstance }) => {
+        cancelledRef.current = true;
+        driverInstance.destroy();
+      },
+      onDestroyed: (_element, step) => {
+        document.removeEventListener('keydown', blockEnterSubmit, true);
+        // Ending on the last step's action click hands off to the next stage.
+        if (!cancelledRef.current && step?.element === lastStepTarget) {
+          setStage(
+            tourStage === 'flag-tour'
+              ? 'await-flag-created'
+              : 'await-apikey-created'
+          );
+        } else {
+          setStage(current => (current === tourStage ? 'idle' : current));
+        }
+      }
+    }),
+    [t]
+  );
+
+  const startApiKeyTour = useCallback(() => {
+    if (!consoleAccount) return;
+    const currentEnvironment = getCurrentEnvironment(consoleAccount);
+
+    cancelledRef.current = false;
+    setStage('apikey-tour');
+    driverRef.current?.destroy();
+    driverRef.current = driver({
+      ...buildDriverConfig(
+        'apikey-tour',
+        tourTarget(WALKTHROUGH_TARGETS.SUBMIT_APIKEY_BUTTON),
+        [tourTarget(WALKTHROUGH_TARGETS.SUBMIT_APIKEY_BUTTON)]
+      ),
+      steps: [
+        {
+          // No element: shown as a centered dialog.
+          popover: {
+            title: titleWithIcon(
+              iconSwitchRaw,
+              t('walkthrough.flag-created.title')
+            ),
+            description: t('walkthrough.flag-created.description'),
+            showButtons: ['next', 'close'],
+            onNextClick: (_element, _step, { driver: driverInstance }) => {
+              navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`);
+              driverInstance.moveNext();
+            }
+          }
+        },
+        {
+          element: tourTarget(WALKTHROUGH_TARGETS.CREATE_APIKEY_BUTTON),
+          advanceOnClick: true,
+          popover: {
+            title: titleWithIcon(
+              iconKeyRaw,
+              t('walkthrough.create-apikey-button.title')
+            ),
+            description: t('walkthrough.create-apikey-button.description'),
+            side: 'bottom',
+            showButtons: ['close']
+          }
+        },
+        {
+          element: tourTarget(WALKTHROUGH_TARGETS.APIKEY_FORM),
+          disableActiveInteraction: false,
+          onHighlighted: () => {
+            document.addEventListener('keydown', blockEnterSubmit, true);
+          },
+          onDeselected: () => {
+            document.removeEventListener('keydown', blockEnterSubmit, true);
+          },
+          popover: {
+            title: titleWithIcon(
+              iconKeyRaw,
+              t('walkthrough.apikey-form.title')
+            ),
+            description: t('walkthrough.apikey-form.description'),
+            side: 'left',
+            showButtons: ['next', 'close']
+          }
+        },
+        {
+          element: tourTarget(WALKTHROUGH_TARGETS.SUBMIT_APIKEY_BUTTON),
+          advanceOnClick: true,
+          popover: {
+            title: titleWithIcon(
+              iconKeyRaw,
+              t('walkthrough.submit-apikey-button.title')
+            ),
+            description: t('walkthrough.submit-apikey-button.description'),
+            side: 'top',
+            showButtons: ['previous', 'close']
+          }
+        }
+      ]
+    });
+    driverRef.current.drive();
+  }, [buildDriverConfig, consoleAccount, navigate, t]);
+
+  // The created flag id comes from the targeting page URL after submit.
+  useEffect(() => {
+    if (stage !== 'await-flag-created') return;
+    const match = pathname.match(TARGETING_PATH_REGEX);
+    if (!match) return;
+
+    setCreatedFlagId(match[1]);
+    startApiKeyTour();
+  }, [pathname, stage, startApiKeyTour]);
+
+  // Wait until the key exists and the "API key created" dialog is closed.
+  // A DOM observer reacts to the dialog closing immediately; the interval is
+  // a fallback and drives the timeout.
+  useEffect(() => {
+    if (stage !== 'await-apikey-created' || !consoleAccount) return;
+    const currentEnvironment = getCurrentEnvironment(consoleAccount);
+    const startedAt = Date.now();
+    let checking = false;
+    let hasKey = false;
+    const check = async () => {
+      if (Date.now() - startedAt > AWAIT_APIKEY_TIMEOUT) {
+        setStage('idle');
+        return;
+      }
+      if (checking) return;
+      checking = true;
+      try {
+        if (!hasKey) {
+          hasKey = await hasUsableSDKKey(
+            currentEnvironment.organizationId,
+            currentEnvironment.id
+          );
+        }
+        const isDialogOpen = !!document.querySelector('[role="dialog"]');
+        if (hasKey && !isDialogOpen) {
+          setStage('sdk-modal');
+        }
+      } finally {
+        checking = false;
+      }
+    };
+    check();
+    // Dialogs portal into <body>, so watching its children catches the
+    // "API key created" dialog being closed.
+    const observer = new MutationObserver(() => check());
+    observer.observe(document.body, { childList: true });
+    const interval = setInterval(check, AWAIT_APIKEY_POLL_INTERVAL);
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, [stage, consoleAccount]);
+
+  const driveFlagTour = useCallback(
+    (withWelcome?: boolean) => {
+      cancelledRef.current = false;
+      setStage('flag-tour');
+      driverRef.current?.destroy();
+      const welcomeStep: DriveStep = {
+        // No element: shown as a centered dialog.
+        popover: {
+          popoverClass: 'walkthrough-welcome-popover',
+          title: titleWithIcon(iconRocketRaw, t('walkthrough.welcome.title')),
+          description: t('walkthrough.welcome.description'),
+          nextBtnText: t('walkthrough.welcome.start'),
+          showButtons: ['next', 'close']
+        }
+      };
+      driverRef.current = driver({
+        ...buildDriverConfig(
+          'flag-tour',
+          tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON)
+        ),
+        steps: [
+          ...(withWelcome ? [welcomeStep] : []),
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU),
+            disableActiveInteraction: true,
+            popover: {
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.feature-flags-menu.title')
+              ),
+              description: t('walkthrough.feature-flags-menu.description'),
+              side: 'right',
+              showButtons: ['next', 'close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.CREATE_FLAG_BUTTON),
+            advanceOnClick: true,
+            popover: {
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.create-flag-button.title')
+              ),
+              description: t('walkthrough.create-flag-button.description'),
+              side: 'bottom',
+              showButtons: ['close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.FLAG_GENERAL_INFO),
+            disableActiveInteraction: false,
+            popover: {
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.flag-general-info.title')
+              ),
+              description: t('walkthrough.flag-general-info.description'),
+              side: 'right',
+              showButtons: ['next', 'close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.FLAG_VARIATIONS),
+            disableActiveInteraction: false,
+            popover: {
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.flag-variations.title')
+              ),
+              description: t('walkthrough.flag-variations.description'),
+              side: 'right',
+              showButtons: ['next', 'previous', 'close']
+            }
+          },
+          {
+            element: tourTarget(WALKTHROUGH_TARGETS.SUBMIT_FLAG_BUTTON),
+            advanceOnClick: true,
+            popover: {
+              title: titleWithIcon(
+                iconSwitchRaw,
+                t('walkthrough.submit-flag-button.title')
+              ),
+              description: t('walkthrough.submit-flag-button.description'),
+              side: 'top',
+              showButtons: ['previous', 'close']
+            }
+          }
+        ]
+      });
+      driverRef.current.drive();
+    },
+    [buildDriverConfig, t]
+  );
+
+  // Starting the tour away from the flag list first navigates there, which
+  // the unsaved-changes dialog may block — only drive once the page is
+  // actually reached (the request expires if the user stays).
+  const pendingTourRef = useRef<{
+    withWelcome: boolean;
+    requestedAt: number;
+  } | null>(null);
+
+  // Cancelling the leave-page dialog means the navigation that would start
+  // the tour never happens — drop the request so it can't fire later.
+  useEffect(() => {
+    const cancelPendingTour = () => {
+      pendingTourRef.current = null;
+    };
+    document.addEventListener(LEAVE_PAGE_CANCELLED_EVENT, cancelPendingTour);
+    return () =>
+      document.removeEventListener(
+        LEAVE_PAGE_CANCELLED_EVENT,
+        cancelPendingTour
+      );
+  }, []);
+
+  const startWalkthrough = useCallback(
+    (options?: { withWelcome?: boolean }) => {
+      if (!consoleAccount) return;
+      const currentEnvironment = getCurrentEnvironment(consoleAccount);
+      const featuresPath = `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`;
+      if (pathname === featuresPath) {
+        driveFlagTour(options?.withWelcome);
+        return;
+      }
+      pendingTourRef.current = {
+        withWelcome: !!options?.withWelcome,
+        requestedAt: Date.now()
+      };
+      navigate(featuresPath);
+    },
+    [consoleAccount, driveFlagTour, navigate, pathname]
+  );
+
+  // The first navigation consumes the request: the tour starts only when it
+  // lands on the flag list; any other destination discards it.
+  useEffect(() => {
+    const pending = pendingTourRef.current;
+    if (!pending || !consoleAccount) return;
+    pendingTourRef.current = null;
+    if (Date.now() - pending.requestedAt > PENDING_TOUR_TIMEOUT) return;
+    const currentEnvironment = getCurrentEnvironment(consoleAccount);
+    if (pathname === `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`) {
+      driveFlagTour(pending.withWelcome);
+    }
+  }, [pathname, consoleAccount, driveFlagTour]);
+
+  // Auto-start once for first-time users (flag set at login).
+  const hasAutoStartedRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoStartedRef.current || !WALKTHROUGH_ENABLED || !consoleAccount)
+      return;
+    if (getWalkthroughPendingStorage()) {
+      hasAutoStartedRef.current = true;
+      clearWalkthroughPendingStorage();
+      startWalkthrough({ withWelcome: true });
+    }
+  }, [startWalkthrough, consoleAccount]);
+
+  return {
+    startWalkthrough,
+    closeWalkthrough,
+    createdFlagId,
+    isSdkModalOpen: stage === 'sdk-modal'
+  };
+};

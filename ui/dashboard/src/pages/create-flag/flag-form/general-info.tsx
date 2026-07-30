@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
 import { useTranslation } from 'i18n';
 import { Tag } from '@types';
 import { onGenerateSlug } from 'utils/converts';
@@ -30,7 +31,10 @@ const GeneralInfo = ({
   const { control, setValue } = useFormContext();
 
   return (
-    <div className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card">
+    <div
+      className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card"
+      data-tour={WALKTHROUGH_TARGETS.FLAG_GENERAL_INFO}
+    >
       <p className="typo-para-medium text-gray-700">{t('general-info')}</p>
       <div className="flex flex-col w-full gap-y-5">
         <div className="flex w-full gap-x-4">

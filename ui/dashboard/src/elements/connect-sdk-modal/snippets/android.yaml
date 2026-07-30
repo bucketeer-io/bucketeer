@@ -1,0 +1,32 @@
+id: android
+label: Android
+kind: client
+installLanguage: groovy
+codeLanguage: kotlin
+install: |-
+  dependencies {
+    implementation 'io.bucketeer:android-client-sdk:LATEST_VERSION'
+  }
+code: |-
+  import io.bucketeer.sdk.android.*
+
+  val config = BKTConfig.builder()
+    .apiKey("{{apiKey}}")
+    .apiEndpoint("{{apiEndpoint}}")
+    .featureTag("{{featureTag}}")
+    .appVersion(BuildConfig.VERSION_NAME)
+    .build()
+
+  val user = BKTUser.builder()
+    .id("USER_ID")
+    .build()
+
+  BKTClient.initialize(this.application, config, user)
+  val client = BKTClient.getInstance()
+
+  val showNewFeature = client.booleanVariation("{{flagId}}", false)
+  if (showNewFeature) {
+    // Show the new feature
+  } else {
+    // Run the default code
+  }

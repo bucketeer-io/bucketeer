@@ -1,0 +1,38 @@
+id: ios
+label: iOS
+kind: client
+installLanguage: bash
+codeLanguage: swift
+install: |-
+  # CocoaPods
+  pod 'Bucketeer', 'LATEST_VERSION'
+
+  # or Swift Package Manager
+  # .package(url: "https://github.com/bucketeer-io/ios-client-sdk.git", exact: "LATEST_VERSION")
+code: |-
+  import Bucketeer
+
+  do {
+    let config = try BKTConfig.Builder()
+      .with(apiKey: "{{apiKey}}")
+      .with(apiEndpoint: "{{apiEndpoint}}")
+      .with(featureTag: "{{featureTag}}")
+      .with(appVersion: "1.0.0")
+      .build()
+
+    let user = try BKTUser.Builder()
+      .with(id: "USER_ID")
+      .build()
+
+    try BKTClient.initialize(config: config, user: user)
+  } catch {
+    // Handle the error
+  }
+
+  let client = try? BKTClient.shared
+  let showNewFeature = client?.boolVariation(featureId: "{{flagId}}", defaultValue: false) ?? false
+  if showNewFeature {
+    // Show the new feature
+  } else {
+    // Run the default code
+  }

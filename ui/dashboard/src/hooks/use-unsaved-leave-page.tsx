@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UNSAFE_NavigationContext as NavigationContext } from 'react-router';
+import { LEAVE_PAGE_CANCELLED_EVENT } from 'constants/walkthrough';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
@@ -44,6 +45,11 @@ interface Props {
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
 let bypassNavigation = false;
+
+// While the onboarding walkthrough (driver.js) runs, navigation attempts are
+// ignored instead of prompting, so its guided steps are never interrupted.
+const isWalkthroughActive = () =>
+  document.body.classList.contains('driver-active');
 
 export function allowNavigation(action?: () => void) {
   bypassNavigation = true;
@@ -93,6 +99,7 @@ export function useUnsavedLeavePage({
         bypassNavigation = false;
         return push(...args);
       }
+      if (isWalkthroughActive()) return;
       confirm({
         title: title,
         message: content,
@@ -111,6 +118,7 @@ export function useUnsavedLeavePage({
         bypassNavigation = false;
         return replace(...args);
       }
+      if (isWalkthroughActive()) return;
       confirm({
         title: title,
         message: content,
@@ -137,6 +145,11 @@ export function useUnsavedLeavePage({
     const handlePopState = () => {
       if (bypassNavigation) {
         bypassNavigation = false;
+        return;
+      }
+      if (isWalkthroughActive()) {
+        // Stay on the page without prompting.
+        history.pushState(null, '', window.location.href);
         return;
       }
       confirm({
@@ -187,6 +200,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const handleCancel = () => {
     options?.onCancel?.();
     setOptions(null);
+    document.dispatchEvent(new CustomEvent(LEAVE_PAGE_CANCELLED_EVENT));
   };
 
   return (

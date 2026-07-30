@@ -1,0 +1,33 @@
+id: react-native
+label: React Native
+kind: client
+installLanguage: bash
+codeLanguage: jsx
+install: npm install @bucketeer/react-native-client-sdk
+code: |-
+  import {
+    BucketeerProvider,
+    defineBKTConfigForReactNative,
+    defineBKTUser,
+    getBKTClient,
+    initializeBKTClient,
+    useBooleanVariation
+  } from '@bucketeer/react-native-client-sdk';
+
+  const config = defineBKTConfigForReactNative({
+    apiKey: '{{apiKey}}',
+    apiEndpoint: '{{apiEndpoint}}',
+    featureTag: '{{featureTag}}',
+    appVersion: '1.0.0'
+  });
+
+  const user = defineBKTUser({ id: 'USER_ID' });
+
+  // Initialize once in your root component, then wrap your app:
+  // await initializeBKTClient(config, user);
+  // <BucketeerProvider client={getBKTClient()}>...</BucketeerProvider>
+
+  function MyScreen() {
+    const showNewFeature = useBooleanVariation('{{flagId}}', false);
+    return showNewFeature ? <NewFeatureScreen /> : <DefaultScreen />;
+  }

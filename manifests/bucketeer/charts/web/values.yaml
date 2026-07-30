@@ -93,6 +93,8 @@ env:
     servicePort: 9109
   googleTagManagerId:
   apiEndpoint:
+  # Show the "Get started" onboarding walkthrough entry in the dashboard navigation.
+  walkthroughEnabled: true
   accessTokenTTL: 10m
   refreshTokenTTL: 168h
 affinity: {}

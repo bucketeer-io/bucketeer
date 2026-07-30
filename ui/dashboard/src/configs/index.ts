@@ -19,6 +19,7 @@ declare global {
       API_ENDPOINT?: string;
       SCHEDULED_FLAG_CHANGES_ENABLED?: boolean;
       AI_CHAT_ENABLED?: boolean;
+      WALKTHROUGH_ENABLED?: boolean;
     };
   }
 }
@@ -70,3 +71,9 @@ export const AI_CHAT_ENABLED =
   releaseMode !== 'prod'
     ? import.meta.env.VITE_AI_CHAT_ENABLED === 'true'
     : !!window.env?.AI_CHAT_ENABLED;
+
+// Enabled unless explicitly turned off.
+export const WALKTHROUGH_ENABLED =
+  releaseMode !== 'prod'
+    ? import.meta.env.VITE_WALKTHROUGH_ENABLED !== 'false'
+    : window.env?.WALKTHROUGH_ENABLED !== false;

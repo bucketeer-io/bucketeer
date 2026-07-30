@@ -42,6 +42,7 @@ import {
   PAGE_PATH_SETTINGS,
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
+import { WalkthroughProvider } from 'contexts/walkthrough-context';
 import { ConfirmProvider } from 'hooks/use-unsaved-leave-page';
 import { i18n } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -155,26 +156,28 @@ export const Root = memo(() => {
       return <UserInformation />;
     }
     return (
-      <div className="flex flex-row w-full h-full">
-        <Navigation onClickNavLink={handleChangePageKey} />
-        <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
-          <Routes>
-            {consoleAccount.isSystemAdmin && (
+      <WalkthroughProvider>
+        <div className="flex flex-row w-full h-full">
+          <Navigation onClickNavLink={handleChangePageKey} />
+          <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
+            <Routes>
+              {consoleAccount.isSystemAdmin && (
+                <Route
+                  path={`${PAGE_PATH_ORGANIZATIONS}/*`}
+                  element={<OrganizationsRoot />}
+                />
+              )}
               <Route
-                path={`${PAGE_PATH_ORGANIZATIONS}/*`}
-                element={<OrganizationsRoot />}
+                key={pageKey}
+                path={'/:envUrlCode?/*'}
+                element={<EnvironmentRoot account={consoleAccount} />}
               />
-            )}
-            <Route
-              key={pageKey}
-              path={'/:envUrlCode?/*'}
-              element={<EnvironmentRoot account={consoleAccount} />}
-            />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </div>
+          {AI_CHAT_ENABLED && <ChatWidget />}
         </div>
-        {AI_CHAT_ENABLED && <ChatWidget />}
-      </div>
+      </WalkthroughProvider>
     );
   }
 

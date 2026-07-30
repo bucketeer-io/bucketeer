@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
@@ -94,6 +95,7 @@ const PageContent = ({
                 className="flex-1 lg:flex-none"
                 onClick={onAdd}
                 disabled={!envEditable || !isOrganizationAdmin}
+                data-tour={WALKTHROUGH_TARGETS.CREATE_APIKEY_BUTTON}
               >
                 <Icon icon={IconAddOutlined} size="sm" />
                 {t(`new-api-key`)}

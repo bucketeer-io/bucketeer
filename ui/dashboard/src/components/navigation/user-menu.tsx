@@ -3,11 +3,19 @@ import { AccountAvatar, accountUpdater } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { WALKTHROUGH_ENABLED } from 'configs';
+import { useWalkthroughContext } from 'contexts/walkthrough-context';
 import { useToast, useToggleOpen } from 'hooks';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { onChangeFontWithLocalized } from 'utils/function';
-import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
+import {
+  IconBuilding,
+  IconChevronRight,
+  IconLogout,
+  IconRocket,
+  IconUser
+} from '@icons';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
 import { DropdownOption } from 'components/dropdown';
@@ -19,6 +27,7 @@ import UserProfileModal from './user-profile';
 const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   const { t } = useTranslation(['common']);
   const { myOrganizations, consoleAccount, logout, onMeFetcher } = useAuth();
+  const { startWalkthrough } = useWalkthroughContext();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { errorNotify } = useToast();
   const popoverCloseRef = useRef<HTMLButtonElement>(null);
@@ -104,6 +113,14 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
       loading: isLoading,
       options: languageList as DropdownOption[],
       onSelectOption: handleUpdateLanguage
+    },
+    WALKTHROUGH_ENABLED && {
+      label: t(`walkthrough.tutorial`),
+      icon: IconRocket,
+      onClick: () => {
+        popoverCloseRef?.current?.click();
+        startWalkthrough();
+      }
     },
     myOrganizations.length > 1 && {
       label: consoleAccount?.organization?.name || '',

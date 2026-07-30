@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
+import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
 import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -84,7 +86,8 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         {
           label: t(`navigation.feature-flags`),
           icon: IconSystem.IconSwitch,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`,
+          tourId: WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU
         },
         {
           label: t(`navigation.user-segment`),
@@ -127,11 +130,23 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
   const settingPaths = flatMapDeep(
     settingMenuSections.map(section => section.menus)
-  ).map(item => item.href);
+  )
+    .map(item => item.href)
+    .filter((href): href is string => !!href);
 
   const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(
     settingPaths.includes(pathname)
   );
+
+  // Keep the sliding settings panel in sync with programmatic navigation
+  // (e.g. the walkthrough moving between the main and settings areas).
+  useEffect(() => {
+    if (settingPaths.some(path => pathname.startsWith(path))) {
+      onOpenSetting();
+    } else {
+      onCloseSetting();
+    }
+  }, [pathname]);
 
   const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
     useToggleOpen(false);
