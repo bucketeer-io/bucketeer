@@ -321,7 +321,52 @@ func (s *NotificationService) PublishAdminNotification(
 	ctx context.Context,
 	req *proto.PublishAdminNotificationRequest,
 ) (*proto.PublishAdminNotificationResponse, error) {
-	return nil, statusNotImplemented
+	editor, err := s.checkSystemAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(strings.TrimSpace(req.Id)) == 0 {
+		return nil, statusNotificationIDRequired.Err()
+	}
+	var notification *domain.Notification
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		var err error
+		notification, err = s.notificationStorage.GetAdminNotification(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		if notification.Status != proto.Notification_DRAFT {
+			return statusNotificationAlreadyPublished.Err()
+		}
+		if len(notification.Localizations) == 0 {
+			return statusLocalizationRequired.Err()
+		}
+		notification.Publish(editor.Email)
+		return s.notificationStorage.PublishAdminNotification(ctxWithTx, notification)
+	})
+	if err != nil {
+		if errors.Is(err, storage.ErrNotificationNotFound) {
+			return nil, statusNotificationNotFound.Err()
+		}
+		if errors.Is(err, statusNotificationAlreadyPublished.Err()) ||
+			errors.Is(err, storage.ErrNotificationAlreadyPublished) {
+			return nil, statusNotificationAlreadyPublished.Err()
+		}
+		if errors.Is(err, statusLocalizationRequired.Err()) {
+			return nil, statusLocalizationRequired.Err()
+		}
+		s.logger.Error(
+			"Failed to publish notification",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("notificationId", req.Id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.PublishAdminNotificationResponse{
+		Notification: notification.Notification,
+	}, nil
 }
 
 func (s *NotificationService) DeleteAdminNotification(

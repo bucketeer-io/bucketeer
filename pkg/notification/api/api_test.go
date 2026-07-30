@@ -693,3 +693,196 @@ func TestNotificationService_DeleteAdminNotification(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationService_PublishAdminNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	adminCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, true),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+	memberCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	draft := func() *domain.Notification {
+		return &domain.Notification{
+			Notification: &proto.Notification{
+				Id:           "notification-id-0",
+				Status:       proto.Notification_DRAFT,
+				CreatedBy:    "admin@example.com",
+				LastEditedBy: "admin@example.com",
+				CreatedAt:    1,
+				UpdatedAt:    1,
+				Localizations: []*proto.NotificationLocalization{
+					{Language: "en", Title: "New feature", Content: "# New feature"},
+				},
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.PublishAdminNotificationRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: unauthenticated",
+			ctx:  context.TODO(),
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc: "err: permission denied",
+			ctx:  memberCtx,
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:        "err: id required",
+			ctx:         adminCtx,
+			req:         &proto.PublishAdminNotificationRequest{Id: " "},
+			expectedErr: statusNotificationIDRequired.Err(),
+		},
+		{
+			desc: "err: not found",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(nil, storage.ErrNotificationNotFound)
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusNotificationNotFound.Err(),
+		},
+		{
+			desc: "err: already published",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				published := draft()
+				published.Status = proto.Notification_PUBLISHED
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(published, nil)
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusNotificationAlreadyPublished.Err(),
+		},
+		{
+			desc: "err: localization required",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				empty := draft()
+				empty.Localizations = nil
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(empty, nil)
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusLocalizationRequired.Err(),
+		},
+		{
+			desc: "err: already published (lost race)",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(draft(), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().PublishAdminNotification(
+					gomock.Any(), gomock.Any(),
+				).Return(storage.ErrNotificationAlreadyPublished)
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: statusNotificationAlreadyPublished.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(draft(), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().PublishAdminNotification(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.PublishAdminNotificationRequest{
+				Id: "notification-id-0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.PublishAdminNotification(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+				assert.Equal(t, "notification-id-0", resp.Notification.Id)
+				assert.Equal(t, proto.Notification_PUBLISHED, resp.Notification.Status)
+				assert.Equal(t, "email", resp.Notification.PublishedBy)
+				assert.True(t, resp.Notification.PublishedAt > 0)
+				assert.Equal(t, resp.Notification.PublishedAt, resp.Notification.UpdatedAt)
+			}
+		})
+	}
+}

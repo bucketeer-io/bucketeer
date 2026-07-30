@@ -46248,10 +46248,30 @@
             ]
           },
           {
-            "name": "PublishAdminNotificationRequest"
+            "name": "PublishAdminNotificationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
           },
           {
-            "name": "PublishAdminNotificationResponse"
+            "name": "PublishAdminNotificationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "notification",
+                "type": "Notification"
+              }
+            ]
           },
           {
             "name": "DeleteAdminNotificationRequest",

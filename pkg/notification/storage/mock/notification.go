@@ -103,6 +103,20 @@ func (mr *MockNotificationStorageMockRecorder) ListDraftAdminNotifications(ctx, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDraftAdminNotifications", reflect.TypeOf((*MockNotificationStorage)(nil).ListDraftAdminNotifications), ctx, params)
 }
 
+// PublishAdminNotification mocks base method.
+func (m *MockNotificationStorage) PublishAdminNotification(ctx context.Context, notification *domain.Notification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishAdminNotification", ctx, notification)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishAdminNotification indicates an expected call of PublishAdminNotification.
+func (mr *MockNotificationStorageMockRecorder) PublishAdminNotification(ctx, notification any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishAdminNotification", reflect.TypeOf((*MockNotificationStorage)(nil).PublishAdminNotification), ctx, notification)
+}
+
 // UpdateAdminNotification mocks base method.
 func (m *MockNotificationStorage) UpdateAdminNotification(ctx context.Context, notification *domain.Notification) error {
 	m.ctrl.T.Helper()

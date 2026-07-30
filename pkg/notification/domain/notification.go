@@ -35,6 +35,15 @@ func (n *Notification) Update(
 	n.Localizations = localizations
 }
 
+// Publish marks a draft as published and stamps the publisher.
+func (n *Notification) Publish(publishedBy string) {
+	now := time.Now().Unix()
+	n.Status = proto.Notification_PUBLISHED
+	n.PublishedBy = publishedBy
+	n.PublishedAt = now
+	n.UpdatedAt = now
+}
+
 func NewNotification(
 	createdBy string,
 	localizations []*proto.NotificationLocalization,

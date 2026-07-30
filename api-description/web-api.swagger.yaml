@@ -14368,8 +14368,16 @@ definitions:
         type: string
   notificationPublishAdminNotificationRequest:
     type: object
+    properties:
+      id:
+        type: string
+    required:
+      - id
   notificationPublishAdminNotificationResponse:
     type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
   notificationUpdateAdminNotificationRequest:
     type: object
     properties:
