@@ -30,11 +30,18 @@ var (
 	ErrReasonNil                                 = errors.New("eventpersister: reason is nil")
 	ErrEvaluationsAreEmpty                       = errors.New("eventpersister: evaluations are empty")
 	ErrEvaluationEventIssuedAfterExperimentEnded = errors.New("eventpersister: evaluation event issued after experiment ended") //nolint:lll
-	ErrFailedToEvaluateUser                      = errors.New("eventpersister: failed to evaluate user")
-	ErrAutoOpsRuleNotFound                       = errors.New("eventpersister: auto ops rule not found")
-	ErrFeatureEmptyList                          = errors.New("eventpersister: list feature returned empty")
-	ErrFeatureVersionNotFound                    = errors.New("eventpersister: feature version not found")
-	ErrUnknownEvent                              = errors.New("metricsevent persister: unknown metrics event")
-	ErrInvalidDuration                           = errors.New("metricsevent persister: invalid duration")
-	ErrUnknownApiId                              = errors.New("metricsevent persister: unknown api id")
+	// ErrGoalEventOlderThanEvaluation is returned when the goal event timestamp is older
+	// than the user's latest evaluation timestamp. Because the client SDK sets both
+	// timestamps when the events are generated, this means the goal event was created
+	// before the user was evaluated (incorrect SDK implementation), so the event is
+	// discarded instead of retried.
+	ErrGoalEventOlderThanEvaluation = errors.New(
+		"eventpersister: goal event timestamp is older than the user's latest evaluation timestamp")
+	ErrFailedToEvaluateUser   = errors.New("eventpersister: failed to evaluate user")
+	ErrAutoOpsRuleNotFound    = errors.New("eventpersister: auto ops rule not found")
+	ErrFeatureEmptyList       = errors.New("eventpersister: list feature returned empty")
+	ErrFeatureVersionNotFound = errors.New("eventpersister: feature version not found")
+	ErrUnknownEvent           = errors.New("metricsevent persister: unknown metrics event")
+	ErrInvalidDuration        = errors.New("metricsevent persister: invalid duration")
+	ErrUnknownApiId           = errors.New("metricsevent persister: unknown api id")
 )
