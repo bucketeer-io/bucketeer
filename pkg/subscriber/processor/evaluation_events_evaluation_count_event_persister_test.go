@@ -17,6 +17,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
@@ -1981,4 +1983,43 @@ func TestWriteEnvLastUsedInfoRemovesOnlySuccessfulEnvironments(t *testing.T) {
 	p.writeEnvLastUsedInfo()
 	assert.Len(t, p.envLastUsedCache, 1)
 	assert.Contains(t, p.envLastUsedCache, "env-ng")
+}
+
+func TestWriteDAURestoresBufferOnFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dauCacheMock := cachemock.NewMockDAUCache(ctrl)
+	p := &evaluationCountEventPersister{
+		dauCache: dauCacheMock,
+		dauBuf:   make(dauBuffer),
+		logger:   zap.NewNop(),
+	}
+	key := dauBufferKey{dateStr: "20260730", envID: "env-1", sourceID: "ANDROID"}
+	p.dauBuf[key] = map[string]struct{}{"user-1": {}}
+
+	// First cycle: Redis fails. The buffer must be restored so the entries
+	// are retried on the next cycle, because the Pub/Sub messages were
+	// already acked.
+	dauCacheMock.EXPECT().RecordDAUBatch(gomock.Any()).
+		Return(errors.New("redis: connection refused"))
+	p.writeDAU()
+	assert.Len(t, p.dauBuf, 1)
+	assert.Contains(t, p.dauBuf[key], "user-1")
+
+	// A new user arrives before the next cycle; it must be merged with the
+	// restored entries.
+	p.dauBuf[key]["user-2"] = struct{}{}
+
+	// Second cycle: Redis recovers. Both users must be flushed together
+	// and the buffer left empty.
+	dauCacheMock.EXPECT().RecordDAUBatch(gomock.Any()).DoAndReturn(
+		func(records []cachev3.DAURecord) error {
+			assert.Len(t, records, 1)
+			assert.ElementsMatch(t, []string{"user-1", "user-2"}, records[0].UserIDs)
+			return nil
+		},
+	)
+	p.writeDAU()
+	assert.Empty(t, p.dauBuf)
 }

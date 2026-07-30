@@ -607,10 +607,31 @@ func (p *evaluationCountEventPersister) writeDAU() {
 	}
 	if err := p.dauCache.RecordDAUBatch(records); err != nil {
 		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Failed to record DAU batch",
+			p.logger.Warn("Failed to record DAU batch, will retry next cycle",
 				zap.Error(err),
 				zap.Int("recordCount", len(records)),
 			)
+		}
+		// Merge the buffer back so the entries are retried on the next cycle.
+		// The Pub/Sub messages were already acked, so dropping the buffer here
+		// would lose the DAU data. Re-sending already-recorded user IDs is safe
+		// because PFADD (HyperLogLog) is idempotent.
+		p.restoreDAUBuffer(buf)
+	}
+}
+
+// restoreDAUBuffer merges a previously swapped-out DAU buffer back into the
+// current one, preserving any entries buffered in the meantime.
+func (p *evaluationCountEventPersister) restoreDAUBuffer(buf dauBuffer) {
+	p.dauBufferMutex.Lock()
+	defer p.dauBufferMutex.Unlock()
+	for key, userIDSet := range buf {
+		if p.dauBuf[key] == nil {
+			p.dauBuf[key] = userIDSet
+			continue
+		}
+		for userID := range userIDSet {
+			p.dauBuf[key][userID] = struct{}{}
 		}
 	}
 }
