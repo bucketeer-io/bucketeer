@@ -2,8 +2,9 @@ WITH deduped_events AS (
     -- BigQuery has no primary keys, so an at-least-once Pub/Sub redelivery
     -- can append the same event twice. Deduplicate by event ID before any
     -- aggregation, otherwise duplicates inflate event_count and value_sum.
-    -- Duplicates are identical rows, so DISTINCT over the used columns is
-    -- equivalent to picking one row per ID.
+    -- Duplicates are expected to be identical rows; DISTINCT collapses exact
+    -- duplicates for the columns used downstream without changing the
+    -- aggregation semantics.
     SELECT DISTINCT
         id,
         user_id,
