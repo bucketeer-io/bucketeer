@@ -4,6 +4,8 @@ import { Mail } from 'lucide-react';
 import Button from 'components/button';
 import Pagination from 'components/pagination';
 import Spinner from 'components/spinner';
+import { NoResultsCollection } from 'elements/collection/collection-empty';
+import EmptyState from 'elements/empty-state';
 import {
   useFetchFeed,
   useMarkAsRead,
@@ -19,13 +21,15 @@ interface NotificationListProps {
   filters: NotificationFilters;
   environmentId: string;
   onSelect?: (notification: FeedNotification) => void;
+  onClearFilters?: () => void;
 }
 
 const NotificationList = ({
   read = true,
   filters,
   environmentId,
-  onSelect
+  onSelect,
+  onClearFilters
 }: NotificationListProps) => {
   const { t } = useTranslation(['common']);
   const [page, setPage] = useState(1);
@@ -69,10 +73,23 @@ const NotificationList = ({
   }
 
   if (items.length === 0) {
+    const isFiltered = !!filters.searchQuery || !!filters.days;
     return (
-      <p className="py-10 text-center typo-para-medium text-gray-500">
-        {t('no-notifications')}
-      </p>
+      <div className="py-10">
+        {isFiltered ? (
+          <NoResultsCollection onClear={onClearFilters} />
+        ) : (
+          <EmptyState.Root variant="no-data" size="lg">
+            <EmptyState.Illustration />
+            <EmptyState.Body>
+              <EmptyState.Title>{t('no-notifications')}</EmptyState.Title>
+              <EmptyState.Description>
+                {t('no-notifications-desc')}
+              </EmptyState.Description>
+            </EmptyState.Body>
+          </EmptyState.Root>
+        )}
+      </div>
     );
   }
 
