@@ -46,7 +46,6 @@ const (
 	codeFailedToGetUserEvaluation           = "FailedToGetUserEvaluation"
 	codeFailedToStoreRetryMessage           = "FailedToStoreRetryMessage"
 	codeRetryMessageAppendSuccess           = "RetryMessageAppendSuccess"
-	codeRetryMessageNoEvaluations           = "RetryMessageNoEvaluations"
 	codeRetryMessageNoGoalEvents            = "RetryMessageNoGoalEvents"
 	codeRetryMessageNoExperiments           = "RetryMessageNoExperiments"
 	codeGetFeaturesReturnedEmpty            = "GetFeaturesReturnedEmpty"
