@@ -57,6 +57,12 @@ const (
 	// manifests/bucketeer/charts/api/values.yaml). If the server default
 	// changes, update this constant so the e2e tests stay aligned.
 	evaluatedAtGracePeriodSeconds int64 = 600
+	// GetEvaluations can transiently fail with codes.Internal when the
+	// feature-flag cache snapshot is inconsistent (see
+	// grpcGetEvaluationsWithRetry). The retry window must outlast the
+	// gateway's in-memory features cache TTL (1 minute by default).
+	getEvaluationsRetryAttempts = 10
+	getEvaluationsRetryInterval = 10 * time.Second
 )
 
 var (
@@ -2032,40 +2038,67 @@ func archiveFeature(t *testing.T, featureID string, client featureclient.Client)
 	}
 }
 
-func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvaluationsResponse {
+// grpcGetEvaluationsWithRetry sends a GetEvaluations request, retrying on
+// transient Internal errors.
+//
+// GetEvaluations may evaluate every flag in the shared e2e environment (a
+// full re-evaluation happens when evaluatedAt is more than 30 days old, the
+// UserEvaluationsID is empty, or no tag is set), so it is sensitive to flags
+// owned by other test suites running in parallel. Those suites create
+// parent/child prerequisite flags and constantly re-run the FeatureFlagCacher
+// batch job; a cache snapshot taken mid-write can contain a flag whose
+// prerequisite is missing from the same snapshot. Evaluating such a snapshot
+// fails with ErrFeatureNotFound, which the gateway returns as
+// "gateway: internal" to every caller until the next snapshot is taken AND
+// the gateway's in-memory L1 cache (1 minute TTL by default) expires.
+// Retrying long enough to outlast both keeps these tests stable.
+func grpcGetEvaluationsWithRetry(
+	t *testing.T,
+	req *gatewayproto.GetEvaluationsRequest,
+) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	var lastErr error
+	for i := 0; i < getEvaluationsRetryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		response, err := c.GetEvaluations(ctx, req)
+		cancel()
+		if err == nil {
+			return response
+		}
+		lastErr = err
+		if status.Code(err) != codes.Internal {
+			break
+		}
+		if i < getEvaluationsRetryAttempts-1 {
+			t.Logf("GetEvaluations returned Internal (attempt %d/%d). Retrying in %v: %v",
+				i+1, getEvaluationsRetryAttempts, getEvaluationsRetryInterval, err)
+			time.Sleep(getEvaluationsRetryInterval)
+		}
+	}
+	t.Fatal(lastErr)
+	return nil
+}
+
+func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvaluationsResponse {
+	t.Helper()
 	req := &gatewayproto.GetEvaluationsRequest{
 		Tag:  tag,
 		User: &userproto.User{Id: userID},
 	}
-	response, err := c.GetEvaluations(ctx, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return response
+	return grpcGetEvaluationsWithRetry(t, req)
 }
 
 // grpcGetEvaluationsWithUser is like grpcGetEvaluations but accepts a full
 // user object so tests can pass user attributes.
 func grpcGetEvaluationsWithUser(t *testing.T, tag string, user *userproto.User) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
-	c := newGatewayClient(t, *apiKeyPath)
-	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
 		Tag:  tag,
 		User: user,
 	}
-	response, err := c.GetEvaluations(ctx, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return response
+	return grpcGetEvaluationsWithRetry(t, req)
 }
 
 func grpcGetFeatureFlags(t *testing.T, tag, featuresID string, requestedAt int64) *gatewayproto.GetFeatureFlagsResponse {
@@ -2123,10 +2156,6 @@ func grpcGetEvaluationsByEvaluatedAt(
 	userAttributesUpdated bool,
 ) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
-	c := newGatewayClient(t, *apiKeyPath)
-	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
 		UserEvaluationsId: userEvaluationsID,
 		User:              &userproto.User{Id: userID},
@@ -2136,11 +2165,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 		},
 		Tag: tag,
 	}
-	response, err := c.GetEvaluations(ctx, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return response
+	return grpcGetEvaluationsWithRetry(t, req)
 }
 
 func grpcGetEvaluation(t *testing.T, tag, featureID, userID string) *gatewayproto.GetEvaluationResponse {
