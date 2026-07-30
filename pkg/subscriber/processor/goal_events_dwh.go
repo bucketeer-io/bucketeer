@@ -141,6 +141,12 @@ func (w *goalEvtWriter) Write(
 						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
 						continue
 					}
+					if errors.Is(err, ErrGoalEventOlderThanEvaluation) {
+						// The goal event was created before the user was evaluated
+						// (the client SDK sets the timestamps), so it can never be
+						// linked. Discard it by acking the message.
+						continue
+					}
 					if !retriable {
 						w.logger.Error(
 							"Failed to convert to goal event",
@@ -264,19 +270,23 @@ func (w *goalEvtWriter) linkGoalEvent(
 	id, environmentID, tag string,
 	experiments []*exproto.Experiment,
 ) ([]*ecdwh.UserEvaluation, bool, error) {
-	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, id, environmentID, tag, experiments)
+	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, id, environmentID, tag, experiments, true)
 	if err != nil {
 		return nil, retriable, err
 	}
 	return evalExp, false, nil
 }
 
-// Link one or more experiments by goal ID
+// Link one or more experiments by goal ID.
+// When storeRetryOnMiss is true (fresh events from Pub/Sub), goal events that can't be
+// linked yet are stored in Redis so the retry processor can link them later.
+// The retry processor itself passes false because it manages its own retry message.
 func (w *goalEvtWriter) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	id, environmentID, tag string,
 	experiments []*exproto.Experiment,
+	storeRetryOnMiss bool,
 ) ([]*ecdwh.UserEvaluation, bool, error) {
 	// Find the experiment by goal ID
 	// TODO: we must change the console UI not to allow creating
@@ -324,19 +334,21 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 					zap.Any("goalEvent", event),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeUserEvaluationNotFound).Inc()
-				if err := w.storeRetryMessage(&retryMessage{
-					GoalEvent:     event,
-					EnvironmentID: environmentID,
-					RetryCount:    0,
-					ID:            id,
-				}); err != nil {
-					subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
-					w.logger.Error("Failed to store retry message",
-						zap.Error(err),
-						zap.String("environmentId", environmentID),
-						zap.Any("goalEvent", event),
-					)
-					return nil, true, err
+				if storeRetryOnMiss {
+					if err := w.storeRetryMessage(&retryMessage{
+						GoalEvent:     event,
+						EnvironmentID: environmentID,
+						RetryCount:    0,
+						ID:            id,
+					}); err != nil {
+						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+						w.logger.Error("Failed to store retry message",
+							zap.Error(err),
+							zap.String("environmentId", environmentID),
+							zap.Any("goalEvent", event),
+						)
+						return nil, true, err
+					}
 				}
 				return nil, false, err
 			}
@@ -353,11 +365,14 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			zap.Any("goalEvent", event),
 			zap.Any("evaluation", eval),
 		)
-		// Skip goal events that occurred before the evaluation timestamp.
-		// This is intentional to trigger retry logic for proper event linking.
+		// Skip goal events older than the evaluation timestamp.
+		// Because the client SDK sets the timestamps when the events are generated,
+		// a goal event older than the user's latest evaluation means the client
+		// sent the goal event before evaluating the user (incorrect implementation),
+		// so it must be discarded instead of retried.
 		if event.Timestamp < eval.Timestamp {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedBeforeEvaluation).Inc()
-			w.logger.Error("Goal event issued before evaluation",
+			w.logger.Warn("Goal event is older than the user's latest evaluation, discarding it",
 				zap.String("environmentId", environmentID),
 				zap.Any("goalEvent", event),
 				zap.Any("evaluation", eval),
@@ -365,6 +380,11 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			continue
 		}
 		evals = append(evals, eval)
+	}
+	if len(evals) == 0 {
+		// Every matching evaluation is newer than the goal event,
+		// so the goal event can never be linked. The callers must discard it.
+		return nil, false, ErrGoalEventOlderThanEvaluation
 	}
 	return evals, false, nil
 }

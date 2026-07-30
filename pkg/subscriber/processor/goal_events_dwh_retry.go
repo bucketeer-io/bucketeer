@@ -188,6 +188,9 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		return
 	}
 
+	// Pass storeRetryOnMiss=false: this path owns the retry message and
+	// re-stores it below with the incremented retry count, so the linker must
+	// not overwrite it with a fresh message (which would reset the backoff).
 	evals, _, err := w.linkGoalEventByExperiment(
 		ctx,
 		msg.GoalEvent,
@@ -195,11 +198,18 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		msg.EnvironmentID,
 		msg.GoalEvent.Tag,
 		experiments,
+		false,
 	)
 	if err != nil {
 		if errors.Is(err, ErrExperimentNotFound) {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
 			lg.Error("Experiment not found, deleting retry message")
+			w.deleteKey(ctx, key)
+		} else if errors.Is(err, ErrGoalEventOlderThanEvaluation) {
+			// The goal event was created before the user was evaluated
+			// (the client SDK sets the timestamps), so retrying can never
+			// link it. Discard the retry message.
+			lg.Warn("Goal event is older than the user's latest evaluation, deleting retry message")
 			w.deleteKey(ctx, key)
 		} else {
 			lg.Error("Linking failed", zap.Error(err))
@@ -208,15 +218,6 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
 				lg.Error("Failed to store retry message", zap.Error(err))
 			}
-		}
-		return
-	}
-	if len(evals) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoEvaluations).Inc()
-		msg.RetryCount++
-		if err := w.storeRetryMessage(msg); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
-			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 		return
 	}
