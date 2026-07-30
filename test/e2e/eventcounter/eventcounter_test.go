@@ -2300,6 +2300,54 @@ func experimentResultCountsReady(vsA, vsB *ecproto.VariationResult) bool {
 		vsB.ExperimentCount.UserCount == n
 }
 
+// formatVariationCounts renders all four counters of a variation result so the
+// retry log shows exactly which one is not at the expected value yet.
+func formatVariationCounts(vr *ecproto.VariationResult) string {
+	if vr == nil {
+		return "nil"
+	}
+	evalEvents, evalUsers, goalEvents, goalUsers := int64(-1), int64(-1), int64(-1), int64(-1)
+	if vr.EvaluationCount != nil {
+		evalEvents = vr.EvaluationCount.EventCount
+		evalUsers = vr.EvaluationCount.UserCount
+	}
+	if vr.ExperimentCount != nil {
+		goalEvents = vr.ExperimentCount.EventCount
+		goalUsers = vr.ExperimentCount.UserCount
+	}
+	return fmt.Sprintf("eval{events=%d users=%d} goal{events=%d users=%d}",
+		evalEvents, evalUsers, goalEvents, goalUsers)
+}
+
+// failIfEventCountsExceeded fails the test immediately when an event count is
+// above the expected total. DWH rows are append-only, so an over-count can
+// never converge back down: it means events were persisted more than once
+// (e.g. an at-least-once Pub/Sub redelivery after a successful append), and
+// waiting the remaining retries would only delay the failure until the suite
+// times out.
+func failIfEventCountsExceeded(t *testing.T, vsA, vsB *ecproto.VariationResult) {
+	t.Helper()
+	n := int64(experimentResultUsersPerVariation)
+	variations := []struct {
+		name string
+		vr   *ecproto.VariationResult
+	}{{"A", vsA}, {"B", vsB}}
+	for _, v := range variations {
+		if v.vr.EvaluationCount != nil && v.vr.EvaluationCount.EventCount > n {
+			t.Fatalf("variation %s: evaluation event count %d exceeds the expected %d: "+
+				"events were likely persisted more than once (duplicate Pub/Sub delivery); "+
+				"this can never recover, failing fast",
+				v.name, v.vr.EvaluationCount.EventCount, n)
+		}
+		if v.vr.ExperimentCount != nil && v.vr.ExperimentCount.EventCount > n {
+			t.Fatalf("variation %s: goal event count %d exceeds the expected %d: "+
+				"events were likely persisted more than once (duplicate Pub/Sub delivery); "+
+				"this can never recover, failing fast",
+				v.name, v.vr.ExperimentCount.EventCount, n)
+		}
+	}
+}
+
 // experimentResultProbFieldsReady reports whether the calculator has populated
 // the CVR and value-metric distribution summaries for a variation.
 func experimentResultProbFieldsReady(vr *ecproto.VariationResult) bool {
@@ -2396,16 +2444,10 @@ func waitAndCheckExperimentResult(
 			t.Fatalf("missing variation result for experiment variations")
 		}
 		if !experimentResultCountsReady(vsA, vsB) {
-			linkedA, linkedB := int64(0), int64(0)
-			if vsA.ExperimentCount != nil {
-				linkedA = vsA.ExperimentCount.UserCount
-			}
-			if vsB.ExperimentCount != nil {
-				linkedB = vsB.ExperimentCount.UserCount
-			}
-			t.Logf("Retry %d/%d: waiting for linked users A=%d/%d B=%d/%d",
-				i+1, retryTimes, linkedA, experimentResultUsersPerVariation,
-				linkedB, experimentResultUsersPerVariation)
+			failIfEventCountsExceeded(t, vsA, vsB)
+			t.Logf("Retry %d/%d: waiting for counts (expected %d each): A=%s B=%s",
+				i+1, retryTimes, experimentResultUsersPerVariation,
+				formatVariationCounts(vsA), formatVariationCounts(vsB))
 			continue
 		}
 		if !experimentResultProbFieldsReady(vsA) || !experimentResultProbFieldsReady(vsB) {
