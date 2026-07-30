@@ -58,17 +58,17 @@ func (mr *MockNotificationStorageMockRecorder) CreateAdminNotification(ctx, noti
 }
 
 // DeleteAdminNotification mocks base method.
-func (m *MockNotificationStorage) DeleteAdminNotification(ctx context.Context, id string) error {
+func (m *MockNotificationStorage) DeleteAdminNotification(ctx context.Context, id, lastEditedBy string, updatedAt int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAdminNotification", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteAdminNotification", ctx, id, lastEditedBy, updatedAt)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteAdminNotification indicates an expected call of DeleteAdminNotification.
-func (mr *MockNotificationStorageMockRecorder) DeleteAdminNotification(ctx, id any) *gomock.Call {
+func (mr *MockNotificationStorageMockRecorder) DeleteAdminNotification(ctx, id, lastEditedBy, updatedAt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAdminNotification", reflect.TypeOf((*MockNotificationStorage)(nil).DeleteAdminNotification), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAdminNotification", reflect.TypeOf((*MockNotificationStorage)(nil).DeleteAdminNotification), ctx, id, lastEditedBy, updatedAt)
 }
 
 // GetAdminNotification mocks base method.

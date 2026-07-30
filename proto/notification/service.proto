@@ -484,7 +484,7 @@ service NotificationService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete",
-      description: "Delete a notification along with its read markers. System admin only.",
+      description: "Delete system admin notification.",
       tags: "notification",
       operation_id: "web.v1.notification.admin.delete",
       responses: {

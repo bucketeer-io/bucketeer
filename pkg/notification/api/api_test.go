@@ -639,7 +639,7 @@ func TestNotificationService_DeleteAdminNotification(t *testing.T) {
 					return fn(ctx)
 				})
 				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().DeleteAdminNotification(
-					gomock.Any(), "notification-id-0",
+					gomock.Any(), "notification-id-0", "email", gomock.Any(),
 				).Return(storage.ErrNotificationNotFound)
 			},
 			req: &proto.DeleteAdminNotificationRequest{
@@ -670,7 +670,7 @@ func TestNotificationService_DeleteAdminNotification(t *testing.T) {
 					return fn(ctx)
 				})
 				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().DeleteAdminNotification(
-					gomock.Any(), "notification-id-0",
+					gomock.Any(), "notification-id-0", "email", gomock.Any(),
 				).Return(nil)
 			},
 			req: &proto.DeleteAdminNotificationRequest{

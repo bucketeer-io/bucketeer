@@ -146,8 +146,8 @@ func (s *notificationStorage) UpdateAdminNotification(
 	if err != nil {
 		return err
 	}
-	if rowsAffected != 1 {
-		return notificationstorage.ErrNotificationUnexpectedAffectedRows
+	if rowsAffected == 0 {
+		return notificationstorage.ErrNotificationNotFound
 	}
 	if _, err := s.qe.ExecContext(
 		ctx,
@@ -175,11 +175,14 @@ func (s *notificationStorage) UpdateAdminNotification(
 
 func (s *notificationStorage) DeleteAdminNotification(
 	ctx context.Context,
-	id string,
+	id, lastEditedBy string,
+	updatedAt int64,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
 		deleteNotificationSQL,
+		lastEditedBy,
+		updatedAt,
 		id,
 	)
 	if err != nil {
@@ -224,6 +227,11 @@ func listDraftAdminNotificationsFilters(
 			Column:   "notification.status",
 			Operator: mysqlstorage.OperatorEqual,
 			Value:    int32(proto.Notification_DRAFT),
+		},
+		{
+			Column:   "notification.deleted",
+			Operator: mysqlstorage.OperatorEqual,
+			Value:    false,
 		},
 	}
 	var searchQuery *mysqlstorage.SearchQuery

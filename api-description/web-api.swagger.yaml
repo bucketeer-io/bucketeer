@@ -1230,7 +1230,7 @@ paths:
   /v1/admin_notification:
     delete:
       summary: Delete
-      description: Delete a notification along with its read markers. System admin only.
+      description: Delete system admin notification.
       operationId: web.v1.notification.admin.delete
       responses:
         "200":

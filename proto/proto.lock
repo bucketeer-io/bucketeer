@@ -47688,7 +47688,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Delete a notification along with its read markers. System admin only."
+                        "value": "Delete system admin notification."
                       },
                       {
                         "name": "tags",
