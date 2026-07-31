@@ -53,12 +53,10 @@ const emptyLocalization = (
 
 const PublishForm = ({
   disabled,
-  environmentId,
   initialDraft,
   onClear
 }: {
   disabled?: boolean;
-  environmentId: string;
   initialDraft?: NotificationDetail;
   onClear?: () => void;
 }) => {
@@ -135,34 +133,21 @@ const PublishForm = ({
     lang => !localizationFields.some(f => f.language === lang)
   );
 
-  const publishMutation = usePublishNotification(environmentId);
-  const saveDraftMutation = useSaveDraft(environmentId);
-  const updateMutation = useUpdateNotification(environmentId);
+  const publishMutation = usePublishNotification();
+  const saveDraftMutation = useSaveDraft();
+  const updateMutation = useUpdateNotification();
 
-  // Editing an existing draft updates it in place; otherwise a new one is made.
-  // Edit mode is driven by whether `initialDraft` is set.
   const isEditing = !!initialDraft;
   const editingId = initialDraft?.id;
 
-  // Mirrors `editingId` in a ref so pending mutation callbacks (defined in a
-  // closure over the `editingId` from whenever they were submitted) can read
-  // the *current* editing target when they resolve, not the one they closed
-  // over. If the user switches to editing a different draft before an
-  // in-flight mutation resolves, its `onSuccess`/`onError` must not touch the
-  // form or report a result for content that's no longer on screen.
   const editingIdRef = useRef(editingId);
   editingIdRef.current = editingId;
 
   const {
     formState: { isValid }
   } = form;
-  // Publishing requires every localization to be complete; saving a draft
-  // does not, since a draft is meant to hold work in progress.
   const canPublish = !disabled && isValid;
   const canSaveDraft = !disabled;
-  // When editing a draft, both "Publish" and "Update draft" submit through the
-  // same `updateMutation`, so its `isPending` alone can't tell which button
-  // triggered it. Track the in-flight action to light up only that button.
   const [pendingAction, setPendingAction] = useState<
     'publish' | 'draft' | null
   >(null);
@@ -196,15 +181,11 @@ const PublishForm = ({
   const resetForm = () => {
     form.reset({ localizations: [emptyLocalization(defaultLanguage)] });
     setActiveLanguage(defaultLanguage);
-    // Leave edit mode: parent drops the draft being edited so "Update draft"
-    // reverts to "Save draft".
     onClear?.();
   };
 
   const handlePublish = form.handleSubmit(() => {
     const payload = toInput(NotificationStatus.PUBLISHED);
-    // Captured now, compared against `editingIdRef.current` when the mutation
-    // resolves, so switching drafts mid-flight is detected.
     const submittedFor = editingId;
     setPendingAction('publish');
     const onDone = {
@@ -218,7 +199,6 @@ const PublishForm = ({
         errorNotify(error);
       }
     };
-    // Publishing an edited draft promotes the same record; otherwise create.
     if (isEditing && editingId) {
       updateMutation.mutate({ id: editingId, input: payload }, onDone);
     } else {

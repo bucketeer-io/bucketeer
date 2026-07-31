@@ -17,26 +17,24 @@ import { NotificationDraft, NotificationFilters } from '../types';
 import DraftCard from './draft-card';
 
 interface DraftsPanelProps {
-  environmentId: string;
   filters?: Partial<NotificationFilters>;
   onSelect?: (draft: NotificationDraft) => void;
   onClearFilters?: () => void;
 }
 
 const DraftsPanel = ({
-  environmentId,
   filters,
   onSelect,
   onClearFilters
 }: DraftsPanelProps) => {
   const { t } = useTranslation(['common', 'message']);
   const { notify, errorNotify } = useToast();
-  const { data, isLoading } = useFetchDrafts(environmentId);
+  const { data, isLoading } = useFetchDrafts();
   const drafts = data?.notifications ?? [];
   const [page, setPage] = useState(1);
   const [activeId, setActiveId] = useState<string>();
   const [deletingDraft, setDeletingDraft] = useState<NotificationDraft>();
-  const deleteMutation = useDeleteNotification(environmentId);
+  const deleteMutation = useDeleteNotification();
 
   const onCloseDeleteModal = () => {
     setDeletingDraft(undefined);

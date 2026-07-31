@@ -343,7 +343,7 @@ interface StoreRecord {
   localizations: NotificationCenterLocalization[];
 }
 
-let notifications: StoreRecord[] = SEED.map(s => ({
+const notifications: StoreRecord[] = SEED.map(s => ({
   id: s.id,
   status: s.status,
   createdBy: SEED_EMAIL,
@@ -458,124 +458,11 @@ export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
     ];
   });
 
-  mock.onGet(/\/v1\/notifications\/drafts\?/).reply(config => {
-    const params = new URLSearchParams(config.url?.split('?')[1]);
-    const cursor = Number(params.get('cursor') ?? 0);
-    const pageSize = Number(params.get('pageSize') ?? 50);
-
-    const drafts = notifications
-      .filter(n => n.status === NotificationCenterStatus.DRAFT)
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map(n => toFeedItem(n, VIEWER_EMAIL, getLanguage()));
-
-    const page = drafts.slice(cursor, cursor + pageSize);
-
-    return [
-      200,
-      {
-        notifications: page,
-        cursor: String(cursor + page.length),
-        totalCount: String(drafts.length)
-      }
-    ];
-  });
-
   mock.onGet(/\/v1\/notifications\/unread_count/).reply(() => {
     const unreadCount = notifications
       .filter(n => n.status === NotificationCenterStatus.PUBLISHED)
       .filter(n => !readSetFor(VIEWER_EMAIL).has(n.id)).length;
     return [200, { count: String(unreadCount) }];
-  });
-
-  mock.onPost('/v1/notification').reply(config => {
-    const body = JSON.parse(config.data);
-    const ts = Date.now();
-    const record: StoreRecord = {
-      id: `draft-${ts}`,
-      status: NotificationCenterStatus.DRAFT,
-      createdBy: VIEWER_EMAIL,
-      lastEditedBy: VIEWER_EMAIL,
-      publishedAt: 0,
-      createdAt: ts,
-      updatedAt: ts,
-      localizations: body.localizations
-    };
-    notifications = [record, ...notifications];
-    return [
-      200,
-      { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
-    ];
-  });
-
-  mock.onPatch('/v1/notification').reply(config => {
-    const body = JSON.parse(config.data);
-    const ts = Date.now();
-    notifications = notifications.map(n =>
-      n.id === body.id
-        ? {
-            ...n,
-            localizations: body.localizations,
-            lastEditedBy: VIEWER_EMAIL,
-            updatedAt: ts
-          }
-        : n
-    );
-    const record = notifications.find(n => n.id === body.id)!;
-    return [
-      200,
-      { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
-    ];
-  });
-
-  mock.onPost('/v1/notification/publish').reply(config => {
-    const body = JSON.parse(config.data);
-    const ts = Date.now();
-
-    if (body.id) {
-      notifications = notifications.map(n =>
-        n.id === body.id
-          ? {
-              ...n,
-              status: NotificationCenterStatus.PUBLISHED,
-              localizations: body.localizations,
-              lastEditedBy: VIEWER_EMAIL,
-              publishedBy: VIEWER_EMAIL,
-              publishedAt: n.publishedAt || ts,
-              updatedAt: ts
-            }
-          : n
-      );
-      const record = notifications.find(n => n.id === body.id)!;
-      return [
-        200,
-        { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
-      ];
-    }
-
-    const record: StoreRecord = {
-      id: `${ts}`,
-      status: NotificationCenterStatus.PUBLISHED,
-      createdBy: VIEWER_EMAIL,
-      lastEditedBy: VIEWER_EMAIL,
-      publishedBy: VIEWER_EMAIL,
-      publishedAt: ts,
-      createdAt: ts,
-      updatedAt: ts,
-      localizations: body.localizations
-    };
-    notifications = [record, ...notifications];
-    return [
-      200,
-      { notification: toFeedItem(record, VIEWER_EMAIL, getLanguage()) }
-    ];
-  });
-
-  mock.onDelete(/\/v1\/notification\?/).reply(config => {
-    const params = new URLSearchParams(config.url?.split('?')[1]);
-    const id = params.get('id');
-    notifications = notifications.filter(n => n.id !== id);
-    reads.forEach(set => set.delete(id ?? ''));
-    return [200, {}];
   });
 
   mock.onPost('/v1/notifications/mark_as_read').reply(config => {

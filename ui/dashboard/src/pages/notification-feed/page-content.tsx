@@ -70,7 +70,7 @@ const PageContent = ({
   // the form always edits current data instead of a stale snapshot taken when
   // "Edit Draft" was clicked.
   const [editingId, setEditingId] = useState<string>();
-  const { data: draftsData } = useFetchDrafts(environmentId, isSystemAdmin);
+  const { data: draftsData } = useFetchDrafts(isSystemAdmin);
   const editingDraft = draftsData?.notifications.find(d => d.id === editingId);
 
   const onEditDraft = (draft: NotificationDetail) => {
@@ -250,7 +250,6 @@ const PageContent = ({
               <TabsContent value="publish">
                 <PublishForm
                   disabled={disabled}
-                  environmentId={environmentId}
                   initialDraft={editingDraft}
                   onClear={onClearEdit}
                 />
@@ -261,7 +260,6 @@ const PageContent = ({
           {isSystemAdmin && filters.tab === 'publish' && (
             <aside className="lg:border-l lg:border-gray-200 lg:pl-8">
               <DraftsPanel
-                environmentId={environmentId}
                 filters={{ ...filters, ...dateFilters }}
                 onSelect={setDetail}
                 onClearFilters={onClearFilters}
