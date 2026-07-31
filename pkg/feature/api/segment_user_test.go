@@ -27,6 +27,8 @@ import (
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -157,6 +159,72 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			assert.Equal(t, tc.expectedErr, err)
 		})
 	}
+}
+
+// TestBulkUploadSegmentUsersPublishOrderingMySQL guards the publish ordering
+// of BulkUploadSegmentUsers:
+//   - the BulkSegmentUsersReceivedEvent must be published inside the
+//     transaction, so a publish failure rolls back the UPLOADING status
+//     (otherwise the segment would be stuck in UPLOADING forever with no
+//     persister event to resolve it);
+//   - the domain event must be published only after the transaction commits,
+//     so consumers that re-read MySQL (e.g. the cache refresher) never
+//     observe pre-commit state.
+func TestBulkUploadSegmentUsersPublishOrderingMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	ctx = setToken(ctx)
+
+	service := createFeatureService(mockController)
+	segmentUsersPublisher := publishermock.NewMockPublisher(mockController)
+	domainPublisher := publishermock.NewMockPublisher(mockController)
+	service.segmentUsersPublisher = segmentUsersPublisher
+	service.domainPublisher = domainPublisher
+
+	committed := false
+	service.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+		err := fn(ctx)
+		require.NoError(t, err)
+		committed = true
+		return err
+	})
+	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&domain.Segment{
+		Segment: &featureproto.Segment{},
+	}, nil, nil)
+	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(nil)
+	segmentUsersPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, msg publisher.Message) error {
+			assert.False(t, committed,
+				"received event must be published inside the transaction")
+			return nil
+		})
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, msg publisher.Message) error {
+			assert.True(t, committed,
+				"domain event must be published after the transaction commits")
+			return nil
+		})
+
+	_, err := service.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
+		Data:          []byte("data"),
+		State:         featureproto.SegmentUser_INCLUDED,
+		EnvironmentId: "ns0",
+		SegmentId:     "id",
+	})
+	assert.NoError(t, err)
 }
 
 func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {

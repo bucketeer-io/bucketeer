@@ -110,6 +110,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		)
 		return nil, err
 	}
+	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
@@ -126,7 +127,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		if err := s.segmentStorage.UpdateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			return err
 		}
-		e, err := domainevent.NewEvent(
+		eventPb, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_SEGMENT,
 			segment.Id,
@@ -143,10 +144,11 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		if err != nil {
 			return err
 		}
-		err = s.domainPublisher.Publish(ctx, e)
-		if err != nil {
-			return err
-		}
+		// The received event stays inside the transaction on purpose: it is
+		// what triggers the segment-user persister to process the upload and
+		// eventually resolve the UPLOADING status. If it cannot be published,
+		// the status change must roll back, otherwise the segment would be
+		// stuck in UPLOADING forever and block future uploads.
 		return s.publishBulkSegmentUsersReceivedEvent(
 			ctx,
 			editor,
@@ -168,6 +170,20 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	// Publish the domain event only after the transaction commits: consumers
+	// such as the cache refresher re-read MySQL on each event, so publishing
+	// inside the transaction would let them read (and cache) pre-commit state.
+	if err := s.domainPublisher.Publish(ctx, eventPb); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("event", eventPb),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()

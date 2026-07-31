@@ -94,24 +94,7 @@ func (s *FeatureService) CreateSegment(
 			)
 			return err
 		}
-		e, err := domainevent.NewEvent(
-			editor,
-			eventproto.Event_SEGMENT,
-			segment.Id,
-			eventproto.Event_SEGMENT_CREATED,
-			&eventproto.SegmentCreatedEvent{
-				Id:          segment.Id,
-				Name:        segment.Name,
-				Description: segment.Description,
-			},
-			req.EnvironmentId,
-			segment.Segment,
-			nil,
-		)
-		if err != nil {
-			return nil
-		}
-		return s.domainPublisher.Publish(ctx, e)
+		return nil
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentAlreadyExists) {
@@ -122,6 +105,44 @@ func (s *FeatureService) CreateSegment(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	// Publish only after the transaction commits: consumers such as the
+	// cache refresher re-read MySQL on each event, so publishing inside
+	// the transaction would let them read (and cache) pre-commit state.
+	e, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_SEGMENT,
+		segment.Id,
+		eventproto.Event_SEGMENT_CREATED,
+		&eventproto.SegmentCreatedEvent{
+			Id:          segment.Id,
+			Name:        segment.Name,
+			Description: segment.Description,
+		},
+		req.EnvironmentId,
+		segment.Segment,
+		nil,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.domainPublisher.Publish(ctx, e); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("event", e),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
@@ -154,6 +175,7 @@ func (s *FeatureService) DeleteSegment(
 	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
+	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -166,7 +188,7 @@ func (s *FeatureService) DeleteSegment(
 			)
 			return err
 		}
-		event, err := domainevent.NewEvent(
+		eventPb, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_SEGMENT,
 			segment.Id,
@@ -179,9 +201,6 @@ func (s *FeatureService) DeleteSegment(
 			segment.Segment, // Previous state: what was deleted
 		)
 		if err != nil {
-			return nil
-		}
-		if err := s.domainPublisher.Publish(ctx, event); err != nil {
 			return err
 		}
 		return s.segmentStorage.DeleteSegment(contextWithTx, segment.Id)
@@ -194,6 +213,20 @@ func (s *FeatureService) DeleteSegment(
 			"Failed to delete segment",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	// Publish only after the transaction commits: consumers such as the
+	// cache refresher act on the event immediately, so publishing inside
+	// the transaction would let them observe pre-commit state.
+	if err := s.domainPublisher.Publish(ctx, eventPb); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("event", eventPb),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
@@ -291,6 +324,7 @@ func (s *FeatureService) UpdateSegment(
 		return nil, err
 	}
 	var updatedSegment *featureproto.Segment
+	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -319,7 +353,7 @@ func (s *FeatureService) UpdateSegment(
 			updated.UpdateRules(req.Rules.Values)
 		}
 		updatedSegment = updated.Segment
-		e, err := domainevent.NewEvent(
+		eventPb, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_SEGMENT,
 			req.Id,
@@ -337,9 +371,6 @@ func (s *FeatureService) UpdateSegment(
 		if err != nil {
 			return err
 		}
-		if err := s.domainPublisher.Publish(ctx, e); err != nil {
-			return err
-		}
 		return s.segmentStorage.UpdateSegment(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
@@ -351,6 +382,21 @@ func (s *FeatureService) UpdateSegment(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	// Publish only after the transaction commits: the cache refresher
+	// re-reads MySQL on each event, so publishing inside the transaction
+	// would let it read the pre-update segment and overwrite the segment
+	// users cache with stale rules.
+	if err := s.domainPublisher.Publish(ctx, eventPb); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("event", eventPb),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()

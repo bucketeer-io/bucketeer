@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -31,6 +32,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -730,6 +733,211 @@ func TestListSegmentsMySQL(t *testing.T) {
 			assert.Equal(t, tc.getExpectedErr(), err)
 		})
 	}
+}
+
+// TestSegmentDomainEventPublishedAfterCommitMySQL guards the
+// publish-after-commit ordering of segment mutations. Publishing inside the
+// transaction lets consumers that re-read MySQL on each event (e.g. the
+// cache refresher) observe pre-commit state and overwrite the segment users
+// cache with stale rules, which broke server SDK diff syncs.
+func TestSegmentDomainEventPublishedAfterCommitMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	ctx = setToken(ctx)
+
+	segmentRules := &featureproto.RuleListValue{
+		Values: []*featureproto.Rule{
+			{
+				Clauses: []*featureproto.Clause{
+					{
+						Attribute: "plan",
+						Operator:  featureproto.Clause_EQUALS,
+						Values:    []string{"premium"},
+					},
+				},
+			},
+		},
+	}
+
+	testcases := []struct {
+		desc  string
+		setup func(s *FeatureService, committed *bool)
+		run   func(s *FeatureService) error
+	}{
+		{
+			desc: "CreateSegment",
+			setup: func(s *FeatureService, committed *bool) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					err := fn(ctx)
+					require.NoError(t, err)
+					*committed = true
+					return err
+				})
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().CreateSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			run: func(s *FeatureService) error {
+				_, err := s.CreateSegment(ctx, &featureproto.CreateSegmentRequest{
+					Name:          "name",
+					Description:   "description",
+					EnvironmentId: "ns0",
+				})
+				return err
+			},
+		},
+		{
+			desc: "UpdateSegment with rules",
+			setup: func(s *FeatureService, committed *bool) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					err := fn(ctx)
+					require.NoError(t, err)
+					*committed = true
+					return err
+				})
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id0",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegmentUsersBySegment(
+					gomock.Any(), "id0", "ns0",
+				).Return([]*featureproto.SegmentUser{}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Any(), "ns0",
+				).Return(nil)
+			},
+			run: func(s *FeatureService) error {
+				_, err := s.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+					Id:            "id0",
+					EnvironmentId: "ns0",
+					Rules:         segmentRules,
+				})
+				return err
+			},
+		},
+		{
+			desc: "DeleteSegment",
+			setup: func(s *FeatureService, committed *bool) {
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					err := fn(ctx)
+					require.NoError(t, err)
+					*committed = true
+					return err
+				})
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id0",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().DeleteSegment(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			run: func(s *FeatureService) error {
+				_, err := s.DeleteSegment(ctx, &featureproto.DeleteSegmentRequest{
+					Id:            "id0",
+					EnvironmentId: "ns0",
+				})
+				return err
+			},
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			domainPublisher := publishermock.NewMockPublisher(mockController)
+			service.domainPublisher = domainPublisher
+			committed := false
+			domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(ctx context.Context, msg publisher.Message) error {
+					assert.True(t, committed,
+						"domain event must be published after the transaction commits")
+					return nil
+				})
+			tc.setup(service, &committed)
+			assert.NoError(t, tc.run(service))
+		})
+	}
+}
+
+// TestUpdateSegmentPublishFailureMySQL: when the post-commit publish fails,
+// the request must fail and the segment users cache must not be refreshed
+// (no ListSegmentUsersBySegment/Put expectations are registered, so the mock
+// controller fails the test if they are called).
+func TestUpdateSegmentPublishFailureMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	ctx = setToken(ctx)
+
+	service := createFeatureService(mockController)
+	domainPublisher := publishermock.NewMockPublisher(mockController)
+	service.domainPublisher = domainPublisher
+	service.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+		return fn(ctx)
+	})
+	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&domain.Segment{
+		Segment: &featureproto.Segment{
+			Id: "id0",
+		},
+	}, nil, nil)
+	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(nil)
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
+
+	_, err := service.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+		Id:            "id0",
+		EnvironmentId: "ns0",
+		Rules: &featureproto.RuleListValue{
+			Values: []*featureproto.Rule{
+				{
+					Clauses: []*featureproto.Clause{
+						{
+							Attribute: "plan",
+							Operator:  featureproto.Clause_EQUALS,
+							Values:    []string{"premium"},
+						},
+					},
+				},
+			},
+		},
+	})
+	assert.Error(t, err)
 }
 
 func setToken(ctx context.Context) context.Context {
