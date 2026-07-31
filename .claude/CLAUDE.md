@@ -89,10 +89,26 @@ make mockgen           # Regenerate only mocks (after changing interfaces that h
 - Run `make proto-all` after any `.proto` file change — this regenerates Go bindings and OpenAPI/Swagger specs.
 - Run `make mockgen` after changing any Go interface that has generated mocks in a `mock/` directory.
 - The generated files are committed to the repo. `protoc` v23.4 must be on PATH ahead of any other version for the version header in `.pb.go` files to stay at `v4.23.4`.
+- Prefer running generation inside the dev container via the `devc-generate` skill — the container guarantees protoc v23.4, while a host version mismatch churns every generated file.
 
 ### Local development
 
-**Docker Compose (recommended for most development):**
+**Dev container + Minikube (preferred):**
+
+Development actions — proto generation, builds, deploys, kubectl/helm — should run **inside the Bucketeer dev container**, where tool versions are guaranteed (protoc v23.4, go-tools, minikube/helm/kubectl). Check for a running dev container first before running these on the host. Use the project skills:
+
+- `devc` — detect the running dev container (local devcontainer or Codespace) and run any command inside it: `bash .claude/skills/devc/scripts/devc-exec.sh status`
+- `devc-generate` — proto/mock generation inside the container
+- `devc-deploy` — deploy to the minikube cluster inside the container
+
+```bash
+make start-minikube    # Inside the dev container. Always use this, not `minikube start` directly
+make deploy-bucketeer  # Deploy all Helm charts to minikube
+```
+
+Never run kubectl/helm bare on the host — the host kubectl context may point at a real GKE cluster, not minikube.
+
+**Docker Compose (host-based alternative):**
 ```bash
 make docker-compose-up      # Start all services
 make docker-compose-status  # Check status
@@ -105,12 +121,6 @@ Add to `/etc/hosts`:
 ```
 127.0.0.1 web-gateway.bucketeer.io
 127.0.0.1 api-gateway.bucketeer.io
-```
-
-**Minikube (Kubernetes-based):**
-```bash
-make start-minikube    # Always use this, not `minikube start` directly
-make deploy-bucketeer  # Deploy all Helm charts
 ```
 
 ### Database migrations
