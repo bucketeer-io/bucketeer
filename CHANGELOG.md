@@ -35,7 +35,7 @@
 * implement postgres for tag svc ([#2583](https://github.com/bucketeer-io/bucketeer/issues/2583)) ([a6eb084](https://github.com/bucketeer-io/bucketeer/commit/a6eb08471176eb39f275500208a2ee59c2152ed2))
 * implement postgres query builder ([#2540](https://github.com/bucketeer-io/bucketeer/issues/2540)) ([0a6cfab](https://github.com/bucketeer-io/bucketeer/commit/0a6cfaba3801ff9f2e85666fdf858621b2175f99))
 * implement postgres storage for push svc ([#2569](https://github.com/bucketeer-io/bucketeer/issues/2569)) ([22a8a92](https://github.com/bucketeer-io/bucketeer/commit/22a8a92b2592e7097c8e9a7765656baddab29928))
-* implement postgreSQL as data warehouse option ([#2300](https://github.com/bucketeer-io/bucketeer/issues/2300)) ([291212c](https://github.com/bucketeer-io/bucketeer/commit/291212ca9a4e1957a59ccb0b1959a3cf4c8ffec4))
+* implement PostgreSQL as data warehouse option ([#2300](https://github.com/bucketeer-io/bucketeer/issues/2300)) ([291212c](https://github.com/bucketeer-io/bucketeer/commit/291212ca9a4e1957a59ccb0b1959a3cf4c8ffec4))
 * implement priority class option to chart manifest ([#2428](https://github.com/bucketeer-io/bucketeer/issues/2428)) ([76af04b](https://github.com/bucketeer-io/bucketeer/commit/76af04bf01487472e020e63d1dc62a326b437514))
 * implement update admin notification ([#2721](https://github.com/bucketeer-io/bucketeer/issues/2721)) ([c946f12](https://github.com/bucketeer-io/bucketeer/commit/c946f12ea2df360dbb22b32f282bb598c25e15f5))
 * init postgres migration and helm chart, compose config ([#2426](https://github.com/bucketeer-io/bucketeer/issues/2426)) ([0acd4ee](https://github.com/bucketeer-io/bucketeer/commit/0acd4ee8c2f8dfb7c7828600c19b2e16a6d143a8))
