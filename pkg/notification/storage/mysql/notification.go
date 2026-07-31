@@ -501,7 +501,7 @@ func (s *notificationStorage) ListNotifications(
 	if err := s.fillLocalizations(ctx, notifications); err != nil {
 		return nil, 0, 0, err
 	}
-	readIDs, err := s.readNotificationIDs(ctx, p.Email)
+	readIDs, err := s.readNotificationIDs(ctx, p.Email, notifications)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -520,17 +520,32 @@ func (s *notificationStorage) ListNotifications(
 	return notifications, nextOffset, totalCount, nil
 }
 
-// readNotificationIDs returns the set of notification ids the viewer has read.
+// readNotificationIDs returns which of the given notifications the viewer
+// has read; the query is bounded by the page size.
 func (s *notificationStorage) readNotificationIDs(
 	ctx context.Context,
 	email string,
+	notifications []*proto.Notification,
 ) (map[string]struct{}, error) {
+	if len(notifications) == 0 {
+		return map[string]struct{}{}, nil
+	}
+	ids := make([]interface{}, 0, len(notifications))
+	for _, n := range notifications {
+		ids = append(ids, n.Id)
+	}
 	options := &mysqlstorage.ListOptions{
 		Filters: []*mysqlstorage.FilterV2{
 			{
 				Column:   "notification_read.email",
 				Operator: mysqlstorage.OperatorEqual,
 				Value:    email,
+			},
+		},
+		InFilters: []*mysqlstorage.InFilter{
+			{
+				Column: "notification_read.notification_id",
+				Values: ids,
 			},
 		},
 	}
@@ -540,15 +555,15 @@ func (s *notificationStorage) readNotificationIDs(
 		return nil, err
 	}
 	defer rows.Close()
-	ids := map[string]struct{}{}
+	readIDs := map[string]struct{}{}
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		ids[id] = struct{}{}
+		readIDs[id] = struct{}{}
 	}
-	return ids, rows.Err()
+	return readIDs, rows.Err()
 }
 
 func (s *notificationStorage) earliestAccountCreatedAt(

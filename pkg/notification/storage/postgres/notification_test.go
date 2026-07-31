@@ -856,13 +856,13 @@ func TestListNotifications(t *testing.T) {
 			setup: func(s *notificationStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(newReadIDRows("notification-id-0"), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(newListRows(), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(newLocRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newReadIDRows("notification-id-0"), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(newCountRow())
@@ -884,9 +884,6 @@ func TestListNotifications(t *testing.T) {
 		{
 			desc: "Success: unread, fallback to English, read flag unset",
 			setup: func(s *notificationStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(newReadIDRows(), nil)
 				boundRow := mock.NewMockRow(mockController)
 				boundRow.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
 					*args[0].(*int64) = int64(5)
@@ -901,6 +898,9 @@ func TestListNotifications(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(newLocRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newReadIDRows(), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(newCountRow())
@@ -923,9 +923,21 @@ func TestListNotifications(t *testing.T) {
 		{
 			desc: "Success: read with no read markers returns empty",
 			setup: func(s *notificationStorage) {
+				emptyRows := mock.NewMockRows(mockController)
+				emptyRows.EXPECT().Close().Return(nil)
+				emptyRows.EXPECT().Next().Return(false)
+				emptyRows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(newReadIDRows(), nil)
+				).Return(emptyRows, nil)
+				countRow := mock.NewMockRow(mockController)
+				countRow.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+					*args[0].(*int64) = int64(0)
+					return nil
+				})
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(countRow)
 			},
 			params: notificationstorage.ListNotificationsParams{
 				Email:      "viewer@example.com",

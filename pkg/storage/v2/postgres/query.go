@@ -267,7 +267,11 @@ func (q *SearchQuery) BindSQL(next int) (sql string, args []interface{}, nextAft
 }
 
 type ExistsFilter struct {
+	// Subquery may contain one "$%d" placeholder template per value; the
+	// templates are formatted with sequential indices at bind time.
+	// Example: "SELECT 1 FROM t WHERE t.id = outer.id AND t.email = $%d".
 	Subquery  string
+	Values    []interface{}
 	NotExists bool
 }
 
@@ -275,10 +279,15 @@ func (f *ExistsFilter) BindSQL(next int) (sql string, args []interface{}, nextAf
 	if f.Subquery == "" {
 		return "", nil, next
 	}
-	if f.NotExists {
-		return fmt.Sprintf("NOT EXISTS (%s)", f.Subquery), nil, next
+	subquery := f.Subquery
+	if len(f.Values) > 0 {
+		subquery = WritePlaceHolder(subquery, next, len(f.Values))
+		next += len(f.Values)
 	}
-	return fmt.Sprintf("EXISTS (%s)", f.Subquery), nil, next
+	if f.NotExists {
+		return fmt.Sprintf("NOT EXISTS (%s)", subquery), f.Values, next
+	}
+	return fmt.Sprintf("EXISTS (%s)", subquery), f.Values, next
 }
 
 type OrFilter struct {

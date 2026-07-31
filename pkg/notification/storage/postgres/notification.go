@@ -58,6 +58,12 @@ var (
 	selectEarliestAccountCreatedAtSQL string
 )
 
+// readNotificationExistsSubquery correlates a viewer's read marker with the
+// outer notification row for EXISTS / NOT EXISTS read-status filters; the
+// $%d template is bound at query-construction time.
+const readNotificationExistsSubquery = "SELECT 1 FROM notification_read " +
+	"WHERE notification_read.notification_id = notification.id AND notification_read.email = $%d"
+
 type notificationStorage struct {
 	qe pgstorage.QueryExecer
 }
@@ -393,10 +399,6 @@ func (s *notificationStorage) ListNotifications(
 	if err != nil || offset < 0 {
 		return nil, 0, 0, notificationstorage.ErrInvalidListNotificationsCursor
 	}
-	readIDs, err := s.readNotificationIDs(ctx, p.Email)
-	if err != nil {
-		return nil, 0, 0, err
-	}
 	filters := []*pgstorage.Filter{
 		{
 			Column:   "notification.status",
@@ -423,12 +425,7 @@ func (s *notificationStorage) ListNotifications(
 			Value:    p.PublishedAtTo,
 		})
 	}
-	var inFilters []*pgstorage.InFilter
-	var notInFilters []*pgstorage.NotInFilter
-	readIDValues := make([]interface{}, 0, len(readIDs))
-	for id := range readIDs {
-		readIDValues = append(readIDValues, id)
-	}
+	var existsFilters []*pgstorage.ExistsFilter
 	switch p.ReadStatus {
 	case proto.ListNotificationsRequest_UNREAD:
 		// New users do not inherit history: unread only considers
@@ -444,19 +441,15 @@ func (s *notificationStorage) ListNotifications(
 				Value:    accountCreatedAt,
 			})
 		}
-		if len(readIDValues) > 0 {
-			notInFilters = append(notInFilters, &pgstorage.NotInFilter{
-				Column: "notification.id",
-				Values: readIDValues,
-			})
-		}
+		existsFilters = append(existsFilters, &pgstorage.ExistsFilter{
+			Subquery:  readNotificationExistsSubquery,
+			NotExists: true,
+			Values:    []interface{}{p.Email},
+		})
 	case proto.ListNotificationsRequest_READ:
-		if len(readIDValues) == 0 {
-			return []*proto.Notification{}, offset, 0, nil
-		}
-		inFilters = append(inFilters, &pgstorage.InFilter{
-			Column: "notification.id",
-			Values: readIDValues,
+		existsFilters = append(existsFilters, &pgstorage.ExistsFilter{
+			Subquery: readNotificationExistsSubquery,
+			Values:   []interface{}{p.Email},
 		})
 	}
 	var searchQuery *pgstorage.SearchQuery
@@ -474,13 +467,12 @@ func (s *notificationStorage) ListNotifications(
 		limit = 0
 	}
 	options := &pgstorage.ListOptions{
-		Filters:      filters,
-		InFilters:    inFilters,
-		NotInFilters: notInFilters,
-		SearchQuery:  searchQuery,
-		Orders:       orders,
-		Limit:        limit,
-		Offset:       offset,
+		Filters:       filters,
+		ExistsFilters: existsFilters,
+		SearchQuery:   searchQuery,
+		Orders:        orders,
+		Limit:         limit,
+		Offset:        offset,
 	}
 	query, whereArgs := pgstorage.ConstructQueryAndWhereArgs(selectNotificationsSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
@@ -514,6 +506,10 @@ func (s *notificationStorage) ListNotifications(
 	if err := s.fillLocalizations(ctx, notifications); err != nil {
 		return nil, 0, 0, err
 	}
+	readIDs, err := s.readNotificationIDs(ctx, p.Email, notifications)
+	if err != nil {
+		return nil, 0, 0, err
+	}
 	for _, n := range notifications {
 		n.Localization = domain.ResolveLocalization(n.Localizations, p.Language)
 		n.Localizations = nil
@@ -529,17 +525,32 @@ func (s *notificationStorage) ListNotifications(
 	return notifications, nextOffset, totalCount, nil
 }
 
-// readNotificationIDs returns the set of notification ids the viewer has read.
+// readNotificationIDs returns which of the given notifications the viewer
+// has read; the query is bounded by the page size.
 func (s *notificationStorage) readNotificationIDs(
 	ctx context.Context,
 	email string,
+	notifications []*proto.Notification,
 ) (map[string]struct{}, error) {
+	if len(notifications) == 0 {
+		return map[string]struct{}{}, nil
+	}
+	ids := make([]interface{}, 0, len(notifications))
+	for _, n := range notifications {
+		ids = append(ids, n.Id)
+	}
 	options := &pgstorage.ListOptions{
 		Filters: []*pgstorage.Filter{
 			{
 				Column:   "notification_read.email",
 				Operator: pgstorage.OperatorEqual,
 				Value:    email,
+			},
+		},
+		InFilters: []*pgstorage.InFilter{
+			{
+				Column: "notification_read.notification_id",
+				Values: ids,
 			},
 		},
 	}
@@ -549,15 +560,15 @@ func (s *notificationStorage) readNotificationIDs(
 		return nil, err
 	}
 	defer rows.Close()
-	ids := map[string]struct{}{}
+	readIDs := map[string]struct{}{}
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		ids[id] = struct{}{}
+		readIDs[id] = struct{}{}
 	}
-	return ids, rows.Err()
+	return readIDs, rows.Err()
 }
 
 func (s *notificationStorage) earliestAccountCreatedAt(
