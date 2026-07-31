@@ -607,10 +607,31 @@ func (p *evaluationCountEventPersister) writeDAU() {
 	}
 	if err := p.dauCache.RecordDAUBatch(records); err != nil {
 		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Warn("Failed to record DAU batch",
+			p.logger.Warn("Failed to record DAU batch, will retry next cycle",
 				zap.Error(err),
 				zap.Int("recordCount", len(records)),
 			)
+		}
+		// Merge the buffer back so the entries are retried on the next cycle.
+		// The Pub/Sub messages were already acked, so dropping the buffer here
+		// would lose the DAU data. Re-sending already-recorded user IDs is safe
+		// because PFADD (HyperLogLog) is idempotent.
+		p.restoreDAUBuffer(buf)
+	}
+}
+
+// restoreDAUBuffer merges a previously swapped-out DAU buffer back into the
+// current one, preserving any entries buffered in the meantime.
+func (p *evaluationCountEventPersister) restoreDAUBuffer(buf dauBuffer) {
+	p.dauBufferMutex.Lock()
+	defer p.dauBufferMutex.Unlock()
+	for key, userIDSet := range buf {
+		if p.dauBuf[key] == nil {
+			p.dauBuf[key] = userIDSet
+			continue
+		}
+		for userID := range userIDSet {
+			p.dauBuf[key][userID] = struct{}{}
 		}
 	}
 }
@@ -696,17 +717,23 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 			info = append(info, v)
 		}
 		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentId); err != nil {
-			p.logger.Error("Failed to write feature last-used info", zap.Error(err),
+			// Keep the entries so they are retried on the next cycle.
+			// The Pub/Sub messages were already acked when the evaluation counts
+			// were written to Redis, so dropping the entries here would lose the
+			// last-used info until the next evaluation event arrives for the flag.
+			p.logger.Error("Failed to write feature last-used info, will retry next cycle",
+				zap.Error(err),
 				zap.String("environmentId", environmentId))
 			continue
 		}
+		// Remove only the environments that were successfully written.
+		// The failed ones will remain for the next attempt.
+		delete(p.envLastUsedCache, environmentId)
 		p.logger.Debug("Cache has been written",
 			zap.String("environmentId", environmentId),
 			zap.Int("cacheSize", len(info)),
 		)
 	}
-	// Reset the cache
-	p.envLastUsedCache = make(environmentLastUsedInfoCache)
 }
 
 func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
