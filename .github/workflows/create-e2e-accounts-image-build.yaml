@@ -1,0 +1,79 @@
+name: Build and Push create-e2e-accounts Multi-Arch Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'hack/create-e2e-accounts/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (leave empty to use the Makefile TAG)"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/bucketeer-io/bucketeer-create-e2e-accounts
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Get image tag
+        id: tag
+        run: |
+          # Use input tag if provided, otherwise extract from the Makefile
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG=$(grep -E '^TAG=' hack/create-e2e-accounts/Makefile | sed 's/TAG=//')
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Using tag: ${TAG}"
+
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version-file: hack/create-e2e-accounts/go.mod
+
+      # The Docker build context is hack/create-e2e-accounts only, but its
+      # go.mod replaces bucketeer/v2 with ../../, so the parent module must be
+      # vendored into the context before building the image.
+      - name: Vendor dependencies
+        working-directory: hack/create-e2e-accounts
+        run: go mod vendor
+
+      - name: Set up QEMU for ARM64 builds
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        with:
+          platforms: linux/arm64
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        with:
+          use: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: ./hack/create-e2e-accounts
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=create-e2e-accounts
+          cache-to: type=gha,mode=max,scope=create-e2e-accounts
+          provenance: false

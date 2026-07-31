@@ -90,17 +90,20 @@ go run ./hack/create-e2e-accounts create \
   this first (e.g. via `make create-dev-container-e2e-accounts` or
   `make docker-compose-create-e2e-accounts`).
 
-## Create docker image
+## Release docker image
 
-```
-make deps
+The image is built and pushed by the
+`create-e2e-accounts-image-build.yaml` GitHub Actions workflow, which
+authenticates to ghcr.io with the built-in `GITHUB_TOKEN` (no PAT needed).
 
-export PAT=<PERSONAL_ACCESS_TOKEN>
-export GITHUB_USER_NAME=<GITHUB_USER_NAME>
-export TAG=<TAG>
+1. Bump `TAG` in this directory's `Makefile`.
+2. Merge to `main`: any change under `hack/create-e2e-accounts/` triggers the
+   workflow, which builds a multi-arch image (linux/amd64 + linux/arm64) and
+   pushes `ghcr.io/bucketeer-io/bucketeer-create-e2e-accounts:<TAG>`.
+3. The workflow can also be run manually via `workflow_dispatch`, optionally
+   overriding the tag.
 
-make docker-build
-make docker-push
-```
-
-Personal Access Token needs to have `write:packages` permission.
+For a local build without pushing (e.g. to verify the Dockerfile), run
+`make deps docker-build`. The `deps` target is required: the Docker build
+context is this directory only, and `go.mod` replaces `bucketeer/v2` with
+`../../`, so the parent module must be vendored in first.
