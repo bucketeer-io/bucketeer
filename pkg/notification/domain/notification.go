@@ -44,6 +44,37 @@ func (n *Notification) Publish(publishedBy string) {
 	n.UpdatedAt = now
 }
 
+// ResolveLocalization returns the localization for the given language,
+// falling back to English, then to the first localization by language code.
+// It returns nil when there are no localizations.
+func ResolveLocalization(
+	localizations []*proto.NotificationLocalization,
+	language string,
+) *proto.NotificationLocalization {
+	if len(localizations) == 0 {
+		return nil
+	}
+	var english *proto.NotificationLocalization
+	for _, l := range localizations {
+		if l.Language == language {
+			return l
+		}
+		if l.Language == "en" {
+			english = l
+		}
+	}
+	if english != nil {
+		return english
+	}
+	first := localizations[0]
+	for _, l := range localizations[1:] {
+		if l.Language < first.Language {
+			first = l
+		}
+	}
+	return first
+}
+
 func NewNotification(
 	createdBy string,
 	localizations []*proto.NotificationLocalization,

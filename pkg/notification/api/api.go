@@ -31,7 +31,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
@@ -40,6 +42,9 @@ const (
 	// Maximum page size for notifications. Also used as default when page_size
 	// is not set or exceeds this value.
 	maxNotificationPageSize = 200
+	// Default language for localization resolution when the request does not
+	// specify one.
+	defaultNotificationLanguage = "en"
 )
 
 type options struct {
@@ -113,11 +118,66 @@ func (s *NotificationService) checkSystemAdminRole(
 	return editor, nil
 }
 
+// checkAuthenticated allows any authenticated console user (viewer APIs).
+func (s *NotificationService) checkAuthenticated(ctx context.Context) (*token.AccessToken, error) {
+	t, ok := rpc.GetAccessToken(ctx)
+	if !ok {
+		s.logger.Error(
+			"Unauthenticated",
+			log.FieldsFromIncomingContext(ctx)...,
+		)
+		return nil, statusUnauthenticated.Err()
+	}
+	return t, nil
+}
+
 func (s *NotificationService) ListNotifications(
 	ctx context.Context,
 	req *proto.ListNotificationsRequest,
 ) (*proto.ListNotificationsResponse, error) {
-	return nil, statusNotImplemented
+	t, err := s.checkAuthenticated(ctx)
+	if err != nil {
+		return nil, err
+	}
+	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxNotificationPageSize {
+		limit = maxNotificationPageSize
+	}
+	language := strings.TrimSpace(req.Language)
+	if language == "" {
+		language = defaultNotificationLanguage
+	}
+	params := storage.ListNotificationsParams{
+		Email:           t.Email,
+		Language:        language,
+		SearchKeyword:   req.SearchKeyword,
+		ReadStatus:      req.ReadStatus,
+		PublishedAtFrom: req.PublishedAtFrom,
+		PublishedAtTo:   req.PublishedAtTo,
+		OrderBy:         req.OrderBy,
+		OrderDirection:  req.OrderDirection,
+		PageSize:        limit,
+		Cursor:          req.Cursor,
+	}
+	notifications, nextOffset, totalCount, err := s.notificationStorage.ListNotifications(ctx, params)
+	if err != nil {
+		if errors.Is(err, storage.ErrInvalidListNotificationsCursor) {
+			return nil, statusInvalidCursor.Err()
+		}
+		if errors.Is(err, storage.ErrInvalidListNotificationsOrderBy) {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		s.logger.Error(
+			"Failed to list notifications",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.ListNotificationsResponse{
+		Notifications: notifications,
+		NextCursor:    strconv.Itoa(nextOffset),
+		TotalCount:    totalCount,
+	}, nil
 }
 
 func (s *NotificationService) GetNotification(
