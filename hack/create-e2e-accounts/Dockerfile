@@ -1,9 +1,12 @@
-FROM golang:1.26.5 AS builder
+# Build on the host's native architecture and cross-compile for the target:
+# running the Go compiler under QEMU emulation takes ~10x longer.
+FROM --platform=$BUILDPLATFORM golang:1.26.5 AS builder
+ARG TARGETOS TARGETARCH
 
 WORKDIR /app
 COPY . .
 
-RUN CGO_ENABLED=0 go build -o create-e2e-accounts .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o create-e2e-accounts .
 
 FROM gcr.io/distroless/base
 
