@@ -23,16 +23,13 @@ detect() {
     return
   fi
 
-  # Case 2: local devcontainer (VS Code "Reopen in Container" / devcontainer CLI)
+  # Case 2: local devcontainer (VS Code "Reopen in Container" / devcontainer CLI).
+  # Derive the repo root from this script's location (<repo>/.claude/skills/devc/scripts/)
+  # so the exact label match works from any cwd — no fuzzy fallback that could pick
+  # the wrong container when multiple checkouts are running.
   local repo_root
-  repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
   CID="$(docker ps -q --filter "label=devcontainer.local_folder=$repo_root" 2>/dev/null | head -1 || true)"
-  if [ -z "$CID" ]; then
-    # Fallback: any running devcontainer whose local folder looks like a bucketeer checkout
-    CID="$(docker ps --filter "label=devcontainer.local_folder" \
-      --format '{{.ID}} {{.Label "devcontainer.local_folder"}}' 2>/dev/null \
-      | awk '$2 ~ /bucketeer/ {print $1; exit}' || true)"
-  fi
   if [ -n "$CID" ]; then
     MODE=local
     return
@@ -98,11 +95,14 @@ status_report() {
     if minikube status >/dev/null 2>&1; then
       # Ignore transient states (Pending/ContainerCreating/Init) — batch CronJobs
       # constantly spawn short-lived pods and would make the count flap.
-      pods=$(kubectl get pods --no-headers 2>/dev/null)
-      total=$(echo "$pods" | grep -c . || true)
-      failing=$(echo "$pods" | grep -cE "CrashLoopBackOff|ImagePull|ErrImage|Error|OOMKilled|Evicted" || true)
-      echo "minikube: running ($total pods, $failing failing)"
-      [ "$failing" -gt 0 ] && echo "$pods" | grep -E "CrashLoopBackOff|ImagePull|ErrImage|Error|OOMKilled|Evicted"
+      if pods=$(kubectl get pods --no-headers 2>/dev/null); then
+        total=$(echo "$pods" | grep -c . || true)
+        failing=$(echo "$pods" | grep -cE "CrashLoopBackOff|ImagePull|ErrImage|Error|OOMKilled|Evicted" || true)
+        echo "minikube: running ($total pods, $failing failing)"
+        [ "$failing" -gt 0 ] && echo "$pods" | grep -E "CrashLoopBackOff|ImagePull|ErrImage|Error|OOMKilled|Evicted"
+      else
+        echo "minikube: running, but kubectl failed to list pods — check kubectl config (kubectl config current-context)"
+      fi
     else
       echo "minikube: NOT running (start with: make start-minikube — never minikube start)"
     fi
