@@ -38,6 +38,10 @@ CERT_DIR ?= tools/dev/cert
 # binary while slow-but-healthy waits are still within their own retry budgets,
 # killing tests that would otherwise pass.
 E2E_TIMEOUT ?= 30m
+# Lifetime of the generated e2e access tokens. They are stateless JWTs that
+# cannot be revoked once minted, so keep this short. Override for a local
+# environment where re-running the bootstrap every hour is inconvenient.
+E2E_TOKEN_TTL ?= 1h
 SYS_ADMIN_EMAIL ?= sysadmin@bucketeer.io
 ORG_OWNER_EMAIL ?= orgowner@bucketeer.io
 ENV_WRITE_EMAIL ?= envwrite@bucketeer.io
@@ -297,6 +301,7 @@ endif
 		--e2e-environment-id=${E2E_ENVIRONMENT_ID} \
 		--oauth-key=${OAUTH_KEY_PATH} \
 		--issuer=${ISSUER} \
+		--token-ttl=${E2E_TOKEN_TTL} \
 		--sys-admin-token-output=${SYS_ADMIN_ACCESS_TOKEN_PATH} \
 		--org-owner-default-token-output=${ORG_OWNER_DEFAULT_ACCESS_TOKEN_PATH} \
 		--org-owner-e2e-token-output=${ORG_OWNER_E2E_ACCESS_TOKEN_PATH} \

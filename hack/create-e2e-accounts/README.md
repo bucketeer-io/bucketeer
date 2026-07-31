@@ -24,8 +24,9 @@ The system admin token is scoped to the e2e organization and is minted with
 organizations. The other three tokens are scoped to the default organization
 and are **not** system admins: the org owner relies on its organization
 `OWNER` role and the editor/viewer rely on their environment roles, so they
-exercise the real RBAC path. None of the tokens is a service token, and all
-are minted with a far-future expiry.
+exercise the real RBAC path. None of the tokens is a service token. Tokens
+expire after `--token-ttl` (default `1h`); they are stateless JWTs that cannot
+be revoked once minted, so keep the TTL short.
 
 ## Run Command
 
@@ -45,6 +46,7 @@ go run ./hack/create-e2e-accounts create \
   --e2e-environment-id=<E2E_ENVIRONMENT_ID> \
   --oauth-key=<OAUTH_PRIVATE_KEY_PATH> \
   --issuer=<ISSUER> \
+  --token-ttl=<TOKEN_TTL> \
   --sys-admin-token-output=<SYS_ADMIN_TOKEN_PATH> \
   --org-owner-default-token-output=<ORG_OWNER_DEFAULT_TOKEN_PATH> \
   --org-owner-e2e-token-output=<ORG_OWNER_E2E_TOKEN_PATH> \
@@ -73,6 +75,7 @@ go run ./hack/create-e2e-accounts create \
 | `--oauth-key` | Path to the OAuth RSA private key used to sign the access tokens. |
 | `--issuer` | Issuer URL set in the generated access tokens (must match the gateway config). |
 | `--audience` | OAuth audience set in the generated access tokens (default `bucketeer`). |
+| `--token-ttl` | Lifetime of the generated access tokens as a Go duration, e.g. `1h`, `30m` (default `1h`). |
 | `--sys-admin-token-output` | Path of the file to write the system admin access token. |
 | `--org-owner-default-token-output` | Path of the file to write the org owner access token (scoped to the default organization). |
 | `--org-owner-e2e-token-output` | Path of the file to write the org owner access token scoped to the e2e organization. |

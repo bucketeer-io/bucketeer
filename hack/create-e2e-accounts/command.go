@@ -48,10 +48,6 @@ const (
 	// (see pkg/account/domain/account.go: ChangeOrganizationRole), so the
 	// org-owner rows carry an empty environment_roles array.
 	emptyEnvironmentRolesJSON = "[]"
-
-	// Access tokens are minted with a far-future expiry so a single bootstrap
-	// run keeps working for the lifetime of a local/e2e environment.
-	tokenTTLYears = 100
 )
 
 // environmentRole mirrors the JSON shape of proto AccountV2_EnvironmentRole as
@@ -94,6 +90,7 @@ type command struct {
 	oauthKeyPath               *string
 	issuer                     *string
 	audience                   *string
+	tokenTTL                   *time.Duration
 	sysAdminTokenOutput        *string
 	orgOwnerDefaultTokenOutput *string
 	orgOwnerE2ETokenOutput     *string
@@ -154,6 +151,11 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 			"audience",
 			"OAuth audience set in the generated access tokens.",
 		).Default("bucketeer").String(),
+		tokenTTL: cmd.Flag(
+			"token-ttl",
+			"Lifetime of the generated access tokens as a Go duration (e.g. 1h, 30m). "+
+				"Keep it short: the tokens are stateless JWTs and cannot be revoked once minted.",
+		).Default("1h").Duration(),
 		sysAdminTokenOutput: cmd.Flag(
 			"sys-admin-token-output",
 			"Path of the file to write the system admin access token.",
@@ -303,7 +305,7 @@ func (c *command) writeAccessToken(
 	accessToken := &token.AccessToken{
 		Issuer:         *c.issuer,
 		Audience:       *c.audience,
-		Expiry:         now.AddDate(tokenTTLYears, 0, 0),
+		Expiry:         now.Add(*c.tokenTTL),
 		IssuedAt:       now,
 		Email:          email,
 		Name:           accountName(email),
