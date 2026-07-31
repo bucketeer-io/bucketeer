@@ -45,10 +45,13 @@ jobs:
 
       # The Docker build context is hack/create-e2e-accounts only, but its
       # go.mod replaces bucketeer/v2 with ../../, so the parent module must be
-      # vendored into the context before building the image.
+      # vendored into the context before building the image. `make deps` runs
+      # `go mod tidy` before vendoring, so drift in the parent module's
+      # dependencies since the last committed go.mod/go.sum doesn't fail the
+      # build (bare `go mod vendor` errors with "updates to go.mod needed").
       - name: Vendor dependencies
         working-directory: hack/create-e2e-accounts
-        run: go mod vendor
+        run: make deps
 
       - name: Set up QEMU for ARM64 builds
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
