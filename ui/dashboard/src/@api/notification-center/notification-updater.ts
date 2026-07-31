@@ -1,16 +1,24 @@
 import axiosClient from '@api/axios-client';
-import { NotificationCenterUpdatePayload } from '@types';
+import { NotificationCenterLocalization } from '@types';
 import { NotificationCreatorResponse } from './notification-creator';
+import { NotificationWire, toFeedItem } from './notification-mapper';
 
-export interface NotificationUpdaterPayload extends NotificationCenterUpdatePayload {
-  environmentId: string;
+export interface NotificationUpdaterPayload {
+  id: string;
+  localizations: NotificationCenterLocalization[];
 }
 
-// PATCH /v1/notification — update a draft's localizations. System admin only.
+interface NotificationResponseWire {
+  notification: NotificationWire;
+}
+
+// PATCH /v1/admin_notification — update a draft's localizations. System admin only.
 export const notificationUpdater = async (
   payload: NotificationUpdaterPayload
 ): Promise<NotificationCreatorResponse> => {
   return axiosClient
-    .patch<NotificationCreatorResponse>('/v1/notification', payload)
-    .then(response => response.data);
+    .patch<NotificationResponseWire>('/v1/admin_notification', payload)
+    .then(response => ({
+      notification: toFeedItem(response.data.notification)
+    }));
 };

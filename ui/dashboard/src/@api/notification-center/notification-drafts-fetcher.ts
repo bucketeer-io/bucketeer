@@ -3,20 +3,26 @@ import pickBy from 'lodash/pickBy';
 import { CollectionParams, NotificationCenterDraftCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
+import { NotificationWire, toFeedItem } from './notification-mapper';
 
-export interface NotificationDraftsFetcherParams extends CollectionParams {
-  environmentId?: string;
+export type NotificationDraftsFetcherParams = CollectionParams;
+
+interface DraftCollectionWire {
+  notifications: NotificationWire[];
+  cursor: string;
+  totalCount: string;
 }
 
-// GET /v1/notifications/drafts — list draft notifications. System admin only.
+// GET /v1/admin_notifications/drafts — list draft notifications. System admin only.
 export const notificationDraftsFetcher = async (
   params?: NotificationDraftsFetcherParams
 ): Promise<NotificationCenterDraftCollection> => {
   const requestParams = stringifyParams(pickBy(params, v => isNotEmpty(v)));
 
   return axiosClient
-    .get<NotificationCenterDraftCollection>(
-      `/v1/notifications/drafts?${requestParams}`
-    )
-    .then(response => response.data);
+    .get<DraftCollectionWire>(`/v1/admin_notifications/drafts?${requestParams}`)
+    .then(response => ({
+      ...response.data,
+      notifications: response.data.notifications.map(toFeedItem)
+    }));
 };

@@ -1,6 +1,9 @@
+// String-valued to match protojson's default enum encoding (the gateway
+// serializes proto enums by name, e.g. "DRAFT", not by number — same as
+// FeatureVariationType, Segment.status, etc.).
 export enum NotificationCenterStatus {
-  DRAFT = 0,
-  PUBLISHED = 1
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED'
 }
 
 export interface NotificationCenterTag {
@@ -10,7 +13,7 @@ export interface NotificationCenterTag {
 
 // One (notification, language) pair. Markdown source lives in `content`.
 export interface NotificationCenterLocalization {
-  language: string; // BCP 47 code, e.g. 'en', 'ja'
+  language: string;
   tags: NotificationCenterTag[];
   title: string;
   content: string;
@@ -60,12 +63,6 @@ export interface NotificationCenterUnreadCount {
 // The author identity (created_by / published_by) is intentionally absent —
 // the backend fills it from the authenticated user.
 export interface NotificationCenterPublishPayload {
-  status: NotificationCenterStatus;
-  localizations: NotificationCenterLocalization[];
-}
-
-export interface NotificationCenterUpdatePayload {
-  id: string;
   status: NotificationCenterStatus;
   localizations: NotificationCenterLocalization[];
 }

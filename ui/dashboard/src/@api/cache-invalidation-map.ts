@@ -261,7 +261,7 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
 
   // Notification center (create / update / publish / delete)
   {
-    match: /\/v1\/notification(\/publish)?(\?|$)/,
+    match: /\/v1\/admin_notification(\/publish)?(\?|$)/,
     keys: [
       'notification-feed',
       'notification-drafts',

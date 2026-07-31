@@ -42,10 +42,9 @@ export const useFetchFeed = (
   });
 };
 
-export const useFetchDrafts = (environmentId: string, enabled = true) => {
+export const useFetchDrafts = (enabled = true) => {
   return useQueryNotificationDrafts({
     params: {
-      environmentId,
       cursor: '0',
       pageSize: LIST_PAGE_SIZE
     },
@@ -89,57 +88,49 @@ export const useMarkAllAsRead = (environmentId: string) => {
   });
 };
 
-export const usePublishNotification = (environmentId: string) => {
+export const usePublishNotification = () => {
   return useMutation({
-    mutationFn: (input: NotificationCenterPublishPayload) =>
-      notificationPublisher({
-        environmentId,
+    mutationFn: async (input: NotificationCenterPublishPayload) => {
+      const created = await notificationCreator({
         localizations: input.localizations
-      })
+      });
+      return notificationPublisher({ id: created.notification.id });
+    }
   });
 };
 
-export const useSaveDraft = (environmentId: string) => {
+export const useSaveDraft = () => {
   return useMutation({
     mutationFn: (input: NotificationCenterPublishPayload) =>
       notificationCreator({
-        environmentId,
-        status: NotificationCenterStatus.DRAFT,
         localizations: input.localizations
       })
   });
 };
 
-export const useUpdateNotification = (environmentId: string) => {
+export const useUpdateNotification = () => {
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       input
     }: {
       id: string;
       input: NotificationCenterPublishPayload;
     }) => {
-      // Publishing an edited draft promotes it in place via the publish
-      // endpoint (with its id); saving it as a draft again just updates it.
       if (input.status === NotificationCenterStatus.PUBLISHED) {
-        return notificationPublisher({
-          environmentId,
-          id,
-          localizations: input.localizations
-        });
+        await notificationUpdater({ id, localizations: input.localizations });
+        return notificationPublisher({ id });
       }
       return notificationUpdater({
         id,
-        environmentId,
-        status: input.status,
         localizations: input.localizations
       });
     }
   });
 };
 
-export const useDeleteNotification = (environmentId: string) => {
+export const useDeleteNotification = () => {
   return useMutation({
-    mutationFn: (id: string) => notificationDelete({ id, environmentId })
+    mutationFn: (id: string) => notificationDelete({ id })
   });
 };
