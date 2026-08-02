@@ -82,7 +82,10 @@
   // root-owned cache volumes. Each script owns one concern:
   //   start-sshd.sh      - sshd, so `gh codespace ssh` can connect
   //   fix-permissions.sh - chown the mounted cache volumes to the container user
-  //   start-docker.sh    - start dockerd
+  //   start-docker.sh    - align the iptables backend with the Codespaces host
+  //                        daemon, then start dockerd (the alignment must happen
+  //                        before dockerd starts or the nested daemon has no
+  //                        network at all)
   "postStartCommand": "bash .devcontainer/start-sshd.sh && bash .devcontainer/fix-permissions.sh && bash .devcontainer/start-docker.sh",
   "postAttachCommand": "bash .devcontainer/setup.sh"
 }
