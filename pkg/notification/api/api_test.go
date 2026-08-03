@@ -1087,6 +1087,37 @@ func TestNotificationService_GetNotification(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
 		},
 		{
+			desc: "err: read state lookup fails",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_PUBLISHED), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().IsNotificationRead(
+					gomock.Any(), "notification-id-0", "email",
+				).Return(false, errors.New("error"))
+			},
+			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success: id is trimmed before lookups",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_PUBLISHED), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().IsNotificationRead(
+					gomock.Any(), "notification-id-0", "email",
+				).Return(false, nil)
+			},
+			req: &proto.GetNotificationRequest{Id: " notification-id-0 "},
+			verify: func(t *testing.T, resp *proto.GetNotificationResponse) {
+				assert.Equal(t, "notification-id-0", resp.Notification.Id)
+			},
+			expectedErr: nil,
+		},
+		{
 			desc: "success: draft visible to admin with all localizations",
 			ctx:  adminCtx,
 			setup: func(s *NotificationService) {
