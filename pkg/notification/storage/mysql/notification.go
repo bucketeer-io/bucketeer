@@ -520,6 +520,19 @@ func (s *notificationStorage) ListNotifications(
 	return notifications, nextOffset, totalCount, nil
 }
 
+// IsNotificationRead reports whether the viewer has read the notification.
+func (s *notificationStorage) IsNotificationRead(
+	ctx context.Context,
+	id, email string,
+) (bool, error) {
+	readIDs, err := s.readNotificationIDs(ctx, email, []*proto.Notification{{Id: id}})
+	if err != nil {
+		return false, err
+	}
+	_, ok := readIDs[id]
+	return ok, nil
+}
+
 // readNotificationIDs returns which of the given notifications the viewer
 // has read; the query is bounded by the page size.
 func (s *notificationStorage) readNotificationIDs(

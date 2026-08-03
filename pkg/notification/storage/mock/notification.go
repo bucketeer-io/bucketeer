@@ -86,6 +86,21 @@ func (mr *MockNotificationStorageMockRecorder) GetAdminNotification(ctx, id any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdminNotification", reflect.TypeOf((*MockNotificationStorage)(nil).GetAdminNotification), ctx, id)
 }
 
+// IsNotificationRead mocks base method.
+func (m *MockNotificationStorage) IsNotificationRead(ctx context.Context, id, email string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsNotificationRead", ctx, id, email)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsNotificationRead indicates an expected call of IsNotificationRead.
+func (mr *MockNotificationStorageMockRecorder) IsNotificationRead(ctx, id, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsNotificationRead", reflect.TypeOf((*MockNotificationStorage)(nil).IsNotificationRead), ctx, id, email)
+}
+
 // ListDraftAdminNotifications mocks base method.
 func (m *MockNotificationStorage) ListDraftAdminNotifications(ctx context.Context, params storage.ListDraftAdminNotificationsParams) ([]*notification.Notification, int, int64, error) {
 	m.ctrl.T.Helper()

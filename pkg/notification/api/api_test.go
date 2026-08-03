@@ -998,3 +998,179 @@ func TestNotificationService_ListNotifications(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationService_GetNotification(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	adminCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, true),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+	viewerCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	localizations := func() []*proto.NotificationLocalization {
+		return []*proto.NotificationLocalization{
+			{Language: "en", Title: "New feature", Content: "# New feature"},
+			{Language: "ja", Title: "新機能", Content: "# 新機能"},
+		}
+	}
+	notification := func(status proto.Notification_Status) *domain.Notification {
+		return &domain.Notification{
+			Notification: &proto.Notification{
+				Id:            "notification-id-0",
+				Status:        status,
+				CreatedBy:     "admin@example.com",
+				LastEditedBy:  "admin@example.com",
+				CreatedAt:     1,
+				UpdatedAt:     1,
+				Localizations: localizations(),
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.GetNotificationRequest
+		verify      func(*testing.T, *proto.GetNotificationResponse)
+		expectedErr error
+	}{
+		{
+			desc:        "err: unauthenticated",
+			ctx:         context.TODO(),
+			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc:        "err: id required",
+			ctx:         viewerCtx,
+			req:         &proto.GetNotificationRequest{Id: " "},
+			expectedErr: statusNotificationIDRequired.Err(),
+		},
+		{
+			desc: "err: not found",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(nil, storage.ErrNotificationNotFound)
+			},
+			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
+			expectedErr: statusNotificationNotFound.Err(),
+		},
+		{
+			desc: "err: draft hidden from viewer",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_DRAFT), nil)
+			},
+			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
+			expectedErr: statusNotificationNotFound.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(nil, errors.New("error"))
+			},
+			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "err: read state lookup fails",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_PUBLISHED), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().IsNotificationRead(
+					gomock.Any(), "notification-id-0", "email",
+				).Return(false, errors.New("error"))
+			},
+			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success: id is trimmed before lookups",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_PUBLISHED), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().IsNotificationRead(
+					gomock.Any(), "notification-id-0", "email",
+				).Return(false, nil)
+			},
+			req: &proto.GetNotificationRequest{Id: " notification-id-0 "},
+			verify: func(t *testing.T, resp *proto.GetNotificationResponse) {
+				assert.Equal(t, "notification-id-0", resp.Notification.Id)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: draft visible to admin with all localizations",
+			ctx:  adminCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_DRAFT), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().IsNotificationRead(
+					gomock.Any(), "notification-id-0", "email",
+				).Return(false, nil)
+			},
+			req: &proto.GetNotificationRequest{Id: "notification-id-0", Language: "ja"},
+			verify: func(t *testing.T, resp *proto.GetNotificationResponse) {
+				assert.Equal(t, proto.Notification_DRAFT, resp.Notification.Status)
+				assert.Equal(t, localizations(), resp.Notification.Localizations)
+				assert.Equal(t, "新機能", resp.Notification.Localization.Title)
+				assert.False(t, resp.Notification.Read)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: published for viewer with resolved localization",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetAdminNotification(
+					gomock.Any(), "notification-id-0",
+				).Return(notification(proto.Notification_PUBLISHED), nil)
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().IsNotificationRead(
+					gomock.Any(), "notification-id-0", "email",
+				).Return(true, nil)
+			},
+			req: &proto.GetNotificationRequest{Id: "notification-id-0"},
+			verify: func(t *testing.T, resp *proto.GetNotificationResponse) {
+				assert.Equal(t, proto.Notification_PUBLISHED, resp.Notification.Status)
+				assert.Nil(t, resp.Notification.Localizations)
+				assert.Equal(t, "en", resp.Notification.Localization.Language)
+				assert.Equal(t, "New feature", resp.Notification.Localization.Title)
+				assert.True(t, resp.Notification.Read)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.GetNotification(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+				p.verify(t, resp)
+			}
+		})
+	}
+}

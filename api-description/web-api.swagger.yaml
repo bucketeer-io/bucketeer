@@ -6990,6 +6990,15 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: language
+          in: query
+          required: false
+          type: string
       tags:
         - notification
   /v1/notifications:
@@ -14330,6 +14339,9 @@ definitions:
     type: object
   notificationGetNotificationResponse:
     type: object
+    properties:
+      notification:
+        $ref: '#/definitions/notificationNotification'
   notificationGetNotificationUnreadCountResponse:
     type: object
   notificationListDraftAdminNotificationsRequestOrderBy:

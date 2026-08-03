@@ -184,7 +184,57 @@ func (s *NotificationService) GetNotification(
 	ctx context.Context,
 	req *proto.GetNotificationRequest,
 ) (*proto.GetNotificationResponse, error) {
-	return nil, statusNotImplemented
+	t, err := s.checkAuthenticated(ctx)
+	if err != nil {
+		return nil, err
+	}
+	id := strings.TrimSpace(req.Id)
+	if len(id) == 0 {
+		return nil, statusNotificationIDRequired.Err()
+	}
+	language := strings.TrimSpace(req.Language)
+	if language == "" {
+		language = defaultNotificationLanguage
+	}
+	notification, err := s.notificationStorage.GetAdminNotification(ctx, id)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotificationNotFound) {
+			return nil, statusNotificationNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to get notification",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("notificationId", id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	// Drafts are visible to system admins only; hide their existence from
+	// other users.
+	if notification.Status != proto.Notification_PUBLISHED && !t.IsSystemAdmin {
+		return nil, statusNotificationNotFound.Err()
+	}
+	read, err := s.notificationStorage.IsNotificationRead(ctx, id, t.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get notification read state",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("notificationId", id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	notification.Read = read
+	notification.Localization = domain.ResolveLocalization(notification.Localizations, language)
+	// All localizations are the editor view; viewers get the resolved one.
+	if !t.IsSystemAdmin {
+		notification.Localizations = nil
+	}
+	return &proto.GetNotificationResponse{
+		Notification: notification.Notification,
+	}, nil
 }
 
 func (s *NotificationService) GetNotificationUnreadCount(

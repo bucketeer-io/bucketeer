@@ -46231,10 +46231,35 @@
             ]
           },
           {
-            "name": "GetNotificationRequest"
+            "name": "GetNotificationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "language",
+                "type": "string"
+              }
+            ]
           },
           {
-            "name": "GetNotificationResponse"
+            "name": "GetNotificationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "notification",
+                "type": "Notification"
+              }
+            ]
           },
           {
             "name": "GetNotificationUnreadCountRequest"
