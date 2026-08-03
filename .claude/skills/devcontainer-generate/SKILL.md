@@ -1,28 +1,29 @@
 ---
-name: devc-generate
+name: devcontainer-generate
 description: >-
   Regenerate Bucketeer protobuf Go bindings, OpenAPI/Swagger specs, and gomock
   files inside the dev container, where protoc is guaranteed to be exactly
   v23.4. Use this whenever a .proto file changed, generated *.pb.go /
   *.pb.gw.go / swagger files need regenerating, a mocked Go interface changed
   (mockgen), or the user says "generate proto", "regen protos", "make
-  proto-all", "make mockgen", or "devc-generate". Prefer this over running
+  proto-all", "make mockgen", or "devcontainer-generate". Prefer this over running
   protoc or make proto-all on the host — a host protoc version mismatch
   silently rewrites every generated file's header.
 ---
 
-# devc-generate — code generation inside the dev container
+# devcontainer-generate — code generation inside the dev container
 
 Generated files are committed to the repo, and their headers record the protoc
 version (`protoc v4.23.4`). The dev container ships exactly protoc 23.4, so
 generation must happen there; a different host protoc churns every `.pb.go`
-file and the PR becomes unreviewable.
+file and the PR becomes unreviewable. (Human-facing background:
+`DEVELOPMENT.md` § "Working with the dev container from the host".)
 
-All commands below go through the devc wrapper (see the `devc` skill for how
+All commands below go through the devcontainer-run wrapper (see the `devcontainer-run` skill for how
 detection works):
 
 ```bash
-DEVC="bash .claude/skills/devc/scripts/devc-exec.sh"
+DEVC="bash .claude/skills/devcontainer-run/scripts/exec.sh"
 ```
 
 ## 1. Pick the right target
@@ -59,4 +60,4 @@ error; don't force it without flagging the compatibility break to the user.
 
 In a codespace the regenerated files land in the codespace's clone, not the
 host repo. Commit/push from inside, or copy back with `gh codespace cp`. The
-`status` subcommand of the devc script tells you which mode you're in.
+`status` subcommand of the devcontainer-run script tells you which mode you're in.

@@ -1,17 +1,17 @@
 ---
-name: devc
+name: devcontainer-run
 description: >-
   Detect the running Bucketeer dev container (local VS Code devcontainer or
   GitHub Codespace) and run commands inside it. Use this whenever a task should
   run in the dev container environment — make targets, builds, tests, kubectl /
   helm / minikube commands, checking whether the container is up — or when the
-  user says "devc", "dev container", "devcontainer", "codespace", or "run this
+  user says "devcontainer-run", "devc", "dev container", "devcontainer", "codespace", or "run this
   inside the container". Also use it when a task needs tools the container
   guarantees but the host may lack (protoc 23.4, mockgen, protolock, helm,
-  kubectl, minikube). devc-generate and devc-deploy build on this skill.
+  kubectl, minikube). devcontainer-generate and devcontainer-deploy build on this skill.
 ---
 
-# devc — run commands inside the Bucketeer dev container
+# devcontainer-run — run commands inside the Bucketeer dev container
 
 The dev container is the canonical Bucketeer development environment: Ubuntu with
 docker-in-docker, minikube + helm + kubectl, protoc v23.4, and Go tooling in
@@ -19,17 +19,22 @@ docker-in-docker, minikube + helm + kubectl, protoc v23.4, and Go tooling in
 non-login shells). The workspace is `/workspaces/bucketeer`, the user is
 `codespace` (passwordless sudo).
 
+Human-facing documentation for this environment lives in `DEVELOPMENT.md`
+("Working with the dev container from the host" and the Minikube sections);
+this skill is the Claude-oriented operational version — when changing one,
+keep the other in sync.
+
 ## How to run anything inside it
 
 Always go through the wrapper script — it finds the container and sets up PATH:
 
 ```bash
 # Where is the container, and is the environment healthy?
-bash .claude/skills/devc/scripts/devc-exec.sh status
+bash .claude/skills/devcontainer-run/scripts/exec.sh status
 
 # Run any command in /workspaces/bucketeer inside the container
-bash .claude/skills/devc/scripts/devc-exec.sh 'make build-api'
-bash .claude/skills/devc/scripts/devc-exec.sh 'kubectl get pods'
+bash .claude/skills/devcontainer-run/scripts/exec.sh 'make build-api'
+bash .claude/skills/devcontainer-run/scripts/exec.sh 'kubectl get pods'
 ```
 
 Detection order (the script handles all of this):
@@ -57,7 +62,7 @@ and let them choose, because host tool versions (especially protoc) may differ.
   Bash timeout (600000) or `run_in_background`.
 - `dockerd` inside the container is started by the post-attach hook, but that
   only fires when an editor attaches. If `status` says it's not running:
-  `bash .claude/skills/devc/scripts/devc-exec.sh 'nohup sudo dockerd > /tmp/dockerd.log 2>&1 & sleep 5 && docker info > /dev/null && echo ok'`
+  `bash .claude/skills/devcontainer-run/scripts/exec.sh 'nohup sudo dockerd > /tmp/dockerd.log 2>&1 & sleep 5 && docker info > /dev/null && echo ok'`
 - minikube must be started with `make start-minikube`, never `minikube start`
   directly (the make target restores the cluster config and localenv services).
   Note: `make start-minikube` intentionally **exits 1 if minikube is already

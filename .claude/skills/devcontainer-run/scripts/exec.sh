@@ -2,8 +2,8 @@
 # Locate the Bucketeer dev container and run a command inside it.
 #
 # Usage:
-#   devc-exec.sh status              Report where the dev container is and its health
-#   devc-exec.sh <command ...>       Run a command in /workspaces/bucketeer inside it
+#   exec.sh status              Report where the dev container is and its health
+#   exec.sh <command ...>       Run a command in /workspaces/bucketeer inside it
 #
 # Exit codes: 0 success, 2 no dev container found, otherwise the command's exit code.
 set -euo pipefail
@@ -24,7 +24,7 @@ detect() {
   fi
 
   # Case 2: local devcontainer (VS Code "Reopen in Container" / devcontainer CLI).
-  # Derive the repo root from this script's location (<repo>/.claude/skills/devc/scripts/)
+  # Derive the repo root from this script's location (<repo>/.claude/skills/devcontainer-run/scripts/)
   # so the exact label match works from any cwd — no fuzzy fallback that could pick
   # the wrong container when multiple checkouts are running.
   local repo_root

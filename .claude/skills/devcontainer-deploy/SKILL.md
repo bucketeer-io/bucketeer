@@ -1,23 +1,24 @@
 ---
-name: devc-deploy
+name: devcontainer-deploy
 description: >-
   Build and deploy Bucketeer to the minikube cluster inside the dev container,
   or redeploy/restart a single service there. Use this whenever the user wants
   to deploy locally, run "make deploy-bucketeer", start minikube, get their
   code changes running in the dev cluster, restart a crashing pod, or says
-  "devc-deploy", "deploy to minikube", "redeploy the backend". Also use it to
+  "devcontainer-deploy", "deploy to minikube", "redeploy the backend". Also use it to
   check deployment health (pods not ready, gateway not responding) in the dev
   container environment.
 ---
 
-# devc-deploy — deploy Bucketeer inside the dev container
+# devcontainer-deploy — deploy Bucketeer inside the dev container
 
 Deployment target is the minikube cluster *inside* the dev container (helm
-charts in `manifests/`), not the host docker-compose stack. All commands go
-through the devc wrapper (see the `devc` skill):
+charts in `manifests/`), not the host docker-compose stack. (Human-facing
+docs for these flows: `DEVELOPMENT.md` § "Deploy Bucketeer".) All commands go
+through the devcontainer-run wrapper (see the `devcontainer-run` skill):
 
 ```bash
-DEVC="bash .claude/skills/devc/scripts/devc-exec.sh"
+DEVC="bash .claude/skills/devcontainer-run/scripts/exec.sh"
 ```
 
 ## 1. Preflight
