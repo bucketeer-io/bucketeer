@@ -6996,10 +6996,6 @@ paths:
           required: true
           type: string
         - name: language
-          description: |-
-            BCP 47 console language (e.g. "en", "ja"). Tags, titles, and contents
-            resolve to it, falling back to English, then to whichever localization
-            exists.
           in: query
           required: false
           type: string
@@ -14346,10 +14342,6 @@ definitions:
     properties:
       notification:
         $ref: '#/definitions/notificationNotification'
-        description: |-
-          The notification with the localization resolved to the requested
-          language and the requesting user's read flag attached. System admins
-          additionally receive all localizations (editor view).
   notificationGetNotificationUnreadCountResponse:
     type: object
   notificationListDraftAdminNotificationsRequestOrderBy:

@@ -464,10 +464,7 @@ type GetNotificationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
-	// BCP 47 console language (e.g. "en", "ja"). Tags, titles, and contents
-	// resolve to it, falling back to English, then to whichever localization
-	// exists.
+	Id       string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 	Language string `protobuf:"bytes,2,opt,name=language,proto3" json:"language"`
 }
 
@@ -522,9 +519,6 @@ type GetNotificationResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The notification with the localization resolved to the requested
-	// language and the requesting user's read flag attached. System admins
-	// additionally receive all localizations (editor view).
 	Notification *Notification `protobuf:"bytes,1,opt,name=notification,proto3" json:"notification"`
 }
 
