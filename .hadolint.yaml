@@ -1,0 +1,6 @@
+ignored:
+  # Temporarily ignored for gradual adoption.
+  # Remove these as Dockerfiles are updated.
+  - DL3008 # Pin versions in apt-get install
+  - DL3018 # Pin versions in apk add
+  - DL4006 # Set the SHELL option -o pipefail before RUN with a pipe in it
