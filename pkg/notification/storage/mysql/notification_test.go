@@ -716,3 +716,224 @@ func TestPublishAdminNotification(t *testing.T) {
 		})
 	}
 }
+
+func TestListNotifications(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	newReadIDRows := func(ids ...string) *mock.MockRows {
+		rows := mock.NewMockRows(mockController)
+		rows.EXPECT().Close().Return(nil)
+		i := 0
+		rows.EXPECT().Next().DoAndReturn(func() bool {
+			i++
+			return i <= len(ids)
+		}).Times(len(ids) + 1)
+		if len(ids) > 0 {
+			j := 0
+			rows.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+				*args[0].(*string) = ids[j]
+				j++
+				return nil
+			}).Times(len(ids))
+		}
+		rows.EXPECT().Err().Return(nil)
+		return rows
+	}
+	newListRows := func() *mock.MockRows {
+		rows := mock.NewMockRows(mockController)
+		rows.EXPECT().Close().Return(nil)
+		i := 0
+		rows.EXPECT().Next().DoAndReturn(func() bool {
+			i++
+			return i <= 1
+		}).Times(2)
+		rows.EXPECT().Err().Return(nil)
+		rows.EXPECT().Scan(
+			gomock.Any(), // id
+			gomock.Any(), // status
+			gomock.Any(), // created_by
+			gomock.Any(), // last_edited_by
+			gomock.Any(), // published_by
+			gomock.Any(), // published_at
+			gomock.Any(), // created_at
+			gomock.Any(), // updated_at
+		).Do(func(args ...interface{}) {
+			*args[0].(*string) = "notification-id-0"
+			*args[1].(*int32) = int32(proto.Notification_PUBLISHED)
+			*args[2].(*string) = "admin@example.com"
+			*args[3].(*string) = "admin@example.com"
+			*args[4].(*string) = "publisher@example.com"
+			*args[5].(*int64) = int64(10)
+			*args[6].(*int64) = int64(1)
+			*args[7].(*int64) = int64(10)
+		}).Return(nil)
+		return rows
+	}
+	newLocRows := func() *mock.MockRows {
+		rows := mock.NewMockRows(mockController)
+		rows.EXPECT().Close().Return(nil)
+		i := 0
+		rows.EXPECT().Next().DoAndReturn(func() bool {
+			i++
+			return i <= 2
+		}).Times(3)
+		j := 0
+		rows.EXPECT().Scan(
+			gomock.Any(), // notification_id
+			gomock.Any(), // language
+			gomock.Any(), // tags
+			gomock.Any(), // title
+			gomock.Any(), // content
+		).DoAndReturn(func(args ...interface{}) error {
+			j++
+			*args[0].(*string) = "notification-id-0"
+			if j == 1 {
+				*args[1].(*string) = "en"
+				*args[3].(*string) = "New feature"
+				*args[4].(*string) = "# New feature"
+			} else {
+				*args[1].(*string) = "ja"
+				*args[3].(*string) = "新機能"
+				*args[4].(*string) = "# 新機能"
+			}
+			return nil
+		}).Times(2)
+		rows.EXPECT().Err().Return(nil)
+		return rows
+	}
+	newCountRow := func() *mock.MockRow {
+		row := mock.NewMockRow(mockController)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+			*args[0].(*int64) = int64(1)
+			return nil
+		})
+		return row
+	}
+	published := func(localization *proto.NotificationLocalization, read bool) []*proto.Notification {
+		return []*proto.Notification{
+			{
+				Id:           "notification-id-0",
+				Status:       proto.Notification_PUBLISHED,
+				CreatedBy:    "admin@example.com",
+				LastEditedBy: "admin@example.com",
+				PublishedBy:  "publisher@example.com",
+				PublishedAt:  10,
+				CreatedAt:    1,
+				UpdatedAt:    10,
+				Localization: localization,
+				Read:         read,
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc           string
+		setup          func(*notificationStorage)
+		params         notificationstorage.ListNotificationsParams
+		expected       []*proto.Notification
+		expectedCursor int
+		expectedCount  int64
+		expectedErr    error
+	}{
+		{
+			desc: "ErrInvalidListNotificationsOrderBy",
+			params: notificationstorage.ListNotificationsParams{
+				OrderBy: proto.ListNotificationsRequest_OrderBy(99),
+			},
+			expectedErr: notificationstorage.ErrInvalidListNotificationsOrderBy,
+		},
+		{
+			desc: "ErrInvalidListNotificationsCursor",
+			params: notificationstorage.ListNotificationsParams{
+				Cursor: "invalid",
+			},
+			expectedErr: notificationstorage.ErrInvalidListNotificationsCursor,
+		},
+		{
+			desc: "Success: all, resolved to requested language, read flag set",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newListRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newLocRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newReadIDRows("notification-id-0"), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newCountRow())
+			},
+			params: notificationstorage.ListNotificationsParams{
+				Email:    "viewer@example.com",
+				Language: "ja",
+				PageSize: 10,
+			},
+			expected: published(&proto.NotificationLocalization{
+				Language: "ja",
+				Title:    "新機能",
+				Content:  "# 新機能",
+			}, true),
+			expectedCursor: 1,
+			expectedCount:  1,
+			expectedErr:    nil,
+		},
+		{
+			desc: "Success: unread, fallback to English, read flag unset",
+			setup: func(s *notificationStorage) {
+				boundRow := mock.NewMockRow(mockController)
+				boundRow.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+					*args[0].(*int64) = int64(5)
+					return nil
+				})
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEarliestAccountCreatedAtSQL, "viewer@example.com",
+				).Return(boundRow)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newListRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newLocRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newReadIDRows(), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newCountRow())
+			},
+			params: notificationstorage.ListNotificationsParams{
+				Email:      "viewer@example.com",
+				Language:   "fr",
+				ReadStatus: proto.ListNotificationsRequest_UNREAD,
+				PageSize:   10,
+			},
+			expected: published(&proto.NotificationLocalization{
+				Language: "en",
+				Title:    "New feature",
+				Content:  "# New feature",
+			}, false),
+			expectedCursor: 1,
+			expectedCount:  1,
+			expectedErr:    nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			notifications, cursor, count, err := storage.ListNotifications(context.Background(), p.params)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.Equal(t, p.expected, notifications)
+				assert.Equal(t, p.expectedCursor, cursor)
+				assert.Equal(t, p.expectedCount, count)
+			}
+		})
+	}
+}

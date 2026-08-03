@@ -85,3 +85,47 @@ func TestPublishNotification(t *testing.T) {
 	assert.Equal(t, "admin@example.com", notification.LastEditedBy)
 	assert.Equal(t, createdAt, notification.CreatedAt)
 }
+
+func TestResolveLocalization(t *testing.T) {
+	t.Parallel()
+	en := &proto.NotificationLocalization{Language: "en", Title: "English"}
+	ja := &proto.NotificationLocalization{Language: "ja", Title: "日本語"}
+	fr := &proto.NotificationLocalization{Language: "fr", Title: "Français"}
+
+	patterns := []struct {
+		desc          string
+		localizations []*proto.NotificationLocalization
+		language      string
+		expected      *proto.NotificationLocalization
+	}{
+		{
+			desc:          "nil when empty",
+			localizations: nil,
+			language:      "en",
+			expected:      nil,
+		},
+		{
+			desc:          "exact match",
+			localizations: []*proto.NotificationLocalization{en, ja},
+			language:      "ja",
+			expected:      ja,
+		},
+		{
+			desc:          "fallback to English",
+			localizations: []*proto.NotificationLocalization{en, ja},
+			language:      "fr",
+			expected:      en,
+		},
+		{
+			desc:          "fallback to first by language code",
+			localizations: []*proto.NotificationLocalization{ja, fr},
+			language:      "en",
+			expected:      fr,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, ResolveLocalization(p.localizations, p.language))
+		})
+	}
+}

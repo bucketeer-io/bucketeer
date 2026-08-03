@@ -48,7 +48,21 @@ var (
 	countDraftNotificationsSQL string
 	//go:embed sql/select_notification_localizations.sql
 	selectNotificationLocalizationsSQL string
+	//go:embed sql/select_notifications.sql
+	selectNotificationsSQL string
+	//go:embed sql/count_notifications.sql
+	countNotificationsSQL string
+	//go:embed sql/select_read_notification_ids.sql
+	selectReadNotificationIDsSQL string
+	//go:embed sql/select_earliest_account_created_at.sql
+	selectEarliestAccountCreatedAtSQL string
 )
+
+// readNotificationExistsSubquery correlates a viewer's read marker with the
+// outer notification row for EXISTS / NOT EXISTS read-status filters; the
+// $%d template is bound at query-construction time.
+const readNotificationExistsSubquery = "SELECT 1 FROM notification_read " +
+	"WHERE notification_read.notification_id = notification.id AND notification_read.email = $%d"
 
 type notificationStorage struct {
 	qe pgstorage.QueryExecer
@@ -348,6 +362,229 @@ func (s *notificationStorage) ListDraftAdminNotifications(
 		return nil, 0, 0, err
 	}
 	return notifications, nextOffset, totalCount, nil
+}
+
+func listNotificationsOrders(
+	orderBy proto.ListNotificationsRequest_OrderBy,
+	orderDirection proto.ListNotificationsRequest_OrderDirection,
+) ([]*pgstorage.Order, error) {
+	var column string
+	switch orderBy {
+	case proto.ListNotificationsRequest_DEFAULT,
+		proto.ListNotificationsRequest_PUBLISHED_AT:
+		column = "notification.published_at"
+	default:
+		return nil, notificationstorage.ErrInvalidListNotificationsOrderBy
+	}
+	direction := pgstorage.OrderDirectionAsc
+	if orderDirection == proto.ListNotificationsRequest_DESC {
+		direction = pgstorage.OrderDirectionDesc
+	}
+	return []*pgstorage.Order{pgstorage.NewOrder(column, direction)}, nil
+}
+
+func (s *notificationStorage) ListNotifications(
+	ctx context.Context,
+	p notificationstorage.ListNotificationsParams,
+) ([]*proto.Notification, int, int64, error) {
+	orders, err := listNotificationsOrders(p.OrderBy, p.OrderDirection)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	cursor := p.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil || offset < 0 {
+		return nil, 0, 0, notificationstorage.ErrInvalidListNotificationsCursor
+	}
+	filters := []*pgstorage.Filter{
+		{
+			Column:   "notification.status",
+			Operator: pgstorage.OperatorEqual,
+			Value:    int32(proto.Notification_PUBLISHED),
+		},
+		{
+			Column:   "notification.deleted",
+			Operator: pgstorage.OperatorEqual,
+			Value:    false,
+		},
+	}
+	if p.PublishedAtFrom > 0 {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "notification.published_at",
+			Operator: pgstorage.OperatorGreaterThanOrEqual,
+			Value:    p.PublishedAtFrom,
+		})
+	}
+	if p.PublishedAtTo > 0 {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "notification.published_at",
+			Operator: pgstorage.OperatorLessThanOrEqual,
+			Value:    p.PublishedAtTo,
+		})
+	}
+	var existsFilters []*pgstorage.ExistsFilter
+	switch p.ReadStatus {
+	case proto.ListNotificationsRequest_UNREAD:
+		// New users do not inherit history: unread only considers
+		// notifications published after the account was created.
+		accountCreatedAt, err := s.earliestAccountCreatedAt(ctx, p.Email)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		if accountCreatedAt > 0 {
+			filters = append(filters, &pgstorage.Filter{
+				Column:   "notification.published_at",
+				Operator: pgstorage.OperatorGreaterThanOrEqual,
+				Value:    accountCreatedAt,
+			})
+		}
+		existsFilters = append(existsFilters, &pgstorage.ExistsFilter{
+			Subquery:  readNotificationExistsSubquery,
+			NotExists: true,
+			Values:    []interface{}{p.Email},
+		})
+	case proto.ListNotificationsRequest_READ:
+		existsFilters = append(existsFilters, &pgstorage.ExistsFilter{
+			Subquery: readNotificationExistsSubquery,
+			Values:   []interface{}{p.Email},
+		})
+	}
+	var searchQuery *pgstorage.SearchQuery
+	if p.SearchKeyword != "" {
+		searchQuery = &pgstorage.SearchQuery{
+			Columns: []string{
+				"notification_localization.title",
+				"notification_localization.content",
+			},
+			Keyword: p.SearchKeyword,
+		}
+	}
+	limit := p.PageSize
+	if limit < 0 {
+		limit = 0
+	}
+	options := &pgstorage.ListOptions{
+		Filters:       filters,
+		ExistsFilters: existsFilters,
+		SearchQuery:   searchQuery,
+		Orders:        orders,
+		Limit:         limit,
+		Offset:        offset,
+	}
+	query, whereArgs := pgstorage.ConstructQueryAndWhereArgs(selectNotificationsSQL, options)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	notifications := make([]*proto.Notification, 0, limit)
+	for rows.Next() {
+		notification := proto.Notification{}
+		var status int32
+		err := rows.Scan(
+			&notification.Id,
+			&status,
+			&notification.CreatedBy,
+			&notification.LastEditedBy,
+			&notification.PublishedBy,
+			&notification.PublishedAt,
+			&notification.CreatedAt,
+			&notification.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		notification.Status = proto.Notification_Status(status)
+		notifications = append(notifications, &notification)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, rows.Err()
+	}
+	if err := s.fillLocalizations(ctx, notifications); err != nil {
+		return nil, 0, 0, err
+	}
+	readIDs, err := s.readNotificationIDs(ctx, p.Email, notifications)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	for _, n := range notifications {
+		n.Localization = domain.ResolveLocalization(n.Localizations, p.Language)
+		n.Localizations = nil
+		_, n.Read = readIDs[n.Id]
+	}
+	nextOffset := offset + len(notifications)
+	var totalCount int64
+	countQuery, countWhereArgs := pgstorage.ConstructCountQuery(countNotificationsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return notifications, nextOffset, totalCount, nil
+}
+
+// readNotificationIDs returns which of the given notifications the viewer
+// has read; the query is bounded by the page size.
+func (s *notificationStorage) readNotificationIDs(
+	ctx context.Context,
+	email string,
+	notifications []*proto.Notification,
+) (map[string]struct{}, error) {
+	if len(notifications) == 0 {
+		return map[string]struct{}{}, nil
+	}
+	ids := make([]interface{}, 0, len(notifications))
+	for _, n := range notifications {
+		ids = append(ids, n.Id)
+	}
+	options := &pgstorage.ListOptions{
+		Filters: []*pgstorage.Filter{
+			{
+				Column:   "notification_read.email",
+				Operator: pgstorage.OperatorEqual,
+				Value:    email,
+			},
+		},
+		InFilters: []*pgstorage.InFilter{
+			{
+				Column: "notification_read.notification_id",
+				Values: ids,
+			},
+		},
+	}
+	query, whereArgs := pgstorage.ConstructQueryAndWhereArgs(selectReadNotificationIDsSQL, options)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	readIDs := map[string]struct{}{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		readIDs[id] = struct{}{}
+	}
+	return readIDs, rows.Err()
+}
+
+func (s *notificationStorage) earliestAccountCreatedAt(
+	ctx context.Context,
+	email string,
+) (int64, error) {
+	var createdAt int64
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectEarliestAccountCreatedAtSQL,
+		email,
+	).Scan(&createdAt)
+	if err != nil {
+		return 0, err
+	}
+	return createdAt, nil
 }
 
 func (s *notificationStorage) fillLocalizations(

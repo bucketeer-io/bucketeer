@@ -501,12 +501,14 @@ func TestExistsFilterBindSQL(t *testing.T) {
 		input        *ExistsFilter
 		expectedSQL  string
 		expectedArgs []interface{}
+		expectedNext int
 	}{
 		{
 			desc:         "Empty",
 			input:        &ExistsFilter{},
 			expectedSQL:  "",
 			expectedArgs: nil,
+			expectedNext: 1,
 		},
 		{
 			desc: "exists",
@@ -515,6 +517,7 @@ func TestExistsFilterBindSQL(t *testing.T) {
 			},
 			expectedSQL:  "EXISTS (SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id)",
 			expectedArgs: nil,
+			expectedNext: 1,
 		},
 		{
 			desc: "not exists",
@@ -524,6 +527,28 @@ func TestExistsFilterBindSQL(t *testing.T) {
 			},
 			expectedSQL:  "NOT EXISTS (SELECT 1 FROM auto_ops_rule WHERE feature_id = feature.id)",
 			expectedArgs: nil,
+			expectedNext: 1,
+		},
+		{
+			desc: "exists with values",
+			input: &ExistsFilter{
+				Subquery: "SELECT 1 FROM notification_read WHERE notification_id = notification.id AND email = $%d",
+				Values:   []interface{}{"viewer@example.com"},
+			},
+			expectedSQL:  "EXISTS (SELECT 1 FROM notification_read WHERE notification_id = notification.id AND email = $1)",
+			expectedArgs: []interface{}{"viewer@example.com"},
+			expectedNext: 2,
+		},
+		{
+			desc: "not exists with values",
+			input: &ExistsFilter{
+				Subquery:  "SELECT 1 FROM notification_read WHERE notification_id = notification.id AND email = $%d",
+				Values:    []interface{}{"viewer@example.com"},
+				NotExists: true,
+			},
+			expectedSQL:  "NOT EXISTS (SELECT 1 FROM notification_read WHERE notification_id = notification.id AND email = $1)",
+			expectedArgs: []interface{}{"viewer@example.com"},
+			expectedNext: 2,
 		},
 	}
 	for _, p := range patterns {
@@ -531,7 +556,7 @@ func TestExistsFilterBindSQL(t *testing.T) {
 			sql, args, next := p.input.BindSQL(1)
 			assert.Equal(t, p.expectedSQL, sql)
 			assert.Equal(t, p.expectedArgs, args)
-			assert.Equal(t, 1, next)
+			assert.Equal(t, p.expectedNext, next)
 		})
 	}
 }

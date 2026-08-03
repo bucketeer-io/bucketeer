@@ -7033,6 +7033,68 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - PUBLISHED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          description: Keyword matched against localization titles and contents.
+          in: query
+          required: false
+          type: string
+        - name: readStatus
+          description: |-
+            Filter by the requesting user's read state. UNREAD only considers
+            notifications published after the user's account was created.
+          in: query
+          required: false
+          type: string
+          enum:
+            - ALL
+            - UNREAD
+            - READ
+          default: ALL
+        - name: publishedAtFrom
+          description: Published date range in epoch seconds; 0 means unbounded.
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: publishedAtTo
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: language
+          description: |-
+            BCP 47 console language (e.g. "en", "ja"). Tags, titles, and contents
+            resolve to it, falling back to English, then to whichever localization
+            exists.
+          in: query
+          required: false
+          type: string
       tags:
         - notification
   /v1/notifications/mark_all_as_read:
@@ -9743,6 +9805,13 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  ListNotificationsRequestReadStatus:
+    type: string
+    enum:
+      - ALL
+      - UNREAD
+      - READ
+    default: ALL
   PageContextPageType:
     type: string
     enum:
@@ -14290,8 +14359,34 @@ definitions:
       totalCount:
         type: string
         format: int64
+  notificationListNotificationsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - PUBLISHED_AT
+    default: DEFAULT
+  notificationListNotificationsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   notificationListNotificationsResponse:
     type: object
+    properties:
+      notifications:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationNotification'
+        description: |-
+          Published notifications with the localization resolved to the requested
+          language and the requesting user's read flag attached.
+      nextCursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   notificationMarkAllNotificationsAsReadRequest:
     type: object
   notificationMarkAllNotificationsAsReadResponse:

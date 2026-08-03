@@ -886,3 +886,115 @@ func TestNotificationService_PublishAdminNotification(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationService_ListNotifications(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	viewerCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	published := []*proto.Notification{
+		{
+			Id:          "notification-id-0",
+			Status:      proto.Notification_PUBLISHED,
+			PublishedBy: "publisher@example.com",
+			PublishedAt: 10,
+			Localization: &proto.NotificationLocalization{
+				Language: "en",
+				Title:    "New feature",
+				Content:  "# New feature",
+			},
+			Read: true,
+		},
+	}
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.ListNotificationsRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: unauthenticated",
+			ctx:         context.TODO(),
+			req:         &proto.ListNotificationsRequest{},
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc: "err: invalid cursor",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListNotifications(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), storage.ErrInvalidListNotificationsCursor)
+			},
+			req:         &proto.ListNotificationsRequest{Cursor: "invalid"},
+			expectedErr: statusInvalidCursor.Err(),
+		},
+		{
+			desc: "err: invalid order by",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListNotifications(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), storage.ErrInvalidListNotificationsOrderBy)
+			},
+			req:         &proto.ListNotificationsRequest{},
+			expectedErr: statusInvalidOrderBy.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListNotifications(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
+			},
+			req:         &proto.ListNotificationsRequest{},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().ListNotifications(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(
+					ctx context.Context,
+					params storage.ListNotificationsParams,
+				) ([]*proto.Notification, int, int64, error) {
+					assert.Equal(t, "email", params.Email)
+					assert.Equal(t, "en", params.Language)
+					assert.Equal(t, maxNotificationPageSize, params.PageSize)
+					assert.Equal(t, proto.ListNotificationsRequest_UNREAD, params.ReadStatus)
+					return published, 1, 1, nil
+				})
+			},
+			req: &proto.ListNotificationsRequest{
+				ReadStatus: proto.ListNotificationsRequest_UNREAD,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.ListNotifications(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+				assert.Equal(t, published, resp.Notifications)
+				assert.Equal(t, "1", resp.NextCursor)
+				assert.Equal(t, int64(1), resp.TotalCount)
+			}
+		})
+	}
+}

@@ -26,9 +26,45 @@ import "proto/notification/notification.proto";
 // NOTE: request/response bodies are intentionally left empty for now; fields
 // will be filled in once the notification center design is finalized.
 
-message ListNotificationsRequest {}
+message ListNotificationsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    PUBLISHED_AT = 1;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  enum ReadStatus {
+    ALL = 0;
+    UNREAD = 1;
+    READ = 2;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  // Keyword matched against localization titles and contents.
+  string search_keyword = 5;
+  // Filter by the requesting user's read state. UNREAD only considers
+  // notifications published after the user's account was created.
+  ReadStatus read_status = 6;
+  // Published date range in epoch seconds; 0 means unbounded.
+  int64 published_at_from = 7;
+  int64 published_at_to = 8;
+  // BCP 47 console language (e.g. "en", "ja"). Tags, titles, and contents
+  // resolve to it, falling back to English, then to whichever localization
+  // exists.
+  string language = 9;
+}
 
-message ListNotificationsResponse {}
+message ListNotificationsResponse {
+  // Published notifications with the localization resolved to the requested
+  // language and the requesting user's read flag attached.
+  repeated Notification notifications = 1;
+  string next_cursor = 2;
+  int64 total_count = 3;
+}
 
 message GetNotificationRequest {}
 
