@@ -3,6 +3,7 @@ import {
   notificationDelete,
   notificationMarkAllAsRead,
   notificationMarkAsRead,
+  NotificationReadStatus,
   notificationPublisher,
   notificationUpdater
 } from '@api/notification-center';
@@ -13,6 +14,7 @@ import {
 } from '@queries/notification-center';
 import { useMutation } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { getLanguage } from 'i18n';
 import {
   NotificationCenterPublishPayload,
   NotificationCenterStatus
@@ -22,22 +24,21 @@ import { NotificationFilters } from '../types';
 const DEFAULT_PAGE_SIZE = 10;
 
 export const useFetchFeed = (
-  environmentId: string,
-  read: boolean,
+  readStatus: NotificationReadStatus,
   page: number,
   filters: NotificationFilters
 ) => {
   const cursor = (page - 1) * DEFAULT_PAGE_SIZE;
   return useQueryNotificationFeed({
     params: {
-      environmentId,
-      read,
+      readStatus,
       cursor: String(cursor),
       pageSize: DEFAULT_PAGE_SIZE,
       searchKeyword: filters.searchQuery,
       orderDirection: filters.sort === 'oldest' ? 'ASC' : 'DESC',
-      from: filters.from ? String(Math.floor(filters.from / 1000)) : undefined,
-      to: filters.to ? String(Math.floor(filters.to / 1000)) : undefined
+      publishedAtFrom: filters.from,
+      publishedAtTo: filters.to,
+      language: getLanguage()
     }
   });
 };
@@ -59,12 +60,12 @@ export const useFetchUnreadCount = (environmentId: string) => {
 export const useFetchTabCounts = (environmentId: string) => {
   const { data: unread } = useFetchUnreadCount(environmentId);
   const { data: readFeed } = useQueryNotificationFeed({
-    params: { environmentId, read: true, cursor: '0', pageSize: 1 }
+    params: { readStatus: 'READ', cursor: '0', pageSize: 1 }
   });
 
   return {
     unreadCount: Number(unread?.count ?? 0),
-    readCount: Number(readFeed?.readCount ?? 0)
+    readCount: Number(readFeed?.totalCount ?? 0)
   };
 };
 
@@ -96,6 +97,14 @@ export const usePublishNotification = () => {
       });
       return notificationPublisher({ id: created.notification.id });
     }
+  });
+};
+
+// Publishes an existing draft as-is (no edits) — e.g. the "Publish" action
+// from the read-only detail view, as opposed to publishing from the form.
+export const usePublishDraft = () => {
+  return useMutation({
+    mutationFn: (id: string) => notificationPublisher({ id })
   });
 };
 

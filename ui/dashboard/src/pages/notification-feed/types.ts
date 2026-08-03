@@ -28,7 +28,6 @@ export interface NotificationFilters {
   tab: NotificationTab;
   searchQuery: string;
   sort: SortOption;
-  days?: number;
-  from?: number;
-  to?: number;
+  from?: string;
+  to?: string;
 }

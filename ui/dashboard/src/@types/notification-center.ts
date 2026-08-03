@@ -42,8 +42,6 @@ export interface NotificationCenterFeedCollection {
   notifications: NotificationCenterFeedItem[];
   cursor: string;
   totalCount: string;
-  unreadCount: string;
-  readCount: string;
 }
 
 export interface NotificationCenterDraftCollection {

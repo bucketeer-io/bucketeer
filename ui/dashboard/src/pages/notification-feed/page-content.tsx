@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -7,10 +7,9 @@ import { CheckCheck } from 'lucide-react';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
-import { IconThreeLines } from '@icons';
 import Button from 'components/button';
+import { ReactDateRangePicker } from 'components/date-range-picker';
 import Dropdown from 'components/dropdown';
-import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
@@ -29,8 +28,6 @@ import {
   NotificationTab,
   SortOption
 } from './types';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const PageContent = ({
   disabled,
@@ -94,7 +91,7 @@ const PageContent = ({
 
   // Resets search + date range only, keeping the current tab and sort order.
   const onClearFilters = useCallback(
-    () => onChangeFilters({ searchQuery: '', days: undefined }),
+    () => onChangeFilters({ searchQuery: '', from: undefined, to: undefined }),
     [onChangeFilters]
   );
 
@@ -104,18 +101,12 @@ const PageContent = ({
     }
   }, [searchOptions]);
 
-  // Publishing is system admin only: bounce anyone else off the "publish"
-  // tab (e.g. a stale bookmark or shared link with ?tab=publish) so the tab
-  // bar and content never disagree.
   useEffect(() => {
     if (!isSystemAdmin && filters.tab === 'publish') {
       onChangeFilters({ tab: 'unread' });
     }
   }, [isSystemAdmin, filters.tab]);
 
-  // Opened via NotificationBell: the clicked notification is handed off
-  // through router state so its detail opens here without an extra fetch.
-  // Cleared right after so a refresh or back-navigation doesn't reopen it.
   useEffect(() => {
     const openNotification = (
       location.state as { notification?: NotificationDetail } | null
@@ -129,26 +120,10 @@ const PageContent = ({
     }
   }, [location.state]);
 
-  const dateFilters = useMemo(() => {
-    if (!filters.days) return {};
-    const to = Date.now();
-    return { from: to - filters.days * DAY_MS, to };
-  }, [filters.days]);
-
   const sortOptions = [
     { label: t('sort-by-newest'), value: 'newest' },
     { label: t('sort-by-oldest'), value: 'oldest' }
   ];
-
-  const dateOptions = [
-    { label: t('last-7-days'), value: 7 },
-    { label: t('last-30-days'), value: 30 },
-    { label: t('last-90-days'), value: 90 }
-  ];
-
-  const dateLabel =
-    dateOptions.find(item => item.value === filters.days)?.label ||
-    t('last-30-days');
 
   return (
     <PageLayout.Content>
@@ -169,20 +144,16 @@ const PageContent = ({
               options={sortOptions}
               onChange={value => onChangeFilters({ sort: value as SortOption })}
             />
-            <Dropdown
-              trigger={
-                <div className="flex items-center gap-x-2">
-                  <Icon icon={IconThreeLines} size="sm" />
-                  <p className="text-gray-600">{dateLabel}</p>
-                </div>
-              }
-              value={filters.days}
-              options={dateOptions}
-              showArrow={false}
-              alignContent="end"
-              className="w-full px-4 py-[11px] justify-center"
-              wrapTriggerStyle="w-fit"
-              onChange={days => onChangeFilters({ days: Number(days) })}
+            <ReactDateRangePicker
+              from={filters.from}
+              to={filters.to}
+              isAllTime={!filters.from && !filters.to}
+              onChange={(startDate, endDate) => {
+                onChangeFilters({
+                  from: startDate ? startDate.toString() : undefined,
+                  to: endDate ? endDate.toString() : undefined
+                });
+              }}
             />
           </>
         }
@@ -232,7 +203,7 @@ const PageContent = ({
             <TabsContent value="unread">
               <NotificationList
                 read={false}
-                filters={{ ...filters, ...dateFilters }}
+                filters={filters}
                 environmentId={environmentId}
                 onSelect={setDetail}
                 onClearFilters={onClearFilters}
@@ -240,7 +211,8 @@ const PageContent = ({
             </TabsContent>
             <TabsContent value="read">
               <NotificationList
-                filters={{ ...filters, ...dateFilters }}
+                read
+                filters={filters}
                 environmentId={environmentId}
                 onSelect={setDetail}
                 onClearFilters={onClearFilters}
@@ -260,7 +232,7 @@ const PageContent = ({
           {isSystemAdmin && filters.tab === 'publish' && (
             <aside className="lg:border-l lg:border-gray-200 lg:pl-8">
               <DraftsPanel
-                filters={{ ...filters, ...dateFilters }}
+                filters={filters}
                 onSelect={setDetail}
                 onClearFilters={onClearFilters}
               />

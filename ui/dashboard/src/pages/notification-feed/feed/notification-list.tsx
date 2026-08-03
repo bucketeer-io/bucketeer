@@ -42,7 +42,11 @@ const NotificationList = ({
     setSelected(new Set());
   }, [read, filters.searchQuery, filters.sort, filters.from, filters.to]);
 
-  const { data, isLoading } = useFetchFeed(environmentId, read, page, filters);
+  const { data, isLoading } = useFetchFeed(
+    read ? 'READ' : 'UNREAD',
+    page,
+    filters
+  );
   const markAsRead = useMarkAsRead(environmentId);
   const markManyAsRead = useMarkManyAsRead(environmentId);
 
@@ -73,7 +77,7 @@ const NotificationList = ({
   }
 
   if (items.length === 0) {
-    const isFiltered = !!filters.searchQuery || !!filters.days;
+    const isFiltered = !!filters.searchQuery || !!filters.from || !!filters.to;
     return (
       <div className="py-10">
         {isFiltered ? (
