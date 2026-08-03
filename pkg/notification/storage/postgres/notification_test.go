@@ -967,3 +967,74 @@ func TestListNotifications(t *testing.T) {
 		})
 	}
 }
+
+func TestIsNotificationRead(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		expected    bool
+		expectedErr error
+	}{
+		{
+			desc: "Error",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			expected:    false,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Read",
+			setup: func(s *notificationStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				i := 0
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					i++
+					return i <= 1
+				}).Times(2)
+				rows.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+					*args[0].(*string) = "notification-id-0"
+					return nil
+				})
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			expected:    true,
+			expectedErr: nil,
+		},
+		{
+			desc: "Unread",
+			setup: func(s *notificationStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			expected:    false,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			read, err := storage.IsNotificationRead(context.Background(), "notification-id-0", "viewer@example.com")
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, read)
+		})
+	}
+}

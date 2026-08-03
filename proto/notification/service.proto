@@ -66,9 +66,14 @@ message ListNotificationsResponse {
   int64 total_count = 3;
 }
 
-message GetNotificationRequest {}
+message GetNotificationRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string language = 2;
+}
 
-message GetNotificationResponse {}
+message GetNotificationResponse {
+  Notification notification = 1;
+}
 
 message GetNotificationUnreadCountRequest {}
 

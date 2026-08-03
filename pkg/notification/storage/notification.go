@@ -73,6 +73,8 @@ type NotificationStorage interface {
 		ctx context.Context,
 		params ListNotificationsParams,
 	) ([]*proto.Notification, int, int64, error)
+	// IsNotificationRead reports whether the viewer has read the notification.
+	IsNotificationRead(ctx context.Context, id, email string) (bool, error)
 }
 
 type ListDraftAdminNotificationsParams struct {
