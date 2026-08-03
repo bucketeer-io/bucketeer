@@ -1,8 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { getLanguage } from 'i18n';
 import type {
-  NotificationCenterFeedItem,
   NotificationCenterLocalization,
   NotificationCenterTag
 } from '@types';
@@ -20,7 +18,6 @@ import { NotificationCenterStatus } from '@types';
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 const now = Date.now();
-const toEpochSeconds = (ms: number) => String(Math.floor(ms / 1000));
 
 const TAGS: Record<string, { color: string; en: string; ja: string }> = {
   announcement: { color: '#3B82F6', en: 'Announcement', ja: 'お知らせ' },
@@ -378,85 +375,12 @@ const readSetFor = (email: string): Set<string> => {
   return reads.get(email)!;
 };
 
-const localizationFor = (
-  record: StoreRecord,
-  lang: string
-): NotificationCenterLocalization | undefined =>
-  record.localizations.find(l => l.language === lang) ??
-  record.localizations.find(l => l.language === 'en') ??
-  record.localizations[0];
-
-const toFeedItem = (
-  record: StoreRecord,
-  email: string,
-  lang: string
-): NotificationCenterFeedItem => {
-  const loc = localizationFor(record, lang);
-  return {
-    id: record.id,
-    title: loc?.title ?? '',
-    content: loc?.content ?? '',
-    tags: loc?.tags ?? [],
-    read: readSetFor(email).has(record.id),
-    status: record.status,
-    publishedAt: toEpochSeconds(record.publishedAt),
-    createdAt: toEpochSeconds(record.createdAt),
-    updatedAt: toEpochSeconds(record.updatedAt),
-    createdBy: record.createdBy,
-    lastEditedBy: record.lastEditedBy,
-    localizations: record.localizations
-  };
-};
-
 // A single fake viewer identity, since the mock has no access to the
 // authenticated user's email (that lives in the JWT, not the request).
 const VIEWER_EMAIL = 'viewer@bucketeer.io';
 
 export const installNotificationCenterMockAdapter = (client: AxiosInstance) => {
   const mock = new MockAdapter(client, { delayResponse: 300 });
-
-  mock.onGet(/\/v1\/notifications\?/).reply(config => {
-    const params = new URLSearchParams(config.url?.split('?')[1]);
-    const read = params.get('read') === 'true';
-    const searchKeyword = (params.get('searchKeyword') ?? '').toLowerCase();
-    const cursor = Number(params.get('cursor') ?? 0);
-    const pageSize = Number(params.get('pageSize') ?? 10);
-    const orderDirection = params.get('orderDirection') ?? 'DESC';
-
-    const published = notifications
-      .filter(n => n.status === NotificationCenterStatus.PUBLISHED)
-      .map(n => toFeedItem(n, VIEWER_EMAIL, getLanguage()));
-
-    const unreadCount = published.filter(n => !n.read).length;
-    const readCount = published.length - unreadCount;
-
-    const filtered = published
-      .filter(n => n.read === read)
-      .filter(n =>
-        searchKeyword
-          ? n.title.toLowerCase().includes(searchKeyword) ||
-            n.content.toLowerCase().includes(searchKeyword)
-          : true
-      )
-      .sort((a, b) =>
-        orderDirection === 'ASC'
-          ? Number(a.createdAt) - Number(b.createdAt)
-          : Number(b.createdAt) - Number(a.createdAt)
-      );
-
-    const page = filtered.slice(cursor, cursor + pageSize);
-
-    return [
-      200,
-      {
-        notifications: page,
-        cursor: String(cursor + page.length),
-        totalCount: String(filtered.length),
-        unreadCount: String(unreadCount),
-        readCount: String(readCount)
-      }
-    ];
-  });
 
   mock.onGet(/\/v1\/notifications\/unread_count/).reply(() => {
     const unreadCount = notifications

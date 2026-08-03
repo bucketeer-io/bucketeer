@@ -49,7 +49,7 @@ const NotificationBell = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: unread } = useFetchUnreadCount(environmentId);
-  const { data } = useFetchFeed(environmentId, false, 1, previewFilters);
+  const { data } = useFetchFeed('UNREAD', 1, previewFilters);
   const markAsRead = useMarkAsRead(environmentId);
   const markAllAsRead = useMarkAllAsRead(environmentId);
 

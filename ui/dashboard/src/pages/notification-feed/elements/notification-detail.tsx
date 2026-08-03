@@ -1,10 +1,12 @@
 import { ReactNode } from 'react';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { Pencil } from 'lucide-react';
+import { Pencil, Send } from 'lucide-react';
 import { formatLongDateTime, useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import Button from 'components/button';
 import SlideModal from 'components/modal/slide';
+import { usePublishDraft } from '../collection-loader/use-fetch-notifications';
 import { NotificationDetail, NotificationStatus } from '../types';
 import { MarkdownContent } from './markdown-content';
 import TagChip from './tag-chip';
@@ -67,13 +69,25 @@ const NotificationDetailModal = ({
   onClose,
   onEditDraft
 }: NotificationDetailModalProps) => {
-  const { t } = useTranslation(['common', 'table', 'form']);
+  const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const formatDateTime = useFormatDateTime();
+  const { notify, errorNotify } = useToast();
+  const publishMutation = usePublishDraft();
 
   if (!notification) return null;
 
   const isDraft = notification.status === NotificationStatus.DRAFT;
   const timestamp = isDraft ? notification.updatedAt : notification.publishedAt;
+
+  const onPublish = () => {
+    publishMutation.mutate(notification.id, {
+      onSuccess: () => {
+        notify({ message: t('message:published-successfully') });
+        onClose();
+      },
+      onError: error => errorNotify(error)
+    });
+  };
 
   return (
     <SlideModal title={notification.title} isOpen={isOpen} onClose={onClose}>
@@ -129,9 +143,18 @@ const NotificationDetailModal = ({
             {t('close')}
           </Button>
           {isDraft && onEditDraft && (
-            <Button onClick={() => onEditDraft(notification)}>
+            <Button
+              variant="secondary"
+              onClick={() => onEditDraft(notification)}
+            >
               <Pencil size={16} />
               {t('form:edit-draft')}
+            </Button>
+          )}
+          {isDraft && (
+            <Button onClick={onPublish} loading={publishMutation.isPending}>
+              <Send size={16} />
+              {t('publish')}
             </Button>
           )}
         </div>

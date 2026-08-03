@@ -3,12 +3,21 @@ import pickBy from 'lodash/pickBy';
 import { CollectionParams, NotificationCenterFeedCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
+import { NotificationWire, toFeedItem } from './notification-mapper';
+
+export type NotificationReadStatus = 'ALL' | 'UNREAD' | 'READ';
 
 export interface NotificationsFetcherParams extends CollectionParams {
-  environmentId?: string;
-  read?: boolean;
-  from?: string;
-  to?: string;
+  readStatus?: NotificationReadStatus;
+  publishedAtFrom?: string;
+  publishedAtTo?: string;
+  language?: string;
+}
+
+interface FeedCollectionWire {
+  notifications: NotificationWire[];
+  cursor: string;
+  totalCount: string;
 }
 
 // GET /v1/notifications — list published notifications.
@@ -18,6 +27,9 @@ export const notificationsFetcher = async (
   const requestParams = stringifyParams(pickBy(params, v => isNotEmpty(v)));
 
   return axiosClient
-    .get<NotificationCenterFeedCollection>(`/v1/notifications?${requestParams}`)
-    .then(response => response.data);
+    .get<FeedCollectionWire>(`/v1/notifications?${requestParams}`)
+    .then(response => ({
+      ...response.data,
+      notifications: response.data.notifications.map(toFeedItem)
+    }));
 };

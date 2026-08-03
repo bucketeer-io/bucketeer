@@ -61,10 +61,10 @@ const DraftsPanel = ({
     const query = (filters?.searchQuery ?? '').trim().toLowerCase();
     return drafts
       .filter(d =>
-        filters?.from ? Number(d.updatedAt) * 1000 >= filters.from : true
+        filters?.from ? Number(d.updatedAt) >= Number(filters.from) : true
       )
       .filter(d =>
-        filters?.to ? Number(d.updatedAt) * 1000 <= filters.to : true
+        filters?.to ? Number(d.updatedAt) <= Number(filters.to) : true
       )
       .filter(d =>
         query
