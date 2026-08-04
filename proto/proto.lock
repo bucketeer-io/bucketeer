@@ -46279,6 +46279,19 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "min_items",
+                        "value": "1"
+                      },
+                      {
+                        "name": "max_items",
+                        "value": "200"
+                      }
+                    ]
                   }
                 ]
               }
