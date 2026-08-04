@@ -248,7 +248,40 @@ func (s *NotificationService) MarkNotificationsAsRead(
 	ctx context.Context,
 	req *proto.MarkNotificationsAsReadRequest,
 ) (*proto.MarkNotificationsAsReadResponse, error) {
-	return nil, statusNotImplemented
+	t, err := s.checkAuthenticated(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(req.Ids))
+	seen := make(map[string]struct{}, len(req.Ids))
+	for _, id := range req.Ids {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, statusNotificationIDsRequired.Err()
+	}
+	if len(ids) > maxNotificationPageSize {
+		return nil, statusTooManyNotificationIDs.Err()
+	}
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		return s.notificationStorage.MarkNotificationsAsRead(ctxWithTx, ids, t.Email, time.Now().Unix())
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to mark notifications as read",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.MarkNotificationsAsReadResponse{}, nil
 }
 
 func (s *NotificationService) MarkAllNotificationsAsRead(
