@@ -46268,21 +46268,7 @@
             "name": "GetNotificationUnreadCountResponse"
           },
           {
-            "name": "MarkNotificationsAsReadRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "ids",
-                "type": "string",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
+            "name": "MarkNotificationsAsReadRequest"
           },
           {
             "name": "MarkNotificationsAsReadResponse"

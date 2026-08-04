@@ -61,16 +61,6 @@ var (
 			bkterr.NotificationPackageName,
 			"notification id must be specified",
 			"Id"))
-	statusNotificationIDsRequired = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(
-			bkterr.NotificationPackageName,
-			"at least one notification id must be specified",
-			"Ids"))
-	statusTooManyNotificationIDs = api.NewGRPCStatus(
-		bkterr.NewErrorExceededMax(
-			bkterr.NotificationPackageName,
-			"too many notification ids",
-			"Ids", maxNotificationPageSize))
 	statusNotificationNotFound = api.NewGRPCStatus(
 		bkterr.NewErrorNotFound(bkterr.NotificationPackageName, "not found", "Notification"))
 	statusNotificationAlreadyPublished = api.NewGRPCStatus(
