@@ -8,6 +8,7 @@ import {
   notificationUpdater
 } from '@api/notification-center';
 import {
+  useQueryNotification,
   useQueryNotificationDrafts,
   useQueryNotificationFeed,
   useQueryNotificationUnreadCount
@@ -40,6 +41,13 @@ export const useFetchFeed = (
       publishedAtTo: filters.to,
       language: getLanguage()
     }
+  });
+};
+
+export const useFetchNotification = (id?: string) => {
+  return useQueryNotification({
+    params: { id: id ?? '', language: getLanguage() },
+    enabled: !!id
   });
 };
 

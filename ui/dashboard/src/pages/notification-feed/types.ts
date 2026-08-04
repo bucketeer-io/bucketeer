@@ -30,4 +30,5 @@ export interface NotificationFilters {
   sort: SortOption;
   from?: string;
   to?: string;
+  notificationId?: string;
 }

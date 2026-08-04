@@ -5,6 +5,7 @@ import * as ROUTING from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { ExternalLink } from 'lucide-react';
 import { useFormatDateTime } from 'utils/date-time';
+import { stringifyParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconNotifications } from '@icons';
 import {
@@ -64,9 +65,13 @@ const NotificationBell = ({
   const onSelectNotification = (notification: FeedNotification) => {
     if (!notification.read) markAsRead.mutate(notification.id);
     setIsOpen(false);
-    navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_NOTIFICATION_FEED}`, {
-      state: { notification }
-    });
+    // page-content fetches the notification fresh via GetNotification, so
+    // only the id needs to travel — no need to hand off the object itself.
+    navigate(
+      `/${envUrlCode}${ROUTING.PAGE_PATH_NOTIFICATION_FEED}?${stringifyParams({
+        notificationId: notification.id
+      })}`
+    );
   };
 
   return (
