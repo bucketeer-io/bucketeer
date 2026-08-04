@@ -79,7 +79,11 @@ message GetNotificationUnreadCountRequest {}
 
 message GetNotificationUnreadCountResponse {}
 
-message MarkNotificationsAsReadRequest {}
+message MarkNotificationsAsReadRequest {
+  // Notification ids to mark as read for the requesting user. Unknown,
+  // draft, and deleted ids are ignored.
+  repeated string ids = 1 [(google.api.field_behavior) = REQUIRED];
+}
 
 message MarkNotificationsAsReadResponse {}
 

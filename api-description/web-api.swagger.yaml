@@ -14405,6 +14405,16 @@ definitions:
     type: object
   notificationMarkNotificationsAsReadRequest:
     type: object
+    properties:
+      ids:
+        type: array
+        items:
+          type: string
+        description: |-
+          Notification ids to mark as read for the requesting user. Unknown,
+          draft, and deleted ids are ignored.
+    required:
+      - ids
   notificationMarkNotificationsAsReadResponse:
     type: object
   notificationNotification:
