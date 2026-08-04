@@ -1039,7 +1039,6 @@ func TestIsNotificationRead(t *testing.T) {
 	}
 }
 
-
 func TestMarkNotificationsAsRead(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
