@@ -6,6 +6,7 @@ import { formatLongDateTime, useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import Button from 'components/button';
 import SlideModal from 'components/modal/slide';
+import Spinner from 'components/spinner';
 import { usePublishDraft } from '../collection-loader/use-fetch-notifications';
 import { NotificationDetail, NotificationStatus } from '../types';
 import { MarkdownContent } from './markdown-content';
@@ -74,7 +75,17 @@ const NotificationDetailModal = ({
   const { notify, errorNotify } = useToast();
   const publishMutation = usePublishDraft();
 
-  if (!notification) return null;
+  if (!isOpen) return null;
+
+  if (!notification) {
+    return (
+      <SlideModal title="" isOpen={isOpen} onClose={onClose}>
+        <div className="flex h-full w-full items-center justify-center">
+          <Spinner />
+        </div>
+      </SlideModal>
+    );
+  }
 
   const isDraft = notification.status === NotificationStatus.DRAFT;
   const timestamp = isDraft ? notification.updatedAt : notification.publishedAt;

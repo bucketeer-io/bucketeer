@@ -16,7 +16,7 @@ export interface NotificationsFetcherParams extends CollectionParams {
 
 interface FeedCollectionWire {
   notifications: NotificationWire[];
-  cursor: string;
+  nextCursor: string;
   totalCount: string;
 }
 
@@ -29,7 +29,8 @@ export const notificationsFetcher = async (
   return axiosClient
     .get<FeedCollectionWire>(`/v1/notifications?${requestParams}`)
     .then(response => ({
-      ...response.data,
-      notifications: response.data.notifications.map(toFeedItem)
+      notifications: response.data.notifications.map(toFeedItem),
+      cursor: response.data.nextCursor,
+      totalCount: response.data.totalCount
     }));
 };

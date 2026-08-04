@@ -1,6 +1,8 @@
 import {
   notificationDraftsFetcher,
   NotificationDraftsFetcherParams,
+  notificationFetcher,
+  NotificationFetcherParams,
   notificationsFetcher,
   NotificationsFetcherParams,
   notificationUnreadCountFetcher,
@@ -11,11 +13,13 @@ import { useTranslation } from 'i18n';
 import type {
   NotificationCenterDraftCollection,
   NotificationCenterFeedCollection,
+  NotificationCenterFeedItem,
   NotificationCenterUnreadCount,
   QueryOptionsRespond
 } from '@types';
 
 export const NOTIFICATION_FEED_QUERY_KEY = 'notification-feed';
+export const NOTIFICATION_QUERY_KEY = 'notification';
 export const NOTIFICATION_DRAFTS_QUERY_KEY = 'notification-drafts';
 export const NOTIFICATION_UNREAD_COUNT_QUERY_KEY = 'notification-unread-count';
 
@@ -32,6 +36,21 @@ export const useQueryNotificationFeed = (options?: FeedQueryOptions) => {
   return useQuery({
     queryKey: [NOTIFICATION_FEED_QUERY_KEY, params, i18n.language],
     queryFn: () => notificationsFetcher(params),
+    ...queryOptions
+  });
+};
+
+type NotificationQueryOptions =
+  QueryOptionsRespond<NotificationCenterFeedItem> & {
+    params: NotificationFetcherParams;
+  };
+
+export const useQueryNotification = (options: NotificationQueryOptions) => {
+  const { params, ...queryOptions } = options;
+  const { i18n } = useTranslation('common');
+  return useQuery({
+    queryKey: [NOTIFICATION_QUERY_KEY, params, i18n.language],
+    queryFn: () => notificationFetcher(params),
     ...queryOptions
   });
 };

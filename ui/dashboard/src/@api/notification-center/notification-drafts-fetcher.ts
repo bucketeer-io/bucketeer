@@ -9,7 +9,7 @@ export type NotificationDraftsFetcherParams = CollectionParams;
 
 interface DraftCollectionWire {
   notifications: NotificationWire[];
-  cursor: string;
+  nextCursor: string;
   totalCount: string;
 }
 
@@ -22,7 +22,8 @@ export const notificationDraftsFetcher = async (
   return axiosClient
     .get<DraftCollectionWire>(`/v1/admin_notifications/drafts?${requestParams}`)
     .then(response => ({
-      ...response.data,
-      notifications: response.data.notifications.map(toFeedItem)
+      notifications: response.data.notifications.map(toFeedItem),
+      cursor: response.data.nextCursor,
+      totalCount: response.data.totalCount
     }));
 };

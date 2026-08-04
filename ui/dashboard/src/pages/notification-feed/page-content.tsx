@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -15,6 +14,7 @@ import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import {
   useFetchDrafts,
+  useFetchNotification,
   useFetchTabCounts,
   useMarkAllAsRead
 } from './collection-loader/use-fetch-notifications';
@@ -41,8 +41,6 @@ const PageContent = ({
   const { t } = useTranslation(['common', 'form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const defaultFilters = {
     tab: 'unread',
@@ -59,26 +57,31 @@ const PageContent = ({
   const { unreadCount, readCount } = useFetchTabCounts(environmentId);
   const markAllAsRead = useMarkAllAsRead(environmentId);
 
-  // The notification/draft shown in the detail SlideModal.
-  const [detail, setDetail] = useState<NotificationDetail>();
+  // The id of the notification/draft shown in the detail SlideModal, driven
+  // by ?notificationId through the same filters/URL mechanism as the rest of
+  // the page, so a deep link (NotificationBell, a shared link, or a refresh)
+  // opens the same panel and other filter changes don't clobber it. The
+  // panel always fetches fresh via GetNotification rather than reusing the
+  // row object from whichever list was clicked, so it reflects the current
+  // read state and (for admins) the full localizations list, per RFC 0047.
+  const selectedId = filters.notificationId;
+  const { data: detail } = useFetchNotification(selectedId);
+
+  const onSelectDetail = (notification: NotificationDetail) =>
+    onChangeFilters({ notificationId: notification.id });
 
   // Which draft is open for editing in the publish form, tracked by id only.
   // The draft object itself is derived from the live drafts query below, so
   // the form always edits current data instead of a stale snapshot taken when
-  // "Edit Draft" was clicked.
+  // "Edit Draft" was clicked. Only fetched once the Publish tab is actually
+  // in play — either it's the active tab, or "Edit Draft" was just clicked
+  // and is about to switch to it — so browsing Unread/Read doesn't pay for
+  // a drafts-list request that tab will never use.
   const [editingId, setEditingId] = useState<string>();
-  const { data: draftsData } = useFetchDrafts(isSystemAdmin);
+  const { data: draftsData } = useFetchDrafts(
+    !!isSystemAdmin && (filters.tab === 'publish' || !!editingId)
+  );
   const editingDraft = draftsData?.notifications.find(d => d.id === editingId);
-
-  const onEditDraft = (draft: NotificationDetail) => {
-    setDetail(undefined);
-    setEditingId(draft.id);
-    onChangeFilters({ tab: 'publish' });
-  };
-
-  // Leaving edit mode (Clear or a successful submit): drop the draft so the
-  // form reverts to "new notification" mode.
-  const onClearEdit = () => setEditingId(undefined);
 
   const onChangeFilters = useCallback(
     (values: Partial<NotificationFilters>) => {
@@ -95,6 +98,15 @@ const PageContent = ({
     [onChangeFilters]
   );
 
+  const onEditDraft = (draft: NotificationDetail) => {
+    setEditingId(draft.id);
+    onChangeFilters({ notificationId: undefined, tab: 'publish' });
+  };
+
+  // Leaving edit mode (Clear or a successful submit): drop the draft so the
+  // form reverts to "new notification" mode.
+  const onClearEdit = () => setEditingId(undefined);
+
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
       setFilters({ ...defaultFilters });
@@ -107,18 +119,7 @@ const PageContent = ({
     }
   }, [isSystemAdmin, filters.tab]);
 
-  useEffect(() => {
-    const openNotification = (
-      location.state as { notification?: NotificationDetail } | null
-    )?.notification;
-    if (openNotification) {
-      setDetail(openNotification);
-      navigate(location.pathname + location.search, {
-        replace: true,
-        state: null
-      });
-    }
-  }, [location.state]);
+  const onCloseDetail = () => onChangeFilters({ notificationId: undefined });
 
   const sortOptions = [
     { label: t('sort-by-newest'), value: 'newest' },
@@ -205,7 +206,7 @@ const PageContent = ({
                 read={false}
                 filters={filters}
                 environmentId={environmentId}
-                onSelect={setDetail}
+                onSelect={onSelectDetail}
                 onClearFilters={onClearFilters}
               />
             </TabsContent>
@@ -214,7 +215,7 @@ const PageContent = ({
                 read
                 filters={filters}
                 environmentId={environmentId}
-                onSelect={setDetail}
+                onSelect={onSelectDetail}
                 onClearFilters={onClearFilters}
               />
             </TabsContent>
@@ -233,7 +234,7 @@ const PageContent = ({
             <aside className="lg:border-l lg:border-gray-200 lg:pl-8">
               <DraftsPanel
                 filters={filters}
-                onSelect={setDetail}
+                onSelect={onSelectDetail}
                 onClearFilters={onClearFilters}
               />
             </aside>
@@ -243,8 +244,8 @@ const PageContent = ({
 
       <NotificationDetailModal
         notification={detail}
-        isOpen={!!detail}
-        onClose={() => setDetail(undefined)}
+        isOpen={!!selectedId}
+        onClose={onCloseDetail}
         onEditDraft={onEditDraft}
       />
     </PageLayout.Content>

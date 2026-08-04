@@ -266,6 +266,7 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
       'notification-feed',
       'notification-drafts',
       'notification-unread-count',
+      'notification',
       'audit-logs'
     ]
   },
@@ -273,7 +274,7 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
   // Notification center read-state (mark as read / mark all as read)
   {
     match: /\/v1\/notifications\/mark_(all_)?as_read(\?|$)/,
-    keys: ['notification-feed', 'notification-unread-count']
+    keys: ['notification-feed', 'notification-unread-count', 'notification']
   }
 ];
 

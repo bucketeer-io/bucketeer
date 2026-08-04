@@ -12,11 +12,12 @@ const axiosClient: AxiosInstance = axios.create({
   baseURL: urls.WEB_API_ENDPOINT
 });
 
-// TEMPORARY: the notification center backend (proto/notification/service.proto)
-// hasn't been implemented yet. This intercepts its endpoints with fake data so
-// the feature can be built against the real request/response shapes ahead of
-// the backend. Remove this call (and @api/notification-center/mock-adapter.ts)
-// once the backend ships — no other file needs to change.
+// TEMPORARY: three notification center endpoints (unread count, mark as
+// read, mark all as read — see proto/notification/service.proto) are still
+// backend stubs. This intercepts just those with fake data so the rest of
+// the feature, which now talks to the real API, isn't blocked on them.
+// Remove this call (and @api/notification-center/mock-adapter.ts) once they
+// ship — no other file needs to change.
 installNotificationCenterMockAdapter(axiosClient);
 
 axiosClient.interceptors.request.use(
