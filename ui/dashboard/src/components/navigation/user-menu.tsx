@@ -128,6 +128,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
         startWalkthrough();
       }
     },
+
     myOrganizations.length > 1 && {
       label: consoleAccount?.organization?.name || '',
       icon: IconBuilding,

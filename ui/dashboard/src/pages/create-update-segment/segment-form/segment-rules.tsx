@@ -91,14 +91,14 @@ const SortableRuleCard = ({
           <div className="flex items-center gap-x-2">
             {rulesCount > 1 && (
               <div
-                className="flex-center cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none"
+                className="flex-center cursor-grab active:cursor-grabbing text-gray-400 dark:text-dark-gray-200 hover:text-gray-600 dark:hover:text-dark-gray-400 touch-none"
                 {...attributes}
                 {...listeners}
               >
                 <GripVertical size={16} />
               </div>
             )}
-            <p className="typo-para-medium leading-5 text-gray-700">
+            <p className="typo-para-medium leading-5 text-gray-700 dark:text-dark-gray-300">
               <Trans
                 i18nKey={'table:feature-flags.rule-index'}
                 values={{ index: ruleIndex + 1 }}
@@ -116,7 +116,7 @@ const SortableRuleCard = ({
                     <Icon
                       icon={IconArrowDownwardFilled}
                       size={'sm'}
-                      className="text-gray-500 group-hover:text-gray-700"
+                      className="text-gray-500 dark:text-dark-gray-200 group-hover:text-gray-700 dark:group-hover:text-dark-gray-400"
                     />
                   </div>
                 )}
@@ -128,7 +128,7 @@ const SortableRuleCard = ({
                     <Icon
                       icon={IconArrowUpwardFilled}
                       size={'sm'}
-                      className="text-gray-500 group-hover:text-gray-700"
+                      className="text-gray-500 dark:text-dark-gray-200 group-hover:text-gray-700 dark:group-hover:text-dark-gray-400"
                     />
                   </div>
                 )}
@@ -141,7 +141,7 @@ const SortableRuleCard = ({
               <Icon
                 icon={IconClose}
                 size={'sm'}
-                className="flex-center text-gray-500 group-hover:text-gray-700"
+                className="flex-center text-gray-500 dark:text-dark-gray-200 group-hover:text-gray-700 dark:group-hover:text-dark-gray-400"
               />
             </div>
           </div>
@@ -261,7 +261,7 @@ const SegmentRules = ({ disabled }: { disabled?: boolean }) => {
               {fields.map((field, ruleIndex) => (
                 <Fragment key={field.key}>
                   {ruleIndex !== 0 && (
-                    <div className="flex-center self-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px] bg-gray-200 text-gray-600">
+                    <div className="flex-center self-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px] bg-gray-200 dark:bg-dark-black-700 text-gray-600 dark:text-dark-gray-200">
                       {t('common:or')}
                     </div>
                   )}
