@@ -99,6 +99,7 @@ export function useUnsavedLeavePage({
         bypassNavigation = false;
         return push(...args);
       }
+
       if (isWalkthroughActive()) return;
       confirm({
         title: title,

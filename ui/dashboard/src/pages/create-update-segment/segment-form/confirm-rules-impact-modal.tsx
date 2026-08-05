@@ -40,7 +40,7 @@ const ConfirmRulesImpactModal = ({
       onClose={onClose}
     >
       <div className="flex flex-col w-full px-5 py-8 gap-y-5">
-        <div className="flex flex-col w-full px-4 py-3 bg-accent-yellow-50 border-l-4 border-accent-yellow-500 rounded">
+        <div className="flex flex-col w-full px-4 py-3 bg-accent-yellow-50 dark:bg-accent-yellow-900/30 border-l-4 border-accent-yellow-500 rounded">
           <div className="flex gap-x-2 w-full pr-3">
             <Icon
               icon={IconToastWarning}
@@ -60,7 +60,7 @@ const ConfirmRulesImpactModal = ({
             {features?.map((item, index) => (
               <div
                 key={item.id}
-                className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500"
+                className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500 dark:text-dark-purple-700"
               >
                 <p>{index + 1}.</p>
                 <Link

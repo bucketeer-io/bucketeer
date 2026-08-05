@@ -237,3 +237,58 @@ body .driver-popover {
 body .driver-active-element-parent-no-scroll {
   overflow: auto !important;
 }
+
+/* Dark mode overrides for the driver.js walkthrough — it renders outside
+   React (appended to <body>) so it can't use Tailwind's dark: variants. */
+.dark .driver-popover {
+  @apply !bg-dark-black-800 !text-dark-gray-400 shadow-none;
+}
+.dark .driver-popover-title {
+  @apply !text-dark-gray-400;
+}
+.dark .driver-popover-description {
+  @apply !text-dark-gray-300;
+}
+.dark .driver-popover-close-btn {
+  @apply !text-dark-gray-200;
+}
+.dark .driver-popover-close-btn:hover,
+.dark .driver-popover-close-btn:focus {
+  @apply !text-dark-gray-400;
+}
+.dark .driver-popover-progress-text {
+  @apply !text-dark-gray-200;
+}
+.dark .driver-popover-footer-btn {
+  @apply !border-dark-black-700 !bg-dark-black-800 !text-dark-gray-400;
+}
+.dark .driver-popover-footer-btn:hover,
+.dark .driver-popover-footer-btn:focus {
+  @apply !bg-dark-black-700;
+}
+.dark .driver-popover-footer .driver-popover-btn-disabled {
+  @apply !text-dark-gray-200;
+}
+.dark .driver-popover-arrow {
+  border-color: theme('colors.dark.black.800');
+}
+.dark .driver-popover-arrow-side-left {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-right-color: transparent !important;
+}
+.dark .driver-popover-arrow-side-right {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-left-color: transparent !important;
+}
+.dark .driver-popover-arrow-side-top {
+  border-bottom-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
+.dark .driver-popover-arrow-side-bottom {
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
