@@ -56,6 +56,8 @@ var (
 	selectReadNotificationIDsSQL string
 	//go:embed sql/select_earliest_account_created_at.sql
 	selectEarliestAccountCreatedAtSQL string
+	//go:embed sql/insert_notification_read.sql
+	insertNotificationReadSQL string
 )
 
 // readNotificationExistsSubquery correlates a viewer's read marker with the
@@ -536,6 +538,29 @@ func (s *notificationStorage) IsNotificationRead(
 	}
 	_, ok := readIDs[id]
 	return ok, nil
+}
+
+// MarkNotificationsAsRead upserts read markers for the given published
+// notifications; unknown, draft, and deleted ids are ignored.
+func (s *notificationStorage) MarkNotificationsAsRead(
+	ctx context.Context,
+	ids []string,
+	email string,
+	readAt int64,
+) error {
+	for _, id := range ids {
+		if _, err := s.qe.ExecContext(
+			ctx,
+			insertNotificationReadSQL,
+			email,
+			readAt,
+			id,
+			int32(proto.Notification_PUBLISHED),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // readNotificationIDs returns which of the given notifications the viewer

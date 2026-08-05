@@ -46268,7 +46268,34 @@
             "name": "GetNotificationUnreadCountResponse"
           },
           {
-            "name": "MarkNotificationsAsReadRequest"
+            "name": "MarkNotificationsAsReadRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ids",
+                "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "min_items",
+                        "value": "1"
+                      },
+                      {
+                        "name": "max_items",
+                        "value": "200"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "MarkNotificationsAsReadResponse"

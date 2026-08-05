@@ -75,6 +75,10 @@ type NotificationStorage interface {
 	) ([]*proto.Notification, int, int64, error)
 	// IsNotificationRead reports whether the viewer has read the notification.
 	IsNotificationRead(ctx context.Context, id, email string) (bool, error)
+	// MarkNotificationsAsRead upserts read markers for the given published
+	// notifications; unknown, draft, and deleted ids are ignored. Idempotent:
+	// already-read notifications keep their original read_at.
+	MarkNotificationsAsRead(ctx context.Context, ids []string, email string, readAt int64) error
 }
 
 type ListDraftAdminNotificationsParams struct {

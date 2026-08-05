@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -1170,6 +1171,100 @@ func TestNotificationService_GetNotification(t *testing.T) {
 			if p.expectedErr == nil {
 				assert.NotNil(t, resp)
 				p.verify(t, resp)
+			}
+		})
+	}
+}
+
+func TestNotificationService_MarkNotificationsAsRead(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	viewerCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	tooManyIDs := make([]string, maxNotificationPageSize+1)
+	for i := range tooManyIDs {
+		tooManyIDs[i] = fmt.Sprintf("notification-id-%d", i)
+	}
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		req         *proto.MarkNotificationsAsReadRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: unauthenticated",
+			ctx:         context.TODO(),
+			req:         &proto.MarkNotificationsAsReadRequest{Ids: []string{"notification-id-0"}},
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc:        "err: ids required",
+			ctx:         viewerCtx,
+			req:         &proto.MarkNotificationsAsReadRequest{},
+			expectedErr: statusNotificationIDsRequired.Err(),
+		},
+		{
+			desc:        "err: ids required when all blank",
+			ctx:         viewerCtx,
+			req:         &proto.MarkNotificationsAsReadRequest{Ids: []string{" ", ""}},
+			expectedErr: statusNotificationIDsRequired.Err(),
+		},
+		{
+			desc:        "err: too many ids",
+			ctx:         viewerCtx,
+			req:         &proto.MarkNotificationsAsReadRequest{Ids: tooManyIDs},
+			expectedErr: statusTooManyNotificationIDs.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req:         &proto.MarkNotificationsAsReadRequest{Ids: []string{"notification-id-0"}},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success: ids trimmed and deduplicated",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().MarkNotificationsAsRead(
+					gomock.Any(),
+					[]string{"notification-id-0", "notification-id-1"},
+					"email",
+					gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.MarkNotificationsAsReadRequest{
+				Ids: []string{" notification-id-0 ", "notification-id-1", "notification-id-0", ""},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.MarkNotificationsAsRead(p.ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
 			}
 		})
 	}

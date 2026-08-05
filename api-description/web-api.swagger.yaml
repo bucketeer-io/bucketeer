@@ -14405,6 +14405,18 @@ definitions:
     type: object
   notificationMarkNotificationsAsReadRequest:
     type: object
+    properties:
+      ids:
+        type: array
+        items:
+          type: string
+        description: |-
+          Notification ids to mark as read for the requesting user; 1 to 200 ids
+          per request. Unknown, draft, and deleted ids are ignored.
+        maxItems: 200
+        minItems: 1
+    required:
+      - ids
   notificationMarkNotificationsAsReadResponse:
     type: object
   notificationNotification:
