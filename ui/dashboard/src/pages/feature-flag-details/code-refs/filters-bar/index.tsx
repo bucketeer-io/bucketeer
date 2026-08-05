@@ -47,7 +47,11 @@ const FiltersBar = ({
         components={{
           text: (
             <span
-              className={repositoryLabel ? 'text-gray-600' : 'text-gray-500'}
+              className={
+                repositoryLabel
+                  ? 'text-gray-600 dark:text-dark-gray-200'
+                  : 'text-gray-500 dark:text-dark-gray-200'
+              }
             />
           )
         }}
@@ -65,7 +69,13 @@ const FiltersBar = ({
         }}
         components={{
           text: (
-            <span className={branchLabel ? 'text-gray-600' : 'text-gray-500'} />
+            <span
+              className={
+                branchLabel
+                  ? 'text-gray-600 dark:text-dark-gray-200'
+                  : 'text-gray-500 dark:text-dark-gray-200'
+              }
+            />
           )
         }}
       />
@@ -83,7 +93,11 @@ const FiltersBar = ({
         components={{
           text: (
             <span
-              className={extensionLabel ? 'text-gray-600' : 'text-gray-500'}
+              className={
+                extensionLabel
+                  ? 'text-gray-600 dark:text-dark-gray-200'
+                  : 'text-gray-500 dark:text-dark-gray-200'
+              }
             />
           )
         }}
@@ -95,10 +109,10 @@ const FiltersBar = ({
   return (
     <div className="flex items-center justify-between w-full gap-x-10">
       <div className="flex flex-col gap-y-4">
-        <p className="typo-head-bold-small text-gray-800">
+        <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
           {t('code-refs.title')}
         </p>
-        <p className="typo-para-medium text-gray-500">
+        <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200">
           {t('code-refs.description')}
         </p>
       </div>

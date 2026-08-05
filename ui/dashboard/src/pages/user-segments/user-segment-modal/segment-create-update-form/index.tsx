@@ -183,11 +183,11 @@ const SegmentCreateUpdateModal = ({
       ) : (
         <div className="w-full p-5 pb-28">
           {isUpdate && (
-            <p className="text-gray-600 typo-para-medium mb-4">
+            <p className="text-gray-600 dark:text-dark-gray-200 typo-para-medium mb-4">
               {t('form:update-user-segment')}
             </p>
           )}
-          <p className="text-gray-800 typo-head-bold-small">
+          <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
             {t('form:general-info')}
           </p>
           <FormProvider {...form}>
@@ -230,7 +230,7 @@ const SegmentCreateUpdateModal = ({
               />
               <Divider className="mt-1 mb-5" />
 
-              <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
+              <p className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
 
               {isDisabledUserIds && userSegment && (
                 <div className="mb-5">
@@ -264,7 +264,7 @@ const SegmentCreateUpdateModal = ({
                             <label
                               htmlFor={'upload'}
                               className={cn(
-                                'cursor-pointer typo-para-small text-gray-700',
+                                'cursor-pointer typo-para-small text-gray-700 dark:text-dark-gray-300',
                                 {
                                   'cursor-not-allowed': isDisabled
                                 }
@@ -314,7 +314,7 @@ const SegmentCreateUpdateModal = ({
                             <label
                               htmlFor={'typing'}
                               className={cn(
-                                'cursor-pointer typo-para-small text-gray-700',
+                                'cursor-pointer typo-para-small text-gray-700 dark:text-dark-gray-300',
                                 {
                                   'cursor-not-allowed': isDisabled
                                 }
@@ -347,7 +347,7 @@ const SegmentCreateUpdateModal = ({
                 />
               </RadioGroup>
 
-              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+              <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
                     <Button

@@ -240,7 +240,7 @@ const DropdownMenuWithSearch = ({
             handleFocusSearchInput();
           })
         ) : (
-          <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+          <div className="flex-center py-2.5 typo-para-medium text-gray-600 dark:text-dark-gray-300">
             {t('no-options-found')}
           </div>
         )}

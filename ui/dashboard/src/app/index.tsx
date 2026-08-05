@@ -90,7 +90,7 @@ import {
 } from './routers';
 
 export const AppLoading = () => (
-  <div className="flex items-center justify-center h-screen w-full">
+  <div className="flex items-center justify-center h-screen w-full bg-white dark:bg-dark-black-950">
     <Spinner size="md" />
   </div>
 );

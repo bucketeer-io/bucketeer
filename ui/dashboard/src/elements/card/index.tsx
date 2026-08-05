@@ -16,7 +16,7 @@ const Card = forwardRef(
       <div
         ref={ref}
         className={cn(
-          'flex flex-col w-full p-5 gap-y-5 bg-white rounded-lg shadow-card',
+          'flex flex-col w-full p-5 gap-y-5 bg-white dark:bg-dark-black-800 rounded-lg shadow-card dark:shadow-dark-card',
           className
         )}
       >
