@@ -1,7 +1,6 @@
 import axiosClient from '@api/axios-client';
 
 export interface NotificationMarkAsReadPayload {
-  environmentId: string;
   ids: string[];
 }
 

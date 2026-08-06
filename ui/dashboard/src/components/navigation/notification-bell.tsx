@@ -35,11 +35,8 @@ const previewFilters: NotificationFilters = {
 };
 
 const NotificationBell = ({
-  environmentId,
   envUrlCode
 }: {
-  // The environment's internal id, used for API calls.
-  environmentId: string;
   // The environment's URL code, used only to build the route link.
   envUrlCode: string;
 }) => {
@@ -49,12 +46,12 @@ const NotificationBell = ({
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: unread } = useFetchUnreadCount(environmentId);
+  const { data: unreadFeed } = useFetchUnreadCount();
   const { data } = useFetchFeed('UNREAD', 1, previewFilters);
-  const markAsRead = useMarkAsRead(environmentId);
-  const markAllAsRead = useMarkAllAsRead(environmentId);
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
 
-  const unreadCount = Number(unread?.count ?? 0);
+  const unreadCount = Number(unreadFeed?.totalCount ?? 0);
   const items = (data?.notifications ?? []).slice(0, PREVIEW_PAGE_SIZE);
 
   const goToFeed = () => {

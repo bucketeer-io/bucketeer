@@ -1,6 +1,3 @@
-// String-valued to match protojson's default enum encoding (the gateway
-// serializes proto enums by name, e.g. "DRAFT", not by number — same as
-// FeatureVariationType, Segment.status, etc.).
 export enum NotificationCenterStatus {
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED'
@@ -19,10 +16,6 @@ export interface NotificationCenterLocalization {
   content: string;
 }
 
-// A feed/draft row projected into one language: the resolved localization's
-// fields are flattened, matching what the list/drafts endpoints return for
-// display. `localizations` carries every language version so the detail
-// panel and publish form can edit them all.
 export interface NotificationCenterFeedItem {
   id: string;
   title: string;
@@ -50,16 +43,6 @@ export interface NotificationCenterDraftCollection {
   totalCount: string;
 }
 
-export interface NotificationCenterUnreadCount {
-  count: string;
-}
-
-// ---------------------------------------------------------------------------
-// Write payloads
-// ---------------------------------------------------------------------------
-
-// The author identity (created_by / published_by) is intentionally absent —
-// the backend fills it from the authenticated user.
 export interface NotificationCenterPublishPayload {
   status: NotificationCenterStatus;
   localizations: NotificationCenterLocalization[];

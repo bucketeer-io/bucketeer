@@ -10,8 +10,7 @@ import {
 import {
   useQueryNotification,
   useQueryNotificationDrafts,
-  useQueryNotificationFeed,
-  useQueryNotificationUnreadCount
+  useQueryNotificationFeed
 } from '@queries/notification-center';
 import { useMutation } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
@@ -61,39 +60,39 @@ export const useFetchDrafts = (enabled = true) => {
   });
 };
 
-export const useFetchUnreadCount = (environmentId: string) => {
-  return useQueryNotificationUnreadCount({ params: { environmentId } });
+export const useFetchUnreadCount = () => {
+  return useQueryNotificationFeed({
+    params: { readStatus: 'UNREAD', cursor: '0', pageSize: 1 }
+  });
 };
 
-export const useFetchTabCounts = (environmentId: string) => {
-  const { data: unread } = useFetchUnreadCount(environmentId);
+export const useFetchTabCounts = () => {
+  const { data: unreadFeed } = useFetchUnreadCount();
   const { data: readFeed } = useQueryNotificationFeed({
     params: { readStatus: 'READ', cursor: '0', pageSize: 1 }
   });
 
   return {
-    unreadCount: Number(unread?.count ?? 0),
+    unreadCount: Number(unreadFeed?.totalCount ?? 0),
     readCount: Number(readFeed?.totalCount ?? 0)
   };
 };
 
-export const useMarkAsRead = (environmentId: string) => {
+export const useMarkAsRead = () => {
   return useMutation({
-    mutationFn: (id: string) =>
-      notificationMarkAsRead({ environmentId, ids: [id] })
+    mutationFn: (id: string) => notificationMarkAsRead({ ids: [id] })
   });
 };
 
-export const useMarkManyAsRead = (environmentId: string) => {
+export const useMarkManyAsRead = () => {
   return useMutation({
-    mutationFn: (ids: string[]) =>
-      notificationMarkAsRead({ environmentId, ids })
+    mutationFn: (ids: string[]) => notificationMarkAsRead({ ids })
   });
 };
 
-export const useMarkAllAsRead = (environmentId: string) => {
+export const useMarkAllAsRead = () => {
   return useMutation({
-    mutationFn: () => notificationMarkAllAsRead({ environmentId })
+    mutationFn: () => notificationMarkAllAsRead()
   });
 };
 
@@ -108,8 +107,6 @@ export const usePublishNotification = () => {
   });
 };
 
-// Publishes an existing draft as-is (no edits) — e.g. the "Publish" action
-// from the read-only detail view, as opposed to publishing from the form.
 export const usePublishDraft = () => {
   return useMutation({
     mutationFn: (id: string) => notificationPublisher({ id })

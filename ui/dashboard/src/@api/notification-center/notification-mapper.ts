@@ -5,9 +5,11 @@ import {
 } from '@types';
 
 // The `Notification` proto message as it comes over the wire: `localizations`
-// (all languages) is populated, but the backend never resolves the singular
-// `localization` field (see proto/notification/notification.proto), so admin
-// endpoints must resolve a display language client-side.
+// (all languages) is always populated, but only ListNotifications,
+// GetNotification, and the drafts list resolve the singular `localization`
+// field server-side (see pkg/notification/api/api.go). Create/update/publish
+// responses leave it unset, so this must still resolve a display language
+// client-side as a fallback for those.
 export interface NotificationWire extends Omit<
   NotificationCenterFeedItem,
   'title' | 'content' | 'tags'
