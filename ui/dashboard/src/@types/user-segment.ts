@@ -24,3 +24,22 @@ export interface UserSegmentCollection {
   cursor: string;
   totalCount: string;
 }
+
+export interface SegmentRuleClausePayload {
+  id: string;
+  attribute: string;
+  operator: string;
+  values: string[];
+}
+
+// Segment rules carry no strategy: matching a rule simply means
+// "the user is in the segment".
+export interface SegmentRulePayload {
+  id: string;
+  clauses: SegmentRuleClausePayload[];
+}
+
+// proto RuleListValue: absent = rules unchanged, present = full replacement.
+export interface SegmentRuleListValue {
+  values: SegmentRulePayload[];
+}

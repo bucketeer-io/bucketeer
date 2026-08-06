@@ -76,7 +76,6 @@ import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
-import UserSegmentsPage from 'pages/user-segments';
 import ChatWidget from 'components/ai-chat';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
@@ -86,7 +85,8 @@ import {
   ProjectsRoot,
   GoalsRoot,
   FeatureFlagsRoot,
-  MemberRoot
+  MemberRoot,
+  UserSegmentsRoot
 } from './routers';
 
 export const AppLoading = () => (
@@ -285,7 +285,7 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_GOALS}/*`} element={<GoalsRoot />} />
         <Route
           path={`${PAGE_PATH_USER_SEGMENTS}/*`}
-          element={<UserSegmentsPage />}
+          element={<UserSegmentsRoot />}
         />
         <Route
           path={`${PAGE_PATH_EXPERIMENTS}/*`}

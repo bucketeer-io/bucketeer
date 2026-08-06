@@ -5,9 +5,9 @@ import { useIsTruncated } from 'hooks/use-is-truncated';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { colorStyles, Option, optionStyle } from 'components/creatable-select';
 import { Tooltip } from 'components/tooltip';
-import { UserMessage } from '../individual-rule';
 
 const CustomOption = memo((props: OptionProps<Option>) => {
   const label = props.data.label;

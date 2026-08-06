@@ -638,7 +638,10 @@ const getValueLabel = (
 ) => {
   const { SEGMENT, FEATURE_FLAG, BEFORE, AFTER } = FeatureRuleClauseOperator;
   if (operator === SEGMENT && segmentUsers) {
-    return segmentUsers.find(item => values.includes(item.id))?.name || '';
+    return segmentUsers
+      .filter(item => values.includes(item.id))
+      .map(item => item.name)
+      .join(', ');
   }
   if ([BEFORE, AFTER].includes(operator as FeatureRuleClauseOperator)) {
     return values[0]

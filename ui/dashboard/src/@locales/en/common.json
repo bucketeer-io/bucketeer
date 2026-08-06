@@ -217,6 +217,7 @@
   "true": "True",
   "false": "False",
   "and": "AND",
+  "or": "OR",
   "see-more": "See more",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
