@@ -21,6 +21,10 @@
     "src/**/*.{js,jsx,ts,tsx}": "eslint --cache --fix",
     "src/**/*.{js,jsx,ts,tsx,css}": "prettier --write --ignore-unknown"
   },
+  "resolutions": {
+    "brace-expansion": "^1.1.18",
+    "@typescript-eslint/typescript-estree/**/brace-expansion": "^5.0.9"
+  },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -80,7 +84,7 @@
     "react-icons-material-design": "^1.0.4",
     "react-intersection-observer": "^9.16.0",
     "react-markdown": "^10.1.0",
-    "react-router": "^7.18.2",
+    "react-router": "^8.3.0",
     "react-select": "^5.9.0",
     "remark": "^15.0.1",
     "strip-markdown": "^6.0.0",
@@ -107,7 +111,6 @@
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.5.4",
     "eslint": "^9.39.5",
-    "axios-mock-adapter": "^2.1.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react": "^7.35.0",

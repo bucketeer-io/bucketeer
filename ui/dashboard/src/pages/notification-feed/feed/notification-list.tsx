@@ -19,7 +19,6 @@ const PAGE_SIZE = 10;
 interface NotificationListProps {
   read?: boolean;
   filters: NotificationFilters;
-  environmentId: string;
   onSelect?: (notification: FeedNotification) => void;
   onClearFilters?: () => void;
 }
@@ -27,7 +26,6 @@ interface NotificationListProps {
 const NotificationList = ({
   read = true,
   filters,
-  environmentId,
   onSelect,
   onClearFilters
 }: NotificationListProps) => {
@@ -47,8 +45,8 @@ const NotificationList = ({
     page,
     filters
   );
-  const markAsRead = useMarkAsRead(environmentId);
-  const markManyAsRead = useMarkManyAsRead(environmentId);
+  const markAsRead = useMarkAsRead();
+  const markManyAsRead = useMarkManyAsRead();
 
   const items = data?.notifications ?? [];
   const total = Number(data?.totalCount ?? 0);

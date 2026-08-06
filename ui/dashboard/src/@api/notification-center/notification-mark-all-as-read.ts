@@ -1,14 +1,8 @@
 import axiosClient from '@api/axios-client';
 
-export interface NotificationMarkAllAsReadPayload {
-  environmentId: string;
-}
-
 // POST /v1/notifications/mark_all_as_read
-export const notificationMarkAllAsRead = async (
-  payload: NotificationMarkAllAsReadPayload
-) => {
+export const notificationMarkAllAsRead = async () => {
   return axiosClient
-    .post('/v1/notifications/mark_all_as_read', payload)
+    .post('/v1/notifications/mark_all_as_read', {})
     .then(response => response.data);
 };

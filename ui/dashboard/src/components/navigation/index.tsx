@@ -222,10 +222,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         <div className="flex items-center justify-between">
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
           <div className="flex items-center justify-center gap-2">
-            <NotificationBell
-              environmentId={currentEnvironment.id}
-              envUrlCode={envUrlCode}
-            />
+            <NotificationBell envUrlCode={envUrlCode} />
             <button
               type="button"
               onClick={() => {

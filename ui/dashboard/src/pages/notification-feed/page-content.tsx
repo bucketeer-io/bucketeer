@@ -31,12 +31,10 @@ import {
 
 const PageContent = ({
   disabled,
-  isSystemAdmin,
-  environmentId
+  isSystemAdmin
 }: {
   disabled?: boolean;
   isSystemAdmin?: boolean;
-  environmentId: string;
 }) => {
   const { t } = useTranslation(['common', 'form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -54,29 +52,15 @@ const PageContent = ({
 
   // Sourced independently of whichever NotificationList is mounted, so both
   // tab badges stay live across tab switches and mutations.
-  const { unreadCount, readCount } = useFetchTabCounts(environmentId);
-  const markAllAsRead = useMarkAllAsRead(environmentId);
+  const { unreadCount, readCount } = useFetchTabCounts();
+  const markAllAsRead = useMarkAllAsRead();
 
-  // The id of the notification/draft shown in the detail SlideModal, driven
-  // by ?notificationId through the same filters/URL mechanism as the rest of
-  // the page, so a deep link (NotificationBell, a shared link, or a refresh)
-  // opens the same panel and other filter changes don't clobber it. The
-  // panel always fetches fresh via GetNotification rather than reusing the
-  // row object from whichever list was clicked, so it reflects the current
-  // read state and (for admins) the full localizations list, per RFC 0047.
   const selectedId = filters.notificationId;
   const { data: detail } = useFetchNotification(selectedId);
 
   const onSelectDetail = (notification: NotificationDetail) =>
     onChangeFilters({ notificationId: notification.id });
 
-  // Which draft is open for editing in the publish form, tracked by id only.
-  // The draft object itself is derived from the live drafts query below, so
-  // the form always edits current data instead of a stale snapshot taken when
-  // "Edit Draft" was clicked. Only fetched once the Publish tab is actually
-  // in play — either it's the active tab, or "Edit Draft" was just clicked
-  // and is about to switch to it — so browsing Unread/Read doesn't pay for
-  // a drafts-list request that tab will never use.
   const [editingId, setEditingId] = useState<string>();
   const { data: draftsData } = useFetchDrafts(
     !!isSystemAdmin && (filters.tab === 'publish' || !!editingId)
@@ -205,7 +189,6 @@ const PageContent = ({
               <NotificationList
                 read={false}
                 filters={filters}
-                environmentId={environmentId}
                 onSelect={onSelectDetail}
                 onClearFilters={onClearFilters}
               />
@@ -214,7 +197,6 @@ const PageContent = ({
               <NotificationList
                 read
                 filters={filters}
-                environmentId={environmentId}
                 onSelect={onSelectDetail}
                 onClearFilters={onClearFilters}
               />
