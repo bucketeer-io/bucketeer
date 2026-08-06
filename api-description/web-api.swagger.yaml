@@ -7198,7 +7198,7 @@ paths:
   /v1/notifications/unread_count:
     get:
       summary: Get Unread Count
-      description: Get the requesting user's unread notification count, used for the bell badge.
+      description: Get the requesting user's unread notification count.
       operationId: web.v1.notification.unread_count
       responses:
         "200":
@@ -14344,6 +14344,10 @@ definitions:
         $ref: '#/definitions/notificationNotification'
   notificationGetNotificationUnreadCountResponse:
     type: object
+    properties:
+      count:
+        type: string
+        format: int64
   notificationListDraftAdminNotificationsRequestOrderBy:
     type: string
     enum:

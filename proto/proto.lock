@@ -46265,7 +46265,14 @@
             "name": "GetNotificationUnreadCountRequest"
           },
           {
-            "name": "GetNotificationUnreadCountResponse"
+            "name": "GetNotificationUnreadCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "count",
+                "type": "int64"
+              }
+            ]
           },
           {
             "name": "MarkNotificationsAsReadRequest",
@@ -46776,7 +46783,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get the requesting user's unread notification count, used for the bell badge."
+                        "value": "Get the requesting user's unread notification count."
                       },
                       {
                         "name": "tags",

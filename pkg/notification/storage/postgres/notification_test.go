@@ -1095,3 +1095,82 @@ func TestMarkNotificationsAsRead(t *testing.T) {
 		})
 	}
 }
+
+func TestGetNotificationUnreadCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	newBoundRow := func(createdAt int64) *mock.MockRow {
+		row := mock.NewMockRow(mockController)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+			*args[0].(*int64) = createdAt
+			return nil
+		})
+		return row
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		expected    int64
+		expectedErr error
+	}{
+		{
+			desc: "Error: account bound query",
+			setup: func(s *notificationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEarliestAccountCreatedAtSQL, "viewer@example.com",
+				).Return(row)
+			},
+			expected:    0,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Error: count query",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEarliestAccountCreatedAtSQL, "viewer@example.com",
+				).Return(newBoundRow(5))
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected:    0,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEarliestAccountCreatedAtSQL, "viewer@example.com",
+				).Return(newBoundRow(5))
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+					*args[0].(*int64) = int64(3)
+					return nil
+				})
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected:    3,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			count, err := storage.GetNotificationUnreadCount(context.Background(), "viewer@example.com")
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, count)
+		})
+	}
+}

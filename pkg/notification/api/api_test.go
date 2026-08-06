@@ -1269,3 +1269,63 @@ func TestNotificationService_MarkNotificationsAsRead(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationService_GetNotificationUnreadCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	viewerCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		expected    int64
+		expectedErr error
+	}{
+		{
+			desc:        "err: unauthenticated",
+			ctx:         context.TODO(),
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetNotificationUnreadCount(
+					gomock.Any(), "email",
+				).Return(int64(0), errors.New("error"))
+			},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().GetNotificationUnreadCount(
+					gomock.Any(), "email",
+				).Return(int64(3), nil)
+			},
+			expected:    3,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.GetNotificationUnreadCount(p.ctx, &proto.GetNotificationUnreadCountRequest{})
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+				assert.Equal(t, p.expected, resp.Count)
+			}
+		})
+	}
+}

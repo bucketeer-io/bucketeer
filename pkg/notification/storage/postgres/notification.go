@@ -58,6 +58,8 @@ var (
 	selectEarliestAccountCreatedAtSQL string
 	//go:embed sql/insert_notification_read.sql
 	insertNotificationReadSQL string
+	//go:embed sql/count_unread_notifications.sql
+	countUnreadNotificationsSQL string
 )
 
 // readNotificationExistsSubquery correlates a viewer's read marker with the
@@ -561,6 +563,54 @@ func (s *notificationStorage) MarkNotificationsAsRead(
 		}
 	}
 	return nil
+}
+
+// GetNotificationUnreadCount counts the published notifications the viewer
+// has not read, limited to notifications published after the viewer's
+// account was created.
+func (s *notificationStorage) GetNotificationUnreadCount(
+	ctx context.Context,
+	email string,
+) (int64, error) {
+	filters := []*pgstorage.Filter{
+		{
+			Column:   "notification.status",
+			Operator: pgstorage.OperatorEqual,
+			Value:    int32(proto.Notification_PUBLISHED),
+		},
+		{
+			Column:   "notification.deleted",
+			Operator: pgstorage.OperatorEqual,
+			Value:    false,
+		},
+	}
+	accountCreatedAt, err := s.earliestAccountCreatedAt(ctx, email)
+	if err != nil {
+		return 0, err
+	}
+	if accountCreatedAt > 0 {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "notification.published_at",
+			Operator: pgstorage.OperatorGreaterThanOrEqual,
+			Value:    accountCreatedAt,
+		})
+	}
+	options := &pgstorage.ListOptions{
+		Filters: filters,
+		ExistsFilters: []*pgstorage.ExistsFilter{
+			{
+				Subquery:  readNotificationExistsSubquery,
+				NotExists: true,
+				Values:    []interface{}{email},
+			},
+		},
+	}
+	query, whereArgs := pgstorage.ConstructCountQuery(countUnreadNotificationsSQL, options)
+	var count int64
+	if err := s.qe.QueryRowContext(ctx, query, whereArgs...).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 // readNotificationIDs returns which of the given notifications the viewer

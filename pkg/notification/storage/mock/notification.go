@@ -86,6 +86,21 @@ func (mr *MockNotificationStorageMockRecorder) GetAdminNotification(ctx, id any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdminNotification", reflect.TypeOf((*MockNotificationStorage)(nil).GetAdminNotification), ctx, id)
 }
 
+// GetNotificationUnreadCount mocks base method.
+func (m *MockNotificationStorage) GetNotificationUnreadCount(ctx context.Context, email string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNotificationUnreadCount", ctx, email)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNotificationUnreadCount indicates an expected call of GetNotificationUnreadCount.
+func (mr *MockNotificationStorageMockRecorder) GetNotificationUnreadCount(ctx, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNotificationUnreadCount", reflect.TypeOf((*MockNotificationStorage)(nil).GetNotificationUnreadCount), ctx, email)
+}
+
 // IsNotificationRead mocks base method.
 func (m *MockNotificationStorage) IsNotificationRead(ctx context.Context, id, email string) (bool, error) {
 	m.ctrl.T.Helper()

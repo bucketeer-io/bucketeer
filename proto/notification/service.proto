@@ -77,7 +77,9 @@ message GetNotificationResponse {
 
 message GetNotificationUnreadCountRequest {}
 
-message GetNotificationUnreadCountResponse {}
+message GetNotificationUnreadCountResponse {
+  int64 count = 1;
+}
 
 message MarkNotificationsAsReadRequest {
   // Notification ids to mark as read for the requesting user; 1 to 200 ids
@@ -245,7 +247,7 @@ service NotificationService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Unread Count",
-      description: "Get the requesting user's unread notification count, used for the bell badge.",
+      description: "Get the requesting user's unread notification count.",
       tags: "notification",
       operation_id: "web.v1.notification.unread_count",
       responses: {

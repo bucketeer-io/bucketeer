@@ -241,7 +241,21 @@ func (s *NotificationService) GetNotificationUnreadCount(
 	ctx context.Context,
 	req *proto.GetNotificationUnreadCountRequest,
 ) (*proto.GetNotificationUnreadCountResponse, error) {
-	return nil, statusNotImplemented
+	t, err := s.checkAuthenticated(ctx)
+	if err != nil {
+		return nil, err
+	}
+	count, err := s.notificationStorage.GetNotificationUnreadCount(ctx, t.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get notification unread count",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.GetNotificationUnreadCountResponse{
+		Count: count,
+	}, nil
 }
 
 func (s *NotificationService) MarkNotificationsAsRead(
