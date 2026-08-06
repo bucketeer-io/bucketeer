@@ -79,6 +79,10 @@ type NotificationStorage interface {
 	// notifications; unknown, draft, and deleted ids are ignored. Idempotent:
 	// already-read notifications keep their original read_at.
 	MarkNotificationsAsRead(ctx context.Context, ids []string, email string, readAt int64) error
+	// GetNotificationUnreadCount counts the published notifications the
+	// viewer has not read, limited to notifications published after the
+	// viewer's account was created.
+	GetNotificationUnreadCount(ctx context.Context, email string) (int64, error)
 }
 
 type ListDraftAdminNotificationsParams struct {
