@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { userSegmentBulkDownload } from '@api/user-segment';
 import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
-import { useQueryUserSegment } from '@queries/user-segment-details';
 import { useMutation } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
-import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
+import { PAGE_PATH_NEW, PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
-import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
@@ -14,25 +13,19 @@ import PageContent from './page-content';
 import { UserSegmentsActionsType } from './types';
 import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
 import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
-import SegmentCreateUpdateModal from './user-segment-modal/segment-create-update-form';
 import SegmentUploadingModal from './user-segment-modal/segment-uploading-modal';
+
+// How long the freshly saved segment keeps its local "uploading" indicator
+// before we rely solely on the status reported by the server.
+const UPLOADING_INDICATOR_TIMEOUT = 10000;
 
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
-
-  const {
-    id,
-    isAdd,
-    isEdit,
-    onOpenAddModal,
-    onOpenEditModal,
-    onCloseActionModal
-  } = useActionWithURL({
-    closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`
-  });
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [isOpenFlagModal, onOpenFlagModal, onCloseFlagModal] =
     useToggleOpen(false);
@@ -41,22 +34,12 @@ const PageLoader = () => {
   const [isOpenUploadingModal, onOpenUploadingdModal, onCloseUploadingdModal] =
     useToggleOpen(false);
   const [selectedSegment, setSelectedSegment] = useState<UserSegment>();
+  // The segment form page passes the segment being uploaded via navigation
+  // state, so the list can show the uploading indicator right away.
   const [segmentUploading, setSegmentUploading] = useState<UserSegment | null>(
-    null
+    (location.state as { segmentUploading?: UserSegment } | null)
+      ?.segmentUploading || null
   );
-
-  const {
-    data: segmentCollection,
-    isLoading: isLoadingSegment,
-    isError,
-    error
-  } = useQueryUserSegment({
-    params: {
-      environmentId: currentEnvironment.id,
-      id: id as string
-    },
-    enabled: !!isEdit && !!id && !selectedSegment
-  });
 
   const { notify, errorNotify } = useToast();
 
@@ -82,10 +65,9 @@ const PageLoader = () => {
   });
 
   const onHandleAddSegment = () => {
-    if (selectedSegment) {
-      setSelectedSegment(undefined);
-    }
-    onOpenAddModal();
+    navigate(
+      `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}${PAGE_PATH_NEW}`
+    );
   };
 
   const onDeleteSegment = () => {
@@ -99,7 +81,7 @@ const PageLoader = () => {
       if (type !== 'DOWNLOAD') setSelectedSegment(segment);
       switch (type) {
         case 'EDIT':
-          return onOpenEditModal(
+          return navigate(
             `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${segment.id}`
           );
         case 'FLAG':
@@ -142,17 +124,14 @@ const PageLoader = () => {
   );
 
   useEffect(() => {
-    if (segmentCollection) {
-      setSelectedSegment(segmentCollection.segment);
+    if (segmentUploading) {
+      const timerId = setTimeout(
+        () => setSegmentUploading(null),
+        UPLOADING_INDICATOR_TIMEOUT
+      );
+      return () => clearTimeout(timerId);
     }
-  }, [segmentCollection]);
-
-  useEffect(() => {
-    if (isError && error) {
-      errorNotify(error);
-      onCloseActionModal();
-    }
-  }, [isError, error]);
+  }, [segmentUploading]);
 
   return (
     <>
@@ -162,21 +141,6 @@ const PageLoader = () => {
         onAdd={onHandleAddSegment}
         onActionHandler={onActionHandler}
       />
-
-      {(!!isAdd || !!isEdit) && (
-        <SegmentCreateUpdateModal
-          isUpdate={!!isEdit || !!selectedSegment || isLoadingSegment}
-          isDisabled={!editable}
-          isOpen={!!isAdd || !!isEdit}
-          isLoadingSegment={isLoadingSegment}
-          userSegment={selectedSegment!}
-          resetSegment={() => setSelectedSegment(undefined)}
-          onClose={() => {
-            onCloseActionModal();
-          }}
-          setSegmentUploading={setSegmentUploading}
-        />
-      )}
 
       {isOpenFlagModal && selectedSegment && (
         <FlagsConnectedModal

@@ -1,5 +1,6 @@
 import { SortingState } from '@tanstack/react-table';
 import { OrderBy, OrderDirection, Account, FeatureSegmentStatus } from '@types';
+import { SegmentRuleFormValue } from './utils';
 
 export interface UserSegmentsFilters {
   pageSize?: number;
@@ -28,4 +29,5 @@ export type UserSegmentForm = {
   description?: string;
   userIds?: string;
   file?: unknown;
+  rules?: SegmentRuleFormValue[];
 };

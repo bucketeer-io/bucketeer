@@ -638,7 +638,11 @@ const getValueLabel = (
 ) => {
   const { SEGMENT, FEATURE_FLAG, BEFORE, AFTER } = FeatureRuleClauseOperator;
   if (operator === SEGMENT && segmentUsers) {
-    return segmentUsers.find(item => values.includes(item.id))?.name || '';
+    // Map in values order so names render in the user's selection order.
+    return values
+      .map(value => segmentUsers.find(item => item.id === value)?.name)
+      .filter(name => !!name)
+      .join(', ');
   }
   if ([BEFORE, AFTER].includes(operator as FeatureRuleClauseOperator)) {
     return values[0]

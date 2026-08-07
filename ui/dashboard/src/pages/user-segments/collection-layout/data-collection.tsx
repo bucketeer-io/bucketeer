@@ -75,6 +75,20 @@ export const useColumns = ({
       }
     },
     {
+      accessorKey: 'rules',
+      header: `${t('table:feature-flags.rules')}`,
+      size: 120,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const segment = row.original;
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {segment.rules?.length || 0}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'connections',
       header: `${t('connections')}`,
       size: 200,

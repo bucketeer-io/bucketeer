@@ -217,6 +217,7 @@
   "true": "True",
   "false": "False",
   "and": "AND",
+  "or": "OR",
   "see-more": "もっと見る",
   "default": "デフォルト",
   "sort-by": "並び替え: {{sortBy}}",

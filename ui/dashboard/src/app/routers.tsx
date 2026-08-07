@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router';
 import { ID_CLONE, ID_NEW } from 'constants/routing';
 import CreateFlagPage from 'pages/create-flag';
+import CreateUpdateSegmentPage from 'pages/create-update-segment';
 import ExperimentDetailsPage from 'pages/experiment-details';
 import ExperimentsPage from 'pages/experiments';
 import FeatureFlagDetailsPage from 'pages/feature-flag-details';
@@ -12,6 +13,7 @@ import OrganizationDetailPage from 'pages/organization-details';
 import OrganizationsPage from 'pages/organizations';
 import ProjectDetailsPage from 'pages/project-details';
 import ProjectsPage from 'pages/projects';
+import UserSegmentsPage from 'pages/user-segments';
 
 export const OrganizationsRoot = () => {
   return (
@@ -63,6 +65,16 @@ export const FeatureFlagsRoot = () => {
       <Route path={ID_NEW} element={<CreateFlagPage />} />
       <Route path={`${ID_CLONE}/:flagId`} element={<FeatureFlagsPage />} />
       <Route path=":flagId/*" element={<FeatureFlagDetailsPage />} />
+    </Routes>
+  );
+};
+
+export const UserSegmentsRoot = () => {
+  return (
+    <Routes>
+      <Route index element={<UserSegmentsPage />} />
+      <Route path={ID_NEW} element={<CreateUpdateSegmentPage />} />
+      <Route path=":segmentId" element={<CreateUpdateSegmentPage />} />
     </Routes>
   );
 };

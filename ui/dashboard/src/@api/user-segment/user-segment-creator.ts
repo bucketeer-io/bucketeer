@@ -1,10 +1,11 @@
 import axiosClient from '@api/axios-client';
-import { UserSegment } from '@types';
+import { SegmentRulePayload, UserSegment } from '@types';
 
 export interface UserSegmentCreatorPayload {
   environmentId: string;
   name: string;
   description?: string;
+  rules?: SegmentRulePayload[];
 }
 
 export interface UserSegmentCreatorResponse {
