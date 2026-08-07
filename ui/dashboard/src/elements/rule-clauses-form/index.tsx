@@ -215,25 +215,28 @@ const RuleClausesForm = ({
           return (
             <div
               key={clause.clauseId ?? clauseIndex}
-              className="flex items-center w-full gap-x-4"
+              className="flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-x-4"
             >
-              <div
-                className={cn(
-                  'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
-                  {
-                    'bg-accent-pink-50 text-accent-pink-500': type === 'if',
-                    'bg-gray-200 text-gray-600': type === 'and'
-                  }
-                )}
-              >
-                {type === 'if' ? t('common:if') : t('common:and')}
-              </div>
-              <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 gap-x-4">
+              <div className="flex flex-col items-center gap-4">
                 <div
                   className={cn(
-                    'grid grid-cols-4 items-end w-full gap-x-4 max-w-full',
+                    'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
                     {
-                      'grid-cols-3': isUserSegment && !isEmptySegment
+                      'bg-accent-pink-50 text-accent-pink-500': type === 'if',
+                      'bg-gray-200 text-gray-600': type === 'and'
+                    }
+                  )}
+                >
+                  {type === 'if' ? t('common:if') : t('common:and')}
+                </div>
+              </div>
+              <div className="flex items-center w-full flex-1 pl-0 sm:pl-4 border-l-0 sm:border-l border-primary-500 gap-x-2 sm:gap-x-4">
+                <div
+                  className={cn(
+                    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end w-full gap-4 max-w-full',
+                    {
+                      'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3':
+                        isUserSegment && !isEmptySegment
                     }
                   )}
                 >
@@ -320,7 +323,9 @@ const RuleClausesForm = ({
                                     placeholder={t('experiments.select-flag')}
                                     isExpand
                                     options={flagOptions}
-                                    selectedOptions={field.value}
+                                    selectedOptions={
+                                      field.value ? [field.value] : []
+                                    }
                                     additionalElement={item => (
                                       <FeatureFlagStatus
                                         status={t(
@@ -334,7 +339,7 @@ const RuleClausesForm = ({
                                     onSelectOption={value => {
                                       field.onChange(value);
                                     }}
-                                    contentClassName="!w-[500px] !max-w-[500px]"
+                                    contentClassName="w-full sm:!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
                                   <AttributeKeySelect
@@ -541,6 +546,7 @@ const RuleClausesForm = ({
                                   </>
                                 ) : isFlag ? (
                                   <Dropdown
+                                    isExpand
                                     options={variationOptions}
                                     value={value?.[0] ?? ''}
                                     onChange={val => field.onChange([val])}

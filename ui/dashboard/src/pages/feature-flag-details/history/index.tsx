@@ -8,7 +8,7 @@ import {
   PAGE_PATH_FEATURES
 } from 'constants/routing';
 import dayjs from 'dayjs';
-import { usePartialState } from 'hooks';
+import { usePartialState, useScreen } from 'hooks';
 import pickBy from 'lodash/pickBy';
 import { AuditLog, Feature } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
@@ -78,6 +78,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
+  const { isMobile } = useScreen();
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
     [expandOrCollapseAllState]
@@ -148,6 +149,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
       <Filter
         link={DOCUMENTATION_LINKS.FLAG_HISTORY}
         placeholder={t('form:name-email-search-placeholder')}
+        actionClassName="sm:flex-nowrap"
         action={
           <>
             <ReactDateRangePicker
@@ -156,6 +158,8 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
               isAllTime={[filters?.range, searchFilters?.range].includes(
                 'all-time'
               )}
+              direction={!isMobile ? 'horizontal' : 'vertical'}
+              className="w-fit"
               onChange={(startDate, endDate) => {
                 onChangeFilters({
                   from: startDate ? startDate?.toString() : undefined,
@@ -165,6 +169,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
               }}
             />
             <Button
+              className="w-fit"
               variant={'secondary'}
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >

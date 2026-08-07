@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import { cn } from 'utils/style';
 import Button from 'components/button';
 import { TargetingSchema } from '../form-schema';
 
@@ -51,20 +50,13 @@ const FlagOffDescription = ({
   }, [prerequisiteCount, individualRuleCount, segmentRuleCount]);
 
   return (
-    <div
-      className={cn(
-        'flex-center w-full gap-x-2 pt-6 pb-6 typo-para-medium text-gray-600',
-        {
-          'flex-col gap-y-4': !isShowRules
-        }
-      )}
-    >
+    <div className="flex flex-col w-full gap-y-1 py-4 sm:py-5 typo-para-medium text-gray-600">
       <p>{t('targeting.flag-off-desc')}</p>
-      <div className="flex-center flex-col gap-y-2">
+      <div className="flex flex-col items-start gap-y-0.5">
         <Button
           variant="text"
           type="button"
-          className="w-fit h-4 p-0 underline"
+          className="w-fit h-auto p-0 underline leading-5"
           onClick={() => setIsShowRules(!isShowRules)}
         >
           {t(
@@ -72,7 +64,7 @@ const FlagOffDescription = ({
           )}
         </Button>
         {!isShowRules && !!hiddenRuleDesc && (
-          <p className="typo-para-small">({hiddenRuleDesc})</p>
+          <p className="typo-para-small text-gray-500">({hiddenRuleDesc})</p>
         )}
       </div>
     </div>

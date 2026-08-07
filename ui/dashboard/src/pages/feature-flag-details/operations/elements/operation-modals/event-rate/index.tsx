@@ -325,7 +325,7 @@ const EventRateOperationModal = ({
                   )}
                 />
                 <div className="flex flex-col w-full gap-y-1">
-                  <div className="flex flex-1 gap-x-4">
+                  <div className="flex flex-col sm:flex-row flex-1 gap-4">
                     <Form.Field
                       control={form.control}
                       name={`operator`}

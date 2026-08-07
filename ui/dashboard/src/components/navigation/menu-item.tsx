@@ -5,6 +5,7 @@ import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 
 export type MenuItem = {
+  isExpanded?: boolean;
   icon?: FunctionComponent;
   label: string;
   actIcon?: FunctionComponent;
@@ -17,6 +18,7 @@ export type MenuItem = {
 };
 
 const MenuItemComponent = ({
+  isExpanded = true,
   icon,
   label,
   href,
@@ -63,7 +65,7 @@ const MenuItemComponent = ({
           ) : null
         }))}
         onChange={value => onSelectOption?.(value as string)}
-        className="w-full !p-0 !border-none !shadow-none [&>div>div>div>div]:text-primary-50 bg-transparent hover:bg-primary-400 hover:opacity-100  sidebar-menu"
+        className="w-full !p-0 !border-none !shadow-none [&>div>div>div>div]:text-primary-50 bg-transparent hover:bg-primary-400 hover:opacity-100 sidebar-menu"
         menuContentSide="right"
       />
     ) : href ? (
@@ -74,7 +76,11 @@ const MenuItemComponent = ({
         data-tour={tourId}
       >
         {iconEl}
-        {label}
+        <span
+          className={cn(isExpanded ? 'inline-block' : 'hidden md:inline-block')}
+        >
+          {label}
+        </span>
       </NavLink>
     ) : (
       <button

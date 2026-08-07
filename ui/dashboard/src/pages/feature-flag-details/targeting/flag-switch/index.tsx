@@ -42,14 +42,14 @@ const FlagSwitch = ({
   );
 
   return (
-    <div className="flex items-center justify-between w-full px-5 h-[104px] rounded-lg shadow-card-secondary">
+    <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full p-3 sm:p-5 gap-2 rounded-lg shadow-card-secondary">
       <Form.Field
         control={control}
         name="enabled"
         render={({ field }) => (
-          <Form.Item className="w-full py-0">
+          <Form.Item className="w-fit py-0">
             <Form.Control>
-              <div className="flex items-center w-full gap-x-2 typo-para-medium text-gray-700">
+              <div className="flex flex-wrap items-center w-full gap-x-2 typo-para-medium text-gray-700">
                 <Trans
                   i18nKey={`form:targeting.flag-switch-${field.value ? 'on' : 'off'}`}
                   components={{
@@ -93,15 +93,15 @@ const FlagSwitch = ({
         )}
       />
       {!enabledWatch && (
-        <div className="flex items-center gap-x-3">
-          <p className="typo-para-small text-gray-600 uppercase min-w-fit">
+        <div className="flex items-center gap-x-2 w-full sm:w-auto border-t border-gray-100 pt-2 sm:border-t-0 sm:pt-0">
+          <p className="typo-para-small text-gray-600 uppercase shrink-0">
             {t('serve')}
           </p>
           <Form.Field
             name="offVariation"
             control={control}
             render={({ field }) => (
-              <Form.Item>
+              <Form.Item className="flex-1 sm:flex-none py-0">
                 <Form.Control>
                   <Dropdown
                     title={t('off-variation')}
@@ -109,8 +109,9 @@ const FlagSwitch = ({
                     onChange={field.onChange}
                     options={options}
                     disabled={!editable}
-                    className="max-w-[400px] truncate"
-                    contentClassName="max-w-[400px]"
+                    className="w-full sm:max-w-[400px] truncate"
+                    contentClassName="w-full sm:max-w-[400px]"
+                    wrapTriggerStyle="w-full"
                     alignContent="end"
                   />
                 </Form.Control>

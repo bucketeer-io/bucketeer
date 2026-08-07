@@ -63,13 +63,16 @@ const PageLayoutEmptyState = ({ children }: PropsWithChildren) => {
 };
 
 const PageLayoutHeader = ({ children }: PropsWithChildren) => {
-  return <div className="p-6 border-b border-gray-200">{children}</div>;
+  return <div className="p-3 sm:p-6 border-b border-gray-200">{children}</div>;
 };
 
 const PageLayoutContent = ({ children, className }: PageLayoutContentProps) => {
   return (
     <div
-      className={cn('pt-6 flex flex-1 flex-col h-full min-w-full', className)}
+      className={cn(
+        'pt-0 sm:pt-6 flex flex-1 flex-col h-full min-w-full',
+        className
+      )}
     >
       {children}
     </div>

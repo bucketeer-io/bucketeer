@@ -30,7 +30,11 @@ const Pagination = ({
   const endItem = Math.min(cursor + pageSize, totalCount);
 
   return (
-    <div className={cn('flex items-center justify-between')}>
+    <div
+      className={cn(
+        'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4 sm:mt-0'
+      )}
+    >
       {totalCount > 0 && (
         <PaginationCount
           totalItems={totalCount}

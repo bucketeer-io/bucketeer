@@ -54,7 +54,7 @@ const OperationActions = ({
               className={cn(
                 'inline-flex animate-fade gap-2 items-center justify-center duration-300 ease-out whitespace-nowrap w-[215px] h-12',
                 'bg-primary-500 hover:bg-primary-700 text-gray-50',
-                'rounded-lg px-6 py-2',
+                'rounded-lg px-3 sm:px-6 py-2',
                 {
                   'cursor-not-allowed bg-primary-200 hover:bg-primary-200 text-primary-50':
                     disabled

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
 import pickBy from 'lodash/pickBy';
@@ -13,6 +14,7 @@ import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterAPIKeyModal from './notification-modal/filter-notification-modal';
@@ -28,6 +30,8 @@ const PageContent = ({
   onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { isMobile } = useScreen();
+  const { notificationSortByOptions, flagSortDirectionOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
 
@@ -87,19 +91,29 @@ const PageContent = ({
         name="notifications-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            hidden={!disabled}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={disabled}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-notification`)}
-              </Button>
-            }
-          />
+          <>
+            {!!isMobile && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={notificationSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              hidden={!disabled}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={disabled}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-notification`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}

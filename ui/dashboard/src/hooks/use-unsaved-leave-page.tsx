@@ -108,7 +108,7 @@ export function useUnsavedLeavePage({
             callBackCancel();
           }
           setIsShowGlobal(false);
-          return push(...args);
+          allowNavigation(() => push(...args));
         }
       });
     };
@@ -127,7 +127,7 @@ export function useUnsavedLeavePage({
             callBackCancel();
           }
           setIsShowGlobal(false);
-          return replace(...args);
+          allowNavigation(() => replace(...args));
         }
       });
     };
@@ -160,6 +160,7 @@ export function useUnsavedLeavePage({
             callBackCancel();
           }
           setIsShowGlobal(false);
+          allowNavigation();
           history.back();
         },
         onCancel: () => {
@@ -253,7 +254,8 @@ export function PopupGlobal({
   const { t } = useTranslation(['message', 'form']);
   return (
     <DialogModal
-      className="w-[500px]"
+      className="max-w-[500px]"
+      overlayCls="!z-[600]"
       title={t(title)}
       isOpen={isOpen}
       onClose={() => onClose?.()}

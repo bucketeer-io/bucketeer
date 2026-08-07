@@ -82,17 +82,17 @@ const ProjectSettings = ({ project }: { project: Project }) => {
   useUnsavedLeavePage({ isShow: isShowPopup });
 
   return (
-    <div className="flex flex-col w-full p-6">
+    <div className="flex flex-col w-full p-3 sm:p-6">
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex lg:items-center justify-between flex-col lg:flex-row">
+          <div className="flex md:items-center justify-between flex-col md:flex-row gap-3 md:gap-0">
             <p className="typo-head-bold-big">{t(`settings`)}</p>
-            <div className="flex items-center gap-4 mt-3 lg:mt-0">
+            <div className="flex items-center gap-4 md:mt-0">
               <Link target="_blank" to={DOCUMENTATION_LINKS.PROJECTS}>
                 <Button
                   variant="text"
                   type="button"
-                  className="flex-1 lg:flex-none"
+                  className="flex-1 md:flex-none"
                 >
                   <Icon icon={IconLaunchOutlined} size="sm" />
                   {t('documentation')}
@@ -114,7 +114,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
               />
             </div>
           </div>
-          <div className="p-5 shadow-card rounded-lg bg-white mt-6">
+          <div className="p-3 sm:p-5 shadow-card rounded-lg bg-white mt-4 sm:mt-6">
             <Form.Field
               control={form.control}
               name="name"

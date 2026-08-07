@@ -172,6 +172,14 @@ body .driver-popover * {
 body .driver-popover {
   max-width: 380px;
 }
+/* driver.js only repositions popovers to stay on-screen, it doesn't shrink
+   their width — clamp explicitly or the fixed max-width overflows narrow
+   viewports. */
+@media (max-width: 420px) {
+  body .driver-popover {
+    max-width: calc(100vw - 20px);
+  }
+}
 /* driver.js sets display:block as an inline style on rendered titles. */
 .driver-popover-title {
   display: flex !important;
@@ -186,6 +194,12 @@ body .driver-popover {
 .driver-popover.walkthrough-welcome-popover {
   max-width: 500px;
   padding: 24px;
+}
+@media (max-width: 420px) {
+  .driver-popover.walkthrough-welcome-popover {
+    max-width: calc(100vw - 20px);
+    padding: 16px;
+  }
 }
 .walkthrough-welcome-popover .driver-popover-title {
   font-size: 20px;

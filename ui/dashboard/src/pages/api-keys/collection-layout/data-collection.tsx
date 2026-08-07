@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthAccess } from 'auth';
@@ -24,8 +23,7 @@ export const useColumns = ({
   const formatDateTime = useFormatDateTime();
 
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
-
-  const getAPIKeyRole = useCallback((role: APIKeyRole) => {
+  const getAPIKeyRole = (role: APIKeyRole) => {
     let roleKey = '';
     let roleTooltipKey = '';
     switch (role) {
@@ -63,13 +61,13 @@ export const useColumns = ({
         role === 'UNKNOWN' ? 'form:unknown' : `table:api-keys.${roleTooltipKey}`
       )
     };
-  }, []);
+  };
 
   return [
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 250,
       cell: ({ row }) => {
         const record = row.original;
         const { id, name, apiKey } = record;
@@ -83,7 +81,7 @@ export const useColumns = ({
                   id={id}
                   name={name}
                   maxLines={1}
-                  className="min-w-[300px]"
+                  className="min-w-[250px]"
                   onClick={() => onActions(record, 'EDIT')}
                 />
               }
