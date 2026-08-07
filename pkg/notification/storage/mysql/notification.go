@@ -59,6 +59,8 @@ var (
 	insertNotificationReadSQL string
 	//go:embed sql/count_unread_notifications.sql
 	countUnreadNotificationsSQL string
+	//go:embed sql/insert_all_notification_reads.sql
+	insertAllNotificationReadsSQL string
 )
 
 // readNotificationExistsSubquery correlates a viewer's read marker with the
@@ -558,6 +560,23 @@ func (s *notificationStorage) MarkNotificationsAsRead(
 		}
 	}
 	return nil
+}
+
+// MarkAllNotificationsAsRead upserts read markers for every published
+// notification for the viewer.
+func (s *notificationStorage) MarkAllNotificationsAsRead(
+	ctx context.Context,
+	email string,
+	readAt int64,
+) error {
+	_, err := s.qe.ExecContext(
+		ctx,
+		insertAllNotificationReadsSQL,
+		email,
+		readAt,
+		int32(proto.Notification_PUBLISHED),
+	)
+	return err
 }
 
 // GetNotificationUnreadCount counts the published notifications the viewer

@@ -15,14 +15,9 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
-
-var statusNotImplemented = gstatus.Error(codes.Unimplemented, "notification: not implemented")
 
 var (
 	statusUnauthenticated = api.NewGRPCStatus(

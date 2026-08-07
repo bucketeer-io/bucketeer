@@ -1174,3 +1174,48 @@ func TestGetNotificationUnreadCount(t *testing.T) {
 		})
 	}
 }
+
+func TestMarkAllNotificationsAsRead(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*notificationStorage)
+		expectedErr error
+	}{
+		{
+			desc: "Error",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *notificationStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					insertAllNotificationReadsSQL,
+					"viewer@example.com",
+					int64(5),
+					int32(proto.Notification_PUBLISHED),
+				).Return(nil, nil)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &notificationStorage{qe: mock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.MarkAllNotificationsAsRead(context.Background(), "viewer@example.com", 5)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}

@@ -150,6 +150,20 @@ func (mr *MockNotificationStorageMockRecorder) ListNotifications(ctx, params any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListNotifications", reflect.TypeOf((*MockNotificationStorage)(nil).ListNotifications), ctx, params)
 }
 
+// MarkAllNotificationsAsRead mocks base method.
+func (m *MockNotificationStorage) MarkAllNotificationsAsRead(ctx context.Context, email string, readAt int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkAllNotificationsAsRead", ctx, email, readAt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkAllNotificationsAsRead indicates an expected call of MarkAllNotificationsAsRead.
+func (mr *MockNotificationStorageMockRecorder) MarkAllNotificationsAsRead(ctx, email, readAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkAllNotificationsAsRead", reflect.TypeOf((*MockNotificationStorage)(nil).MarkAllNotificationsAsRead), ctx, email, readAt)
+}
+
 // MarkNotificationsAsRead mocks base method.
 func (m *MockNotificationStorage) MarkNotificationsAsRead(ctx context.Context, ids []string, email string, readAt int64) error {
 	m.ctrl.T.Helper()
