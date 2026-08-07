@@ -55,7 +55,7 @@
     "i18next-browser-languagedetector": "^8.2.1",
     "i18next-http-backend": "^3.0.6",
     "js-cookie": "^3.0.8",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^4.3.1",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.23",
     "lucide-react": "^0.577.0",
