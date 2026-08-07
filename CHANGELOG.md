@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.4.0](https://github.com/bucketeer-io/bucketeer/compare/v2.3.0...v2.4.0) (2026-08-07)
+
+
+### Features
+
+* implement mark all notification as read API ([#2762](https://github.com/bucketeer-io/bucketeer/issues/2762)) ([0516403](https://github.com/bucketeer-io/bucketeer/commit/051640369061e019cc0ae9930ff953e721fab535))
+* implement mark notification read API ([5210d34](https://github.com/bucketeer-io/bucketeer/commit/5210d34400f7fa2ed40307b81c0c4a3c78991e5e))
+* **notification:** implement GetNotification API ([#2749](https://github.com/bucketeer-io/bucketeer/issues/2749)) ([a7fd245](https://github.com/bucketeer-io/bucketeer/commit/a7fd245e2d51bb9d030a03100a0d36454550e290))
+* **notification:** implement GetNotificationUnreadCount API ([#2751](https://github.com/bucketeer-io/bucketeer/issues/2751)) ([8f4d576](https://github.com/bucketeer-io/bucketeer/commit/8f4d57608acf3c2282174d5dd18389b53ae5af4a))
+* **notification:** implement ListNotifications API for viewers ([#2745](https://github.com/bucketeer-io/bucketeer/issues/2745)) ([fc142f9](https://github.com/bucketeer-io/bucketeer/commit/fc142f9aba2fc7eaef552ab043a7fbb418630fca))
+* **notification:** implement MarkNotificationsAsRead API ([#2750](https://github.com/bucketeer-io/bucketeer/issues/2750)) ([02447b7](https://github.com/bucketeer-io/bucketeer/commit/02447b7e2f0ebe02db4f9d6ad80cd368bb1cf2b6))
+* **ui:** add rule-based segment editing to the console ([#2753](https://github.com/bucketeer-io/bucketeer/issues/2753)) ([0d76807](https://github.com/bucketeer-io/bucketeer/commit/0d76807f7cf581cf9373b2a976621d0856da1860))
+
+
+### Bug Fixes
+
+* return invalid argument for update feature validation errors ([#2765](https://github.com/bucketeer-io/bucketeer/issues/2765)) ([1036f73](https://github.com/bucketeer-io/bucketeer/commit/1036f7308171494575d8233d1cb4e76a91c71d19))
+
+
+### Build System
+
+* **deps:** bump the dependencies group in /ui/dashboard with 2 updates ([#2747](https://github.com/bucketeer-io/bucketeer/issues/2747)) ([7bf7041](https://github.com/bucketeer-io/bucketeer/commit/7bf7041b1c6486fc7a885074b53283391099091a))
+* **deps:** bump the dependencies group with 7 updates ([#2746](https://github.com/bucketeer-io/bucketeer/issues/2746)) ([75858e1](https://github.com/bucketeer-io/bucketeer/commit/75858e13f4451c641dfb3693d4243d4a0ddee2d4))
+
 ## [2.3.0](https://github.com/bucketeer-io/bucketeer/compare/v2.2.0...v2.3.0) (2026-07-31)
 
 
