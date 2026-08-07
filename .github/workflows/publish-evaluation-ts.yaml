@@ -10,7 +10,7 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: 22
   EVALUATION_DIRECTORY: "evaluation/typescript"
 
 permissions:
