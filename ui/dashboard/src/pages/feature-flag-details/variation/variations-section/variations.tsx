@@ -84,7 +84,8 @@ const Variations = ({
   const enumValueOptions = useMemo(() => {
     if (valueSchema?.type !== 'ENUM') return null;
     return (valueSchema.enumValidator?.values ?? []).map(value => ({
-      label: value,
+      // Keep empty-string values visible and selectable in the dropdown.
+      label: value === '' ? '""' : value,
       value
     }));
   }, [valueSchema]);
@@ -307,7 +308,14 @@ const Variations = ({
                               <Dropdown
                                 options={enumValueOptions}
                                 value={field.value}
-                                labelCustom={field.value || undefined}
+                                // Resolve the label through the options so an
+                                // empty-string value shows as '""' instead of
+                                // falling back to the placeholder.
+                                labelCustom={
+                                  enumValueOptions.find(
+                                    option => option.value === field.value
+                                  )?.label
+                                }
                                 onChange={value => {
                                   field.onChange(String(value));
                                   reValidVariation();
