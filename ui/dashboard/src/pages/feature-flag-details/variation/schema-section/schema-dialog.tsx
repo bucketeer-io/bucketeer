@@ -89,8 +89,6 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
     switch (definitionError) {
       case 'enum-not-number':
         return t('message:validation.value-schema-enum-not-number');
-      case 'regex-invalid':
-        return t('message:validation.value-schema-invalid-regex');
       case 'json-schema-invalid':
         return t('message:validation.value-schema-invalid-json-schema');
       // Empty-field errors only disable the buttons; no message needed.
