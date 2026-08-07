@@ -302,7 +302,21 @@ func (s *NotificationService) MarkAllNotificationsAsRead(
 	ctx context.Context,
 	req *proto.MarkAllNotificationsAsReadRequest,
 ) (*proto.MarkAllNotificationsAsReadResponse, error) {
-	return nil, statusNotImplemented
+	t, err := s.checkAuthenticated(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		return s.notificationStorage.MarkAllNotificationsAsRead(ctxWithTx, t.Email, time.Now().Unix())
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to mark all notifications as read",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.MarkAllNotificationsAsReadResponse{}, nil
 }
 
 func (s *NotificationService) ListDraftAdminNotifications(

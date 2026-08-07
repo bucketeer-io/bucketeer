@@ -1329,3 +1329,65 @@ func TestNotificationService_GetNotificationUnreadCount(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationService_MarkAllNotificationsAsRead(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	viewerCtx := metadata.NewIncomingContext(
+		createContextWithToken(t, false),
+		metadata.MD{"accept-language": []string{"en"}},
+	)
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*NotificationService)
+		expectedErr error
+	}{
+		{
+			desc:        "err: unauthenticated",
+			ctx:         context.TODO(),
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc: "err: internal",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			expectedErr: api.NewGRPCStatus(errors.New("error")).Err(),
+		},
+		{
+			desc: "success",
+			ctx:  viewerCtx,
+			setup: func(s *NotificationService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.notificationStorage.(*notificationstoragemock.MockNotificationStorage).EXPECT().MarkAllNotificationsAsRead(
+					gomock.Any(), "email", gomock.Any(),
+				).Return(nil)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createNotificationService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.MarkAllNotificationsAsRead(p.ctx, &proto.MarkAllNotificationsAsReadRequest{})
+			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NotNil(t, resp)
+			}
+		})
+	}
+}
