@@ -97,12 +97,19 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
     }
   }, [definitionError, t]);
 
+  // Client-side testing is not always possible (e.g. a pattern that only
+  // compiles with Go RE2); disable the Test button in that case instead of
+  // letting the click silently do nothing.
+  const valueValidator = useMemo(
+    () =>
+      definitionError
+        ? null
+        : createValueValidator(buildSchema(), feature.variationType),
+    [definitionError, buildSchema, feature.variationType]
+  );
+
   const handleTest = useCallback(() => {
-    const validator = createValueValidator(
-      buildSchema(),
-      feature.variationType
-    );
-    if (!validator) return;
+    if (!valueValidator) return;
     setTestResults(
       variations.map((variation, index) => ({
         index,
@@ -110,10 +117,10 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
           variation.name ||
           variation.value ||
           t('form:feature-flags.variation', { index: index + 1 }),
-        passed: validator(variation.value)
+        passed: valueValidator(variation.value)
       }))
     );
-  }, [buildSchema, feature.variationType, variations, t]);
+  }, [valueValidator, variations, t]);
 
   const handleSave = useCallback(() => {
     setValue('variationValueSchema', buildSchema(), {
@@ -302,7 +309,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
           <Button
             type="button"
             variant="secondary"
-            disabled={!!definitionError}
+            disabled={!valueValidator}
             onClick={handleTest}
           >
             {t('form:feature-flags.value-schema.test')}
