@@ -46,12 +46,12 @@ const NotificationBell = ({
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: unreadFeed } = useFetchUnreadCount();
+  const { data: unreadCountData } = useFetchUnreadCount();
   const { data } = useFetchFeed('UNREAD', 1, previewFilters);
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
 
-  const unreadCount = Number(unreadFeed?.totalCount ?? 0);
+  const unreadCount = unreadCountData ?? 0;
   const items = (data?.notifications ?? []).slice(0, PREVIEW_PAGE_SIZE);
 
   const goToFeed = () => {

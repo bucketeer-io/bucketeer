@@ -10,7 +10,8 @@ import {
 import {
   useQueryNotification,
   useQueryNotificationDrafts,
-  useQueryNotificationFeed
+  useQueryNotificationFeed,
+  useQueryNotificationUnreadCount
 } from '@queries/notification-center';
 import { useMutation } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
@@ -61,19 +62,17 @@ export const useFetchDrafts = (enabled = true) => {
 };
 
 export const useFetchUnreadCount = () => {
-  return useQueryNotificationFeed({
-    params: { readStatus: 'UNREAD', cursor: '0', pageSize: 1 }
-  });
+  return useQueryNotificationUnreadCount();
 };
 
 export const useFetchTabCounts = () => {
-  const { data: unreadFeed } = useFetchUnreadCount();
+  const { data: unreadCount } = useFetchUnreadCount();
   const { data: readFeed } = useQueryNotificationFeed({
     params: { readStatus: 'READ', cursor: '0', pageSize: 1 }
   });
 
   return {
-    unreadCount: Number(unreadFeed?.totalCount ?? 0),
+    unreadCount: unreadCount ?? 0,
     readCount: Number(readFeed?.totalCount ?? 0)
   };
 };
