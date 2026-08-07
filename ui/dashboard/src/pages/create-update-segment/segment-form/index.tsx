@@ -120,6 +120,7 @@ const SegmentForm = ({
         if (link.parentNode) {
           link.parentNode.removeChild(link);
         }
+        window.URL.revokeObjectURL(url);
       }
     } catch (error) {
       errorNotify(error);
