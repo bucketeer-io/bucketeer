@@ -3023,6 +3023,80 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: statusInvalidArchive.Err(),
 		},
 		{
+			// Regression test: domain validation errors from the update
+			// transaction must surface as InvalidArgument with structured
+			// details, not as codes.Unknown (HTTP 500).
+			desc: "fail: variation value schema violation returns InvalidArgument",
+			setup: func(s *FeatureService) {
+				vID1 := newUUID(t)
+				vID2 := newUUID(t)
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{},
+					nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(
+					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
+					nil,
+				)
+				// Run the real transaction callback so the domain error
+				// propagates through UpdateFeature's error conversion.
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id:            "fid",
+						VariationType: featureproto.Feature_STRING,
+						Variations: []*featureproto.Variation{
+							{
+								Id:    vID1,
+								Value: "true",
+								Name:  "true",
+							},
+							{
+								Id:    vID2,
+								Value: "false",
+								Name:  "false",
+							},
+						},
+						OffVariation: vID2,
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: vID1,
+							},
+						},
+						Tags: []string{"test"},
+					},
+				}, 0, int64(0), nil)
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "fid",
+				// The existing variation values (true/false) are not in the
+				// enum, so the schema update must be rejected.
+				VariationValueSchema: &featureproto.VariationValueSchema{
+					Type: featureproto.VariationValueSchema_ENUM,
+					Validator: &featureproto.VariationValueSchema_EnumValidator_{
+						EnumValidator: &featureproto.VariationValueSchema_EnumValidator{
+							Values: []string{"a", "b"},
+						},
+					},
+				},
+			},
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(
+				pkgErr.FeaturePackageName, "feature: variation value does not match schema", "VariationValueSchema")).Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *FeatureService) {
 				vID1 := newUUID(t)
