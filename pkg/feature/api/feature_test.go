@@ -23,7 +23,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -619,6 +621,14 @@ func TestConvUpdateFeatureError(t *testing.T) {
 		err := fs.convUpdateFeatureError(p.input)
 		assert.Equal(t, p.expectedErr, err)
 	}
+
+	// UpdateFeature relies on this conversion to surface domain validation
+	// errors (e.g. variation value schema violations) as InvalidArgument
+	// with structured details instead of Unknown without details.
+	fs := &FeatureService{}
+	schemaErr := fs.convUpdateFeatureError(pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "variation_value_schema"))
+	assert.Equal(t, codes.InvalidArgument, status.Code(schemaErr))
 }
 
 func TestEvaluateFeatures(t *testing.T) {

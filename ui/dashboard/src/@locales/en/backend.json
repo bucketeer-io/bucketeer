@@ -116,7 +116,8 @@
         "WebhookRule": "Webhook rule",
         "FlagTrigger": "Flag trigger",
         "CodeReference": "Code reference",
-        "DataSource": "Data source"
+        "DataSource": "Data source",
+        "variation_value_schema": "Variation value schema"
     },
     "errors": {
         "RequiredField": "{{field_1}} is required",

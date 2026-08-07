@@ -605,7 +605,10 @@ func (s *FeatureService) UpdateFeature(
 		return err
 	})
 	if err != nil {
-		return nil, err
+		// Convert domain errors to gRPC statuses; otherwise validation errors
+		// (e.g. variation value schema violations) surface as codes.Unknown
+		// (HTTP 500) without the structured details the console relies on.
+		return nil, s.convUpdateFeatureError(err)
 	}
 	if errs := s.publishDomainEvents(ctx, []*eventproto.Event{event}); len(errs) > 0 {
 		s.logger.Error(

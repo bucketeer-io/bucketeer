@@ -141,7 +141,8 @@
         "CodeReferenceRepositoryInfo": "コードリファレンスのリポジトリ情報",
         "CodeReferenceRepositoryType": "コードリファレンスのリポジトリタイプ",
         "Team": "チーム",
-        "DataSource": "データソース"
+        "DataSource": "データソース",
+        "variation_value_schema": "バリエーション値スキーマ"
     },
     "errors": {
         "RequiredField": "{{field_1}}は必須です",
