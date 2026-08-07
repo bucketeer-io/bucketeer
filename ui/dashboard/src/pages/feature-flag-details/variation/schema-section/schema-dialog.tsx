@@ -31,6 +31,7 @@ interface TestResult {
   index: number;
   label: string;
   passed: boolean;
+  detail?: string;
 }
 
 const DEFAULT_JSON_SCHEMA = `{
@@ -89,6 +90,8 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
     switch (definitionError) {
       case 'enum-not-number':
         return t('message:validation.value-schema-enum-not-number');
+      case 'regex-invalid':
+        return t('message:validation.value-schema-invalid-regex');
       case 'json-schema-invalid':
         return t('message:validation.value-schema-invalid-json-schema');
       // Empty-field errors only disable the buttons; no message needed.
@@ -111,14 +114,18 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
   const handleTest = useCallback(() => {
     if (!valueValidator) return;
     setTestResults(
-      variations.map((variation, index) => ({
-        index,
-        label:
-          variation.name ||
-          variation.value ||
-          t('form:feature-flags.variation', { index: index + 1 }),
-        passed: valueValidator(variation.value)
-      }))
+      variations.map((variation, index) => {
+        const result = valueValidator(variation.value);
+        return {
+          index,
+          label:
+            variation.name ||
+            variation.value ||
+            t('form:feature-flags.variation', { index: index + 1 }),
+          passed: result.valid,
+          detail: result.detail
+        };
+      })
     );
   }, [valueValidator, variations, t]);
 
@@ -282,20 +289,29 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
               {testResults.map(result => (
                 <li
                   key={result.index}
-                  className="flex items-center justify-between typo-para-small text-gray-700"
+                  className="flex flex-col typo-para-small text-gray-700"
                 >
-                  <span className="truncate max-w-[400px]">{result.label}</span>
-                  <span
-                    className={
-                      result.passed
-                        ? 'text-accent-green-500'
-                        : 'text-accent-red-500'
-                    }
-                  >
-                    {result.passed
-                      ? t('form:feature-flags.value-schema.test-valid')
-                      : t('form:feature-flags.value-schema.test-invalid')}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="truncate max-w-[400px]">
+                      {result.label}
+                    </span>
+                    <span
+                      className={
+                        result.passed
+                          ? 'text-accent-green-500'
+                          : 'text-accent-red-500'
+                      }
+                    >
+                      {result.passed
+                        ? t('form:feature-flags.value-schema.test-valid')
+                        : t('form:feature-flags.value-schema.test-invalid')}
+                    </span>
+                  </div>
+                  {!result.passed && result.detail && (
+                    <span className="truncate max-w-[500px] text-gray-500">
+                      {result.detail}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

@@ -1,4 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020';
+import type { ErrorObject } from 'ajv/dist/2020';
+import { RE2JS } from 're2js';
 import {
   FeatureVariationType,
   VariationValueSchema,
@@ -32,18 +34,35 @@ const ajv2020 = new Ajv2020({ strict: false, allErrors: true });
 const compileJsonSchema = (schema: string) =>
   ajv2020.compile(JSON.parse(schema));
 
-// Mirrors the backend's strconv.ParseFloat, which rejects surrounding
-// whitespace and non-finite values.
+// The backend parses enum numbers with strconv.ParseFloat, but Number() is
+// more lenient (it also accepts 0x/0b/0o prefixes, 'Infinity', and
+// surrounding whitespace). Only accept plain decimal notation so the dialog
+// never accepts a value the backend rejects.
+const DECIMAL_NUMBER_REGEX = /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/;
+
 const isStrictFiniteNumber = (value: string): boolean =>
-  value !== '' && value === value.trim() && Number.isFinite(Number(value));
+  DECIMAL_NUMBER_REGEX.test(value) && Number.isFinite(Number(value));
 
 export type SchemaDefinitionError =
   | 'enum-empty'
   | 'enum-not-number'
   | 'regex-empty'
+  | 'regex-invalid'
   | 'json-schema-empty'
   | 'json-schema-invalid'
   | 'type-unsupported';
+
+// Compiles the pattern with RE2JS, which implements the same RE2 syntax the
+// backend uses via Go's regexp package. This keeps the client and backend in
+// agreement: Go-only constructs like inline flags compile, while Perl-only
+// constructs like lookarounds are rejected up front.
+const compileRe2Pattern = (pattern: string): RE2JS | null => {
+  try {
+    return RE2JS.compile(pattern);
+  } catch {
+    return null;
+  }
+};
 
 // Returns null when the schema definition itself is valid.
 export const validateSchemaDefinition = (
@@ -68,10 +87,7 @@ export const validateSchemaDefinition = (
     case 'REGEX': {
       const pattern = schema.regexValidator?.pattern ?? '';
       if (pattern === '') return 'regex-empty';
-      // The backend compiles patterns with Go RE2, whose syntax differs from
-      // JS RegExp (e.g. inline flags like (?U) are valid in Go but throw in
-      // JS). Never block on JS compilation; the backend is the source of
-      // truth for pattern validity.
+      if (!compileRe2Pattern(pattern)) return 'regex-invalid';
       return null;
     }
     case 'JSON_SCHEMA': {
@@ -89,30 +105,45 @@ export const validateSchemaDefinition = (
   }
 };
 
+export interface ValueValidationResult {
+  valid: boolean;
+  // Technical detail from the underlying validator (e.g. the failing JSON
+  // path reported by AJV). Not localized; shown as-is next to the
+  // localized message.
+  detail?: string;
+}
+
+const formatAjvErrors = (
+  errors: ErrorObject[] | null | undefined
+): string | undefined => {
+  const error = errors?.[0];
+  if (!error) return undefined;
+  return `${error.instancePath || '/'} ${error.message ?? ''}`.trim();
+};
+
 // Returns a value validator, or null when client-side validation is not
-// possible (e.g. the pattern only compiles with Go RE2). The backend remains
-// the source of truth in that case.
+// possible. The backend remains the source of truth either way.
 export const createValueValidator = (
   schema: VariationValueSchema,
   variationType: FeatureVariationType
-): ((value: string) => boolean) | null => {
+): ((value: string) => ValueValidationResult) | null => {
   switch (schema.type) {
     case 'ENUM': {
       const values = schema.enumValidator?.values ?? [];
       if (variationType === 'NUMBER') {
         const allowed = values.map(Number);
-        return value =>
-          isStrictFiniteNumber(value) && allowed.includes(Number(value));
+        return value => ({
+          valid: isStrictFiniteNumber(value) && allowed.includes(Number(value))
+        });
       }
-      return value => values.includes(value);
+      return value => ({ valid: values.includes(value) });
     }
     case 'REGEX': {
-      try {
-        const pattern = new RegExp(schema.regexValidator?.pattern ?? '');
-        return value => pattern.test(value);
-      } catch {
-        return null;
-      }
+      const pattern = compileRe2Pattern(schema.regexValidator?.pattern ?? '');
+      if (!pattern) return null;
+      // find() is an unanchored partial match, mirroring the backend's
+      // regexp MatchString.
+      return value => ({ valid: pattern.matcher(value).find() });
     }
     case 'JSON_SCHEMA': {
       try {
@@ -121,9 +152,10 @@ export const createValueValidator = (
         );
         return value => {
           try {
-            return validate(JSON.parse(value)) === true;
+            if (validate(JSON.parse(value)) === true) return { valid: true };
+            return { valid: false, detail: formatAjvErrors(validate.errors) };
           } catch {
-            return false;
+            return { valid: false, detail: 'invalid JSON' };
           }
         };
       } catch {
