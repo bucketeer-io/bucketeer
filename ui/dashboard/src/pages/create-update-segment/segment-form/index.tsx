@@ -167,13 +167,17 @@ const SegmentForm = ({
           });
         }
         if (file) {
-          covertFileToUint8ToBase64(file, async base64String => {
-            await userSegmentBulkUpload({
-              segmentId: segmentId as string,
-              environmentId: currentEnvironment.id,
-              state: 'INCLUDED',
-              data: base64String
-            });
+          // Await the upload so a failure reaches the catch below instead of
+          // being swallowed by the FileReader callback while the UI shows a
+          // success toast and navigates away.
+          const base64String = await new Promise<string>(resolve =>
+            covertFileToUint8ToBase64(file, resolve)
+          );
+          await userSegmentBulkUpload({
+            segmentId: segmentId as string,
+            environmentId: currentEnvironment.id,
+            state: 'INCLUDED',
+            data: base64String
           });
         }
 

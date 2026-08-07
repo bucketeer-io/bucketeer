@@ -181,12 +181,12 @@ const SegmentRules = ({ disabled }: { disabled?: boolean }) => {
   const rulesWatch = watch(RULES_FIELD_NAME) as
     SegmentRuleFormValue[] | undefined;
 
-  // Segment rules only offer attribute comparisons: the server rejects the
-  // SEGMENT and FEATURE_FLAG operators, and the DATE kind is not offered.
+  // Segment rules reject the SEGMENT and FEATURE_FLAG operators server-side;
+  // only attribute comparisons and date conditions are offered.
   const segmentSituationOptions = useMemo(
     () =>
-      (situationOptions as SituationOption[]).filter(
-        option => option.value === RuleClauseType.COMPARE
+      (situationOptions as SituationOption[]).filter(option =>
+        [RuleClauseType.COMPARE, RuleClauseType.DATE].includes(option.value)
       ),
     [situationOptions]
   );
