@@ -47,8 +47,9 @@ To release a new version:
 3. Run the workflow from the `main` branch. Enable `dry_run` to verify the
    package without publishing it.
 
-To verify another branch, run the workflow from `main`, enable `dry_run`, and
-set `checkout_ref` to the branch, tag, or commit SHA to test.
+To verify another branch, select that branch when starting the workflow and
+enable `dry_run`. Alternatively, run it from `main` and set `checkout_ref` to
+the branch, tag, or commit SHA to test.
 
 The workflow builds and publishes the package with npm trusted publishing
 (OIDC), so an npm token is not required.

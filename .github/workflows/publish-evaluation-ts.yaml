@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   dry-run:
-    if: github.ref == 'refs/heads/main' && inputs.dry_run
+    if: inputs.dry_run
     runs-on: ubuntu-latest
     defaults:
       run:
