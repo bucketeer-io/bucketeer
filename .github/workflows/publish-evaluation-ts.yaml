@@ -8,6 +8,10 @@ on:
         required: false
         default: false
         type: boolean
+      checkout_ref:
+        description: "Branch, tag, or SHA to test (dry runs only)"
+        required: false
+        type: string
 
 env:
   NODE_VERSION: 22
@@ -15,12 +19,53 @@ env:
 
 permissions:
   contents: read
-  id-token: write # required for npm OIDC trusted publishing
 
 jobs:
-  publish:
-    if: github.ref == 'refs/heads/main'
+  dry-run:
+    if: github.ref == 'refs/heads/main' && inputs.dry_run
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.EVALUATION_DIRECTORY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ inputs.checkout_ref || github.ref }}
+
+      - name: Setup node env
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
+
+      - name: Use publishing npm version
+        run: npm install -g npm@11.10.0
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Generate protobuf code
+        run: make gen_proto
+
+      - name: Build evaluation package
+        run: make build
+
+      - name: Verify npm package
+        run: |
+          make copy-genfiles
+          npm publish --dry-run --access public
+
+  publish:
+    if: github.ref == 'refs/heads/main' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for npm OIDC trusted publishing
     defaults:
       run:
         working-directory: ${{ env.EVALUATION_DIRECTORY }}
@@ -57,5 +102,4 @@ jobs:
           make copy-genfiles
           npm publish \
             --provenance \
-            --access public \
-            ${{ inputs.dry_run && '--dry-run' || '' }}
+            --access public
