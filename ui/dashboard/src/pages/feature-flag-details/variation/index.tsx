@@ -36,6 +36,7 @@ import ConfirmationRequiredModal, {
 import { SCHEDULE_TYPE_SCHEDULE } from '../elements/confirm-required-modal/form-schema';
 import ScheduledChangesBanner from '../elements/scheduled-changes-banner';
 import { variationsFormSchema } from './form-schema';
+import SchemaSection from './schema-section';
 import SubmitBar from './submit-bar';
 import VariationsSection from './variations-section';
 
@@ -87,15 +88,22 @@ const Variation = ({ feature, editable }: VariationProps) => {
       variations: feature.variations,
       variationType: feature.variationType,
       offVariation: feature.offVariation,
-      onVariation: ''
+      onVariation: '',
+      variationValueSchema: feature.variationValueSchema ?? null
     },
     mode: 'onChange'
   });
 
   const {
     getValues,
+    watch,
     formState: { isDirty, isSubmitting }
   } = form;
+
+  const isSchemaChanged = !isEqual(
+    watch('variationValueSchema') ?? null,
+    feature.variationValueSchema ?? null
+  );
 
   const handleCheckVariations = useCallback(
     (variations: FeatureVariation[]) => {
@@ -139,9 +147,14 @@ const Variation = ({ feature, editable }: VariationProps) => {
     async (additionalValues?: ConfirmRequiredValues) => {
       if (editable) {
         try {
-          const { variations, offVariation } = form.getValues();
+          const { variations, offVariation, variationValueSchema } =
+            form.getValues();
           const { comment, resetSampling, scheduleType, scheduleAt } =
             additionalValues || {};
+          const isSchemaUpdated = !isEqual(
+            variationValueSchema ?? null,
+            feature.variationValueSchema ?? null
+          );
 
           const isScheduleUpdate = scheduleType === SCHEDULE_TYPE_SCHEDULE;
 
@@ -179,6 +192,11 @@ const Variation = ({ feature, editable }: VariationProps) => {
               comment,
               resetSamplingSeed: resetSampling,
               offVariation,
+              ...(isSchemaUpdated
+                ? variationValueSchema
+                  ? { variationValueSchema }
+                  : { clearVariationValueSchema: true }
+                : {}),
               ...handleCheckVariations(variations)
             });
             if (resp) {
@@ -202,7 +220,8 @@ const Variation = ({ feature, editable }: VariationProps) => {
   useEffect(() => {
     form.reset({
       ...getValues(),
-      variations: feature.variations
+      variations: feature.variations,
+      variationValueSchema: feature.variationValueSchema ?? null
     });
   }, [feature]);
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
@@ -267,6 +286,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
                 )}
               />
             )}
+            <SchemaSection feature={feature} editable={editable} />
             <VariationsSection
               editable={editable && !waitingRunningRollouts.length}
               feature={feature}
@@ -279,7 +299,11 @@ const Variation = ({ feature, editable }: VariationProps) => {
         <ConfirmationRequiredModal
           feature={feature}
           isOpen={openConfirmDialog}
-          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED}
+          // Schema changes are not supported by scheduled flag changes,
+          // so only offer scheduling when the schema is unchanged.
+          isShowScheduleSelect={
+            SCHEDULED_FLAG_CHANGES_ENABLED && !isSchemaChanged
+          }
           onClose={onCloseConfirmDialog}
           onSubmit={additionalValues =>
             form.handleSubmit(() => onSubmit(additionalValues))()
