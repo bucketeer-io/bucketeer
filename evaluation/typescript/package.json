@@ -6,6 +6,11 @@
   "types": "lib/index.d.ts",
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bucketeer-io/bucketeer.git",
+    "directory": "evaluation/typescript"
+  },
   "publishConfig": {
     "access": "public"
   },
