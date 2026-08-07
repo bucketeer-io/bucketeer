@@ -43,6 +43,7 @@ import {
   PAGE_PATH_SETTINGS,
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
+import { WALKTHROUGH_MOBILE_MENU_EVENT } from 'constants/walkthrough';
 import { WalkthroughProvider } from 'contexts/walkthrough-context';
 import { useScreen } from 'hooks';
 import { ConfirmProvider } from 'hooks/use-unsaved-leave-page';
@@ -154,6 +155,23 @@ export const Root = memo(() => {
     setPageKey(uuid());
     setShowMenu(false);
   }, [setPageKey]);
+
+  // The walkthrough highlights a nav item that only mounts while the mobile
+  // drawer is open, so it drives `showMenu` directly for that step.
+  useEffect(() => {
+    const handleWalkthroughMobileMenu = (event: Event) => {
+      setShowMenu((event as CustomEvent<boolean>).detail);
+    };
+    document.addEventListener(
+      WALKTHROUGH_MOBILE_MENU_EVENT,
+      handleWalkthroughMobileMenu
+    );
+    return () =>
+      document.removeEventListener(
+        WALKTHROUGH_MOBILE_MENU_EVENT,
+        handleWalkthroughMobileMenu
+      );
+  }, []);
 
   if (isInitialLoading) {
     return <AppLoading />;
