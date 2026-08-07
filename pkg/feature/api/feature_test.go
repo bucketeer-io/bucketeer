@@ -627,7 +627,7 @@ func TestConvUpdateFeatureError(t *testing.T) {
 	// with structured details instead of Unknown without details.
 	fs := &FeatureService{}
 	schemaErr := fs.convUpdateFeatureError(pkgErr.NewErrorInvalidArgNotMatchFormat(
-		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "variation_value_schema"))
+		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "VariationValueSchema"))
 	assert.Equal(t, codes.InvalidArgument, status.Code(schemaErr))
 }
 

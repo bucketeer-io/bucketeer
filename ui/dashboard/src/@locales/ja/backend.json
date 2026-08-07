@@ -128,6 +128,7 @@
         "UserId": "ユーザーID",
         "Variation": "バリエーション",
         "VariationId": "バリエーションID",
+        "VariationValueSchema": "バリエーション値スキーマ",
         "VariationWeight": "バリエーションの重み",
         "Webhook": "Webhook",
         "WebhookURL": "Webhook URL",
@@ -141,8 +142,7 @@
         "CodeReferenceRepositoryInfo": "コードリファレンスのリポジトリ情報",
         "CodeReferenceRepositoryType": "コードリファレンスのリポジトリタイプ",
         "Team": "チーム",
-        "DataSource": "データソース",
-        "variation_value_schema": "バリエーション値スキーマ"
+        "DataSource": "データソース"
     },
     "errors": {
         "RequiredField": "{{field_1}}は必須です",

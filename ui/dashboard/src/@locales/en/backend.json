@@ -110,14 +110,14 @@
         "TimeRange": "Time range",
         "TrialProject": "Trial project",
         "VariationId": "Variation ID",
+        "VariationValueSchema": "Variation value schema",
         "VariationWeight": "Variation weight",
         "Webhook": "Webhook",
         "WebhookURL": "Webhook URL",
         "WebhookRule": "Webhook rule",
         "FlagTrigger": "Flag trigger",
         "CodeReference": "Code reference",
-        "DataSource": "Data source",
-        "variation_value_schema": "Variation value schema"
+        "DataSource": "Data source"
     },
     "errors": {
         "RequiredField": "{{field_1}} is required",

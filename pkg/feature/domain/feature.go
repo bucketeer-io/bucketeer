@@ -97,11 +97,11 @@ var (
 	errVariationTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
 		pkgErr.FeaturePackageName, "feature: variation value and type are unmatched", "variation")
 	errVariationValueSchemaInvalid = pkgErr.NewErrorInvalidArgNotMatchFormat(
-		pkgErr.FeaturePackageName, "feature: variation value schema is invalid", "variation_value_schema")
+		pkgErr.FeaturePackageName, "feature: variation value schema is invalid", "VariationValueSchema")
 	errVariationValueSchemaTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
-		pkgErr.FeaturePackageName, "feature: variation value schema and type are unmatched", "variation_value_schema")
+		pkgErr.FeaturePackageName, "feature: variation value schema and type are unmatched", "VariationValueSchema")
 	errVariationValueSchemaViolation = pkgErr.NewErrorInvalidArgNotMatchFormat(
-		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "variation_value_schema")
+		pkgErr.FeaturePackageName, "feature: variation value does not match schema", "VariationValueSchema")
 	errStrategyRequired = pkgErr.NewErrorInvalidArgEmpty(
 		pkgErr.FeaturePackageName, "feature: strategy required", "strategy")
 	errUnsupportedStrategy = pkgErr.NewErrorInvalidArgNotMatchFormat(
