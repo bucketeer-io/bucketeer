@@ -110,6 +110,7 @@
         "TimeRange": "Time range",
         "TrialProject": "Trial project",
         "VariationId": "Variation ID",
+        "VariationValueSchema": "Variation value schema",
         "VariationWeight": "Variation weight",
         "Webhook": "Webhook",
         "WebhookURL": "Webhook URL",
