@@ -215,7 +215,7 @@ const RuleClausesForm = ({
           return (
             <div
               key={clause.clauseId ?? clauseIndex}
-              className="flex items-center w-full gap-x-4"
+              className="flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-x-4"
             >
               <div className="flex flex-col items-center gap-4">
                 <div
@@ -229,9 +229,8 @@ const RuleClausesForm = ({
                 >
                   {type === 'if' ? t('common:if') : t('common:and')}
                 </div>
-                <div className="block sm:hidden w-[1px] h-full bg-primary-500" />
               </div>
-              <div className="flex items-center w-full flex-1 pl-3 sm:pl-4 border-l-0 sm:border-l border-primary-500 gap-x-2 sm:gap-x-4">
+              <div className="flex items-center w-full flex-1 pl-0 sm:pl-4 border-l-0 sm:border-l border-primary-500 gap-x-2 sm:gap-x-4">
                 <div
                   className={cn(
                     'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end w-full gap-4 max-w-full',
@@ -324,7 +323,9 @@ const RuleClausesForm = ({
                                     placeholder={t('experiments.select-flag')}
                                     isExpand
                                     options={flagOptions}
-                                    selectedOptions={field.value}
+                                    selectedOptions={
+                                      field.value ? [field.value] : []
+                                    }
                                     additionalElement={item => (
                                       <FeatureFlagStatus
                                         status={t(
@@ -338,7 +339,7 @@ const RuleClausesForm = ({
                                     onSelectOption={value => {
                                       field.onChange(value);
                                     }}
-                                    contentClassName="!w-[500px] !max-w-[500px]"
+                                    contentClassName="w-full sm:!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
                                   <AttributeKeySelect
@@ -545,6 +546,7 @@ const RuleClausesForm = ({
                                   </>
                                 ) : isFlag ? (
                                   <Dropdown
+                                    isExpand
                                     options={variationOptions}
                                     value={value?.[0] ?? ''}
                                     onChange={val => field.onChange([val])}

@@ -147,7 +147,7 @@ const ConditionForm = forwardRef(
                         onHasMoreOptions={loadMore}
                         isExpand
                         options={remainingFlagOptions}
-                        selectedOptions={field.value}
+                        selectedOptions={field.value ? [field.value] : []}
                         triggerClassName="max-w-full"
                         additionalElement={item => (
                           <FeatureFlagStatus
