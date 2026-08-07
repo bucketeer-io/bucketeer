@@ -64,9 +64,12 @@ const RowWithData = ({
       data-option-index={index}
       style={style}
       isSelectedItem={String(itemSelected) === String(currentItem?.value)}
-      isSelected={selectedOptions?.some(
-        option => String(option) === String(currentFieldValue)
-      )}
+      isSelected={
+        Array.isArray(selectedOptions) &&
+        selectedOptions.some(
+          option => String(option) === String(currentFieldValue)
+        )
+      }
       isMultiselect={isMultiselect}
       value={currentItem?.value}
       label={currentItem?.label}
