@@ -1,0 +1,10 @@
+# github.com/prometheus/prometheus is an indirect dependency pinned at v0.35.0
+# (Prometheus 2.35). The fixed versions (v0.305.2+ / Prometheus 3.x) require a
+# major upgrade that must be handled separately. The vulnerable remote-read
+# code path is not used by Bucketeer.
+CVE-2026-42154
+
+# The react-router advisory only affects RSC (React Server Components) mode.
+# The dashboard is a classic SPA and does not use RSC. The fix requires a
+# react-router v8 major upgrade, tracked separately.
+GHSA-qwww-vcr4-c8h2
