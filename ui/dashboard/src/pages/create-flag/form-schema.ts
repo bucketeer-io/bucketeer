@@ -144,11 +144,18 @@ export const createVariationsSchema = ({
                 root.variationType
               );
               // Unable to validate client-side; the backend validates on save.
-              if (!validator || validator(value)) return true;
+              if (!validator) return true;
+              const result = validator(value);
+              if (result.valid) return true;
+              const message = translation(
+                'message:validation.value-schema-violation'
+              );
               return context.createError({
-                message: translation(
-                  'message:validation.value-schema-violation'
-                ),
+                // Append the failing JSON path/rule when the validator can
+                // identify it, so users know which field to fix.
+                message: result.detail
+                  ? `${message} (${result.detail})`
+                  : message,
                 path: context.path
               });
             })
