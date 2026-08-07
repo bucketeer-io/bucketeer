@@ -9,6 +9,7 @@ import { WALKTHROUGH_ENABLED } from 'configs';
 import { PAGE_PATH_APIKEYS, PAGE_PATH_FEATURES } from 'constants/routing';
 import {
   LEAVE_PAGE_CANCELLED_EVENT,
+  WALKTHROUGH_MOBILE_MENU_EVENT,
   WALKTHROUGH_TARGETS
 } from 'constants/walkthrough';
 import { driver, type Config, type Driver, type DriveStep } from 'driver.js';
@@ -28,6 +29,14 @@ type WalkthroughStage =
   | 'sdk-modal';
 
 const tourTarget = (id: string) => `[data-tour="${id}"]`;
+
+// On mobile the nav menu only mounts while the drawer is open, so the
+// feature-flags-menu step must open it before driver.js can find the target.
+const setMobileMenuOpen = (open: boolean) => {
+  document.dispatchEvent(
+    new CustomEvent(WALKTHROUGH_MOBILE_MENU_EVENT, { detail: open })
+  );
+};
 
 // Popover titles are rendered as HTML by driver.js.
 const titleWithIcon = (rawIcon: string, title: string) =>
@@ -174,6 +183,7 @@ export const useWalkthrough = () => {
       },
       onDestroyed: (_element, step) => {
         document.removeEventListener('keydown', blockEnterSubmit, true);
+        setMobileMenuOpen(false);
         // Ending on the last step's action click hands off to the next stage.
         if (!cancelledRef.current && step?.element === lastStepTarget) {
           setStage(
@@ -333,9 +343,14 @@ export const useWalkthrough = () => {
           title: titleWithIcon(iconRocketRaw, t('walkthrough.welcome.title')),
           description: t('walkthrough.welcome.description'),
           nextBtnText: t('walkthrough.welcome.start'),
-          showButtons: ['next', 'close']
+          showButtons: ['next', 'close'],
+          onNextClick: (_element, _step, { driver: driverInstance }) => {
+            setMobileMenuOpen(true);
+            driverInstance.moveNext();
+          }
         }
       };
+      if (!withWelcome) setMobileMenuOpen(true);
       driverRef.current = driver({
         ...buildDriverConfig(
           'flag-tour',
@@ -346,6 +361,7 @@ export const useWalkthrough = () => {
           {
             element: tourTarget(WALKTHROUGH_TARGETS.FEATURE_FLAGS_MENU),
             disableActiveInteraction: true,
+            onDeselected: () => setMobileMenuOpen(false),
             popover: {
               title: titleWithIcon(
                 iconSwitchRaw,
