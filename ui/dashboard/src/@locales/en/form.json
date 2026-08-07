@@ -138,6 +138,7 @@
   "feature-flags": {
     "value-schema": {
       "title": "Value Schema",
+      "tooltip": "Restrict which values this flag's variations can have. The available validators depend on the flag type:\nString: Enum or Regex\nNumber: Enum\nJSON: JSON Schema\nBoolean and YAML flags do not support value schemas.",
       "no-schema": "No schema is defined. Variation values are accepted without validation.",
       "has-schema": "Variation values are validated against this schema.",
       "add": "Add Schema",

@@ -4,8 +4,11 @@ import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { isSchemaSupported } from 'utils/variation-value-schema';
+import { IconInfo } from '@icons';
 import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
+import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Card from '../../elements/card';
 import { VariationForm } from '../form-schema';
@@ -65,6 +68,15 @@ const SchemaSection = ({
             <h3 className="typo-head-bold-small text-gray-800">
               {t('form:feature-flags.value-schema.title')}
             </h3>
+            <Tooltip
+              content={t('form:feature-flags.value-schema.tooltip')}
+              trigger={
+                <div className="flex-center size-fit">
+                  <Icon icon={IconInfo} size="xxs" color="gray-500" />
+                </div>
+              }
+              className="max-w-[420px] whitespace-pre-line"
+            />
             {schema && (
               <span className="px-2 py-0.5 rounded bg-primary-50 text-primary-500 typo-para-small">
                 {typeLabel}
