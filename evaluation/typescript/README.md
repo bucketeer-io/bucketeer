@@ -30,7 +30,7 @@ make lint
 ## Release to NPM
 
 Publishing is run manually with the
-[`Publish TypeScript evaluation to npm`](../../actions/workflows/publish-evaluation-ts.yaml)
+[`Publish TypeScript evaluation to npm`](https://github.com/bucketeer-io/bucketeer/actions/workflows/publish-evaluation-ts.yaml)
 GitHub Actions workflow.
 
 Before the first release, configure an npm trusted publisher for
