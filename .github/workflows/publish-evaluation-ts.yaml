@@ -10,7 +10,7 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: 22
   EVALUATION_DIRECTORY: "evaluation/typescript"
 
 permissions:
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || inputs.dry_run
     runs-on: ubuntu-latest
     defaults:
       run:

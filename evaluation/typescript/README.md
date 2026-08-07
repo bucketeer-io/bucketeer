@@ -44,8 +44,8 @@ To release a new version:
 
 1. Update the version in `package.json`.
 2. Merge the change into `main`.
-3. Run the workflow from the `main` branch. Enable `dry_run` to verify the
-   package without publishing it.
+3. Run the workflow from the `main` branch to publish. Enable `dry_run` to
+   verify the package from another branch without publishing it.
 
 The workflow builds and publishes the package with npm trusted publishing
 (OIDC), so an npm token is not required.
