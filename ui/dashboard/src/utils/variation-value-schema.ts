@@ -25,16 +25,22 @@ export const isSchemaSupported = (
   variationType: FeatureVariationType
 ): boolean => getSupportedSchemaTypes(variationType).length > 0;
 
-const compileJsonSchema = (schema: string) => {
-  const ajv = new Ajv2020({ strict: false, allErrors: true });
-  return ajv.compile(JSON.parse(schema));
-};
+// Reuse a single Ajv instance; constructing one is relatively expensive and
+// this runs on every keystroke while editing a JSON Schema.
+const ajv2020 = new Ajv2020({ strict: false, allErrors: true });
+
+const compileJsonSchema = (schema: string) =>
+  ajv2020.compile(JSON.parse(schema));
+
+// Mirrors the backend's strconv.ParseFloat, which rejects surrounding
+// whitespace and non-finite values.
+const isStrictFiniteNumber = (value: string): boolean =>
+  value !== '' && value === value.trim() && Number.isFinite(Number(value));
 
 export type SchemaDefinitionError =
   | 'enum-empty'
   | 'enum-not-number'
   | 'regex-empty'
-  | 'regex-invalid'
   | 'json-schema-empty'
   | 'json-schema-invalid'
   | 'type-unsupported';
@@ -53,9 +59,7 @@ export const validateSchemaDefinition = (
       if (values.length === 0) return 'enum-empty';
       if (
         variationType === 'NUMBER' &&
-        values.some(
-          value => !Number.isFinite(Number(value)) || value.trim() === ''
-        )
+        values.some(value => !isStrictFiniteNumber(value))
       ) {
         return 'enum-not-number';
       }
@@ -64,12 +68,11 @@ export const validateSchemaDefinition = (
     case 'REGEX': {
       const pattern = schema.regexValidator?.pattern ?? '';
       if (pattern === '') return 'regex-empty';
-      try {
-        new RegExp(pattern);
-        return null;
-      } catch {
-        return 'regex-invalid';
-      }
+      // The backend compiles patterns with Go RE2, whose syntax differs from
+      // JS RegExp (e.g. inline flags like (?U) are valid in Go but throw in
+      // JS). Never block on JS compilation; the backend is the source of
+      // truth for pattern validity.
+      return null;
     }
     case 'JSON_SCHEMA': {
       const jsonSchema = schema.jsonSchemaValidator?.schema ?? '';
@@ -98,14 +101,8 @@ export const createValueValidator = (
       const values = schema.enumValidator?.values ?? [];
       if (variationType === 'NUMBER') {
         const allowed = values.map(Number);
-        return value => {
-          const target = Number(value);
-          return (
-            value.trim() !== '' &&
-            Number.isFinite(target) &&
-            allowed.includes(target)
-          );
-        };
+        return value =>
+          isStrictFiniteNumber(value) && allowed.includes(Number(value));
       }
       return value => values.includes(value);
     }
