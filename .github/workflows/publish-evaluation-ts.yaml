@@ -1,0 +1,60 @@
+name: Publish TypeScript evaluation to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (do not actually publish)"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: 20
+  EVALUATION_DIRECTORY: "evaluation/typescript"
+
+permissions:
+  contents: read
+  id-token: write # required for npm OIDC trusted publishing
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.EVALUATION_DIRECTORY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup node env
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
+
+      # npm >= 11.5.1 is required for OIDC trusted publishing.
+      # Keep this aligned with the npm version used by the SDK publish workflows.
+      - name: Ensure npm supports OIDC trusted publishing
+        run: npm install -g npm@11.10.0
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Generate protobuf code
+        run: make gen_proto
+
+      - name: Build evaluation package
+        run: make build
+
+      - name: Publish to npm via OIDC
+        run: |
+          make copy-genfiles
+          npm publish \
+            --provenance \
+            --access public \
+            ${{ inputs.dry_run && '--dry-run' || '' }}

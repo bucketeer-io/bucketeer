@@ -14,7 +14,6 @@ concurrency:
 
 env:
   NODE_VERSION: 20
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
   EVALUATION_DIRECTORY: "evaluation/typescript"
 
 jobs:
