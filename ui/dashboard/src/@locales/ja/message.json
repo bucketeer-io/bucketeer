@@ -3,6 +3,10 @@
   "validation": {
     "must-be-number": "数値を入力してください",
     "must-be-json": "JSONを入力してください",
+    "value-schema-violation": "この値はフラグの値スキーマに一致していません",
+    "value-schema-enum-not-number": "許可される値はすべて数値である必要があります",
+    "value-schema-invalid-regex": "正規表現パターンが無効です",
+    "value-schema-invalid-json-schema": "有効なJSONスキーマではありません",
     "must-be-yaml": "YAMLを入力してください",
     "must-be-unique": "一意の値を入力してください",
     "max-length-number": "このフィールドの最大長は{{count}}桁です。",

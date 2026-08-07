@@ -9,10 +9,15 @@ import {
 import { FormSchemaProps } from 'hooks/use-form-schema';
 import * as yaml from 'js-yaml';
 import * as yup from 'yup';
-import { FeatureVariation, FeatureVariationType } from '@types';
+import {
+  FeatureVariation,
+  FeatureVariationType,
+  VariationValueSchema
+} from '@types';
 import { isNumber } from 'utils/chart';
 import { isJsonString } from 'utils/converts';
 import { isUniqueValue } from 'utils/function';
+import { createValueValidator } from 'utils/variation-value-schema';
 import { FlagSwitchVariationType } from './types';
 
 const nameSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
@@ -128,6 +133,24 @@ export const createVariationsSchema = ({
                 });
               }
               return true;
+            })
+            .test('matchesValueSchema', (value, context) => {
+              const root = context.from && context.from[1].value;
+              const valueSchema: VariationValueSchema | null | undefined =
+                root?.variationValueSchema;
+              if (!valueSchema || !value) return true;
+              const validator = createValueValidator(
+                valueSchema,
+                root.variationType
+              );
+              // Unable to validate client-side; the backend validates on save.
+              if (!validator || validator(value)) return true;
+              return context.createError({
+                message: translation(
+                  'message:validation.value-schema-violation'
+                ),
+                path: context.path
+              });
             })
             .test('isUnique', function (_, context) {
               const type = context.from && context.from[1].value.variationType;
