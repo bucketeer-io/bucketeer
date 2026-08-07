@@ -113,6 +113,14 @@ export const onFormatEnvironments = (environments: Environment[]) => {
 export const checkEnvironmentEmptyId = (environmentId: string) =>
   environmentId.includes(ENVIRONMENT_WITH_EMPTY_ID) ? '' : environmentId;
 
+// Inverse of `checkEnvironmentEmptyId`: map a stored environment id back to the
+// value used in the dropdown. The empty-id environment ("") is represented by
+// the `ENVIRONMENT_WITH_EMPTY_ID` placeholder so it can be a selectable option.
+// This is a pure, index-independent mapping, so hydration does not need to read
+// any state populated during a prior render.
+export const resolveEnvironmentEmptyId = (environmentId: string) =>
+  environmentId ? environmentId : ENVIRONMENT_WITH_EMPTY_ID;
+
 export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
   const htmlElement = document.getElementsByTagName('html')[0];
   if (htmlElement) {
