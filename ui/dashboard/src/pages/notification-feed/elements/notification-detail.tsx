@@ -48,7 +48,6 @@ const DetailRow = ({
   </div>
 );
 
-// A titled section with a heading.
 const Section = ({
   title,
   className,

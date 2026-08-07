@@ -2,8 +2,8 @@ import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
 import { CollectionParams, NotificationCenterFeedCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { NotificationWire, toFeedItem } from 'utils/notification-mapper';
 import { stringifyParams } from 'utils/search-params';
-import { NotificationWire, toFeedItem } from './notification-mapper';
 
 export type NotificationReadStatus = 'ALL' | 'UNREAD' | 'READ';
 
@@ -20,7 +20,6 @@ interface FeedCollectionWire {
   totalCount: string;
 }
 
-// GET /v1/notifications — list published notifications.
 export const notificationsFetcher = async (
   params?: NotificationsFetcherParams
 ): Promise<NotificationCenterFeedCollection> => {

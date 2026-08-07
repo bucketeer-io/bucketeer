@@ -1,7 +1,14 @@
-import { StylesConfig } from 'react-select';
+import { useRef } from 'react';
+import { MultiValueGenericProps, StylesConfig } from 'react-select';
 import { useTranslation } from 'i18n';
-import { CreatableSelect, Option } from 'components/creatable-select';
-import { getTagPresets } from '../constants';
+import { cn } from 'utils/style';
+import {
+  colorStyles,
+  CreatableSelect,
+  Option
+} from 'components/creatable-select';
+import { Popover } from 'components/popover';
+import { getTagPresets, TAG_COLOR_SWATCHES } from '../constants';
 import { NotificationTag } from '../types';
 
 interface TagSelectProps {
@@ -17,20 +24,33 @@ const toOption = (tag: NotificationTag): Option => ({
   color: tag.color
 });
 
-// Tint each selected chip with its own tag color instead of the default
-// purple defined in the shared creatable-select styles.
+const contentFont = {
+  fontSize: '14px',
+  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+};
+
 const tagColorStyles: StylesConfig<Option, boolean> = {
+  control: (base, props) => ({
+    ...colorStyles.control?.(base, props),
+    ...contentFont
+  }),
+  menu: (base, props) => ({
+    ...colorStyles.menu?.(base, props),
+    ...contentFont
+  }),
   multiValue: (base, { data }) => {
     const color = (data.color as string) || undefined;
     return {
       ...base,
       backgroundColor: color ? `${color}1A` : base.backgroundColor,
-      borderRadius: '4px'
+      borderRadius: '4px',
+      padding: '4px'
     };
   },
   multiValueLabel: (base, { data }) => ({
     ...base,
-    color: (data.color as string) || (base.color as string)
+    color: (data.color as string) || (base.color as string),
+    padding: 0
   }),
   multiValueRemove: (base, { data }) => {
     const color = (data.color as string) || undefined;
@@ -45,6 +65,61 @@ const tagColorStyles: StylesConfig<Option, boolean> = {
   }
 };
 
+const makeTagColorLabel = (
+  onSwatchPick: (name: string, color: string) => void
+) => {
+  const TagColorLabel = (props: MultiValueGenericProps<Option, true>) => {
+    const { t } = useTranslation(['common']);
+    const closeRef = useRef<HTMLButtonElement>(null);
+    const { data } = props;
+    const name = data.value;
+    const color = (data.color as string) || '';
+
+    return (
+      <Popover
+        align="start"
+        modal
+        closeRef={closeRef}
+        trigger={
+          <span className="flex items-center gap-1.5 px-2 py-0.5 typo-para-tiny font-medium cursor-pointer">
+            <span
+              className={cn(
+                'size-1.5 shrink-0 rounded-full',
+                !color && 'bg-gray-400'
+              )}
+              style={color ? { backgroundColor: color } : undefined}
+            />
+            {name}
+          </span>
+        }
+      >
+        <div className="p-2">
+          <p className="mb-2 typo-para-tiny text-gray-500">{t('tag-color')}</p>
+          <div className="grid grid-cols-4 gap-2">
+            {TAG_COLOR_SWATCHES.map(swatch => (
+              <button
+                key={swatch}
+                type="button"
+                aria-label={swatch}
+                className={cn(
+                  'size-6 rounded-full ring-offset-1 hover:ring-2 hover:ring-gray-300',
+                  color === swatch && 'ring-2 ring-gray-500'
+                )}
+                style={{ backgroundColor: swatch }}
+                onClick={() => {
+                  onSwatchPick(name, swatch);
+                  closeRef.current?.click();
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </Popover>
+    );
+  };
+  return TagColorLabel;
+};
+
 const TagSelect = ({ value, language, onChange }: TagSelectProps) => {
   const { t } = useTranslation(['form']);
 
@@ -55,15 +130,18 @@ const TagSelect = ({ value, language, onChange }: TagSelectProps) => {
   const handleChange = (opts: readonly Option[]) => {
     onChange(
       opts.map(o => {
+        const existing = value.find(tag => tag.name === o.value);
         const preset = presets.find(p => p.name === o.value);
-        // Preset tags keep their color; user-created tags have none and render
-        // as a neutral chip.
         return {
           name: o.label,
-          color: preset?.color ?? (o.color as string) ?? ''
+          color: existing?.color ?? preset?.color ?? (o.color as string) ?? ''
         };
       })
     );
+  };
+
+  const onSwatchPick = (name: string, color: string) => {
+    onChange(value.map(tag => (tag.name === name ? { ...tag, color } : tag)));
   };
 
   return (
@@ -74,7 +152,12 @@ const TagSelect = ({ value, language, onChange }: TagSelectProps) => {
       styles={tagColorStyles}
       placeholder={t('form:add-tags')}
       onChange={opts => handleChange(opts)}
-      onCreateOption={name => onChange([...value, { name, color: '' }])}
+      onCreateOption={name =>
+        onChange([...value, { name, color: TAG_COLOR_SWATCHES[0] }])
+      }
+      components={{
+        MultiValueLabel: makeTagColorLabel(onSwatchPick)
+      }}
     />
   );
 };

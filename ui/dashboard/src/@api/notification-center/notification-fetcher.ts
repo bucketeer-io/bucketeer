@@ -1,8 +1,8 @@
 import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
 import { isNotEmpty } from 'utils/data-type';
+import { NotificationWire, toFeedItem } from 'utils/notification-mapper';
 import { stringifyParams } from 'utils/search-params';
-import { NotificationWire, toFeedItem } from './notification-mapper';
 
 export interface NotificationFetcherParams {
   id: string;
@@ -13,8 +13,6 @@ interface NotificationResponseWire {
   notification: NotificationWire;
 }
 
-// GET /v1/notification — get a single notification by id. Drafts are visible
-// to system admins only.
 export const notificationFetcher = async (
   params: NotificationFetcherParams
 ) => {

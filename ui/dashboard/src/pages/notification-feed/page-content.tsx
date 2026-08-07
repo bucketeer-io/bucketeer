@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePartialState } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { CheckCheck } from 'lucide-react';
@@ -9,13 +10,14 @@ import { cn } from 'utils/style';
 import Button from 'components/button';
 import { ReactDateRangePicker } from 'components/date-range-picker';
 import Dropdown from 'components/dropdown';
+import Spinner from 'components/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import {
   useFetchDrafts,
   useFetchNotification,
-  useFetchTabCounts,
+  useFetchUnreadCount,
   useMarkAllAsRead
 } from './collection-loader/use-fetch-notifications';
 import DraftsPanel from './drafts/drafts-panel';
@@ -37,6 +39,7 @@ const PageContent = ({
   isSystemAdmin?: boolean;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { notificationSortOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
 
@@ -50,9 +53,7 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<NotificationFilters>(defaultFilters);
 
-  // Sourced independently of whichever NotificationList is mounted, so both
-  // tab badges stay live across tab switches and mutations.
-  const { unreadCount, readCount } = useFetchTabCounts();
+  const { data: unreadCount = 0 } = useFetchUnreadCount();
   const markAllAsRead = useMarkAllAsRead();
 
   const selectedId = filters.notificationId;
@@ -76,7 +77,6 @@ const PageContent = ({
     [filters]
   );
 
-  // Resets search + date range only, keeping the current tab and sort order.
   const onClearFilters = useCallback(
     () => onChangeFilters({ searchQuery: '', from: undefined, to: undefined }),
     [onChangeFilters]
@@ -87,8 +87,6 @@ const PageContent = ({
     onChangeFilters({ notificationId: undefined, tab: 'publish' });
   };
 
-  // Leaving edit mode (Clear or a successful submit): drop the draft so the
-  // form reverts to "new notification" mode.
   const onClearEdit = () => setEditingId(undefined);
 
   useEffect(() => {
@@ -98,17 +96,20 @@ const PageContent = ({
   }, [searchOptions]);
 
   useEffect(() => {
+    const urlNotificationId = searchFilters.notificationId as
+      string | undefined;
+    if (urlNotificationId && urlNotificationId !== filters.notificationId) {
+      setFilters({ notificationId: urlNotificationId });
+    }
+  }, [searchFilters.notificationId]);
+
+  useEffect(() => {
     if (!isSystemAdmin && filters.tab === 'publish') {
       onChangeFilters({ tab: 'unread' });
     }
   }, [isSystemAdmin, filters.tab]);
 
   const onCloseDetail = () => onChangeFilters({ notificationId: undefined });
-
-  const sortOptions = [
-    { label: t('sort-by-newest'), value: 'newest' },
-    { label: t('sort-by-oldest'), value: 'oldest' }
-  ];
 
   return (
     <PageLayout.Content>
@@ -126,7 +127,7 @@ const PageContent = ({
               wrapTriggerStyle="w-fit"
               isTruncate={false}
               value={filters.sort}
-              options={sortOptions}
+              options={notificationSortOptions}
               onChange={value => onChangeFilters({ sort: value as SortOption })}
             />
             <ReactDateRangePicker
@@ -160,9 +161,7 @@ const PageContent = ({
                 <TabsTrigger value="unread">
                   {t('unread')} ({unreadCount})
                 </TabsTrigger>
-                <TabsTrigger value="read">
-                  {t('read')} ({readCount})
-                </TabsTrigger>
+                <TabsTrigger value="read">{t('read')}</TabsTrigger>
                 {isSystemAdmin && (
                   <TabsTrigger value="publish">
                     {t('publish-notification')}
@@ -176,10 +175,13 @@ const PageContent = ({
                   size="sm"
                   className="absolute right-0 top-0"
                   onClick={() => markAllAsRead.mutate()}
-                  disabled={unreadCount === 0}
-                  loading={markAllAsRead.isPending}
+                  disabled={unreadCount === 0 || markAllAsRead.isPending}
                 >
-                  <CheckCheck size={16} />
+                  {markAllAsRead.isPending ? (
+                    <Spinner className="size-4 border-2" />
+                  ) : (
+                    <CheckCheck size={16} />
+                  )}
                   {t('mark-all-as-read')}
                 </Button>
               )}

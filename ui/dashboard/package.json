@@ -21,10 +21,6 @@
     "src/**/*.{js,jsx,ts,tsx}": "eslint --cache --fix",
     "src/**/*.{js,jsx,ts,tsx,css}": "prettier --write --ignore-unknown"
   },
-  "resolutions": {
-    "brace-expansion": "^1.1.18",
-    "@typescript-eslint/typescript-estree/**/brace-expansion": "^5.0.9"
-  },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -48,8 +44,8 @@
     "@types/js-cookie": "^3.0.6",
     "@types/react-date-range": "^1.4.10",
     "ajv": "^8.20.0",
-    "axios": "^1.18.1",
     "@uiw/react-md-editor": "^4.1.1",
+    "axios": "^1.18.1",
     "chart.js": "^4.5.1",
     "chartjs-adapter-luxon": "^1.3.1",
     "class-variance-authority": "^0.7.0",
@@ -84,7 +80,7 @@
     "react-icons-material-design": "^1.0.4",
     "react-intersection-observer": "^9.16.0",
     "react-markdown": "^10.1.0",
-    "react-router": "^8.3.0",
+    "react-router": "^7.18.2",
     "react-select": "^5.9.0",
     "remark": "^15.0.1",
     "strip-markdown": "^6.0.0",

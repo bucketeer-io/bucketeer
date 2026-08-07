@@ -4,7 +4,8 @@ import {
   notificationFetcher,
   NotificationFetcherParams,
   notificationsFetcher,
-  NotificationsFetcherParams
+  NotificationsFetcherParams,
+  notificationUnreadCountFetcher
 } from '@api/notification-center';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'i18n';
@@ -18,6 +19,7 @@ import type {
 export const NOTIFICATION_FEED_QUERY_KEY = 'notification-feed';
 export const NOTIFICATION_QUERY_KEY = 'notification';
 export const NOTIFICATION_DRAFTS_QUERY_KEY = 'notification-drafts';
+export const NOTIFICATION_UNREAD_COUNT_QUERY_KEY = 'notification-unread-count';
 
 type FeedQueryOptions =
   QueryOptionsRespond<NotificationCenterFeedCollection> & {
@@ -63,5 +65,17 @@ export const useQueryNotificationDrafts = (options?: DraftsQueryOptions) => {
     queryKey: [NOTIFICATION_DRAFTS_QUERY_KEY, params, i18n.language],
     queryFn: () => notificationDraftsFetcher(params),
     ...queryOptions
+  });
+};
+
+type UnreadCountQueryOptions = QueryOptionsRespond<number>;
+
+export const useQueryNotificationUnreadCount = (
+  options?: UnreadCountQueryOptions
+) => {
+  return useQuery({
+    queryKey: [NOTIFICATION_UNREAD_COUNT_QUERY_KEY],
+    queryFn: notificationUnreadCountFetcher,
+    ...options
   });
 };

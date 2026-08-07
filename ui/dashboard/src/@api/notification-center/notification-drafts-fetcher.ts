@@ -2,8 +2,8 @@ import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
 import { CollectionParams, NotificationCenterDraftCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { NotificationWire, toFeedItem } from 'utils/notification-mapper';
 import { stringifyParams } from 'utils/search-params';
-import { NotificationWire, toFeedItem } from './notification-mapper';
 
 export type NotificationDraftsFetcherParams = CollectionParams;
 
@@ -13,7 +13,6 @@ interface DraftCollectionWire {
   totalCount: string;
 }
 
-// GET /v1/admin_notifications/drafts — list draft notifications. System admin only.
 export const notificationDraftsFetcher = async (
   params?: NotificationDraftsFetcherParams
 ): Promise<NotificationCenterDraftCollection> => {

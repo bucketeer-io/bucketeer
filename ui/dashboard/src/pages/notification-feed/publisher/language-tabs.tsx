@@ -30,9 +30,6 @@ interface LanguageTabsProps {
   onRemove: (index: number, language: string) => void;
 }
 
-// The "Languages" field of the publish form: one tab per authored language,
-// each removable (while more than one remains), plus a dropdown to add any
-// language not already present.
 const LanguageTabs = ({
   fields,
   activeLanguage,

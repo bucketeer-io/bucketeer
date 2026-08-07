@@ -29,12 +29,10 @@ const NotificationList = ({
   onSelect,
   onClearFilters
 }: NotificationListProps) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'message']);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Reset paging and selection whenever the tab or filters change so we never
-  // land on a now-empty page or carry a stale selection across contexts.
   useEffect(() => {
     setPage(1);
     setSelected(new Set());
@@ -84,9 +82,15 @@ const NotificationList = ({
           <EmptyState.Root variant="no-data" size="lg">
             <EmptyState.Illustration />
             <EmptyState.Body>
-              <EmptyState.Title>{t('no-notifications')}</EmptyState.Title>
+              <EmptyState.Title>
+                {t(read ? 'no-read-notifications' : 'no-unread-notifications')}
+              </EmptyState.Title>
               <EmptyState.Description>
-                {t('no-notifications-desc')}
+                {t(
+                  read
+                    ? 'no-read-notifications-desc'
+                    : 'no-unread-notifications-desc'
+                )}
               </EmptyState.Description>
             </EmptyState.Body>
           </EmptyState.Root>
@@ -113,7 +117,6 @@ const NotificationList = ({
         ))}
       </div>
 
-      {/* Selection action bar — unread tab only, shown once a row is selected. */}
       {!read && selected.size > 0 && (
         <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
           <div className="flex items-center gap-3">

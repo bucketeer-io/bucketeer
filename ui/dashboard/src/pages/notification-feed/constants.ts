@@ -3,12 +3,9 @@ import { NotificationTag } from './types';
 
 export const DRAFTS_PAGE_SIZE = 5;
 
-// Preset tags offered in the publish form. Names are localized per language;
-// the color is shared. The suggestions the author sees follow the active
-// language tab, mirroring how tags are stored per localization.
 interface TagPreset {
   color: string;
-  names: Record<string, string>; // language code -> display name
+  names: Record<string, string>;
 }
 
 const TAG_PRESETS_SOURCE: TagPreset[] = [
@@ -36,10 +33,19 @@ const TAG_PRESETS_SOURCE: TagPreset[] = [
   }
 ];
 
-// Returns the preset tags with names resolved for `language`, falling back to
-// English when a translation is missing.
 export const getTagPresets = (language: string): NotificationTag[] =>
   TAG_PRESETS_SOURCE.map(preset => ({
     name: preset.names[language] ?? preset.names[Language.ENGLISH],
     color: preset.color
   }));
+
+export const TAG_COLOR_SWATCHES: readonly string[] = [
+  '#3B82F6',
+  '#F97316',
+  '#8B5CF6',
+  '#6366F1',
+  '#10B981',
+  '#EC4899',
+  '#EAB308',
+  '#EF4444'
+];

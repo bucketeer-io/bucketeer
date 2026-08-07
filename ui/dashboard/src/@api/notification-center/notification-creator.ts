@@ -3,7 +3,7 @@ import {
   NotificationCenterFeedItem,
   NotificationCenterLocalization
 } from '@types';
-import { NotificationWire, toFeedItem } from './notification-mapper';
+import { NotificationWire, toFeedItem } from 'utils/notification-mapper';
 
 export interface NotificationCreatorPayload {
   localizations: NotificationCenterLocalization[];

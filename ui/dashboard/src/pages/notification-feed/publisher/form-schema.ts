@@ -6,7 +6,6 @@ export interface PublishFormValues {
   localizations: NotificationLocalizationInput[];
 }
 
-// A notification is one or more localizations, each with a title and content.
 export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
   yup.object().shape({
     localizations: yup

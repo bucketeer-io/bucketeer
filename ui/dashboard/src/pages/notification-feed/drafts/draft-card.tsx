@@ -3,6 +3,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import Icon from 'components/icon';
+import { markdownToText } from '../elements/markdown-content';
 import NotificationCard from '../elements/notification-card';
 import TagChip from '../elements/tag-chip';
 import { NotificationDraft } from '../types';
@@ -23,27 +24,36 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
         active={active}
         onClick={onClick}
         header={
-          <span
-            className={cn(
-              'typo-para-medium font-medium text-gray-900',
-              onDelete && 'pr-8'
+          <div className="flex w-full flex-col gap-1">
+            <span
+              className={cn(
+                'typo-para-medium font-medium text-gray-900',
+                onDelete && 'pr-8'
+              )}
+            >
+              {draft.title}
+            </span>
+            {draft.content && (
+              <p className="line-clamp-1 typo-para-small text-gray-500">
+                {markdownToText(draft.content)}
+              </p>
             )}
-          >
-            {draft.title}
-          </span>
+          </div>
         }
         footer={
-          <span className="typo-para-small text-gray-500">
-            {draft.createdBy.split('@')[0]}
-          </span>
+          <div className="flex w-full items-center justify-between">
+            <span className="typo-para-small text-gray-500">
+              {draft.createdBy.split('@')[0]}
+            </span>
+            <span className="typo-para-tiny text-gray-500">
+              {formatDateTime(draft.updatedAt)}
+            </span>
+          </div>
         }
       >
         {draft.tags.map(tag => (
           <TagChip key={tag.name} tag={tag} />
         ))}
-        <span className="typo-para-tiny text-gray-500">
-          {formatDateTime(draft.updatedAt)}
-        </span>
       </NotificationCard>
       {onDelete && (
         <button

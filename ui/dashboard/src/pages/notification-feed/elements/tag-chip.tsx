@@ -1,9 +1,6 @@
 import { cn } from 'utils/style';
 import { NotificationTag } from '../types';
 
-// Renders a pill for a notification tag: a colored dot (the tag color) followed
-// by the tag name on a soft tinted background, matching the Tag select chips.
-// Tags without a color fall back to a neutral gray dot and background.
 const TagChip = ({
   tag,
   className,

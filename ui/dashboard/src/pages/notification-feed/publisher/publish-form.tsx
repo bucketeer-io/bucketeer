@@ -24,8 +24,6 @@ import LanguageTabs from './language-tabs';
 import MarkdownEditor from './markdown-editor';
 import TagSelect from './tag-select';
 
-// Per-language display metadata: native name, English name (for the add menu),
-// and flag icon. Mirrors the shared `languageList` used elsewhere.
 const LANGUAGE_META = {
   [Language.ENGLISH]: {
     label: 'English',
@@ -60,18 +58,13 @@ const PublishForm = ({
   initialDraft?: NotificationDetail;
   onClear?: () => void;
 }) => {
-  const { t } = useTranslation(['common', 'form', 'message']);
+  const { t, i18n } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
-  // The language the form starts with (the console language). It is only the
-  // initial default — the author may remove it and author another language —
-  // so it must stay fixed for the component's lifetime and not react to the
-  // console language changing while the form is open, or in-progress input
-  // would be reset out from under the author.
   const defaultLanguage = useMemo(() => {
     const lang = getLanguage();
     return FORM_LANGUAGES.includes(lang) ? lang : Language.ENGLISH;
-  }, []);
+  }, [i18n.language]);
 
   const buildLocalizations = (
     draft?: NotificationDetail
@@ -110,14 +103,10 @@ const PublishForm = ({
     name: 'localizations'
   });
 
-  // `activeLanguage` (which tab is shown) is UI-only — not part of the
-  // submitted payload.
   const [activeLanguage, setActiveLanguage] = useState<string>(() =>
     initialActiveLanguage(buildLocalizations(initialDraft))
   );
 
-  // Reload the form when a different draft is opened for editing, showing that
-  // draft's first language tab.
   useEffect(() => {
     const locs = buildLocalizations(initialDraft);
     form.reset({ localizations: locs });
@@ -146,8 +135,7 @@ const PublishForm = ({
   const {
     formState: { isValid }
   } = form;
-  const canPublish = !disabled && isValid;
-  const canSaveDraft = !disabled;
+  const canSubmit = !disabled && isValid;
   const [pendingAction, setPendingAction] = useState<
     'publish' | 'draft' | null
   >(null);
@@ -206,7 +194,7 @@ const PublishForm = ({
     }
   });
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = form.handleSubmit(() => {
     const payload = toInput(NotificationStatus.DRAFT);
     const submittedFor = editingId;
     setPendingAction('draft');
@@ -221,16 +209,13 @@ const PublishForm = ({
         errorNotify(error);
       }
     };
-    // Updating an existing draft keeps its id; otherwise create a new one.
     if (isEditing && editingId) {
       updateMutation.mutate({ id: editingId, input: payload }, onDone);
     } else {
       saveDraftMutation.mutate(payload, onDone);
     }
-  };
+  });
 
-  // Clears the form back to a fresh "new notification" state, discarding any
-  // draft that was open for editing (so "Update draft" reverts to "Save draft").
   const handleClear = () => resetForm();
 
   return (
@@ -247,7 +232,6 @@ const PublishForm = ({
           onRemove={removeLanguage}
         />
 
-        {/* Fields for the active language, addressed by its field-array index. */}
         <Form.Field
           control={control}
           name={`localizations.${activeIndex}.title`}
@@ -304,7 +288,7 @@ const PublishForm = ({
         <div className="flex items-center gap-4">
           <Button
             type="submit"
-            disabled={!canPublish}
+            disabled={!canSubmit}
             loading={isPublishPending}
           >
             {t('publish')}
@@ -313,7 +297,7 @@ const PublishForm = ({
             type="button"
             variant="secondary"
             onClick={handleSaveDraft}
-            disabled={!canSaveDraft}
+            disabled={!canSubmit}
             loading={isDraftPending}
           >
             {isEditing ? t('form:update-draft') : t('save-draft')}

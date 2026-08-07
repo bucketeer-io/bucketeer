@@ -8,7 +8,6 @@ export interface NotificationCenterTag {
   color: string;
 }
 
-// One (notification, language) pair. Markdown source lives in `content`.
 export interface NotificationCenterLocalization {
   language: string;
   tags: NotificationCenterTag[];
@@ -19,11 +18,11 @@ export interface NotificationCenterLocalization {
 export interface NotificationCenterFeedItem {
   id: string;
   title: string;
-  content: string; // Markdown source, from the resolved localization
+  content: string;
   tags: NotificationCenterTag[];
   read: boolean;
   status: NotificationCenterStatus;
-  publishedAt: string; // epoch seconds; "0" while draft
+  publishedAt: string;
   createdAt: string;
   updatedAt: string;
   createdBy: string;

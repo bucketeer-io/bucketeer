@@ -10,7 +10,8 @@ import {
 import {
   useQueryNotification,
   useQueryNotificationDrafts,
-  useQueryNotificationFeed
+  useQueryNotificationFeed,
+  useQueryNotificationUnreadCount
 } from '@queries/notification-center';
 import { useMutation } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
@@ -26,7 +27,8 @@ const DEFAULT_PAGE_SIZE = 10;
 export const useFetchFeed = (
   readStatus: NotificationReadStatus,
   page: number,
-  filters: NotificationFilters
+  filters: NotificationFilters,
+  enabled = true
 ) => {
   const cursor = (page - 1) * DEFAULT_PAGE_SIZE;
   return useQueryNotificationFeed({
@@ -39,7 +41,8 @@ export const useFetchFeed = (
       publishedAtFrom: filters.from,
       publishedAtTo: filters.to,
       language: getLanguage()
-    }
+    },
+    enabled
   });
 };
 
@@ -60,22 +63,25 @@ export const useFetchDrafts = (enabled = true) => {
   });
 };
 
-export const useFetchUnreadCount = () => {
-  return useQueryNotificationFeed({
-    params: { readStatus: 'UNREAD', cursor: '0', pageSize: 1 }
+export const useFetchDraftsPage = (
+  page: number,
+  searchQuery: string,
+  pageSize: number,
+  sort: NotificationFilters['sort']
+) => {
+  const cursor = (page - 1) * pageSize;
+  return useQueryNotificationDrafts({
+    params: {
+      cursor: String(cursor),
+      pageSize,
+      searchKeyword: searchQuery,
+      orderDirection: sort === 'oldest' ? 'ASC' : 'DESC'
+    }
   });
 };
 
-export const useFetchTabCounts = () => {
-  const { data: unreadFeed } = useFetchUnreadCount();
-  const { data: readFeed } = useQueryNotificationFeed({
-    params: { readStatus: 'READ', cursor: '0', pageSize: 1 }
-  });
-
-  return {
-    unreadCount: Number(unreadFeed?.totalCount ?? 0),
-    readCount: Number(readFeed?.totalCount ?? 0)
-  };
+export const useFetchUnreadCount = () => {
+  return useQueryNotificationUnreadCount();
 };
 
 export const useMarkAsRead = () => {

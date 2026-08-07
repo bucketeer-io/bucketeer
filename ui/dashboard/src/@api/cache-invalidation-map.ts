@@ -18,8 +18,11 @@
  *   listed for almost every mutation because the audit log is a global feed
  *   of every change; under-invalidating leads to stale audit log views.
  */
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
 export type CacheInvalidationRule = {
   match: RegExp;
+  methods?: readonly HttpMethod[];
   keys: readonly string[];
 };
 
@@ -259,14 +262,34 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
     keys: ['teams', 'accounts', 'audit-logs']
   },
 
-  // Notification center (create / update / publish / delete)
+  // Notification center draft (create / update)
   {
-    match: /\/v1\/admin_notification(\/publish)?(\?|$)/,
+    match: /\/v1\/admin_notification(\?|$)/,
+    methods: ['POST', 'PATCH'],
+    keys: ['notification', 'notification-drafts', 'audit-logs']
+  },
+
+  {
+    match: /\/v1\/admin_notification(\?|$)/,
+    methods: ['DELETE'],
     keys: [
-      'notification-feed',
-      'notification-drafts',
-      'notification-unread-count',
       'notification',
+      'notification-drafts',
+      'notification-feed',
+      'notification-unread-count',
+      'audit-logs'
+    ]
+  },
+
+  // Notification center publish — the notification leaves the drafts list
+  // and becomes visible in every user's unread feed.
+  {
+    match: /\/v1\/admin_notification\/publish(\?|$)/,
+    keys: [
+      'notification',
+      'notification-drafts',
+      'notification-feed',
+      'notification-unread-count',
       'audit-logs'
     ]
   },
@@ -279,16 +302,22 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
 ];
 
 /**
- * Resolve the union of query keys to invalidate for a given request URL.
+ * Resolve the union of query keys to invalidate for a given request URL and
+ * HTTP method. `method` is optional so existing callers/tests that only care
+ * about the URL shape keep working; rules with a `methods` restriction are
+ * simply skipped when no method is supplied.
  * Returns an empty array when no rule matches (e.g. read-only endpoints,
  * auth/exchange flows, AI chat suggestions, etc.).
  */
-export const resolveInvalidationKeys = (url: string): string[] => {
+export const resolveInvalidationKeys = (
+  url: string,
+  method?: HttpMethod
+): string[] => {
   const keys = new Set<string>();
-  for (const { match, keys: ruleKeys } of URL_TO_KEYS) {
-    if (match.test(url)) {
-      ruleKeys.forEach(key => keys.add(key));
-    }
+  for (const { match, methods, keys: ruleKeys } of URL_TO_KEYS) {
+    if (!match.test(url)) continue;
+    if (methods && (!method || !methods.includes(method))) continue;
+    ruleKeys.forEach(key => keys.add(key));
   }
   return Array.from(keys);
 };

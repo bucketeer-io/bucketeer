@@ -339,6 +339,20 @@ const useOptions = () => {
     [language]
   );
 
+  const notificationSortOptions = useMemo(
+    () => [
+      {
+        label: translation('sort-by-newest'),
+        value: 'newest'
+      },
+      {
+        label: translation('sort-by-oldest'),
+        value: 'oldest'
+      }
+    ],
+    [language]
+  );
+
   const environmentRoleOptions = useMemo(
     () => [
       {
@@ -582,6 +596,7 @@ const useOptions = () => {
     organizationRoles,
     flagSortByOptions,
     flagSortDirectionOptions,
+    notificationSortOptions,
     environmentRoleOptions,
     situationOptions,
     conditionerCompareOptions,

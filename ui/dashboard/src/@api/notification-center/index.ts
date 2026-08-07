@@ -1,6 +1,7 @@
 export * from './notifications-fetcher';
 export * from './notification-fetcher';
 export * from './notification-drafts-fetcher';
+export * from './notification-unread-count-fetcher';
 export * from './notification-creator';
 export * from './notification-updater';
 export * from './notification-publisher';

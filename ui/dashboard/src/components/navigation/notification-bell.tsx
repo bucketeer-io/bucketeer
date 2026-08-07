@@ -4,6 +4,7 @@ import * as Popover from '@radix-ui/react-popover';
 import * as ROUTING from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { ExternalLink } from 'lucide-react';
+import { formatCappedCount } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { stringifyParams } from 'utils/search-params';
 import { cn } from 'utils/style';
@@ -34,24 +35,19 @@ const previewFilters: NotificationFilters = {
   sort: 'newest'
 };
 
-const NotificationBell = ({
-  envUrlCode
-}: {
-  // The environment's URL code, used only to build the route link.
-  envUrlCode: string;
-}) => {
+const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
   const formatDateTime = useFormatDateTime();
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: unreadFeed } = useFetchUnreadCount();
-  const { data } = useFetchFeed('UNREAD', 1, previewFilters);
+  const { data: unreadCountData } = useFetchUnreadCount();
+  const { data } = useFetchFeed('UNREAD', 1, previewFilters, isOpen);
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
 
-  const unreadCount = Number(unreadFeed?.totalCount ?? 0);
+  const unreadCount = unreadCountData ?? 0;
   const items = (data?.notifications ?? []).slice(0, PREVIEW_PAGE_SIZE);
 
   const goToFeed = () => {
@@ -62,8 +58,6 @@ const NotificationBell = ({
   const onSelectNotification = (notification: FeedNotification) => {
     if (!notification.read) markAsRead.mutate(notification.id);
     setIsOpen(false);
-    // page-content fetches the notification fresh via GetNotification, so
-    // only the id needs to travel — no need to hand off the object itself.
     navigate(
       `/${envUrlCode}${ROUTING.PAGE_PATH_NOTIFICATION_FEED}?${stringifyParams({
         notificationId: notification.id
@@ -81,7 +75,7 @@ const NotificationBell = ({
               variant="primary"
               className="absolute -right-1.5 -top-1.5 h-4 w-auto min-w-4 whitespace-nowrap bg-accent-red-500 px-1 text-white typo-para-tiny"
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {formatCappedCount(unreadCount)}
             </Badge>
           )}
         </button>
@@ -123,13 +117,13 @@ const NotificationBell = ({
                   onClick={() => onSelectNotification(notification)}
                   className="flex w-full flex-col items-start gap-1.5 border-t border-gray-100 px-4 py-3.5 text-left first:border-t-0 hover:bg-gray-50"
                 >
-                  <div className="flex w-full items-start gap-2">
+                  <div className="flex w-full items-center gap-2">
                     {!notification.read && (
                       <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary-500" />
                     )}
                     <span
                       className={cn(
-                        'typo-para-medium text-gray-900',
+                        'typo-para-medium text-gray-900 truncate',
                         !notification.read ? 'font-semibold' : 'ml-3.5'
                       )}
                     >
