@@ -24,6 +24,16 @@ container [here](https://docs.github.com/en/github/developing-online-with-codesp
    dev container)
 4. Wait for the dev container to be ready
 
+## Working with the dev container from the host
+
+If you edit code on the host (or drive the repo with tools running on the host), run environment-sensitive commands **inside the dev container**, not on the host:
+
+- **kubectl / helm**: the host's kubectl context may point at a completely different cluster (e.g. a real remote cluster) instead of the minikube instance inside the container. Always run cluster commands inside the container.
+- **Code generation**: generated `.pb.go` files record the protoc version and must be produced with exactly protoc v23.4, which the dev container guarantees. A different host protoc rewrites the header of every generated file and makes the diff unreviewable.
+- **Gateway health checks**: `web-gateway.bucketeer.io` / `api-gateway.bucketeer.io` are resolved by the *container's* `/etc/hosts` (pointing at `minikube ip`), so `curl` checks against those hosts only work inside the container.
+
+For Claude Code users, the project ships skills that automate this: `.claude/skills/devcontainer-run` detects the running dev container (local or Codespace) and runs commands inside it — `bash .claude/skills/devcontainer-run/scripts/exec.sh status` shows where it is and whether it's healthy. `devcontainer-generate` and `devcontainer-deploy` build on it for codegen and minikube deploys.
+
 # Local Development Setup
 
 You can set up Bucketeer locally using one of two methods:
@@ -57,6 +67,8 @@ make start-minikube
 
 **Note:** When you restart the Minikube cluster, you must use `make start-minikube` to start it. Do not use `minikube start` directly.
 
+**Note:** `make start-minikube` intentionally exits with an error if minikube is already running. Check with `minikube status` first — an "already running" failure is not a problem to fix.
+
 It will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 
 * `api-gateway.bucketeer.io` for API Gateway Service
@@ -82,6 +94,15 @@ If you need to deploy a single service, you can do as follows.
 ```shell
 # Deploy the backend service (in the project root directory)
 helm install backend manifests/bucketeer/charts/backend/ --values manifests/bucketeer/charts/backend/values.dev.yaml
+```
+
+For faster iteration on a single service after a Go code change, rebuild and load the images, then restart only that deployment (`api`, `web`, `batch-server`, or `subscriber`):
+
+```shell
+make build-go-embed
+TAG=localenv make build-docker-images
+TAG=localenv make minikube-load-images
+kubectl rollout restart deployment web && kubectl rollout status deployment web
 ```
 
 **Note:** You can switch between data warehouses (MySQL, PostgreSQL, BigQuery) but remember to update the `values.dev.yaml` file to match the data warehouse you are using as the events persister and web service must use same event store service.
