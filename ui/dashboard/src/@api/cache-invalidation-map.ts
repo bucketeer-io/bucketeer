@@ -257,6 +257,24 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
   {
     match: /\/v1\/team(\?|$)/,
     keys: ['teams', 'accounts', 'audit-logs']
+  },
+
+  // Notification center (create / update / publish / delete)
+  {
+    match: /\/v1\/admin_notification(\/publish)?(\?|$)/,
+    keys: [
+      'notification-feed',
+      'notification-drafts',
+      'notification-unread-count',
+      'notification',
+      'audit-logs'
+    ]
+  },
+
+  // Notification center read-state (mark as read / mark all as read)
+  {
+    match: /\/v1\/notifications\/mark_(all_)?as_read(\?|$)/,
+    keys: ['notification-feed', 'notification-unread-count', 'notification']
   }
 ];
 
