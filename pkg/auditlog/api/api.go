@@ -138,6 +138,7 @@ func (s *auditlogService) GetAuditLog(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
+	s.obfuscateAPIKey(auditlog)
 
 	accounts, err := s.getAccountMapByEmails(ctx, []string{auditlog.Editor.Email}, req.EnvironmentId)
 	if err != nil {
@@ -243,6 +244,7 @@ func (s *auditlogService) ListAuditLogs(
 		}
 		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlogs[i].Type, localizer)
 	}
+	s.obfuscateAPIKeys(auditlogs)
 
 	return &proto.ListAuditLogsResponse{
 		AuditLogs:  auditlogs,
@@ -306,6 +308,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 	for _, auditlog := range auditlogs {
 		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	}
+	s.obfuscateAPIKeys(auditlogs)
 	return &proto.ListAdminAuditLogsResponse{
 		AuditLogs:  auditlogs,
 		Cursor:     strconv.Itoa(nextCursor),
@@ -371,6 +374,7 @@ func (s *auditlogService) ListFeatureHistory(
 	for _, auditlog := range auditlogs {
 		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	}
+	s.obfuscateAPIKeys(auditlogs)
 	return &proto.ListFeatureHistoryResponse{
 		AuditLogs:  auditlogs,
 		Cursor:     strconv.Itoa(nextCursor),

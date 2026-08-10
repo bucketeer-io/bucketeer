@@ -22,15 +22,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestCreateAPIKeyMySQL(t *testing.T) {
@@ -574,4 +577,111 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			assert.Equal(t, p.expected, actual, p.desc)
 		})
 	}
+}
+
+func TestCreateAPIKeyObfuscatesAPIKeyInDomainEvent(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := setToken(context.Background(), true)
+	service := createAccountService(t, mockController, nil)
+	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&domain.AccountV2{
+		AccountV2: &accountproto.AccountV2{
+			Email:            "bucketeer@bucketeer.io",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		},
+	}, nil)
+	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAPIKey(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(nil)
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+		require.NoError(t, fn(ctx))
+	}).Return(nil)
+	var published *eventproto.Event
+	service.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+		gomock.Any(), gomock.Any(),
+	).Do(func(ctx context.Context, msg publisher.Message) {
+		published = msg.(*eventproto.Event)
+	}).Return(nil)
+
+	res, err := service.CreateAPIKey(ctx, &accountproto.CreateAPIKeyRequest{
+		Name:        "name",
+		Maintainer:  "bucketeer@bucketeer.io",
+		Role:        accountproto.APIKey_SDK_CLIENT,
+		Description: "test key",
+	})
+	require.NoError(t, err)
+	rawAPIKey := res.ApiKey.ApiKey
+	require.NotEmpty(t, rawAPIKey)
+	obfuscatedAPIKey := domain.ObfuscateAPIKey(rawAPIKey)
+	require.NotEqual(t, rawAPIKey, obfuscatedAPIKey)
+
+	require.NotNil(t, published)
+	created := &eventproto.APIKeyCreatedEvent{}
+	require.NoError(t, published.Data.UnmarshalTo(created))
+	assert.Equal(t, obfuscatedAPIKey, created.ApiKey)
+	assert.NotContains(t, published.EntityData, rawAPIKey)
+	assert.Contains(t, published.EntityData, obfuscatedAPIKey)
+}
+
+func TestUpdateAPIKeyObfuscatesAPIKeyInDomainEvent(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	rawAPIKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	obfuscatedAPIKey := domain.ObfuscateAPIKey(rawAPIKey)
+
+	ctx := setToken(context.Background(), true)
+	service := createAccountService(t, mockController, nil)
+	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&domain.AccountV2{
+		AccountV2: &accountproto.AccountV2{
+			Email:            "bucketeer@bucketeer.io",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		},
+	}, nil)
+	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&domain.APIKey{
+		APIKey: &accountproto.APIKey{
+			Id:     "id-1",
+			Name:   "name",
+			ApiKey: rawAPIKey,
+			Role:   accountproto.APIKey_SDK_CLIENT,
+		},
+	}, nil)
+	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAPIKey(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(nil)
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
+		require.NoError(t, fn(ctx))
+	}).Return(nil)
+	var published *eventproto.Event
+	service.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+		gomock.Any(), gomock.Any(),
+	).Do(func(ctx context.Context, msg publisher.Message) {
+		published = msg.(*eventproto.Event)
+	}).Return(nil)
+
+	_, err := service.UpdateAPIKey(ctx, &accountproto.UpdateAPIKeyRequest{
+		Id:            "id-1",
+		EnvironmentId: "env-1",
+		Name:          wrapperspb.String("new name"),
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, published)
+	assert.NotContains(t, published.EntityData, rawAPIKey)
+	assert.Contains(t, published.EntityData, obfuscatedAPIKey)
+	assert.NotContains(t, published.PreviousEntityData, rawAPIKey)
+	assert.Contains(t, published.PreviousEntityData, obfuscatedAPIKey)
 }
