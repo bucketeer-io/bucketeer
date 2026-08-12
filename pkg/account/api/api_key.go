@@ -20,7 +20,6 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	pb "google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
@@ -30,16 +29,6 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
-
-// obfuscatedAPIKeyEntity returns a copy of the API key with its key obfuscated.
-func obfuscatedAPIKeyEntity(k *proto.APIKey) *proto.APIKey {
-	if k == nil {
-		return nil
-	}
-	obfuscated := pb.Clone(k).(*proto.APIKey)
-	obfuscated.ApiKey = domain.ObfuscateAPIKey(obfuscated.ApiKey)
-	return obfuscated
-}
 
 func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
@@ -96,8 +85,6 @@ func (s *AccountService) CreateAPIKey(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	// The raw key is returned to its creator only.
-	obfuscatedKey := obfuscatedAPIKeyEntity(key.APIKey)
 	e, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_APIKEY,
@@ -111,10 +98,12 @@ func (s *AccountService) CreateAPIKey(
 			CreatedAt:  key.CreatedAt,
 			UpdatedAt:  key.UpdatedAt,
 			Maintainer: key.Maintainer,
-			ApiKey:     obfuscatedKey.ApiKey,
+			ApiKey:     key.ApiKey,
 		},
 		req.EnvironmentId,
-		obfuscatedKey,
+		// The domain event keeps the raw key: it is where the api key cache pipeline resolves the
+		// cache key from. It is obfuscated when the audit log is created.
+		key.APIKey,
 		nil,
 	)
 	if err != nil {
@@ -370,8 +359,8 @@ func (s *AccountService) UpdateAPIKey(
 			Id: req.Id,
 		},
 		req.EnvironmentId,
-		obfuscatedAPIKeyEntity(current),
-		obfuscatedAPIKeyEntity(prev),
+		current,
+		prev,
 	)
 	if err != nil {
 		return nil, err

@@ -374,7 +374,6 @@ func (s *auditlogService) ListFeatureHistory(
 	for _, auditlog := range auditlogs {
 		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	}
-	s.obfuscateAPIKeys(auditlogs)
 	return &proto.ListFeatureHistoryResponse{
 		AuditLogs:  auditlogs,
 		Cursor:     strconv.Itoa(nextCursor),

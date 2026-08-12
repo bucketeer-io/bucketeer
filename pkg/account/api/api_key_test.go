@@ -28,6 +28,7 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
@@ -579,7 +580,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	}
 }
 
-func TestCreateAPIKeyObfuscatesAPIKeyInDomainEvent(t *testing.T) {
+func TestCreateAPIKeyDomainEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -618,24 +619,24 @@ func TestCreateAPIKeyObfuscatesAPIKeyInDomainEvent(t *testing.T) {
 	require.NoError(t, err)
 	rawAPIKey := res.ApiKey.ApiKey
 	require.NotEmpty(t, rawAPIKey)
-	obfuscatedAPIKey := domain.ObfuscateAPIKey(rawAPIKey)
-	require.NotEqual(t, rawAPIKey, obfuscatedAPIKey)
 
+	// The domain event keeps the raw key, which the api key cache pipeline resolves the cache key
+	// from. It is obfuscated when the audit log is created.
 	require.NotNil(t, published)
 	created := &eventproto.APIKeyCreatedEvent{}
 	require.NoError(t, published.Data.UnmarshalTo(created))
-	assert.Equal(t, obfuscatedAPIKey, created.ApiKey)
-	assert.NotContains(t, published.EntityData, rawAPIKey)
-	assert.Contains(t, published.EntityData, obfuscatedAPIKey)
+	assert.Equal(t, rawAPIKey, created.ApiKey)
+	secrets, err := domaineventdomain.ExtractAPIKeySecrets(published)
+	require.NoError(t, err)
+	assert.Equal(t, []string{rawAPIKey}, secrets)
 }
 
-func TestUpdateAPIKeyObfuscatesAPIKeyInDomainEvent(t *testing.T) {
+func TestUpdateAPIKeyDomainEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	rawAPIKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-	obfuscatedAPIKey := domain.ObfuscateAPIKey(rawAPIKey)
 
 	ctx := setToken(context.Background(), true)
 	service := createAccountService(t, mockController, nil)
@@ -680,8 +681,9 @@ func TestUpdateAPIKeyObfuscatesAPIKeyInDomainEvent(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, published)
-	assert.NotContains(t, published.EntityData, rawAPIKey)
-	assert.Contains(t, published.EntityData, obfuscatedAPIKey)
-	assert.NotContains(t, published.PreviousEntityData, rawAPIKey)
-	assert.Contains(t, published.PreviousEntityData, obfuscatedAPIKey)
+	// The domain event keeps the raw key, which the api key cache pipeline resolves the cache key
+	// from. It is obfuscated when the audit log is created.
+	secrets, err := domaineventdomain.ExtractAPIKeySecrets(published)
+	require.NoError(t, err)
+	assert.Equal(t, []string{rawAPIKey}, secrets)
 }

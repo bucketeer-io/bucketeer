@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package domain
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
@@ -31,17 +30,13 @@ const (
 	obfuscatedAPIKey = "0123....cdef"
 )
 
-func newAuditLogServiceForObfuscation(t *testing.T) *auditlogService {
-	t.Helper()
-	return &auditlogService{logger: zap.NewNop()}
-}
-
 func TestObfuscateAPIKeyEntityData(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc     string
-		input    string
-		expected string
+		desc        string
+		input       string
+		expected    string
+		expectedErr bool
 	}{
 		{
 			desc:     "empty",
@@ -49,9 +44,10 @@ func TestObfuscateAPIKeyEntityData(t *testing.T) {
 			expected: "",
 		},
 		{
-			desc:     "invalid json: dropped",
-			input:    "not a json",
-			expected: "",
+			desc:        "invalid json: dropped",
+			input:       "not a json",
+			expected:    "",
+			expectedErr: true,
 		},
 		{
 			desc:     "no api key field: returned as it is",
@@ -64,10 +60,15 @@ func TestObfuscateAPIKeyEntityData(t *testing.T) {
 			expected: "{\n  \"api_key\": \"" + obfuscatedAPIKey + "\",\n  \"created_at\": 1739746800\n}",
 		},
 	}
-	s := newAuditLogServiceForObfuscation(t)
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			assert.Equal(t, p.expected, s.obfuscateAPIKeyEntityData(p.input))
+			actual, err := ObfuscateAPIKeyEntityData(p.input)
+			assert.Equal(t, p.expected, actual)
+			if p.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -146,10 +147,9 @@ func TestObfuscateAPIKey(t *testing.T) {
 			},
 		},
 	}
-	s := newAuditLogServiceForObfuscation(t)
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s.obfuscateAPIKey(p.input)
+			require.NoError(t, ObfuscateAPIKey(p.input))
 			if p.input == nil {
 				return
 			}
@@ -167,9 +167,8 @@ func TestObfuscateAPIKey(t *testing.T) {
 	}
 }
 
-func TestObfuscateAPIKeys(t *testing.T) {
+func TestObfuscateAPIKeyOnlyTouchesAPIKeyLogs(t *testing.T) {
 	t.Parallel()
-	s := newAuditLogServiceForObfuscation(t)
 	auditlogs := []*proto.AuditLog{
 		{
 			EntityType: eventproto.Event_APIKEY,
@@ -182,7 +181,35 @@ func TestObfuscateAPIKeys(t *testing.T) {
 			EntityData: "{\n  \"email\": \"bucketeer@bucketeer.io\"\n}",
 		},
 	}
-	s.obfuscateAPIKeys(auditlogs)
+	for _, a := range auditlogs {
+		require.NoError(t, ObfuscateAPIKey(a))
+	}
 	assert.Equal(t, "{\n  \"api_key\": \""+obfuscatedAPIKey+"\"\n}", auditlogs[0].EntityData)
 	assert.Equal(t, "{\n  \"email\": \"bucketeer@bucketeer.io\"\n}", auditlogs[1].EntityData)
+}
+
+func TestNewAuditLogObfuscatesAPIKey(t *testing.T) {
+	t.Parallel()
+	createdEvent, err := anypb.New(&eventproto.APIKeyCreatedEvent{Id: "id-1", ApiKey: rawAPIKey})
+	require.NoError(t, err)
+	entityData := "{\n  \"api_key\": \"" + rawAPIKey + "\",\n  \"id\": \"id-1\"\n}"
+
+	actual := NewAuditLog(&eventproto.Event{
+		Id:                 "auditlog-1",
+		EntityType:         eventproto.Event_APIKEY,
+		EntityId:           "id-1",
+		Type:               eventproto.Event_APIKEY_CREATED,
+		Editor:             &eventproto.Editor{Email: "bucketeer@bucketeer.io"},
+		Data:               createdEvent,
+		EntityData:         entityData,
+		PreviousEntityData: entityData,
+	}, "env-1")
+
+	assert.NotContains(t, actual.EntityData, rawAPIKey)
+	assert.Contains(t, actual.EntityData, obfuscatedAPIKey)
+	assert.NotContains(t, actual.PreviousEntityData, rawAPIKey)
+	assert.Contains(t, actual.PreviousEntityData, obfuscatedAPIKey)
+	created := &eventproto.APIKeyCreatedEvent{}
+	require.NoError(t, actual.Event.UnmarshalTo(created))
+	assert.Equal(t, obfuscatedAPIKey, created.ApiKey)
 }
