@@ -1467,9 +1467,6 @@ func (s *server) readOAuthConfig(
 		)
 		return nil, err
 	}
-	// Allow overriding the client secret from a K8s Secret via env var.
-	// This enables sourcing the secret from Secret Manager (via ESO)
-	// instead of embedding it in the oauth-config ConfigMap.
 	if secret := os.Getenv("BUCKETEER_WEB_OAUTH_CLIENT_SECRET"); secret != "" {
 		config.GoogleConfig.ClientSecret = secret
 	}
