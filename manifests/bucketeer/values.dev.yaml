@@ -33,6 +33,10 @@ global:
       user: "bucketeer"
       password: "bucketeer"
       database: "bucketeer"
+      sslMode: "verify-full"
+      sslRootCert: "/usr/local/certs/postgres/tls.crt"
+      sslCert: ""
+      sslKey: ""
 
   # Global primary database configuration
   # Set type to "mysql" or "postgres"
@@ -53,6 +57,13 @@ global:
       port: 5432
       name: "bucketeer"
       openConns: 50
+      # The local PostgreSQL serves TLS with the tools/dev/cert certificate,
+      # which is its own CA.
+      sslMode: "verify-full"
+      sslRootCert: "/usr/local/certs/postgres/tls.crt"
+      sslCert: ""
+      sslKey: ""
+      sslSecretName: "bucketeer-postgres-cert"
 
   pubsub:
     type: redis-stream # Options: redis-stream, google
@@ -94,7 +105,7 @@ migration:
   image:
     # For MySQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-mysql.
     # For PostgreSQL migrations, use repository ghcr.io/bucketeer-io/bucketeer-migration-postgres.
-    repository: ghcr.io/bucketeer-io/bucketeer-migration
+    repository: ghcr.io/bucketeer-io/bucketeer-migration-postgres
     tag: localenv
 
   imagePullSecrets: []

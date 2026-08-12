@@ -42,6 +42,11 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
+        {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
+        - name: postgres-cert-secret
+          secret:
+            secretName: {{ .Values.global.operationalDatabase.postgres.sslSecretName }}
+        {{- end }}
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "api.fullname" . }}
       {{- end }}
@@ -79,6 +84,14 @@ spec:
               value: "{{ .Values.env.operationalDatabase.postgres.port | default .Values.global.operationalDatabase.postgres.port }}"
             - name: BUCKETEER_API_POSTGRES_DB_NAME
               value: "{{ .Values.env.operationalDatabase.postgres.name | default .Values.global.operationalDatabase.postgres.name }}"
+            - name: BUCKETEER_API_POSTGRES_SSL_MODE
+              value: "{{ .Values.env.operationalDatabase.postgres.sslMode | default .Values.global.operationalDatabase.postgres.sslMode }}"
+            - name: BUCKETEER_API_POSTGRES_SSL_ROOT_CERT
+              value: "{{ .Values.env.operationalDatabase.postgres.sslRootCert | default .Values.global.operationalDatabase.postgres.sslRootCert }}"
+            - name: BUCKETEER_API_POSTGRES_SSL_CERT
+              value: "{{ .Values.env.operationalDatabase.postgres.sslCert | default .Values.global.operationalDatabase.postgres.sslCert }}"
+            - name: BUCKETEER_API_POSTGRES_SSL_KEY
+              value: "{{ .Values.env.operationalDatabase.postgres.sslKey | default .Values.global.operationalDatabase.postgres.sslKey }}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_API_GOAL_TOPIC
@@ -200,6 +213,11 @@ spec:
             - name: service-token-secret
               mountPath: /usr/local/service-token
               readOnly: true
+            {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
+            - name: postgres-cert-secret
+              mountPath: /usr/local/certs/postgres
+              readOnly: true
+            {{- end }}
           ports:
             - name: service
               containerPort: {{ .Values.env.port }}

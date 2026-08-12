@@ -48,6 +48,11 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
+        {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
+        - name: postgres-cert-secret
+          secret:
+            secretName: {{ .Values.global.operationalDatabase.postgres.sslSecretName }}
+        {{- end }}
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
@@ -100,6 +105,14 @@ spec:
               value: "{{ .Values.env.operationalDatabase.postgres.port | default .Values.global.operationalDatabase.postgres.port }}"
             - name: BUCKETEER_WEB_POSTGRES_DB_NAME
               value: "{{ .Values.env.operationalDatabase.postgres.name | default .Values.global.operationalDatabase.postgres.name }}"
+            - name: BUCKETEER_WEB_POSTGRES_SSL_MODE
+              value: "{{ .Values.env.operationalDatabase.postgres.sslMode | default .Values.global.operationalDatabase.postgres.sslMode }}"
+            - name: BUCKETEER_WEB_POSTGRES_SSL_ROOT_CERT
+              value: "{{ .Values.env.operationalDatabase.postgres.sslRootCert | default .Values.global.operationalDatabase.postgres.sslRootCert }}"
+            - name: BUCKETEER_WEB_POSTGRES_SSL_CERT
+              value: "{{ .Values.env.operationalDatabase.postgres.sslCert | default .Values.global.operationalDatabase.postgres.sslCert }}"
+            - name: BUCKETEER_WEB_POSTGRES_SSL_KEY
+              value: "{{ .Values.env.operationalDatabase.postgres.sslKey | default .Values.global.operationalDatabase.postgres.sslKey }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_ADDR
@@ -266,6 +279,11 @@ spec:
             - name: service-token-secret
               mountPath: /usr/local/service-token
               readOnly: true
+            {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
+            - name: postgres-cert-secret
+              mountPath: /usr/local/certs/postgres
+              readOnly: true
+            {{- end }}
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
               readOnly: true

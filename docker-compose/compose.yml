@@ -33,6 +33,23 @@ services:
     networks:
       - bucketeer
 
+  # PostgreSQL needs the key owned by its own user and not group readable, which
+  # neither a bind mount nor a git clone can guarantee. Runs the same image as
+  # postgres below so the user can be resolved by name rather than by uid.
+  postgres-certs:
+    image: timescale/timescaledb:${POSTGRES_VERSION:-2.25.2-pg18}
+    container_name: bucketeer-postgres-certs
+    network_mode: none
+    entrypoint:
+      - sh
+      - -c
+      - install -o postgres -g postgres -m 600 /src/tls.key /certs/tls.key &&
+        install -o postgres -g postgres -m 644 /src/tls.crt /certs/tls.crt
+    volumes:
+      - ../tools/dev/cert/postgres-tls.crt:/src/tls.crt:ro
+      - ../tools/dev/cert/postgres-tls.key:/src/tls.key:ro
+      - postgres_certs:/certs
+
   # NOTE: If you are switching from the official postgres image to timescaledb (or vice versa),
   # you must remove the existing volume or reset the database before starting, otherwise the
   # container will fail to initialize due to incompatible data directory formats.
@@ -41,6 +58,17 @@ services:
     image: timescale/timescaledb:${POSTGRES_VERSION:-2.25.2-pg18}
     container_name: bucketeer-postgres
     restart: unless-stopped
+    depends_on:
+      postgres-certs:
+        condition: service_completed_successfully
+    # Plaintext keeps working, so tools that set no SSL mode are unaffected.
+    command:
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/usr/local/certs/postgres/tls.crt
+      - -c
+      - ssl_key_file=/usr/local/certs/postgres/tls.key
     environment:
       POSTGRES_USER: bucketeer
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
@@ -52,6 +80,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./init-db/postgres_dump.sql:/docker-entrypoint-initdb.d/postgres_dump.sql
+      - postgres_certs:/usr/local/certs/postgres:ro
     healthcheck:
       test: [ "CMD-SHELL", "export PGPASSWORD=`cat /run/secrets/postgres_password` && pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
@@ -116,6 +145,8 @@ services:
       - BUCKETEER_WEB_POSTGRES_HOST=postgres
       - BUCKETEER_WEB_POSTGRES_PORT=5432
       - BUCKETEER_WEB_POSTGRES_DB_NAME=bucketeer
+      - BUCKETEER_WEB_POSTGRES_SSL_MODE=verify-full
+      - BUCKETEER_WEB_POSTGRES_SSL_ROOT_CERT=/usr/local/certs/postgres/tls.crt
       - BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME=persistent-redis
       - BUCKETEER_WEB_PERSISTENT_REDIS_ADDR=redis:6379
       - BUCKETEER_WEB_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -197,6 +228,7 @@ services:
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/postgres-tls.crt:/usr/local/certs/postgres/tls.crt:ro
       - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ../tools/dev/cert/oauth-private.pem:/usr/local/oauth-key/private.pem:ro
@@ -229,6 +261,8 @@ services:
       - BUCKETEER_API_POSTGRES_HOST=postgres
       - BUCKETEER_API_POSTGRES_PORT=5432
       - BUCKETEER_API_POSTGRES_DB_NAME=bucketeer
+      - BUCKETEER_API_POSTGRES_SSL_MODE=verify-full
+      - BUCKETEER_API_POSTGRES_SSL_ROOT_CERT=/usr/local/certs/postgres/tls.crt
       - BUCKETEER_API_GOAL_TOPIC=goal
       - BUCKETEER_API_EVALUATION_TOPIC=evaluation
       - BUCKETEER_API_METRICS_TOPIC=metrics
@@ -280,6 +314,7 @@ services:
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/postgres-tls.crt:/usr/local/certs/postgres/tls.crt:ro
       - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
     networks:
       - bucketeer
@@ -309,6 +344,8 @@ services:
       - BUCKETEER_BATCH_POSTGRES_HOST=postgres
       - BUCKETEER_BATCH_POSTGRES_PORT=5432
       - BUCKETEER_BATCH_POSTGRES_DB_NAME=bucketeer
+      - BUCKETEER_BATCH_POSTGRES_SSL_MODE=verify-full
+      - BUCKETEER_BATCH_POSTGRES_SSL_ROOT_CERT=/usr/local/certs/postgres/tls.crt
       - BUCKETEER_BATCH_POSTGRES_DB_OPEN_CONNS=50
       - BUCKETEER_BATCH_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_BATCH_PERSISTENT_REDIS_ADDR=redis:6379
@@ -361,6 +398,7 @@ services:
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/postgres-tls.crt:/usr/local/certs/postgres/tls.crt:ro
       - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
     networks:
@@ -391,6 +429,8 @@ services:
       - BUCKETEER_SUBSCRIBER_POSTGRES_HOST=postgres
       - BUCKETEER_SUBSCRIBER_POSTGRES_PORT=5432
       - BUCKETEER_SUBSCRIBER_POSTGRES_DB_NAME=bucketeer
+      - BUCKETEER_SUBSCRIBER_POSTGRES_SSL_MODE=verify-full
+      - BUCKETEER_SUBSCRIBER_POSTGRES_SSL_ROOT_CERT=/usr/local/certs/postgres/tls.crt
       - BUCKETEER_SUBSCRIBER_POSTGRES_DB_OPEN_CONNS=50
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR=redis:6379
@@ -437,6 +477,7 @@ services:
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/postgres-tls.crt:/usr/local/certs/postgres/tls.crt:ro
       - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ./config/subscriber-config:/usr/local/conf:ro
@@ -535,6 +576,8 @@ volumes:
   mysql_data:
     driver: local
   postgres_data:
+    driver: local
+  postgres_certs:
     driver: local
   redis_data:
     driver: local

@@ -29,6 +29,10 @@ env:
       port: 5432
       name:
       openConns: 50
+      sslMode:
+      sslRootCert:
+      sslCert:
+      sslKey:
   bigqueryQuerierEmulatorHost:
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
@@ -333,6 +337,10 @@ onDemandProcessors:
         user: ""
         password: ""
         database: ""
+        sslMode: ""
+        sslRootCert: ""
+        sslCert: ""
+        sslKey: ""
       bigquery:
         project: ""
         dataset: ""
@@ -369,6 +377,10 @@ onDemandProcessors:
         user: ""
         password: ""
         database: ""
+        sslMode: ""
+        sslRootCert: ""
+        sslCert: ""
+        sslKey: ""
       bigquery:
         project: ""
         dataset: ""

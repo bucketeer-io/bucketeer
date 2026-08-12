@@ -80,6 +80,10 @@ data:
     {{- $_ := set $config.dataWarehouse.postgres "user" $.Values.global.dataWarehouse.postgres.user }}
     {{- $_ := set $config.dataWarehouse.postgres "password" $.Values.global.dataWarehouse.postgres.password }}
     {{- $_ := set $config.dataWarehouse.postgres "database" $.Values.global.dataWarehouse.postgres.database }}
+    {{- $_ := set $config.dataWarehouse.postgres "sslMode" (default "" $.Values.global.dataWarehouse.postgres.sslMode) }}
+    {{- $_ := set $config.dataWarehouse.postgres "sslRootCert" (default "" $.Values.global.dataWarehouse.postgres.sslRootCert) }}
+    {{- $_ := set $config.dataWarehouse.postgres "sslCert" (default "" $.Values.global.dataWarehouse.postgres.sslCert) }}
+    {{- $_ := set $config.dataWarehouse.postgres "sslKey" (default "" $.Values.global.dataWarehouse.postgres.sslKey) }}
     {{- $_ := set $config.dataWarehouse.bigquery "project" $.Values.global.dataWarehouse.bigquery.project }}
     {{- $_ := set $config.dataWarehouse.bigquery "dataset" $.Values.global.dataWarehouse.bigquery.dataset }}
     {{- $_ := set $config.dataWarehouse.bigquery "location" $.Values.global.dataWarehouse.bigquery.location }}

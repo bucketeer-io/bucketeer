@@ -22,6 +22,10 @@ env:
       host:
       port: 5432
       name:
+      sslMode:
+      sslRootCert:
+      sslCert:
+      sslKey:
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
   pubsubEmulatorHost:

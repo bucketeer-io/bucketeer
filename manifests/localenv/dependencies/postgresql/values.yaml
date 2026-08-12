@@ -35,6 +35,12 @@ auth:
   username: "bucketeer"
   password: "bucketeer"
 
+# Plaintext keeps working, so tools that set no SSL mode are unaffected.
+# The secret is created by "make -C tools/dev postgres-cert-secret".
+tls:
+  enabled: true
+  secretName: "bucketeer-postgres-cert"
+
 service:
   type: NodePort
   port: 5432

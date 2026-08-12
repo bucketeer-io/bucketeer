@@ -29,6 +29,12 @@ global:
       user: ""
       password: ""
       database: ""
+      # disable, allow, prefer, require, verify-ca, verify-full
+      sslMode: "require"
+      # Paths inside the container, mounted by sslSecretName below
+      sslRootCert: ""
+      sslCert: ""
+      sslKey: ""
   # Global primary database configuration
   # Supported types: mysql, postgres
   operationalDatabase:
@@ -47,6 +53,14 @@ global:
       port: 5432
       name: ""
       openConns: 50
+      # disable, allow, prefer, require, verify-ca, verify-full
+      sslMode: "require"
+      sslRootCert: ""
+      sslCert: ""
+      sslKey: ""
+      # Existing secret holding the files above. Mounted read-only at
+      # /usr/local/certs/postgres in every service, data warehouse included.
+      sslSecretName: ""
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""

@@ -38,11 +38,15 @@ var (
 
 type command struct {
 	*kingpin.CmdClause
-	postgresUser   *string
-	postgresPass   *string
-	postgresHost   *string
-	postgresPort   *int
-	postgresDBName *string
+	postgresUser        *string
+	postgresPass        *string
+	postgresHost        *string
+	postgresPort        *int
+	postgresDBName      *string
+	postgresSSLMode     *string
+	postgresSSLRootCert *string
+	postgresSSLCert     *string
+	postgresSSLKey      *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -54,6 +58,22 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").Required().String(),
 		postgresPort:   cmd.Flag("postgres-port", "PostgreSQL port.").Default("5432").Int(),
 		postgresDBName: cmd.Flag("postgres-db-name", "PostgreSQL database name.").Required().String(),
+		postgresSSLMode: cmd.Flag(
+			"postgres-ssl-mode",
+			"PostgreSQL SSL mode (disable, allow, prefer, require, verify-ca, verify-full).",
+		).Default(postgres.SSLModeRequire).String(),
+		postgresSSLRootCert: cmd.Flag(
+			"postgres-ssl-root-cert",
+			"Path to the PostgreSQL SSL root certificate (CA) file.",
+		).String(),
+		postgresSSLCert: cmd.Flag(
+			"postgres-ssl-cert",
+			"Path to the PostgreSQL SSL client certificate file.",
+		).String(),
+		postgresSSLKey: cmd.Flag(
+			"postgres-ssl-key",
+			"Path to the PostgreSQL SSL client private key file.",
+		).String(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -157,6 +177,12 @@ func (c *command) createPostgresClient(ctx context.Context, logger *zap.Logger) 
 		*c.postgresUser, *c.postgresPass, *c.postgresHost,
 		*c.postgresPort,
 		*c.postgresDBName,
+		postgres.WithSSL(postgres.SSLConfig{
+			Mode:     *c.postgresSSLMode,
+			RootCert: *c.postgresSSLRootCert,
+			Cert:     *c.postgresSSLCert,
+			Key:      *c.postgresSSLKey,
+		}),
 		postgres.WithLogger(logger),
 	)
 }

@@ -33,6 +33,9 @@ LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 # $(CERT_DIR); the e2e tests then authenticate with them instead of a service
 # token. All paths can be overridden by the caller (e.g. CI).
 CERT_DIR ?= tools/dev/cert
+# Only "require" by default: the dev certificate cannot name the minikube node IP.
+POSTGRES_SSL_MODE ?= require
+POSTGRES_SSL_ROOT_CERT ?= $(CERT_DIR)/postgres-tls.crt
 # Go test binary timeout for the e2e suites. Go's default of 10m is too tight
 # when parallel suites slow down the async event pipeline: it panics the whole
 # binary while slow-but-healthy waits are still within their own retry budgets,
@@ -331,6 +334,8 @@ create-postgres-event-tables:
 		--postgres-user=${POSTGRES_USER} \
 		--postgres-pass=${POSTGRES_PASS} \
 		--postgres-db-name=${POSTGRES_DB_NAME} \
+		--postgres-ssl-mode=${POSTGRES_SSL_MODE} \
+		--postgres-ssl-root-cert=${POSTGRES_SSL_ROOT_CERT} \
 		--no-profile \
 		--no-gcp-trace-enabled \
 		--log-level=debug
@@ -715,6 +720,7 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
+	make -C tools/dev postgres-cert-secret
 	make -C ./ build-go-embed
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
@@ -792,6 +798,12 @@ docker-compose-setup:
 		echo "PostgresQL secrets created"; \
 	else \
 		echo "docker-compose/secrets directory already exists"; \
+	fi
+	@if [ ! -f "$(CERT_DIR)/postgres-tls.key" ]; then \
+		echo "Generating PostgreSQL TLS certificate..."; \
+		make -C tools/dev generate-postgres-tls-certificate; \
+	else \
+		echo "PostgreSQL TLS certificate already exists"; \
 	fi
 	@echo "Docker Compose setup complete"
 
@@ -920,6 +932,7 @@ docker-compose-create-postgres-event-tables:
 	POSTGRES_HOST=localhost \
 	POSTGRES_PORT=5432 \
 	POSTGRES_DB_NAME=bucketeer \
+	POSTGRES_SSL_MODE=verify-full \
 	make -C ./ create-postgres-event-tables
 
 .PHONY: docker-compose-delete-mysql-data-warehouse-data

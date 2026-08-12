@@ -135,11 +135,15 @@ type server struct {
 	mysqlDBName      *string
 	mysqlDBOpenConns *int
 	// PostgreSQL
-	postgresUser   *string
-	postgresPass   *string
-	postgresHost   *string
-	postgresPort   *int
-	postgresDBName *string
+	postgresUser        *string
+	postgresPass        *string
+	postgresHost        *string
+	postgresPort        *int
+	postgresDBName      *string
+	postgresSSLMode     *string
+	postgresSSLRootCert *string
+	postgresSSLCert     *string
+	postgresSSLKey      *string
 	// gRPC service
 	accountService              *string
 	environmentService          *string
@@ -211,6 +215,22 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		postgresHost:     cmd.Flag("postgres-host", "PostgreSQL host.").String(),
 		postgresPort:     cmd.Flag("postgres-port", "PostgreSQL port.").Int(),
 		postgresDBName:   cmd.Flag("postgres-db-name", "PostgreSQL database name.").String(),
+		postgresSSLMode: cmd.Flag(
+			"postgres-ssl-mode",
+			"PostgreSQL SSL mode (disable, allow, prefer, require, verify-ca, verify-full).",
+		).Default(postgres.SSLModeRequire).String(),
+		postgresSSLRootCert: cmd.Flag(
+			"postgres-ssl-root-cert",
+			"Path to the PostgreSQL SSL root certificate (CA) file.",
+		).String(),
+		postgresSSLCert: cmd.Flag(
+			"postgres-ssl-cert",
+			"Path to the PostgreSQL SSL client certificate file.",
+		).String(),
+		postgresSSLKey: cmd.Flag(
+			"postgres-ssl-key",
+			"Path to the PostgreSQL SSL client private key file.",
+		).String(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -828,6 +848,12 @@ func (s *server) createPostgresClient(
 		*s.postgresUser, *s.postgresPass, *s.postgresHost,
 		*s.postgresPort,
 		*s.postgresDBName,
+		postgres.WithSSL(postgres.SSLConfig{
+			Mode:     *s.postgresSSLMode,
+			RootCert: *s.postgresSSLRootCert,
+			Cert:     *s.postgresSSLCert,
+			Key:      *s.postgresSSLKey,
+		}),
 		postgres.WithLogger(logger),
 		postgres.WithMetrics(registerer),
 	)

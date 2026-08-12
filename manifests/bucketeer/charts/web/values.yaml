@@ -34,6 +34,11 @@ env:
       host:
       port: 5432
       name:
+      # Leave empty to inherit global.operationalDatabase.postgres.
+      sslMode:
+      sslRootCert:
+      sslCert:
+      sslKey:
   persistentRedis:
     serverName:
     addr:

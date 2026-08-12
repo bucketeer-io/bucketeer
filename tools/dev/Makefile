@@ -10,6 +10,17 @@ generate-tls-certificate:
 		-subj "/CN=*.bucketeer.io" \
 		-config service.config
 
+# Serves TLS from the local PostgreSQL. Self-signed and its own CA, so clients
+# can verify it with sslmode=verify-full.
+generate-postgres-tls-certificate:
+	mkdir -p $(CURDIR)/cert
+	openssl req -x509 -nodes -days 36500 -newkey rsa:2048 \
+		-keyout $(CURDIR)/cert/postgres-tls.key \
+		-out $(CURDIR)/cert/postgres-tls.crt \
+		-subj "/CN=postgres" \
+		-config postgres.config
+	chmod 600 $(CURDIR)/cert/postgres-tls.key
+
 generate-oauth:
 	mkdir -p ${CURDIR}/$*
 	openssl genrsa -out ${CURDIR}/cert/oauth-private.pem 4096
@@ -19,6 +30,11 @@ service-cert-secret:
 	kubectl config use-context minikube
 	kubectl delete secret bucketeer-service-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-service-cert --key ${CURDIR}/cert/tls.key --cert ${CURDIR}/cert/tls.crt --namespace $(NAMESPACE)
+
+postgres-cert-secret:
+	kubectl config use-context minikube
+	kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found
+	kubectl create secret tls bucketeer-postgres-cert --key ${CURDIR}/cert/postgres-tls.key --cert ${CURDIR}/cert/postgres-tls.crt --namespace $(NAMESPACE)
 
 service-token-secret:
 	kubectl config use-context minikube
@@ -57,6 +73,7 @@ setup-minikube-cached:
 	minikube addons enable ingress
 	kubectl config use-context minikube
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
+	$(MAKE) postgres-cert-secret
 	helm install localenv ../../manifests/localenv
 
 setup-minikube:
@@ -64,6 +81,7 @@ setup-minikube:
 	minikube addons enable ingress
 	kubectl config use-context minikube
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
+	$(MAKE) postgres-cert-secret
 	helm install localenv ../../manifests/localenv
 
 start-minikube:
@@ -77,6 +95,7 @@ start-minikube:
 	# This is needed because selector labels changed from app.kubernetes.io/name: localenv to app.kubernetes.io/name: redis/mysql/postgres
 	kubectl delete statefulset localenv-mysql localenv-redis localenv-postgresql -n default --ignore-not-found=true
 	# Install or upgrade localenv
+	$(MAKE) postgres-cert-secret
 	helm list | grep -q localenv && helm upgrade localenv ../../manifests/localenv || helm install localenv ../../manifests/localenv
 
 # Clean Docker cache and volumes (use when troubleshooting or freeing space)

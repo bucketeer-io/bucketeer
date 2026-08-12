@@ -20,7 +20,8 @@
         "port": 5432,
         "user": "bucketeer",
         "password": "bucketeer",
-        "database": "bucketeer"
+        "database": "bucketeer",
+        "sslMode": "disable"
       },
       "bigquery": {
         "project": "",
@@ -57,7 +58,8 @@
         "port": 5432,
         "user": "bucketeer",
         "password": "bucketeer",
-        "database": "bucketeer"
+        "database": "bucketeer",
+        "sslMode": "disable"
       },
       "bigquery": {
         "project": "",
