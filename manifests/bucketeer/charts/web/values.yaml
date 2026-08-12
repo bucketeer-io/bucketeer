@@ -131,6 +131,9 @@ oauth:
     issuer:
     clientId:
     clientSecret:
+    clientSecretRef:
+      name: ""
+      key: client-secret
     redirectUrls:
   demoSignIn:
     enabled:

@@ -242,6 +242,13 @@ spec:
               value: "{{ .Values.env.accessTokenTTL }}"
             - name: BUCKETEER_WEB_REFRESH_TOKEN_TTL
               value: "{{ .Values.env.refreshTokenTTL }}"
+            {{- if .Values.oauth.google.clientSecretRef.name }}
+            - name: BUCKETEER_WEB_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.oauth.google.clientSecretRef.name }}"
+                  key: "{{ .Values.oauth.google.clientSecretRef.key }}"
+            {{- end }}
             {{- if .Values.env.aichat.openaiApiKeySecret.name }}
             - name: BUCKETEER_WEB_OPENAI_API_KEY
               valueFrom:
