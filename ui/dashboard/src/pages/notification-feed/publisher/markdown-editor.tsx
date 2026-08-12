@@ -10,7 +10,6 @@ import '../elements/markdown-content.css';
 import './markdown-editor.css';
 
 interface MarkdownEditorProps {
-  // stored as Markdown text
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -18,8 +17,6 @@ interface MarkdownEditorProps {
 
 type Mode = 'edit' | 'preview';
 
-// Inserts an "@" at the cursor to start a mention, mirroring the previous
-// editor's behavior. There is no built-in mention command in the library.
 const createMention = (t: TFunction): ICommand => ({
   name: 'mention',
   keyCommand: 'mention',
@@ -96,6 +93,7 @@ const MarkdownEditor = ({
         visibleDragbar={false}
         extraCommands={[]}
         commands={createToolbar(t)}
+        className="markdown-editor-preview text-sm"
         textareaProps={{
           placeholder: placeholder ?? t('form:description-placeholder')
         }}

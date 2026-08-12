@@ -108,10 +108,16 @@ const PublishForm = ({
   );
 
   useEffect(() => {
-    const locs = buildLocalizations(initialDraft);
-    form.reset({ localizations: locs });
-    setActiveLanguage(initialActiveLanguage(locs));
-  }, [initialDraft]);
+    if (initialDraft) {
+      const locs = buildLocalizations(initialDraft);
+      form.reset({ localizations: locs });
+      setActiveLanguage(initialActiveLanguage(locs));
+      return;
+    }
+    if (form.formState.isDirty) return;
+    form.reset({ localizations: [emptyLocalization(defaultLanguage)] });
+    setActiveLanguage(defaultLanguage);
+  }, [initialDraft?.id, initialDraft?.updatedAt, defaultLanguage]);
 
   const activeIndex = Math.max(
     0,

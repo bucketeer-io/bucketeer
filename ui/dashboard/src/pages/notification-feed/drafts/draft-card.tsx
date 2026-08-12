@@ -5,7 +5,7 @@ import { IconTrash } from '@icons';
 import Icon from 'components/icon';
 import { markdownToText } from '../elements/markdown-content';
 import NotificationCard from '../elements/notification-card';
-import TagChip from '../elements/tag-chip';
+import TagList from '../elements/tag-list';
 import { NotificationDraft } from '../types';
 
 interface DraftCardProps {
@@ -27,14 +27,14 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
           <div className="flex w-full flex-col gap-1">
             <span
               className={cn(
-                'typo-para-medium font-medium text-gray-900',
+                'truncate typo-para-medium font-medium text-gray-900',
                 onDelete && 'pr-8'
               )}
             >
               {draft.title}
             </span>
             {draft.content && (
-              <p className="line-clamp-1 typo-para-small text-gray-500">
+              <p className="line-clamp-2 typo-para-small text-gray-500">
                 {markdownToText(draft.content)}
               </p>
             )}
@@ -51,9 +51,7 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
           </div>
         }
       >
-        {draft.tags.map(tag => (
-          <TagChip key={tag.name} tag={tag} />
-        ))}
+        <TagList tags={draft.tags} />
       </NotificationCard>
       {onDelete && (
         <button

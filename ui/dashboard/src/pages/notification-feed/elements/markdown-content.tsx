@@ -1,5 +1,6 @@
 import MDEditor from '@uiw/react-md-editor';
 import { remark } from 'remark';
+import remarkGfm from 'remark-gfm';
 import strip from 'strip-markdown';
 import { visit } from 'unist-util-visit';
 import { cn } from 'utils/style';
@@ -22,7 +23,7 @@ export const MarkdownContent = ({
   );
 };
 
-const stripProcessor = remark().use(strip);
+const stripProcessor = remark().use(remarkGfm).use(strip);
 
 export const markdownToText = (markdown: string): string =>
   String(stripProcessor.processSync(markdown)).replace(/\s+/g, ' ').trim();

@@ -1,13 +1,13 @@
-.markdown-content .wmde-markdown,
-.markdown-content .wmde-markdown * {
+.wmde-markdown,
+.wmde-markdown * {
     font-family: 'Sofia Pro', sans-serif;
 }
 
 /* Keep code/pre in a monospace font, as Markdown expects. */
-.markdown-content .wmde-markdown code,
-.markdown-content .wmde-markdown pre,
-.markdown-content .wmde-markdown kbd,
-.markdown-content .wmde-markdown samp {
+.wmde-markdown code,
+.wmde-markdown pre,
+.wmde-markdown kbd,
+.wmde-markdown samp {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 

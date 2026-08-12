@@ -3,7 +3,7 @@ import { cn } from 'utils/style';
 import Checkbox from 'components/checkbox';
 import { markdownToText } from '../elements/markdown-content';
 import NotificationCard from '../elements/notification-card';
-import TagChip from '../elements/tag-chip';
+import TagList from '../elements/tag-list';
 import { FeedNotification } from '../types';
 
 interface NotificationRowProps {
@@ -50,13 +50,7 @@ const NotificationRow = ({
                 >
                   {notification.title}
                 </span>
-                {notification.tags.length > 0 && (
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {notification.tags.map(tag => (
-                      <TagChip key={tag.name} tag={tag} />
-                    ))}
-                  </div>
-                )}
+                <TagList tags={notification.tags} />
                 <span className="ml-auto shrink-0 typo-para-tiny text-gray-500">
                   {formatDateTime(notification.publishedAt)}
                 </span>
