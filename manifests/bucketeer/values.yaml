@@ -31,7 +31,9 @@ global:
       database: ""
       # disable, allow, prefer, require, verify-ca, verify-full
       sslMode: "require"
-      # Paths inside the container, mounted by sslSecretName below
+      # Paths inside the container. These files come from the same mount as the
+      # operational database, so they are provided by
+      # operationalDatabase.postgres.sslSecretName below.
       sslRootCert: ""
       sslCert: ""
       sslKey: ""
