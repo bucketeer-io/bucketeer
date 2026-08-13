@@ -30,3 +30,15 @@ spec:
             - "{{ .Values.migration.dbBaseline }}"
             - -u
             - {{ .Values.migration.dbUrl }}
+          {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
+          volumeMounts:
+            - name: postgres-cert-secret
+              mountPath: /usr/local/certs/postgres
+              readOnly: true
+          {{- end }}
+      {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
+      volumes:
+        - name: postgres-cert-secret
+          secret:
+            secretName: {{ .Values.global.operationalDatabase.postgres.sslSecretName }}
+      {{- end }}
