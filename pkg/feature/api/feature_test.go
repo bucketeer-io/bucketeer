@@ -3213,8 +3213,15 @@ func TestUpdateFeature(t *testing.T) {
 				require.Error(t, err)
 				expectedSt, _ := status.FromError(p.expectedErr)
 				actualSt, _ := status.FromError(err)
-				assert.True(t, proto.Equal(expectedSt.Proto(), actualSt.Proto()),
-					"expected status %v, got %v", expectedSt.Proto(), actualSt.Proto())
+				assert.Equal(t, expectedSt.Code(), actualSt.Code())
+				assert.Equal(t, expectedSt.Message(), actualSt.Message())
+				expectedDetails := expectedSt.Details()
+				actualDetails := actualSt.Details()
+				require.Equal(t, len(expectedDetails), len(actualDetails))
+				for i := range expectedDetails {
+					assert.True(t, proto.Equal(expectedDetails[i].(proto.Message), actualDetails[i].(proto.Message)),
+						"detail[%d]: expected %v, got %v", i, expectedDetails[i], actualDetails[i])
+				}
 			}
 		})
 	}
