@@ -25,7 +25,7 @@ type AuditLog struct {
 }
 
 func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
-	return &AuditLog{
+	auditlog := &AuditLog{
 		AuditLog: &proto.AuditLog{
 			Id:                 event.Id,
 			Timestamp:          event.Timestamp,
@@ -40,4 +40,7 @@ func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
 		},
 		EnvironmentId: environmentId,
 	}
+	// On failure the affected field is left empty rather than persisting a raw key.
+	_ = ObfuscateAPIKey(auditlog.AuditLog)
+	return auditlog
 }

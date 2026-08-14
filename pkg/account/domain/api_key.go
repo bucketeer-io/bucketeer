@@ -27,7 +27,19 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
-const keyBytes = 32
+const (
+	keyBytes           = 32
+	apiKeyVisibleChars = 4
+)
+
+// ObfuscateAPIKey shows the first and last apiKeyVisibleChars characters, with dots in the middle.
+// It must be used everywhere an API key is returned, stored or logged, except when it is created.
+func ObfuscateAPIKey(input string) string {
+	if len(input) > apiKeyVisibleChars*2 {
+		return input[:apiKeyVisibleChars] + "...." + input[len(input)-apiKeyVisibleChars:]
+	}
+	return input
+}
 
 var (
 	ErrLastUsedAtNotUpdated = pkgErr.NewErrorFailedPrecondition(

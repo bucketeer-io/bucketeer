@@ -57,3 +57,42 @@ func TestAPIKeyDisable(t *testing.T) {
 	a.Disable()
 	assert.Equal(t, true, a.Disabled)
 }
+
+func TestObfuscateAPIKey(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		{
+			desc:     "empty",
+			input:    "",
+			expected: "",
+		},
+		{
+			desc:     "shorter than the visible characters: not obfuscated",
+			input:    "abc",
+			expected: "abc",
+		},
+		{
+			desc:     "same length as the visible characters: not obfuscated",
+			input:    "abcdefgh",
+			expected: "abcdefgh",
+		},
+		{
+			desc:     "longer than the visible characters: obfuscated",
+			input:    "abcdefghi",
+			expected: "abcd....fghi",
+		},
+		{
+			desc:     "generated key length: obfuscated",
+			input:    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			expected: "0123....cdef",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, ObfuscateAPIKey(p.input))
+		})
+	}
+}

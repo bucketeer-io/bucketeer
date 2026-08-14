@@ -30,21 +30,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
-const (
-	// apiKeyVisibleChars is the number of leading and trailing characters shown when returning API keys (get/list).
-	// The middle is replaced with dots.
-	apiKeyVisibleChars = 4
-)
-
-// obfuscateAPIKey obfuscates the API key by showing the first and last apiKeyVisibleChars characters,
-// with dots in the middle (same pattern as pkg/api/api/api_grpc.go obfuscateString).
-func obfuscateAPIKey(input string) string {
-	if len(input) > apiKeyVisibleChars*2 {
-		return input[:apiKeyVisibleChars] + "...." + input[len(input)-apiKeyVisibleChars:]
-	}
-	return input
-}
-
 func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
 	req *proto.CreateAPIKeyRequest,
@@ -116,6 +101,8 @@ func (s *AccountService) CreateAPIKey(
 			ApiKey:     key.ApiKey,
 		},
 		req.EnvironmentId,
+		// The domain event keeps the raw key: it is where the api key cache pipeline resolves the
+		// cache key from. It is obfuscated when the audit log is created.
 		key.APIKey,
 		nil,
 	)
@@ -178,7 +165,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 	}
 
 	// for security, obfuscate the returned key: show first and last N characters
-	apiKey.ApiKey = obfuscateAPIKey(apiKey.ApiKey)
+	apiKey.ApiKey = domain.ObfuscateAPIKey(apiKey.ApiKey)
 
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
@@ -238,7 +225,7 @@ func (s *AccountService) ListAPIKeys(
 
 	// for security, obfuscate the returned key: show first and last N characters
 	for i := 0; i < len(apiKeys); i++ {
-		apiKeys[i].ApiKey = obfuscateAPIKey(apiKeys[i].ApiKey)
+		apiKeys[i].ApiKey = domain.ObfuscateAPIKey(apiKeys[i].ApiKey)
 	}
 
 	return &proto.ListAPIKeysResponse{
@@ -296,13 +283,13 @@ func (s *AccountService) GetEnvironmentAPIKey(
 			"Failed to get environment api key",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("apiKey", obfuscateAPIKey(req.ApiKey)),
+				zap.String("apiKey", domain.ObfuscateAPIKey(req.ApiKey)),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// for security, obfuscate the returned key: show first and last N characters
-	envAPIKey.ApiKey.ApiKey = obfuscateAPIKey(envAPIKey.ApiKey.ApiKey)
+	envAPIKey.ApiKey.ApiKey = domain.ObfuscateAPIKey(envAPIKey.ApiKey.ApiKey)
 
 	return &proto.GetEnvironmentAPIKeyResponse{
 		EnvironmentApiKey: envAPIKey.EnvironmentAPIKey,
