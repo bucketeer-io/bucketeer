@@ -29,6 +29,11 @@ env:
       port: 5432
       name:
       openConns: 50
+      # Leave empty to inherit global.operationalDatabase.postgres.
+      sslMode:
+      sslRootCert:
+      sslCert:
+      sslKey:
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
   accountService: localhost:9001

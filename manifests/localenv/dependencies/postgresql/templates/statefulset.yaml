@@ -26,12 +26,40 @@ spec:
       serviceAccountName: {{ include "postgres.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.tls.enabled }}
+      # PostgreSQL only accepts a key owned by its own user, whose uid differs
+      # between the postgres and timescaledb images, so copy it by user name.
+      initContainers:
+      - name: install-cert
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - sh
+        - -c
+        - install -o postgres -g postgres -m 600 /src/tls.key /certs/tls.key &&
+          install -o postgres -g postgres -m 644 /src/tls.crt /certs/tls.crt
+        volumeMounts:
+        - name: postgres-cert-source
+          mountPath: /src
+          readOnly: true
+        - name: postgres-cert
+          mountPath: /certs
+      {{- end }}
       containers:
       - name: postgresql
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.tls.enabled }}
+        args:
+        - -c
+        - ssl=on
+        - -c
+        - ssl_cert_file=/usr/local/certs/postgres/tls.crt
+        - -c
+        - ssl_key_file=/usr/local/certs/postgres/tls.key
+        {{- end }}
         ports:
         - name: postgres
           containerPort: 5432
@@ -78,10 +106,22 @@ spec:
         - name: postgres-initdb
           mountPath: /docker-entrypoint-initdb.d
           readOnly: true
+        {{- if .Values.tls.enabled }}
+        - name: postgres-cert
+          mountPath: /usr/local/certs/postgres
+          readOnly: true
+        {{- end }}
       volumes:
       - name: postgres-initdb
         configMap:
           name: {{ include "postgres.fullname" . }}-initdb
+      {{- if .Values.tls.enabled }}
+      - name: postgres-cert-source
+        secret:
+          secretName: {{ .Values.tls.secretName }}
+      - name: postgres-cert
+        emptyDir: {}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

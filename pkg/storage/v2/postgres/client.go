@@ -19,6 +19,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net"
+	"net/url"
+	"slices"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -32,12 +36,34 @@ type contextKey string
 const (
 	postgres                  = "postgres"
 	transactionKey contextKey = "transaction"
+
+	SSLModeDisable = "disable"
+	SSLModeRequire = "require"
 )
+
+// https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
+var sslModes = []string{
+	SSLModeDisable,
+	"allow",
+	"prefer",
+	SSLModeRequire,
+	"verify-ca",
+	"verify-full",
+}
+
+// SSLConfig maps to the libpq TLS connection parameters.
+type SSLConfig struct {
+	Mode     string // sslmode, defaults to require
+	RootCert string // sslrootcert, the CA verify-ca and verify-full check against
+	Cert     string // sslcert
+	Key      string // sslkey
+}
 
 type options struct {
 	connMaxLifetime time.Duration
 	maxOpenConns    int
 	maxIdleConns    int
+	ssl             SSLConfig
 	logger          *zap.Logger
 	metrics         metrics.Registerer
 }
@@ -47,6 +73,7 @@ func defaultOptions() *options {
 		connMaxLifetime: 300 * time.Second,
 		maxOpenConns:    10,
 		maxIdleConns:    5,
+		ssl:             SSLConfig{Mode: SSLModeRequire},
 		logger:          zap.NewNop(),
 	}
 }
@@ -97,6 +124,17 @@ func WithMaxIdleConns(mic int) Option {
 	}
 }
 
+// WithSSL configures TLS. An empty Mode falls back to require, so opting out of
+// encryption has to be explicit.
+func WithSSL(ssl SSLConfig) Option {
+	return func(opts *options) {
+		if ssl.Mode == "" {
+			ssl.Mode = SSLModeRequire
+		}
+		opts.ssl = ssl
+	}
+}
+
 func WithLogger(logger *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = logger
@@ -124,10 +162,11 @@ func NewClient(
 		registerMetrics(dopts.metrics)
 	}
 	logger := dopts.logger.Named(postgres)
-	dsn := fmt.Sprintf(
-		"%s://%s:%s@%s:%d/%s?sslmode=disable",
-		postgres, dbUser, dbPass, dbHost, dbPort, dbName,
-	)
+	dsn, err := buildDSN(dbUser, dbPass, dbHost, dbPort, dbName, dopts.ssl)
+	if err != nil {
+		logger.Error("Failed to build dsn", zap.Error(err))
+		return nil, err
+	}
 	db, err := sql.Open(postgres, dsn)
 	if err != nil {
 		logger.Error("Failed to open db", zap.Error(err))
@@ -145,6 +184,38 @@ func NewClient(
 		opts:   dopts,
 		logger: logger,
 	}, nil
+}
+
+func buildDSN(dbUser, dbPass, dbHost string, dbPort int, dbName string, ssl SSLConfig) (string, error) {
+	if err := validateSSLMode(ssl.Mode); err != nil {
+		return "", err
+	}
+	q := url.Values{}
+	q.Set("sslmode", ssl.Mode)
+	if ssl.RootCert != "" {
+		q.Set("sslrootcert", ssl.RootCert)
+	}
+	if ssl.Cert != "" {
+		q.Set("sslcert", ssl.Cert)
+	}
+	if ssl.Key != "" {
+		q.Set("sslkey", ssl.Key)
+	}
+	dsn := url.URL{
+		Scheme:   postgres,
+		User:     url.UserPassword(dbUser, dbPass),
+		Host:     net.JoinHostPort(dbHost, strconv.Itoa(dbPort)),
+		Path:     dbName,
+		RawQuery: q.Encode(),
+	}
+	return dsn.String(), nil
+}
+
+func validateSSLMode(mode string) error {
+	if !slices.Contains(sslModes, mode) {
+		return fmt.Errorf("postgres: invalid ssl mode %q, must be one of %v", mode, sslModes)
+	}
+	return nil
 }
 
 func (c *client) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {

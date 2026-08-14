@@ -57,4 +57,16 @@ data:
       {{- if .Values.global.dataWarehouse.postgres.password }}
       password: {{ .Values.global.dataWarehouse.postgres.password | quote }}
       {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.sslMode }}
+      sslMode: {{ .Values.global.dataWarehouse.postgres.sslMode | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.sslRootCert }}
+      sslRootCert: {{ .Values.global.dataWarehouse.postgres.sslRootCert | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.sslCert }}
+      sslCert: {{ .Values.global.dataWarehouse.postgres.sslCert | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.sslKey }}
+      sslKey: {{ .Values.global.dataWarehouse.postgres.sslKey | quote }}
+      {{- end }}
     {{- end }}

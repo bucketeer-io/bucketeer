@@ -29,6 +29,14 @@ global:
       user: ""
       password: ""
       database: ""
+      # disable, allow, prefer, require, verify-ca, verify-full
+      sslMode: "require"
+      # Paths inside the container. These files come from the same mount as the
+      # operational database, so they are provided by
+      # operationalDatabase.postgres.sslSecretName below.
+      sslRootCert: ""
+      sslCert: ""
+      sslKey: ""
   # Global primary database configuration
   # Supported types: mysql, postgres
   operationalDatabase:
@@ -47,6 +55,15 @@ global:
       port: 5432
       name: ""
       openConns: 50
+      # disable, allow, prefer, require, verify-ca, verify-full
+      sslMode: "require"
+      sslRootCert: ""
+      sslCert: ""
+      sslKey: ""
+      # Existing secret holding the files above. Mounted read-only at
+      # /usr/local/certs/postgres in every service and in the migration job, so
+      # migration.dbUrl can reference the same paths.
+      sslSecretName: ""
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""
