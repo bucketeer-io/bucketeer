@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -3206,7 +3207,15 @@ func TestUpdateFeature(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.UpdateFeature(p.ctx, p.input)
-			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				expectedSt, _ := status.FromError(p.expectedErr)
+				actualSt, _ := status.FromError(err)
+				assert.True(t, proto.Equal(expectedSt.Proto(), actualSt.Proto()),
+					"expected status %v, got %v", expectedSt.Proto(), actualSt.Proto())
+			}
 		})
 	}
 }
