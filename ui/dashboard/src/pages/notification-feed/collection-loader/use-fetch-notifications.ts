@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import {
   notificationCreator,
   notificationDelete,
@@ -103,14 +104,27 @@ export const useMarkAllAsRead = () => {
 };
 
 export const usePublishNotification = () => {
-  return useMutation({
+  const createdIdRef = useRef<string | null>(null);
+  const mutation = useMutation({
     mutationFn: async (input: NotificationCenterPublishPayload) => {
-      const created = await notificationCreator({
-        localizations: input.localizations
-      });
-      return notificationPublisher({ id: created.notification.id });
+      const id =
+        createdIdRef.current ??
+        (
+          await notificationCreator({
+            localizations: input.localizations
+          })
+        ).notification.id;
+      createdIdRef.current = id;
+      const result = await notificationPublisher({ id });
+      createdIdRef.current = null;
+      return result;
     }
   });
+  const reset = () => {
+    createdIdRef.current = null;
+    mutation.reset();
+  };
+  return { ...mutation, reset };
 };
 
 export const usePublishDraft = () => {

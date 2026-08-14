@@ -77,5 +77,6 @@
   "bulk-clone-already-exists": "Feature flag already exists in {{env}}.",
   "bulk-clone-failed": "Failed to clone to {{env}}.",
   "published-successfully": "Notification published successfully.",
-  "draft-saved": "Draft saved."
+  "draft-saved": "Draft saved.",
+  "notification-load-failed": "Failed to load this notification. It may have been deleted."
 }

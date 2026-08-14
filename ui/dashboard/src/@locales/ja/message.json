@@ -77,5 +77,6 @@
   "bulk-clone-already-exists": "フィーチャーフラグはすでに{{env}}に存在します。",
   "bulk-clone-failed": "{{env}}への複製に失敗しました。",
   "published-successfully": "通知を公開しました。",
-  "draft-saved": "下書きを保存しました。"
+  "draft-saved": "下書きを保存しました。",
+  "notification-load-failed": "この通知の読み込みに失敗しました。削除された可能性があります。"
 }

@@ -68,7 +68,11 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
   return (
     <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
       <Popover.Trigger asChild>
-        <button type="button" className="relative flex bottom-1">
+        <button
+          type="button"
+          aria-label={t('notifications')}
+          className="relative flex bottom-1"
+        >
           <Icon icon={IconNotifications} color="primary-50" />
           {unreadCount > 0 && (
             <Badge

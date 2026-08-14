@@ -13,8 +13,8 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
       .of(
         yup.object().shape({
           language: yup.string().required(),
-          title: yup.string().required(requiredMessage),
-          content: yup.string().required(requiredMessage),
+          title: yup.string().trim().required(requiredMessage),
+          content: yup.string().trim().required(requiredMessage),
           tags: yup
             .array()
             .of(

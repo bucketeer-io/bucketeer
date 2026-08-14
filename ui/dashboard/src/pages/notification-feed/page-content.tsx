@@ -57,7 +57,11 @@ const PageContent = ({
   const markAllAsRead = useMarkAllAsRead();
 
   const selectedId = filters.notificationId;
-  const { data: detail } = useFetchNotification(selectedId);
+  const {
+    data: detail,
+    isLoading: isDetailLoading,
+    isError: isDetailError
+  } = useFetchNotification(selectedId);
 
   const onSelectDetail = (notification: NotificationDetail) =>
     onChangeFilters({ notificationId: notification.id });
@@ -228,6 +232,8 @@ const PageContent = ({
 
       <NotificationDetailModal
         notification={detail}
+        isLoading={isDetailLoading}
+        isError={isDetailError}
         isOpen={!!selectedId}
         onClose={onCloseDetail}
         onEditDraft={onEditDraft}

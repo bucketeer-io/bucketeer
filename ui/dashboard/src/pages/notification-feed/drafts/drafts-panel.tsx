@@ -113,6 +113,7 @@ const DraftsPanel = ({
         pageSize={DRAFTS_PAGE_SIZE}
         totalCount={totalCount}
         onChange={setPage}
+        className="flex-col gap-y-2"
       />
 
       {deletingDraft && (

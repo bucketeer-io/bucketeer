@@ -112,11 +112,13 @@ const PublishForm = ({
       const locs = buildLocalizations(initialDraft);
       form.reset({ localizations: locs });
       setActiveLanguage(initialActiveLanguage(locs));
-      return;
+    } else {
+      if (form.formState.isDirty) return;
+      form.reset({ localizations: [emptyLocalization(defaultLanguage)] });
+      setActiveLanguage(defaultLanguage);
     }
-    if (form.formState.isDirty) return;
-    form.reset({ localizations: [emptyLocalization(defaultLanguage)] });
-    setActiveLanguage(defaultLanguage);
+    // Also re-applies on a console language change, but only to a
+    // pristine/new form; never discards unsaved edits on an in-progress draft.
   }, [initialDraft?.id, initialDraft?.updatedAt, defaultLanguage]);
 
   const activeIndex = Math.max(
@@ -141,7 +143,12 @@ const PublishForm = ({
   const {
     formState: { isValid }
   } = form;
-  const canSubmit = !disabled && isValid;
+  const canSubmit =
+    !disabled &&
+    isValid &&
+    !publishMutation.isPending &&
+    !saveDraftMutation.isPending &&
+    !updateMutation.isPending;
   const [pendingAction, setPendingAction] = useState<
     'publish' | 'draft' | null
   >(null);
@@ -175,6 +182,7 @@ const PublishForm = ({
   const resetForm = () => {
     form.reset({ localizations: [emptyLocalization(defaultLanguage)] });
     setActiveLanguage(defaultLanguage);
+    publishMutation.reset();
     onClear?.();
   };
 

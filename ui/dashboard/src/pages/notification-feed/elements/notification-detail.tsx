@@ -14,6 +14,8 @@ import TagChip from './tag-chip';
 
 interface NotificationDetailModalProps {
   notification?: NotificationDetail;
+  isLoading?: boolean;
+  isError?: boolean;
   isOpen: boolean;
   onClose: () => void;
   onEditDraft?: (notification: NotificationDetail) => void;
@@ -65,6 +67,8 @@ const Section = ({
 
 const NotificationDetailModal = ({
   notification,
+  isLoading,
+  isError,
   isOpen,
   onClose,
   onEditDraft
@@ -76,7 +80,22 @@ const NotificationDetailModal = ({
 
   if (!isOpen) return null;
 
-  if (!notification) {
+  if (isError) {
+    return (
+      <SlideModal title="" isOpen={isOpen} onClose={onClose}>
+        <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+          <p className="typo-para-medium text-gray-500">
+            {t('message:notification-load-failed')}
+          </p>
+          <Button variant="secondary" onClick={onClose}>
+            {t('close')}
+          </Button>
+        </div>
+      </SlideModal>
+    );
+  }
+
+  if (!notification || isLoading) {
     return (
       <SlideModal title="" isOpen={isOpen} onClose={onClose}>
         <div className="flex h-full w-full items-center justify-center">
