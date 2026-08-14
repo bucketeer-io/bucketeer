@@ -12,7 +12,7 @@ const PageContent = ({
   isDisabled: boolean;
 }) => {
   return (
-    <PageLayout.Content className="p-6 min-w-[900px]">
+    <PageLayout.Content className="p-4 sm:p-6">
       <SegmentForm
         isUpdate={isUpdate}
         userSegment={userSegment}
