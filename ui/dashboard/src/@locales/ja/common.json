@@ -72,6 +72,8 @@
     "user-profile": "ユーザープロフィール",
     "logout": "ログアウト",
     "back-to-main": "メインに戻る",
+    "collapse": "サイドバーを折りたたむ",
+    "expand": "サイドバーを展開",
     "no-projects": "プロジェクトが見つかりません",
     "no-organizations": "組織が見つかりません",
     "insights": "インサイト"
