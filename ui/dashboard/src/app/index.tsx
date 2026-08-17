@@ -52,6 +52,7 @@ import {
   setCurrentEnvIdStorage
 } from 'storage/environment';
 import { getIsLoginFirstTimeStorage } from 'storage/login';
+import { getNavigationCollapsedStorage } from 'storage/navigation';
 import {
   getCurrentProjectEnvironmentStorage,
   setCurrentProjectEnvironmentStorage
@@ -62,6 +63,7 @@ import { ConsoleAccount, EnvironmentRole } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { checkEnvironmentEmptyId } from 'utils/function';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
+import { cn } from 'utils/style';
 import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
@@ -141,6 +143,9 @@ function App() {
 export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
+  const [isNavCollapsed, setIsNavCollapsed] = useState(
+    getNavigationCollapsedStorage
+  );
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -160,8 +165,17 @@ export const Root = memo(() => {
     return (
       <WalkthroughProvider>
         <div className="flex flex-row w-full h-full">
-          <Navigation onClickNavLink={handleChangePageKey} />
-          <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
+          <Navigation
+            onClickNavLink={handleChangePageKey}
+            isCollapsed={isNavCollapsed}
+            onToggleCollapsed={setIsNavCollapsed}
+          />
+          <div
+            className={cn(
+              'w-full shadow-lg overflow-y-auto transition-all duration-300 ease-in-out',
+              isNavCollapsed ? 'ml-[60px]' : 'ml-[248px]'
+            )}
+          >
             <Routes>
               {consoleAccount.isSystemAdmin && (
                 <Route
