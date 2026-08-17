@@ -15,12 +15,60 @@
 package v3
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+// writeTestCertKeyPair generates a self-signed EC certificate/key pair and
+// writes them as PEM files under dir, returning their paths.
+func writeTestCertKeyPair(t *testing.T, dir, prefix string) (certPath, keyPath string) {
+	t.Helper()
+
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "redis-test"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		IsCA:         true,
+	}
+	derBytes, err := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+	require.NoError(t, err)
+
+	certPath = filepath.Join(dir, prefix+".crt")
+	keyPath = filepath.Join(dir, prefix+".key")
+
+	certOut, err := os.Create(certPath)
+	require.NoError(t, err)
+	defer certOut.Close()
+	require.NoError(t, pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}))
+
+	keyBytes, err := x509.MarshalECPrivateKey(priv)
+	require.NoError(t, err)
+	keyOut, err := os.Create(keyPath)
+	require.NoError(t, err)
+	defer keyOut.Close()
+	require.NoError(t, pem.Encode(keyOut, &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes}))
+
+	return certPath, keyPath
+}
 
 func TestNewClientIntegration(t *testing.T) {
 	if testing.Short() {
@@ -229,4 +277,123 @@ func TestClientTypeString(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "cluster", clientTypeString(ClientTypeCluster))
 	assert.Equal(t, "standalone", clientTypeString(ClientTypeStandard))
+}
+
+func TestWithTLS(t *testing.T) {
+	t.Parallel()
+
+	cfg := TLSConfig{Enabled: true, CACert: "/path/to/ca.crt"}
+	opts := defaultOptions()
+	WithTLS(cfg)(opts)
+	assert.Equal(t, cfg, opts.tls)
+}
+
+func TestBuildTLSConfig(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	caCertPath, _ := writeTestCertKeyPair(t, dir, "ca")
+	certPath, keyPath := writeTestCertKeyPair(t, dir, "client")
+
+	t.Run("disabled returns nil config", func(t *testing.T) {
+		t.Parallel()
+		tlsConfig, err := buildTLSConfig(TLSConfig{Enabled: false})
+		require.NoError(t, err)
+		assert.Nil(t, tlsConfig)
+	})
+
+	t.Run("enabled with no cert paths uses system pool", func(t *testing.T) {
+		t.Parallel()
+		tlsConfig, err := buildTLSConfig(TLSConfig{Enabled: true})
+		require.NoError(t, err)
+		require.NotNil(t, tlsConfig)
+		assert.Nil(t, tlsConfig.RootCAs)
+		assert.False(t, tlsConfig.InsecureSkipVerify)
+	})
+
+	t.Run("insecure skip verify is propagated", func(t *testing.T) {
+		t.Parallel()
+		tlsConfig, err := buildTLSConfig(TLSConfig{Enabled: true, InsecureSkipVerify: true})
+		require.NoError(t, err)
+		require.NotNil(t, tlsConfig)
+		assert.True(t, tlsConfig.InsecureSkipVerify)
+	})
+
+	t.Run("valid CA cert is loaded", func(t *testing.T) {
+		t.Parallel()
+		tlsConfig, err := buildTLSConfig(TLSConfig{Enabled: true, CACert: caCertPath})
+		require.NoError(t, err)
+		require.NotNil(t, tlsConfig)
+		assert.NotNil(t, tlsConfig.RootCAs)
+	})
+
+	t.Run("missing CA cert file errors", func(t *testing.T) {
+		t.Parallel()
+		_, err := buildTLSConfig(TLSConfig{Enabled: true, CACert: "/nonexistent/ca.crt"})
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid CA cert content errors", func(t *testing.T) {
+		t.Parallel()
+		badCACert := filepath.Join(dir, "bad-ca.crt")
+		require.NoError(t, os.WriteFile(badCACert, []byte("not a pem cert"), 0o600))
+		_, err := buildTLSConfig(TLSConfig{Enabled: true, CACert: badCACert})
+		assert.Error(t, err)
+	})
+
+	t.Run("valid client cert and key are loaded", func(t *testing.T) {
+		t.Parallel()
+		tlsConfig, err := buildTLSConfig(TLSConfig{Enabled: true, Cert: certPath, Key: keyPath})
+		require.NoError(t, err)
+		require.NotNil(t, tlsConfig)
+		assert.Len(t, tlsConfig.Certificates, 1)
+	})
+
+	t.Run("cert without key errors", func(t *testing.T) {
+		t.Parallel()
+		_, err := buildTLSConfig(TLSConfig{Enabled: true, Cert: certPath})
+		assert.Error(t, err)
+	})
+
+	t.Run("key without cert errors", func(t *testing.T) {
+		t.Parallel()
+		_, err := buildTLSConfig(TLSConfig{Enabled: true, Key: keyPath})
+		assert.Error(t, err)
+	})
+
+	t.Run("mismatched cert and key errors", func(t *testing.T) {
+		t.Parallel()
+		_, otherKeyPath := writeTestCertKeyPair(t, dir, "other")
+		_, err := buildTLSConfig(TLSConfig{Enabled: true, Cert: certPath, Key: otherKeyPath})
+		assert.Error(t, err)
+	})
+}
+
+func TestNewClientWithTLS(t *testing.T) {
+	t.Parallel()
+
+	t.Run("TLS enabled against unreachable host does not fail startup", func(t *testing.T) {
+		t.Parallel()
+		logger := zap.NewNop()
+		c, err := NewClient(
+			"localhost:9999",
+			WithLogger(logger),
+			WithTLS(TLSConfig{Enabled: true}),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, c)
+		c.Close()
+	})
+
+	t.Run("invalid TLS config returns error", func(t *testing.T) {
+		t.Parallel()
+		logger := zap.NewNop()
+		c, err := NewClient(
+			"localhost:9999",
+			WithLogger(logger),
+			WithTLS(TLSConfig{Enabled: true, CACert: "/nonexistent/ca.crt"}),
+		)
+		assert.Error(t, err)
+		assert.Nil(t, c)
+	})
 }
