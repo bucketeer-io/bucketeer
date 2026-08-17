@@ -185,6 +185,7 @@ type options struct {
 	poolTimeout  time.Duration
 	serverName   string
 	redisMode    RedisMode
+	db           int
 	metrics      metrics.Registerer
 	logger       *zap.Logger
 }
@@ -197,6 +198,7 @@ func defaultOptions() *options {
 		minIdleConns: 5,
 		poolTimeout:  30 * time.Second,
 		redisMode:    RedisModeAuto,
+		db:           0,
 		logger:       zap.NewNop(),
 	}
 }
@@ -272,6 +274,19 @@ func WithRedisMode(mode RedisMode) Option {
 	}
 }
 
+// WithDB sets the logical database index to select on the Redis connection.
+// It only takes effect for standalone connections: Redis Cluster does not
+// support the SELECT command, so a non-zero db is ignored (with a warning
+// logged at connection time) when the client resolves to cluster mode.
+func WithDB(db int) Option {
+	return func(opts *options) {
+		if db < 0 {
+			db = 0
+		}
+		opts.db = db
+	}
+}
+
 func NewClient(addr string, opts ...Option) (Client, error) {
 	options := defaultOptions()
 	for _, opt := range opts {
@@ -296,6 +311,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		PoolSize:     options.poolSize,
 		MinIdleConns: options.minIdleConns,
 		PoolTimeout:  options.poolTimeout,
+		DB:           options.db,
 	}
 
 	var rc goredis.UniversalClient
@@ -322,6 +338,15 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 
 	default: // RedisModeAuto
 		clientType, rc = detectRedisMode(addr, clusterOpts, standardOpts, logger)
+	}
+
+	// Redis Cluster has no concept of logical databases (no SELECT support),
+	// so a non-default db index has no effect when the client is a cluster client.
+	if options.db != 0 && clientType == ClientTypeCluster {
+		logger.Warn("Redis DB index is ignored in cluster mode",
+			zap.Int("db", options.db),
+			zap.String("addr", addr),
+		)
 	}
 
 	// Non-blocking startup: try to ping but don't fail if Redis is unavailable.

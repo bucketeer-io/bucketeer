@@ -120,6 +120,7 @@ type server struct {
 	redisServerName                   *string
 	redisAddr                         *string
 	redisMode                         *string
+	redisDB                           *int
 	certPath                          *string
 	keyPath                           *string
 	serviceTokenPath                  *string
@@ -140,6 +141,7 @@ type server struct {
 	pubSubRedisMinIdle        *int
 	pubSubRedisPartitionCount *int
 	pubSubRedisMode           *string
+	pubSubRedisDB             *int
 	cacheInvalidationTopic    *string
 	sseHeartbeatInterval      *time.Duration
 	sseMaxConnections         *int
@@ -259,6 +261,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		redisMode: cmd.Flag("redis-mode",
 			"Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		redisDB: cmd.Flag("redis-db",
+			"Redis logical database index to select. Ignored in cluster mode.",
+		).Default("0").Int(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -325,6 +330,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		pubSubRedisDB: cmd.Flag("pubsub-redis-db",
+			"Redis logical database index to select for PubSub. Ignored in cluster mode.",
+		).Default("0").Int(),
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
 				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
@@ -366,6 +374,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
 			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
+			redisv3.WithDB(*s.pubSubRedisDB),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
@@ -560,6 +569,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
 		redisv3.WithServerName(*s.redisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.redisMode)),
+		redisv3.WithDB(*s.redisDB),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)

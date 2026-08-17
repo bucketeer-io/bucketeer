@@ -123,6 +123,8 @@ spec:
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.persistentRedis.mode }}"
+            - name: BUCKETEER_WEB_PERSISTENT_REDIS_DB
+              value: "{{ .Values.env.persistentRedis.db }}"
             - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
             - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_ADDR
@@ -133,6 +135,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.nonPersistentRedis.mode }}"
+            - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_DB
+              value: "{{ .Values.env.nonPersistentRedis.db }}"
             - name: BUCKETEER_WEB_BIGQUERY_DATA_SET
               value: "{{ .Values.env.bigQueryDataSet }}"
             - name: BUCKETEER_WEB_BIGQUERY_DATA_LOCATION
@@ -217,6 +221,8 @@ spec:
               value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_MODE
               value: "{{ .Values.env.pubSubRedisMode }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_DB
+              value: "{{ .Values.env.pubSubRedisDB }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT
               value: "{{ .Values.global.pubsub.redis.partitionCount }}"
             - name: BUCKETEER_WEB_PROJECT

@@ -39,12 +39,14 @@ env:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
   pubSubRedisMode: auto
+  pubSubRedisDB: 0
   redis:
     serverName:
     poolMaxIdle: 25
     poolMaxActive: 25
     addr:
     mode: auto
+    db: 0
   oldestEventTimestamp:
   furthestEventTimestamp:
   # Grace window applied to the diff filters for:

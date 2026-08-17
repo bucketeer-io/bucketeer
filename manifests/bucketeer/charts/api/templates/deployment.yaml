@@ -114,6 +114,8 @@ spec:
               value: "{{ .Values.env.redis.poolMaxActive }}"
             - name: BUCKETEER_API_REDIS_MODE
               value: "{{ .Values.env.redis.mode }}"
+            - name: BUCKETEER_API_REDIS_DB
+              value: "{{ .Values.env.redis.db }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_PARTITION_COUNT
               value: "{{ .Values.global.pubsub.redis.partitionCount }}"
             - name: BUCKETEER_API_OLDEST_EVENT_TIMESTAMP
@@ -168,6 +170,8 @@ spec:
               value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_MODE
               value: "{{ .Values.env.pubSubRedisMode }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_DB
+              value: "{{ .Values.env.pubSubRedisDB }}"
             {{- if .Values.env.featuresMemoryCacheTTL }}
             - name: BUCKETEER_API_FEATURES_MEMORY_CACHE_TTL
               value: "{{ .Values.env.featuresMemoryCacheTTL }}"
