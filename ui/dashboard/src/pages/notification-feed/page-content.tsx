@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import {
-  useFetchDrafts,
   useFetchNotification,
   useFetchUnreadCount,
   useMarkAllAsRead
@@ -67,10 +66,7 @@ const PageContent = ({
     onChangeFilters({ notificationId: notification.id });
 
   const [editingId, setEditingId] = useState<string>();
-  const { data: draftsData } = useFetchDrafts(
-    !!isSystemAdmin && (filters.tab === 'publish' || !!editingId)
-  );
-  const editingDraft = draftsData?.notifications.find(d => d.id === editingId);
+  const { data: editingDraft } = useFetchNotification(editingId);
 
   const onChangeFilters = useCallback(
     (values: Partial<NotificationFilters>) => {

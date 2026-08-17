@@ -15,7 +15,6 @@ import {
   useQueryNotificationUnreadCount
 } from '@queries/notification-center';
 import { useMutation } from '@tanstack/react-query';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { getLanguage } from 'i18n';
 import {
   NotificationCenterPublishPayload,
@@ -51,16 +50,6 @@ export const useFetchNotification = (id?: string) => {
   return useQueryNotification({
     params: { id: id ?? '', language: getLanguage() },
     enabled: !!id
-  });
-};
-
-export const useFetchDrafts = (enabled = true) => {
-  return useQueryNotificationDrafts({
-    params: {
-      cursor: '0',
-      pageSize: LIST_PAGE_SIZE
-    },
-    enabled
   });
 };
 
