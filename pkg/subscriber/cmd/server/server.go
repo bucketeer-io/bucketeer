@@ -662,6 +662,7 @@ func (s *server) createCacheInvalidationPublisher(
 			redisv3.WithMinIdleConns(conf.RedisMinIdle),
 			redisv3.WithServerName(conf.RedisServerName),
 			redisv3.WithRedisMode(redisv3.RedisMode(conf.RedisMode)),
+			redisv3.WithDB(conf.RedisDB),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)

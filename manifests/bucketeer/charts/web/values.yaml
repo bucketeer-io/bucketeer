@@ -19,7 +19,6 @@ env:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
   pubSubRedisMode: auto
-  pubSubRedisDB: 0
   # Database configuration
   operationalDatabase:
     type: "mysql"

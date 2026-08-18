@@ -394,7 +394,14 @@ func detectRedisMode(
 	standardOpts *goredis.Options,
 	logger *zap.Logger,
 ) (ClientType, goredis.UniversalClient) {
-	probe := goredis.NewClient(standardOpts)
+	// Probe with DB 0: a configured non-zero DB would make go-redis issue
+	// SELECT during the probe connection's handshake, which a real Redis
+	// Cluster node rejects, causing CLUSTER INFO to fail and the cluster to
+	// be misdetected as standalone. The configured DB is still applied to
+	// the standalone client actually returned below.
+	probeOpts := *standardOpts
+	probeOpts.DB = 0
+	probe := goredis.NewClient(&probeOpts)
 	defer probe.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), detectionTimeout)

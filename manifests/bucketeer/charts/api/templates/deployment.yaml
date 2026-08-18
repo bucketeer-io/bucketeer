@@ -171,7 +171,7 @@ spec:
             - name: BUCKETEER_API_PUBSUB_REDIS_MODE
               value: "{{ .Values.env.pubSubRedisMode }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_DB
-              value: "{{ .Values.env.pubSubRedisDB }}"
+              value: "{{ .Values.global.pubsub.redis.db }}"
             {{- if .Values.env.featuresMemoryCacheTTL }}
             - name: BUCKETEER_API_FEATURES_MEMORY_CACHE_TTL
               value: "{{ .Values.env.featuresMemoryCacheTTL }}"
