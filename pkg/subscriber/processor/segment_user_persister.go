@@ -64,6 +64,12 @@ type segmentUserPersisterConfig struct {
 	RedisMode           string `json:"redisMode"`           // Redis client mode: cluster, standalone, or auto
 	RedisDB             int    `json:"redisDB"`             // Redis logical database index. Ignored in cluster mode
 	Project             string `json:"project"`             // Google Cloud project ID
+	// Redis TLS configuration
+	RedisTLSEnabled            bool   `json:"redisTLSEnabled"`
+	RedisTLSCACert             string `json:"redisTLSCACert"`
+	RedisTLSCert               string `json:"redisTLSCert"`
+	RedisTLSKey                string `json:"redisTLSKey"`
+	RedisTLSInsecureSkipVerify bool   `json:"redisTLSInsecureSkipVerify"`
 }
 
 type segmentUserPersister struct {
@@ -205,6 +211,13 @@ func createRedisClientForSegmentPersister(
 		v3.WithDB(conf.RedisDB),
 		v3.WithMetrics(registerer),
 		v3.WithLogger(logger),
+		v3.WithTLS(v3.TLSConfig{
+			Enabled:            conf.RedisTLSEnabled,
+			CACert:             conf.RedisTLSCACert,
+			Cert:               conf.RedisTLSCert,
+			Key:                conf.RedisTLSKey,
+			InsecureSkipVerify: conf.RedisTLSInsecureSkipVerify,
+		}),
 	)
 }
 
