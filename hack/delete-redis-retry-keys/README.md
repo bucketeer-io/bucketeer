@@ -12,6 +12,11 @@ go run ./hack/delete-redis-retry-keys delete \
   --environment-id=<ENVIRONMENT_ID> \
   --redis-password=<REDIS_PASSWORD> \ # optional
   --scan-count=<SCAN_COUNT> \ # optional, defaults to 100
+  --redis-tls-enabled \ # optional, defaults to false
+  --redis-tls-ca-cert=<PATH> \ # optional, defaults to the system CA pool
+  --redis-tls-cert=<PATH> \ # optional, for mutual TLS
+  --redis-tls-key=<PATH> \ # optional, for mutual TLS
+  --redis-tls-insecure-skip-verify \ # optional, not recommended for production
   --no-profile \
   --no-gcp-trace-enabled
 ```
