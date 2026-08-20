@@ -275,6 +275,31 @@ func TestErrorType_String(t *testing.T) {
 	}
 }
 
+func TestMessageKey(t *testing.T) {
+	t.Parallel()
+
+	t.Run("default returns error type", func(t *testing.T) {
+		t.Parallel()
+		err := NewErrorFailedPrecondition("test", "precondition failed")
+		assert.Equal(t, "FailedPreconditionError", err.MessageKey())
+	})
+
+	t.Run("override replaces default", func(t *testing.T) {
+		t.Parallel()
+		err := NewErrorFailedPrecondition("test", "comment required").
+			WithMessageKey("CommentRequiredForUpdating")
+		assert.Equal(t, "CommentRequiredForUpdating", err.MessageKey())
+		assert.Equal(t, ErrorTypeFailedPrecondition, err.ErrorType())
+	})
+
+	t.Run("empty override falls back to default", func(t *testing.T) {
+		t.Parallel()
+		err := NewErrorFailedPrecondition("test", "generic").
+			WithMessageKey("")
+		assert.Equal(t, "FailedPreconditionError", err.MessageKey())
+	})
+}
+
 func TestErrorWrapComplex(t *testing.T) {
 	t.Parallel()
 

@@ -71,13 +71,24 @@ type BktError struct {
 	wrappedError error
 	field        string // optional
 
-	embeddedKeyValues map[string]string
+	embeddedKeyValues  map[string]string
+	messageKeyOverride string
 }
 
 func (e *BktError) PackageName() string  { return e.packageName }
 func (e *BktError) ErrorType() ErrorType { return e.errorType }
 
-func (e *BktError) MessageKey() string                   { return string(e.errorType) }
+func (e *BktError) MessageKey() string {
+	if e.messageKeyOverride != "" {
+		return e.messageKeyOverride
+	}
+	return string(e.errorType)
+}
+
+func (e *BktError) WithMessageKey(key string) *BktError {
+	e.messageKeyOverride = key
+	return e
+}
 func (e *BktError) EmbeddedKeyValues() map[string]string { return e.embeddedKeyValues }
 
 func (e *BktError) Error() string {

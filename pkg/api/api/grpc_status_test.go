@@ -142,6 +142,17 @@ func TestNewGRPCStatus(t *testing.T) {
 			},
 		},
 		{
+			name: "FailedPrecondition with messageKey override",
+			err: pkgErr.NewErrorFailedPrecondition("test", "comment required").
+				WithMessageKey("CommentRequiredForUpdating"),
+			expectedCode:    codes.FailedPrecondition,
+			expectedMessage: "test:comment required",
+			expectedReason:  "FAILED_PRECONDITION",
+			expectedMetadata: map[string]string{
+				"messagekey": "CommentRequiredForUpdating",
+			},
+		},
+		{
 			name:            "Non-BucketeerError",
 			err:             errors.New("standard error"),
 			expectedCode:    codes.Unknown,
