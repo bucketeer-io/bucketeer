@@ -202,7 +202,7 @@ func TestCreateExperimentRunningAttachment(t *testing.T) {
 			desc:            "english",
 			lang:            locale.En,
 			expectedText:    "There are running experiments.",
-			expectedDaysMsg: "- `1` days left, Name: *",
+			expectedDaysMsg: "- Days left: `1`, Name: *",
 		},
 		{
 			desc:            "japanese",
