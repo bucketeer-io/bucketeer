@@ -13,10 +13,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
-import {
-  allowNavigation,
-  useUnsavedLeavePage
-} from 'hooks/use-unsaved-leave-page';
+import { useConfirm, useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
@@ -59,6 +56,7 @@ const SegmentForm = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const navigate = useNavigate();
   const { notify, errorNotify } = useToast();
+  const { allowNavigation } = useConfirm();
 
   const isDisabledUserIds = useMemo(
     () =>
