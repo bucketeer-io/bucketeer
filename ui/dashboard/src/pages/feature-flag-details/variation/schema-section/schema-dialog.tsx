@@ -308,7 +308,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
                     </span>
                   </div>
                   {!result.passed && result.detail && (
-                    <span className="truncate max-w-[500px] text-gray-500">
+                    <span className="max-w-[500px] break-words text-gray-500">
                       {result.detail}
                     </span>
                   )}

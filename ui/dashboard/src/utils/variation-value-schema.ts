@@ -113,12 +113,49 @@ export interface ValueValidationResult {
   detail?: string;
 }
 
+// Caps keep the detail usable in a single-line inline form error; a badly
+// broken document can produce dozens of AJV errors.
+const MAX_DETAIL_ERRORS = 3;
+const MAX_ALLOWED_VALUES = 5;
+
+// AJV's default messages omit specifics it collects in error.params (which
+// additional property is present, which values an enum allows), so append
+// them to make the error actionable without re-reading the schema.
+const formatAjvError = (error: ErrorObject): string => {
+  let message = error.message ?? '';
+  if (
+    error.keyword === 'additionalProperties' &&
+    typeof error.params.additionalProperty === 'string'
+  ) {
+    message += ` ('${error.params.additionalProperty}')`;
+  } else if (
+    error.keyword === 'enum' &&
+    Array.isArray(error.params.allowedValues)
+  ) {
+    const allowed = error.params.allowedValues as unknown[];
+    const shown = allowed
+      .slice(0, MAX_ALLOWED_VALUES)
+      .map(value => JSON.stringify(value))
+      .join(', ');
+    const more =
+      allowed.length > MAX_ALLOWED_VALUES
+        ? `, +${allowed.length - MAX_ALLOWED_VALUES} more`
+        : '';
+    message += `: ${shown}${more}`;
+  }
+  return `${error.instancePath || '/'} ${message}`.trim();
+};
+
 const formatAjvErrors = (
   errors: ErrorObject[] | null | undefined
 ): string | undefined => {
-  const error = errors?.[0];
-  if (!error) return undefined;
-  return `${error.instancePath || '/'} ${error.message ?? ''}`.trim();
+  if (!errors || errors.length === 0) return undefined;
+  const shown = errors.slice(0, MAX_DETAIL_ERRORS).map(formatAjvError);
+  const more =
+    errors.length > MAX_DETAIL_ERRORS
+      ? ` (+${errors.length - MAX_DETAIL_ERRORS} more)`
+      : '';
+  return shown.join('; ') + more;
 };
 
 // Returns a value validator, or null when client-side validation is not
