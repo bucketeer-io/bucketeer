@@ -35,6 +35,18 @@ type command struct {
 	srcPassword     *string
 	destPassword    *string
 	overrideDestKey *bool
+
+	srcTLSEnabled            *bool
+	srcTLSCACert             *string
+	srcTLSCert               *string
+	srcTLSKey                *string
+	srcTLSInsecureSkipVerify *bool
+
+	destTLSEnabled            *bool
+	destTLSCACert             *string
+	destTLSCert               *string
+	destTLSKey                *string
+	destTLSInsecureSkipVerify *bool
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -48,6 +60,46 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		overrideDestKey: cmd.Flag("override-dest-key", "Override existing keys in the destination Redis").
 			Default("false").
 			Bool(),
+		srcTLSEnabled: cmd.Flag(
+			"src-tls-enabled",
+			"Enable TLS when connecting to the source Redis server.",
+		).Default("false").Bool(),
+		srcTLSCACert: cmd.Flag(
+			"src-tls-ca-cert",
+			"Path to the source Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		srcTLSCert: cmd.Flag(
+			"src-tls-cert",
+			"Path to the source Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		srcTLSKey: cmd.Flag(
+			"src-tls-key",
+			"Path to the source Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		srcTLSInsecureSkipVerify: cmd.Flag(
+			"src-tls-insecure-skip-verify",
+			"Skip source Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
+		destTLSEnabled: cmd.Flag(
+			"dest-tls-enabled",
+			"Enable TLS when connecting to the destination Redis server.",
+		).Default("false").Bool(),
+		destTLSCACert: cmd.Flag(
+			"dest-tls-ca-cert",
+			"Path to the destination Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		destTLSCert: cmd.Flag(
+			"dest-tls-cert",
+			"Path to the destination Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		destTLSKey: cmd.Flag(
+			"dest-tls-key",
+			"Path to the destination Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		destTLSInsecureSkipVerify: cmd.Flag(
+			"dest-tls-insecure-skip-verify",
+			"Skip destination Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -61,6 +113,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		v3.WithMinIdleConns(5),
 		v3.WithMaxRetries(3),
 		v3.WithDialTimeout(10*time.Second),
+		v3.WithTLS(v3.TLSConfig{
+			Enabled:            *c.srcTLSEnabled,
+			CACert:             *c.srcTLSCACert,
+			Cert:               *c.srcTLSCert,
+			Key:                *c.srcTLSKey,
+			InsecureSkipVerify: *c.srcTLSInsecureSkipVerify,
+		}),
 	)
 	if err != nil {
 		logger.Error("Error creating source Redis client", zap.Error(err))
@@ -75,6 +134,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		v3.WithMinIdleConns(5),
 		v3.WithMaxRetries(3),
 		v3.WithDialTimeout(10*time.Second),
+		v3.WithTLS(v3.TLSConfig{
+			Enabled:            *c.destTLSEnabled,
+			CACert:             *c.destTLSCACert,
+			Cert:               *c.destTLSCert,
+			Key:                *c.destTLSKey,
+			InsecureSkipVerify: *c.destTLSInsecureSkipVerify,
+		}),
 	)
 	if err != nil {
 		logger.Error("Error creating destination Redis client", zap.Error(err))
