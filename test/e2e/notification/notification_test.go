@@ -99,6 +99,8 @@ func TestAdminNotificationLifecycle(t *testing.T) {
 	assert.True(t, containsNotificationID(listDraftsResp.Notifications, notificationID),
 		"expected draft %q to be in ListDraftAdminNotifications", notificationID)
 
+	time.Sleep(1 * time.Second) // Avoid a same-second no-op update
+
 	// Update the draft's localizations.
 	updatedTitle := title + "-updated"
 	updateResp, err := admin.UpdateAdminNotification(ctx, &proto.UpdateAdminNotificationRequest{
