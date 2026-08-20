@@ -27,7 +27,8 @@ var (
 		err.NewErrorInvalidArgEmpty(err.TagPackageName, "entity_type must be specified", "EntityType"),
 	)
 	statusTagInUsed = api.NewGRPCStatus(
-		err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use"))
+		err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use").
+			WithMessageKey("TagInUse"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "cursor is invalid", "Cursor"),
 	)
