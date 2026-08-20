@@ -175,10 +175,10 @@ const (
 
 // subscription notifications
 const (
-	NotificationFeatureStale       = "NotificationFeatureStale"
-	NotificationExperimentRunning  = "NotificationExperimentRunning"
-	NotificationExperimentDaysLeft = "NotificationExperimentDaysLeft"
-	NotificationMAUCount           = "NotificationMAUCount"
+	NotificationFeatureStaleTemplate       = "NotificationFeatureStale"
+	NotificationExperimentRunning          = "NotificationExperimentRunning"
+	NotificationExperimentDaysLeftTemplate = "NotificationExperimentDaysLeft"
+	NotificationMAUCountTemplate           = "NotificationMAUCount"
 )
 
 func init() {

@@ -275,7 +275,7 @@ func (n *slackNotifier) createFeatureStaleAttachment(
 		featureListMsg = featureListMsg + newLine
 	}
 	msg := localizer.MustLocalizeWithTemplate(
-		locale.NotificationFeatureStale,
+		locale.NotificationFeatureStaleTemplate,
 		strconv.Itoa(featuredomain.SecondsToStale/24/60/60),
 	)
 	attachment := &slack.Attachment{
@@ -307,7 +307,7 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 		}
 		nameLink := fmt.Sprintf(linkTemplate, url, e.Name)
 		daysLeft := localizer.MustLocalizeWithTemplate(
-			locale.NotificationExperimentDaysLeft,
+			locale.NotificationExperimentDaysLeftTemplate,
 			fmt.Sprintf("`%d`", lastDays(now, time.Unix(e.StopAt, 0))),
 		)
 		newLine := fmt.Sprintf("- %s, Name: *%s*\n", daysLeft, nameLink)
@@ -330,7 +330,7 @@ func (n *slackNotifier) createMAUCountAttachment(
 	localizer locale.Localizer,
 ) (*slack.Attachment, error) {
 	msg := localizer.MustLocalizeWithTemplate(
-		locale.NotificationMAUCount,
+		locale.NotificationMAUCountTemplate,
 		strconv.Itoa(int(notification.Month)),
 	)
 	p := message.NewPrinter(language.English)
