@@ -1,0 +1,152 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'i18n';
+import { Mail } from 'lucide-react';
+import Button from 'components/button';
+import Pagination from 'components/pagination';
+import Spinner from 'components/spinner';
+import { NoResultsCollection } from 'elements/collection/collection-empty';
+import EmptyState from 'elements/empty-state';
+import {
+  useFetchFeed,
+  useMarkAsRead,
+  useMarkManyAsRead
+} from '../collection-loader/use-fetch-notifications';
+import { FeedNotification, NotificationFilters } from '../types';
+import NotificationRow from './notification-row';
+
+const PAGE_SIZE = 10;
+
+interface NotificationListProps {
+  read?: boolean;
+  filters: NotificationFilters;
+  onSelect?: (notification: FeedNotification) => void;
+  onClearFilters?: () => void;
+}
+
+const NotificationList = ({
+  read = true,
+  filters,
+  onSelect,
+  onClearFilters
+}: NotificationListProps) => {
+  const { t } = useTranslation(['common', 'message']);
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setPage(1);
+    setSelected(new Set());
+  }, [read, filters.searchQuery, filters.sort, filters.from, filters.to]);
+
+  const { data, isLoading } = useFetchFeed(
+    read ? 'READ' : 'UNREAD',
+    page,
+    filters
+  );
+  const markAsRead = useMarkAsRead();
+  const markManyAsRead = useMarkManyAsRead();
+
+  const items = data?.notifications ?? [];
+  const total = Number(data?.totalCount ?? 0);
+
+  const toggle = (id: string, isSelected: boolean) =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (isSelected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  const clearSelection = () => setSelected(new Set());
+
+  const markSelectedAsRead = () =>
+    markManyAsRead.mutate([...selected], {
+      onSuccess: () => clearSelection()
+    });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    const isFiltered = !!filters.searchQuery || !!filters.from || !!filters.to;
+    return (
+      <div className="py-10">
+        {isFiltered ? (
+          <NoResultsCollection onClear={onClearFilters} />
+        ) : (
+          <EmptyState.Root variant="no-data" size="lg">
+            <EmptyState.Illustration />
+            <EmptyState.Body>
+              <EmptyState.Title>
+                {t(read ? 'no-read-notifications' : 'no-unread-notifications')}
+              </EmptyState.Title>
+              <EmptyState.Description>
+                {t(
+                  read
+                    ? 'no-read-notifications-desc'
+                    : 'no-unread-notifications-desc'
+                )}
+              </EmptyState.Description>
+            </EmptyState.Body>
+          </EmptyState.Root>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
+        {items.map(notification => (
+          <NotificationRow
+            key={notification.id}
+            notification={notification}
+            selectable={!read}
+            selected={selected.has(notification.id)}
+            onSelectedChange={value => toggle(notification.id, value)}
+            onClick={() => {
+              if (!notification.read) markAsRead.mutate(notification.id);
+              onSelect?.(notification);
+            }}
+          />
+        ))}
+      </div>
+
+      {!read && selected.size > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="typo-para-medium text-gray-700">
+              {t('selected', { count: selected.size })}
+            </span>
+            <Button variant="text" size="sm" onClick={clearSelection}>
+              {t('clear-selection')}
+            </Button>
+          </div>
+          <Button
+            variant="secondary-2"
+            size="sm"
+            onClick={markSelectedAsRead}
+            loading={markManyAsRead.isPending}
+          >
+            <Mail size={16} />
+            {t('mark-selected-as-read')}
+          </Button>
+        </div>
+      )}
+
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        totalCount={total}
+        onChange={setPage}
+      />
+    </div>
+  );
+};
+
+export default NotificationList;

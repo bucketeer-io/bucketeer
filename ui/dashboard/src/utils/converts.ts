@@ -41,6 +41,10 @@ export const truncateBySide = (
   return `...${_value}`;
 };
 
+export const formatCappedCount = (count: number, max: number = 99) => {
+  return count > max ? `${max}+` : count;
+};
+
 export const formatFileSize = (size: number): string => {
   if (size === 0) return '0 Bytes';
 

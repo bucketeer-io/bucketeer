@@ -9,6 +9,7 @@ export type ConfirmModalProps = {
   title: string;
   description: React.ReactElement | string;
   loading?: boolean;
+  submitText?: string;
   onClose: () => void;
   onSubmit: () => void;
 };
@@ -19,6 +20,7 @@ const ConfirmModal = ({
   title,
   description,
   loading,
+  submitText,
   onClose,
   onSubmit
 }: ConfirmModalProps) => {
@@ -40,7 +42,7 @@ const ConfirmModal = ({
       <ButtonBar
         secondaryButton={
           <Button loading={loading} onClick={onSubmit} disabled={disabled}>
-            {t(`submit`)}
+            {submitText ?? t(`submit`)}
           </Button>
         }
         primaryButton={
