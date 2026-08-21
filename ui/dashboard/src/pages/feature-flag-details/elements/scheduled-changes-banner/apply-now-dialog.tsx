@@ -42,7 +42,7 @@ const ApplyNowDialog = ({ schedule, isOpen, onClose }: ApplyNowDialogProps) => {
       onClose={onClose}
     >
       <div className="flex flex-col w-full items-center px-5 py-8 gap-y-4">
-        <p className="typo-para-big text-gray-700 text-center">
+        <p className="typo-para-big text-gray-700 dark:text-dark-gray-300 text-center">
           <Trans
             i18nKey="form:feature-flags.apply-now-confirm"
             values={{ datetime: formatScheduledDate(schedule.scheduledAt) }}

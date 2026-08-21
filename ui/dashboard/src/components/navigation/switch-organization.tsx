@@ -32,9 +32,9 @@ const OrganizationItem = ({
 }) => (
   <div
     className={cn(
-      'flex items-center justify-between gap-x-2 px-3 py-2 text-gray-600 rounded-lg typo-para-medium cursor-pointer hover:bg-primary-400 hover:text-white',
+      'flex items-center justify-between gap-x-2 px-3 py-2 text-gray-600 dark:text-dark-gray-200 rounded-lg typo-para-medium cursor-pointer hover:bg-primary-400 hover:text-white dark:hover:bg-dark-black-700 dark:hover:text-white',
       {
-        'bg-primary-400 text-white': active,
+        'bg-primary-400 text-white dark:bg-dark-black-700': active,
         '!pointer-events-none': isLoading
       }
     )}
@@ -164,7 +164,7 @@ const SwitchOrganization = ({
     <div
       ref={menuRef}
       className={cn(
-        'absolute z-50 top-0 left-[248px] w-[238px] h-screen bg-primary-100 transition-all duration-300',
+        'absolute z-50 top-0 left-[248px] w-[238px] h-screen bg-primary-100 dark:bg-dark-black-800 transition-all duration-300',
         {
           'w-0 [&>div]:px-0 opacity-0': !isOpen
         }
@@ -178,22 +178,24 @@ const SwitchOrganization = ({
           }
         )}
       >
-        <SearchInput
-          variant="secondary"
-          placeholder={`${t('form:placeholder-search')}`}
-          name="switch-org-search"
-          value={searchValue}
-          onChange={value => onSearchOrganization(value)}
-        />
+        <div className="[&_input]:dark:bg-dark-black-700 [&_input]:dark:border-dark-purple-100 [&_input]:dark:text-white [&_input]:dark:placeholder-dark-gray-100">
+          <SearchInput
+            variant="secondary"
+            placeholder={`${t('form:placeholder-search')}`}
+            name="switch-org-search"
+            value={searchValue}
+            onChange={value => onSearchOrganization(value)}
+          />
+        </div>
         {searchValue && !organizations?.length ? (
           <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
-            <div className="typo-para-medium text-gray-500">
+            <div className="typo-para-medium text-gray-500 dark:text-dark-gray-100">
               {t(`navigation.no-organizations`)}
             </div>
           </div>
         ) : (
           <>
-            <h3 className="typo-para-medium text-gray-600 whitespace-nowrap">
+            <h3 className="typo-para-medium text-gray-600 dark:text-dark-gray-100 whitespace-nowrap">
               {t('switch-organization')}
             </h3>
             <div className="flex flex-col gap-y-[1px]">

@@ -28,15 +28,19 @@ const PageHeader = ({
         })}
       >
         <div className="flex items-center gap-2">
-          <h1 className="text-gray-900 typo-head-bold-huge">{title}</h1>
+          <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge">
+            {title}
+          </h1>
           {createdAt && <CreatedAtTime createdAt={createdAt} />}
         </div>
-        <div className="flex items-center gap-4 text-gray-500">
+        <div className="flex items-center gap-4 text-gray-500 dark:text-dark-gray-200">
           {isShowApiEndpoint && <SDKApiEndpoint />}
           <SupportPopover />
         </div>
       </div>
-      <p className="text-gray-600 mt-3 typo-para-small">{description}</p>
+      <p className="text-gray-600 dark:text-dark-gray-200 mt-3 typo-para-small">
+        {description}
+      </p>
     </PageLayout.Header>
   );
 };

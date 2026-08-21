@@ -20,7 +20,7 @@ const Operation = ({
   onActions
 }: Props) => {
   return (
-    <div className="flex flex-col p-5 shadow-card rounded-lg bg-white gap-y-4">
+    <div className="flex flex-col p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 gap-y-4">
       <OperationStatus
         operation={operation}
         isFinished={isFinished}

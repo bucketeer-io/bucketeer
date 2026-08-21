@@ -202,27 +202,31 @@ const MyProjects = () => {
     <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
       <Popover.Portal>
         <Popover.Content align="start" className="border-none mt-2 z-20">
-          <div className="w-[600px] bg-white rounded-lg shadow-menu">
+          <div className="w-[600px] bg-white dark:bg-dark-black-800 rounded-lg shadow-menu dark:shadow-none dark:ring-1 dark:ring-dark-purple-200">
             <div className="flex items-center justify-between px-5 py-4">
-              <h1 className="typo-head-bold-huge text-gray-900 capitalize">
+              <h1 className="typo-head-bold-huge text-gray-900 dark:text-white capitalize">
                 {t(`navigation.my-projects`)}
               </h1>
               <Popover.Close>
                 <Icon icon={IconCloseRound} size="sm" color="gray-500" />
               </Popover.Close>
             </div>
-            <Divider />
+            <Divider className="dark:border-dark-purple-100" />
             <div className="p-5">
-              <SearchInput
-                name="my-project-search"
-                placeholder={t(`search`)}
-                value={searchValue}
-                onChange={onSearchProject}
-              />
+              <div className="[&_input]:dark:bg-dark-black-700 [&_input]:dark:border-dark-purple-100 [&_input]:dark:text-white [&_input]:dark:placeholder-dark-gray-100">
+                <SearchInput
+                  name="my-project-search"
+                  placeholder={t(`search`)}
+                  value={searchValue}
+                  onChange={onSearchProject}
+                />
+              </div>
               {projects && projects?.length > 0 ? (
                 <div className="mt-5 grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-3">
-                    <List.Title>{t(`projects`)}</List.Title>
+                    <List.Title className="dark:text-dark-gray-200">
+                      {t(`projects`)}
+                    </List.Title>
                     <ScrollArea className="h-[120px] pr-2">
                       <List
                         items={
@@ -238,7 +242,9 @@ const MyProjects = () => {
                     </ScrollArea>
                   </div>
                   <div className="flex flex-col gap-3">
-                    <List.Title>{t(`environments`)}</List.Title>
+                    <List.Title className="dark:text-dark-gray-200">
+                      {t(`environments`)}
+                    </List.Title>
                     <ScrollArea className="h-[120px] pr-2">
                       <List
                         items={
@@ -258,7 +264,7 @@ const MyProjects = () => {
               ) : (
                 <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
                   <IconNoData />
-                  <div className="typo-para-medium text-gray-500">
+                  <div className="typo-para-medium text-gray-500 dark:text-dark-gray-100">
                     {t(`navigation.no-projects`)}
                   </div>
                 </div>
@@ -270,9 +276,9 @@ const MyProjects = () => {
       <Popover.Trigger className="w-full">
         <div
           className={cn(
-            'flex items-center w-full text-primary-50 hover:bg-primary-400',
+            'flex items-center w-full text-primary-50 dark:text-white hover:bg-primary-400 dark:hover:bg-dark-purple-100',
             'pl-3 pr-1.5 py-3 rounded-lg typo-para-medium justify-between',
-            { 'bg-primary-400': isShowProjectsList }
+            { 'bg-primary-400 dark:bg-dark-purple-200/20': isShowProjectsList }
           )}
         >
           <div className="flex items-center gap-x-2 truncate">

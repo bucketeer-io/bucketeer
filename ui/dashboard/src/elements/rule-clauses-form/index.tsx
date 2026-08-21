@@ -221,14 +221,16 @@ const RuleClausesForm = ({
                 className={cn(
                   'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
                   {
-                    'bg-accent-pink-50 text-accent-pink-500': type === 'if',
-                    'bg-gray-200 text-gray-600': type === 'and'
+                    'bg-accent-pink-50 text-accent-pink-500 dark:bg-accent-pink-900/30':
+                      type === 'if',
+                    'bg-gray-200 text-gray-600 dark:bg-dark-black-700 dark:text-dark-gray-200':
+                      type === 'and'
                   }
                 )}
               >
                 {type === 'if' ? t('common:if') : t('common:and')}
               </div>
-              <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 gap-x-4">
+              <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 dark:border-dark-purple-300 gap-x-4">
                 <div
                   className={cn(
                     'grid grid-cols-4 items-end w-full gap-x-4 max-w-full',
@@ -401,7 +403,7 @@ const RuleClausesForm = ({
                                 alignContent="start"
                               />
                             ) : isEmptySegment ? (
-                              <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
+                              <div className="flex items-end mb-4 h-full typo-para-small text-gray-700 dark:text-dark-gray-400">
                                 <Trans
                                   i18nKey={'message:empty-segment'}
                                   components={{
@@ -410,7 +412,7 @@ const RuleClausesForm = ({
                                         target="_blank"
                                         to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`}
                                         className={cn(
-                                          'text-primary-500 underline',
+                                          'text-primary-500 dark:text-dark-purple-400 underline',
                                           {
                                             'mx-1': !isLanguageJapanese
                                           }
@@ -531,7 +533,7 @@ const RuleClausesForm = ({
                                             key={item.id}
                                             target="_blank"
                                             to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${item.id}`}
-                                            className="typo-para-small text-primary-500 hover:underline truncate w-fit max-w-full"
+                                            className="typo-para-small text-primary-500 dark:text-dark-purple-400 hover:underline truncate w-fit max-w-full"
                                           >
                                             {`${item.name} (${getSegmentSummary(item, t)})`}
                                           </Link>
@@ -596,7 +598,7 @@ const RuleClausesForm = ({
                     type="button"
                     disabled={formatClauses?.length <= 1}
                     variant={'grey'}
-                    className="flex-center text-gray-500 hover:text-gray-600 size-fit p-0"
+                    className="flex-center text-gray-500 hover:text-gray-600 dark:text-dark-gray-200 dark:hover:text-dark-gray-400 size-fit p-0"
                     onClick={() => remove(clauseIndex)}
                   >
                     <Icon icon={IconTrash} size={'sm'} />
