@@ -3,6 +3,10 @@
   "validation": {
     "must-be-number": "This must be a number",
     "must-be-json": "This must be a JSON",
+    "value-schema-violation": "This value doesn't match the flag's value schema",
+    "value-schema-enum-not-number": "All allowed values must be numbers",
+    "value-schema-invalid-regex": "The pattern is not a valid RE2 regular expression",
+    "value-schema-invalid-json-schema": "The document is not a valid JSON Schema",
     "must-be-yaml": "This must be a YAML",
     "must-be-unique": "This must be unique",
     "max-length-number": "The maximum length for this field is {{count}} numbers.",

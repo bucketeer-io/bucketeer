@@ -19,6 +19,7 @@ import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elem
 import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
 import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -78,6 +79,16 @@ const Variations = ({
   });
 
   const offVariation = watch('offVariation');
+  const valueSchema = watch('variationValueSchema');
+
+  const enumValueOptions = useMemo(() => {
+    if (valueSchema?.type !== 'ENUM') return null;
+    return (valueSchema.enumValidator?.values ?? []).map(value => ({
+      // Keep empty-string values visible and selectable in the dropdown.
+      label: value === '' ? '""' : value,
+      value
+    }));
+  }, [valueSchema]);
 
   const isBoolean = useMemo(
     () => feature.variationType === 'BOOLEAN',
@@ -293,18 +304,41 @@ const Variations = ({
                             {t('form:feature-flags.value')}
                           </Form.Label>
                           <Form.Control>
-                            <Input
-                              {...field}
-                              onChange={value => {
-                                field.onChange(value);
-                                reValidVariation();
-                              }}
-                              disabled={
-                                isBoolean || isRunningExperiment || !editable
-                              }
-                              placeholder={t('form:feature-flags.value')}
-                              className="px-3"
-                            />
+                            {enumValueOptions ? (
+                              <Dropdown
+                                options={enumValueOptions}
+                                value={field.value}
+                                // Resolve the label through the options so an
+                                // empty-string value shows as '""' instead of
+                                // falling back to the placeholder.
+                                labelCustom={
+                                  enumValueOptions.find(
+                                    option => option.value === field.value
+                                  )?.label
+                                }
+                                onChange={value => {
+                                  field.onChange(String(value));
+                                  reValidVariation();
+                                }}
+                                disabled={
+                                  isBoolean || isRunningExperiment || !editable
+                                }
+                                placeholder={t('form:feature-flags.value')}
+                              />
+                            ) : (
+                              <Input
+                                {...field}
+                                onChange={value => {
+                                  field.onChange(value);
+                                  reValidVariation();
+                                }}
+                                disabled={
+                                  isBoolean || isRunningExperiment || !editable
+                                }
+                                placeholder={t('form:feature-flags.value')}
+                                className="px-3"
+                              />
+                            )}
                           </Form.Control>
                           <Form.Message />
                         </Form.Item>
