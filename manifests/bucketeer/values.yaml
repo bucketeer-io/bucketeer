@@ -83,6 +83,24 @@ global:
       partitionCount: 16
       # Idle time in seconds for pending message reclaim
       idleTime: 600
+      # TLS configuration, for connecting to a TLS-enabled Redis/Valkey
+      # deployment (e.g. AWS ElastiCache/MemoryDB with in-transit encryption).
+      tlsEnabled: false
+      # Path inside the container to a PEM-encoded CA certificate. Leave
+      # empty to use the system CA pool (sufficient for AWS ElastiCache).
+      tlsCACert: ""
+      tlsCert: ""
+      tlsKey: ""
+      tlsInsecureSkipVerify: false
+      # Existing secret holding Redis/Valkey TLS client materials (CA cert,
+      # client cert/key for mutual TLS). Mounted read-only at
+      # /usr/local/certs/redis in every service, so tlsCACert/tlsCert/tlsKey
+      # above (and the equivalent persistent/non-persistent redis TLS paths
+      # in each chart's values.yaml) can reference files under that path.
+      # Shared across every redis block, not just pubsub redis. Only needed
+      # when those paths point inside this secret; AWS ElastiCache/MemoryDB
+      # with a publicly-trusted CA needs only tlsEnabled: true and no secret.
+      tlsSecretName: ""
     # PubSub emulator host (for local development)
     emulatorHost: ""
     # Google Cloud project ID
