@@ -553,6 +553,7 @@
   "notification-title-placeholder": "通知のタイトル",
   "languages": "言語",
   "languages-info": "各言語の翻訳を追加します。閲覧者にはコンソールの言語で表示され、なければ英語で表示されます。",
+  "languages-info-view": "この通知は以下の言語でご利用いただけます。",
   "add-language": "言語を追加",
   "remove-language": "言語を削除",
   "content": "内容",

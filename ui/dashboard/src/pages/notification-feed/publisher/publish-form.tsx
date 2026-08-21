@@ -4,7 +4,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { getLanguage, Language, useTranslation } from 'i18n';
-import { IconEnglishFlag, IconJapanFlag } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
@@ -13,6 +12,7 @@ import {
   useSaveDraft,
   useUpdateNotification
 } from '../collection-loader/use-fetch-notifications';
+import { FORM_LANGUAGES, LANGUAGE_META } from '../language-meta';
 import {
   NotificationDetail,
   NotificationLocalizationInput,
@@ -23,22 +23,6 @@ import { formSchema, PublishFormValues } from './form-schema';
 import LanguageTabs from './language-tabs';
 import MarkdownEditor from './markdown-editor';
 import TagSelect from './tag-select';
-
-const LANGUAGE_META = {
-  [Language.ENGLISH]: {
-    label: 'English',
-    englishName: 'English',
-    icon: IconEnglishFlag
-  },
-  [Language.JAPANESE]: {
-    label: '日本語',
-    englishName: 'Japanese',
-    icon: IconJapanFlag
-  }
-};
-
-// Languages the form can author, in the order they appear in the add menu.
-const FORM_LANGUAGES: Language[] = [Language.ENGLISH, Language.JAPANESE];
 
 const emptyLocalization = (
   language: string

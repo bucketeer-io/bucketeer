@@ -1,4 +1,3 @@
-import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
 import { X } from 'lucide-react';
 import { cn } from 'utils/style';
@@ -7,16 +6,11 @@ import Button from 'components/button';
 import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import { LanguageMeta } from '../language-meta';
 
 export interface LanguageTabField {
   id: string;
   language: string;
-}
-
-interface LanguageMeta {
-  label: string;
-  englishName: string;
-  icon: FunctionComponent;
 }
 
 interface LanguageTabsProps {
@@ -28,6 +22,8 @@ interface LanguageTabsProps {
   onSelect: (language: string) => void;
   onAdd: (language: string) => void;
   onRemove: (index: number, language: string) => void;
+  readOnly?: boolean;
+  tooltipContent?: string;
 }
 
 const LanguageTabs = ({
@@ -38,7 +34,9 @@ const LanguageTabs = ({
   languageMeta,
   onSelect,
   onAdd,
-  onRemove
+  onRemove,
+  readOnly = false,
+  tooltipContent
 }: LanguageTabsProps) => {
   const { t } = useTranslation(['form']);
 
@@ -52,7 +50,7 @@ const LanguageTabs = ({
           {t('form:languages')}
         </label>
         <Tooltip
-          content={t('form:languages-info')}
+          content={tooltipContent ?? t('form:languages-info')}
           trigger={
             <span className="flex text-gray-400">
               <Icon icon={IconInfo} size="xxs" />
@@ -83,7 +81,7 @@ const LanguageTabs = ({
                 )}
                 {label(field.language)}
               </Button>
-              {canRemove && (
+              {!readOnly && canRemove && (
                 <Button
                   type="button"
                   variant="text"
@@ -98,17 +96,19 @@ const LanguageTabs = ({
           ))}
         </div>
 
-        <Dropdown
-          className="w-[200px] py-[11px]"
-          disabled={availableToAdd.length <= 0}
-          placeholder={t('form:add-language')}
-          options={availableToAdd.map(lang => ({
-            value: lang,
-            label: `${label(lang)} (${languageMeta[lang]?.englishName ?? lang})`,
-            icon: icon(lang)
-          }))}
-          onChange={value => onAdd(String(value))}
-        />
+        {!readOnly && (
+          <Dropdown
+            className="w-[200px] py-[11px]"
+            disabled={availableToAdd.length <= 0}
+            placeholder={t('form:add-language')}
+            options={availableToAdd.map(lang => ({
+              value: lang,
+              label: `${label(lang)} (${languageMeta[lang]?.englishName ?? lang})`,
+              icon: icon(lang)
+            }))}
+            onChange={value => onAdd(String(value))}
+          />
+        )}
       </div>
     </div>
   );

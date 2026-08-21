@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useToast } from 'hooks';
-import { useTranslation } from 'i18n';
+import { getLanguage, useTranslation } from 'i18n';
 import { Pencil, Send } from 'lucide-react';
 import { formatLongDateTime, useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
@@ -8,7 +8,13 @@ import Button from 'components/button';
 import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
 import { usePublishDraft } from '../collection-loader/use-fetch-notifications';
-import { NotificationDetail, NotificationStatus } from '../types';
+import { LANGUAGE_META } from '../language-meta';
+import LanguageTabs from '../publisher/language-tabs';
+import {
+  NotificationDetail,
+  NotificationLocalizationInput,
+  NotificationStatus
+} from '../types';
 import { MarkdownContent } from './markdown-content';
 import TagChip from './tag-chip';
 
@@ -78,6 +84,34 @@ const NotificationDetailModal = ({
   const { notify, errorNotify } = useToast();
   const publishMutation = usePublishDraft();
 
+  const localizations: NotificationLocalizationInput[] = useMemo(() => {
+    if (notification?.localizations?.length) return notification.localizations;
+    if (!notification) return [];
+    return [
+      {
+        language: getLanguage(),
+        title: notification.title,
+        content: notification.content,
+        tags: notification.tags
+      }
+    ];
+  }, [notification]);
+
+  const [activeLanguage, setActiveLanguage] = useState<string>(() =>
+    getLanguage()
+  );
+
+  useEffect(() => {
+    if (!localizations.length) return;
+    setActiveLanguage(current => {
+      if (localizations.some(l => l.language === current)) return current;
+      const preferred = getLanguage();
+      return localizations.some(l => l.language === preferred)
+        ? preferred
+        : localizations[0].language;
+    });
+  }, [localizations]);
+
   if (!isOpen) return null;
 
   if (isError) {
@@ -107,6 +141,8 @@ const NotificationDetailModal = ({
 
   const isDraft = notification.status === NotificationStatus.DRAFT;
   const timestamp = isDraft ? notification.updatedAt : notification.publishedAt;
+  const activeLocalization =
+    localizations.find(l => l.language === activeLanguage) ?? localizations[0];
 
   const onPublish = () => {
     publishMutation.mutate(notification.id, {
@@ -119,9 +155,31 @@ const NotificationDetailModal = ({
   };
 
   return (
-    <SlideModal title={notification.title} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={activeLocalization.title}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
+          {localizations.length > 1 && (
+            <LanguageTabs
+              fields={localizations.map(l => ({
+                id: l.language,
+                language: l.language
+              }))}
+              activeLanguage={activeLanguage}
+              availableToAdd={[]}
+              canRemove={false}
+              readOnly
+              languageMeta={LANGUAGE_META}
+              tooltipContent={t('form:languages-info-view')}
+              onSelect={setActiveLanguage}
+              onAdd={() => {}}
+              onRemove={() => {}}
+            />
+          )}
+
           <div className="flex items-center gap-2">
             <TagChip
               tag={{
@@ -136,16 +194,16 @@ const NotificationDetailModal = ({
             </span>
           </div>
 
-          {notification.tags.length > 0 && (
+          {activeLocalization.tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              {notification.tags.map(tag => (
+              {activeLocalization.tags.map(tag => (
                 <TagChip key={tag.name} tag={tag} />
               ))}
             </div>
           )}
 
           <Section title={t('form:content')}>
-            <MarkdownContent source={notification.content} />
+            <MarkdownContent source={activeLocalization.content} />
           </Section>
 
           <Section

@@ -554,6 +554,7 @@
   "mention": "Mention",
   "languages": "Languages",
   "languages-info": "Add a translation for each language. Viewers see the notification in their console language, falling back to English.",
+  "languages-info-view": "This notification is available in the following languages.",
   "add-language": "Add language",
   "remove-language": "Remove language",
   "content": "Content",
