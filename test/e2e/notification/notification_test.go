@@ -101,23 +101,30 @@ func TestAdminNotificationLifecycle(t *testing.T) {
 
 	time.Sleep(1 * time.Second) // Avoid a same-second no-op update
 
-	// Update the draft's localizations.
+	// Update the draft, keeping both languages for the editor view assertions.
 	updatedTitle := title + "-updated"
+	updatedTitleJa := title + "-ja-updated"
 	updateResp, err := admin.UpdateAdminNotification(ctx, &proto.UpdateAdminNotificationRequest{
 		Id: notificationID,
 		Localizations: []*proto.NotificationLocalization{
 			{Language: "en", Title: updatedTitle, Content: "Updated English content"},
+			{Language: "ja", Title: updatedTitleJa, Content: "更新した日本語のコンテンツ"},
 		},
 	})
 	require.NoError(t, err)
-	assert.Len(t, updateResp.Notification.Localizations, 1)
-	assert.Equal(t, updatedTitle, updateResp.Notification.Localizations[0].Title)
+	require.Len(t, updateResp.Notification.Localizations, 2)
+	assert.Equal(t, updatedTitle, localizationTitle(t, updateResp.Notification.Localizations, "en"))
+	assert.Equal(t, updatedTitleJa, localizationTitle(t, updateResp.Notification.Localizations, "ja"))
 
-	// The admin can read back all localizations of the draft.
+	// The admin gets the editor view: the resolved localization plus the full
+	// localization list, which viewers are denied below.
 	getResp, err := admin.GetNotification(ctx, &proto.GetNotificationRequest{Id: notificationID, Language: "en"})
 	require.NoError(t, err)
 	assert.Equal(t, proto.Notification_DRAFT, getResp.Notification.Status)
 	assert.Equal(t, updatedTitle, getResp.Notification.Localization.Title)
+	require.Len(t, getResp.Notification.Localizations, 2, "system admins must see the full localization list")
+	assert.Equal(t, updatedTitle, localizationTitle(t, getResp.Notification.Localizations, "en"))
+	assert.Equal(t, updatedTitleJa, localizationTitle(t, getResp.Notification.Localizations, "ja"))
 
 	// Publish the draft.
 	publishResp, err := admin.PublishAdminNotification(ctx, &proto.PublishAdminNotificationRequest{Id: notificationID})
@@ -154,14 +161,8 @@ func TestAdminNotificationLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, viewerGetResp.Notification.Read)
 
-	// MarkAllNotificationsAsRead and GetNotificationUnreadCount are callable by
-	// any authenticated user and must not error.
-	_, err = viewer.MarkAllNotificationsAsRead(ctx, &proto.MarkAllNotificationsAsReadRequest{})
-	require.NoError(t, err)
-
-	unreadResp, err := viewer.GetNotificationUnreadCount(ctx, &proto.GetNotificationUnreadCountRequest{})
-	require.NoError(t, err)
-	assert.GreaterOrEqual(t, unreadResp.Count, int64(0))
+	// The bulk read marker RPCs are covered by TestMarkAllNotificationsAsRead,
+	// which uses another account to keep the unread assertion above isolated.
 
 	// Delete the notification; a second delete must report NotFound.
 	_, err = admin.DeleteAdminNotification(ctx, &proto.DeleteAdminNotificationRequest{Id: notificationID})
@@ -169,6 +170,53 @@ func TestAdminNotificationLifecycle(t *testing.T) {
 
 	_, err = admin.DeleteAdminNotification(ctx, &proto.DeleteAdminNotificationRequest{Id: notificationID})
 	requireStatusCode(t, err, codes.NotFound, "delete already deleted notification")
+}
+
+// TestMarkAllNotificationsAsRead covers the bulk read marker RPCs, using the
+// environment viewer so that no other test's unread assertion is affected.
+func TestMarkAllNotificationsAsRead(t *testing.T) {
+	requireAccessToken(t, *sysAdminAccessTokenPath, "system admin")
+	requireAccessToken(t, *envViewerAccessTokenPath, "environment viewer")
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	admin := newNotificationClient(t, *sysAdminAccessTokenPath)
+	viewer := newNotificationClient(t, *envViewerAccessTokenPath)
+
+	title := fmt.Sprintf("e2e-notification-mark-all-%s", uniqueSuffix())
+	createResp, err := admin.CreateAdminNotification(ctx, &proto.CreateAdminNotificationRequest{
+		Localizations: []*proto.NotificationLocalization{
+			{Language: "en", Title: title, Content: "English content"},
+		},
+	})
+	require.NoError(t, err)
+	notificationID := createResp.Notification.Id
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), timeout)
+		defer cleanupCancel()
+		_, _ = admin.DeleteAdminNotification(cleanupCtx, &proto.DeleteAdminNotificationRequest{Id: notificationID})
+	})
+
+	_, err = admin.PublishAdminNotification(ctx, &proto.PublishAdminNotificationRequest{Id: notificationID})
+	require.NoError(t, err)
+
+	_, err = viewer.MarkAllNotificationsAsRead(ctx, &proto.MarkAllNotificationsAsReadRequest{})
+	require.NoError(t, err)
+
+	// Scoped to our own notification ID so that a concurrent run issuing the
+	// same bulk call cannot make this flaky.
+	getResp, err := viewer.GetNotification(ctx, &proto.GetNotificationRequest{Id: notificationID, Language: "en"})
+	require.NoError(t, err)
+	assert.True(t, getResp.Notification.Read,
+		"MarkAllNotificationsAsRead must cover the published notification %q", notificationID)
+
+	// The exact count depends on what other runs published, so only assert the
+	// RPC is callable.
+	unreadResp, err := viewer.GetNotificationUnreadCount(ctx, &proto.GetNotificationUnreadCountRequest{})
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, unreadResp.Count, int64(0))
 }
 
 // TestCreateAdminNotificationValidation checks the request validation rules
@@ -184,6 +232,17 @@ func TestCreateAdminNotificationValidation(t *testing.T) {
 		defer cancel()
 		_, err := admin.CreateAdminNotification(ctx, &proto.CreateAdminNotificationRequest{})
 		requireStatusCode(t, err, codes.InvalidArgument, "create with no localizations")
+	})
+
+	t.Run("missing language", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		_, err := admin.CreateAdminNotification(ctx, &proto.CreateAdminNotificationRequest{
+			Localizations: []*proto.NotificationLocalization{
+				{Title: "t1", Content: "c1"},
+			},
+		})
+		requireStatusCode(t, err, codes.InvalidArgument, "create with missing language")
 	})
 
 	t.Run("duplicated language", func(t *testing.T) {
@@ -207,6 +266,17 @@ func TestCreateAdminNotificationValidation(t *testing.T) {
 			},
 		})
 		requireStatusCode(t, err, codes.InvalidArgument, "create with missing title")
+	})
+
+	t.Run("missing content", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		_, err := admin.CreateAdminNotification(ctx, &proto.CreateAdminNotificationRequest{
+			Localizations: []*proto.NotificationLocalization{
+				{Language: "en", Title: "t1"},
+			},
+		})
+		requireStatusCode(t, err, codes.InvalidArgument, "create with missing content")
 	})
 }
 
@@ -282,6 +352,19 @@ func containsNotificationID(notifications []*proto.Notification, id string) bool
 		}
 	}
 	return false
+}
+
+// localizationTitle returns the title of the localization for language, and
+// fails the test when the language is missing from the list.
+func localizationTitle(t *testing.T, localizations []*proto.NotificationLocalization, language string) string {
+	t.Helper()
+	for _, l := range localizations {
+		if l.Language == language {
+			return l.Title
+		}
+	}
+	t.Fatalf("no localization for language %q", language)
+	return ""
 }
 
 func requireStatusCode(t *testing.T, err error, code codes.Code, op string) {
