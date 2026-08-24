@@ -1,6 +1,6 @@
 # Build on the host's native architecture and cross-compile for the target:
 # running the Go compiler under QEMU emulation takes ~10x longer.
-FROM --platform=$BUILDPLATFORM golang:1.25.8 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.7 AS builder
 ARG TARGETOS TARGETARCH
 
 WORKDIR /app

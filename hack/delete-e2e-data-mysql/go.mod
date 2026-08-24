@@ -1,6 +1,6 @@
 module github.com/bucketeer-io/bucketeer/hack/delete-e2e-data-mysql
 
-go 1.25.1
+go 1.26.7
 
 require (
 	github.com/bucketeer-io/bucketeer/v2 v2.1.1
