@@ -70,7 +70,7 @@ manifests/bucketeer/values.dev.yaml`.
 
 ```bash
 $DEVC 'kubectl get pods'   # everything Running/Completed, restarts not climbing
-$DEVC 'curl -sk https://web-gateway.bucketeer.io/health'   # must run INSIDE the container
+$DEVC 'curl -sk https://api-gateway.bucketeer.io/health'   # must run INSIDE the container
 ```
 
 The `*.bucketeer.io` hosts entries live in the container's `/etc/hosts`
