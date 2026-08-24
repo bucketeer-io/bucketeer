@@ -14,6 +14,7 @@ import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
+import NotificationBell from './notification-bell';
 import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
 
@@ -44,6 +45,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`projects`),
           icon: IconSystem.IconFolder,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
+        },
+        {
+          label: t(`navigation.notifications`),
+          icon: IconSystem.IconNotifications,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_NOTIFICATION_FEED}`
         }
       ])
     },
@@ -134,9 +140,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
     .map(item => item.href)
     .filter((href): href is string => !!href);
 
-  const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(
-    settingPaths.includes(pathname)
-  );
+  const [isOpenSetting, onOpenSetting, onCloseSetting, setIsOpenSetting] =
+    useToggleOpen(settingPaths.includes(pathname));
+
+  useEffect(() => {
+    setIsOpenSetting(settingPaths.includes(pathname));
+  }, [pathname]);
 
   // Keep the sliding settings panel in sync with programmatic navigation
   // (e.g. the walkthrough moving between the main and settings areas).
@@ -212,19 +221,22 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
         <div className="flex items-center justify-between">
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
-          <button
-            type="button"
-            onClick={() => {
-              onOpenSetting();
-              if (consoleAccount?.isSystemAdmin) {
-                navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
-              } else {
-                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`);
-              }
-            }}
-          >
-            <Icon icon={IconSystem.IconSetting} color="primary-50" />
-          </button>
+          <div className="flex items-center justify-center gap-2">
+            <NotificationBell envUrlCode={envUrlCode} />
+            <button
+              type="button"
+              onClick={() => {
+                onOpenSetting();
+                if (consoleAccount?.isSystemAdmin) {
+                  navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
+                } else {
+                  navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`);
+                }
+              }}
+            >
+              <Icon icon={IconSystem.IconSetting} color="primary-50" />
+            </button>
+          </div>
         </div>
       </div>
       <SwitchOrganization

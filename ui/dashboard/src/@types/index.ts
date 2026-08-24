@@ -7,6 +7,7 @@ export * from './collection';
 export * from './account';
 export * from './api-key';
 export * from './notification';
+export * from './notification-center';
 export * from './push';
 export * from './tag';
 export * from './goal';

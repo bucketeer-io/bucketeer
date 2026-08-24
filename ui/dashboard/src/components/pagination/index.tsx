@@ -10,6 +10,7 @@ export type PaginationProps = {
   page: number;
   pageSize?: number;
   totalCount: number;
+  className?: string;
   onChange: (page: number) => void;
 };
 
@@ -17,6 +18,7 @@ const Pagination = ({
   pageSize = LIST_PAGE_SIZE,
   totalCount,
   page,
+  className,
   onChange
 }: PaginationProps) => {
   const cursor = pageSize * (page - 1);
@@ -30,7 +32,7 @@ const Pagination = ({
   const endItem = Math.min(cursor + pageSize, totalCount);
 
   return (
-    <div className={cn('flex items-center justify-between')}>
+    <div className={cn('flex items-center justify-between', className)}>
       {totalCount > 0 && (
         <PaginationCount
           totalItems={totalCount}
