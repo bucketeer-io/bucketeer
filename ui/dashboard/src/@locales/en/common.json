@@ -219,6 +219,8 @@
   "and": "AND",
   "or": "OR",
   "see-more": "See more",
+  "show-count-user-segments_one": "{{count}} user segment selected",
+  "show-count-user-segments_other": "{{count}} user segments selected",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
   "sort-asc": "Ascending",
