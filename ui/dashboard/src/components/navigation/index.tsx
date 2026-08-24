@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import logoIcon from 'assets/logos/logo-icon.svg';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
@@ -19,7 +20,6 @@ import MyProjects from './my-projects';
 import NotificationBell from './notification-bell';
 import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
-import logoIcon from '/img/bucketeer-logo-icon.png';
 
 type NavigationProps = {
   onClickNavLink: () => void;
@@ -197,28 +197,29 @@ const Navigation = ({
             onClick={onCloseSetting}
             className={cn(
               'overflow-hidden',
-              isCollapsed && 'flex-center w-full'
+              isCollapsed && 'flex-center w-full',
+              isCollapsed && 'group-hover:pointer-events-none'
             )}
           >
             {isCollapsed ? (
               <img
                 src={logoIcon}
                 alt="Bucketeer"
-                className="w-11 h-11 shrink-0"
+                className="w-8 h-8 shrink-0"
               />
             ) : (
-              <img src={logo} alt="Bucketer" />
+              <img src={logo} alt="Bucketeer" />
             )}
           </Link>
           <button
             type="button"
             onClick={toggleCollapsed}
             className={cn(
-              'flex-center size-6 rounded-md text-primary-50 shrink-0',
+              'flex-center rounded-md text-primary-50 shrink-0',
               'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
               isCollapsed
-                ? 'absolute inset-0 mx-auto w-11 h-11 bg-primary-500/80 hover:bg-primary-400 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto'
-                : 'ml-auto hover:bg-primary-400'
+                ? 'absolute inset-0 m-auto size-8 bg-primary-400 hover:bg-primary-300 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto'
+                : 'size-6 ml-auto hover:bg-primary-400'
             )}
             aria-label={t(
               isCollapsed ? `navigation.expand` : `navigation.collapse`
