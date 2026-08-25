@@ -123,8 +123,8 @@ const PageContent = ({
         action={
           <>
             <Dropdown
-              className="w-[200px]"
-              wrapTriggerStyle="w-fit"
+              className="w-full sm:w-[200px]"
+              wrapTriggerStyle="w-full sm:w-fit"
               isTruncate={false}
               value={filters.sort}
               options={notificationSortOptions}
@@ -151,29 +151,31 @@ const PageContent = ({
         className="flex flex-1 flex-col"
       >
         <div
-          className={cn('p-6 grid grid-cols-1 gap-8', {
+          className={cn('p-3 sm:p-6 grid grid-cols-1 gap-8', {
             'lg:grid-cols-[1fr_360px]': filters.tab === 'publish'
           })}
         >
-          <div className="flex flex-col relative">
-            <div className="flex items-center justify-between">
-              <TabsList className="justify-start">
-                <TabsTrigger value="unread">
-                  {t('unread')} ({unreadCount})
-                </TabsTrigger>
-                <TabsTrigger value="read">{t('read')}</TabsTrigger>
-                {isSystemAdmin && (
-                  <TabsTrigger value="publish">
-                    {t('publish-notification')}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="w-auto min-w-0 flex-1 overflow-x-auto">
+                <TabsList className="w-max justify-start sm:w-auto">
+                  <TabsTrigger value="unread">
+                    {t('unread')} ({unreadCount})
                   </TabsTrigger>
-                )}
-              </TabsList>
+                  <TabsTrigger value="read">{t('read')}</TabsTrigger>
+                  {isSystemAdmin && (
+                    <TabsTrigger value="publish">
+                      {t('publish-notification')}
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+              </div>
 
               {filters.tab === 'unread' && (
                 <Button
                   variant="text"
                   size="sm"
-                  className="absolute right-0 top-0"
+                  className="shrink-0"
                   onClick={() => markAllAsRead.mutate()}
                   disabled={unreadCount === 0 || markAllAsRead.isPending}
                 >
@@ -215,7 +217,7 @@ const PageContent = ({
           </div>
 
           {isSystemAdmin && filters.tab === 'publish' && (
-            <aside className="lg:border-l lg:border-gray-200 lg:pl-8">
+            <aside className="border-t border-gray-200 pt-8 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
               <DraftsPanel
                 filters={filters}
                 onSelect={onSelectDetail}

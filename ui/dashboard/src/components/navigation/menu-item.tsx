@@ -1,9 +1,9 @@
-import Dropdown, { DropdownOption } from 'components/dropdown';
-import Icon from 'components/icon';
-import { Tooltip } from 'components/tooltip';
 import type { FunctionComponent } from 'react';
 import { NavLink } from 'react-router';
 import { cn } from 'utils/style';
+import Dropdown, { DropdownOption } from 'components/dropdown';
+import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 
 export type MenuItem = {
   isExpanded?: boolean;

@@ -50,9 +50,9 @@ const FlagOffDescription = ({
   }, [prerequisiteCount, individualRuleCount, segmentRuleCount]);
 
   return (
-    <div className="flex flex-col w-full gap-y-1 py-4 sm:py-5 typo-para-medium text-gray-600">
+    <div className="flex flex-col justify-center items-center w-full gap-y-1 py-4 sm:py-5 typo-para-medium text-gray-600">
       <p>{t('targeting.flag-off-desc')}</p>
-      <div className="flex flex-col items-start gap-y-0.5">
+      <div className="flex flex-col items-center gap-y-0.5">
         <Button
           variant="text"
           type="button"
