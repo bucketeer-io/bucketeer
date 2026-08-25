@@ -24,7 +24,7 @@ const NotificationCard = ({
     variant="text"
     onClick={onClick}
     className={cn(
-      'flex h-full w-full flex-col items-start justify-start gap-2 whitespace-normal text-left transition-colors',
+      'flex h-full max-h-none w-full flex-col items-start justify-start gap-2 whitespace-normal text-left transition-colors',
       bordered
         ? cn(
             'rounded-lg border p-4',
