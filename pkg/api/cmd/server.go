@@ -143,6 +143,7 @@ type server struct {
 	cacheInvalidationTopic    *string
 	sseHeartbeatInterval      *time.Duration
 	sseMaxConnections         *int
+	sseReadinessThreshold    *float64
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -339,6 +340,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		sseMaxConnections: cmd.Flag("sse-max-connections",
 			"Maximum number of concurrent SSE connections per pod.",
 		).Default("10000").Int(),
+		sseReadinessThreshold: cmd.Flag("sse-readiness-threshold",
+			"Fraction of sse-max-connections at which the readiness probe starts failing (0.0-1.0).",
+		).Default("0.95").Float64(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -679,9 +683,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
 	defer healthCheckCancel()
 
+	sseReadinessLimit := int(float64(*s.sseMaxConnections) * *s.sseReadinessThreshold)
+	sseReadinessCheck := func() bool {
+		current, _ := streamDispatcher.ConnectionStatus()
+		return current < sseReadinessLimit
+	}
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(5*time.Second),
 		health.WithCheck("metrics", metrics.Check),
+		health.WithReadinessCheck("sse-connections", sseReadinessCheck),
 	)
 	go healthChecker.Run(healthCheckCtx)
 
@@ -729,6 +739,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.Version, api.Service,
 		health.WithTimeout(5*time.Second),
 		health.WithCheck("metrics", metrics.Check),
+		health.WithReadinessCheck("sse-connections", sseReadinessCheck),
 	)
 	go restHealthChecker.Run(healthCheckCtx)
 

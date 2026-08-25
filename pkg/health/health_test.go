@@ -137,6 +137,67 @@ func TestHTTPReadyUnhealthy(t *testing.T) {
 	}
 }
 
+func TestReadinessCheckBlocksReady(t *testing.T) {
+	t.Parallel()
+	ready := true
+	checker := NewRestChecker(version, service,
+		WithReadinessCheck("capacity", func() bool { return ready }),
+	)
+	checker.check(context.Background())
+
+	req := httptest.NewRequest("GET", fmt.Sprintf("%s%s%s", version, service, readyPath), nil)
+	resp := httptest.NewRecorder()
+	checker.ServeReadyHTTP(resp, req)
+	if resp.Code != http.StatusOK {
+		t.Errorf("Expected 200 when readiness check passes, got %d", resp.Code)
+	}
+
+	ready = false
+	resp = httptest.NewRecorder()
+	checker.ServeReadyHTTP(resp, req)
+	if resp.Code != http.StatusServiceUnavailable {
+		t.Errorf("Expected 503 when readiness check fails, got %d", resp.Code)
+	}
+}
+
+func TestReadinessCheckDoesNotAffectLiveness(t *testing.T) {
+	t.Parallel()
+	checker := NewRestChecker(version, service,
+		WithReadinessCheck("capacity", func() bool { return false }),
+	)
+	checker.check(context.Background())
+
+	req := httptest.NewRequest("GET", getTargetPath(t), nil)
+	resp := httptest.NewRecorder()
+	checker.ServeLiveHTTP(resp, req)
+	if resp.Code != http.StatusOK {
+		t.Errorf("Liveness should not be affected by readiness check, got %d", resp.Code)
+	}
+}
+
+func TestGRPCReadinessCheckBlocksReady(t *testing.T) {
+	t.Parallel()
+	ready := true
+	checker := NewGrpcChecker(
+		WithReadinessCheck("capacity", func() bool { return ready }),
+	)
+	checker.check(context.Background())
+
+	req := httptest.NewRequest("GET", readyPath, nil)
+	resp := httptest.NewRecorder()
+	checker.ServeHTTP(resp, req)
+	if resp.Code != http.StatusOK {
+		t.Errorf("Expected 200 when readiness check passes, got %d", resp.Code)
+	}
+
+	ready = false
+	resp = httptest.NewRecorder()
+	checker.ServeHTTP(resp, req)
+	if resp.Code != http.StatusServiceUnavailable {
+		t.Errorf("Expected 503 when readiness check fails, got %d", resp.Code)
+	}
+}
+
 func TestHTTPHealthAffectedByStop(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
