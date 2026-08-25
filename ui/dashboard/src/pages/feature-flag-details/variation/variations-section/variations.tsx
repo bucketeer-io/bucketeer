@@ -358,7 +358,7 @@ const Variations = ({
                                   isBoolean || isRunningExperiment || !editable
                                 }
                                 placeholder={t('form:feature-flags.value')}
-                               className="px-3 min-w-[300px]"
+                                className="px-3 min-w-[300px]"
                               />
                             )}
                           </Form.Control>

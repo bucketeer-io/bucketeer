@@ -311,12 +311,19 @@ const Navigation = ({
 
         <div
           className={cn(
-            'flex gap-5 items-center justify-between',
-            isExpanded ? 'flex-row' : 'flex-col md:flex-row'
+            'flex items-center justify-between',
+            isExpanded
+              ? 'flex-row gap-5'
+              : 'flex-col gap-3 md:flex-row md:gap-5'
           )}
         >
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
-          <div className="flex items-center justify-center gap-2">
+          <div
+            className={cn(
+              'flex items-center justify-center',
+              isExpanded ? 'gap-2' : 'flex-col gap-3 md:flex-row md:gap-2'
+            )}
+          >
             <NotificationBell envUrlCode={envUrlCode} />
             <button
               type="button"
