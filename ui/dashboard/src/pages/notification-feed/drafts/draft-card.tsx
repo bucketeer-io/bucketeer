@@ -34,7 +34,7 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
               {draft.title}
             </span>
             {draft.content && (
-              <p className="line-clamp-2 typo-para-small text-gray-500">
+              <p className="line-clamp-2 break-words typo-para-small text-gray-500">
                 {markdownToText(draft.content)}
               </p>
             )}
