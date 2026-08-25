@@ -58,13 +58,15 @@ const SwitchOrganization = ({
   isOpen,
   onCloseSwitchOrg,
   onCloseSetting,
-  isCollapsed
+  isCollapsed,
+  isModal
 }: {
   isExpanded?: boolean;
   isOpen: boolean;
   onCloseSwitchOrg: () => void;
   onCloseSetting: () => void;
   isCollapsed?: boolean;
+  isModal?: boolean;
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
@@ -146,6 +148,7 @@ const SwitchOrganization = ({
   );
 
   useEffect(() => {
+    if (isModal) return;
     function handleClickOutside(event: MouseEvent) {
       if (options) return;
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -157,7 +160,7 @@ const SwitchOrganization = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [options]);
+  }, [options, isModal]);
 
   useEffect(() => {
     if (!isOpen) setSearchValue('');
@@ -167,16 +170,21 @@ const SwitchOrganization = ({
     <div
       ref={menuRef}
       className={cn(
-        'absolute z-50 top-0 w-[238px] h-screen bg-primary-100 transition-all duration-300',
-        isCollapsed ? 'left-[60px]' : 'left-[248px]',
-        {
-          'w-full sm:w-0 [&>div]:px-0 opacity-0': !isOpen
-        }
+        isModal
+          ? 'w-full max-h-[70vh] flex flex-col'
+          : cn(
+              'absolute z-50 top-0 w-[238px] h-screen transition-all duration-300',
+              isCollapsed ? 'left-[60px]' : 'left-[248px]',
+              {
+                'w-full sm:w-0 [&>div]:px-0 opacity-0': !isOpen
+              }
+            ),
+        'bg-primary-100'
       )}
     >
       <div
         className={cn(
-          'flex flex-col size-full gap-y-2 sm:gap-y-5 overflow-y-auto relative small-scroll',
+          'flex flex-col size-full min-h-0 gap-y-2 sm:gap-y-5 overflow-y-auto relative small-scroll',
           {
             'overflow-hidden': isLoading
           }

@@ -89,7 +89,7 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
         align="start"
         side="top"
         sideOffset={8}
-        className="w-[380px] rounded-lg border-none bg-white p-0 shadow-menu"
+        className="w-[calc(100vw-2rem)] max-w-[380px] rounded-lg border-none bg-white p-0 shadow-menu"
       >
         <div className="flex items-center justify-between px-4 py-3.5">
           <span className="typo-head-bold-medium text-gray-900">
@@ -121,24 +121,26 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
                   onClick={() => onSelectNotification(notification)}
                   className="flex w-full flex-col items-start gap-1.5 border-t border-gray-100 px-4 py-3.5 text-left first:border-t-0 hover:bg-gray-50"
                 >
-                  <div className="flex w-full items-center gap-2">
-                    {!notification.read && (
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary-500" />
-                    )}
-                    <span
-                      className={cn(
-                        'typo-para-medium text-gray-900 truncate',
-                        !notification.read ? 'font-semibold' : 'ml-3.5'
+                  <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      {!notification.read && (
+                        <span className="size-1.5 shrink-0 rounded-full bg-primary-500" />
                       )}
-                    >
-                      {notification.title}
+                      <span
+                        className={cn(
+                          'typo-para-medium text-gray-900 truncate',
+                          !notification.read ? 'font-semibold' : 'ml-3.5'
+                        )}
+                      >
+                        {notification.title}
+                      </span>
+                    </div>
+                    <span className="ml-auto shrink-0 typo-para-tiny text-gray-500">
+                      {formatDateTime(notification.publishedAt)}
                     </span>
                     {notification.tags[0] && (
                       <TagChip tag={notification.tags[0]} hideDot />
                     )}
-                    <span className="ml-auto shrink-0 typo-para-tiny text-gray-500">
-                      {formatDateTime(notification.publishedAt)}
-                    </span>
                   </div>
                   <span
                     className={cn(

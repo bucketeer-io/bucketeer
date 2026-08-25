@@ -203,12 +203,12 @@ export const Root = memo(() => {
               </Button>
             )}
           </div>
-          {!isMobile  ? (
-          <Navigation
-          onClickNavLink={handleChangePageKey}
-          isCollapsed={isNavCollapsed}
-          onToggleCollapsed={setIsNavCollapsed}
-        />
+          {!isMobile ? (
+            <Navigation
+              onClickNavLink={handleChangePageKey}
+              isCollapsed={isNavCollapsed}
+              onToggleCollapsed={setIsNavCollapsed}
+            />
           ) : (
             <Drawer
               side="left"
@@ -216,21 +216,24 @@ export const Root = memo(() => {
               onClose={() => setShowMenu(false)}
               className="!z-30"
             >
-          <Navigation
-            onClickNavLink={handleChangePageKey}
-            isCollapsed={isNavCollapsed}
-            onToggleCollapsed={setIsNavCollapsed}
-          />
+              <Navigation
+                onClickNavLink={handleChangePageKey}
+                isCollapsed={isNavCollapsed}
+                onToggleCollapsed={setIsNavCollapsed}
+              />
             </Drawer>
           )}
 
-<div
+          <div
             className={cn(
               'w-full shadow-lg overflow-y-auto transition-all duration-300 ease-in-out',
-              isNavCollapsed ? 'ml-[60px]' : 'ml-[248px]'
+              isMobile
+                ? 'mt-[50px]'
+                : isNavCollapsed
+                  ? 'ml-[60px]'
+                  : 'ml-[248px]'
             )}
           >
-
             <Routes>
               {consoleAccount.isSystemAdmin && (
                 <Route
