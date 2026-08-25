@@ -84,6 +84,9 @@ func WithTimeout(timeout time.Duration) option {
 
 func WithReadinessCheck(name string, rc ReadinessCheck) option {
 	return func(c *checker) {
+		if _, ok := c.readinessChecks[name]; ok {
+			panic(fmt.Sprintf("health: readiness check %s already registered", name))
+		}
 		c.readinessChecks[name] = rc
 	}
 }

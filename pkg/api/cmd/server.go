@@ -17,6 +17,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"sync"
 	"time"
@@ -683,7 +684,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
 	defer healthCheckCancel()
 
-	sseReadinessLimit := int(float64(*s.sseMaxConnections) * *s.sseReadinessThreshold)
+	threshold := *s.sseReadinessThreshold
+	if threshold < 0 || threshold > 1 || math.IsNaN(threshold) {
+		return fmt.Errorf("sse-readiness-threshold must be between 0.0 and 1.0, got %v", threshold)
+	}
+	sseReadinessLimit := int(math.Ceil(float64(*s.sseMaxConnections) * threshold))
 	sseReadinessCheck := func() bool {
 		current, _ := streamDispatcher.ConnectionStatus()
 		return current < sseReadinessLimit
