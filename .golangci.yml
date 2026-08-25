@@ -1,6 +1,4 @@
 version: "2"
-run:
-  tests: false
 linters:
   default: none
   enable:
@@ -36,6 +34,15 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      - path: '_test\.go'
+        linters:
+          - errcheck
+          - goheader
+          - ineffassign
+          - lll
+          - staticcheck
+          - unused
 formatters:
   enable:
     - gofmt
