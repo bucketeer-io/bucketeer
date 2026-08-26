@@ -586,7 +586,7 @@ func TestCreateAPIKeyDomainEvent(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := setToken(context.Background(), true)
-	service := createAccountService(t, mockController, nil)
+	service := createAccountService(t, mockController)
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(&domain.AccountV2{
@@ -639,7 +639,7 @@ func TestUpdateAPIKeyDomainEvent(t *testing.T) {
 	rawAPIKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	ctx := setToken(context.Background(), true)
-	service := createAccountService(t, mockController, nil)
+	service := createAccountService(t, mockController)
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(&domain.AccountV2{
