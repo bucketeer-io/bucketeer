@@ -690,7 +690,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	sseReadinessLimit := int(math.Ceil(float64(*s.sseMaxConnections) * threshold))
 	sseReadinessCheck := func() bool {
-		current, _ := streamDispatcher.ConnectionStatus()
+		current := streamDispatcher.ActiveConns()
 		return current < sseReadinessLimit
 	}
 	healthChecker := health.NewGrpcChecker(

@@ -135,30 +135,22 @@ func TestDispatcherRegisterMaxConns(t *testing.T) {
 	}
 }
 
-func TestDispatcherConnectionStatus(t *testing.T) {
+func TestDispatcherActiveConns(t *testing.T) {
 	t.Parallel()
 	d := NewDispatcher(100, nil, zap.NewNop())
-
-	cur, max := d.ConnectionStatus()
-	assert.Equal(t, 0, cur)
-	assert.Equal(t, 100, max)
+	assert.Equal(t, 0, d.ActiveConns())
 
 	_, dereg1, err := d.register("env-1", "tag-A", "src")
 	require.NoError(t, err)
 	_, dereg2, err := d.register("env-1", "tag-B", "src")
 	require.NoError(t, err)
-
-	cur, max = d.ConnectionStatus()
-	assert.Equal(t, 2, cur)
-	assert.Equal(t, 100, max)
+	assert.Equal(t, 2, d.ActiveConns())
 
 	dereg1()
-	cur, _ = d.ConnectionStatus()
-	assert.Equal(t, 1, cur)
+	assert.Equal(t, 1, d.ActiveConns())
 
 	dereg2()
-	cur, _ = d.ConnectionStatus()
-	assert.Equal(t, 0, cur)
+	assert.Equal(t, 0, d.ActiveConns())
 }
 
 func TestDispatcherRegisterSlotFreedByDeregister(t *testing.T) {

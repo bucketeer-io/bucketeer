@@ -69,11 +69,11 @@ func NewDispatcher(maxConns int, fetchFeatures FeaturesFetcher, logger *zap.Logg
 	}
 }
 
-// ConnectionStatus returns the current and maximum number of SSE connections.
-func (d *Dispatcher) ConnectionStatus() (current, max int) {
+// ActiveConns returns the current number of SSE connections.
+func (d *Dispatcher) ActiveConns() int {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	return d.totalConns, d.maxConns
+	return d.totalConns
 }
 
 // Shutdown signals all active SSE handlers to exit immediately.
