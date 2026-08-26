@@ -135,6 +135,24 @@ func TestDispatcherRegisterMaxConns(t *testing.T) {
 	}
 }
 
+func TestDispatcherActiveConns(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(100, nil, zap.NewNop())
+	assert.Equal(t, 0, d.ActiveConns())
+
+	_, dereg1, err := d.register("env-1", "tag-A", "src")
+	require.NoError(t, err)
+	_, dereg2, err := d.register("env-1", "tag-B", "src")
+	require.NoError(t, err)
+	assert.Equal(t, 2, d.ActiveConns())
+
+	dereg1()
+	assert.Equal(t, 1, d.ActiveConns())
+
+	dereg2()
+	assert.Equal(t, 0, d.ActiveConns())
+}
+
 func TestDispatcherRegisterSlotFreedByDeregister(t *testing.T) {
 	t.Parallel()
 	maxConns := 1

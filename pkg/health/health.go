@@ -45,13 +45,18 @@ func (s Status) String() string {
 
 type check func(context.Context) Status
 
+// ReadinessCheck is called synchronously on each readiness probe.
+// It returns true when the pod should accept new traffic.
+type ReadinessCheck func() bool
+
 type checker struct {
 	status  uint32
 	stopped uint32 // 0 = running, 1 = stopped
 
-	interval time.Duration
-	timeout  time.Duration
-	checks   map[string]check
+	interval        time.Duration
+	timeout         time.Duration
+	checks          map[string]check
+	readinessChecks map[string]ReadinessCheck
 }
 
 type option func(*checker)
@@ -77,12 +82,22 @@ func WithTimeout(timeout time.Duration) option {
 	}
 }
 
+func WithReadinessCheck(name string, rc ReadinessCheck) option {
+	return func(c *checker) {
+		if _, ok := c.readinessChecks[name]; ok {
+			panic(fmt.Sprintf("health: readiness check %s already registered", name))
+		}
+		c.readinessChecks[name] = rc
+	}
+}
+
 func newChecker(opts ...option) *checker {
 	checker := &checker{
-		status:   uint32(Unhealthy),
-		interval: 10 * time.Second,
-		timeout:  5 * time.Second,
-		checks:   make(map[string]check),
+		status:          uint32(Unhealthy),
+		interval:        10 * time.Second,
+		timeout:         5 * time.Second,
+		checks:          make(map[string]check),
+		readinessChecks: make(map[string]ReadinessCheck),
 	}
 	for _, o := range opts {
 		o(checker)
@@ -135,10 +150,15 @@ func (hc *checker) check(ctx context.Context) {
 }
 
 func (hc *checker) ServeReadyHTTP(resp http.ResponseWriter, req *http.Request) {
-	// Readiness check: return 503 if health checks fail
 	if hc.getStatus() == Unhealthy {
 		resp.WriteHeader(http.StatusServiceUnavailable)
 		return
+	}
+	for _, rc := range hc.readinessChecks {
+		if !rc() {
+			resp.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
 	}
 	resp.WriteHeader(http.StatusOK)
 }
