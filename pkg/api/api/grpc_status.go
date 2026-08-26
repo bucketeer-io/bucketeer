@@ -123,6 +123,18 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "EXCEEDED_MAX"
 	case pkgErr.ErrorTypeOutOfRange:
 		return "OUT_OF_RANGE"
+	case pkgErr.ErrorTypeVariationInUseByOffVariation:
+		return "VARIATION_IN_USE_BY_OFF_VARIATION"
+	case pkgErr.ErrorTypeVariationInUseByDefaultStrategy:
+		return "VARIATION_IN_USE_BY_DEFAULT_STRATEGY"
+	case pkgErr.ErrorTypeVariationInUseByTargetingRule:
+		return "VARIATION_IN_USE_BY_TARGETING_RULE"
+	case pkgErr.ErrorTypeVariationInUseByIndividualTarget:
+		return "VARIATION_IN_USE_BY_INDIVIDUAL_TARGETING"
+	case pkgErr.ErrorTypeVariationInUseByPrerequisite:
+		return "VARIATION_IN_USE_BY_PREREQUISITE"
+	case pkgErr.ErrorTypeVariationInUseByFeatureFlagRule:
+		return "VARIATION_IN_USE_BY_FEATURE_FLAG_RULE"
 	default:
 		return "UNKNOWN"
 	}
@@ -150,7 +162,13 @@ func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 		return codes.Internal
 	case pkgErr.ErrorTypeInternal:
 		return codes.Internal
-	case pkgErr.ErrorTypeFailedPrecondition:
+	case pkgErr.ErrorTypeFailedPrecondition,
+		pkgErr.ErrorTypeVariationInUseByOffVariation,
+		pkgErr.ErrorTypeVariationInUseByDefaultStrategy,
+		pkgErr.ErrorTypeVariationInUseByTargetingRule,
+		pkgErr.ErrorTypeVariationInUseByIndividualTarget,
+		pkgErr.ErrorTypeVariationInUseByPrerequisite,
+		pkgErr.ErrorTypeVariationInUseByFeatureFlagRule:
 		return codes.FailedPrecondition
 	case pkgErr.ErrorTypeUnavailable:
 		return codes.Unavailable

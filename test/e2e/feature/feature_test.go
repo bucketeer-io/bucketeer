@@ -27,6 +27,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -1159,6 +1160,118 @@ func TestRemoveVariation(t *testing.T) {
 	if findVariation(targetVariationID, feature.Variations) != nil {
 		t.Fatalf("The wrong variation might has been deleted. Expected: %s actual: %v", targetVariationID, feature.Variations)
 	}
+}
+
+func TestRemoveVariationUsedByPrerequisiteOfOtherFeature(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	flagAID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagAID))
+	flagA := getFeature(t, flagAID, client)
+	targetVariationID := flagA.Variations[2].Id
+
+	flagBID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagBID))
+
+	// Flag B requires Flag A to serve the variation we are about to delete.
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            flagBID,
+		EnvironmentId: *environmentID,
+		PrerequisiteChanges: []*feature.PrerequisiteChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Prerequisite: &feature.Prerequisite{
+					FeatureId:   flagAID,
+					VariationId: targetVariationID,
+				},
+			},
+		},
+		Comment: "e2e - flag B depends on flag A",
+	})
+	require.NoError(t, err)
+
+	_, err = client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            flagAID,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Variation:  &feature.Variation{Id: targetVariationID},
+			},
+		},
+		Comment: "e2e - should fail because flag B still references the variation",
+	})
+	require.Error(t, err)
+
+	st, ok := status.FromError(err)
+	require.True(t, ok, "expected a gRPC status, got %v", err)
+	assert.Equal(t, codes.FailedPrecondition, st.Code())
+
+	errorInfo := findErrorInfo(t, st)
+	assert.Equal(t, "VARIATION_IN_USE_BY_PREREQUISITE", errorInfo.Reason)
+	assert.Equal(t, "VariationInUseByPrerequisiteError", errorInfo.Metadata["messageKey"])
+	assert.Equal(t, targetVariationID, errorInfo.Metadata["variationId"])
+	assert.Equal(t, flagBID, errorInfo.Metadata["featureId"])
+	assert.NotEmpty(t, errorInfo.Metadata["featureName"])
+
+	// The variation must still be there.
+	assert.NotNil(t, findVariation(targetVariationID, getFeature(t, flagAID, client).Variations))
+}
+
+func TestRemoveVariationUsedByOffVariation(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	featureID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureID))
+	targetVariationID := getFeature(t, featureID, client).Variations[2].Id
+
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		OffVariation:  wrapperspb.String(targetVariationID),
+		Comment:       "e2e - set the off variation",
+	})
+	require.NoError(t, err)
+
+	_, err = client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Variation:  &feature.Variation{Id: targetVariationID},
+			},
+		},
+		Comment: "e2e - should fail because it is the off variation",
+	})
+	require.Error(t, err)
+
+	st, ok := status.FromError(err)
+	require.True(t, ok, "expected a gRPC status, got %v", err)
+	assert.Equal(t, codes.FailedPrecondition, st.Code())
+
+	errorInfo := findErrorInfo(t, st)
+	assert.Equal(t, "VARIATION_IN_USE_BY_OFF_VARIATION", errorInfo.Reason)
+	assert.Equal(t, "VariationInUseByOffVariationError", errorInfo.Metadata["messageKey"])
+
+	assert.NotNil(t, findVariation(targetVariationID, getFeature(t, featureID, client).Variations))
+}
+
+func findErrorInfo(t *testing.T, st *status.Status) *errdetails.ErrorInfo {
+	t.Helper()
+	for _, detail := range st.Details() {
+		if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
+			return errorInfo
+		}
+	}
+	t.Fatalf("ErrorInfo not found in %v", st.Details())
+	return nil
 }
 
 func TestRemoveVariations(t *testing.T) {

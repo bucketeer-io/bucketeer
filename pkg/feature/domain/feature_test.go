@@ -27,6 +27,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -1201,17 +1202,18 @@ func TestRemoveVariationUsingFixedStrategy(t *testing.T) {
 		id       string
 		expected error
 	}{
+		// Every makeFeature variation has target users, checked before the strategies.
 		{
 			id:       "variation-A",
-			expected: ErrVariationInUse, // Used in default strategy
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       "variation-B",
-			expected: ErrVariationInUse, // Used in default strategy
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       "variation-C",
-			expected: ErrVariationInUse, // Has users in target
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       expected,
@@ -1264,17 +1266,18 @@ func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 		id       string
 		expected error
 	}{
+		// Every makeFeature variation has target users, checked before the strategies.
 		{
 			id:       "variation-A",
-			expected: ErrVariationInUse, // Used in default strategy with weight > 0
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       "variation-B",
-			expected: ErrVariationInUse, // Used in default strategy with weight > 0
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       "variation-C",
-			expected: ErrVariationInUse, // Has users in target
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       expected,
@@ -1314,7 +1317,7 @@ func TestRemoveVariationUsingOffVariation(t *testing.T) {
 		{
 			des:      "in use",
 			id:       "variation-C",
-			expected: ErrVariationInUse,
+			expected: errVariationInUseByOffVariation,
 		},
 		{
 			des:      "success",
@@ -1392,17 +1395,18 @@ func TestRemoveVariationComprehensiveCleanup(t *testing.T) {
 		id       string
 		expected error
 	}{
+		// Every makeFeature variation has target users, checked before the strategies.
 		{
 			id:       "variation-A",
-			expected: ErrVariationInUse, // Used in default strategy with weight > 0
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       "variation-B",
-			expected: ErrVariationInUse, // Used in rule strategy with weight > 0
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       "variation-C",
-			expected: ErrVariationInUse, // Has users in target
+			expected: errVariationInUseByIndividualTarget,
 		},
 		{
 			id:       expected,
@@ -2700,7 +2704,11 @@ func TestValidateVariationUsage(t *testing.T) {
 		features          []*ftproto.Feature
 		targetFeatureID   string
 		deletedVariations map[string]string // variationID -> variationValue
-		expected          error
+		// Empty means no error is expected.
+		expectedErrType pkgErr.ErrorType
+		// The flag holding the reference.
+		expectedFeatureID   string
+		expectedFeatureName string
 	}{
 		{
 			desc:            "success: no features using deleted variations",
@@ -2709,7 +2717,7 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				variationID1: variationValue1,
 			},
-			expected: nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "success: target feature uses variation (should be excluded)",
@@ -2728,13 +2736,14 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				variationID1: variationValue1,
 			},
-			expected: nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "error: other feature has prerequisite using deleted variation",
 			features: []*ftproto.Feature{
 				{
-					Id: "feature-2",
+					Id:   "feature-2",
+					Name: "Flag 2",
 					Prerequisites: []*ftproto.Prerequisite{
 						{
 							FeatureId:   "feature-1",
@@ -2747,7 +2756,9 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				variationID1: variationValue1,
 			},
-			expected: ErrVariationInUse,
+			expectedErrType:     pkgErr.ErrorTypeVariationInUseByPrerequisite,
+			expectedFeatureID:   "feature-2",
+			expectedFeatureName: "Flag 2",
 		},
 		{
 			desc: "error: other feature has FEATURE_FLAG rule using deleted variation ID",
@@ -2771,7 +2782,8 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				variationID1: variationValue1,
 			},
-			expected: ErrVariationInUse,
+			expectedErrType:   pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
+			expectedFeatureID: "feature-2",
 		},
 		{
 			desc: "success: no variations to delete",
@@ -2788,7 +2800,7 @@ func TestValidateVariationUsage(t *testing.T) {
 			},
 			targetFeatureID:   "feature-1",
 			deletedVariations: map[string]string{},
-			expected:          nil,
+			expectedErrType:   "",
 		},
 		{
 			desc: "success: different feature ID in prerequisite",
@@ -2807,7 +2819,7 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				variationID1: variationValue1,
 			},
-			expected: nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "success: different variation ID in FEATURE_FLAG rule",
@@ -2831,7 +2843,7 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				variationID1: variationValue1,
 			},
-			expected: nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "error: detailed FEATURE_FLAG rule test",
@@ -2864,7 +2876,8 @@ func TestValidateVariationUsage(t *testing.T) {
 			deletedVariations: map[string]string{
 				"var-true": "true", // Deleting variation with value "true"
 			},
-			expected: ErrVariationInUse,
+			expectedErrType:   pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
+			expectedFeatureID: "feature-B",
 		},
 	}
 
@@ -2872,12 +2885,15 @@ func TestValidateVariationUsage(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
 			err := ValidateVariationUsage(p.features, p.targetFeatureID, p.deletedVariations)
-			if p.expected != nil {
-				assert.Error(t, err)
-				assert.Equal(t, p.expected, err)
-			} else {
+			if p.expectedErrType == "" {
 				assert.NoError(t, err)
+				return
 			}
+			bktErr, ok := pkgErr.AsVariationInUseError(err)
+			require.True(t, ok, "expected a variation in use error, got %v", err)
+			assert.Equal(t, p.expectedErrType, bktErr.ErrorType())
+			assert.Equal(t, p.expectedFeatureID, bktErr.EmbeddedKeyValues()["featureId"])
+			assert.Equal(t, p.expectedFeatureName, bktErr.EmbeddedKeyValues()["featureName"])
 		})
 	}
 }

@@ -2048,7 +2048,7 @@ func TestUpdateRemoveVariationComprehensiveCleanup(t *testing.T) {
 				return makeFeature("test-feature")
 			},
 			variationID: "variation-C", // Has users in target
-			expectedErr: ErrVariationInUse,
+			expectedErr: errVariationInUseByIndividualTarget,
 		},
 		{
 			desc: "error - minimum variation constraint",

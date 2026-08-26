@@ -19,8 +19,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -40,14 +42,15 @@ func TestValidateVariationDeletion(t *testing.T) {
 		variationChanges []*featureproto.VariationChange
 		features         []*featureproto.Feature
 		targetFeatureID  string
-		expected         error
+		// Empty means no error is expected.
+		expectedErrType pkgErr.ErrorType
 	}{
 		{
 			desc:             "success: no variation changes",
 			variationChanges: []*featureproto.VariationChange{},
 			features:         []*featureproto.Feature{},
 			targetFeatureID:  "feature-1",
-			expected:         nil,
+			expectedErrType:  "",
 		},
 		{
 			desc: "success: no deletion changes",
@@ -62,7 +65,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 			},
 			features:        []*featureproto.Feature{},
 			targetFeatureID: "feature-1",
-			expected:        nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "success: no other features using deleted variation",
@@ -77,7 +80,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 			},
 			features:        []*featureproto.Feature{},
 			targetFeatureID: "feature-1",
-			expected:        nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "error: other feature has prerequisite using deleted variation",
@@ -111,7 +114,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 				},
 			},
 			targetFeatureID: "feature-1",
-			expected:        statusVariationInUseByOtherFeatures.Err(),
+			expectedErrType: pkgErr.ErrorTypeVariationInUseByPrerequisite,
 		},
 		{
 			desc: "error: other feature has FEATURE_FLAG rule using deleted variation ID",
@@ -150,7 +153,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 				},
 			},
 			targetFeatureID: "feature-1",
-			expected:        statusVariationInUseByOtherFeatures.Err(),
+			expectedErrType: pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
 		},
 		{
 			desc: "success: target feature uses deleted variation (should be excluded)",
@@ -175,7 +178,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 				},
 			},
 			targetFeatureID: "feature-1",
-			expected:        nil,
+			expectedErrType: "",
 		},
 		{
 			desc: "success: different variation ID in FEATURE_FLAG rule",
@@ -205,14 +208,20 @@ func TestValidateVariationDeletion(t *testing.T) {
 				},
 			},
 			targetFeatureID: "feature-1",
-			expected:        nil,
+			expectedErrType: "",
 		},
 	}
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			err := validateVariationDeletion(p.variationChanges, p.features, p.targetFeatureID)
-			assert.Equal(t, p.expected, err)
+			if p.expectedErrType == "" {
+				assert.NoError(t, err)
+				return
+			}
+			bktErr, ok := pkgErr.AsVariationInUseError(err)
+			require.True(t, ok, "expected a variation in use error, got %v", err)
+			assert.Equal(t, p.expectedErrType, bktErr.ErrorType())
 		})
 	}
 }
