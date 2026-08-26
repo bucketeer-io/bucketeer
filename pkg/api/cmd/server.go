@@ -144,7 +144,7 @@ type server struct {
 	cacheInvalidationTopic    *string
 	sseHeartbeatInterval      *time.Duration
 	sseMaxConnections         *int
-	sseReadinessThreshold    *float64
+	sseReadinessThreshold     *float64
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
