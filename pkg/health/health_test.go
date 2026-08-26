@@ -145,6 +145,7 @@ func TestReadinessCheckBlocksReady(t *testing.T) {
 	)
 	checker.check(context.Background())
 
+	// Success: readiness check passes -> 200
 	req := httptest.NewRequest("GET", fmt.Sprintf("%s%s%s", version, service, readyPath), nil)
 	resp := httptest.NewRecorder()
 	checker.ServeReadyHTTP(resp, req)
@@ -152,6 +153,7 @@ func TestReadinessCheckBlocksReady(t *testing.T) {
 		t.Errorf("Expected 200 when readiness check passes, got %d", resp.Code)
 	}
 
+	// Error: readiness check fails -> 503
 	ready = false
 	resp = httptest.NewRecorder()
 	checker.ServeReadyHTTP(resp, req)
@@ -183,6 +185,7 @@ func TestGRPCReadinessCheckBlocksReady(t *testing.T) {
 	)
 	checker.check(context.Background())
 
+	// Success: readiness check passes -> 200
 	req := httptest.NewRequest("GET", readyPath, nil)
 	resp := httptest.NewRecorder()
 	checker.ServeHTTP(resp, req)
@@ -190,6 +193,7 @@ func TestGRPCReadinessCheckBlocksReady(t *testing.T) {
 		t.Errorf("Expected 200 when readiness check passes, got %d", resp.Code)
 	}
 
+	// Error: readiness check fails -> 503
 	ready = false
 	resp = httptest.NewRecorder()
 	checker.ServeHTTP(resp, req)
