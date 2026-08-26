@@ -1,6 +1,6 @@
 module github.com/bucketeer-io/bucketeer/v2
 
-go 1.25.8
+go 1.25.1
 
 require (
 	cloud.google.com/go/bigquery v1.79.0
@@ -16,10 +16,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.66.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/go-resty/resty/v2 v2.17.2
-	github.com/go-sql-driver/mysql v1.10.0
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/protobuf v1.5.4
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.7.0
@@ -46,7 +47,8 @@ require (
 	github.com/tkuchiki/go-timezone v0.2.3
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.6.0
-	go.uber.org/zap v1.28.0
+	go.uber.org/zap v1.27.1
+	golang.org/x/crypto v0.55.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.22.0
@@ -73,7 +75,7 @@ require (
 	cloud.google.com/go/monitoring v1.24.3 // indirect
 	cloud.google.com/go/pubsub/v2 v2.6.0 // indirect
 	cloud.google.com/go/trace v1.11.7 // indirect
-	filippo.io/edwards25519 v1.2.0 // indirect
+	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
@@ -139,7 +141,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/mod v0.40.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
