@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 
@@ -285,16 +286,19 @@ func TestNewGRPCStatus_VariationInUse(t *testing.T) {
 			assert.Equal(t, codes.FailedPrecondition, st.Code())
 			assert.Equal(t, "feature:variation in use", st.Message())
 
+			var errorInfo *errdetails.ErrorInfo
 			for _, detail := range st.Details() {
-				errorInfo, ok := detail.(*errdetails.ErrorInfo)
-				if !ok {
-					continue
+				if info, ok := detail.(*errdetails.ErrorInfo); ok {
+					errorInfo = info
+					break
 				}
-				assert.Equal(t, tt.expectedReason, errorInfo.Reason)
-				assert.Equal(t, string(tt.errorType), errorInfo.Metadata["messageKey"])
-				assert.Equal(t, "feature-2", errorInfo.Metadata["featureId"])
-				assert.Equal(t, "Flag B", errorInfo.Metadata["featureName"])
 			}
+			require.NotNil(t, errorInfo, "status must carry an ErrorInfo detail")
+
+			assert.Equal(t, tt.expectedReason, errorInfo.Reason)
+			assert.Equal(t, string(tt.errorType), errorInfo.Metadata["messageKey"])
+			assert.Equal(t, "feature-2", errorInfo.Metadata["featureId"])
+			assert.Equal(t, "Flag B", errorInfo.Metadata["featureName"])
 		})
 	}
 }

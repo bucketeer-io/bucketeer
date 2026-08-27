@@ -2051,6 +2051,32 @@ func TestUpdateRemoveVariationComprehensiveCleanup(t *testing.T) {
 			expectedErr: errVariationInUseByIndividualTarget,
 		},
 		{
+			desc: "error - variation in use by the default strategy",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				// The individual targeting is checked before the strategies, so clear it.
+				for _, target := range f.Targets {
+					target.Users = nil
+				}
+				return f
+			},
+			variationID: "variation-B", // makeFeature's default strategy points at variation-B
+			expectedErr: errVariationInUseByDefaultStrategy,
+		},
+		{
+			desc: "error - variation in use by a targeting rule",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				// The individual targeting is checked before the strategies, so clear it.
+				for _, target := range f.Targets {
+					target.Users = nil
+				}
+				return f
+			},
+			variationID: "variation-A", // makeFeature's rule-1 points at variation-A
+			expectedErr: errVariationInUseByTargetingRule,
+		},
+		{
 			desc: "error - minimum variation constraint",
 			setupFunc: func() *Feature {
 				f := makeFeature("test-feature")

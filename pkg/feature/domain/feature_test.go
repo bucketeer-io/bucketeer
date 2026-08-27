@@ -1339,6 +1339,36 @@ func TestRemoveVariationUsingOffVariation(t *testing.T) {
 	}
 }
 
+func TestRemoveVariationInUseByStrategy(t *testing.T) {
+	t.Parallel()
+	patterns := []*struct {
+		des, id  string
+		expected error
+	}{
+		{
+			des:      "in use by the default strategy",
+			id:       "variation-B", // makeFeature's default strategy points at variation-B
+			expected: errVariationInUseByDefaultStrategy,
+		},
+		{
+			des:      "in use by a targeting rule",
+			id:       "variation-A", // makeFeature's rule-1 points at variation-A
+			expected: errVariationInUseByTargetingRule,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.des, func(t *testing.T) {
+			t.Parallel()
+			f := makeFeature("test-feature")
+			// The individual targeting is checked before the strategies, so clear it.
+			for _, target := range f.Targets {
+				target.Users = nil
+			}
+			assert.Equal(t, p.expected, f.RemoveVariation(p.id))
+		})
+	}
+}
+
 func TestRemoveVariationComprehensiveCleanup(t *testing.T) {
 	t.Parallel()
 	f := makeFeature("test-feature")
