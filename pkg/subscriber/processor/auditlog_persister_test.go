@@ -57,31 +57,36 @@ func TestExtractAuditLogs(t *testing.T) {
 		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
-	adninEvent0, err := domainevent.NewAdminEvent(
+	adminEvent0, err := domainevent.NewAdminEvent(
 		editor,
-		eventproto.Event_FEATURE,
-		"fId-2",
-		eventproto.Event_FEATURE_CREATED,
-		&eventproto.FeatureCreatedEvent{Id: "fId-2"},
+		eventproto.Event_ORGANIZATION,
+		"org-0",
+		eventproto.Event_ORGANIZATION_UPDATED,
+		&eventproto.OrganizationUpdatedEvent{Id: "org-0"},
+		"org-0",
 		"{\"id\": \"curr\"}",
 		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
-	chunk := createChunk(t, []*domain.Event{event0, event1, adninEvent0})
+	chunk := createChunk(t, []*domain.Event{event0, event1, adminEvent0})
 
 	p := newPersister(t, mockController)
-	auditLogs, adminAuditLogs, messages, adminMessages := p.extractAuditLogs(chunk)
+	auditLogs, messages := p.extractAuditLogs(chunk)
+	assert.Len(t, auditLogs, 3)
 	for i, al := range auditLogs {
 		msg, ok := chunk[al.Id]
 		assert.True(t, ok)
 		assert.Equal(t, msg.ID, al.Id)
 		assert.Equal(t, messages[i].ID, al.Id)
-	}
-	for i, al := range adminAuditLogs {
-		msg, ok := chunk[al.Id]
-		assert.True(t, ok)
-		assert.Equal(t, msg.ID, al.Id)
-		assert.Equal(t, adminMessages[i].ID, al.Id)
+		// Organization-level events are stored with an empty environment id,
+		// scoped by their organization id.
+		if al.Id == adminEvent0.Id {
+			assert.Equal(t, "", al.EnvironmentId)
+			assert.Equal(t, "org-0", al.OrganizationId)
+		} else {
+			assert.Equal(t, "ns0", al.EnvironmentId)
+			assert.Equal(t, "", al.OrganizationId)
+		}
 	}
 }
 

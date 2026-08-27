@@ -165,6 +165,7 @@ func (h *adminSubscriptionCommandHandler) createEvent(
 		h.subscription.Id,
 		eventType,
 		event,
+		"", // admin subscriptions are system-level and belong to no organization
 		h.subscription.Subscription,
 		prev,
 	)

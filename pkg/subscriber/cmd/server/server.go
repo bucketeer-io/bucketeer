@@ -295,7 +295,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	var accountStorage accstorage.AccountStorage
 	var auditLogStorage v2als.AuditLogStorage
-	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	var experimentStorage operationalstorage.ExperimentStorage
 	var autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage
 	if *s.operationalDatabaseType == "postgres" {
@@ -313,7 +312,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
-		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
 		experimentStorage = oppostgres.NewExperimentStorage(postgresClient)
 		autoOpsRuleStorage = oppostgres.NewAutoOpsRuleStorage(postgresClient)
 	} else {
@@ -324,7 +322,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
-		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
 		experimentStorage = opmysql.NewExperimentStorage(mysqlClient)
 		autoOpsRuleStorage = opmysql.NewAutoOpsRuleStorage(mysqlClient)
 	}
@@ -472,7 +469,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		fluiStorage,
 		pushStorage,
 		auditLogStorage,
-		adminAuditLogStorage,
 		accountStorage,
 		experimentStorage,
 		autoOpsRuleStorage,
@@ -993,7 +989,6 @@ func (s *server) registerPubSubProcessorMap(
 	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	pushStorage pushstorage.PushStorage,
 	auditLogStorage v2als.AuditLogStorage,
-	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	accountStorage accstorage.AccountStorage,
 	experimentStorage operationalstorage.ExperimentStorage,
 	autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage,
@@ -1026,7 +1021,6 @@ func (s *server) registerPubSubProcessorMap(
 		auditLogPersister, err := processor.NewAuditLogPersister(
 			processorsConfigMap[processor.AuditLogPersisterName],
 			auditLogStorage,
-			adminAuditLogStorage,
 			logger,
 		)
 		if err != nil {

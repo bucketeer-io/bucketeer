@@ -195,6 +195,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 			CreatedAt:   organization.CreatedAt,
 			UpdatedAt:   organization.UpdatedAt,
 		},
+		organization.Id,
 		organization,
 		nil,
 	)
@@ -274,6 +275,7 @@ func (s *EnvironmentService) CreateOrganization(
 			CreatedAt:   organization.CreatedAt,
 			UpdatedAt:   organization.UpdatedAt,
 		},
+		organization.Id,
 		organization,
 		nil,
 	)
@@ -564,6 +566,7 @@ func (s *EnvironmentService) UpdateOrganization(
 				Description: req.Description,
 				OwnerEmail:  req.OwnerEmail,
 			},
+			req.Id,
 			updated,
 			organization,
 		)
@@ -744,6 +747,7 @@ func (s *EnvironmentService) EnableOrganization(
 			&eventproto.OrganizationEnabledEvent{
 				Id: organization.Id,
 			},
+			organization.Id,
 			organization,
 			prev,
 		)
@@ -810,6 +814,7 @@ func (s *EnvironmentService) DisableOrganization(
 			&eventproto.OrganizationDisabledEvent{
 				Id: organization.Id,
 			},
+			organization.Id,
 			organization,
 			prev,
 		)
@@ -876,6 +881,7 @@ func (s *EnvironmentService) ArchiveOrganization(
 			&eventproto.OrganizationArchivedEvent{
 				Id: organization.Id,
 			},
+			organization.Id,
 			organization,
 			prev,
 		)
@@ -940,6 +946,7 @@ func (s *EnvironmentService) UnarchiveOrganization(
 			&eventproto.OrganizationUnarchivedEvent{
 				Id: organization.Id,
 			},
+			organization.Id,
 			organization,
 			prev,
 		)
@@ -1004,6 +1011,7 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 			&eventproto.OrganizationTrialConvertedEvent{
 				Id: organization.Id,
 			},
+			organization.Id,
 			organization,
 			prev,
 		)

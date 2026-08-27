@@ -52,21 +52,26 @@ func NewEvent(
 ) (*domain.Event, error) {
 	return newEvent(
 		editor, entityType, entityID, eventType, event,
-		environmentID, false, entityData, previousEntityData, opts...)
+		environmentID, "", false, entityData, previousEntityData, opts...)
 }
 
+// NewAdminEvent creates an organization-level event. It is stored in the
+// audit_log table with an empty environment id, scoped by organizationID.
+// System-level entities that belong to no organization pass an empty
+// organizationID.
 func NewAdminEvent(
 	editor *domain.Editor,
 	entityType domain.Event_EntityType,
 	entityID string,
 	eventType domain.Event_Type,
 	event pb.Message,
+	organizationID string,
 	entityData, previousEntityData interface{},
 	opts ...Option,
 ) (*domain.Event, error) {
 	return newEvent(
 		editor, entityType, entityID, eventType, event,
-		storage.AdminEnvironmentID, true, entityData, previousEntityData, opts...)
+		storage.AdminEnvironmentID, organizationID, true, entityData, previousEntityData, opts...)
 }
 
 func newEvent(
@@ -76,6 +81,7 @@ func newEvent(
 	eventType domain.Event_Type,
 	event pb.Message,
 	environmentID string,
+	organizationID string,
 	isAdminEvent bool,
 	entity, previousEntity interface{},
 	opts ...Option,
@@ -117,6 +123,7 @@ func newEvent(
 		Editor:             editor,
 		Data:               buf,
 		EnvironmentId:      environmentID,
+		OrganizationId:     organizationID,
 		IsAdminEvent:       isAdminEvent,
 		EntityData:         string(entityData),
 		PreviousEntityData: string(prevEntityData),

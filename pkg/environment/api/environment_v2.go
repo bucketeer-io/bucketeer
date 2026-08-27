@@ -183,6 +183,7 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 				CreatedAt:      newEnvironment.CreatedAt,
 				UpdatedAt:      newEnvironment.UpdatedAt,
 			},
+			newEnvironment.OrganizationId,
 			newEnvironment.EnvironmentV2,
 			nil,
 		)
@@ -288,6 +289,7 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 				Description:    req.Description,
 				RequireComment: req.RequireComment,
 			},
+			environment.OrganizationId,
 			updated,
 			environment,
 		)
@@ -400,6 +402,7 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 				Name:      environment.Name,
 				ProjectId: environment.ProjectId,
 			},
+			environment.OrganizationId,
 			environment,
 			prev,
 		)
@@ -469,6 +472,7 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 				Name:      environment.Name,
 				ProjectId: environment.ProjectId,
 			},
+			environment.OrganizationId,
 			environment,
 			prev,
 		)

@@ -236,6 +236,7 @@ func (s *EnvironmentService) newCreateDomainEvent(
 			CreatedAt:   newProj.CreatedAt,
 			UpdatedAt:   newProj.UpdatedAt,
 		},
+		newProj.OrganizationId,
 		newProj,
 		nil,
 	)
@@ -347,6 +348,7 @@ func (s *EnvironmentService) newUpdateDomainEvent(
 			Name:           updated.Name,
 			Description:    updated.Description,
 		},
+		updated.OrganizationId,
 		updated,
 		prev,
 	)
@@ -391,6 +393,7 @@ func (s *EnvironmentService) EnableProject(
 			&eventproto.ProjectEnabledEvent{
 				Id: project.Id,
 			},
+			project.OrganizationId,
 			project,
 			prev,
 		)
@@ -464,6 +467,7 @@ func (s *EnvironmentService) DisableProject(
 			&eventproto.ProjectDisabledEvent{
 				Id: project.Id,
 			},
+			project.OrganizationId,
 			project,
 			prev,
 		)
@@ -537,6 +541,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 			&eventproto.ProjectTrialConvertedEvent{
 				Id: project.Id,
 			},
+			project.OrganizationId,
 			project,
 			prev,
 		)

@@ -27,7 +27,6 @@ import (
 	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -40,7 +39,6 @@ type auditLogPersisterConfig struct {
 
 type auditLogPersister struct {
 	auditLogPersisterConfig auditLogPersisterConfig
-	adminStorage            v2als.AdminAuditLogStorage
 	storage                 v2als.AuditLogStorage
 	logger                  *zap.Logger
 }
@@ -48,7 +46,6 @@ type auditLogPersister struct {
 func NewAuditLogPersister(
 	config interface{},
 	auditLogStorage v2als.AuditLogStorage,
-	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	auditLogPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -69,7 +66,6 @@ func NewAuditLogPersister(
 	}
 	return &auditLogPersister{
 		auditLogPersisterConfig: persisterConfig,
-		adminStorage:            adminAuditLogStorage,
 		storage:                 auditLogStorage,
 		logger:                  logger,
 	}, nil
@@ -115,21 +111,18 @@ func (a auditLogPersister) Process(
 }
 
 func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
-	auditlogs, adminAuditLogs, messages, adminMessages := a.extractAuditLogs(chunk)
+	auditlogs, messages := a.extractAuditLogs(chunk)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		time.Duration(a.auditLogPersisterConfig.FlushTimeout)*time.Second,
 	)
 	defer cancel()
-	// Environment audit logs
 	a.createAuditLogs(ctx, auditlogs, messages, a.storage.CreateAuditLog)
-	// Admin audit logs
-	a.createAuditLogs(ctx, adminAuditLogs, adminMessages, a.adminStorage.CreateAdminAuditLog)
 }
 
 func (a auditLogPersister) extractAuditLogs(
 	chunk map[string]*puller.Message,
-) (auditlogs, adminAuditLogs []*domain.AuditLog, messages, adminMessages []*puller.Message) {
+) (auditlogs []*domain.AuditLog, messages []*puller.Message) {
 	for _, msg := range chunk {
 		event := &domainevent.Event{}
 		if err := pb.Unmarshal(msg.Data, event); err != nil {
@@ -138,16 +131,10 @@ func (a auditLogPersister) extractAuditLogs(
 			msg.Ack()
 			continue
 		}
-		if event.IsAdminEvent {
-			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(
-				event,
-				storage.AdminEnvironmentID,
-			))
-			adminMessages = append(adminMessages, msg)
-		} else {
-			auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentId))
-			messages = append(messages, msg)
-		}
+		// Organization-level (admin) events are stored in the audit_log table
+		// with an empty environment id, scoped by their organization id.
+		auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentId))
+		messages = append(messages, msg)
 	}
 	return
 }
@@ -160,7 +147,7 @@ func (a auditLogPersister) createAuditLogs(
 ) {
 	for i, aud := range auditlogs {
 		if err := createFunc(ctx, aud); err != nil {
-			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) || errors.Is(err, v2als.ErrAdminAuditLogAlreadyExists) {
+			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) {
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.NonRepeatableError.String()).Inc()
 				messages[i].Ack()
 			} else {

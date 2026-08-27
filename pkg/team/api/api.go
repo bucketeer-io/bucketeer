@@ -198,6 +198,7 @@ func (s *TeamService) CreateTeam(
 			actualTeam.Id,
 			eventType,
 			eventData,
+			actualTeam.OrganizationId,
 			actualTeam,
 			previousEntityData,
 		)
@@ -298,6 +299,7 @@ func (s *TeamService) DeleteTeam(
 				Id:             team.Id,
 				OrganizationId: req.OrganizationId,
 			},
+			req.OrganizationId,
 			nil,  // Current state: entity no longer exists
 			team, // Previous state: what was deleted
 		)

@@ -95,6 +95,7 @@ func (s *AccountService) CreateAccountV2(
 				CreatedAt:        account.CreatedAt,
 				UpdatedAt:        account.UpdatedAt,
 			},
+			account.OrganizationId,
 			account,
 			nil,
 		)
@@ -105,7 +106,7 @@ func (s *AccountService) CreateAccountV2(
 		if err != nil {
 			return err
 		}
-		return s.adminAuditLogStorage.CreateAdminAuditLog(
+		return s.auditLogStorage.CreateAuditLog(
 			contextWithTx,
 			domainauditlog.NewAuditLog(createAccountEvent, storage.AdminEnvironmentID),
 		)
@@ -515,6 +516,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 				Email:          updated.Email,
 				OrganizationId: updated.OrganizationId,
 			},
+			updated.OrganizationId,
 			updated,
 			account,
 		)
@@ -526,7 +528,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 		if err != nil {
 			return err
 		}
-		return s.adminAuditLogStorage.CreateAdminAuditLog(
+		return s.auditLogStorage.CreateAuditLog(
 			contextWithTx,
 			domainauditlog.NewAuditLog(updateAccountV2Event, storage.AdminEnvironmentID),
 		)
@@ -585,6 +587,7 @@ func (s *AccountService) DeleteAccountV2(
 				Email:          account.Email,
 				OrganizationId: account.OrganizationId,
 			},
+			account.OrganizationId,
 			nil,     // Current state: entity no longer exists
 			account, // Previous state: what was deleted
 		)

@@ -890,7 +890,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountStorage,
 		tagStorage,
 		teamStorage,
-		adminAuditLogStorage,
+		auditLogStorage,
 		domainTopicPublisher,
 		accountapi.WithLogger(logger),
 	)
