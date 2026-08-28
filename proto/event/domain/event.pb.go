@@ -796,8 +796,9 @@ type Event struct {
 	Type         Event_Type       `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type"`
 	Editor       *Editor          `protobuf:"bytes,6,opt,name=editor,proto3" json:"editor"`
 	Data         *anypb.Any       `protobuf:"bytes,7,opt,name=data,proto3" json:"data"`
-	IsAdminEvent bool             `protobuf:"varint,9,opt,name=is_admin_event,json=isAdminEvent,proto3" json:"is_admin_event"` // if true, it's stored in AdminDomainEvent table
-	// and AdminAuditLog table.
+	IsAdminEvent bool             `protobuf:"varint,9,opt,name=is_admin_event,json=isAdminEvent,proto3" json:"is_admin_event"` // if true, it's an organization-level event stored
+	// in the AuditLog table with an empty environment_id, scoped by
+	// organization_id. Also used to route admin notification subscriptions.
 	Options            *Options `protobuf:"bytes,10,opt,name=options,proto3" json:"options"`                                                   // optional
 	EntityData         string   `protobuf:"bytes,11,opt,name=entity_data,json=entityData,proto3" json:"entity_data"`                           // JSON string of the entity data
 	PreviousEntityData string   `protobuf:"bytes,12,opt,name=previous_entity_data,json=previousEntityData,proto3" json:"previous_entity_data"` // JSON string of the previous entity data
