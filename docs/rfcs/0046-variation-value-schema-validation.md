@@ -11,8 +11,8 @@ The v1 scope supports:
 - JSON Schema validation for `JSON` variation types
 
 Validation will run in the backend before saving direct flag changes and
-scheduled flag changes. The UI implementation will be handled separately after
-the design direction is confirmed.
+scheduled flag changes. The UI will provide schema configuration and client-side
+validation.
 
 [Issue](https://github.com/bucketeer-io/bucketeer/issues/2499)
 
@@ -40,9 +40,10 @@ as a fixed enum, a string format, or a JSON object shape.
 - Validate variation values before creating or updating a feature flag.
 - Validate scheduled variation changes before scheduling and again before
   execution.
-- Return structured backend errors that the UI can map to variation value fields.
-- Keep the implementation incremental so backend work can proceed before the UI
-  design is finalized.
+- Return `InvalidArgument` when a schema definition or variation value is
+  invalid.
+- Keep backend validation authoritative while providing detailed client-side
+  validation in the UI.
 
 ## Non-goals
 
@@ -124,6 +125,11 @@ message VariationValueSchema {
 The `oneof` makes the validator payload structurally exclusive, so callers
 cannot send multiple validator definitions for a single schema.
 
+`type` and the selected `validator` must describe the same validator. For
+example, `type = ENUM` requires `enum_validator`. An unspecified type, a missing
+validator, or a mismatch between the two fields is invalid and the backend
+rejects it with `InvalidArgument`.
+
 Add `VariationValueSchema variation_value_schema` to:
 
 - `Feature`
@@ -132,18 +138,22 @@ Add `VariationValueSchema variation_value_schema` to:
 - Public gateway `CreateFeatureRequest`
 - Public gateway `UpdateFeatureRequest`
 
-The update request needs optional semantics so callers can distinguish "do not
-change schema" from "clear schema". If plain proto3 message presence is not
-sufficient for the generated code and gateway behavior, use an explicit update
-field such as:
+The update request uses separate fields so callers can distinguish "do not
+change schema" from "clear schema":
 
 ```proto
-VariationValueSchema variation_value_schema = X;
-google.protobuf.BoolValue clear_variation_value_schema = Y;
+VariationValueSchema variation_value_schema = 20;
+google.protobuf.BoolValue clear_variation_value_schema = 21;
 ```
 
-The final field shape should be confirmed during RFC review before
-implementation.
+The update semantics are:
+
+- If both fields are absent, the existing schema is unchanged.
+- If `variation_value_schema` is present and clear is absent or `false`, the
+  schema is set or replaced.
+- If `clear_variation_value_schema` is `true`, the schema is cleared. Clear takes
+  precedence if both fields are present.
+- If clear is `false` and no schema is present, the existing schema is unchanged.
 
 ## Persistence
 
@@ -165,6 +175,12 @@ ALTER TABLE feature
 
 Storage changes are required because feature storage writes individual columns
 instead of serializing the entire `Feature` proto.
+
+The generated protobuf `oneof` cannot be restored through the generic
+`encoding/json` database adapters. Variation value schemas therefore use a
+dedicated scanner and valuer backed by `protojson.Marshal` and
+`protojson.Unmarshal`. Unknown fields are discarded while reading so newer
+stored schemas remain readable by older binaries.
 
 Update the feature create, update, get, list, and list-by-environment SQL paths
 for both MySQL and PostgreSQL.
@@ -223,10 +239,17 @@ For `STRING` flags, compare the variation value against
 
 For `NUMBER` flags:
 
-- Every enum value must parse as a number.
-- Every variation value must parse as a number.
-- Comparison should use normalized numeric comparison instead of raw string
-  comparison, so `1` and `1.0` are treated consistently.
+- Every enum and variation value is parsed with `strconv.ParseFloat(value, 64)`.
+- Decimal and hexadecimal floating-point forms accepted by `ParseFloat` are
+  valid. Surrounding whitespace and other unsupported syntax are invalid.
+- `NaN`, positive infinity, and negative infinity are invalid.
+- Parsed IEEE 754 `float64` values are compared with numeric equality. Therefore
+  values such as `1`, `1.0`, and `1e0` compare equal. Values that round to the
+  same `float64` also compare equal; arbitrary-precision comparison is not part
+  of v1.
+
+The UI accepts decimal notation as a conservative subset of this backend
+grammar.
 
 Enum schemas must contain at least one value.
 
@@ -234,9 +257,10 @@ Enum schemas must contain at least one value.
 
 Regex validation is supported only for `STRING` flags.
 
-The regex pattern must compile before it can be saved. Variation values are valid
-when they match the compiled pattern. The backend should document that Go regexp
-syntax is used.
+The regex pattern must compile before it can be saved. Patterns use Go's
+`regexp` syntax and `MatchString` semantics, so an unanchored pattern may match a
+substring. Callers must use `^` and `$` when the whole variation value must
+match.
 
 ### JSON Schema
 
@@ -245,8 +269,10 @@ JSON Schema validation is supported only for `JSON` flags.
 The schema document must be valid JSON and a valid JSON Schema. Variation values
 must be valid JSON and must satisfy the schema.
 
-The implementation should use a maintained Go JSON Schema library rather than a
-custom validator. The library choice should be made in the backend validation PR.
+The backend uses `github.com/santhosh-tekuri/jsonschema/v6` with JSON Schema
+Draft 2020-12. The v1 contract permits only self-contained schemas. References
+to definitions within the submitted schema are supported, but implementations
+must not resolve external file, HTTP, or HTTPS `$ref` resources.
 
 ## Scheduled Changes
 
@@ -269,37 +295,22 @@ must use the schema active at execution time. If the scheduled variation value n
 longer satisfies the active schema, execution should fail and the scheduled flag
 change should move to the existing failed state with a validation failure reason.
 
+During scheduled-change execution, a validation or other permanent execution
+error rolls back the feature transaction. After that transaction returns, the
+backend records the scheduled change's failed state in a separate write so that
+the failure is not rolled back with the feature update. Transient errors leave
+the scheduled change pending for retry.
+
 ## Error Contract
 
-Schema validation errors should return `InvalidArgument`.
+Schema definition and value validation errors return `InvalidArgument`. They use
+the existing backend error conversion and contain one `google.rpc.ErrorInfo`
+detail with the existing generic invalid-argument message key.
 
-The backend should include structured details so the UI can map errors to
-specific form fields. The preferred shape is `google.rpc.ErrorInfo`, matching the
-existing backend error design direction.
-
-Example metadata:
-
-```json
-{
-  "reason": "INVALID",
-  "domain": "feature.bucketeer.io",
-  "metadata": {
-    "messageKey": "VariationValueSchemaValidationError",
-    "field": "variations.0.value",
-    "variationId": "variation-id",
-    "schemaType": "JSON_SCHEMA",
-    "path": "/theme",
-    "constraint": "enum"
-  }
-}
-```
-
-For JSON Schema validation, the backend may return multiple details, one per
-schema violation. If multiple details are too large for a response, the backend
-should return the most relevant errors and include a generic summary.
-
-The UI can initially display the backend message as a toast, but the contract
-should support field-level rendering in the UI PR.
+V1 does not return one backend detail per JSON Schema violation or guarantee a
+variation field path in the error metadata. The UI performs client-side
+validation before submission and renders its own validation details. The generic
+backend error remains the fallback for API clients and validation races.
 
 ## API Compatibility
 
@@ -341,9 +352,10 @@ that already has a schema, may receive validation errors before persistence.
 
 ### PR 4: UI
 
-- Add schema configuration UI after design direction is confirmed.
+- Add schema configuration UI.
 - Add client-side schema validation where practical.
-- Map structured backend validation errors to variation value fields.
+- Render detailed client-side validation errors and use the generic backend
+  error as a fallback.
 - Add UI tests for create, update, and scheduled-change flows.
 
 ## Open Questions
@@ -354,5 +366,3 @@ that already has a schema, may receive validation errors before persistence.
   schema updates be immediate-only in v1?
 - What is the maximum allowed size for `json_schema_validator.schema`,
   `regex_validator.pattern`, and enum value lists?
-- Which Go JSON Schema library should be adopted?
-- Should JSON Schema validation support a specific draft version only?
