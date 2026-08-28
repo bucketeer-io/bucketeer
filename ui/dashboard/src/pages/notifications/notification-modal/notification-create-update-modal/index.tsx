@@ -295,6 +295,7 @@ const NotificationCreateUpdateModal = ({
                     <Form.Label required>{t('language')}</Form.Label>
                     <Form.Control>
                       <Dropdown
+                        isExpand
                         options={languageList.map(item => ({
                           label: item.label,
                           value: item.value

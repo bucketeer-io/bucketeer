@@ -234,7 +234,7 @@ const TimeseriesLineChart = memo(
       }, []);
 
       return (
-        <div className="flex flex-1 w-full min-w-[650px] h-fit pr-5">
+        <div className="flex flex-1 w-full h-fit sm:pr-5">
           <Line
             ref={chartRef}
             height={300}

@@ -164,6 +164,7 @@ const CreateTriggerForm = forwardRef(
                       options={triggerTypeOptions}
                       value={field.value}
                       onChange={field.onChange}
+                      contentClassName="max-w-[300px] sm:w-full"
                     />
                   </Form.Control>
                   <Form.Message />

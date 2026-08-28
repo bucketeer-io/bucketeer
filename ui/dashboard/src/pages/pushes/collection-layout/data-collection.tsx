@@ -30,13 +30,13 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 250,
       cell: ({ row }) => {
         const push = row.original;
         const { id, name } = push;
 
         return (
-          <div className="flex items-center gap-0.5 max-w-fit min-w-[300px]">
+          <div className="flex items-center gap-0.5 max-w-fit min-w-[230px]">
             <NameWithTooltip
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}

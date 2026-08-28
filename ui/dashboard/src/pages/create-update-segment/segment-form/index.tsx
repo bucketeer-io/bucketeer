@@ -307,7 +307,7 @@ const SegmentForm = ({
             </div>
 
             {isUpdate && userSegment && (
-              <div className="flex items-center justify-between gap-x-4 w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50">
+              <div className="flex flex-wrap items-center justify-between gap-4 w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50">
                 <div className="flex items-center gap-x-2">
                   <Icon
                     icon={IconInfoFilled}
@@ -381,7 +381,7 @@ const SegmentForm = ({
                           </label>
                         </div>
                         {userIdsType === 'upload' && !isDisabled && (
-                          <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
+                          <div className="flex w-full max-w-full h-fit gap-x-4 pl-4 sm:pl-8">
                             <Upload
                               files={files}
                               className="border-l border-primary-500 pl-4"

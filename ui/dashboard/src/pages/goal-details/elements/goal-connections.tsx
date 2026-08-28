@@ -13,8 +13,8 @@ import Status from 'elements/status';
 
 const headerCls =
     'typo-para-small font-medium text-gray-500 uppercase whitespace-nowrap',
-  experimentCls = 'col-span-4 min-w-[200px] truncate',
-  experimentStatusCls = 'col-span-3 min-w-[150px]';
+  experimentCls = 'sm:col-span-4 sm:min-w-[200px] truncate',
+  experimentStatusCls = 'sm:col-span-3 sm:min-w-[150px]';
 
 const GoalConnections = ({ goal }: { goal: Goal }) => {
   const { t } = useTranslation(['common', 'table']);
@@ -23,13 +23,13 @@ const GoalConnections = ({ goal }: { goal: Goal }) => {
   const isExperimentType = goal.connectionType === 'EXPERIMENT';
 
   return (
-    <div className="flex flex-col w-full min-w-[780px] p-5 gap-y-5 shadow-card rounded-lg bg-white">
+    <div className="flex flex-col w-full p-5 gap-y-5 shadow-card rounded-lg bg-white">
       <p className="text-gray-800 typo-head-bold-small">
         {t('goal-connections')}
       </p>
       <Divider />
       <div className="flex flex-col w-full gap-y-3">
-        <div className="grid grid-cols-12 w-full gap-x-4">
+        <div className="hidden sm:grid grid-cols-12 w-full gap-x-4">
           <div className={cn(headerCls, experimentCls)}>
             {isExperimentType
               ? t('table:goals.experiment')
@@ -74,7 +74,7 @@ const ConnectionItem = ({
 }) => {
   const { t } = useTranslation(['table']);
   return (
-    <div className="grid grid-cols-12 w-full gap-x-4">
+    <div className="flex flex-col sm:grid sm:grid-cols-12 w-full gap-y-1 sm:gap-y-0 sm:gap-x-4">
       <div className={experimentCls}>
         <Link
           to={url}

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Account } from '@types';
@@ -13,6 +14,7 @@ import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import SortBy from 'elements/sort-by';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterMemberModal from './member-modal/filter-member-modal';
@@ -26,7 +28,9 @@ const PageContent = ({
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { isMobile } = useScreen();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+  const { memberSortByOptions, flagSortDirectionOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<MembersFilters> = searchOptions;
 
@@ -62,9 +66,9 @@ const PageContent = ({
   );
 
   const onAddMember = useCallback(() => {
-    if (!envEditable || !isOrganizationAdmin) return undefined;
-    return onAdd;
-  }, [isOrganizationAdmin, envEditable]);
+    if (!envEditable || !isOrganizationAdmin) return;
+    onAdd();
+  }, [onAdd, isOrganizationAdmin, envEditable]);
 
   const onClearFilters = useCallback(() => {
     onChangeFilters({
@@ -75,7 +79,7 @@ const PageContent = ({
       teams: undefined
     });
     onCloseFilterModal();
-  }, [filters]);
+  }, [filters, onCloseFilterModal]);
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -91,20 +95,30 @@ const PageContent = ({
         name="members-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            type={!isOrganizationAdmin ? 'admin' : 'editor'}
-            hidden={envEditable && isOrganizationAdmin}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!envEditable || !isOrganizationAdmin}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`invite-member`)}
-              </Button>
-            }
-          />
+          <>
+            {!!isMobile && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={memberSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              hidden={envEditable && isOrganizationAdmin}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!envEditable || !isOrganizationAdmin}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`invite-member`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}

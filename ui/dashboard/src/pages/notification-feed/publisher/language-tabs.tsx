@@ -58,8 +58,8 @@ const LanguageTabs = ({
           }
         />
       </div>
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {fields.map((field, index) => (
             <div
               key={field.id}
@@ -98,7 +98,7 @@ const LanguageTabs = ({
 
         {!readOnly && (
           <Dropdown
-            className="w-[200px] py-[11px]"
+            className="w-full sm:w-[200px] py-[11px]"
             disabled={availableToAdd.length <= 0}
             placeholder={t('form:add-language')}
             options={availableToAdd.map(lang => ({
