@@ -73,6 +73,8 @@
     "user-profile": "User profile",
     "logout": "Logout",
     "back-to-main": "Back to Main",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
     "no-projects": "No projects found",
     "no-organizations": "No organizations found",
     "insights": "Insights"

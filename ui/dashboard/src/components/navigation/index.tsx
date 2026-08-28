@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import logoIcon from 'assets/logos/logo-icon.svg';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
@@ -8,21 +9,39 @@ import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
+import { setNavigationCollapsedStorage } from 'storage/navigation';
 import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
 import NotificationBell from './notification-bell';
 import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
 
-const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
+type NavigationProps = {
+  onClickNavLink: () => void;
+  isCollapsed: boolean;
+  onToggleCollapsed: (value: boolean) => void;
+};
+
+const Navigation = ({
+  onClickNavLink,
+  isCollapsed,
+  onToggleCollapsed
+}: NavigationProps) => {
   const { t } = useTranslation(['common']);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { consoleAccount } = useAuth();
+
+  const toggleCollapsed = () => {
+    const next = !isCollapsed;
+    setNavigationCollapsedStorage(next);
+    onToggleCollapsed(next);
+  };
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
@@ -161,11 +180,59 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
     useToggleOpen(false);
 
   return (
-    <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
+    <div
+      className={cn(
+        'fixed h-screen bg-primary-500 z-50 py-8 transition-all duration-300 ease-in-out',
+        isCollapsed ? 'w-[60px] px-2' : 'w-[248px] px-6'
+      )}
+    >
       <div className="flex flex-col size-full relative overflow-hidden">
-        <Link to={ROUTING.PAGE_PATH_ROOT} onClick={onCloseSetting}>
-          <img src={logo} alt="Bucketer" />
-        </Link>
+        <div
+          className={cn('group relative flex items-center', {
+            'w-full justify-center': isCollapsed
+          })}
+        >
+          <Link
+            to={ROUTING.PAGE_PATH_ROOT}
+            onClick={onCloseSetting}
+            className={cn(
+              'overflow-hidden',
+              isCollapsed && 'flex-center w-full',
+              isCollapsed && 'group-hover:pointer-events-none'
+            )}
+          >
+            {isCollapsed ? (
+              <img
+                src={logoIcon}
+                alt="Bucketeer"
+                className="w-8 h-8 shrink-0"
+              />
+            ) : (
+              <img src={logo} alt="Bucketeer" />
+            )}
+          </Link>
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            className={cn(
+              'flex-center rounded-md text-primary-50 shrink-0',
+              'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
+              isCollapsed
+                ? 'absolute inset-0 m-auto size-8 bg-primary-400 hover:bg-primary-300 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto'
+                : 'size-6 ml-auto hover:bg-primary-400'
+            )}
+            aria-label={t(
+              isCollapsed ? `navigation.expand` : `navigation.collapse`
+            )}
+          >
+            <Icon
+              icon={IconSystem.IconChevronRight}
+              color="primary-50"
+              size="xs"
+              className={cn({ 'rotate-180': !isCollapsed })}
+            />
+          </button>
+        </div>
 
         <div className="flex flex-col flex-1 items-center pt-6">
           <div
@@ -174,16 +241,31 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               { 'right-0': isOpenSetting }
             )}
           >
-            <button
-              onClick={() => {
-                onCloseSetting();
-                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
-              }}
-              className="flex items-center gap-x-2 text-primary-50"
-            >
-              <Icon icon={IconSystem.IconBackspace} />
-              <span>{t(`navigation.back-to-main`)}</span>
-            </button>
+            <Tooltip
+              hidden={!isCollapsed}
+              content={t(`navigation.back-to-main`)}
+              side="right"
+              trigger={
+                <button
+                  onClick={() => {
+                    onCloseSetting();
+                    navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
+                  }}
+                  aria-label={
+                    isCollapsed ? t(`navigation.back-to-main`) : undefined
+                  }
+                  className={cn(
+                    'flex items-center gap-x-2 text-primary-50 rounded-lg',
+                    isCollapsed
+                      ? 'justify-center w-full py-2 hover:bg-primary-400'
+                      : 'px-3'
+                  )}
+                >
+                  <Icon icon={IconSystem.IconBackspace} />
+                  {!isCollapsed && <span>{t(`navigation.back-to-main`)}</span>}
+                </button>
+              }
+            />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             {settingMenuSections.map((item, index) => (
               <SectionMenu
@@ -191,6 +273,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
+                isCollapsed={isCollapsed}
               />
             ))}
           </div>
@@ -200,10 +283,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               { 'left-0': !isOpenSetting }
             )}
           >
-            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
-              {t(`environment`)}
-            </div>
-            <MyProjects />
+            {!isCollapsed && (
+              <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+                {t(`environment`)}
+              </div>
+            )}
+            <MyProjects isCollapsed={isCollapsed} />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             {mainMenuSections.map((item, index) => (
               <SectionMenu
@@ -212,6 +297,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                 title={item.title}
                 items={item.menus}
                 onClickNavLink={onClickNavLink}
+                isCollapsed={isCollapsed}
               />
             ))}
           </div>
@@ -219,23 +305,39 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
-        <div className="flex items-center justify-between">
+        <div
+          className={cn('flex items-center justify-between', {
+            'flex-col gap-y-3': isCollapsed
+          })}
+        >
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
-          <div className="flex items-center justify-center gap-2">
+          <div
+            className={cn('flex items-center justify-center gap-2', {
+              'flex-col': isCollapsed
+            })}
+          >
             <NotificationBell envUrlCode={envUrlCode} />
-            <button
-              type="button"
-              onClick={() => {
-                onOpenSetting();
-                if (consoleAccount?.isSystemAdmin) {
-                  navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
-                } else {
-                  navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`);
-                }
-              }}
-            >
-              <Icon icon={IconSystem.IconSetting} color="primary-50" />
-            </button>
+            <Tooltip
+              hidden={!isCollapsed}
+              content={t(`settings`)}
+              side="right"
+              trigger={
+                <button
+                  type="button"
+                  aria-label={isCollapsed ? t(`settings`) : undefined}
+                  onClick={() => {
+                    onOpenSetting();
+                    if (consoleAccount?.isSystemAdmin) {
+                      navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
+                    } else {
+                      navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`);
+                    }
+                  }}
+                >
+                  <Icon icon={IconSystem.IconSetting} color="primary-50" />
+                </button>
+              }
+            />
           </div>
         </div>
       </div>
@@ -243,6 +345,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         isOpen={isOpenSwitchOrg}
         onCloseSwitchOrg={onCloseSwitchOrg}
         onCloseSetting={onCloseSetting}
+        isCollapsed={isCollapsed}
       />
     </div>
   );

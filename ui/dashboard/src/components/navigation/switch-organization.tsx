@@ -57,11 +57,13 @@ const OrganizationItem = ({
 const SwitchOrganization = ({
   isOpen,
   onCloseSwitchOrg,
-  onCloseSetting
+  onCloseSetting,
+  isCollapsed
 }: {
   isOpen: boolean;
   onCloseSwitchOrg: () => void;
   onCloseSetting: () => void;
+  isCollapsed?: boolean;
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
@@ -164,7 +166,8 @@ const SwitchOrganization = ({
     <div
       ref={menuRef}
       className={cn(
-        'absolute z-50 top-0 left-[248px] w-[238px] h-screen bg-primary-100 transition-all duration-300',
+        'absolute z-50 top-0 w-[238px] h-screen bg-primary-100 transition-all duration-300',
+        isCollapsed ? 'left-[60px]' : 'left-[248px]',
         {
           'w-0 [&>div]:px-0 opacity-0': !isOpen
         }
