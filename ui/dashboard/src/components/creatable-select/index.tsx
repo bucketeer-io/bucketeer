@@ -73,7 +73,7 @@ export const optionStyle = (
           ? '#2B1F45'
           : '#FAFAFC'
         : isDark
-          ? '#110D1C'
+          ? '#171321'
           : 'white',
     color: isDark ? '#F2EDF7' : '#475569',
     ':hover': {
@@ -94,7 +94,7 @@ export const buildColorStyles = (
         ? '#1B1725'
         : '#F3F4F6'
       : isDark
-        ? '#110D1C'
+        ? '#171321'
         : 'white',
     borderColor: isDark ? '#2B1F45' : '#CBD5E1',
     '&:hover': {
@@ -111,7 +111,7 @@ export const buildColorStyles = (
     ...base,
     fontSize,
     lineHeight,
-    backgroundColor: isDark ? '#110D1C' : 'white',
+    backgroundColor: isDark ? '#171321' : 'white',
     border: `1px solid ${isDark ? '#1B1725' : '#E2E8F0'}`,
     boxShadow: isDark
       ? '0px 4px 8px 1px rgba(0, 0, 0, 0.4)'
@@ -120,7 +120,7 @@ export const buildColorStyles = (
   }),
   menuList: base => ({
     ...base,
-    backgroundColor: isDark ? '#110D1C' : 'white',
+    backgroundColor: isDark ? '#171321' : 'white',
     padding: '4px'
   }),
   placeholder: styles => ({

@@ -24,6 +24,7 @@ import {
   Legend
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
+import { useTheme } from 'hooks/use-theme';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
@@ -153,7 +154,8 @@ export const TimeseriesAreaLineChart = memo(
         }
       };
 
-      const isDark = document.documentElement.classList.contains('dark');
+      const { theme } = useTheme();
+      const isDark = theme === 'dark';
       const tickColor = isDark ? '#B5B0C2' : '#94A3B8';
       const gridColor = isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0';
 

@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
+import { useTheme } from 'hooks/use-theme';
 import { useTranslation } from 'i18n';
 import { InsightsMonthlySummaryResponse } from '@types';
 import Spinner from 'components/spinner';
@@ -50,8 +51,9 @@ const MonthlyBarChart = ({
   environmentNameMap
 }: MonthlyBarChartProps) => {
   const { t } = useTranslation(['common']);
-  const isDark = document.documentElement.classList.contains('dark');
-  const barOptions = getBarOptions(isDark);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const barOptions = useMemo(() => getBarOptions(isDark), [isDark]);
 
   const { datasets, isStacked } = useMemo(() => {
     if (!summary?.series?.length) return { datasets: [], isStacked: false };
