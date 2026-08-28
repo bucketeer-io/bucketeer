@@ -1,6 +1,7 @@
 import { RefObject, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Editor, EditorProps, Monaco } from '@monaco-editor/react';
+import { useTheme } from 'hooks/use-theme';
 import { cn } from 'utils/style';
 import { IconExpandSquar } from '@icons';
 import Button from 'components/button';
@@ -32,6 +33,8 @@ export default function ReactCodeEditor({
   ...props
 }: ReactCodeEditorProps) {
   const { t } = useTranslation('common');
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const editorOptions = useMemo(
     () => ({
@@ -103,12 +106,37 @@ export default function ReactCodeEditor({
         'editorBracketMatch.border': '#64748B1F'
       }
     });
+
+    monaco.editor.defineTheme('customDark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '7D768E' },
+        { token: 'keyword', foreground: 'B58CFF' },
+        { token: 'string.key.json', foreground: 'E961BD' },
+        { token: 'string.value.json', foreground: '66CC68' }
+      ],
+      colors: {
+        'editor.background': '#110D1C',
+        'editor.foreground': '#B5B0C2',
+        'editorLineNumber.foreground': '#B5B0C2',
+        'editorCursor.foreground': '#F2EDF7',
+        'editor.selectionBackground': '#2B1F45',
+        'editorBracketHighlight.foreground1': '#B5B0C2',
+        'editorBracketHighlight.foreground2': '#B5B0C2',
+        'editorBracketHighlight.foreground3': '#B5B0C2',
+        'editorBracketHighlight.foreground4': '#B5B0C2',
+        'editorBracketHighlight.foreground5': '#B5B0C2',
+        'editorBracketHighlight.foreground6': '#B5B0C2',
+        'editorBracketMatch.border': '#2B1F45'
+      }
+    });
   }, []);
 
   return (
     <div
       className={cn(
-        'relative w-full min-h-[170px] h-[170px] max-h-[600px] overflow-hidden',
+        'relative w-full min-h-[170px] h-[170px] max-h-[600px] overflow-hidden rounded-lg dark:ring-1 dark:ring-dark-purple-100',
         { 'resize-y': isResize },
         props.className
       )}
@@ -132,7 +160,7 @@ export default function ReactCodeEditor({
         height={'100%'}
         width={'100%'}
         defaultLanguage={props.defaultLanguage || 'json'}
-        theme="customLight"
+        theme={isDark ? 'customDark' : 'customLight'}
         wrapperProps={{
           className: cn(
             'flex border-none outline-none rounded-lg overflow-hidden editor-wrapper',
@@ -184,8 +212,8 @@ export default function ReactCodeEditor({
           });
         }}
         loading={
-          <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
-            <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
+          <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 dark:bg-dark-black-900 animate-pulse duration-200">
+            <p className="typo-para-medium text-gray-600 dark:text-dark-gray-200 animate-pulse duration-500">
               {t('common:loading')}
             </p>
             <Spinner />

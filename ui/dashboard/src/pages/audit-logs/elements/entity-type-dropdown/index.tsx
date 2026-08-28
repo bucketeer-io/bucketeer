@@ -128,7 +128,7 @@ const EntityTypeDropdown = memo(
               entityType: +value
             })
           }
-          className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700"
+          className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700 dark:[&>div>p]:!text-dark-gray-300"
           contentClassName="min-w-[180px]"
           alignContent="end"
         />

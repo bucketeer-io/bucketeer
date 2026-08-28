@@ -84,6 +84,23 @@ import {
   reorderWithReset
 } from './utils';
 
+export const TargetingDivider = () => (
+  <div
+    className="flex-center py-3 text-gray-400 dark:text-dark-gray-100"
+    aria-hidden="true"
+  >
+    <svg width="12" height="24" viewBox="0 0 12 24" fill="none">
+      <path
+        d="M6 1v18M2 15l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </div>
+);
+
 const TargetingPage = ({
   feature,
   editable
