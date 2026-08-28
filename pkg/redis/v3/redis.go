@@ -79,6 +79,7 @@ const (
 var (
 	ErrNil         = goredis.Nil
 	ErrInvalidType = errors.New("redis: invalid type")
+	ErrInvalidDB   = errors.New("redis: db index must not be negative")
 )
 
 type poolStats goredis.PoolStats
@@ -278,11 +279,9 @@ func WithRedisMode(mode RedisMode) Option {
 // It only takes effect for standalone connections: Redis Cluster does not
 // support the SELECT command, so a non-zero db is ignored (with a warning
 // logged at connection time) when the client resolves to cluster mode.
+// A negative db is invalid and makes NewClient fail with ErrInvalidDB.
 func WithDB(db int) Option {
 	return func(opts *options) {
-		if db < 0 {
-			db = 0
-		}
 		opts.db = db
 	}
 }
@@ -293,6 +292,16 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		opt(options)
 	}
 	logger := options.logger.Named("redis-v3")
+
+	// Fail loudly instead of silently falling back to DB 0, so a misconfigured
+	// index (e.g. --redis-db=-1) cannot operate on the wrong database.
+	if options.db < 0 {
+		logger.Error("Invalid Redis DB index",
+			zap.Int("db", options.db),
+			zap.String("addr", addr),
+		)
+		return nil, fmt.Errorf("%w: %d", ErrInvalidDB, options.db)
+	}
 
 	clusterOpts := &goredis.ClusterOptions{
 		Addrs:        []string{addr},

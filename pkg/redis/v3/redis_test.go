@@ -241,7 +241,7 @@ func TestWithDB(t *testing.T) {
 	}{
 		{"default db", 0, 0},
 		{"positive db index", 5, 5},
-		{"negative db index clamps to zero", -1, 0},
+		{"negative db index is preserved for validation", -1, -1},
 	}
 
 	for _, tt := range tests {
@@ -293,5 +293,16 @@ func TestNewClientWithDB(t *testing.T) {
 			assert.Equal(t, ClientTypeCluster, rc.clientType)
 			c.Close()
 		}
+	})
+
+	t.Run("negative db fails instead of falling back to db 0", func(t *testing.T) {
+		c, err := NewClient(
+			"localhost:9999",
+			WithLogger(zap.NewNop()),
+			WithRedisMode(RedisModeStandalone),
+			WithDB(-1),
+		)
+		assert.ErrorIs(t, err, ErrInvalidDB)
+		assert.Nil(t, c)
 	})
 }
