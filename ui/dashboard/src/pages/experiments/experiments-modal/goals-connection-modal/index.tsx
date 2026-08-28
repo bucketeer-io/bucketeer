@@ -48,7 +48,7 @@ const GoalsConnectionModal = ({
             {goals?.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-x-2 typo-para-medium leading-4 text-primary-500"
+                className="flex items-center gap-x-2 typo-para-medium leading-4 text-primary-500 dark:text-dark-purple-700"
               >
                 <p>{index + 1}.</p>
                 <Link

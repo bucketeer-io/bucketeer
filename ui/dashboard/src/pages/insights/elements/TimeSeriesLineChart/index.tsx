@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
+import { useTheme } from 'hooks/use-theme';
 import { InsightsTimeSeries } from '@types';
 import Spinner from 'components/spinner';
 import { LegendTable } from '../LegendTable';
@@ -32,7 +33,8 @@ const TimeSeriesLineChart = ({
   environmentNameMap,
   labelBuilder
 }: TimeSeriesLineChartProps) => {
-  const isDark = document.documentElement.classList.contains('dark');
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const tickColor = isDark ? '#B5B0C2' : '#94A3B8';
   const gridColor = isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0';
   const datasets = useMemo(() => {

@@ -37,7 +37,7 @@ const APIKeyCreatedSecretModal = ({
     >
       <div className="flex flex-col gap-4 p-5 pb-6">
         <p
-          className="typo-para-medium rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 text-amber-900 dark:text-amber-300"
+          className="typo-para-medium rounded-lg border border-accent-yellow-200 dark:border-accent-yellow-800 bg-accent-yellow-50 dark:bg-accent-yellow-900/30 px-4 py-3 text-accent-yellow-900 dark:text-accent-yellow-400"
           role="alert"
         >
           {t('message:api-key-secret-warning')}

@@ -215,7 +215,7 @@ const PageContent = ({
           </div>
 
           {isSystemAdmin && filters.tab === 'publish' && (
-            <aside className="lg:border-l lg:border-gray-200 lg:pl-8">
+            <aside className="lg:border-l lg:border-gray-200 dark:lg:border-dark-black-700 lg:pl-8">
               <DraftsPanel
                 filters={filters}
                 onSelect={onSelectDetail}

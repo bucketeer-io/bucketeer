@@ -14,7 +14,7 @@ import { Tooltip } from 'components/tooltip';
 const buttonCls =
   'typo-para-medium !text-gray-600 dark:!text-dark-gray-200 !shadow-none border border-gray-200 dark:border-dark-black-700 hover:border-gray-400 dark:hover:border-dark-purple-300 disabled:pointer-events-none';
 const buttonActiveCls =
-  '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 disabled:pointer-events-none';
+  '!text-accent-pink-500 dark:!text-accent-pink-400 border-accent-pink-500 dark:border-accent-pink-400 hover:!text-accent-pink-500 dark:hover:!text-accent-pink-400 hover:border-accent-pink-500 dark:hover:border-accent-pink-400 disabled:pointer-events-none';
 
 const VariationsSwitch = () => {
   const { t } = useTranslation(['form', 'common']);

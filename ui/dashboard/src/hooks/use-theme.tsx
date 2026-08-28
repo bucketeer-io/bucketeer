@@ -2,11 +2,10 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useState
 } from 'react';
-
-type Theme = 'light' | 'dark';
+import { getThemeStorage, setThemeStorage, Theme } from 'storage/theme';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -20,21 +19,21 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem('theme') as Theme | null;
-    if (stored === 'dark' || stored === 'light') return stored;
+    const stored = getThemeStorage();
+    if (stored) return stored;
     return window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
       : 'light';
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('theme', theme);
+    setThemeStorage(theme);
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

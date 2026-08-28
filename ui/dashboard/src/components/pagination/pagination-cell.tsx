@@ -73,7 +73,8 @@ const PaginationCell = ({
     <button
       className={cn(
         cellVariant({ variant }),
-        checked && 'bg-primary-500 text-white typo-para-medium',
+        checked &&
+          'bg-primary-500 dark:bg-dark-purple-300 text-white dark:text-white typo-para-medium',
         disabled && 'cursor-not-allowed opacity-80'
       )}
       onClick={() => !disabled && onClick && onClick(value)}

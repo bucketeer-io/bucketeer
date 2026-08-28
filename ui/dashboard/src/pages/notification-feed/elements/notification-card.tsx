@@ -30,7 +30,7 @@ const NotificationCard = ({
             'rounded-lg border p-4',
             active
               ? 'border-primary-500 shadow-border-primary-500'
-              : 'border-gray-200 hover:border-gray-300'
+              : 'border-gray-200 dark:border-dark-black-700 hover:border-gray-300 dark:hover:border-dark-black-600'
           )
         : 'p-0'
     )}

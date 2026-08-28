@@ -51,7 +51,8 @@ export const ExperimentStatuses = ({
       className={cn(
         'flex-center w-fit gap-x-1 px-2 py-1.5 typo-para-small rounded whitespace-nowrap capitalize',
         {
-          'bg-primary-50 dark:bg-dark-purple-100 text-primary-500': isRunning,
+          'bg-primary-50 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-700':
+            isRunning,
           'bg-accent-orange-50 dark:bg-dark-purple-100 text-accent-orange-500':
             isWaiting,
           'bg-accent-red-50 dark:bg-dark-purple-100 text-accent-red-500':

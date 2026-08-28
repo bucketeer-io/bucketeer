@@ -33,14 +33,17 @@ export const ProgressDateTimePoint = ({
       <div
         className={cn(
           'size-2 relative rounded-full border bg-white dark:bg-dark-black-800 border-gray-400 dark:border-dark-gray-200',
-          { 'bg-accent-pink-500 border-accent-pink-500': isSameOrBefore }
+          {
+            'bg-accent-pink-500 dark:bg-accent-pink-500 border-accent-pink-500 dark:border-accent-pink-500':
+              isSameOrBefore
+          }
         )}
       >
         <span
           className={cn(
             'typo-para-medium text-gray-700 dark:text-dark-gray-400 absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap',
             {
-              'text-accent-pink-500': isCurrentActive
+              'text-accent-pink-500 dark:text-accent-pink-400': isCurrentActive
             }
           )}
         >

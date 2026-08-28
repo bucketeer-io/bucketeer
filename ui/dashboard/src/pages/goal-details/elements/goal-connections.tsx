@@ -78,7 +78,9 @@ const ConnectionItem = ({
       <div className={experimentCls}>
         <Link
           to={url}
-          className={cn('w-fit typo-para-medium text-primary-500 underline')}
+          className={cn(
+            'w-fit typo-para-medium text-primary-500 dark:text-dark-purple-700 underline'
+          )}
         >
           {name}
         </Link>

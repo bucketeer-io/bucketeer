@@ -14,7 +14,8 @@ const TagChip = ({
     <span
       className={cn(
         'inline-flex items-center gap-1.5 rounded px-2 py-0.5 typo-para-tiny font-medium',
-        !tag.color && 'bg-gray-100 text-gray-700',
+        !tag.color &&
+          'bg-gray-100 dark:bg-dark-black-700 text-gray-700 dark:text-dark-gray-400',
         className
       )}
       style={
@@ -25,7 +26,7 @@ const TagChip = ({
     >
       {!hideDot && (
         <span
-          className={cn('size-1.5 shrink-0 rounded-full', !tag.color && 'bg-gray-400')} // prettier-ignore
+          className={cn('size-1.5 shrink-0 rounded-full', !tag.color && 'bg-gray-400 dark:bg-dark-gray-200')} // prettier-ignore
           style={tag.color ? { backgroundColor: tag.color } : undefined}
         />
       )}
