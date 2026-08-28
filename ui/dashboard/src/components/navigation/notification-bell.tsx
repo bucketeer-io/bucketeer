@@ -89,10 +89,10 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
         align="start"
         side="top"
         sideOffset={8}
-        className="w-[380px] rounded-lg border-none bg-white p-0 shadow-menu"
+        className="w-[380px] rounded-lg border-none bg-white dark:bg-dark-black-800 p-0 shadow-menu dark:shadow-none dark:ring-1 dark:ring-dark-purple-200"
       >
         <div className="flex items-center justify-between px-4 py-3.5">
-          <span className="typo-head-bold-medium text-gray-900">
+          <span className="typo-head-bold-medium text-gray-900 dark:text-white">
             {t('notifications')}
           </span>
           {unreadCount > 0 && (
@@ -108,7 +108,7 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
 
         <div className="max-h-[400px] overflow-y-auto">
           {items.length === 0 ? (
-            <p className="px-4 py-8 text-center typo-para-medium text-gray-500">
+            <p className="px-4 py-8 text-center typo-para-medium text-gray-500 dark:text-dark-gray-200">
               {t('no-notifications')}
             </p>
           ) : (
@@ -119,7 +119,7 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
                   key={notification.id}
                   type="button"
                   onClick={() => onSelectNotification(notification)}
-                  className="flex w-full flex-col items-start gap-1.5 border-t border-gray-100 px-4 py-3.5 text-left first:border-t-0 hover:bg-gray-50"
+                  className="flex w-full flex-col items-start gap-1.5 border-t border-gray-100 dark:border-dark-black-700 px-4 py-3.5 text-left first:border-t-0 hover:bg-gray-50 dark:hover:bg-dark-black-700"
                 >
                   <div className="flex w-full items-center gap-2">
                     {!notification.read && (
@@ -127,7 +127,7 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
                     )}
                     <span
                       className={cn(
-                        'typo-para-medium text-gray-900 truncate',
+                        'typo-para-medium text-gray-900 dark:text-dark-gray-400 truncate',
                         !notification.read ? 'font-semibold' : 'ml-3.5'
                       )}
                     >
@@ -136,13 +136,13 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
                     {notification.tags[0] && (
                       <TagChip tag={notification.tags[0]} hideDot />
                     )}
-                    <span className="ml-auto shrink-0 typo-para-tiny text-gray-500">
+                    <span className="ml-auto shrink-0 typo-para-tiny text-gray-500 dark:text-dark-gray-200">
                       {formatDateTime(notification.publishedAt)}
                     </span>
                   </div>
                   <span
                     className={cn(
-                      'line-clamp-2 typo-para-small text-gray-500',
+                      'line-clamp-2 typo-para-small text-gray-500 dark:text-dark-gray-200',
                       !notification.read && 'pl-3.5'
                     )}
                   >
@@ -172,7 +172,7 @@ const NotificationBell = ({ envUrlCode }: { envUrlCode: string }) => {
         <button
           type="button"
           onClick={goToFeed}
-          className="block w-full border-t border-gray-100 px-4 py-3 text-center typo-para-medium font-medium text-primary-500 hover:bg-gray-50"
+          className="block w-full border-t border-gray-100 dark:border-dark-black-700 px-4 py-3 text-center typo-para-medium font-medium text-primary-500 hover:bg-gray-50 dark:hover:bg-dark-black-700"
         >
           {t('view-all-notifications')}
         </button>

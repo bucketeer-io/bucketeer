@@ -82,7 +82,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const segment = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {segment.rules?.length || 0}
           </div>
         );

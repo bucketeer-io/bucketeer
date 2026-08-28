@@ -1,4 +1,5 @@
 import MDEditor from '@uiw/react-md-editor';
+import { useTheme } from 'hooks/use-theme';
 import { remark } from 'remark';
 import remarkGfm from 'remark-gfm';
 import strip from 'strip-markdown';
@@ -13,9 +14,11 @@ export const MarkdownContent = ({
   source: string;
   className?: string;
 }) => {
+  const { theme } = useTheme();
+
   return (
     <div
-      data-color-mode="light"
+      data-color-mode={theme}
       className={cn('markdown-content max-w-none text-sm', className)}
     >
       <MDEditor.Markdown source={source} className="!bg-transparent" />

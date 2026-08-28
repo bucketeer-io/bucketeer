@@ -287,8 +287,11 @@ const MyProjects = ({ isCollapsed }: { isCollapsed?: boolean }) => {
             <div
               className={cn(
                 'flex items-center w-full text-primary-50 dark:text-white hover:bg-primary-400 dark:hover:bg-dark-purple-100',
-            'pl-3 pr-1.5 py-3 rounded-lg typo-para-medium justify-between',
-            { 'bg-primary-400 dark:bg-dark-purple-200/20': isShowProjectsList },
+                'pl-3 pr-1.5 py-3 rounded-lg typo-para-medium justify-between',
+                {
+                  'bg-primary-400 dark:bg-dark-purple-200/20':
+                    isShowProjectsList
+                },
                 isCollapsed ? 'justify-center px-0' : 'pl-3 pr-1.5'
               )}
             >

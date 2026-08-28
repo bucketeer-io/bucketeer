@@ -266,7 +266,7 @@ const Navigation = ({
                 </button>
               }
             />
-    <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
+            <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
             {settingMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
@@ -283,21 +283,13 @@ const Navigation = ({
               { 'left-0': !isOpenSetting }
             )}
           >
-<<<<<<< HEAD
             {!isCollapsed && (
               <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 dark:text-dark-gray-100 mb-3">
                 {t(`environment`)}
               </div>
             )}
             <MyProjects isCollapsed={isCollapsed} />
-<Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
-=======
-            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 dark:text-dark-gray-100 mb-3">
-              {t(`environment`)}
-            </div>
-            <MyProjects />
             <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
->>>>>>> 4435b327b (implement dark mode for app root and navigation components)
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
