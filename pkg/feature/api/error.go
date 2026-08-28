@@ -124,8 +124,8 @@ var (
 	statusSegmentUsersAlreadyUploading = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment users already uploading").
 			WithMessageKey("SegmentUsersAlreadyUploading"))
-	statusSegmentStatusNotSuceeded = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment status is not suceeded").
+	statusSegmentStatusNotSucceeded = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment status is not succeeded").
 			WithMessageKey("SegmentStatusNotSucceeded"))
 	statusSegmentInUse = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment is in use").
@@ -211,7 +211,7 @@ var (
 	statusInvalidArchive = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
-			"can't archive because this feature is used as a prerequsite").
+			"can't archive because this feature is used as a prerequisite").
 			WithMessageKey("InvalidArchive"))
 	statusVariationInUseByOtherFeatures = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(

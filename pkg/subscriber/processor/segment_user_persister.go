@@ -324,7 +324,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 		}
 		msg.Ack()
 		p.logger.Debug(
-			"suceeded to persist segment users",
+			"succeeded to persist segment users",
 			zap.String("msgID", msg.ID),
 			zap.String("environmentId", event.EnvironmentId),
 			zap.String("segmentId", event.SegmentId),
