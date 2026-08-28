@@ -35,8 +35,10 @@ const PersonBadge = ({ email }: { email: string }) => {
   const name = email.split('@')[0];
   return (
     <div className="flex items-center gap-2">
-      <span className="typo-para-small text-gray-900">{name}</span>
-      <span className="flex-center size-6 rounded-full bg-primary-100 typo-para-tiny font-medium text-primary-600">
+      <span className="typo-para-small text-gray-900 dark:text-dark-gray-400">
+        {name}
+      </span>
+      <span className="flex-center size-6 rounded-full bg-primary-100 dark:bg-dark-purple-100 typo-para-tiny font-medium text-primary-600 dark:text-dark-purple-700">
         {initial}
       </span>
     </div>
@@ -51,8 +53,12 @@ const DetailRow = ({
   children: ReactNode;
 }) => (
   <div className="flex min-h-8 items-center justify-between gap-4">
-    <span className="typo-para-small text-gray-500">{label}</span>
-    <div className="typo-para-small text-gray-900">{children}</div>
+    <span className="typo-para-small text-gray-500 dark:text-dark-gray-200">
+      {label}
+    </span>
+    <div className="typo-para-small text-gray-900 dark:text-dark-gray-400">
+      {children}
+    </div>
   </div>
 );
 
@@ -66,7 +72,9 @@ const Section = ({
   children: ReactNode;
 }) => (
   <section className={cn('flex flex-col gap-3', className)}>
-    <h3 className="typo-para-medium font-bold text-gray-900">{title}</h3>
+    <h3 className="typo-para-medium font-bold text-gray-900 dark:text-dark-gray-400">
+      {title}
+    </h3>
     {children}
   </section>
 );
@@ -118,7 +126,7 @@ const NotificationDetailModal = ({
     return (
       <SlideModal title="" isOpen={isOpen} onClose={onClose}>
         <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-          <p className="typo-para-medium text-gray-500">
+          <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200">
             {t('message:notification-load-failed')}
           </p>
           <Button variant="secondary" onClick={onClose}>
@@ -188,8 +196,8 @@ const NotificationDetailModal = ({
               }}
               hideDot
             />
-            <span className="text-gray-300">•</span>
-            <span className="typo-para-small text-gray-500">
+            <span className="text-gray-300 dark:text-dark-black-700">•</span>
+            <span className="typo-para-small text-gray-500 dark:text-dark-gray-200">
               {formatDateTime(timestamp)}
             </span>
           </div>
@@ -208,7 +216,7 @@ const NotificationDetailModal = ({
 
           <Section
             title={t('details')}
-            className="border-t border-gray-200 pt-6"
+            className="border-t border-gray-200 dark:border-dark-black-700 pt-6"
           >
             <DetailRow label={t('form:created-by')}>
               <PersonBadge email={notification.createdBy} />
@@ -225,7 +233,7 @@ const NotificationDetailModal = ({
           </Section>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-gray-200 dark:border-dark-black-700 px-6 py-4">
           <Button variant="secondary" onClick={onClose}>
             {t('close')}
           </Button>

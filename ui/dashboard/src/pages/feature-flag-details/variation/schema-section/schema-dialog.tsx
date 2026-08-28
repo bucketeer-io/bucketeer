@@ -154,7 +154,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
       <div className="flex flex-col w-full gap-y-5 p-5">
         {supportedTypes.length > 1 && (
           <div className="flex flex-col gap-y-3">
-            <p className="typo-para-small text-gray-600">
+            <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
               {t('form:feature-flags.value-schema.type')}
             </p>
             <RadioGroup
@@ -168,7 +168,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
               {supportedTypes.map(type => (
                 <label
                   key={type}
-                  className="flex items-center gap-x-2 cursor-pointer typo-para-medium text-gray-700"
+                  className="flex items-center gap-x-2 cursor-pointer typo-para-medium text-gray-700 dark:text-dark-gray-400"
                 >
                   <RadioGroupItem value={type} id={`schema-type-${type}`} />
                   {t(
@@ -186,7 +186,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
 
         {schemaType === 'ENUM' && (
           <div className="flex flex-col gap-y-2">
-            <p className="typo-para-small text-gray-600">
+            <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
               {t('form:feature-flags.value-schema.enum-values')}
             </p>
             <CreatableSelect
@@ -201,7 +201,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
               noOptionsMessage={() => null}
             />
             {feature.variationType === 'NUMBER' && (
-              <p className="typo-para-small text-gray-500">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
                 {t('form:feature-flags.value-schema.enum-values-number-note')}
               </p>
             )}
@@ -210,7 +210,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
 
         {schemaType === 'REGEX' && (
           <div className="flex flex-col gap-y-2">
-            <p className="typo-para-small text-gray-600">
+            <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
               {t('form:feature-flags.value-schema.regex-pattern')}
             </p>
             <Input
@@ -223,7 +223,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
                 setTestResults(null);
               }}
             />
-            <p className="typo-para-small text-gray-500">
+            <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
               {t('form:feature-flags.value-schema.regex-note')}
             </p>
           </div>
@@ -231,7 +231,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
 
         {schemaType === 'JSON_SCHEMA' && (
           <div className="flex flex-col gap-y-2">
-            <p className="typo-para-small text-gray-600">
+            <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
               {t('form:feature-flags.value-schema.json-schema')}
             </p>
             <ReactCodeEditor
@@ -244,7 +244,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
               isExpand={false}
               className="min-h-[240px] h-[240px]"
             />
-            <p className="typo-para-small text-gray-500">
+            <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
               {t('form:feature-flags.value-schema.json-schema-note')}
             </p>
           </div>
@@ -264,19 +264,19 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
         </div>
 
         {definitionErrorMessage && (
-          <div className="flex items-center gap-x-2 typo-para-small text-accent-red-500">
+          <div className="flex items-center gap-x-2 typo-para-small text-accent-red-500 dark:text-accent-red-400">
             <Icon icon={IconAlert} size="xs" />
             {definitionErrorMessage}
           </div>
         )}
 
         {testResults && (
-          <div className="flex flex-col gap-y-2 p-3 rounded-lg bg-gray-100">
+          <div className="flex flex-col gap-y-2 p-3 rounded-lg bg-gray-100 dark:bg-dark-black-700">
             <p
               className={
                 failedCount > 0
-                  ? 'typo-para-small text-accent-red-500'
-                  : 'typo-para-small text-accent-green-500'
+                  ? 'typo-para-small text-accent-red-500 dark:text-accent-red-400'
+                  : 'typo-para-small text-accent-green-500 dark:text-accent-green-400'
               }
             >
               {failedCount > 0
@@ -289,7 +289,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
               {testResults.map(result => (
                 <li
                   key={result.index}
-                  className="flex flex-col typo-para-small text-gray-700"
+                  className="flex flex-col typo-para-small text-gray-700 dark:text-dark-gray-400"
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate max-w-[400px]">
@@ -298,8 +298,8 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
                     <span
                       className={
                         result.passed
-                          ? 'text-accent-green-500'
-                          : 'text-accent-red-500'
+                          ? 'text-accent-green-500 dark:text-accent-green-400'
+                          : 'text-accent-red-500 dark:text-accent-red-400'
                       }
                     >
                       {result.passed
@@ -308,7 +308,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
                     </span>
                   </div>
                   {!result.passed && result.detail && (
-                    <span className="max-w-[500px] break-words text-gray-500">
+                    <span className="max-w-[500px] break-words text-gray-500 dark:text-dark-gray-200">
                       {result.detail}
                     </span>
                   )}

@@ -65,7 +65,7 @@ const SchemaSection = ({
       <div className="flex items-center justify-between w-full gap-x-6">
         <div className="flex flex-col gap-y-1">
           <div className="flex items-center gap-x-2">
-            <h3 className="typo-head-bold-small text-gray-800">
+            <h3 className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
               {t('form:feature-flags.value-schema.title')}
             </h3>
             <Tooltip
@@ -78,12 +78,12 @@ const SchemaSection = ({
               className="max-w-[420px] whitespace-pre-line"
             />
             {schema && (
-              <span className="px-2 py-0.5 rounded bg-primary-50 text-primary-500 typo-para-small">
+              <span className="px-2 py-0.5 rounded bg-primary-50 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-700 typo-para-small">
                 {typeLabel}
               </span>
             )}
           </div>
-          <p className="typo-para-small text-gray-600">
+          <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
             {schema
               ? schema.description ||
                 t('form:feature-flags.value-schema.has-schema')
@@ -143,7 +143,7 @@ const SchemaSection = ({
           {schema.enumValidator?.values?.map(value => (
             <span
               key={value}
-              className="px-2 py-1 rounded bg-gray-100 text-gray-700 typo-para-small"
+              className="px-2 py-1 rounded bg-gray-100 dark:bg-dark-black-700 text-gray-700 dark:text-dark-gray-400 typo-para-small"
             >
               {value}
             </span>
@@ -151,7 +151,7 @@ const SchemaSection = ({
         </div>
       )}
       {schema?.type === 'REGEX' && (
-        <code className="w-fit px-3 py-2 rounded-lg bg-gray-100 text-gray-700 typo-para-small">
+        <code className="w-fit px-3 py-2 rounded-lg bg-gray-100 dark:bg-dark-black-700 text-gray-700 dark:text-dark-gray-400 typo-para-small">
           {schema.regexValidator?.pattern}
         </code>
       )}
