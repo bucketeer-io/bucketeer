@@ -207,11 +207,6 @@ var (
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
 			"can't archive because this feature is used as a prerequsite"))
-	statusVariationInUseByOtherFeatures = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(
-			pkgErr.FeaturePackageName,
-			"can't remove this variation because it is used as a prerequisite or rule in other features",
-		))
 	// flag trigger
 	statusMissingTriggerFeatureID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing trigger feature id", "FeatureFlagID"))

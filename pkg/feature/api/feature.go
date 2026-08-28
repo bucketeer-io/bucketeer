@@ -31,6 +31,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
@@ -802,6 +803,7 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 		},
 	)
 	if err != nil {
+		s.logVariationInUseError(ctx, err, req)
 		return nil, nil, err
 	}
 	if err := s.upsertTags(ctx, updated.Tags, req.EnvironmentId); err != nil {
@@ -824,6 +826,7 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	}
 	// Validate that variations being deleted are not used in other features
 	if err := validateVariationDeletion(req.VariationChanges, features, req.Id); err != nil {
+		s.logVariationInUseError(ctx, err, req)
 		return nil, nil, err
 	}
 	event, err := domainevent.NewEvent(
@@ -1012,6 +1015,36 @@ func (s *FeatureService) DeleteFeature(
 
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.DeleteFeatureResponse{}, nil
+}
+
+// logVariationInUseError records which variation blocked the update and what
+// still references it. Validation failures are otherwise not logged at all.
+func (s *FeatureService) logVariationInUseError(
+	ctx context.Context,
+	err error,
+	req *featureproto.UpdateFeatureRequest,
+) {
+	bktErr, ok := pkgErr.AsVariationInUseError(err)
+	if !ok {
+		return
+	}
+	deleted := make([]string, 0, len(req.VariationChanges))
+	for _, change := range req.VariationChanges {
+		if change.ChangeType == featureproto.ChangeType_DELETE {
+			deleted = append(deleted, change.Variation.GetId())
+		}
+	}
+	s.logger.Error(
+		"Failed to update feature because a variation is still in use",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("environmentId", req.EnvironmentId),
+			zap.String("featureId", req.Id),
+			zap.Strings("deletedVariationIds", deleted),
+			// Empty when the reference is in the flag being updated.
+			zap.Any("reference", bktErr.EmbeddedKeyValues()),
+		)...,
+	)
 }
 
 func (s *FeatureService) convUpdateFeatureError(err error) error {

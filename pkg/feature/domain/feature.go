@@ -90,8 +90,32 @@ var (
 		pkgErr.FeaturePackageName, "feature: target users required", "target_users")
 	errTargetUserRequired = pkgErr.NewErrorInvalidArgEmpty(
 		pkgErr.FeaturePackageName, "feature: target user required", "target_user")
-	ErrVariationInUse = pkgErr.NewErrorInvalidArgNotMatchFormat(
-		pkgErr.FeaturePackageName, "feature: variation in use", "variation")
+	// References inside the flag being updated. For another flag's references,
+	// see newErrVariationInUseByOtherFeature.
+	errVariationInUseByOffVariation = pkgErr.NewErrorVariationInUse(
+		pkgErr.FeaturePackageName,
+		pkgErr.ErrorTypeVariationInUseByOffVariation,
+		"feature: variation is set as the off variation",
+		nil,
+	)
+	errVariationInUseByDefaultStrategy = pkgErr.NewErrorVariationInUse(
+		pkgErr.FeaturePackageName,
+		pkgErr.ErrorTypeVariationInUseByDefaultStrategy,
+		"feature: variation is used in the default strategy",
+		nil,
+	)
+	errVariationInUseByTargetingRule = pkgErr.NewErrorVariationInUse(
+		pkgErr.FeaturePackageName,
+		pkgErr.ErrorTypeVariationInUseByTargetingRule,
+		"feature: variation is used in a targeting rule",
+		nil,
+	)
+	errVariationInUseByIndividualTarget = pkgErr.NewErrorVariationInUse(
+		pkgErr.FeaturePackageName,
+		pkgErr.ErrorTypeVariationInUseByIndividualTarget,
+		"feature: variation has users assigned in the individual targeting",
+		nil,
+	)
 	errVariationNotFound = pkgErr.NewErrorNotFound(
 		pkgErr.FeaturePackageName, "feature: variation not found", "variation")
 	errVariationTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
@@ -935,7 +959,7 @@ func (f *Feature) validateRemoveVariation(id string) error {
 		return errVariationsMustHaveAtLeastTwoVariations
 	}
 	if f.OffVariation == id {
-		return ErrVariationInUse
+		return errVariationInUseByOffVariation
 	}
 	// Check if the individual targeting has any users
 	idx, err := f.findTarget(id)
@@ -943,13 +967,13 @@ func (f *Feature) validateRemoveVariation(id string) error {
 		return err
 	}
 	if len(f.Targets[idx].Users) > 0 {
-		return ErrVariationInUse
+		return errVariationInUseByIndividualTarget
 	}
 	if strategyContainsVariation(id, f.DefaultStrategy) {
-		return ErrVariationInUse
+		return errVariationInUseByDefaultStrategy
 	}
 	if f.rulesContainsVariation(id) {
-		return ErrVariationInUse
+		return errVariationInUseByTargetingRule
 	}
 	return nil
 }
@@ -1537,7 +1561,13 @@ func ValidateVariationUsage(
 		for _, prerequisite := range f.Prerequisites {
 			if prerequisite.FeatureId == targetFeatureID {
 				if _, found := deletedVariations[prerequisite.VariationId]; found {
-					return ErrVariationInUse
+					return newErrVariationInUseByOtherFeature(
+						pkgErr.ErrorTypeVariationInUseByPrerequisite,
+						"used as a prerequisite",
+						prerequisite.VariationId,
+						targetFeatureID,
+						f,
+					)
 				}
 			}
 		}
@@ -1550,7 +1580,13 @@ func ValidateVariationUsage(
 					// We should check if any clause values match deleted variation IDs
 					for _, clValue := range clause.Values {
 						if _, found := deletedVariations[clValue]; found {
-							return ErrVariationInUse
+							return newErrVariationInUseByOtherFeature(
+								pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
+								"used in a targeting rule",
+								clValue,
+								targetFeatureID,
+								f,
+							)
 						}
 					}
 				}
@@ -1558,6 +1594,30 @@ func ValidateVariationUsage(
 		}
 	}
 	return nil
+}
+
+// newErrVariationInUseByOtherFeature reports that referencedBy still points at
+// variationID. The message is for the logs, the key values for the console.
+func newErrVariationInUseByOtherFeature(
+	errorType pkgErr.ErrorType,
+	usage string,
+	variationID string,
+	ownerFeatureID string,
+	referencedBy *feature.Feature,
+) error {
+	return pkgErr.NewErrorVariationInUse(
+		pkgErr.FeaturePackageName,
+		errorType,
+		fmt.Sprintf(
+			"feature: variation %s of feature %s is %s by feature %s (%s)",
+			variationID, ownerFeatureID, usage, referencedBy.Id, referencedBy.Name,
+		),
+		map[string]string{
+			"variationId": variationID,
+			"featureId":   referencedBy.Id,
+			"featureName": referencedBy.Name,
+		},
+	)
 }
 
 // This logic is based on https://en.wikipedia.org/wiki/Topological_sorting.

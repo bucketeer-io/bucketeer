@@ -534,7 +534,7 @@ func (f *Feature) updateValidateRemoveVariation(id string) error {
 		return errVariationsMustHaveAtLeastTwoVariations
 	}
 	if f.OffVariation == id {
-		return ErrVariationInUse
+		return errVariationInUseByOffVariation
 	}
 	// Check if the individual targeting has any users
 	idx, err := f.updateFindTarget(id)
@@ -542,13 +542,13 @@ func (f *Feature) updateValidateRemoveVariation(id string) error {
 		return err
 	}
 	if len(f.Targets[idx].Users) > 0 {
-		return ErrVariationInUse
+		return errVariationInUseByIndividualTarget
 	}
 	if strategyContainsVariation(id, f.DefaultStrategy) {
-		return ErrVariationInUse
+		return errVariationInUseByDefaultStrategy
 	}
 	if f.updateRulesContainsVariation(id) {
-		return ErrVariationInUse
+		return errVariationInUseByTargetingRule
 	}
 	return nil
 }
