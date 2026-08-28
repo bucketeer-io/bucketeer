@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 
@@ -227,6 +228,77 @@ func TestNewGRPCStatus_EdgeCases(t *testing.T) {
 
 			assert.Equal(t, tt.expectedCode, st.Code())
 			assert.Equal(t, tt.expectedMessage, st.Message())
+		})
+	}
+}
+
+func TestNewGRPCStatus_VariationInUse(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		errorType      pkgErr.ErrorType
+		expectedReason string
+	}{
+		{
+			name:           "off variation",
+			errorType:      pkgErr.ErrorTypeVariationInUseByOffVariation,
+			expectedReason: "VARIATION_IN_USE_BY_OFF_VARIATION",
+		},
+		{
+			name:           "default strategy",
+			errorType:      pkgErr.ErrorTypeVariationInUseByDefaultStrategy,
+			expectedReason: "VARIATION_IN_USE_BY_DEFAULT_STRATEGY",
+		},
+		{
+			name:           "targeting rule",
+			errorType:      pkgErr.ErrorTypeVariationInUseByTargetingRule,
+			expectedReason: "VARIATION_IN_USE_BY_TARGETING_RULE",
+		},
+		{
+			name:           "individual targeting",
+			errorType:      pkgErr.ErrorTypeVariationInUseByIndividualTarget,
+			expectedReason: "VARIATION_IN_USE_BY_INDIVIDUAL_TARGETING",
+		},
+		{
+			name:           "prerequisite",
+			errorType:      pkgErr.ErrorTypeVariationInUseByPrerequisite,
+			expectedReason: "VARIATION_IN_USE_BY_PREREQUISITE",
+		},
+		{
+			name:           "feature flag rule",
+			errorType:      pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
+			expectedReason: "VARIATION_IN_USE_BY_FEATURE_FLAG_RULE",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			st := NewGRPCStatus(pkgErr.NewErrorVariationInUse(
+				pkgErr.FeaturePackageName,
+				tt.errorType,
+				"variation in use",
+				map[string]string{"featureId": "feature-2", "featureName": "Flag B"},
+			))
+
+			assert.Equal(t, codes.FailedPrecondition, st.Code())
+			assert.Equal(t, "feature:variation in use", st.Message())
+
+			var errorInfo *errdetails.ErrorInfo
+			for _, detail := range st.Details() {
+				if info, ok := detail.(*errdetails.ErrorInfo); ok {
+					errorInfo = info
+					break
+				}
+			}
+			require.NotNil(t, errorInfo, "status must carry an ErrorInfo detail")
+
+			assert.Equal(t, tt.expectedReason, errorInfo.Reason)
+			assert.Equal(t, string(tt.errorType), errorInfo.Metadata["messageKey"])
+			assert.Equal(t, "feature-2", errorInfo.Metadata["featureId"])
+			assert.Equal(t, "Flag B", errorInfo.Metadata["featureName"])
 		})
 	}
 }

@@ -73,7 +73,7 @@ export type PopoverProps<PopoverValue> = {
   children?: ReactNode;
   closeBtnCls?: string;
   sideOffset?: number;
-  closeRef?: RefObject<HTMLButtonElement>;
+  closeRef?: RefObject<HTMLButtonElement | null>;
   onClick?: (value: PopoverValue) => void;
   onOpenChange?: (open: boolean) => void;
   onPointerDownOutside?: () => void;

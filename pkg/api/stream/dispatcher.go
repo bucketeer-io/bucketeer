@@ -69,6 +69,13 @@ func NewDispatcher(maxConns int, fetchFeatures FeaturesFetcher, logger *zap.Logg
 	}
 }
 
+// ActiveConns returns the current number of SSE connections.
+func (d *Dispatcher) ActiveConns() int {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.totalConns
+}
+
 // Shutdown signals all active SSE handlers to exit immediately.
 func (d *Dispatcher) Shutdown() {
 	d.shutdownOnce.Do(func() { close(d.shutdownCh) })

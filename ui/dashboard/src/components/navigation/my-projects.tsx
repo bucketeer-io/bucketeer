@@ -32,8 +32,9 @@ import Icon from 'components/icon';
 import List from 'components/list';
 import { ScrollArea } from 'components/scroll-area';
 import SearchInput from 'components/search-input';
+import { Tooltip } from 'components/tooltip';
 
-const MyProjects = () => {
+const MyProjects = ({ isCollapsed }: { isCollapsed?: boolean }) => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
@@ -267,22 +268,42 @@ const MyProjects = () => {
           </div>
         </Popover.Content>
       </Popover.Portal>
-      <Popover.Trigger className="w-full">
-        <div
-          className={cn(
-            'flex items-center w-full text-primary-50 hover:bg-primary-400',
-            'pl-3 pr-1.5 py-3 rounded-lg typo-para-medium justify-between',
-            { 'bg-primary-400': isShowProjectsList }
-          )}
-        >
-          <div className="flex items-center gap-x-2 truncate">
-            <Icon color="primary-50" icon={IconFolder} size="sm" />
-            <span className="truncate text-ellipsis">
-              {selectedEnvironment?.name}
-            </span>
-          </div>
-          <Icon color="primary-50" size="sm" icon={IconChevronRight} />
-        </div>
+      <Popover.Trigger
+        className="w-full"
+        aria-label={isCollapsed ? selectedEnvironment?.name : undefined}
+      >
+        <Tooltip
+          hidden={!isCollapsed}
+          content={selectedEnvironment?.name}
+          side="right"
+          triggerCls="w-full"
+          trigger={
+            <div
+              className={cn(
+                'flex items-center w-full text-primary-50 hover:bg-primary-400',
+                'py-3 rounded-lg typo-para-medium justify-between',
+                { 'bg-primary-400': isShowProjectsList },
+                isCollapsed ? 'justify-center px-0' : 'pl-3 pr-1.5'
+              )}
+            >
+              <div
+                className={cn('flex items-center gap-x-2 truncate', {
+                  'w-fit': isCollapsed
+                })}
+              >
+                <Icon color="primary-50" icon={IconFolder} size="sm" />
+                {!isCollapsed && (
+                  <span className="truncate text-ellipsis">
+                    {selectedEnvironment?.name}
+                  </span>
+                )}
+              </div>
+              {!isCollapsed && (
+                <Icon color="primary-50" size="sm" icon={IconChevronRight} />
+              )}
+            </div>
+          }
+        />
       </Popover.Trigger>
     </Popover.Root>
   );

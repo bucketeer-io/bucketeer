@@ -150,3 +150,12 @@ Cancelled: "{{ .Field_1 }}がキャンセルされました"
 Failed: "{{ .Field_1 }}が失敗しました"
 Skipped: "{{ .Field_1 }}がスキップされました"
 AppliedNow: "{{ .Field_1 }}が即時適用されました"
+
+#############################
+# Subscription Notifications
+#############################
+
+NotificationFeatureStale: "{{ .Field_1 }}日以上使用されていないフィーチャーフラグがあります。"
+NotificationExperimentRunning: "実行中のエクスペリメントがあります。"
+NotificationExperimentDaysLeft: "残り {{ .Field_1 }} 日"
+NotificationMAUCount: "{{ .Field_1 }}月のMAUです。"

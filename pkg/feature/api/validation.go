@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"regexp"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -428,17 +427,11 @@ func validateVariationDeletion(
 		dependentFeaturesSlice = append(dependentFeaturesSlice, f)
 	}
 
-	// Check if the deleted variation is used as a prerequisite or rule in other features
-	if err := featuredomain.ValidateVariationUsage(
+	// Check if the deleted variation is used as a prerequisite or rule in other features.
+	// The error already names the reference, so it is returned as-is.
+	return featuredomain.ValidateVariationUsage(
 		dependentFeaturesSlice,
 		targetFeatureID,
 		deletedVariations,
-	); err != nil {
-		if errors.Is(err, featuredomain.ErrVariationInUse) {
-			return statusVariationInUseByOtherFeatures.Err()
-		}
-		return err
-	}
-
-	return nil
+	)
 }

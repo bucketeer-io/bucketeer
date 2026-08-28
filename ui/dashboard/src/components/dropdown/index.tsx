@@ -120,6 +120,7 @@ const DropdownMenuTrigger = forwardRef<
       <DropdownMenuPrimitive.Trigger
         type="button"
         ref={ref}
+        aria-label={ariaLabel}
         className={cn(
           triggerVariants({
             variant
@@ -363,6 +364,7 @@ interface DropdownProps {
   menuContentSide?: 'top' | 'bottom' | 'left' | 'right';
   alignContent?: 'center' | 'end' | 'start';
   trigger?: ReactNode;
+  ariaLabel?: string;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onChange?: (value: DropdownValue | DropdownValue[]) => void;
   onChangeAdditional?: (value: DropdownValue | DropdownValue[]) => void; // for additional options
@@ -396,6 +398,7 @@ const Dropdown = ({
   className = 'w-full',
   alignContent = 'start',
   trigger,
+  ariaLabel,
 
   additionalElement,
   sideOffsetContent,
@@ -468,6 +471,7 @@ const Dropdown = ({
           }
           label={labelCustom ? labelCustom : triggerLabel}
           trigger={trigger}
+          ariaLabel={ariaLabel}
           disabled={disabled}
           loading={loading}
           variant={variant}

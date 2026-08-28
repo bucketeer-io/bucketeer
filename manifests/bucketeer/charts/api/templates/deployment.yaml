@@ -225,6 +225,10 @@ spec:
             - name: BUCKETEER_API_SSE_MAX_CONNECTIONS
               value: "{{ .Values.env.sseMaxConnections }}"
             {{- end }}
+            {{- if .Values.env.sseReadinessThreshold }}
+            - name: BUCKETEER_API_SSE_READINESS_THRESHOLD
+              value: "{{ .Values.env.sseReadinessThreshold }}"
+            {{- end }}
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT

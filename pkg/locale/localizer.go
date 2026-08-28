@@ -173,6 +173,14 @@ const (
 	AppliedNowTemplate             = "AppliedNow"
 )
 
+// subscription notifications
+const (
+	NotificationFeatureStaleTemplate       = "NotificationFeatureStale"
+	NotificationExperimentRunning          = "NotificationExperimentRunning"
+	NotificationExperimentDaysLeftTemplate = "NotificationExperimentDaysLeft"
+	NotificationMAUCountTemplate           = "NotificationMAUCount"
+)
+
 func init() {
 	bundle = i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
