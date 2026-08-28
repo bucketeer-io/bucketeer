@@ -89,6 +89,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 
 	opts := []redisv3.Option{
 		redisv3.WithLogger(logger),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *c.redisTLSEnabled,
+			CACert:             *c.redisTLSCACert,
+			Cert:               *c.redisTLSCert,
+			Key:                *c.redisTLSKey,
+			InsecureSkipVerify: *c.redisTLSInsecureSkipVerify,
+		}),
 	}
 	if *c.redisPassword != "" {
 		opts = append(opts, redisv3.WithPassword(*c.redisPassword))

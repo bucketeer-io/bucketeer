@@ -10,16 +10,28 @@ The tool deletes keys matching the pattern `{environment-id}:goal_event_retry:*`
 go run ./hack/delete-redis-retry-keys delete \
   --redis-addr=<REDIS_HOST:PORT> \
   --environment-id=<ENVIRONMENT_ID> \
-  --redis-password=<REDIS_PASSWORD> \ # optional
-  --scan-count=<SCAN_COUNT> \ # optional, defaults to 100
-  --redis-tls-enabled \ # optional, defaults to false
-  --redis-tls-ca-cert=<PATH> \ # optional, defaults to the system CA pool
-  --redis-tls-cert=<PATH> \ # optional, for mutual TLS
-  --redis-tls-key=<PATH> \ # optional, for mutual TLS
-  --redis-tls-insecure-skip-verify \ # optional, not recommended for production
+  --redis-password=<REDIS_PASSWORD> \
+  --scan-count=<SCAN_COUNT> \
+  --redis-tls-enabled \
+  --redis-tls-ca-cert=<PATH> \
+  --redis-tls-cert=<PATH> \
+  --redis-tls-key=<PATH> \
+  --redis-tls-insecure-skip-verify \
   --no-profile \
   --no-gcp-trace-enabled
 ```
+
+Optional flags:
+
+| Flag | Description |
+| --- | --- |
+| `--redis-password` | Redis password. |
+| `--scan-count` | Number of keys to scan per iteration. Defaults to 100. |
+| `--redis-tls-enabled` | Connect over TLS. Defaults to false. |
+| `--redis-tls-ca-cert` | CA certificate path. Uses the system CA pool if unset. |
+| `--redis-tls-cert` | Client certificate path, for mutual TLS. |
+| `--redis-tls-key` | Client private key path, for mutual TLS. |
+| `--redis-tls-insecure-skip-verify` | Skip server certificate verification. Not recommended for production. |
 
 ### Example: Delete retry keys for e2e environment (minikube)
 
