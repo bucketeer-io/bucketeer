@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/slack-go/slack"
@@ -174,11 +175,11 @@ func (n *slackNotifier) createAttachment(
 	case senderproto.Notification_DomainEvent:
 		return n.createDomainEventAttachment(notification.DomainEventNotification, localizer)
 	case senderproto.Notification_FeatureStale:
-		return n.createFeatureStaleAttachment(notification.FeatureStaleNotification)
+		return n.createFeatureStaleAttachment(notification.FeatureStaleNotification, localizer)
 	case senderproto.Notification_ExperimentRunning:
-		return n.createExperimentRunningAttachment(notification.ExperimentRunningNotification)
+		return n.createExperimentRunningAttachment(notification.ExperimentRunningNotification, localizer)
 	case senderproto.Notification_MauCount:
-		return n.createMAUCountAttachment(notification.MauCountNotification)
+		return n.createMAUCountAttachment(notification.MauCountNotification, localizer)
 	case senderproto.Notification_DemoOrganizationCreation:
 		return n.createDemoOrganizationCreationAttachment(notification.DemoOrganizationCreationNotification)
 	}
@@ -257,6 +258,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 
 func (n *slackNotifier) createFeatureStaleAttachment(
 	notification *senderproto.FeatureStaleNotification,
+	localizer locale.Localizer,
 ) (*slack.Attachment, error) {
 	featureListMsg := ""
 	for _, feature := range notification.Features {
@@ -272,16 +274,14 @@ func (n *slackNotifier) createFeatureStaleAttachment(
 		newLine := "- ID: `" + feature.Id + "`, Name: *" + fmt.Sprintf(linkTemplate, url, feature.Name) + "*\n"
 		featureListMsg = featureListMsg + newLine
 	}
-	// handle loc if multi-lang is necessary
-	msg, err := localizedMessage(msgTypeFeatureStale, locale.Ja)
-	if err != nil {
-		return nil, err
-	}
-	replacedMsg := fmt.Sprintf(msg.Message, featuredomain.SecondsToStale/24/60/60)
+	msg := localizer.MustLocalizeWithTemplate(
+		locale.NotificationFeatureStaleTemplate,
+		strconv.Itoa(featuredomain.SecondsToStale/24/60/60),
+	)
 	attachment := &slack.Attachment{
 		Color:      "#F4D03F",
 		MarkdownIn: []string{"text"},
-		Text: replacedMsg + "\n\n" +
+		Text: msg + "\n\n" +
 			"Environment: " + notification.EnvironmentName + "\n\n" +
 			"Feature flags: \n\n" +
 			featureListMsg,
@@ -291,6 +291,7 @@ func (n *slackNotifier) createFeatureStaleAttachment(
 
 func (n *slackNotifier) createExperimentRunningAttachment(
 	notification *senderproto.ExperimentRunningNotification,
+	localizer locale.Localizer,
 ) (*slack.Attachment, error) {
 	listMsg := ""
 	now := time.Now()
@@ -305,18 +306,18 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 			return nil, err
 		}
 		nameLink := fmt.Sprintf(linkTemplate, url, e.Name)
-		newLine := fmt.Sprintf("- 残り `%d` 日, Name: *%s*\n", lastDays(now, time.Unix(e.StopAt, 0)), nameLink)
+		daysLeft := localizer.MustLocalizeWithTemplate(
+			locale.NotificationExperimentDaysLeftTemplate,
+			fmt.Sprintf("`%d`", lastDays(now, time.Unix(e.StopAt, 0))),
+		)
+		newLine := fmt.Sprintf("- %s, Name: *%s*\n", daysLeft, nameLink)
 		listMsg = listMsg + newLine
 	}
-	// handle loc if multi-lang is necessary
-	msg, err := localizedMessage(msgTypeExperimentResult, locale.Ja)
-	if err != nil {
-		return nil, err
-	}
+	msg := localizer.MustLocalize(locale.NotificationExperimentRunning)
 	attachment := &slack.Attachment{
 		Color:      "#3498DB",
 		MarkdownIn: []string{"text"},
-		Text: msg.Message + "\n\n" +
+		Text: msg + "\n\n" +
 			"Environment: " + notification.EnvironmentName + "\n\n" +
 			"Experiments: \n\n" +
 			listMsg,
@@ -326,17 +327,17 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 
 func (n *slackNotifier) createMAUCountAttachment(
 	notification *senderproto.MauCountNotification,
+	localizer locale.Localizer,
 ) (*slack.Attachment, error) {
-	msg, err := localizedMessage(msgTypeMAUCount, locale.Ja)
-	if err != nil {
-		return nil, err
-	}
-	replacedMsg := fmt.Sprintf(msg.Message, notification.Month)
+	msg := localizer.MustLocalizeWithTemplate(
+		locale.NotificationMAUCountTemplate,
+		strconv.Itoa(int(notification.Month)),
+	)
 	p := message.NewPrinter(language.English)
 	attachment := &slack.Attachment{
 		Color:      "#3498DB",
 		MarkdownIn: []string{"text"},
-		Text: replacedMsg + "\n\n" +
+		Text: msg + "\n\n" +
 			"Environment: " + notification.EnvironmentName + "\n" +
 			p.Sprintf("Event count: %d", notification.EventCount) + "\n" +
 			p.Sprintf("User count: %d", notification.UserCount),

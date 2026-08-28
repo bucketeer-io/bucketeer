@@ -1,0 +1,34 @@
+.wmde-markdown,
+.wmde-markdown * {
+    font-family: 'Sofia Pro', sans-serif;
+}
+
+/* Keep code/pre in a monospace font, as Markdown expects. */
+.wmde-markdown code,
+.wmde-markdown pre,
+.wmde-markdown kbd,
+.wmde-markdown samp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.wmde-markdown ul,
+.wmde-markdown ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+.wmde-markdown ul {
+    list-style: disc;
+}
+.wmde-markdown ol {
+    list-style: decimal;
+}
+.wmde-markdown li {
+    display: list-item;
+}
+/* Nested lists: switch the marker style so levels stay distinguishable. */
+.wmde-markdown ul ul {
+    list-style: circle;
+}
+.wmde-markdown ul ul ul {
+    list-style: square;
+}

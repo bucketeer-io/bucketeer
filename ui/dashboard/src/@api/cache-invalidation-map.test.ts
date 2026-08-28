@@ -2,7 +2,11 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { describe, expect, it } from 'vitest';
-import { resolveInvalidationKeys, URL_TO_KEYS } from './cache-invalidation-map';
+import {
+  HttpMethod,
+  resolveInvalidationKeys,
+  URL_TO_KEYS
+} from './cache-invalidation-map';
 
 /**
  * The repo root for this dashboard package, computed relative to this file.
@@ -181,7 +185,10 @@ describe('cache-invalidation-map: every mutating axios endpoint is covered', () 
 
     for (const call of mutatingCalls) {
       if (NON_INVALIDATING_ENDPOINTS.has(call.url)) continue;
-      const keys = resolveInvalidationKeys(call.url);
+      const keys = resolveInvalidationKeys(
+        call.url,
+        call.method.toUpperCase() as HttpMethod
+      );
       if (keys.length === 0) uncovered.push(call);
     }
 

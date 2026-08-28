@@ -1,6 +1,6 @@
 import { FormSchemaProps } from 'hooks/use-form-schema';
 import * as yup from 'yup';
-import { FeatureVariationType } from '@types';
+import { FeatureVariationType, VariationValueSchema } from '@types';
 import {
   createVariationsSchema,
   VariationSchema
@@ -14,11 +14,16 @@ export const variationsFormSchema = ({
     variationType: yup.mixed<FeatureVariationType>().required(requiredMessage),
     onVariation: yup.string(),
     offVariation: yup.string(),
+    variationValueSchema: yup
+      .mixed<VariationValueSchema>()
+      .nullable()
+      .default(null),
     variations: createVariationsSchema({ requiredMessage, translation })
   });
 export interface VariationForm {
   variationType: FeatureVariationType;
   onVariation: string;
   offVariation: string;
+  variationValueSchema?: VariationValueSchema | null;
   variations: VariationSchema[];
 }

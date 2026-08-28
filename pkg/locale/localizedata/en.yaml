@@ -150,3 +150,12 @@ Cancelled: "{{ .Field_1 }} has been cancelled"
 Failed: "{{ .Field_1 }} has failed"
 Skipped: "{{ .Field_1 }} has been skipped"
 AppliedNow: "{{ .Field_1 }} has been applied immediately"
+
+#############################
+# Subscription Notifications
+#############################
+
+NotificationFeatureStale: "There are feature flags that have not been used for more than {{ .Field_1 }} days."
+NotificationExperimentRunning: "There are running experiments."
+NotificationExperimentDaysLeft: "Days left: {{ .Field_1 }}"
+NotificationMAUCount: "This is the MAU for month {{ .Field_1 }}."

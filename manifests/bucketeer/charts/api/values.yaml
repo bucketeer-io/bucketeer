@@ -71,6 +71,7 @@ env:
   cacheInvalidationTopic:
   sseHeartbeatInterval: 25s
   sseMaxConnections: 10000
+  sseReadinessThreshold: 0.95
   logLevel: info
   grpcGatewayPort: 9089
   port: 9090

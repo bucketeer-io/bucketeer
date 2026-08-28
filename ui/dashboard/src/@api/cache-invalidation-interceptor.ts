@@ -1,6 +1,6 @@
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { queryClient } from 'configs/query-client';
-import { resolveInvalidationKeys } from './cache-invalidation-map';
+import { HttpMethod, resolveInvalidationKeys } from './cache-invalidation-map';
 
 /**
  * Invalidates React Query caches for a single response, based on its request
@@ -11,10 +11,10 @@ import { resolveInvalidationKeys } from './cache-invalidation-map';
 export const invalidateCacheForResponse = (
   config: InternalAxiosRequestConfig
 ) => {
-  const method = config.method?.toUpperCase();
+  const method = config.method?.toUpperCase() as HttpMethod | undefined;
   if (!method || method === 'GET') return;
   const url = config.url ?? '';
-  const keys = resolveInvalidationKeys(url);
+  const keys = resolveInvalidationKeys(url, method);
   if (keys.length === 0) return;
   keys.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
 };

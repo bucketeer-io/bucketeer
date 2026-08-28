@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { cn } from 'utils/style';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 
 export type MenuItem = {
   icon?: FunctionComponent;
@@ -25,8 +26,9 @@ const MenuItemComponent = ({
   loading,
   tourId,
   onClick,
-  onSelectOption
-}: MenuItem) => {
+  onSelectOption,
+  isCollapsed
+}: MenuItem & { isCollapsed?: boolean }) => {
   const iconEl = icon ? (
     <Icon color="primary-50" size="sm" icon={icon} />
   ) : null;
@@ -36,8 +38,23 @@ const MenuItemComponent = ({
 
   const textClsx = cn(
     'flex items-center gap-x-2 w-full text-primary-50',
-    'px-3 py-3 rounded-lg typo-para-medium my-0.5 capitalize',
-    'hover:bg-primary-400 hover:opacity-100 opacity-80 sidebar-menu'
+    'py-3 rounded-lg typo-para-medium my-0.5 capitalize',
+    'hover:bg-primary-400 hover:opacity-100 opacity-80 sidebar-menu',
+    isCollapsed ? 'justify-center px-0' : 'px-3'
+  );
+
+  const dropdownTrigger = (
+    <div className={textClsx}>
+      <div
+        className={cn('flex items-center gap-x-2 w-full', {
+          'w-fit': isCollapsed
+        })}
+      >
+        {iconEl}
+        {!isCollapsed && <div className="w-fit truncate">{label}</div>}
+      </div>
+      {!loading && !isCollapsed && actionIcon}
+    </div>
   );
 
   const actionEl =
@@ -45,14 +62,18 @@ const MenuItemComponent = ({
       <Dropdown
         loading={loading}
         trigger={
-          <div className={textClsx}>
-            <div className="flex items-center gap-x-2 w-full">
-              {iconEl}
-              <div className="w-fit truncate">{label}</div>
-            </div>
-            {!loading && actionIcon}
-          </div>
+          isCollapsed ? (
+            <Tooltip
+              trigger={dropdownTrigger}
+              content={label}
+              side="right"
+              triggerCls="w-full"
+            />
+          ) : (
+            dropdownTrigger
+          )
         }
+        ariaLabel={isCollapsed ? label : undefined}
         showArrow={false}
         options={options.map(item => ({
           ...item,
@@ -72,23 +93,36 @@ const MenuItemComponent = ({
         className={textClsx}
         to={href}
         data-tour={tourId}
+        aria-label={isCollapsed ? label : undefined}
       >
         {iconEl}
-        {label}
+        {!isCollapsed && label}
       </NavLink>
     ) : (
       <button
         className={cn(textClsx, { 'justify-between': actionIcon })}
         onClick={onClick}
         data-tour={tourId}
+        aria-label={isCollapsed ? label : undefined}
       >
         <div className="flex items-center gap-x-2 truncate">
           {iconEl}
-          <div className="w-fit truncate">{label}</div>
+          {!isCollapsed && <div className="w-fit truncate">{label}</div>}
         </div>
-        {actionIcon}
+        {!isCollapsed && actionIcon}
       </button>
     );
+
+  if (isCollapsed && (!options || options.length === 0)) {
+    return (
+      <Tooltip
+        trigger={actionEl}
+        content={label}
+        side="right"
+        triggerCls="w-full"
+      />
+    );
+  }
 
   return actionEl;
 };

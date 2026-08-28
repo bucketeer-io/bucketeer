@@ -3,6 +3,10 @@
   "validation": {
     "must-be-number": "数値を入力してください",
     "must-be-json": "JSONを入力してください",
+    "value-schema-violation": "この値はフラグの値スキーマに一致していません",
+    "value-schema-enum-not-number": "許可される値はすべて数値である必要があります",
+    "value-schema-invalid-regex": "有効なRE2正規表現ではありません",
+    "value-schema-invalid-json-schema": "有効なJSONスキーマではありません",
     "must-be-yaml": "YAMLを入力してください",
     "must-be-unique": "一意の値を入力してください",
     "max-length-number": "このフィールドの最大長は{{count}}桁です。",
@@ -71,5 +75,8 @@
   "leave-page-unsaved-changes": "未保存の変更があります",
   "leave-page-unsaved-changes-content": "このページを離れると、変更内容が失われます。",
   "bulk-clone-already-exists": "フィーチャーフラグはすでに{{env}}に存在します。",
-  "bulk-clone-failed": "{{env}}への複製に失敗しました。"
+  "bulk-clone-failed": "{{env}}への複製に失敗しました。",
+  "published-successfully": "通知を公開しました。",
+  "draft-saved": "下書きを保存しました。",
+  "notification-load-failed": "この通知の読み込みに失敗しました。削除された可能性があります。"
 }

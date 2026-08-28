@@ -6,19 +6,23 @@ export type MenuProps = {
   title: string;
   items: MenuItem[];
   onClickNavLink?: () => void;
+  isCollapsed?: boolean;
 };
 
 const SectionMenu = ({
   className,
   title,
   items = [],
-  onClickNavLink
+  onClickNavLink,
+  isCollapsed
 }: MenuProps) => {
   return (
     <div className={cn('flex flex-col', className)}>
-      <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3 opacity-70">
-        {title}
-      </div>
+      {!isCollapsed && (
+        <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3 opacity-70">
+          {title}
+        </div>
+      )}
 
       {items.map((item, index) => (
         <MenuItemComponent
@@ -28,6 +32,7 @@ const SectionMenu = ({
             item.onClick?.();
             onClickNavLink?.();
           }}
+          isCollapsed={isCollapsed}
         />
       ))}
     </div>

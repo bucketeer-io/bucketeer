@@ -16,6 +16,7 @@ package notifier
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -23,8 +24,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	domainproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
@@ -133,6 +137,143 @@ func TestCreateDomainEventAttachment(t *testing.T) {
 			assert.Equal(t, notification.Editor.Email, attachment.AuthorName)
 			assert.Contains(t, attachment.Text, notification.EnvironmentName)
 			assert.Contains(t, attachment.Text, notification.EntityId)
+		})
+	}
+}
+
+func newTestLocalizer(lang string) locale.Localizer {
+	md := metadata.New(map[string]string{"accept-language": lang})
+	return locale.NewLocalizer(metadata.NewIncomingContext(context.Background(), md))
+}
+
+func TestCreateFeatureStaleAttachment(t *testing.T) {
+	t.Parallel()
+
+	staleDays := strconv.Itoa(featuredomain.SecondsToStale / 24 / 60 / 60)
+
+	patterns := []struct {
+		desc         string
+		lang         string
+		expectedText string
+	}{
+		{
+			desc:         "english",
+			lang:         locale.En,
+			expectedText: "There are feature flags that have not been used for more than " + staleDays + " days.",
+		},
+		{
+			desc:         "japanese",
+			lang:         locale.Ja,
+			expectedText: staleDays + "日以上使用されていないフィーチャーフラグがあります。",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			notifier := &slackNotifier{webURL: "https://example.com", logger: zap.NewNop()}
+			attachment, err := notifier.createFeatureStaleAttachment(
+				&senderproto.FeatureStaleNotification{
+					EnvironmentName:    "test-env",
+					EnvironmentUrlCode: "test",
+					Features: []*featureproto.Feature{
+						{Id: "feature-id-1", Name: "feature-name-1"},
+					},
+				},
+				newTestLocalizer(p.lang),
+			)
+			assert.NoError(t, err)
+			assert.Contains(t, attachment.Text, p.expectedText)
+			assert.Contains(t, attachment.Text, "https://example.com/test/features/feature-id-1")
+		})
+	}
+}
+
+func TestCreateExperimentRunningAttachment(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc            string
+		lang            string
+		expectedText    string
+		expectedDaysMsg string
+	}{
+		{
+			desc:            "english",
+			lang:            locale.En,
+			expectedText:    "There are running experiments.",
+			expectedDaysMsg: "- Days left: `1`, Name: *",
+		},
+		{
+			desc:            "japanese",
+			lang:            locale.Ja,
+			expectedText:    "実行中のエクスペリメントがあります。",
+			expectedDaysMsg: "- 残り `1` 日, Name: *",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			notifier := &slackNotifier{webURL: "https://example.com", logger: zap.NewNop()}
+			attachment, err := notifier.createExperimentRunningAttachment(
+				&senderproto.ExperimentRunningNotification{
+					EnvironmentName:    "test-env",
+					EnvironmentUrlCode: "test",
+					Experiments: []*experimentproto.Experiment{
+						{
+							Id:     "experiment-id-1",
+							Name:   "experiment-name-1",
+							StopAt: time.Now().Add(25 * time.Hour).Unix(),
+						},
+					},
+				},
+				newTestLocalizer(p.lang),
+			)
+			assert.NoError(t, err)
+			assert.Contains(t, attachment.Text, p.expectedText)
+			assert.Contains(t, attachment.Text, p.expectedDaysMsg)
+		})
+	}
+}
+
+func TestCreateMAUCountAttachment(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc         string
+		lang         string
+		expectedText string
+	}{
+		{
+			desc:         "english",
+			lang:         locale.En,
+			expectedText: "This is the MAU for month 4.",
+		},
+		{
+			desc:         "japanese",
+			lang:         locale.Ja,
+			expectedText: "4月のMAUです。",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			notifier := &slackNotifier{webURL: "https://example.com", logger: zap.NewNop()}
+			attachment, err := notifier.createMAUCountAttachment(
+				&senderproto.MauCountNotification{
+					EnvironmentName: "test-env",
+					EventCount:      1234,
+					UserCount:       567,
+					Month:           4,
+				},
+				newTestLocalizer(p.lang),
+			)
+			assert.NoError(t, err)
+			assert.Contains(t, attachment.Text, p.expectedText)
+			assert.Contains(t, attachment.Text, "Event count: 1,234")
+			assert.Contains(t, attachment.Text, "User count: 567")
 		})
 	}
 }

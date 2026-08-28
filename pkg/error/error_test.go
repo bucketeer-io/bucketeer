@@ -348,3 +348,100 @@ func TestErrorAs(t *testing.T) {
 		t.Error("Expected fieldErr to wrap originalErr")
 	}
 }
+
+func TestNewErrorVariationInUse(t *testing.T) {
+	t.Parallel()
+
+	err := NewErrorVariationInUse(
+		FeaturePackageName,
+		ErrorTypeVariationInUseByPrerequisite,
+		"feature: variation variation-1 is used as a prerequisite by feature feature-2",
+		map[string]string{"featureId": "feature-2", "featureName": "Flag B"},
+	)
+
+	assert.Equal(t, FeaturePackageName, err.PackageName())
+	assert.Equal(t, ErrorTypeVariationInUseByPrerequisite, err.ErrorType())
+	assert.Equal(t, "VariationInUseByPrerequisiteError", err.MessageKey())
+	assert.Equal(
+		t,
+		"feature:feature: variation variation-1 is used as a prerequisite by feature feature-2",
+		err.Error(),
+	)
+	assert.Equal(
+		t,
+		map[string]string{"featureId": "feature-2", "featureName": "Flag B"},
+		err.EmbeddedKeyValues(),
+	)
+}
+
+func TestNewErrorVariationInUse_CopiesKeyValues(t *testing.T) {
+	t.Parallel()
+
+	keyValues := map[string]string{"featureId": "feature-2"}
+	err := NewErrorVariationInUse(
+		FeaturePackageName,
+		ErrorTypeVariationInUseByPrerequisite,
+		"feature: variation in use",
+		keyValues,
+	)
+	keyValues["featureId"] = "mutated"
+
+	assert.Equal(t, "feature-2", err.EmbeddedKeyValues()["featureId"])
+}
+
+func TestAsVariationInUseError(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		err      error
+		expected bool
+	}{
+		{
+			desc:     "false: nil",
+			err:      nil,
+			expected: false,
+		},
+		{
+			desc:     "false: not a BktError",
+			err:      errors.New("something else"),
+			expected: false,
+		},
+		{
+			desc:     "false: another BktError type",
+			err:      NewErrorFailedPrecondition(FeaturePackageName, "failed precondition"),
+			expected: false,
+		},
+		{
+			desc: "true: off variation",
+			err: NewErrorVariationInUse(
+				FeaturePackageName, ErrorTypeVariationInUseByOffVariation, "in use", nil,
+			),
+			expected: true,
+		},
+		{
+			desc: "true: individual targeting",
+			err: NewErrorVariationInUse(
+				FeaturePackageName, ErrorTypeVariationInUseByIndividualTarget, "in use", nil,
+			),
+			expected: true,
+		},
+		{
+			desc: "true: feature flag rule",
+			err: NewErrorVariationInUse(
+				FeaturePackageName, ErrorTypeVariationInUseByFeatureFlagRule, "in use", nil,
+			),
+			expected: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			bktErr, ok := AsVariationInUseError(p.err)
+			assert.Equal(t, p.expected, ok)
+			if !p.expected {
+				assert.Nil(t, bktErr)
+			}
+		})
+	}
+}

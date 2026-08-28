@@ -17,6 +17,7 @@ package error
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 )
@@ -62,6 +63,14 @@ const (
 	ErrorTypeExceededMax              ErrorType = "ExceededMaxError"
 	ErrorTypeOutOfRange               ErrorType = "OutOfRangeError"
 	ErrorTypeDifferentVariationsSize  ErrorType = "DifferentVariationsSizeError"
+
+	// A variation cannot be deleted while something still references it.
+	ErrorTypeVariationInUseByOffVariation     ErrorType = "VariationInUseByOffVariationError"
+	ErrorTypeVariationInUseByDefaultStrategy  ErrorType = "VariationInUseByDefaultStrategyError"
+	ErrorTypeVariationInUseByTargetingRule    ErrorType = "VariationInUseByTargetingRuleError"
+	ErrorTypeVariationInUseByIndividualTarget ErrorType = "VariationInUseByIndividualTargetingError"
+	ErrorTypeVariationInUseByPrerequisite     ErrorType = "VariationInUseByPrerequisiteError"
+	ErrorTypeVariationInUseByFeatureFlagRule  ErrorType = "VariationInUseByFeatureFlagRuleError"
 )
 
 type BktError struct {
@@ -109,6 +118,24 @@ func (e *BktError) Error() string {
 func (e *BktError) Unwrap() error { return e.wrappedError }
 func (e *BktError) Wrap(err error) {
 	e.wrappedError = errors.Join(e.wrappedError, err)
+}
+
+// AsVariationInUseError reports whether err says a variation is still referenced.
+func AsVariationInUseError(err error) (*BktError, bool) {
+	var bktErr *BktError
+	if !errors.As(err, &bktErr) {
+		return nil, false
+	}
+	switch bktErr.ErrorType() {
+	case ErrorTypeVariationInUseByOffVariation,
+		ErrorTypeVariationInUseByDefaultStrategy,
+		ErrorTypeVariationInUseByTargetingRule,
+		ErrorTypeVariationInUseByIndividualTarget,
+		ErrorTypeVariationInUseByPrerequisite,
+		ErrorTypeVariationInUseByFeatureFlagRule:
+		return bktErr, true
+	}
+	return nil, false
 }
 
 func newBktError(pkg string, errorType ErrorType, message string) *BktError {
@@ -216,4 +243,22 @@ func NewErrorOutOfRange(pkg string, message string, field string, min int, max i
 
 func NewErrorDifferentVariationsSize(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeDifferentVariationsSize, message)
+}
+
+// NewErrorVariationInUse creates an error naming the reference that keeps a
+// variation from being deleted. keyValues may be nil.
+func NewErrorVariationInUse(
+	pkg string,
+	errorType ErrorType,
+	message string,
+	keyValues map[string]string,
+) *BktError {
+	embedded := make(map[string]string, len(keyValues))
+	maps.Copy(embedded, keyValues)
+	return &BktError{
+		packageName:       pkg,
+		errorType:         errorType,
+		message:           message,
+		embeddedKeyValues: embedded,
+	}
 }
