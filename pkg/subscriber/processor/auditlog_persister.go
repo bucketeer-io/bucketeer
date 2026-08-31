@@ -40,12 +40,14 @@ type auditLogPersisterConfig struct {
 type auditLogPersister struct {
 	auditLogPersisterConfig auditLogPersisterConfig
 	storage                 v2als.AuditLogStorage
+	adminStorage            v2als.AdminAuditLogStorage
 	logger                  *zap.Logger
 }
 
 func NewAuditLogPersister(
 	config interface{},
 	auditLogStorage v2als.AuditLogStorage,
+	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	auditLogPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -67,6 +69,7 @@ func NewAuditLogPersister(
 	return &auditLogPersister{
 		auditLogPersisterConfig: persisterConfig,
 		storage:                 auditLogStorage,
+		adminStorage:            adminAuditLogStorage,
 		logger:                  logger,
 	}, nil
 }
@@ -111,18 +114,19 @@ func (a auditLogPersister) Process(
 }
 
 func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
-	auditlogs, messages := a.extractAuditLogs(chunk)
+	auditlogs, adminAuditLogs, messages, adminMessages := a.extractAuditLogs(chunk)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		time.Duration(a.auditLogPersisterConfig.FlushTimeout)*time.Second,
 	)
 	defer cancel()
 	a.createAuditLogs(ctx, auditlogs, messages, a.storage.CreateAuditLog)
+	a.createAuditLogs(ctx, adminAuditLogs, adminMessages, a.adminStorage.CreateAdminAuditLog)
 }
 
 func (a auditLogPersister) extractAuditLogs(
 	chunk map[string]*puller.Message,
-) (auditlogs []*domain.AuditLog, messages []*puller.Message) {
+) (auditlogs, adminAuditLogs []*domain.AuditLog, messages, adminMessages []*puller.Message) {
 	for _, msg := range chunk {
 		event := &domainevent.Event{}
 		if err := pb.Unmarshal(msg.Data, event); err != nil {
@@ -133,10 +137,28 @@ func (a auditLogPersister) extractAuditLogs(
 		}
 		// Organization-level (admin) events are stored in the audit_log table
 		// with an empty environment id, scoped by their organization id.
+		// An organization-scoped event without an organization id was published
+		// by an older producer that predates the organization_id field; it is
+		// kept in admin_audit_log so the history migration can resolve its
+		// organization later. TODO: remove this fallback once no old producers
+		// or queued events remain.
+		if event.IsAdminEvent && event.OrganizationId == "" && !isSystemLevelEntity(event.EntityType) {
+			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(event, event.EnvironmentId))
+			adminMessages = append(adminMessages, msg)
+			continue
+		}
 		auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentId))
 		messages = append(messages, msg)
 	}
 	return
+}
+
+// isSystemLevelEntity reports whether the entity belongs to no organization,
+// so an empty organization id on its events is expected rather than a sign of
+// an old producer.
+func isSystemLevelEntity(entityType domainevent.Event_EntityType) bool {
+	return entityType == domainevent.Event_ADMIN_ACCOUNT ||
+		entityType == domainevent.Event_ADMIN_SUBSCRIPTION
 }
 
 func (a auditLogPersister) createAuditLogs(
@@ -147,7 +169,7 @@ func (a auditLogPersister) createAuditLogs(
 ) {
 	for i, aud := range auditlogs {
 		if err := createFunc(ctx, aud); err != nil {
-			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) {
+			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) || errors.Is(err, v2als.ErrAdminAuditLogAlreadyExists) {
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.NonRepeatableError.String()).Inc()
 				messages[i].Ack()
 			} else {
