@@ -2359,6 +2359,9 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 				"authorization": []string{"test-key"},
 			})
 			actual, err := gs.GetEvaluations(ctx, p.input)
+			if p.expected != nil && actual != nil {
+				normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations, "%s", p.desc)
+			}
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -2410,6 +2413,7 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations, "%s", p.desc)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
@@ -4957,6 +4961,20 @@ func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 		ArchivedFeatureIds: []string{},
 		ForceUpdate:        false,
 	}
+}
+
+// normalizeUserEvaluationsCreatedAt asserts CreatedAt is roughly now, then aligns expected so Equal stays stable.
+func normalizeUserEvaluationsCreatedAt(
+	t *testing.T,
+	expected, actual *featureproto.UserEvaluations,
+	msgAndArgs ...interface{},
+) {
+	t.Helper()
+	if expected == nil || actual == nil {
+		return
+	}
+	assert.InDelta(t, time.Now().Unix(), actual.CreatedAt, 5, msgAndArgs...)
+	expected.CreatedAt = actual.CreatedAt
 }
 
 func TestGrpcListFeatures(t *testing.T) {
