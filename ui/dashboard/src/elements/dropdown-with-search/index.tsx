@@ -36,6 +36,7 @@ export interface DropdownMenuWithSearchProps {
   itemClassName?: string;
   isExpand?: boolean;
   disabled?: boolean;
+  hideSearchInput?: boolean;
   trigger?: ReactNode;
   showArrow?: boolean;
   showClear?: boolean;
@@ -84,6 +85,7 @@ const DropdownMenuWithSearch = ({
   itemClassName,
   isExpand,
   disabled,
+  hideSearchInput,
   trigger,
   showArrow,
   showClear,
@@ -129,10 +131,13 @@ const DropdownMenuWithSearch = ({
     [options, searchValue, onSearchChange]
   );
 
-  let timerId: NodeJS.Timeout | null = null;
-  if (timerId) clearTimeout(timerId);
-  timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
   const handleFocusSearchInput = useCallback(() => {}, []);
+
+  useEffect(() => {
+    if (hideSearchInput || !isOpen) return;
+    const timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
+    return () => clearTimeout(timerId);
+  }, [hideSearchInput, isOpen]);
 
   const onClearSearchValue = useCallback(() => {
     setSearchValue('');
@@ -185,28 +190,30 @@ const DropdownMenuWithSearch = ({
             : {}
         }
       >
-        <DropdownMenuSearch
-          ref={inputSearchRef}
-          value={searchValue}
-          placeholder={inputPlaceholder}
-          onChange={value => {
-            contentRef.current?.scrollTo({
-              top: 0,
-              behavior: 'smooth'
-            });
-            setSearchValue(value);
-            onSearchChange?.(value);
-            handleFocusSearchInput();
-          }}
-          onKeyDown={event =>
-            onKeyDown?.({
-              event,
-              searchValue,
-              matchOptions: dropdownOptions,
-              onClearSearchValue
-            })
-          }
-        />
+        {!hideSearchInput && (
+          <DropdownMenuSearch
+            ref={inputSearchRef}
+            value={searchValue}
+            placeholder={inputPlaceholder}
+            onChange={value => {
+              contentRef.current?.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+              });
+              setSearchValue(value);
+              onSearchChange?.(value);
+              handleFocusSearchInput();
+            }}
+            onKeyDown={event =>
+              onKeyDown?.({
+                event,
+                searchValue,
+                matchOptions: dropdownOptions,
+                onClearSearchValue
+              })
+            }
+          />
+        )}
         {dropdownOptions?.length > 0 ? (
           <>
             <DropdownList
