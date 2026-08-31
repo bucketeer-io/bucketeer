@@ -2,7 +2,12 @@ import {
   userSegmentsFetcher,
   UserSegmentsFetcherParams
 } from '@api/user-segment';
-import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
 import type { UserSegmentCollection, QueryOptionsRespond } from '@types';
 
 type QueryOptions = QueryOptionsRespond<UserSegmentCollection> & {
@@ -48,3 +53,25 @@ export const prefetchUserSegments = (
     ...queryOptions
   });
 };
+
+type InfiniteQueryOptions = {
+  params?: Omit<UserSegmentsFetcherParams, 'cursor'>;
+  enabled?: boolean;
+};
+
+export const useInfiniteQueryUserSegments = ({
+  params,
+  enabled = true
+}: InfiniteQueryOptions = {}) =>
+  useInfiniteQuery({
+    queryKey: [USER_SEGMENTS_QUERY_KEY, 'infinite', params],
+    queryFn: ({ pageParam = '0' }) =>
+      userSegmentsFetcher({ ...params, cursor: pageParam as string }),
+    initialPageParam: '0',
+    getNextPageParam: (lastPage: UserSegmentCollection) => {
+      const nextCursor = Number(lastPage.cursor);
+      const total = Number(lastPage.totalCount);
+      return nextCursor < total ? String(nextCursor) : undefined;
+    },
+    enabled
+  });
