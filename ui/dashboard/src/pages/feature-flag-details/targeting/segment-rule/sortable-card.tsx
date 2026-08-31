@@ -10,7 +10,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'i18n';
 import { GripVertical } from 'lucide-react';
-import { Feature, UserSegment } from '@types';
+import { Feature } from '@types';
 import { IconClose, IconDropZone, IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -25,7 +25,6 @@ export interface DragOverlayCardProps {
   segmentIndex: number;
   feature: Feature;
   features: Feature[];
-  userSegments: UserSegment[];
   sdkAttributeKeys: string[];
 }
 
@@ -39,7 +38,6 @@ export interface SortableCardProps {
   segmentRules: RuleSchemaFields[];
   feature: Feature;
   features: Feature[];
-  userSegments: UserSegment[];
   sdkAttributeKeys: string[];
   ghostHeight?: number | null;
   editSegmentRule: (index: number) => boolean;
@@ -65,7 +63,6 @@ export const CardContent = ({
   segmentRules,
   feature,
   features,
-  userSegments,
   sdkAttributeKeys,
   editSegmentRule,
   handleChangeIndexRule,
@@ -170,7 +167,6 @@ export const CardContent = ({
           feature={feature}
           features={features}
           segmentIndex={segmentIndex}
-          userSegments={userSegments}
           sdkAttributeKeys={sdkAttributeKeys}
         />
         <SegmentVariation
@@ -188,7 +184,6 @@ export const DragOverlayCard = ({
   segmentIndex,
   feature,
   features,
-  userSegments,
   sdkAttributeKeys
 }: DragOverlayCardProps) => {
   // Mount RuleForm/SegmentVariation in an isolated FormProvider seeded with a
@@ -211,7 +206,6 @@ export const DragOverlayCard = ({
         segmentRules={[segment]}
         feature={feature}
         features={features}
-        userSegments={userSegments}
         sdkAttributeKeys={sdkAttributeKeys}
         editSegmentRule={noop}
         handleChangeIndexRule={() => {}}
@@ -228,7 +222,6 @@ const SortableCard = ({
   segmentRules,
   feature,
   features,
-  userSegments,
   sdkAttributeKeys,
   ghostHeight,
   editSegmentRule,
@@ -266,7 +259,6 @@ const SortableCard = ({
           segmentRules={segmentRules}
           feature={feature}
           features={features}
-          userSegments={userSegments}
           sdkAttributeKeys={sdkAttributeKeys}
           editSegmentRule={editSegmentRule}
           handleChangeIndexRule={handleChangeIndexRule}

@@ -17,9 +17,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { useQueryAttributeKeys } from '@queries/attribute-keys';
-import { useQueryUserSegments } from '@queries/user-segments';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { Feature } from '@types';
 import AddRule from '../add-rule';
 import { FLOW_LABELS, FlowStep } from '../evaluation-flow';
@@ -70,21 +68,12 @@ const TargetSegmentRule = ({
 
   useFormContext<TargetingSchema>();
 
-  const { data: segmentCollection } = useQueryUserSegments({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
-    }
-  });
-
   const { data: keysCollection } = useQueryAttributeKeys({
     params: {
       environmentId: currentEnvironment.id
     }
   });
 
-  const userSegments = segmentCollection?.segments || [];
   const sdkAttributeKeys = keysCollection?.userAttributeKeys || [];
 
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -146,7 +135,6 @@ const TargetSegmentRule = ({
     feature,
     features,
     segmentRules,
-    userSegments,
     sdkAttributeKeys,
     editSegmentRule,
     handleChangeIndexRule,
@@ -213,7 +201,6 @@ const TargetSegmentRule = ({
               segmentIndex={activeDragIndex}
               feature={feature}
               features={features}
-              userSegments={userSegments}
               sdkAttributeKeys={sdkAttributeKeys}
             />
           </div>
