@@ -89,16 +89,16 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 	var query strings.Builder
 	args := []interface{}{}
 	query.WriteString(insertAuditLogsV2SQL)
-	colsPerRow := 11
+	colsPerRow := 12
 	for i, al := range auditLogs {
 		if i != 0 {
 			query.WriteString(",")
 		}
 		base := i*colsPerRow + 1
 		query.WriteString(fmt.Sprintf(
-			" ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			" ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			base, base+1, base+2, base+3, base+4,
-			base+5, base+6, base+7, base+8, base+9, base+10,
+			base+5, base+6, base+7, base+8, base+9, base+10, base+11,
 		))
 		args = append(
 			args,
@@ -111,6 +111,7 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 			pgstorage.JSONObject{Val: al.Editor},
 			pgstorage.JSONObject{Val: al.Options},
 			al.EnvironmentId,
+			al.OrganizationId,
 			al.EntityData,
 			al.PreviousEntityData,
 		)
@@ -138,6 +139,7 @@ func (s *auditLogStorage) CreateAuditLog(ctx context.Context, auditLog *domain.A
 		pgstorage.JSONObject{Val: auditLog.Editor},
 		pgstorage.JSONObject{Val: auditLog.Options},
 		auditLog.EnvironmentId,
+		auditLog.OrganizationId,
 		auditLog.EntityData,
 		auditLog.PreviousEntityData,
 	)

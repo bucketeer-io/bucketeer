@@ -8,6 +8,7 @@ INSERT INTO audit_log (
     editor,
     options,
     environment_id,
+    organization_id,
     entity_data,
     previous_entity_data
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)

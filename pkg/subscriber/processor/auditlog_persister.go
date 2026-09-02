@@ -27,7 +27,6 @@ import (
 	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -40,8 +39,8 @@ type auditLogPersisterConfig struct {
 
 type auditLogPersister struct {
 	auditLogPersisterConfig auditLogPersisterConfig
-	adminStorage            v2als.AdminAuditLogStorage
 	storage                 v2als.AuditLogStorage
+	adminStorage            v2als.AdminAuditLogStorage
 	logger                  *zap.Logger
 }
 
@@ -69,8 +68,8 @@ func NewAuditLogPersister(
 	}
 	return &auditLogPersister{
 		auditLogPersisterConfig: persisterConfig,
-		adminStorage:            adminAuditLogStorage,
 		storage:                 auditLogStorage,
+		adminStorage:            adminAuditLogStorage,
 		logger:                  logger,
 	}, nil
 }
@@ -121,9 +120,7 @@ func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
 		time.Duration(a.auditLogPersisterConfig.FlushTimeout)*time.Second,
 	)
 	defer cancel()
-	// Environment audit logs
 	a.createAuditLogs(ctx, auditlogs, messages, a.storage.CreateAuditLog)
-	// Admin audit logs
 	a.createAuditLogs(ctx, adminAuditLogs, adminMessages, a.adminStorage.CreateAdminAuditLog)
 }
 
@@ -138,18 +135,30 @@ func (a auditLogPersister) extractAuditLogs(
 			msg.Ack()
 			continue
 		}
-		if event.IsAdminEvent {
-			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(
-				event,
-				storage.AdminEnvironmentID,
-			))
+		// Organization-level (admin) events are stored in the audit_log table
+		// with an empty environment id, scoped by their organization id.
+		// An organization-scoped event without an organization id was published
+		// by an older producer that predates the organization_id field; it is
+		// kept in admin_audit_log so the history migration can resolve its
+		// organization later. TODO: remove this fallback once no old producers
+		// or queued events remain.
+		if event.IsAdminEvent && event.OrganizationId == "" && !isSystemLevelEntity(event.EntityType) {
+			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(event, event.EnvironmentId))
 			adminMessages = append(adminMessages, msg)
-		} else {
-			auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentId))
-			messages = append(messages, msg)
+			continue
 		}
+		auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentId))
+		messages = append(messages, msg)
 	}
 	return
+}
+
+// isSystemLevelEntity reports whether the entity belongs to no organization,
+// so an empty organization id on its events is expected rather than a sign of
+// an old producer.
+func isSystemLevelEntity(entityType domainevent.Event_EntityType) bool {
+	return entityType == domainevent.Event_ADMIN_ACCOUNT ||
+		entityType == domainevent.Event_ADMIN_SUBSCRIPTION
 }
 
 func (a auditLogPersister) createAuditLogs(

@@ -21,7 +21,8 @@ import (
 
 type AuditLog struct {
 	*proto.AuditLog
-	EnvironmentId string
+	EnvironmentId  string
+	OrganizationId string
 }
 
 func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
@@ -38,7 +39,8 @@ func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
 			PreviousEntityData: event.PreviousEntityData,
 			Options:            event.Options,
 		},
-		EnvironmentId: environmentId,
+		EnvironmentId:  environmentId,
+		OrganizationId: event.OrganizationId,
 	}
 	// On failure the affected field is left empty rather than persisting a raw key.
 	_ = ObfuscateAPIKey(auditlog.AuditLog)
