@@ -465,7 +465,7 @@ func TestAddSearchFilter(t *testing.T) {
 				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
-			backdatedUpdatedAt := backdateUpdatedAt(a)
+			backdateUpdatedAt(a)
 			for _, f := range p.expectedFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -480,11 +480,7 @@ func TestAddSearchFilter(t *testing.T) {
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
 			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
-			if len(p.expectedFilters) > 0 {
-				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
-			} else {
-				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
-			}
+			assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
 			for i, f := range p.expectedFilters {
