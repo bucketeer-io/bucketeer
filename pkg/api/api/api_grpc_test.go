@@ -1774,6 +1774,8 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 		expected    *gwproto.GetFeatureFlagsResponse
 		expectedErr error
 		clampTest   bool // when true, verify RequestedAt is clamped (not exact match with timeNow)
+		// when true, RequestedAt is stamped by the server and checked against the current time
+		expectRequestedAtNow bool
 	}{
 		{
 			desc: "err: environment api key not found",
@@ -1900,10 +1902,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         "",
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			desc: "success: with no tag and no feature flags ID",
@@ -1936,10 +1938,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 					multiFeatures[2],
 				},
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            true,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			desc: "success: with no tag and with same feature flags ID",
@@ -2006,10 +2008,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 					multiFeatures[2],
 				},
 				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			desc: "success: with tag and no feature flags ID",
@@ -2037,11 +2039,11 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			expected: &gwproto.GetFeatureFlagsResponse{
 				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
-				RequestedAt:            timeNow.Unix(),
 				ArchivedFeatureFlagIds: make([]string, 0),
 				ForceUpdate:            true,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			desc: "success: with tag and same feature flags ID",
@@ -2103,10 +2105,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            true,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			// With the 10-minute featureFlagDiffGracePeriod default, the
@@ -2141,10 +2143,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               []*featureproto.Feature{multiFeatures[0]},
 				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			desc: "success: diff includes features with UpdatedAt equal to RequestedAt",
@@ -2174,10 +2176,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            false,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 		{
 			desc: "success: future requestedAt is clamped to now in None response",
@@ -2240,10 +2242,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				ArchivedFeatureFlagIds: make([]string, 0),
-				RequestedAt:            timeNow.Unix(),
 				ForceUpdate:            true,
 			},
-			expectedErr: nil,
+			expectedErr:          nil,
+			expectRequestedAtNow: true,
 		},
 	}
 	for _, p := range patterns {
@@ -2265,6 +2267,11 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				assert.Less(t, actual.RequestedAt, p.input.RequestedAt,
 					"%s: RequestedAt should be clamped below the future input value", p.desc)
 			} else {
+				if p.expectRequestedAtNow {
+					require.NotNil(t, actual, "%s", p.desc)
+					assert.InDelta(t, time.Now().Unix(), actual.RequestedAt, 5, "%s", p.desc)
+					p.expected.RequestedAt = actual.RequestedAt
+				}
 				assert.Equal(t, p.expected, actual, "%s", p.desc)
 			}
 		})
@@ -2359,6 +2366,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 				"authorization": []string{"test-key"},
 			})
 			actual, err := gs.GetEvaluations(ctx, p.input)
+			assertEvaluationsCreatedAtNow(t, p.expected, actual, p.desc)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -2410,6 +2418,7 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
+		assertEvaluationsCreatedAtNow(t, p.expected, actual, p.desc)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
@@ -4948,12 +4957,27 @@ func newUUID(t *testing.T) string {
 	return id.String()
 }
 
+// assertEvaluationsCreatedAtNow checks the server-stamped CreatedAt against the
+// current time, then copies it into expected so the whole response can be compared.
+func assertEvaluationsCreatedAtNow(
+	t *testing.T,
+	expected, actual *gwproto.GetEvaluationsResponse,
+	desc string,
+) {
+	t.Helper()
+	if expected == nil || expected.Evaluations == nil || actual == nil || actual.Evaluations == nil {
+		return
+	}
+	assert.InDelta(t, time.Now().Unix(), actual.Evaluations.CreatedAt, 5, "%s", desc)
+	expected.Evaluations.CreatedAt = actual.Evaluations.CreatedAt
+}
+
+// CreatedAt is left unset because the server stamps it at request time.
 func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
 		Id:                 "no_evaluations",
 		Evaluations:        []*featureproto.Evaluation{},
-		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},
 		ForceUpdate:        false,
 	}
