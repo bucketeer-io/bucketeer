@@ -258,6 +258,8 @@
   "and": "AND",
   "or": "OR",
   "see-more": "もっと見る",
+  "show-count-user-segments_one": "ユーザーセグメントを{{count}}件選択中",
+  "show-count-user-segments_other": "ユーザーセグメントを{{count}}件選択中",
   "default": "デフォルト",
   "sort-by": "並び替え: {{sortBy}}",
   "sort-asc": "昇順",
