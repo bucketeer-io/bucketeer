@@ -785,7 +785,6 @@ func TestChangeRuleStrategyToFixed(t *testing.T) {
 func TestChangeRulesOrder(t *testing.T) {
 	t.Helper()
 	f := makeFeature("test-feature")
-	initialUpdatedAt := f.UpdatedAt
 	patterns := []*struct {
 		ruleIDs            []string
 		expected           []string
@@ -815,12 +814,13 @@ func TestChangeRulesOrder(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
+		updatedAtBefore := f.UpdatedAt
 		err := f.ChangeRulesOrder(p.ruleIDs)
 		assert.Equal(t, p.expectedError, err)
 		if p.expectUpdatedAtNow {
 			assert.InDelta(t, time.Now().Unix(), f.UpdatedAt, 5)
 		} else {
-			assert.Equal(t, initialUpdatedAt, f.UpdatedAt)
+			assert.Equal(t, updatedAtBefore, f.UpdatedAt)
 		}
 		for i := range f.Rules {
 			if p.expected[i] != f.Rules[i].Id {
