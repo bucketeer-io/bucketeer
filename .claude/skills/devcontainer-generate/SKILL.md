@@ -52,7 +52,9 @@ error; don't force it without flagging the compatibility break to the user.
   outputs. **A diff touching every `.pb.go` in the repo means a wrong protoc
   version — abort and check `$DEVC 'protoc --version'`.**
 - Spot-check one regenerated file's header still says `protoc v4.23.4`:
-  `grep -m1 "protoc " proto/<domain>/<file>.pb.go`
+  `$DEVC 'grep -m1 "protoc " proto/<domain>/<file>.pb.go'` — run it through
+  `$DEVC`, not bare: in codespace mode the host clone is a *different* checkout,
+  so a bare `grep` would validate a stale file that was never regenerated.
 - Build still compiles: `$DEVC 'make build-go'` (or the affected
   `make build-<service>`), and `$DEVC 'make gofmt'` after any Go changes.
 

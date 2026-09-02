@@ -42,7 +42,12 @@ Detection order (the script handles all of this):
 2. Local devcontainer → `docker ps` filtered by label `devcontainer.local_folder=<repo root>`, exec via `docker exec`.
 3. GitHub Codespace → `gh codespace list` (needs the `codespace` auth scope), exec via `gh codespace ssh`.
 
-Exit code 2 means no container was found; the script prints how to start one.
+If more than one available Bucketeer codespace matches (a fork is also named
+`bucketeer`, or you keep several), the script refuses to guess and exits 2 with
+the list — pick one with `export BUCKETEER_CODESPACE=<name>`.
+
+Exit code 2 means no container was found (or the codespace was ambiguous); the
+script prints how to start one.
 Don't fall back to running the command on the host in that case — tell the user
 and let them choose, because host tool versions (especially protoc) may differ.
 

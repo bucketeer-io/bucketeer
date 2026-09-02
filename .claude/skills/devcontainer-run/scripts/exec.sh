@@ -35,11 +35,36 @@ detect() {
     return
   fi
 
-  # Case 3: GitHub Codespace (requires `gh` with the codespace scope)
-  CODESPACE="$(gh codespace list --json name,repository,state \
+  # Case 3: GitHub Codespace (requires `gh` with the codespace scope).
+  # Never silently pick one: a fork named `bucketeer`, or several codespaces on
+  # this repo, would otherwise run commands in the wrong clone/branch/cluster.
+  local candidates
+  candidates="$(gh codespace list --json name,repository,state \
     -q '.[] | select((.repository | endswith("/bucketeer")) and .state == "Available") | .name' 2>/dev/null \
-    | head -1 || true)"
-  if [ -n "$CODESPACE" ]; then
+    || true)"
+  if [ -n "${BUCKETEER_CODESPACE:-}" ]; then
+    if ! echo "$candidates" | grep -qx -- "$BUCKETEER_CODESPACE"; then
+      echo "BUCKETEER_CODESPACE='$BUCKETEER_CODESPACE' is not an available Bucketeer codespace." >&2
+      echo "Available:" >&2
+      echo "$candidates" | sed 's/^/  - /' >&2
+      exit 2
+    fi
+    CODESPACE="$BUCKETEER_CODESPACE"
+    MODE=codespace
+    return
+  fi
+  local count
+  count="$(echo "$candidates" | grep -c . || true)"
+  if [ "$count" -gt 1 ]; then
+    echo "Multiple available Bucketeer codespaces found — refusing to guess:" >&2
+    echo "$candidates" | sed 's/^/  - /' >&2
+    echo "" >&2
+    echo "Pick one explicitly:" >&2
+    echo "  export BUCKETEER_CODESPACE=<name>" >&2
+    exit 2
+  fi
+  if [ "$count" -eq 1 ]; then
+    CODESPACE="$candidates"
     MODE=codespace
     return
   fi
@@ -93,15 +118,20 @@ status_report() {
     command -v mockgen >/dev/null && echo "go-tools: OK" || echo "go-tools: MISSING (run bash .devcontainer/setup.sh)"
     docker info >/dev/null 2>&1 && echo "dockerd: running" || echo "dockerd: NOT running (start with: nohup sudo dockerd > /tmp/dockerd.log 2>&1 &)"
     if minikube status >/dev/null 2>&1; then
+      # Always query the minikube context explicitly: the active context may point
+      # somewhere else entirely (a real GKE cluster), and reporting its pods here
+      # would be exactly the confusion this wrapper exists to prevent.
+      ctx=$(kubectl config current-context 2>/dev/null || echo unknown)
+      [ "$ctx" != "minikube" ] && echo "kube-context: WARNING active context is \"$ctx\", not minikube — bare kubectl/helm commands would hit that cluster; pass --context minikube / --kube-context minikube"
       # Ignore transient states (Pending/ContainerCreating/Init) — batch CronJobs
       # constantly spawn short-lived pods and would make the count flap.
-      if pods=$(kubectl get pods --no-headers 2>/dev/null); then
+      if pods=$(kubectl --context minikube get pods --no-headers 2>/dev/null); then
         total=$(echo "$pods" | grep -c . || true)
         failing=$(echo "$pods" | grep -cE "CrashLoopBackOff|ImagePull|ErrImage|Error|OOMKilled|Evicted" || true)
         echo "minikube: running ($total pods, $failing failing)"
         [ "$failing" -gt 0 ] && echo "$pods" | grep -E "CrashLoopBackOff|ImagePull|ErrImage|Error|OOMKilled|Evicted"
       else
-        echo "minikube: running, but kubectl failed to list pods — check kubectl config (kubectl config current-context)"
+        echo "minikube: running, but kubectl failed to list pods in the minikube context — check kubectl config (kubectl config get-contexts)"
       fi
     else
       echo "minikube: NOT running (start with: make start-minikube — never minikube start)"

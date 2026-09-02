@@ -58,25 +58,32 @@ For a code change to one service (e.g. backend):
 
 ```bash
 $DEVC 'make build-go-embed && TAG=localenv make build-docker-images && TAG=localenv make minikube-load-images'
-$DEVC 'kubectl rollout restart deployment <name> && kubectl rollout status deployment <name>'
+$DEVC 'kubectl --context minikube rollout restart deployment <name> && kubectl --context minikube rollout status deployment <name>'
 ```
 
 The Bucketeer deployments are `api`, `web`, `batch-server`, and `subscriber`
-(confirm with `$DEVC 'kubectl get deployments'`). Chart-level
-changes instead: `helm upgrade bucketeer manifests/bucketeer/ --values
-manifests/bucketeer/values.dev.yaml`.
+(confirm with `$DEVC 'kubectl --context minikube get deployments'`). Chart-level
+changes instead:
+
+```bash
+$DEVC 'helm upgrade bucketeer manifests/bucketeer/ --kube-context minikube --values manifests/bucketeer/values.dev.yaml'
+```
+
+Always go through `$DEVC` and always name the context: a bare `helm`/`kubectl`
+runs against whatever context is currently active, which on the host is often a
+real cluster. `$DEVC status` warns when the active context is not `minikube`.
 
 ## 4. Verify
 
 ```bash
-$DEVC 'kubectl get pods'   # everything Running/Completed, restarts not climbing
+$DEVC 'kubectl --context minikube get pods'   # everything Running/Completed, restarts not climbing
 $DEVC 'curl -sk https://api-gateway.bucketeer.io/health'   # must run INSIDE the container
 ```
 
 The `*.bucketeer.io` hosts entries live in the container's `/etc/hosts`
 (pointed at `minikube ip`) — curl from the host proves nothing. For a failing
-pod: `$DEVC 'kubectl logs deploy/<name> --tail=100'` and
-`$DEVC 'kubectl describe pod <pod>'`.
+pod: `$DEVC 'kubectl --context minikube logs deploy/<name> --tail=100'` and
+`$DEVC 'kubectl --context minikube describe pod <pod>'`.
 
 ## Related dev-cluster chores
 
