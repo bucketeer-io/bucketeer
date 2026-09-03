@@ -1,5 +1,49 @@
 # Changelog
 
+## [2.4.0](https://github.com/bucketeer-io/bucketeer/compare/v2.3.0...v2.4.0) (2026-09-03)
+
+
+### Features
+
+* add schema validation for variation value ([#2760](https://github.com/bucketeer-io/bucketeer/issues/2760)) ([4b42fc6](https://github.com/bucketeer-io/bucketeer/commit/4b42fc63de29ad579eee12790bf2e6bd26247219))
+* **api:** add connection-aware readiness probe for SSE ([#2787](https://github.com/bucketeer-io/bucketeer/issues/2787)) ([27448d8](https://github.com/bucketeer-io/bucketeer/commit/27448d856cd67c5fbbd72c4907e188e7a556000b))
+* **auditlog:** write organization events to audit_log ([#2791](https://github.com/bucketeer-io/bucketeer/issues/2791)) ([b3df88e](https://github.com/bucketeer-io/bucketeer/commit/b3df88eacc28ea8cca3649cd3a6d0ea2cc24a0ff))
+* implement mark all notification as read API ([#2762](https://github.com/bucketeer-io/bucketeer/issues/2762)) ([0516403](https://github.com/bucketeer-io/bucketeer/commit/051640369061e019cc0ae9930ff953e721fab535))
+* implement mark notification read API ([5210d34](https://github.com/bucketeer-io/bucketeer/commit/5210d34400f7fa2ed40307b81c0c4a3c78991e5e))
+* **migration:** add organization_id column to audit_log ([#2789](https://github.com/bucketeer-io/bucketeer/issues/2789)) ([4a8271b](https://github.com/bucketeer-io/bucketeer/commit/4a8271bafb926f802cfaf5e4f7c7c0fbaf2e9c9a))
+* **notification:** implement GetNotification API ([#2749](https://github.com/bucketeer-io/bucketeer/issues/2749)) ([a7fd245](https://github.com/bucketeer-io/bucketeer/commit/a7fd245e2d51bb9d030a03100a0d36454550e290))
+* **notification:** implement GetNotificationUnreadCount API ([#2751](https://github.com/bucketeer-io/bucketeer/issues/2751)) ([8f4d576](https://github.com/bucketeer-io/bucketeer/commit/8f4d57608acf3c2282174d5dd18389b53ae5af4a))
+* **notification:** implement ListNotifications API for viewers ([#2745](https://github.com/bucketeer-io/bucketeer/issues/2745)) ([fc142f9](https://github.com/bucketeer-io/bucketeer/commit/fc142f9aba2fc7eaef552ab043a7fbb418630fca))
+* **notification:** implement MarkNotificationsAsRead API ([#2750](https://github.com/bucketeer-io/bucketeer/issues/2750)) ([02447b7](https://github.com/bucketeer-io/bucketeer/commit/02447b7e2f0ebe02db4f9d6ad80cd368bb1cf2b6))
+* **postgres:** support configurable SSL/TLS connections ([#2769](https://github.com/bucketeer-io/bucketeer/issues/2769)) ([10faace](https://github.com/bucketeer-io/bucketeer/commit/10faaceea49360b12cde0152e8512b8c2d35e27f))
+* show selected user segments in a popover ([#2785](https://github.com/bucketeer-io/bucketeer/issues/2785)) ([d411823](https://github.com/bucketeer-io/bucketeer/commit/d4118235a69335e2dbbcac1cb9d5049f1d3425ef))
+* **ui/dashboard:** add collapsible navigation sidebar ([#2776](https://github.com/bucketeer-io/bucketeer/issues/2776)) ([faba45f](https://github.com/bucketeer-io/bucketeer/commit/faba45f93a9dffe23cf4a03adb4379726fd5282c))
+* **ui/dashboard:** implement UI for notification page ([#2702](https://github.com/bucketeer-io/bucketeer/issues/2702)) ([5a82f0f](https://github.com/bucketeer-io/bucketeer/commit/5a82f0f7281ab76852285ad5e5292ad0b050d066))
+* **ui:** add rule-based segment editing to the console ([#2753](https://github.com/bucketeer-io/bucketeer/issues/2753)) ([0d76807](https://github.com/bucketeer-io/bucketeer/commit/0d76807f7cf581cf9373b2a976621d0856da1860))
+
+
+### Bug Fixes
+
+* **deps:** update golang.org/x/net to fix CVE-2026-46600 ([#2773](https://github.com/bucketeer-io/bucketeer/issues/2773)) ([0da723d](https://github.com/bucketeer-io/bucketeer/commit/0da723d1ccc1ac73140f4bdc39b5e8127c2703e0))
+* **flaky test:** use proto.Equal for gRPC status comparison in TestUpdateFeature ([#2774](https://github.com/bucketeer-io/bucketeer/issues/2774)) ([941987f](https://github.com/bucketeer-io/bucketeer/commit/941987f2f17a5fe0739964c439a2348ea9580d70))
+* obfuscate the API key in audit log ([#2767](https://github.com/bucketeer-io/bucketeer/issues/2767)) ([161bf4c](https://github.com/bucketeer-io/bucketeer/commit/161bf4c7fcc7d2c66b9aa4e43840759155121c86))
+* return invalid argument for update feature validation errors ([#2765](https://github.com/bucketeer-io/bucketeer/issues/2765)) ([1036f73](https://github.com/bucketeer-io/bucketeer/commit/1036f7308171494575d8233d1cb4e76a91c71d19))
+
+
+### Miscellaneous
+
+* **claude:** add dev container skills for Claude Code ([#2741](https://github.com/bucketeer-io/bucketeer/issues/2741)) ([27df25a](https://github.com/bucketeer-io/bucketeer/commit/27df25ac4b2786301dc75e1a51d8233a3551f606))
+* **feature:** explain the cause when a variation cannot be deleted ([#2790](https://github.com/bucketeer-io/bucketeer/issues/2790)) ([e1f410e](https://github.com/bucketeer-io/bucketeer/commit/e1f410e230a2a280c51448969dd8dccbd56a6c43))
+* **subscription:** localize slack notification messages ([#2778](https://github.com/bucketeer-io/bucketeer/issues/2778)) ([e5c8e6c](https://github.com/bucketeer-io/bucketeer/commit/e5c8e6ca937a3638bef44d24a4aa2d3ca8571d87))
+
+
+### Build System
+
+* **deps:** bump the dependencies group in /ui/dashboard with 2 updates ([#2747](https://github.com/bucketeer-io/bucketeer/issues/2747)) ([7bf7041](https://github.com/bucketeer-io/bucketeer/commit/7bf7041b1c6486fc7a885074b53283391099091a))
+* **deps:** bump the dependencies group with 21 updates ([#2796](https://github.com/bucketeer-io/bucketeer/issues/2796)) ([ce51611](https://github.com/bucketeer-io/bucketeer/commit/ce51611ee4e8cca0089617c1f2efa6f0a85a5a49))
+* **deps:** bump the dependencies group with 5 updates ([#2795](https://github.com/bucketeer-io/bucketeer/issues/2795)) ([1d52a70](https://github.com/bucketeer-io/bucketeer/commit/1d52a70a0afbab7be435566a21418c2ff180de2b))
+* **deps:** bump the dependencies group with 7 updates ([#2746](https://github.com/bucketeer-io/bucketeer/issues/2746)) ([75858e1](https://github.com/bucketeer-io/bucketeer/commit/75858e13f4451c641dfb3693d4243d4a0ddee2d4))
+
 ## [2.3.0](https://github.com/bucketeer-io/bucketeer/compare/v2.2.0...v2.3.0) (2026-07-31)
 
 
