@@ -188,7 +188,14 @@
         "VariationInUseByFeatureFlagRuleError": "このバリエーションはフラグ「{{featureName}}」のターゲティングルールで使用されているため削除できません。先に該当フラグのルールを削除してください。",
         "StartAtIsAfterEndAt": "開始時間は終了時間以前を指定してください",
         "PeriodOutOfRange": "期間は過去30日以内を選択してください",
-        "ProjectDisabled": "プロジェクトが無効化されています"
+        "ProjectDisabled": "プロジェクトが無効化されています",
+        "DemoSiteNotEnabled": "デモサイトが有効化されていません",
+        "UserAlreadyInOrganization": "ユーザーは既にこのオーガニゼーションのメンバーです",
+        "TriggerAlreadyDisabled": "トリガーは既に無効化されています",
+        "ScheduledFlagChangeNotPending": "スケジュールされたフラグ変更は保留中ではありません",
+        "NotificationAlreadyPublished": "通知は既に公開されています",
+        "TagInUse": "タグが使用されているため削除できません",
+        "ProgressiveRolloutVariationsMustBeDifferent": "プログレッシブロールアウトのコントロールバリエーションとターゲットバリエーションは異なる必要があります"
     },
     "domainEvents": {
         "UnknownOperation": "不明な操作が実行されました",

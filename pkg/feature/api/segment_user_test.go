@@ -275,7 +275,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			expectedErr:   statusSegmentNotFound.Err(),
 		},
 		{
-			desc: "ErrSegmentStatusNotSuceeded",
+			desc: "ErrSegmentStatusNotSucceeded",
 			setup: func(s *FeatureService) {
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -286,7 +286,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "id",
 			state:         featureproto.SegmentUser_INCLUDED,
-			expectedErr:   statusSegmentStatusNotSuceeded.Err(),
+			expectedErr:   statusSegmentStatusNotSucceeded.Err(),
 		},
 	}
 	for _, tc := range testcases {
