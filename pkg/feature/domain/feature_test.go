@@ -786,40 +786,42 @@ func TestChangeRulesOrder(t *testing.T) {
 	t.Helper()
 	f := makeFeature("test-feature")
 	patterns := []*struct {
-		ruleIDs          []string
-		expected         []string
-		expectedUpdateAt int64
-		expectedError    error
+		ruleIDs            []string
+		expected           []string
+		expectUpdatedAtNow bool
+		expectedError      error
 	}{
 		{
-			ruleIDs:          []string{f.Rules[0].Id, "not-found-id"},
-			expected:         []string{f.Rules[0].Id, f.Rules[1].Id},
-			expectedUpdateAt: f.UpdatedAt,
-			expectedError:    errRuleNotFound,
+			ruleIDs:       []string{f.Rules[0].Id, "not-found-id"},
+			expected:      []string{f.Rules[0].Id, f.Rules[1].Id},
+			expectedError: errRuleNotFound,
 		},
 		{
-			ruleIDs:          []string{f.Rules[0].Id},
-			expected:         []string{f.Rules[0].Id, f.Rules[1].Id},
-			expectedUpdateAt: f.UpdatedAt,
-			expectedError:    errRulesOrderSizeNotEqual,
+			ruleIDs:       []string{f.Rules[0].Id},
+			expected:      []string{f.Rules[0].Id, f.Rules[1].Id},
+			expectedError: errRulesOrderSizeNotEqual,
 		},
 		{
-			ruleIDs:          []string{f.Rules[1].Id, f.Rules[1].Id},
-			expected:         []string{f.Rules[0].Id, f.Rules[1].Id},
-			expectedUpdateAt: f.UpdatedAt,
-			expectedError:    errRulesOrderDuplicateIDs,
+			ruleIDs:       []string{f.Rules[1].Id, f.Rules[1].Id},
+			expected:      []string{f.Rules[0].Id, f.Rules[1].Id},
+			expectedError: errRulesOrderDuplicateIDs,
 		},
 		{
-			ruleIDs:          []string{f.Rules[1].Id, f.Rules[0].Id},
-			expected:         []string{f.Rules[1].Id, f.Rules[0].Id},
-			expectedUpdateAt: time.Now().Unix(),
-			expectedError:    nil,
+			ruleIDs:            []string{f.Rules[1].Id, f.Rules[0].Id},
+			expected:           []string{f.Rules[1].Id, f.Rules[0].Id},
+			expectUpdatedAtNow: true,
+			expectedError:      nil,
 		},
 	}
 	for _, p := range patterns {
+		updatedAtBefore := f.UpdatedAt
 		err := f.ChangeRulesOrder(p.ruleIDs)
 		assert.Equal(t, p.expectedError, err)
-		assert.Equal(t, p.expectedUpdateAt, f.UpdatedAt)
+		if p.expectUpdatedAtNow {
+			assert.InDelta(t, time.Now().Unix(), f.UpdatedAt, 5)
+		} else {
+			assert.Equal(t, updatedAtBefore, f.UpdatedAt)
+		}
 		for i := range f.Rules {
 			if p.expected[i] != f.Rules[i].Id {
 				t.Fatalf("Incorrect rules order. Expected: %s, actual: %s", p.expected[i], f.Rules[i].Id)

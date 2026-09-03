@@ -2972,12 +2972,12 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 	}
 }
 
+// CreatedAt is left unset because the server stamps it at request time.
 func emptyUserEvaluationsForREST(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
 		Id:                 "no_evaluations",
 		Evaluations:        []*featureproto.Evaluation{},
-		CreatedAt:          time.Now().Unix(),
 		ForceUpdate:        false,
 		ArchivedFeatureIds: []string{},
 	}

@@ -25,6 +25,11 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 )
 
+func backdateUpdatedAt(a *AccountV2) int64 {
+	a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
+	return a.UpdatedAt
+}
+
 func TestNewMemberAccount(t *testing.T) {
 	envRoles := []*proto.AccountV2_EnvironmentRole{
 		{
@@ -390,7 +395,6 @@ func TestAddSearchFilter(t *testing.T) {
 				Role:          proto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
-		UpdatedAt: time.Now().Unix(),
 	}
 
 	patterns := []struct {
@@ -461,6 +465,7 @@ func TestAddSearchFilter(t *testing.T) {
 				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
+			backdateUpdatedAt(a)
 			for _, f := range p.expectedFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -475,7 +480,7 @@ func TestAddSearchFilter(t *testing.T) {
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
 			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
-			assert.Equal(t, account.UpdatedAt, a.UpdatedAt)
+			assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
 			for i, f := range p.expectedFilters {
@@ -516,7 +521,6 @@ func TestChangeSearchFilterName(t *testing.T) {
 				Role:          proto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
-		UpdatedAt: time.Now().Unix(),
 	}
 
 	patterns := []struct {
@@ -629,6 +633,7 @@ func TestChangeSearchFilterName(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
+			backdatedUpdatedAt := backdateUpdatedAt(a)
 			err := a.ChangeSearchFilterName(updateFilterId, p.updateFilterName)
 			assert.Equal(t, err, p.error)
 
@@ -642,7 +647,11 @@ func TestChangeSearchFilterName(t *testing.T) {
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
 			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
-			assert.Equal(t, account.UpdatedAt, a.UpdatedAt)
+			if p.error == nil {
+				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
+			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
 			for i, f := range p.expectedFilters {
@@ -671,7 +680,6 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 				Role:          proto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
-		UpdatedAt: time.Now().Unix(),
 	}
 
 	patterns := []struct {
@@ -784,6 +792,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
+			backdatedUpdatedAt := backdateUpdatedAt(a)
 			err := a.ChangeSearchFilterQuery(updateFilterId, p.updateFilterQuery)
 			assert.Equal(t, err, p.error)
 
@@ -797,7 +806,11 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
 			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
-			assert.Equal(t, account.UpdatedAt, a.UpdatedAt)
+			if p.error == nil {
+				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
+			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
 			for i, f := range p.expectedFilters {
@@ -826,7 +839,6 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 				Role:          proto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
-		UpdatedAt: time.Now().Unix(),
 	}
 
 	patterns := []struct {
@@ -943,6 +955,7 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 				Id:            updateFilterId,
 				DefaultFilter: p.updateDefaultFilter,
 			}
+			backdatedUpdatedAt := backdateUpdatedAt(a)
 			err := a.ChangeDefaultSearchFilter(
 				updateFilter.Id,
 				updateFilter.DefaultFilter)
@@ -958,7 +971,11 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
 			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
-			assert.Equal(t, account.UpdatedAt, a.UpdatedAt)
+			if p.error == nil {
+				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
+			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
 			for i, f := range p.expectedFilters {
@@ -987,7 +1004,6 @@ func TestDeleteSearchFilter(t *testing.T) {
 				Role:          proto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
-		UpdatedAt: time.Now().Unix(),
 	}
 
 	patterns := []struct {
@@ -1081,6 +1097,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				deleteFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
+			backdatedUpdatedAt := backdateUpdatedAt(a)
 			err := a.DeleteSearchFilter(deleteFilterId)
 			assert.Equal(t, err, p.error)
 
@@ -1094,7 +1111,11 @@ func TestDeleteSearchFilter(t *testing.T) {
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
 			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
-			assert.Equal(t, account.UpdatedAt, a.UpdatedAt)
+			if p.error == nil {
+				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
+			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
 			if len(a.SearchFilters) > 0 {

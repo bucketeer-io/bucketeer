@@ -529,7 +529,11 @@ func TestUpdateExperiment(t *testing.T) {
 		status      *experimentproto.UpdateExperimentRequest_UpdatedStatus
 		archived    *wrapperspb.BoolValue
 		expected    *Experiment
-		expectedErr error
+		// StartAt and StoppedAt are stamped by Update, so they are checked
+		// against the current time instead of the expected experiment.
+		expectStartAtNow   bool
+		expectStoppedAtNow bool
+		expectedErr        error
 	}{
 		{
 			desc:        "success",
@@ -568,7 +572,6 @@ func TestUpdateExperiment(t *testing.T) {
 					Name:        experiment.Name,
 					Description: experiment.Description,
 					Status:      experimentproto.Experiment_RUNNING,
-					StartAt:     now,
 					StopAt:      experiment.StopAt,
 					StoppedAt:   experiment.StoppedAt,
 					CreatedAt:   experiment.CreatedAt,
@@ -577,6 +580,7 @@ func TestUpdateExperiment(t *testing.T) {
 					Deleted:     experiment.Deleted,
 				},
 			},
+			expectStartAtNow: true,
 		},
 		{
 			desc:       "success stop",
@@ -595,13 +599,13 @@ func TestUpdateExperiment(t *testing.T) {
 					Status:      experimentproto.Experiment_STOPPED,
 					StartAt:     experiment.StartAt,
 					StopAt:      experiment.StopAt,
-					StoppedAt:   now,
 					CreatedAt:   experiment.CreatedAt,
 					UpdatedAt:   experiment.UpdatedAt,
 					Archived:    experiment.Archived,
 					Deleted:     experiment.Deleted,
 				},
 			},
+			expectStoppedAtNow: true,
 		},
 		{
 			desc:       "success force stop",
@@ -620,13 +624,13 @@ func TestUpdateExperiment(t *testing.T) {
 					Status:      experimentproto.Experiment_FORCE_STOPPED,
 					StartAt:     experiment.StartAt,
 					StopAt:      experiment.StopAt,
-					StoppedAt:   now,
 					CreatedAt:   experiment.CreatedAt,
 					UpdatedAt:   experiment.UpdatedAt,
 					Archived:    experiment.Archived,
 					Deleted:     experiment.Deleted,
 				},
 			},
+			expectStoppedAtNow: true,
 		},
 		{
 			desc:       "error invalid status already stopped to waiting",
@@ -730,9 +734,17 @@ func TestUpdateExperiment(t *testing.T) {
 				assert.Equal(t, p.expected.Name, updated.Name)
 				assert.Equal(t, p.expected.Description, updated.Description)
 				assert.Equal(t, p.expected.Status, updated.Status)
-				assert.Equal(t, p.expected.StartAt, updated.StartAt)
+				if p.expectStartAtNow {
+					assert.InDelta(t, time.Now().Unix(), updated.StartAt, 5)
+				} else {
+					assert.Equal(t, p.expected.StartAt, updated.StartAt)
+				}
 				assert.Equal(t, p.expected.StopAt, updated.StopAt)
-				assert.Equal(t, p.expected.StoppedAt, updated.StoppedAt)
+				if p.expectStoppedAtNow {
+					assert.InDelta(t, time.Now().Unix(), updated.StoppedAt, 5)
+				} else {
+					assert.Equal(t, p.expected.StoppedAt, updated.StoppedAt)
+				}
 			}
 		})
 	}

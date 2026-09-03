@@ -104,7 +104,6 @@ func TestUpdateNotification(t *testing.T) {
 							WebhookUrl: "https://slack-hooks.exp",
 						},
 					},
-					UpdatedAt: time.Now().Unix(),
 				},
 			},
 			expectedErr: nil,
@@ -143,8 +142,7 @@ func TestUpdateNotification(t *testing.T) {
 							WebhookUrl: "https://slack-hooks.exp",
 						},
 					},
-					Disabled:  true,
-					UpdatedAt: time.Now().Unix(),
+					Disabled: true,
 				},
 			},
 			expectedErr: nil,
@@ -217,7 +215,6 @@ func TestUpdateNotification(t *testing.T) {
 						},
 					},
 					Disabled:        false,
-					UpdatedAt:       time.Now().Unix(),
 					FeatureFlagTags: []string{},
 				},
 			},
@@ -261,7 +258,6 @@ func TestUpdateNotification(t *testing.T) {
 						},
 					},
 					Disabled:        false,
-					UpdatedAt:       time.Now().Unix(),
 					FeatureFlagTags: []string{"update-tag"},
 				},
 			},
@@ -277,6 +273,10 @@ func TestUpdateNotification(t *testing.T) {
 				p.inputData.featureFlagTags,
 			)
 			assert.Equal(t, p.expectedErr, err)
+			if p.expected != nil && actual != nil {
+				assert.InDelta(t, time.Now().Unix(), actual.UpdatedAt, 5)
+				p.expected.UpdatedAt = actual.UpdatedAt
+			}
 			assert.Equal(t, p.expected, actual)
 		})
 	}
