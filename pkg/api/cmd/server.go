@@ -121,6 +121,11 @@ type server struct {
 	redisServerName                   *string
 	redisAddr                         *string
 	redisMode                         *string
+	redisTLSEnabled                   *bool
+	redisTLSCACert                    *string
+	redisTLSCert                      *string
+	redisTLSKey                       *string
+	redisTLSInsecureSkipVerify        *bool
 	certPath                          *string
 	keyPath                           *string
 	serviceTokenPath                  *string
@@ -134,17 +139,22 @@ type server struct {
 	segmentUsersMemoryCacheTTL        *time.Duration
 	featureFlagDiffGracePeriod        *time.Duration
 	// PubSub configurations
-	pubSubType                *string
-	pubSubRedisServerName     *string
-	pubSubRedisAddr           *string
-	pubSubRedisPoolSize       *int
-	pubSubRedisMinIdle        *int
-	pubSubRedisPartitionCount *int
-	pubSubRedisMode           *string
-	cacheInvalidationTopic    *string
-	sseHeartbeatInterval      *time.Duration
-	sseMaxConnections         *int
-	sseReadinessThreshold     *float64
+	pubSubType                       *string
+	pubSubRedisServerName            *string
+	pubSubRedisAddr                  *string
+	pubSubRedisPoolSize              *int
+	pubSubRedisMinIdle               *int
+	pubSubRedisPartitionCount        *int
+	pubSubRedisMode                  *string
+	pubSubRedisTLSEnabled            *bool
+	pubSubRedisTLSCACert             *string
+	pubSubRedisTLSCert               *string
+	pubSubRedisTLSKey                *string
+	pubSubRedisTLSInsecureSkipVerify *bool
+	cacheInvalidationTopic           *string
+	sseHeartbeatInterval             *time.Duration
+	sseMaxConnections                *int
+	sseReadinessThreshold            *float64
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -261,6 +271,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		redisMode: cmd.Flag("redis-mode",
 			"Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		redisTLSEnabled: cmd.Flag(
+			"redis-tls-enabled",
+			"Enable TLS when connecting to Redis (e.g. AWS ElastiCache/MemoryDB with in-transit encryption).",
+		).Default("false").Bool(),
+		redisTLSCACert: cmd.Flag(
+			"redis-tls-ca-cert",
+			"Path to the Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		redisTLSCert: cmd.Flag(
+			"redis-tls-cert",
+			"Path to the Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		redisTLSKey: cmd.Flag(
+			"redis-tls-key",
+			"Path to the Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		redisTLSInsecureSkipVerify: cmd.Flag(
+			"redis-tls-insecure-skip-verify",
+			"Skip Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -327,6 +357,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		pubSubRedisTLSEnabled: cmd.Flag(
+			"pubsub-redis-tls-enabled",
+			"Enable TLS when connecting to the PubSub Redis server.",
+		).Default("false").Bool(),
+		pubSubRedisTLSCACert: cmd.Flag(
+			"pubsub-redis-tls-ca-cert",
+			"Path to the PubSub Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		pubSubRedisTLSCert: cmd.Flag(
+			"pubsub-redis-tls-cert",
+			"Path to the PubSub Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		pubSubRedisTLSKey: cmd.Flag(
+			"pubsub-redis-tls-key",
+			"Path to the PubSub Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		pubSubRedisTLSInsecureSkipVerify: cmd.Flag(
+			"pubsub-redis-tls-insecure-skip-verify",
+			"Skip PubSub Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 		cacheInvalidationTopic: cmd.Flag("cache-invalidation-topic",
 			"PubSub topic on which the subscriber announces L2 cache refreshes. "+
 				"When set, this pod evicts its L1 (in-memory) cache entries on each "+
@@ -371,6 +421,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
 			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
+			redisv3.WithTLS(redisv3.TLSConfig{
+				Enabled:            *s.pubSubRedisTLSEnabled,
+				CACert:             *s.pubSubRedisTLSCACert,
+				Cert:               *s.pubSubRedisTLSCert,
+				Key:                *s.pubSubRedisTLSKey,
+				InsecureSkipVerify: *s.pubSubRedisTLSInsecureSkipVerify,
+			}),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
@@ -565,6 +622,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
 		redisv3.WithServerName(*s.redisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.redisMode)),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *s.redisTLSEnabled,
+			CACert:             *s.redisTLSCACert,
+			Cert:               *s.redisTLSCert,
+			Key:                *s.redisTLSKey,
+			InsecureSkipVerify: *s.redisTLSInsecureSkipVerify,
+		}),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)

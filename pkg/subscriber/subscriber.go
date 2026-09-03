@@ -98,6 +98,13 @@ type Configuration struct {
 	RedisPartitionCount int    `json:"redisPartitionCount,omitempty"`
 	RedisIdleTime       int    `json:"redisIdleTime,omitempty"`
 	RedisMode           string `json:"redisMode,omitempty"`
+	// Redis TLS configuration (used to connect to TLS-enabled Redis/Valkey
+	// deployments, e.g. AWS ElastiCache/MemoryDB with in-transit encryption)
+	RedisTLSEnabled            bool   `json:"redisTLSEnabled,omitempty"`
+	RedisTLSCACert             string `json:"redisTLSCACert,omitempty"`
+	RedisTLSCert               string `json:"redisTLSCert,omitempty"`
+	RedisTLSKey                string `json:"redisTLSKey,omitempty"`
+	RedisTLSInsecureSkipVerify bool   `json:"redisTLSInsecureSkipVerify,omitempty"`
 }
 
 type pubSubSubscriber struct {
@@ -289,6 +296,13 @@ func createRedisClient(ctx context.Context,
 		redisv3.WithMinIdleConns(redisMinIdle),
 		redisv3.WithServerName(conf.RedisServerName),
 		redisv3.WithRedisMode(redisMode),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            conf.RedisTLSEnabled,
+			CACert:             conf.RedisTLSCACert,
+			Cert:               conf.RedisTLSCert,
+			Key:                conf.RedisTLSKey,
+			InsecureSkipVerify: conf.RedisTLSInsecureSkipVerify,
+		}),
 		redisv3.WithMetrics(metrics),
 		redisv3.WithLogger(logger),
 	)
