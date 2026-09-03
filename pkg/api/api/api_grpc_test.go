@@ -2366,7 +2366,9 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 				"authorization": []string{"test-key"},
 			})
 			actual, err := gs.GetEvaluations(ctx, p.input)
-			assertEvaluationsCreatedAtNow(t, p.expected, actual, p.desc)
+			if p.expected != nil && actual != nil {
+				normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations)
+			}
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -2418,7 +2420,7 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
-		assertEvaluationsCreatedAtNow(t, p.expected, actual, p.desc)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
@@ -4957,21 +4959,6 @@ func newUUID(t *testing.T) string {
 	return id.String()
 }
 
-// assertEvaluationsCreatedAtNow checks the server-stamped CreatedAt against the
-// current time, then copies it into expected so the whole response can be compared.
-func assertEvaluationsCreatedAtNow(
-	t *testing.T,
-	expected, actual *gwproto.GetEvaluationsResponse,
-	desc string,
-) {
-	t.Helper()
-	if expected == nil || expected.Evaluations == nil || actual == nil || actual.Evaluations == nil {
-		return
-	}
-	assert.InDelta(t, time.Now().Unix(), actual.Evaluations.CreatedAt, 5, "%s", desc)
-	expected.Evaluations.CreatedAt = actual.Evaluations.CreatedAt
-}
-
 // CreatedAt is left unset because the server stamps it at request time.
 func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
@@ -4981,6 +4968,18 @@ func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 		ArchivedFeatureIds: []string{},
 		ForceUpdate:        false,
 	}
+}
+
+// CreatedAt is stamped by the service while the test runs, so it can differ from the value
+// the expectation was built with and make a plain Equal flaky. Check it only loosely, then
+// align expected with it so the remaining fields are still compared exactly.
+func normalizeUserEvaluationsCreatedAt(t *testing.T, expected, actual *featureproto.UserEvaluations) {
+	t.Helper()
+	if expected == nil || actual == nil {
+		return
+	}
+	assert.InDelta(t, time.Now().Unix(), actual.CreatedAt, 5)
+	expected.CreatedAt = actual.CreatedAt
 }
 
 func TestGrpcListFeatures(t *testing.T) {

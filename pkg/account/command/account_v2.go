@@ -166,6 +166,7 @@ func (h *accountV2CommandHandler) send(
 		h.account.Email,
 		eventType,
 		event,
+		h.account.OrganizationId,
 		h.account.AccountV2,
 		prev,
 	)

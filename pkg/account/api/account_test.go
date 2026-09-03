@@ -206,7 +206,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+				s.auditLogStorage.(*alstoragemock.MockAuditLogStorage).EXPECT().CreateAuditLog(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
@@ -467,7 +467,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					require.NoError(t, err)
 				}).Return(nil)
 
-				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+				s.auditLogStorage.(*alstoragemock.MockAuditLogStorage).EXPECT().CreateAuditLog(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -651,7 +651,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					require.NoError(t, err)
 				}).Return(nil)
 
-				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+				s.auditLogStorage.(*alstoragemock.MockAuditLogStorage).EXPECT().CreateAuditLog(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -839,7 +839,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					require.NoError(t, err)
 				}).Return(nil)
 
-				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+				s.auditLogStorage.(*alstoragemock.MockAuditLogStorage).EXPECT().CreateAuditLog(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},

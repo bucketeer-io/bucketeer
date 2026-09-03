@@ -281,12 +281,14 @@ message Event {
   Editor editor = 6;
   google.protobuf.Any data = 7;
   reserved 8;
-  bool is_admin_event = 9;  // if true, it's stored in AdminDomainEvent table
-  // and AdminAuditLog table.
+  bool is_admin_event = 9;  // if true, it's an organization-level event stored
+  // in the AuditLog table with an empty environment_id, scoped by
+  // organization_id. Also used to route admin notification subscriptions.
   Options options = 10;              // optional
   string entity_data = 11;           // JSON string of the entity data
   string previous_entity_data = 12;  // JSON string of the previous entity data
   string environment_id = 13;
+  string organization_id = 14;
 }
 
 message Editor {

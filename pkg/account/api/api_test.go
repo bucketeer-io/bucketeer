@@ -56,13 +56,13 @@ func createAccountService(t *testing.T, mockController *gomock.Controller, db st
 	t.Helper()
 	logger := zap.NewNop()
 	return &AccountService{
-		environmentClient:    ecmock.NewMockClient(mockController),
-		dbClient:             dbmock.NewMockClient(mockController),
-		accountStorage:       storagemock.NewMockAccountStorage(mockController),
-		teamStorage:          teamstoragemock.NewMockTeamStorage(mockController),
-		adminAuditLogStorage: auditlogstoragemock.NewMockAdminAuditLogStorage(mockController),
-		publisher:            publishermock.NewMockPublisher(mockController),
-		logger:               logger.Named("api"),
+		environmentClient: ecmock.NewMockClient(mockController),
+		dbClient:          dbmock.NewMockClient(mockController),
+		accountStorage:    storagemock.NewMockAccountStorage(mockController),
+		teamStorage:       teamstoragemock.NewMockTeamStorage(mockController),
+		auditLogStorage:   auditlogstoragemock.NewMockAuditLogStorage(mockController),
+		publisher:         publishermock.NewMockPublisher(mockController),
+		logger:            logger.Named("api"),
 	}
 }
 

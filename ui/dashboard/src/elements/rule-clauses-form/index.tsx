@@ -26,6 +26,7 @@ import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
+import { Popover } from 'components/popover';
 import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
@@ -494,51 +495,34 @@ const RuleClausesForm = ({
                                     }}
                                   />
                                 ) : isUserSegment ? (
-                                  <>
-                                    <Dropdown
-                                      options={segmentOptions}
-                                      multiselect
-                                      value={(value as string[]) || []}
-                                      labelCustom={
-                                        selectedSegments.length
-                                          ? truncateBySide(
-                                              selectedSegments
-                                                .map(item => item.name)
-                                                .join(', '),
-                                              50
-                                            )
-                                          : ''
-                                      }
-                                      onChange={val => {
-                                        const current =
-                                          (value as string[]) || [];
-                                        const next = current.includes(
-                                          val as string
-                                        )
-                                          ? current.filter(v => v !== val)
-                                          : [...current, val as string];
-                                        field.onChange(next);
-                                      }}
-                                      onClear={() => field.onChange([])}
-                                      placeholder={t('common:select-value')}
-                                      disabled={!segmentOptions?.length}
-                                      className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                                    />
-                                    {selectedSegments.length > 0 && (
-                                      <div className="flex flex-col w-full gap-y-1 mt-2">
-                                        {selectedSegments.map(item => (
-                                          <Link
-                                            key={item.id}
-                                            target="_blank"
-                                            to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${item.id}`}
-                                            className="typo-para-small text-primary-500 hover:underline truncate w-fit max-w-full"
-                                          >
-                                            {`${item.name} (${getSegmentSummary(item, t)})`}
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </>
+                                  <Dropdown
+                                    options={segmentOptions}
+                                    multiselect
+                                    value={(value as string[]) || []}
+                                    labelCustom={
+                                      selectedSegments.length
+                                        ? truncateBySide(
+                                            selectedSegments
+                                              .map(item => item.name)
+                                              .join(', '),
+                                            50
+                                          )
+                                        : ''
+                                    }
+                                    onChange={val => {
+                                      const current = (value as string[]) || [];
+                                      const next = current.includes(
+                                        val as string
+                                      )
+                                        ? current.filter(v => v !== val)
+                                        : [...current, val as string];
+                                      field.onChange(next);
+                                    }}
+                                    onClear={() => field.onChange([])}
+                                    placeholder={t('common:select-value')}
+                                    disabled={!segmentOptions?.length}
+                                    className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                                  />
                                 ) : isFlag ? (
                                   <Dropdown
                                     options={variationOptions}
@@ -575,6 +559,44 @@ const RuleClausesForm = ({
                                   />
                                 )}
                               </Form.Control>
+                              {isUserSegment && selectedSegments.length > 0 && (
+                                <div className="mt-0.5">
+                                  <Popover
+                                    align="start"
+                                    trigger={
+                                      <div>
+                                        <span className="typo-para-small font-medium text-primary-500">
+                                          {t(
+                                            'common:show-count-user-segments',
+                                            {
+                                              count: selectedSegments.length
+                                            }
+                                          )}
+                                        </span>
+                                      </div>
+                                    }
+                                    triggerCls="w-fit justify-start"
+                                    className="flex flex-col w-[300px] gap-y-0.5 p-0 overflow-hidden"
+                                  >
+                                    <div className="flex flex-col gap-y-0.5 max-h-[220px] overflow-y-auto small-scroll p-2">
+                                      {selectedSegments.map(item => (
+                                        <div
+                                          key={item.id}
+                                          className="flex items-center w-full gap-x-1 rounded hover:bg-primary-50"
+                                        >
+                                          <Link
+                                            target="_blank"
+                                            to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${item.id}`}
+                                            className="typo-para-small text-primary-500 hover:underline truncate flex-1 min-w-0 px-1 py-1"
+                                          >
+                                            {`${item.name} (${getSegmentSummary(item, t)})`}
+                                          </Link>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </Popover>
+                                </div>
+                              )}
                               <Form.Message />
                             </Form.Item>
                           );

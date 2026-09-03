@@ -59,15 +59,15 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type AccountService struct {
-	environmentClient    environmentclient.Client
-	dbClient             database.Client
-	accountStorage       v2.AccountStorage
-	tagStorage           tagstorage.TagStorage
-	teamStorage          teamstorage.TeamStorage
-	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
-	publisher            publisher.Publisher
-	opts                 *options
-	logger               *zap.Logger
+	environmentClient environmentclient.Client
+	dbClient          database.Client
+	accountStorage    v2.AccountStorage
+	tagStorage        tagstorage.TagStorage
+	teamStorage       teamstorage.TeamStorage
+	auditLogStorage   auditlogstorage.AuditLogStorage
+	publisher         publisher.Publisher
+	opts              *options
+	logger            *zap.Logger
 }
 
 func NewAccountService(
@@ -76,7 +76,7 @@ func NewAccountService(
 	accountStorage v2.AccountStorage,
 	tagStorage tagstorage.TagStorage,
 	teamStorage teamstorage.TeamStorage,
-	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage,
+	auditLogStorage auditlogstorage.AuditLogStorage,
 	publisher publisher.Publisher,
 	opts ...Option,
 ) *AccountService {
@@ -85,15 +85,15 @@ func NewAccountService(
 		opt(&options)
 	}
 	return &AccountService{
-		environmentClient:    e,
-		dbClient:             dbClient,
-		accountStorage:       accountStorage,
-		tagStorage:           tagStorage,
-		teamStorage:          teamStorage,
-		adminAuditLogStorage: adminAuditLogStorage,
-		publisher:            publisher,
-		opts:                 &options,
-		logger:               options.logger.Named("api"),
+		environmentClient: e,
+		dbClient:          dbClient,
+		accountStorage:    accountStorage,
+		tagStorage:        tagStorage,
+		teamStorage:       teamStorage,
+		auditLogStorage:   auditLogStorage,
+		publisher:         publisher,
+		opts:              &options,
+		logger:            options.logger.Named("api"),
 	}
 }
 

@@ -716,7 +716,7 @@ func TestGetEvaluationsValidation(t *testing.T) {
 		decoded := decodeSuccessResponse(t, actual.Body)
 		err := json.Unmarshal(decoded, &respBody)
 		assert.NoError(t, err)
-		assertEvaluationsCreatedAtNowForREST(t, p.expected, &respBody, p.desc)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, respBody.Evaluations)
 		assert.Equal(t, p.expected, &respBody, "%s", p.desc)
 	}
 }
@@ -779,7 +779,7 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 		decoded := decodeSuccessResponse(t, actual.Body)
 		err := json.Unmarshal(decoded, &respBody)
 		assert.NoError(t, err)
-		assertEvaluationsCreatedAtNowForREST(t, p.expected, &respBody, p.desc)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, respBody.Evaluations)
 		assert.Equal(t, p.expected, &respBody, "%s", p.desc)
 	}
 }
@@ -2981,19 +2981,4 @@ func emptyUserEvaluationsForREST(t *testing.T) *featureproto.UserEvaluations {
 		ForceUpdate:        false,
 		ArchivedFeatureIds: []string{},
 	}
-}
-
-// assertEvaluationsCreatedAtNowForREST checks the server-stamped CreatedAt against
-// the current time, then copies it into expected so the whole response can be compared.
-func assertEvaluationsCreatedAtNowForREST(
-	t *testing.T,
-	expected, actual *getEvaluationsResponse,
-	desc string,
-) {
-	t.Helper()
-	if expected == nil || expected.Evaluations == nil || actual == nil || actual.Evaluations == nil {
-		return
-	}
-	assert.InDelta(t, time.Now().Unix(), actual.Evaluations.CreatedAt, 5, "%s", desc)
-	expected.Evaluations.CreatedAt = actual.Evaluations.CreatedAt
 }
