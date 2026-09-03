@@ -716,7 +716,7 @@ func TestGetEvaluationsValidation(t *testing.T) {
 		decoded := decodeSuccessResponse(t, actual.Body)
 		err := json.Unmarshal(decoded, &respBody)
 		assert.NoError(t, err)
-		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, respBody.Evaluations, "%s", p.desc)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, respBody.Evaluations)
 		assert.Equal(t, p.expected, &respBody, "%s", p.desc)
 	}
 }
@@ -779,7 +779,7 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 		decoded := decodeSuccessResponse(t, actual.Body)
 		err := json.Unmarshal(decoded, &respBody)
 		assert.NoError(t, err)
-		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, respBody.Evaluations, "%s", p.desc)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, respBody.Evaluations)
 		assert.Equal(t, p.expected, &respBody, "%s", p.desc)
 	}
 }

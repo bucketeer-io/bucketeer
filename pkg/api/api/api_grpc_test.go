@@ -2360,7 +2360,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			})
 			actual, err := gs.GetEvaluations(ctx, p.input)
 			if p.expected != nil && actual != nil {
-				normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations, "%s", p.desc)
+				normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations)
 			}
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
@@ -2413,7 +2413,7 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
-		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations, "%s", p.desc)
+		normalizeUserEvaluationsCreatedAt(t, p.expected.Evaluations, actual.Evaluations)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
@@ -4963,17 +4963,15 @@ func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 	}
 }
 
-// normalizeUserEvaluationsCreatedAt asserts CreatedAt is roughly now, then aligns expected so Equal stays stable.
-func normalizeUserEvaluationsCreatedAt(
-	t *testing.T,
-	expected, actual *featureproto.UserEvaluations,
-	msgAndArgs ...interface{},
-) {
+// CreatedAt is stamped by the service while the test runs, so it can differ from the value
+// the expectation was built with and make a plain Equal flaky. Check it only loosely, then
+// align expected with it so the remaining fields are still compared exactly.
+func normalizeUserEvaluationsCreatedAt(t *testing.T, expected, actual *featureproto.UserEvaluations) {
 	t.Helper()
 	if expected == nil || actual == nil {
 		return
 	}
-	assert.InDelta(t, time.Now().Unix(), actual.CreatedAt, 5, msgAndArgs...)
+	assert.InDelta(t, time.Now().Unix(), actual.CreatedAt, 5)
 	expected.CreatedAt = actual.CreatedAt
 }
 
