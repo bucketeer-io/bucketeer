@@ -1,8 +1,11 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import {
-  BrowserRouter,
+  createBrowserRouter,
+  createRoutesFromElements,
+  Outlet,
   Route,
+  RouterProvider,
   Routes,
   useParams,
   useNavigate,
@@ -99,38 +102,18 @@ export const AppLoading = () => (
   </div>
 );
 
+const AppLayout = () => (
+  <AuthProvider>
+    <Outlet />
+  </AuthProvider>
+);
+
 function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         <ConfirmProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route
-                  path={PAGE_PATH_AUTH_CALLBACK}
-                  element={<AuthCallbackPage />}
-                />
-                <Route
-                  path={PAGE_PATH_AUTH_DEMO_CALLBACK}
-                  element={<AuthDemoCallbackPage />}
-                />
-                <Route
-                  path={PAGE_PATH_AUTH_SIGNIN}
-                  element={<SignInEmailPage />}
-                />
-                <Route
-                  path={PAGE_PATH_DEMO_SITE}
-                  element={<AccessDemoPage />}
-                />
-                <Route
-                  path={`${PAGE_PATH_DEMO_SITE}/new`}
-                  element={<CreateDemoPage />}
-                />
-                <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
+          <RouterProvider router={router} />
         </ConfirmProvider>
         {/* {process.env.NODE_ENV === 'development' && (
           <ReactQueryDevtools initialIsOpen={false} />
@@ -319,6 +302,22 @@ export const EnvironmentRoot = memo(
       </Routes>
     );
   }
+);
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<AppLayout />}>
+      <Route path={PAGE_PATH_AUTH_CALLBACK} element={<AuthCallbackPage />} />
+      <Route
+        path={PAGE_PATH_AUTH_DEMO_CALLBACK}
+        element={<AuthDemoCallbackPage />}
+      />
+      <Route path={PAGE_PATH_AUTH_SIGNIN} element={<SignInEmailPage />} />
+      <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
+      <Route path={`${PAGE_PATH_DEMO_SITE}/new`} element={<CreateDemoPage />} />
+      <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
+    </Route>
+  )
 );
 
 export default App;
