@@ -51,7 +51,7 @@ export const useFormField = () => {
 
 interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   children: React.ReactNode;
-  onSubmit: () => Promise<void>;
+  onSubmit: () => Promise<void | unknown>;
   className?: string;
 }
 
