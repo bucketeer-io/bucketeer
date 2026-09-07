@@ -273,7 +273,7 @@ func TestUpdateNotification(t *testing.T) {
 				p.inputData.featureFlagTags,
 			)
 			assert.Equal(t, p.expectedErr, err)
-			if p.expected != nil && actual != nil {
+			if err == nil {
 				assert.InDelta(t, time.Now().Unix(), actual.UpdatedAt, 5)
 				p.expected.UpdatedAt = actual.UpdatedAt
 			}

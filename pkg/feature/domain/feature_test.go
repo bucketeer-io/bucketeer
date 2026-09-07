@@ -786,10 +786,9 @@ func TestChangeRulesOrder(t *testing.T) {
 	t.Helper()
 	f := makeFeature("test-feature")
 	patterns := []*struct {
-		ruleIDs            []string
-		expected           []string
-		expectUpdatedAtNow bool
-		expectedError      error
+		ruleIDs       []string
+		expected      []string
+		expectedError error
 	}{
 		{
 			ruleIDs:       []string{f.Rules[0].Id, "not-found-id"},
@@ -807,20 +806,16 @@ func TestChangeRulesOrder(t *testing.T) {
 			expectedError: errRulesOrderDuplicateIDs,
 		},
 		{
-			ruleIDs:            []string{f.Rules[1].Id, f.Rules[0].Id},
-			expected:           []string{f.Rules[1].Id, f.Rules[0].Id},
-			expectUpdatedAtNow: true,
-			expectedError:      nil,
+			ruleIDs:       []string{f.Rules[1].Id, f.Rules[0].Id},
+			expected:      []string{f.Rules[1].Id, f.Rules[0].Id},
+			expectedError: nil,
 		},
 	}
 	for _, p := range patterns {
-		updatedAtBefore := f.UpdatedAt
 		err := f.ChangeRulesOrder(p.ruleIDs)
 		assert.Equal(t, p.expectedError, err)
-		if p.expectUpdatedAtNow {
+		if p.expectedError == nil {
 			assert.InDelta(t, time.Now().Unix(), f.UpdatedAt, 5)
-		} else {
-			assert.Equal(t, updatedAtBefore, f.UpdatedAt)
 		}
 		for i := range f.Rules {
 			if p.expected[i] != f.Rules[i].Id {

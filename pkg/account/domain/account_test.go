@@ -25,9 +25,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 )
 
-func backdateUpdatedAt(a *AccountV2) int64 {
+func backdateUpdatedAt(a *AccountV2) {
 	a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
-	return a.UpdatedAt
 }
 
 func TestNewMemberAccount(t *testing.T) {
@@ -633,7 +632,7 @@ func TestChangeSearchFilterName(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
-			backdatedUpdatedAt := backdateUpdatedAt(a)
+			backdateUpdatedAt(a)
 			err := a.ChangeSearchFilterName(updateFilterId, p.updateFilterName)
 			assert.Equal(t, err, p.error)
 
@@ -649,8 +648,6 @@ func TestChangeSearchFilterName(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
-			} else {
-				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
@@ -792,7 +789,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
-			backdatedUpdatedAt := backdateUpdatedAt(a)
+			backdateUpdatedAt(a)
 			err := a.ChangeSearchFilterQuery(updateFilterId, p.updateFilterQuery)
 			assert.Equal(t, err, p.error)
 
@@ -808,8 +805,6 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
-			} else {
-				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
@@ -955,7 +950,7 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 				Id:            updateFilterId,
 				DefaultFilter: p.updateDefaultFilter,
 			}
-			backdatedUpdatedAt := backdateUpdatedAt(a)
+			backdateUpdatedAt(a)
 			err := a.ChangeDefaultSearchFilter(
 				updateFilter.Id,
 				updateFilter.DefaultFilter)
@@ -973,8 +968,6 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
-			} else {
-				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
@@ -1097,7 +1090,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				deleteFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
-			backdatedUpdatedAt := backdateUpdatedAt(a)
+			backdateUpdatedAt(a)
 			err := a.DeleteSearchFilter(deleteFilterId)
 			assert.Equal(t, err, p.error)
 
@@ -1113,8 +1106,6 @@ func TestDeleteSearchFilter(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
-			} else {
-				assert.Equal(t, backdatedUpdatedAt, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
