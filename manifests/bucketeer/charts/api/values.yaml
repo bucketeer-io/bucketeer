@@ -45,6 +45,11 @@ env:
     poolMaxActive: 25
     addr:
     mode: auto
+    tlsEnabled: false
+    tlsCACert: ""
+    tlsCert: ""
+    tlsKey: ""
+    tlsInsecureSkipVerify: false
   oldestEventTimestamp:
   furthestEventTimestamp:
   # Grace window applied to the diff filters for:

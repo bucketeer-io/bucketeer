@@ -51,6 +51,11 @@ spec:
           secret:
             secretName: {{ .Values.global.operationalDatabase.postgres.sslSecretName }}
         {{- end }}
+        {{- if .Values.global.pubsub.redis.tlsSecretName }}
+        - name: redis-cert-secret
+          secret:
+            secretName: {{ .Values.global.pubsub.redis.tlsSecretName }}
+        {{- end }}
         - name: subscriber-config
           configMap:
             name: {{ template "subscriber.fullname" . }}-subscribers-config
@@ -179,6 +184,16 @@ spec:
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.persistentRedis.mode }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_TLS_ENABLED
+              value: "{{ .Values.env.persistentRedis.tlsEnabled }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_TLS_CA_CERT
+              value: "{{ .Values.env.persistentRedis.tlsCACert }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_TLS_CERT
+              value: "{{ .Values.env.persistentRedis.tlsCert }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_TLS_KEY
+              value: "{{ .Values.env.persistentRedis.tlsKey }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_TLS_INSECURE_SKIP_VERIFY
+              value: "{{ .Values.env.persistentRedis.tlsInsecureSkipVerify }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_ADDR
@@ -189,6 +204,16 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.nonPersistentRedis.mode }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_TLS_ENABLED
+              value: "{{ .Values.env.nonPersistentRedis.tlsEnabled }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_TLS_CA_CERT
+              value: "{{ .Values.env.nonPersistentRedis.tlsCACert }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_TLS_CERT
+              value: "{{ .Values.env.nonPersistentRedis.tlsCert }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_TLS_KEY
+              value: "{{ .Values.env.nonPersistentRedis.tlsKey }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_TLS_INSECURE_SKIP_VERIFY
+              value: "{{ .Values.env.nonPersistentRedis.tlsInsecureSkipVerify }}"
 
           volumeMounts:
             - name: service-cert-secret
@@ -200,6 +225,11 @@ spec:
             {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
             - name: postgres-cert-secret
               mountPath: /usr/local/certs/postgres
+              readOnly: true
+            {{- end }}
+            {{- if .Values.global.pubsub.redis.tlsSecretName }}
+            - name: redis-cert-secret
+              mountPath: /usr/local/certs/redis
               readOnly: true
             {{- end }}
             - name: email-config

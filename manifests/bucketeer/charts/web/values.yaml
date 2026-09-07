@@ -45,12 +45,22 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
     mode: auto
+    tlsEnabled: false
+    tlsCACert: ""
+    tlsCert: ""
+    tlsKey: ""
+    tlsInsecureSkipVerify: false
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
     mode: auto
+    tlsEnabled: false
+    tlsCACert: ""
+    tlsCert: ""
+    tlsKey: ""
+    tlsInsecureSkipVerify: false
   bigQueryDataSet:
   bigQueryDataLocation:
   domainTopic:
