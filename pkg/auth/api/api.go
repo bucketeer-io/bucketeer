@@ -31,12 +31,15 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	envdomain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	envstotage "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -108,6 +111,10 @@ type authService struct {
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
+	credentialsStorage  storage.CredentialsStorage
+	domainPolicyStorage storage.DomainPolicyStorage
+	emailConfig         *email.Config
+	emailService        email.Service
 	opts                *options
 	logger              *zap.Logger
 }
@@ -124,6 +131,9 @@ func NewAuthService(
 	projectStorage envstotage.ProjectStorage,
 	environmentStorage envstotage.EnvironmentStorage,
 	config *auth.OAuthConfig,
+	emailConfig *email.Config,
+	credentialsStorage storage.CredentialsStorage,
+	domainPolicyStorage storage.DomainPolicyStorage,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -131,6 +141,20 @@ func NewAuthService(
 		opt(&options)
 	}
 	logger := options.logger.Named("api")
+
+	// Initialize email service if email are enabled
+	var emailService email.Service
+	if emailConfig.Enabled {
+		var err error
+		emailService, err = email.NewService(*emailConfig, logger)
+		if err != nil {
+			logger.Warn("Failed to initialize email service", zap.Error(err))
+			emailService = email.NewNoOpService(logger)
+		}
+	} else {
+		emailService = email.NewNoOpService(logger)
+	}
+
 	service := &authService{
 		issuer:              issuer,
 		audience:            audience,
@@ -146,8 +170,12 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
-		opts:   &options,
-		logger: logger,
+		credentialsStorage:  credentialsStorage,
+		domainPolicyStorage: domainPolicyStorage,
+		emailConfig:         emailConfig,
+		emailService:        emailService,
+		opts:                &options,
+		logger:              logger,
 	}
 	service.PrepareDemoUser()
 	return service
@@ -844,6 +872,26 @@ func (s *authService) PrepareDemoUser() {
 			if err != nil && !errors.Is(err, accstorage.ErrAccountAlreadyExists) {
 				s.logger.Error("Create account for demo user error", zap.Error(err))
 			}
+		}
+	}
+
+	// Create credentials for demo user if not exists
+	_, err = s.credentialsStorage.GetCredentials(ctx, config.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			passwordHash, hashErr := auth.HashPassword(config.Password)
+			if hashErr != nil {
+				s.logger.Error("Failed to hash demo user password", zap.Error(hashErr))
+				return
+			}
+			err = s.credentialsStorage.CreateCredentials(ctx, config.Email, passwordHash)
+			if err != nil && !errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+				s.logger.Error("Failed to create credentials for demo user", zap.Error(err))
+				return
+			}
+		} else {
+			s.logger.Error("Failed to check credentials for demo user", zap.Error(err))
+			return
 		}
 	}
 	s.logger.Info("Demo environment prepared successfully")

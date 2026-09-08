@@ -29,6 +29,7 @@ import "proto/feature/segment.proto";
 import "proto/feature/target.proto";
 import "proto/account/account.proto";
 import "proto/account/api_key.proto";
+import "proto/environment/organization.proto";
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
 import "proto/autoops/service.proto";
