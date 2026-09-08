@@ -1044,7 +1044,8 @@ const diffClauses = (
 
     const isCompare =
       currentClause.operator === FeatureRuleClauseOperator.EQUALS ||
-      currentClause.type === RuleClauseType.COMPARE;
+      currentClause.type === RuleClauseType.COMPARE ||
+      currentClause.type === RuleClauseType.SEGMENT;
 
     const removedValue = preValues.filter(v => !currentValues.includes(v));
     const addValue = currentValues.filter(v => !preValues.includes(v));
