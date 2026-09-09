@@ -24,6 +24,7 @@ data:
     {{- /* Allow a per-subscriber redisIdleTime override; fall back to the global value */}}
     {{- $_ := set $config "redisIdleTime" (default $.Values.global.pubsub.redis.idleTime $config.redisIdleTime) }}
     {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
+    {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
@@ -38,6 +39,7 @@ data:
     {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
     {{- $_ := set $config "redisIdleTime" $.Values.global.pubsub.redis.idleTime }}
     {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
+    {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
@@ -57,6 +59,7 @@ data:
     {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
     {{- $_ := set $config "redisIdleTime" $.Values.global.pubsub.redis.idleTime }}
     {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
+    {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}

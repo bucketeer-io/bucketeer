@@ -24,6 +24,7 @@
     "redisMinIdle": 25,
     "redisPartitionCount": 16,
     "redisMode": "auto",
+    "redisDB": 0,
     "project": "bucketeer-dev"
   }
 } 

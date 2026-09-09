@@ -179,6 +179,8 @@ spec:
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.persistentRedis.mode }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_DB
+              value: "{{ .Values.env.persistentRedis.db }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_ADDR
@@ -189,6 +191,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_MODE
               value: "{{ .Values.env.nonPersistentRedis.mode }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_DB
+              value: "{{ .Values.env.nonPersistentRedis.db }}"
 
           volumeMounts:
             - name: service-cert-secret

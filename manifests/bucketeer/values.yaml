@@ -79,6 +79,8 @@ global:
       minIdle: 25
       # Redis client mode: cluster, standalone, or auto
       mode: auto
+      # Redis logical database index. Ignored in cluster mode
+      db: 0
       # Redis stream partition count
       partitionCount: 16
       # Idle time in seconds for pending message reclaim

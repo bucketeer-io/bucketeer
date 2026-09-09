@@ -192,11 +192,13 @@ type server struct {
 	persistentRedisPoolMaxIdle      *int
 	persistentRedisPoolMaxActive    *int
 	persistentRedisMode             *string
+	persistentRedisDB               *int
 	nonPersistentRedisServerName    *string
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
 	nonPersistentRedisMode          *string
+	nonPersistentRedisDB            *int
 	bigQueryDataSet                 *string
 	bigQueryDataLocation            *string
 	domainTopic                     *string
@@ -244,6 +246,7 @@ type server struct {
 	pubSubRedisMinIdle              *int
 	pubSubRedisPartitionCount       *int
 	pubSubRedisMode                 *string
+	pubSubRedisDB                   *int
 	dataWarehouseType               *string
 	dataWarehouseConfigPath         *string
 	// AI Chat configuration
@@ -347,6 +350,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		persistentRedisMode: cmd.Flag("persistent-redis-mode",
 			"Persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		persistentRedisDB: cmd.Flag("persistent-redis-db",
+			"Persistent Redis logical database index to select. Ignored in cluster mode.",
+		).Default("0").Int(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -366,6 +372,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
 			"Non-persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		nonPersistentRedisDB: cmd.Flag("non-persistent-redis-db",
+			"Non-persistent Redis logical database index to select. Ignored in cluster mode.",
+		).Default("0").Int(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
 		domainTopic: cmd.Flag(
@@ -539,6 +548,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		pubSubRedisDB: cmd.Flag("pubsub-redis-db",
+			"Redis logical database index to select for PubSub. Ignored in cluster mode.",
+		).Default("0").Int(),
 		// AI Chat configuration (optional — disabled when openai-api-key is empty)
 		openAIAPIKey: cmd.Flag(
 			"openai-api-key",
@@ -722,6 +734,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.persistentRedisMode)),
+		redisv3.WithDB(*s.persistentRedisDB),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -736,6 +749,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
+		redisv3.WithDB(*s.nonPersistentRedisDB),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -1460,6 +1474,7 @@ func (s *server) createPublisher(
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
 			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
+			redisv3.WithDB(*s.pubSubRedisDB),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
