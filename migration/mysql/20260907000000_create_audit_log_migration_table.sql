@@ -1,5 +1,8 @@
 -- Resolve the organization for the frozen admin_audit_log history in a working table.
 -- The merge into audit_log is a follow-up migration, after the resolved_by counts are reviewed.
+-- A row can still reach admin_audit_log after this snapshot (the persister keeps a temporary
+-- fallback for events published by producers that predate organization_id); the follow-up
+-- migration delta-copies such late rows and re-runs these rules, which are idempotent.
 -- No-op where admin_audit_log is empty; each UPDATE only touches rows still unresolved (organization_id = '').
 
 CREATE TABLE audit_log_migration LIKE admin_audit_log;
@@ -72,7 +75,10 @@ SET m.organization_id = r.organization_id,
     m.resolved_by     = '6-role-payload';
 
 -- 7. Account rows (entity_type 3, and 9 — some account events were mislabeled PUSH):
--- entity_id is an email; only when it maps to exactly one organization.
+-- entity_id is an email; only when it maps to exactly one organization. account_v2 is
+-- current state and deletion removes rows, so an email that moved organizations can map
+-- uniquely to the wrong one; decline when rows of this log already resolved the same
+-- email to a different organization.
 UPDATE audit_log_migration m
   JOIN (
     SELECT email, MIN(organization_id) AS organization_id
@@ -80,9 +86,15 @@ UPDATE audit_log_migration m
     GROUP BY email
     HAVING COUNT(DISTINCT organization_id) = 1
   ) av ON av.email = m.entity_id
+  LEFT JOIN (
+    SELECT DISTINCT entity_id, organization_id
+    FROM audit_log_migration
+    WHERE organization_id <> ''
+  ) conflict ON conflict.entity_id = m.entity_id AND conflict.organization_id <> av.organization_id
 SET m.organization_id = av.organization_id,
     m.resolved_by     = '7-account'
-WHERE m.organization_id = '' AND m.entity_type IN (3, 9);
+WHERE m.organization_id = '' AND m.entity_type IN (3, 9)
+  AND conflict.entity_id IS NULL;
 
 -- 8. Same email already resolved on another row of this log (unique org only). Must run last.
 UPDATE audit_log_migration m
