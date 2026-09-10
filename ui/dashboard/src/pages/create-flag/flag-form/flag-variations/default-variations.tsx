@@ -1,4 +1,4 @@
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import { FeatureVariation } from '@types';
@@ -26,9 +26,12 @@ const makeVariationTrigger = (
 
 const DefaultVariations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
-  const { control, watch } = useFormContext<FlagFormSchema>();
+  const { control } = useFormContext<FlagFormSchema>();
   const isJapaneseLanguage = getLanguage() === Language.JAPANESE;
-  const currentVariations = watch('variations') as FeatureVariation[];
+  const currentVariations = useWatch({
+    control,
+    name: 'variations'
+  }) as FeatureVariation[];
 
   const options =
     currentVariations?.map((item, index) => ({
