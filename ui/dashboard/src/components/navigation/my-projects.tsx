@@ -12,7 +12,7 @@ import {
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToast } from 'hooks';
-import { allowNavigation, useConfirm } from 'hooks/use-unsaved-leave-page';
+import { useConfirm } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import {
   clearCurrentEnvIdStorage,
@@ -39,7 +39,12 @@ const MyProjects = ({ isCollapsed }: { isCollapsed?: boolean }) => {
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
   const { errorNotify } = useToast();
-  const { isShow: showConfirm, confirm, setIsShow } = useConfirm();
+  const {
+    isShow: showConfirm,
+    confirm,
+    allowNavigation,
+    resetAllBlockers
+  } = useConfirm();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [projects, setProjects] = useState<Project[]>();
@@ -144,7 +149,7 @@ const MyProjects = ({ isCollapsed }: { isCollapsed?: boolean }) => {
           title: 'message:leave-page-unsaved-changes',
           message: 'message:leave-page-unsaved-changes-content',
           onConfirm: () => {
-            setIsShow(false);
+            resetAllBlockers();
             onHandleChange(environment);
           }
         });
