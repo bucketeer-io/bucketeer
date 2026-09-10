@@ -1,9 +1,19 @@
+-- atlas:txmode none
+
 -- Resolve the organization for the frozen admin_audit_log history in a working table.
+--
+-- txmode none: every statement commits on its own, so shared locks taken on
+-- admin_audit_log (INSERT ... SELECT) and on the lookup tables (rules 4-7) are held per
+-- statement instead of for the whole file. Safe because the file only builds a working
+-- table: on any failure it can simply be re-applied — DROP + re-create rebuilds it from
+-- scratch, and the rules re-resolve everything.
 -- The merge into audit_log is a follow-up migration, after the resolved_by counts are reviewed.
 -- A row can still reach admin_audit_log after this snapshot (the persister keeps a temporary
 -- fallback for events published by producers that predate organization_id); the follow-up
 -- migration delta-copies such late rows and re-runs these rules, which are idempotent.
 -- No-op where admin_audit_log is empty; each UPDATE only touches rows still unresolved (organization_id = '').
+
+DROP TABLE IF EXISTS audit_log_migration;
 
 CREATE TABLE audit_log_migration LIKE admin_audit_log;
 
