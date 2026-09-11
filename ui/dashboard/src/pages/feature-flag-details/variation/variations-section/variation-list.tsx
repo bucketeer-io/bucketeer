@@ -69,7 +69,7 @@ const VariationList = ({
     label: (
       <div className="flex items-center gap-x-2 pl-0.5">
         <FlagVariationPolygon index={index} />
-        <span className="typo-para-medium text-gray-700">
+        <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
           {item.name || item.value}
         </span>
       </div>
@@ -128,7 +128,7 @@ const VariationList = ({
                 onChange={field.onChange}
                 trigger={
                   offVariationData.variation ? (
-                    <div className="flex items-center gap-x-2 pl-0.5 w-0 flex-1 typo-para-medium text-gray-700">
+                    <div className="flex items-center gap-x-2 pl-0.5 w-0 flex-1 typo-para-medium text-gray-700 dark:text-dark-gray-400">
                       <FlagVariationPolygon index={offVariationData.index} />
                       <p className="truncate">
                         {offVariationData.variation.name ||

@@ -23,6 +23,7 @@ import {
   ChartDataset
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
+import { useTheme } from 'hooks/use-theme';
 import { FeatureVariationType } from '@types';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
@@ -115,6 +116,11 @@ const TimeseriesLineChart = memo(
         }
       };
 
+      const { theme } = useTheme();
+      const isDark = theme === 'dark';
+      const tickColor = isDark ? '#B5B0C2' : '#94A3B8';
+      const gridColor = isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0';
+
       const chartData: ChartData<'line', (string | number)[], Date> = {
         labels,
         datasets: dataLabels?.map((e, i) => {
@@ -173,13 +179,14 @@ const TimeseriesLineChart = memo(
               },
               grid: {
                 display: true,
-                color: '#E2E8F0',
+                color: gridColor,
                 lineWidth: 2,
                 tickWidth: 0
               },
               border: {
+                display: true,
                 dash: [5, 5],
-                color: '#E2E8F0'
+                color: gridColor
               },
               ticks: {
                 align: 'center' as const,
@@ -191,7 +198,7 @@ const TimeseriesLineChart = memo(
                   size: 14,
                   weight: 400
                 },
-                color: '#94A3B8'
+                color: tickColor
               }
             },
             y: {
@@ -199,7 +206,9 @@ const TimeseriesLineChart = memo(
                 display: false
               },
               border: {
-                dash: [5, 5]
+                display: true,
+                dash: [5, 5],
+                color: gridColor
               },
               ticks: {
                 font: {
@@ -207,18 +216,18 @@ const TimeseriesLineChart = memo(
                   size: 14,
                   weight: 400
                 },
-                color: '#94A3B8'
+                color: tickColor
               },
               grid: {
                 display: true,
-                color: '#E2E8F0',
+                color: gridColor,
                 lineWidth: 2,
                 tickWidth: 0
               }
             }
           }
         }),
-        []
+        [isDark]
       );
 
       useEffect(() => {

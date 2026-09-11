@@ -37,7 +37,7 @@ const Checkbox = forwardRef(
         <div className="flex-center size-5 mt-0.5">
           <CheckboxPrimitive.Root
             className={cn(
-              'flex-center size-5 rounded border border-gray-500 transition-colors duration-200',
+              'flex-center size-5 rounded border border-gray-500 dark:border-dark-purple-100 transition-colors duration-200',
               {
                 'border-primary-500 bg-primary-500': checked
               }
@@ -60,7 +60,9 @@ const Checkbox = forwardRef(
         </div>
         {title && (
           <label className="flex flex-col gap-y-2 text-left" htmlFor={inputId}>
-            <span className="typo-para-medium text-gray-700">{title}</span>
+            <span className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
+              {title}
+            </span>
             {description && (
               <span className="typo-para-small text-additional-gray-500">
                 {description}

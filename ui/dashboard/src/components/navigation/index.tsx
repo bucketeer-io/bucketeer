@@ -182,7 +182,7 @@ const Navigation = ({
   return (
     <div
       className={cn(
-        'fixed h-screen bg-primary-500 z-50 py-8 transition-all duration-300 ease-in-out',
+        'fixed h-screen bg-primary-500 z-50 py-8 transition-all duration-300 ease-in-out dark:bg-dark-black-900',
         isCollapsed ? 'w-[60px] px-2' : 'w-[248px] px-6'
       )}
     >
@@ -255,7 +255,7 @@ const Navigation = ({
                     isCollapsed ? t(`navigation.back-to-main`) : undefined
                   }
                   className={cn(
-                    'flex items-center gap-x-2 text-primary-50 rounded-lg',
+                    'flex items-center gap-x-2 text-primary-50 rounded-lg dark:text-white',
                     isCollapsed
                       ? 'justify-center w-full py-2 hover:bg-primary-400'
                       : 'px-3'
@@ -266,7 +266,7 @@ const Navigation = ({
                 </button>
               }
             />
-            <Divider className="my-5 bg-primary-50 opacity-10" />
+            <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
             {settingMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
@@ -284,12 +284,12 @@ const Navigation = ({
             )}
           >
             {!isCollapsed && (
-              <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+              <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 dark:text-dark-gray-100 mb-3">
                 {t(`environment`)}
               </div>
             )}
             <MyProjects isCollapsed={isCollapsed} />
-            <Divider className="my-5 bg-primary-50 opacity-10" />
+            <Divider className="my-5 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
@@ -303,7 +303,7 @@ const Navigation = ({
           </div>
         </div>
 
-        <Divider className="mb-3 bg-primary-50 opacity-10" />
+        <Divider className="mb-3 bg-primary-50 opacity-10 dark:bg-white dark:opacity-10" />
 
         <div
           className={cn('flex items-center justify-between', {

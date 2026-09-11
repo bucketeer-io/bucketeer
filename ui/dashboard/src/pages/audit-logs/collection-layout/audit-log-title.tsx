@@ -45,7 +45,7 @@ const AuditLogTitle = ({
         additionalText
       }}
       components={{
-        b: <span className="font-bold text-gray-700" />,
+        b: <span className="font-bold text-gray-700 dark:text-dark-gray-400" />,
         highlight: (
           <Link
             to={getPathName(entityId, entityType) as string}
@@ -55,7 +55,7 @@ const AuditLogTitle = ({
               const pathName = getPathName(entityId, entityType);
               if (pathName) navigate(`/${urlCode}${pathName}`);
             }}
-            className="text-primary-500 underline truncate"
+            className="text-primary-500 dark:text-dark-purple-700 underline truncate"
           />
         )
       }}

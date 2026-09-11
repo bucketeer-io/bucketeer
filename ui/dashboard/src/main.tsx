@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from 'hooks/use-theme';
 import 'unfonts.css';
 import App from 'app';
 import './index.css';
@@ -11,7 +12,9 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <Suspense>
-    <App />
-    <Toaster />
+    <ThemeProvider>
+      <App />
+      <Toaster />
+    </ThemeProvider>
   </Suspense>
 );

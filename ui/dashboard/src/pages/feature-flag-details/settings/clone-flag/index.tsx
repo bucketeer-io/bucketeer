@@ -19,8 +19,10 @@ const CloneFlag = ({
     useToggleOpen(false);
   return (
     <Card>
-      <p className="typo-head-bold-small text-gray-800">{t('clone-flag')}</p>
-      <p className="typo-para-small text-gray-500">
+      <p className="typo-head-bold-small text-gray-800 dark:text-gray-400">
+        {t('clone-flag')}
+      </p>
+      <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
         {t('form:clone-flag-desc')}
       </p>
       <DisabledButtonTooltip

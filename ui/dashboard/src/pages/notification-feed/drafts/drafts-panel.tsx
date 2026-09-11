@@ -67,7 +67,7 @@ const DraftsPanel = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="typo-head-bold-small text-gray-900">
+      <h2 className="typo-head-bold-small text-gray-900 dark:text-dark-gray-400">
         {t('drafts')} ({totalCount})
       </h2>
 

@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
+import { useTheme } from 'hooks/use-theme';
 import { InsightsTimeSeries } from '@types';
 import Spinner from 'components/spinner';
 import { LegendTable } from '../LegendTable';
@@ -32,6 +33,10 @@ const TimeSeriesLineChart = ({
   environmentNameMap,
   labelBuilder
 }: TimeSeriesLineChartProps) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const tickColor = isDark ? '#B5B0C2' : '#94A3B8';
+  const gridColor = isDark ? 'rgba(181, 176, 194, 0.25)' : '#E2E8F0';
   const datasets = useMemo(() => {
     const uniqueEnvIds = new Set(timeseries.map(s => s.environmentId));
     const singleEnv = uniqueEnvIds.size <= 1;
@@ -97,28 +102,28 @@ const TimeSeriesLineChart = ({
           ticks: {
             align: 'center' as const,
             source: 'auto' as const,
-            color: '#94A3B8',
+            color: tickColor,
             font: { family: 'Sofia Pro', size: 14, weight: 400 }
           }
         },
         y: {
           min: 0,
-          grid: { color: '#E2E8F0', drawTicks: false },
+          grid: { color: gridColor, drawTicks: false },
           title: {
             display: true,
             text: legendTitle,
-            color: '#94A3B8',
+            color: tickColor,
             font: { size: 12, weight: 'bold' as const }
           },
           ticks: {
-            color: '#94A3B8',
+            color: tickColor,
             font: { size: 12 },
             callback: (value: number | string) => yAxisFormatter(Number(value))
           }
         }
       }
     }),
-    [startAt, endAt, timeUnit, legendTitle, yAxisFormatter]
+    [startAt, endAt, timeUnit, legendTitle, yAxisFormatter, isDark]
   );
 
   return (

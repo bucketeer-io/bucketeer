@@ -47,10 +47,10 @@ export const useColumns = ({
           <div className="flex w-full col-span-5 gap-x-1.5">
             <FlagVariationPolygon index={row.index} className="mt-0.5" />
             <div className="flex flex-col flex-1 w-full gap-y-1.5">
-              <p className="typo-para-small text-gray-700 break-all">
+              <p className="typo-para-small text-gray-700 dark:text-dark-gray-300 break-all">
                 {variationName || variationValue}
               </p>
-              <p className="typo-para-small text-gray-500 break-all">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 break-all">
                 {variationId}
               </p>
             </div>

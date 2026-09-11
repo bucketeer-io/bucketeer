@@ -19,7 +19,7 @@ const SectionMenu = ({
   return (
     <div className={cn('flex flex-col', className)}>
       {!isCollapsed && (
-        <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3 opacity-70">
+        <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 dark:text-dark-gray-100 mb-3 opacity-70 dark:opacity-100">
           {title}
         </div>
       )}

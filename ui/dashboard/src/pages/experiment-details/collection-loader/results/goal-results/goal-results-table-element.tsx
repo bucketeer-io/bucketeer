@@ -23,7 +23,7 @@ export const ResultHeaderCell = ({
   return (
     <div
       className={cn(
-        'flex items-center size-fit w-full p-4 pt-0 gap-x-3 text-[13px] leading-[13px] text-gray-500 uppercase relative z-10',
+        'flex items-center size-fit w-full p-4 pt-0 gap-x-3 text-[13px] leading-[13px] text-gray-500 dark:text-dark-gray-200 uppercase relative z-10',
         className
       )}
       style={{
@@ -74,7 +74,7 @@ export const ResultCell = ({
   return (
     <div
       className={cn(
-        'flex items-center size-fit w-full px-4 py-5 gap-x-2 text-gray-500',
+        'flex items-center size-fit w-full px-4 py-5 gap-x-2 text-gray-500 dark:text-dark-gray-200',
         className
       )}
       style={{ minWidth: minSize }}
@@ -104,18 +104,24 @@ export const ResultCell = ({
                 name={String(value)}
                 maxLines={1}
                 haveAction={false}
-                className={cn('typo-para-medium text-gray-800', {
-                  capitalize: isBooleanValue
-                })}
+                className={cn(
+                  'typo-para-medium text-gray-800 dark:text-dark-gray-400',
+                  {
+                    capitalize: isBooleanValue
+                  }
+                )}
               />
             }
           />
         </>
       ) : (
         <p
-          className={cn('typo-para-medium leading-4 text-gray-800', {
-            capitalize: isBooleanValue
-          })}
+          className={cn(
+            'typo-para-medium leading-4 text-gray-800 dark:text-dark-gray-300',
+            {
+              capitalize: isBooleanValue
+            }
+          )}
         >
           {String(value)}
         </p>

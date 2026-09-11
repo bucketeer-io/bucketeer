@@ -39,14 +39,16 @@ const SlideModal = ({
         <Dialog.Content>
           <div
             className={cn(
-              'fixed z-50 flex h-full w-full flex-col rounded-l-lg bg-gray-50 max-w-[542px]',
+              'fixed z-50 flex h-full w-full flex-col rounded-l-lg bg-gray-50 dark:bg-dark-black-800 max-w-[542px]',
               direction === 'slide-left' && 'right-0 top-0 animate-slide-left',
               direction === 'slide-up' && 'bottom-0 left-0 animate-slide-up'
             )}
           >
             <div className="z-10 flex-initial shadow-header">
               <div
-                className={cn('flex items-center justify-between px-4 py-3.5')}
+                className={cn(
+                  'flex items-center justify-between px-4 py-3.5 dark:text-dark-gray-400'
+                )}
               >
                 <Dialog.Title className="typo-head-bold-huge">
                   {title}

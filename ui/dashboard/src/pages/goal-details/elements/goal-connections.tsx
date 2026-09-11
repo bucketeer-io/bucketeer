@@ -12,7 +12,7 @@ import Divider from 'components/divider';
 import Status from 'elements/status';
 
 const headerCls =
-    'typo-para-small font-medium text-gray-500 uppercase whitespace-nowrap',
+    'typo-para-small font-medium text-gray-500 dark:text-dark-gray-200 uppercase whitespace-nowrap',
   experimentCls = 'col-span-4 min-w-[200px] truncate',
   experimentStatusCls = 'col-span-3 min-w-[150px]';
 
@@ -23,8 +23,8 @@ const GoalConnections = ({ goal }: { goal: Goal }) => {
   const isExperimentType = goal.connectionType === 'EXPERIMENT';
 
   return (
-    <div className="flex flex-col w-full min-w-[780px] p-5 gap-y-5 shadow-card rounded-lg bg-white">
-      <p className="text-gray-800 typo-head-bold-small">
+    <div className="flex flex-col w-full min-w-[780px] p-5 gap-y-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card">
+      <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
         {t('goal-connections')}
       </p>
       <Divider />

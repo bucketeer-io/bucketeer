@@ -9,7 +9,7 @@ const AudienceTraffic = () => {
     // Left-aligned to match the visual rhythm of the cards below: the title
     // sits flush with the card column, anchored to the start node on the spine.
     <div className="flex items-center w-full gap-x-2">
-      <p className="typo-para-medium text-gray-700">
+      <p className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
         {t('targeting.all-audience-traffic')}
       </p>
       <Tooltip

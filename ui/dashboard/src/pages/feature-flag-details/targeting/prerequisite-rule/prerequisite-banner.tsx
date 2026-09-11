@@ -23,7 +23,7 @@ const PrerequisiteBanner = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="flex flex-col w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50">
+    <div className="flex flex-col w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50 dark:bg-accent-blue-900/30">
       <button
         type="button"
         onClick={() => setIsExpanded(prev => !prev)}
@@ -58,7 +58,7 @@ const PrerequisiteBanner = ({
 
       {isExpanded && (
         <div className="flex flex-col gap-y-1 pl-6 pt-3">
-          <p className="typo-para-small text-gray-700">
+          <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
             <Trans
               i18nKey={'form:targeting.prerequisite-flags-desc'}
               values={{
