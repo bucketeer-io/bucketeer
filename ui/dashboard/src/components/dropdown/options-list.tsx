@@ -76,6 +76,7 @@ export const OptionsList = memo(
               value={opt.value}
               label={opt.label}
               icon={opt.icon}
+              disabled={opt.disabled}
               description={opt.description}
               iconElement={opt.iconElement}
               additionalElement={

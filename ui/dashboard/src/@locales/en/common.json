@@ -490,6 +490,6 @@
   },
   "detail": "Detail",
   "last-seen": "Last seen",
-  "time-stop": "Time stop",
-  "time-start": "Time start"
+  "time-stop": "End time",
+  "time-start": "Start time"
 }

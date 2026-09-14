@@ -73,7 +73,7 @@ const PageContent = () => {
   >(undefined);
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const { isMobile, fromTabletScreen } = useScreen();
+  const { isMobile } = useScreen();
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
@@ -137,7 +137,7 @@ const PageContent = () => {
     <PageLayout.Content className="gap-y-3 sm:gap-y-6">
       <Filter
         link={DOCUMENTATION_LINKS.AUDIT_LOGS}
-        isShowDocumentation={fromTabletScreen}
+        isShowDocumentation={!isMobile}
         placeholder={t('form:name-email-search-placeholder')}
         name="audit-logs-search"
         action={
@@ -170,6 +170,7 @@ const PageContent = () => {
             <Button
               variant={'secondary'}
               className="w-fit px-[10px]"
+              aria-label={t(isExpandAll ? 'collapse-all' : 'expand-all')}
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
               <Icon

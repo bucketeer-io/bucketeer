@@ -296,7 +296,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                           </div>
                         }
                         isExpand
-                        contentClassName="min-w-[500px]"
+                        contentClassName="sm:min-w-[500px]"
                         options={languageList.map(item => ({
                           label: item.label,
                           value: item.value,

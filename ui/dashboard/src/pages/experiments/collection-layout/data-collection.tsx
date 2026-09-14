@@ -94,7 +94,7 @@ export const useColumns = ({
         const experiment = row.original;
         const { id, name } = experiment;
         return (
-          <div className="flex flex-col gap-0.5 relative z-[999]">
+          <div className="flex flex-col gap-0.5">
             <NameWithTooltip
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}
