@@ -39,9 +39,14 @@ OWNED_DIRS=(
 fixed=0
 for dir in "${OWNED_DIRS[@]}"; do
     sudo mkdir -p "$dir"
-    # Skip the recursive chown when the top-level owner is already correct --
+    # Skip the recursive chown when nothing in the tree is foreign-owned --
     # these trees hold tens of thousands of files and this runs on every start.
-    if [ "$(stat -c '%U' "$dir")" != "$USER_NAME" ]; then
+    # Testing "$dir" itself is not enough: the drift that actually happens is a
+    # root-owned file appearing *inside* a tree whose root still looks correct,
+    # which is exactly what the setup.sh re-attach call is meant to repair.
+    # `-print -quit` stops at the first offender, and unlike chown -R this walk
+    # only reads metadata, so a healthy cache is never rewritten.
+    if [ -n "$(sudo find "$dir" ! -user "$USER_NAME" -print -quit)" ]; then
         echo "🔑 Fixing ownership of $dir..."
         sudo chown -R "$USER_NAME:$USER_NAME" "$dir"
         fixed=$((fixed + 1))

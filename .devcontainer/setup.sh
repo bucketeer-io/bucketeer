@@ -164,9 +164,10 @@ install_go_tools() {
         USER_NAME=$(whoami)
     fi
 
-    # Ensure go-tools directory exists and has correct permissions
-    sudo mkdir -p /home/$USER_NAME/go-tools/bin
-    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/go-tools
+    # fix_cache_permissions already owns /home/$USER_NAME/go-tools, so only the
+    # bin/ subdirectory is left to create -- without sudo, or it would come back
+    # root-owned and break `go install`.
+    mkdir -p /home/$USER_NAME/go-tools/bin
 
     cd /home/$USER_NAME/go-tools
     if [ ! -e go.mod ]; then go mod init go-tools; fi
@@ -330,17 +331,9 @@ install_node_deps() {
 
     print_status "Installing $name dependencies..."
 
-    # Check if codespace user exists
-    if id "codespace" &>/dev/null; then
-        USER_NAME="codespace"
-    else
-        USER_NAME=$(whoami)
-    fi
-
-    # Ensure node_modules directory has correct permissions if it exists
-    if [ -d "$dir/node_modules" ]; then
-        sudo chown -R $USER_NAME:$USER_NAME "$dir/node_modules"
-    fi
+    # No chown of node_modules here: fix_cache_permissions runs first in main()
+    # and repairs both node_modules volumes, and nothing between there and here
+    # writes into them as root.
 
     cd "$dir"
 
