@@ -346,7 +346,7 @@ export const useWalkthrough = () => {
           showButtons: ['next', 'close'],
           onNextClick: (_element, _step, { driver: driverInstance }) => {
             setMobileMenuOpen(true);
-            driverInstance.moveNext();
+            requestAnimationFrame(() => driverInstance.moveNext());
           }
         }
       };
