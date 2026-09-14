@@ -62,6 +62,9 @@ type EvaluateFunc func(
 	environmentID, tag string,
 	prevUEID string,
 	evaluatedAt int64,
+	// True only for the initial put after a (re)connect; attributes cannot
+	// change on a live connection.
+	checkUserAttributes bool,
 ) (ueid string, evals *featureproto.UserEvaluations, err error)
 
 // EvaluationsHandler handles the SSE stream_evaluations endpoint.
@@ -196,7 +199,7 @@ func (h *EvaluationsHandler) sendInitialPut(
 ) (ueid string, evaluatedAt int64, err error) {
 	start := time.Now()
 	evaluatedAt = start.Unix()
-	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt)
+	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt, true)
 	sseEvaluationDurationHistogram.WithLabelValues(envID, tag, sourceID, eventTypePut).
 		Observe(time.Since(start).Seconds())
 	if err != nil {
@@ -224,7 +227,7 @@ func (h *EvaluationsHandler) sendPatch(
 ) (ueid string, newEvaluatedAt int64, err error) {
 	start := time.Now()
 	newEvaluatedAt = start.Unix()
-	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt)
+	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt, false)
 	sseEvaluationDurationHistogram.WithLabelValues(envID, tag, sourceID, eventTypePatch).
 		Observe(time.Since(start).Seconds())
 	if err != nil {

@@ -401,6 +401,7 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	environmentID, tag string,
 	prevUEID string,
 	evaluatedAt int64,
+	checkUserAttributes bool,
 ) (ueid string, evals *featureproto.UserEvaluations, err error) {
 	f, e, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
 		return s.getFeatures(ctx, environmentID)
@@ -442,15 +443,32 @@ func (s *gatewayService) evaluateFeaturesForStream(
 		return "", nil, err
 	}
 
+	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, filterFeaturesByTag(features, tag))
+	// The stream request cannot signal a user attribute change, but the
+	// attributes are part of the UEID hash, so a mismatch on reconnect forces
+	// rule-based flags to be re-evaluated.
+	userAttributesUpdated := checkUserAttributes && prevUEID != "" && prevUEID != ueid
 	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
 		features, user, segmentUsersMap, segmentsMap,
-		prevUEID, evaluatedAt, false, tag,
+		prevUEID, evaluatedAt, userAttributesUpdated, tag,
 	)
 	if err != nil {
 		return "", nil, err
 	}
-	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features)
 	return ueid, evaluations, nil
+}
+
+func filterFeaturesByTag(fs []*featureproto.Feature, tag string) []*featureproto.Feature {
+	result := make([]*featureproto.Feature, 0)
+	for _, f := range fs {
+		for _, t := range f.Tags {
+			if t == tag {
+				result = append(result, f)
+				break
+			}
+		}
+	}
+	return result
 }
 
 func (s *gatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {

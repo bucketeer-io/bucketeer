@@ -138,9 +138,13 @@ func TestInitialPut(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			h := &EvaluationsHandler{
-				evaluate: func(_ context.Context, _ *userproto.User, _, _ string, prevUEID string, evaluatedAt int64) (string, *featureproto.UserEvaluations, error) {
+				evaluate: func(
+					_ context.Context, _ *userproto.User, _, _ string,
+					prevUEID string, evaluatedAt int64, checkUserAttributes bool,
+				) (string, *featureproto.UserEvaluations, error) {
 					assert.Equal(t, "", prevUEID)
 					assert.Equal(t, int64(0), evaluatedAt)
+					assert.True(t, checkUserAttributes)
 					return "ueid-1", p.evals, p.evalErr
 				},
 			}
@@ -203,9 +207,13 @@ func TestPatch(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			h := &EvaluationsHandler{
-				evaluate: func(_ context.Context, _ *userproto.User, _, _ string, prevUEID string, evaluatedAt int64) (string, *featureproto.UserEvaluations, error) {
+				evaluate: func(
+					_ context.Context, _ *userproto.User, _, _ string,
+					prevUEID string, evaluatedAt int64, checkUserAttributes bool,
+				) (string, *featureproto.UserEvaluations, error) {
 					assert.Equal(t, "prev-ueid", prevUEID)
 					assert.Equal(t, p.evaluatedAt, evaluatedAt)
+					assert.False(t, checkUserAttributes)
 					return "new-ueid", p.evals, p.evalErr
 				},
 			}
@@ -256,7 +264,9 @@ func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
 	h := NewEvaluationsHandler(
 		d,
 		time.Hour, // ensure the heartbeat ticker never fires during the test
-		func(_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64) (string, *featureproto.UserEvaluations, error) {
+		func(
+			_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64, _ bool,
+		) (string, *featureproto.UserEvaluations, error) {
 			return "ueid-1", &featureproto.UserEvaluations{
 				Id:          "ueid-1",
 				Evaluations: []*featureproto.Evaluation{},
