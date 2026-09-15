@@ -60,8 +60,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 1, ActionType: autoopsproto.ActionType_DISABLE}),
 					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 2, ActionType: autoopsproto.ActionType_ENABLE}),
 				},
-				CreatedAt:     time.Now().Unix(),
-				UpdatedAt:     time.Now().Unix(),
 				Deleted:       false,
 				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 			}},
@@ -95,8 +93,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 						ActionType:      autoopsproto.ActionType_DISABLE,
 					}),
 				},
-				CreatedAt:     time.Now().Unix(),
-				UpdatedAt:     time.Now().Unix(),
 				Deleted:       false,
 				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 			}},
@@ -116,8 +112,9 @@ func TestNewAutoOpsRule(t *testing.T) {
 				assert.Equal(t, p.expected.FeatureId, aor.FeatureId)
 				assert.Equal(t, p.expected.OpsType, aor.OpsType)
 				assert.Equal(t, p.expected.AutoOpsStatus, aor.AutoOpsStatus)
-				assert.Equal(t, p.expected.CreatedAt, aor.CreatedAt)
-				assert.Equal(t, p.expected.UpdatedAt, aor.UpdatedAt)
+				assert.InDelta(t, time.Now().Unix(), aor.CreatedAt, 5)
+				assert.InDelta(t, time.Now().Unix(), aor.UpdatedAt, 5)
+				assert.GreaterOrEqual(t, aor.UpdatedAt, aor.CreatedAt)
 				assert.Equal(t, p.expected.Deleted, aor.Deleted)
 
 				for i, c := range aor.Clauses {
