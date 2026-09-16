@@ -7,7 +7,7 @@ import {
   useRef,
   useState
 } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { urls } from 'configs';
 import {
@@ -52,6 +52,7 @@ const AuditLogItem = memo(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const params = useParams();
+    const location = useLocation();
 
     const [currentTab, setCurrentTab] = useState<AuditLogTab>(
       AuditLogTab.CHANGES
@@ -104,15 +105,16 @@ const AuditLogItem = memo(
       (id: string) => {
         const flagId = params?.flagId;
 
+        // Keep the active filters: the details scope is derived from entityType.
         copyToClipBoard(
-          `${urls.ORIGIN_URL}${currentEnvironment.urlCode}${flagId ? `${PAGE_PATH_FEATURES}/${flagId}${PAGE_PATH_FEATURE_HISTORY}` : '/audit-logs'}/${id}`
+          `${urls.ORIGIN_URL}${currentEnvironment.urlCode}${flagId ? `${PAGE_PATH_FEATURES}/${flagId}${PAGE_PATH_FEATURE_HISTORY}` : '/audit-logs'}/${id}${location.search}`
         );
 
         notify({
           message: t('message:copied')
         });
       },
-      [currentEnvironment, params]
+      [currentEnvironment, params, location.search]
     );
 
     const handleOnExpandAuditLog = useCallback(
