@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import dayjs from 'dayjs';
 import { usePartialState } from 'hooks';
@@ -19,7 +19,7 @@ import CollectionLoader from './collection-loader';
 import AuditLogDetailsModal from './elements/audit-logs-modal/audit-log-details';
 import EntityTypeDropdown from './elements/entity-type-dropdown';
 import { AuditLogsFilters, ExpandOrCollapse } from './types';
-import { truncNumber } from './utils';
+import { isOrganizationEntityType, truncNumber } from './utils';
 
 export type ExpandOrCollapseRef = {
   toggle: () => void;
@@ -32,6 +32,7 @@ const PageContent = () => {
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { isOrganizationAdmin } = getAccountAccess(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<AuditLogsFilters> = searchOptions;
@@ -143,6 +144,7 @@ const PageContent = () => {
             <EntityTypeDropdown
               className="w-fit"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
+              isOrganizationAdmin={isOrganizationAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
             />
@@ -189,6 +191,11 @@ const PageContent = () => {
       {!!auditLogId && (
         <AuditLogDetailsModal
           auditLogId={auditLogId}
+          organizationId={
+            isOrganizationAdmin && isOrganizationEntityType(filters?.entityType)
+              ? consoleAccount?.organization.id
+              : undefined
+          }
           isOpen={!!auditLogId}
           onClose={() => {
             onChangeFilters({});

@@ -1,6 +1,6 @@
 import { forwardRef, Ref, useImperativeHandle } from 'react';
 import { useParams } from 'react-router';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog } from '@types';
 import Pagination from 'components/pagination';
 import FormLoading from 'elements/form-loading';
@@ -9,6 +9,7 @@ import TableListContainer from 'elements/table-list-container';
 import { DataCollection } from '../collection-layout/data-collection';
 import { ExpandOrCollapseRef } from '../page-content';
 import { AuditLogsFilters, ExpandOrCollapse } from '../types';
+import { isOrganizationEntityType } from '../utils';
 import { useFetchAuditLogs } from './use-fetch-audit-logs';
 
 const CollectionLoader = forwardRef(
@@ -33,6 +34,9 @@ const CollectionLoader = forwardRef(
     const { consoleAccount } = useAuth();
     const params = useParams();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const { isOrganizationAdmin } = getAccountAccess(consoleAccount!);
+    const isOrganizationScope =
+      isOrganizationAdmin && isOrganizationEntityType(filters?.entityType);
 
     const {
       data: auditLogCollection,
@@ -41,7 +45,10 @@ const CollectionLoader = forwardRef(
       isError
     } = useFetchAuditLogs({
       ...filters,
-      environmentId: currentEnvironment?.id,
+      environmentId: isOrganizationScope ? undefined : currentEnvironment?.id,
+      organizationId: isOrganizationScope
+        ? consoleAccount?.organization.id
+        : undefined,
       enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
     });
 

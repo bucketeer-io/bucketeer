@@ -10,12 +10,19 @@ import Dropdown from 'components/dropdown';
 interface Props {
   entityType?: DomainEventEntityMap;
   isSystemAdmin: boolean;
+  isOrganizationAdmin: boolean;
   className?: string;
   onChangeFilters: (filters: Partial<AuditLogsFilters>) => void;
 }
 
 const EntityTypeDropdown = memo(
-  ({ entityType, isSystemAdmin, className, onChangeFilters }: Props) => {
+  ({
+    entityType,
+    isSystemAdmin,
+    isOrganizationAdmin,
+    className,
+    onChangeFilters
+  }: Props) => {
     const { t } = useTranslation(['common', 'form', 'table']);
 
     const options = useMemo(() => {
@@ -30,8 +37,28 @@ const EntityTypeDropdown = memo(
         PROGRESSIVE_ROLLOUT,
         PUSH,
         ADMIN_SUBSCRIPTION,
-        SUBSCRIPTION
+        SUBSCRIPTION,
+        ENVIRONMENT,
+        PROJECT,
+        ORGANIZATION
       } = DomainEventEntityMap;
+
+      const organizationOptions = isOrganizationAdmin
+        ? [
+            {
+              labelKey: 'environment',
+              value: ENVIRONMENT
+            },
+            {
+              labelKey: 'source-type.project',
+              value: PROJECT
+            },
+            {
+              labelKey: 'organization',
+              value: ORGANIZATION
+            }
+          ]
+        : [];
 
       return [
         {
@@ -73,9 +100,10 @@ const EntityTypeDropdown = memo(
         {
           labelKey: 'source-type.subscription',
           value: isSystemAdmin ? ADMIN_SUBSCRIPTION : SUBSCRIPTION
-        }
+        },
+        ...organizationOptions
       ];
-    }, [isSystemAdmin]);
+    }, [isSystemAdmin, isOrganizationAdmin]);
 
     const entityLabel = useMemo(() => {
       const labelKey = options.find(

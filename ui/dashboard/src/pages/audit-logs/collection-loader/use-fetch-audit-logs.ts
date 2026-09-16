@@ -12,6 +12,7 @@ export const useFetchAuditLogs = ({
   to,
   entityType,
   environmentId,
+  organizationId,
   enabledFetching = true
 }: {
   pageSize?: number;
@@ -21,6 +22,7 @@ export const useFetchAuditLogs = ({
   orderDirection?: OrderDirection;
   disabled?: boolean;
   environmentId?: string;
+  organizationId?: string;
   from?: string;
   to?: string;
   entityType?: number;
@@ -38,7 +40,8 @@ export const useFetchAuditLogs = ({
       from,
       to,
       entityType,
-      environmentId
+      environmentId,
+      organizationId
     },
     enabled: enabledFetching,
     gcTime: 0
