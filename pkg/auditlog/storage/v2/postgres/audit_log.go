@@ -40,6 +40,8 @@ var (
 	selectAuditLogsV2SQL string
 	//go:embed sql/auditlog/select_audit_log_v2_count.sql
 	selectAuditLogV2CountSQL string
+	//go:embed sql/auditlog/select_organization_audit_log_v2.sql
+	selectOrganizationAuditLogV2SQL string
 )
 
 type auditLogStorage struct {
@@ -59,6 +61,38 @@ func (s *auditLogStorage) GetAuditLog(
 	var et int32
 	var t int32
 	row := s.qe.QueryRowContext(ctx, selectAuditLogV2SQL, environmentID, id)
+	err := row.Scan(
+		&auditLog.Id,
+		&auditLog.Timestamp,
+		&et,
+		&auditLog.EntityId,
+		&t,
+		&pgstorage.JSONObject{Val: &auditLog.Event},
+		&pgstorage.JSONObject{Val: &auditLog.Editor},
+		&pgstorage.JSONObject{Val: &auditLog.Options},
+		&auditLog.EntityData,
+		&auditLog.PreviousEntityData,
+	)
+	if err != nil {
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return nil, v2als.ErrAuditLogNotFound
+		}
+		return nil, err
+	}
+	auditLog.EntityType = eventproto.Event_EntityType(et)
+	auditLog.Type = eventproto.Event_Type(t)
+	return auditLog, nil
+}
+
+func (s *auditLogStorage) GetOrganizationAuditLog(
+	ctx context.Context,
+	id string,
+	organizationID string,
+) (*proto.AuditLog, error) {
+	auditLog := &proto.AuditLog{}
+	var et int32
+	var t int32
+	row := s.qe.QueryRowContext(ctx, selectOrganizationAuditLogV2SQL, organizationID, id)
 	err := row.Scan(
 		&auditLog.Id,
 		&auditLog.Timestamp,
@@ -209,6 +243,17 @@ func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*pgstorage.Lis
 			Column:   "environment_id",
 			Operator: pgstorage.OperatorEqual,
 			Value:    p.EnvironmentID,
+		})
+	}
+	if p.OrganizationID != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "organization_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    p.OrganizationID,
+		}, &pgstorage.Filter{
+			Column:   "environment_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    "",
 		})
 	}
 	if p.EntityType != nil {

@@ -32,7 +32,9 @@ var (
 
 // ListAuditLogsParams carries list intent for ListAuditLogs without database-specific types.
 type ListAuditLogsParams struct {
-	EnvironmentID  string
+	EnvironmentID string
+	// Scopes to organization-level logs: organization_id with an empty environment_id.
+	OrganizationID string
 	EntityType     *int32
 	EntityID       string
 	From           int64
@@ -46,6 +48,7 @@ type ListAuditLogsParams struct {
 
 type AuditLogStorage interface {
 	GetAuditLog(ctx context.Context, id string, environmentID string) (*proto.AuditLog, error)
+	GetOrganizationAuditLog(ctx context.Context, id string, organizationID string) (*proto.AuditLog, error)
 	CreateAuditLogs(ctx context.Context, auditLogs []*domain.AuditLog) error
 	CreateAuditLog(ctx context.Context, auditLog *domain.AuditLog) error
 	ListAuditLogs(

@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	v2asmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
@@ -74,15 +75,68 @@ func TestGetAuditLog(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			desc:    "err: missing environment_id and organization_id",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, true),
+			setup:   nil,
+			input: &proto.GetAuditLogRequest{
+				Id: "id-1",
+			},
+			expected:    nil,
+			expectedErr: statusMissingEnvironmentOrOrganization.Err(),
+		},
+		{
 			desc:    "errPermissionDenied",
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			context: createContextWithToken(t, false),
 			setup:   func(s *auditlogService) {},
 			input: &proto.GetAuditLogRequest{
-				Id: "id-1",
+				Id:            "id-1",
+				EnvironmentId: "env-1",
 			},
 			expected:    nil,
 			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "errPermissionDenied: organization member",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER),
+			context: createContextWithToken(t, false),
+			setup:   func(s *auditlogService) {},
+			input: &proto.GetAuditLogRequest{
+				Id:             "id-1",
+				OrganizationId: "org-1",
+			},
+			expected:    nil,
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "success: organization audit log",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetOrganizationAuditLog(
+					gomock.Any(), "id-1", "org-1",
+				).Return(&proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+				}, nil)
+			},
+			input: &proto.GetAuditLogRequest{
+				Id:             "id-1",
+				OrganizationId: "org-1",
+			},
+			expected: &proto.GetAuditLogResponse{
+				AuditLog: &proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+					LocalizedMessage: domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.NewLocalizer(context.Background())),
+				},
+			},
+			expectedErr: nil,
 		},
 		{
 			desc:    "err: missing ID",
@@ -302,6 +356,50 @@ func TestListAuditLogs(t *testing.T) {
 				Cursor:     "200",
 				TotalCount: 10,
 			},
+			expectedErr: nil,
+		},
+		{
+			desc:        "err: missing environment_id and organization_id",
+			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context:     createContextWithToken(t, true),
+			setup:       nil,
+			input:       &proto.ListAuditLogsRequest{PageSize: 2},
+			expected:    nil,
+			expectedErr: statusMissingEnvironmentOrOrganization.Err(),
+		},
+		{
+			desc:        "errPermissionDenied: organization member",
+			service:     newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER),
+			context:     createContextWithToken(t, false),
+			setup:       func(s *auditlogService) {},
+			input:       &proto.ListAuditLogsRequest{PageSize: 2, OrganizationId: "org-1"},
+			expected:    nil,
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "success: organization scope",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				entityType := int32(domaineventproto.Event_ORGANIZATION)
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					v2als.ListAuditLogsParams{
+						OrganizationID: "org-1",
+						EntityType:     &entityType,
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       2,
+						Cursor:         "0",
+					},
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+			},
+			input: &proto.ListAuditLogsRequest{
+				PageSize:       2,
+				OrganizationId: "org-1",
+				EntityType:     wrapperspb.Int32(int32(domaineventproto.Event_ORGANIZATION)),
+			},
+			expected:    &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
 			expectedErr: nil,
 		},
 	}
@@ -581,6 +679,31 @@ func newAuditLogServiceWithGetAccountByEnvironmentMock(t *testing.T, mockControl
 		},
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	return &auditlogService{
+		accountClient:        accountClientMock,
+		accountStorage:       v2asmock.NewMockAccountStorage(mockController),
+		auditLogStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
+		adminAuditLogStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
+		logger:               logger.Named("api"),
+	}
+}
+
+func newAuditLogServiceWithGetAccountMock(
+	t *testing.T,
+	mockController *gomock.Controller,
+	ro accountproto.AccountV2_Role_Organization,
+) *auditlogService {
+	t.Helper()
+	logger, err := log.NewLogger()
+	require.NoError(t, err)
+	accountClientMock := accountclientmock.NewMockClient(mockController)
+	ar := &accountproto.GetAccountV2Response{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: ro,
+		},
+	}
+	accountClientMock.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &auditlogService{
 		accountClient:        accountClientMock,
 		accountStorage:       v2asmock.NewMockAccountStorage(mockController),
