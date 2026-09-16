@@ -249,7 +249,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if segment.Status != featureproto.Segment_SUCEEDED {
-		return nil, statusSegmentStatusNotSuceeded.Err()
+		return nil, statusSegmentStatusNotSucceeded.Err()
 	}
 	stateVal := int32(req.State)
 	users, _, err := s.segmentUserStorage.ListSegmentUsers(

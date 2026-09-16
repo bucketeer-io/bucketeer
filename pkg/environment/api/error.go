@@ -89,8 +89,8 @@ var (
 	statusCannotUpdateSystemAdmin = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.EnvironmentPackageName,
-			"cannot update system admin organization",
-		))
+			"cannot update system admin organization").
+			WithMessageKey("CannotUpdateSystemAdminOrganizationError"))
 	statusEnvironmentNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "environment not found", "Environment"))
 	statusProjectNotFound = api.NewGRPCStatus(
@@ -104,7 +104,8 @@ var (
 	statusOrganizationAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.EnvironmentPackageName, "organization already exists"))
 	statusProjectDisabled = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "project disabled"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "project disabled").
+			WithMessageKey("ProjectDisabled"))
 	statusUnauthenticated = api.NewGRPCStatus(
 		pkgErr.NewErrorUnauthenticated(pkgErr.EnvironmentPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(
@@ -112,9 +113,11 @@ var (
 	statusAccountNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "account not found", "Account"))
 	statusDemoSiteDisabled = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "demo site is not enabled"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "demo site is not enabled").
+			WithMessageKey("DemoSiteNotEnabled"))
 	statusUserAlreadyInOrganization = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "user already in organization"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "user already in organization").
+			WithMessageKey("UserAlreadyInOrganization"))
 	statusInvalidAutoArchiveUnusedDays = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,

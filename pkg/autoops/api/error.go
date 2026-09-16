@@ -219,13 +219,13 @@ var (
 	statusProgressiveRolloutWaitingOrRunningExperimentExists = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.AutoopsPackageName,
-			"cannot create a progressive rollout when there is a scheduled or running experiment",
-		))
+			"cannot create a progressive rollout when there is a scheduled or running experiment").
+			WithMessageKey("AutoOpsWaitingOrRunningExperimentExists"))
 	statusProgressiveRolloutInsufficientVariations = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.AutoopsPackageName,
-			"the feature must have at least 2 variations when creating a progressive rollout",
-		))
+			"the feature must have at least 2 variations when creating a progressive rollout").
+			WithMessageKey("AutoOpsInvalidVariationSize"))
 	statusProgressiveRolloutControlVariationRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,
@@ -241,8 +241,8 @@ var (
 	statusProgressiveRolloutVariationsMustBeDifferent = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.AutoopsPackageName,
-			"control and target variations must be different for a progressive rollout",
-		))
+			"control and target variations must be different for a progressive rollout").
+			WithMessageKey("ProgressiveRolloutVariationsMustBeDifferent"))
 	statusProgressiveRolloutControlVariationNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,
@@ -258,8 +258,8 @@ var (
 	statusProgressiveRolloutInvalidScheduleSpans = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.AutoopsPackageName,
-			"the span of time for each scheduled time must be at least 5 minutes for a progressive rollout",
-		))
+			"the span of time for each scheduled time must be at least 5 minutes for a progressive rollout").
+			WithMessageKey("AutoOpsInvalidScheduleSpans"))
 	statusProgressiveRolloutScheduleExecutedAtRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,

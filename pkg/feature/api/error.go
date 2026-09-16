@@ -65,7 +65,8 @@ var (
 	statusMissingFeatureTags = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "feature must contain one or more tags", "Tag"))
 	statusCommentRequiredForUpdating = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "a comment is required for updating"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "a comment is required for updating").
+			WithMessageKey("CommentRequiredForUpdating"))
 	statusMissingSegmentID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing segment id", "Segment"))
 	statusMissingSegmentUsersData = api.NewGRPCStatus(
@@ -121,11 +122,14 @@ var (
 	statusAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.FeaturePackageName, "already exists"))
 	statusSegmentUsersAlreadyUploading = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment users already uploading"))
-	statusSegmentStatusNotSuceeded = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment status is not suceeded"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment users already uploading").
+			WithMessageKey("SegmentUsersAlreadyUploading"))
+	statusSegmentStatusNotSucceeded = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment status is not succeeded").
+			WithMessageKey("SegmentStatusNotSucceeded"))
 	statusSegmentInUse = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment is in use"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "segment is in use").
+			WithMessageKey("SegmentInUse"))
 	// segment rules
 	statusExceededMaxSegmentRules = api.NewGRPCStatus(
 		pkgErr.NewErrorExceededMax(
@@ -202,11 +206,13 @@ var (
 	statusPermissionDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.FeaturePackageName, "permission denied"))
 	statusWaitingOrRunningExperimentExists = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "experiment in waiting or running status exists"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "experiment in waiting or running status exists").
+			WithMessageKey("HasWaitingOrRunningExperiment"))
 	statusInvalidArchive = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
-			"can't archive because this feature is used as a prerequsite"))
+			"can't archive because this feature is used as a prerequisite").
+			WithMessageKey("InvalidArchive"))
 	// flag trigger
 	statusMissingTriggerFeatureID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing trigger feature id", "FeatureFlagID"))
@@ -219,7 +225,8 @@ var (
 	statusSecretRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "trigger secret is required", "TriggerSecret"))
 	statusTriggerAlreadyDisabled = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "trigger already disabled"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "trigger already disabled").
+			WithMessageKey("TriggerAlreadyDisabled"))
 	statusTriggerNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "trigger not found", "FlagTrigger"))
 	statusTriggerDisableFailed = api.NewGRPCStatus(
@@ -278,7 +285,8 @@ var (
 	statusScheduledFlagChangeNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "scheduled flag change not found", "ScheduledFlagChange"))
 	statusScheduledFlagChangeNotPending = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "scheduled flag change is not pending"))
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "scheduled flag change is not pending").
+			WithMessageKey("ScheduledFlagChangeNotPending"))
 	statusEmptyPayload = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "payload must contain at least one change", "Payload"))
 	statusInvalidVariationReference = api.NewGRPCStatus(

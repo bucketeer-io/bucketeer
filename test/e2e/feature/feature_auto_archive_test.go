@@ -473,7 +473,7 @@ func executeBatchJob(t *testing.T, client btclient.Client, job btproto.BatchJob)
 		// FailedPrecondition errors are expected when the environment contains
 		// features with prerequisites that can't be archived. This is not a test failure.
 		if strings.Contains(err.Error(), "FailedPrecondition") ||
-			strings.Contains(err.Error(), "used as a prerequsite") {
+			strings.Contains(err.Error(), "used as a prerequisite") {
 			t.Logf("Batch job completed with expected prerequisite warning: %v", err)
 			return
 		}

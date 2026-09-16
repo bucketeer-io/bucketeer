@@ -162,7 +162,15 @@
         "VariationInUseByFeatureFlagRuleError": "This variation cannot be deleted because the flag \"{{featureName}}\" uses it in a targeting rule. Remove the rule from that flag first.",
         "StartAtIsAfterEndAt": "Start at must be before end at",
         "PeriodOutOfRange": "The period must be within the last 30 days",
-        "ProjectDisabled": "Project is disabled"
+        "ProjectDisabled": "Project is disabled",
+        "CannotUpdateSystemAdminOrganizationError": "System admin organization cannot be disabled or archived",
+        "DemoSiteNotEnabled": "Demo site is not enabled",
+        "UserAlreadyInOrganization": "User is already a member of this organization",
+        "TriggerAlreadyDisabled": "Trigger is already disabled",
+        "ScheduledFlagChangeNotPending": "Scheduled flag change is not in pending status",
+        "NotificationAlreadyPublished": "Notification has already been published",
+        "TagInUse": "Tag cannot be deleted because it is in use",
+        "ProgressiveRolloutVariationsMustBeDifferent": "Control and target variations must be different for a progressive rollout"
     },
     "domainEvents": {
         "UnknownOperation": "An unknown operation occurred",

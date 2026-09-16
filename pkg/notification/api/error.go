@@ -71,7 +71,8 @@ var (
 	statusNotificationAlreadyPublished = api.NewGRPCStatus(
 		bkterr.NewErrorFailedPrecondition(
 			bkterr.NotificationPackageName,
-			"notification is already published"))
+			"notification is already published").
+			WithMessageKey("NotificationAlreadyPublished"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(
 			bkterr.NotificationPackageName,
