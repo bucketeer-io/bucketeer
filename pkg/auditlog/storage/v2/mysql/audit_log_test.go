@@ -302,3 +302,23 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		})
 	}
 }
+
+func TestListAuditLogsOrganizationScopeMySQL(t *testing.T) {
+	t.Parallel()
+	options, err := listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, "organization_id = ?")
+	assert.Contains(t, query, "environment_id = ?")
+	assert.Equal(t, []interface{}{"org-1", ""}, whereArgs)
+
+	countQuery, countArgs := mysql.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, "organization_id = ?")
+	assert.Contains(t, countQuery, "environment_id = ?")
+	assert.Equal(t, []interface{}{"org-1", ""}, countArgs)
+}

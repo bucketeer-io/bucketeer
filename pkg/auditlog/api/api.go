@@ -112,17 +112,19 @@ func (s *auditlogService) GetAuditLog(
 	if req.EnvironmentId == "" && req.OrganizationId == "" {
 		return nil, statusMissingEnvironmentOrOrganization.Err()
 	}
-	if req.EnvironmentId != "" {
-		_, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId)
+	// A non-empty organization_id selects the organization scope, as in ListAuditLogs.
+	isOrganizationScope := req.OrganizationId != ""
+	if isOrganizationScope {
+		_, err := s.checkOrganizationRole(
+			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+			req.OrganizationId)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		_, err := s.checkOrganizationRole(
-			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-			req.OrganizationId)
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId)
 		if err != nil {
 			return nil, err
 		}
@@ -138,10 +140,10 @@ func (s *auditlogService) GetAuditLog(
 	}
 	var auditlog *proto.AuditLog
 	var err error
-	if req.EnvironmentId != "" {
-		auditlog, err = s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId)
-	} else {
+	if isOrganizationScope {
 		auditlog, err = s.auditLogStorage.GetOrganizationAuditLog(ctx, req.Id, req.OrganizationId)
+	} else {
+		auditlog, err = s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId)
 	}
 	if err != nil {
 		s.logger.Error("Failed to get audit log",
@@ -160,7 +162,7 @@ func (s *auditlogService) GetAuditLog(
 	s.obfuscateAPIKey(auditlog)
 
 	// Editor avatars are stored per environment; organization-scoped logs skip them.
-	if req.EnvironmentId == "" {
+	if isOrganizationScope {
 		return &proto.GetAuditLogResponse{
 			AuditLog: auditlog,
 		}, nil

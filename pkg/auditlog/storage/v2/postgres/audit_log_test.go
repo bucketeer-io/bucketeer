@@ -316,3 +316,23 @@ func newAuditLogStorageWithMock(t *testing.T, mockController *gomock.Controller)
 	t.Helper()
 	return &auditLogStorage{qe: pgmock.NewMockQueryExecer(mockController)}
 }
+
+func TestListAuditLogsOrganizationScopePostgres(t *testing.T) {
+	t.Parallel()
+	options, err := listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs := postgres.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, "organization_id = $1")
+	assert.Contains(t, query, "environment_id = $2")
+	assert.Equal(t, []interface{}{"org-1", ""}, whereArgs)
+
+	countQuery, countArgs := postgres.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, "organization_id = $1")
+	assert.Contains(t, countQuery, "environment_id = $2")
+	assert.Equal(t, []interface{}{"org-1", ""}, countArgs)
+}

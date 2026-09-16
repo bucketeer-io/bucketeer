@@ -110,6 +110,36 @@ func TestGetAuditLog(t *testing.T) {
 			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
+			desc:    "success: organization scope takes precedence over environment_id",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetOrganizationAuditLog(
+					gomock.Any(), "id-1", "org-1",
+				).Return(&proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+				}, nil)
+			},
+			input: &proto.GetAuditLogRequest{
+				Id:             "id-1",
+				EnvironmentId:  "env-1",
+				OrganizationId: "org-1",
+			},
+			expected: &proto.GetAuditLogResponse{
+				AuditLog: &proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+					LocalizedMessage: domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.NewLocalizer(context.Background())),
+				},
+			},
+			expectedErr: nil,
+		},
+		{
 			desc:    "success: organization audit log",
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
