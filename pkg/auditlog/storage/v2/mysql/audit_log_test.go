@@ -85,7 +85,7 @@ func TestGetAuditLogMySQL(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &auditLogStorage{qe: mock.NewMockClient(mockController)}
 			p.setup(storage)
-			_, err := storage.GetAuditLog(context.Background(), "audit-log-id", "env-1")
+			_, err := storage.GetAuditLog(context.Background(), "audit-log-id", "env-1", "")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -305,9 +305,11 @@ func TestListAuditLogsMySQL(t *testing.T) {
 
 func TestListAuditLogsOrganizationScopeMySQL(t *testing.T) {
 	t.Parallel()
+	// EnvironmentID is ignored when OrganizationID is set.
 	options, err := listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
 		PageSize:       10,
 		Cursor:         "0",
+		EnvironmentID:  "env-1",
 		OrganizationID: "org-1",
 	})
 	assert.NoError(t, err)

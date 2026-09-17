@@ -138,13 +138,7 @@ func (s *auditlogService) GetAuditLog(
 		)
 		return nil, statusMissingID.Err()
 	}
-	var auditlog *proto.AuditLog
-	var err error
-	if isOrganizationScope {
-		auditlog, err = s.auditLogStorage.GetOrganizationAuditLog(ctx, req.Id, req.OrganizationId)
-	} else {
-		auditlog, err = s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId)
-	}
+	auditlog, err := s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId, req.OrganizationId)
 	if err != nil {
 		s.logger.Error("Failed to get audit log",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -199,43 +193,50 @@ func (s *auditlogService) ListAuditLogs(
 	ctx context.Context,
 	req *proto.ListAuditLogsRequest,
 ) (*proto.ListAuditLogsResponse, error) {
-	if req.OrganizationId != "" {
-		return s.listOrganizationAuditLogs(ctx, req)
-	}
-	return s.listEnvironmentAuditLogs(ctx, req)
-}
-
-func (s *auditlogService) listEnvironmentAuditLogs(
-	ctx context.Context,
-	req *proto.ListAuditLogsRequest,
-) (*proto.ListAuditLogsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if req.EnvironmentId == "" {
-		return nil, statusMissingEnvironmentOrOrganization.Err()
-	}
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
+	// A non-empty organization_id selects the organization scope, as in GetAuditLog.
+	isOrganizationScope := req.OrganizationId != ""
+	if isOrganizationScope {
+		_, err := s.checkOrganizationRole(
+			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+			req.OrganizationId)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if req.EnvironmentId == "" {
+			return nil, statusMissingEnvironmentOrOrganization.Err()
+		}
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId)
+		if err != nil {
+			return nil, err
+		}
 	}
 	params, err := listAuditLogsParams(req)
 	if err != nil {
 		return nil, err
 	}
+	// Storage gives organization_id precedence, matching the role check above.
 	params.EnvironmentID = req.EnvironmentId
+	params.OrganizationID = req.OrganizationId
 	auditlogs, nextCursor, totalCount, err := s.listAuditLogs(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	editorEmails := make([]string, 0, len(auditlogs))
-	for _, auditlog := range auditlogs {
-		editorEmails = append(editorEmails, auditlog.Editor.Email)
-	}
-	editorEmails = deDuplicateStrings(editorEmails)
-	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId)
-	if err != nil {
-		return nil, err
+	// Editor avatars are stored per environment; organization-scoped logs skip them.
+	accounts := make(map[string]*accountproto.AccountV2)
+	if !isOrganizationScope {
+		editorEmails := make([]string, 0, len(auditlogs))
+		for _, auditlog := range auditlogs {
+			editorEmails = append(editorEmails, auditlog.Editor.Email)
+		}
+		editorEmails = deDuplicateStrings(editorEmails)
+		accounts, err = s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for i := range auditlogs {
 		if account, ok := accounts[auditlogs[i].Editor.Email]; ok {
@@ -246,38 +247,6 @@ func (s *auditlogService) listEnvironmentAuditLogs(
 				auditlogs[i].Editor.PublicApiEditor.AvatarFileType = account.AvatarFileType
 			}
 		}
-		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlogs[i].Type, localizer)
-	}
-	s.obfuscateAPIKeys(auditlogs)
-	return &proto.ListAuditLogsResponse{
-		AuditLogs:  auditlogs,
-		Cursor:     strconv.Itoa(nextCursor),
-		TotalCount: totalCount,
-	}, nil
-}
-
-func (s *auditlogService) listOrganizationAuditLogs(
-	ctx context.Context,
-	req *proto.ListAuditLogsRequest,
-) (*proto.ListAuditLogsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkOrganizationRole(
-		ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-		req.OrganizationId)
-	if err != nil {
-		return nil, err
-	}
-	params, err := listAuditLogsParams(req)
-	if err != nil {
-		return nil, err
-	}
-	params.OrganizationID = req.OrganizationId
-	auditlogs, nextCursor, totalCount, err := s.listAuditLogs(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-	// Editor avatars are stored per environment; organization-scoped logs skip them.
-	for i := range auditlogs {
 		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlogs[i].Type, localizer)
 	}
 	s.obfuscateAPIKeys(auditlogs)

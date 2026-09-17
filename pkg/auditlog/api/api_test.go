@@ -114,8 +114,8 @@ func TestGetAuditLog(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
-				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetOrganizationAuditLog(
-					gomock.Any(), "id-1", "org-1",
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
+					gomock.Any(), "id-1", "env-1", "org-1",
 				).Return(&proto.AuditLog{
 					Id: "id-1",
 					Editor: &domaineventproto.Editor{
@@ -144,8 +144,8 @@ func TestGetAuditLog(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
-				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetOrganizationAuditLog(
-					gomock.Any(), "id-1", "org-1",
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
+					gomock.Any(), "id-1", "", "org-1",
 				).Return(&proto.AuditLog{
 					Id: "id-1",
 					Editor: &domaineventproto.Editor{
@@ -186,7 +186,7 @@ func TestGetAuditLog(t *testing.T) {
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
 			},
 			input: &proto.GetAuditLogRequest{
@@ -202,7 +202,7 @@ func TestGetAuditLog(t *testing.T) {
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&proto.AuditLog{
 					Id: "id-1",
 					Editor: &domaineventproto.Editor{

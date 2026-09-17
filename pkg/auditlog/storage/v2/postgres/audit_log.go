@@ -30,8 +30,6 @@ import (
 )
 
 var (
-	//go:embed sql/auditlog/select_audit_log_v2.sql
-	selectAuditLogV2SQL string
 	//go:embed sql/auditlog/insert_audit_logs_v2.sql
 	insertAuditLogsV2SQL string
 	//go:embed sql/auditlog/insert_audit_log_v2.sql
@@ -40,8 +38,6 @@ var (
 	selectAuditLogsV2SQL string
 	//go:embed sql/auditlog/select_audit_log_v2_count.sql
 	selectAuditLogV2CountSQL string
-	//go:embed sql/auditlog/select_organization_audit_log_v2.sql
-	selectOrganizationAuditLogV2SQL string
 )
 
 type auditLogStorage struct {
@@ -54,45 +50,36 @@ func NewAuditLogStorage(qe pgstorage.QueryExecer) v2als.AuditLogStorage {
 
 func (s *auditLogStorage) GetAuditLog(
 	ctx context.Context,
-	id string,
-	environmentID string,
+	id, environmentID, organizationID string,
 ) (*proto.AuditLog, error) {
-	auditLog := &proto.AuditLog{}
-	var et int32
-	var t int32
-	row := s.qe.QueryRowContext(ctx, selectAuditLogV2SQL, environmentID, id)
-	err := row.Scan(
-		&auditLog.Id,
-		&auditLog.Timestamp,
-		&et,
-		&auditLog.EntityId,
-		&t,
-		&pgstorage.JSONObject{Val: &auditLog.Event},
-		&pgstorage.JSONObject{Val: &auditLog.Editor},
-		&pgstorage.JSONObject{Val: &auditLog.Options},
-		&auditLog.EntityData,
-		&auditLog.PreviousEntityData,
-	)
-	if err != nil {
-		if errors.Is(err, pgstorage.ErrNoRows) {
-			return nil, v2als.ErrAuditLogNotFound
-		}
-		return nil, err
+	filters := []*pgstorage.Filter{
+		{Column: "id", Operator: pgstorage.OperatorEqual, Value: id},
 	}
-	auditLog.EntityType = eventproto.Event_EntityType(et)
-	auditLog.Type = eventproto.Event_Type(t)
-	return auditLog, nil
-}
-
-func (s *auditLogStorage) GetOrganizationAuditLog(
-	ctx context.Context,
-	id string,
-	organizationID string,
-) (*proto.AuditLog, error) {
+	if organizationID != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "organization_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    organizationID,
+		}, &pgstorage.Filter{
+			Column:   "environment_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    "",
+		})
+	} else {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "environment_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    environmentID,
+		})
+	}
+	query, whereArgs := pgstorage.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, &pgstorage.ListOptions{
+		Limit:   1,
+		Filters: filters,
+	})
 	auditLog := &proto.AuditLog{}
 	var et int32
 	var t int32
-	row := s.qe.QueryRowContext(ctx, selectOrganizationAuditLogV2SQL, organizationID, id)
+	row := s.qe.QueryRowContext(ctx, query, whereArgs...)
 	err := row.Scan(
 		&auditLog.Id,
 		&auditLog.Timestamp,
@@ -238,13 +225,6 @@ func (s *auditLogStorage) ListAuditLogs(
 
 func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*pgstorage.ListOptions, error) {
 	var filters []*pgstorage.Filter
-	if p.EnvironmentID != "" {
-		filters = append(filters, &pgstorage.Filter{
-			Column:   "environment_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    p.EnvironmentID,
-		})
-	}
 	if p.OrganizationID != "" {
 		filters = append(filters, &pgstorage.Filter{
 			Column:   "organization_id",
@@ -254,6 +234,12 @@ func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*pgstorage.Lis
 			Column:   "environment_id",
 			Operator: pgstorage.OperatorEqual,
 			Value:    "",
+		})
+	} else if p.EnvironmentID != "" {
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "environment_id",
+			Operator: pgstorage.OperatorEqual,
+			Value:    p.EnvironmentID,
 		})
 	}
 	if p.EntityType != nil {
