@@ -6,14 +6,16 @@ const VariationLabel = ({
   label,
   index,
   className,
-  asChild = true
+  asChild = true,
+  idPrefix = 'variation-label'
 }: {
   label: string;
   index: number;
   className?: string;
   asChild?: boolean;
+  idPrefix?: string;
 }) => {
-  const id = `variation-label-${index}`;
+  const id = `${idPrefix}-${index}`;
 
   return (
     <div className={cn('flex items-center gap-x-2 pl-0.5', className)}>

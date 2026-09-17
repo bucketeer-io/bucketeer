@@ -12,7 +12,7 @@ import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { AutoOpsRule, Feature, OpsEventRateClause } from '@types';
-import { IconInfo, IconPlus } from '@icons';
+import { IconInfo } from '@icons';
 import {
   eventRateSchema,
   EventRateSchemaType
@@ -30,6 +30,7 @@ import InputGroup from 'components/input-group';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
 import CreateGoalModal from 'elements/create-goal-modal';
+import CreateNewOptionButton from 'elements/create-new-option-button';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 export interface OperationModalProps {
@@ -43,24 +44,6 @@ export interface OperationModalProps {
   onClose: () => void;
   onSubmitOperationSuccess: () => void;
 }
-
-const CreateNewOptionButton = ({
-  text,
-  onClick
-}: {
-  text: string;
-  onClick: () => void;
-}) => (
-  <Button
-    type="button"
-    variant="text"
-    className="h-10 self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
-    onClick={onClick}
-  >
-    <Icon icon={IconPlus} color="primary-500" size={'xs'} />
-    {text}
-  </Button>
-);
 
 const conditionOptions = [
   {
