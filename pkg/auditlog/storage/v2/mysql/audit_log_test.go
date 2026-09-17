@@ -305,11 +305,10 @@ func TestListAuditLogsMySQL(t *testing.T) {
 
 func TestListAuditLogsOrganizationScopeMySQL(t *testing.T) {
 	t.Parallel()
-	// EnvironmentID is ignored when OrganizationID is set.
+	// Organization scope alone: organization-level rows only.
 	options, err := listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
 		PageSize:       10,
 		Cursor:         "0",
-		EnvironmentID:  "env-1",
 		OrganizationID: "org-1",
 	})
 	assert.NoError(t, err)
@@ -323,4 +322,22 @@ func TestListAuditLogsOrganizationScopeMySQL(t *testing.T) {
 	assert.Contains(t, countQuery, "organization_id = ?")
 	assert.Contains(t, countQuery, "environment_id = ?")
 	assert.Equal(t, []interface{}{"org-1", ""}, countArgs)
+
+	// Both IDs: the environment's rows plus the organization-level rows.
+	unionWhere := "(environment_id = ? OR (organization_id = ? AND environment_id = ?))"
+	options, err = listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		EnvironmentID:  "env-1",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs = mysql.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, unionWhere)
+	assert.Equal(t, []interface{}{"env-1", "org-1", ""}, whereArgs)
+
+	countQuery, countArgs = mysql.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, unionWhere)
+	assert.Equal(t, []interface{}{"env-1", "org-1", ""}, countArgs)
 }

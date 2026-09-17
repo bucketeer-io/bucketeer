@@ -323,6 +323,39 @@ func (f *OrFilter) BindSQL(next int) (sql string, args []interface{}, nextAfter 
 	return sb.String(), args, cur
 }
 
+type AndFilter struct {
+	Queries []WherePart
+}
+
+func (f *AndFilter) BindSQL(next int) (sql string, args []interface{}, nextAfter int) {
+	if len(f.Queries) == 0 {
+		return "", nil, next
+	}
+	var sb strings.Builder
+	cur := next
+	wrote := false
+	for _, q := range f.Queries {
+		qs, qa, after := q.BindSQL(cur)
+		if qs == "" {
+			continue
+		}
+		if !wrote {
+			sb.WriteString("(")
+			wrote = true
+		} else {
+			sb.WriteString(" AND ")
+		}
+		sb.WriteString(qs)
+		args = append(args, qa...)
+		cur = after
+	}
+	if !wrote {
+		return "", nil, next
+	}
+	sb.WriteString(")")
+	return sb.String(), args, cur
+}
+
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 	if len(wps) == 0 {
 		return "", nil

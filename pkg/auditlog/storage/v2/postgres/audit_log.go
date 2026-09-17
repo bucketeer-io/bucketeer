@@ -48,33 +48,48 @@ func NewAuditLogStorage(qe pgstorage.QueryExecer) v2als.AuditLogStorage {
 	return &auditLogStorage{qe}
 }
 
+// auditLogScopeFilters translates the requested scope into WHERE parts: both
+// IDs list the environment's logs plus the organization's organization-level
+// logs (environment_id = ”), one ID lists that scope alone.
+func auditLogScopeFilters(environmentID, organizationID string) ([]*pgstorage.Filter, []*pgstorage.OrFilter) {
+	envFilter := &pgstorage.Filter{
+		Column:   "environment_id",
+		Operator: pgstorage.OperatorEqual,
+		Value:    environmentID,
+	}
+	orgFilters := []*pgstorage.Filter{
+		{Column: "organization_id", Operator: pgstorage.OperatorEqual, Value: organizationID},
+		{Column: "environment_id", Operator: pgstorage.OperatorEqual, Value: ""},
+	}
+	if organizationID != "" && environmentID != "" {
+		return nil, []*pgstorage.OrFilter{{
+			Queries: []pgstorage.WherePart{
+				envFilter,
+				&pgstorage.AndFilter{Queries: []pgstorage.WherePart{orgFilters[0], orgFilters[1]}},
+			},
+		}}
+	}
+	if organizationID != "" {
+		return orgFilters, nil
+	}
+	if environmentID != "" {
+		return []*pgstorage.Filter{envFilter}, nil
+	}
+	return nil, nil
+}
+
 func (s *auditLogStorage) GetAuditLog(
 	ctx context.Context,
 	id, environmentID, organizationID string,
 ) (*proto.AuditLog, error) {
-	filters := []*pgstorage.Filter{
+	scopeFilters, orFilters := auditLogScopeFilters(environmentID, organizationID)
+	filters := append([]*pgstorage.Filter{
 		{Column: "id", Operator: pgstorage.OperatorEqual, Value: id},
-	}
-	if organizationID != "" {
-		filters = append(filters, &pgstorage.Filter{
-			Column:   "organization_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    organizationID,
-		}, &pgstorage.Filter{
-			Column:   "environment_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    "",
-		})
-	} else {
-		filters = append(filters, &pgstorage.Filter{
-			Column:   "environment_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    environmentID,
-		})
-	}
+	}, scopeFilters...)
 	query, whereArgs := pgstorage.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, &pgstorage.ListOptions{
-		Limit:   1,
-		Filters: filters,
+		Limit:     1,
+		Filters:   filters,
+		OrFilters: orFilters,
 	})
 	auditLog := &proto.AuditLog{}
 	var et int32
@@ -224,24 +239,7 @@ func (s *auditLogStorage) ListAuditLogs(
 }
 
 func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*pgstorage.ListOptions, error) {
-	var filters []*pgstorage.Filter
-	if p.OrganizationID != "" {
-		filters = append(filters, &pgstorage.Filter{
-			Column:   "organization_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    p.OrganizationID,
-		}, &pgstorage.Filter{
-			Column:   "environment_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    "",
-		})
-	} else if p.EnvironmentID != "" {
-		filters = append(filters, &pgstorage.Filter{
-			Column:   "environment_id",
-			Operator: pgstorage.OperatorEqual,
-			Value:    p.EnvironmentID,
-		})
-	}
+	filters, orFilters := auditLogScopeFilters(p.EnvironmentID, p.OrganizationID)
 	if p.EntityType != nil {
 		filters = append(filters, &pgstorage.Filter{
 			Column:   "entity_type",
@@ -302,6 +300,7 @@ func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*pgstorage.Lis
 		Limit:       p.PageSize,
 		Offset:      offset,
 		Filters:     filters,
+		OrFilters:   orFilters,
 		SearchQuery: searchQuery,
 		Orders:      []*pgstorage.Order{pgstorage.NewOrder(column, direction)},
 	}, nil

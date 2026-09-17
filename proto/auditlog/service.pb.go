@@ -323,9 +323,10 @@ type GetAuditLogRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
-	// Required for environment-scoped logs. Leave empty and set organization_id
-	// to get an organization-scoped log as an organization admin.
-	EnvironmentId  string `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	// Required for environment-scoped logs.
+	EnvironmentId string `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	// Requires the organization admin role. Matches an organization-level log;
+	// combined with environment_id, matches either scope.
 	OrganizationId string `protobuf:"bytes,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
@@ -446,9 +447,10 @@ type ListAuditLogsRequest struct {
 	EntityType     *wrapperspb.Int32Value              `protobuf:"bytes,9,opt,name=entity_type,json=entityType,proto3" json:"entity_type"`
 	// Scopes the list to one environment; requires an environment role.
 	EnvironmentId string `protobuf:"bytes,10,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
-	// Scopes the list to one organization's organization-level logs
-	// (environment_id is empty on those); requires the organization admin role.
-	// Takes precedence over environment_id.
+	// Requires the organization admin role. Alone, lists the organization's
+	// organization-level logs (environment_id is empty on those); combined with
+	// environment_id, lists that environment's logs plus the organization-level
+	// logs in one timeline.
 	OrganizationId string `protobuf:"bytes,11,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 

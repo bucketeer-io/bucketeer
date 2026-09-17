@@ -26,9 +26,10 @@ import "proto/auditlog/auditlog.proto";
 
 message GetAuditLogRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  // Required for environment-scoped logs. Leave empty and set organization_id
-  // to get an organization-scoped log as an organization admin.
+  // Required for environment-scoped logs.
   string environment_id = 2;
+  // Requires the organization admin role. Matches an organization-level log;
+  // combined with environment_id, matches either scope.
   string organization_id = 3;
 }
 
@@ -58,9 +59,10 @@ message ListAuditLogsRequest {
   google.protobuf.Int32Value entity_type = 9;
   // Scopes the list to one environment; requires an environment role.
   string environment_id = 10;
-  // Scopes the list to one organization's organization-level logs
-  // (environment_id is empty on those); requires the organization admin role.
-  // Takes precedence over environment_id.
+  // Requires the organization admin role. Alone, lists the organization's
+  // organization-level logs (environment_id is empty on those); combined with
+  // environment_id, lists that environment's logs plus the organization-level
+  // logs in one timeline.
   string organization_id = 11;
 }
 

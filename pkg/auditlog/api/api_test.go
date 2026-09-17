@@ -110,7 +110,7 @@ func TestGetAuditLog(t *testing.T) {
 			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
-			desc:    "success: organization scope takes precedence over environment_id",
+			desc:    "success: environment and organization scope combined",
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
@@ -122,6 +122,9 @@ func TestGetAuditLog(t *testing.T) {
 						Email: "test@bucketeer.io",
 					},
 				}, nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
 			},
 			input: &proto.GetAuditLogRequest{
 				Id:             "id-1",
@@ -428,6 +431,34 @@ func TestListAuditLogs(t *testing.T) {
 				PageSize:       2,
 				OrganizationId: "org-1",
 				EntityType:     wrapperspb.Int32(int32(domaineventproto.Event_ORGANIZATION)),
+			},
+			expected:    &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			expectedErr: nil,
+		},
+		{
+			desc:    "success: environment and organization scope combined",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					v2als.ListAuditLogsParams{
+						EnvironmentID:  "env-1",
+						OrganizationID: "org-1",
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       2,
+						Cursor:         "0",
+					},
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
+			},
+			input: &proto.ListAuditLogsRequest{
+				PageSize:       2,
+				EnvironmentId:  "env-1",
+				OrganizationId: "org-1",
 			},
 			expected:    &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
 			expectedErr: nil,

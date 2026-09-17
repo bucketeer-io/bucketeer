@@ -112,9 +112,8 @@ func (s *auditlogService) GetAuditLog(
 	if req.EnvironmentId == "" && req.OrganizationId == "" {
 		return nil, statusMissingEnvironmentOrOrganization.Err()
 	}
-	// A non-empty organization_id selects the organization scope, as in ListAuditLogs.
-	isOrganizationScope := req.OrganizationId != ""
-	if isOrganizationScope {
+	// organization_id requires the organization admin role, as in ListAuditLogs.
+	if req.OrganizationId != "" {
 		_, err := s.checkOrganizationRole(
 			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
 			req.OrganizationId)
@@ -155,8 +154,8 @@ func (s *auditlogService) GetAuditLog(
 	auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	s.obfuscateAPIKey(auditlog)
 
-	// Editor avatars are stored per environment; organization-scoped logs skip them.
-	if isOrganizationScope {
+	// Editor avatars are stored per environment; organization-only scope skips them.
+	if req.EnvironmentId == "" {
 		return &proto.GetAuditLogResponse{
 			AuditLog: auditlog,
 		}, nil
@@ -194,9 +193,10 @@ func (s *auditlogService) ListAuditLogs(
 	req *proto.ListAuditLogsRequest,
 ) (*proto.ListAuditLogsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	// A non-empty organization_id selects the organization scope, as in GetAuditLog.
-	isOrganizationScope := req.OrganizationId != ""
-	if isOrganizationScope {
+	// organization_id requires the organization admin role; combined with
+	// environment_id it lists that environment's logs plus the organization's
+	// organization-level logs in one timeline.
+	if req.OrganizationId != "" {
 		_, err := s.checkOrganizationRole(
 			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
 			req.OrganizationId)
@@ -218,16 +218,15 @@ func (s *auditlogService) ListAuditLogs(
 	if err != nil {
 		return nil, err
 	}
-	// Storage gives organization_id precedence, matching the role check above.
 	params.EnvironmentID = req.EnvironmentId
 	params.OrganizationID = req.OrganizationId
 	auditlogs, nextCursor, totalCount, err := s.listAuditLogs(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	// Editor avatars are stored per environment; organization-scoped logs skip them.
+	// Editor avatars are stored per environment; organization-only scope skips them.
 	accounts := make(map[string]*accountproto.AccountV2)
-	if !isOrganizationScope {
+	if req.EnvironmentId != "" {
 		editorEmails := make([]string, 0, len(auditlogs))
 		for _, auditlog := range auditlogs {
 			editorEmails = append(editorEmails, auditlog.Editor.Email)

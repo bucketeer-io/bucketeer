@@ -332,6 +332,35 @@ func (f *OrFilter) SQLString() (sql string, args []interface{}) {
 	return
 }
 
+type AndFilter struct {
+	Queries []WherePart
+}
+
+func NewAndFilter(queries []WherePart) WherePart {
+	return &AndFilter{
+		Queries: queries,
+	}
+}
+
+func (f *AndFilter) SQLString() (sql string, args []interface{}) {
+	if len(f.Queries) == 0 {
+		return "", nil
+	}
+	var sb strings.Builder
+	sb.WriteString("(")
+	for i, q := range f.Queries {
+		if i != 0 {
+			sb.WriteString(" AND ")
+		}
+		qSQL, qArgs := q.SQLString()
+		sb.WriteString(qSQL)
+		args = append(args, qArgs...)
+	}
+	sb.WriteString(")")
+	sql = sb.String()
+	return
+}
+
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 	var sb strings.Builder
 	if len(wps) == 0 {
