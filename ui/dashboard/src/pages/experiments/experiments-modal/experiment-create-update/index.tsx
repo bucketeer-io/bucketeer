@@ -3,8 +3,7 @@ import {
   ControllerRenderProps,
   FormProvider,
   SubmitHandler,
-  useForm,
-  useWatch
+  useForm
 } from 'react-hook-form';
 import {
   ExperimentCreateUpdateResponse,
@@ -19,18 +18,16 @@ import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
-import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
-import { IconInfo, IconPlus } from '@icons';
+import { IconInfo } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
-import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -39,12 +36,12 @@ import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import CreateGoalModal from 'elements/create-goal-modal';
+import CreateNewOptionButton from 'elements/create-new-option-button';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
-import FeatureFlagStatus from 'elements/feature-flag-status';
 import FormLoading from 'elements/form-loading';
 import SelectedGoalsList from 'elements/selected-goals-list';
-import VariationLabel from 'elements/variation-label';
+import FeatureFlagField from './feature-flag-field';
 
 interface ExperimentCreateUpdateModalProps {
   disabled: boolean;
@@ -77,24 +74,6 @@ export type DefineAudienceField = ControllerRenderProps<
   ExperimentCreateUpdateForm,
   'audience'
 >;
-
-const CreateNewOptionButton = ({
-  text,
-  onClick
-}: {
-  text: string;
-  onClick: () => void;
-}) => (
-  <Button
-    type="button"
-    variant="text"
-    className="h-10 self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
-    onClick={onClick}
-  >
-    <Icon icon={IconPlus} color="primary-500" size={'xs'} />
-    {text}
-  </Button>
-);
 
 const ExperimentCreateUpdateModal = ({
   disabled,
@@ -222,50 +201,6 @@ const ExperimentCreateUpdateModal = ({
   useUnsavedLeavePage({
     isShow: isDirty && !isSubmitting
   });
-  const featureId = useWatch({ control: form.control, name: 'featureId' });
-
-  const {
-    allAvailableFlags,
-    remainingFlagOptions,
-    isLoadingMore,
-    isSearching: isSearchingFeature,
-    isInitialLoading: isLoadingFeature,
-    hasMore,
-    onSearchChange,
-    loadMore
-  } = useFeatureFlagsLoader({
-    environmentId: currentEnvironment.id,
-    selectedFlagIds: featureId ? [featureId] : [],
-    filterSelected: !isEdit
-  });
-
-  const featureFlagOptions = useMemo(
-    () =>
-      allAvailableFlags.map(feature => {
-        return {
-          value: feature.id,
-          label: feature.name,
-          enabled: feature.enabled,
-          disabled: featureId === feature.id
-        };
-      }),
-    [allAvailableFlags]
-  );
-
-  const variationOptions = useMemo(() => {
-    // In edit mode, use variations from fetched experiment feature or experiment data
-    const variations =
-      isEdit && (experimentFeature || experiment)
-        ? experimentFeature?.variations || experiment?.variations
-        : allAvailableFlags?.find(item => item.id === featureId)?.variations;
-
-    return (
-      variations?.map((item, index) => ({
-        label: <VariationLabel label={item.name || item.value} index={index} />,
-        value: item.id
-      })) || []
-    );
-  }, [isEdit, experimentFeature, experiment, allAvailableFlags, featureId]);
 
   // const startOptions = [
   //   {
@@ -570,82 +505,15 @@ const ExperimentCreateUpdateModal = ({
               <p className="text-gray-800 typo-head-bold-small mb-1">
                 {t('common:flag')}
               </p>
-              <Form.Field
-                control={form.control}
-                name={`featureId`}
-                render={({ field }) => (
-                  <Form.Item className="flex flex-col w-full">
-                    <Form.Label required>{t('common:flag')}</Form.Label>
-                    <Form.Control>
-                      <DropdownMenuWithSearch
-                        disabled={!!isEdit || disabled}
-                        hidden={isOpenCreateFlagModal}
-                        isLoading={isLoadingFeature}
-                        isLoadingMore={isLoadingMore}
-                        isSearching={isSearchingFeature}
-                        isHasMore={hasMore || isLoadingMore}
-                        onSearchChange={onSearchChange}
-                        onHasMoreOptions={loadMore}
-                        placeholder={t(`experiments.select-flag`)}
-                        label={
-                          (isEdit && experimentFeature
-                            ? experimentFeature.name
-                            : featureFlagOptions.find(
-                                item => item.value === field.value
-                              )?.label) || ''
-                        }
-                        options={remainingFlagOptions}
-                        selectedOptions={[field.value]}
-                        additionalElement={item => (
-                          <FeatureFlagStatus
-                            status={t(
-                              item.enabled
-                                ? 'experiments.on'
-                                : 'experiments.off'
-                            )}
-                            enabled={item.enabled as boolean}
-                          />
-                        )}
-                        createNewOption={
-                          disabled ? undefined : (
-                            <CreateNewOptionButton
-                              text={t('common:create-a-new-flag')}
-                              onClick={onOpenCreateFlagModal}
-                            />
-                          )
-                        }
-                        onSelectOption={field.onChange}
-                      />
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                )}
+              <FeatureFlagField
+                disabled={disabled}
+                isEdit={isEdit}
+                environmentId={currentEnvironment.id}
+                experiment={experiment}
+                experimentFeature={experimentFeature}
+                isOpenCreateFlagModal={isOpenCreateFlagModal}
+                onOpenCreateFlagModal={onOpenCreateFlagModal}
               />
-              {featureId && (
-                <Form.Field
-                  control={form.control}
-                  name={`baseVariationId`}
-                  render={({ field }) => (
-                    <Form.Item className="flex flex-col w-full overflow-hidden">
-                      <Form.Label required>
-                        {t('experiments.base-variation')}
-                      </Form.Label>
-                      <Form.Control>
-                        <Dropdown
-                          disabled={!!isEdit || disabled}
-                          placeholder={t(`experiments.select-variation`)}
-                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                          contentClassName="min-w-[502px]"
-                          options={variationOptions}
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  )}
-                />
-              )}
               <Divider className="mt-3 mb-4" />
               <p className="text-gray-800 typo-head-bold-small mb-1">
                 {t('common:goals')}
