@@ -1,21 +1,4 @@
-import {
-  DomainEventEntityMap,
-  DomainEventEntityType,
-  DomainEventType
-} from '@types';
-import { isNotEmpty } from 'utils/data-type';
-
-// Organization-level entities are listed organization-wide for organization admins.
-export const ORGANIZATION_ENTITY_TYPES = [
-  DomainEventEntityMap.ACCOUNT,
-  DomainEventEntityMap.ENVIRONMENT,
-  DomainEventEntityMap.PROJECT,
-  DomainEventEntityMap.ORGANIZATION
-];
-
-export const isOrganizationEntityType = (entityType?: number | string) =>
-  isNotEmpty(entityType) &&
-  ORGANIZATION_ENTITY_TYPES.includes(Number(entityType));
+import { DomainEventEntityType, DomainEventType } from '@types';
 
 export const getActionText = (
   type: DomainEventType,

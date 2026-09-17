@@ -19,7 +19,7 @@ import CollectionLoader from './collection-loader';
 import AuditLogDetailsModal from './elements/audit-logs-modal/audit-log-details';
 import EntityTypeDropdown from './elements/entity-type-dropdown';
 import { AuditLogsFilters, ExpandOrCollapse } from './types';
-import { isOrganizationEntityType, truncNumber } from './utils';
+import { truncNumber } from './utils';
 
 export type ExpandOrCollapseRef = {
   toggle: () => void;
@@ -192,9 +192,7 @@ const PageContent = () => {
         <AuditLogDetailsModal
           auditLogId={auditLogId}
           organizationId={
-            isOrganizationAdmin && isOrganizationEntityType(filters?.entityType)
-              ? consoleAccount?.organization.id
-              : undefined
+            isOrganizationAdmin ? consoleAccount?.organization.id : undefined
           }
           isOpen={!!auditLogId}
           onClose={() => {

@@ -51,7 +51,7 @@ const AuditLogDetailsModal = ({
     error
   } = useQueryAuditLogDetails({
     params: {
-      environmentId: organizationId ? undefined : currentEnvironment.id,
+      environmentId: currentEnvironment.id,
       organizationId,
       id: auditLogId
     },

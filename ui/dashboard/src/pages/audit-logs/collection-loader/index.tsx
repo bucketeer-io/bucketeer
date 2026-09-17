@@ -9,7 +9,6 @@ import TableListContainer from 'elements/table-list-container';
 import { DataCollection } from '../collection-layout/data-collection';
 import { ExpandOrCollapseRef } from '../page-content';
 import { AuditLogsFilters, ExpandOrCollapse } from '../types';
-import { isOrganizationEntityType } from '../utils';
 import { useFetchAuditLogs } from './use-fetch-audit-logs';
 
 const CollectionLoader = forwardRef(
@@ -35,8 +34,6 @@ const CollectionLoader = forwardRef(
     const params = useParams();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { isOrganizationAdmin } = getAccountAccess(consoleAccount!);
-    const isOrganizationScope =
-      isOrganizationAdmin && isOrganizationEntityType(filters?.entityType);
 
     const {
       data: auditLogCollection,
@@ -45,8 +42,9 @@ const CollectionLoader = forwardRef(
       isError
     } = useFetchAuditLogs({
       ...filters,
-      environmentId: isOrganizationScope ? undefined : currentEnvironment?.id,
-      organizationId: isOrganizationScope
+      environmentId: currentEnvironment?.id,
+      // Organization admins also get the organization-level logs in the same timeline.
+      organizationId: isOrganizationAdmin
         ? consoleAccount?.organization.id
         : undefined,
       enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
