@@ -289,6 +289,7 @@ func createRedisClient(ctx context.Context,
 		redisv3.WithMinIdleConns(redisMinIdle),
 		redisv3.WithServerName(conf.RedisServerName),
 		redisv3.WithRedisMode(redisMode),
+		redisv3.WithDB(conf.RedisDB),
 		redisv3.WithMetrics(metrics),
 		redisv3.WithLogger(logger),
 	)
