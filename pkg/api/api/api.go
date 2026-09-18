@@ -401,6 +401,7 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	environmentID, tag string,
 	prevUEID string,
 	evaluatedAt int64,
+	checkUserAttributes bool,
 ) (ueid string, evals *featureproto.UserEvaluations, err error) {
 	f, e, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
 		return s.getFeatures(ctx, environmentID)
@@ -442,9 +443,11 @@ func (s *gatewayService) evaluateFeaturesForStream(
 		return "", nil, err
 	}
 
+	// The stream request cannot signal a user attribute change, so rule-based
+	// flags are re-evaluated on every reconnect initial put.
 	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
 		features, user, segmentUsersMap, segmentsMap,
-		prevUEID, evaluatedAt, false, tag,
+		prevUEID, evaluatedAt, checkUserAttributes, tag,
 	)
 	if err != nil {
 		return "", nil, err

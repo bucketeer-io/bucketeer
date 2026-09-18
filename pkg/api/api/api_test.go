@@ -2553,12 +2553,14 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 	tag := "test"
 
 	patterns := []struct {
-		desc        string
-		setup       func(*gatewayService)
-		prevUEID    string
-		evaluatedAt int64
-		expectedErr bool
-		expected    *featureproto.UserEvaluations
+		desc                string
+		setup               func(*gatewayService)
+		user                *userproto.User
+		prevUEID            string
+		evaluatedAt         int64
+		checkUserAttributes bool
+		expectedErr         bool
+		expected            *featureproto.UserEvaluations
 	}{
 		{
 			desc: "success: full evaluation with segment from cache",
@@ -2889,6 +2891,152 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 			},
 		},
 		{
+			desc:                "success: reconnect with changed user attributes re-evaluates rule-based flags",
+			user:                &userproto.User{Id: "user-id-1", Data: map[string]string{"app_version": "0.0.1"}},
+			prevUEID:            "prev-ueid",
+			evaluatedAt:         now.Add(-5 * time.Minute).Unix(),
+			checkUserAttributes: true,
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name a", Value: "value-1"},
+									{Id: "variation-b", Name: "variation name b", Value: "value-2"},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type:          featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "app_version",
+												Operator:  featureproto.Clause_EQUALS,
+												Values:    []string{"0.0.1"},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-a"},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-99 * time.Minute).Unix(),
+							},
+							{
+								// Updated recently on another tag: keeps the diff branch active.
+								Id:      "feature-id-2",
+								Version: int32(3),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-c", Name: "variation name c", Value: "c-val"},
+									{Id: "variation-d", Name: "variation name d", Value: "d-val"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-d"},
+								},
+								Tags:      []string{"other"},
+								UpdatedAt: now.Add(-1 * time.Minute).Unix(),
+							},
+						},
+					}, nil)
+			},
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(2),
+						VariationId:    "variation-b",
+						VariationName:  "variation name b",
+						VariationValue: "value-2",
+						Variation: &featureproto.Variation{
+							Id:    "variation-b",
+							Name:  "variation name b",
+							Value: "value-2",
+						},
+						Reason: &featureproto.Reason{
+							Type:   featureproto.Reason_RULE,
+							RuleId: "rule-1",
+						},
+					},
+				},
+				ForceUpdate: false,
+			},
+		},
+		{
+			desc:                "success: patch path (checkUserAttributes=false) does not re-evaluate rule-based flags",
+			user:                &userproto.User{Id: "user-id-1", Data: map[string]string{"app_version": "0.0.1"}},
+			prevUEID:            "prev-ueid",
+			evaluatedAt:         now.Add(-5 * time.Minute).Unix(),
+			checkUserAttributes: false,
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-a", Name: "variation name a", Value: "value-1"},
+									{Id: "variation-b", Name: "variation name b", Value: "value-2"},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type:          featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-b"},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "app_version",
+												Operator:  featureproto.Clause_EQUALS,
+												Values:    []string{"0.0.1"},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-a"},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-99 * time.Minute).Unix(),
+							},
+							{
+								Id:      "feature-id-2",
+								Version: int32(3),
+								Variations: []*featureproto.Variation{
+									{Id: "variation-c", Name: "variation name c", Value: "c-val"},
+									{Id: "variation-d", Name: "variation name d", Value: "d-val"},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type:          featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-d"},
+								},
+								Tags:      []string{"other"},
+								UpdatedAt: now.Add(-1 * time.Minute).Unix(),
+							},
+						},
+					}, nil)
+			},
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{},
+				ForceUpdate: false,
+			},
+		},
+		{
 			desc: "error: segment users error",
 			setup: func(gs *gatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -2952,13 +3100,18 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 			defer mc.Finish()
 			gs := newGatewayServiceWithMock(t, mc)
 			p.setup(gs)
+			reqUser := user
+			if p.user != nil {
+				reqUser = p.user
+			}
 			_, got, err := gs.evaluateFeaturesForStream(
 				context.Background(),
-				user,
+				reqUser,
 				envID,
 				tag,
 				p.prevUEID,
 				p.evaluatedAt,
+				p.checkUserAttributes,
 			)
 			if p.expectedErr {
 				assert.Error(t, err)

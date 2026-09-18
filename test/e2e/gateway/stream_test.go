@@ -207,6 +207,68 @@ func TestStreamReconnect(t *testing.T) {
 	})
 }
 
+// Reconnecting with changed user attributes must re-evaluate rule-based flags
+// (https://github.com/bucketeer-io/bucketeer/issues/2814).
+func TestStreamReconnectAfterUserAttributesUpdate(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	addTag(t, tag, featureID, client)
+	feature := getFeature(t, featureID, client)
+	// app_version == "0.0.1" -> variation B; default -> variation A.
+	addAttributeRuleToFeature(t, featureID, feature.Variations[1].Id, "app_version", "0.0.1", client)
+	enableFeature(t, featureID, client)
+	// Updated while disconnected to keep the reconnect on the diff branch.
+	otherFeatureID := newFeatureID(t, newUUID(t))
+	createFeature(t, client, newCreateFeatureReq(otherFeatureID))
+	addTag(t, tag, otherFeatureID, client)
+	updateFeatueFlagCache(t)
+
+	userID := newUserID(t, uuid)
+	// Connect without attributes and receive the default variation.
+	stream := connectStream(t, newStreamBody(tag, userID))
+	put := stream.waitForEvent(t, sseEventPut, initialPutTimeout, nil)
+	eval, err := findFeature(put.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatalf("Failed to find evaluation in initial put. Error: %v", err)
+	}
+	if eval.VariationValue != "A" {
+		t.Fatalf("Wrong variation value. Expected: A (no attributes), actual: %s", eval.VariationValue)
+	}
+	ueid := put.UserEvaluationsId
+	// Advance the cursor past the featureFlagDiffGracePeriod so the
+	// just-created rule flag falls outside the diff window, without sleeping.
+	evaluatedAt := time.Now().Unix() + int64(10*time.Minute/time.Second)
+	stream.close()
+
+	enableFeature(t, otherFeatureID, client)
+	updateFeatueFlagCache(t)
+
+	// Reconnect with the attribute that matches the targeting rule.
+	body := newStreamResumeBody(tag, userID, ueid, evaluatedAt)
+	body["user"] = map[string]any{"id": userID, "data": map[string]any{"app_version": "0.0.1"}}
+	resumedStream := connectStream(t, body)
+	resumed := resumedStream.waitForEvent(t, sseEventPut, initialPutTimeout, nil)
+	if resumed.Evaluations.ForceUpdate {
+		t.Fatal("Wrong forceUpdate. Expected false (diff) on resumed connect, actual true")
+	}
+	resumedEval, err := findFeature(resumed.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatalf("Rule-based flag missing from resumed put after attribute update. Error: %v", err)
+	}
+	if resumedEval.VariationValue != "B" {
+		t.Fatalf("Wrong variation value. Expected: B (rule match), actual: %s", resumedEval.VariationValue)
+	}
+	if resumedEval.Reason.Type != featureproto.Reason_RULE {
+		t.Fatalf("Wrong reason. Expected: RULE, actual: %s", resumedEval.Reason.Type)
+	}
+}
+
 func TestStreamTagFilter(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -596,6 +658,42 @@ func (s *sseStream) assertNoPatchContaining(t *testing.T, featureID string, wait
 		case <-deadline:
 			return
 		}
+	}
+}
+
+func addAttributeRuleToFeature(t *testing.T, featureID, variationID, attribute, value string, client featureclient.Client) {
+	t.Helper()
+	rule := &featureproto.Rule{
+		Id: newUUID(t),
+		Strategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_FIXED,
+			FixedStrategy: &featureproto.FixedStrategy{
+				Variation: variationID,
+			},
+		},
+		Clauses: []*featureproto.Clause{
+			{
+				Id:        newUUID(t),
+				Attribute: attribute,
+				Operator:  featureproto.Clause_EQUALS,
+				Values:    []string{value},
+			},
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*featureproto.RuleChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Rule:       rule,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
