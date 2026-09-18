@@ -109,21 +109,35 @@ func (s *auditlogService) GetAuditLog(
 	req *proto.GetAuditLogRequest,
 ) (*proto.GetAuditLogResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
+	if req.EnvironmentId == "" && req.OrganizationId == "" {
+		return nil, statusMissingEnvironmentOrOrganization.Err()
+	}
+	// organization_id requires the organization admin role, as in ListAuditLogs.
+	if req.OrganizationId != "" {
+		_, err := s.checkOrganizationRole(
+			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+			req.OrganizationId)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if req.Id == "" {
 		s.logger.Error("Missing audit log id",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentId", req.EnvironmentId),
+				zap.String("organizationId", req.OrganizationId),
 			)...,
 		)
 		return nil, statusMissingID.Err()
 	}
-	auditlog, err := s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId)
+	auditlog, err := s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId, req.OrganizationId)
 	if err != nil {
 		s.logger.Error("Failed to get audit log",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -140,6 +154,12 @@ func (s *auditlogService) GetAuditLog(
 	auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	s.obfuscateAPIKey(auditlog)
 
+	// Editor avatars are stored per environment; organization-only scope skips them.
+	if req.EnvironmentId == "" {
+		return &proto.GetAuditLogResponse{
+			AuditLog: auditlog,
+		}, nil
+	}
 	accounts, err := s.getAccountMapByEmails(ctx, []string{auditlog.Editor.Email}, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error("Failed to get account map by emails",
@@ -173,66 +193,50 @@ func (s *auditlogService) ListAuditLogs(
 	req *proto.ListAuditLogsRequest,
 ) (*proto.ListAuditLogsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
-	limit := int(req.PageSize)
-	if limit <= 0 || limit > maxAuditLogPageSize {
-		limit = maxAuditLogPageSize
-	}
-
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	// Validate cursor before passing to storage
-	if _, err := strconv.Atoi(cursor); err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-
-	var entityType *int32
-	if req.EntityType != nil {
-		v := req.EntityType.Value
-		entityType = &v
-	}
-
-	params := v2als.ListAuditLogsParams{
-		EnvironmentID:  req.EnvironmentId,
-		EntityType:     entityType,
-		From:           req.From,
-		To:             req.To,
-		SearchKeyword:  req.SearchKeyword,
-		OrderBy:        req.OrderBy,
-		OrderDirection: req.OrderDirection,
-		PageSize:       limit,
-		Cursor:         cursor,
-	}
-	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
-	if err != nil {
-		if errors.Is(err, v2als.ErrInvalidOrderBy) {
-			return nil, statusInvalidOrderBy.Err()
+	// organization_id requires the organization admin role; combined with
+	// environment_id it lists that environment's logs plus the organization's
+	// organization-level logs in one timeline.
+	if req.OrganizationId != "" {
+		_, err := s.checkOrganizationRole(
+			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+			req.OrganizationId)
+		if err != nil {
+			return nil, err
 		}
-		s.logger.Error(
-			"Failed to list auditlogs",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
+	} else {
+		if req.EnvironmentId == "" {
+			return nil, statusMissingEnvironmentOrOrganization.Err()
+		}
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId)
+		if err != nil {
+			return nil, err
+		}
 	}
-	editorEmails := make([]string, 0, len(auditlogs))
-	for _, auditlog := range auditlogs {
-		editorEmails = append(editorEmails, auditlog.Editor.Email)
-	}
-	editorEmails = deDuplicateStrings(editorEmails)
-	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId)
+	params, err := listAuditLogsParams(req)
 	if err != nil {
 		return nil, err
 	}
-
+	params.EnvironmentID = req.EnvironmentId
+	params.OrganizationID = req.OrganizationId
+	auditlogs, nextCursor, totalCount, err := s.listAuditLogs(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	// Editor avatars are stored per environment; organization-only scope skips them.
+	accounts := make(map[string]*accountproto.AccountV2)
+	if req.EnvironmentId != "" {
+		editorEmails := make([]string, 0, len(auditlogs))
+		for _, auditlog := range auditlogs {
+			editorEmails = append(editorEmails, auditlog.Editor.Email)
+		}
+		editorEmails = deDuplicateStrings(editorEmails)
+		accounts, err = s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId)
+		if err != nil {
+			return nil, err
+		}
+	}
 	for i := range auditlogs {
 		if account, ok := accounts[auditlogs[i].Editor.Email]; ok {
 			auditlogs[i].Editor.AvatarImage = account.AvatarImage
@@ -245,12 +249,60 @@ func (s *auditlogService) ListAuditLogs(
 		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlogs[i].Type, localizer)
 	}
 	s.obfuscateAPIKeys(auditlogs)
-
 	return &proto.ListAuditLogsResponse{
 		AuditLogs:  auditlogs,
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
+}
+
+func listAuditLogsParams(req *proto.ListAuditLogsRequest) (v2als.ListAuditLogsParams, error) {
+	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
+	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxAuditLogPageSize {
+		limit = maxAuditLogPageSize
+	}
+	cursor := req.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	// Validate cursor before passing to storage
+	if _, err := strconv.Atoi(cursor); err != nil {
+		return v2als.ListAuditLogsParams{}, statusInvalidCursor.Err()
+	}
+	var entityType *int32
+	if req.EntityType != nil {
+		v := req.EntityType.Value
+		entityType = &v
+	}
+	return v2als.ListAuditLogsParams{
+		EntityType:     entityType,
+		From:           req.From,
+		To:             req.To,
+		SearchKeyword:  req.SearchKeyword,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
+		PageSize:       limit,
+		Cursor:         cursor,
+	}, nil
+}
+
+func (s *auditlogService) listAuditLogs(
+	ctx context.Context,
+	params v2als.ListAuditLogsParams,
+) ([]*proto.AuditLog, int, int64, error) {
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
+	if err != nil {
+		if errors.Is(err, v2als.ErrInvalidOrderBy) {
+			return nil, 0, 0, statusInvalidOrderBy.Err()
+		}
+		s.logger.Error(
+			"Failed to list auditlogs",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, 0, 0, api.NewGRPCStatus(err).Err()
+	}
+	return auditlogs, nextCursor, totalCount, nil
 }
 
 func (s *auditlogService) ListAdminAuditLogs(
@@ -430,6 +482,28 @@ func (s *auditlogService) checkEnvironmentRole(
 				return nil, err
 			}
 			return resp.Account, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
+}
+
+func (s *auditlogService) checkOrganizationRole(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	organizationID string,
+) (*eventproto.Editor, error) {
+	return role.CheckOrganizationRoleWithLog(
+		ctx,
+		requiredRole,
+		organizationID,
+		func(email string) (*accountproto.GetAccountV2Response, error) {
+			return s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+				Email:          email,
+				OrganizationId: organizationID,
+			})
 		},
 		s.logger,
 		statusUnauthenticated.Err(),

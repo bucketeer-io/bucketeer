@@ -6,7 +6,8 @@ import { stringifyParams } from 'utils/search-params';
 
 export interface AuditLogDetailsFetcherParams {
   id: string;
-  environmentId: string;
+  environmentId?: string;
+  organizationId?: string;
 }
 
 export interface AuditLogDetailsResponse {

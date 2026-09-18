@@ -5087,13 +5087,12 @@
               {
                 "id": 2,
                 "name": "environment_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           },
@@ -5153,6 +5152,11 @@
               {
                 "id": 10,
                 "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "organization_id",
                 "type": "string"
               }
             ],

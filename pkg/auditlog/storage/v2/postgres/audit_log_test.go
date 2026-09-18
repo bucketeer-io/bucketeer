@@ -92,7 +92,7 @@ func TestGetAuditLogPostgres(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAuditLog(context.Background(), p.id, "env-1")
+			_, err := storage.GetAuditLog(context.Background(), p.id, "env-1", "")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -315,4 +315,43 @@ func TestListAuditLogsPostgres(t *testing.T) {
 func newAuditLogStorageWithMock(t *testing.T, mockController *gomock.Controller) *auditLogStorage {
 	t.Helper()
 	return &auditLogStorage{qe: pgmock.NewMockQueryExecer(mockController)}
+}
+
+func TestListAuditLogsOrganizationScopePostgres(t *testing.T) {
+	t.Parallel()
+	// Organization scope alone: organization-level rows only.
+	options, err := listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs := postgres.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, "organization_id = $1")
+	assert.Contains(t, query, "environment_id = $2")
+	assert.Equal(t, []interface{}{"org-1", ""}, whereArgs)
+
+	countQuery, countArgs := postgres.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, "organization_id = $1")
+	assert.Contains(t, countQuery, "environment_id = $2")
+	assert.Equal(t, []interface{}{"org-1", ""}, countArgs)
+
+	// Both IDs: the environment's rows plus the organization-level rows.
+	unionWhere := "(environment_id = $1 OR (organization_id = $2 AND environment_id = $3))"
+	options, err = listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		EnvironmentID:  "env-1",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs = postgres.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, unionWhere)
+	assert.Equal(t, []interface{}{"env-1", "org-1", ""}, whereArgs)
+
+	countQuery, countArgs = postgres.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, unionWhere)
+	assert.Equal(t, []interface{}{"env-1", "org-1", ""}, countArgs)
 }

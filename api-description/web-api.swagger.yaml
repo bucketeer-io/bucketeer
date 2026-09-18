@@ -1692,8 +1692,16 @@ paths:
           required: true
           type: string
         - name: environmentId
+          description: Required for environment-scoped logs.
           in: query
-          required: true
+          required: false
+          type: string
+        - name: organizationId
+          description: |-
+            Requires the organization admin role. Matches an organization-level log;
+            combined with environment_id, matches either scope.
+          in: query
+          required: false
           type: string
       tags:
         - audit_log
@@ -1787,6 +1795,16 @@ paths:
           type: integer
           format: int32
         - name: environmentId
+          description: Scopes the list to one environment; requires an environment role.
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          description: |-
+            Requires the organization admin role. Alone, lists the organization's
+            organization-level logs (environment_id is empty on those); combined with
+            environment_id, lists that environment's logs plus the organization-level
+            logs in one timeline.
           in: query
           required: false
           type: string

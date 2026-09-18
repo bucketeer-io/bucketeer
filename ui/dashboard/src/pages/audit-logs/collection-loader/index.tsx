@@ -1,6 +1,6 @@
 import { forwardRef, Ref, useImperativeHandle } from 'react';
 import { useParams } from 'react-router';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog } from '@types';
 import Pagination from 'components/pagination';
 import FormLoading from 'elements/form-loading';
@@ -33,6 +33,7 @@ const CollectionLoader = forwardRef(
     const { consoleAccount } = useAuth();
     const params = useParams();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const { isOrganizationAdmin } = getAccountAccess(consoleAccount!);
 
     const {
       data: auditLogCollection,
@@ -42,6 +43,10 @@ const CollectionLoader = forwardRef(
     } = useFetchAuditLogs({
       ...filters,
       environmentId: currentEnvironment?.id,
+      // Organization admins also get the organization-level logs in the same timeline.
+      organizationId: isOrganizationAdmin
+        ? consoleAccount?.organization.id
+        : undefined,
       enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
     });
 

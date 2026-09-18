@@ -85,7 +85,7 @@ func TestGetAuditLogMySQL(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &auditLogStorage{qe: mock.NewMockClient(mockController)}
 			p.setup(storage)
-			_, err := storage.GetAuditLog(context.Background(), "audit-log-id", "env-1")
+			_, err := storage.GetAuditLog(context.Background(), "audit-log-id", "env-1", "")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -301,4 +301,43 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func TestListAuditLogsOrganizationScopeMySQL(t *testing.T) {
+	t.Parallel()
+	// Organization scope alone: organization-level rows only.
+	options, err := listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, "organization_id = ?")
+	assert.Contains(t, query, "environment_id = ?")
+	assert.Equal(t, []interface{}{"org-1", ""}, whereArgs)
+
+	countQuery, countArgs := mysql.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, "organization_id = ?")
+	assert.Contains(t, countQuery, "environment_id = ?")
+	assert.Equal(t, []interface{}{"org-1", ""}, countArgs)
+
+	// Both IDs: the environment's rows plus the organization-level rows.
+	unionWhere := "(environment_id = ? OR (organization_id = ? AND environment_id = ?))"
+	options, err = listAuditLogsOptionsFromParams(v2als.ListAuditLogsParams{
+		PageSize:       10,
+		Cursor:         "0",
+		EnvironmentID:  "env-1",
+		OrganizationID: "org-1",
+	})
+	assert.NoError(t, err)
+
+	query, whereArgs = mysql.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, options)
+	assert.Contains(t, query, unionWhere)
+	assert.Equal(t, []interface{}{"env-1", "org-1", ""}, whereArgs)
+
+	countQuery, countArgs = mysql.ConstructCountQuery(selectAuditLogV2CountSQL, options)
+	assert.Contains(t, countQuery, unionWhere)
+	assert.Equal(t, []interface{}{"env-1", "org-1", ""}, countArgs)
 }

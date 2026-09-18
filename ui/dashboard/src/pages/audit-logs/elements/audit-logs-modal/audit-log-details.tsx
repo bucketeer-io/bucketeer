@@ -20,11 +20,13 @@ import FormLoading from 'elements/form-loading';
 
 const AuditLogDetailsModal = ({
   auditLogId,
+  organizationId,
   isOpen,
   title,
   onClose
 }: {
   auditLogId: string;
+  organizationId?: string;
   isOpen: boolean;
   title?: string;
   onClose: () => void;
@@ -50,6 +52,7 @@ const AuditLogDetailsModal = ({
   } = useQueryAuditLogDetails({
     params: {
       environmentId: currentEnvironment.id,
+      organizationId,
       id: auditLogId
     },
     enabled: params?.envUrlCode === currentEnvironment?.urlCode

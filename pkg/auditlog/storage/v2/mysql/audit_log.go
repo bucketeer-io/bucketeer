@@ -29,8 +29,6 @@ import (
 )
 
 var (
-	//go:embed sql/auditlog/select_audit_log_v2.sql
-	selectAuditLogV2SQL string
 	//go:embed sql/auditlog/insert_audit_logs_v2.sql
 	insertAuditLogsV2SQL string
 	//go:embed sql/auditlog/insert_audit_log_v2.sql
@@ -49,15 +47,53 @@ func NewAuditLogStorage(qe mysqlstorage.QueryExecer) v2als.AuditLogStorage {
 	return &auditLogStorage{qe}
 }
 
+// auditLogScopeFilters translates the requested scope into WHERE parts: both
+// IDs list the environment's logs plus the organization's organization-level
+// logs (environment_id = ”), one ID lists that scope alone.
+func auditLogScopeFilters(environmentID, organizationID string) ([]*mysqlstorage.FilterV2, []*mysqlstorage.OrFilter) {
+	envFilter := &mysqlstorage.FilterV2{
+		Column:   "environment_id",
+		Operator: mysqlstorage.OperatorEqual,
+		Value:    environmentID,
+	}
+	orgFilters := []*mysqlstorage.FilterV2{
+		{Column: "organization_id", Operator: mysqlstorage.OperatorEqual, Value: organizationID},
+		{Column: "environment_id", Operator: mysqlstorage.OperatorEqual, Value: ""},
+	}
+	if organizationID != "" && environmentID != "" {
+		return nil, []*mysqlstorage.OrFilter{{
+			Queries: []mysqlstorage.WherePart{
+				envFilter,
+				&mysqlstorage.AndFilter{Queries: []mysqlstorage.WherePart{orgFilters[0], orgFilters[1]}},
+			},
+		}}
+	}
+	if organizationID != "" {
+		return orgFilters, nil
+	}
+	if environmentID != "" {
+		return []*mysqlstorage.FilterV2{envFilter}, nil
+	}
+	return nil, nil
+}
+
 func (s *auditLogStorage) GetAuditLog(
 	ctx context.Context,
-	id string,
-	environmentID string,
+	id, environmentID, organizationID string,
 ) (*proto.AuditLog, error) {
+	scopeFilters, orFilters := auditLogScopeFilters(environmentID, organizationID)
+	filters := append([]*mysqlstorage.FilterV2{
+		{Column: "id", Operator: mysqlstorage.OperatorEqual, Value: id},
+	}, scopeFilters...)
+	query, whereArgs := mysqlstorage.ConstructQueryAndWhereArgs(selectAuditLogsV2SQL, &mysqlstorage.ListOptions{
+		Limit:     1,
+		Filters:   filters,
+		OrFilters: orFilters,
+	})
 	auditLog := &proto.AuditLog{}
 	var et int32
 	var t int32
-	row := s.qe.QueryRowContext(ctx, selectAuditLogV2SQL, environmentID, id)
+	row := s.qe.QueryRowContext(ctx, query, whereArgs...)
 	err := row.Scan(
 		&auditLog.Id,
 		&auditLog.Timestamp,
@@ -197,14 +233,7 @@ func (s *auditLogStorage) ListAuditLogs(
 }
 
 func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*mysqlstorage.ListOptions, error) {
-	var filters []*mysqlstorage.FilterV2
-	if p.EnvironmentID != "" {
-		filters = append(filters, &mysqlstorage.FilterV2{
-			Column:   "environment_id",
-			Operator: mysqlstorage.OperatorEqual,
-			Value:    p.EnvironmentID,
-		})
-	}
+	filters, orFilters := auditLogScopeFilters(p.EnvironmentID, p.OrganizationID)
 	if p.EntityType != nil {
 		filters = append(filters, &mysqlstorage.FilterV2{
 			Column:   "entity_type",
@@ -264,6 +293,7 @@ func listAuditLogsOptionsFromParams(p v2als.ListAuditLogsParams) (*mysqlstorage.
 		Limit:       p.PageSize,
 		Offset:      offset,
 		Filters:     filters,
+		OrFilters:   orFilters,
 		SearchQuery: searchQuery,
 		Orders:      []*mysqlstorage.Order{mysqlstorage.NewOrder(column, direction)},
 	}, nil

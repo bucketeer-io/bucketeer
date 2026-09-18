@@ -9,6 +9,7 @@ export interface AuditLogsFetcherParams extends CollectionParams {
   to?: string;
   entityType?: number;
   environmentId?: string;
+  organizationId?: string;
 }
 
 export const auditLogsFetcher = async (
