@@ -6,21 +6,22 @@ import { updateFeatureCache } from '@queries/feature-details';
 import { useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
 import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
-import { useQueryUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast, useToggleOpen } from 'hooks';
 import useOptions from 'hooks/use-options';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
+import { useUserSegmentsLoader } from 'hooks/use-user-segments-loading-more';
 import { useTranslation } from 'i18n';
 import { isEqual, isNil } from 'lodash';
 import cloneDeep from 'lodash/cloneDeep';
+import uniq from 'lodash/uniq';
 import {
   Evaluation,
   Feature,
   FeatureRule,
+  FeatureRuleClauseOperator,
   FeatureRuleStrategy,
   ScheduledChangePayload
 } from '@types';
@@ -141,14 +142,6 @@ const TargetingPage = ({
     }
   });
 
-  const { data: segmentCollection } = useQueryUserSegments({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
-    }
-  });
-
   const { data: collection } = useQueryFeatures({
     params: {
       cursor: String(0),
@@ -193,6 +186,26 @@ const TargetingPage = ({
   const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
+
+  const referencedSegmentIds = useMemo(() => {
+    const collectFromRules = (rules: FeatureRule[]) =>
+      rules.flatMap(rule =>
+        rule.clauses
+          .filter(
+            clause => clause.operator === FeatureRuleClauseOperator.SEGMENT
+          )
+          .flatMap(clause => clause.values || [])
+      );
+    return uniq([
+      ...collectFromRules(feature.rules),
+      ...collectFromRules(segmentRulesWatch as unknown as FeatureRule[])
+    ]);
+  }, [feature.rules, segmentRulesWatch]);
+
+  const { userSegments: allSegments } = useUserSegmentsLoader({
+    environmentId: currentEnvironment.id,
+    selectedSegmentIds: referencedSegmentIds
+  });
 
   const operatorOptions = useMemo(
     () => [...conditionerCompareOptions, ...conditionerDateOptions],
@@ -459,7 +472,7 @@ const TargetingPage = ({
       segmentRulesWatch as unknown as FeatureRule[],
       feature.rules,
       features,
-      segmentCollection?.segments || [],
+      allSegments,
       situationOptions,
       operatorOptions,
       feature.variations,
@@ -483,7 +496,7 @@ const TargetingPage = ({
       feature,
       cloneTracked as Feature,
       features,
-      segmentCollection?.segments || [],
+      allSegments,
       situationOptions,
       operatorOptions,
       t,
@@ -503,7 +516,7 @@ const TargetingPage = ({
     const preRules = feature.rules.find(r => r.id === ruleId) || null;
     const { changes, action } = handleCheckSegmentRulesDiscardChanges(
       preRules || null,
-      segmentCollection?.segments || [],
+      allSegments,
       segmentRulesWatch[index] as unknown as FeatureRule,
       situationOptions,
       features,
@@ -563,7 +576,7 @@ const TargetingPage = ({
               feature,
               cloneFeatureRef as Feature,
               features,
-              segmentCollection?.segments || [],
+              allSegments,
               situationOptions,
               operatorOptions,
               t,
