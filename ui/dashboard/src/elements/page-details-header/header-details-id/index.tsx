@@ -16,7 +16,7 @@ const HeaderDetailsID = ({ id, message }: { id: string; message?: string }) => {
     });
   }, [id, message]);
   return (
-    <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 select-none pl-10 mt-2">
+    <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 select-none pl-0 sm:pl-10 mt-2">
       {id}
       <div onClick={handleCopyId}>
         <Icon

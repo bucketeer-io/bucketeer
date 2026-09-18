@@ -68,7 +68,7 @@ export const EvaluationFlow = ({
     // nodes have their left edge flush with the Targeting tab underline.
     <div
       className={cn(
-        'relative w-full pl-14',
+        'relative w-full pl-0 sm:pl-14',
         'flex flex-col items-stretch gap-y-8',
         className
       )}
@@ -76,7 +76,7 @@ export const EvaluationFlow = ({
       <div
         aria-hidden
         className={cn(
-          'absolute top-3 bottom-3 w-px pointer-events-none rounded-full',
+          'hidden sm:block absolute top-3 bottom-3 w-px pointer-events-none rounded-full',
           muted ? 'bg-gray-200' : 'bg-gray-300'
         )}
         style={{ left: '14px' }}
@@ -150,7 +150,7 @@ interface FlowNodeProps {
 
 const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
   const baseClasses =
-    'absolute z-10 flex items-center justify-center rounded-full ring-4 ring-white';
+    'absolute z-10 hidden sm:flex items-center justify-center rounded-full ring-4 ring-white';
 
   const alignClasses =
     align === 'center' ? 'top-1/2 -translate-y-1/2' : 'top-4';

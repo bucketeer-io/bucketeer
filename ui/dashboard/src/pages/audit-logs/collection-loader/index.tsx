@@ -61,7 +61,7 @@ const CollectionLoader = forwardRef(
     return isError ? (
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
-      <TableListContainer className="px-6 gap-y-6">
+      <TableListContainer className="px-3 sm:px-6 gap-y-6">
         {isLoading ? (
           <FormLoading />
         ) : (

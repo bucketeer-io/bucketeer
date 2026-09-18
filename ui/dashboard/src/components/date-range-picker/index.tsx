@@ -6,12 +6,14 @@ import en from 'date-fns/locale/en-US';
 import ja from 'date-fns/locale/ja';
 import dayjs from 'dayjs';
 import { useToggleOpen } from 'hooks';
+import { useScreen } from 'hooks/use-screen';
 import { getLanguage, useTranslation } from 'i18n';
 import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { IconCalendar } from '@icons';
 import { truncNumber } from 'pages/audit-logs/utils';
 import Button from 'components/button';
+import Drawer from 'components/drawer';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 import ActionBar from './action-bar';
@@ -131,6 +133,7 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
   }) => {
     const { t } = useTranslation(['common']);
     const isLanguageJapanese = getLanguage() === 'ja';
+    const { isMobile } = useScreen();
 
     const [isOpenRangePicker, onOpenRangePicker, onCloseRangePicker] =
       useToggleOpen(false);
@@ -248,17 +251,101 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
       }
     }, [from, to, range, staticRanges, staticRangeSelected]);
 
+    const handleStaticRangeClick = useCallback((range: StaticRangeOption) => {
+      setStaticRangeSelected(range);
+      setRange({ ...range.range(), key: 'selection' });
+    }, []);
+
     useEffect(() => {
       handleSetRange();
     }, [from, to, isAllTime]);
     useEffect(() => {
       getTriggerLabel?.(triggerLabel ?? '');
     }, [triggerLabel]);
-    return (
+
+    const pickerContent = (
       <>
+        <ReactDateRangePickerComp
+          {...props}
+          onChange={item => {
+            setRange(item.selection);
+            onRangeChange?.(item.selection);
+          }}
+          showPreview={showPreview}
+          moveRangeOnFirstSelection={moveRangeOnFirstSelection}
+          months={months}
+          ranges={[range]}
+          direction={direction}
+          rangeColors={rangeColors}
+          staticRanges={staticRanges}
+          showDateDisplay={showDateDisplay}
+          dateDisplayFormat="yyyy/MM/dd"
+          inputRanges={[]}
+          renderStaticRangeLabel={staticRange => (
+            <div
+              onClick={() =>
+                setStaticRangeSelected(staticRange as StaticRangeOption)
+              }
+              className={cn('hidden md:flex items-center md:size-full pl-3', {
+                'range-selected': staticRange.isSelected(range)
+              })}
+            >
+              {staticRange.label}
+            </div>
+          )}
+          dayContentRenderer={date => (
+            <span
+              onClick={() => setStaticRangeSelected(undefined)}
+              style={{ width: '100%', height: '100%' }}
+              className={cn('flex-center size-full', {
+                'range__days--all-time':
+                  staticRangeSelected?.type === 'all-time'
+              })}
+            >
+              {date.getDate()}
+            </span>
+          )}
+          navigatorRenderer={(currFocusedDate, changeShownDate) => (
+            <CustomizeNavigator
+              staticRanges={staticRanges as StaticRangeOption[]}
+              handleStaticRangeClick={handleStaticRangeClick}
+              selectedLabel={staticRangeSelected?.label}
+              currFocusedDate={currFocusedDate}
+              changeShownDate={changeShownDate}
+            />
+          )}
+          locale={isLanguageJapanese ? ja : en}
+          classNames={{
+            ...defaultClassNames,
+            ...props?.classNames
+          }}
+        />
+        {renderActionBar ? (
+          renderActionBar({
+            onApply: handleApply,
+            onCancel: () => {
+              handleSetRange();
+              onCloseRangePicker();
+              onClose?.();
+            }
+          })
+        ) : (
+          <ActionBar
+            onCancel={() => {
+              handleSetRange();
+              onCloseRangePicker();
+            }}
+            onApply={handleApply}
+          />
+        )}
+      </>
+    );
+
+    return (
+      <div className="w-fit max-w-[180px] sm:max-w-full">
         <Button
           variant="secondary-2"
-          className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg !max-w-[200px] xxl:!max-w-fit"
+          className="border border-gray-400 shadow-none hover:shadow-border-gray-400 rounded-lg w-full !max-w-full sm:!max-w-[200px] xxl:!max-w-fit"
           onClick={onOpenRangePicker}
         >
           {!hasValue && (
@@ -273,93 +360,35 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
             {triggerLabel}
           </p>
         </Button>
-        <DialogModal
-          title="Date Range Picker"
-          isShowHeader={false}
-          isOpen={isOpenRangePicker || !!isShowRange}
-          onClose={() => {
-            handleSetRange();
-            onCloseRangePicker();
-            onClose?.();
-          }}
-          className="w-fit max-w-[820px] p-0 rounded-lg overflow-y-auto"
-        >
-          <ReactDateRangePickerComp
-            {...props}
-            onChange={item => {
-              setRange(item.selection);
-              onRangeChange?.(item.selection);
+        {isMobile ? (
+          <Drawer
+            open={isOpenRangePicker || !!isShowRange}
+            onClose={() => {
+              handleSetRange();
+              onCloseRangePicker();
+              onClose?.();
             }}
-            showPreview={showPreview}
-            moveRangeOnFirstSelection={moveRangeOnFirstSelection}
-            months={months}
-            ranges={[range]}
-            direction={direction}
-            rangeColors={rangeColors}
-            staticRanges={staticRanges}
-            showDateDisplay={showDateDisplay}
-            dateDisplayFormat="yyyy/MM/dd"
-            inputRanges={[]}
-            renderStaticRangeLabel={staticRange => (
-              <div
-                onClick={() =>
-                  setStaticRangeSelected(staticRange as StaticRangeOption)
-                }
-                className={cn('flex items-center size-full pl-3', {
-                  'range-selected': staticRange.isSelected(range)
-                })}
-              >
-                {staticRange.label}
-              </div>
-            )}
-            dayContentRenderer={date => (
-              <span
-                onClick={() => setStaticRangeSelected(undefined)}
-                style={{
-                  width: '100%',
-                  height: '100%'
-                }}
-                className={cn('flex-center size-full', {
-                  'range__days--all-time':
-                    staticRangeSelected?.type === 'all-time'
-                })}
-              >
-                {date.getDate()}
-              </span>
-            )}
-            navigatorRenderer={(currFocusedDate, changeShownDate) => (
-              <CustomizeNavigator
-                currFocusedDate={currFocusedDate}
-                changeShownDate={changeShownDate}
-              />
-            )}
-            locale={isLanguageJapanese ? ja : en}
-            classNames={{
-              ...defaultClassNames,
-              ...props?.classNames
+            side="bottom"
+            className="z-10"
+          >
+            {pickerContent}
+          </Drawer>
+        ) : (
+          <DialogModal
+            title="Date Range Picker"
+            isShowHeader={false}
+            isOpen={isOpenRangePicker || !!isShowRange}
+            onClose={() => {
+              handleSetRange();
+              onCloseRangePicker();
+              onClose?.();
             }}
-          />
-
-          {renderActionBar ? (
-            renderActionBar({
-              onApply: handleApply,
-              onCancel: () => {
-                handleSetRange();
-                onCloseRangePicker();
-                onClose?.();
-              }
-            })
-          ) : (
-            <ActionBar
-              onCancel={() => {
-                handleSetRange();
-                onCloseRangePicker();
-              }}
-              onApply={handleApply}
-            />
-          )}
-        </DialogModal>
-      </>
+            className="!w-fit lg:w-[820px] p-4 sm:p-0 rounded-lg overflow-y-auto"
+          >
+            {pickerContent}
+          </DialogModal>
+        )}
+      </div>
     );
   }
 );

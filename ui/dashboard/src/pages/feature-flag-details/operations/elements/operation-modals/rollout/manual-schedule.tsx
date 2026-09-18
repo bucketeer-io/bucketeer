@@ -208,7 +208,10 @@ const ManualSchedule = ({
       />
 
       {schedulesList.map((item, index) => (
-        <div key={item.scheduleItemId} className="flex w-full gap-x-4">
+        <div
+          key={item.scheduleItemId}
+          className="flex flex-col sm:flex-row w-full gap-4"
+        >
           <Form.Field
             name={`progressiveRollout.manual.schedulesList.${index}.weight`}
             render={({ field }) => (
@@ -306,7 +309,7 @@ const ManualSchedule = ({
           <Button
             type="button"
             variant={'grey'}
-            className="flex-center self-start h-full mt-9 min-w-5"
+            className="flex-center self-end sm:self-start h-10 sm:h-full sm:mt-9 min-w-5"
             disabled={schedulesList.length <= 1 || isDisabled}
             onClick={() => handleRemoveSchedule(index)}
           >

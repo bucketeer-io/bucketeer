@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import logoIcon from 'assets/logos/logo-icon.svg';
 import logo from 'assets/logos/logo-white.svg';
-import { useAuth, getCurrentEnvironment } from 'auth';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import * as ROUTING from 'constants/routing';
 import { WALKTHROUGH_TARGETS } from 'constants/walkthrough';
-import { useToggleOpen } from 'hooks';
+import { useScreen, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
@@ -14,6 +14,7 @@ import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+import DialogModal from 'components/modal/dialog';
 import { Tooltip } from 'components/tooltip';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
@@ -43,8 +44,11 @@ const Navigation = ({
     onToggleCollapsed(next);
   };
 
+  const { isMobile, fromTabletScreen } = useScreen();
+  const isTablet = !isMobile && !fromTabletScreen;
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
+  const isCollapsedEffective = isMobile ? false : isCollapsed;
 
   const settingMenuSections = [
     {
@@ -183,55 +187,76 @@ const Navigation = ({
     <div
       className={cn(
         'fixed h-screen bg-primary-500 z-50 py-8 transition-all duration-300 ease-in-out',
-        isCollapsed ? 'w-[60px] px-2' : 'w-[248px] px-6'
+        isCollapsedEffective ? 'w-[60px] px-2' : 'w-[248px] px-6'
       )}
     >
       <div className="flex flex-col size-full relative overflow-hidden">
         <div
           className={cn('group relative flex items-center', {
-            'w-full justify-center': isCollapsed
+            'w-full justify-center': isCollapsedEffective
           })}
         >
-          <Link
-            to={ROUTING.PAGE_PATH_ROOT}
-            onClick={onCloseSetting}
-            className={cn(
-              'overflow-hidden',
-              isCollapsed && 'flex-center w-full',
-              isCollapsed && 'group-hover:pointer-events-none'
-            )}
-          >
-            {isCollapsed ? (
+          {isCollapsedEffective && isTablet ? (
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="flex-center w-full"
+              aria-label={t(`navigation.expand`)}
+            >
               <img
                 src={logoIcon}
                 alt="Bucketeer"
                 className="w-8 h-8 shrink-0"
               />
-            ) : (
-              <img src={logo} alt="Bucketeer" />
-            )}
-          </Link>
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            className={cn(
-              'flex-center rounded-md text-primary-50 shrink-0',
-              'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
-              isCollapsed
-                ? 'absolute inset-0 m-auto size-8 bg-primary-400 hover:bg-primary-300 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto'
-                : 'size-6 ml-auto hover:bg-primary-400'
-            )}
-            aria-label={t(
-              isCollapsed ? `navigation.expand` : `navigation.collapse`
-            )}
-          >
-            <Icon
-              icon={IconSystem.IconChevronRight}
-              color="primary-50"
-              size="xs"
-              className={cn({ 'rotate-180': !isCollapsed })}
-            />
-          </button>
+            </button>
+          ) : (
+            <>
+              <Link
+                to={ROUTING.PAGE_PATH_ROOT}
+                onClick={onCloseSetting}
+                className={cn(
+                  'overflow-hidden',
+                  isCollapsedEffective && 'flex-center w-full',
+                  isCollapsedEffective && 'group-hover:pointer-events-none'
+                )}
+              >
+                {isCollapsedEffective ? (
+                  <img
+                    src={logoIcon}
+                    alt="Bucketeer"
+                    className="w-8 h-8 shrink-0"
+                  />
+                ) : (
+                  <img src={logo} alt="Bucketeer" />
+                )}
+              </Link>
+              {!isMobile && (
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  className={cn(
+                    'flex-center rounded-md text-primary-50 shrink-0',
+                    'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
+                    isCollapsedEffective
+                      ? 'absolute inset-0 m-auto size-8 bg-primary-400 hover:bg-primary-300 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto'
+                      : 'size-6 ml-auto hover:bg-primary-400'
+                  )}
+                  aria-label={t(
+                    isCollapsedEffective
+                      ? `navigation.expand`
+                      : `navigation.collapse`
+                  )}
+                >
+                  <Icon
+                    icon={IconSystem.IconChevronRight}
+                    color="primary-50"
+                    size="xs"
+                    className={cn({ 'rotate-180': !isCollapsedEffective })}
+                  />
+                </button>
+              )}
+            </>
+          )}
         </div>
 
         <div className="flex flex-col flex-1 items-center pt-6">
@@ -242,7 +267,7 @@ const Navigation = ({
             )}
           >
             <Tooltip
-              hidden={!isCollapsed}
+              hidden={!isCollapsedEffective}
               content={t(`navigation.back-to-main`)}
               side="right"
               trigger={
@@ -252,17 +277,21 @@ const Navigation = ({
                     navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
                   }}
                   aria-label={
-                    isCollapsed ? t(`navigation.back-to-main`) : undefined
+                    isCollapsedEffective
+                      ? t(`navigation.back-to-main`)
+                      : undefined
                   }
                   className={cn(
                     'flex items-center gap-x-2 text-primary-50 rounded-lg',
-                    isCollapsed
+                    isCollapsedEffective
                       ? 'justify-center w-full py-2 hover:bg-primary-400'
                       : 'px-3'
                   )}
                 >
                   <Icon icon={IconSystem.IconBackspace} />
-                  {!isCollapsed && <span>{t(`navigation.back-to-main`)}</span>}
+                  {!isCollapsedEffective && (
+                    <span>{t(`navigation.back-to-main`)}</span>
+                  )}
                 </button>
               }
             />
@@ -273,7 +302,8 @@ const Navigation = ({
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
-                isCollapsed={isCollapsed}
+                isCollapsed={isCollapsedEffective}
+                onClickNavLink={onClickNavLink}
               />
             ))}
           </div>
@@ -283,21 +313,22 @@ const Navigation = ({
               { 'left-0': !isOpenSetting }
             )}
           >
-            {!isCollapsed && (
+            {!isCollapsedEffective && (
               <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
                 {t(`environment`)}
               </div>
             )}
-            <MyProjects isCollapsed={isCollapsed} />
+            <MyProjects isCollapsed={isCollapsedEffective} />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
+
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
                 onClickNavLink={onClickNavLink}
-                isCollapsed={isCollapsed}
+                isCollapsed={isCollapsedEffective}
               />
             ))}
           </div>
@@ -307,24 +338,24 @@ const Navigation = ({
 
         <div
           className={cn('flex items-center justify-between', {
-            'flex-col gap-y-3': isCollapsed
+            'flex-col gap-y-3': isCollapsedEffective
           })}
         >
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
           <div
             className={cn('flex items-center justify-center gap-2', {
-              'flex-col': isCollapsed
+              'flex-col': isCollapsedEffective
             })}
           >
             <NotificationBell envUrlCode={envUrlCode} />
             <Tooltip
-              hidden={!isCollapsed}
+              hidden={!isCollapsedEffective}
               content={t(`settings`)}
               side="right"
               trigger={
                 <button
                   type="button"
-                  aria-label={isCollapsed ? t(`settings`) : undefined}
+                  aria-label={isCollapsedEffective ? t(`settings`) : undefined}
                   onClick={() => {
                     onOpenSetting();
                     if (consoleAccount?.isSystemAdmin) {
@@ -341,12 +372,29 @@ const Navigation = ({
           </div>
         </div>
       </div>
-      <SwitchOrganization
-        isOpen={isOpenSwitchOrg}
-        onCloseSwitchOrg={onCloseSwitchOrg}
-        onCloseSetting={onCloseSetting}
-        isCollapsed={isCollapsed}
-      />
+      {!isMobile && isOpenSwitchOrg ? (
+        <SwitchOrganization
+          isOpen={isOpenSwitchOrg}
+          onCloseSwitchOrg={onCloseSwitchOrg}
+          onCloseSetting={onCloseSetting}
+          isCollapsed={isCollapsedEffective}
+        />
+      ) : (
+        <DialogModal
+          className="w-[290px]"
+          title=""
+          isOpen={isOpenSwitchOrg}
+          onClose={onCloseSwitchOrg}
+          overlayCls="!z-[500]"
+        >
+          <SwitchOrganization
+            isOpen={isOpenSwitchOrg}
+            onCloseSwitchOrg={onCloseSwitchOrg}
+            onCloseSetting={onCloseSetting}
+            isModal
+          />
+        </DialogModal>
+      )}
     </div>
   );
 };
