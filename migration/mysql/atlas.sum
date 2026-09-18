@@ -1,4 +1,4 @@
-h1:tTTey3gnWNWe7OqCS2ju8G/KD7BqBy5E0/nS3WLN3Fo=
+h1:lZjVZLXRB9Wa5ebPjYGcad5Np+F5Bvs7veEFOs1KkFg=
 20240626022133_initialization.sql h1:reSmqMhqnsrdIdPU2ezv/PXSL0COlRFX4gQA4U3/wMo=
 20240708065726_update_audit_log_table.sql h1:fi8Xxw4WfSlHDyvq2Ni/8JUiZW8z/0qWWyWm6jFdUy8=
 20240815043128_update_auto_ops_rule_table.sql h1:IKSW9W/XO6SWAYl5WPLJSg6KdsfcZ3rfQhIrf7aOnYc=
@@ -45,3 +45,4 @@ h1:tTTey3gnWNWe7OqCS2ju8G/KD7BqBy5E0/nS3WLN3Fo=
 20260728000000_add_notification_deleted.sql h1:yky/5yXtjVf4Vl9si/FJ5ODUSPzjC1NfUsyfLCTh97I=
 20260826000000_add_audit_log_organization_id.sql h1:rgjKMBWwGhPyBpm7UrSaQMNjW+YuMWpqD3ELK9rZaWo=
 20260907000000_create_audit_log_migration_table.sql h1:tkvhFUhcB9ci19/0TAmKO+gVWtlCA885kHueqkfFK1E=
+20260917000000_merge_audit_log_migration.sql h1:WpRikE9Ibzj7GRIZwHpEixqgtdh48aom1i8d4dGXVSA=
