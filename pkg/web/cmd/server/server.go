@@ -165,87 +165,102 @@ type GracefulStopper interface {
 
 type server struct {
 	*kingpin.CmdClause
-	port                            *int
-	project                         *string
-	isDemoSiteEnabled               *bool
-	timezone                        *string
-	certPath                        *string
-	keyPath                         *string
-	serviceTokenPath                *string
-	operationalDatabaseType         *string
-	mysqlUser                       *string
-	mysqlPass                       *string
-	mysqlHost                       *string
-	mysqlPort                       *int
-	mysqlDBName                     *string
-	postgresUser                    *string
-	postgresPass                    *string
-	postgresHost                    *string
-	postgresPort                    *int
-	postgresDBName                  *string
-	postgresSSLMode                 *string
-	postgresSSLRootCert             *string
-	postgresSSLCert                 *string
-	postgresSSLKey                  *string
-	persistentRedisServerName       *string
-	persistentRedisAddr             *string
-	persistentRedisPoolMaxIdle      *int
-	persistentRedisPoolMaxActive    *int
-	persistentRedisMode             *string
-	nonPersistentRedisServerName    *string
-	nonPersistentRedisAddr          *string
-	nonPersistentRedisPoolMaxIdle   *int
-	nonPersistentRedisPoolMaxActive *int
-	nonPersistentRedisMode          *string
-	bigQueryDataSet                 *string
-	bigQueryDataLocation            *string
-	domainTopic                     *string
-	bulkSegmentUsersReceivedTopic   *string
-	accountServicePort              *int
-	authServicePort                 *int
-	auditLogServicePort             *int
-	autoOpsServicePort              *int
-	environmentServicePort          *int
-	eventCounterServicePort         *int
-	experimentServicePort           *int
-	featureServicePort              *int
-	subscriptionServicePort         *int
-	pushServicePort                 *int
-	dashboardServicePort            *int
-	tagServicePort                  *int
-	codeReferenceServicePort        *int
-	teamServicePort                 *int
-	insightsServicePort             *int
-	notificationServicePort         *int
-	prometheusURL                   *string
-	webGrpcGatewayPort              *int
-	accountService                  *string
-	authService                     *string
-	batchService                    *string
-	environmentService              *string
-	experimentService               *string
-	featureService                  *string
-	autoOpsService                  *string
-	codeReferenceService            *string
-	accessTokenTTL                  *time.Duration
-	refreshTokenTTL                 *time.Duration
-	emailFilter                     *string
-	oauthConfigPath                 *string
-	oauthPublicKeyPath              *string
-	oauthPrivateKeyPath             *string
-	webhookBaseURL                  *string
-	webhookKMSResourceName          *string
-	cloudService                    *string
-	webConsoleEnvJSPath             *string
-	pubSubType                      *string
-	pubSubRedisServerName           *string
-	pubSubRedisAddr                 *string
-	pubSubRedisPoolSize             *int
-	pubSubRedisMinIdle              *int
-	pubSubRedisPartitionCount       *int
-	pubSubRedisMode                 *string
-	dataWarehouseType               *string
-	dataWarehouseConfigPath         *string
+	port                                    *int
+	project                                 *string
+	isDemoSiteEnabled                       *bool
+	timezone                                *string
+	certPath                                *string
+	keyPath                                 *string
+	serviceTokenPath                        *string
+	operationalDatabaseType                 *string
+	mysqlUser                               *string
+	mysqlPass                               *string
+	mysqlHost                               *string
+	mysqlPort                               *int
+	mysqlDBName                             *string
+	postgresUser                            *string
+	postgresPass                            *string
+	postgresHost                            *string
+	postgresPort                            *int
+	postgresDBName                          *string
+	postgresSSLMode                         *string
+	postgresSSLRootCert                     *string
+	postgresSSLCert                         *string
+	postgresSSLKey                          *string
+	persistentRedisServerName               *string
+	persistentRedisAddr                     *string
+	persistentRedisPoolMaxIdle              *int
+	persistentRedisPoolMaxActive            *int
+	persistentRedisMode                     *string
+	persistentRedisTLSEnabled               *bool
+	persistentRedisTLSCACert                *string
+	persistentRedisTLSCert                  *string
+	persistentRedisTLSKey                   *string
+	persistentRedisTLSInsecureSkipVerify    *bool
+	nonPersistentRedisServerName            *string
+	nonPersistentRedisAddr                  *string
+	nonPersistentRedisPoolMaxIdle           *int
+	nonPersistentRedisPoolMaxActive         *int
+	nonPersistentRedisMode                  *string
+	nonPersistentRedisTLSEnabled            *bool
+	nonPersistentRedisTLSCACert             *string
+	nonPersistentRedisTLSCert               *string
+	nonPersistentRedisTLSKey                *string
+	nonPersistentRedisTLSInsecureSkipVerify *bool
+	bigQueryDataSet                         *string
+	bigQueryDataLocation                    *string
+	domainTopic                             *string
+	bulkSegmentUsersReceivedTopic           *string
+	accountServicePort                      *int
+	authServicePort                         *int
+	auditLogServicePort                     *int
+	autoOpsServicePort                      *int
+	environmentServicePort                  *int
+	eventCounterServicePort                 *int
+	experimentServicePort                   *int
+	featureServicePort                      *int
+	subscriptionServicePort                 *int
+	pushServicePort                         *int
+	dashboardServicePort                    *int
+	tagServicePort                          *int
+	codeReferenceServicePort                *int
+	teamServicePort                         *int
+	insightsServicePort                     *int
+	notificationServicePort                 *int
+	prometheusURL                           *string
+	webGrpcGatewayPort                      *int
+	accountService                          *string
+	authService                             *string
+	batchService                            *string
+	environmentService                      *string
+	experimentService                       *string
+	featureService                          *string
+	autoOpsService                          *string
+	codeReferenceService                    *string
+	accessTokenTTL                          *time.Duration
+	refreshTokenTTL                         *time.Duration
+	emailFilter                             *string
+	oauthConfigPath                         *string
+	oauthPublicKeyPath                      *string
+	oauthPrivateKeyPath                     *string
+	webhookBaseURL                          *string
+	webhookKMSResourceName                  *string
+	cloudService                            *string
+	webConsoleEnvJSPath                     *string
+	pubSubType                              *string
+	pubSubRedisServerName                   *string
+	pubSubRedisAddr                         *string
+	pubSubRedisPoolSize                     *int
+	pubSubRedisMinIdle                      *int
+	pubSubRedisPartitionCount               *int
+	pubSubRedisMode                         *string
+	pubSubRedisTLSEnabled                   *bool
+	pubSubRedisTLSCACert                    *string
+	pubSubRedisTLSCert                      *string
+	pubSubRedisTLSKey                       *string
+	pubSubRedisTLSInsecureSkipVerify        *bool
+	dataWarehouseType                       *string
+	dataWarehouseConfigPath                 *string
 	// AI Chat configuration
 	openAIAPIKey      *string
 	openAIBaseURL     *string
@@ -347,6 +362,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		persistentRedisMode: cmd.Flag("persistent-redis-mode",
 			"Persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		persistentRedisTLSEnabled: cmd.Flag(
+			"persistent-redis-tls-enabled",
+			"Enable TLS when connecting to the persistent Redis server.",
+		).Default("false").Bool(),
+		persistentRedisTLSCACert: cmd.Flag(
+			"persistent-redis-tls-ca-cert",
+			"Path to the persistent Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		persistentRedisTLSCert: cmd.Flag(
+			"persistent-redis-tls-cert",
+			"Path to the persistent Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		persistentRedisTLSKey: cmd.Flag(
+			"persistent-redis-tls-key",
+			"Path to the persistent Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		persistentRedisTLSInsecureSkipVerify: cmd.Flag(
+			"persistent-redis-tls-insecure-skip-verify",
+			"Skip persistent Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -366,6 +401,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
 			"Non-persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		nonPersistentRedisTLSEnabled: cmd.Flag(
+			"non-persistent-redis-tls-enabled",
+			"Enable TLS when connecting to the non-persistent Redis server.",
+		).Default("false").Bool(),
+		nonPersistentRedisTLSCACert: cmd.Flag(
+			"non-persistent-redis-tls-ca-cert",
+			"Path to the non-persistent Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		nonPersistentRedisTLSCert: cmd.Flag(
+			"non-persistent-redis-tls-cert",
+			"Path to the non-persistent Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		nonPersistentRedisTLSKey: cmd.Flag(
+			"non-persistent-redis-tls-key",
+			"Path to the non-persistent Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		nonPersistentRedisTLSInsecureSkipVerify: cmd.Flag(
+			"non-persistent-redis-tls-insecure-skip-verify",
+			"Skip non-persistent Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
 		domainTopic: cmd.Flag(
@@ -539,6 +594,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		pubSubRedisTLSEnabled: cmd.Flag(
+			"pubsub-redis-tls-enabled",
+			"Enable TLS when connecting to the PubSub Redis server.",
+		).Default("false").Bool(),
+		pubSubRedisTLSCACert: cmd.Flag(
+			"pubsub-redis-tls-ca-cert",
+			"Path to the PubSub Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		pubSubRedisTLSCert: cmd.Flag(
+			"pubsub-redis-tls-cert",
+			"Path to the PubSub Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		pubSubRedisTLSKey: cmd.Flag(
+			"pubsub-redis-tls-key",
+			"Path to the PubSub Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		pubSubRedisTLSInsecureSkipVerify: cmd.Flag(
+			"pubsub-redis-tls-insecure-skip-verify",
+			"Skip PubSub Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 		// AI Chat configuration (optional — disabled when openai-api-key is empty)
 		openAIAPIKey: cmd.Flag(
 			"openai-api-key",
@@ -722,6 +797,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.persistentRedisMode)),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *s.persistentRedisTLSEnabled,
+			CACert:             *s.persistentRedisTLSCACert,
+			Cert:               *s.persistentRedisTLSCert,
+			Key:                *s.persistentRedisTLSKey,
+			InsecureSkipVerify: *s.persistentRedisTLSInsecureSkipVerify,
+		}),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -736,6 +818,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *s.nonPersistentRedisTLSEnabled,
+			CACert:             *s.nonPersistentRedisTLSCACert,
+			Cert:               *s.nonPersistentRedisTLSCert,
+			Key:                *s.nonPersistentRedisTLSKey,
+			InsecureSkipVerify: *s.nonPersistentRedisTLSInsecureSkipVerify,
+		}),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -1460,6 +1549,13 @@ func (s *server) createPublisher(
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
 			redisv3.WithRedisMode(redisv3.RedisMode(*s.pubSubRedisMode)),
+			redisv3.WithTLS(redisv3.TLSConfig{
+				Enabled:            *s.pubSubRedisTLSEnabled,
+				CACert:             *s.pubSubRedisTLSCACert,
+				Cert:               *s.pubSubRedisTLSCert,
+				Key:                *s.pubSubRedisTLSKey,
+				InsecureSkipVerify: *s.pubSubRedisTLSInsecureSkipVerify,
+			}),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)

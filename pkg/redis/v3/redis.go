@@ -17,8 +17,11 @@ package v3
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -176,6 +179,21 @@ type pipeClient struct {
 	logger *zap.Logger
 }
 
+// TLSConfig configures TLS for connecting to a TLS-enabled Redis/Valkey
+// deployment (e.g. AWS ElastiCache/MemoryDB with in-transit encryption).
+// When Enabled is false, the connection is plaintext.
+type TLSConfig struct {
+	Enabled bool
+	// CACert is the path to a PEM-encoded CA certificate used to verify the
+	// server certificate. If empty, the host's system CA pool is used.
+	CACert string
+	// Cert and Key are paths to a PEM-encoded client certificate/key pair,
+	// used for mutual TLS. Both must be set together, or left empty.
+	Cert               string
+	Key                string
+	InsecureSkipVerify bool
+}
+
 type options struct {
 	password     string
 	maxRetries   int
@@ -185,6 +203,8 @@ type options struct {
 	poolTimeout  time.Duration
 	serverName   string
 	redisMode    RedisMode
+	tls          TLSConfig
+	tlsConfig    *tls.Config
 	metrics      metrics.Registerer
 	logger       *zap.Logger
 }
@@ -257,6 +277,15 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+// WithTLS enables TLS for the connection to Redis/Valkey. Use this to
+// connect to managed deployments with in-transit encryption enabled, such
+// as AWS ElastiCache/MemoryDB.
+func WithTLS(cfg TLSConfig) Option {
+	return func(opts *options) {
+		opts.tls = cfg
+	}
+}
+
 // WithRedisMode sets the Redis client creation mode.
 // "cluster" always creates a ClusterClient, "standalone" always creates a standard Client,
 // "auto" (default) tries detection and runs background mismatch checking.
@@ -279,6 +308,12 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 	}
 	logger := options.logger.Named("redis-v3")
 
+	tlsConfig, err := buildTLSConfig(options.tls)
+	if err != nil {
+		return nil, err
+	}
+	options.tlsConfig = tlsConfig
+
 	clusterOpts := &goredis.ClusterOptions{
 		Addrs:        []string{addr},
 		Password:     options.password,
@@ -287,6 +322,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		PoolSize:     options.poolSize,
 		MinIdleConns: options.minIdleConns,
 		PoolTimeout:  options.poolTimeout,
+		TLSConfig:    tlsConfig,
 	}
 	standardOpts := &goredis.Options{
 		Addr:         addr,
@@ -296,6 +332,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		PoolSize:     options.poolSize,
 		MinIdleConns: options.minIdleConns,
 		PoolTimeout:  options.poolTimeout,
+		TLSConfig:    tlsConfig,
 	}
 
 	var rc goredis.UniversalClient
@@ -358,6 +395,41 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 	return c, nil
 }
 
+// buildTLSConfig converts a TLSConfig into a *tls.Config suitable for
+// go-redis Options/ClusterOptions.TLSConfig. Returns nil (plaintext) when
+// TLS is not enabled.
+func buildTLSConfig(cfg TLSConfig) (*tls.Config, error) {
+	if !cfg.Enabled {
+		return nil, nil
+	}
+	tlsConfig := &tls.Config{
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: cfg.InsecureSkipVerify, //nolint:gosec
+	}
+	if cfg.CACert != "" {
+		caCert, err := os.ReadFile(cfg.CACert)
+		if err != nil {
+			return nil, fmt.Errorf("redis: failed to read TLS CA certificate: %w", err)
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("redis: failed to parse TLS CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+	if cfg.Cert != "" || cfg.Key != "" {
+		if cfg.Cert == "" || cfg.Key == "" {
+			return nil, fmt.Errorf("redis: both TLS client certificate and key must be set together")
+		}
+		cert, err := tls.LoadX509KeyPair(cfg.Cert, cfg.Key)
+		if err != nil {
+			return nil, fmt.Errorf("redis: failed to load TLS client certificate/key: %w", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+	return tlsConfig, nil
+}
+
 // detectRedisMode tries to determine whether the Redis server is a cluster or standalone
 // by issuing CLUSTER INFO with a short timeout. Falls back to standalone if detection fails.
 // Note: if Redis is unreachable at startup and the actual topology is a cluster,
@@ -416,6 +488,7 @@ func (c *client) runMismatchDetector(addr string) {
 			Addr:        addr,
 			Password:    c.opts.password,
 			DialTimeout: c.opts.dialTimeout,
+			TLSConfig:   c.opts.tlsConfig,
 		})
 
 		actualCluster := false
