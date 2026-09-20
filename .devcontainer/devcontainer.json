@@ -76,8 +76,16 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  // Start sshd at every container start so `gh codespace ssh` works without an editor attach
-  // (postAttachCommand only fires when an editor client attaches)
-  "postStartCommand": "bash .devcontainer/start-sshd.sh",
+  // Everything a container start must do, regardless of how the user connects.
+  // postAttachCommand (setup.sh) only fires when an editor client attaches, so
+  // `gh codespace ssh` sessions used to get no sshd, no Docker daemon and
+  // root-owned cache volumes. Each script owns one concern:
+  //   start-sshd.sh      - sshd, so `gh codespace ssh` can connect
+  //   fix-permissions.sh - chown the mounted cache volumes to the container user
+  //   start-docker.sh    - align the iptables backend with the Codespaces host
+  //                        daemon, then start dockerd (the alignment must happen
+  //                        before dockerd starts or the nested daemon has no
+  //                        network at all)
+  "postStartCommand": "bash .devcontainer/start-sshd.sh && bash .devcontainer/fix-permissions.sh && bash .devcontainer/start-docker.sh",
   "postAttachCommand": "bash .devcontainer/setup.sh"
 }
