@@ -34,11 +34,11 @@ const FlagsConnectedModal = ({
       <div className="flex flex-col w-full px-5 py-8 gap-y-5">
         <div className="flex-center flex-col gap-8">
           <Icon icon={IconFlagConnected} size={'fit'} />
-          <div className="typo-para-medium text-gray-700 text-center px-[42px]">
+          <div className="typo-para-medium text-gray-700 dark:text-dark-gray-300 text-center px-[42px]">
             {t('flags-connected-desc')}
           </div>
         </div>
-        <div className="flex flex-col w-full gap-y-5 p-4 bg-primary-50 rounded">
+        <div className="flex flex-col w-full gap-y-5 p-4 bg-primary-50 dark:bg-dark-purple-100 rounded">
           {segment?.features?.map((item, index) => (
             <div
               key={index}

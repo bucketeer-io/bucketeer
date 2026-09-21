@@ -83,7 +83,7 @@ const RolloutVariantModal = ({
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col w-full items-start p-5 gap-y-5">
-            <div className="typo-para-medium text-gray-600 w-full">
+            <div className="typo-para-medium text-gray-600 dark:text-dark-gray-300 w-full">
               {t('results.choose-variant')}
             </div>
             <Form.Field
@@ -106,7 +106,7 @@ const RolloutVariantModal = ({
                               <RadioGroupItem value={id} id={id} />
                               <label
                                 htmlFor={id}
-                                className="flex-1 typo-para-medium text-gray-600"
+                                className="flex-1 typo-para-medium text-gray-600 dark:text-dark-gray-300"
                               >
                                 <Trans
                                   i18nKey={'table:results.variant-percent'}

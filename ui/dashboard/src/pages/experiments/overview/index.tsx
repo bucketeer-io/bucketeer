@@ -78,7 +78,7 @@ const Overview = ({
           color={item.color}
           icon={item.icon}
           className={cn('border border-transparent', {
-            'border-gray-300':
+            'border-gray-300 dark:border-dark-black-600':
               filterBySummary && item.summaryFilterValue === filterBySummary
           })}
           onClick={() =>

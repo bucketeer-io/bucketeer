@@ -22,7 +22,7 @@ const CreatedAtTime = ({
       trigger={
         <div
           className={cn(
-            'flex items-center w-fit h-6 gap-1.5 text-gray-500 whitespace-nowrap -mb-1',
+            'flex items-center w-fit h-6 gap-1.5 text-gray-500 dark:text-dark-gray-200 whitespace-nowrap -mb-1',
             className
           )}
         >

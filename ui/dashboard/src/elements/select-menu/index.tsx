@@ -48,7 +48,7 @@ const SelectMenu = ({
                 return (
                   <div
                     key={index}
-                    className="flex items-center max-w-full gap-x-2 px-1.5 rounded bg-primary-100"
+                    className="flex items-center max-w-full gap-x-2 px-1.5 rounded bg-primary-100 dark:bg-dark-purple-100"
                   >
                     <NameWithTooltip
                       asChild
@@ -61,7 +61,7 @@ const SelectMenu = ({
                         <NameWithTooltip.Trigger
                           name={content}
                           id={id}
-                          className="typo-para-small py-1 [&>div]:!text-primary-500"
+                          className="typo-para-small py-1 [&>div]:!text-primary-500 dark:[&>div]:!text-dark-purple-700"
                           maxLines={1}
                           haveAction={false}
                         />
@@ -69,7 +69,7 @@ const SelectMenu = ({
                     />
                     <div
                       aria-label="tag-delete-btn"
-                      className="flex-center w-3 min-w-3 min-h-full self-stretch cursor-pointer hover:text-gray-900"
+                      className="flex-center w-3 min-w-3 min-h-full self-stretch cursor-pointer hover:text-gray-900 dark:hover:text-dark-gray-400"
                       onClick={() =>
                         onChange(
                           fieldValues.filter((tag: string) => tag !== item)
@@ -137,7 +137,7 @@ const SelectMenu = ({
               className={cn(
                 'flex items-center py-2 px-4 my-1 rounded pointer-events-none',
                 {
-                  'hover:bg-gray-100 cursor-pointer pointer-events-auto':
+                  'hover:bg-gray-100 dark:hover:bg-dark-purple-100 cursor-pointer pointer-events-auto':
                     !isExisted
                 }
               )}
@@ -160,7 +160,7 @@ const SelectMenu = ({
                 }
               }}
             >
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-dark-gray-400">
                 {t('create-tag-name', {
                   name: searchValue
                 })}

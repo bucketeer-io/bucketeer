@@ -58,9 +58,9 @@ export interface OperationModalProps {
 }
 
 const buttonCls =
-  '!typo-para-medium flex-1 !text-gray-600 !shadow-none border border-gray-200 hover:border-gray-400';
+  '!typo-para-medium flex-1 !text-gray-600 dark:!text-dark-gray-300 !shadow-none border border-gray-200 dark:border-dark-purple-100 hover:border-gray-400 dark:hover:border-dark-purple-300';
 const buttonActiveCls =
-  '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500';
+  '!text-accent-pink-500 border-accent-pink-500 dark:border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 dark:hover:border-accent-pink-500';
 
 const ProgressiveRolloutModal = ({
   editable,
@@ -260,10 +260,10 @@ const ProgressiveRolloutModal = ({
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-y-5 w-full p-5 pb-28">
             <div className="flex flex-col gap-y-3 w-full">
-              <p className="typo-head-bold-small text-gray-800">
+              <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
                 {t('common:source-type.progressive-rollout')}
               </p>
-              <p className="typo-para-small text-gray-500">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
                 {t('table:feature-flags.rollout-create-desc')}
               </p>
             </div>
@@ -312,7 +312,7 @@ const ProgressiveRolloutModal = ({
                   {t(`manual`)}
                 </Button>
               </div>
-              <p className="typo-para-small text-gray-500">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
                 {t(
                   isTemplateRollout
                     ? 'rollout-template-desc'
@@ -334,7 +334,7 @@ const ProgressiveRolloutModal = ({
               />
             )}
           </div>
-          <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+          <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={
                 <Button type="button" variant="secondary" onClick={onClose}>

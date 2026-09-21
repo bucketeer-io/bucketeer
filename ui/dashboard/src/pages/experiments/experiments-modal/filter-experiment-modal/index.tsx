@@ -234,9 +234,10 @@ const FilterExperimentModal = ({
             >
               <div
                 className={cn(
-                  'typo-para-small text-center py-[3px] w-[42px] min-w-[42px] rounded text-accent-pink-500 bg-accent-pink-50',
+                  'typo-para-small text-center py-[3px] w-[42px] min-w-[42px] rounded text-accent-pink-500 bg-accent-pink-50 dark:bg-accent-pink-900/30',
                   {
-                    'bg-gray-200 text-gray-600': filterIndex !== 0
+                    'bg-gray-200 dark:bg-dark-black-700 text-gray-600 dark:text-dark-gray-300':
+                      filterIndex !== 0
                   }
                 )}
               >
@@ -255,7 +256,9 @@ const FilterExperimentModal = ({
                 }
               />
 
-              <p className="typo-para-medium text-gray-600">is</p>
+              <p className="typo-para-medium text-gray-600 dark:text-dark-gray-300">
+                is
+              </p>
               <Dropdown
                 disabled={isLoading || !filterType}
                 placeholder={t(`select-value`)}

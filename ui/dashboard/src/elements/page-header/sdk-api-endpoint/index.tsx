@@ -18,13 +18,15 @@ const SDKApiEndpoint = () => {
     });
   }, [urls]);
   return (
-    <div className="flex items-center gap-x-2 p-2 bg-gray-100 rounded">
-      <p className="typo-para-small text-gray-600 whitespace-nowrap">
+    <div className="flex items-center gap-x-2 p-2 bg-gray-100 dark:bg-dark-black-700 rounded">
+      <p className="typo-para-small text-gray-600 dark:text-dark-gray-200 whitespace-nowrap">
         {t('sdk-api-endpoint')}
         {isJapaneseLanguage ? '：' : ':'}
       </p>
       <div className="flex items-center gap-x-1">
-        <p className="typo-para-small text-primary-500">{urls.API_ENDPOINT}</p>
+        <p className="typo-para-small text-primary-500 dark:text-dark-purple-700">
+          {urls.API_ENDPOINT}
+        </p>
         <Button variant={'grey'} className="size-fit p-0" onClick={handleCopy}>
           <Icon icon={IconCopy} size={'xs'} />
         </Button>

@@ -31,7 +31,7 @@ const TagList = ({
           trigger={
             <span
               aria-label={hiddenTagsLabel}
-              className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-2 py-0.5 typo-para-tiny font-medium text-gray-700"
+              className="inline-flex items-center gap-0.5 rounded bg-gray-100 dark:bg-dark-black-700 px-2 py-0.5 typo-para-tiny font-medium text-gray-700 dark:text-dark-gray-400"
             >
               <IconMoreHorizOutlined style={{ fontSize: 14 }} />+
               {hiddenTags.length}

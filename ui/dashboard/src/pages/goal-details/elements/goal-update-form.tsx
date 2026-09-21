@@ -68,8 +68,8 @@ const GoalUpdateForm = ({
     isShow: isDirty && !isSubmitting
   });
   return (
-    <div className="p-5 shadow-card rounded-lg bg-white">
-      <p className="text-gray-800 typo-head-bold-small">
+    <div className="p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card">
+      <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
         {t('form:general-info')}
       </p>
       <FormProvider {...form}>

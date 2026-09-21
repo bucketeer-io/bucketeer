@@ -23,7 +23,7 @@ const NotificationRow = ({
 }: NotificationRowProps) => {
   const formatDateTime = useFormatDateTime();
   return (
-    <div className="flex min-h-[130px] items-stretch gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-gray-300">
+    <div className="flex min-h-[130px] items-stretch gap-3 rounded-lg border border-gray-200 dark:border-dark-black-700 p-4 transition-colors hover:border-gray-300 dark:hover:border-dark-black-600">
       {selectable && (
         <div className="self-start pt-0.5">
           <Checkbox
@@ -44,26 +44,26 @@ const NotificationRow = ({
                 )}
                 <span
                   className={cn(
-                    'truncate typo-para-medium text-gray-900',
+                    'truncate typo-para-medium text-gray-900 dark:text-dark-gray-400',
                     !notification.read && 'font-semibold'
                   )}
                 >
                   {notification.title}
                 </span>
                 <TagList tags={notification.tags} />
-                <span className="ml-auto shrink-0 typo-para-tiny text-gray-500">
+                <span className="ml-auto shrink-0 typo-para-tiny text-gray-500 dark:text-dark-gray-200">
                   {formatDateTime(notification.publishedAt)}
                 </span>
               </div>
               {notification.content && (
-                <p className="line-clamp-2 typo-para-small text-gray-500">
+                <p className="line-clamp-2 typo-para-small text-gray-500 dark:text-dark-gray-200">
                   {markdownToText(notification.content)}
                 </p>
               )}
             </div>
           }
           footer={
-            <span className="typo-para-small text-gray-500">
+            <span className="typo-para-small text-gray-500 dark:text-dark-gray-200">
               {notification.createdBy.split('@')[0]}
             </span>
           }

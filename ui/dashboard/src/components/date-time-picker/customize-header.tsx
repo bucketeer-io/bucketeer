@@ -53,7 +53,7 @@ const CustomizeHeader = ({
           onChange={({ target: { value } }) =>
             changeMonth(months.indexOf(value))
           }
-          className="border-none font-sofia-pro typo-para-medium text-gray-700"
+          className="border-none font-sofia-pro typo-para-medium text-gray-700 dark:bg-transparent dark:text-dark-gray-400"
         >
           {months.map(option => (
             <option key={option} value={option}>
@@ -64,7 +64,7 @@ const CustomizeHeader = ({
         <select
           value={getYear(date)}
           onChange={({ target: { value } }) => changeYear(+value)}
-          className="border-none font-sofia-pro typo-para-medium text-gray-700"
+          className="border-none font-sofia-pro typo-para-medium text-gray-700 dark:bg-transparent dark:text-dark-gray-400"
         >
           {years.map(option => (
             <option key={option} value={option}>

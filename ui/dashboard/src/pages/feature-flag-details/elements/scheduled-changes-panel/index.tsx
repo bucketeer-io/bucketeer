@@ -65,13 +65,13 @@ const ScheduledChangesPanel = ({
         <div className="flex flex-col gap-y-4 p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <p className="typo-para-small text-gray-400">
+              <p className="typo-para-small text-gray-400 dark:text-dark-gray-100">
                 {t('common:loading')}
               </p>
             </div>
           ) : schedules.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <p className="typo-para-small text-gray-400">
+              <p className="typo-para-small text-gray-400 dark:text-dark-gray-100">
                 {t('feature-flags.no-scheduled-changes')}
               </p>
             </div>

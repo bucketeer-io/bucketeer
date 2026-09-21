@@ -17,7 +17,7 @@ const makeVariationTrigger = (
   const variation = variations[idx];
 
   return (
-    <div className="flex items-center gap-x-2 w-0 flex-1 text-gray-700 typo-para-medium">
+    <div className="flex items-center gap-x-2 w-0 flex-1 text-gray-700 dark:text-dark-gray-300 typo-para-medium">
       <FlagVariationPolygon index={idx} />
       <p className="truncate">{variation.name || fallbackLabel(idx)}</p>
     </div>
@@ -34,7 +34,7 @@ const DefaultVariations = () => {
     currentVariations?.map((item, index) => ({
       value: item.id,
       label: (
-        <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
+        <div className="flex items-center gap-x-2 text-gray-700 dark:text-dark-gray-300 typo-para-medium">
           <FlagVariationPolygon index={index} />
           {item.name || t('feature-flags.variation', { index: index + 1 })}
         </div>

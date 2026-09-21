@@ -13,8 +13,8 @@ import SlideModal from 'components/modal/slide';
 
 const InfoItem = ({ title, desc }: { title: ReactNode; desc: string }) => (
   <div className="flex flex-col flex-1 typo-para-small gap-y-2">
-    <p className="text-gray-600 capitalize">{title}</p>
-    <p className="text-gray-700 capitalize">{desc}</p>
+    <p className="text-gray-600 dark:text-dark-gray-200 capitalize">{title}</p>
+    <p className="text-gray-700 dark:text-dark-gray-400 capitalize">{desc}</p>
   </div>
 );
 
@@ -52,7 +52,7 @@ const RolloutCloneModal = ({
       <div className="flex flex-col gap-y-6 w-full p-5 pb-28">
         {type === RolloutTypeMap.TEMPLATE_SCHEDULE ? (
           <>
-            <p className="typo-head-bold-small text-gray-800">
+            <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
               {t('general-info')}
             </p>
             <div className="flex items-center w-full justify-between">
@@ -71,7 +71,7 @@ const RolloutCloneModal = ({
             </div>
           </>
         ) : (
-          <div className="flex flex-col w-full divide-y divide-gray-200">
+          <div className="flex flex-col w-full divide-y divide-gray-200 dark:divide-dark-black-700">
             <div className="flex items-center w-full justify-between pb-4">
               <InfoItem title={t('set')} desc={t('manual')} />
               <InfoItem
@@ -106,7 +106,7 @@ const RolloutCloneModal = ({
           </div>
         )}
       </div>
-      <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+      <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
         <ButtonBar
           primaryButton={
             <Button variant="primary" onClick={onClose}>

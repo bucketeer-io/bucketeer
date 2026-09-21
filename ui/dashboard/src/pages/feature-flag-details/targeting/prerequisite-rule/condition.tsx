@@ -114,14 +114,16 @@ const ConditionForm = forwardRef(
           className={cn(
             'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
             {
-              'bg-accent-pink-50 text-accent-pink-500': type === 'if',
-              'bg-gray-200 text-gray-600': type === 'and'
+              'bg-accent-pink-50 text-accent-pink-500 dark:bg-accent-pink-900/30':
+                type === 'if',
+              'bg-gray-200 text-gray-600 dark:bg-dark-black-700 dark:text-dark-gray-300':
+                type === 'and'
             }
           )}
         >
           {type === 'if' ? t('common:if') : t('common:and')}
         </div>
-        <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500">
+        <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 dark:border-dark-purple-300">
           <div className="flex w-full gap-x-4">
             <Form.Field
               control={control}
@@ -159,7 +161,7 @@ const ConditionForm = forwardRef(
                 </Form.Item>
               )}
             />
-            <div className="flex-center size-fit min-w-fit px-3 py-3.5 mt-6 rounded bg-gray-100 typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
+            <div className="flex-center size-fit min-w-fit px-3 py-3.5 mt-6 rounded bg-gray-100 dark:bg-dark-black-700 typo-para-medium leading-5 text-gray-700 dark:text-dark-gray-200 whitespace-nowrap">
               <Trans
                 i18nKey={'form:feature-flags.receiving-state'}
                 values={{
@@ -187,7 +189,7 @@ const ConditionForm = forwardRef(
                       onChange={field.onChange}
                       placeholder={t('experiments.select-variation')}
                       disabled={!variationOptions?.length}
-                      className="w-full"
+                      className="w-full dark:border-dark-purple-100"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -199,7 +201,7 @@ const ConditionForm = forwardRef(
               <Button
                 type="button"
                 variant={'grey'}
-                className="flex-center text-gray-500 hover:text-gray-600"
+                className="flex-center text-gray-500 hover:text-gray-600 dark:text-dark-gray-200 dark:hover:text-dark-gray-400"
                 onClick={onDeleteCondition}
               >
                 <Icon icon={IconTrash} size={'sm'} />

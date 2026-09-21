@@ -53,7 +53,7 @@ const ConfidenceVariants = ({
   );
 
   return (
-    <div className="flex items-center justify-between w-full gap-x-2 px-4 py-2 rounded-lg bg-gray-100">
+    <div className="flex items-center justify-between w-full gap-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-dark-black-700">
       {/* flex-1 min-w-0 allows the left section to shrink when space is tight */}
       <div className="flex items-center gap-x-3 flex-1 min-w-0">
         {/* ── Status badge — primary signal ── */}
@@ -77,7 +77,7 @@ const ConfidenceVariants = ({
             trigger={
               <button
                 type="button"
-                className="flex items-center gap-x-2 typo-head-bold-small text-gray-600 whitespace-nowrap cursor-default bg-transparent border-0 p-0"
+                className="flex items-center gap-x-2 typo-head-bold-small text-gray-600 dark:text-dark-gray-400 whitespace-nowrap cursor-default bg-transparent border-0 p-0"
               >
                 <Icon icon={IconExperiment} color="gray-600" size={'sm'} />
                 {t('results.status-monitoring')}
@@ -93,7 +93,7 @@ const ConfidenceVariants = ({
           return (
             <div
               key={item?.id}
-              className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600 whitespace-nowrap"
+              className="flex items-center gap-x-2 pl-3 border-l border-gray-400 dark:border-dark-black-800 typo-para-small text-gray-600 dark:text-dark-gray-200 whitespace-nowrap"
             >
               <Trans
                 i18nKey={'table:results.variant-chance-beats-baseline'}
@@ -136,7 +136,7 @@ const ConfidenceVariants = ({
               </div>
             }
             trigger={
-              <div className="flex items-center gap-x-2 typo-para-small text-gray-600 pl-3 border-l border-gray-400 whitespace-nowrap">
+              <div className="flex items-center gap-x-2 typo-para-small text-gray-600 dark:text-dark-gray-200 pl-3 border-l border-gray-400 dark:border-dark-black-800 whitespace-nowrap">
                 <Trans
                   i18nKey={'table:results.more-variants'}
                   values={{

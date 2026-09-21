@@ -221,7 +221,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   return (
     <SlideModal title={t('update-member')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
-        <p className="text-gray-800 typo-head-bold-small">
+        <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
           {t('form:general-info')}
         </p>
         <FormProvider {...form}>
@@ -379,7 +379,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 <EnvironmentRoles environments={formattedEnvironments} />
               </>
             )}
-            <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+            <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
                   <Button variant="secondary" onClick={onClose}>

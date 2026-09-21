@@ -13,10 +13,10 @@ const DebuggerPage = () => {
   return (
     <PageLayout.Root title={t('navigation.debugger')}>
       <PageLayout.Header>
-        <h1 className="text-gray-900 typo-head-bold-huge">
+        <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge">
           {t('navigation.debugger')}
         </h1>
-        <p className="text-gray-600 mt-3 typo-para-small">
+        <p className="text-gray-600 dark:text-dark-gray-200 mt-3 typo-para-small">
           <Trans
             i18nKey={'common:debugger-subtitle'}
             components={{
@@ -24,7 +24,7 @@ const DebuggerPage = () => {
                 <Link
                   to={DOCUMENTATION_LINKS.DEBUGGER}
                   target="_blank"
-                  className="inline-flex items-center gap-x-1 text-primary-500 underline"
+                  className="inline-flex items-center gap-x-1 text-primary-500 dark:text-dark-purple-700 underline"
                 />
               ),
               icon: <Icon icon={IconLaunchOutlined} size="sm" />

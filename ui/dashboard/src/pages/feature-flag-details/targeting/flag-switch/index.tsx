@@ -42,14 +42,14 @@ const FlagSwitch = ({
   );
 
   return (
-    <div className="flex items-center justify-between w-full px-5 h-[104px] rounded-lg shadow-card-secondary">
+    <div className="flex items-center justify-between w-full px-5 h-[104px] rounded-lg shadow-card-secondary dark:bg-dark-black-800 dark:shadow-dark-card">
       <Form.Field
         control={control}
         name="enabled"
         render={({ field }) => (
           <Form.Item className="w-full py-0">
             <Form.Control>
-              <div className="flex items-center w-full gap-x-2 typo-para-medium text-gray-700">
+              <div className="flex items-center w-full gap-x-2 typo-para-medium text-gray-700 dark:text-dark-gray-400">
                 <Trans
                   i18nKey={`form:targeting.flag-switch-${field.value ? 'on' : 'off'}`}
                   components={{
@@ -94,7 +94,7 @@ const FlagSwitch = ({
       />
       {!enabledWatch && (
         <div className="flex items-center gap-x-3">
-          <p className="typo-para-small text-gray-600 uppercase min-w-fit">
+          <p className="typo-para-small text-gray-600 dark:text-dark-gray-200 uppercase min-w-fit">
             {t('serve')}
           </p>
           <Form.Field

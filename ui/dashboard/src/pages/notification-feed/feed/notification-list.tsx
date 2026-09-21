@@ -118,9 +118,9 @@ const NotificationList = ({
       </div>
 
       {!read && selected.size > 0 && (
-        <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+        <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-dark-black-700 bg-gray-50 dark:bg-dark-black-700 px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="typo-para-medium text-gray-700">
+            <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
               {t('selected', { count: selected.size })}
             </span>
             <Button variant="text" size="sm" onClick={clearSelection}>

@@ -32,9 +32,12 @@ const OperationPagination = memo<OperationPaginationProps>(
             .map((_, i) => (
               <div
                 key={i}
-                className={cn('size-2 rounded-full bg-gray-300', {
-                  'w-6 bg-gray-600': page === i
-                })}
+                className={cn(
+                  'size-2 rounded-full bg-gray-300 dark:bg-dark-black-700',
+                  {
+                    'w-6 bg-gray-600 dark:bg-dark-gray-200': page === i
+                  }
+                )}
               />
             ))}
         </div>

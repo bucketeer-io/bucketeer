@@ -98,7 +98,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
 
   return (
     <div className="flex flex-col gap-y-5">
-      <p className="typo-head-bold-small text-gray-800">
+      <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
         {t('feature-flags.schedule')}
       </p>
 
@@ -185,7 +185,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                           'flex-center size-9 rounded-md border typo-para-medium transition-colors',
                           isActive
                             ? 'bg-primary-500 text-white border-primary-500'
-                            : 'bg-white text-gray-700 border-gray-400 hover:border-gray-500'
+                            : 'bg-white dark:bg-dark-black-800 text-gray-700 dark:text-dark-gray-400 border-gray-400 dark:border-dark-black-700 hover:border-gray-500 dark:hover:border-dark-purple-300'
                         )}
                       >
                         {t(`form:${DAY_LABELS_SHORT_KEYS[day]}`)}
@@ -209,7 +209,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
               <Form.Label required>
                 {t('feature-flags.day-of-month')}
               </Form.Label>
-              <p className="typo-para-small text-gray-500 mb-2">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 mb-2">
                 {t('feature-flags.day-of-month-hint')}
               </p>
               <Form.Control>
@@ -274,14 +274,14 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                 >
                   <div className="flex items-center pb-5 gap-x-2">
                     <RadioGroupItem value={EndConditionType.NEVER} />
-                    <span className="typo-para-medium text-gray-700">
+                    <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                       {t('feature-flags.end-never')}
                     </span>
                   </div>
 
                   <div className="flex items-center pb-5 gap-x-2">
                     <RadioGroupItem value={EndConditionType.ON_DATE} />
-                    <span className="typo-para-medium text-gray-700">
+                    <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                       {t('feature-flags.end-on-date')}
                     </span>
                     <Form.Field
@@ -312,7 +312,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
 
                   <div className="flex items-center pb-5 gap-x-2">
                     <RadioGroupItem value={EndConditionType.AFTER} />
-                    <span className="typo-para-medium text-gray-700">
+                    <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                       {t('feature-flags.end-after')}
                     </span>
                     <Form.Field
@@ -337,9 +337,9 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
                                   isDisabled ||
                                   endCondition !== EndConditionType.AFTER
                                 }
-                                className="w-[160px] py-[11px] px-4 rounded-lg border border-gray-400 typo-para-medium text-gray-700 focus:outline-none focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-400"
+                                className="w-[160px] py-[11px] px-4 rounded-lg border border-gray-400 dark:border-dark-black-700 bg-white dark:bg-dark-black-800 typo-para-medium text-gray-700 dark:text-dark-gray-400 focus:outline-none focus:border-primary-500 dark:focus:border-dark-purple-300 disabled:bg-gray-100 dark:disabled:bg-dark-black-700 disabled:text-gray-400 dark:disabled:text-dark-gray-200"
                               />
-                              <span className="typo-para-medium text-gray-700">
+                              <span className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                                 {t('feature-flags.occurrences')}
                               </span>
                             </div>
@@ -356,7 +356,7 @@ const RecurringScheduleList = ({ isDisabled }: { isDisabled: boolean }) => {
         />
       </div>
 
-      <div className="border-t border-gray-300 my-1" />
+      <div className="border-t border-gray-300 dark:border-dark-black-700 my-1" />
 
       <Form.Field
         control={control}

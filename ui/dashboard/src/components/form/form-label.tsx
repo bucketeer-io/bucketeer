@@ -19,7 +19,10 @@ const FormLabel = React.forwardRef(
     return (
       <div
         ref={ref}
-        className={cn('typo-para-small text-gray-600 mb-1', className)}
+        className={cn(
+          'typo-para-small text-gray-600 dark:text-dark-gray-400 mb-1',
+          className
+        )}
         id={formItemId}
         {...props}
       >

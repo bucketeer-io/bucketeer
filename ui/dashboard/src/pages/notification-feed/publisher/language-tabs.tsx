@@ -46,13 +46,13 @@ const LanguageTabs = ({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1">
-        <label className="typo-para-medium text-gray-700">
+        <label className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
           {t('form:languages')}
         </label>
         <Tooltip
           content={tooltipContent ?? t('form:languages-info')}
           trigger={
-            <span className="flex text-gray-400">
+            <span className="flex text-gray-400 dark:text-dark-gray-200">
               <Icon icon={IconInfo} size="xxs" />
             </span>
           }
@@ -67,7 +67,7 @@ const LanguageTabs = ({
                 'flex items-center gap-2 rounded-md border px-3 py-[11px] min-w-[127px] typo-para-medium transition-colors',
                 field.language === activeLanguage
                   ? 'border-primary-500 text-primary-500'
-                  : 'border-gray-300 text-gray-600 hover:text-gray-900'
+                  : 'border-gray-300 dark:border-dark-black-600 text-gray-600 dark:text-dark-gray-200 hover:text-gray-900 dark:hover:text-dark-gray-400'
               )}
             >
               <Button
@@ -87,7 +87,7 @@ const LanguageTabs = ({
                   variant="text"
                   aria-label={t('form:remove-language')}
                   onClick={() => onRemove(index, field.language)}
-                  className="h-auto px-0 text-gray-400 hover:text-gray-600"
+                  className="h-auto px-0 text-gray-400 dark:text-dark-gray-200 hover:text-gray-600 dark:hover:text-dark-gray-400"
                 >
                   <X size={14} />
                 </Button>

@@ -1,4 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  IconDarkModeOutlined,
+  IconLightModeOutlined
+} from 'react-icons-material-design';
 import { AccountAvatar, accountUpdater } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
 import defaultAvatar from 'assets/avatars/default.svg';
@@ -6,6 +10,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { WALKTHROUGH_ENABLED } from 'configs';
 import { useWalkthroughContext } from 'contexts/walkthrough-context';
 import { useToast, useToggleOpen } from 'hooks';
+import { useTheme } from 'hooks/use-theme';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { onChangeFontWithLocalized } from 'utils/function';
@@ -28,6 +33,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   const { t } = useTranslation(['common']);
   const { myOrganizations, consoleAccount, logout, onMeFetcher } = useAuth();
   const { startWalkthrough } = useWalkthroughContext();
+  const { theme, toggleTheme } = useTheme();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { errorNotify } = useToast();
   const popoverCloseRef = useRef<HTMLButtonElement>(null);
@@ -122,11 +128,20 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
         startWalkthrough();
       }
     },
+
     myOrganizations.length > 1 && {
       label: consoleAccount?.organization?.name || '',
       icon: IconBuilding,
       actIcon: IconChevronRight,
       onClick: onOpenSwitchOrg
+    },
+    {
+      label:
+        theme === 'dark'
+          ? t('navigation.light-mode')
+          : t('navigation.dark-mode'),
+      icon: theme === 'dark' ? IconLightModeOutlined : IconDarkModeOutlined,
+      onClick: toggleTheme
     },
     {
       label: t(`navigation.logout`),
@@ -139,7 +154,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
     <Popover.Root>
       <Popover.Content align="start" className="border-none p-0">
         <Popover.Close ref={popoverCloseRef} className="hidden" />
-        <div className="bg-primary-600 rounded-lg min-w-[200px] max-w-[220px] mb-2">
+        <div className="bg-primary-600 dark:bg-dark-black-800 rounded-lg min-w-[200px] max-w-[220px] mb-2">
           {menuItems.map((item, index) => (
             <MenuItemComponent {...item} key={index} />
           ))}

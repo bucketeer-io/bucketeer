@@ -66,10 +66,10 @@ const SelectOrganization = () => {
 
   return (
     <AuthWrapper>
-      <h1 className="text-gray-900 typo-head-bold-huge">
+      <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge">
         {t(`select-organization.title`)}
       </h1>
-      <p className="text-gray-600 typo-para-medium mt-4">
+      <p className="text-gray-600 dark:text-dark-gray-200 typo-para-medium mt-4">
         {t(`select-organization.description`)}
       </p>
       <FormProvider {...form}>

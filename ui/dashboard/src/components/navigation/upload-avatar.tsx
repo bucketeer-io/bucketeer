@@ -122,7 +122,9 @@ const UploadAvatarModal = ({
       onClose={onClose}
     >
       <div className="py-5 flex flex-col items-center">
-        <div className="typo-para-big text-gray-700">{t(`upload-title`)}</div>
+        <div className="typo-para-big text-gray-700 dark:text-dark-gray-300">
+          {t(`upload-title`)}
+        </div>
         <div className="flex items-center justify-center py-5 flex-wrap gap-6">
           {avatarOptions.map(avt => (
             <AvatarImage

@@ -73,7 +73,8 @@ const Overview = ({
                   color={item.color}
                   icon={item.icon}
                   className={cn('border border-transparent', {
-                    'border-gray-300': item.filterValue === statusFilter
+                    'border-gray-300 dark:border-dark-black-600':
+                      item.filterValue === statusFilter
                   })}
                   onClick={() => onChangeFilters(item.filterValue)}
                 />
