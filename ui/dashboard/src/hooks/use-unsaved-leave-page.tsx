@@ -1,14 +1,16 @@
 import {
   createContext,
-  Dispatch,
   ReactNode,
-  SetStateAction,
+  RefObject,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router';
+import { type BlockerFunction, useBlocker } from 'react-router';
 import { LEAVE_PAGE_CANCELLED_EVENT } from 'constants/walkthrough';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -23,15 +25,27 @@ interface ConfirmOptions {
   onCancel?: () => void;
 }
 
+interface RegisteredBlocker {
+  isShow: boolean;
+  title?: string;
+  content?: string;
+  titleLeave?: string;
+  titleStay?: string;
+  callBackCancel?: () => void;
+}
+
 interface ConfirmContextType {
   isShow: boolean;
-  setIsShow: Dispatch<SetStateAction<boolean>>;
-  setOptions: Dispatch<SetStateAction<ConfirmOptions | null>>;
   confirm: (options: ConfirmOptions) => void;
   options: ConfirmOptions | null;
   handleCancel: () => void;
   handleConfirm: () => void;
+  registerBlocker: (id: number, state: RegisteredBlocker | null) => void;
+  allowNavigation: (action: () => void) => void;
+  resetAllBlockers: () => void;
+  bypassRef: RefObject<boolean>;
 }
+
 interface Props {
   title?: string;
   titleStay?: string;
@@ -44,34 +58,19 @@ interface Props {
 
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
-let bypassNavigation = false;
-
 // While the onboarding walkthrough (driver.js) runs, navigation attempts are
 // ignored instead of prompting, so its guided steps are never interrupted.
 const isWalkthroughActive = () =>
   document.body.classList.contains('driver-active');
 
-export function allowNavigation(action?: () => void) {
-  bypassNavigation = true;
-  if (action) {
-    try {
-      action();
-    } finally {
-      bypassNavigation = false;
-    }
-  } else {
-    // Fallback for existing call sites that do not pass a callback:
-    // ensure the bypass is short-lived and does not leak indefinitely.
-    setTimeout(() => {
-      bypassNavigation = false;
-    }, 0);
-  }
-}
+let nextInstanceId = 0;
 
 export function useUnsavedLeavePage({
   isShow,
   title = 'message:leave-page-unsaved-changes',
   content = 'message:leave-page-unsaved-changes-content',
+  titleLeave,
+  titleStay,
   callBackCancel
 }: {
   isShow: boolean;
@@ -81,100 +80,29 @@ export function useUnsavedLeavePage({
   titleStay?: string;
   callBackCancel?: () => void;
 }) {
-  const { confirm, setIsShow: setIsShowGlobal, isShow: global } = useConfirm();
-  const navigator = useContext(NavigationContext).navigator;
+  const { registerBlocker } = useConfirm();
 
+  const instanceId = useRef(++nextInstanceId).current;
+
+  // Register this instance's dirty state with the provider, which owns the
+  // single router blocker and aggregates every registered instance into one
+  // unsaved-state decision. Multiple instances can be mounted at once (e.g. a
+  // dirty parent page with a dirty nested modal), so each is tracked
+  // separately instead of each instance creating its own blocker.
   useEffect(() => {
-    setIsShowGlobal(isShow);
-  }, [isShow]);
+    registerBlocker(instanceId, {
+      isShow,
+      title,
+      content,
+      titleLeave,
+      titleStay,
+      callBackCancel
+    });
+  }, [isShow, title, content, titleLeave, titleStay, callBackCancel]);
 
-  useEffect(() => {
-    if (!global) return;
+  useEffect(() => () => registerBlocker(instanceId, null), []);
 
-    const push = navigator.push;
-    const replace = navigator.replace;
-
-    navigator.push = (...args: Parameters<typeof push>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return push(...args);
-      }
-      if (isWalkthroughActive()) return;
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return push(...args);
-        }
-      });
-    };
-
-    navigator.replace = (...args: Parameters<typeof replace>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return replace(...args);
-      }
-      if (isWalkthroughActive()) return;
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return replace(...args);
-        }
-      });
-    };
-
-    return () => {
-      navigator.push = push;
-      navigator.replace = replace;
-    };
-  }, [global, title, content, navigator]);
-
-  useEffect(() => {
-    if (!global) return;
-    history.pushState(null, '', window.location.href);
-
-    const handlePopState = () => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return;
-      }
-      if (isWalkthroughActive()) {
-        // Stay on the page without prompting.
-        history.pushState(null, '', window.location.href);
-        return;
-      }
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          history.back();
-        },
-        onCancel: () => {
-          history.pushState(null, '', window.location.href);
-        }
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [global, title, content]);
-
+  // Browser tab close / reload guard
   useEffect(() => {
     if (!isShow) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -184,37 +112,145 @@ export function useUnsavedLeavePage({
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [isShow]);
+
   return { isShow };
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
-  const [options, setOptions] = useState<ConfirmOptions | null>(null);
-  const [isShow, setIsShow] = useState<boolean>(false);
-  const confirm = (opts: ConfirmOptions) => setOptions(opts);
+  const [queue, setQueue] = useState<ConfirmOptions[]>([]);
+  const [isShow, setIsShow] = useState(false);
+  const bypassRef = useRef(false);
+  const blockersRef = useRef<Map<number, RegisteredBlocker>>(new Map());
+
+  const options = queue[0] ?? null;
+
+  const confirm = useCallback((opts: ConfirmOptions) => {
+    setQueue(prev => [...prev, opts]);
+  }, []);
+
+  const isAnyDirty = useCallback(
+    () => [...blockersRef.current.values()].some(b => b.isShow),
+    []
+  );
+
+  const registerBlocker = useCallback(
+    (id: number, state: RegisteredBlocker | null) => {
+      if (state) {
+        blockersRef.current.set(id, state);
+      } else {
+        blockersRef.current.delete(id);
+      }
+      setIsShow(isAnyDirty());
+    },
+    [isAnyDirty]
+  );
+
+  // Leaving is a decision to discard every unsaved change, not just the one
+  // that triggered the prompt. Clearing the whole registry here (rather than
+  // relying on each instance to unmount and unregister itself) prevents a
+  // still-mounted dirty instance from re-blocking a chained navigation that
+  // fires before React has torn down the old route tree — e.g. switching
+  // organizations issues a root navigation, which then triggers a follow-up
+  // redirect to the env-specific URL from an effect in the newly mounted
+  // route; without this, that second navigation re-opens the confirm dialog.
+  const resetAllBlockers = useCallback(() => {
+    blockersRef.current.clear();
+    setIsShow(false);
+  }, []);
+
+  const blocker = useBlocker(
+    useCallback<BlockerFunction>(() => {
+      if (bypassRef.current) {
+        bypassRef.current = false;
+        return false;
+      }
+      return isAnyDirty();
+    }, [])
+  );
+
+  // When blocker fires, show the confirmation dialog — unless the onboarding
+  // walkthrough (driver.js) is running, in which case the navigation attempt
+  // is silently suppressed (reset without prompting) so guided steps are
+  // never interrupted.
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+
+    if (isWalkthroughActive()) {
+      blocker.reset();
+      return;
+    }
+
+    // Use the most recently registered dirty instance to source the dialog's
+    // copy, but proceeding must clear every dirty instance so none of them
+    // re-blocks the very navigation the user just confirmed.
+    const dirtyBlockers = [...blockersRef.current.values()].filter(
+      b => b.isShow
+    );
+    const active = dirtyBlockers[dirtyBlockers.length - 1];
+
+    confirm({
+      title: active?.title,
+      titleLeave: active?.titleLeave,
+      titleStay: active?.titleStay,
+      message: active?.content,
+      onConfirm: () => {
+        dirtyBlockers.forEach(b => b.callBackCancel?.());
+        resetAllBlockers();
+        blocker.proceed();
+      },
+      onCancel: () => {
+        blocker.reset();
+      }
+    });
+  }, [blocker.state]);
+
+  const allowNavigation = useCallback((action: () => void) => {
+    // One-shot bypass so the next blocked navigation isn't blocked.
+    bypassRef.current = true;
+    try {
+      action();
+    } finally {
+      queueMicrotask(() => {
+        bypassRef.current = false;
+      });
+    }
+  }, []);
 
   const handleConfirm = () => {
     options?.onConfirm();
-    setOptions(null);
+    setQueue(prev => prev.slice(1));
   };
 
   const handleCancel = () => {
     options?.onCancel?.();
-    setOptions(null);
+    setQueue(prev => prev.slice(1));
     document.dispatchEvent(new CustomEvent(LEAVE_PAGE_CANCELLED_EVENT));
   };
 
+  const value = useMemo<ConfirmContextType>(
+    () => ({
+      isShow,
+      confirm,
+      options,
+      handleCancel,
+      handleConfirm,
+      registerBlocker,
+      allowNavigation,
+      resetAllBlockers,
+      bypassRef
+    }),
+    [
+      isShow,
+      confirm,
+      options,
+      allowNavigation,
+      registerBlocker,
+      resetAllBlockers
+    ]
+  );
+
   return (
-    <ConfirmContext.Provider
-      value={{
-        confirm,
-        options,
-        setOptions,
-        isShow,
-        setIsShow,
-        handleCancel,
-        handleConfirm
-      }}
-    >
+    <ConfirmContext.Provider value={value}>
       {children}
       {options && (
         <PopupGlobal
