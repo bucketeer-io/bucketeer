@@ -62,7 +62,6 @@ import {
   setCurrentProjectEnvironmentStorage
 } from 'storage/project-environment';
 import { getTokenStorage } from 'storage/token';
-import { v4 as uuid } from 'uuid';
 import { ConsoleAccount, EnvironmentRole } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { checkEnvironmentEmptyId } from 'utils/function';
@@ -126,16 +125,11 @@ function App() {
 
 export const Root = memo(() => {
   const authToken = getTokenStorage();
-  const [pageKey, setPageKey] = useState<string>(uuid());
   const [isNavCollapsed, setIsNavCollapsed] = useState(
     getNavigationCollapsedStorage
   );
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
-
-  const handleChangePageKey = useCallback(() => {
-    setPageKey(uuid());
-  }, [setPageKey]);
 
   const rootRoutes: RouteObject[] = [
     ...(consoleAccount?.isSystemAdmin
@@ -149,7 +143,7 @@ export const Root = memo(() => {
     {
       path: '/:envUrlCode?/*',
       element: consoleAccount ? (
-        <EnvironmentRoot key={pageKey} account={consoleAccount} />
+        <EnvironmentRoot account={consoleAccount} />
       ) : null
     },
     { path: '*', element: <NotFoundPage /> }
@@ -170,7 +164,6 @@ export const Root = memo(() => {
       <WalkthroughProvider>
         <div className="flex flex-row w-full h-full">
           <Navigation
-            onClickNavLink={handleChangePageKey}
             isCollapsed={isNavCollapsed}
             onToggleCollapsed={setIsNavCollapsed}
           />

@@ -22,16 +22,11 @@ import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
 
 type NavigationProps = {
-  onClickNavLink: () => void;
   isCollapsed: boolean;
   onToggleCollapsed: (value: boolean) => void;
 };
 
-const Navigation = ({
-  onClickNavLink,
-  isCollapsed,
-  onToggleCollapsed
-}: NavigationProps) => {
+const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
   const { t } = useTranslation(['common']);
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -296,7 +291,6 @@ const Navigation = ({
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
-                onClickNavLink={onClickNavLink}
                 isCollapsed={isCollapsed}
               />
             ))}
