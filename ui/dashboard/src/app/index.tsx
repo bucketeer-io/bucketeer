@@ -1,12 +1,16 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import {
-  BrowserRouter,
+  createBrowserRouter,
+  createRoutesFromElements,
+  Outlet,
   Route,
-  Routes,
+  RouteObject,
+  RouterProvider,
   useParams,
   useNavigate,
-  useLocation
+  useLocation,
+  useRoutes
 } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -58,7 +62,6 @@ import {
   setCurrentProjectEnvironmentStorage
 } from 'storage/project-environment';
 import { getTokenStorage } from 'storage/token';
-import { v4 as uuid } from 'uuid';
 import { ConsoleAccount, EnvironmentRole } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { checkEnvironmentEmptyId } from 'utils/function';
@@ -99,38 +102,18 @@ export const AppLoading = () => (
   </div>
 );
 
+const AppLayout = () => (
+  <AuthProvider>
+    <Outlet />
+  </AuthProvider>
+);
+
 function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         <ConfirmProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route
-                  path={PAGE_PATH_AUTH_CALLBACK}
-                  element={<AuthCallbackPage />}
-                />
-                <Route
-                  path={PAGE_PATH_AUTH_DEMO_CALLBACK}
-                  element={<AuthDemoCallbackPage />}
-                />
-                <Route
-                  path={PAGE_PATH_AUTH_SIGNIN}
-                  element={<SignInEmailPage />}
-                />
-                <Route
-                  path={PAGE_PATH_DEMO_SITE}
-                  element={<AccessDemoPage />}
-                />
-                <Route
-                  path={`${PAGE_PATH_DEMO_SITE}/new`}
-                  element={<CreateDemoPage />}
-                />
-                <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
+          <RouterProvider router={router} />
         </ConfirmProvider>
         {/* {process.env.NODE_ENV === 'development' && (
           <ReactQueryDevtools initialIsOpen={false} />
@@ -142,16 +125,31 @@ function App() {
 
 export const Root = memo(() => {
   const authToken = getTokenStorage();
-  const [pageKey, setPageKey] = useState<string>(uuid());
   const [isNavCollapsed, setIsNavCollapsed] = useState(
     getNavigationCollapsedStorage
   );
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
-  const handleChangePageKey = useCallback(() => {
-    setPageKey(uuid());
-  }, [setPageKey]);
+  const rootRoutes: RouteObject[] = [
+    ...(consoleAccount?.isSystemAdmin
+      ? [
+          {
+            path: `${PAGE_PATH_ORGANIZATIONS}/*`,
+            element: <OrganizationsRoot />
+          }
+        ]
+      : []),
+    {
+      path: '/:envUrlCode?/*',
+      element: consoleAccount ? (
+        <EnvironmentRoot account={consoleAccount} />
+      ) : null
+    },
+    { path: '*', element: <NotFoundPage /> }
+  ];
+
+  const rootElement = useRoutes(rootRoutes);
 
   if (isInitialLoading) {
     return <AppLoading />;
@@ -166,7 +164,6 @@ export const Root = memo(() => {
       <WalkthroughProvider>
         <div className="flex flex-row w-full h-full">
           <Navigation
-            onClickNavLink={handleChangePageKey}
             isCollapsed={isNavCollapsed}
             onToggleCollapsed={setIsNavCollapsed}
           />
@@ -176,20 +173,7 @@ export const Root = memo(() => {
               isNavCollapsed ? 'ml-[60px]' : 'ml-[248px]'
             )}
           >
-            <Routes>
-              {consoleAccount.isSystemAdmin && (
-                <Route
-                  path={`${PAGE_PATH_ORGANIZATIONS}/*`}
-                  element={<OrganizationsRoot />}
-                />
-              )}
-              <Route
-                key={pageKey}
-                path={'/:envUrlCode?/*'}
-                element={<EnvironmentRoot account={consoleAccount} />}
-              />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            {rootElement}
           </div>
           {AI_CHAT_ENABLED && <ChatWidget />}
         </div>
@@ -275,50 +259,58 @@ export const EnvironmentRoot = memo(
       handleCheckEnvCodeOnInit();
     }, [account, envUrlCode]);
 
+    const environmentRoutes: RouteObject[] = [
+      ...(!editable
+        ? [{ path: `/:any${PAGE_PATH_NEW}`, element: <AccessDeniedPage /> }]
+        : []),
+      { path: `${PAGE_PATH_FEATURES}/*`, element: <FeatureFlagsRoot /> },
+      { path: PAGE_PATH_SETTINGS, element: <SettingsPage /> },
+      { path: `${PAGE_PATH_PROJECTS}/*`, element: <ProjectsRoot /> },
+      { path: `${PAGE_PATH_APIKEYS}/*`, element: <APIKeysPage /> },
+      { path: `${PAGE_PATH_MEMBERS}/*`, element: <MemberRoot /> },
+      {
+        path: `${PAGE_PATH_NOTIFICATIONS}/*`,
+        element: <NotificationsPage />
+      },
+      { path: `${PAGE_PATH_PUSHES}/*`, element: <PushesPage /> },
+      {
+        path: `${PAGE_PATH_NOTIFICATION_FEED}/*`,
+        element: <NotificationFeedPage />
+      },
+      { path: `${PAGE_PATH_GOALS}/*`, element: <GoalsRoot /> },
+      {
+        path: `${PAGE_PATH_USER_SEGMENTS}/*`,
+        element: <UserSegmentsRoot />
+      },
+      { path: `${PAGE_PATH_EXPERIMENTS}/*`, element: <ExperimentsRoot /> },
+      { path: `${PAGE_PATH_AUDIT_LOGS}/*`, element: <AuditLogsPage /> },
+      { path: `${PAGE_PATH_DEBUGGER}/*`, element: <DebuggerPage /> },
+      { path: `${PAGE_PATH_INSIGHTS}/*`, element: <InsightsPage /> },
+      { path: '*', element: <NotFoundPage /> }
+    ];
+
+    const environmentElement = useRoutes(environmentRoutes);
+
     if (pathname === '/') return <AppLoading />;
 
-    return (
-      <Routes>
-        {!editable && (
-          <Route
-            path={`/:any${PAGE_PATH_NEW}`}
-            element={<AccessDeniedPage />}
-          />
-        )}
-        <Route
-          path={`${PAGE_PATH_FEATURES}/*`}
-          element={<FeatureFlagsRoot />}
-        />
-        <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
-        <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
-        <Route path={`${PAGE_PATH_APIKEYS}/*`} element={<APIKeysPage />} />
-        <Route path={`${PAGE_PATH_MEMBERS}/*`} element={<MemberRoot />} />
-        <Route
-          path={`${PAGE_PATH_NOTIFICATIONS}/*`}
-          element={<NotificationsPage />}
-        />
-        <Route path={`${PAGE_PATH_PUSHES}/*`} element={<PushesPage />} />
-        <Route
-          path={`${PAGE_PATH_NOTIFICATION_FEED}/*`}
-          element={<NotificationFeedPage />}
-        />
-        <Route path={`${PAGE_PATH_GOALS}/*`} element={<GoalsRoot />} />
-        <Route
-          path={`${PAGE_PATH_USER_SEGMENTS}/*`}
-          element={<UserSegmentsRoot />}
-        />
-        <Route
-          path={`${PAGE_PATH_EXPERIMENTS}/*`}
-          element={<ExperimentsRoot />}
-        />
-        <Route path={`${PAGE_PATH_AUDIT_LOGS}/*`} element={<AuditLogsPage />} />
-        <Route path={`${PAGE_PATH_DEBUGGER}/*`} element={<DebuggerPage />} />
-        <Route path={`${PAGE_PATH_INSIGHTS}/*`} element={<InsightsPage />} />
-
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    );
+    return environmentElement;
   }
+);
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<AppLayout />}>
+      <Route path={PAGE_PATH_AUTH_CALLBACK} element={<AuthCallbackPage />} />
+      <Route
+        path={PAGE_PATH_AUTH_DEMO_CALLBACK}
+        element={<AuthDemoCallbackPage />}
+      />
+      <Route path={PAGE_PATH_AUTH_SIGNIN} element={<SignInEmailPage />} />
+      <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
+      <Route path={`${PAGE_PATH_DEMO_SITE}/new`} element={<CreateDemoPage />} />
+      <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
+    </Route>
+  )
 );
 
 export default App;

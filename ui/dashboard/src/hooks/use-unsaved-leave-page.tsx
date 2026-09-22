@@ -3,12 +3,14 @@ import {
   Dispatch,
   ReactNode,
   SetStateAction,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router';
+import { useBlocker } from 'react-router';
 import { LEAVE_PAGE_CANCELLED_EVENT } from 'constants/walkthrough';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -81,99 +83,46 @@ export function useUnsavedLeavePage({
   titleStay?: string;
   callBackCancel?: () => void;
 }) {
-  const { confirm, setIsShow: setIsShowGlobal, isShow: global } = useConfirm();
-  const navigator = useContext(NavigationContext).navigator;
+  const { confirm, setIsShow: setIsShowGlobal } = useConfirm();
+
+  // `isShow` is read fresh inside the blocker function rather than captured
+  // by value, since `useBlocker`'s `shouldBlock` function is called by the
+  // router at navigation time, not re-created on every isShow change.
+  const isShowRef = useRef(isShow);
+  isShowRef.current = isShow;
 
   useEffect(() => {
     setIsShowGlobal(isShow);
   }, [isShow]);
 
-  useEffect(() => {
-    if (!global) return;
+  const shouldBlock = useCallback(() => {
+    if (!isShowRef.current || bypassNavigation) {
+      bypassNavigation = false;
+      return false;
+    }
+    return !isWalkthroughActive();
+  }, []);
 
-    const push = navigator.push;
-    const replace = navigator.replace;
-
-    navigator.push = (...args: Parameters<typeof push>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return push(...args);
-      }
-      if (isWalkthroughActive()) return;
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return push(...args);
-        }
-      });
-    };
-
-    navigator.replace = (...args: Parameters<typeof replace>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return replace(...args);
-      }
-      if (isWalkthroughActive()) return;
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return replace(...args);
-        }
-      });
-    };
-
-    return () => {
-      navigator.push = push;
-      navigator.replace = replace;
-    };
-  }, [global, title, content, navigator]);
+  const blocker = useBlocker(shouldBlock);
 
   useEffect(() => {
-    if (!global) return;
-    history.pushState(null, '', window.location.href);
+    if (blocker.state !== 'blocked') return;
 
-    const handlePopState = () => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return;
-      }
-      if (isWalkthroughActive()) {
-        // Stay on the page without prompting.
-        history.pushState(null, '', window.location.href);
-        return;
-      }
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          history.back();
-        },
-        onCancel: () => {
-          history.pushState(null, '', window.location.href);
+    confirm({
+      title: title,
+      message: content,
+      onConfirm: () => {
+        if (callBackCancel) {
+          callBackCancel();
         }
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [global, title, content]);
+        setIsShowGlobal(false);
+        blocker.proceed();
+      },
+      onCancel: () => {
+        blocker.reset();
+      }
+    });
+  }, [blocker.state]);
 
   useEffect(() => {
     if (!isShow) return;
