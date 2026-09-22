@@ -5,11 +5,13 @@ import {
   createRoutesFromElements,
   Outlet,
   Route,
+  RouteObject,
   RouterProvider,
   Routes,
   useParams,
   useNavigate,
-  useLocation
+  useLocation,
+  useRoutes
 } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -258,49 +260,41 @@ export const EnvironmentRoot = memo(
       handleCheckEnvCodeOnInit();
     }, [account, envUrlCode]);
 
+    const environmentRoutes: RouteObject[] = [
+      ...(!editable
+        ? [{ path: `/:any${PAGE_PATH_NEW}`, element: <AccessDeniedPage /> }]
+        : []),
+      { path: `${PAGE_PATH_FEATURES}/*`, element: <FeatureFlagsRoot /> },
+      { path: PAGE_PATH_SETTINGS, element: <SettingsPage /> },
+      { path: `${PAGE_PATH_PROJECTS}/*`, element: <ProjectsRoot /> },
+      { path: `${PAGE_PATH_APIKEYS}/*`, element: <APIKeysPage /> },
+      { path: `${PAGE_PATH_MEMBERS}/*`, element: <MemberRoot /> },
+      {
+        path: `${PAGE_PATH_NOTIFICATIONS}/*`,
+        element: <NotificationsPage />
+      },
+      { path: `${PAGE_PATH_PUSHES}/*`, element: <PushesPage /> },
+      {
+        path: `${PAGE_PATH_NOTIFICATION_FEED}/*`,
+        element: <NotificationFeedPage />
+      },
+      { path: `${PAGE_PATH_GOALS}/*`, element: <GoalsRoot /> },
+      {
+        path: `${PAGE_PATH_USER_SEGMENTS}/*`,
+        element: <UserSegmentsRoot />
+      },
+      { path: `${PAGE_PATH_EXPERIMENTS}/*`, element: <ExperimentsRoot /> },
+      { path: `${PAGE_PATH_AUDIT_LOGS}/*`, element: <AuditLogsPage /> },
+      { path: `${PAGE_PATH_DEBUGGER}/*`, element: <DebuggerPage /> },
+      { path: `${PAGE_PATH_INSIGHTS}/*`, element: <InsightsPage /> },
+      { path: '*', element: <NotFoundPage /> }
+    ];
+
+    const environmentElement = useRoutes(environmentRoutes);
+
     if (pathname === '/') return <AppLoading />;
 
-    return (
-      <Routes>
-        {!editable && (
-          <Route
-            path={`/:any${PAGE_PATH_NEW}`}
-            element={<AccessDeniedPage />}
-          />
-        )}
-        <Route
-          path={`${PAGE_PATH_FEATURES}/*`}
-          element={<FeatureFlagsRoot />}
-        />
-        <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
-        <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
-        <Route path={`${PAGE_PATH_APIKEYS}/*`} element={<APIKeysPage />} />
-        <Route path={`${PAGE_PATH_MEMBERS}/*`} element={<MemberRoot />} />
-        <Route
-          path={`${PAGE_PATH_NOTIFICATIONS}/*`}
-          element={<NotificationsPage />}
-        />
-        <Route path={`${PAGE_PATH_PUSHES}/*`} element={<PushesPage />} />
-        <Route
-          path={`${PAGE_PATH_NOTIFICATION_FEED}/*`}
-          element={<NotificationFeedPage />}
-        />
-        <Route path={`${PAGE_PATH_GOALS}/*`} element={<GoalsRoot />} />
-        <Route
-          path={`${PAGE_PATH_USER_SEGMENTS}/*`}
-          element={<UserSegmentsRoot />}
-        />
-        <Route
-          path={`${PAGE_PATH_EXPERIMENTS}/*`}
-          element={<ExperimentsRoot />}
-        />
-        <Route path={`${PAGE_PATH_AUDIT_LOGS}/*`} element={<AuditLogsPage />} />
-        <Route path={`${PAGE_PATH_DEBUGGER}/*`} element={<DebuggerPage />} />
-        <Route path={`${PAGE_PATH_INSIGHTS}/*`} element={<InsightsPage />} />
-
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    );
+    return environmentElement;
   }
 );
 
