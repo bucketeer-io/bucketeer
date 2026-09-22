@@ -7,7 +7,6 @@ import {
   Route,
   RouteObject,
   RouterProvider,
-  Routes,
   useParams,
   useNavigate,
   useLocation,
@@ -138,6 +137,26 @@ export const Root = memo(() => {
     setPageKey(uuid());
   }, [setPageKey]);
 
+  const rootRoutes: RouteObject[] = [
+    ...(consoleAccount?.isSystemAdmin
+      ? [
+          {
+            path: `${PAGE_PATH_ORGANIZATIONS}/*`,
+            element: <OrganizationsRoot />
+          }
+        ]
+      : []),
+    {
+      path: '/:envUrlCode?/*',
+      element: consoleAccount ? (
+        <EnvironmentRoot key={pageKey} account={consoleAccount} />
+      ) : null
+    },
+    { path: '*', element: <NotFoundPage /> }
+  ];
+
+  const rootElement = useRoutes(rootRoutes);
+
   if (isInitialLoading) {
     return <AppLoading />;
   }
@@ -161,20 +180,7 @@ export const Root = memo(() => {
               isNavCollapsed ? 'ml-[60px]' : 'ml-[248px]'
             )}
           >
-            <Routes>
-              {consoleAccount.isSystemAdmin && (
-                <Route
-                  path={`${PAGE_PATH_ORGANIZATIONS}/*`}
-                  element={<OrganizationsRoot />}
-                />
-              )}
-              <Route
-                key={pageKey}
-                path={'/:envUrlCode?/*'}
-                element={<EnvironmentRoot account={consoleAccount} />}
-              />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            {rootElement}
           </div>
           {AI_CHAT_ENABLED && <ChatWidget />}
         </div>
