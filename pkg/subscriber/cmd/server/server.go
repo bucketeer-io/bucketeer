@@ -125,17 +125,27 @@ type server struct {
 	processorsConfig         *string
 	onDemandProcessorsConfig *string
 	// Persistent Redis
-	persistentRedisServerName    *string
-	persistentRedisAddr          *string
-	persistentRedisPoolMaxIdle   *int
-	persistentRedisPoolMaxActive *int
-	persistentRedisMode          *string
+	persistentRedisServerName            *string
+	persistentRedisAddr                  *string
+	persistentRedisPoolMaxIdle           *int
+	persistentRedisPoolMaxActive         *int
+	persistentRedisMode                  *string
+	persistentRedisTLSEnabled            *bool
+	persistentRedisTLSCACert             *string
+	persistentRedisTLSCert               *string
+	persistentRedisTLSKey                *string
+	persistentRedisTLSInsecureSkipVerify *bool
 	// Non Persistent Redis
-	nonPersistentRedisServerName    *string
-	nonPersistentRedisAddr          *string
-	nonPersistentRedisPoolMaxIdle   *int
-	nonPersistentRedisPoolMaxActive *int
-	nonPersistentRedisMode          *string
+	nonPersistentRedisServerName            *string
+	nonPersistentRedisAddr                  *string
+	nonPersistentRedisPoolMaxIdle           *int
+	nonPersistentRedisPoolMaxActive         *int
+	nonPersistentRedisMode                  *string
+	nonPersistentRedisTLSEnabled            *bool
+	nonPersistentRedisTLSCACert             *string
+	nonPersistentRedisTLSCert               *string
+	nonPersistentRedisTLSKey                *string
+	nonPersistentRedisTLSInsecureSkipVerify *bool
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -250,6 +260,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		persistentRedisMode: cmd.Flag("persistent-redis-mode",
 			"Persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		persistentRedisTLSEnabled: cmd.Flag(
+			"persistent-redis-tls-enabled",
+			"Enable TLS when connecting to the persistent Redis server.",
+		).Default("false").Bool(),
+		persistentRedisTLSCACert: cmd.Flag(
+			"persistent-redis-tls-ca-cert",
+			"Path to the persistent Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		persistentRedisTLSCert: cmd.Flag(
+			"persistent-redis-tls-cert",
+			"Path to the persistent Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		persistentRedisTLSKey: cmd.Flag(
+			"persistent-redis-tls-key",
+			"Path to the persistent Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		persistentRedisTLSInsecureSkipVerify: cmd.Flag(
+			"persistent-redis-tls-insecure-skip-verify",
+			"Skip persistent Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -269,6 +299,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		nonPersistentRedisMode: cmd.Flag("non-persistent-redis-mode",
 			"Non-persistent Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
+		nonPersistentRedisTLSEnabled: cmd.Flag(
+			"non-persistent-redis-tls-enabled",
+			"Enable TLS when connecting to the non-persistent Redis server.",
+		).Default("false").Bool(),
+		nonPersistentRedisTLSCACert: cmd.Flag(
+			"non-persistent-redis-tls-ca-cert",
+			"Path to the non-persistent Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		nonPersistentRedisTLSCert: cmd.Flag(
+			"non-persistent-redis-tls-cert",
+			"Path to the non-persistent Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		nonPersistentRedisTLSKey: cmd.Flag(
+			"non-persistent-redis-tls-key",
+			"Path to the non-persistent Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		nonPersistentRedisTLSInsecureSkipVerify: cmd.Flag(
+			"non-persistent-redis-tls-insecure-skip-verify",
+			"Skip non-persistent Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -395,6 +445,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.nonPersistentRedisMode)),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *s.nonPersistentRedisTLSEnabled,
+			CACert:             *s.nonPersistentRedisTLSCACert,
+			Cert:               *s.nonPersistentRedisTLSCert,
+			Key:                *s.nonPersistentRedisTLSKey,
+			InsecureSkipVerify: *s.nonPersistentRedisTLSInsecureSkipVerify,
+		}),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -408,6 +465,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
 		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithRedisMode(redisv3.RedisMode(*s.persistentRedisMode)),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *s.persistentRedisTLSEnabled,
+			CACert:             *s.persistentRedisTLSCACert,
+			Cert:               *s.persistentRedisTLSCert,
+			Key:                *s.persistentRedisTLSKey,
+			InsecureSkipVerify: *s.persistentRedisTLSInsecureSkipVerify,
+		}),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
@@ -652,6 +716,13 @@ func (s *server) createCacheInvalidationPublisher(
 			redisv3.WithMinIdleConns(conf.RedisMinIdle),
 			redisv3.WithServerName(conf.RedisServerName),
 			redisv3.WithRedisMode(redisv3.RedisMode(conf.RedisMode)),
+			redisv3.WithTLS(redisv3.TLSConfig{
+				Enabled:            conf.RedisTLSEnabled,
+				CACert:             conf.RedisTLSCACert,
+				Cert:               conf.RedisTLSCert,
+				Key:                conf.RedisTLSKey,
+				InsecureSkipVerify: conf.RedisTLSInsecureSkipVerify,
+			}),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)

@@ -36,6 +36,12 @@ type command struct {
 	redisPassword *string
 	environmentID *string
 	scanCount     *int64
+
+	redisTLSEnabled            *bool
+	redisTLSCACert             *string
+	redisTLSCert               *string
+	redisTLSKey                *string
+	redisTLSInsecureSkipVerify *bool
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -46,6 +52,26 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		redisPassword: cmd.Flag("redis-password", "Redis password.").Default("").String(),
 		environmentID: cmd.Flag("environment-id", "Environment ID to delete retry keys for.").Required().String(),
 		scanCount:     cmd.Flag("scan-count", "Number of keys to scan per iteration.").Default("100").Int64(),
+		redisTLSEnabled: cmd.Flag(
+			"redis-tls-enabled",
+			"Enable TLS when connecting to the Redis server.",
+		).Default("false").Bool(),
+		redisTLSCACert: cmd.Flag(
+			"redis-tls-ca-cert",
+			"Path to the Redis TLS CA certificate file. Uses the system CA pool if unset.",
+		).String(),
+		redisTLSCert: cmd.Flag(
+			"redis-tls-cert",
+			"Path to the Redis TLS client certificate file (for mutual TLS).",
+		).String(),
+		redisTLSKey: cmd.Flag(
+			"redis-tls-key",
+			"Path to the Redis TLS client private key file (for mutual TLS).",
+		).String(),
+		redisTLSInsecureSkipVerify: cmd.Flag(
+			"redis-tls-insecure-skip-verify",
+			"Skip Redis server certificate verification. Not recommended for production.",
+		).Default("false").Bool(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -63,6 +89,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 
 	opts := []redisv3.Option{
 		redisv3.WithLogger(logger),
+		redisv3.WithTLS(redisv3.TLSConfig{
+			Enabled:            *c.redisTLSEnabled,
+			CACert:             *c.redisTLSCACert,
+			Cert:               *c.redisTLSCert,
+			Key:                *c.redisTLSKey,
+			InsecureSkipVerify: *c.redisTLSInsecureSkipVerify,
+		}),
 	}
 	if *c.redisPassword != "" {
 		opts = append(opts, redisv3.WithPassword(*c.redisPassword))
