@@ -154,7 +154,8 @@ export const Root = memo(() => {
     getNavigationCollapsedStorage
   );
   const [showMenu, setShowMenu] = useState<boolean>(false);
-  const { isMobile } = useScreen();
+  const { isMobile, fromTabletScreen } = useScreen();
+  const isTablet = !isMobile && !fromTabletScreen;
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -229,9 +230,11 @@ export const Root = memo(() => {
               'w-full shadow-lg overflow-y-auto transition-all duration-300 ease-in-out',
               isMobile
                 ? 'mt-[50px]'
-                : isNavCollapsed
+                : isTablet
                   ? 'ml-[60px]'
-                  : 'ml-[248px]'
+                  : isNavCollapsed
+                    ? 'ml-[60px]'
+                    : 'ml-[248px]'
             )}
           >
             <Routes>
