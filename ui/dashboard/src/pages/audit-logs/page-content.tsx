@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import dayjs from 'dayjs';
-import { usePartialState } from 'hooks';
+import { usePartialState, useScreen } from 'hooks';
 import pickBy from 'lodash/pickBy';
 import { AuditLog } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
@@ -73,7 +73,7 @@ const PageContent = () => {
   >(undefined);
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
+  const { isMobile } = useScreen();
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
@@ -134,15 +134,16 @@ const PageContent = () => {
   }, [searchOptions]);
 
   return (
-    <PageLayout.Content className="gap-y-6">
+    <PageLayout.Content className="gap-y-3 sm:gap-y-6">
       <Filter
         link={DOCUMENTATION_LINKS.AUDIT_LOGS}
+        isShowDocumentation={!isMobile}
         placeholder={t('form:name-email-search-placeholder')}
         name="audit-logs-search"
         action={
           <>
             <EntityTypeDropdown
-              className="w-fit"
+              className="w-fit max-w-[150px] sm:max-w-full [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               isOrganizationAdmin={isOrganizationAdmin}
               entityType={filters?.entityType}
@@ -154,6 +155,8 @@ const PageContent = () => {
               isAllTime={[filters?.range, searchFilters?.range].includes(
                 'all-time'
               )}
+              direction={!isMobile ? 'horizontal' : 'vertical'}
+              className="w-fit"
               onChange={(startDate, endDate) => {
                 onChangeFilters({
                   from: startDate ? startDate?.toString() : undefined,
@@ -164,6 +167,8 @@ const PageContent = () => {
             />
             <Button
               variant={'secondary'}
+              className="w-fit px-[10px]"
+              aria-label={t(isExpandAll ? 'collapse-all' : 'expand-all')}
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
               <Icon
@@ -171,7 +176,7 @@ const PageContent = () => {
                 size="sm"
                 color="primary-500"
               />
-              {t(isExpandAll ? 'collapse-all' : 'expand-all')}
+              {!isMobile && t(isExpandAll ? 'collapse-all' : 'expand-all')}
             </Button>
           </>
         }

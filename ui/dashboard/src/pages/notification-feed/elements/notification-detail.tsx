@@ -34,9 +34,9 @@ const PersonBadge = ({ email }: { email: string }) => {
   const initial = (email.trim()[0] ?? '?').toUpperCase();
   const name = email.split('@')[0];
   return (
-    <div className="flex items-center gap-2">
-      <span className="typo-para-small text-gray-900">{name}</span>
-      <span className="flex-center size-6 rounded-full bg-primary-100 typo-para-tiny font-medium text-primary-600">
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="truncate typo-para-small text-gray-900">{name}</span>
+      <span className="flex-center shrink-0 size-6 rounded-full bg-primary-100 typo-para-tiny font-medium text-primary-600">
         {initial}
       </span>
     </div>
@@ -50,9 +50,9 @@ const DetailRow = ({
   label: string;
   children: ReactNode;
 }) => (
-  <div className="flex min-h-8 items-center justify-between gap-4">
-    <span className="typo-para-small text-gray-500">{label}</span>
-    <div className="typo-para-small text-gray-900">{children}</div>
+  <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-4 gap-y-1">
+    <span className="shrink-0 typo-para-small text-gray-500">{label}</span>
+    <div className="min-w-0 typo-para-small text-gray-900">{children}</div>
   </div>
 );
 
@@ -161,7 +161,7 @@ const NotificationDetailModal = ({
       onClose={onClose}
     >
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
+        <div className="flex flex-1 flex-col gap-6 overflow-auto p-4 sm:p-6">
           {localizations.length > 1 && (
             <LanguageTabs
               fields={localizations.map(l => ({
@@ -225,7 +225,7 @@ const NotificationDetailModal = ({
           </Section>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-200 px-4 py-4 sm:px-6">
           <Button variant="secondary" onClick={onClose}>
             {t('close')}
           </Button>

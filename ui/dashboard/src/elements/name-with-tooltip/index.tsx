@@ -36,7 +36,7 @@ const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
         ref={ref}
         id={parentId}
         className={cn(
-          'typo-para-medium text-gray-700',
+          'relative typo-para-medium text-gray-700',
           { 'text-primary-500 underline cursor-pointer': haveAction },
           className
         )}

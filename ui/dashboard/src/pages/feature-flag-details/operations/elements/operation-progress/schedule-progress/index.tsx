@@ -91,8 +91,8 @@ const ScheduleProgress = ({
         )}
       </div>
 
-      <div>
-        <div className="p-12 pb-16 bg-gray-100 rounded-lg">
+      <div className="overflow-x-scroll">
+        <div className="p-12 pb-16 bg-gray-100 rounded-lg min-w-[900px]">
           <div className="flex relative h-1">
             <ProgressDateTimePoint
               displayLabel={displayLabel}
