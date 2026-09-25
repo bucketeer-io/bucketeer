@@ -132,11 +132,13 @@ function App() {
 
 export const Root = memo(() => {
   const authToken = getTokenStorage();
+  const location = useLocation();
   const [isNavCollapsed, setIsNavCollapsed] = useState(
     getNavigationCollapsedStorage
   );
   const [showMenu, setShowMenu] = useState<boolean>(false);
-  const { isMobile } = useScreen();
+  const { isMobile, fromTabletScreen } = useScreen();
+  const isTablet = !isMobile && !fromTabletScreen;
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -159,6 +161,11 @@ export const Root = memo(() => {
   ];
 
   const rootElement = useRoutes(rootRoutes);
+
+  // Close the drawer after a committed navigation, including same-page links.
+  useEffect(() => {
+    setShowMenu(false);
+  }, [location]);
 
   // The walkthrough highlights a nav item that only mounts while the mobile
   // drawer is open, so it drives `showMenu` directly for that step.
@@ -200,11 +207,11 @@ export const Root = memo(() => {
               </Button>
             )}
           </div>
-          {!isMobile  ? (
-          <Navigation
-          isCollapsed={isNavCollapsed}
-          onToggleCollapsed={setIsNavCollapsed}
-        />
+          {!isMobile ? (
+            <Navigation
+              isCollapsed={isNavCollapsed}
+              onToggleCollapsed={setIsNavCollapsed}
+            />
           ) : (
             <Drawer
               side="left"
@@ -212,10 +219,10 @@ export const Root = memo(() => {
               onClose={() => setShowMenu(false)}
               className="!z-30"
             >
-          <Navigation
-            isCollapsed={isNavCollapsed}
-            onToggleCollapsed={setIsNavCollapsed}
-          />
+              <Navigation
+                isCollapsed={isNavCollapsed}
+                onToggleCollapsed={setIsNavCollapsed}
+              />
             </Drawer>
           )}
 
@@ -224,9 +231,11 @@ export const Root = memo(() => {
               'w-full shadow-lg overflow-y-auto transition-all duration-300 ease-in-out',
               isMobile
                 ? 'mt-[50px]'
-                : isNavCollapsed
+                : isTablet
                   ? 'ml-[60px]'
-                  : 'ml-[248px]'
+                  : isNavCollapsed
+                    ? 'ml-[60px]'
+                    : 'ml-[248px]'
             )}
           >
             {rootElement}

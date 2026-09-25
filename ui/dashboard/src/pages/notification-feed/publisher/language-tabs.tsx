@@ -44,7 +44,7 @@ const LanguageTabs = ({
   const icon = (language: string) => languageMeta[language]?.icon;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center gap-1">
         <label className="typo-para-medium text-gray-700">
           {t('form:languages')}
@@ -58,8 +58,8 @@ const LanguageTabs = ({
           }
         />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex shrink-0 items-center gap-2">
           {fields.map((field, index) => (
             <div
               key={field.id}
@@ -98,7 +98,7 @@ const LanguageTabs = ({
 
         {!readOnly && (
           <Dropdown
-            className="w-full sm:w-[200px] py-[11px]"
+            className="w-auto shrink-0 sm:w-[200px] py-[11px]"
             disabled={availableToAdd.length <= 0}
             placeholder={t('form:add-language')}
             options={availableToAdd.map(lang => ({
