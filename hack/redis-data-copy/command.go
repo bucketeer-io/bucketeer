@@ -34,6 +34,8 @@ type command struct {
 	destAddress     *string
 	srcPassword     *string
 	destPassword    *string
+	srcDB           *int
+	destDB          *int
 	overrideDestKey *bool
 }
 
@@ -45,6 +47,12 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		destAddress:  cmd.Flag("dest-address", "Destination Redis address").Required().String(),
 		srcPassword:  cmd.Flag("src-password", "Source Redis password").String(),
 		destPassword: cmd.Flag("dest-password", "Destination Redis password").String(),
+		srcDB: cmd.Flag("src-db", "Source Redis logical database index. Ignored in cluster mode.").
+			Default("0").
+			Int(),
+		destDB: cmd.Flag("dest-db", "Destination Redis logical database index. Ignored in cluster mode.").
+			Default("0").
+			Int(),
 		overrideDestKey: cmd.Flag("override-dest-key", "Override existing keys in the destination Redis").
 			Default("false").
 			Bool(),
@@ -57,6 +65,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	srcClient, err := v3.NewClient(*c.srcAddress,
 		v3.WithLogger(logger),
 		v3.WithPassword(*c.srcPassword),
+		v3.WithDB(*c.srcDB),
 		v3.WithPoolSize(10),
 		v3.WithMinIdleConns(5),
 		v3.WithMaxRetries(3),
@@ -71,6 +80,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	destClient, err := v3.NewClient(*c.destAddress,
 		v3.WithLogger(logger),
 		v3.WithPassword(*c.destPassword),
+		v3.WithDB(*c.destDB),
 		v3.WithPoolSize(10),
 		v3.WithMinIdleConns(5),
 		v3.WithMaxRetries(3),
