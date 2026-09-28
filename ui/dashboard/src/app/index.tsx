@@ -103,18 +103,18 @@ export const AppLoading = () => (
 );
 
 const AppLayout = () => (
-  <AuthProvider>
-    <Outlet />
-  </AuthProvider>
+  <ConfirmProvider>
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  </ConfirmProvider>
 );
 
 function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
-        <ConfirmProvider>
-          <RouterProvider router={router} />
-        </ConfirmProvider>
+        <RouterProvider router={router} />
         {/* {process.env.NODE_ENV === 'development' && (
           <ReactQueryDevtools initialIsOpen={false} />
         )} */}
