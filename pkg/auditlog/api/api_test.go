@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -108,6 +109,35 @@ func TestGetAuditLog(t *testing.T) {
 			},
 			expected:    nil,
 			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "success: system admin without organization membership",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
+					gomock.Any(), "id-1", "", "org-1",
+				).Return(&proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+				}, nil)
+			},
+			input: &proto.GetAuditLogRequest{
+				Id:             "id-1",
+				OrganizationId: "org-1",
+			},
+			expected: &proto.GetAuditLogResponse{
+				AuditLog: &proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+					LocalizedMessage: domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.NewLocalizer(context.Background())),
+				},
+			},
+			expectedErr: nil,
 		},
 		{
 			desc:    "success: environment and organization scope combined",
@@ -408,6 +438,34 @@ func TestListAuditLogs(t *testing.T) {
 			input:       &proto.ListAuditLogsRequest{PageSize: 2, OrganizationId: "org-1"},
 			expected:    nil,
 			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "success: system admin without organization membership",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					v2als.ListAuditLogsParams{
+						EnvironmentID:  "env-1",
+						OrganizationID: "org-1",
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       2,
+						Cursor:         "0",
+					},
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
+			},
+			input: &proto.ListAuditLogsRequest{
+				PageSize:       2,
+				EnvironmentId:  "env-1",
+				OrganizationId: "org-1",
+			},
+			expected:    &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			expectedErr: nil,
 		},
 		{
 			desc:    "success: organization scope",
@@ -805,4 +863,20 @@ func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+}
+
+func TestSanitizeEvents(t *testing.T) {
+	t.Parallel()
+	resolvable, err := anypb.New(&domaineventproto.AccountV2CreatedEvent{})
+	require.NoError(t, err)
+	legacy := &anypb.Any{TypeUrl: "type.googleapis.com/bucketeer.event.domain.AccountCreatedEvent"}
+	logs := []*proto.AuditLog{
+		{Id: "id-1", Event: resolvable},
+		{Id: "id-2", Event: legacy},
+		{Id: "id-3"},
+	}
+	sanitizeEvents(logs...)
+	assert.NotNil(t, logs[0].Event)
+	assert.Nil(t, logs[1].Event)
+	assert.Nil(t, logs[2].Event)
 }

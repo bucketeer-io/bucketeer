@@ -144,7 +144,9 @@ const PageContent = () => {
             <EntityTypeDropdown
               className="w-fit"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
-              isOrganizationAdmin={isOrganizationAdmin}
+              isOrganizationAdmin={
+                isOrganizationAdmin || !!consoleAccount?.isSystemAdmin
+              }
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
             />
@@ -192,7 +194,9 @@ const PageContent = () => {
         <AuditLogDetailsModal
           auditLogId={auditLogId}
           organizationId={
-            isOrganizationAdmin ? consoleAccount?.organization.id : undefined
+            isOrganizationAdmin || consoleAccount?.isSystemAdmin
+              ? consoleAccount?.organization.id
+              : undefined
           }
           isOpen={!!auditLogId}
           onClose={() => {
