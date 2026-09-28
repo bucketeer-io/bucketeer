@@ -43,10 +43,11 @@ const CollectionLoader = forwardRef(
     } = useFetchAuditLogs({
       ...filters,
       environmentId: currentEnvironment?.id,
-      // Organization admins also get the organization-level logs in the same timeline.
-      organizationId: isOrganizationAdmin
-        ? consoleAccount?.organization.id
-        : undefined,
+      // Organization and system admins also get the organization-level logs in the same timeline.
+      organizationId:
+        isOrganizationAdmin || consoleAccount?.isSystemAdmin
+          ? consoleAccount?.organization.id
+          : undefined,
       enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
     });
 

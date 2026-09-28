@@ -192,7 +192,9 @@ const PageContent = () => {
         <AuditLogDetailsModal
           auditLogId={auditLogId}
           organizationId={
-            isOrganizationAdmin ? consoleAccount?.organization.id : undefined
+            isOrganizationAdmin || consoleAccount?.isSystemAdmin
+              ? consoleAccount?.organization.id
+              : undefined
           }
           isOpen={!!auditLogId}
           onClose={() => {

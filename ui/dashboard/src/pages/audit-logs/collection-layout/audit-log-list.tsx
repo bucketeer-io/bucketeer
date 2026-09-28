@@ -27,12 +27,21 @@ const AuditLogList = memo(
     const getDateLabel = useCallback((auditLogKey: string) => {
       const date = new Date(auditLogKey);
       const currentDate = new Date();
-      if (date.getDate() === currentDate.getDate()) return t('today');
-      if (date.getDate() === currentDate.getDate() - 1) return t('yesterday');
+      if (date.toDateString() === currentDate.toDateString()) {
+        return t('today');
+      }
+      const yesterday = new Date(currentDate);
+      yesterday.setDate(currentDate.getDate() - 1);
+      if (date.toDateString() === yesterday.toDateString()) {
+        return t('yesterday');
+      }
 
       return formatLongDateTime({
         value: Math.trunc(date.getTime() / 1000).toString(),
-        overrideOptions: { month: 'long', day: 'numeric' }
+        overrideOptions:
+          date.getFullYear() === currentDate.getFullYear()
+            ? { month: 'long', day: 'numeric' }
+            : { month: 'long', day: 'numeric', year: 'numeric' }
       });
     }, []);
 

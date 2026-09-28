@@ -138,7 +138,7 @@ const AuditLogItem = memo(
           'flex flex-col w-full p-3 bg-white shadow-card rounded-lg h-[73px] min-h-[73px] transition-all duration-100',
           {
             'h-fit min-h-[179px]': isExpanded && isHaveEntityData,
-            'h-fit': !!options.comment
+            'h-fit': !!options?.comment
           }
         )}
       >
@@ -218,10 +218,10 @@ const AuditLogItem = memo(
             </div>
           )}
         </div>
-        {options.comment && (
+        {!!options?.comment && (
           <div className="pt-3 cursor-pointer" onClick={onClick}>
             <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
-              {options.comment}
+              {options?.comment}
             </div>
           </div>
         )}
