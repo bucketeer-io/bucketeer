@@ -100,13 +100,17 @@ export function useUnsavedLeavePage({
       bypassNavigation = false;
       return false;
     }
-    return !isWalkthroughActive();
+    return true;
   }, []);
 
   const blocker = useBlocker(shouldBlock);
 
   useEffect(() => {
     if (blocker.state !== 'blocked') return;
+    if (isWalkthroughActive()) {
+      blocker.reset();
+      return;
+    }
 
     confirm({
       title: title,
