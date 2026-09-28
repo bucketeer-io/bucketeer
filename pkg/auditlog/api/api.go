@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
@@ -114,11 +115,14 @@ func (s *auditlogService) GetAuditLog(
 	}
 	// organization_id requires the organization admin role, as in ListAuditLogs.
 	if req.OrganizationId != "" {
-		_, err := s.checkOrganizationRole(
-			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-			req.OrganizationId)
-		if err != nil {
-			return nil, err
+		// System admins can read any organization's logs without being a member.
+		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
+			_, err := s.checkOrganizationRole(
+				ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+				req.OrganizationId)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		_, err := s.checkEnvironmentRole(
@@ -138,6 +142,9 @@ func (s *auditlogService) GetAuditLog(
 		return nil, statusMissingID.Err()
 	}
 	auditlog, err := s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId, req.OrganizationId)
+	if err == nil {
+		sanitizeEvents(auditlog)
+	}
 	if err != nil {
 		s.logger.Error("Failed to get audit log",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -197,11 +204,14 @@ func (s *auditlogService) ListAuditLogs(
 	// environment_id it lists that environment's logs plus the organization's
 	// organization-level logs in one timeline.
 	if req.OrganizationId != "" {
-		_, err := s.checkOrganizationRole(
-			ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-			req.OrganizationId)
-		if err != nil {
-			return nil, err
+		// System admins can read any organization's logs without being a member.
+		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
+			_, err := s.checkOrganizationRole(
+				ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+				req.OrganizationId)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		if req.EnvironmentId == "" {
@@ -224,6 +234,7 @@ func (s *auditlogService) ListAuditLogs(
 	if err != nil {
 		return nil, err
 	}
+	sanitizeEvents(auditlogs...)
 	// Editor avatars are stored per environment; organization-only scope skips them.
 	accounts := make(map[string]*accountproto.AccountV2)
 	if req.EnvironmentId != "" {
@@ -287,6 +298,19 @@ func listAuditLogsParams(req *proto.ListAuditLogsRequest) (v2als.ListAuditLogsPa
 	}, nil
 }
 
+// sanitizeEvents clears event payloads whose message type no longer exists in
+// the proto registry, so one legacy row cannot fail the whole response marshal.
+func sanitizeEvents(auditlogs ...*proto.AuditLog) {
+	for _, al := range auditlogs {
+		if al == nil || al.Event == nil {
+			continue
+		}
+		if _, err := protoregistry.GlobalTypes.FindMessageByURL(al.Event.TypeUrl); err != nil {
+			al.Event = nil
+		}
+	}
+}
+
 func (s *auditlogService) listAuditLogs(
 	ctx context.Context,
 	params v2als.ListAuditLogsParams,
@@ -347,6 +371,9 @@ func (s *auditlogService) ListAdminAuditLogs(
 		Cursor:         cursor,
 	}
 	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(ctx, params)
+	if err == nil {
+		sanitizeEvents(auditlogs...)
+	}
 	if err != nil {
 		if errors.Is(err, v2als.ErrInvalidOrderBy) {
 			return nil, statusInvalidOrderBy.Err()
@@ -409,6 +436,9 @@ func (s *auditlogService) ListFeatureHistory(
 		Cursor:         cursor,
 	}
 	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, params)
+	if err == nil {
+		sanitizeEvents(auditlogs...)
+	}
 	if err != nil {
 		if errors.Is(err, v2als.ErrInvalidOrderBy) {
 			return nil, statusInvalidOrderBy.Err()
