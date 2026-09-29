@@ -189,7 +189,6 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
         >
           <Link
             to={ROUTING.PAGE_PATH_ROOT}
-            onClick={onCloseSetting}
             className={cn(
               'overflow-hidden',
               isCollapsed && 'flex-center w-full',
@@ -243,7 +242,6 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
               trigger={
                 <button
                   onClick={() => {
-                    onCloseSetting();
                     navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
                   }}
                   aria-label={
@@ -320,7 +318,6 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
                   type="button"
                   aria-label={isCollapsed ? t(`settings`) : undefined}
                   onClick={() => {
-                    onOpenSetting();
                     if (consoleAccount?.isSystemAdmin) {
                       navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
                     } else {
