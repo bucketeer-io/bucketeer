@@ -34,6 +34,7 @@ type command struct {
 	*kingpin.CmdClause
 	redisAddr     *string
 	redisPassword *string
+	redisDB       *int
 	environmentID *string
 	scanCount     *int64
 }
@@ -44,6 +45,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		CmdClause:     cmd,
 		redisAddr:     cmd.Flag("redis-addr", "Redis server address (host:port).").Required().String(),
 		redisPassword: cmd.Flag("redis-password", "Redis password.").Default("").String(),
+		redisDB:       cmd.Flag("redis-db", "Redis logical database index. Ignored in cluster mode.").Default("0").Int(),
 		environmentID: cmd.Flag("environment-id", "Environment ID to delete retry keys for.").Required().String(),
 		scanCount:     cmd.Flag("scan-count", "Number of keys to scan per iteration.").Default("100").Int64(),
 	}
@@ -63,6 +65,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 
 	opts := []redisv3.Option{
 		redisv3.WithLogger(logger),
+		redisv3.WithDB(*c.redisDB),
 	}
 	if *c.redisPassword != "" {
 		opts = append(opts, redisv3.WithPassword(*c.redisPassword))

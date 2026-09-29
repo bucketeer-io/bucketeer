@@ -230,3 +230,79 @@ func TestClientTypeString(t *testing.T) {
 	assert.Equal(t, "cluster", clientTypeString(ClientTypeCluster))
 	assert.Equal(t, "standalone", clientTypeString(ClientTypeStandard))
 }
+
+func TestWithDB(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		input    int
+		expected int
+	}{
+		{"default db", 0, 0},
+		{"positive db index", 5, 5},
+		{"negative db index is preserved for validation", -1, -1},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			opts := defaultOptions()
+			WithDB(tt.input)(opts)
+			assert.Equal(t, tt.expected, opts.db)
+		})
+	}
+}
+
+func TestNewClientWithDB(t *testing.T) {
+	t.Parallel()
+
+	t.Run("standalone mode applies db to underlying client", func(t *testing.T) {
+		logger := zap.NewNop()
+		c, err := NewClient(
+			"localhost:9999",
+			WithLogger(logger),
+			WithRedisMode(RedisModeStandalone),
+			WithDB(3),
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, c)
+
+		if c != nil {
+			rc := c.(*client)
+			stdClient, ok := rc.rc.(*goredis.Client)
+			assert.True(t, ok)
+			assert.Equal(t, 3, stdClient.Options().DB)
+			c.Close()
+		}
+	})
+
+	t.Run("cluster mode ignores db without error", func(t *testing.T) {
+		logger := zap.NewNop()
+		c, err := NewClient(
+			"localhost:9999",
+			WithLogger(logger),
+			WithRedisMode(RedisModeCluster),
+			WithDB(3),
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, c)
+
+		if c != nil {
+			rc := c.(*client)
+			assert.Equal(t, ClientTypeCluster, rc.clientType)
+			c.Close()
+		}
+	})
+
+	t.Run("negative db fails instead of falling back to db 0", func(t *testing.T) {
+		c, err := NewClient(
+			"localhost:9999",
+			WithLogger(zap.NewNop()),
+			WithRedisMode(RedisModeStandalone),
+			WithDB(-1),
+		)
+		assert.ErrorIs(t, err, ErrInvalidDB)
+		assert.Nil(t, c)
+	})
+}

@@ -45,6 +45,7 @@ env:
     poolMaxActive: 25
     addr:
     mode: auto
+    db: 0
   oldestEventTimestamp:
   furthestEventTimestamp:
   # Grace window applied to the diff filters for:

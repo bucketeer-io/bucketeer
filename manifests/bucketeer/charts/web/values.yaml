@@ -45,12 +45,14 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
     mode: auto
+    db: 0
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
     mode: auto
+    db: 0
   bigQueryDataSet:
   bigQueryDataLocation:
   domainTopic:
