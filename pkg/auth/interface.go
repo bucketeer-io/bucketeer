@@ -16,6 +16,9 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 )
 
 type Authenticator interface {
@@ -56,9 +59,76 @@ type DemoSignInConfig struct {
 	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
+type PasswordPolicyConfig struct {
+	MinLength        int  `json:"minLength"`
+	RequireUppercase bool `json:"requireUppercase"`
+	RequireLowercase bool `json:"requireLowercase"`
+	RequireNumbers   bool `json:"requireNumbers"`
+	RequireSymbols   bool `json:"requireSymbols"`
+}
+
+type PasswordTokensConfig struct {
+	ResetTTL time.Duration `json:"resetTTL"`
+	SetupTTL time.Duration `json:"setupTTL"`
+}
+
+type PasswordURLsConfig struct {
+	ResetPath  string `json:"resetPath"`  // Path for password reset page
+	SetupPath  string `json:"setupPath"`  // Path for password setup page
+	TokenParam string `json:"tokenParam"` // URL parameter name for token
+}
+
+type PasswordAuthConfig struct {
+	Policy PasswordPolicyConfig `json:"policy"`
+	Tokens PasswordTokensConfig `json:"tokens"`
+	URLs   PasswordURLsConfig   `json:"urls"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for PasswordAuthConfig
+// to handle duration strings like "1h", "24h" in the Tokens field
+func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
+	type TokensAlias struct {
+		ResetTTL string `json:"resetTTL"`
+		SetupTTL string `json:"setupTTL"`
+	}
+
+	type Alias struct {
+		Policy PasswordPolicyConfig `json:"policy"`
+		Tokens TokensAlias          `json:"tokens"`
+		URLs   PasswordURLsConfig   `json:"urls"`
+	}
+
+	var aux Alias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	c.Policy = aux.Policy
+	c.URLs = aux.URLs
+
+	if aux.Tokens.ResetTTL != "" {
+		resetTTL, err := time.ParseDuration(aux.Tokens.ResetTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse resetTTL: %w", err)
+		}
+		c.Tokens.ResetTTL = resetTTL
+	}
+
+	if aux.Tokens.SetupTTL != "" {
+		setupTTL, err := time.ParseDuration(aux.Tokens.SetupTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse setupTTL: %w", err)
+		}
+		c.Tokens.SetupTTL = setupTTL
+	}
+
+	return nil
+}
+
 type OAuthConfig struct {
-	Issuer       string           `json:"issuer"`
-	Audience     string           `json:"audience"`
-	GoogleConfig GoogleConfig     `json:"google"`
-	DemoSignIn   DemoSignInConfig `json:"demoSignIn"`
+	Issuer       string             `json:"issuer"`
+	Audience     string             `json:"audience"`
+	GoogleConfig GoogleConfig       `json:"google"`
+	Password     PasswordAuthConfig `json:"password"`
+	DemoSignIn   DemoSignInConfig   `json:"demoSignIn"`
 }
