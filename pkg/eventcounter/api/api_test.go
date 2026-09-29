@@ -432,6 +432,20 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
 		},
 		{
+			desc: "err: ErrInternal without feature version",
+			setup: func(s *eventCounterService) {
+				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
+			},
+			input: &ecproto.ListExperimentResultsRequest{
+				FeatureId:     "fid",
+				EnvironmentId: "ns0",
+			},
+			expected:    nil,
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
+		},
+		{
 			desc:    "error: ErrPermissionDenied",
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),

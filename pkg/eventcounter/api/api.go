@@ -737,13 +737,17 @@ func (s *eventCounterService) ListExperimentResults(
 			listExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
 			return nil, statusExperimentResultNotFound.Err()
 		}
+		var featureVersion *int32
+		if req.FeatureVersion != nil {
+			featureVersion = &req.FeatureVersion.Value
+		}
 		s.logger.Error(
 			"Failed to get Experiment list",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureID", req.FeatureId),
-				zap.Int32("featureVersion", req.FeatureVersion.Value),
+				zap.Int32p("featureVersion", featureVersion),
 			)...,
 		)
 		listExperimentCountsCounter.WithLabelValues(codeFail).Inc()
