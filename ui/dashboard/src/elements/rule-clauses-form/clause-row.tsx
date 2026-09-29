@@ -473,6 +473,9 @@ const ClauseRow = ({
                           />
                         )}
                       </Form.Control>
+                      {isUserSegment &&
+                        isResolvingSelectedSegments &&
+                        selectedSegments.length === 0 && <Spinner size="sm" />}
                       {isUserSegment && selectedSegments.length > 0 && (
                         <div className="mt-0.5 flex items-center gap-x-1">
                           <Popover

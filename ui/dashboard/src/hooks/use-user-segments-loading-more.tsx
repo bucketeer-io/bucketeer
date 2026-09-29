@@ -97,7 +97,7 @@ export const useUserSegmentsLoader = ({
   const isResolvingSelection = isPreloadingSelection;
 
   const totalCount = Number(data?.pages[0]?.totalCount ?? 0);
-  const hasNoSegments = !isLoading && totalCount === 0;
+  const hasNoSegments = !isLoading && data !== undefined && totalCount === 0;
 
   return {
     userSegments,
