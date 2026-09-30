@@ -41,8 +41,8 @@ The decisions below answer the open questions raised on the issue.
 | 1 | User assignment model | Configurable via `assignment_type`: hash-based percentage with a group-scoped seed (default), or a segment reference. `assignment_type`, `percentage`, `sampling_seed` and `segment_id` are all fixed at creation, so membership never changes for a given user (§4.2, §4.6). |
 | 2 | Data model / evaluation strategy | New entities `holdout_group` and `holdout_group_feature`; target flags are managed through the intermediate table (§4.1, §4.3.1). |
 | 3 | Holdout definitions for local-evaluation SDKs | Carried on the existing `GetFeatureFlags` response rather than a new RPC (§4.3.2). |
-| 4 | Lifecycle | Registered `start_at`/`stop_at` **and** manual start/stop, on the same status machine as experiments; flags may be added/removed mid-period, both timestamped; archiving a target flag removes it automatically (§4.6). |
-| 5 | Multiple holdout groups | **At most one non-stopped group serves per environment at a time.** Not-yet-started and already-finished groups may coexist with it; their periods may not overlap. A flag belongs to at most one non-stopped group, and users are therefore mutually exclusive across groups (§4.6, §6.4). |
+| 4 | Lifecycle | Registered `start_at`/`stop_at` **and** manual start/stop, on the same status machine as experiments; flags may be added/removed mid-period, both timestamped; archiving a flag that is still a target is rejected until an org admin removes it from the group (§4.6). |
+| 5 | Multiple holdout groups | **At most one `RUNNING` group per environment at a time.** `WAITING` and finished groups may coexist with it, but the periods of `WAITING` and `RUNNING` groups may not overlap. A flag belongs to at most one `WAITING` or `RUNNING` group, and users are therefore mutually exclusive across groups (§4.6, §6.4). |
 | 6 | Governance | Two layers. Structural: holdout state does not live on the `Feature`, so no flag API can change it. Permission: every management RPC requires **`Organization_ADMIN` or above**, reusing the existing role model (§4.5). |
 | 7 | UI | Dedicated Holdout Groups page under the environment; the flag detail page shows only a read-only "This flag is subject to a holdout" indicator (§4.7). |
 
@@ -78,7 +78,7 @@ Two new tables, added to `migration/mysql/` and `migration/postgres/` (Atlas). B
 | `holdout_group_id`, `feature_id`, `environment_id` | VARCHAR(255) | |
 | `holdout_variation_id` | VARCHAR(255) | variation served to holdout users, chosen per flag |
 | `added_at` | BIGINT | epoch seconds |
-| `removed_at` | BIGINT | `0` = still a target; soft removal keeps the audit trail |
+| `removed_at` | BIGINT | `0` = not removed; soft removal keeps the audit trail. Not stamped when the group stops, so a row counts as a *current* target only while its group is `WAITING` or `RUNNING` (§4.5) |
 
 Indexes: `(environment_id, status)` on `holdout_group`; `(holdout_group_id, environment_id)` and `(feature_id, environment_id, removed_at)` on `holdout_group_feature`.
 
@@ -101,7 +101,7 @@ Its costs are real and are surfaced in the UI when the mode is selected:
 
 - **Membership can be changed from outside the group.** Editing the segment, or a bulk user upload, moves users in and out mid-period. `UpdateSegment`, `BulkUploadSegmentUsers` and `DeleteSegment` therefore reject a segment referenced by a **`RUNNING`** group. The check is evaluated on demand rather than kept as a column on `segment`, so the status transitions of §4.6 are themselves the lock and unlock, with no state to repair if one is missed. This is the one guard the design otherwise avoids (§6.1), and it is the price of the mode.
 - **The lock is a governance requirement, not only a measurement one.** Editing a segment needs `Environment_EDITOR` — the flag editor's role — so without it, gating the group behind `Organization_ADMIN` (§4.5) would be defeated through the referenced segment.
-- **Membership resolution costs a lookup.** In HASH mode `IsHeldOut` is pure; in SEGMENT mode it needs the segment's user set, both at evaluation time (§4.3) and at measurement time (§4.4).
+- **Membership resolution costs a lookup.** In HASH mode `IsHeldOut` is pure; in SEGMENT mode it needs the segment's user set at evaluation time (§4.3). Measurement reads the served reason instead of recomputing membership (§4.4), so it needs no lookup.
 
 #### 4.2.3 Conformance
 
@@ -124,7 +124,7 @@ Why the holdout is evaluated first:
 - **One invariant, with no exceptions.** "A held-out user always receives `holdout_variation_id`" is a property of the Holdout Group alone: no combination of flag state produces a different answer, in any SDK port.
 - **`flagVariations` stays correct.** `evaluate` records `flagVariations[feature.Id]` for every flag and downstream flags resolve their prerequisites against it. With the holdout first, a downstream prerequisite check sees the variation the user actually received.
 
-Three consequences are accepted, not designed away:
+Two consequences are accepted, not designed away:
 
 - **The kill switch does not reach holdout users.** Setting `enabled = false` on a target flag turns the feature off for everyone *except* the held-out share, who keep receiving `holdout_variation_id`. In the normal case that is the intent — that variation is the pre-change behavior. When it is not, the escape hatch is `RemoveHoldoutGroupFeatures` or `StopHoldoutGroup`, both effective on the next evaluation and both surfaced at the point of disabling (§4.7).
 - **A holdout user can see a feature whose prerequisite is unsatisfied.** Choosing the flag's pre-change variation as `holdout_variation_id` makes this harmless in practice. `AddHoldoutGroupFeatures` warns when the selected variation differs from `off_variation` on a flag that has prerequisites.
@@ -168,12 +168,13 @@ On creation, the service also creates an **internal experiment row** (`experimen
 
 - The subscriber links goal events by goal ID against `listExperiments`, and the internal experiment is returned by that same call, so **goal linking needs no change at all**.
 - The experiment calculator picks it up and produces a standard `experiment_result`, so the Results tab is the existing experiment-result component pointed at a different ID.
-- `ListExperiments` filters `kind = KIND_EXPERIMENT` by default so internal rows never appear on the Experiments page; the internal row is created through the domain layer, bypassing the public API's feature-existence validation.
+- `ListExperimentsRequest` gains `repeated Kind kinds`. An empty list means no filter, so the existing internal callers — the subscriber (`goal_events_dwh.go`, `evaluation_events_dwh.go`, `cache_refresher.go`) and the experiment calculator — keep receiving the internal row unchanged. The dashboard's Experiments page sends `kinds = [KIND_EXPERIMENT]`, so internal rows never appear there. The internal row is created through the domain layer, bypassing the public API's feature-existence validation.
+- The internal experiment follows the group: every status transition and every edit of `start_at` / `stop_at` (§4.6) is written to it in the same transaction, so its window always matches the group's. A manual stop sets the experiment to `STOPPED` with `stop_at = stopped_at` — never `FORCE_STOPPED`, which the subscriber does not list — so goal linking continues through the grace window.
 
-The only genuinely new piece is the **exposure denominator**. The calculator counts distinct users per variation from `evaluation_event`, and no SDK emits an event for a flag that does not exist. So the subscriber derives them: while writing evaluation events, for each event whose `feature_id` is a target of the live group, it writes one additional row against the synthetic identity, with the variation computed by the shared `IsHeldOut`. Rows are deduplicated per user, group and day through the Redis locker already used for goal events, which also keeps the SEGMENT-mode lookup to one per user per day.
+The only genuinely new piece is the **exposure denominator**. The calculator counts distinct users per variation from `evaluation_event`, and no SDK emits an event for a flag that does not exist. So the subscriber derives them: while writing evaluation events, for each event whose `feature_id` is a target of the live group, it writes one additional row against the synthetic identity. The variation is taken from **what the user was actually served**, not recomputed: `in_holdout` if the event's reason is `HOLDOUT` with this `holdout_group_id`, `not_in_holdout` otherwise. Rows are deduplicated per user, group and day through the Redis locker already used for goal events.
 
 - The resulting population is "users exposed to at least one target flag", which is the correct denominator for a cumulative-impact readout.
-- Deriving membership server-side means **measurement needs no SDK support at all**, including from SDKs too old to serve the holdout — those users are correctly counted as `not_in_holdout`, so an outdated SDK degrades the effect size rather than corrupting the assignment.
+- Reading the served reason means **measurement needs no SDK support**, and users behind an SDK too old to serve the holdout — who did receive the treatment — are counted as `not_in_holdout`. An outdated SDK therefore shrinks the holdout arm rather than putting treated users into the control group. It also removes the SEGMENT-mode lookup from the subscriber.
 
 ### 4.5 API and governance
 
@@ -196,25 +197,25 @@ Every mutation writes an audit log event (`HOLDOUT_GROUP_CREATED`, `_UPDATED`, `
 
 Validation:
 
-- `CreateHoldoutGroup` / `StartHoldoutGroup`: the `[start_at, stop_at)` window must not intersect another non-stopped, non-archived group in the environment; `assignment_type` decides whether `percentage` or `segment_id` is required; `segment_id` must exist in the environment and must not be referenced by a `RUNNING` group (§4.2.2).
-- `AddHoldoutGroupFeatures`: the flag exists, is not archived, and is not a current target of any other group (a `holdout_group_feature` row with `removed_at = 0`); `holdout_variation_id` is one of the flag's variations; the group is `WAITING` or `RUNNING`.
+- `CreateHoldoutGroup` / `StartHoldoutGroup`, and `UpdateHoldoutGroup` when it changes `start_at` or `stop_at`: the resulting `[start_at, stop_at)` window must not intersect another `WAITING` or `RUNNING` group in the environment; `assignment_type` decides whether `percentage` or `segment_id` is required; `segment_id` must exist in the environment and must not be referenced by a `RUNNING` group (§4.2.2).
+- `AddHoldoutGroupFeatures`: the flag exists, is not archived, and is not a current target of any other group (a `holdout_group_feature` row with `removed_at = 0` whose group is `WAITING` or `RUNNING`; rows left by stopped or archived groups do not count); `holdout_variation_id` is one of the flag's variations; the group is `WAITING` or `RUNNING`.
 
 ### 4.6 Lifecycle
 
 `WAITING → RUNNING → STOPPED`, on the same status machine as experiments. Both transitions have two triggers:
 
 - **Scheduled** — `start_at` / `stop_at`, advanced by the same batch job that advances experiment statuses (`pkg/batch/jobs/experiment`).
-- **Manual** — `StartHoldoutGroup` starts a `WAITING` group immediately, clamping `start_at` to now; `StopHoldoutGroup` ends a `RUNNING` group immediately, recording `stopped_at` and status `FORCE_STOPPED`. The actor is recorded in the audit log rather than in a column. The lifecycle is hybrid rather than schedule-only because a holdout deliberately withholds functionality from real users, so it must be stoppable without waiting for `stop_at`.
+- **Manual** — `StartHoldoutGroup` starts a `WAITING` group immediately, clamping `start_at` to now; `StopHoldoutGroup` ends a `RUNNING` group immediately, recording `stopped_at` and status `FORCE_STOPPED`. Both triggers, and edits of `start_at` / `stop_at`, are mirrored onto the internal experiment (§4.4). The actor is recorded in the audit log rather than in a column. The lifecycle is hybrid rather than schedule-only because a holdout deliberately withholds functionality from real users, so it must be stoppable without waiting for `stop_at`.
 
 | Event | Behavior |
 |---|---|
 | Add a flag mid-period | Allowed. `added_at` is recorded and surfaced in the results UI, since a flag added late contributes less to the cumulative effect. |
 | Remove a flag mid-period | Allowed, with an explicit confirmation: released users immediately get normal evaluation, which contaminates the remaining window. `removed_at` is kept. |
-| Archive a target flag | **Archiving is not rejected.** `removed_at` is stamped automatically and the flag drops out on the next evaluation, exactly as a manual removal would. Blocking the archive would let a measurement hold a flag hostage for months. |
+| Archive a target flag | **Rejected** while the flag is a current target of a `WAITING` or `RUNNING` group. Archiving needs only `Environment_EDITOR`, so auto-removal would let a flag editor release held-out users. The error names the group; an org admin removes the flag first (`RemoveHoldoutGroupFeatures`), which is always possible, so no flag is held hostage. |
 | Edit `assignment_type`, `percentage`, `sampling_seed` or `segment_id` | **Rejected at every status.** Membership must never change for a given user: raising `percentage` would only add members and lowering it only remove them, but either re-partitions a measurement in progress. A group created with the wrong value is deleted while `WAITING` and recreated. |
 | Edit anything else | `name`, `description`, `goal_ids` and the period are editable while `WAITING`; only `name`, `description` and `stop_at` while `RUNNING`. The result is deliberately asymmetric: **target flags are mutable, target users are not**. |
 | Stop / dissolve | Holdout users fall back to normal evaluation on the next evaluation. The internal experiment keeps calculating for two more days, matching the existing goal-event grace window. |
-| Multiple groups | At most one non-stopped group per environment, and non-stopped groups may not have overlapping periods (§4.5). Groups that have not started, or have already finished, coexist freely. Because only one group can ever be serving, **users are mutually exclusive across groups by construction** — no cross-group bookkeeping, and no group's readout confounded by another (§6.4). |
+| Multiple groups | At most one `RUNNING` group per environment, and `WAITING` / `RUNNING` groups may not have overlapping periods (§4.5). `WAITING` and finished groups coexist freely. Because only one group can ever be serving, **users are mutually exclusive across groups by construction** — no cross-group bookkeeping, and no group's readout confounded by another (§6.4). |
 
 ### 4.7 UI
 
@@ -224,6 +225,7 @@ Validation:
 - **Flag detail page**: a read-only badge — "This flag is subject to a holdout" — linking to the group by name, identical in both assignment modes. Nothing about the holdout is editable from here; the targeting UI stays editable because it still governs everyone outside the holdout. Without the badge, a flag owner sees a slice of users not getting the new variation with no way to find out why — usually ending in a mistaken rollback.
 - **Segment list and detail pages**: a segment referenced by a `RUNNING` group says so and has its edit and delete actions disabled, mirroring the API-level lock of §4.2.2.
 - **Flag disable confirmation**: turning off a flag that belongs to a live group warns that held-out users will keep receiving `holdout_variation_id` (§4.3.1).
+- **Flag archive action**: disabled for a flag that belongs to a live group, with a link to the group (§4.6).
 - **Debugger**: `DebugEvaluateFeatures` surfaces `Reason.HOLDOUT` so an operator can confirm why a user got a given variation.
 
 ### 4.8 Interaction with existing features
@@ -235,7 +237,7 @@ Auto-ops, flag triggers, prerequisites and the kill switch all change flag confi
 | Experiments | An experiment on a target flag measures only non-holdout users. Its result stays valid (holdout users never enter any variation's exposure denominator for that flag) but its sample size shrinks by the holdout share. The experiment UI notes this. |
 | Progressive rollout | Continues to operate on non-holdout traffic. A rollout reaching 100% does not release holdout users — that is the point. |
 | Segments | In SEGMENT mode, `UpdateSegment`, `BulkUploadSegmentUsers` and `DeleteSegment` are rejected for a segment referenced by a `RUNNING` group (§4.2.2). |
-| Auto-archive | Unaffected. An archived flag is stamped `removed_at` and leaves the group (§4.6). |
+| Archive / auto-archive | Rejected for a current target of a live group; auto-archive skips such flags (§4.6). |
 | Code references | Unaffected. |
 
 ## 5. Rollout plan
@@ -277,7 +279,8 @@ Allow several groups to serve at once, each with its own seed, on disjoint flag 
 
 1. **Minimum SDK versions.** The exact Go/Node SDK versions gating §4.3.2 can only be fixed once those releases are cut.
 2. **Nested holdouts.** Layering a holdout inside a holdout, to measure a single program within the universal one, is a natural next step. The single-active-group rule of §4.6 forecloses it for now; lifting that rule for the nested case specifically is the likely path, but neither the assignment interaction nor the analysis has been designed. Deferred.
-3. **Concurrent groups, if the restriction is lifted** (§6.4). Mutual exclusion would have to be built, and its cost depends on the modes involved: two HASH groups can share a seed and split the bucket range, which is cheap, while HASH-against-SEGMENT and SEGMENT-against-SEGMENT have no closed form and need the overlap computed per pair up front.
+3. **Concurrent groups, if the restriction is lifted** (§6.4). Mutual exclusion would have to be built, and its cost depends on the modes involved: two HASH groups can split one bucket range cheaply, but only if they hash the same input — today's input includes the group ID (§4.2), so this would need an environment-level hash key instead, and since membership is fixed at creation that choice has to be made before v1 ships; while HASH-against-SEGMENT and SEGMENT-against-SEGMENT have no closed form and need the overlap computed per pair up front.
 4. **Segment locking granularity** (§4.2.2). Blocking all user edits on a segment referenced by a live group is the safe default, but it may be too coarse if a team wants to reuse a large operational segment. An alternative is to snapshot the segment's user set into the group at start.
 5. **`evaluationTotal` semantics** for the synthetic holdout feature. The per-user/per-day dedupe makes it "exposed user-days" rather than raw exposures; the Bayesian models consume user counts, but the number is still shown in the results UI and may need its own label.
 6. **Default percentage and period** for the create wizard — a product choice; 5% / 3 months is the common starting point.
+7. **Users seen through both a holdout-aware and an outdated path** (§4.4). A held-out user evaluated on one day through a path that serves the holdout, and on another day through a server SDK too old to serve it, gets derived rows in both variations, and the calculator counts them in both. Deduplication is per day, so it does not prevent this. The affected share is bounded by the holdout percentage times the share of users reached through mixed paths, and shrinks as the compatibility panel of §4.3.2 is cleared. Resolving it — excluding such users, or counting anyone who ever received the treatment as `not_in_holdout` — needs a change to the calculator's per-variation user count, which §4.4 otherwise avoids. Deferred until the observed overlap justifies it.
