@@ -137,8 +137,13 @@ Two delivery paths already exist, and they have very different exposure:
 
 | Path | SDKs | Work needed |
 |---|---|---|
-| `GetEvaluations` — evaluated server-side by `cmd/api` | Android, iOS, JavaScript, React, React Native, Flutter, and the OpenFeature providers | **None.** The gateway runs the shared evaluator, so holdouts apply the moment the feature ships. |
+| `GetEvaluations` — evaluated server-side by `cmd/api` | Android, iOS, JavaScript, React, React Native, Flutter, and the OpenFeature providers | **Gateway only; no SDK release** (change detection, below). |
 | `GetFeatureFlags` — evaluated locally by the SDK | `GO_SERVER`, `NODE_SERVER` | SDK release required. |
+
+On the server-evaluated path, change detection (`UserEvaluationsID`, `EvaluateFeaturesByEvaluatedAt`) looks only at each flag's `UpdatedAt`, so a holdout change would never reach a client. Two changes fix this:
+
+- `UserEvaluationsID` also hashes the live group's ID and `updated_at` (§4.6).
+- An `evaluatedAt` older than the group's `updated_at` forces a full re-evaluation (`ForceUpdate`).
 
 For the local-evaluation path, `GetFeatureFlagsResponse` gains `repeated HoldoutGroup holdout_groups`, always sent in full (the list is tiny and never diffed). It is repeated even though only one group serves at a time (§4.6), so lifting that restriction later costs no wire-format change. It rides on `GetFeatureFlags` rather than a new RPC because a separate endpoint would let the flag and holdout snapshots drift, leaving windows where the holdout is not yet applied or still applied after it ended.
 
@@ -154,7 +159,7 @@ Caching mirrors the feature flags path: a `HoldoutGroupCache` with the same shap
 
 ### 4.4 Measurement
 
-The group is given a **synthetic feature identity** so that the entire analytics pipeline — goal linking, the DWH schema, the Bayesian calculator, `experiment_result`, and the results UI — is reused without modification:
+The group is given a **synthetic feature identity** so that the entire analytics pipeline — goal linking, the DWH schema, the Bayesian calculator, `experiment_result`, and the results UI — is reused. The places that still need a `kind`-aware branch are listed below.
 
 | Field | Value |
 |---|---|
@@ -167,11 +172,19 @@ The group is given a **synthetic feature identity** so that the entire analytics
 On creation, the service also creates an **internal experiment row** (`experiment.kind = HOLDOUT`, a new field defaulting to `KIND_EXPERIMENT` for every existing row) pointing at that synthetic identity, with `base_variation_id = in_holdout`. Consequences:
 
 - The subscriber links goal events by goal ID against `listExperiments`, and the internal experiment is returned by that same call, so **goal linking needs no change at all**.
-- The experiment calculator picks it up and produces a standard `experiment_result`, so the Results tab is the existing experiment-result component pointed at a different ID.
+- The experiment calculator picks it up and produces a standard `experiment_result`.
 - `ListExperimentsRequest` gains `repeated Kind kinds`. An empty list means no filter, so the existing internal callers — the subscriber (`goal_events_dwh.go`, `evaluation_events_dwh.go`, `cache_refresher.go`) and the experiment calculator — keep receiving the internal row unchanged. The dashboard's Experiments page sends `kinds = [KIND_EXPERIMENT]`, so internal rows never appear there. The internal row is created through the domain layer, bypassing the public API's feature-existence validation.
+- Places that would otherwise treat the internal row as an ordinary experiment branch on `kind = HOLDOUT`:
+
+  | Place | Behavior for `kind = HOLDOUT` |
+  |---|---|
+  | `UpdateExperiment`, `DeleteExperiment` | Rejected with `FailedPrecondition` for any role, so an `Environment_EDITOR` cannot get around §4.5. The row changes only through the holdout service. |
+  | SRM (`getFeatureForSRM`) | Variations and expected weights (`percentage` / `100 − percentage`) come from the group, not `GetFeature`. SEGMENT mode: `SKIPPED` with a reason. |
+  | Results tab | Variation labels come from the group, not `GetFeature`. |
+
 - The internal experiment follows the group: every status transition and every edit of `start_at` / `stop_at` (§4.6) is written to it in the same transaction, so its window always matches the group's. A manual stop sets the experiment to `STOPPED` with `stop_at = stopped_at` — never `FORCE_STOPPED`, which the subscriber does not list — so goal linking continues through the grace window.
 
-The only genuinely new piece is the **exposure denominator**. The calculator counts distinct users per variation from `evaluation_event`, and no SDK emits an event for a flag that does not exist. So the subscriber derives them: while writing evaluation events, for each event whose `feature_id` is a target of the live group, it writes one additional row against the synthetic identity. The variation is taken from **what the user was actually served**, not recomputed: `in_holdout` if the event's reason is `HOLDOUT` with this `holdout_group_id`, `not_in_holdout` otherwise. Rows are deduplicated per user, group and day through the Redis locker already used for goal events.
+The only genuinely new piece is the **exposure denominator**. The calculator counts distinct users per variation from `evaluation_event`, and no SDK emits an event for a flag that does not exist. So the subscriber derives them: while writing evaluation events, for each event whose `feature_id` is a target of the live group, it writes one additional row against the synthetic identity. The variation is taken from **what the user was actually served**, not recomputed: `in_holdout` if the event's reason is `HOLDOUT` with this `holdout_group_id`, `not_in_holdout` otherwise. Rows are deduplicated per user, group and day through the Redis locker already used for goal events. A `HOLDOUT`-reason event produces only this derived row, and is not written against the target flag's own experiment (§4.8).
 
 - The resulting population is "users exposed to at least one target flag", which is the correct denominator for a cumulative-impact readout.
 - Reading the served reason means **measurement needs no SDK support**, and users behind an SDK too old to serve the holdout — who did receive the treatment — are counted as `not_in_holdout`. An outdated SDK therefore shrinks the holdout arm rather than putting treated users into the control group. It also removes the SEGMENT-mode lookup from the subscriber.
@@ -205,7 +218,7 @@ Validation:
 `WAITING → RUNNING → STOPPED`, on the same status machine as experiments. Both transitions have two triggers:
 
 - **Scheduled** — `start_at` / `stop_at`, advanced by the same batch job that advances experiment statuses (`pkg/batch/jobs/experiment`).
-- **Manual** — `StartHoldoutGroup` starts a `WAITING` group immediately, clamping `start_at` to now; `StopHoldoutGroup` ends a `RUNNING` group immediately, recording `stopped_at` and status `FORCE_STOPPED`. Both triggers, and edits of `start_at` / `stop_at`, are mirrored onto the internal experiment (§4.4). The actor is recorded in the audit log rather than in a column. The lifecycle is hybrid rather than schedule-only because a holdout deliberately withholds functionality from real users, so it must be stoppable without waiting for `stop_at`.
+- **Manual** — `StartHoldoutGroup` starts a `WAITING` group immediately, clamping `start_at` to now; `StopHoldoutGroup` ends a `RUNNING` group immediately, recording `stopped_at` and status `FORCE_STOPPED`. Both triggers, and edits of `start_at` / `stop_at`, are mirrored onto the internal experiment (§4.4). Every transition and target-flag change bumps `updated_at` (§4.3.2). The actor is recorded in the audit log rather than in a column. The lifecycle is hybrid rather than schedule-only because a holdout deliberately withholds functionality from real users, so it must be stoppable without waiting for `stop_at`.
 
 | Event | Behavior |
 |---|---|
@@ -234,7 +247,7 @@ Auto-ops, flag triggers, prerequisites and the kill switch all change flag confi
 
 | Feature | Interaction |
 |---|---|
-| Experiments | An experiment on a target flag measures only non-holdout users. Its result stays valid (holdout users never enter any variation's exposure denominator for that flag) but its sample size shrinks by the holdout share. The experiment UI notes this. |
+| Experiments | An experiment on a target flag measures only non-holdout users, and its sample size shrinks by the holdout share (noted in the experiment UI). The subscriber does not write `HOLDOUT`-reason events to the flag's own experiment (§4.4). Goal events then find no evaluation row for that experiment and are dropped. |
 | Progressive rollout | Continues to operate on non-holdout traffic. A rollout reaching 100% does not release holdout users — that is the point. |
 | Segments | In SEGMENT mode, `UpdateSegment`, `BulkUploadSegmentUsers` and `DeleteSegment` are rejected for a segment referenced by a `RUNNING` group (§4.2.2). |
 | Archive / auto-archive | Rejected for a current target of a live group; auto-archive skips such flags (§4.6). |
@@ -245,9 +258,9 @@ Auto-ops, flag triggers, prerequisites and the kill switch all change flag confi
 | Phase | Content |
 |---|---|
 | 1 | Proto, DB migrations, domain + storage + API (both assignment modes, org-admin authorization, single-active-group enforcement, segment lock), audit logs. No evaluation behavior yet. |
-| 2 | Evaluation: `evaluation/go`, `evaluation/typescript`, conformance fixtures, `Reason.HOLDOUT`, holdout-first ordering, segment-user plumbing, server-side path in `cmd/api`. Every client SDK becomes holdout-capable here. |
+| 2 | Evaluation: `evaluation/go`, `evaluation/typescript`, conformance fixtures, `Reason.HOLDOUT`, holdout-first ordering, segment-user plumbing, server-side path in `cmd/api` including holdout-aware `UserEvaluationsID` and forced re-evaluation. Every client SDK becomes holdout-capable here. |
 | 3 | Delivery to local-evaluation SDKs: `GetFeatureFlagsResponse.holdout_groups`, change detection, cache, compatibility metrics. Go/Node SDK releases follow in their own repos. |
-| 4 | Measurement: internal experiment, `experiment.kind`, derived evaluation rows in the subscriber, dedupe. |
+| 4 | Measurement: internal experiment, `experiment.kind` and its write guard on `ExperimentService`, derived evaluation rows and the `HOLDOUT`-reason filter in the subscriber, dedupe, holdout-aware SRM. |
 | 5 | Dashboard: Holdout Groups page, flag indicator, disable confirmation, results tab, compatibility panel. |
 | 6 | E2E tests (`test/e2e/gateway`), docs. |
 
@@ -265,7 +278,7 @@ Materialize the holdout into each target flag when the group is saved — a syst
 
 ### 6.2 A dedicated holdout analysis pipeline
 
-Compute holdout vs. non-holdout aggregates in a purpose-built query instead of the synthetic-feature trick. Rejected for v1: it duplicates the winsorization, Bayesian modelling and result storage that the existing calculator already implements across three data warehouses. The synthetic identity is a small, reversible amount of cleverness (one `kind` column and a list filter) in exchange for reusing that whole stack. If holdout-specific statistics — variance reduction, segment breakdowns — become necessary, a dedicated pipeline can be added later without changing the serving design.
+Compute holdout vs. non-holdout aggregates in a purpose-built query instead of the synthetic-feature trick. Rejected for v1: it duplicates the winsorization, Bayesian modelling and result storage that the existing calculator already implements across three data warehouses. The synthetic identity is a small, reversible amount of cleverness (one `kind` column, a list filter, a write guard and two `kind`-aware readers, §4.4) in exchange for reusing that whole stack. If holdout-specific statistics — variance reduction, segment breakdowns — become necessary, a dedicated pipeline can be added later without changing the serving design.
 
 ### 6.3 Holdout below prerequisites and the `enabled` check
 
