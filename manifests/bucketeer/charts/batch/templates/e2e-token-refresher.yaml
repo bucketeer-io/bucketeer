@@ -1,0 +1,155 @@
+{{- if and (eq (include "batch.deploy" .) "true") .Values.e2eTokenRefresher.enabled }}
+{{- $v := .Values.e2eTokenRefresher }}
+{{- $name := printf "%s-e2e-token-refresher" (include "batch-server.fullname" .) }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.namespace }}
+rules:
+  # create cannot be scoped by resourceNames; only used when the Secret does not exist yet.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ $v.secretName | quote }}]
+    verbs: ["update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: {{ $v.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      # Also cleans up the jobs created manually from this CronJob by dev-deploy.
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: {{ template "batch-server.name" . }}
+            job-type: e2e-token-refresher
+        spec:
+          serviceAccountName: {{ $name }}
+          restartPolicy: Never
+          volumes:
+            - name: oauth-key
+              secret:
+                secretName: {{ template "oauth-key-secret" . }}
+            - name: tokens
+              emptyDir: {}
+          initContainers:
+            # Seeds the e2e accounts and signs an access token for each role.
+            - name: create-e2e-accounts
+              image: "{{ $v.image.repository }}:{{ $v.image.tag }}"
+              imagePullPolicy: {{ $v.image.pullPolicy }}
+              env:
+                - name: MYSQL_USER
+                  value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
+                - name: MYSQL_PASS
+                  value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
+              args:
+                - create
+                - --mysql-user=$(MYSQL_USER)
+                - --mysql-pass=$(MYSQL_PASS)
+                - --mysql-host={{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}
+                - --mysql-port={{ .Values.env.operationalDatabase.mysql.port | default .Values.global.operationalDatabase.mysql.port }}
+                - --mysql-db-name={{ .Values.env.operationalDatabase.mysql.name | default .Values.global.operationalDatabase.mysql.name }}
+                - --sys-admin-email={{ required "e2eTokenRefresher.sysAdminEmail is required" $v.sysAdminEmail }}
+                - --org-owner-email={{ required "e2eTokenRefresher.orgOwnerEmail is required" $v.orgOwnerEmail }}
+                - --env-write-email={{ required "e2eTokenRefresher.envWriteEmail is required" $v.envWriteEmail }}
+                - --env-read-email={{ required "e2eTokenRefresher.envReadEmail is required" $v.envReadEmail }}
+                - --default-organization-id={{ required "e2eTokenRefresher.defaultOrganizationId is required" $v.defaultOrganizationId }}
+                - --e2e-organization-id={{ $v.e2eOrganizationId }}
+                - --e2e-environment-id={{ $v.e2eEnvironmentId }}
+                - --oauth-key=/usr/local/oauth-key/private.pem
+                - --issuer={{ required "oauth.issuer is required" .Values.oauth.issuer }}
+                - --audience={{ .Values.oauth.audience | default "bucketeer" }}
+                - --token-ttl={{ $v.tokenTTL }}
+                - --sys-admin-token-output=/tokens/sys-admin-token
+                - --org-owner-default-token-output=/tokens/org-owner-default-token
+                - --org-owner-e2e-token-output=/tokens/org-owner-e2e-token
+                - --env-write-token-output=/tokens/env-editor-token
+                - --env-read-token-output=/tokens/env-viewer-token
+                - --no-profile
+              volumeMounts:
+                - name: oauth-key
+                  mountPath: /usr/local/oauth-key
+                  readOnly: true
+                - name: tokens
+                  mountPath: /tokens
+          containers:
+            # Replaces the Secret with the new tokens via the Kubernetes API.
+            - name: upload-tokens
+              image: {{ $v.uploaderImage }}
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: NAMESPACE
+                  value: {{ .Values.namespace }}
+                - name: SECRET_NAME
+                  value: {{ $v.secretName }}
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - |
+                  set -eu
+                  SA=/var/run/secrets/kubernetes.io/serviceaccount
+                  API="https://kubernetes.default.svc/api/v1/namespaces/${NAMESPACE}/secrets"
+                  DATA=""
+                  for f in sys-admin-token org-owner-default-token org-owner-e2e-token env-editor-token env-viewer-token; do
+                    [ -s "/tokens/$f" ] || { echo "missing /tokens/$f"; exit 1; }
+                    DATA="${DATA}${DATA:+,}\"$f\":\"$(base64 < "/tokens/$f" | tr -d '\n')\""
+                  done
+                  BODY="{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"type\":\"Opaque\",\"metadata\":{\"name\":\"${SECRET_NAME}\"},\"data\":{${DATA}}}"
+                  req() {
+                    curl -sS -o /tmp/resp -w '%{http_code}' --cacert "$SA/ca.crt" \
+                      -H "Authorization: Bearer $(cat "$SA/token")" \
+                      -H "Content-Type: application/json" "$@"
+                  }
+                  CODE=$(req -X PUT --data "$BODY" "$API/$SECRET_NAME")
+                  if [ "$CODE" = "404" ]; then
+                    CODE=$(req -X POST --data "$BODY" "$API")
+                  fi
+                  case "$CODE" in
+                    200|201) echo "updated secret ${SECRET_NAME}" ;;
+                    *) echo "failed to update secret ${SECRET_NAME}: HTTP ${CODE}"; cat /tmp/resp; exit 1 ;;
+                  esac
+              volumeMounts:
+                - name: tokens
+                  mountPath: /tokens
+                  readOnly: true
+{{- end }}

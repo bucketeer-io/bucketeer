@@ -227,3 +227,23 @@ cronjob:
       jobId: MonthlySummarizer
       schedule: "2 0 * * *"
 terminationGracePeriodSeconds: 60
+
+# Seeds the e2e accounts and stores their access tokens in a Secret. Enable only in dev.
+e2eTokenRefresher:
+  enabled: false
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-create-e2e-accounts
+    tag: v0.0.2
+    pullPolicy: IfNotPresent
+  uploaderImage: curlimages/curl:8.1.2
+  schedule: "0 0 * * *"
+  # Keep it longer than the schedule interval so tokens read from the Secret stay valid.
+  tokenTTL: 48h
+  secretName: bucketeer-e2e-tokens
+  sysAdminEmail:
+  orgOwnerEmail:
+  envWriteEmail:
+  envReadEmail:
+  defaultOrganizationId:
+  e2eOrganizationId: e2e
+  e2eEnvironmentId: e2e
