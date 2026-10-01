@@ -141,7 +141,9 @@ func TestInitialPut(t *testing.T) {
 				evaluate: func(
 					_ context.Context, _ *userproto.User, _, _ string,
 					prevUEID string, evaluatedAt int64, checkUserAttributes bool,
+					features []*featureproto.Feature,
 				) (string, *featureproto.UserEvaluations, error) {
+					assert.Nil(t, features)
 					assert.Equal(t, "", prevUEID)
 					assert.Equal(t, int64(0), evaluatedAt)
 					assert.True(t, checkUserAttributes)
@@ -169,6 +171,7 @@ func TestInitialPut(t *testing.T) {
 
 func TestPatch(t *testing.T) {
 	t.Parallel()
+	snapshot := []*featureproto.Feature{{Id: "f1", Version: 3}}
 	patterns := []struct {
 		desc        string
 		evaluatedAt int64
@@ -210,7 +213,9 @@ func TestPatch(t *testing.T) {
 				evaluate: func(
 					_ context.Context, _ *userproto.User, _, _ string,
 					prevUEID string, evaluatedAt int64, checkUserAttributes bool,
+					features []*featureproto.Feature,
 				) (string, *featureproto.UserEvaluations, error) {
+					assert.Equal(t, snapshot, features)
 					assert.Equal(t, "prev-ueid", prevUEID)
 					assert.Equal(t, p.evaluatedAt, evaluatedAt)
 					assert.False(t, checkUserAttributes)
@@ -218,7 +223,7 @@ func TestPatch(t *testing.T) {
 				},
 			}
 			var buf bytes.Buffer
-			ueid, newEvalAt, err := h.sendPatch(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1", "prev-ueid", p.evaluatedAt)
+			ueid, newEvalAt, err := h.sendPatch(context.Background(), &buf, stubFlusher{}, &userproto.User{Id: "u"}, "env1", "tag1", "source1", "prev-ueid", p.evaluatedAt, snapshot)
 			if p.expectErr {
 				assert.Error(t, err)
 				return
@@ -266,6 +271,7 @@ func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
 		time.Hour, // ensure the heartbeat ticker never fires during the test
 		func(
 			_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64, _ bool,
+			_ []*featureproto.Feature,
 		) (string, *featureproto.UserEvaluations, error) {
 			return "ueid-1", &featureproto.UserEvaluations{
 				Id:          "ueid-1",

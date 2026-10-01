@@ -36,20 +36,32 @@ type FeaturesFetcher func(envID string) ([]*featureproto.Feature, error)
 type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns         map[string]map[string]map[*conn]struct{}
-	totalConns    int
-	maxConns      int
-	fetchFeatures FeaturesFetcher
-	shutdownCh    chan struct{}
-	shutdownOnce  sync.Once
-	logger        *zap.Logger
+	conns           map[string]map[string]map[*conn]struct{}
+	totalConns      int
+	maxConns        int
+	fetchFeatures   FeaturesFetcher
+	refetchFeatures FeaturesFetcher
+	shutdownCh      chan struct{}
+	shutdownOnce    sync.Once
+	logger          *zap.Logger
+}
+
+type DispatcherOption func(*Dispatcher)
+
+// WithFeaturesRefetcher sets the source used when the cache is older than the event.
+func WithFeaturesRefetcher(f FeaturesFetcher) DispatcherOption {
+	return func(d *Dispatcher) {
+		d.refetchFeatures = f
+	}
 }
 
 type event struct {
 	environmentID string
 	tags          []string
 	eventType     domaineventproto.Event_Type
-	dispatchedAt  time.Time
+	// features is a snapshot verified to include the event's change; nil means use the cache.
+	features     []*featureproto.Feature
+	dispatchedAt time.Time
 }
 
 type conn struct {
@@ -59,14 +71,23 @@ type conn struct {
 	createdAt time.Time
 }
 
-func NewDispatcher(maxConns int, fetchFeatures FeaturesFetcher, logger *zap.Logger) *Dispatcher {
-	return &Dispatcher{
+func NewDispatcher(
+	maxConns int,
+	fetchFeatures FeaturesFetcher,
+	logger *zap.Logger,
+	opts ...DispatcherOption,
+) *Dispatcher {
+	d := &Dispatcher{
 		conns:         make(map[string]map[string]map[*conn]struct{}),
 		maxConns:      maxConns,
 		fetchFeatures: fetchFeatures,
 		shutdownCh:    make(chan struct{}),
 		logger:        logger.Named("stream-dispatcher"),
 	}
+	for _, opt := range opts {
+		opt(d)
+	}
+	return d
 }
 
 // ActiveConns returns the current number of SSE connections.
@@ -156,10 +177,12 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 			e.Type != domaineventproto.Event_FEATURE_DISABLED {
 			return
 		}
+		features := d.featuresFor(e)
 		d.dispatch(event{
 			environmentID: e.EnvironmentId,
 			eventType:     e.Type,
-			tags:          d.affectedTags(e),
+			tags:          d.affectedTags(e, features),
+			features:      features,
 		})
 	case domaineventproto.Event_SEGMENT:
 		// Segment membership only changes through a bulk upload.
@@ -190,14 +213,14 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 // affectedTags unions the flag's tags before and after the update so that
 // removing a tag still notifies that tag's subscribers.
 // And the result includes the tags of flags that transitively depend on this one.
-func (d *Dispatcher) affectedTags(e *domaineventproto.Event) []string {
+func (d *Dispatcher) affectedTags(e *domaineventproto.Event, features []*featureproto.Feature) []string {
 	seen := make(map[string]struct{})
 	for _, data := range []string{e.EntityData, e.PreviousEntityData} {
 		for _, tag := range d.parseTags(data) {
 			seen[tag] = struct{}{}
 		}
 	}
-	for _, tag := range d.dependentTags(e.EnvironmentId, e.EntityId) {
+	for _, tag := range dependentTags(e.EntityId, features) {
 		seen[tag] = struct{}{}
 	}
 	if len(seen) == 0 {
@@ -210,16 +233,47 @@ func (d *Dispatcher) affectedTags(e *domaineventproto.Event) []string {
 	return tags
 }
 
-func (d *Dispatcher) dependentTags(envID, entityID string) []string {
+// featuresFor returns the env's features, refetching them if the cache predates the event.
+func (d *Dispatcher) featuresFor(e *domaineventproto.Event) []*featureproto.Feature {
 	if d.fetchFeatures == nil {
 		return nil
 	}
-	features, err := d.fetchFeatures(envID)
+	features, err := d.fetchFeatures(e.EnvironmentId)
 	if err != nil {
-		d.logger.Warn("Failed to fetch features for tag propagation",
+		d.logger.Warn("Failed to fetch features",
 			zap.Error(err),
-			zap.String("environmentID", envID),
+			zap.String("environmentID", e.EnvironmentId),
 		)
+		features = nil
+	}
+	version, ok := d.parseVersion(e.EntityData)
+	if !ok || d.refetchFeatures == nil || hasVersion(features, e.EntityId, version) {
+		return features
+	}
+	sseStaleFeaturesCounter.WithLabelValues(e.EnvironmentId).Inc()
+	fresh, err := d.refetchFeatures(e.EnvironmentId)
+	if err != nil {
+		d.logger.Warn("Failed to refetch stale features",
+			zap.Error(err),
+			zap.String("environmentID", e.EnvironmentId),
+			zap.String("featureID", e.EntityId),
+		)
+		return features
+	}
+	return fresh
+}
+
+func hasVersion(features []*featureproto.Feature, id string, version int32) bool {
+	for _, f := range features {
+		if f.Id == id {
+			return f.Version >= version
+		}
+	}
+	return false
+}
+
+func dependentTags(entityID string, features []*featureproto.Feature) []string {
+	if len(features) == 0 {
 		return nil
 	}
 	featuresMap := make(map[string]*featureproto.Feature, len(features))
@@ -237,6 +291,19 @@ func (d *Dispatcher) dependentTags(envID, entityID string) []string {
 		tags = append(tags, f.Tags...)
 	}
 	return tags
+}
+
+func (d *Dispatcher) parseVersion(data string) (int32, bool) {
+	if data == "" {
+		return 0, false
+	}
+	var payload struct {
+		Version *int32 `json:"version"`
+	}
+	if err := json.Unmarshal([]byte(data), &payload); err != nil || payload.Version == nil {
+		return 0, false
+	}
+	return *payload.Version, true
 }
 
 func (d *Dispatcher) parseTags(data string) []string {
@@ -301,8 +368,22 @@ func (d *Dispatcher) dispatch(ev event) {
 	for _, c := range targetConns {
 		select {
 		case c.ch <- ev:
+			continue
 		default:
-			sseDispatchDroppedCounter.WithLabelValues(ev.environmentID, c.tag, c.sourceID).Inc()
+		}
+		// Replace the pending event so the conn evaluates the newest snapshot.
+		sseDispatchDroppedCounter.WithLabelValues(ev.environmentID, c.tag, c.sourceID).Inc()
+		next := ev
+		select {
+		case pending := <-c.ch:
+			if next.features == nil {
+				next.features = pending.features
+			}
+		default:
+		}
+		select {
+		case c.ch <- next:
+		default:
 		}
 	}
 }
