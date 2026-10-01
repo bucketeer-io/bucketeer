@@ -73,9 +73,10 @@ const (
 	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
 	// a best-effort 15s limit. We optimize for the common case (normal operations).
 	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
-	propagationDelay      = 15 * time.Second
-	serverShutDownTimeout = 30 * time.Second
-	grpcStopTimeout       = 5 * time.Second
+	propagationDelay       = 15 * time.Second
+	serverShutDownTimeout  = 30 * time.Second
+	grpcStopTimeout        = 5 * time.Second
+	featuresRefetchTimeout = 5 * time.Second
 )
 
 type server struct {
@@ -610,6 +611,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			return fs.Features, nil
 		},
 		logger,
+		// Used when both cache layers lag behind an event, e.g. after a stale batch cacher write.
+		stream.WithFeaturesRefetcher(func(envID string) ([]*featureproto.Feature, error) {
+			ctx, cancel := context.WithTimeout(context.Background(), featuresRefetchTimeout)
+			defer cancel()
+			fs, err := api.ListFeatures(ctx, featureClient, envID)
+			if err != nil {
+				return nil, err
+			}
+			if putErr := featuresL1Cache.Put(&featureproto.Features{Features: fs}, envID); putErr != nil {
+				logger.Warn("Failed to repopulate L1 features cache",
+					zap.String("environmentId", envID),
+					zap.Error(putErr),
+				)
+			}
+			return fs, nil
+		}),
 	)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
 	var invalidatorCleanup func()

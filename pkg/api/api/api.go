@@ -402,18 +402,22 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	prevUEID string,
 	evaluatedAt int64,
 	checkUserAttributes bool,
+	snapshot []*featureproto.Feature,
 ) (ueid string, evals *featureproto.UserEvaluations, err error) {
-	f, e, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
-		return s.getFeatures(ctx, environmentID)
-	})
-	if e != nil {
-		return "", nil, e
+	shared := snapshot
+	if shared == nil {
+		f, e, _ := s.flightgroup.Do(environmentID, func() (interface{}, error) {
+			return s.getFeatures(ctx, environmentID)
+		})
+		if e != nil {
+			return "", nil, e
+		}
+		shared = f.([]*featureproto.Feature)
 	}
-	shared := f.([]*featureproto.Feature)
 	if len(shared) == 0 {
 		return "", s.emptyUserEvaluations(), nil
 	}
-	// singleflight shares the same slice across concurrent callers.
+	// singleflight and dispatched snapshots share the same slice across callers.
 	// Copy to avoid data races from in-place sort in UserEvaluationsID.
 	features := make([]*featureproto.Feature, len(shared))
 	copy(features, shared)
@@ -908,10 +912,19 @@ func (s *gatewayService) listFeatures(
 	ctx context.Context,
 	environmentId string,
 ) ([]*featureproto.Feature, error) {
+	return ListFeatures(ctx, s.featureClient, environmentId)
+}
+
+// ListFeatures loads the environment's evaluable features from the feature service.
+func ListFeatures(
+	ctx context.Context,
+	featureClient featureclient.Client,
+	environmentId string,
+) ([]*featureproto.Feature, error) {
 	features := []*featureproto.Feature{}
 	cursor := ""
 	for {
-		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
+		resp, err := featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 			PageSize:      listRequestSize,
 			Cursor:        cursor,
 			EnvironmentId: environmentId,
