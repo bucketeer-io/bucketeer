@@ -74,26 +74,6 @@ func (mr *MockClientMockRecorder) GetAuditLog(ctx, in any, opts ...any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuditLog", reflect.TypeOf((*MockClient)(nil).GetAuditLog), varargs...)
 }
 
-// ListAdminAuditLogs mocks base method.
-func (m *MockClient) ListAdminAuditLogs(ctx context.Context, in *auditlog.ListAdminAuditLogsRequest, opts ...grpc.CallOption) (*auditlog.ListAdminAuditLogsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ListAdminAuditLogs", varargs...)
-	ret0, _ := ret[0].(*auditlog.ListAdminAuditLogsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListAdminAuditLogs indicates an expected call of ListAdminAuditLogs.
-func (mr *MockClientMockRecorder) ListAdminAuditLogs(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminAuditLogs", reflect.TypeOf((*MockClient)(nil).ListAdminAuditLogs), varargs...)
-}
-
 // ListAuditLogs mocks base method.
 func (m *MockClient) ListAuditLogs(ctx context.Context, in *auditlog.ListAuditLogsRequest, opts ...grpc.CallOption) (*auditlog.ListAuditLogsResponse, error) {
 	m.ctrl.T.Helper()

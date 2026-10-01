@@ -49,13 +49,11 @@ func TestNewAuditLogService(t *testing.T) {
 	accountClientMock := accountclientmock.NewMockClient(mockController)
 	accountStorageMock := v2asmock.NewMockAccountStorage(mockController)
 	auditLogStorageMock := v2alsmock.NewMockAuditLogStorage(mockController)
-	adminAuditLogStorageMock := v2alsmock.NewMockAdminAuditLogStorage(mockController)
 	logger := zap.NewNop()
 	s := NewAuditLogService(
 		accountClientMock,
 		accountStorageMock,
 		auditLogStorageMock,
-		adminAuditLogStorageMock,
 		WithLogger(logger),
 	)
 	assert.IsType(t, &auditlogService{}, s)
@@ -540,100 +538,6 @@ func TestListAuditLogs(t *testing.T) {
 	}
 }
 
-func TestListAdminAuditLogs(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		desc        string
-		setup       func(*auditlogService)
-		input       *proto.ListAdminAuditLogsRequest
-		expected    *proto.ListAdminAuditLogsResponse
-		expectedErr error
-	}{
-		{
-			desc:        "err: ErrInvalidCursor",
-			setup:       nil,
-			input:       &proto.ListAdminAuditLogsRequest{Cursor: "invalid"},
-			expected:    nil,
-			expectedErr: statusInvalidCursor.Err(),
-		},
-		{
-			desc: "err: ErrInternal",
-			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
-			},
-			input:       &proto.ListAdminAuditLogsRequest{},
-			expected:    nil,
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err(),
-		},
-		{
-			desc: "success",
-			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(), gomock.Any(),
-				).Return(createAuditLogs(t), 2, int64(10), nil)
-			},
-			input:       &proto.ListAdminAuditLogsRequest{PageSize: 2, Cursor: ""},
-			expected:    &proto.ListAdminAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
-			expectedErr: nil,
-		},
-		{
-			desc: "success with default page size when page_size is 0",
-			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(),
-					v2als.ListAdminAuditLogsParams{
-						OrderBy:        proto.ListAdminAuditLogsRequest_DEFAULT,
-						OrderDirection: proto.ListAdminAuditLogsRequest_DESC,
-						PageSize:       200,
-						Cursor:         "0",
-					},
-				).Return(createAuditLogs(t), 200, int64(10), nil)
-			},
-			input:       &proto.ListAdminAuditLogsRequest{PageSize: 0, Cursor: ""},
-			expected:    &proto.ListAdminAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: 10},
-			expectedErr: nil,
-		},
-		{
-			desc: "success: page size exceeds maximum",
-			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(),
-					v2als.ListAdminAuditLogsParams{
-						OrderBy:        proto.ListAdminAuditLogsRequest_DEFAULT,
-						OrderDirection: proto.ListAdminAuditLogsRequest_DESC,
-						PageSize:       200,
-						Cursor:         "0",
-					},
-				).Return(createAuditLogs(t), 200, int64(10), nil)
-			},
-			input:       &proto.ListAdminAuditLogsRequest{PageSize: 1000, Cursor: ""},
-			expected:    &proto.ListAdminAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: 10},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			s := newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR)
-			if p.setup != nil {
-				p.setup(s)
-			}
-			actual, err := s.ListAdminAuditLogs(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err)
-			assert.Equal(t, p.expected, actual)
-		})
-	}
-}
-
 func TestListFeatureHistory(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -799,11 +703,10 @@ func newAuditLogServiceWithGetAccountByEnvironmentMock(t *testing.T, mockControl
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &auditlogService{
-		accountClient:        accountClientMock,
-		accountStorage:       v2asmock.NewMockAccountStorage(mockController),
-		auditLogStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
-		adminAuditLogStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
-		logger:               logger.Named("api"),
+		accountClient:   accountClientMock,
+		accountStorage:  v2asmock.NewMockAccountStorage(mockController),
+		auditLogStorage: v2alsmock.NewMockAuditLogStorage(mockController),
+		logger:          logger.Named("api"),
 	}
 }
 
@@ -824,11 +727,10 @@ func newAuditLogServiceWithGetAccountMock(
 	}
 	accountClientMock.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &auditlogService{
-		accountClient:        accountClientMock,
-		accountStorage:       v2asmock.NewMockAccountStorage(mockController),
-		auditLogStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
-		adminAuditLogStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
-		logger:               logger.Named("api"),
+		accountClient:   accountClientMock,
+		accountStorage:  v2asmock.NewMockAccountStorage(mockController),
+		auditLogStorage: v2alsmock.NewMockAuditLogStorage(mockController),
+		logger:          logger.Named("api"),
 	}
 }
 

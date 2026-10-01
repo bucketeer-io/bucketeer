@@ -22,8 +22,6 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -59,10 +57,6 @@ func WithLogger(l *zap.Logger) Option {
 type AuditlogService interface {
 	Register(*grpc.Server)
 	ListAuditLogs(context.Context, *proto.ListAuditLogsRequest) (*proto.ListAuditLogsResponse, error)
-	ListAdminAuditLogs(
-		ctx context.Context,
-		req *proto.ListAdminAuditLogsRequest,
-	) (*proto.ListAdminAuditLogsResponse, error)
 	ListFeatureHistory(
 		ctx context.Context,
 		req *proto.ListFeatureHistoryRequest,
@@ -70,19 +64,17 @@ type AuditlogService interface {
 }
 
 type auditlogService struct {
-	accountClient        accountclient.Client
-	accountStorage       v2as.AccountStorage
-	auditLogStorage      v2als.AuditLogStorage
-	adminAuditLogStorage v2als.AdminAuditLogStorage
-	opts                 *options
-	logger               *zap.Logger
+	accountClient   accountclient.Client
+	accountStorage  v2as.AccountStorage
+	auditLogStorage v2als.AuditLogStorage
+	opts            *options
+	logger          *zap.Logger
 }
 
 func NewAuditLogService(
 	accountClient accountclient.Client,
 	accountStorage v2as.AccountStorage,
 	auditLogStorage v2als.AuditLogStorage,
-	adminAuditLogStorage v2als.AdminAuditLogStorage,
 	opts ...Option,
 ) AuditlogService {
 	dopts := &options{
@@ -92,12 +84,11 @@ func NewAuditLogService(
 		opt(dopts)
 	}
 	return &auditlogService{
-		accountClient:        accountClient,
-		accountStorage:       accountStorage,
-		auditLogStorage:      auditLogStorage,
-		adminAuditLogStorage: adminAuditLogStorage,
-		opts:                 dopts,
-		logger:               dopts.logger.Named("api"),
+		accountClient:   accountClient,
+		accountStorage:  accountStorage,
+		auditLogStorage: auditLogStorage,
+		opts:            dopts,
+		logger:          dopts.logger.Named("api"),
 	}
 }
 
@@ -329,72 +320,6 @@ func (s *auditlogService) listAuditLogs(
 	return auditlogs, nextCursor, totalCount, nil
 }
 
-func (s *auditlogService) ListAdminAuditLogs(
-	ctx context.Context,
-	req *proto.ListAdminAuditLogsRequest,
-) (*proto.ListAdminAuditLogsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
-	limit := int(req.PageSize)
-	if limit <= 0 || limit > maxAuditLogPageSize {
-		limit = maxAuditLogPageSize
-	}
-
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	// Validate cursor before passing to storage
-	if _, err := strconv.Atoi(cursor); err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
-
-	var entityType *int32
-	if req.EntityType != nil {
-		v := req.EntityType.Value
-		entityType = &v
-	}
-
-	params := v2als.ListAdminAuditLogsParams{
-		EntityType:     entityType,
-		From:           req.From,
-		To:             req.To,
-		SearchKeyword:  req.SearchKeyword,
-		OrderBy:        req.OrderBy,
-		OrderDirection: req.OrderDirection,
-		PageSize:       limit,
-		Cursor:         cursor,
-	}
-	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(ctx, params)
-	if err == nil {
-		sanitizeEvents(auditlogs...)
-	}
-	if err != nil {
-		if errors.Is(err, v2als.ErrInvalidOrderBy) {
-			return nil, statusInvalidOrderBy.Err()
-		}
-		s.logger.Error(
-			"Failed to list admin auditlogs",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
-	}
-	s.obfuscateAPIKeys(auditlogs)
-	return &proto.ListAdminAuditLogsResponse{
-		AuditLogs:  auditlogs,
-		Cursor:     strconv.Itoa(nextCursor),
-		TotalCount: totalCount,
-	}, nil
-}
-
 func (s *auditlogService) ListFeatureHistory(
 	ctx context.Context,
 	req *proto.ListFeatureHistoryRequest,
@@ -540,35 +465,6 @@ func (s *auditlogService) checkOrganizationRole(
 		statusPermissionDenied.Err(),
 		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
-}
-
-func (s *auditlogService) checkSystemAdminRole(
-	ctx context.Context,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckSystemAdminRole(ctx)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
 }
 
 func deDuplicateStrings(args []string) []string {
