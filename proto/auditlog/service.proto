@@ -72,33 +72,6 @@ message ListAuditLogsResponse {
   int64 total_count = 3;
 }
 
-message ListAdminAuditLogsRequest {
-  enum OrderBy {
-    DEFAULT = 0;
-    TIMESTAMP = 1;
-  }
-  enum OrderDirection {
-    DESC = 0;
-    ASC = 1;
-  }
-  // Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
-  // Maximum allowed value is 200.
-  int64 page_size = 1;
-  string cursor = 2;
-  OrderBy order_by = 3;
-  OrderDirection order_direction = 4;
-  string search_keyword = 5;
-  int64 from = 6;
-  int64 to = 7;
-  google.protobuf.Int32Value entity_type = 8;
-}
-
-message ListAdminAuditLogsResponse {
-  repeated AuditLog audit_logs = 1;
-  string cursor = 2;
-  int64 total_count = 3;
-}
-
 message ListFeatureHistoryRequest {
   enum OrderBy {
     DEFAULT = 0;
@@ -182,40 +155,6 @@ service AuditLogService {
       description: "List audit logs"
       tags: "audit_log"
       operation_id: "web.v1.audit_log.list"
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc ListAdminAuditLogs(ListAdminAuditLogsRequest)
-      returns (ListAdminAuditLogsResponse) {
-    option (google.api.http) = {
-      get: "/v1/admin_audit_logs"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List Admin Audit Logs"
-      description: "List admin audit logs"
-      tags: "audit_log"
-      operation_id: "web.v1.audit_log.admin.list"
       responses: {
         key: "400"
         value: {

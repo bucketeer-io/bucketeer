@@ -1136,97 +1136,6 @@ paths:
             $ref: '#/definitions/accountUpdateSearchFilterRequest'
       tags:
         - Account
-  /v1/admin_audit_logs:
-    get:
-      summary: List Admin Audit Logs
-      description: List admin audit logs
-      operationId: web.v1.audit_log.admin.list
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/auditlogListAdminAuditLogsResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: pageSize
-          description: |-
-            Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
-            Maximum allowed value is 200.
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: cursor
-          in: query
-          required: false
-          type: string
-        - name: orderBy
-          in: query
-          required: false
-          type: string
-          enum:
-            - DEFAULT
-            - TIMESTAMP
-          default: DEFAULT
-        - name: orderDirection
-          in: query
-          required: false
-          type: string
-          enum:
-            - DESC
-            - ASC
-          default: DESC
-        - name: searchKeyword
-          in: query
-          required: false
-          type: string
-        - name: from
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: to
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: entityType
-          in: query
-          required: false
-          type: integer
-          format: int32
-      tags:
-        - audit_log
   /v1/admin_notification:
     delete:
       summary: Delete
@@ -10604,31 +10513,6 @@ definitions:
     properties:
       auditLog:
         $ref: '#/definitions/auditlogAuditLog'
-  auditlogListAdminAuditLogsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - TIMESTAMP
-    default: DEFAULT
-  auditlogListAdminAuditLogsRequestOrderDirection:
-    type: string
-    enum:
-      - DESC
-      - ASC
-    default: DESC
-  auditlogListAdminAuditLogsResponse:
-    type: object
-    properties:
-      auditLogs:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/auditlogAuditLog'
-      cursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
   auditlogListAuditLogsRequestOrderBy:
     type: string
     enum:

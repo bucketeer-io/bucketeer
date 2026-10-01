@@ -141,25 +141,6 @@ func TestListAndGetAuditLog(t *testing.T) {
 		t.Fatal("GetAuditLog ID error")
 	}
 
-	sysadminAC := newAuditLogClient(t, *sysAdminAccessTokenPath)
-	listAdminResp, err := listAdminAuditLogsWithRetry(t, sysadminAC, &auditlog.ListAdminAuditLogsRequest{
-		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-		PageSize:       10,
-		Cursor:         "0",
-		OrderBy:        auditlog.ListAdminAuditLogsRequest_TIMESTAMP,
-		OrderDirection: auditlog.ListAdminAuditLogsRequest_DESC,
-	})
-	if err != nil {
-		t.Fatal("Failed to list admin audit logs", err)
-	}
-	if len(listAdminResp.AuditLogs) > 10 {
-		t.Fatal("ListAdminAuditLogs page size error")
-	}
-	for i := 1; i < len(listAdminResp.AuditLogs); i++ {
-		if listAdminResp.AuditLogs[i].Timestamp > listAdminResp.AuditLogs[i-1].Timestamp {
-			t.Fatal("ListAdminAuditLogs order error")
-		}
-	}
 }
 
 func newFeatureID(t *testing.T) string {
@@ -335,48 +316,6 @@ func getAuditLogWithRetry(
 		}
 		if i == maxRetries-1 {
 			return nil, fmt.Errorf("Failed to get audit log after %d retries: %w", maxRetries, err)
-		}
-		st, _ := status.FromError(err)
-		if st.Code() == codes.Unavailable ||
-			st.Code() == codes.Internal ||
-			st.Code() == codes.DeadlineExceeded ||
-			st.Code() == codes.Canceled {
-			fmt.Printf("Retry %d/%d: %s (code: %s). Retrying in %.0f seconds.\n",
-				i+1,
-				maxRetries,
-				st.Message(),
-				st.Code().String(),
-				sleepTimeBetweenRequests.Seconds(),
-			)
-			time.Sleep(sleepTimeBetweenRequests)
-			continue
-		}
-		return nil, err
-	}
-	return nil, fmt.Errorf("Unexpected error: max retries reached")
-}
-
-func listAdminAuditLogsWithRetry(
-	t *testing.T,
-	client auditlogclient.Client,
-	req *auditlog.ListAdminAuditLogsRequest,
-) (*auditlog.ListAdminAuditLogsResponse, error) {
-	t.Helper()
-
-	for i := range maxRetries {
-		// Wrap in anonymous function to ensure proper defer cleanup per iteration
-		resp, err := func() (*auditlog.ListAdminAuditLogsResponse, error) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel() // This will run at the end of this anonymous function
-
-			return client.ListAdminAuditLogs(ctx, req)
-		}()
-
-		if err == nil {
-			return resp, nil
-		}
-		if i == maxRetries-1 {
-			return nil, fmt.Errorf("Failed to list admin audit logs after %d retries: %w", maxRetries, err)
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable ||

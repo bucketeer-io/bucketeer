@@ -14,9 +14,9 @@
  *   tuples in `src/@queries/*.ts`. Adding a new query module means the new key
  *   should be referenced here for any endpoint that mutates data it depends
  *   on.
- * - `audit-logs` (and `admin-audit-logs` for org-level admin actions) is
- *   listed for almost every mutation because the audit log is a global feed
- *   of every change; under-invalidating leads to stale audit log views.
+ * - `audit-logs` is listed for almost every mutation because the audit log
+ *   is a global feed of every change; under-invalidating leads to stale audit
+ *   log views.
  */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -227,8 +227,7 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
       'projects',
       'project-details',
       'accounts',
-      'audit-logs',
-      'admin-audit-logs'
+      'audit-logs'
     ]
   },
   {
@@ -239,8 +238,7 @@ export const URL_TO_KEYS: readonly CacheInvalidationRule[] = [
       'projects',
       'project-details',
       'accounts',
-      'audit-logs',
-      'admin-audit-logs'
+      'audit-logs'
     ]
   },
 
