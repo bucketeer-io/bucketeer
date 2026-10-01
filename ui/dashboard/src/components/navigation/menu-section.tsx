@@ -5,7 +5,6 @@ export type MenuProps = {
   className?: string;
   title: string;
   items: MenuItem[];
-  onClickNavLink?: () => void;
   isCollapsed?: boolean;
 };
 
@@ -13,7 +12,6 @@ const SectionMenu = ({
   className,
   title,
   items = [],
-  onClickNavLink,
   isCollapsed
 }: MenuProps) => {
   return (
@@ -28,10 +26,7 @@ const SectionMenu = ({
         <MenuItemComponent
           {...item}
           key={index}
-          onClick={() => {
-            item.onClick?.();
-            onClickNavLink?.();
-          }}
+          onClick={item.onClick}
           isCollapsed={isCollapsed}
         />
       ))}
