@@ -1704,7 +1704,10 @@ paths:
           type: integer
           format: int32
         - name: environmentId
-          description: Scopes the list to one environment; requires an environment role.
+          description: |-
+            Scopes the list to one environment; requires an environment role.
+            With neither environment_id nor organization_id, system admins list every
+            audit log, including system-level ones.
           in: query
           required: false
           type: string

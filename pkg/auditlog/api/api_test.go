@@ -420,13 +420,32 @@ func TestListAuditLogs(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:        "err: missing environment_id and organization_id",
+			desc:        "err: missing environment_id and organization_id for a non system admin",
 			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context:     createContextWithToken(t, true),
+			context:     createContextWithToken(t, false),
 			setup:       nil,
 			input:       &proto.ListAuditLogsRequest{PageSize: 2},
 			expected:    nil,
 			expectedErr: statusMissingEnvironmentOrOrganization.Err(),
+		},
+		{
+			desc:    "success: system admin lists every audit log without a scope",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					v2als.ListAuditLogsParams{
+						OrderBy:        proto.ListAuditLogsRequest_DEFAULT,
+						OrderDirection: proto.ListAuditLogsRequest_DESC,
+						PageSize:       2,
+						Cursor:         "0",
+					},
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+			},
+			input:       &proto.ListAuditLogsRequest{PageSize: 2},
+			expected:    &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			expectedErr: nil,
 		},
 		{
 			desc:        "errPermissionDenied: organization member",

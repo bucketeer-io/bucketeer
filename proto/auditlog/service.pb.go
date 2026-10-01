@@ -354,6 +354,8 @@ type ListAuditLogsRequest struct {
 	To             int64                               `protobuf:"varint,8,opt,name=to,proto3" json:"to"`
 	EntityType     *wrapperspb.Int32Value              `protobuf:"bytes,9,opt,name=entity_type,json=entityType,proto3" json:"entity_type"`
 	// Scopes the list to one environment; requires an environment role.
+	// With neither environment_id nor organization_id, system admins list every
+	// audit log, including system-level ones.
 	EnvironmentId string `protobuf:"bytes,10,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
 	// Requires the organization admin role. Alone, lists the organization's
 	// organization-level logs (environment_id is empty on those); combined with

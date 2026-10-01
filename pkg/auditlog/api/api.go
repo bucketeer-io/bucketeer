@@ -204,10 +204,12 @@ func (s *auditlogService) ListAuditLogs(
 				return nil, err
 			}
 		}
-	} else {
-		if req.EnvironmentId == "" {
+	} else if req.EnvironmentId == "" {
+		// Neither ID lists every audit log, including system-level ones; system admins only.
+		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
 			return nil, statusMissingEnvironmentOrOrganization.Err()
 		}
+	} else {
 		_, err := s.checkEnvironmentRole(
 			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 			req.EnvironmentId)

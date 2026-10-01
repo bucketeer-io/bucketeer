@@ -58,6 +58,8 @@ message ListAuditLogsRequest {
   int64 to = 8;
   google.protobuf.Int32Value entity_type = 9;
   // Scopes the list to one environment; requires an environment role.
+  // With neither environment_id nor organization_id, system admins list every
+  // audit log, including system-level ones.
   string environment_id = 10;
   // Requires the organization admin role. Alone, lists the organization's
   // organization-level logs (environment_id is empty on those); combined with
