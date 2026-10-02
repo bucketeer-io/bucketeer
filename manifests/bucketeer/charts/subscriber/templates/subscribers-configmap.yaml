@@ -27,6 +27,11 @@ data:
     {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
+    {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
+    {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}
+    {{- $_ := set $config "redisTLSKey" $.Values.global.pubsub.redis.tlsKey }}
+    {{- $_ := set $config "redisTLSInsecureSkipVerify" $.Values.global.pubsub.redis.tlsInsecureSkipVerify }}
     {{- end }}
     {{ toJson $subscribers }}
 
@@ -42,6 +47,11 @@ data:
     {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
+    {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
+    {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}
+    {{- $_ := set $config "redisTLSKey" $.Values.global.pubsub.redis.tlsKey }}
+    {{- $_ := set $config "redisTLSInsecureSkipVerify" $.Values.global.pubsub.redis.tlsInsecureSkipVerify }}
     {{- end }}
     {{ toJson .Values.onDemandSubscribers }}
 
@@ -62,6 +72,11 @@ data:
     {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
+    {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
+    {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}
+    {{- $_ := set $config "redisTLSKey" $.Values.global.pubsub.redis.tlsKey }}
+    {{- $_ := set $config "redisTLSInsecureSkipVerify" $.Values.global.pubsub.redis.tlsInsecureSkipVerify }}
     {{- end }}
     {{- end }}
     {{ toJson $processors }}

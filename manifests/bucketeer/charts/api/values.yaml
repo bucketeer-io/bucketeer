@@ -46,6 +46,11 @@ env:
     addr:
     mode: auto
     db: 0
+    tlsEnabled: false
+    tlsCACert: ""
+    tlsCert: ""
+    tlsKey: ""
+    tlsInsecureSkipVerify: false
   oldestEventTimestamp:
   furthestEventTimestamp:
   # Grace window applied to the diff filters for:
