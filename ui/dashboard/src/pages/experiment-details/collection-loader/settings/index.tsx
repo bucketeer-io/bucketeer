@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import {
+  Control,
   ControllerRenderProps,
   FormProvider,
   SubmitHandler,
-  useForm
+  useForm,
+  useWatch
 } from 'react-hook-form';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,7 +17,7 @@ import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
-import { Experiment } from '@types';
+import { Experiment, FeatureVariation } from '@types';
 import { IconInfo } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
@@ -38,6 +40,7 @@ export interface ExperimentSettingsForm {
   description?: string;
   startAt: string;
   stopAt: string;
+  startType: 'manual' | 'schedule';
   audience?: {
     rule: string;
     inExperiment: number;
@@ -53,6 +56,103 @@ export type DefineAudienceField = ControllerRenderProps<
   ExperimentSettingsForm,
   'audience'
 >;
+
+interface FeatureFlagOption {
+  value: string;
+  label: string;
+  enabled: boolean;
+  variations: FeatureVariation[];
+}
+
+const FeatureVariationFields = ({
+  control,
+  featureFlagOptions
+}: {
+  control: Control<ExperimentSettingsForm>;
+  featureFlagOptions: FeatureFlagOption[];
+}) => {
+  const { t } = useTranslation(['form', 'common']);
+  const featureId = useWatch({ control, name: 'featureId' });
+
+  const flagDropdownOptions: DropdownOption[] = useMemo(
+    () =>
+      featureFlagOptions.map(({ value, label }) => ({
+        value,
+        label
+      })),
+    [featureFlagOptions]
+  );
+
+  const variationOptions = useMemo(
+    () =>
+      featureFlagOptions
+        ?.find(item => item.value === featureId)
+        ?.variations.map((variation, index) => ({
+          label: (
+            <VariationLabel
+              label={variation.name || variation.value}
+              index={index}
+            />
+          ),
+          value: variation.id
+        })) || [],
+    [featureFlagOptions, featureId]
+  );
+
+  return (
+    <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
+      <p className="text-gray-800 typo-head-bold-small">{t('common:flag')}</p>
+      <Form.Field
+        control={control}
+        name={`featureId`}
+        render={({ field }) => (
+          <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
+            <Form.Label required className="relative w-fit">
+              {t('common:flag')}
+            </Form.Label>
+            <Form.Control>
+              <Dropdown
+                disabled
+                placeholder={t(`experiments.select-flag`)}
+                contentClassName="min-w-[502px]"
+                className="w-full"
+                options={flagDropdownOptions}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            </Form.Control>
+            <Form.Message />
+          </Form.Item>
+        )}
+      />
+      {featureId && (
+        <Form.Field
+          control={control}
+          name={`baseVariationId`}
+          render={({ field }) => (
+            <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
+              <Form.Label required>
+                {t('experiments.base-variation')}
+              </Form.Label>
+              <Form.Control>
+                <Dropdown
+                  disabled
+                  placeholder={t(`experiments.select-flag`)}
+                  options={variationOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  contentClassName="min-w-[502px]"
+                  className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                />
+              </Form.Control>
+              <Form.Message />
+            </Form.Item>
+          )}
+        />
+      )}
+    </div>
+  );
+};
 
 const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const { t } = useTranslation(['form', 'common', 'table', 'message']);
@@ -100,18 +200,18 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
     }
   });
 
-  const featureFlagOptions = (featureCollection?.features || []).map(
-    feature => {
-      return {
+  const featureFlagOptions = useMemo(
+    () =>
+      (featureCollection?.features || []).map(feature => ({
         value: feature.id,
         label: feature.name,
         enabled: feature.enabled,
         variations: feature.variations
-      };
-    }
+      })),
+    [featureCollection]
   );
 
-  const form = useForm({
+  const form = useForm<ExperimentSettingsForm>({
     resolver: yupResolver(useFormSchema(createExperimentFormSchema)),
     defaultValues: {
       id: experiment.id,
@@ -135,26 +235,11 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   });
 
   const {
-    watch,
     formState: { isDirty, isValid, isSubmitting }
   } = form;
   useUnsavedLeavePage({
     isShow: isDirty && !isSubmitting
   });
-  const featureId = watch('featureId');
-
-  const variationOptions =
-    featureFlagOptions
-      ?.find(item => item.value === featureId)
-      ?.variations.map((variation, index) => ({
-        label: (
-          <VariationLabel
-            label={variation.name || variation.value}
-            index={index}
-          />
-        ),
-        value: variation.id
-      })) || [];
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
     const { id, name, description, startAt, stopAt } = values;
@@ -371,59 +456,10 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 />
               </div>
             </div>
-            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
-              <p className="text-gray-800 typo-head-bold-small">
-                {t('common:flag')}
-              </p>
-              <Form.Field
-                control={form.control}
-                name={`featureId`}
-                render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
-                    <Form.Label required className="relative w-fit">
-                      {t('common:flag')}
-                    </Form.Label>
-                    <Form.Control>
-                      <Dropdown
-                        disabled
-                        placeholder={t(`experiments.select-flag`)}
-                        contentClassName="min-w-[502px]"
-                        className="w-full"
-                        options={featureFlagOptions as DropdownOption[]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                )}
-              />
-              {featureId && (
-                <Form.Field
-                  control={form.control}
-                  name={`baseVariationId`}
-                  render={({ field }) => (
-                    <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
-                      <Form.Label required>
-                        {t('experiments.base-variation')}
-                      </Form.Label>
-                      <Form.Control>
-                        <Dropdown
-                          disabled
-                          placeholder={t(`experiments.select-flag`)}
-                          options={variationOptions as DropdownOption[]}
-                          value={field.value}
-                          onChange={field.onChange}
-                          contentClassName="min-w-[502px]"
-                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                        />
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  )}
-                />
-              )}
-            </div>
+            <FeatureVariationFields
+              control={form.control}
+              featureFlagOptions={featureFlagOptions}
+            />
             <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
               <p className="text-gray-800 typo-head-bold-small">
                 {t('common:goals')}
