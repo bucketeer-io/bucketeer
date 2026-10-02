@@ -58,12 +58,15 @@ const SwitchOrganization = ({
   isOpen,
   onCloseSwitchOrg,
   onCloseSetting,
-  isCollapsed
+  isCollapsed,
+  isModal
 }: {
+  isExpanded?: boolean;
   isOpen: boolean;
   onCloseSwitchOrg: () => void;
   onCloseSetting: () => void;
   isCollapsed?: boolean;
+  isModal?: boolean;
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
@@ -145,6 +148,7 @@ const SwitchOrganization = ({
   );
 
   useEffect(() => {
+    if (isModal) return;
     function handleClickOutside(event: MouseEvent) {
       if (options) return;
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -156,7 +160,7 @@ const SwitchOrganization = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [options]);
+  }, [options, isModal]);
 
   useEffect(() => {
     if (!isOpen) setSearchValue('');
@@ -166,55 +170,64 @@ const SwitchOrganization = ({
     <div
       ref={menuRef}
       className={cn(
-        'absolute z-50 top-0 w-[238px] h-screen bg-primary-100 transition-all duration-300',
-        isCollapsed ? 'left-[60px]' : 'left-[248px]',
-        {
-          'w-0 [&>div]:px-0 opacity-0': !isOpen
-        }
+        isModal
+          ? 'w-full max-h-[70vh] flex flex-col'
+          : cn(
+              'absolute z-50 top-0 w-[238px] h-screen transition-all duration-300',
+              isCollapsed ? 'left-[60px]' : 'left-[248px]',
+              {
+                'w-full sm:w-0 [&>div]:px-0 opacity-0': !isOpen
+              }
+            ),
+        'bg-primary-100'
       )}
     >
       <div
         className={cn(
-          'flex flex-col size-full gap-y-5 p-4 overflow-y-auto relative small-scroll',
+          'flex flex-col size-full min-h-0 gap-y-2 sm:gap-y-5 overflow-y-auto relative small-scroll',
           {
             'overflow-hidden': isLoading
           }
         )}
       >
-        <SearchInput
-          variant="secondary"
-          placeholder={`${t('form:placeholder-search')}`}
-          name="switch-org-search"
-          value={searchValue}
-          onChange={value => onSearchOrganization(value)}
-        />
-        {searchValue && !organizations?.length ? (
-          <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
-            <div className="typo-para-medium text-gray-500">
-              {t(`navigation.no-organizations`)}
+        <div className="w-full p-4 bg-white sm:bg-primary-100 sticky sm:static top-0">
+          <SearchInput
+            variant="secondary"
+            placeholder={`${t('form:placeholder-search')}`}
+            name="switch-org-search"
+            value={searchValue}
+            onChange={value => onSearchOrganization(value)}
+          />
+        </div>
+        <div className="px-4">
+          {searchValue && !organizations?.length ? (
+            <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
+              <div className="typo-para-medium text-gray-500">
+                {t(`navigation.no-organizations`)}
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <h3 className="typo-para-medium text-gray-600 whitespace-nowrap">
-              {t('switch-organization')}
-            </h3>
-            <div className="flex flex-col gap-y-[1px]">
-              {organizations?.map((item, index) => (
-                <OrganizationItem
-                  key={index}
-                  name={item.name}
-                  isLoading={isLoading}
-                  active={currentOrganization === item.id}
-                  onClick={() => {
-                    if (currentOrganization === item.id) return;
-                    onChangeOrganizationWithConfirm(item.id);
-                  }}
-                />
-              ))}
-            </div>
-          </>
-        )}
+          ) : (
+            <>
+              <h3 className="typo-para-medium text-gray-600 whitespace-nowrap">
+                {t('switch-organization')}
+              </h3>
+              <div className="flex flex-col gap-y-[1px]">
+                {organizations?.map((item, index) => (
+                  <OrganizationItem
+                    key={index}
+                    name={item.name}
+                    isLoading={isLoading}
+                    active={currentOrganization === item.id}
+                    onClick={() => {
+                      if (currentOrganization === item.id) return;
+                      onChangeOrganizationWithConfirm(item.id);
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

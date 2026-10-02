@@ -89,7 +89,7 @@ export const useColumns = ({
       id: 'name',
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 300,
       cell: ({ row }) => {
         const experiment = row.original;
         const { id, name } = experiment;

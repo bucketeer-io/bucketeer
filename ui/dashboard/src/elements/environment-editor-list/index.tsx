@@ -73,6 +73,7 @@ const EnvironmentEditorList = ({
 
   return (
     <DropdownMenuWithSearch
+      isExpand
       options={remainingEnvironmentsOptions}
       label={environmentLabel}
       placeholder={placeholder || t('select-environment')}

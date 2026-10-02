@@ -127,6 +127,8 @@ const theme = {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
     menu: '0px 8px 12px rgba(0, 0, 0, 0.08)',
     card: '0px 4px 8px 1px rgba(0, 0, 0, 0.1)',
+    left: '-10px 0 15px -10px rgba(0,0,0,0.05),-4px 0 6px -2px rgba(0,0,0,0.01)',
+    right: '10px 0 15px -10px rgba(0,0,0,0.05),4px 0 6px -2px rgba(0,0,0,0.01)',
     'card-note': '0px 0px 4px 1px rgba(0, 0, 0, 0.1)',
     'card-secondary': '0px 4px 13px 2px rgba(0, 0, 0, 0.1)',
     dropdown: '0px 4px 8px rgba(35, 35, 35, 0.1)',
@@ -153,6 +155,8 @@ const theme = {
       zoom: '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running zoom',
       'slide-left':
         '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-left',
+      'slide-right':
+        '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-right',
       'slide-up':
         '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-up'
     },
@@ -184,6 +188,16 @@ const theme = {
           opacity: '1',
           right: '0',
           transform: 'scale(1)'
+        }
+      },
+      'slide-right': {
+        '0%': {
+          opacity: '0',
+          transform: 'translateX(-100%)'
+        },
+        '100%': {
+          opacity: '1',
+          transform: 'translateX(0)'
         }
       },
       'slide-up': {

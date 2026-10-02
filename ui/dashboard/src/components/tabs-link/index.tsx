@@ -48,7 +48,7 @@ const TabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('mt-4 flex flex-col flex-1', className)}
+    className={cn('mt-2 sm:mt-4 flex flex-col flex-1', className)}
     {...props}
   />
 ));

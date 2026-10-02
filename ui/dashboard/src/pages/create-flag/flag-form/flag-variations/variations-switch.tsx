@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { cn } from 'utils/style';
@@ -7,6 +8,7 @@ import { IconInfo } from '@icons';
 import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagSwitchVariationType } from 'pages/create-flag/types';
 import Button from 'components/button';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -18,6 +20,8 @@ const buttonActiveCls =
 
 const VariationsSwitch = () => {
   const { t } = useTranslation(['form', 'common']);
+  const { fromTabletScreen } = useScreen();
+  const useDropdown = !fromTabletScreen;
 
   const { watch, setValue, resetField } = useFormContext<FlagFormSchema>();
 
@@ -467,154 +471,212 @@ const VariationsSwitch = () => {
     }
   }, [currentVariationType, handleSwitchVariation, currentSwitchVariation]);
 
+  const switchOptions = useMemo<DropdownOption[]>(
+    () => [
+      {
+        label: t('custom'),
+        labelText: t('custom'),
+        value: FlagSwitchVariationType.CUSTOM,
+        tooltip: t('template-tooltip.custom')
+      },
+      {
+        label: t('release'),
+        labelText: t('release'),
+        value: FlagSwitchVariationType.RELEASE,
+        tooltip: t('template-tooltip.release')
+      },
+      {
+        label: t('kill-switch'),
+        labelText: t('kill-switch'),
+        value: FlagSwitchVariationType.KILL_SWITCH,
+        tooltip: t('template-tooltip.kill-switch')
+      },
+      {
+        label: t('common:source-type.experiment'),
+        labelText: t('common:source-type.experiment'),
+        value: FlagSwitchVariationType.EXPERIMENT,
+        tooltip: t('template-tooltip.experiment')
+      }
+    ],
+    [t]
+  );
+
   return (
-    <div className="flex items-center w-full justify-between">
+    <div className="flex flex-wrap items-start sm:items-center w-full justify-between gap-y-1">
       <p className="typo-para-medium text-gray-700">
         {t('feature-flags.flag-variations')}
       </p>
       <Form.Field
         name="switchVariationType"
         render={() => (
-          <Form.Item className="py-0">
+          <Form.Item className="py-0 w-full sm:w-auto">
             <Form.Control>
-              <div className="flex items-center">
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-r-none',
-                    buttonCls,
-                    currentSwitchVariation === FlagSwitchVariationType.CUSTOM &&
-                      buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.CUSTOM)
+              {useDropdown ? (
+                <Dropdown
+                  options={switchOptions}
+                  value={currentSwitchVariation}
+                  isTooltip
+                  className="w-full"
+                  onChange={value =>
+                    handleSwitchVariation(value as FlagSwitchVariationType)
                   }
-                >
-                  <div className="flex items-center gap-x-1">
-                    {t(`custom`)}
-                    <Tooltip
-                      align="start"
-                      trigger={
-                        <span
-                          className="flex-center cursor-pointer"
-                          onClick={e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          aria-label={t('template-info-aria-label')}
-                        >
-                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
-                      }
-                      content={t('template-tooltip.custom')}
-                      className="!z-[100] max-w-[300px]"
-                    />
-                  </div>
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-none',
-                    buttonCls,
-                    currentSwitchVariation ===
-                      FlagSwitchVariationType.RELEASE && buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.RELEASE)
-                  }
-                >
-                  <div className="flex items-center gap-x-1">
-                    {t(`release`)}
-                    <Tooltip
-                      align="start"
-                      trigger={
-                        <span
-                          className="flex-center cursor-pointer"
-                          onClick={e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          aria-label={t('template-info-aria-label')}
-                        >
-                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
-                      }
-                      content={t('template-tooltip.release')}
-                      className="!z-[100] max-w-[300px]"
-                    />
-                  </div>
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-none',
-                    buttonCls,
-                    currentSwitchVariation ===
-                      FlagSwitchVariationType.KILL_SWITCH && buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.KILL_SWITCH)
-                  }
-                >
-                  <div className="flex items-center gap-x-1">
-                    {t(`kill-switch`)}
-                    <Tooltip
-                      align="start"
-                      trigger={
-                        <span
-                          className="flex-center cursor-pointer"
-                          onClick={e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          aria-label={t('template-info-aria-label')}
-                        >
-                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
-                      }
-                      content={t('template-tooltip.kill-switch')}
-                      className="!z-[100] max-w-[300px]"
-                    />
-                  </div>
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-l-none',
-                    buttonCls,
-                    currentSwitchVariation ===
-                      FlagSwitchVariationType.EXPERIMENT && buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.EXPERIMENT)
-                  }
-                >
-                  <div className="flex items-center gap-x-1">
-                    {t(`common:source-type.experiment`)}
-                    <Tooltip
-                      align="start"
-                      trigger={
-                        <span
-                          className="flex-center cursor-pointer"
-                          onClick={e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          aria-label={t('template-info-aria-label')}
-                        >
-                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </span>
-                      }
-                      content={t('template-tooltip.experiment')}
-                      className="!z-[100] max-w-[300px]"
-                    />
-                  </div>
-                </Button>
-              </div>
+                />
+              ) : (
+                <div className="flex items-center">
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-r-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.CUSTOM && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.CUSTOM)
+                    }
+                  >
+                    <div className="flex items-center gap-x-1">
+                      {t(`custom`)}
+                      <Tooltip
+                        align="start"
+                        trigger={
+                          <span
+                            className="flex-center cursor-pointer"
+                            onClick={e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            aria-label={t('template-info-aria-label')}
+                          >
+                            <Icon
+                              icon={IconInfo}
+                              size={'sm'}
+                              color="gray-500"
+                            />
+                          </span>
+                        }
+                        content={t('template-tooltip.custom')}
+                        className="!z-[100] max-w-[300px]"
+                      />
+                    </div>
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.RELEASE && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.RELEASE)
+                    }
+                  >
+                    <div className="flex items-center gap-x-1">
+                      {t(`release`)}
+                      <Tooltip
+                        align="start"
+                        trigger={
+                          <span
+                            className="flex-center cursor-pointer"
+                            onClick={e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            aria-label={t('template-info-aria-label')}
+                          >
+                            <Icon
+                              icon={IconInfo}
+                              size={'sm'}
+                              color="gray-500"
+                            />
+                          </span>
+                        }
+                        content={t('template-tooltip.release')}
+                        className="!z-[100] max-w-[300px]"
+                      />
+                    </div>
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.KILL_SWITCH && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.KILL_SWITCH)
+                    }
+                  >
+                    <div className="flex items-center gap-x-1">
+                      {t(`kill-switch`)}
+                      <Tooltip
+                        align="start"
+                        trigger={
+                          <span
+                            className="flex-center cursor-pointer"
+                            onClick={e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            aria-label={t('template-info-aria-label')}
+                          >
+                            <Icon
+                              icon={IconInfo}
+                              size={'sm'}
+                              color="gray-500"
+                            />
+                          </span>
+                        }
+                        content={t('template-tooltip.kill-switch')}
+                        className="!z-[100] max-w-[300px]"
+                      />
+                    </div>
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-l-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.EXPERIMENT && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.EXPERIMENT)
+                    }
+                  >
+                    <div className="flex items-center gap-x-1">
+                      {t(`common:source-type.experiment`)}
+                      <Tooltip
+                        align="start"
+                        trigger={
+                          <span
+                            className="flex-center cursor-pointer"
+                            onClick={e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            aria-label={t('template-info-aria-label')}
+                          >
+                            <Icon
+                              icon={IconInfo}
+                              size={'sm'}
+                              color="gray-500"
+                            />
+                          </span>
+                        }
+                        content={t('template-tooltip.experiment')}
+                        className="!z-[100] max-w-[300px]"
+                      />
+                    </div>
+                  </Button>
+                </div>
+              )}
             </Form.Control>
           </Form.Item>
         )}
