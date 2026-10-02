@@ -92,46 +92,23 @@ if command -v kubectl &> /dev/null; then
 fi
 
 # Function to fix permissions on cache directories
+# The actual work lives in fix-permissions.sh, which postStartCommand also runs
+# so that `gh codespace ssh` sessions (no editor attach, no postAttachCommand)
+# get writable cache volumes too. Kept as a call here so an editor attach still
+# repairs anything that changed since the container started.
 fix_cache_permissions() {
     print_status "Ensuring cache directories have correct permissions..."
+    bash "$(dirname "${BASH_SOURCE[0]}")/fix-permissions.sh"
+}
 
-    # Check if codespace user exists
-    if id "codespace" &>/dev/null; then
-        USER_NAME="codespace"
-    else
-        USER_NAME=$(whoami)
-        print_status "codespace user not found, using current user: $USER_NAME"
-    fi
-
-    # Fix Go modules cache permissions
-    sudo mkdir -p /go/pkg/mod /go/pkg/sumdb
-    sudo chown -R $USER_NAME:$USER_NAME /go/pkg/mod /go/pkg/sumdb
-
-    # Fix Go tools directory permissions
-    if [ -d "/home/$USER_NAME/go-tools" ]; then
-        sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/go-tools
-    fi
-
-    # Fix Yarn cache permissions
-    if [ -d "/home/$USER_NAME/.yarn" ]; then
-        sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/.yarn
-    fi
-
-    # Fix node_modules permissions
-    for project in "${NODE_PROJECTS[@]}"; do
-        if [ -d "$project/node_modules" ]; then
-            sudo chown -R $USER_NAME:$USER_NAME "$project/node_modules"
-        fi
-    done
-
-    # Fix minikube cache permissions
-    if [ -d "/home/$USER_NAME/.minikube" ]; then
-        sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/.minikube
-        chmod -R u+wrx /home/$USER_NAME/.minikube
-        print_status "Fixed minikube cache permissions"
-    fi
-
-    print_success "Cache permissions fixed"
+# Function to make sure the Docker daemon is up
+# Same delegation as above: postStartCommand runs start-docker.sh at every
+# container start, so this is normally a no-op. It stays here because
+# cleanup_docker_if_needed below shells out to `docker`, and because
+# postStartCommand does not re-run when an editor re-attaches to a container
+# whose daemon died mid-session.
+ensure_docker_running() {
+    bash "$(dirname "${BASH_SOURCE[0]}")/start-docker.sh"
 }
 
 # Function to check if Go tools are installed
@@ -187,9 +164,10 @@ install_go_tools() {
         USER_NAME=$(whoami)
     fi
 
-    # Ensure go-tools directory exists and has correct permissions
-    sudo mkdir -p /home/$USER_NAME/go-tools/bin
-    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/go-tools
+    # fix_cache_permissions already owns /home/$USER_NAME/go-tools, so only the
+    # bin/ subdirectory is left to create -- without sudo, or it would come back
+    # root-owned and break `go install`.
+    mkdir -p /home/$USER_NAME/go-tools/bin
 
     cd /home/$USER_NAME/go-tools
     if [ ! -e go.mod ]; then go mod init go-tools; fi
@@ -353,17 +331,9 @@ install_node_deps() {
 
     print_status "Installing $name dependencies..."
 
-    # Check if codespace user exists
-    if id "codespace" &>/dev/null; then
-        USER_NAME="codespace"
-    else
-        USER_NAME=$(whoami)
-    fi
-
-    # Ensure node_modules directory has correct permissions if it exists
-    if [ -d "$dir/node_modules" ]; then
-        sudo chown -R $USER_NAME:$USER_NAME "$dir/node_modules"
-    fi
+    # No chown of node_modules here: fix_cache_permissions runs first in main()
+    # and repairs both node_modules volumes, and nothing between there and here
+    # writes into them as root.
 
     cd "$dir"
 
@@ -417,8 +387,11 @@ cleanup_docker_if_needed() {
 
 # Main setup logic
 main() {
-    # Fix any permission issues with mounted cache volumes first
+    # Preconditions for everything below: yarn/go write into the mounted cache
+    # volumes, and cleanup_docker_if_needed shells out to `docker`. Both must be
+    # satisfied before any of the install steps run.
     fix_cache_permissions
+    ensure_docker_running
 
     print_status "Checking cache status..."
 
@@ -503,17 +476,3 @@ main() {
 # Run main function
 main "$@"
 
-# Start Docker daemon automatically after main setup is complete
-if ! docker info > /dev/null 2>&1; then
-    echo "🐳 Starting Docker daemon..."
-    nohup sudo dockerd > /tmp/dockerd.log 2>&1 < /dev/null &
-    # Wait for Docker to be ready
-    while ! docker info > /dev/null 2>&1; do
-        sleep 1
-    done
-    echo "✅ Docker daemon started successfully"
-    # Reset cursor position for clean terminal state
-    printf "\r"
-else
-    echo "✅ Docker daemon already running"
-fi
