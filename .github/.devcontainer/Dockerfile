@@ -194,7 +194,8 @@ RUN apt-get update \
 # overrides the entrypoint at container start, so it never runs there — it only
 # runs under plain `docker run`. On Codespaces sshd is started by
 # .devcontainer/start-sshd.sh (postStartCommand) and dockerd by
-# .devcontainer/setup.sh (postAttachCommand) instead. Keep these in sync.
+# .devcontainer/start-docker.sh (postStartCommand) instead. Keep the sshd steps
+# below in sync with start-sshd.sh.
 RUN echo '#!/bin/bash\n\
 # Regenerate SSH host keys if missing (never baked into the shared image)\n\
 sudo ssh-keygen -A > /dev/null\n\
