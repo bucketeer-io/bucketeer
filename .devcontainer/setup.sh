@@ -4,38 +4,9 @@ set -e
 echo "🚀 Starting post-attach setup with intelligent caching..."
 
 # ===== PROJECT CONFIGURATION =====
-# Configure which projects to cache dependencies for
-# To add/remove projects, just update these arrays
-#
-# Example: To add a new Node.js project at "ui/new-app":
-# 1. Add "ui/new-app" to NODE_PROJECTS array
-# 2. Add "New App" to NODE_PROJECTS_NAMES array
-# 3. Add volume mount in devcontainer.json
-# 4. Update cache-manager.sh volume arrays
-# The setup script will handle the rest automatically!
-
-# Node.js projects (directories containing package.json)
-declare -a NODE_PROJECTS=(
-    "ui/dashboard"
-    "evaluation/typescript"
-)
-
-# Display names for Node.js projects (must match array order)
-declare -a NODE_PROJECTS_NAMES=(
-    "Dashboard"
-    "Evaluation TypeScript"
-)
-
-# Go projects (directories containing go.mod)
-# Note: "." represents the root directory
-declare -a GO_PROJECTS=(
-    "."
-)
-
-# Display names for Go projects (must match array order)
-declare -a GO_PROJECTS_NAMES=(
-    "Main Go"
-)
+# Projects and cache locations are defined in paths.sh, shared with
+# fix-permissions.sh. To add/remove projects, update the arrays there.
+source "$(dirname "${BASH_SOURCE[0]}")/paths.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -332,8 +303,8 @@ install_node_deps() {
     print_status "Installing $name dependencies..."
 
     # No chown of node_modules here: fix_cache_permissions runs first in main()
-    # and repairs both node_modules volumes, and nothing between there and here
-    # writes into them as root.
+    # and repairs every NODE_PROJECTS node_modules volume, and nothing between
+    # there and here writes into them as root.
 
     cd "$dir"
 

@@ -17,27 +17,24 @@
 # paths, that one only ever deals with the Docker daemon.
 set -e
 
-if id codespace &> /dev/null; then
-    USER_NAME=codespace
-else
-    USER_NAME=$(whoami)
-fi
-HOME_DIR=$(getent passwd "$USER_NAME" | cut -d: -f6)
+# USER_NAME, HOME_DIR and USER_WRITABLE_DIRS come from here.
+source "$(dirname "${BASH_SOURCE[0]}")/paths.sh"
 
-# Directories that must exist and be owned by the user. `go` cannot create
-# /go/pkg/sumdb itself because /go/pkg is root-owned, so mkdir -p comes first.
-OWNED_DIRS=(
-    /go/pkg/mod
-    /go/pkg/sumdb
-    "$HOME_DIR/go-tools"
-    "$HOME_DIR/.yarn"
-    "$HOME_DIR/.minikube"
-    /workspaces/bucketeer/ui/dashboard/node_modules
-    /workspaces/bucketeer/evaluation/typescript/node_modules
-)
+# Same output format as setup.sh, which also runs this script on attach.
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
 
 fixed=0
-for dir in "${OWNED_DIRS[@]}"; do
+for dir in "${USER_WRITABLE_DIRS[@]}"; do
+    # mkdir -p first: `go` cannot create /go/pkg/sumdb itself because /go/pkg
+    # is root-owned.
     sudo mkdir -p "$dir"
     # Skip the recursive chown when nothing in the tree is foreign-owned --
     # these trees hold tens of thousands of files and this runs on every start.
@@ -47,17 +44,17 @@ for dir in "${OWNED_DIRS[@]}"; do
     # `-print -quit` stops at the first offender, and unlike chown -R this walk
     # only reads metadata, so a healthy cache is never rewritten.
     if [ -n "$(sudo find "$dir" ! -user "$USER_NAME" -print -quit)" ]; then
-        echo "🔑 Fixing ownership of $dir..."
+        print_status "Fixing ownership of $dir..."
         sudo chown -R "$USER_NAME:$USER_NAME" "$dir"
         fixed=$((fixed + 1))
     fi
 done
 
 # minikube refuses to start if its cache is not user-writable.
-chmod -R u+wrx "$HOME_DIR/.minikube" 2> /dev/null || true
+chmod -R u+wrx "$MINIKUBE_DIR" 2> /dev/null || true
 
 if [ "$fixed" -eq 0 ]; then
-    echo "✅ Cache volume permissions already correct"
+    print_success "Cache permissions already correct"
 else
-    echo "✅ Fixed permissions on $fixed cache volume(s)"
+    print_success "Cache permissions fixed"
 fi

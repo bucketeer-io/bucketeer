@@ -4,13 +4,13 @@ This document explains the caching optimizations implemented in the Bucketeer de
 
 ## 🔧 Project Configuration
 
-The caching system uses dynamic configuration arrays in `setup.sh` to determine which projects to cache. This makes adding or removing projects simple and maintainable.
+The caching system uses dynamic configuration arrays in `paths.sh` to determine which projects to cache. `paths.sh` is sourced by both `setup.sh` (dependency installation) and `fix-permissions.sh` (cache volume ownership), so a project only needs to be listed once. This makes adding or removing projects simple and maintainable.
 
 ### Adding a New Node.js Project
 
 To add a new Node.js project for caching:
 
-1. **Update the arrays in `setup.sh`:**
+1. **Update the arrays in `paths.sh`:**
 ```bash
 # Add your project directory to NODE_PROJECTS
 declare -a NODE_PROJECTS=(
@@ -42,13 +42,13 @@ JS_VOLUMES=(
 )
 ```
 
-That's it! The setup script will automatically handle dependency checking, caching, and installation for your new project.
+That's it! The setup script will automatically handle dependency checking, caching, and installation for your new project, and `fix-permissions.sh` will keep its `node_modules` volume owned by the container user.
 
 ### Adding a New Go Project
 
 To add a new Go project:
 
-1. **Update the arrays in `setup.sh`:**
+1. **Update the arrays in `paths.sh`:**
 ```bash
 declare -a GO_PROJECTS=(
     "."
@@ -72,7 +72,7 @@ The dev container uses Docker named volumes to persist dependencies across conta
 - **Go tools** (`/home/codespace/go-tools`): Keeps installed Go development tools
 - **Node.js modules** (various `node_modules` directories): Preserves installed yarn packages
   - Currently configured for: `ui/dashboard` and `evaluation/typescript`
-  - Automatically configured based on `NODE_PROJECTS` array in `setup.sh`
+  - Automatically configured based on `NODE_PROJECTS` array in `paths.sh`
 - **Package manager caches**: Yarn local cache at `/home/codespace/.yarn/cache`
 
 ### 2. Intelligent Setup Script
@@ -224,10 +224,11 @@ This will show detailed information about where tools are being looked for and w
 - Avoid variables like `${containerHome}` in mount configurations
 
 **Permission errors:**
-- The setup script automatically fixes volume mount permissions for all cache directories
-- If you see "permission denied" errors, restart the dev container
+- `fix-permissions.sh` fixes ownership of every directory in `USER_WRITABLE_DIRS` (defined in `paths.sh`) on each container start, and `setup.sh` runs it again on editor attach
+- If you see "permission denied" errors, restart the dev container or run `bash .devcontainer/fix-permissions.sh`
 - Cache volumes are mounted with root ownership by default, but the script corrects this
-- Go modules cache (`/go/pkg/mod`) and Go tools directory are automatically fixed
+- Go modules cache (`/go/pkg/mod`), Go tools, Yarn cache, minikube cache and every `NODE_PROJECTS` `node_modules` directory are covered
+- To cover a new directory, add it to `USER_WRITABLE_DIRS` in `paths.sh`
 
 ## Additional Optimizations
 
@@ -260,7 +261,8 @@ When everything is cached:
 ```
 🚀 Starting post-attach setup with intelligent caching...
 [INFO] Ensuring cache directories have correct permissions...
-[SUCCESS] Cache permissions fixed
+[SUCCESS] Cache permissions already correct
+✅ Docker daemon already running
 [INFO] Checking cache status...
 [SUCCESS] All Go tools are already installed
 [SUCCESS] Go vendor directory is up to date
@@ -274,7 +276,8 @@ When some dependencies need installation:
 ```
 🚀 Starting post-attach setup with intelligent caching...
 [INFO] Ensuring cache directories have correct permissions...
-[SUCCESS] Cache permissions fixed
+[SUCCESS] Cache permissions already correct
+✅ Docker daemon already running
 [INFO] Checking cache status...
 [WARNING] Missing Go tools: goimports golangci-lint
 [SUCCESS] Go vendor directory is up to date
