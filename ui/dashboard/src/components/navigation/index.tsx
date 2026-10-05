@@ -22,16 +22,11 @@ import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
 
 type NavigationProps = {
-  onClickNavLink: () => void;
   isCollapsed: boolean;
   onToggleCollapsed: (value: boolean) => void;
 };
 
-const Navigation = ({
-  onClickNavLink,
-  isCollapsed,
-  onToggleCollapsed
-}: NavigationProps) => {
+const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
   const { t } = useTranslation(['common']);
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -194,7 +189,6 @@ const Navigation = ({
         >
           <Link
             to={ROUTING.PAGE_PATH_ROOT}
-            onClick={onCloseSetting}
             className={cn(
               'overflow-hidden',
               isCollapsed && 'flex-center w-full',
@@ -248,7 +242,6 @@ const Navigation = ({
               trigger={
                 <button
                   onClick={() => {
-                    onCloseSetting();
                     navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
                   }}
                   aria-label={
@@ -296,7 +289,6 @@ const Navigation = ({
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
-                onClickNavLink={onClickNavLink}
                 isCollapsed={isCollapsed}
               />
             ))}
@@ -326,7 +318,6 @@ const Navigation = ({
                   type="button"
                   aria-label={isCollapsed ? t(`settings`) : undefined}
                   onClick={() => {
-                    onOpenSetting();
                     if (consoleAccount?.isSystemAdmin) {
                       navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
                     } else {

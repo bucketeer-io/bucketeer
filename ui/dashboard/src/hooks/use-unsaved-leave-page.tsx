@@ -2,17 +2,21 @@ import {
   createContext,
   Dispatch,
   ReactNode,
+  RefObject,
   SetStateAction,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router';
+import { useBlocker } from 'react-router';
 import { LEAVE_PAGE_CANCELLED_EVENT } from 'constants/walkthrough';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
+import { createUnsavedForms, UnsavedForm } from './unsaved-forms';
 
 interface ConfirmOptions {
   title?: string;
@@ -24,6 +28,8 @@ interface ConfirmOptions {
 }
 
 interface ConfirmContextType {
+  register: (form: RefObject<UnsavedForm>) => () => void;
+  syncDirtyState: () => void;
   isShow: boolean;
   setIsShow: Dispatch<SetStateAction<boolean>>;
   setOptions: Dispatch<SetStateAction<ConfirmOptions | null>>;
@@ -81,116 +87,79 @@ export function useUnsavedLeavePage({
   titleStay?: string;
   callBackCancel?: () => void;
 }) {
-  const { confirm, setIsShow: setIsShowGlobal, isShow: global } = useConfirm();
-  const navigator = useContext(NavigationContext).navigator;
+  const { register, syncDirtyState } = useConfirm();
+  const form = useRef({ isShow, title, content, callBackCancel });
+  form.current = { isShow, title, content, callBackCancel };
 
+  useEffect(() => register(form), [register]);
   useEffect(() => {
-    setIsShowGlobal(isShow);
-  }, [isShow]);
-
-  useEffect(() => {
-    if (!global) return;
-
-    const push = navigator.push;
-    const replace = navigator.replace;
-
-    navigator.push = (...args: Parameters<typeof push>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return push(...args);
-      }
-      if (isWalkthroughActive()) return;
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return push(...args);
-        }
-      });
-    };
-
-    navigator.replace = (...args: Parameters<typeof replace>) => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return replace(...args);
-      }
-      if (isWalkthroughActive()) return;
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          return replace(...args);
-        }
-      });
-    };
-
-    return () => {
-      navigator.push = push;
-      navigator.replace = replace;
-    };
-  }, [global, title, content, navigator]);
-
-  useEffect(() => {
-    if (!global) return;
-    history.pushState(null, '', window.location.href);
-
-    const handlePopState = () => {
-      if (bypassNavigation) {
-        bypassNavigation = false;
-        return;
-      }
-      if (isWalkthroughActive()) {
-        // Stay on the page without prompting.
-        history.pushState(null, '', window.location.href);
-        return;
-      }
-      confirm({
-        title: title,
-        message: content,
-        onConfirm: () => {
-          if (callBackCancel) {
-            callBackCancel();
-          }
-          setIsShowGlobal(false);
-          history.back();
-        },
-        onCancel: () => {
-          history.pushState(null, '', window.location.href);
-        }
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [global, title, content]);
-
-  useEffect(() => {
-    if (!isShow) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [isShow]);
+    syncDirtyState();
+  }, [isShow, syncDirtyState]);
   return { isShow };
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const [isShow, setIsShow] = useState<boolean>(false);
-  const confirm = (opts: ConfirmOptions) => setOptions(opts);
+  const [forms] = useState(createUnsavedForms);
+  const getDirtyForms = forms.getDirtyForms;
+  const syncDirtyState = useCallback(() => {
+    setIsShow(getDirtyForms().length > 0);
+  }, [getDirtyForms]);
+  const register = useCallback(
+    (form: RefObject<UnsavedForm>) => {
+      const unregister = forms.register(form);
+      syncDirtyState();
+      return () => {
+        unregister();
+        syncDirtyState();
+      };
+    },
+    [forms, syncDirtyState]
+  );
+  const confirm = useCallback((opts: ConfirmOptions) => setOptions(opts), []);
+  const shouldBlock = useCallback(() => {
+    if (bypassNavigation) {
+      bypassNavigation = false;
+      return false;
+    }
+    return getDirtyForms().length > 0;
+  }, [getDirtyForms]);
+  const blocker = useBlocker(shouldBlock);
+
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+    if (isWalkthroughActive()) {
+      blocker.reset();
+      return;
+    }
+    const dirtyForms = getDirtyForms();
+    if (!dirtyForms.length) {
+      blocker.proceed();
+      return;
+    }
+    // One confirmation covers all dirty forms. The first supplies the copy.
+    confirm({
+      title: dirtyForms[0].title,
+      message: dirtyForms[0].content,
+      onConfirm: () => {
+        getDirtyForms().forEach(form => form.callBackCancel?.());
+        setIsShow(false);
+        blocker.proceed();
+      },
+      onCancel: () => blocker.reset()
+    });
+  }, [blocker, confirm, getDirtyForms]);
+
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (!getDirtyForms().length) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [getDirtyForms]);
 
   const handleConfirm = () => {
     options?.onConfirm();
@@ -206,6 +175,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider
       value={{
+        register,
+        syncDirtyState,
         confirm,
         options,
         setOptions,
