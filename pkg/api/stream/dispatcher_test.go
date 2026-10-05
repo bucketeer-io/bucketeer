@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -454,7 +455,7 @@ func TestDispatcherHandleEvent(t *testing.T) {
 				require.True(t, p.wantDispatch, "unexpected dispatch")
 				assert.Equal(t, envID, got.environmentID)
 				assert.Equal(t, p.wantTags, got.tags)
-			default:
+			case <-time.After(100 * time.Millisecond):
 				require.False(t, p.wantDispatch, "expected dispatch but none occurred")
 			}
 		})
@@ -519,10 +520,11 @@ func TestDispatcherAffectedTags(t *testing.T) {
 	d := &Dispatcher{logger: zap.NewNop()}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			got := d.affectedTags(&domaineventproto.Event{
+			tags := d.changeTags(&domaineventproto.Event{
 				EntityData:         p.entity,
 				PreviousEntityData: p.previous,
-			}, nil)
+			})
+			got := affectedTags(map[string]*featureChange{"flag-A": {tags: tags}}, nil)
 			sort.Strings(got)
 			sort.Strings(p.expected)
 			assert.Equal(t, p.expected, got)
@@ -581,11 +583,8 @@ func TestDispatcherAffectedTagsWithPrerequisites(t *testing.T) {
 	d := &Dispatcher{logger: zap.NewNop()}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			got := d.affectedTags(&domaineventproto.Event{
-				EntityId:      p.entityID,
-				EnvironmentId: "env-1",
-				EntityData:    p.entity,
-			}, allFeatures)
+			changes := map[string]*featureChange{p.entityID: {tags: d.parseTags(p.entity)}}
+			got := affectedTags(changes, allFeatures)
 			sort.Strings(got)
 			sort.Strings(p.expected)
 			assert.Equal(t, p.expected, got)
@@ -663,12 +662,12 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			refetched := false
+			var refetched atomic.Bool
 			d := NewDispatcher(10000,
 				func(string) ([]*featureproto.Feature, error) { return p.cached, p.cacheErr },
 				zap.NewNop(),
 				WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
-					refetched = true
+					refetched.Store(true)
 					return p.refetched, p.refetchErr
 				}),
 			)
@@ -684,13 +683,13 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 				EntityData:    p.entityData,
 			})
 
-			assert.Equal(t, p.wantRefetch, refetched)
 			select {
 			case got := <-ch:
 				assert.Equal(t, p.want, got.features)
-			default:
+			case <-time.After(time.Second):
 				t.Fatal("expected dispatch")
 			}
+			assert.Equal(t, p.wantRefetch, refetched.Load())
 		})
 	}
 }
@@ -727,4 +726,85 @@ func featureJSON(t *testing.T, id string, version int32, tags ...string) string 
 	b, err := json.Marshal(&featureproto.Feature{Id: id, Version: version, Tags: tags})
 	require.NoError(t, err)
 	return string(b)
+}
+
+func TestDispatcherHandleEventSkipsEnvWithoutConns(t *testing.T) {
+	t.Parallel()
+	var fetches atomic.Int32
+	d := NewDispatcher(10000,
+		func(string) ([]*featureproto.Feature, error) {
+			fetches.Add(1)
+			return nil, nil
+		},
+		zap.NewNop(),
+	)
+	ch, cancel, err := d.register("env-other", "android", "source1")
+	require.NoError(t, err)
+	defer cancel()
+
+	d.HandleEvent(&domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+		EnvironmentId: "env-1",
+		EntityId:      "flag-A",
+		EntityData:    featureJSON(t, "flag-A", 3, "android"),
+	})
+
+	select {
+	case <-ch:
+		t.Fatal("unexpected dispatch")
+	case <-time.After(100 * time.Millisecond):
+	}
+	assert.Equal(t, int32(0), fetches.Load())
+}
+
+func TestDispatcherHandleEventCoalescesPendingEvents(t *testing.T) {
+	t.Parallel()
+	const envID = "env-1"
+	var fetches, refetches atomic.Int32
+	release := make(chan struct{})
+	d := NewDispatcher(10000,
+		func(string) ([]*featureproto.Feature, error) {
+			if fetches.Add(1) == 1 {
+				<-release
+			}
+			return []*featureproto.Feature{{Id: "flag-A", Version: 1}}, nil
+		},
+		zap.NewNop(),
+		WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
+			refetches.Add(1)
+			return []*featureproto.Feature{
+				{Id: "flag-A", Version: 3},
+				{Id: "flag-B", Version: 5},
+				{Id: "flag-C", Version: 7},
+			}, nil
+		}),
+	)
+	ch, cancel, err := d.register(envID, "android", "source1")
+	require.NoError(t, err)
+	defer cancel()
+	handle := func(id string, version int32, tag string) {
+		d.HandleEvent(&domaineventproto.Event{
+			EntityType:    domaineventproto.Event_FEATURE,
+			Type:          domaineventproto.Event_FEATURE_UPDATED,
+			EnvironmentId: envID,
+			EntityId:      id,
+			EntityData:    featureJSON(t, id, version, tag),
+		})
+	}
+
+	handle("flag-A", 3, "android")
+	require.Eventually(t, func() bool { return fetches.Load() == 1 }, time.Second, time.Millisecond)
+	// Both arrive while the first dispatch is in flight and are merged into one.
+	handle("flag-B", 5, "android")
+	handle("flag-C", 7, "ios")
+	close(release)
+
+	require.Eventually(t, func() bool { return fetches.Load() == 2 && refetches.Load() == 2 },
+		time.Second, time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, int32(2), fetches.Load())
+	got := <-ch
+	assert.ElementsMatch(t, []string{"android", "ios"}, got.tags)
+	assert.Len(t, got.features, 3)
 }

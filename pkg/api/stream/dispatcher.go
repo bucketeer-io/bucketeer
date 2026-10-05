@@ -37,6 +37,8 @@ type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
 	conns           map[string]map[string]map[*conn]struct{}
+	pending         map[string]*pendingDispatch
+	draining        map[string]bool
 	totalConns      int
 	maxConns        int
 	fetchFeatures   FeaturesFetcher
@@ -53,6 +55,20 @@ func WithFeaturesRefetcher(f FeaturesFetcher) DispatcherOption {
 	return func(d *Dispatcher) {
 		d.refetchFeatures = f
 	}
+}
+
+// pendingDispatch merges an environment's events until its drain goroutine processes them.
+type pendingDispatch struct {
+	eventType domaineventproto.Event_Type
+	allTags   bool
+	// featureID -> change
+	changes map[string]*featureChange
+}
+
+type featureChange struct {
+	tags       []string
+	version    int32
+	hasVersion bool
 }
 
 type event struct {
@@ -79,6 +95,8 @@ func NewDispatcher(
 ) *Dispatcher {
 	d := &Dispatcher{
 		conns:         make(map[string]map[string]map[*conn]struct{}),
+		pending:       make(map[string]*pendingDispatch),
+		draining:      make(map[string]bool),
 		maxConns:      maxConns,
 		fetchFeatures: fetchFeatures,
 		shutdownCh:    make(chan struct{}),
@@ -177,12 +195,18 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 			e.Type != domaineventproto.Event_FEATURE_DISABLED {
 			return
 		}
-		features := d.featuresFor(e)
-		d.dispatch(event{
-			environmentID: e.EnvironmentId,
-			eventType:     e.Type,
-			tags:          d.affectedTags(e, features),
-			features:      features,
+		tags := d.changeTags(e)
+		version, hasVersion := d.parseVersion(e.EntityData)
+		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
+			c, ok := p.changes[e.EntityId]
+			if !ok {
+				c = &featureChange{}
+				p.changes[e.EntityId] = c
+			}
+			c.tags = append(c.tags, tags...)
+			if hasVersion && (!c.hasVersion || version > c.version) {
+				c.version, c.hasVersion = version, true
+			}
 		})
 	case domaineventproto.Event_SEGMENT:
 		// Segment membership only changes through a bulk upload.
@@ -203,73 +227,142 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 		}
 		// TODO: resolve the affected tags from the segment.
 		// Currently, it fans out env-wide (all tags).
-		d.dispatch(event{
-			environmentID: e.EnvironmentId,
-			eventType:     e.Type,
+		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
+			p.allTags = true
 		})
 	}
 }
 
-// affectedTags unions the flag's tags before and after the update so that
-// removing a tag still notifies that tag's subscribers.
-// And the result includes the tags of flags that transitively depend on this one.
-func (d *Dispatcher) affectedTags(e *domaineventproto.Event, features []*featureproto.Feature) []string {
-	seen := make(map[string]struct{})
-	for _, data := range []string{e.EntityData, e.PreviousEntityData} {
-		for _, tag := range d.parseTags(data) {
-			seen[tag] = struct{}{}
+// enqueue merges an event into the env's pending dispatch so refetches never block the caller.
+func (d *Dispatcher) enqueue(envID string, eventType domaineventproto.Event_Type, merge func(*pendingDispatch)) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	// Pods without connections in the environment have nothing to fan out.
+	if len(d.conns[envID]) == 0 {
+		return
+	}
+	p, ok := d.pending[envID]
+	if !ok {
+		p = &pendingDispatch{changes: make(map[string]*featureChange)}
+		d.pending[envID] = p
+	}
+	p.eventType = eventType
+	merge(p)
+	if d.draining[envID] {
+		return
+	}
+	d.draining[envID] = true
+	go d.drain(envID)
+}
+
+// drain processes the environment's pending dispatches one at a time, preserving their order.
+func (d *Dispatcher) drain(envID string) {
+	for {
+		d.mu.Lock()
+		p, ok := d.pending[envID]
+		if !ok {
+			delete(d.draining, envID)
+			d.mu.Unlock()
+			return
 		}
+		delete(d.pending, envID)
+		d.mu.Unlock()
+		d.process(envID, p)
 	}
-	for _, tag := range dependentTags(e.EntityId, features) {
-		seen[tag] = struct{}{}
+}
+
+func (d *Dispatcher) process(envID string, p *pendingDispatch) {
+	ev := event{
+		environmentID: envID,
+		eventType:     p.eventType,
 	}
-	if len(seen) == 0 {
-		return nil
+	if len(p.changes) > 0 {
+		ev.features = d.featuresFor(envID, p.changes)
 	}
-	tags := make([]string, 0, len(seen))
-	for tag := range seen {
-		tags = append(tags, tag)
+	if !p.allTags {
+		ev.tags = affectedTags(p.changes, ev.features)
+	}
+	d.dispatch(ev)
+}
+
+// changeTags unions the flag's tags before and after the update so that
+// removing a tag still notifies that tag's subscribers.
+func (d *Dispatcher) changeTags(e *domaineventproto.Event) []string {
+	var tags []string
+	for _, data := range []string{e.EntityData, e.PreviousEntityData} {
+		tags = append(tags, d.parseTags(data)...)
 	}
 	return tags
 }
 
-// featuresFor returns the env's features, refetching them if the cache predates the event.
-func (d *Dispatcher) featuresFor(e *domaineventproto.Event) []*featureproto.Feature {
+// affectedTags unions the changed flags' tags and the tags of flags that transitively depend on them.
+// It returns nil (all tags) if any changed flag has no tags to target.
+func affectedTags(changes map[string]*featureChange, features []*featureproto.Feature) []string {
+	seen := make(map[string]struct{})
+	for id, c := range changes {
+		dependents := dependentTags(id, features)
+		if len(c.tags) == 0 && len(dependents) == 0 {
+			return nil
+		}
+		for _, tag := range c.tags {
+			seen[tag] = struct{}{}
+		}
+		for _, tag := range dependents {
+			seen[tag] = struct{}{}
+		}
+	}
+	if len(seen) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(seen))
+	for tag := range seen {
+		out = append(out, tag)
+	}
+	return out
+}
+
+// featuresFor returns the env's features, refetching them if the cache predates any change.
+func (d *Dispatcher) featuresFor(envID string, changes map[string]*featureChange) []*featureproto.Feature {
 	if d.fetchFeatures == nil {
 		return nil
 	}
-	features, err := d.fetchFeatures(e.EnvironmentId)
+	features, err := d.fetchFeatures(envID)
 	if err != nil {
 		d.logger.Warn("Failed to fetch features",
 			zap.Error(err),
-			zap.String("environmentID", e.EnvironmentId),
+			zap.String("environmentID", envID),
 		)
 		features = nil
 	}
-	version, ok := d.parseVersion(e.EntityData)
-	if !ok || d.refetchFeatures == nil || hasVersion(features, e.EntityId, version) {
+	if d.refetchFeatures == nil || includesChanges(features, changes) {
 		return features
 	}
-	sseStaleFeaturesCounter.WithLabelValues(e.EnvironmentId).Inc()
-	fresh, err := d.refetchFeatures(e.EnvironmentId)
+	sseStaleFeaturesCounter.WithLabelValues(envID).Inc()
+	fresh, err := d.refetchFeatures(envID)
 	if err != nil {
 		d.logger.Warn("Failed to refetch stale features",
 			zap.Error(err),
-			zap.String("environmentID", e.EnvironmentId),
-			zap.String("featureID", e.EntityId),
+			zap.String("environmentID", envID),
 		)
 		return features
 	}
 	return fresh
 }
 
-func hasVersion(features []*featureproto.Feature, id string, version int32) bool {
+func includesChanges(features []*featureproto.Feature, changes map[string]*featureChange) bool {
+	versions := make(map[string]int32, len(features))
 	for _, f := range features {
-		if f.Id == id {
-			return f.Version >= version
+		versions[f.Id] = f.Version
+	}
+	for id, c := range changes {
+		if !c.hasVersion {
+			continue
+		}
+		if v, ok := versions[id]; !ok || v < c.version {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func dependentTags(entityID string, features []*featureproto.Feature) []string {
