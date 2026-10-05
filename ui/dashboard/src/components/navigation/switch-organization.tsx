@@ -7,11 +7,8 @@ import { useToast } from 'hooks';
 import { allowNavigation, useConfirm } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { clearCurrentEnvIdStorage } from 'storage/environment';
-import {
-  clearOrgIdStorage,
-  getOrgIdStorage,
-  setOrgIdStorage
-} from 'storage/organization';
+import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
+import { clearCurrentProjectEnvironmentStorage } from 'storage/project-environment';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
@@ -97,28 +94,33 @@ const SwitchOrganization = ({
         setIsLoading(true);
         const token = getTokenStorage();
         if (token?.accessToken) {
-          clearOrgIdStorage();
-          clearCurrentEnvIdStorage();
-          setOrgIdStorage(organizationId);
           const resp = await switchOrganization({
             accessToken: token.accessToken,
             organizationId
           });
           if (resp.token) {
+            // Preserve the current session until the switch request succeeds.
+            setOrgIdStorage(organizationId);
+            clearCurrentEnvIdStorage();
+            clearCurrentProjectEnvironmentStorage();
             setTokenStorage(resp.token);
-            await onMeFetcher({ organizationId });
             onCloseSwitchOrg();
             onCloseSetting();
-            allowNavigation(() => navigate(PAGE_PATH_ROOT));
+            // Leave the old org's URL before loading the new account, so
+            // EnvironmentRoot can't match a same-named urlCode and keep the
+            // stale entity path (e.g. a flag ID from the previous org).
+            allowNavigation(() => navigate(PAGE_PATH_ROOT, { replace: true }));
+            await onMeFetcher({ organizationId }, { logoutOnFailure: true });
           }
         }
       } catch (error) {
         errorNotify(error);
       } finally {
+        setCurrentOrganization(getOrgIdStorage() ?? '');
         setIsLoading(false);
       }
     },
-    [currentOrganization]
+    [navigate, onMeFetcher, onCloseSwitchOrg, onCloseSetting, errorNotify]
   );
 
   const onChangeOrganizationWithConfirm = useCallback(

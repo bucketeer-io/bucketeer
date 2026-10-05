@@ -53,6 +53,7 @@ import {
 } from 'storage/environment';
 import { getIsLoginFirstTimeStorage } from 'storage/login';
 import { getNavigationCollapsedStorage } from 'storage/navigation';
+import { getOrgIdStorage } from 'storage/organization';
 import {
   getCurrentProjectEnvironmentStorage,
   setCurrentProjectEnvironmentStorage
@@ -215,6 +216,17 @@ export const EnvironmentRoot = memo(
     const currentEnv = getCurrentEnvironment(account);
 
     const handleCheckEnvCodeOnInit = useCallback(() => {
+      // While switching organizations, the account still belongs to the
+      // previous org until the new one is fetched. Skip syncing so we don't
+      // write the old org's environment back into storage or navigate to it.
+      const orgIdStorage = getOrgIdStorage();
+      if (
+        orgIdStorage &&
+        account.organization?.id &&
+        account.organization.id !== orgIdStorage
+      )
+        return;
+
       const envIdStorage = getCurrentEnvIdStorage();
       const projectEnvironment = getCurrentProjectEnvironmentStorage();
       let isExistEnv: EnvironmentRole | undefined = undefined;
