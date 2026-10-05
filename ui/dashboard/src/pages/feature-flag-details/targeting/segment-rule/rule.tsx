@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
 import useOptions from 'hooks/use-options';
 import compact from 'lodash/compact';
-import { Feature, UserSegment } from '@types';
+import { Feature } from '@types';
 import RuleClausesForm, { SituationOption } from 'elements/rule-clauses-form';
 
 interface Props {
   feature: Feature;
   features: Feature[];
   segmentIndex: number;
-  userSegments?: UserSegment[];
   sdkAttributeKeys: string[];
 }
 
@@ -16,7 +15,6 @@ const RuleForm = ({
   feature,
   features,
   segmentIndex,
-  userSegments,
   sdkAttributeKeys
 }: Props) => {
   const { situationOptions } = useOptions();
@@ -39,7 +37,6 @@ const RuleForm = ({
       usedAttributeKeys={usedAttributeKeys}
       feature={feature}
       features={features}
-      userSegments={userSegments}
       sdkAttributeKeys={sdkAttributeKeys}
     />
   );
