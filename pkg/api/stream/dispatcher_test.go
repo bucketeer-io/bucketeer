@@ -604,73 +604,102 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 	const envID = "env-1"
 	stale := []*featureproto.Feature{{Id: "flag-A", Version: 2, Tags: []string{"android"}}}
 	fresh := []*featureproto.Feature{{Id: "flag-A", Version: 3, Tags: []string{"android"}}}
+	disabledNoOffVariation, err := json.Marshal(&featureproto.Feature{
+		Id: "flag-A", Version: 3, Tags: []string{"android"},
+	})
+	require.NoError(t, err)
 	patterns := []struct {
-		desc        string
-		entityData  string
-		cached      []*featureproto.Feature
-		cacheErr    error
-		refetched   []*featureproto.Feature
-		refetchErr  error
-		wantRefetch bool
-		want        []*featureproto.Feature
+		desc            string
+		entityData      string
+		cached          []*featureproto.Feature
+		cacheErr        error
+		refetched       []*featureproto.Feature
+		refetchFailures int
+		wantRefetches   int32
+		wantDispatch    bool
+		want            []*featureproto.Feature
 	}{
 		{
-			desc:       "cache already has the event version",
-			entityData: featureJSON(t, "flag-A", 3, "android"),
-			cached:     fresh,
-			want:       fresh,
+			desc:         "cache already has the event version",
+			entityData:   featureJSON(t, "flag-A", 3, "android"),
+			cached:       fresh,
+			wantDispatch: true,
+			want:         fresh,
 		},
 		{
-			desc:        "cache older than the event is refetched",
-			entityData:  featureJSON(t, "flag-A", 3, "android"),
-			cached:      stale,
-			refetched:   fresh,
-			wantRefetch: true,
-			want:        fresh,
+			desc:          "cache older than the event is refetched",
+			entityData:    featureJSON(t, "flag-A", 3, "android"),
+			cached:        stale,
+			refetched:     fresh,
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          fresh,
 		},
 		{
-			desc:        "feature missing from the cache is refetched",
-			entityData:  featureJSON(t, "flag-A", 3, "android"),
-			cached:      []*featureproto.Feature{},
-			refetched:   fresh,
-			wantRefetch: true,
-			want:        fresh,
+			desc:          "feature missing from the cache is refetched",
+			entityData:    featureJSON(t, "flag-A", 3, "android"),
+			cached:        []*featureproto.Feature{},
+			refetched:     fresh,
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          fresh,
 		},
 		{
-			desc:        "cache error is refetched",
-			entityData:  featureJSON(t, "flag-A", 3, "android"),
-			cacheErr:    errors.New("redis down"),
-			refetched:   fresh,
-			wantRefetch: true,
-			want:        fresh,
+			desc:          "cache error is refetched",
+			entityData:    featureJSON(t, "flag-A", 3, "android"),
+			cacheErr:      errors.New("redis down"),
+			refetched:     fresh,
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          fresh,
 		},
 		{
-			desc:        "refetch error falls back to the cache",
-			entityData:  featureJSON(t, "flag-A", 3, "android"),
-			cached:      stale,
-			refetchErr:  errors.New("feature service down"),
-			wantRefetch: true,
-			want:        stale,
+			desc:            "failed refetch is retried",
+			entityData:      featureJSON(t, "flag-A", 3, "android"),
+			cached:          stale,
+			refetched:       fresh,
+			refetchFailures: 1,
+			wantRefetches:   2,
+			wantDispatch:    true,
+			want:            fresh,
 		},
 		{
-			desc:       "event without a version uses the cache",
-			entityData: `{"tags":["android"]}`,
-			cached:     stale,
-			want:       stale,
+			desc:            "stale snapshot is never dispatched when every refetch fails",
+			entityData:      featureJSON(t, "flag-A", 3, "android"),
+			cached:          stale,
+			refetchFailures: maxRefetchAttempts,
+			wantRefetches:   maxRefetchAttempts,
+		},
+		{
+			desc:         "event without a version uses the cache",
+			entityData:   `{"tags":["android"]}`,
+			cached:       stale,
+			wantDispatch: true,
+			want:         stale,
+		},
+		{
+			desc:         "flag filtered out of the caches skips the version check",
+			entityData:   string(disabledNoOffVariation),
+			cached:       stale,
+			wantDispatch: true,
+			want:         stale,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			var refetched atomic.Bool
+			var refetches atomic.Int32
 			d := NewDispatcher(10000,
 				func(string) ([]*featureproto.Feature, error) { return p.cached, p.cacheErr },
 				zap.NewNop(),
 				WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
-					refetched.Store(true)
-					return p.refetched, p.refetchErr
+					if int(refetches.Add(1)) <= p.refetchFailures {
+						return nil, errors.New("feature service down")
+					}
+					return p.refetched, nil
 				}),
 			)
+			d.refetchRetryInterval = time.Millisecond
 			ch, cancel, err := d.register(envID, "android", "source1")
 			require.NoError(t, err)
 			defer cancel()
@@ -685,11 +714,12 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 
 			select {
 			case got := <-ch:
+				require.True(t, p.wantDispatch, "unexpected dispatch")
 				assert.Equal(t, p.want, got.features)
-			case <-time.After(time.Second):
-				t.Fatal("expected dispatch")
+			case <-time.After(200 * time.Millisecond):
+				require.False(t, p.wantDispatch, "expected dispatch")
 			}
-			assert.Equal(t, p.wantRefetch, refetched.Load())
+			assert.Equal(t, p.wantRefetches, refetches.Load())
 		})
 	}
 }
@@ -723,7 +753,7 @@ func TestDispatcherDispatchReplacesPendingEvent(t *testing.T) {
 
 func featureJSON(t *testing.T, id string, version int32, tags ...string) string {
 	t.Helper()
-	b, err := json.Marshal(&featureproto.Feature{Id: id, Version: version, Tags: tags})
+	b, err := json.Marshal(&featureproto.Feature{Id: id, Version: version, Enabled: true, Tags: tags})
 	require.NoError(t, err)
 	return string(b)
 }

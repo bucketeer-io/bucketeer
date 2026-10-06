@@ -29,6 +29,11 @@ import (
 
 var errTooManyConnections = errors.New("stream: too many connections")
 
+const (
+	maxRefetchAttempts          = 3
+	defaultRefetchRetryInterval = time.Second
+)
+
 // FeaturesFetcher returns all features for the given environment.
 type FeaturesFetcher func(envID string) ([]*featureproto.Feature, error)
 
@@ -43,9 +48,11 @@ type Dispatcher struct {
 	maxConns        int
 	fetchFeatures   FeaturesFetcher
 	refetchFeatures FeaturesFetcher
-	shutdownCh      chan struct{}
-	shutdownOnce    sync.Once
-	logger          *zap.Logger
+	// Base backoff between refetch attempts; doubled on each retry.
+	refetchRetryInterval time.Duration
+	shutdownCh           chan struct{}
+	shutdownOnce         sync.Once
+	logger               *zap.Logger
 }
 
 type DispatcherOption func(*Dispatcher)
@@ -62,7 +69,8 @@ type pendingDispatch struct {
 	eventType domaineventproto.Event_Type
 	allTags   bool
 	// featureID -> change
-	changes map[string]*featureChange
+	changes  map[string]*featureChange
+	attempts int
 }
 
 type featureChange struct {
@@ -94,13 +102,14 @@ func NewDispatcher(
 	opts ...DispatcherOption,
 ) *Dispatcher {
 	d := &Dispatcher{
-		conns:         make(map[string]map[string]map[*conn]struct{}),
-		pending:       make(map[string]*pendingDispatch),
-		draining:      make(map[string]bool),
-		maxConns:      maxConns,
-		fetchFeatures: fetchFeatures,
-		shutdownCh:    make(chan struct{}),
-		logger:        logger.Named("stream-dispatcher"),
+		conns:                make(map[string]map[string]map[*conn]struct{}),
+		pending:              make(map[string]*pendingDispatch),
+		draining:             make(map[string]bool),
+		maxConns:             maxConns,
+		fetchFeatures:        fetchFeatures,
+		refetchRetryInterval: defaultRefetchRetryInterval,
+		shutdownCh:           make(chan struct{}),
+		logger:               logger.Named("stream-dispatcher"),
 	}
 	for _, opt := range opts {
 		opt(d)
@@ -198,15 +207,7 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 		tags := d.changeTags(e)
 		version, hasVersion := d.parseVersion(e.EntityData)
 		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
-			c, ok := p.changes[e.EntityId]
-			if !ok {
-				c = &featureChange{}
-				p.changes[e.EntityId] = c
-			}
-			c.tags = append(c.tags, tags...)
-			if hasVersion && (!c.hasVersion || version > c.version) {
-				c.version, c.hasVersion = version, true
-			}
+			p.addChange(e.EntityId, &featureChange{tags: tags, version: version, hasVersion: hasVersion})
 		})
 	case domaineventproto.Event_SEGMENT:
 		// Segment membership only changes through a bulk upload.
@@ -230,6 +231,18 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
 			p.allTags = true
 		})
+	}
+}
+
+func (p *pendingDispatch) addChange(id string, change *featureChange) {
+	c, ok := p.changes[id]
+	if !ok {
+		c = &featureChange{}
+		p.changes[id] = c
+	}
+	c.tags = append(c.tags, change.tags...)
+	if change.hasVersion && (!c.hasVersion || change.version > c.version) {
+		c.version, c.hasVersion = change.version, true
 	}
 }
 
@@ -267,22 +280,65 @@ func (d *Dispatcher) drain(envID string) {
 		}
 		delete(d.pending, envID)
 		d.mu.Unlock()
-		d.process(envID, p)
+		if d.process(envID, p) {
+			continue
+		}
+		// Never send a snapshot known to be stale: retry, then give up.
+		p.attempts++
+		if p.attempts >= maxRefetchAttempts {
+			d.logger.Error("Dropped dispatch after failing to refetch stale features",
+				zap.String("environmentID", envID),
+				zap.Int("attempts", p.attempts),
+			)
+			continue
+		}
+		d.requeue(envID, p)
+		select {
+		case <-time.After(d.refetchRetryInterval << (p.attempts - 1)):
+		case <-d.shutdownCh:
+			d.mu.Lock()
+			delete(d.pending, envID)
+			delete(d.draining, envID)
+			d.mu.Unlock()
+			return
+		}
 	}
 }
 
-func (d *Dispatcher) process(envID string, p *pendingDispatch) {
+// requeue merges a failed dispatch with any events that arrived meanwhile.
+func (d *Dispatcher) requeue(envID string, p *pendingDispatch) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	cur, ok := d.pending[envID]
+	if !ok {
+		d.pending[envID] = p
+		return
+	}
+	cur.allTags = cur.allTags || p.allTags
+	cur.attempts = max(cur.attempts, p.attempts)
+	for id, c := range p.changes {
+		cur.addChange(id, c)
+	}
+}
+
+// process dispatches the pending events and returns false if the refetch failed.
+func (d *Dispatcher) process(envID string, p *pendingDispatch) bool {
 	ev := event{
 		environmentID: envID,
 		eventType:     p.eventType,
 	}
 	if len(p.changes) > 0 {
-		ev.features = d.featuresFor(envID, p.changes)
+		features, ok := d.featuresFor(envID, p.changes)
+		if !ok {
+			return false
+		}
+		ev.features = features
 	}
 	if !p.allTags {
 		ev.tags = affectedTags(p.changes, ev.features)
 	}
 	d.dispatch(ev)
+	return true
 }
 
 // changeTags unions the flag's tags before and after the update so that
@@ -322,9 +378,13 @@ func affectedTags(changes map[string]*featureChange, features []*featureproto.Fe
 }
 
 // featuresFor returns the env's features, refetching them if the cache predates any change.
-func (d *Dispatcher) featuresFor(envID string, changes map[string]*featureChange) []*featureproto.Feature {
+// It returns false if the cache is stale and the refetch failed.
+func (d *Dispatcher) featuresFor(
+	envID string,
+	changes map[string]*featureChange,
+) ([]*featureproto.Feature, bool) {
 	if d.fetchFeatures == nil {
-		return nil
+		return nil, true
 	}
 	features, err := d.fetchFeatures(envID)
 	if err != nil {
@@ -335,7 +395,7 @@ func (d *Dispatcher) featuresFor(envID string, changes map[string]*featureChange
 		features = nil
 	}
 	if d.refetchFeatures == nil || includesChanges(features, changes) {
-		return features
+		return features, true
 	}
 	sseStaleFeaturesCounter.WithLabelValues(envID).Inc()
 	fresh, err := d.refetchFeatures(envID)
@@ -344,9 +404,9 @@ func (d *Dispatcher) featuresFor(envID string, changes map[string]*featureChange
 			zap.Error(err),
 			zap.String("environmentID", envID),
 		)
-		return features
+		return nil, false
 	}
-	return fresh
+	return fresh, true
 }
 
 func includesChanges(features []*featureproto.Feature, changes map[string]*featureChange) bool {
@@ -395,6 +455,14 @@ func (d *Dispatcher) parseVersion(data string) (int32, bool) {
 	}
 	if err := json.Unmarshal([]byte(data), &payload); err != nil || payload.Version == nil {
 		return 0, false
+	}
+	// Flags excluded from every features cache can never be found there, so skip the check.
+	f := &featureproto.Feature{}
+	if err := json.Unmarshal([]byte(data), f); err == nil {
+		ff := ftdomain.Feature{Feature: f}
+		if ff.IsDisabledAndOffVariationEmpty() || ff.IsArchivedBeforeLastThirtyDays() {
+			return 0, false
+		}
 	}
 	return *payload.Version, true
 }
