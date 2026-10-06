@@ -68,21 +68,7 @@ func TestExtractAuditLogs(t *testing.T) {
 		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
-	// An organization-scoped event without an organization id, as published by
-	// an older producer that predates the organization_id field.
-	legacyAdminEvent0, err := domainevent.NewAdminEvent(
-		editor,
-		eventproto.Event_PROJECT,
-		"pj-0",
-		eventproto.Event_PROJECT_CREATED,
-		&eventproto.ProjectCreatedEvent{Id: "pj-0"},
-		"",
-		"{\"id\": \"curr\"}",
-		"{\"id\": \"prev\"}",
-	)
-	assert.NoError(t, err)
-	// A system-level event legitimately has no organization id and must not
-	// fall back to admin_audit_log.
+	// A system-level event legitimately has no organization id.
 	systemAdminEvent0, err := domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_ADMIN_SUBSCRIPTION,
@@ -94,10 +80,10 @@ func TestExtractAuditLogs(t *testing.T) {
 		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
-	chunk := createChunk(t, []*domain.Event{event0, event1, adminEvent0, legacyAdminEvent0, systemAdminEvent0})
+	chunk := createChunk(t, []*domain.Event{event0, event1, adminEvent0, systemAdminEvent0})
 
 	p := newPersister(t, mockController)
-	auditLogs, adminAuditLogs, messages, adminMessages := p.extractAuditLogs(chunk)
+	auditLogs, messages := p.extractAuditLogs(chunk)
 	assert.Len(t, auditLogs, 4)
 	for i, al := range auditLogs {
 		msg, ok := chunk[al.Id]
@@ -118,11 +104,6 @@ func TestExtractAuditLogs(t *testing.T) {
 			assert.Equal(t, "", al.OrganizationId)
 		}
 	}
-	// The legacy organization-scoped event goes to admin_audit_log so the
-	// history migration can resolve its organization later.
-	assert.Len(t, adminAuditLogs, 1)
-	assert.Equal(t, legacyAdminEvent0.Id, adminAuditLogs[0].Id)
-	assert.Equal(t, legacyAdminEvent0.Id, adminMessages[0].ID)
 }
 
 func newPersister(t *testing.T, mockController *gomock.Controller) *auditLogPersister {

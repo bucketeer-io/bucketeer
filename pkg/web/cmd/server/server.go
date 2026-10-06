@@ -643,7 +643,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var flagTriggerStorage v2fs.FlagTriggerStorage
 	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	var auditLogStorage v2als.AuditLogStorage
-	var adminAuditLogStorage v2als.AdminAuditLogStorage
 	var postgresClient postgres.Client
 	var accountStorage v2as.AccountStorage
 	var projectStorage v2es.ProjectStorage
@@ -679,7 +678,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		flagTriggerStorage = featurepostgres.NewFlagTriggerStorage(postgresClient)
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
-		adminAuditLogStorage = auditlogpostgres.NewAdminAuditLogStorage(postgresClient)
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		projectStorage = environmentpostgres.NewProjectStorage(postgresClient)
 		orgStorage = environmentpostgres.NewOrganizationStorage(postgresClient)
@@ -707,7 +705,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		flagTriggerStorage = featuremysql.NewFlagTriggerStorage(mysqlClient)
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
-		adminAuditLogStorage = auditlogmysql.NewAdminAuditLogStorage(mysqlClient)
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		projectStorage = environmentmysql.NewProjectStorage(mysqlClient)
 		orgStorage = environmentmysql.NewOrganizationStorage(mysqlClient)
@@ -922,7 +919,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountClient,
 		accountStorage,
 		auditLogStorage,
-		adminAuditLogStorage,
 		auditlogapi.WithLogger(logger),
 	)
 	auditLogServer := rpc.NewServer(auditLogService, *s.certPath, *s.keyPath,
