@@ -85,15 +85,11 @@ const ProjectSettings = ({ project }: { project: Project }) => {
     <div className="flex flex-col w-full p-3 sm:p-6">
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex md:items-center justify-between flex-col md:flex-row gap-3 md:gap-0">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="typo-head-bold-big">{t(`settings`)}</p>
-            <div className="flex items-center gap-4 md:mt-0">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link target="_blank" to={DOCUMENTATION_LINKS.PROJECTS}>
-                <Button
-                  variant="text"
-                  type="button"
-                  className="flex-1 md:flex-none"
-                >
+                <Button variant="text" type="button">
                   <Icon icon={IconLaunchOutlined} size="sm" />
                   {t('documentation')}
                 </Button>
@@ -106,7 +102,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
                     loading={form.formState.isSubmitting}
                     disabled={!form.formState.isDirty || disabled}
                     type="submit"
-                    className="w-[120px]"
+                    className="w-auto min-w-16 sm:w-[120px]"
                   >
                     {t(`save`)}
                   </Button>
