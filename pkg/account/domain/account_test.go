@@ -25,10 +25,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 )
 
-func backdateUpdatedAt(a *AccountV2) {
-	a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
-}
-
 func TestNewMemberAccount(t *testing.T) {
 	envRoles := []*proto.AccountV2_EnvironmentRole{
 		{
@@ -464,7 +460,8 @@ func TestAddSearchFilter(t *testing.T) {
 				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
-			backdateUpdatedAt(a)
+			// NewAccountV2 sets UpdatedAt to "now"; backdate so AddSearchFilter must refresh it.
+			a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
 			for _, f := range p.expectedFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -623,7 +620,8 @@ func TestChangeSearchFilterName(t *testing.T) {
 				account.Tags,
 				[]string{"team"},
 				account.OrganizationId,
-				account.OrganizationRole, account.EnvironmentRoles)
+				account.OrganizationRole, account.EnvironmentRoles,
+			)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -632,7 +630,9 @@ func TestChangeSearchFilterName(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
-			backdateUpdatedAt(a)
+			// Setup already sets UpdatedAt to "now"; backdate so success must refresh it.
+			a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
+			updatedAtBefore := a.UpdatedAt // assert unchanged when the call returns an error
 			err := a.ChangeSearchFilterName(updateFilterId, p.updateFilterName)
 			assert.Equal(t, err, p.error)
 
@@ -648,6 +648,8 @@ func TestChangeSearchFilterName(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, updatedAtBefore, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
@@ -789,7 +791,9 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
-			backdateUpdatedAt(a)
+			// Setup already sets UpdatedAt to "now"; backdate so success must refresh it.
+			a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
+			updatedAtBefore := a.UpdatedAt // assert unchanged when the call returns an error
 			err := a.ChangeSearchFilterQuery(updateFilterId, p.updateFilterQuery)
 			assert.Equal(t, err, p.error)
 
@@ -805,6 +809,8 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, updatedAtBefore, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
@@ -950,7 +956,9 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 				Id:            updateFilterId,
 				DefaultFilter: p.updateDefaultFilter,
 			}
-			backdateUpdatedAt(a)
+			// Setup already sets UpdatedAt to "now"; backdate so success must refresh it.
+			a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
+			updatedAtBefore := a.UpdatedAt // assert unchanged when the call returns an error
 			err := a.ChangeDefaultSearchFilter(
 				updateFilter.Id,
 				updateFilter.DefaultFilter)
@@ -968,6 +976,8 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, updatedAtBefore, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
@@ -1090,7 +1100,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 			if len(a.SearchFilters) > 0 {
 				deleteFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
-			backdateUpdatedAt(a)
+			// Setup already sets UpdatedAt to "now"; backdate so success must refresh it.
+			a.UpdatedAt = time.Now().Add(-time.Hour).Unix()
+			updatedAtBefore := a.UpdatedAt // assert unchanged when the call returns an error
 			err := a.DeleteSearchFilter(deleteFilterId)
 			assert.Equal(t, err, p.error)
 
@@ -1106,6 +1118,8 @@ func TestDeleteSearchFilter(t *testing.T) {
 			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
 			if p.error == nil {
 				assert.InDelta(t, time.Now().Unix(), a.UpdatedAt, 5)
+			} else {
+				assert.Equal(t, updatedAtBefore, a.UpdatedAt)
 			}
 
 			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))

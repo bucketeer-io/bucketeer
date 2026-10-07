@@ -812,10 +812,13 @@ func TestChangeRulesOrder(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
+		updatedAtBefore := f.UpdatedAt
 		err := f.ChangeRulesOrder(p.ruleIDs)
 		assert.Equal(t, p.expectedError, err)
 		if p.expectedError == nil {
 			assert.InDelta(t, time.Now().Unix(), f.UpdatedAt, 5)
+		} else {
+			assert.Equal(t, updatedAtBefore, f.UpdatedAt)
 		}
 		for i := range f.Rules {
 			if p.expected[i] != f.Rules[i].Id {
