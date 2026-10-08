@@ -30,7 +30,7 @@ import (
 var errTooManyConnections = errors.New("stream: too many connections")
 
 const (
-	maxRefetchAttempts          = 3
+	defaultMaxRefetchAttempts   = 3
 	defaultRefetchRetryInterval = time.Second
 )
 
@@ -41,13 +41,14 @@ type FeaturesFetcher func(envID string) ([]*featureproto.Feature, error)
 type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns           map[string]map[string]map[*conn]struct{}
-	pending         map[string]*pendingDispatch
-	draining        map[string]bool
-	totalConns      int
-	maxConns        int
-	fetchFeatures   FeaturesFetcher
-	refetchFeatures FeaturesFetcher
+	conns              map[string]map[string]map[*conn]struct{}
+	pending            map[string]*pendingDispatch
+	draining           map[string]bool
+	totalConns         int
+	maxConns           int
+	fetchFeatures      FeaturesFetcher
+	refetchFeatures    FeaturesFetcher
+	maxRefetchAttempts int
 	// Base backoff between refetch attempts; doubled on each retry.
 	refetchRetryInterval time.Duration
 	shutdownCh           chan struct{}
@@ -61,6 +62,14 @@ type DispatcherOption func(*Dispatcher)
 func WithFeaturesRefetcher(f FeaturesFetcher) DispatcherOption {
 	return func(d *Dispatcher) {
 		d.refetchFeatures = f
+	}
+}
+
+// WithRefetchRetry sets the refetch attempts and the base backoff, which doubles on each retry.
+func WithRefetchRetry(maxAttempts int, interval time.Duration) DispatcherOption {
+	return func(d *Dispatcher) {
+		d.maxRefetchAttempts = maxAttempts
+		d.refetchRetryInterval = interval
 	}
 }
 
@@ -107,6 +116,7 @@ func NewDispatcher(
 		draining:             make(map[string]bool),
 		maxConns:             maxConns,
 		fetchFeatures:        fetchFeatures,
+		maxRefetchAttempts:   defaultMaxRefetchAttempts,
 		refetchRetryInterval: defaultRefetchRetryInterval,
 		shutdownCh:           make(chan struct{}),
 		logger:               logger.Named("stream-dispatcher"),
@@ -204,14 +214,19 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 			e.Type != domaineventproto.Event_FEATURE_DISABLED {
 			return
 		}
-		tags := d.changeTags(e)
-		version, hasVersion := d.parseVersion(e.EntityData)
+		if !d.hasConns(e.EnvironmentId) {
+			return
+		}
+		change := d.featureChangeOf(e)
 		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
-			p.addChange(e.EntityId, &featureChange{tags: tags, version: version, hasVersion: hasVersion})
+			p.addChange(e.EntityId, change)
 		})
 	case domaineventproto.Event_SEGMENT:
 		// Segment membership only changes through a bulk upload.
 		if e.Type != domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED {
+			return
+		}
+		if !d.hasConns(e.EnvironmentId) {
 			return
 		}
 		if e.Data == nil {
@@ -232,6 +247,13 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 			p.allTags = true
 		})
 	}
+}
+
+// hasConns lets HandleEvent skip decoding events for environments this pod has no connections in.
+func (d *Dispatcher) hasConns(envID string) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return len(d.conns[envID]) > 0
 }
 
 func (p *pendingDispatch) addChange(id string, change *featureChange) {
@@ -269,6 +291,7 @@ func (d *Dispatcher) enqueue(envID string, eventType domaineventproto.Event_Type
 }
 
 // drain processes the environment's pending dispatches one at a time, preserving their order.
+// While waiting to retry a failed refetch it blocks only this env; new events are merged meanwhile.
 func (d *Dispatcher) drain(envID string) {
 	for {
 		d.mu.Lock()
@@ -285,7 +308,8 @@ func (d *Dispatcher) drain(envID string) {
 		}
 		// Never send a snapshot known to be stale: retry, then give up.
 		p.attempts++
-		if p.attempts >= maxRefetchAttempts {
+		if p.attempts >= d.maxRefetchAttempts {
+			sseDispatchAbandonedCounter.WithLabelValues(envID).Inc()
 			d.logger.Error("Dropped dispatch after failing to refetch stale features",
 				zap.String("environmentID", envID),
 				zap.Int("attempts", p.attempts),
@@ -341,18 +365,48 @@ func (d *Dispatcher) process(envID string, p *pendingDispatch) bool {
 	return true
 }
 
-// changeTags unions the flag's tags before and after the update so that
-// removing a tag still notifies that tag's subscribers.
-func (d *Dispatcher) changeTags(e *domaineventproto.Event) []string {
-	var tags []string
-	for _, data := range []string{e.EntityData, e.PreviousEntityData} {
-		tags = append(tags, d.parseTags(data)...)
+type featureEntity struct {
+	Tags         []string `json:"tags"`
+	Version      *int32   `json:"version"`
+	Enabled      bool     `json:"enabled"`
+	OffVariation string   `json:"off_variation"`
+	Archived     bool     `json:"archived"`
+	UpdatedAt    int64    `json:"updated_at"`
+}
+
+// featureChangeOf decodes the event's entity data once. Tags are unioned with the previous ones so
+// that removing a tag still notifies that tag's subscribers.
+func (d *Dispatcher) featureChangeOf(e *domaineventproto.Event) *featureChange {
+	c := &featureChange{}
+	if e.EntityData != "" {
+		var f featureEntity
+		if err := json.Unmarshal([]byte(e.EntityData), &f); err != nil {
+			d.logger.Warn("Failed to extract tags from feature entity data", zap.Error(err))
+		} else {
+			c.tags = f.Tags
+			// Flags excluded from every features cache can never be found there, so skip the check.
+			if f.Version != nil && !isFilteredFromCache(&f) {
+				c.version, c.hasVersion = *f.Version, true
+			}
+		}
 	}
-	return tags
+	c.tags = append(c.tags, d.parseTags(e.PreviousEntityData)...)
+	return c
+}
+
+func isFilteredFromCache(f *featureEntity) bool {
+	ff := ftdomain.Feature{Feature: &featureproto.Feature{
+		Enabled:      f.Enabled,
+		OffVariation: f.OffVariation,
+		Archived:     f.Archived,
+		UpdatedAt:    f.UpdatedAt,
+	}}
+	return ff.IsDisabledAndOffVariationEmpty() || ff.IsArchivedBeforeLastThirtyDays()
 }
 
 // affectedTags unions the changed flags' tags and the tags of flags that transitively depend on them.
-// It returns nil (all tags) if any changed flag has no tags to target.
+// It returns nil (all tags) if any changed flag has no tags to target, which widens a merged batch to
+// the whole env; extra conns only re-evaluate and get no patch unless something changed for them.
 func affectedTags(changes map[string]*featureChange, features []*featureproto.Feature) []string {
 	seen := make(map[string]struct{})
 	for id, c := range changes {
@@ -446,27 +500,6 @@ func dependentTags(entityID string, features []*featureproto.Feature) []string {
 	return tags
 }
 
-func (d *Dispatcher) parseVersion(data string) (int32, bool) {
-	if data == "" {
-		return 0, false
-	}
-	var payload struct {
-		Version *int32 `json:"version"`
-	}
-	if err := json.Unmarshal([]byte(data), &payload); err != nil || payload.Version == nil {
-		return 0, false
-	}
-	// Flags excluded from every features cache can never be found there, so skip the check.
-	f := &featureproto.Feature{}
-	if err := json.Unmarshal([]byte(data), f); err == nil {
-		ff := ftdomain.Feature{Feature: f}
-		if ff.IsDisabledAndOffVariationEmpty() || ff.IsArchivedBeforeLastThirtyDays() {
-			return 0, false
-		}
-	}
-	return *payload.Version, true
-}
-
 func (d *Dispatcher) parseTags(data string) []string {
 	if data == "" {
 		return nil
@@ -537,6 +570,8 @@ func (d *Dispatcher) dispatch(ev event) {
 		next := ev
 		select {
 		case pending := <-c.ch:
+			// A segment event has no snapshot; keep the pending one, which was verified for an
+			// earlier feature change. The segment change itself is evaluated from the cache.
 			if next.features == nil {
 				next.features = pending.features
 			}

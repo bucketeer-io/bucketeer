@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -520,10 +521,10 @@ func TestDispatcherAffectedTags(t *testing.T) {
 	d := &Dispatcher{logger: zap.NewNop()}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			tags := d.changeTags(&domaineventproto.Event{
+			tags := d.featureChangeOf(&domaineventproto.Event{
 				EntityData:         p.entity,
 				PreviousEntityData: p.previous,
-			})
+			}).tags
 			got := affectedTags(map[string]*featureChange{"flag-A": {tags: tags}}, nil)
 			sort.Strings(got)
 			sort.Strings(p.expected)
@@ -667,8 +668,8 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 			desc:            "stale snapshot is never dispatched when every refetch fails",
 			entityData:      featureJSON(t, "flag-A", 3, "android"),
 			cached:          stale,
-			refetchFailures: maxRefetchAttempts,
-			wantRefetches:   maxRefetchAttempts,
+			refetchFailures: defaultMaxRefetchAttempts,
+			wantRefetches:   defaultMaxRefetchAttempts,
 		},
 		{
 			desc:         "event without a version uses the cache",
@@ -698,16 +699,19 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 					}
 					return p.refetched, nil
 				}),
+				WithRefetchRetry(defaultMaxRefetchAttempts, time.Millisecond),
 			)
-			d.refetchRetryInterval = time.Millisecond
-			ch, cancel, err := d.register(envID, "android", "source1")
+			// A per-case env keeps the abandoned counter isolated between parallel cases.
+			env := envID + "/" + p.desc
+			ch, cancel, err := d.register(env, "android", "source1")
 			require.NoError(t, err)
 			defer cancel()
+			abandonedBefore := abandonedCount(t, env)
 
 			d.HandleEvent(&domaineventproto.Event{
 				EntityType:    domaineventproto.Event_FEATURE,
 				Type:          domaineventproto.Event_FEATURE_UPDATED,
-				EnvironmentId: envID,
+				EnvironmentId: env,
 				EntityId:      "flag-A",
 				EntityData:    p.entityData,
 			})
@@ -720,6 +724,11 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 				require.False(t, p.wantDispatch, "expected dispatch")
 			}
 			assert.Equal(t, p.wantRefetches, refetches.Load())
+			wantAbandoned := 0.0
+			if !p.wantDispatch {
+				wantAbandoned = 1
+			}
+			assert.Equal(t, wantAbandoned, abandonedCount(t, env)-abandonedBefore)
 		})
 	}
 }
@@ -837,4 +846,11 @@ func TestDispatcherHandleEventCoalescesPendingEvents(t *testing.T) {
 	got := <-ch
 	assert.ElementsMatch(t, []string{"android", "ios"}, got.tags)
 	assert.Len(t, got.features, 3)
+}
+
+func abandonedCount(t *testing.T, envID string) float64 {
+	t.Helper()
+	m := &dto.Metric{}
+	require.NoError(t, sseDispatchAbandonedCounter.WithLabelValues(envID).Write(m))
+	return m.GetCounter().GetValue()
 }
