@@ -49,7 +49,7 @@ const PageHeader = ({
         </p>
         {link && (
           <Link
-            className="inline-flex items-center ml-1 typo-para-small text-primary-500 underline sm:hidden"
+            className="inline-flex items-center ml-1 typo-para-small text-primary-500 underline md:hidden"
             target="_blank"
             to={link}
             onClick={(e: React.MouseEvent) => {
