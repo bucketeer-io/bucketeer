@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -107,6 +108,9 @@ type Client interface {
 	Check(context.Context) health.Status
 	Stats() redis.PoolStats
 	Scan(cursor uint64, key string, count int64) (uint64, []string, error)
+	// ScanAll calls fn with every page of keys matching the pattern, on every master in cluster mode.
+	// fn is never called concurrently.
+	ScanAll(match string, count int64, fn func(keys []string) error) error
 	Get(key string) ([]byte, error)
 	GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, error)
 	Set(key string, val interface{}, expiration time.Duration) error
@@ -612,6 +616,64 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return cursor, keys, err
+}
+
+func (c *client) ScanAll(match string, count int64, fn func(keys []string) error) error {
+	ctx := context.TODO()
+	// A cluster SCAN cursor is only valid on the node that returned it, so scan each master separately.
+	if cc, ok := c.rc.(*goredis.ClusterClient); ok {
+		// Masters are scanned in parallel; serialize fn so callers keep one-at-a-time semantics.
+		serialFn := serialize(fn)
+		return cc.ForEachMaster(ctx, func(ctx context.Context, node *goredis.Client) error {
+			return c.scanNode(ctx, node.Scan, match, count, serialFn)
+		})
+	}
+	return c.scanNode(ctx, c.rc.Scan, match, count, fn)
+}
+
+func serialize(fn func(keys []string) error) func(keys []string) error {
+	var mu sync.Mutex
+	return func(keys []string) error {
+		mu.Lock()
+		defer mu.Unlock()
+		return fn(keys)
+	}
+}
+
+type scanFunc func(ctx context.Context, cursor uint64, match string, count int64) *goredis.ScanCmd
+
+func (c *client) scanNode(
+	ctx context.Context,
+	scan scanFunc,
+	match string,
+	count int64,
+	fn func(keys []string) error,
+) error {
+	var cursor uint64
+	for {
+		startTime := time.Now()
+		redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName).Inc()
+		keys, next, err := scan(ctx, cursor, match, count).Result()
+		code := redis.CodeSuccess
+		if err != nil {
+			code = redis.CodeFail
+		}
+		redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Inc()
+		redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Observe(
+			time.Since(startTime).Seconds())
+		if err != nil {
+			return err
+		}
+		if len(keys) > 0 {
+			if err := fn(keys); err != nil {
+				return err
+			}
+		}
+		if next == 0 {
+			return nil
+		}
+		cursor = next
+	}
 }
 
 func (c *client) Get(key string) ([]byte, error) {

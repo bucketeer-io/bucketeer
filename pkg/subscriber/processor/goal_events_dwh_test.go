@@ -296,3 +296,35 @@ func TestHandleNewRetryRequeuesWhenEvaluationNotFound(t *testing.T) {
 	}
 	w.handleNewRetry(context.Background(), msg, key, w.logger)
 }
+
+func TestScanAndProcessVisitsKeysFromEveryScanPage(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	redisClient := redismock.NewMockClient(ctrl)
+	w := newTestGoalEvtWriter(nil, redisClient, nil)
+	w.locker = NewGoalEventLocker(redisClient, time.Minute)
+
+	redisClient.EXPECT().ScanAll("*:goal_event_retry:*", int64(scanBatchSize), gomock.Any()).DoAndReturn(
+		func(_ string, _ int64, fn func([]string) error) error {
+			// One page per cluster master.
+			if err := fn([]string{testEnvironmentID + ":goal_event_retry:event-1"}); err != nil {
+				return err
+			}
+			return fn([]string{testEnvironmentID + ":goal_event_retry:event-2"})
+		})
+	// Each key reaches processing; the lock is not acquired, so it stops there.
+	redisClient.EXPECT().SetNX(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).Times(2)
+
+	w.scanAndProcess(context.Background())
+}
+
+func TestScanAndProcessScanError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	redisClient := redismock.NewMockClient(ctrl)
+	w := newTestGoalEvtWriter(nil, redisClient, nil)
+
+	redisClient.EXPECT().ScanAll(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("scan failed"))
+
+	w.scanAndProcess(context.Background())
+}

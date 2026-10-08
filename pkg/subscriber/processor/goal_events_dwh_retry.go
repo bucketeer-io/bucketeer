@@ -70,20 +70,15 @@ func (w *goalEvtWriter) StartRetryProcessor(ctx context.Context) {
 }
 
 func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
-	var cursor uint64
-	for {
-		nextCursor, keys, err := w.redisClient.Scan(cursor, fmt.Sprintf("*:%s:*", retryGoalEventKeyKind), scanBatchSize)
-		if err != nil {
-			w.logger.Error("Scan failed", zap.Error(err), zap.Uint64("cursor", cursor))
-			break
-		}
+	pattern := fmt.Sprintf("*:%s:*", retryGoalEventKeyKind)
+	err := w.redisClient.ScanAll(pattern, scanBatchSize, func(keys []string) error {
 		for _, key := range keys {
 			w.processRetryKey(ctx, key)
 		}
-		if nextCursor == 0 {
-			break
-		}
-		cursor = nextCursor
+		return nil
+	})
+	if err != nil {
+		w.logger.Error("Scan failed", zap.Error(err))
 	}
 }
 

@@ -363,6 +363,20 @@ func (mr *MockClientMockRecorder) Scan(cursor, key, count any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockClient)(nil).Scan), cursor, key, count)
 }
 
+// ScanAll mocks base method.
+func (m *MockClient) ScanAll(match string, count int64, fn func([]string) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScanAll", match, count, fn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ScanAll indicates an expected call of ScanAll.
+func (mr *MockClientMockRecorder) ScanAll(match, count, fn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanAll", reflect.TypeOf((*MockClient)(nil).ScanAll), match, count, fn)
+}
+
 // Set mocks base method.
 func (m *MockClient) Set(key string, val any, expiration time.Duration) error {
 	m.ctrl.T.Helper()
