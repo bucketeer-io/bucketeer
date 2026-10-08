@@ -41,9 +41,11 @@ type FeaturesFetcher func(envID string) ([]*featureproto.Feature, error)
 type Dispatcher struct {
 	mu sync.Mutex
 	// envID -> tag -> set of conns
-	conns              map[string]map[string]map[*conn]struct{}
-	pending            map[string]*pendingDispatch
-	draining           map[string]bool
+	conns    map[string]map[string]map[*conn]struct{}
+	pending  map[string]*pendingDispatch
+	draining map[string]bool
+	// envID -> featureID -> version in the last snapshot sent; a new snapshot must not be older.
+	lastSent           map[string]map[string]int32
 	totalConns         int
 	maxConns           int
 	fetchFeatures      FeaturesFetcher
@@ -86,6 +88,8 @@ type featureChange struct {
 	tags       []string
 	version    int32
 	hasVersion bool
+	// The flag is filtered out of the features caches, so it may be absent instead.
+	absentOK bool
 }
 
 type event struct {
@@ -114,6 +118,7 @@ func NewDispatcher(
 		conns:                make(map[string]map[string]map[*conn]struct{}),
 		pending:              make(map[string]*pendingDispatch),
 		draining:             make(map[string]bool),
+		lastSent:             make(map[string]map[string]int32),
 		maxConns:             maxConns,
 		fetchFeatures:        fetchFeatures,
 		maxRefetchAttempts:   defaultMaxRefetchAttempts,
@@ -194,6 +199,7 @@ func (d *Dispatcher) deregister(envID string, target *conn) {
 	}
 	if len(tagConns) == 0 {
 		delete(d.conns, envID)
+		delete(d.lastSent, envID)
 	}
 	d.mu.Unlock()
 
@@ -264,7 +270,7 @@ func (p *pendingDispatch) addChange(id string, change *featureChange) {
 	}
 	c.tags = append(c.tags, change.tags...)
 	if change.hasVersion && (!c.hasVersion || change.version > c.version) {
-		c.version, c.hasVersion = change.version, true
+		c.version, c.hasVersion, c.absentOK = change.version, true, change.absentOK
 	}
 }
 
@@ -357,6 +363,7 @@ func (d *Dispatcher) process(envID string, p *pendingDispatch) bool {
 			return false
 		}
 		ev.features = features
+		d.setLastSent(envID, features)
 	}
 	if !p.allTags {
 		ev.tags = affectedTags(p.changes, ev.features)
@@ -384,9 +391,10 @@ func (d *Dispatcher) featureChangeOf(e *domaineventproto.Event) *featureChange {
 			d.logger.Warn("Failed to extract tags from feature entity data", zap.Error(err))
 		} else {
 			c.tags = f.Tags
-			// Flags excluded from every features cache can never be found there, so skip the check.
-			if f.Version != nil && !isFilteredFromCache(&f) {
+			if f.Version != nil {
 				c.version, c.hasVersion = *f.Version, true
+				// Filtered flags are dropped from the caches; an older cached copy is still stale.
+				c.absentOK = isFilteredFromCache(&f)
 			}
 		}
 	}
@@ -431,8 +439,8 @@ func affectedTags(changes map[string]*featureChange, features []*featureproto.Fe
 	return out
 }
 
-// featuresFor returns the env's features, refetching them if the cache predates any change.
-// It returns false if the cache is stale and the refetch failed.
+// featuresFor returns the env's features, refetching them if the cache predates any change or is
+// older than the last snapshot sent. It returns false if the cache is stale and the refetch failed.
 func (d *Dispatcher) featuresFor(
 	envID string,
 	changes map[string]*featureChange,
@@ -448,7 +456,7 @@ func (d *Dispatcher) featuresFor(
 		)
 		features = nil
 	}
-	if d.refetchFeatures == nil || includesChanges(features, changes) {
+	if d.refetchFeatures == nil || (includesChanges(features, changes) && d.notOlderThanLastSent(envID, features)) {
 		return features, true
 	}
 	sseStaleFeaturesCounter.WithLabelValues(envID).Inc()
@@ -472,11 +480,49 @@ func includesChanges(features []*featureproto.Feature, changes map[string]*featu
 		if !c.hasVersion {
 			continue
 		}
-		if v, ok := versions[id]; !ok || v < c.version {
+		v, ok := versions[id]
+		if !ok {
+			if c.absentOK {
+				continue
+			}
+			return false
+		}
+		if v < c.version {
 			return false
 		}
 	}
 	return true
+}
+
+// notOlderThanLastSent rejects a cache that regressed or lost a flag since the last dispatch, e.g.
+// when a delayed older event arrives after a newer one was sent.
+func (d *Dispatcher) notOlderThanLastSent(envID string, features []*featureproto.Feature) bool {
+	versions := make(map[string]int32, len(features))
+	for _, f := range features {
+		versions[f.Id] = f.Version
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for id, sent := range d.lastSent[envID] {
+		if v, ok := versions[id]; !ok || v < sent {
+			return false
+		}
+	}
+	return true
+}
+
+func (d *Dispatcher) setLastSent(envID string, features []*featureproto.Feature) {
+	versions := make(map[string]int32, len(features))
+	for _, f := range features {
+		versions[f.Id] = f.Version
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	// Skip if every conn left meanwhile, so the entry isn't recreated after deregister cleared it.
+	if len(d.conns[envID]) == 0 {
+		return
+	}
+	d.lastSent[envID] = versions
 }
 
 func dependentTags(entityID string, features []*featureproto.Feature) []string {

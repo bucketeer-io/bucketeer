@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -679,11 +680,20 @@ func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
 			want:         stale,
 		},
 		{
-			desc:         "flag filtered out of the caches skips the version check",
+			desc:         "flag filtered out of the caches may be absent",
 			entityData:   string(disabledNoOffVariation),
-			cached:       stale,
+			cached:       []*featureproto.Feature{},
 			wantDispatch: true,
-			want:         stale,
+			want:         []*featureproto.Feature{},
+		},
+		{
+			desc:          "older copy of a filtered flag is still stale",
+			entityData:    string(disabledNoOffVariation),
+			cached:        stale,
+			refetched:     []*featureproto.Feature{},
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          []*featureproto.Feature{},
 		},
 	}
 	for _, p := range patterns {
@@ -853,4 +863,93 @@ func abandonedCount(t *testing.T, envID string) float64 {
 	m := &dto.Metric{}
 	require.NoError(t, sseDispatchAbandonedCounter.WithLabelValues(envID).Write(m))
 	return m.GetCounter().GetValue()
+}
+
+func TestDispatcherSnapshotNotOlderThanLastSent(t *testing.T) {
+	t.Parallel()
+	const envID = "env-1"
+	var mu sync.Mutex
+	var cached, fresh []*featureproto.Feature
+	var refetches atomic.Int32
+	d := NewDispatcher(10000,
+		func(string) ([]*featureproto.Feature, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			return cached, nil
+		},
+		zap.NewNop(),
+		WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
+			refetches.Add(1)
+			mu.Lock()
+			defer mu.Unlock()
+			return fresh, nil
+		}),
+	)
+	ch, cancel, err := d.register(envID, "android", "source1")
+	require.NoError(t, err)
+	defer cancel()
+	set := func(c, f []*featureproto.Feature) {
+		mu.Lock()
+		defer mu.Unlock()
+		cached, fresh = c, f
+	}
+	handle := func(id string, version int32) []*featureproto.Feature {
+		d.HandleEvent(&domaineventproto.Event{
+			EntityType:    domaineventproto.Event_FEATURE,
+			Type:          domaineventproto.Event_FEATURE_UPDATED,
+			EnvironmentId: envID,
+			EntityId:      id,
+			EntityData:    featureJSON(t, id, version, "android"),
+		})
+		select {
+		case got := <-ch:
+			return got.features
+		case <-time.After(time.Second):
+			t.Fatal("expected dispatch")
+			return nil
+		}
+	}
+	x5 := &featureproto.Feature{Id: "flag-X", Version: 5}
+	y2 := &featureproto.Feature{Id: "flag-Y", Version: 2}
+	z1 := &featureproto.Feature{Id: "flag-Z", Version: 1}
+
+	set([]*featureproto.Feature{x5, z1}, nil)
+	handle("flag-X", 5)
+	assert.Equal(t, int32(0), refetches.Load())
+
+	// A delayed event for Y must not accept a cache that regressed X.
+	set([]*featureproto.Feature{{Id: "flag-X", Version: 4}, y2, z1}, []*featureproto.Feature{x5, y2, z1})
+	assert.Equal(t, []*featureproto.Feature{x5, y2, z1}, handle("flag-Y", 2))
+	assert.Equal(t, int32(1), refetches.Load())
+
+	// Z was deleted: the missing flag costs one refetch, then the refetched snapshot is the new baseline.
+	set([]*featureproto.Feature{x5, y2}, []*featureproto.Feature{x5, y2})
+	assert.Equal(t, []*featureproto.Feature{x5, y2}, handle("flag-Y", 2))
+	assert.Equal(t, int32(2), refetches.Load())
+	handle("flag-Y", 2)
+	assert.Equal(t, int32(2), refetches.Load())
+}
+
+func TestDispatcherDeregisterClearsLastSent(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, func(string) ([]*featureproto.Feature, error) {
+		return []*featureproto.Feature{{Id: "flag-A", Version: 3}}, nil
+	}, zap.NewNop())
+	ch, cancel, err := d.register("env-1", "android", "source1")
+	require.NoError(t, err)
+	d.HandleEvent(&domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+		EnvironmentId: "env-1",
+		EntityId:      "flag-A",
+		EntityData:    featureJSON(t, "flag-A", 3, "android"),
+	})
+	<-ch
+	d.mu.Lock()
+	assert.Len(t, d.lastSent["env-1"], 1)
+	d.mu.Unlock()
+	cancel()
+	d.mu.Lock()
+	assert.Empty(t, d.lastSent["env-1"])
+	d.mu.Unlock()
 }
