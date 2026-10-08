@@ -42,13 +42,13 @@ const Filter = ({
   return (
     <div
       className={cn(
-        'flex flex-wrap w-full lg:items-center justify-between lg:flex-row px-3 sm:px-6 gap-x-6 pt-3 sm:pt-0',
+        'flex flex-wrap w-full items-center justify-between px-3 sm:px-6 gap-x-6 gap-y-3 pt-3 sm:pt-0',
         { '!flex-row lg:!justify-end': !onSearchChange },
         className
       )}
     >
       {onSearchChange && (
-        <div className="w-full max-w-full lg:max-w-[365px]">
+        <div className="w-full md:min-w-[220px] md:max-w-[365px] md:flex-[1_1_220px]">
           <SearchInput
             name={name}
             placeholder={placeholder || `${t('form:placeholder-search-input')}`}
@@ -59,13 +59,13 @@ const Filter = ({
       )}
       <div
         className={cn(
-          'flex flex-wrap flex-1 w-full items-center  justify-start md:justify-end gap-4 mt-3 lg:mt-0',
+          'flex flex-wrap flex-1 w-full items-center justify-start md:justify-end gap-4 md:w-auto md:flex-[1_1_auto]',
           actionClassName
         )}
       >
         {isShowDocumentation && (
           <Link
-            className="hidden sm:block"
+            className="hidden md:block"
             target="_blank"
             to={link}
             onClick={e => {
