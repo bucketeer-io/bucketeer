@@ -20,10 +20,14 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -31,6 +35,7 @@ import (
 	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
@@ -95,7 +100,138 @@ func newCacheRefresherWithMocks(t *testing.T) (*cacheRefresher, *cacheRefresherM
 		m.invalidationPublisher,
 		zap.NewNop(),
 	).(*cacheRefresher)
+	p.now = func() time.Time { return refresherFixedNow }
 	return p, m
+}
+
+// refresherFixedNow is the deterministic clock used by the test refresher;
+// refresherFixedGeneration is the generation every PutIfNewer is expected to
+// carry.
+var (
+	refresherFixedNow        = time.Date(2026, 10, 9, 1, 2, 3, 456_789_000, time.UTC)
+	refresherFixedGeneration = refresherFixedNow.UnixNano()
+)
+
+func TestNewCacheRefresherUsesWallClock(t *testing.T) {
+	t.Parallel()
+	p := NewCacheRefresher(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, zap.NewNop()).(*cacheRefresher)
+	require.NotNil(t, p.now)
+	before := time.Now()
+	assert.False(t, p.now().Before(before))
+}
+
+// The generation must be captured before the first ListFeatures page is
+// requested; otherwise a read that began before a concurrent writer's could
+// be stamped after it and win incorrectly.
+func TestCacheRefresherFeaturesGenerationCapturedBeforeFetch(t *testing.T) {
+	t.Parallel()
+	cr, mocks := newCacheRefresherWithMocks(t)
+	first := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	calls := 0
+	cr.now = func() time.Time {
+		calls++
+		return first.Add(time.Duration(calls) * time.Hour)
+	}
+	mocks.featureClient.EXPECT().
+		ListFeatures(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(context.Context, *featureproto.ListFeaturesRequest, ...grpc.CallOption) (*featureproto.ListFeaturesResponse, error) {
+			assert.Equal(t, 1, calls, "generation must be captured before the fetch")
+			return &featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{{Id: "f"}}}, nil
+		})
+	mocks.featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", first.Add(time.Hour).UnixNano()).
+		Return(true, nil)
+	mocks.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+
+	err := cr.refreshFeatures(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EntityId:      "feature-id-1",
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	})
+	require.NoError(t, err)
+}
+
+// A rejected (stale) write is not an error: the event is acked, the stale
+// counter is incremented, and the L1 invalidation is still published so api
+// pods pick up the newer snapshot that is already in L2.
+//
+// Not parallel: the stale counter is process-global and asserted by delta.
+func TestCacheRefresherHandleMessageStalePutStillPublishesAndAcks(t *testing.T) {
+	cr, mocks := newCacheRefresherWithMocks(t)
+
+	mocks.featureClient.EXPECT().
+		ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{{Id: "f"}}}, nil)
+	mocks.featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		Return(false, nil)
+	mocks.invalidationPublisher.EXPECT().
+		Publish(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	data, err := proto.Marshal(&domaineventproto.Event{
+		Id:            "evt-feature",
+		EntityType:    domaineventproto.Event_FEATURE,
+		EntityId:      "feature-id-1",
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	})
+	require.NoError(t, err)
+
+	staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterRefresher)
+	staleBefore := testutil.ToFloat64(staleCounter)
+	acked := false
+	nacked := false
+	msg := &puller.Message{
+		Data: data,
+		Ack:  func() { acked = true },
+		Nack: func() { nacked = true },
+	}
+	cr.handleMessage(context.Background(), msg)
+
+	assert.True(t, acked)
+	assert.False(t, nacked)
+	assert.Equal(t, float64(1), testutil.ToFloat64(staleCounter)-staleBefore)
+}
+
+// An accepted write must not touch the stale counter.
+// Not parallel: the stale counter is process-global and asserted by delta.
+func TestCacheRefresherAcceptedPutDoesNotCountStale(t *testing.T) {
+	cr, mocks := newCacheRefresherWithMocks(t)
+	mocks.featureClient.EXPECT().
+		ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{}, nil)
+	mocks.featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		Return(true, nil)
+	mocks.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+
+	staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterRefresher)
+	staleBefore := testutil.ToFloat64(staleCounter)
+	err := cr.refreshFeatures(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, float64(0), testutil.ToFloat64(staleCounter)-staleBefore)
+}
+
+// When the fetch fails the cache must not be touched and no generation is
+// consumed by a write.
+func TestCacheRefresherFetchFailureSkipsPut(t *testing.T) {
+	t.Parallel()
+	cr, mocks := newCacheRefresherWithMocks(t)
+	fetchErr := errors.New("feature service unavailable")
+	mocks.featureClient.EXPECT().
+		ListFeatures(gomock.Any(), gomock.Any()).
+		Return(nil, fetchErr)
+	err := cr.refreshFeatures(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+	})
+	assert.Equal(t, fetchErr, err)
 }
 
 func TestCacheRefresherHandleMessage(t *testing.T) {
@@ -125,8 +261,8 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 						Cursor: "",
 					}, nil)
 				m.featuresCache.EXPECT().
-					Put(gomock.Any(), "env-1").
-					Return(nil)
+					PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+					Return(true, nil)
 				m.invalidationPublisher.EXPECT().
 					Publish(gomock.Any(), gomock.Any()).
 					Return(nil)
@@ -403,8 +539,8 @@ func TestCacheRefresherHandleMessageAcksOnPutFailureNonRepeatable(t *testing.T) 
 		ListFeatures(gomock.Any(), gomock.Any()).
 		Return(&featureproto.ListFeaturesResponse{}, nil)
 	mocks.featuresCache.EXPECT().
-		Put(gomock.Any(), "env-1").
-		Return(errors.New("redis: oom"))
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		Return(false, errors.New("redis: oom"))
 	// non-repeatable error => Ack (drop the event)
 
 	data, err := proto.Marshal(&domaineventproto.Event{
@@ -443,8 +579,8 @@ func TestCacheRefresherHandleMessageNacksWhenPublishFailsWithContextCanceled(t *
 		ListFeatures(gomock.Any(), gomock.Any()).
 		Return(&featureproto.ListFeaturesResponse{}, nil)
 	mocks.featuresCache.EXPECT().
-		Put(gomock.Any(), "env-1").
-		Return(nil)
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		Return(true, nil)
 	mocks.invalidationPublisher.EXPECT().
 		Publish(gomock.Any(), gomock.Any()).
 		Return(context.Canceled)

@@ -28,11 +28,24 @@ import (
 
 const (
 	featuresKind = "features"
+	// featuresGenerationSuffix is appended to the features key (wrapped in a
+	// Redis hash tag) to form the generation marker key.
+	featuresGenerationSuffix = "gen"
 )
 
 type FeaturesCache interface {
 	Get(environmentId string) (*featureproto.Features, error)
+	// Put unconditionally overwrites the cached snapshot. Snapshot writers that
+	// may run concurrently (subscriber refresher, batch cacher) must use
+	// PutIfNewer instead.
 	Put(features *featureproto.Features, environmentId string) error
+	// PutIfNewer stores the snapshot only if generation is not older than the
+	// generation of the snapshot currently cached. generation should be the
+	// time (UnixNano) at which the writer started reading the snapshot from the
+	// source of truth, captured before the first read is issued. Returns false
+	// when the write was rejected as stale; that is not an error.
+	PutIfNewer(features *featureproto.Features, environmentId string, generation int64) (bool, error)
+	// Evict atomically removes the snapshot and its generation marker.
 	Evict(environmentId string) error
 }
 
@@ -75,10 +88,43 @@ func (c *featuresCache) Put(features *featureproto.Features, environmentId strin
 	return c.cache.Put(key, buffer, c.ttl)
 }
 
+func (c *featuresCache) PutIfNewer(
+	features *featureproto.Features,
+	environmentId string,
+	generation int64,
+) (bool, error) {
+	if features == nil {
+		return false, errors.New("features cannot be nil")
+	}
+	buffer, err := proto.Marshal(features)
+	if err != nil {
+		return false, err
+	}
+	return c.cache.PutIfNewer(
+		c.key(environmentId),
+		c.generationKey(environmentId),
+		buffer,
+		generation,
+		c.ttl,
+	)
+}
+
 func (c *featuresCache) Evict(environmentId string) error {
-	return evictKey(c.cache, c.key(environmentId))
+	// Both keys must go in one atomic step; deleting them separately would let
+	// a concurrent PutIfNewer land between the two deletes and lose its marker,
+	// after which an older snapshot could be accepted.
+	return c.cache.DeleteWithGeneration(c.key(environmentId), c.generationKey(environmentId))
 }
 
 func (c *featuresCache) key(environmentId string) string {
 	return fmt.Sprintf("%s:%s", environmentId, featuresKind)
+}
+
+// generationKey returns the key holding the generation marker for the
+// environment's snapshot. The features key is wrapped in a hash tag so both
+// keys land in the same Redis Cluster slot, which the multi-key Lua script
+// requires. The features key itself is unchanged so existing readers (and
+// pods running older builds) keep working.
+func (c *featuresCache) generationKey(environmentId string) string {
+	return fmt.Sprintf("{%s}:%s", c.key(environmentId), featuresGenerationSuffix)
 }

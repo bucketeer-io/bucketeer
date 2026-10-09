@@ -49,6 +49,36 @@ func (c *inMemoryCache) Put(key interface{}, value interface{}, expiration time.
 	return nil
 }
 
+func (c *inMemoryCache) PutIfNewer(
+	key, genKey string,
+	value []byte,
+	generation int64,
+	expiration time.Duration,
+) (bool, error) {
+	formatted, err := cache.FormatGeneration(generation)
+	if err != nil {
+		return false, err
+	}
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	currentValue, valueExists := c.data[key].([]byte)
+	currentMarker, _ := c.data[genKey].(string)
+	if cache.IsStaleGeneration(valueExists, currentValue, currentMarker, formatted) {
+		return false, nil
+	}
+	c.data[key] = value
+	c.data[genKey] = cache.EncodeGenerationMarker(formatted, value)
+	return true, nil
+}
+
+func (c *inMemoryCache) DeleteWithGeneration(key, genKey string) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	delete(c.data, key)
+	delete(c.data, genKey)
+	return nil
+}
+
 func (c *inMemoryCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {
 	// TODO: implement
 	return nil, nil

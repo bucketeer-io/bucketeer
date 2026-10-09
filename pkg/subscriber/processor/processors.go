@@ -17,6 +17,7 @@ package processor
 import (
 	"errors"
 
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 )
@@ -47,6 +48,7 @@ type PubSubProcessors struct {
 
 func NewPubSubProcessors(r metrics.Registerer) *PubSubProcessors {
 	registerMetrics(r)
+	cachev3.RegisterMetrics(r)
 	return &PubSubProcessors{
 		processorMap: make(map[string]subscriber.PubSubProcessor),
 	}

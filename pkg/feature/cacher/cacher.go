@@ -51,6 +51,8 @@ type featureFlagCacher struct {
 	ftStorage ftstorage.FeatureStorage
 	caches    []cachev3.FeaturesCache
 	logger    *zap.Logger
+	// now supplies the snapshot generation; overridable in tests.
+	now func() time.Time
 }
 
 // NewFeatureFlagCacher creates a new FeatureFlagCacher.
@@ -67,12 +69,18 @@ func NewFeatureFlagCacher(
 		ftStorage: ftStorage,
 		caches:    caches,
 		logger:    logger.Named("feature-flag-cacher"),
+		now:       time.Now,
 	}
 }
 
 // RefreshEnvironmentCache updates the Redis cache for a specific environment.
 func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environmentID string) error {
-	startTime := time.Now()
+	startTime := c.now()
+	// The generation is the time the read started: a snapshot read later
+	// reflects at least everything an earlier read did, so "later read wins"
+	// is the ordering FeaturesCache.PutIfNewer enforces. It must be captured
+	// before the query is issued.
+	generation := startTime.UnixNano()
 
 	// Use targeted query for single environment instead of fetching all environments
 	features, err := c.ftStorage.ListFeaturesByEnvironment(ctx, environmentID)
@@ -91,14 +99,17 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 		Id:       evaluation.GenerateFeaturesID(filtered),
 		Features: filtered,
 	}
-	c.putCache(fts, environmentID, len(filtered))
+	c.putCache(fts, environmentID, len(filtered), generation)
 
 	return nil
 }
 
 // RefreshAllEnvironmentCaches updates the Redis cache for all environments.
 func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) error {
-	startTime := time.Now()
+	startTime := c.now()
+	// One generation for the whole run: every environment's snapshot comes
+	// from the same read, so they all share its start time.
+	generation := startTime.UnixNano()
 
 	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
 	if err != nil {
@@ -116,7 +127,7 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 			Id:       evaluation.GenerateFeaturesID(filtered),
 			Features: filtered,
 		}
-		c.putCache(fts, envFt.EnvironmentId, len(filtered))
+		c.putCache(fts, envFt.EnvironmentId, len(filtered), generation)
 	}
 
 	return nil
@@ -135,16 +146,29 @@ func (c *featureFlagCacher) removeOldFeatures(features []*ftproto.Feature) []*ft
 }
 
 // putCache saves features to all Redis instances and records metrics.
-func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string, featureCount int) {
+//
+// A write rejected as stale (a concurrent writer already cached a newer
+// snapshot) is not a failure: the cache holds data at least as fresh as ours.
+// It is counted in the stale-rejection metric and otherwise treated as
+// success, except that the features-updated gauge is only set when at least
+// one instance accepted our snapshot.
+func (c *featureFlagCacher) putCache(
+	features *ftproto.Features,
+	environmentID string,
+	featureCount int,
+	generation int64,
+) {
 	var wg sync.WaitGroup
 	var hasError bool
+	var anyAccepted bool
 	var mu sync.Mutex
 
 	for _, cache := range c.caches {
 		wg.Add(1)
 		go func(cache cachev3.FeaturesCache) {
 			defer wg.Done()
-			if err := cache.Put(features, environmentID); err != nil {
+			accepted, err := cache.PutIfNewer(features, environmentID, generation)
+			if err != nil {
 				c.logger.Error("Failed to cache features",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
@@ -152,7 +176,19 @@ func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID s
 				mu.Lock()
 				hasError = true
 				mu.Unlock()
+				return
 			}
+			if !accepted {
+				cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterBatchCacher)
+				c.logger.Debug("Skipped caching features: a newer snapshot is already cached",
+					zap.String("environmentId", environmentID),
+					zap.Int64("generation", generation),
+				)
+				return
+			}
+			mu.Lock()
+			anyAccepted = true
+			mu.Unlock()
 		}(cache)
 	}
 	wg.Wait()
@@ -160,8 +196,10 @@ func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID s
 	// Record metrics based on overall success/failure
 	if hasError {
 		recordCachePut(cacherTypeFeatureFlag, environmentID, codeFail)
-	} else {
-		recordCachePut(cacherTypeFeatureFlag, environmentID, codeSuccess)
+		return
+	}
+	recordCachePut(cacherTypeFeatureFlag, environmentID, codeSuccess)
+	if anyAccepted {
 		recordFeaturesUpdated(cacherTypeFeatureFlag, environmentID, featureCount)
 	}
 }
