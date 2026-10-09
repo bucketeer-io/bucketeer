@@ -127,6 +127,145 @@ func TestInMemoryCacheEvicterSkipsNoExpiryEntries(t *testing.T) {
 	assert.Equal(t, "value1", val)
 }
 
+// Expiry removal must only delete the exact entry that was observed to be
+// expired. Deleting by key alone would race with a Put/PutIfNewer that stored
+// a fresh entry in between, removing the new value (or only its generation
+// marker, which would let a later stale write through).
+func TestInMemoryCacheRemoveIfExpired(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	expired := &entry{value: "old", expiration: now.Add(-time.Second)}
+	fresh := &entry{value: "new", expiration: now.Add(time.Hour)}
+	noExpiry := &entry{value: "forever"}
+
+	t.Run("not expired: untouched, returns false", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		c.entries.Store("k", fresh)
+		assert.False(t, c.removeIfExpired("k", fresh, now))
+		v, loaded := c.entries.Load("k")
+		require.True(t, loaded)
+		assert.Same(t, fresh, v)
+	})
+	t.Run("no expiry: untouched, returns false", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		c.entries.Store("k", noExpiry)
+		assert.False(t, c.removeIfExpired("k", noExpiry, now))
+		_, loaded := c.entries.Load("k")
+		assert.True(t, loaded)
+	})
+	t.Run("exactly at expiration is not yet expired", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		e := &entry{value: "v", expiration: now}
+		c.entries.Store("k", e)
+		assert.False(t, c.removeIfExpired("k", e, now))
+		_, loaded := c.entries.Load("k")
+		assert.True(t, loaded)
+	})
+	t.Run("expired and still stored: deleted, returns true", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		c.entries.Store("k", expired)
+		assert.True(t, c.removeIfExpired("k", expired, now))
+		_, loaded := c.entries.Load("k")
+		assert.False(t, loaded)
+	})
+	t.Run("expired but replaced by a fresh entry: fresh entry survives", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		// Simulates: reader loads `expired`, then a writer stores `fresh`, then
+		// the reader attempts the expiry delete with its stale observation.
+		c.entries.Store("k", expired)
+		c.entries.Store("k", fresh)
+		assert.True(t, c.removeIfExpired("k", expired, now))
+		v, loaded := c.entries.Load("k")
+		require.True(t, loaded)
+		assert.Same(t, fresh, v)
+	})
+	t.Run("expired and already gone: no-op, returns true", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		assert.True(t, c.removeIfExpired("k", expired, now))
+		_, loaded := c.entries.Load("k")
+		assert.False(t, loaded)
+	})
+}
+
+// Get must report an expired entry as missing even when the expiry delete was
+// a no-op because a concurrent writer already replaced the entry; the caller
+// retries and sees the new value on the next call.
+func TestInMemoryCacheGetStaleObservationDoesNotDeleteFreshEntry(t *testing.T) {
+	t.Parallel()
+	c := NewInMemoryCache()
+	expired := &entry{value: "old", expiration: time.Now().Add(-time.Second)}
+	c.entries.Store("k", expired)
+	// Writer wins the race before Get's delete.
+	require.NoError(t, c.Put("k", "new", time.Hour))
+	assert.True(t, c.removeIfExpired("k", expired, time.Now()))
+	v, err := c.Get("k")
+	require.NoError(t, err)
+	assert.Equal(t, "new", v)
+}
+
+// The background sweep must not remove a value or marker that PutIfNewer
+// rewrote after the sweep observed the previous (expired) pair.
+func TestInMemoryCacheEvictExpiredKeepsFreshConditionalPair(t *testing.T) {
+	t.Parallel()
+	c := NewInMemoryCache()
+	oldValue := &entry{value: []byte("old"), expiration: time.Now().Add(-time.Second)}
+	oldMarker := &entry{value: "marker-old", expiration: time.Now().Add(-time.Second)}
+	c.entries.Store("k", oldValue)
+	c.entries.Store("g", oldMarker)
+
+	// Sweep observes the expired pair, then PutIfNewer replaces both before the
+	// sweep's deletes run.
+	accepted, err := c.PutIfNewer("k", "g", []byte("new"), 10, time.Hour)
+	require.NoError(t, err)
+	require.True(t, accepted)
+	assert.True(t, c.removeIfExpired("k", oldValue, time.Now()))
+	assert.True(t, c.removeIfExpired("g", oldMarker, time.Now()))
+
+	v, err := c.Get("k")
+	require.NoError(t, err)
+	assert.Equal(t, []byte("new"), v)
+	_, err = c.Get("g")
+	require.NoError(t, err)
+	// Marker intact → an older generation is still rejected.
+	accepted, err = c.PutIfNewer("k", "g", []byte("stale"), 5, time.Hour)
+	require.NoError(t, err)
+	assert.False(t, accepted)
+}
+
+func TestInMemoryCacheGetRejectsNonEntryValue(t *testing.T) {
+	t.Parallel()
+	c := NewInMemoryCache()
+	c.entries.Store("k", "raw")
+	_, err := c.Get("k")
+	assert.Equal(t, cache.ErrInvalidType, err)
+}
+
+// evictExpired itself must route through the identity-checked delete.
+func TestInMemoryCacheEvictExpiredOnlyRemovesExpiredEntries(t *testing.T) {
+	t.Parallel()
+	c := NewInMemoryCache()
+	now := time.Now()
+	c.entries.Store("expired", &entry{value: "a", expiration: now.Add(-time.Second)})
+	c.entries.Store("fresh", &entry{value: "b", expiration: now.Add(time.Hour)})
+	c.entries.Store("forever", &entry{value: "c"})
+	c.entries.Store("not-an-entry", "raw")
+
+	c.evictExpired(now)
+
+	_, loaded := c.entries.Load("expired")
+	assert.False(t, loaded)
+	for _, k := range []string{"fresh", "forever", "not-an-entry"} {
+		_, loaded := c.entries.Load(k)
+		assert.True(t, loaded, k)
+	}
+}
+
 func TestInMemoryCacheDestroy(t *testing.T) {
 	t.Parallel()
 	c := NewInMemoryCache(WithEvictionInterval(50 * time.Millisecond))

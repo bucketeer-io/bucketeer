@@ -76,11 +76,25 @@ func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
 
 func (c *InMemoryCache) evictExpired(t time.Time) {
 	c.entries.Range(func(key, value interface{}) bool {
-		if e, ok := value.(*entry); ok && !e.expiration.IsZero() && e.expiration.Before(t) {
-			c.entries.Delete(key)
+		if e, ok := value.(*entry); ok {
+			c.removeIfExpired(key, e, t)
 		}
 		return true
 	})
+}
+
+// removeIfExpired deletes e from the map if it has expired as of now, but only
+// if e is still the entry stored under key. Every store allocates a fresh
+// *entry, so comparing by identity guarantees an expiry sweep or a lazy Get
+// never removes a value (or generation marker) that a concurrent Put or
+// PutIfNewer wrote after the expired entry was observed. Returns true when e
+// had expired, regardless of whether it was still present to delete.
+func (c *InMemoryCache) removeIfExpired(key interface{}, e *entry, now time.Time) bool {
+	if e.expiration.IsZero() || !now.After(e.expiration) {
+		return false
+	}
+	c.entries.CompareAndDelete(key, e)
+	return true
 }
 
 func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
@@ -92,8 +106,7 @@ func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
 	if !ok {
 		return nil, cache.ErrInvalidType
 	}
-	if !e.expiration.IsZero() && time.Now().After(e.expiration) {
-		c.entries.Delete(key)
+	if c.removeIfExpired(key, e, time.Now()) {
 		return nil, cache.ErrNotFound
 	}
 	return e.value, nil
