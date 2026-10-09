@@ -54,7 +54,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
         </div>
 
         <div className="flex-center flex-col w-full gap-y-5">
-          <div className="flex-center w-full text-center px-[67px] text-gray-700">
+          <div className="flex-center w-full text-center px-[67px] text-gray-700 dark:text-dark-gray-300">
             <Trans
               i18nKey="goal-connected-desc"
               values={{
@@ -64,7 +64,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
               }}
             />
           </div>
-          <div className="flex flex-col w-full p-4 gap-y-3 rounded bg-gray-100 max-h-[300px] overflow-auto">
+          <div className="flex flex-col w-full p-4 gap-y-3 rounded bg-gray-100 dark:bg-dark-black-700 max-h-[300px] overflow-auto">
             {connections?.map((item, index) => (
               <div
                 key={index}

@@ -18,7 +18,7 @@ const SupportPopoverItem = ({ to, title }: { to: string; title: string }) => (
   <Link
     to={to}
     target="_blank"
-    className="flex items-center w-full gap-x-2 px-3 py-1 typo-para-small text-gray-700 hover:bg-gray-200 hover:text-primary-500 hover:underline transition-colors rounded"
+    className="flex items-center w-full gap-x-2 px-3 py-1 typo-para-small text-gray-700 dark:text-dark-gray-300 hover:bg-gray-200 dark:hover:bg-dark-purple-100 hover:text-primary-500 dark:hover:text-dark-purple-700 hover:underline transition-colors rounded"
   >
     {title}
     <Icon icon={IconLaunchOutlined} size="xxs" />
@@ -51,11 +51,13 @@ const SupportPopover = () => {
         {urls.API_ENDPOINT && (
           <>
             <div className="flex flex-col w-full gap-y-0.5 px-3 py-1 typo-para-small">
-              <p className="typo-para-tiny font-semibold text-gray-700 pt-1">
+              <p className="typo-para-tiny font-semibold text-gray-700 dark:text-dark-gray-300 pt-1">
                 {t('sdk-api-endpoint')}
               </p>
               <div className="flex items-center gap-x-1.5">
-                <p className="text-gray-600">{urls.API_ENDPOINT || ''}</p>
+                <p className="text-gray-600 dark:text-dark-gray-200">
+                  {urls.API_ENDPOINT || ''}
+                </p>
                 <Button
                   variant="grey"
                   className="size-fit flex-center"
@@ -68,7 +70,7 @@ const SupportPopover = () => {
           </>
         )}
         <div>
-          <p className="typo-para-tiny font-semibold text-gray-700 pt-1 px-3">
+          <p className="typo-para-tiny font-semibold text-gray-700 dark:text-dark-gray-300 pt-1 px-3">
             {t('common:docs')}
           </p>
           <SupportPopoverItem

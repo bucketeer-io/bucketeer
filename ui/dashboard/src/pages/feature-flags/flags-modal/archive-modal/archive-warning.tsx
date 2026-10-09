@@ -5,7 +5,7 @@ import Icon from 'components/icon';
 
 const ArchiveWarning = () => {
   return (
-    <div className="flex items-center w-full p-4 gap-x-2 rounded-xl bg-accent-yellow-50 text-accent-yellow-500 typo-para-medium">
+    <div className="flex items-center w-full p-4 gap-x-2 rounded-xl bg-accent-yellow-50 dark:bg-accent-yellow-900/30 text-accent-yellow-500 typo-para-medium">
       <Icon
         icon={IconToastWarning}
         size={'xs'}

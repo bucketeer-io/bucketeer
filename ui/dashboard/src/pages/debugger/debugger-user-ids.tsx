@@ -37,7 +37,7 @@ const DebuggerUserIds = () => {
                   <UserMessage message={t('type-to-create-user-id')} />
                 )}
               />
-              <p className="typo-para-small text-gray-600">
+              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
                 {t('enter-to-add-multiple')}
               </p>
             </div>

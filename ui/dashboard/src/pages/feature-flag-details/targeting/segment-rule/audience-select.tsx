@@ -22,10 +22,13 @@ const AudienceSelect = ({
   return (
     <div
       className={cn(
-        'flex-center size-fit min-w-20 py-[14px] px-3 border border-gray-400 rounded-lg typo-para-medium leading-5 text-gray-700 capitalize',
-        disabled ? 'cursor-not-allowed bg-gray-100' : 'cursor-pointer',
+        'flex-center size-fit min-w-20 py-[14px] px-3 border border-gray-400 dark:border-dark-purple-100 rounded-lg typo-para-medium leading-5 text-gray-700 dark:text-dark-gray-400 capitalize',
+        disabled
+          ? 'cursor-not-allowed bg-gray-100 dark:bg-dark-black-700'
+          : 'cursor-pointer dark:hover:bg-dark-purple-100',
         {
-          'text-primary-500 border-primary-500': isActive && !disabled
+          'text-primary-500 border-primary-500 dark:text-dark-purple-700 dark:border-dark-purple-300':
+            isActive && !disabled
         }
       )}
       onClick={handleClick}

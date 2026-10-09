@@ -16,8 +16,10 @@ const UploadZone = ({
     <div
       className={cn(
         'flex flex-col items-center justify-center rounded-3xl border text-center',
-        'mx-auto h-[220px] max-w-[700px] bg-gray-100',
-        color === 'positive' ? 'border-gray-400' : 'border-accent-red-200'
+        'mx-auto h-[220px] max-w-[700px] bg-gray-100 dark:bg-dark-black-700',
+        color === 'positive'
+          ? 'border-gray-400 dark:border-dark-black-600'
+          : 'border-accent-red-200'
       )}
     >
       <Icon

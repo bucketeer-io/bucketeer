@@ -53,26 +53,32 @@ const MemberDetailsModal = ({
         </div>
       ) : (
         <div className="flex flex-col w-full p-5 gap-y-5">
-          <h3 className="typo-head-bold-small text-gray-800">
+          <h3 className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
             {t(`form:general-info`)}
           </h3>
           <div className="flex items-start w-full gap-x-4">
             <div className="flex-1">
-              <p className="typo-para-small text-gray-600">{t('name')}</p>
-              <p className="text-gray-700 mt-1 typo-para-medium">
+              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+                {t('name')}
+              </p>
+              <p className="text-gray-700 dark:text-dark-gray-300 mt-1 typo-para-medium">
                 {joinName(member.firstName, member.lastName) || member.name}
               </p>
             </div>
             <div className="flex-1">
-              <p className="typo-para-small text-gray-600">{t('email')}</p>
-              <p className="text-gray-700 mt-1 typo-para-medium break-all">
+              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+                {t('email')}
+              </p>
+              <p className="text-gray-700 dark:text-dark-gray-300 mt-1 typo-para-medium break-all">
                 {member.email}
               </p>
             </div>
           </div>
           <div className="flex items-start w-full gap-x-4">
             <div className="flex flex-col w-full gap-y-1 flex-1">
-              <p className="typo-para-small text-gray-600">{t('teams')}</p>
+              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+                {t('teams')}
+              </p>
               <div className="flex items-center flex-wrap w-full max-w-full gap-2">
                 {member?.teams.map(item => (
                   <Tag
@@ -86,8 +92,10 @@ const MemberDetailsModal = ({
               </div>
             </div>
             <div className="flex-1">
-              <p className="typo-para-small text-gray-600">{t('role')}</p>
-              <p className="text-gray-700 mt-1 typo-para-medium break-all">
+              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+                {t('role')}
+              </p>
+              <p className="text-gray-700 dark:text-dark-gray-300 mt-1 typo-para-medium break-all">
                 {t(
                   typeof member.organizationRole === 'string' &&
                     member.organizationRole.includes('_')
@@ -99,11 +107,11 @@ const MemberDetailsModal = ({
           </div>
           <Divider />
           <div>
-            <h3 className="typo-head-bold-small text-gray-800">
+            <h3 className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
               {t('form:env-access')}
             </h3>
             {isAdminOwnerAccount && (
-              <div className="typo-para-small text-gray-800 mt-2">
+              <div className="typo-para-small text-gray-800 dark:text-dark-gray-300 mt-2">
                 {t('form:env-admin-access-desc')}
               </div>
             )}
@@ -112,10 +120,10 @@ const MemberDetailsModal = ({
             (member.environmentRoles || []).map((env, index) => (
               <div className="flex items-start w-full gap-x-4" key={index}>
                 <div className="flex-1">
-                  <p className="typo-para-small text-gray-600">
+                  <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
                     {t('environment')}
                   </p>
-                  <p className="text-gray-700 mt-1 typo-para-medium">
+                  <p className="text-gray-700 dark:text-dark-gray-300 mt-1 typo-para-medium">
                     {
                       environments?.find(
                         item => item.environment.id === env.environmentId
@@ -124,7 +132,9 @@ const MemberDetailsModal = ({
                   </p>
                 </div>
                 <div className="flex-1">
-                  <p className="typo-para-small text-gray-600">{t('role')}</p>
+                  <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+                    {t('role')}
+                  </p>
                   <p className="text-gray-700 mt-1 capitalize typo-para-medium">
                     {env?.role === 'Environment_EDITOR'
                       ? t('editor')

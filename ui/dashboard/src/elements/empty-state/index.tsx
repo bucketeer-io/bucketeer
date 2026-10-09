@@ -50,18 +50,22 @@ const EmptyStateRoot = ({
 const EmptyStateIllustration = () => {
   const { variant } = useEmptyState();
 
+  const imgClass = 'w-fit dark:[filter:brightness(0.3)_saturate(2.5)]';
+
   switch (variant) {
     case 'error':
-      return <img alt="Error" className="w-fit" src={emptyStateError} />;
+      return <img alt="Error" className={imgClass} src={emptyStateError} />;
 
     case 'no-data':
-      return <img alt="No Data" className="w-fit" src={emptyStateNoData} />;
+      return <img alt="No Data" className={imgClass} src={emptyStateNoData} />;
 
     case 'no-search':
-      return <img alt="No Search" className="w-fit" src={emptyStateNoSearch} />;
+      return (
+        <img alt="No Search" className={imgClass} src={emptyStateNoSearch} />
+      );
 
     case 'invalid':
-      return <img alt="Invalid" className="w-fit" src={emptyStateCode} />;
+      return <img alt="Invalid" className={imgClass} src={emptyStateCode} />;
   }
 };
 
@@ -74,11 +78,19 @@ const EmptyStateBody = ({ children }: PropsWithChildren) => {
 };
 
 const EmptyStateTitle = ({ children }: { children: string }) => {
-  return <div className="text-gray-900 typo-head-bold-medium">{children}</div>;
+  return (
+    <div className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-medium">
+      {children}
+    </div>
+  );
 };
 
 const EmptyStateDescription = ({ children }: { children: ReactNode }) => {
-  return <div className="text-gray-600 typo-para-small">{children}</div>;
+  return (
+    <div className="text-gray-600 dark:text-dark-gray-200 typo-para-small">
+      {children}
+    </div>
+  );
 };
 
 const EmptyStateActions = ({ children }: PropsWithChildren) => {

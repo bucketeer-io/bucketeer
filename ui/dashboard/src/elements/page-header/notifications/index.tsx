@@ -17,13 +17,15 @@ const NotificationItem = ({
 }: NotificationItemProps) => {
   const rowCls = 'flex items-center w-full justify-between gap-x-2';
   return (
-    <div className="flex flex-col w-full gap-y-4 pb-4 border-b border-gray-200 last:border-transparent last:pb-0">
+    <div className="flex flex-col w-full gap-y-4 pb-4 border-b border-gray-200 dark:border-dark-black-700 last:border-transparent last:pb-0">
       <div className={rowCls}>
         <p className="typo-head-bold-medium leading-[18px]">{title}</p>
-        <p className="typo-para-medium leading-4 text-gray-700">{date}</p>
+        <p className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300">
+          {date}
+        </p>
       </div>
       <div className={rowCls}>
-        <div className="flex items-center gap-x-1 typo-para-medium leading-4 text-gray-700">
+        <div className="flex items-center gap-x-1 typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300">
           {description}
           {highlightText && (
             <p className="text-primary-500 underline">{highlightText}</p>
@@ -45,14 +47,14 @@ const Notifications = () => {
   const isEmpty = false;
   return (
     <div className="flex flex-col w-full max-h-[500px]">
-      <div className="flex items-center w-full p-5 border-b border-gray-200">
+      <div className="flex items-center w-full p-5 border-b border-gray-200 dark:border-dark-black-700">
         <h1 className="typo-head-bold-huge leading-6">{t('notifications')}</h1>
       </div>
       <div className="flex flex-col w-full py-8 px-5 gap-y-4 overflow-auto">
         {isEmpty ? (
           <div className="flex flex-col items-center gap-y-4 px-[59.5px]">
             <Icon icon={IconNotifications} size={'fit'} />
-            <p className="typo-para-big text-gray-700 text-center">
+            <p className="typo-para-big text-gray-700 dark:text-dark-gray-300 text-center">
               {t('table:empty.notifications')}
             </p>
           </div>

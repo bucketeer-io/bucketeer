@@ -94,7 +94,7 @@ const InsightsDateRangePicker = ({
       }}
       onRangeChange={setPendingRange}
       renderActionBar={({ onApply: handleApply, onCancel }) => (
-        <div className="sticky bottom-0 left-0 right-0 flex flex-col w-full border-t border-gray-200 bg-white">
+        <div className="sticky bottom-0 left-0 right-0 flex flex-col w-full border-t border-gray-200 dark:border-dark-black-700 bg-white dark:bg-dark-black-800">
           {rangeExceedsLimit && (
             <p className="px-5 pt-3 typo-para-small text-accent-red-500">
               {t('insights.date-range-limit', { days: MAX_RANGE_DAYS })}

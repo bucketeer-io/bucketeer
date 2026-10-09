@@ -3,6 +3,7 @@ import DiffViewer, {
   DiffMethod,
   ReactDiffViewerProps
 } from 'react-diff-viewer-continued';
+import { useTheme } from 'hooks/use-theme';
 
 interface Props extends ReactDiffViewerProps {
   lineNumber: number;
@@ -21,24 +22,27 @@ const ReactDiffViewer = ({
   deps = [],
   ...props
 }: Props) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const diffViewerStyles = useMemo(
     () => ({
       variables: {
         light: {
           codeFoldGutterBackground: 'transparent',
           codeFoldBackground: 'transparent',
-          diffViewerBackground: '#F8FAFC',
-          addedBackground: '#DCF4DE',
-          removedBackground: '#FCE3F3',
+          diffViewerBackground: isDark ? '#1B1725' : '#F8FAFC',
+          addedBackground: isDark ? '#14532d4d' : '#DCF4DE',
+          removedBackground: isDark ? '#4a044e4d' : '#FCE3F3',
           wordAddedBackground: 'transparent',
           wordRemovedBackground: 'transparent'
         },
         dark: {
           codeFoldGutterBackground: 'transparent',
           codeFoldBackground: 'transparent',
-          diffViewerBackground: '#F8FAFC',
-          addedBackground: '#DCF4DE',
-          removedBackground: '#FCE3F3',
+          diffViewerBackground: isDark ? '#1B1725' : '#F8FAFC',
+          addedBackground: isDark ? '#14532d4d' : '#DCF4DE',
+          removedBackground: isDark ? '#4a044e4d' : '#FCE3F3',
           wordAddedBackground: 'transparent',
           wordRemovedBackground: 'transparent'
         }
@@ -56,7 +60,7 @@ const ReactDiffViewer = ({
       },
       contentText: {
         display: 'flex',
-        color: '#64748B',
+        color: isDark ? '#B5B0C2' : '#64748B',
         fontSize: 14,
         fontFamily: 'Sofia Pro',
         width: 'fit-content',
@@ -75,10 +79,10 @@ const ReactDiffViewer = ({
             'td:first-child': {
               padding: '0 12px',
               fontSize: 14,
-              color: '#64748B',
+              color: isDark ? '#B5B0C2' : '#64748B',
               minWidth: 42,
               textAlign: 'right',
-              background: '#64748B1F'
+              background: isDark ? '#2B1F45' : '#64748B1F'
             }
           },
           'tr.first-line-item td:first-child': {
@@ -109,7 +113,7 @@ const ReactDiffViewer = ({
         marginTop: '1px !important'
       }
     }),
-    []
+    [isDark]
   );
   const handleAddClassForLines = () => {
     try {
@@ -155,7 +159,7 @@ const ReactDiffViewer = ({
       compareMethod={DiffMethod.LINES}
       hideMarkers
       hideLineNumbers
-      useDarkTheme={false}
+      useDarkTheme={isDark}
       extraLinesSurroundingDiff={1}
       codeFoldMessageRenderer={() => <></>}
       renderGutter={() => {
@@ -164,7 +168,7 @@ const ReactDiffViewer = ({
       }}
       renderContent={str => (
         <span
-          className="typo-para-small font-sofia-pro text-gray-600"
+          className={`typo-para-small font-sofia-pro ${isDark ? 'text-dark-gray-200' : 'text-gray-600'}`}
           dangerouslySetInnerHTML={{ __html: str }}
         />
       )}

@@ -29,7 +29,7 @@ const ReasonTooltip = ({ reason }: { reason: EvaluationReason }) => {
       content={t(reasonContentKey)}
       trigger={
         <div className="flex items-center w-fit gap-x-2">
-          <p className="typo-para-medium text-gray-700 capitalize">
+          <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300 capitalize">
             {(reason.type || 'DEFAULT')?.replace('_', ' ')?.toLowerCase()}
           </p>
           <Icon icon={IconInfoFilled} color="gray-500" />

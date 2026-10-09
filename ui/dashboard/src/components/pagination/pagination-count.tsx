@@ -13,7 +13,7 @@ const PaginationCount = ({
 }: PaginationCountProps) => {
   const { t } = useTranslation(['common']);
   return (
-    <p className="text-gray-600 typo-para-medium">
+    <p className="text-gray-600 dark:text-dark-gray-200 typo-para-medium">
       {t('pagination-count', {
         start: startItem,
         end: endItem,

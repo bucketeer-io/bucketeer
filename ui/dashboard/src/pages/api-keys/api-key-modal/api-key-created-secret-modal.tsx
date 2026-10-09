@@ -37,16 +37,16 @@ const APIKeyCreatedSecretModal = ({
     >
       <div className="flex flex-col gap-4 p-5 pb-6">
         <p
-          className="typo-para-medium rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
+          className="typo-para-medium rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 text-amber-900 dark:text-amber-300"
           role="alert"
         >
           {t('message:api-key-secret-warning')}
         </p>
-        <div className="rounded-lg border border-gray-200 bg-gray-100 p-3">
-          <p className="typo-para-small mb-2 text-gray-600">
+        <div className="rounded-lg border border-gray-200 dark:border-dark-black-700 bg-gray-100 dark:bg-dark-black-700 p-3">
+          <p className="typo-para-small mb-2 text-gray-600 dark:text-dark-gray-200">
             {t('message:api-key-secret-label')}
           </p>
-          <code className="typo-para-small block break-all font-mono text-gray-900">
+          <code className="typo-para-small block break-all font-mono text-gray-900 dark:text-dark-gray-400">
             {apiKeySecret}
           </code>
         </div>

@@ -277,9 +277,9 @@ const PageContent = ({
 
   return (
     <div className="p-6 flex flex-col gap-6 min-w-[950px]">
-      <div className="bg-white p-4 flex flex-wrap items-end gap-4">
+      <div className="bg-white dark:bg-dark-black-800 p-4 flex flex-wrap items-end gap-4 rounded-lg shadow-card dark:shadow-dark-card">
         <div className="flex flex-col gap-1 min-w-[180px]">
-          <label className="typo-para-small text-gray-500 font-medium">
+          <label className="typo-para-small text-gray-500 dark:text-dark-gray-200 font-medium">
             {t('project')}
           </label>
           <DropdownMenuWithSearch
@@ -296,7 +296,7 @@ const PageContent = ({
           />
         </div>
         <div className="flex flex-col gap-1 min-w-[200px]">
-          <label className="typo-para-small text-gray-500 font-medium">
+          <label className="typo-para-small text-gray-500 dark:text-dark-gray-200 font-medium">
             {t('environment')}
           </label>
           <DropdownMenuWithSearch
@@ -313,7 +313,7 @@ const PageContent = ({
           />
         </div>
         <div className="flex flex-col gap-1 min-w-[160px]">
-          <label className="typo-para-small text-gray-500 font-medium">
+          <label className="typo-para-small text-gray-500 dark:text-dark-gray-200 font-medium">
             SDK
           </label>
           <DropdownMenuWithSearch
@@ -329,9 +329,11 @@ const PageContent = ({
         </div>
       </div>
 
-      <div className="shadow-card-secondary rounded-xl border border-gray-200 p-6">
+      <div className="shadow-card-secondary rounded-xl border border-gray-200 dark:border-dark-black-700 dark:bg-dark-black-800 p-6">
         <div className="flex justify-between items-center mb-4">
-          <p className="typo-head-bold-small">{t('insights.monthly-use')}</p>
+          <p className="typo-head-bold-small dark:text-dark-gray-400">
+            {t('insights.monthly-use')}
+          </p>
 
           <Button
             disabled={isDisableExportCSV}
@@ -385,11 +387,11 @@ const PageContent = ({
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-card-secondary">
+      <div className="bg-white dark:bg-dark-black-800 p-4 rounded-xl shadow-card-secondary dark:shadow-dark-card">
         {/* Time Series Filters */}
         <div className="flex flex-wrap items-end py-4 gap-4">
           <div className="flex items-center gap-3 min-w-[160px]">
-            <label className="typo-para-small text-gray-500 font-medium">
+            <label className="typo-para-small text-gray-500 dark:text-dark-gray-200 font-medium">
               API:
             </label>
             <DropdownMenuWithSearch

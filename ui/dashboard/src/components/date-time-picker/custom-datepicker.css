@@ -77,3 +77,83 @@
 .react-datepicker__day--disabled {
   @apply text-gray-500;
 }
+
+/* Dark mode overrides */
+.dark .react-datepicker {
+  @apply border-dark-black-700 bg-dark-black-800 shadow-dark-card;
+}
+
+.dark .react-datepicker__header.react-datepicker__header--has-time-select,
+.dark .react-datepicker__header.react-datepicker__header--custom {
+  @apply border-dark-black-700 !bg-dark-black-800;
+}
+
+.dark .react-datepicker__header.react-datepicker__header--time {
+  @apply border-dark-black-700 bg-dark-black-800;
+}
+
+.dark .react-datepicker__current-month {
+  @apply text-dark-gray-400;
+}
+
+.dark .react-datepicker__day-name {
+  @apply text-dark-gray-200;
+}
+
+.dark .react-datepicker__day {
+  @apply text-dark-gray-400;
+}
+
+.dark .react-datepicker__day.react-datepicker__day--outside-month {
+  @apply text-dark-gray-200;
+}
+
+.dark .react-datepicker__day:hover:not(.react-datepicker__day--selected):not(.react-datepicker__day--disabled) {
+  @apply bg-dark-purple-100;
+}
+
+.dark .react-datepicker__day.react-datepicker__day--selected,
+.dark .react-datepicker__day--selected:hover {
+  @apply !bg-primary-500 !text-white font-semibold;
+}
+
+.dark .react-datepicker__time-container,
+.dark .react-datepicker__time-box {
+  @apply border-dark-black-700;
+}
+
+.dark .react-datepicker-time__header {
+  @apply text-dark-gray-400;
+}
+
+.dark .react-datepicker__time-list-item {
+  @apply text-dark-gray-300;
+}
+
+.dark .react-datepicker__time-list-item:hover:not(.react-datepicker__time-list-item--selected) {
+  @apply !bg-dark-purple-100;
+}
+
+.dark .react-datepicker__time-list-item--selected {
+  @apply !bg-primary-500 !text-white font-semibold;
+}
+
+.dark .react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle {
+  @apply !fill-dark-black-800 !stroke-dark-black-700 !text-dark-black-800;
+}
+
+.dark .react-datepicker__day--disabled {
+  @apply text-dark-gray-200 opacity-50;
+}
+
+.dark .react-datepicker__day--today {
+  @apply !bg-dark-purple-100 !text-dark-gray-400 font-semibold;
+}
+
+.dark .react-datepicker__day--today.react-datepicker__day--selected {
+  @apply !bg-primary-500 !text-white;
+}
+
+.dark .react-datepicker__time-list {
+  @apply bg-dark-black-800;
+}

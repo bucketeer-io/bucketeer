@@ -73,7 +73,7 @@ const ArchiveModal = ({
           className
         )}
       >
-        <div className="typo-para-small text-gray-600 w-full">
+        <div className="typo-para-small text-gray-600 dark:text-dark-gray-300 w-full">
           {description}
         </div>
         {dependentFlags && !!dependentFlags?.length && (

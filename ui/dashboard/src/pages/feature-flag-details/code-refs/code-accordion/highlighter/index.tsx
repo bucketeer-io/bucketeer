@@ -55,7 +55,7 @@ const CodeHighlighter = ({
               >
                 <span
                   className={cn(
-                    'inline-block w-10 text-right pr-2 select-none text-gray-600 text-opacity-90',
+                    'inline-block w-10 text-right pr-2 select-none text-gray-600 dark:text-dark-gray-200 text-opacity-90',
                     i === 0 && 'pt-3',
                     i === tokens.length - 1 && 'pb-3'
                   )}

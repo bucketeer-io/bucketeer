@@ -243,7 +243,7 @@ const GeneralInfoForm = ({
       >
         <Card>
           <div className="flex lg:items-center justify-between flex-col lg:flex-row">
-            <p className="typo-head-bold-small text-gray-800">
+            <p className="typo-head-bold-small text-gray-800 dark:text-gray-400">
               {t('general-info')}
             </p>
             <Button

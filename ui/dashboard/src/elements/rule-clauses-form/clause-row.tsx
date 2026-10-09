@@ -147,14 +147,16 @@ const ClauseRow = ({
         className={cn(
           'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
           {
-            'bg-accent-pink-50 text-accent-pink-500': type === 'if',
-            'bg-gray-200 text-gray-600': type === 'and'
+            'bg-accent-pink-50 text-accent-pink-500 dark:bg-accent-pink-900/30':
+              type === 'if',
+            'bg-gray-200 text-gray-600 dark:bg-dark-black-700 dark:text-dark-gray-200':
+              type === 'and'
           }
         )}
       >
         {type === 'if' ? t('common:if') : t('common:and')}
       </div>
-      <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 gap-x-4">
+      <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 dark:border-dark-purple-300 gap-x-4">
         <div
           className={cn(
             'grid grid-cols-4 items-end w-full gap-x-4 max-w-full',
@@ -324,7 +326,7 @@ const ClauseRow = ({
                         alignContent="start"
                       />
                     ) : isEmptySegment ? (
-                      <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
+                      <div className="flex items-end mb-4 h-full typo-para-small text-gray-700 dark:text-dark-gray-400">
                         <Trans
                           i18nKey={'message:empty-segment'}
                           components={{
@@ -332,9 +334,12 @@ const ClauseRow = ({
                               <Link
                                 target="_blank"
                                 to={`/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`}
-                                className={cn('text-primary-500 underline', {
-                                  'mx-1': !isLanguageJapanese
-                                })}
+                                className={cn(
+                                  'text-primary-500 dark:text-dark-purple-400 underline',
+                                  {
+                                    'mx-1': !isLanguageJapanese
+                                  }
+                                )}
                               />
                             )
                           }}
@@ -482,7 +487,7 @@ const ClauseRow = ({
                             align="start"
                             trigger={
                               <div>
-                                <span className="typo-para-small font-medium text-primary-500">
+                                <span className="typo-para-small font-medium text-primary-500 dark:text-dark-purple-400">
                                   {t('common:show-count-user-segments', {
                                     count: selectedSegments.length
                                   })}
@@ -496,12 +501,12 @@ const ClauseRow = ({
                               {selectedSegments.map(item => (
                                 <div
                                   key={item.id}
-                                  className="flex items-center w-full gap-x-1 rounded hover:bg-primary-50"
+                                  className="flex items-center w-full gap-x-1 rounded hover:bg-primary-50 dark:hover:bg-dark-black-700"
                                 >
                                   <Link
                                     target="_blank"
                                     to={`/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}/${item.id}`}
-                                    className="typo-para-small text-primary-500 hover:underline truncate flex-1 min-w-0 px-1 py-1"
+                                    className="typo-para-small text-primary-500 dark:text-dark-purple-400 hover:underline truncate flex-1 min-w-0 px-1 py-1"
                                   >
                                     {`${item.name} (${getSegmentSummary(item, t)})`}
                                   </Link>
@@ -530,7 +535,7 @@ const ClauseRow = ({
             type="button"
             disabled={clausesLength <= 1}
             variant={'grey'}
-            className="flex-center text-gray-500 hover:text-gray-600 size-fit p-0"
+            className="flex-center text-gray-500 hover:text-gray-600 dark:text-dark-gray-200 dark:hover:text-dark-gray-400 size-fit p-0"
             onClick={() => onRemoveClause(clauseIndex)}
           >
             <Icon icon={IconTrash} size={'sm'} />
