@@ -99,4 +99,5 @@ message ConsoleAccount {
   string avatar_file_type = 12;
   bytes avatar_image = 13;
   int64 last_seen = 14;
+  bool password_setup_required = 15;
 }

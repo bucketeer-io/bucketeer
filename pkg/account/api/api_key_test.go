@@ -134,7 +134,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, p.isSystemAdmin)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -296,7 +296,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				"accept-language": []string{"ja"},
 			})
 
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -391,7 +391,7 @@ func TestGetEnvironmentAPIKeyMySQL(t *testing.T) {
 				"accept-language": []string{"ja"},
 			})
 			ctx = setToken(ctx, true)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -569,7 +569,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -586,7 +586,7 @@ func TestCreateAPIKeyDomainEvent(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := setToken(context.Background(), true)
-	service := createAccountService(t, mockController, nil)
+	service := createAccountService(t, mockController)
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(&domain.AccountV2{
@@ -639,7 +639,7 @@ func TestUpdateAPIKeyDomainEvent(t *testing.T) {
 	rawAPIKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	ctx := setToken(context.Background(), true)
-	service := createAccountService(t, mockController, nil)
+	service := createAccountService(t, mockController)
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(&domain.AccountV2{

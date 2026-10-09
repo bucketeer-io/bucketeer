@@ -27,6 +27,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	envstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -280,6 +281,9 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 				projectStorage,
 				environmentStorage,
 				config,
+				&email.Config{},
+				nil,
+				nil,
 				p.setupFunc()...,
 			).(*authService)
 
@@ -463,6 +467,9 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 				projectStorage,
 				environmentStorage,
 				config,
+				&email.Config{},
+				nil,
+				nil,
 				opts...,
 			).(*authService)
 
