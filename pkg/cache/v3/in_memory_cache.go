@@ -153,6 +153,16 @@ func (c *InMemoryCache) PutIfNewer(
 	return true, nil
 }
 
+// DeleteWithGeneration implements cache.ConditionalPutter. It holds the same
+// lock as PutIfNewer so a put can never interleave between the two deletes.
+func (c *InMemoryCache) DeleteWithGeneration(key, genKey string) error {
+	c.conditionalMu.Lock()
+	defer c.conditionalMu.Unlock()
+	c.entries.Delete(key)
+	c.entries.Delete(genKey)
+	return nil
+}
+
 func (c *InMemoryCache) Delete(key interface{}) {
 	c.entries.Delete(key)
 }

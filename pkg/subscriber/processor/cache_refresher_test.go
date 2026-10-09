@@ -155,8 +155,9 @@ func TestCacheRefresherFeaturesGenerationCapturedBeforeFetch(t *testing.T) {
 // A rejected (stale) write is not an error: the event is acked, the stale
 // counter is incremented, and the L1 invalidation is still published so api
 // pods pick up the newer snapshot that is already in L2.
+//
+// Not parallel: the stale counter is process-global and asserted by delta.
 func TestCacheRefresherHandleMessageStalePutStillPublishesAndAcks(t *testing.T) {
-	t.Parallel()
 	cr, mocks := newCacheRefresherWithMocks(t)
 
 	mocks.featureClient.EXPECT().
@@ -195,8 +196,8 @@ func TestCacheRefresherHandleMessageStalePutStillPublishesAndAcks(t *testing.T) 
 }
 
 // An accepted write must not touch the stale counter.
+// Not parallel: the stale counter is process-global and asserted by delta.
 func TestCacheRefresherAcceptedPutDoesNotCountStale(t *testing.T) {
-	t.Parallel()
 	cr, mocks := newCacheRefresherWithMocks(t)
 	mocks.featureClient.EXPECT().
 		ListFeatures(gomock.Any(), gomock.Any()).

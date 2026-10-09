@@ -15,6 +15,7 @@
 package v3
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -365,6 +366,71 @@ func TestInMemoryCachePutIfNewerAppliesExpiration(t *testing.T) {
 		require.True(t, ok)
 		assert.True(t, v.(*entry).expiration.IsZero(), "%s should not carry an expiration", k)
 	}
+}
+
+func TestInMemoryCacheDeleteWithGeneration(t *testing.T) {
+	t.Parallel()
+
+	t.Run("removes value and marker", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		defer c.Destroy()
+		accepted, err := c.PutIfNewer("k", "g", []byte("v"), 10, 0)
+		require.NoError(t, err)
+		require.True(t, accepted)
+		require.NoError(t, c.DeleteWithGeneration("k", "g"))
+		_, err = c.Get("k")
+		assert.Equal(t, cache.ErrNotFound, err)
+		_, err = c.Get("g")
+		assert.Equal(t, cache.ErrNotFound, err)
+	})
+	t.Run("missing keys is not an error", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		defer c.Destroy()
+		assert.NoError(t, c.DeleteWithGeneration("k", "g"))
+	})
+	t.Run("does not touch other keys", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		defer c.Destroy()
+		require.NoError(t, c.Put("other", []byte("x"), 0))
+		require.NoError(t, c.DeleteWithGeneration("k", "g"))
+		v, err := c.Get("other")
+		require.NoError(t, err)
+		assert.Equal(t, []byte("x"), v)
+	})
+	// A put racing with the delete must end up either fully present (value and
+	// marker) or fully absent; a value without a marker would let a later stale
+	// write through.
+	t.Run("concurrent put is never left unmarked", func(t *testing.T) {
+		t.Parallel()
+		c := NewInMemoryCache()
+		defer c.Destroy()
+		for i := 0; i < 200; i++ {
+			var wg sync.WaitGroup
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				_, err := c.PutIfNewer("k", "g", []byte("new"), 200, 0)
+				assert.NoError(t, err)
+			}()
+			go func() {
+				defer wg.Done()
+				assert.NoError(t, c.DeleteWithGeneration("k", "g"))
+			}()
+			wg.Wait()
+			_, valueErr := c.Get("k")
+			_, markerErr := c.Get("g")
+			assert.Equal(t, valueErr == nil, markerErr == nil, "iteration %d: value/marker presence diverged", i)
+			if valueErr == nil {
+				accepted, err := c.PutIfNewer("k", "g", []byte("old"), 100, 0)
+				require.NoError(t, err)
+				assert.False(t, accepted, "iteration %d: stale write accepted", i)
+			}
+			require.NoError(t, c.DeleteWithGeneration("k", "g"))
+		}
+	})
 }
 
 func TestInMemoryCachePutIfNewerConcurrentHighestWins(t *testing.T) {

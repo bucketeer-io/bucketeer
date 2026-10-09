@@ -81,6 +81,10 @@ type ConditionalPutter interface {
 	// IsStaleGeneration), so a stale generation marker can never block
 	// repopulation. generation must not be negative.
 	PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (accepted bool, err error)
+	// DeleteWithGeneration removes key and genKey as a single atomic step so a
+	// concurrent PutIfNewer can never observe (or be left with) a value whose
+	// marker is gone, which would otherwise let a later stale write through.
+	DeleteWithGeneration(key, genKey string) error
 }
 
 type Deleter interface {

@@ -41,6 +41,20 @@ func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 	return m.recorder
 }
 
+// DeleteWithGeneration mocks base method.
+func (m *MockCache) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockCacheMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockCache)(nil).DeleteWithGeneration), key, genKey)
+}
+
 // Get mocks base method.
 func (m *MockCache) Get(key any) (any, error) {
 	m.ctrl.T.Helper()
@@ -106,6 +120,20 @@ func NewMockMultiGetCache(ctrl *gomock.Controller) *MockMultiGetCache {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMultiGetCache) EXPECT() *MockMultiGetCacheMockRecorder {
 	return m.recorder
+}
+
+// DeleteWithGeneration mocks base method.
+func (m *MockMultiGetCache) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockMultiGetCacheMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockMultiGetCache)(nil).DeleteWithGeneration), key, genKey)
 }
 
 // Get mocks base method.
@@ -233,6 +261,20 @@ func (m *MockMultiGetDeleteCountCache) Delete(key string) error {
 func (mr *MockMultiGetDeleteCountCacheMockRecorder) Delete(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Delete), key)
+}
+
+// DeleteWithGeneration mocks base method.
+func (m *MockMultiGetDeleteCountCache) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).DeleteWithGeneration), key, genKey)
 }
 
 // Expire mocks base method.
@@ -649,6 +691,20 @@ func NewMockConditionalPutter(ctrl *gomock.Controller) *MockConditionalPutter {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockConditionalPutter) EXPECT() *MockConditionalPutterMockRecorder {
 	return m.recorder
+}
+
+// DeleteWithGeneration mocks base method.
+func (m *MockConditionalPutter) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockConditionalPutterMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockConditionalPutter)(nil).DeleteWithGeneration), key, genKey)
 }
 
 // PutIfNewer mocks base method.

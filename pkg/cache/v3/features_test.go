@@ -17,6 +17,7 @@ package v3
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -269,39 +270,95 @@ func TestEvictFeatures(t *testing.T) {
 		_, err = backing.Get(genKey)
 		assert.Equal(t, cache.ErrNotFound, err)
 	})
-	t.Run("deleter backend deletes both keys", func(t *testing.T) {
+	t.Run("redis backend removes both keys", func(t *testing.T) {
+		t.Parallel()
+		mr, backing := newMiniRedisCache(t)
+		fc := NewFeaturesCache(backing, 0)
+		accepted, err := fc.PutIfNewer(createFeatures(t), environmentId, 1)
+		require.NoError(t, err)
+		require.True(t, accepted)
+		require.True(t, mr.Exists(key))
+		require.True(t, mr.Exists(genKey))
+
+		require.NoError(t, fc.Evict(environmentId))
+		assert.False(t, mr.Exists(key))
+		assert.False(t, mr.Exists(genKey))
+	})
+	t.Run("uses the atomic pair delete, never two single deletes", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
 		backing := cachemock.NewMockMultiGetDeleteCountCache(ctrl)
-		backing.EXPECT().Delete(key).Return(nil)
-		backing.EXPECT().Delete(genKey).Return(nil)
+		backing.EXPECT().DeleteWithGeneration(key, genKey).Return(nil)
+		backing.EXPECT().Delete(gomock.Any()).Times(0)
 		fc := NewFeaturesCache(backing, 0)
 		assert.NoError(t, fc.Evict(environmentId))
 	})
-	t.Run("value key delete failure short-circuits", func(t *testing.T) {
+	t.Run("delete failure is returned", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
 		backing := cachemock.NewMockMultiGetDeleteCountCache(ctrl)
-		backing.EXPECT().Delete(key).Return(deleteErr)
+		backing.EXPECT().DeleteWithGeneration(key, genKey).Return(deleteErr)
 		fc := NewFeaturesCache(backing, 0)
 		assert.Equal(t, deleteErr, fc.Evict(environmentId))
 	})
-	t.Run("generation key delete failure is returned", func(t *testing.T) {
+	// Regression for the review finding: with two separate deletes, a
+	// PutIfNewer landing between them leaves a blob without its marker, and a
+	// later lower-generation write would then be accepted. With the atomic
+	// delete the put either happens entirely before (and is wiped) or entirely
+	// after (and keeps its marker), so the stale write is always rejected.
+	t.Run("concurrent put never ends up unmarked", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		backing := cachemock.NewMockMultiGetDeleteCountCache(ctrl)
-		backing.EXPECT().Delete(key).Return(nil)
-		backing.EXPECT().Delete(genKey).Return(deleteErr)
-		fc := NewFeaturesCache(backing, 0)
-		assert.Equal(t, deleteErr, fc.Evict(environmentId))
-	})
-	t.Run("unsupported backend returns error", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		fc := NewFeaturesCache(cachemock.NewMockMultiGetCache(ctrl), 0)
-		err := fc.Evict(environmentId)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "unsupported cache backend")
+		for _, tc := range []struct {
+			desc    string
+			backing cache.Cache
+		}{
+			{"in-memory", func() cache.Cache {
+				c := NewInMemoryCache()
+				t.Cleanup(c.Destroy)
+				return c
+			}()},
+			{"redis", func() cache.Cache {
+				_, c := newMiniRedisCache(t)
+				return c
+			}()},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				fc := NewFeaturesCache(tc.backing, 0)
+				newer := &featureproto.Features{Features: []*featureproto.Feature{{Id: "newer"}}}
+				older := &featureproto.Features{Features: []*featureproto.Feature{{Id: "older"}}}
+				for i := 0; i < 50; i++ {
+					var wg sync.WaitGroup
+					wg.Add(2)
+					go func() {
+						defer wg.Done()
+						_, err := fc.PutIfNewer(newer, environmentId, 200)
+						assert.NoError(t, err)
+					}()
+					go func() {
+						defer wg.Done()
+						assert.NoError(t, fc.Evict(environmentId))
+					}()
+					wg.Wait()
+					// Either the put was wiped (blob missing → stale write
+					// repopulates, which is correct) or it survived with its
+					// marker (stale write rejected). Never: blob present and
+					// stale write accepted.
+					_, getErr := fc.Get(environmentId)
+					blobSurvived := getErr == nil
+					accepted, err := fc.PutIfNewer(older, environmentId, 100)
+					require.NoError(t, err)
+					if blobSurvived {
+						assert.False(t, accepted, "iteration %d: stale write accepted over surviving blob", i)
+						got, err := fc.Get(environmentId)
+						require.NoError(t, err)
+						assert.Equal(t, "newer", got.Features[0].Id)
+					} else {
+						assert.True(t, accepted, "iteration %d: repopulation of empty cache rejected", i)
+					}
+					require.NoError(t, fc.Evict(environmentId))
+				}
+			})
+		}
 	})
 }
 

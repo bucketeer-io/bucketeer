@@ -129,6 +129,18 @@ func (r *redisCache) PutIfNewer(
 	return res == 1, nil
 }
 
+// deleteWithGenerationScript removes the value and its marker in one
+// server-side step. A single multi-key DEL is already atomic; the script is
+// used because redis.Client.Del only accepts one key, and it keeps the
+// cluster-slot requirement (both keys hash-tagged together) identical to
+// putIfNewerScript.
+const deleteWithGenerationScript = `return redis.call('DEL', KEYS[1], KEYS[2])`
+
+// DeleteWithGeneration implements cache.ConditionalPutter.
+func (r *redisCache) DeleteWithGeneration(key, genKey string) error {
+	return r.client.Eval(context.Background(), deleteWithGenerationScript, []string{key, genKey}).Err()
+}
+
 func (r *redisCache) SAdd(key string, members ...interface{}) (int64, error) {
 	return r.client.SAdd(key, members...)
 }
