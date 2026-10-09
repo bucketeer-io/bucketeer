@@ -40,24 +40,23 @@ export const useFetchFlags = ({
 }) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
-  return useQueryFeatures({
-    params: {
-      pageSize: pageSize || LIST_PAGE_SIZE,
-      cursor: String(cursor),
-      orderBy,
-      orderDirection,
-      searchKeyword: searchQuery,
-      environmentId,
-      maintainer,
-      enabled,
-      archived: tab === 'ARCHIVED',
-      hasExperiment,
-      hasPrerequisites,
-      tags,
-      status,
-      hasFeatureFlagAsRule,
-      hasActiveAutoOps,
-      hasFinishedAutoOps
-    }
-  });
+  const params = {
+    pageSize: pageSize || LIST_PAGE_SIZE,
+    cursor: String(cursor),
+    orderBy,
+    orderDirection,
+    searchKeyword: searchQuery,
+    environmentId,
+    maintainer,
+    enabled,
+    archived: tab === 'ARCHIVED',
+    hasExperiment,
+    hasPrerequisites,
+    tags,
+    status,
+    hasFeatureFlagAsRule,
+    hasActiveAutoOps,
+    hasFinishedAutoOps
+  };
+  return useQueryFeatures({ params });
 };
