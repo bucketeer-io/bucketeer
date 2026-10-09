@@ -19,6 +19,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -125,5 +128,54 @@ func checkOperationUntilDone(t *testing.T, fitId string) {
 			}
 		}
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func TestStanRequestsHonorContext(t *testing.T) {
+	release := make(chan struct{})
+	hung := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-release
+	}))
+	defer hung.Close()
+	defer close(release)
+	host, port, err := net.SplitHostPort(hung.Listener.Addr().String())
+	assert.NoError(t, err)
+	s := NewStan(host, port, prometheus.NewRegistry(), stan.logger)
+
+	patterns := []struct {
+		desc string
+		call func(ctx context.Context) error
+	}{
+		{
+			desc: "create fit",
+			call: func(ctx context.Context) error {
+				_, err := s.CreateFit(ctx, "model", CreateFitReq{})
+				return err
+			},
+		},
+		{
+			desc: "get operation details",
+			call: func(ctx context.Context) error {
+				_, err := s.GetOperationDetails(ctx, "op")
+				return err
+			},
+		},
+		{
+			desc: "get fit result",
+			call: func(ctx context.Context) error {
+				_, err := s.GetFitResult(ctx, "model", "fit")
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+			start := time.Now()
+			err := p.call(ctx)
+			assert.ErrorIs(t, err, context.DeadlineExceeded)
+			assert.Less(t, time.Since(start), 5*time.Second)
+		})
 	}
 }
