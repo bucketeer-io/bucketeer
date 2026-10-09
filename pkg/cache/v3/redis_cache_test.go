@@ -546,6 +546,74 @@ func TestRedisCachePutIfNewerPassesArgs(t *testing.T) {
 	assert.True(t, accepted)
 }
 
+func TestRedisCacheDeleteWithGeneration(t *testing.T) {
+	t.Parallel()
+
+	t.Run("removes value and marker", func(t *testing.T) {
+		t.Parallel()
+		mr, rc := newMiniRedisCache(t)
+		accepted, err := rc.PutIfNewer(testValueKey, testGenKey, []byte("v"), 10, 0)
+		require.NoError(t, err)
+		require.True(t, accepted)
+		require.True(t, mr.Exists(testValueKey))
+		require.True(t, mr.Exists(testGenKey))
+
+		require.NoError(t, rc.DeleteWithGeneration(testValueKey, testGenKey))
+		assert.False(t, mr.Exists(testValueKey))
+		assert.False(t, mr.Exists(testGenKey))
+	})
+	t.Run("missing keys is not an error", func(t *testing.T) {
+		t.Parallel()
+		_, rc := newMiniRedisCache(t)
+		assert.NoError(t, rc.DeleteWithGeneration(testValueKey, testGenKey))
+	})
+	t.Run("removes orphaned marker when value is already gone", func(t *testing.T) {
+		t.Parallel()
+		mr, rc := newMiniRedisCache(t)
+		require.NoError(t, mr.Set(testGenKey, mk(t, 5, "v")))
+		require.NoError(t, rc.DeleteWithGeneration(testValueKey, testGenKey))
+		assert.False(t, mr.Exists(testGenKey))
+	})
+	t.Run("stale write is rejected after delete only if the put fully survived", func(t *testing.T) {
+		t.Parallel()
+		mr, rc := newMiniRedisCache(t)
+		// Put after delete keeps its marker, so an older write is rejected.
+		require.NoError(t, rc.DeleteWithGeneration(testValueKey, testGenKey))
+		accepted, err := rc.PutIfNewer(testValueKey, testGenKey, []byte("new"), 200, 0)
+		require.NoError(t, err)
+		require.True(t, accepted)
+		accepted, err = rc.PutIfNewer(testValueKey, testGenKey, []byte("old"), 100, 0)
+		require.NoError(t, err)
+		assert.False(t, accepted)
+		v, err := mr.Get(testValueKey)
+		require.NoError(t, err)
+		assert.Equal(t, "new", v)
+	})
+	t.Run("eval error is returned", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		client := redismock.NewMockClient(ctrl)
+		evalErr := errors.New("connection refused")
+		client.EXPECT().
+			Eval(gomock.Any(), deleteWithGenerationScript, []string{testValueKey, testGenKey}).
+			Return(goredis.NewCmdResult(nil, evalErr))
+		rc := NewRedisCache(client).(*redisCache)
+		assert.Equal(t, evalErr, rc.DeleteWithGeneration(testValueKey, testGenKey))
+	})
+	t.Run("passes both keys to a single eval", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		client := redismock.NewMockClient(ctrl)
+		client.EXPECT().
+			Eval(gomock.AssignableToTypeOf(context.Background()), deleteWithGenerationScript,
+				[]string{testValueKey, testGenKey}).
+			Return(goredis.NewCmdResult(int64(2), nil))
+		client.EXPECT().Del(gomock.Any()).Times(0)
+		rc := NewRedisCache(client).(*redisCache)
+		assert.NoError(t, rc.DeleteWithGeneration(testValueKey, testGenKey))
+	})
+}
+
 // The script template must have its placeholder substituted, otherwise the
 // Lua pattern would never match a well-formed marker.
 func TestPutIfNewerScriptRendered(t *testing.T) {

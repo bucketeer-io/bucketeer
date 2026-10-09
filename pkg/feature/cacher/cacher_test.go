@@ -576,8 +576,10 @@ func TestRefreshAllEnvironmentCachesSharesOneGeneration(t *testing.T) {
 	require.NoError(t, cacher.RefreshAllEnvironmentCaches(context.Background()))
 }
 
+// Not parallel: the stale counter is process-global (labelled only by writer),
+// and other tests in this package (e.g. the end-to-end monotonic test) also
+// increment it. Running in the sequential phase keeps the deltas exact.
 func TestPutCacheStaleRejection(t *testing.T) {
-	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 

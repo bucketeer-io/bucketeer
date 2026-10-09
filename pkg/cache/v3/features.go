@@ -45,7 +45,7 @@ type FeaturesCache interface {
 	// source of truth, captured before the first read is issued. Returns false
 	// when the write was rejected as stale; that is not an error.
 	PutIfNewer(features *featureproto.Features, environmentId string, generation int64) (bool, error)
-	// Evict removes the snapshot and its generation marker.
+	// Evict atomically removes the snapshot and its generation marker.
 	Evict(environmentId string) error
 }
 
@@ -110,10 +110,10 @@ func (c *featuresCache) PutIfNewer(
 }
 
 func (c *featuresCache) Evict(environmentId string) error {
-	if err := evictKey(c.cache, c.key(environmentId)); err != nil {
-		return err
-	}
-	return evictKey(c.cache, c.generationKey(environmentId))
+	// Both keys must go in one atomic step; deleting them separately would let
+	// a concurrent PutIfNewer land between the two deletes and lose its marker,
+	// after which an older snapshot could be accepted.
+	return c.cache.DeleteWithGeneration(c.key(environmentId), c.generationKey(environmentId))
 }
 
 func (c *featuresCache) key(environmentId string) string {

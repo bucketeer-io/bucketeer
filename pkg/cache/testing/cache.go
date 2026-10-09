@@ -71,6 +71,14 @@ func (c *inMemoryCache) PutIfNewer(
 	return true, nil
 }
 
+func (c *inMemoryCache) DeleteWithGeneration(key, genKey string) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	delete(c.data, key)
+	delete(c.data, genKey)
+	return nil
+}
+
 func (c *inMemoryCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {
 	// TODO: implement
 	return nil, nil
