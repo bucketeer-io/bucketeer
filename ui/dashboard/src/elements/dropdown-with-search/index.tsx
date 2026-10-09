@@ -132,6 +132,7 @@ const DropdownMenuWithSearch = ({
   );
 
   const handleFocusSearchInput = useCallback(() => {}, []);
+  const focusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (hideSearchInput || !isOpen) return;
@@ -145,11 +146,17 @@ const DropdownMenuWithSearch = ({
   }, [onSearchChange]);
 
   useEffect(() => {
+    return () => {
+      if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (hidden) {
       setIsOpen(false);
       onClearSearchValue();
     }
-  }, [hidden]);
+  }, [hidden, onClearSearchValue]);
 
   return (
     <DropdownMenu
@@ -177,7 +184,7 @@ const DropdownMenuWithSearch = ({
         ref={contentRef}
         align={align}
         className={cn(
-          'w-[500px] py-0',
+          'w-[500px] max-w-[calc(100vw-32px)] py-0',
           { 'hidden-scroll': dropdownOptions?.length > maxOptions },
           contentClassName
         )}

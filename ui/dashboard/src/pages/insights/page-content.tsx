@@ -276,9 +276,9 @@ const PageContent = ({
       : t('insights.all-apis');
 
   return (
-    <div className="p-6 flex flex-col gap-6 min-w-[950px]">
-      <div className="bg-white p-4 flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1 min-w-[180px]">
+    <div className="p-3 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div className="bg-white p-3 md:p-4 flex flex-wrap items-end gap-3 md:gap-4">
+        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[180px]">
           <label className="typo-para-small text-gray-500 font-medium">
             {t('project')}
           </label>
@@ -291,11 +291,11 @@ const PageContent = ({
             }
             placeholder={t('insights.all-projects')}
             onSelectOption={v => onProjectChange(String(v))}
-            triggerClassName="min-w-[180px]"
+            triggerClassName="w-full sm:min-w-[180px]"
             align="start"
           />
         </div>
-        <div className="flex flex-col gap-1 min-w-[200px]">
+        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[200px]">
           <label className="typo-para-small text-gray-500 font-medium">
             {t('environment')}
           </label>
@@ -308,11 +308,11 @@ const PageContent = ({
             }
             placeholder={t('insights.all-environments')}
             onSelectOption={v => handleEnvironmentChange(String(v))}
-            triggerClassName="min-w-[200px]"
+            triggerClassName="w-full sm:min-w-[200px]"
             align="start"
           />
         </div>
-        <div className="flex flex-col gap-1 min-w-[160px]">
+        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[160px]">
           <label className="typo-para-small text-gray-500 font-medium">
             SDK
           </label>
@@ -323,13 +323,13 @@ const PageContent = ({
             selectedOptions={filters.sourceId !== ALL ? [filters.sourceId] : []}
             placeholder={t('insights.all-sdks')}
             onSelectOption={v => handleSourceChange(String(v))}
-            triggerClassName="min-w-[160px]"
+            triggerClassName="w-full sm:min-w-[160px]"
             align="start"
           />
         </div>
       </div>
 
-      <div className="shadow-card-secondary rounded-xl border border-gray-200 p-6">
+      <div className="shadow-card-secondary rounded-xl border border-gray-200 p-3 md:p-6">
         <div className="flex justify-between items-center mb-4">
           <p className="typo-head-bold-small">{t('insights.monthly-use')}</p>
 
@@ -342,7 +342,7 @@ const PageContent = ({
             {t('insights.export-csv')}
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <MonthlyBarChart
             description={
               <ChartDescription
@@ -385,13 +385,11 @@ const PageContent = ({
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-card-secondary">
+      <div className="bg-white p-3 md:p-4 rounded-xl shadow-card-secondary">
         {/* Time Series Filters */}
-        <div className="flex flex-wrap items-end py-4 gap-4">
-          <div className="flex items-center gap-3 min-w-[160px]">
-            <label className="typo-para-small text-gray-500 font-medium">
-              API:
-            </label>
+        <div className="flex flex-wrap items-center py-3 md:py-4 gap-3 md:gap-4">
+          <p className="typo-para-small text-gray-500 font-medium">API:</p>
+          <div className="flex items-center gap-3 w-full sm:w-auto sm:min-w-[160px]">
             <DropdownMenuWithSearch
               options={apiIdOptions}
               label={selectedApiLabel}
@@ -399,11 +397,11 @@ const PageContent = ({
               selectedOptions={filters.apiId !== ALL ? [filters.apiId] : []}
               placeholder={t('insights.all-apis')}
               onSelectOption={v => handleApiChange(String(v))}
-              triggerClassName="min-w-[160px]"
+              triggerClassName="flex-1 sm:min-w-[160px]"
               align="start"
             />
           </div>
-          <div className="flex items-center gap-x-3 min-w-[180px]">
+          <div className="flex items-center gap-x-3 w-full sm:w-auto sm:min-w-[180px]">
             <Dropdown
               options={timeRangeOptions}
               value={dateRangeLabel ? 'date_range' : filters.timeRange}
@@ -418,7 +416,7 @@ const PageContent = ({
                 </span>
               }
               onChange={v => handleTimeRangeChange(v as string)}
-              className="min-w-[180px]"
+              className="w-full sm:min-w-[180px]"
               contentClassName="!max-h-[300px]"
             />
             <div className="hidden">
@@ -432,7 +430,7 @@ const PageContent = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TimeSeriesLineChart
             title={t('insights.average-latency')}
             description={t('insights.description.latency.title')}

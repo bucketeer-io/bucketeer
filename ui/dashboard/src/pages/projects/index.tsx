@@ -1,3 +1,4 @@
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
@@ -8,7 +9,11 @@ const ProjectsPage = () => {
 
   return (
     <PageLayout.Root title={t('projects')}>
-      <PageHeader title={t('projects')} description={t('project-subtitle')} />
+      <PageHeader
+        title={t('projects')}
+        description={t('project-subtitle')}
+        link={DOCUMENTATION_LINKS.PROJECTS}
+      />
       <PageLoader />
     </PageLayout.Root>
   );

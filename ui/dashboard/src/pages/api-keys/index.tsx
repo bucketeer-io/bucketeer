@@ -1,3 +1,4 @@
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
@@ -12,6 +13,7 @@ const APIKeysPage = () => {
         title={t('api-keys')}
         description={t('api-keys-subtitle')}
         isShowApiEndpoint
+        link={DOCUMENTATION_LINKS.API_KEYS}
       />
       <PageLoader />
     </PageLayout.Root>

@@ -142,10 +142,10 @@ const ClauseRow = ({
   );
 
   return (
-    <div className="flex items-center w-full gap-x-4">
+    <div className="flex flex-col sm:flex-row sm:items-center w-full gap-2 sm:gap-4">
       <div
         className={cn(
-          'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
+          'flex-center shrink-0 w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
           {
             'bg-accent-pink-50 text-accent-pink-500': type === 'if',
             'bg-gray-200 text-gray-600': type === 'and'
@@ -154,17 +154,17 @@ const ClauseRow = ({
       >
         {type === 'if' ? t('common:if') : t('common:and')}
       </div>
-      <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 gap-x-4">
+      <div className="flex items-start sm:items-center min-w-0 w-full flex-1 pl-2 sm:pl-4 border-l border-primary-500 gap-x-2 sm:gap-x-4">
         <div
           className={cn(
-            'grid grid-cols-4 items-end w-full gap-x-4 max-w-full',
+            'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 items-end min-w-0 w-full gap-4 max-w-full',
             {
-              'grid-cols-3': isUserSegment && !isEmptySegment
+              'xl:grid-cols-3': isUserSegment && !isEmptySegment
             }
           )}
         >
           <div
-            className={cn('flex flex-1 col-span-1 self-stretch', {
+            className={cn('flex flex-1 min-w-0 col-span-1 self-stretch', {
               'flex-initial': isEmptySegment
             })}
           >
@@ -175,7 +175,7 @@ const ClauseRow = ({
                 return (
                   <Form.Item
                     className={cn(
-                      'flex flex-col w-full self-stretch py-0 min-w-[170px] order-1',
+                      'flex flex-col w-full self-stretch py-0 min-w-0 order-1',
                       {
                         'max-w-[250px]': isEmptySegment
                       }
@@ -206,13 +206,13 @@ const ClauseRow = ({
           </div>
 
           {!isUserSegment && (
-            <div className="flex flex-1 col-span-1 self-stretch">
+            <div className="flex flex-1 min-w-0 col-span-1 self-stretch">
               <Form.Field
                 control={control}
                 name={getFieldName('attribute', clauseIndex)}
                 render={({ field }) => {
                   return (
-                    <Form.Item className="flex flex-col w-full self-stretch py-0 min-w-[170px] order-2">
+                    <Form.Item className="flex flex-col w-full self-stretch py-0 min-w-0 order-2">
                       <Form.Label required className="relative w-fit">
                         {isFlag
                           ? t(`feature-flags.feature-flag`)
@@ -259,7 +259,7 @@ const ClauseRow = ({
                             onSelectOption={value => {
                               field.onChange(value);
                             }}
-                            contentClassName="!w-[500px] !max-w-[500px]"
+                            contentClassName="!w-[500px] !max-w-[calc(100vw-32px)]"
                           />
                         ) : (
                           <AttributeKeySelect
@@ -295,15 +295,15 @@ const ClauseRow = ({
             </div>
           )}
           <div
-            className={cn('flex flex-1 col-span-1 self-stretch', {
-              'col-span-3': isEmptySegment
+            className={cn('flex flex-1 min-w-0 col-span-1 self-stretch', {
+              'sm:col-span-1 xl:col-span-3': isEmptySegment
             })}
           >
             <Form.Field
               control={control}
               name={getFieldName('operator', clauseIndex)}
               render={({ field }) => (
-                <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
+                <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-0 order-2">
                   {!isEmptySegment && (
                     <Form.Label required>
                       {t('feature-flags.operator')}
@@ -324,7 +324,7 @@ const ClauseRow = ({
                         alignContent="start"
                       />
                     ) : isEmptySegment ? (
-                      <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
+                      <div className="flex flex-wrap items-end sm:mb-4 h-full typo-para-small text-gray-700">
                         <Trans
                           i18nKey={'message:empty-segment'}
                           components={{
@@ -354,7 +354,7 @@ const ClauseRow = ({
             />
           </div>
           {!isEmptySegment && (
-            <div className="flex flex-1 col-span-1 self-stretch">
+            <div className="flex flex-1 min-w-0 col-span-1 self-stretch">
               <Form.Field
                 control={control}
                 name={getFieldName('values', clauseIndex)}
@@ -369,7 +369,7 @@ const ClauseRow = ({
                     ? selectedUserSegments || []
                     : [];
                   return (
-                    <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
+                    <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-0 order-2">
                       <Form.Label required className="relative w-fit">
                         {isFlag
                           ? t('table:feature-flags.variation')
@@ -521,10 +521,13 @@ const ClauseRow = ({
           )}
         </div>
         <div
-          className={cn('flex items-center mt-[22px] self-stretch order-5', {
-            'items-end mb-4 mt-0': isEmptySegment,
-            'mt-0': isHaveError
-          })}
+          className={cn(
+            'flex shrink-0 items-start sm:items-center mt-[22px] self-stretch order-5',
+            {
+              'items-end mb-4 mt-0': isEmptySegment,
+              'mt-0': isHaveError
+            }
+          )}
         >
           <Button
             type="button"

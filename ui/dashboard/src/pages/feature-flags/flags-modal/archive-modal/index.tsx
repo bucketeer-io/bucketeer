@@ -62,7 +62,7 @@ const ArchiveModal = ({
 
   return (
     <DialogModal
-      className="w-[500px]"
+      className="w-fit max-w-[500px]"
       title={title}
       isOpen={isOpen}
       onClose={onClose}
