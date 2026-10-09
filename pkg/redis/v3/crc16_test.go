@@ -34,8 +34,14 @@ func TestHashSlot(t *testing.T) {
 		{desc: "hash tag uses only tagged part", key: "{foo}bar", expected: 12182},
 		{desc: "hash tag anywhere in key", key: "prefix:{foo}:suffix", expected: 12182},
 		{desc: "first tag wins", key: "{foo}{bar}", expected: 12182},
-		{desc: "empty tag hashes whole key", key: "{}foo", expected: HashSlot("{}foo")},
-		{desc: "unclosed brace hashes whole key", key: "{foo", expected: HashSlot("{foo")},
+		// Empty tag: Redis hashes the whole key, not the empty string (slot 0).
+		{desc: "empty tag hashes whole key", key: "{}foo", expected: 9500},
+		{desc: "only empty tag hashes whole key", key: "{}", expected: 15257},
+		{desc: "unclosed brace hashes whole key", key: "{foo", expected: 13308},
+		{desc: "lone brace hashes whole key", key: "{", expected: 4092},
+		{desc: "closing before opening hashes whole key", key: "foo}{bar", expected: 7624},
+		// First '{' and the first '}' after it delimit the tag, so the tag is "{foo".
+		{desc: "nested opening brace is part of the tag", key: "{{foo}", expected: 13308},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -43,7 +49,6 @@ func TestHashSlot(t *testing.T) {
 			assert.Equal(t, keyHashSlot(p.key), HashSlot(p.key))
 		})
 	}
-	assert.NotEqual(t, HashSlot("{}foo"), HashSlot("foo"), "empty tag must not be treated as tag")
-	assert.NotEqual(t, HashSlot("{foo"), HashSlot("foo"), "unclosed brace must not be treated as tag")
+	assert.NotEqual(t, 0, HashSlot("{}foo"), "empty tag must not hash the empty string")
 	assert.Less(t, HashSlot("anything"), RedisClusterSlots)
 }
