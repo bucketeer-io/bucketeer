@@ -46,8 +46,9 @@ func keyHashSlot(key string) int {
 		}
 	}
 
-	// If {...} is found, use only the part between braces
-	if start >= 0 && end > start {
+	// If a non-empty {...} is found, use only the part between braces. Redis
+	// hashes the whole key when the tag is empty ("{}foo").
+	if start >= 0 && end > start+1 {
 		key = key[start+1 : end]
 	}
 
