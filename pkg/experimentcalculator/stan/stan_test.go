@@ -167,6 +167,23 @@ func TestStanRequestsHonorContext(t *testing.T) {
 				return err
 			},
 		},
+		{
+			desc: "compile model",
+			call: func(ctx context.Context) error {
+				_, err := s.CompileModel(ctx, "program")
+				return err
+			},
+		},
+		{
+			desc: "stan params",
+			call: func(ctx context.Context) error {
+				names, params := s.StanParams(ctx, "model", nil)
+				assert.Nil(t, names)
+				assert.Nil(t, params)
+				// StanParams logs errors instead of returning them, so check it returned once ctx expired.
+				return ctx.Err()
+			},
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
