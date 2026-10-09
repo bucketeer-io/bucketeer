@@ -16,10 +16,14 @@ package stream
 
 import (
 	"encoding/json"
+	"errors"
 	"sort"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -453,7 +457,7 @@ func TestDispatcherHandleEvent(t *testing.T) {
 				require.True(t, p.wantDispatch, "unexpected dispatch")
 				assert.Equal(t, envID, got.environmentID)
 				assert.Equal(t, p.wantTags, got.tags)
-			default:
+			case <-time.After(100 * time.Millisecond):
 				require.False(t, p.wantDispatch, "expected dispatch but none occurred")
 			}
 		})
@@ -518,10 +522,11 @@ func TestDispatcherAffectedTags(t *testing.T) {
 	d := &Dispatcher{logger: zap.NewNop()}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			got := d.affectedTags(&domaineventproto.Event{
+			tags := d.featureChangeOf(&domaineventproto.Event{
 				EntityData:         p.entity,
 				PreviousEntityData: p.previous,
-			})
+			}).tags
+			got := affectedTags(map[string]*featureChange{"flag-A": {tags: tags}}, nil)
 			sort.Strings(got)
 			sort.Strings(p.expected)
 			assert.Equal(t, p.expected, got)
@@ -551,9 +556,6 @@ func TestDispatcherAffectedTagsWithPrerequisites(t *testing.T) {
 		},
 	}
 	allFeatures := []*featureproto.Feature{flagA, flagB, flagC}
-	fetcher := func(envID string) ([]*featureproto.Feature, error) {
-		return allFeatures, nil
-	}
 
 	patterns := []struct {
 		desc     string
@@ -580,14 +582,11 @@ func TestDispatcherAffectedTagsWithPrerequisites(t *testing.T) {
 			expected: []string{"android"},
 		},
 	}
-	d := &Dispatcher{fetchFeatures: fetcher, logger: zap.NewNop()}
+	d := &Dispatcher{logger: zap.NewNop()}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			got := d.affectedTags(&domaineventproto.Event{
-				EntityId:      p.entityID,
-				EnvironmentId: "env-1",
-				EntityData:    p.entity,
-			})
+			changes := map[string]*featureChange{p.entityID: {tags: d.parseTags(p.entity)}}
+			got := affectedTags(changes, allFeatures)
 			sort.Strings(got)
 			sort.Strings(p.expected)
 			assert.Equal(t, p.expected, got)
@@ -600,4 +599,357 @@ func featureTagsJSON(t *testing.T, tags ...string) string {
 	b, err := json.Marshal(&featureproto.Feature{Tags: tags})
 	require.NoError(t, err)
 	return string(b)
+}
+
+func TestDispatcherHandleEventFeaturesSnapshot(t *testing.T) {
+	t.Parallel()
+	const envID = "env-1"
+	stale := []*featureproto.Feature{{Id: "flag-A", Version: 2, Tags: []string{"android"}}}
+	fresh := []*featureproto.Feature{{Id: "flag-A", Version: 3, Tags: []string{"android"}}}
+	disabledNoOffVariation, err := json.Marshal(&featureproto.Feature{
+		Id: "flag-A", Version: 3, Tags: []string{"android"},
+	})
+	require.NoError(t, err)
+	patterns := []struct {
+		desc            string
+		entityData      string
+		cached          []*featureproto.Feature
+		cacheErr        error
+		refetched       []*featureproto.Feature
+		refetchFailures int
+		wantRefetches   int32
+		wantDispatch    bool
+		want            []*featureproto.Feature
+	}{
+		{
+			desc:         "cache already has the event version",
+			entityData:   featureJSON(t, "flag-A", 3, "android"),
+			cached:       fresh,
+			wantDispatch: true,
+			want:         fresh,
+		},
+		{
+			desc:          "cache older than the event is refetched",
+			entityData:    featureJSON(t, "flag-A", 3, "android"),
+			cached:        stale,
+			refetched:     fresh,
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          fresh,
+		},
+		{
+			desc:          "feature missing from the cache is refetched",
+			entityData:    featureJSON(t, "flag-A", 3, "android"),
+			cached:        []*featureproto.Feature{},
+			refetched:     fresh,
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          fresh,
+		},
+		{
+			desc:          "cache error is refetched",
+			entityData:    featureJSON(t, "flag-A", 3, "android"),
+			cacheErr:      errors.New("redis down"),
+			refetched:     fresh,
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          fresh,
+		},
+		{
+			desc:            "failed refetch is retried",
+			entityData:      featureJSON(t, "flag-A", 3, "android"),
+			cached:          stale,
+			refetched:       fresh,
+			refetchFailures: 1,
+			wantRefetches:   2,
+			wantDispatch:    true,
+			want:            fresh,
+		},
+		{
+			desc:            "stale snapshot is never dispatched when every refetch fails",
+			entityData:      featureJSON(t, "flag-A", 3, "android"),
+			cached:          stale,
+			refetchFailures: defaultMaxRefetchAttempts,
+			wantRefetches:   defaultMaxRefetchAttempts,
+		},
+		{
+			desc:         "event without a version uses the cache",
+			entityData:   `{"tags":["android"]}`,
+			cached:       stale,
+			wantDispatch: true,
+			want:         stale,
+		},
+		{
+			desc:         "flag filtered out of the caches may be absent",
+			entityData:   string(disabledNoOffVariation),
+			cached:       []*featureproto.Feature{},
+			wantDispatch: true,
+			want:         []*featureproto.Feature{},
+		},
+		{
+			desc:          "older copy of a filtered flag is still stale",
+			entityData:    string(disabledNoOffVariation),
+			cached:        stale,
+			refetched:     []*featureproto.Feature{},
+			wantRefetches: 1,
+			wantDispatch:  true,
+			want:          []*featureproto.Feature{},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			var refetches atomic.Int32
+			d := NewDispatcher(10000,
+				func(string) ([]*featureproto.Feature, error) { return p.cached, p.cacheErr },
+				zap.NewNop(),
+				WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
+					if int(refetches.Add(1)) <= p.refetchFailures {
+						return nil, errors.New("feature service down")
+					}
+					return p.refetched, nil
+				}),
+				WithRefetchRetry(defaultMaxRefetchAttempts, time.Millisecond),
+			)
+			// A per-case env keeps the abandoned counter isolated between parallel cases.
+			env := envID + "/" + p.desc
+			ch, cancel, err := d.register(env, "android", "source1")
+			require.NoError(t, err)
+			defer cancel()
+			abandonedBefore := abandonedCount(t, env)
+
+			d.HandleEvent(&domaineventproto.Event{
+				EntityType:    domaineventproto.Event_FEATURE,
+				Type:          domaineventproto.Event_FEATURE_UPDATED,
+				EnvironmentId: env,
+				EntityId:      "flag-A",
+				EntityData:    p.entityData,
+			})
+
+			select {
+			case got := <-ch:
+				require.True(t, p.wantDispatch, "unexpected dispatch")
+				assert.Equal(t, p.want, got.features)
+			case <-time.After(200 * time.Millisecond):
+				require.False(t, p.wantDispatch, "expected dispatch")
+			}
+			assert.Equal(t, p.wantRefetches, refetches.Load())
+			wantAbandoned := 0.0
+			if !p.wantDispatch {
+				wantAbandoned = 1
+			}
+			assert.Equal(t, wantAbandoned, abandonedCount(t, env)-abandonedBefore)
+		})
+	}
+}
+
+func TestDispatcherDispatchReplacesPendingEvent(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, nil, zap.NewNop())
+	ch, cancel, err := d.register("env-1", "tag-A", "source1")
+	require.NoError(t, err)
+	defer cancel()
+	older := []*featureproto.Feature{{Id: "flag-A", Version: 2}}
+	newer := []*featureproto.Feature{{Id: "flag-A", Version: 3}}
+
+	d.dispatch(event{environmentID: "env-1", tags: []string{"tag-A"}, features: older})
+	d.dispatch(event{environmentID: "env-1", tags: []string{"tag-A"}, features: newer})
+	got := <-ch
+	assert.Equal(t, newer, got.features)
+
+	// An event without a snapshot keeps the pending one's snapshot.
+	d.dispatch(event{environmentID: "env-1", tags: []string{"tag-A"}, features: newer})
+	d.dispatch(event{environmentID: "env-1", eventType: domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED})
+	got = <-ch
+	assert.Equal(t, domaineventproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED, got.eventType)
+	assert.Equal(t, newer, got.features)
+	select {
+	case <-ch:
+		t.Fatal("expected a single pending event")
+	default:
+	}
+}
+
+func featureJSON(t *testing.T, id string, version int32, tags ...string) string {
+	t.Helper()
+	b, err := json.Marshal(&featureproto.Feature{Id: id, Version: version, Enabled: true, Tags: tags})
+	require.NoError(t, err)
+	return string(b)
+}
+
+func TestDispatcherHandleEventSkipsEnvWithoutConns(t *testing.T) {
+	t.Parallel()
+	var fetches atomic.Int32
+	d := NewDispatcher(10000,
+		func(string) ([]*featureproto.Feature, error) {
+			fetches.Add(1)
+			return nil, nil
+		},
+		zap.NewNop(),
+	)
+	ch, cancel, err := d.register("env-other", "android", "source1")
+	require.NoError(t, err)
+	defer cancel()
+
+	d.HandleEvent(&domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+		EnvironmentId: "env-1",
+		EntityId:      "flag-A",
+		EntityData:    featureJSON(t, "flag-A", 3, "android"),
+	})
+
+	select {
+	case <-ch:
+		t.Fatal("unexpected dispatch")
+	case <-time.After(100 * time.Millisecond):
+	}
+	assert.Equal(t, int32(0), fetches.Load())
+}
+
+func TestDispatcherHandleEventCoalescesPendingEvents(t *testing.T) {
+	t.Parallel()
+	const envID = "env-1"
+	var fetches, refetches atomic.Int32
+	release := make(chan struct{})
+	d := NewDispatcher(10000,
+		func(string) ([]*featureproto.Feature, error) {
+			if fetches.Add(1) == 1 {
+				<-release
+			}
+			return []*featureproto.Feature{{Id: "flag-A", Version: 1}}, nil
+		},
+		zap.NewNop(),
+		WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
+			refetches.Add(1)
+			return []*featureproto.Feature{
+				{Id: "flag-A", Version: 3},
+				{Id: "flag-B", Version: 5},
+				{Id: "flag-C", Version: 7},
+			}, nil
+		}),
+	)
+	ch, cancel, err := d.register(envID, "android", "source1")
+	require.NoError(t, err)
+	defer cancel()
+	handle := func(id string, version int32, tag string) {
+		d.HandleEvent(&domaineventproto.Event{
+			EntityType:    domaineventproto.Event_FEATURE,
+			Type:          domaineventproto.Event_FEATURE_UPDATED,
+			EnvironmentId: envID,
+			EntityId:      id,
+			EntityData:    featureJSON(t, id, version, tag),
+		})
+	}
+
+	handle("flag-A", 3, "android")
+	require.Eventually(t, func() bool { return fetches.Load() == 1 }, time.Second, time.Millisecond)
+	// Both arrive while the first dispatch is in flight and are merged into one.
+	handle("flag-B", 5, "android")
+	handle("flag-C", 7, "ios")
+	close(release)
+
+	require.Eventually(t, func() bool { return fetches.Load() == 2 && refetches.Load() == 2 },
+		time.Second, time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, int32(2), fetches.Load())
+	got := <-ch
+	assert.ElementsMatch(t, []string{"android", "ios"}, got.tags)
+	assert.Len(t, got.features, 3)
+}
+
+func abandonedCount(t *testing.T, envID string) float64 {
+	t.Helper()
+	m := &dto.Metric{}
+	require.NoError(t, sseDispatchAbandonedCounter.WithLabelValues(envID).Write(m))
+	return m.GetCounter().GetValue()
+}
+
+func TestDispatcherSnapshotNotOlderThanLastSent(t *testing.T) {
+	t.Parallel()
+	const envID = "env-1"
+	var mu sync.Mutex
+	var cached, fresh []*featureproto.Feature
+	var refetches atomic.Int32
+	d := NewDispatcher(10000,
+		func(string) ([]*featureproto.Feature, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			return cached, nil
+		},
+		zap.NewNop(),
+		WithFeaturesRefetcher(func(string) ([]*featureproto.Feature, error) {
+			refetches.Add(1)
+			mu.Lock()
+			defer mu.Unlock()
+			return fresh, nil
+		}),
+	)
+	ch, cancel, err := d.register(envID, "android", "source1")
+	require.NoError(t, err)
+	defer cancel()
+	set := func(c, f []*featureproto.Feature) {
+		mu.Lock()
+		defer mu.Unlock()
+		cached, fresh = c, f
+	}
+	handle := func(id string, version int32) []*featureproto.Feature {
+		d.HandleEvent(&domaineventproto.Event{
+			EntityType:    domaineventproto.Event_FEATURE,
+			Type:          domaineventproto.Event_FEATURE_UPDATED,
+			EnvironmentId: envID,
+			EntityId:      id,
+			EntityData:    featureJSON(t, id, version, "android"),
+		})
+		select {
+		case got := <-ch:
+			return got.features
+		case <-time.After(time.Second):
+			t.Fatal("expected dispatch")
+			return nil
+		}
+	}
+	x5 := &featureproto.Feature{Id: "flag-X", Version: 5}
+	y2 := &featureproto.Feature{Id: "flag-Y", Version: 2}
+	z1 := &featureproto.Feature{Id: "flag-Z", Version: 1}
+
+	set([]*featureproto.Feature{x5, z1}, nil)
+	handle("flag-X", 5)
+	assert.Equal(t, int32(0), refetches.Load())
+
+	// A delayed event for Y must not accept a cache that regressed X.
+	set([]*featureproto.Feature{{Id: "flag-X", Version: 4}, y2, z1}, []*featureproto.Feature{x5, y2, z1})
+	assert.Equal(t, []*featureproto.Feature{x5, y2, z1}, handle("flag-Y", 2))
+	assert.Equal(t, int32(1), refetches.Load())
+
+	// Z was deleted: the missing flag costs one refetch, then the refetched snapshot is the new baseline.
+	set([]*featureproto.Feature{x5, y2}, []*featureproto.Feature{x5, y2})
+	assert.Equal(t, []*featureproto.Feature{x5, y2}, handle("flag-Y", 2))
+	assert.Equal(t, int32(2), refetches.Load())
+	handle("flag-Y", 2)
+	assert.Equal(t, int32(2), refetches.Load())
+}
+
+func TestDispatcherDeregisterClearsLastSent(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, func(string) ([]*featureproto.Feature, error) {
+		return []*featureproto.Feature{{Id: "flag-A", Version: 3}}, nil
+	}, zap.NewNop())
+	ch, cancel, err := d.register("env-1", "android", "source1")
+	require.NoError(t, err)
+	d.HandleEvent(&domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+		EnvironmentId: "env-1",
+		EntityId:      "flag-A",
+		EntityData:    featureJSON(t, "flag-A", 3, "android"),
+	})
+	<-ch
+	d.mu.Lock()
+	assert.Len(t, d.lastSent["env-1"], 1)
+	d.mu.Unlock()
+	cancel()
+	d.mu.Lock()
+	assert.Empty(t, d.lastSent["env-1"])
+	d.mu.Unlock()
 }
