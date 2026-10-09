@@ -82,3 +82,18 @@ func (mr *MockFeaturesCacheMockRecorder) Put(features, environmentId any) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockFeaturesCache)(nil).Put), features, environmentId)
 }
+
+// PutIfNewer mocks base method.
+func (m *MockFeaturesCache) PutIfNewer(features *feature.Features, environmentId string, generation int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", features, environmentId, generation)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockFeaturesCacheMockRecorder) PutIfNewer(features, environmentId, generation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockFeaturesCache)(nil).PutIfNewer), features, environmentId, generation)
+}

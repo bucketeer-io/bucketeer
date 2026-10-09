@@ -34,6 +34,9 @@ type InMemoryCache struct {
 	entries          sync.Map
 	evictionInterval time.Duration
 	doneCh           chan struct{}
+	// conditionalMu serializes PutIfNewer calls so the read-compare-write
+	// sequence is atomic with respect to other conditional writers.
+	conditionalMu sync.Mutex
 }
 
 type InMemoryCacheOption func(*InMemoryCache)
@@ -97,6 +100,11 @@ func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
 }
 
 func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) error {
+	c.store(key, value, expiration)
+	return nil
+}
+
+func (c *InMemoryCache) store(key, value interface{}, expiration time.Duration) {
 	var exp time.Time
 	if expiration > 0 {
 		exp = time.Now().Add(expiration)
@@ -105,7 +113,44 @@ func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) er
 		value:      value,
 		expiration: exp,
 	})
-	return nil
+}
+
+// PutIfNewer implements cache.ConditionalPutter. See cache.IsStaleGeneration
+// for the acceptance rule; it is identical to the Redis implementation.
+func (c *InMemoryCache) PutIfNewer(
+	key, genKey string,
+	value []byte,
+	generation int64,
+	expiration time.Duration,
+) (bool, error) {
+	formatted, err := cache.FormatGeneration(generation)
+	if err != nil {
+		return false, err
+	}
+	c.conditionalMu.Lock()
+	defer c.conditionalMu.Unlock()
+	// A value that exists but is not bytes cannot have been written by a
+	// conditional writer; it is treated as absent so the marker is ignored.
+	valueExists := false
+	var currentValue []byte
+	if current, err := c.Get(key); err == nil {
+		if b, err := cache.Bytes(current); err == nil {
+			valueExists = true
+			currentValue = b
+		}
+	}
+	currentMarker := ""
+	if marker, err := c.Get(genKey); err == nil {
+		if s, ok := marker.(string); ok {
+			currentMarker = s
+		}
+	}
+	if cache.IsStaleGeneration(valueExists, currentValue, currentMarker, formatted) {
+		return false, nil
+	}
+	c.store(key, value, expiration)
+	c.store(genKey, cache.EncodeGenerationMarker(formatted, value), expiration)
+	return true, nil
 }
 
 func (c *InMemoryCache) Delete(key interface{}) {
