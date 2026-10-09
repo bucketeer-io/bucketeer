@@ -103,6 +103,8 @@ type cacheRefresher struct {
 	autoOpsRulesCache          cachev3.AutoOpsRulesCache
 	cacheInvalidationPublisher publisher.Publisher
 	logger                     *zap.Logger
+	// now supplies the features snapshot generation; overridable in tests.
+	now func() time.Time
 }
 
 // NewCacheRefresher returns a processor that refreshes L2 caches and announces
@@ -135,6 +137,7 @@ func NewCacheRefresher(
 		autoOpsRulesCache:          autoOpsRulesCache,
 		cacheInvalidationPublisher: cacheInvalidationPublisher,
 		logger:                     logger.Named("cache-refresher"),
+		now:                        time.Now,
 	}
 }
 
@@ -310,19 +313,38 @@ func (c *cacheRefresher) refreshFeatures(
 ) error {
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
+	// The generation is the time the read started, captured before the first
+	// ListFeatures page is requested. A snapshot read later reflects at least
+	// everything an earlier read did, so FeaturesCache.PutIfNewer lets the
+	// later read win regardless of which writer (this refresher, the batch
+	// cacher) reaches Redis first.
+	generation := c.now().UnixNano()
 	features, err := c.fetchAllFeatures(fetchCtx, event.EnvironmentId)
 	if err != nil {
 		return err
 	}
-	if err := c.featuresCache.Put(features, event.EnvironmentId); err != nil {
+	accepted, err := c.featuresCache.PutIfNewer(features, event.EnvironmentId, generation)
+	if err != nil {
 		return err
 	}
-	c.logger.Debug("Refreshed features redis cache",
-		zap.String("environmentId", event.EnvironmentId),
-		zap.String("entityId", event.EntityId),
-		zap.String("type", event.Type.String()),
-		zap.Int("featuresCount", len(features.Features)),
-	)
+	if accepted {
+		c.logger.Debug("Refreshed features redis cache",
+			zap.String("environmentId", event.EnvironmentId),
+			zap.String("entityId", event.EntityId),
+			zap.String("type", event.Type.String()),
+			zap.Int("featuresCount", len(features.Features)),
+		)
+	} else {
+		// A newer snapshot is already in L2. Nothing to write, but api pods
+		// still need the invalidation so their L1 picks up that snapshot.
+		cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterRefresher)
+		c.logger.Debug("Skipped features redis cache write: a newer snapshot is already cached",
+			zap.String("environmentId", event.EnvironmentId),
+			zap.String("entityId", event.EntityId),
+			zap.String("type", event.Type.String()),
+			zap.Int64("generation", generation),
+		)
+	}
 	return c.publishCacheInvalidation(ctx, event)
 }
 
