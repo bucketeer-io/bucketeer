@@ -450,6 +450,7 @@ const ClauseRow = ({
                           />
                         ) : (
                           <CreatableSelect
+                            editMode="popover"
                             value={value?.map((item: string) => ({
                               label: item,
                               value: item

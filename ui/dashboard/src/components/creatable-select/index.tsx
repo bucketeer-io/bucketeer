@@ -11,6 +11,7 @@ import {
 } from 'react-select';
 import ReactCreatableSelect, { CreatableProps } from 'react-select/creatable';
 import Spinner from 'components/spinner';
+import { CompactSelect } from './compact-select';
 
 export interface Option {
   value: string;
@@ -28,6 +29,8 @@ export interface CreatableSelectProps extends CreatableProps<
   true,
   GroupBase<Option>
 > {
+  /** Inline editing by default; popover shows a compact display and a separate editor. */
+  editMode?: 'inline' | 'popover';
   isMulti?: true;
   loading?: boolean;
   options?: Option[];
@@ -148,6 +151,7 @@ export const CustomMenuList = ({
 
 export const CreatableSelect = memo<CreatableSelectProps>(
   ({
+    editMode = 'inline',
     isMulti = true,
     loading = false,
     disabled,
@@ -167,8 +171,12 @@ export const CreatableSelect = memo<CreatableSelectProps>(
     isHiddenCreateNewOption = false,
     ...props
   }) => {
+    const SelectComponent =
+      editMode === 'popover'
+        ? CompactSelect
+        : ReactCreatableSelect<Option, true, GroupBase<Option>>;
     return (
-      <ReactCreatableSelect
+      <SelectComponent
         {...props}
         isMulti={isMulti}
         options={options}
