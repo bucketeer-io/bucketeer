@@ -517,10 +517,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	if err := validatePushSenderConfig(subscriberConfigs); err != nil {
-		logger.Error("subscriber: invalid pushSender configuration", zap.Error(err))
-		return err
-	}
 
 	// Create the cache-invalidation publisher up front so it can be wired
 	// into the cache-refresher processor below. The PubSub backend is
@@ -675,42 +671,6 @@ func resolveCacheInvalidationConfig(
 		return subscriber.Configuration{}, false
 	}
 	return conf, true
-}
-
-// validatePushSenderConfig enforces that the pushSender processor consumes
-// the cacheRefresher's cache-invalidation topic rather than the domain-event
-// topic. The cacheRefresher publishes there only after writing the
-// environment's L2 snapshot, so receiving events from that topic is what
-// guarantees a device fetching on push receipt evaluates against the change
-// that triggered the push. Consuming domain events directly would send the
-// push with no ordering relative to the L2 write. Failing at startup halts a
-// rollout on the first misconfigured pod while the previous pods keep running.
-//
-// Extracted as a free function so it can be unit-tested.
-func validatePushSenderConfig(subscriberConfigs map[string]subscriber.Configuration) error {
-	pushConf, ok := subscriberConfigs[processor.PushSenderName]
-	if !ok {
-		return nil
-	}
-	refresherConf, enabled := resolveCacheInvalidationConfig(subscriberConfigs)
-	if !enabled {
-		return fmt.Errorf(
-			"pushSender requires the cacheRefresher processor with a non-empty cacheInvalidationTopic",
-		)
-	}
-	if pushConf.Topic != refresherConf.CacheInvalidationTopic {
-		return fmt.Errorf(
-			"pushSender.topic must be the cacheRefresher cacheInvalidationTopic %q, got %q",
-			refresherConf.CacheInvalidationTopic, pushConf.Topic,
-		)
-	}
-	if pushConf.Subscription == refresherConf.Subscription {
-		return fmt.Errorf(
-			"pushSender.subscription %q must not be shared with the cacheRefresher",
-			pushConf.Subscription,
-		)
-	}
-	return nil
 }
 
 // createCacheInvalidationPublisher builds a publisher for the
