@@ -32,21 +32,27 @@ func TestRegisterMetricsIsIdempotent(t *testing.T) {
 }
 
 func TestRecordFeaturesPutRejectedStale(t *testing.T) {
-	beforeRefresher := testutil.ToFloat64(FeaturesPutRejectedStaleCounter(FeaturesWriterRefresher))
-	beforeBatch := testutil.ToFloat64(FeaturesPutRejectedStaleCounter(FeaturesWriterBatchCacher))
+	refresherEnvA := FeaturesPutRejectedStaleCounter(FeaturesWriterRefresher, "metrics-env-a")
+	batchEnvA := FeaturesPutRejectedStaleCounter(FeaturesWriterBatchCacher, "metrics-env-a")
+	batchEnvB := FeaturesPutRejectedStaleCounter(FeaturesWriterBatchCacher, "metrics-env-b")
+	beforeRefresherA := testutil.ToFloat64(refresherEnvA)
+	beforeBatchA := testutil.ToFloat64(batchEnvA)
+	beforeBatchB := testutil.ToFloat64(batchEnvB)
 
-	RecordFeaturesPutRejectedStale(FeaturesWriterRefresher)
-	RecordFeaturesPutRejectedStale(FeaturesWriterBatchCacher)
-	RecordFeaturesPutRejectedStale(FeaturesWriterBatchCacher)
+	RecordFeaturesPutRejectedStale(FeaturesWriterRefresher, "metrics-env-a")
+	RecordFeaturesPutRejectedStale(FeaturesWriterBatchCacher, "metrics-env-a")
+	RecordFeaturesPutRejectedStale(FeaturesWriterBatchCacher, "metrics-env-a")
+	RecordFeaturesPutRejectedStale(FeaturesWriterBatchCacher, "metrics-env-b")
 
-	afterRefresher := testutil.ToFloat64(FeaturesPutRejectedStaleCounter(FeaturesWriterRefresher))
-	afterBatch := testutil.ToFloat64(FeaturesPutRejectedStaleCounter(FeaturesWriterBatchCacher))
-	assert.Equal(t, float64(1), afterRefresher-beforeRefresher)
-	assert.Equal(t, float64(2), afterBatch-beforeBatch)
+	assert.Equal(t, float64(1), testutil.ToFloat64(refresherEnvA)-beforeRefresherA)
+	assert.Equal(t, float64(2), testutil.ToFloat64(batchEnvA)-beforeBatchA)
+	assert.Equal(t, float64(1), testutil.ToFloat64(batchEnvB)-beforeBatchB)
 
+	// One series per (writer, environment_id) pair touched above. Other tests
+	// in this package may add series, so assert at least these three exist.
 	count, err := testutil.GatherAndCount(mustRegistry(t), "bucketeer_cache_features_put_rejected_stale_total")
 	require.NoError(t, err)
-	assert.Equal(t, 2, count, "one series per writer label")
+	assert.GreaterOrEqual(t, count, 3, "one series per (writer, environment_id)")
 }
 
 func mustRegistry(t *testing.T) *prometheus.Registry {

@@ -179,8 +179,10 @@ func (c *featureFlagCacher) putCache(
 				return
 			}
 			if !accepted {
-				cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterBatchCacher)
-				c.logger.Debug("Skipped caching features: a newer snapshot is already cached",
+				cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterBatchCacher, environmentID)
+				// Info, not Debug: rejections are rare (two writers raced) and the
+				// environment ID is what an operator needs to investigate them.
+				c.logger.Info("Skipped caching features: a newer snapshot is already cached",
 					zap.String("environmentId", environmentID),
 					zap.Int64("generation", generation),
 				)

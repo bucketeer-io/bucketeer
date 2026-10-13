@@ -179,7 +179,7 @@ func TestCacheRefresherHandleMessageStalePutStillPublishesAndAcks(t *testing.T) 
 	})
 	require.NoError(t, err)
 
-	staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterRefresher)
+	staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterRefresher, "env-1")
 	staleBefore := testutil.ToFloat64(staleCounter)
 	acked := false
 	nacked := false
@@ -207,7 +207,7 @@ func TestCacheRefresherAcceptedPutDoesNotCountStale(t *testing.T) {
 		Return(true, nil)
 	mocks.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 
-	staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterRefresher)
+	staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterRefresher, "env-1")
 	staleBefore := testutil.ToFloat64(staleCounter)
 	err := cr.refreshFeatures(context.Background(), &domaineventproto.Event{
 		EntityType:    domaineventproto.Event_FEATURE,

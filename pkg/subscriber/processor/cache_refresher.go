@@ -337,8 +337,10 @@ func (c *cacheRefresher) refreshFeatures(
 	} else {
 		// A newer snapshot is already in L2. Nothing to write, but api pods
 		// still need the invalidation so their L1 picks up that snapshot.
-		cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterRefresher)
-		c.logger.Debug("Skipped features redis cache write: a newer snapshot is already cached",
+		cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterRefresher, event.EnvironmentId)
+		// Info, not Debug: rejections are rare (two writers raced) and the
+		// environment ID is what an operator needs to investigate them.
+		c.logger.Info("Skipped features redis cache write: a newer snapshot is already cached",
 			zap.String("environmentId", event.EnvironmentId),
 			zap.String("entityId", event.EntityId),
 			zap.String("type", event.Type.String()),

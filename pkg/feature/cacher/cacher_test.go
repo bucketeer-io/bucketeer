@@ -650,7 +650,7 @@ func TestPutCacheStaleRejection(t *testing.T) {
 					Return(r.accepted, r.err)
 			}
 
-			staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterBatchCacher)
+			staleCounter := cachev3.FeaturesPutRejectedStaleCounter(cachev3.FeaturesWriterBatchCacher, p.envID)
 			successCounter := cachePutCounter.WithLabelValues(cacherTypeFeatureFlag, p.envID, codeSuccess)
 			failCounter := cachePutCounter.WithLabelValues(cacherTypeFeatureFlag, p.envID, codeFail)
 			staleBefore := testutil.ToFloat64(staleCounter)

@@ -34,15 +34,23 @@ var (
 
 	// featuresPutRejectedStaleCounter counts snapshot writes rejected by
 	// FeaturesCache.PutIfNewer because a newer snapshot was already cached.
-	// Rejections from the batch cacher are expected; sustained rejections from
-	// the refresher indicate an ordering or clock problem.
+	//
+	// The generation is the writer pod's wall clock captured before it read
+	// the database, so occasional rejections are the expected outcome of two
+	// writers racing on the same environment (typically the batch cacher losing
+	// to the refresher). A sustained non-zero rate for writer="refresher", or
+	// for a single environment_id, means snapshots are being written out of
+	// order: check for clock skew between subscriber and batch nodes or for a
+	// slow database read. Worth an alert.
 	featuresPutRejectedStaleCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "cache",
 			Name:      "features_put_rejected_stale_total",
-			Help:      "Total number of feature snapshot writes rejected because a newer snapshot was already cached",
-		}, []string{"writer"})
+			Help: "Total number of feature snapshot writes rejected because a newer snapshot was already " +
+				"cached. Occasional rejections are expected; a sustained rate indicates clock skew or " +
+				"out-of-order writes.",
+		}, []string{"writer", "environment_id"})
 )
 
 // RegisterMetrics registers the cache metrics. Safe to call more than once.
@@ -52,14 +60,15 @@ func RegisterMetrics(r metrics.Registerer) {
 	})
 }
 
-// RecordFeaturesPutRejectedStale records a rejected stale snapshot write.
-func RecordFeaturesPutRejectedStale(writer string) {
-	FeaturesPutRejectedStaleCounter(writer).Inc()
+// RecordFeaturesPutRejectedStale records a rejected stale snapshot write for
+// the given writer and environment.
+func RecordFeaturesPutRejectedStale(writer, environmentID string) {
+	FeaturesPutRejectedStaleCounter(writer, environmentID).Inc()
 }
 
-// FeaturesPutRejectedStaleCounter returns the counter series for writer. It
-// exists so writers' tests can assert on the metric; production code should
-// use RecordFeaturesPutRejectedStale.
-func FeaturesPutRejectedStaleCounter(writer string) prometheus.Counter {
-	return featuresPutRejectedStaleCounter.WithLabelValues(writer)
+// FeaturesPutRejectedStaleCounter returns the counter series for writer and
+// environment. It exists so writers' tests can assert on the metric;
+// production code should use RecordFeaturesPutRejectedStale.
+func FeaturesPutRejectedStaleCounter(writer, environmentID string) prometheus.Counter {
+	return featuresPutRejectedStaleCounter.WithLabelValues(writer, environmentID)
 }
