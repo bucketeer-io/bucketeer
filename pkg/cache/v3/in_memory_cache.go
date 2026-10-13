@@ -34,6 +34,9 @@ type InMemoryCache struct {
 	entries          sync.Map
 	evictionInterval time.Duration
 	doneCh           chan struct{}
+	// conditionalMu serializes PutIfNewer calls so the read-compare-write
+	// sequence is atomic with respect to other conditional writers.
+	conditionalMu sync.Mutex
 }
 
 type InMemoryCacheOption func(*InMemoryCache)
@@ -73,11 +76,25 @@ func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
 
 func (c *InMemoryCache) evictExpired(t time.Time) {
 	c.entries.Range(func(key, value interface{}) bool {
-		if e, ok := value.(*entry); ok && !e.expiration.IsZero() && e.expiration.Before(t) {
-			c.entries.Delete(key)
+		if e, ok := value.(*entry); ok {
+			c.removeIfExpired(key, e, t)
 		}
 		return true
 	})
+}
+
+// removeIfExpired deletes e from the map if it has expired as of now, but only
+// if e is still the entry stored under key. Every store allocates a fresh
+// *entry, so comparing by identity guarantees an expiry sweep or a lazy Get
+// never removes a value (or generation marker) that a concurrent Put or
+// PutIfNewer wrote after the expired entry was observed. Returns true when e
+// had expired, regardless of whether it was still present to delete.
+func (c *InMemoryCache) removeIfExpired(key interface{}, e *entry, now time.Time) bool {
+	if e.expiration.IsZero() || !now.After(e.expiration) {
+		return false
+	}
+	c.entries.CompareAndDelete(key, e)
+	return true
 }
 
 func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
@@ -89,14 +106,18 @@ func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
 	if !ok {
 		return nil, cache.ErrInvalidType
 	}
-	if !e.expiration.IsZero() && time.Now().After(e.expiration) {
-		c.entries.Delete(key)
+	if c.removeIfExpired(key, e, time.Now()) {
 		return nil, cache.ErrNotFound
 	}
 	return e.value, nil
 }
 
 func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) error {
+	c.store(key, value, expiration)
+	return nil
+}
+
+func (c *InMemoryCache) store(key, value interface{}, expiration time.Duration) {
 	var exp time.Time
 	if expiration > 0 {
 		exp = time.Now().Add(expiration)
@@ -105,6 +126,53 @@ func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) er
 		value:      value,
 		expiration: exp,
 	})
+}
+
+// PutIfNewer implements cache.ConditionalPutter. See cache.IsStaleGeneration
+// for the acceptance rule; it is identical to the Redis implementation.
+func (c *InMemoryCache) PutIfNewer(
+	key, genKey string,
+	value []byte,
+	generation int64,
+	expiration time.Duration,
+) (bool, error) {
+	formatted, err := cache.FormatGeneration(generation)
+	if err != nil {
+		return false, err
+	}
+	c.conditionalMu.Lock()
+	defer c.conditionalMu.Unlock()
+	// A value that exists but is not bytes cannot have been written by a
+	// conditional writer; it is treated as absent so the marker is ignored.
+	valueExists := false
+	var currentValue []byte
+	if current, err := c.Get(key); err == nil {
+		if b, err := cache.Bytes(current); err == nil {
+			valueExists = true
+			currentValue = b
+		}
+	}
+	currentMarker := ""
+	if marker, err := c.Get(genKey); err == nil {
+		if s, ok := marker.(string); ok {
+			currentMarker = s
+		}
+	}
+	if cache.IsStaleGeneration(valueExists, currentValue, currentMarker, formatted) {
+		return false, nil
+	}
+	c.store(key, value, expiration)
+	c.store(genKey, cache.EncodeGenerationMarker(formatted, value), expiration)
+	return true, nil
+}
+
+// DeleteWithGeneration implements cache.ConditionalPutter. It holds the same
+// lock as PutIfNewer so a put can never interleave between the two deletes.
+func (c *InMemoryCache) DeleteWithGeneration(key, genKey string) error {
+	c.conditionalMu.Lock()
+	defer c.conditionalMu.Unlock()
+	c.entries.Delete(key)
+	c.entries.Delete(genKey)
 	return nil
 }
 

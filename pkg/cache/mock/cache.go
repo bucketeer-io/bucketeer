@@ -41,6 +41,20 @@ func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 	return m.recorder
 }
 
+// DeleteWithGeneration mocks base method.
+func (m *MockCache) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockCacheMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockCache)(nil).DeleteWithGeneration), key, genKey)
+}
+
 // Get mocks base method.
 func (m *MockCache) Get(key any) (any, error) {
 	m.ctrl.T.Helper()
@@ -70,6 +84,21 @@ func (mr *MockCacheMockRecorder) Put(key, value, expiration any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockCache)(nil).Put), key, value, expiration)
 }
 
+// PutIfNewer mocks base method.
+func (m *MockCache) PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", key, genKey, value, generation, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockCacheMockRecorder) PutIfNewer(key, genKey, value, generation, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockCache)(nil).PutIfNewer), key, genKey, value, generation, expiration)
+}
+
 // MockMultiGetCache is a mock of MultiGetCache interface.
 type MockMultiGetCache struct {
 	ctrl     *gomock.Controller
@@ -91,6 +120,20 @@ func NewMockMultiGetCache(ctrl *gomock.Controller) *MockMultiGetCache {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMultiGetCache) EXPECT() *MockMultiGetCacheMockRecorder {
 	return m.recorder
+}
+
+// DeleteWithGeneration mocks base method.
+func (m *MockMultiGetCache) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockMultiGetCacheMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockMultiGetCache)(nil).DeleteWithGeneration), key, genKey)
 }
 
 // Get mocks base method.
@@ -135,6 +178,21 @@ func (m *MockMultiGetCache) Put(key, value any, expiration time.Duration) error 
 func (mr *MockMultiGetCacheMockRecorder) Put(key, value, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetCache)(nil).Put), key, value, expiration)
+}
+
+// PutIfNewer mocks base method.
+func (m *MockMultiGetCache) PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", key, genKey, value, generation, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockMultiGetCacheMockRecorder) PutIfNewer(key, genKey, value, generation, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockMultiGetCache)(nil).PutIfNewer), key, genKey, value, generation, expiration)
 }
 
 // SMembers mocks base method.
@@ -203,6 +261,20 @@ func (m *MockMultiGetDeleteCountCache) Delete(key string) error {
 func (mr *MockMultiGetDeleteCountCacheMockRecorder) Delete(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Delete), key)
+}
+
+// DeleteWithGeneration mocks base method.
+func (m *MockMultiGetDeleteCountCache) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).DeleteWithGeneration), key, genKey)
 }
 
 // Expire mocks base method.
@@ -364,6 +436,21 @@ func (m *MockMultiGetDeleteCountCache) Put(key, value any, expiration time.Durat
 func (mr *MockMultiGetDeleteCountCacheMockRecorder) Put(key, value, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Put), key, value, expiration)
+}
+
+// PutIfNewer mocks base method.
+func (m *MockMultiGetDeleteCountCache) PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", key, genKey, value, generation, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) PutIfNewer(key, genKey, value, generation, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PutIfNewer), key, genKey, value, generation, expiration)
 }
 
 // SMembers mocks base method.
@@ -581,6 +668,58 @@ func (m *MockPutter) Put(key, value any, expiration time.Duration) error {
 func (mr *MockPutterMockRecorder) Put(key, value, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockPutter)(nil).Put), key, value, expiration)
+}
+
+// MockConditionalPutter is a mock of ConditionalPutter interface.
+type MockConditionalPutter struct {
+	ctrl     *gomock.Controller
+	recorder *MockConditionalPutterMockRecorder
+}
+
+// MockConditionalPutterMockRecorder is the mock recorder for MockConditionalPutter.
+type MockConditionalPutterMockRecorder struct {
+	mock *MockConditionalPutter
+}
+
+// NewMockConditionalPutter creates a new mock instance.
+func NewMockConditionalPutter(ctrl *gomock.Controller) *MockConditionalPutter {
+	mock := &MockConditionalPutter{ctrl: ctrl}
+	mock.recorder = &MockConditionalPutterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockConditionalPutter) EXPECT() *MockConditionalPutterMockRecorder {
+	return m.recorder
+}
+
+// DeleteWithGeneration mocks base method.
+func (m *MockConditionalPutter) DeleteWithGeneration(key, genKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWithGeneration", key, genKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWithGeneration indicates an expected call of DeleteWithGeneration.
+func (mr *MockConditionalPutterMockRecorder) DeleteWithGeneration(key, genKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWithGeneration", reflect.TypeOf((*MockConditionalPutter)(nil).DeleteWithGeneration), key, genKey)
+}
+
+// PutIfNewer mocks base method.
+func (m *MockConditionalPutter) PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", key, genKey, value, generation, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockConditionalPutterMockRecorder) PutIfNewer(key, genKey, value, generation, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockConditionalPutter)(nil).PutIfNewer), key, genKey, value, generation, expiration)
 }
 
 // MockDeleter is a mock of Deleter interface.

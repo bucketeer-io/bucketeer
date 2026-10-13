@@ -32,6 +32,7 @@ var (
 type Cache interface {
 	Getter
 	Putter
+	ConditionalPutter
 }
 
 type MultiGetCache interface {
@@ -65,6 +66,25 @@ type MultiGetter interface {
 
 type Putter interface {
 	Put(key interface{}, value interface{}, expiration time.Duration) error
+}
+
+// ConditionalPutter writes a value guarded by a monotonic generation so that
+// concurrent writers cannot replace a newer snapshot with an older one.
+type ConditionalPutter interface {
+	// PutIfNewer atomically stores value under key and records generation under
+	// genKey, unless genKey already describes the value currently stored at key
+	// and holds a generation greater than the supplied one. In that case nothing
+	// is written and accepted is false.
+	//
+	// The write is always accepted when key is missing or when the value at key
+	// was written by a path that does not maintain genKey (see
+	// IsStaleGeneration), so a stale generation marker can never block
+	// repopulation. generation must not be negative.
+	PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (accepted bool, err error)
+	// DeleteWithGeneration removes key and genKey as a single atomic step so a
+	// concurrent PutIfNewer can never observe (or be left with) a value whose
+	// marker is gone, which would otherwise let a later stale write through.
+	DeleteWithGeneration(key, genKey string) error
 }
 
 type Deleter interface {
