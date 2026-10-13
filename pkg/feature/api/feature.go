@@ -40,7 +40,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -575,7 +574,6 @@ func (s *FeatureService) CreateFeature(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CreateFeatureResponse{Feature: feature.Feature}, nil
 }
 
@@ -667,8 +665,6 @@ func (s *FeatureService) UpdateFeature(
 	} else {
 		conflictCount += int32(crossCount)
 	}
-
-	s.updateFeatureFlagCache(ctx)
 
 	return &featureproto.UpdateFeatureResponse{
 		Feature:                   updatedpb,
@@ -1013,7 +1009,6 @@ func (s *FeatureService) DeleteFeature(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	s.updateFeatureFlagCache(ctx)
 	return &featureproto.DeleteFeatureResponse{}, nil
 }
 
@@ -1659,7 +1654,6 @@ func (s *FeatureService) CloneFeature(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CloneFeatureResponse{}, nil
 }
 
@@ -1800,7 +1794,6 @@ func (s *FeatureService) BulkCloneFeature(
 			Status:        featureproto.BulkCloneFeatureStatus_BULK_CLONE_FEATURE_STATUS_SUCCESS,
 		})
 	}
-	s.updateFeatureFlagCache(ctx)
 	return &featureproto.BulkCloneFeatureResponse{Results: results}, nil
 }
 
@@ -1810,16 +1803,4 @@ func boolValueToPtr(v *wrapperspb.BoolValue) *bool {
 	}
 	b := v.Value
 	return &b
-}
-
-// Even if the update request fails, the cronjob will keep trying
-// to update the cache every minute, so we don't need to retry.
-func (s *FeatureService) updateFeatureFlagCache(ctx context.Context) {
-	req := &btproto.BatchJobRequest{
-		Job: btproto.BatchJob_FeatureFlagCacher,
-	}
-	_, err := s.batchClient.ExecuteBatchJob(ctx, req)
-	if err != nil {
-		s.logger.Error("Failed to update feature flag cache", zap.Error(err))
-	}
 }

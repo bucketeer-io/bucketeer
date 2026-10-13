@@ -28,7 +28,6 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
-	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
@@ -66,7 +65,6 @@ type FeatureService struct {
 	experimentClient           experimentclient.Client
 	featuresCache              cachev3.FeaturesCache
 	autoOpsClient              autoopsclient.Client
-	batchClient                btclient.Client
 	environmentClient          envclient.Client
 	segmentUsersCache          cachev3.SegmentUsersCache
 	userAttributesCache        cachev3.UserAttributesCache
@@ -90,7 +88,6 @@ func NewFeatureService(
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
-	batchClient btclient.Client,
 	environmentClient envclient.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
 	persistentRedisV3Cache cache.MultiGetDeleteCountCache,
@@ -117,7 +114,6 @@ func NewFeatureService(
 		accountClient:              accountClient,
 		experimentClient:           experimentClient,
 		autoOpsClient:              autoOpsClient,
-		batchClient:                batchClient,
 		environmentClient:          environmentClient,
 		featuresCache:              cachev3.NewFeaturesCache(v3Cache, 0),
 		segmentUsersCache:          cachev3.NewSegmentUsersCache(v3Cache, 0),

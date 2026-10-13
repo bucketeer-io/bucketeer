@@ -30,7 +30,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	btclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -507,7 +506,6 @@ func TestCreateFeatureMySQL(t *testing.T) {
 				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			id:                       "Bucketeer-id-2019",
 			name:                     "name",
@@ -2269,7 +2267,6 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
 					gomock.Any(),
 					&envproto.GetEnvironmentV2Request{
@@ -2388,7 +2385,6 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			req: &featureproto.CloneFeatureRequest{
 				Id:                  "id-0",
@@ -2513,7 +2509,6 @@ func TestBulkCloneFeatureMySQL(t *testing.T) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil).Times(2)
-				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			req: &featureproto.BulkCloneFeatureRequest{
 				Id:                   "id-0",
@@ -2558,7 +2553,6 @@ func TestBulkCloneFeatureMySQL(t *testing.T) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			req: &featureproto.BulkCloneFeatureRequest{
 				Id:                   "id-0",
@@ -3186,7 +3180,6 @@ func TestUpdateFeature(t *testing.T) {
 				s.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage).EXPECT().ListScheduledFlagChanges(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
-				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			ctx: createContextWithToken(),
 			input: &featureproto.UpdateFeatureRequest{

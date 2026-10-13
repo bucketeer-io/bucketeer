@@ -208,7 +208,6 @@ services:
       # Internal gRPC client connections (routed through nginx gRPC proxy)
       - BUCKETEER_WEB_ACCOUNT_SERVICE=nginx:443
       - BUCKETEER_WEB_AUTH_SERVICE=nginx:443
-      - BUCKETEER_WEB_BATCH_SERVICE=nginx:443
       - BUCKETEER_WEB_ENVIRONMENT_SERVICE=nginx:443
       - BUCKETEER_WEB_EXPERIMENT_SERVICE=nginx:443
       - BUCKETEER_WEB_FEATURE_SERVICE=nginx:443

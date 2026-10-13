@@ -212,8 +212,6 @@ spec:
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_WEB_AUTH_SERVICE
               value: "{{ .Values.env.authService }}"
-            - name: BUCKETEER_WEB_BATCH_SERVICE
-              value: "{{ .Values.env.batchService }}"
             - name: BUCKETEER_WEB_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
             - name: BUCKETEER_WEB_EXPERIMENT_SERVICE

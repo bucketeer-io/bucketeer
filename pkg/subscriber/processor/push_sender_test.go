@@ -15,14 +15,64 @@
 package processor
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+	"go.uber.org/zap"
 
+	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
+	pushstorage "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
+	pushstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2/mock"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
+
+// send consumes the cache-invalidation topic, so it must not refresh any
+// cache itself: it only looks up the feature and the pushes, then sends. The
+// pushes below never match the feature's tags, so no FCM call is attempted.
+func TestPushSenderSendDoesNotTouchCaches(t *testing.T) {
+	t.Parallel()
+	getFeatureErr := errors.New("get feature failed")
+	listPushesErr := errors.New("list pushes failed")
+	patterns := []struct {
+		desc          string
+		getFeatureErr error
+		pushes        []*pushproto.Push
+		listPushesErr error
+		expectedErr   error
+	}{
+		{desc: "get feature fails", getFeatureErr: getFeatureErr, expectedErr: getFeatureErr},
+		{desc: "list pushes fails", listPushesErr: listPushesErr, expectedErr: listPushesErr},
+		{desc: "no pushes configured", pushes: []*pushproto.Push{}},
+		{desc: "pushes with no matching tags", pushes: []*pushproto.Push{{Id: "push-1", Tags: []string{"other"}}}},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			featureClient := featureclientmock.NewMockClient(ctrl)
+			pushStorage := pushstoragemock.NewMockPushStorage(ctrl)
+			featureClient.EXPECT().
+				GetFeature(gomock.Any(), &featureproto.GetFeatureRequest{Id: "feature-123", EnvironmentId: "env-123"}).
+				Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{Id: "feature-123"}}, p.getFeatureErr)
+			if p.getFeatureErr == nil {
+				pushStorage.EXPECT().
+					ListPushes(gomock.Any(), pushstorage.ListPushesParams{
+						EnvironmentIDs: []string{"env-123"},
+						Deleted:        false,
+					}).
+					Return(p.pushes, 0, int64(len(p.pushes)), p.listPushesErr)
+			}
+			sender := NewPushSender(featureClient, pushStorage, zap.NewNop()).(*pushSender)
+
+			err := sender.send("feature-123", "env-123")
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
 
 func TestExtractFeatureID(t *testing.T) {
 	t.Parallel()
