@@ -210,9 +210,8 @@ subscribers:
     project:
     # Must be the cacheRefresher's cacheInvalidationTopic (not the
     # domain-event topic). The cacheRefresher publishes there only after
-    # writing the environment's L2 snapshot, which is what guarantees a
-    # device fetching on push receipt sees the change. Use a dedicated
-    # subscription for this processor.
+    # writing the environment's L2 snapshot, so a push is never sent before
+    # L2 holds the change. Use a dedicated subscription for this processor.
     topic:
     subscription:
     pullerNumGoroutines: 5

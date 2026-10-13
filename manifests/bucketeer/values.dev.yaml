@@ -548,8 +548,10 @@ subscriber:
       redisMinIdle: ${global.pubsub.redis.minIdle}
       redisMode: ${global.pubsub.redis.mode}
       project: ${global.pubsub.project}
-      topic: domain
-      subscription: push-sender-domain-sub
+      # Consumes the cacheRefresher's cacheInvalidationTopic so a push is only
+      # sent after the environment's L2 snapshot has been written.
+      topic: cache-invalidation
+      subscription: push-sender-cache-invalidation-sub
       pullerNumGoroutines: 5
       pullerMaxOutstandingMessages: 1000
       pullerMaxOutstandingBytes: 1000000000

@@ -51,13 +51,16 @@ var (
 // they re-fetch their evaluations.
 //
 // It must consume the cache-invalidation topic, not the domain-event topic.
-// The cacheRefresher publishes the invalidation only after it has written the
-// environment's new L2 (Redis) snapshot, and api pods evict their L1 on the
-// same message. Receiving the event from that topic is what guarantees that a
-// device fetching on receipt of the push evaluates against the change that
-// triggered it. Earlier versions consumed domain events directly and ran the
-// all-environments FeatureFlagCacher batch job before each push to get the
-// same ordering.
+// The cacheRefresher publishes there only after it has written the
+// environment's new L2 (Redis) snapshot, so by the time this processor sees
+// the event, L2 already holds the change that triggered the push. api pods
+// consume the same topic on their own subscriptions to evict their L1; that
+// is not ordered relative to this processor, but L1 eviction is an in-memory
+// delete performed on receipt, while a device's fetch arrives only after the
+// FCM round trip, and any remaining staleness is bounded by the L1 TTL.
+// Earlier versions consumed domain events directly and ran the
+// all-environments FeatureFlagCacher batch job before each push, which
+// refreshed L2 but never invalidated L1.
 type pushSender struct {
 	featureClient featureclient.Client
 	pushStorage   pushstorage.PushStorage
@@ -172,7 +175,7 @@ func (p pushSender) send(featureID, environmentId string) error {
 	}
 	// No cache refresh here: this processor consumes the cache-invalidation
 	// topic, so by the time the event arrives the cacheRefresher has already
-	// written the environment's L2 snapshot and api pods are evicting L1.
+	// written the environment's L2 snapshot (see the type comment).
 	var lastErr error
 	for _, push := range pushes {
 		// Determine which topics to send notifications to
