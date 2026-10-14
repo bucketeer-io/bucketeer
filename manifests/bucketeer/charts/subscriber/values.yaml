@@ -212,6 +212,14 @@ subscribers:
     # domain-event topic). The cacheRefresher publishes there only after
     # writing the environment's L2 snapshot, so a push is never sent before
     # L2 holds the change. Use a dedicated subscription for this processor.
+    #
+    # Redis Streams backend only: a new consumer group is created from stream
+    # ID 0 and the stream is never trimmed, so it replays every past
+    # invalidation as a push. Before pointing an existing deployment at this
+    # topic, create the group at the stream tail yourself, once per
+    # partition (streams are named "<topic>-<n>{stream}", n from 0):
+    #   XGROUP CREATE <topic>-<n>{stream} <subscription> $ MKSTREAM
+    # The puller only creates the group when it does not exist yet.
     topic:
     subscription:
     pullerNumGoroutines: 5
