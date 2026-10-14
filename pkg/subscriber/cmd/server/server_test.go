@@ -15,13 +15,73 @@
 package server
 
 import (
+	"bytes"
+	"errors"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/processor"
 )
+
+type stubCloser struct {
+	err error
+}
+
+func (s stubCloser) Close() error {
+	return s.err
+}
+
+func TestCloseDWHWriter(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc       string
+		closer     stubCloser
+		wantErrors int
+		wantMsg    string
+	}{
+		{
+			desc:       "io.EOF on close is not logged as error",
+			closer:     stubCloser{err: io.EOF},
+			wantErrors: 0,
+		},
+		{
+			desc:       "nil on close is not logged as error",
+			closer:     stubCloser{err: nil},
+			wantErrors: 0,
+		},
+		{
+			desc:       "real close errors are logged",
+			closer:     stubCloser{err: errors.New("connection reset")},
+			wantErrors: 1,
+			wantMsg:    "subscriber: failed to close evaluation event writer",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			var buf bytes.Buffer
+			enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+			core := zapcore.NewCore(enc, zapcore.AddSync(&buf), zapcore.ErrorLevel)
+			logger := zap.New(core)
+
+			closeDWHWriter(p.closer, "evaluation event writer", logger)
+
+			logOutput := strings.TrimSpace(buf.String())
+			if p.wantErrors == 0 {
+				assert.Empty(t, logOutput)
+				return
+			}
+			assert.Contains(t, logOutput, p.wantMsg)
+		})
+	}
+}
 
 func TestResolveCacheInvalidationConfig(t *testing.T) {
 	t.Parallel()
