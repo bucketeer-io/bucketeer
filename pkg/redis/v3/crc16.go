@@ -27,6 +27,12 @@ func crc16(data []byte) uint16 {
 	return crc
 }
 
+// HashSlot returns the Redis Cluster hash slot for key, honouring {hash tags}.
+// Multi-key commands (e.g. Lua scripts) require all keys to share a slot.
+func HashSlot(key string) int {
+	return keyHashSlot(key)
+}
+
 // keyHashSlot calculates the hash slot for a given key
 func keyHashSlot(key string) int {
 	// Find start and end of {...} if it exists
@@ -40,8 +46,9 @@ func keyHashSlot(key string) int {
 		}
 	}
 
-	// If {...} is found, use only the part between braces
-	if start >= 0 && end > start {
+	// If a non-empty {...} is found, use only the part between braces. Redis
+	// hashes the whole key when the tag is empty ("{}foo").
+	if start >= 0 && end > start+1 {
 		key = key[start+1 : end]
 	}
 

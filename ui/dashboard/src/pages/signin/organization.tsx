@@ -43,9 +43,11 @@ const SelectOrganization = () => {
         const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
 
         const fetchUserData = async () => {
-          return onMeFetcher({ organizationId }).then(() => {
-            navigate(PAGE_PATH_ROOT);
-          });
+          const success = await onMeFetcher(
+            { organizationId },
+            { logoutOnFailure: true }
+          );
+          if (success) navigate(PAGE_PATH_ROOT);
         };
 
         if (parsedToken.organization_id === organizationId) {

@@ -40,6 +40,9 @@ var (
 
 const (
 	HmcNUTSFunction = "stan::services::sample::hmc_nuts_diag_e_adapt"
+
+	// Bounds calls that should answer quickly, so a hung httpstan can't stall the calculation.
+	requestTimeout = time.Minute
 )
 
 type Stan struct {
@@ -158,6 +161,7 @@ func (s Stan) CompileModel(ctx context.Context, programCode string) (compileResp
 	compileReq := ModelCompileReq{ProgramCode: programCode}
 
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetBody(compileReq).
 		SetResult(&compileResp).
 		Post("/v1/models")
@@ -206,7 +210,10 @@ func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (
 	createFitResp := CreateFitResp{}
 	crateFitErrResp := CreateFitErrResp{}
 
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetPathParam("model_id", modelID).
 		SetBody(req).
 		SetResult(&createFitResp).
@@ -255,7 +262,10 @@ func (s Stan) GetOperationDetails(
 		RecordHTTPStan(methodGetOperationDetails, err, statusCode, time.Since(startTime))
 	}()
 
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetPathParam("operation_id", operationID).
 		SetResult(&getOperationResp).
 		Get("/v1/operations/{operation_id}")
@@ -293,7 +303,9 @@ func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (result i
 		RecordHTTPStan(methodGetFitResult, err, statusCode, time.Since(startTime))
 	}()
 
+	// No request timeout: the body is streamed to the caller after this returns.
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetPathParam("model_id", modelID).
 		SetPathParam("fit_id", fitID).
 		SetDoNotParseResponse(true).
@@ -343,7 +355,10 @@ func (s Stan) StanParams(
 	}()
 
 	paramsResp := GetParamsResp{}
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetPathParam("model_id", modelID).
 		SetBody(map[string]interface{}{
 			"data": data,

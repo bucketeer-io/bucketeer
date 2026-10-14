@@ -101,6 +101,20 @@ var (
 				" including queuing, evaluation, marshaling, and flushing.",
 			Buckets: prometheus.DefBuckets,
 		}, []string{"environment_id", "tag", "source_id"})
+	sseDispatchAbandonedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "sse_dispatch_abandoned_total",
+			Help:      "Total dispatches dropped because stale features could not be refetched.",
+		}, []string{"environment_id"})
+	sseStaleFeaturesCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "sse_stale_features_total",
+			Help:      "Total dispatches whose cached features were older than the event and were refetched.",
+		}, []string{"environment_id"})
 )
 
 func RegisterMetrics(r metrics.Registerer) {
@@ -114,5 +128,7 @@ func RegisterMetrics(r metrics.Registerer) {
 		sseEvaluationDurationHistogram,
 		sseInitialPutDurationHistogram,
 		sseDispatchToSendDurationHistogram,
+		sseStaleFeaturesCounter,
+		sseDispatchAbandonedCounter,
 	)
 }

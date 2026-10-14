@@ -65,6 +65,8 @@ type EvaluateFunc func(
 	// True only for the initial put after a (re)connect; attributes cannot
 	// change on a live connection.
 	checkUserAttributes bool,
+	// When non-nil, evaluate against these features instead of the cache.
+	features []*featureproto.Feature,
 ) (ueid string, evals *featureproto.UserEvaluations, err error)
 
 // EvaluationsHandler handles the SSE stream_evaluations endpoint.
@@ -169,7 +171,9 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 				return
 			}
 		case ev := <-events:
-			newUEID, newEvalAt, err := h.sendPatch(ctx, w, flusher, req.User, envID, req.Tag, sourceID, ueid, evaluatedAt)
+			newUEID, newEvalAt, err := h.sendPatch(
+				ctx, w, flusher, req.User, envID, req.Tag, sourceID, ueid, evaluatedAt, ev.features,
+			)
 			if err != nil {
 				h.logger.Error("Failed to send patch",
 					zap.Error(err),
@@ -199,7 +203,7 @@ func (h *EvaluationsHandler) sendInitialPut(
 ) (ueid string, evaluatedAt int64, err error) {
 	start := time.Now()
 	evaluatedAt = start.Unix()
-	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt, true)
+	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt, true, nil)
 	sseEvaluationDurationHistogram.WithLabelValues(envID, tag, sourceID, eventTypePut).
 		Observe(time.Since(start).Seconds())
 	if err != nil {
@@ -224,10 +228,11 @@ func (h *EvaluationsHandler) sendPatch(
 	envID, tag, sourceID string,
 	prevUEID string,
 	prevEvaluatedAt int64,
+	features []*featureproto.Feature,
 ) (ueid string, newEvaluatedAt int64, err error) {
 	start := time.Now()
 	newEvaluatedAt = start.Unix()
-	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt, false)
+	ueid, evals, err := h.evaluate(ctx, user, envID, tag, prevUEID, prevEvaluatedAt, false, features)
 	sseEvaluationDurationHistogram.WithLabelValues(envID, tag, sourceID, eventTypePatch).
 		Observe(time.Since(start).Seconds())
 	if err != nil {

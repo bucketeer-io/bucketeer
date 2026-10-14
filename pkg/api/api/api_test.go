@@ -2559,9 +2559,49 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 		prevUEID            string
 		evaluatedAt         int64
 		checkUserAttributes bool
+		snapshot            []*featureproto.Feature
 		expectedErr         bool
 		expected            *featureproto.UserEvaluations
 	}{
+		{
+			desc:  "success: dispatched snapshot is evaluated without reading the cache",
+			setup: func(gs *gatewayService) {},
+			snapshot: []*featureproto.Feature{
+				{
+					Id:      "feature-id-1",
+					Version: int32(3),
+					Variations: []*featureproto.Variation{
+						{Id: "variation-a", Name: "variation name true", Value: "true"},
+						{Id: "variation-b", Name: "variation name false", Value: "false"},
+					},
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: "variation-a"},
+					},
+					Tags: []string{"test"},
+				},
+			},
+			expected: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						Id:             evaluation.EvaluationID("feature-id-1", int32(3), "user-id-1"),
+						UserId:         "user-id-1",
+						FeatureId:      "feature-id-1",
+						FeatureVersion: int32(3),
+						VariationId:    "variation-a",
+						VariationName:  "variation name true",
+						VariationValue: "true",
+						Variation: &featureproto.Variation{
+							Id:    "variation-a",
+							Name:  "variation name true",
+							Value: "true",
+						},
+						Reason: &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+					},
+				},
+				ForceUpdate: true,
+			},
+		},
 		{
 			desc: "success: full evaluation with segment from cache",
 			setup: func(gs *gatewayService) {
@@ -3112,6 +3152,7 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 				p.prevUEID,
 				p.evaluatedAt,
 				p.checkUserAttributes,
+				p.snapshot,
 			)
 			if p.expectedErr {
 				assert.Error(t, err)

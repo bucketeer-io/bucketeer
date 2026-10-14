@@ -1749,6 +1749,17 @@ func (m *mockEvaluationCountCache) Get(key interface{}) (interface{}, error) { r
 func (m *mockEvaluationCountCache) Put(key interface{}, value interface{}, expiration time.Duration) error {
 	return nil
 }
+func (m *mockEvaluationCountCache) PutIfNewer(
+	key, genKey string,
+	value []byte,
+	generation int64,
+	expiration time.Duration,
+) (bool, error) {
+	return true, nil
+}
+func (m *mockEvaluationCountCache) DeleteWithGeneration(key, genKey string) error {
+	return nil
+}
 
 // MultiGetter interface methods
 func (m *mockEvaluationCountCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {

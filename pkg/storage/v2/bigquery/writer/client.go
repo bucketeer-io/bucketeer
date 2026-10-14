@@ -16,7 +16,9 @@ package writer
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
@@ -172,7 +174,16 @@ func (w *writer) Close() error {
 	if w.defaultStream == nil {
 		return nil
 	}
-	return w.defaultStream.Close()
+	return normalizeStreamCloseError(w.defaultStream.Close())
+}
+
+// normalizeStreamCloseError treats io.EOF from managedwriter.ManagedStream.Close as success.
+// The BigQuery Storage Write API client returns EOF on normal stream shutdown.
+func normalizeStreamCloseError(err error) error {
+	if errors.Is(err, io.EOF) {
+		return nil
+	}
+	return err
 }
 
 func (w *writer) emulatorAppendRows(

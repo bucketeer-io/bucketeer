@@ -48,7 +48,10 @@ interface AuthContextType {
   refreshOrganizations: () => Promise<void>;
 
   syncSignIn: (authToken: AuthToken) => Promise<void>;
-  onMeFetcher: (params: MeFetcherParams) => Promise<void>;
+  onMeFetcher: (
+    params: MeFetcherParams,
+    options?: { logoutOnFailure?: boolean }
+  ) => Promise<boolean>;
 
   isInitialLoading: boolean;
   setIsInitialLoading: (v: boolean) => void;
@@ -96,20 +99,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearCurrentProjectEnvironmentStorage();
   };
 
-  const onMeFetcher = async (params: MeFetcherParams) => {
+  const onMeFetcher = async (
+    params: MeFetcherParams,
+    { logoutOnFailure = false }: { logoutOnFailure?: boolean } = {}
+  ) => {
     try {
       const response = await accountMeFetcher(params);
       const environmentRoles = response.account.environmentRoles;
       if (!environmentRoles?.length) {
         clearOrgAndEnvStorage();
         errorNotify(null, t('message:env-are-empty'));
-        return logout();
+        logout();
+        return false;
       }
       setConsoleAccount(response.account);
       setIsLogin(true);
       if (response.account.lastSeen === '0' || !response.account.lastSeen) {
         setWalkthroughPendingStorage();
-        return setIsLoginFirstTimeStorage(true);
+        setIsLoginFirstTimeStorage(true);
+        return true;
       }
       const isJapanese = response.account.language === Language.JAPANESE;
       onChangeFontWithLocalized(isJapanese);
@@ -125,9 +133,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           projectId: environment.projectId
         });
       }
+      return true;
     } catch (error) {
-      clearOrgAndEnvStorage();
+      // Sign-in and organization switches must not leave a previous account
+      // active with a new token. Ordinary refresh failures keep the session.
+      if (logoutOnFailure) {
+        clearOrgAndEnvStorage();
+        logout();
+      }
       errorNotify(error, t('message:org-not-found'));
+      return false;
     } finally {
       setIsInitialLoading(false);
     }
@@ -141,10 +156,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         item => item.id === organizationId
       );
       if (organizationId && isExistOrg) {
-        await onMeFetcher({ organizationId });
+        if (!(await onMeFetcher({ organizationId }, { logoutOnFailure: true })))
+          return;
       } else if (organizationsList.length === 1) {
         setOrgIdStorage(organizationsList[0].id);
-        await onMeFetcher({ organizationId: organizationsList[0].id });
+        if (
+          !(await onMeFetcher(
+            { organizationId: organizationsList[0].id },
+            { logoutOnFailure: true }
+          ))
+        )
+          return;
       } else {
         setIsInitialLoading(false);
       }
