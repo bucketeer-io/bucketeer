@@ -15,11 +15,56 @@
 package writer
 
 import (
+	"errors"
+	"fmt"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
+
+func TestNormalizeStreamCloseError(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		input    error
+		expected error
+	}{
+		{
+			desc:     "nil stays nil",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			desc:     "io.EOF is success",
+			input:    io.EOF,
+			expected: nil,
+		},
+		{
+			desc:     "wrapped io.EOF is success",
+			input:    fmt.Errorf("close stream: %w", io.EOF),
+			expected: nil,
+		},
+		{
+			desc:     "real errors are preserved",
+			input:    errors.New("connection reset"),
+			expected: errors.New("connection reset"),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			got := normalizeStreamCloseError(p.input)
+			if p.expected == nil {
+				assert.NoError(t, got)
+				return
+			}
+			assert.EqualError(t, got, p.expected.Error())
+		})
+	}
+}
 
 func TestGetUniqueFails(t *testing.T) {
 	t.Parallel()

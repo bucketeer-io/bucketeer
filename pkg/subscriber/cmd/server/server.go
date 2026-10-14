@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -824,7 +825,7 @@ func (s *server) createPostgresClient(
 // logging any error. BigQuery writers hold a live managed stream and must be closed.
 func closeDWHWriter(w interface{}, name string, logger *zap.Logger) {
 	if c, ok := w.(io.Closer); ok {
-		if err := c.Close(); err != nil {
+		if err := c.Close(); err != nil && !errors.Is(err, io.EOF) {
 			logger.Error("subscriber: failed to close "+name, zap.Error(err))
 		}
 	}
