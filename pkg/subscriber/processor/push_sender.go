@@ -27,14 +27,12 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/protobuf/proto"
 
-	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	pushdomain "github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	pushstorage "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
-	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
@@ -49,9 +47,22 @@ var (
 	defaultTopic = fmt.Sprintf("%s-default", topicPrefix)
 )
 
+// pushSender sends a silent FCM push to SDK clients when a flag changes so
+// they re-fetch their evaluations.
+//
+// It must consume the cache-invalidation topic, not the domain-event topic.
+// The cacheRefresher publishes there only after it has written the
+// environment's new L2 (Redis) snapshot, so by the time this processor sees
+// the event, L2 already holds the change that triggered the push. api pods
+// consume the same topic on their own subscriptions to evict their L1; that
+// is not ordered relative to this processor, but L1 eviction is an in-memory
+// delete performed on receipt, while a device's fetch arrives only after the
+// FCM round trip, and any remaining staleness is bounded by the L1 TTL.
+// Earlier versions consumed domain events directly and ran the
+// all-environments FeatureFlagCacher batch job before each push, which
+// refreshed L2 but never invalidated L1.
 type pushSender struct {
 	featureClient featureclient.Client
-	batchClient   btclient.Client
 	pushStorage   pushstorage.PushStorage
 	logger        *zap.Logger
 }
@@ -63,13 +74,11 @@ type fcmConfig struct {
 
 func NewPushSender(
 	featureClient featureclient.Client,
-	batchClient btclient.Client,
 	pushStorage pushstorage.PushStorage,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
 	return &pushSender{
 		featureClient: featureClient,
-		batchClient:   batchClient,
 		pushStorage:   pushStorage,
 		logger:        logger,
 	}
@@ -164,16 +173,9 @@ func (p pushSender) send(featureID, environmentId string) error {
 		)
 		return nil
 	}
-	// Before sending the push notification we must update the cache
-	// so the api-gateway can evaluate the user correctly.
-	if err := p.updateFeatureFlagCache(ctx); err != nil {
-		p.logger.Error("Failed to update feature flag cache", zap.Error(err))
-		return err
-	}
-	if err := p.updateSegmentUserCache(ctx); err != nil {
-		p.logger.Error("Failed to update segment user cache", zap.Error(err))
-		return err
-	}
+	// No cache refresh here: this processor consumes the cache-invalidation
+	// topic, so by the time the event arrives the cacheRefresher has already
+	// written the environment's L2 snapshot (see the type comment).
 	var lastErr error
 	for _, push := range pushes {
 		// Determine which topics to send notifications to
@@ -308,30 +310,6 @@ func (p pushSender) extractFeatureID(event *domaineventproto.Event) (string, boo
 		return "", false
 	}
 	return event.EntityId, true
-}
-
-// The batch API updates the feature flag cache in all the environments
-func (p pushSender) updateFeatureFlagCache(ctx context.Context) error {
-	req := &btproto.BatchJobRequest{
-		Job: btproto.BatchJob_FeatureFlagCacher,
-	}
-	_, err := p.batchClient.ExecuteBatchJob(ctx, req)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// The batch API updates the segment user cache in all the environments
-func (p pushSender) updateSegmentUserCache(ctx context.Context) error {
-	req := &btproto.BatchJobRequest{
-		Job: btproto.BatchJob_SegmentUserCacher,
-	}
-	_, err := p.batchClient.ExecuteBatchJob(ctx, req)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // getTopicsForPush determines which topics should receive push notifications

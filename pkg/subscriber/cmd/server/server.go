@@ -1207,7 +1207,6 @@ func (s *server) registerPubSubProcessorMap(
 			processor.PushSenderName,
 			processor.NewPushSender(
 				ftClient,
-				batchClient,
 				pushStorage,
 				logger,
 			),

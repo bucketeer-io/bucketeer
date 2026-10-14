@@ -750,7 +750,6 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 		)
 		// Don't fail the execution if event publishing fails
 	}
-	s.updateFeatureFlagCache(ctx)
 
 	return &ftproto.ExecuteScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
