@@ -128,7 +128,12 @@ type Client interface {
 	Exists(key string) (int64, error)
 
 	// Redis Stream methods
-	XAdd(ctx context.Context, stream string, values map[string]interface{}) (string, error)
+
+	// XAdd appends values to stream with an auto-generated ID. When maxLen > 0
+	// the stream is trimmed approximately (XADD ... MAXLEN ~ maxLen) so it
+	// cannot grow without bound; entries are never removed from a stream by
+	// XACK alone. maxLen <= 0 disables trimming.
+	XAdd(ctx context.Context, stream string, values map[string]interface{}, maxLen int64) (string, error)
 	XGroupCreateMkStream(stream, group, start string) error
 	XReadGroup(ctx context.Context,
 		group, consumer string,
@@ -1134,8 +1139,13 @@ func convertErrorToMetricsCode(err error) string {
 	return redis.CodeFail
 }
 
-// XAdd adds a message to a stream
-func (c *client) XAdd(ctx context.Context, stream string, values map[string]interface{}) (string, error) {
+// XAdd adds a message to a stream, trimming it to approximately maxLen entries when maxLen > 0
+func (c *client) XAdd(
+	ctx context.Context,
+	stream string,
+	values map[string]interface{},
+	maxLen int64,
+) (string, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xAddCmdName).Inc()
 
@@ -1144,6 +1154,12 @@ func (c *client) XAdd(ctx context.Context, stream string, values map[string]inte
 		Stream: stream,
 		Values: values,
 		ID:     "*", // Auto-generate ID
+	}
+	if maxLen > 0 {
+		// "~" lets Redis trim at macro-node boundaries, which is far cheaper
+		// than exact trimming and only ever keeps a few extra entries.
+		args.MaxLen = maxLen
+		args.Approx = true
 	}
 
 	// Execute XAdd command

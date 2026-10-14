@@ -31,6 +31,14 @@ import (
 )
 
 const (
+	// newGroupStartID is where a newly created consumer group starts reading.
+	// "$" means "entries added from now on", matching Google Pub/Sub, where a
+	// new subscription only receives messages published after it is created.
+	// Starting at "0" would make every new group replay the whole retained
+	// stream (e.g. moving a processor to a new subscription would re-deliver
+	// every historical message).
+	newGroupStartID = "$"
+
 	// Default values
 	defaultBatchSize = 10
 	defaultBlockTime = 5 * time.Second
@@ -164,7 +172,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 
 		// Only create the group if it doesn't exist
 		if !groupExists {
-			err := p.redisClient.XGroupCreateMkStream(streamKey, p.subscription, "0")
+			err := p.redisClient.XGroupCreateMkStream(streamKey, p.subscription, newGroupStartID)
 			if err != nil && !strings.Contains(strings.ToLower(err.Error()), "busygroup") {
 				p.logger.Error("Failed to create consumer group",
 					zap.Error(err),
