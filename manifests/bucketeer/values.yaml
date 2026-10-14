@@ -83,6 +83,10 @@ global:
       db: 0
       # Redis stream partition count
       partitionCount: 16
+      # Approximate max entries kept per stream partition (XADD MAXLEN ~).
+      # Also the max backlog a lagging consumer can have before it loses
+      # messages; raise it for high-volume topics. 0 disables trimming.
+      streamMaxLen: 10000
       # Idle time in seconds for pending message reclaim
       idleTime: 600
       # TLS configuration, for connecting to a TLS-enabled Redis/Valkey

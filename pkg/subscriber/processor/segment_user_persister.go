@@ -61,6 +61,7 @@ type segmentUserPersisterConfig struct {
 	RedisPoolSize       int    `json:"redisPoolSize"`       // Redis pool size
 	RedisMinIdle        int    `json:"redisMinIdle"`        // Redis min idle connections
 	RedisPartitionCount int    `json:"redisPartitionCount"` // Redis partition count
+	RedisStreamMaxLen   *int64 `json:"redisStreamMaxLen"`   // Max entries per stream partition; nil = default
 	RedisMode           string `json:"redisMode"`           // Redis client mode: cluster, standalone, or auto
 	RedisDB             int    `json:"redisDB"`             // Redis logical database index. Ignored in cluster mode
 	Project             string `json:"project"`             // Google Cloud project ID
@@ -142,6 +143,9 @@ func NewSegmentUserPersister(
 		opts = append(opts, factory.WithRedisClient(redisClient))
 		if segmentPersisterConfig.RedisPartitionCount > 0 {
 			opts = append(opts, factory.WithPartitionCount(segmentPersisterConfig.RedisPartitionCount))
+		}
+		if segmentPersisterConfig.RedisStreamMaxLen != nil {
+			opts = append(opts, factory.WithStreamMaxLen(*segmentPersisterConfig.RedisStreamMaxLen))
 		}
 	}
 

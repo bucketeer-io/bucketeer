@@ -248,6 +248,9 @@ func (s *onDemandSubscriber) createPubSubClient(ctx context.Context) error {
 		if s.configuration.RedisPartitionCount > 0 {
 			factoryOpts = append(factoryOpts, factory.WithPartitionCount(s.configuration.RedisPartitionCount))
 		}
+		if s.configuration.RedisStreamMaxLen != nil {
+			factoryOpts = append(factoryOpts, factory.WithStreamMaxLen(*s.configuration.RedisStreamMaxLen))
+		}
 	}
 
 	// Create the PubSub client using the factory with context.Background()

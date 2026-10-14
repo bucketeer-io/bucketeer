@@ -74,6 +74,7 @@ global:
       poolSize: 25
       minIdle: 25
       partitionCount: 16 # Must match between publisher (API) and subscriber
+      streamMaxLen: 10000
       idleTime: 60
       mode: auto
     emulatorHost: localenv-pubsub.default.svc.cluster.local:8089

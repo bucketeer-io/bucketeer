@@ -133,6 +133,10 @@ spec:
               value: "{{ .Values.env.redis.tlsInsecureSkipVerify }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_PARTITION_COUNT
               value: "{{ .Values.global.pubsub.redis.partitionCount }}"
+            {{- if hasKey .Values.global.pubsub.redis "streamMaxLen" }}
+            - name: BUCKETEER_API_PUBSUB_REDIS_STREAM_MAX_LEN
+              value: "{{ .Values.global.pubsub.redis.streamMaxLen }}"
+            {{- end }}
             - name: BUCKETEER_API_OLDEST_EVENT_TIMESTAMP
               value: "{{ .Values.env.oldestEventTimestamp }}"
             - name: BUCKETEER_API_FURTHEST_EVENT_TIMESTAMP
