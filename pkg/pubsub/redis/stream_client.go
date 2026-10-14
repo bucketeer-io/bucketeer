@@ -34,10 +34,9 @@ const (
 	defaultStreamPartitionCount = 16
 	// defaultStreamMaxLen bounds each partition stream to roughly this many
 	// entries (XADD ... MAXLEN ~). Acknowledging a message does not remove it
-	// from the stream, so without trimming streams grow forever and every new
-	// consumer group would start with the whole history pending. The limit is
-	// also the maximum backlog a consumer can fall behind, per partition,
-	// before it starts losing messages.
+	// from the stream, so without trimming streams grow forever. The limit is
+	// also the approximate maximum backlog a consumer can fall behind, per
+	// partition, before it starts losing messages.
 	defaultStreamMaxLen int64 = 10000
 )
 

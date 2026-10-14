@@ -30,14 +30,16 @@ import (
 func TestNewClientRedisStreamMaxLen(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc   string
-		maxLen int64
+		desc string
+		opts []Option
 		// XAdd must receive this limit when publishing.
 		expectedXAddMaxLen int64
 	}{
-		{desc: "custom limit is passed through", maxLen: 99, expectedXAddMaxLen: 99},
-		// Backend default (not 0): the factory only overrides when > 0.
-		{desc: "unset keeps the backend default", maxLen: 0, expectedXAddMaxLen: 10000},
+		{desc: "custom limit is passed through", opts: []Option{WithStreamMaxLen(99)}, expectedXAddMaxLen: 99},
+		{desc: "explicit zero disables trimming", opts: []Option{WithStreamMaxLen(0)}, expectedXAddMaxLen: 0},
+		{desc: "explicit negative disables trimming", opts: []Option{WithStreamMaxLen(-1)}, expectedXAddMaxLen: -1},
+		// Backend default: the factory only overrides when the option is used.
+		{desc: "unset keeps the backend default", opts: nil, expectedXAddMaxLen: 10000},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -48,13 +50,10 @@ func TestNewClientRedisStreamMaxLen(t *testing.T) {
 				XAdd(gomock.Any(), gomock.Any(), gomock.Any(), p.expectedXAddMaxLen).
 				Return("1-0", nil)
 
-			opts := []Option{
+			opts := append([]Option{
 				WithPubSubType(RedisStream),
 				WithRedisClient(rc),
-			}
-			if p.maxLen > 0 {
-				opts = append(opts, WithStreamMaxLen(p.maxLen))
-			}
+			}, p.opts...)
 			client, err := NewClient(context.Background(), opts...)
 			require.NoError(t, err)
 			_, ok := client.(*redis.StreamClient)

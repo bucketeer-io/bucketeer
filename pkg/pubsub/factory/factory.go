@@ -75,8 +75,11 @@ type options struct {
 	metrics        metrics.Registerer
 	logger         *zap.Logger
 	partitionCount int
-	idleTime       int   // Redis Stream idle time in seconds
-	streamMaxLen   int64 // Redis Stream approximate max entries per partition
+	idleTime       int // Redis Stream idle time in seconds
+	// Redis Stream approximate max entries per partition. Only forwarded when
+	// explicitly set, so 0 (disable trimming) is distinguishable from unset.
+	streamMaxLen    int64
+	streamMaxLenSet bool
 }
 
 // Option is a function that configures options.
@@ -125,10 +128,12 @@ func WithPartitionCount(count int) Option {
 }
 
 // WithStreamMaxLen sets the approximate number of entries each Redis Stream
-// partition keeps (XADD ... MAXLEN ~). Values <= 0 keep the backend default.
+// partition keeps (XADD ... MAXLEN ~). Values <= 0 disable trimming. When not
+// called, the backend default applies.
 func WithStreamMaxLen(maxLen int64) Option {
 	return func(opts *options) {
 		opts.streamMaxLen = maxLen
+		opts.streamMaxLenSet = true
 	}
 }
 
@@ -205,7 +210,7 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 		if options.idleTime > 0 {
 			streamOpts = append(streamOpts, redis.WithStreamIdleTime(options.idleTime))
 		}
-		if options.streamMaxLen > 0 {
+		if options.streamMaxLenSet {
 			streamOpts = append(streamOpts, redis.WithStreamMaxLen(options.streamMaxLen))
 		}
 
