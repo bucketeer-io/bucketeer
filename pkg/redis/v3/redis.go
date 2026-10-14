@@ -789,98 +789,167 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 	}()
 
 	if c.clientType == ClientTypeCluster {
-		// Cluster-aware approach
-		var allK []string
+		// Cluster-aware approach. Assign to err (not :=) so the deferred
+		// metrics reporting observes failures.
+		err = c.pfMergeCluster(ctx, dest, expiration, keys...)
+		return err
+	}
 
-		// Fetch all HLL objects via GetMulti and store them client side as strings
-		hllObjects, err := c.GetMulti(keys, true)
-		if err != nil {
-			return err
-		}
-		allHLLObjects := make([]string, 0, len(hllObjects))
-		for _, hllObj := range hllObjects {
-			if obj, ok := hllObj.([]byte); ok {
-				allHLLObjects = append(allHLLObjects, string(obj))
-			}
-		}
+	// Standard non-cluster approach
+	// We use transaction here to ensure the expiration will be set when merging the key
+	pipe := c.rc.TxPipeline()
+	pipe.PFMerge(ctx, dest, keys...)
+	pipe.Expire(ctx, dest, expiration)
 
-		// Randomize a keyslot hash
-		randomHashSlot := c.randomID()
+	// Execute the pipeline
+	_, err = pipe.Exec(ctx)
+	return err
+}
 
-		// Special handling of dest variable if it already exists
-		destData, err := c.rc.Get(ctx, dest).Result()
-		if err != nil && !errors.Is(err, goredis.Nil) {
-			return err
-		}
-		if !errors.Is(err, goredis.Nil) {
-			allHLLObjects = append(allHLLObjects, destData)
-		}
+// pfMergeStagingTTL bounds the lifetime of the temporary keys used to stage
+// source HLL values during a cluster PFMerge. The keys are deleted right
+// after the merge; the TTL only guarantees they cannot leak forever when the
+// process dies mid-operation or the cleanup fails.
+const pfMergeStagingTTL = time.Minute
 
-		// MSet all stored HLL objects with {RandomHash}RandomKey hll_obj
-		pairs := make([]interface{}, 0, len(allHLLObjects)*2)
-		for _, hllObject := range allHLLObjects {
-			k := c.randomHashSlotKey(randomHashSlot)
-			allK = append(allK, k)
-			pairs = append(pairs, k, hllObject)
-		}
-		if len(pairs) > 0 {
-			err = c.rc.MSet(ctx, pairs...).Err()
-			if err != nil {
-				return err
-			}
-		}
-
-		// Do regular PFMERGE operation and store value in random key in {RandomHash}
-		tmpDest := c.randomHashSlotKey(randomHashSlot)
-		_, err = c.rc.PFMerge(ctx, tmpDest, allK...).Result()
-		if err != nil {
-			return err
-		}
-
-		// Do GET and SET so that result will be stored in the destination object anywhere in the cluster
-		parsedDest, err := c.rc.Get(ctx, tmpDest).Result()
-		if err != nil {
-			return err
-		}
-		err = c.rc.Set(ctx, dest, parsedDest, expiration).Err()
-		if err != nil {
-			return err
-		}
-
-		// Cleanup temporary keys
-		pipe := c.rc.Pipeline()
-		for _, k := range allK {
-			pipe.Del(ctx, k)
-		}
-		pipe.Del(ctx, tmpDest)
-
-		// Execute the pipeline
-		_, err = pipe.Exec(ctx)
-		if err != nil {
-			return err
-		}
-	} else {
-		// Standard non-cluster approach
-		// We use transaction here to ensure the expiration will be set when merging the key
-		pipe := c.rc.TxPipeline()
-		pipe.PFMerge(ctx, dest, keys...)
-		pipe.Expire(ctx, dest, expiration)
-
-		// Execute the pipeline
-		_, err = pipe.Exec(ctx)
-		if err != nil {
-			return err
+// pfMergeCluster merges HyperLogLog values whose keys may live in different
+// cluster slots. PFMERGE requires all of its keys in one slot, so the source
+// values are fetched client side and staged under keys sharing dest's hash
+// slot (via a {hash tag}), then merged server side directly into dest. Merging
+// into dest keeps PFMERGE's native semantics: concurrent writes to dest are
+// merged rather than overwritten.
+func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration time.Duration, keys ...string) error {
+	// Fetch all source HLL objects (GetMulti groups the keys by slot).
+	values, err := c.GetMulti(keys, true)
+	if err != nil {
+		return err
+	}
+	blobs := make([][]byte, 0, len(values))
+	for _, v := range values {
+		// Missing keys are returned as empty strings; keep existing values only.
+		if b, ok := v.([]byte); ok && len(b) > 0 {
+			blobs = append(blobs, b)
 		}
 	}
-	return nil
+	if len(blobs) == 0 {
+		// Nothing to merge. Keep parity with the standalone branch: PFMERGE
+		// creates dest as an empty HLL when missing, and the TTL is (re)set.
+		pipe := c.rc.TxPipeline()
+		pipe.PFMerge(ctx, dest)
+		pipe.Expire(ctx, dest, expiration)
+		_, err := pipe.Exec(ctx)
+		return err
+	}
+
+	tag, ok := hashTagForKey(dest)
+	if !ok {
+		// dest contains braces that would change the parsed hash tag of a
+		// "{tag}..." staging key; merge in a random slot and copy the result.
+		return c.pfMergeClusterViaTmpDest(ctx, dest, expiration, blobs)
+	}
+	staged := make([]string, 0, len(blobs))
+	for range blobs {
+		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
+	}
+	defer c.bestEffortDel(ctx, staged)
+
+	// All staged keys share dest's hash slot, so a single transactional
+	// pipeline on dest's node stages the values, merges them into dest, and
+	// sets the expiration.
+	pipe := c.rc.TxPipeline()
+	for i, b := range blobs {
+		pipe.Set(ctx, staged[i], b, pfMergeStagingTTL)
+	}
+	pipe.PFMerge(ctx, dest, staged...)
+	pipe.Expire(ctx, dest, expiration)
+	_, err = pipe.Exec(ctx)
+	return err
 }
 
-func (c *client) randomID() string {
-	return uuid.New().String()
+// pfMergeClusterViaTmpDest handles destination keys containing braces, where
+// no "{tag}..." staging key is guaranteed to share dest's slot. The sources
+// and the current dest value are merged in a random slot and the result is
+// copied to dest. Unlike the fast path, writes to dest that land between the
+// GET and the SET are overwritten.
+func (c *client) pfMergeClusterViaTmpDest(
+	ctx context.Context,
+	dest string,
+	expiration time.Duration,
+	blobs [][]byte,
+) error {
+	// Include the current dest value, if any, since SET below overwrites it.
+	destData, err := c.rc.Get(ctx, dest).Result()
+	if err != nil && !errors.Is(err, goredis.Nil) {
+		return err
+	}
+	if !errors.Is(err, goredis.Nil) {
+		blobs = append(blobs, []byte(destData))
+	}
+
+	tag := uuid.New().String()
+	staged := make([]string, 0, len(blobs))
+	for range blobs {
+		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
+	}
+	tmpDest := fmt.Sprintf("{%s}%s", tag, uuid.New().String())
+	defer c.bestEffortDel(ctx, append(staged, tmpDest))
+
+	pipe := c.rc.TxPipeline()
+	for i, b := range blobs {
+		pipe.Set(ctx, staged[i], b, pfMergeStagingTTL)
+	}
+	pipe.PFMerge(ctx, tmpDest, staged...)
+	pipe.Expire(ctx, tmpDest, pfMergeStagingTTL)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return err
+	}
+
+	merged, err := c.rc.Get(ctx, tmpDest).Result()
+	if err != nil {
+		return err
+	}
+	return c.rc.Set(ctx, dest, merged, expiration).Err()
 }
 
-func (c *client) randomHashSlotKey(randomHashSlot string) string {
-	return fmt.Sprintf("{%s}%s", randomHashSlot, uuid.New().String())
+// bestEffortDel removes keys without failing the caller: the keys carry a
+// TTL, so a failed cleanup only delays their removal.
+func (c *client) bestEffortDel(ctx context.Context, keys []string) {
+	pipe := c.rc.Pipeline()
+	for _, k := range keys {
+		pipe.Del(ctx, k)
+	}
+	if _, err := pipe.Exec(ctx); err != nil {
+		c.logger.Warn("Failed to clean up staging keys",
+			zap.Error(err),
+			zap.Strings("keys", keys),
+		)
+	}
+}
+
+// hashTagForKey returns the tag to embed in "{tag}..." keys so they hash to
+// the same cluster slot as key, mirroring the tag parsing rules of
+// keyHashSlot. ok is false when key contains braces without a usable tag; in
+// that case wrapping key in new braces could change the parsed tag and land
+// the staged keys in a different slot.
+func hashTagForKey(key string) (tag string, ok bool) {
+	if !strings.ContainsAny(key, "{}") {
+		return key, true
+	}
+	start, end := -1, -1
+	for i := 0; i < len(key); i++ {
+		if key[i] == '{' && start == -1 {
+			start = i
+		} else if key[i] == '}' && start >= 0 {
+			end = i
+			break
+		}
+	}
+	// A non-empty {...} is a valid tag to reuse: it cannot contain '}' by
+	// construction, so re-wrapping it parses back to the same tag.
+	if start >= 0 && end > start+1 {
+		return key[start+1 : end], true
+	}
+	return "", false
 }
 
 func (c *client) PFCount(keys ...string) (int64, error) {
