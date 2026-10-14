@@ -58,6 +58,11 @@ func TestHashTagForKey(t *testing.T) {
 			wantOK: false,
 		},
 		{
+			desc:   "empty key cannot be wrapped",
+			key:    "",
+			wantOK: false,
+		},
+		{
 			desc:   "closing brace without tag cannot be wrapped",
 			key:    "a}b",
 			wantOK: false,

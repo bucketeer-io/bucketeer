@@ -932,6 +932,11 @@ func (c *client) bestEffortDel(ctx context.Context, keys []string) {
 // that case wrapping key in new braces could change the parsed tag and land
 // the staged keys in a different slot.
 func hashTagForKey(key string) (tag string, ok bool) {
+	if key == "" {
+		// Redis ignores empty hash tags, so "{}..." keys would be hashed as a
+		// whole and land in arbitrary slots.
+		return "", false
+	}
 	if !strings.ContainsAny(key, "{}") {
 		return key, true
 	}
