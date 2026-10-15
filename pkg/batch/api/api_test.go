@@ -794,6 +794,7 @@ func newBatchService(t *testing.T,
 		rediscounter.NewRedisCounterDeleter(
 			cacheMock,
 			environmentMockClient,
+			nil,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
