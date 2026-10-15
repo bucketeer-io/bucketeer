@@ -82,7 +82,13 @@ const (
 var (
 	ErrNil         = goredis.Nil
 	ErrInvalidType = errors.New("redis: invalid type")
-	ErrInvalidDB   = errors.New("redis: db index must not be negative")
+	// ErrPFCountCrossSlot is returned by PFCount in cluster mode when the
+	// keys hash to more than one slot. The union cardinality of HLLs in
+	// different slots cannot be computed per slot and summed (users present
+	// in several slots would be counted once per slot); merge the keys into
+	// a single destination with PFMerge and PFCount that key instead.
+	ErrPFCountCrossSlot = errors.New("redis: PFCount keys must hash to a single slot in cluster mode")
+	ErrInvalidDB        = errors.New("redis: db index must not be negative")
 )
 
 type poolStats goredis.PoolStats
@@ -980,26 +986,20 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 	var err error
 
 	if c.clientType == ClientTypeCluster {
-		// Use cluster-aware approach.
-		//
-		// WARNING: summing per-slot PFCOUNTs is NOT a union cardinality: a
-		// user present in HLLs on different slots is counted once per slot.
-		// With multiple keys this therefore overcounts unless the keys are
-		// known to be disjoint. To count unique users across keys, merge
-		// them into one key with PFMerge and PFCount that single key.
-		slotMap := make(map[int][]string)
+		// PFCOUNT requires all of its keys in one hash slot. Summing per-slot
+		// PFCOUNTs is NOT a union cardinality (a user present in HLLs on
+		// different slots would be counted once per slot), so cross-slot
+		// requests are rejected instead of returning an inflated count. To
+		// count unique users across slots, merge the keys into a single
+		// destination with PFMerge and PFCount that key.
+		slots := make(map[int]bool, 1)
 		for _, key := range keys {
-			slot := keyHashSlot(key)
-			slotMap[slot] = append(slotMap[slot], key)
+			slots[keyHashSlot(key)] = true
 		}
-
-		for _, slotKeys := range slotMap {
-			slotCount, slotErr := c.rc.PFCount(context.TODO(), slotKeys...).Result()
-			if slotErr != nil {
-				err = slotErr
-				break
-			}
-			count += slotCount
+		if len(slots) > 1 {
+			err = ErrPFCountCrossSlot
+		} else {
+			count, err = c.rc.PFCount(context.TODO(), keys...).Result()
 		}
 	} else {
 		// Use standard approach for non-cluster client
