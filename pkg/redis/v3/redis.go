@@ -827,19 +827,35 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 // when the process dies mid-operation or the cleanup fails.
 const hllStagingTTL = time.Minute
 
-// fetchHLLValues returns the raw values of the keys that exist (GetMulti
-// groups the keys by slot and fetches all slots in one pipeline).
-func (c *client) fetchHLLValues(keys []string) ([][]byte, error) {
-	values, err := c.GetMulti(keys, true)
-	if err != nil {
+// fetchHLLValues returns the raw values of the keys that exist, fetched with
+// per-key GETs in one pipeline (go-redis groups them into one batch per
+// node). Only missing keys are skipped — they contribute nothing to a union.
+// Existing values are returned as is, including empty or malformed strings,
+// so the server-side PFMERGE/PFCOUNT validates them exactly like the native
+// command would; wrong-type keys (e.g. lists) fail the GET itself, again
+// matching the native commands, where MGET would silently treat them as
+// missing.
+func (c *client) fetchHLLValues(ctx context.Context, keys []string) ([][]byte, error) {
+	pipe := c.rc.Pipeline()
+	cmds := make([]*goredis.StringCmd, len(keys))
+	for i, key := range keys {
+		cmds[i] = pipe.Get(ctx, key)
+	}
+	// Exec returns the first command error, which is goredis.Nil whenever any
+	// key is missing; per-command errors are inspected below instead.
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, goredis.Nil) {
 		return nil, err
 	}
-	blobs := make([][]byte, 0, len(values))
-	for _, v := range values {
-		// Missing keys are returned as empty strings; keep existing values only.
-		if b, ok := v.([]byte); ok && len(b) > 0 {
-			blobs = append(blobs, b)
+	blobs := make([][]byte, 0, len(keys))
+	for _, cmd := range cmds {
+		b, err := cmd.Bytes()
+		if errors.Is(err, goredis.Nil) {
+			continue
 		}
+		if err != nil {
+			return nil, err
+		}
+		blobs = append(blobs, b)
 	}
 	return blobs, nil
 }
@@ -861,7 +877,7 @@ func newStagedKeys(tag string, n int) []string {
 // into dest keeps PFMERGE's native semantics: concurrent writes to dest are
 // merged rather than overwritten.
 func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration time.Duration, keys ...string) error {
-	blobs, err := c.fetchHLLValues(keys)
+	blobs, err := c.fetchHLLValues(ctx, keys)
 	if err != nil {
 		return err
 	}
@@ -1030,7 +1046,7 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 // Note: although PFCount is conceptually a read, this emulation writes
 // TTL-guarded staging keys, like the cluster PFMerge does.
 func (c *client) pfCountCluster(ctx context.Context, keys []string) (int64, error) {
-	blobs, err := c.fetchHLLValues(keys)
+	blobs, err := c.fetchHLLValues(ctx, keys)
 	if err != nil {
 		return 0, err
 	}

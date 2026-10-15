@@ -85,3 +85,38 @@ func TestPFCountClusterCrossSlotErrorCleansUpStagingKeys(t *testing.T) {
 	// Only the two source keys may remain; all staging keys must be gone.
 	assert.ElementsMatch(t, keys, mr.Keys())
 }
+
+// A wrong-type source (here a list) must fail the cross-slot count, like
+// native PFCOUNT raises WRONGTYPE. MGET would silently treat such keys as
+// missing; the per-key GETs used by the staged path propagate the error.
+func TestPFCountClusterCrossSlotWrongTypeKeyFails(t *testing.T) {
+	t.Parallel()
+	mr, c := newMiniredisClient(t, ClientTypeCluster)
+
+	keys := []string{"env:uc:1:feature:variation", "env:uc:2:feature:variation"}
+	require.NotEqual(t, keyHashSlot(keys[0]), keyHashSlot(keys[1]))
+	_, err := mr.Lpush(keys[0], "element")
+	require.NoError(t, err)
+
+	_, err = c.PFCount(keys...)
+	require.Error(t, err)
+	assert.ElementsMatch(t, []string{keys[0]}, mr.Keys(),
+		"no staging keys may be written when fetching the sources fails")
+}
+
+// An existing empty-string source must be staged and rejected server side,
+// like native PFCOUNT rejects a key that is not a valid HLL string, instead
+// of being silently skipped.
+func TestPFCountClusterCrossSlotEmptyStringKeyFails(t *testing.T) {
+	t.Parallel()
+	mr, c := newMiniredisClient(t, ClientTypeCluster)
+
+	keys := []string{"env:uc:1:feature:variation", "env:uc:2:feature:variation"}
+	require.NotEqual(t, keyHashSlot(keys[0]), keyHashSlot(keys[1]))
+	require.NoError(t, mr.Set(keys[0], ""))
+
+	_, err := c.PFCount(keys...)
+	require.Error(t, err)
+	// Only the source key may remain; the staging keys must be cleaned up.
+	assert.ElementsMatch(t, []string{keys[0]}, mr.Keys())
+}
