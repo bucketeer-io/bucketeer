@@ -43,7 +43,9 @@ func TestClusterPFCountIntegration(t *testing.T) {
 	}
 	cl, err := NewClient(addr, WithRedisMode(RedisModeCluster))
 	require.NoError(t, err)
-	defer cl.Close()
+	// Registered first so it runs last: cleanups run in reverse registration
+	// order, and the key deletions below need a working client.
+	t.Cleanup(func() { _ = cl.Close() })
 	c := cl.(*client)
 	require.Equal(t, ClientTypeCluster, c.clientType)
 
