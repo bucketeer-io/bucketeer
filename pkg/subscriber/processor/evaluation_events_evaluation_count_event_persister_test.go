@@ -1060,10 +1060,10 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		{
 			name: "single key pair - PFADD before INCRBY",
 			eventCounts: map[string]int64{
-				"env1:ec:hour1:feature1:varA": 100,
+				"env1:ec:1709974800:feature1:varA": 100,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"env1:uc:hour1:feature1:varA": {"user1": {}, "user2": {}},
+				"env1:uc:1709974800:feature1:varA": {"user1": {}, "user2": {}},
 			},
 			expectedPFAdds:  1,
 			expectedIncrBys: 1,
@@ -1072,14 +1072,14 @@ func TestFlushAggregatedCounts(t *testing.T) {
 		{
 			name: "multiple key pairs - PFADD before INCRBY for each",
 			eventCounts: map[string]int64{
-				"env1:ec:hour1:feature1:varA": 10,
-				"env1:ec:hour1:feature2:varB": 20,
-				"env1:ec:hour1:feature3:varC": 30,
+				"env1:ec:1709974800:feature1:varA": 10,
+				"env1:ec:1709974800:feature2:varB": 20,
+				"env1:ec:1709974800:feature3:varC": 30,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"env1:uc:hour1:feature1:varA": {"user1": {}},
-				"env1:uc:hour1:feature2:varB": {"user2": {}},
-				"env1:uc:hour1:feature3:varC": {"user3": {}},
+				"env1:uc:1709974800:feature1:varA": {"user1": {}},
+				"env1:uc:1709974800:feature2:varB": {"user2": {}},
+				"env1:uc:1709974800:feature3:varC": {"user3": {}},
 			},
 			expectedPFAdds:  3,
 			expectedIncrBys: 3,
@@ -1236,12 +1236,12 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 		{
 			name: "all operations succeed",
 			eventCounts: map[string]int64{
-				"env1:ec:hour1:feature1:varA": 10,
-				"env1:ec:hour1:feature2:varB": 20,
+				"env1:ec:1709974800:feature1:varA": 10,
+				"env1:ec:1709974800:feature2:varB": 20,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"env1:uc:hour1:feature1:varA": {"user1": {}},
-				"env1:uc:hour1:feature2:varB": {"user2": {}},
+				"env1:uc:1709974800:feature1:varA": {"user1": {}},
+				"env1:uc:1709974800:feature2:varB": {"user2": {}},
 			},
 			shouldFailPFAdd:     false,
 			shouldFailIncrBy:    false,
@@ -1253,10 +1253,10 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 		{
 			name: "PFADD fails - INCRBY never executes (no over-count on retry)",
 			eventCounts: map[string]int64{
-				"env1:ec:hour1:feature1:varA": 10,
+				"env1:ec:1709974800:feature1:varA": 10,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"env1:uc:hour1:feature1:varA": {"user1": {}},
+				"env1:uc:1709974800:feature1:varA": {"user1": {}},
 			},
 			shouldFailPFAdd:     true,
 			shouldFailIncrBy:    false,
@@ -1269,10 +1269,10 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 		{
 			name: "INCRBY fails after PFADD succeeds (safe retry due to idempotency)",
 			eventCounts: map[string]int64{
-				"env1:ec:hour1:feature1:varA": 10,
+				"env1:ec:1709974800:feature1:varA": 10,
 			},
 			userCounts: map[string]map[string]struct{}{
-				"env1:uc:hour1:feature1:varA": {"user1": {}},
+				"env1:uc:1709974800:feature1:varA": {"user1": {}},
 			},
 			shouldFailPFAdd:     false,
 			shouldFailIncrBy:    true,
@@ -1635,12 +1635,12 @@ func TestFlushAggregatedCounts_AllPairsFail(t *testing.T) {
 	t.Parallel()
 
 	eventCounts := map[string]int64{
-		"env1:ec:hour1:feature1:varA": 10,
-		"env1:ec:hour1:feature2:varB": 20,
+		"env1:ec:1709974800:feature1:varA": 10,
+		"env1:ec:1709974800:feature2:varB": 20,
 	}
 	userCounts := map[string]map[string]struct{}{
-		"env1:uc:hour1:feature1:varA": {"user1": {}},
-		"env1:uc:hour1:feature2:varB": {"user2": {}},
+		"env1:uc:1709974800:feature1:varA": {"user1": {}},
+		"env1:uc:1709974800:feature2:varB": {"user2": {}},
 	}
 
 	mockCache := &mockEvaluationCountCache{
@@ -1655,8 +1655,8 @@ func TestFlushAggregatedCounts_AllPairsFail(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 2, len(failedKeys), "all ecKeys must be in failedKeys when all pairs fail")
-	assert.Contains(t, failedKeys, "env1:ec:hour1:feature1:varA")
-	assert.Contains(t, failedKeys, "env1:ec:hour1:feature2:varB")
+	assert.Contains(t, failedKeys, "env1:ec:1709974800:feature1:varA")
+	assert.Contains(t, failedKeys, "env1:ec:1709974800:feature2:varB")
 
 	// Both PFAdds should still have been attempted (no early return)
 	assert.Equal(t, 2, mockCache.pfaddCallCount, "all PFAdds should be attempted even when INCRBY fails")
@@ -1669,16 +1669,16 @@ func TestFlushAggregatedCounts_PartialFailure(t *testing.T) {
 
 	// Two key pairs: one will succeed, one will fail via failOnECKey
 	eventCounts := map[string]int64{
-		"env1:ec:hour1:feature-ok:varA":  50,
-		"env1:ec:hour1:feature-bad:varB": 30,
+		"env1:ec:1709974800:feature-ok:varA":  50,
+		"env1:ec:1709974800:feature-bad:varB": 30,
 	}
 	userCounts := map[string]map[string]struct{}{
-		"env1:uc:hour1:feature-ok:varA":  {"user1": {}},
-		"env1:uc:hour1:feature-bad:varB": {"user2": {}},
+		"env1:uc:1709974800:feature-ok:varA":  {"user1": {}},
+		"env1:uc:1709974800:feature-bad:varB": {"user2": {}},
 	}
 
 	mockCache := &mockEvaluationCountCache{
-		failOnECKey: "env1:ec:hour1:feature-bad:varB",
+		failOnECKey: "env1:ec:1709974800:feature-bad:varB",
 	}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
@@ -1689,18 +1689,18 @@ func TestFlushAggregatedCounts_PartialFailure(t *testing.T) {
 
 	// Should return error for partial failure
 	assert.Error(t, err)
-	assert.Contains(t, failedKeys, "env1:ec:hour1:feature-bad:varB",
+	assert.Contains(t, failedKeys, "env1:ec:1709974800:feature-bad:varB",
 		"failed ecKey must be in failedKeys")
-	assert.NotContains(t, failedKeys, "env1:ec:hour1:feature-ok:varA",
+	assert.NotContains(t, failedKeys, "env1:ec:1709974800:feature-ok:varA",
 		"succeeded ecKey must NOT be in failedKeys")
 
 	// Both PFAdds should have been attempted (no early return)
 	assert.Equal(t, 2, mockCache.pfaddCallCount, "all PFAdds should be attempted")
 
 	// The succeeded key pair's data should be persisted
-	assert.Equal(t, int64(50), mockCache.lastEventCounts["env1:ec:hour1:feature-ok:varA"],
+	assert.Equal(t, int64(50), mockCache.lastEventCounts["env1:ec:1709974800:feature-ok:varA"],
 		"succeeded key pair's count should be persisted")
-	assert.NotContains(t, mockCache.lastEventCounts, "env1:ec:hour1:feature-bad:varB",
+	assert.NotContains(t, mockCache.lastEventCounts, "env1:ec:1709974800:feature-bad:varB",
 		"failed key pair's count should NOT be persisted")
 }
 
@@ -1711,22 +1711,31 @@ type pfaddCall struct {
 	err error
 }
 
-// mockEvaluationCountCache mocks the cache interface for testing
+// mockEvaluationCountCache mocks the cache interface for testing.
+//
+// Both the direct Counter/Expirer methods and the pipelined commands (via
+// mockPipeClient.Exec) go through the same apply* helpers, so the recorded
+// counters (pfaddCallCount, execCount, incrbyCallOrder, expireCalls, ...)
+// describe the commands Redis would actually have received regardless of the
+// transport.
 type mockEvaluationCountCache struct {
 	mu               sync.Mutex
 	flushCalled      bool
 	lastEventCounts  map[string]int64
 	lastUserCounts   map[string]map[string]struct{}
-	shouldFailFlush  bool
+	shouldFailFlush  bool   // Simulates a connection-level failure (Exec returns no results)
 	shouldFailPFAdd  bool   // Simulates PFADD failure for all keys
 	shouldFailIncrBy bool   // Simulates INCRBY failure for all keys
-	failOnECKey      string // If set, IncrementBy fails only for this specific key
+	shouldFailExpire bool   // Simulates EXPIRE failure for all keys
+	failOnECKey      string // If set, INCRBY fails only for this specific key
 	pipelineExecuted bool
 	pipelineCount    int // Number of pipelines created
-	execCount        int // Number of IncrementBy calls (direct INCRBY operations)
-	pfaddCallCount   int // Number of direct PFAdd calls
+	execCallCount    int // Number of pipeline Exec round trips
+	execCount        int // Number of INCRBY commands
+	pfaddCallCount   int // Number of PFADD commands
 	pfaddCalls       []pfaddCall
-	incrbyCallOrder  []string                 // Track order of operations
+	incrbyCallOrder  []string                 // Order of PFADD/INCRBY commands
+	commandOrder     []string                 // Order of every command incl. EXPIRE
 	expireCalls      map[string]time.Duration // key → TTL of the last Expire call
 	putIfAbsentKey   string                   // key of the last PutIfAbsent call
 	putIfAbsentValue interface{}              // value of the last PutIfAbsent call
@@ -1738,12 +1747,8 @@ func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
 	m.mu.Unlock()
 
 	return &mockPipeClient{
-		cache:          m,
-		transactional:  tx,
-		commands:       []string{},
-		eventCounts:    make(map[string]int64),
-		userCounts:     make(map[string][]string),
-		shouldFailExec: m.shouldFailFlush,
+		cache:         m,
+		transactional: tx,
 	}
 }
 
@@ -1782,10 +1787,15 @@ func (m *mockEvaluationCountCache) Increment(key string) (int64, error) { return
 func (m *mockEvaluationCountCache) IncrementBy(key string, value int64) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.applyIncrBy(key, value)
+}
 
+// applyIncrBy records and applies one INCRBY. Caller must hold m.mu.
+func (m *mockEvaluationCountCache) applyIncrBy(key string, value int64) (int64, error) {
 	m.flushCalled = true
 	m.execCount++
 	m.incrbyCallOrder = append(m.incrbyCallOrder, "INCRBY:"+key)
+	m.commandOrder = append(m.commandOrder, "INCRBY:"+key)
 
 	if m.shouldFailIncrBy || m.shouldFailFlush {
 		return 0, assert.AnError
@@ -1806,10 +1816,15 @@ func (m *mockEvaluationCountCache) IncrementBy(key string, value int64) (int64, 
 func (m *mockEvaluationCountCache) PFAdd(key string, els ...string) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.applyPFAdd(key, els...)
+}
 
+// applyPFAdd records and applies one PFADD. Caller must hold m.mu.
+func (m *mockEvaluationCountCache) applyPFAdd(key string, els ...string) (int64, error) {
 	m.flushCalled = true // Mark that flush operations are happening
 	m.pfaddCallCount++
 	m.incrbyCallOrder = append(m.incrbyCallOrder, "PFADD:"+key)
+	m.commandOrder = append(m.commandOrder, "PFADD:"+key)
 
 	if m.shouldFailPFAdd || m.shouldFailFlush {
 		err := assert.AnError
@@ -1848,6 +1863,15 @@ func (m *mockEvaluationCountCache) PFMerge(dest string, expiration time.Duration
 func (m *mockEvaluationCountCache) Expire(key string, expiration time.Duration) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.applyExpire(key, expiration)
+}
+
+// applyExpire records one EXPIRE. Caller must hold m.mu.
+func (m *mockEvaluationCountCache) applyExpire(key string, expiration time.Duration) (bool, error) {
+	m.commandOrder = append(m.commandOrder, "EXPIRE:"+key)
+	if m.shouldFailExpire || m.shouldFailFlush {
+		return false, assert.AnError
+	}
 	if m.expireCalls == nil {
 		m.expireCalls = make(map[string]time.Duration)
 	}
@@ -1868,36 +1892,46 @@ func (m *mockEvaluationCountCache) PutIfAbsent(
 	return true, nil
 }
 
+// mockPipeClient queues commands and applies them, in order, on Exec. Like
+// go-redis it returns every queued Cmder with its own error set, and returns
+// no Cmders at all when the whole round trip fails.
 type mockPipeClient struct {
-	cache          *mockEvaluationCountCache
-	transactional  bool
-	commands       []string
-	eventCounts    map[string]int64
-	userCounts     map[string][]string
-	shouldFailExec bool
+	cache         *mockEvaluationCountCache
+	transactional bool
+	queued        []func() goredis.Cmder
 }
 
 func (m *mockPipeClient) IncrBy(key string, value int64) *goredis.IntCmd {
-	m.commands = append(m.commands, "INCRBY")
-	m.eventCounts[key] = value
-
-	// Record order in parent cache
-	m.cache.mu.Lock()
-	m.cache.incrbyCallOrder = append(m.cache.incrbyCallOrder, "INCRBY:"+key)
-	m.cache.mu.Unlock()
-
-	return goredis.NewIntCmd(context.Background())
+	cmd := goredis.NewIntCmd(context.Background())
+	m.queued = append(m.queued, func() goredis.Cmder {
+		v, err := m.cache.applyIncrBy(key, value)
+		cmd.SetVal(v)
+		cmd.SetErr(err)
+		return cmd
+	})
+	return cmd
 }
 
 func (m *mockPipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
-	m.commands = append(m.commands, "PFADD")
-	m.userCounts[key] = els
-	return goredis.NewIntCmd(context.Background())
+	cmd := goredis.NewIntCmd(context.Background())
+	m.queued = append(m.queued, func() goredis.Cmder {
+		v, err := m.cache.applyPFAdd(key, els...)
+		cmd.SetVal(v)
+		cmd.SetErr(err)
+		return cmd
+	})
+	return cmd
 }
 
-func (m *mockPipeClient) PFMerge(dest string, keys ...string) *goredis.StatusCmd {
-	m.commands = append(m.commands, "PFMERGE")
-	return goredis.NewStatusCmd(context.Background())
+func (m *mockPipeClient) Expire(key string, expiration time.Duration) *goredis.BoolCmd {
+	cmd := goredis.NewBoolCmd(context.Background())
+	m.queued = append(m.queued, func() goredis.Cmder {
+		v, err := m.cache.applyExpire(key, expiration)
+		cmd.SetVal(v)
+		cmd.SetErr(err)
+		return cmd
+	})
+	return cmd
 }
 
 func (m *mockPipeClient) Exec() ([]goredis.Cmder, error) {
@@ -1906,39 +1940,30 @@ func (m *mockPipeClient) Exec() ([]goredis.Cmder, error) {
 
 	m.cache.flushCalled = true
 	m.cache.pipelineExecuted = true
-	m.cache.execCount++
+	m.cache.execCallCount++
 
-	// Check if this pipeline should fail
-	if m.shouldFailExec {
+	// Connection-level failure: nothing reached Redis, no per-command results.
+	if m.cache.shouldFailFlush {
 		return nil, assert.AnError
 	}
 
-	// Check if IncrBy should fail (only if this pipeline contains INCRBY)
-	hasIncrBy := false
-	for _, cmd := range m.commands {
-		if cmd == "INCRBY" {
-			hasIncrBy = true
-			break
+	cmds := make([]goredis.Cmder, 0, len(m.queued))
+	var firstErr error
+	for _, apply := range m.queued {
+		cmd := apply()
+		if firstErr == nil && cmd.Err() != nil {
+			firstErr = cmd.Err()
 		}
+		cmds = append(cmds, cmd)
 	}
-	if hasIncrBy && m.cache.shouldFailIncrBy {
-		return nil, assert.AnError
-	}
-
-	// For successful pipelines, accumulate the data
-	if m.cache.lastEventCounts == nil {
-		m.cache.lastEventCounts = make(map[string]int64)
-	}
-
-	// Merge event counts (only for INCRBY commands)
-	for key, count := range m.eventCounts {
-		m.cache.lastEventCounts[key] += count
-	}
-
-	return nil, nil
+	m.queued = nil
+	return cmds, firstErr
 }
 
 // Unused pipeline methods
+func (m *mockPipeClient) PFMerge(dest string, keys ...string) *goredis.StatusCmd {
+	return goredis.NewStatusCmd(context.Background())
+}
 func (m *mockPipeClient) Incr(key string) *goredis.IntCmd {
 	return goredis.NewIntCmd(context.Background())
 }
@@ -1947,9 +1972,6 @@ func (m *mockPipeClient) TTL(key string) *goredis.DurationCmd {
 }
 func (m *mockPipeClient) SAdd(key string, members ...interface{}) *goredis.IntCmd {
 	return goredis.NewIntCmd(context.Background())
-}
-func (m *mockPipeClient) Expire(key string, expiration time.Duration) *goredis.BoolCmd {
-	return goredis.NewBoolCmd(context.Background())
 }
 func (m *mockPipeClient) PFCount(keys ...string) *goredis.IntCmd {
 	return goredis.NewIntCmd(context.Background())

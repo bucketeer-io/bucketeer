@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -59,14 +60,16 @@ var countKindTTLs = map[string]time.Duration{
 	cachev3.UserCountDailyKind:   cachev3.DailyCountTTL,
 }
 
-// countKindTiers maps each kind to a kind-agnostic tier label used to pair an
-// ec key with the uc key written for the same bucket. The label must encode
-// the tier: at a UTC midnight the minute, hour, and day buckets share the
-// same timestamp, so pairing on the suffix alone would mix tiers.
-var countKindTiers = []struct {
+// countKindTier maps a kind to a kind-agnostic tier label used to pair an ec
+// key with the uc key written for the same bucket. The label must encode the
+// tier: at a UTC midnight the minute, hour, and day buckets share the same
+// timestamp, so pairing on the suffix alone would mix tiers.
+type countKindTier struct {
 	kind string
 	tier string
-}{
+}
+
+var countKindTiers = []countKindTier{
 	{cachev3.EventCountMinuteKind, "1m"},
 	{cachev3.UserCountMinuteKind, "1m"},
 	{cachev3.EventCountDailyKind, "1d"},
@@ -416,25 +419,30 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-// flushAggregatedCounts writes aggregated counts to Redis using individual calls
-// with PFADD-before-INCRBY ordering per key pair.
+// flushAggregatedCounts writes aggregated counts to Redis in two pipelined
+// phases, preserving PFADD-before-INCRBY ordering per key pair:
 //
-// Why not pipelines? While go-redis pipelines do expose per-command errors via
-// each Cmder's .Err() method after Exec(), individual calls were chosen as the
-// simpler correctness-first approach. Pipeline optimization (batching all PFADDs
-// then all INCRBYs with per-command error inspection) is planned as a follow-up.
+//  1. One pipeline with PFADD (+ EXPIRE for TTL tiers) for every uc key.
+//  2. One pipeline with INCRBY (+ EXPIRE for TTL tiers) for every ec key whose
+//     PFADD succeeded (or that has no uc side).
 //
 // Within each key pair:
 //   - PFADD runs first (idempotent). If it fails, INCRBY is skipped.
-//   - INCRBY runs only after PFADD succeeds. If INCRBY fails, PFADD is
+//   - INCRBY runs only after PFADD succeeded. If INCRBY fails, PFADD is
 //     already done (idempotent) so retry is safe.
 //
-// Across key pairs: all pairs are attempted even if some fail. The caller
-// receives the set of failed ecKeys so it can Nack only the affected events,
-// preventing over-counting of already-succeeded key pairs on retry.
+// Across key pairs: all pairs are attempted even if some fail. Pipelines
+// expose per-command errors through each Cmder, so a failure on one key does
+// not hide the outcome of the others. The caller receives the set of failed
+// ecKeys so it can Nack only the affected events, preventing over-counting of
+// already-succeeded key pairs on retry.
 //
-// Minute- and day-tier keys get their TTL refreshed with EXPIRE after each
-// successful write (see refreshCountTTL for the failure semantics).
+// Each EXPIRE is queued right after the mutation of the same key. In a Redis
+// Cluster a pipeline is split per node and executed in order within a node,
+// and a key and its EXPIRE always hash to the same node, so the mutation and
+// its TTL reach Redis back-to-back instead of as two independent round trips.
+// Three tiers per event therefore cost two round trips per flush instead of
+// up to twelve synchronous calls.
 func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	eventCounts map[string]int64,
 	userCounts map[string]map[string]struct{},
@@ -453,6 +461,11 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		ucUsers  []string
 		hasUsers bool
 		ttl      time.Duration
+		// pfadd holds the queued PFADD so its outcome can be inspected after
+		// the first pipeline ran.
+		pfadd *goredis.IntCmd
+		// incrby holds the queued INCRBY for the second pipeline.
+		incrby *goredis.IntCmd
 	}
 
 	keyPairs := make(map[string]*keyPair)
@@ -497,42 +510,68 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	}
 
 	failedECKeys := make(map[string]struct{})
-
-	for _, pair := range keyPairs {
-		// Step 1: PFADD first (idempotent - safe to retry)
-		if pair.hasUsers && pair.ucKey != "" {
-			_, err := p.evaluationCountCacher.PFAdd(pair.ucKey, pair.ucUsers...)
-			if err != nil {
-				if !strings.Contains(err.Error(), "client is closed") {
-					p.logger.Error("Failed to add users to HyperLogLog",
-						zap.Error(err),
-						zap.String("ucKey", pair.ucKey),
-					)
-				}
-				if pair.ecKey != "" {
-					failedECKeys[pair.ecKey] = struct{}{}
-				}
-				continue
-			}
-			p.refreshCountTTL(pair.ucKey, pair.ttl)
-		}
-
-		// Step 2: INCRBY only if PFADD succeeded
+	markFailed := func(pair *keyPair) {
 		if pair.ecKey != "" {
-			_, err := p.evaluationCountCacher.IncrementBy(pair.ecKey, pair.ecCount)
-			if err != nil {
-				if !strings.Contains(err.Error(), "client is closed") {
-					p.logger.Error("Failed to increment event count",
-						zap.Error(err),
-						zap.String("ecKey", pair.ecKey),
-						zap.Int64("count", pair.ecCount),
-					)
-				}
-				failedECKeys[pair.ecKey] = struct{}{}
-				continue
-			}
-			p.refreshCountTTL(pair.ecKey, pair.ttl)
+			failedECKeys[pair.ecKey] = struct{}{}
 		}
+	}
+
+	// Phase 1: PFADD (+EXPIRE) for every uc key in one pipeline.
+	ucPipe := p.evaluationCountCacher.Pipeline(false)
+	ucExpires := make(map[string]*goredis.BoolCmd)
+	ucPairs := make([]*keyPair, 0, len(keyPairs))
+	for _, pair := range keyPairs {
+		if !pair.hasUsers || pair.ucKey == "" {
+			continue
+		}
+		pair.pfadd = ucPipe.PFAdd(pair.ucKey, pair.ucUsers...)
+		if pair.ttl > 0 {
+			ucExpires[pair.ucKey] = ucPipe.Expire(pair.ucKey, pair.ttl)
+		}
+		ucPairs = append(ucPairs, pair)
+	}
+	if len(ucPairs) > 0 {
+		cmds, err := ucPipe.Exec()
+		for _, pair := range ucPairs {
+			if cmdErr := pipelineCmdErr(pair.pfadd, cmds, err); cmdErr != nil {
+				p.logFlushError("Failed to add users to HyperLogLog", cmdErr,
+					zap.String("ucKey", pair.ucKey),
+				)
+				markFailed(pair)
+				// Skip INCRBY for this pair; PFADD is idempotent so the
+				// redelivered events can safely redo both commands.
+				pair.ecKey = ""
+			}
+		}
+		p.logExpireErrors(ucExpires, cmds, err)
+	}
+
+	// Phase 2: INCRBY (+EXPIRE) for every surviving ec key in one pipeline.
+	ecPipe := p.evaluationCountCacher.Pipeline(false)
+	ecExpires := make(map[string]*goredis.BoolCmd)
+	ecPairs := make([]*keyPair, 0, len(keyPairs))
+	for _, pair := range keyPairs {
+		if pair.ecKey == "" {
+			continue
+		}
+		pair.incrby = ecPipe.IncrBy(pair.ecKey, pair.ecCount)
+		if pair.ttl > 0 {
+			ecExpires[pair.ecKey] = ecPipe.Expire(pair.ecKey, pair.ttl)
+		}
+		ecPairs = append(ecPairs, pair)
+	}
+	if len(ecPairs) > 0 {
+		cmds, err := ecPipe.Exec()
+		for _, pair := range ecPairs {
+			if cmdErr := pipelineCmdErr(pair.incrby, cmds, err); cmdErr != nil {
+				p.logFlushError("Failed to increment event count", cmdErr,
+					zap.String("ecKey", pair.ecKey),
+					zap.Int64("count", pair.ecCount),
+				)
+				markFailed(pair)
+			}
+		}
+		p.logExpireErrors(ecExpires, cmds, err)
 	}
 
 	if len(failedECKeys) > 0 {
@@ -550,46 +589,101 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	return nil, nil
 }
 
-// refreshCountTTL applies the tier TTL after a successful counter write. A
-// zero TTL means the key is owned by the deleter job and gets no expiry.
-//
-// EXPIRE failures are logged but do not fail the key pair: the counter write
-// already succeeded, so Nacking the events would guarantee a double count on
-// redelivery just to retry a TTL, and every later write to the same bucket
-// refreshes the TTL anyway. A key can only end up without expiry if the
-// EXPIRE of its very last write fails, which is rare and bounded.
-func (p *evaluationCountEventPersister) refreshCountTTL(key string, ttl time.Duration) {
-	if ttl <= 0 {
-		return
+// pipelineCmdErr returns the error of one queued pipeline command. When Exec
+// could not run the pipeline at all (no per-command results), the Exec error
+// applies to every queued command.
+func pipelineCmdErr(cmd goredis.Cmder, cmds []goredis.Cmder, execErr error) error {
+	if len(cmds) == 0 && execErr != nil {
+		return execErr
 	}
-	if _, err := p.evaluationCountCacher.Expire(key, ttl); err != nil {
-		if !strings.Contains(err.Error(), "client is closed") {
-			p.logger.Error("Failed to set TTL on evaluation count key",
-				zap.Error(err),
+	if cmd == nil {
+		return nil
+	}
+	return cmd.Err()
+}
+
+// logExpireErrors reports failed EXPIREs without failing the key pair: the
+// counter write already succeeded, so Nacking the events would guarantee a
+// double count on redelivery just to retry a TTL, and every later write to
+// the same bucket queues the EXPIRE again anyway. Because EXPIRE is pipelined
+// right behind the mutation of the same key, a key can only end up without
+// expiry if Redis accepted the mutation and then rejected the EXPIRE of its
+// very last write, which is rare and bounded.
+func (p *evaluationCountEventPersister) logExpireErrors(
+	expires map[string]*goredis.BoolCmd,
+	cmds []goredis.Cmder,
+	execErr error,
+) {
+	for key, cmd := range expires {
+		if err := pipelineCmdErr(cmd, cmds, execErr); err != nil {
+			p.logFlushError("Failed to set TTL on evaluation count key", err,
 				zap.String("key", key),
-				zap.Duration("ttl", ttl),
 			)
 		}
 	}
 }
 
+// logFlushError logs a Redis write failure unless it is the expected
+// "client is closed" error raised during shutdown.
+func (p *evaluationCountEventPersister) logFlushError(msg string, err error, fields ...zap.Field) {
+	if strings.Contains(err.Error(), "client is closed") {
+		return
+	}
+	p.logger.Error(msg, append([]zap.Field{zap.Error(err)}, fields...)...)
+}
+
 // splitCountKey extracts the kind segment of an evaluation count key and
 // returns it together with a pairing key that is identical for the ec and uc
 // keys of the same tier and bucket (and only for those).
-// Non-admin keys look like "<env>:<kind>:<suffix>", admin keys "<kind>:<suffix>".
+//
+// Keys look like "<env>:<kind>:<bucketTs>:<featureId>:<variationId>", or
+// "<kind>:<bucketTs>:<featureId>:<variationId>" for the admin environment.
+// The kind is identified positionally and must be followed by the numeric
+// bucket timestamp, so feature or environment IDs that happen to equal a kind
+// name (e.g. a feature called "ec1m") are never mistaken for the kind.
 func splitCountKey(key string) (kind, pairingKey string) {
-	for _, kt := range countKindTiers {
-		pattern := ":" + kt.kind + ":"
-		if idx := strings.Index(key, pattern); idx >= 0 {
-			return kt.kind, key[:idx] + ":" + kt.tier + ":" + key[idx+len(pattern):]
-		}
-		adminPrefix := kt.kind + ":"
-		if strings.HasPrefix(key, adminPrefix) {
-			return kt.kind, kt.tier + ":" + strings.TrimPrefix(key, adminPrefix)
-		}
+	first, rest, ok := strings.Cut(key, ":")
+	if !ok {
+		return "", key
+	}
+	if kt, isKind := countKindTierOf(first); isKind && startsWithBucketTimestamp(rest) {
+		// Admin key: "<kind>:<bucketTs>:...".
+		return kt.kind, kt.tier + ":" + rest
+	}
+	second, rest, ok := strings.Cut(rest, ":")
+	if !ok {
+		return "", key
+	}
+	if kt, isKind := countKindTierOf(second); isKind && startsWithBucketTimestamp(rest) {
+		// Environment key: "<env>:<kind>:<bucketTs>:...".
+		return kt.kind, first + ":" + kt.tier + ":" + rest
 	}
 	// Unknown kind: pair by the full key (no TTL applies).
 	return "", key
+}
+
+func countKindTierOf(segment string) (countKindTier, bool) {
+	for _, kt := range countKindTiers {
+		if kt.kind == segment {
+			return kt, true
+		}
+	}
+	return countKindTier{}, false
+}
+
+// startsWithBucketTimestamp reports whether s begins with a non-empty
+// all-digit segment, i.e. the bucket timestamp that always follows the kind.
+func startsWithBucketTimestamp(s string) bool {
+	ts, _, _ := strings.Cut(s, ":")
+	if ts == "" {
+		return false
+	}
+	for _, r := range ts {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // countKeyPair is the ec/uc key pair of one tier plus the TTL to apply after
@@ -651,12 +745,21 @@ func truncateUnixUTC(ts int64, bucket time.Duration) int64 {
 	return time.Unix(ts, 0).UTC().Truncate(bucket).Unix()
 }
 
+// dailyCutoverRolloutDays is how many UTC midnights after the first new
+// persister starts the daily tier is declared complete. The deploy day itself
+// is incomplete (events before the deploy were never dual-written), and the
+// NEXT midnight is not safe either: during a rolling update the old,
+// hourly-only pods keep consuming events for a while, so a pod starting just
+// before midnight would declare a day complete that old pods are still
+// writing hourly-only. Skipping one more midnight gives the rollout a full day
+// to drain; the extra day is simply served from the (correct) hourly fallback
+// and materialized by the backfill job.
+const dailyCutoverRolloutDays = 2
+
 // writeDailyCutoverMarker records, once per cluster (SETNX), the first UTC
-// midnight from which the daily tier is complete. The deploy day itself is
-// incomplete in the daily tier (events before the deploy were never
-// dual-written), so the cutover is the next UTC midnight after startup.
+// midnight from which the daily tier is complete.
 func (p *evaluationCountEventPersister) writeDailyCutoverMarker() {
-	cutover := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, 1)
+	cutover := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, dailyCutoverRolloutDays)
 	set, err := p.evaluationCountCacher.PutIfAbsent(
 		cachev3.EvaluationDailyCutoverKey,
 		strconv.FormatInt(cutover.Unix(), 10),
