@@ -9,7 +9,6 @@ import { useScreen, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
-import { setNavigationCollapsedStorage } from 'storage/navigation';
 import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
@@ -35,7 +34,6 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
 
   const toggleCollapsed = () => {
     const next = !isCollapsed;
-    setNavigationCollapsedStorage(next);
     onToggleCollapsed(next);
   };
 
@@ -45,6 +43,15 @@ const Navigation = ({ isCollapsed, onToggleCollapsed }: NavigationProps) => {
   const envUrlCode = currentEnvironment.urlCode;
   const isCollapsedEffective = isMobile ? false : isCollapsed;
   const isTabletOverlay = isTablet && !isCollapsedEffective;
+
+  useEffect(() => {
+    if (!isTabletOverlay) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onToggleCollapsed(true);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isTabletOverlay, onToggleCollapsed]);
 
   const settingMenuSections = [
     {
