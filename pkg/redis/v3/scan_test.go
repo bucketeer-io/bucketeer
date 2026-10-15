@@ -121,3 +121,23 @@ func TestSerialize(t *testing.T) {
 	assert.Equal(t, int32(50), calls.Load())
 	assert.Equal(t, int32(1), maxInFlight.Load())
 }
+
+func TestSerializeStopsAfterError(t *testing.T) {
+	t.Parallel()
+	fnErr := errors.New("fn failed")
+	var calls atomic.Int32
+	fn := serialize(func(_ []string) error {
+		calls.Add(1)
+		return fnErr
+	})
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			assert.ErrorIs(t, fn([]string{"k"}), fnErr)
+		}()
+	}
+	wg.Wait()
+	assert.Equal(t, int32(1), calls.Load())
+}

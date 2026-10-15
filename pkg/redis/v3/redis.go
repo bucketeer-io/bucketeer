@@ -633,10 +633,16 @@ func (c *client) ScanAll(match string, count int64, fn func(keys []string) error
 
 func serialize(fn func(keys []string) error) func(keys []string) error {
 	var mu sync.Mutex
+	var firstErr error
 	return func(keys []string) error {
 		mu.Lock()
 		defer mu.Unlock()
-		return fn(keys)
+		// Once fn fails, other masters' pages are not passed to fn.
+		if firstErr != nil {
+			return firstErr
+		}
+		firstErr = fn(keys)
+		return firstErr
 	}
 }
 
