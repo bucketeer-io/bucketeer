@@ -640,10 +640,18 @@ func (c *client) ScanAll(match string, count int64, fn func(keys []string) error
 
 func serialize(fn func(keys []string) error) func(keys []string) error {
 	var mu sync.Mutex
+	var firstErr error
 	return func(keys []string) error {
 		mu.Lock()
 		defer mu.Unlock()
-		return fn(keys)
+		// Masters are scanned in parallel, so after fn requests an abort the
+		// other workers may still deliver pages; latch the first error and
+		// stop invoking fn so the abort applies to the whole scan.
+		if firstErr != nil {
+			return firstErr
+		}
+		firstErr = fn(keys)
+		return firstErr
 	}
 }
 

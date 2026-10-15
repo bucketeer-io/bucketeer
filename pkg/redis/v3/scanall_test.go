@@ -72,3 +72,26 @@ func TestScanAllStandalone(t *testing.T) {
 	})
 	assert.ErrorIs(t, err, wantErr)
 }
+
+// TestSerializeLatchesFirstError verifies the cluster-mode abort semantics:
+// once fn returns an error, parallel master workers that deliver later pages
+// must get that same error back without fn being invoked again.
+func TestSerializeLatchesFirstError(t *testing.T) {
+	t.Parallel()
+	wantErr := fmt.Errorf("stop")
+	calls := 0
+	fn := serialize(func(keys []string) error {
+		calls++
+		if calls == 2 {
+			return wantErr
+		}
+		return nil
+	})
+
+	require.NoError(t, fn([]string{"page-1"}))
+	require.ErrorIs(t, fn([]string{"page-2"}), wantErr)
+	// Later pages from other masters: same error, fn not invoked again.
+	require.ErrorIs(t, fn([]string{"page-3"}), wantErr)
+	require.ErrorIs(t, fn([]string{"page-4"}), wantErr)
+	assert.Equal(t, 2, calls, "fn must not run after it requested an abort")
+}
