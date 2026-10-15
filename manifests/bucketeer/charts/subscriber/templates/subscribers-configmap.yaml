@@ -27,6 +27,9 @@ data:
     {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- if hasKey $.Values.global.pubsub.redis "streamMaxLen" }}
+    {{- $_ := set $config "redisStreamMaxLen" $.Values.global.pubsub.redis.streamMaxLen }}
+    {{- end }}
     {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
     {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
     {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}
@@ -47,6 +50,9 @@ data:
     {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- if hasKey $.Values.global.pubsub.redis "streamMaxLen" }}
+    {{- $_ := set $config "redisStreamMaxLen" $.Values.global.pubsub.redis.streamMaxLen }}
+    {{- end }}
     {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
     {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
     {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}
@@ -72,6 +78,9 @@ data:
     {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- if hasKey $.Values.global.pubsub.redis "streamMaxLen" }}
+    {{- $_ := set $config "redisStreamMaxLen" $.Values.global.pubsub.redis.streamMaxLen }}
+    {{- end }}
     {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
     {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
     {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}

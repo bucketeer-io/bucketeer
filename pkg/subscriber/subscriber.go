@@ -96,8 +96,12 @@ type Configuration struct {
 	RedisMinIdle        int    `json:"redisMinIdle,omitempty"`
 	RedisDB             int    `json:"redisDB,omitempty"`
 	RedisPartitionCount int    `json:"redisPartitionCount,omitempty"`
-	RedisIdleTime       int    `json:"redisIdleTime,omitempty"`
-	RedisMode           string `json:"redisMode,omitempty"`
+	// Approximate max entries kept per Redis Stream partition (XADD MAXLEN ~),
+	// used by publishers created from this configuration. nil keeps the
+	// backend default; 0 disables trimming.
+	RedisStreamMaxLen *int64 `json:"redisStreamMaxLen,omitempty"`
+	RedisIdleTime     int    `json:"redisIdleTime,omitempty"`
+	RedisMode         string `json:"redisMode,omitempty"`
 	// Redis TLS configuration (used to connect to TLS-enabled Redis/Valkey
 	// deployments, e.g. AWS ElastiCache/MemoryDB with in-transit encryption)
 	RedisTLSEnabled            bool   `json:"redisTLSEnabled,omitempty"`
@@ -214,6 +218,9 @@ func (s pubSubSubscriber) createPuller(
 		// Add partition count if configured
 		if s.configuration.RedisPartitionCount > 0 {
 			factoryOpts = append(factoryOpts, factory.WithPartitionCount(s.configuration.RedisPartitionCount))
+		}
+		if s.configuration.RedisStreamMaxLen != nil {
+			factoryOpts = append(factoryOpts, factory.WithStreamMaxLen(*s.configuration.RedisStreamMaxLen))
 		}
 
 		// Add idle time if configured

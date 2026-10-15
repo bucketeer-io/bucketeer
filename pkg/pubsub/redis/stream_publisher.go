@@ -38,6 +38,7 @@ type StreamPublisher struct {
 	redisClient    v3.Client
 	streamBase     string // Base name for the stream
 	partitionCount int    // Number of partitions
+	maxLen         int64  // Approximate max entries per partition stream; <= 0 disables trimming
 	logger         *zap.Logger
 }
 
@@ -64,12 +65,21 @@ func WithStreamPublisherPartitionCount(count int) StreamPublisherOption {
 	}
 }
 
+// WithStreamPublisherMaxLen sets the approximate number of entries each
+// partition stream keeps (XADD ... MAXLEN ~). Values <= 0 disable trimming.
+func WithStreamPublisherMaxLen(maxLen int64) StreamPublisherOption {
+	return func(p *StreamPublisher) {
+		p.maxLen = maxLen
+	}
+}
+
 // NewStreamPublisher creates a new Redis Stream publisher
 func NewStreamPublisher(client v3.Client, stream string, opts ...StreamPublisherOption) publisher.Publisher {
 	p := &StreamPublisher{
 		redisClient:    client,
 		streamBase:     stream,
 		partitionCount: defaultStreamPartitionCount,
+		maxLen:         defaultStreamMaxLen,
 		logger:         zap.NewNop(),
 	}
 
@@ -121,8 +131,8 @@ func (p *StreamPublisher) Publish(ctx context.Context, msg publisher.Message) er
 		messageID: data,
 	}
 
-	// Add the message to the stream
-	_, err = p.redisClient.XAdd(ctx, streamKey, values)
+	// Add the message to the stream, trimming old entries so it stays bounded
+	_, err = p.redisClient.XAdd(ctx, streamKey, values, p.maxLen)
 	if err != nil {
 		p.logger.Error("Failed to add message to stream",
 			zap.Error(err),

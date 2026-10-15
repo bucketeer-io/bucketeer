@@ -32,6 +32,12 @@ import (
 const (
 	// Default number of partitions for Redis Streams
 	defaultStreamPartitionCount = 16
+	// defaultStreamMaxLen bounds each partition stream to roughly this many
+	// entries (XADD ... MAXLEN ~). Acknowledging a message does not remove it
+	// from the stream, so without trimming streams grow forever. The limit is
+	// also the approximate maximum backlog a consumer can fall behind, per
+	// partition, before it starts losing messages.
+	defaultStreamMaxLen int64 = 10000
 )
 
 var (
@@ -51,7 +57,8 @@ type streamOptions struct {
 	metrics        metrics.Registerer
 	logger         *zap.Logger
 	partitionCount int
-	idleTime       int // Idle time in seconds for pending message reclaim
+	idleTime       int   // Idle time in seconds for pending message reclaim
+	maxLen         int64 // Approximate per-partition stream length kept by publishers
 }
 
 type StreamOption func(*streamOptions)
@@ -77,6 +84,14 @@ func WithStreamPartitionCount(count int) StreamOption {
 	}
 }
 
+// WithStreamMaxLen sets the approximate number of entries each partition stream
+// keeps (XADD ... MAXLEN ~). Values <= 0 disable trimming.
+func WithStreamMaxLen(maxLen int64) StreamOption {
+	return func(opts *streamOptions) {
+		opts.maxLen = maxLen
+	}
+}
+
 // WithStreamIdleTime sets the idle time in seconds for pending message reclaim
 func WithStreamIdleTime(idleTimeSeconds int) StreamOption {
 	return func(opts *streamOptions) {
@@ -89,6 +104,7 @@ func NewStreamClient(ctx context.Context, redisClient v3.Client, opts ...StreamO
 	options := &streamOptions{
 		logger:         zap.NewNop(),
 		partitionCount: defaultStreamPartitionCount,
+		maxLen:         defaultStreamMaxLen,
 	}
 	for _, opt := range opts {
 		opt(options)
@@ -111,6 +127,7 @@ func (c *StreamClient) CreatePublisher(topic string) (publisher.Publisher, error
 	options := []StreamPublisherOption{
 		WithStreamPublisherLogger(c.logger),
 		WithStreamPublisherPartitionCount(c.partitionCount),
+		WithStreamPublisherMaxLen(c.opts.maxLen),
 	}
 	if c.opts.metrics != nil {
 		options = append(options, WithStreamPublisherMetrics(c.opts.metrics))

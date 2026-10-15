@@ -741,6 +741,9 @@ func (s *server) createCacheInvalidationPublisher(
 		if conf.RedisPartitionCount > 0 {
 			factoryOpts = append(factoryOpts, factory.WithPartitionCount(conf.RedisPartitionCount))
 		}
+		if conf.RedisStreamMaxLen != nil {
+			factoryOpts = append(factoryOpts, factory.WithStreamMaxLen(*conf.RedisStreamMaxLen))
+		}
 		backendCleanup = func() { _ = redisClient.Close() }
 	}
 	client, err := factory.NewClient(ctx, factoryOpts...)

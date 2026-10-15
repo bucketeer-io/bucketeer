@@ -421,18 +421,18 @@ func (mr *MockClientMockRecorder) XAck(stream, group, id any) *gomock.Call {
 }
 
 // XAdd mocks base method.
-func (m *MockClient) XAdd(ctx context.Context, stream string, values map[string]any) (string, error) {
+func (m *MockClient) XAdd(ctx context.Context, stream string, values map[string]any, maxLen int64) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "XAdd", ctx, stream, values)
+	ret := m.ctrl.Call(m, "XAdd", ctx, stream, values, maxLen)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // XAdd indicates an expected call of XAdd.
-func (mr *MockClientMockRecorder) XAdd(ctx, stream, values any) *gomock.Call {
+func (mr *MockClientMockRecorder) XAdd(ctx, stream, values, maxLen any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XAdd", reflect.TypeOf((*MockClient)(nil).XAdd), ctx, stream, values)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XAdd", reflect.TypeOf((*MockClient)(nil).XAdd), ctx, stream, values, maxLen)
 }
 
 // XClaim mocks base method.

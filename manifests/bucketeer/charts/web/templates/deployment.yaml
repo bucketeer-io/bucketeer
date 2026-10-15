@@ -258,6 +258,10 @@ spec:
               value: "{{ .Values.global.pubsub.redis.tlsInsecureSkipVerify }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT
               value: "{{ .Values.global.pubsub.redis.partitionCount }}"
+            {{- if hasKey .Values.global.pubsub.redis "streamMaxLen" }}
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_STREAM_MAX_LEN
+              value: "{{ .Values.global.pubsub.redis.streamMaxLen }}"
+            {{- end }}
             - name: BUCKETEER_WEB_PROJECT
               value: "{{ .Values.global.pubsub.project }}"
             - name: PUBSUB_EMULATOR_HOST

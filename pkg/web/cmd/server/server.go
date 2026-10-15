@@ -253,6 +253,7 @@ type server struct {
 	pubSubRedisPoolSize                     *int
 	pubSubRedisMinIdle                      *int
 	pubSubRedisPartitionCount               *int
+	pubSubRedisStreamMaxLen                 *int64
 	pubSubRedisMode                         *string
 	pubSubRedisDB                           *int
 	pubSubRedisTLSEnabled                   *bool
@@ -594,6 +595,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
 			"Number of partitions for Redis Streams PubSub.",
 		).Default("16").Int(),
+		pubSubRedisStreamMaxLen: cmd.Flag("pubsub-redis-stream-max-len",
+			"Approximate max entries kept per Redis Stream partition (XADD MAXLEN ~). "+
+				"Also the max backlog a lagging consumer can have before losing messages. 0 disables trimming.",
+		).Default("10000").Int64(),
 		pubSubRedisMode: cmd.Flag("pubsub-redis-mode",
 			"PubSub Redis client mode: cluster, standalone, or auto.",
 		).Default("auto").String(),
@@ -1556,6 +1561,7 @@ func (s *server) createPublisher(
 		}
 		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
 		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
+		factoryOpts = append(factoryOpts, factory.WithStreamMaxLen(*s.pubSubRedisStreamMaxLen))
 	}
 
 	// Create the PubSub client using the factory
