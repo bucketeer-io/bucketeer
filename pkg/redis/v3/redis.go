@@ -644,33 +644,43 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 	var err error
 
 	if c.clientType == ClientTypeCluster {
-		// Use cluster-aware approach
+		// MGET requires all of its keys in one hash slot, so group them by slot.
 		slotMap := make(map[int][]string)
 		for _, key := range keys {
 			slot := keyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
-		// Create a map to store results temporarily
-		resultMap := make(map[string]interface{}, len(keys))
-
-		for _, slotKeys := range slotMap {
-			slotReply, slotErr := c.rc.MGet(context.TODO(), slotKeys...).Result()
-			if slotErr != nil {
-				err = slotErr
-				break
-			}
-			// Store results in the map
-			for i, key := range slotKeys {
-				resultMap[key] = slotReply[i]
-			}
+		// Issue one MGET per slot inside a single pipeline. The cluster
+		// pipeline groups the commands by node and queries the nodes
+		// concurrently, so the latency is roughly one round trip per node
+		// instead of one sequential round trip per slot.
+		pipe := c.rc.Pipeline()
+		slotCmds := make(map[int]*goredis.SliceCmd, len(slotMap))
+		for slot, slotKeys := range slotMap {
+			slotCmds[slot] = pipe.MGet(context.TODO(), slotKeys...)
 		}
+		_, err = pipe.Exec(context.TODO())
 
 		if err == nil {
-			// Populate the reply slice in the original order
-			reply = make([]interface{}, len(keys))
-			for i, key := range keys {
-				reply[i] = resultMap[key]
+			// Store results in a map, then populate the reply slice in the
+			// original key order.
+			resultMap := make(map[string]interface{}, len(keys))
+			for slot, cmd := range slotCmds {
+				slotReply, slotErr := cmd.Result()
+				if slotErr != nil {
+					err = slotErr
+					break
+				}
+				for i, key := range slotMap[slot] {
+					resultMap[key] = slotReply[i]
+				}
+			}
+			if err == nil {
+				reply = make([]interface{}, len(keys))
+				for i, key := range keys {
+					reply[i] = resultMap[key]
+				}
 			}
 		}
 	} else {
@@ -811,11 +821,54 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 	return err
 }
 
-// pfMergeStagingTTL bounds the lifetime of the temporary keys used to stage
-// source HLL values during a cluster PFMerge. The keys are deleted right
-// after the merge; the TTL only guarantees they cannot leak forever when the
-// process dies mid-operation or the cleanup fails.
-const pfMergeStagingTTL = time.Minute
+// hllStagingTTL bounds the lifetime of the temporary keys used to stage
+// source HLL values during a cluster PFMerge or PFCount. The keys are deleted
+// right after the operation; the TTL only guarantees they cannot leak forever
+// when the process dies mid-operation or the cleanup fails.
+const hllStagingTTL = time.Minute
+
+// fetchHLLValues returns the raw values of the keys that exist, fetched with
+// per-key GETs in one pipeline (go-redis groups them into one batch per
+// node). Only missing keys are skipped — they contribute nothing to a union.
+// Existing values are returned as is, including empty or malformed strings,
+// so the server-side PFMERGE/PFCOUNT validates them exactly like the native
+// command would; wrong-type keys (e.g. lists) fail the GET itself, again
+// matching the native commands, where MGET would silently treat them as
+// missing.
+func (c *client) fetchHLLValues(ctx context.Context, keys []string) ([][]byte, error) {
+	pipe := c.rc.Pipeline()
+	cmds := make([]*goredis.StringCmd, len(keys))
+	for i, key := range keys {
+		cmds[i] = pipe.Get(ctx, key)
+	}
+	// Exec returns the first command error, which is goredis.Nil whenever any
+	// key is missing; per-command errors are inspected below instead.
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, goredis.Nil) {
+		return nil, err
+	}
+	blobs := make([][]byte, 0, len(keys))
+	for _, cmd := range cmds {
+		b, err := cmd.Bytes()
+		if errors.Is(err, goredis.Nil) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		blobs = append(blobs, b)
+	}
+	return blobs, nil
+}
+
+// newStagedKeys returns n unique keys that all hash to the slot of the given
+// hash tag.
+func newStagedKeys(tag string, n int) []string {
+	staged := make([]string, 0, n)
+	for i := 0; i < n; i++ {
+		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
+	}
+	return staged
+}
 
 // pfMergeCluster merges HyperLogLog values whose keys may live in different
 // cluster slots. PFMERGE requires all of its keys in one slot, so the source
@@ -824,17 +877,9 @@ const pfMergeStagingTTL = time.Minute
 // into dest keeps PFMERGE's native semantics: concurrent writes to dest are
 // merged rather than overwritten.
 func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration time.Duration, keys ...string) error {
-	// Fetch all source HLL objects (GetMulti groups the keys by slot).
-	values, err := c.GetMulti(keys, true)
+	blobs, err := c.fetchHLLValues(ctx, keys)
 	if err != nil {
 		return err
-	}
-	blobs := make([][]byte, 0, len(values))
-	for _, v := range values {
-		// Missing keys are returned as empty strings; keep existing values only.
-		if b, ok := v.([]byte); ok && len(b) > 0 {
-			blobs = append(blobs, b)
-		}
 	}
 	if len(blobs) == 0 {
 		// Nothing to merge. Keep parity with the standalone branch: PFMERGE
@@ -852,10 +897,7 @@ func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration tim
 		// "{tag}..." staging key; merge in a random slot and copy the result.
 		return c.pfMergeClusterViaTmpDest(ctx, dest, expiration, blobs)
 	}
-	staged := make([]string, 0, len(blobs))
-	for range blobs {
-		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
-	}
+	staged := newStagedKeys(tag, len(blobs))
 	defer c.bestEffortDel(ctx, staged)
 
 	// All staged keys share dest's hash slot, so a single transactional
@@ -863,7 +905,7 @@ func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration tim
 	// sets the expiration.
 	pipe := c.rc.TxPipeline()
 	for i, b := range blobs {
-		pipe.Set(ctx, staged[i], b, pfMergeStagingTTL)
+		pipe.Set(ctx, staged[i], b, hllStagingTTL)
 	}
 	pipe.PFMerge(ctx, dest, staged...)
 	pipe.Expire(ctx, dest, expiration)
@@ -892,19 +934,16 @@ func (c *client) pfMergeClusterViaTmpDest(
 	}
 
 	tag := uuid.New().String()
-	staged := make([]string, 0, len(blobs))
-	for range blobs {
-		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
-	}
+	staged := newStagedKeys(tag, len(blobs))
 	tmpDest := fmt.Sprintf("{%s}%s", tag, uuid.New().String())
 	defer c.bestEffortDel(ctx, append(staged, tmpDest))
 
 	pipe := c.rc.TxPipeline()
 	for i, b := range blobs {
-		pipe.Set(ctx, staged[i], b, pfMergeStagingTTL)
+		pipe.Set(ctx, staged[i], b, hllStagingTTL)
 	}
 	pipe.PFMerge(ctx, tmpDest, staged...)
-	pipe.Expire(ctx, tmpDest, pfMergeStagingTTL)
+	pipe.Expire(ctx, tmpDest, hllStagingTTL)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return err
 	}
@@ -970,20 +1009,17 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 	var err error
 
 	if c.clientType == ClientTypeCluster {
-		// Use cluster-aware approach
-		slotMap := make(map[int][]string)
+		// PFCOUNT requires all of its keys in one hash slot. Keys in one
+		// slot (including the single-key case) are counted directly; keys
+		// spanning slots go through the staged union emulation.
+		slots := make(map[int]bool, 1)
 		for _, key := range keys {
-			slot := keyHashSlot(key)
-			slotMap[slot] = append(slotMap[slot], key)
+			slots[keyHashSlot(key)] = true
 		}
-
-		for _, slotKeys := range slotMap {
-			slotCount, slotErr := c.rc.PFCount(context.TODO(), slotKeys...).Result()
-			if slotErr != nil {
-				err = slotErr
-				break
-			}
-			count += slotCount
+		if len(slots) > 1 {
+			count, err = c.pfCountCluster(context.TODO(), keys)
+		} else {
+			count, err = c.rc.PFCount(context.TODO(), keys...).Result()
 		}
 	} else {
 		// Use standard approach for non-cluster client
@@ -999,6 +1035,39 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return count, err
+}
+
+// pfCountCluster computes the union cardinality of HLLs whose keys span
+// multiple cluster slots. Summing per-slot PFCOUNTs would NOT be a union (a
+// user present in HLLs on different slots would be counted once per slot),
+// so the values are fetched client side, staged under short-lived keys
+// sharing one hash slot, and counted server side with a single PFCOUNT.
+//
+// Note: although PFCount is conceptually a read, this emulation writes
+// TTL-guarded staging keys, like the cluster PFMerge does.
+func (c *client) pfCountCluster(ctx context.Context, keys []string) (int64, error) {
+	blobs, err := c.fetchHLLValues(ctx, keys)
+	if err != nil {
+		return 0, err
+	}
+	if len(blobs) == 0 {
+		// None of the keys exist: the union is empty.
+		return 0, nil
+	}
+	staged := newStagedKeys(uuid.New().String(), len(blobs))
+	defer c.bestEffortDel(ctx, staged)
+
+	// All staged keys share one hash slot, so a single transactional
+	// pipeline on that node stages the values and counts their union.
+	pipe := c.rc.TxPipeline()
+	for i, b := range blobs {
+		pipe.Set(ctx, staged[i], b, hllStagingTTL)
+	}
+	countCmd := pipe.PFCount(ctx, staged...)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return 0, err
+	}
+	return countCmd.Result()
 }
 
 func (c *client) IncrByFloat(key string, value float64) (float64, error) {

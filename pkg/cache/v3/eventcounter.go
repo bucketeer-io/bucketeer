@@ -18,10 +18,14 @@ package v3
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
 )
+
+// getEventCountsConcurrency bounds how many per-day count fetches run in
+// parallel so a long time range cannot flood Redis with concurrent requests.
+const getEventCountsConcurrency = 8
 
 type EventCounterCache interface {
 	GetEventCounts(keys []string) ([]float64, error)
@@ -29,8 +33,10 @@ type EventCounterCache interface {
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
 	GetUserCountsV2(keys []string) ([]float64, error)
-	MergeMultiKeys(dest string, keys []string, expiration time.Duration) error
-	DeleteKey(key string) error
+	// CountUniqueUsers returns the union cardinality of the user-count HLLs
+	// stored at the given keys. In cluster mode, keys spanning multiple hash
+	// slots are counted through short-lived staging keys.
+	CountUniqueUsers(keys []string) (int64, error)
 	UpdateUserCount(key, userID string) error
 }
 
@@ -75,21 +81,32 @@ func (*eventCounterCache) getEventValues(values []interface{}) ([]float64, error
 }
 
 func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
-	eventVals := make([]float64, 0, len(keys))
-	for _, day := range keys {
-		values, err := c.cache.GetMulti(day, true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get multiple keys: %w", err)
-		}
-		dayTotal, err := c.getEventValues(values)
-		if err != nil {
-			return nil, err
-		}
-		var totalVal float64
-		for _, v := range dayTotal {
-			totalVal += v
-		}
-		eventVals = append(eventVals, totalVal)
+	// The days are independent, so fetch them in parallel. The local errgroup
+	// recovers panics inside the goroutines, which plain x/sync/errgroup
+	// would let crash the process.
+	eventVals := make([]float64, len(keys))
+	var eg errgroup.Group
+	eg.SetLimit(getEventCountsConcurrency)
+	for i, day := range keys {
+		eg.Go(func() error {
+			values, err := c.cache.GetMulti(day, true)
+			if err != nil {
+				return fmt.Errorf("failed to get multiple keys: %w", err)
+			}
+			dayTotal, err := c.getEventValues(values)
+			if err != nil {
+				return err
+			}
+			var totalVal float64
+			for _, v := range dayTotal {
+				totalVal += v
+			}
+			eventVals[i] = totalVal
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 	return eventVals, nil
 }
@@ -122,16 +139,10 @@ func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 	return nil
 }
 
-func (c *eventCounterCache) MergeMultiKeys(dest string, keys []string, expiration time.Duration) error {
-	if err := c.cache.PFMerge(dest, expiration, keys...); err != nil {
-		return fmt.Errorf("failed to merge keys: %w", err)
+func (c *eventCounterCache) CountUniqueUsers(keys []string) (int64, error) {
+	count, err := c.cache.PFCount(keys...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count unique users: %w", err)
 	}
-	return nil
-}
-
-func (c *eventCounterCache) DeleteKey(key string) error {
-	if err := c.cache.Delete(key); err != nil {
-		return fmt.Errorf("failed to delete key: %w", err)
-	}
-	return nil
+	return count, nil
 }

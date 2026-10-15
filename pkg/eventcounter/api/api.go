@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -56,9 +55,10 @@ const (
 	opsGoalUserCountPrefix       = "autoops:goal"
 	defaultVariationID           = "default"
 	twentyFourHours              = 24
-	pfMergeKey                   = "pfmerge-key"
-	pfMergeKind                  = "pfmerge"
-	pfMergeExpiration            = 10 * time.Minute
+	// countFetchConcurrency bounds how many per-day (or per-hour) count
+	// fetches run in parallel per variation, so long time ranges cannot
+	// flood Redis with concurrent requests.
+	countFetchConcurrency = 8
 )
 
 var (
@@ -291,9 +291,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			)
 			userCounts, err := s.getUserCounts(
 				userCountKeys,
-				req.FeatureId,
-				req.EnvironmentId,
-				variationID,
 				timestampUnit,
 			)
 			if err != nil {
@@ -307,12 +304,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 				return err
 			}
 
-			totalUserCounts, err := s.getTotalUserCounts(
-				userCountKeys,
-				req.FeatureId,
-				req.EnvironmentId,
-				variationID,
-			)
+			totalUserCounts, err := s.getTotalUserCounts(userCountKeys)
 			if err != nil {
 				s.logCountError(
 					ctx,
@@ -382,19 +374,6 @@ func (s *eventCounterService) validateGetEvaluationTimeseriesCount(
 	return nil
 }
 
-type multiError []error
-
-func (m multiError) Error() string {
-	str := make([]string, 0, len(m))
-	for _, e := range m {
-		if e != nil {
-			s := e.Error()
-			str = append(str, s)
-		}
-	}
-	return fmt.Sprintf("%d errors: %s", len(str), strings.Join(str, ", "))
-}
-
 func (s *eventCounterService) getEventCounts(
 	keys [][]string,
 	unit ecproto.Timeseries_Unit,
@@ -417,47 +396,59 @@ func (s *eventCounterService) getTotalEventCounts(
 
 func (s *eventCounterService) getUserCounts(
 	keys [][]string,
-	featureID, environmentId, variationID string,
 	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
 	if unit == ecproto.Timeseries_HOUR {
-		return s.getHourlyUserCounts(keys, featureID, environmentId)
+		return s.getHourlyUserCounts(keys)
 	}
-	return s.getDailyUserCounts(keys, featureID, environmentId, variationID)
+	return s.getDailyUserCounts(keys)
 }
 
 func (s *eventCounterService) getHourlyUserCounts(
 	days [][]string,
-	featureID, environmentId string,
 ) ([]float64, error) {
+	// The hours are independent, so count them in parallel.
 	hours := days[0]
-	counts := make([]float64, 0, len(hours))
-	for _, hour := range hours {
-		c, err := s.evaluationCountCacher.GetUserCount(hour)
-		if err != nil {
-			return nil, err
-		}
-		counts = append(counts, float64(c))
+	counts := make([]float64, len(hours))
+	// The local errgroup recovers panics inside the goroutines, which plain
+	// x/sync/errgroup would let crash the process.
+	var eg errgroup.Group
+	eg.SetLimit(countFetchConcurrency)
+	for i, hour := range hours {
+		eg.Go(func() error {
+			c, err := s.evaluationCountCacher.GetUserCount(hour)
+			if err != nil {
+				return err
+			}
+			counts[i] = float64(c)
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 	return counts, nil
 }
 
 func (s *eventCounterService) getDailyUserCounts(
 	days [][]string,
-	featureID, environmentId, variationID string,
 ) ([]float64, error) {
-	counts := make([]float64, 0, len(days))
-	for _, day := range days {
-		c, err := s.countUniqueUser(
-			day,
-			featureID,
-			environmentId,
-			variationID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		counts = append(counts, c)
+	// The days are independent, so count them in parallel.
+	counts := make([]float64, len(days))
+	var eg errgroup.Group
+	eg.SetLimit(countFetchConcurrency)
+	for i, day := range days {
+		eg.Go(func() error {
+			c, err := s.evaluationCountCacher.CountUniqueUsers(day)
+			if err != nil {
+				return err
+			}
+			counts[i] = float64(c)
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 	return counts, nil
 }
@@ -474,47 +465,9 @@ func (s *eventCounterService) flattenAry(
 
 func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
-	featureID, environmentId, variationID string,
 ) (int64, error) {
 	flat := s.flattenAry(userCountKeys)
-	count, err := s.countUniqueUser(
-		flat,
-		featureID, environmentId,
-		variationID,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return int64(count), nil
-}
-
-func (s *eventCounterService) countUniqueUser(
-	userCountKeys []string,
-	featureID, environmentId, variationID string,
-) (count float64, err multiError) {
-	key := newPFMergeKey(
-		UserCountPrefix,
-		featureID,
-		environmentId,
-		variationID,
-	)
-	// We need to count the number of unique users in the target term.
-	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys, pfMergeExpiration); e != nil {
-		err = append(err, e)
-		return
-	}
-	defer func() {
-		if e := s.evaluationCountCacher.DeleteKey(key); e != nil {
-			err = append(err, e)
-		}
-	}()
-	c, e := s.evaluationCountCacher.GetUserCount(key)
-	count = float64(c)
-	if e != nil {
-		err = append(err, e)
-		return
-	}
-	return
+	return s.evaluationCountCacher.CountUniqueUsers(flat)
 }
 
 func (*eventCounterService) getEventCountKeys(
@@ -572,16 +525,6 @@ func (s *eventCounterService) logCountError(
 			zap.Int32("featureVersion", featureVersion),
 			zap.String("variationId", vID),
 		)...,
-	)
-}
-
-func newPFMergeKey(
-	kind, featureID, environmentId, variationID string,
-) string {
-	return cache.MakeKey(
-		fmt.Sprintf("%s:%s", pfMergeKind, kind),
-		fmt.Sprintf("%s:%s:%s", pfMergeKey, featureID, variationID),
-		environmentId,
 	)
 }
 

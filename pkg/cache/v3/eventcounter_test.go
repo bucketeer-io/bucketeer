@@ -15,7 +15,11 @@
 package v3
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -107,6 +111,81 @@ func TestGetEventCounts(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetEventCountsV2(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success: results keep input order under out-of-order completion", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+		c := &eventCounterCache{cache: mockCache}
+
+		// More days than getEventCountsConcurrency (8) so the limiter queues
+		// work, with distinct per-day totals so any index mix-up changes the
+		// output. Earlier days sleep longer, forcing them to finish after
+		// later ones.
+		numDays := 12
+		keys := make([][]string, 0, numDays)
+		expected := make([]float64, 0, numDays)
+		for i := 0; i < numDays; i++ {
+			day := []string{
+				fmt.Sprintf("day%d-hour0", i),
+				fmt.Sprintf("day%d-hour1", i),
+			}
+			keys = append(keys, day)
+			// Distinct totals: day i sums to 100*i + 1.
+			expected = append(expected, float64(100*i+1))
+			sleep := time.Duration(numDays-i) * 2 * time.Millisecond
+			resp := []interface{}{
+				[]byte(strconv.Itoa(100 * i)),
+				[]byte("1"),
+			}
+			mockCache.EXPECT().GetMulti(day, true).DoAndReturn(
+				func([]string, bool) ([]interface{}, error) {
+					time.Sleep(sleep)
+					return resp, nil
+				})
+		}
+
+		actual, err := c.GetEventCountsV2(keys)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("failure: GetMulti error propagates", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+		c := &eventCounterCache{cache: mockCache}
+
+		mockCache.EXPECT().GetMulti([]string{"ok"}, true).Return(
+			[]interface{}{[]byte("1")}, nil).AnyTimes()
+		mockCache.EXPECT().GetMulti([]string{"broken"}, true).Return(
+			nil, errors.New("redis down"))
+
+		actual, err := c.GetEventCountsV2([][]string{{"ok"}, {"broken"}})
+		assert.ErrorContains(t, err, "redis down")
+		assert.Nil(t, actual)
+	})
+
+	t.Run("failure: unparsable value propagates", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+		c := &eventCounterCache{cache: mockCache}
+
+		mockCache.EXPECT().GetMulti([]string{"bad"}, true).Return(
+			[]interface{}{[]byte("not a number")}, nil)
+
+		actual, err := c.GetEventCountsV2([][]string{{"bad"}})
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
 func TestGetUserCounts(t *testing.T) {
