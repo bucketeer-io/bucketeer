@@ -60,7 +60,8 @@ type PFGetter interface {
 
 type MultiGetter interface {
 	GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error)
-	Scan(cursor, key, count interface{}) (uint64, []string, error)
+	// ScanKeys returns all keys matching the pattern, from every master in cluster mode.
+	ScanKeys(match string, count int64) ([]string, error)
 	SMembers(key string) ([]string, error)
 }
 

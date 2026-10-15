@@ -100,7 +100,6 @@ func TestGetAllSegmentUser(t *testing.T) {
 
 	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentId)
 	key := keyPrefix + "*"
-	var cursor uint64
 
 	patterns := []struct {
 		desc        string
@@ -110,16 +109,16 @@ func TestGetAllSegmentUser(t *testing.T) {
 		{
 			desc: "error_scan_not_found",
 			setup: func(sc *segmentUsersCache) {
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
-					cursor, nil, cache.ErrNotFound)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().ScanKeys(key, segmentUsersMaxSize).Return(
+					nil, cache.ErrNotFound)
 			},
 			expectedErr: cache.ErrNotFound,
 		},
 		{
 			desc: "error_get_multi_not_found",
 			setup: func(sc *segmentUsersCache) {
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
-					cursor, keys, nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().ScanKeys(key, segmentUsersMaxSize).Return(
+					keys, nil)
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys, false).Return(nil, cache.ErrNotFound)
 			},
 			expectedErr: cache.ErrNotFound,
@@ -127,8 +126,8 @@ func TestGetAllSegmentUser(t *testing.T) {
 		{
 			desc: "error_invalid_type",
 			setup: func(sc *segmentUsersCache) {
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
-					cursor, keys, nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().ScanKeys(key, segmentUsersMaxSize).Return(
+					keys, nil)
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys, false).Return([]interface{}{"test"}, nil)
 			},
 			expectedErr: cache.ErrInvalidType,
@@ -136,8 +135,8 @@ func TestGetAllSegmentUser(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(sc *segmentUsersCache) {
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
-					cursor, keys, nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().ScanKeys(key, segmentUsersMaxSize).Return(
+					keys, nil)
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys, false).Return([]interface{}{dataSegmentUsers}, nil)
 			},
 			expectedErr: nil,

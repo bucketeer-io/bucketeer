@@ -622,3 +622,48 @@ func TestPutIfNewerScriptRendered(t *testing.T) {
 	assert.Contains(t, putIfNewerScript, "string.rep('%d', 20)")
 	assert.Contains(t, putIfNewerScript, "redis.sha1hex")
 }
+
+func TestRedisCacheScanKeys(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		keys     []string
+		match    string
+		expected []string
+	}{
+		{
+			desc:     "no keys",
+			match:    "env-1:su:*",
+			expected: []string{},
+		},
+		{
+			desc:     "keys across several pages",
+			keys:     []string{"env-1:su:a", "env-1:su:b", "env-1:su:c", "env-1:su:d", "env-1:su:e", "env-2:su:a"},
+			match:    "env-1:su:*",
+			expected: []string{"env-1:su:a", "env-1:su:b", "env-1:su:c", "env-1:su:d", "env-1:su:e"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			mr, rc := newMiniRedisCache(t)
+			for _, k := range p.keys {
+				require.NoError(t, mr.Set(k, "v"))
+			}
+			keys, err := rc.ScanKeys(p.match, 2)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, p.expected, keys)
+		})
+	}
+}
+
+func TestRedisCacheScanKeysError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	client := redismock.NewMockClient(ctrl)
+	client.EXPECT().ScanAll("env-1:su:*", int64(100), gomock.Any()).Return(errors.New("scan failed"))
+	rc := NewRedisCache(client).(*redisCache)
+	keys, err := rc.ScanKeys("env-1:su:*", 100)
+	assert.EqualError(t, err, "scan failed")
+	assert.Nil(t, keys)
+}

@@ -178,20 +178,7 @@ func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, e
 		zap.String("kind", kind),
 	)
 	startTime := time.Now()
-	var cursor uint64
-	var k []string
-	var err error
-	keys := []string{}
-	for {
-		cursor, k, err = r.cache.Scan(cursor, key, redisScanMaxSize)
-		if err != nil {
-			break
-		}
-		keys = append(keys, k...)
-		if cursor == 0 {
-			break
-		}
-	}
+	keys, err := r.cache.ScanKeys(key, redisScanMaxSize)
 	if err != nil {
 		return nil, err
 	}

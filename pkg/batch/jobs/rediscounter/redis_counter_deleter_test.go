@@ -78,8 +78,8 @@ func TestRun(t *testing.T) {
 					&evproto.ListEnvironmentsV2Response{
 						Environments: inputEnvironments,
 					}, nil)
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:uc:*", redisScanMaxSize).Return(
-					uint64(0), nil, errors.New("internal error"))
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:uc:*", redisScanMaxSize).Return(
+					nil, errors.New("internal error"))
 			},
 			expected: errors.New("internal error"),
 		},
@@ -91,17 +91,17 @@ func TestRun(t *testing.T) {
 						Environments: inputEnvironments,
 					}, nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:uc:*", redisScanMaxSize).Return(
-					uint64(0), nil, nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:uc:*", redisScanMaxSize).Return(
+					nil, nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:ec:*", redisScanMaxSize).Return(
-					uint64(0), nil, nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+					nil, nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:uc:*", redisScanMaxSize).Return(
-					uint64(0), nil, nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("prd:uc:*", redisScanMaxSize).Return(
+					nil, nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:ec:*", redisScanMaxSize).Return(
-					uint64(0), nil, nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("prd:ec:*", redisScanMaxSize).Return(
+					nil, nil)
 			},
 		},
 		{
@@ -111,8 +111,8 @@ func TestRun(t *testing.T) {
 					&evproto.ListEnvironmentsV2Response{
 						Environments: inputEnvironments,
 					}, nil)
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:uc:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "dev", "uc", 31, 1), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:uc:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "dev", "uc", 31, 1), nil)
 
 				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(gomock.Any()).Return(errors.New("delete error")).AnyTimes()
 			},
@@ -128,17 +128,17 @@ func TestRun(t *testing.T) {
 						Environments: inputEnvironments,
 					}, nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:uc:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "dev", "uc", 7, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:uc:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "dev", "uc", 7, 100), nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:ec:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "dev", "ec", 7, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "dev", "ec", 7, 100), nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:uc:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "prd", "uc", 7, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("prd:uc:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "prd", "uc", 7, 100), nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:ec:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "prd", "ec", 7, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("prd:ec:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "prd", "ec", 7, 100), nil)
 			},
 			expected: nil,
 		},
@@ -150,17 +150,17 @@ func TestRun(t *testing.T) {
 						Environments: inputEnvironments,
 					}, nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:uc:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "dev", "uc", 31, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:uc:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "dev", "uc", 31, 100), nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:ec:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "dev", "ec", 31, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "dev", "ec", 31, 100), nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:uc:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "prd", "uc", 31, 100), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("prd:uc:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "prd", "uc", 31, 100), nil)
 
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:ec:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "prd", "ec", 31, 150), nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("prd:ec:*", redisScanMaxSize).Return(
+					makeDummyKeys(t, "prd", "ec", 31, 150), nil)
 
 				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(gomock.Any()).Return(nil).Times(450)
 			},
@@ -264,8 +264,8 @@ func TestScan(t *testing.T) {
 		{
 			desc: "err: internal",
 			setup: func(r *redisCounterDeleter) {
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "key", redisScanMaxSize).Return(
-					uint64(0), nil, errors.New("internal error"))
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("key", redisScanMaxSize).Return(
+					nil, errors.New("internal error"))
 			},
 			expected:      nil,
 			expectedError: errors.New("internal error"),
@@ -273,8 +273,8 @@ func TestScan(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(r *redisCounterDeleter) {
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "key", redisScanMaxSize).Return(
-					uint64(0), inputKeys, nil)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().ScanKeys("key", redisScanMaxSize).Return(
+					inputKeys, nil)
 			},
 			expected:      inputKeys,
 			expectedError: nil,
