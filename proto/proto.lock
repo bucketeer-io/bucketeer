@@ -24133,6 +24133,18 @@
               {
                 "name": "THIRTY_DAYS",
                 "integer": 4
+              },
+              {
+                "name": "ONE_HOUR",
+                "integer": 5
+              },
+              {
+                "name": "SIXTY_DAYS",
+                "integer": 6
+              },
+              {
+                "name": "NINETY_DAYS",
+                "integer": 7
               }
             ]
           }
@@ -26021,6 +26033,10 @@
               {
                 "name": "DAY",
                 "integer": 1
+              },
+              {
+                "name": "MINUTE",
+                "integer": 2
               }
             ]
           }

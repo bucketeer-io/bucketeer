@@ -1856,6 +1856,9 @@ paths:
             - SEVEN_DAYS
             - FOURTEEN_DAYS
             - THIRTY_DAYS
+            - ONE_HOUR
+            - SIXTY_DAYS
+            - NINETY_DAYS
           default: UNKNOWN
       tags:
         - Event Counter
@@ -4988,6 +4991,9 @@ definitions:
       - SEVEN_DAYS
       - FOURTEEN_DAYS
       - THIRTY_DAYS
+      - ONE_HOUR
+      - SIXTY_DAYS
+      - NINETY_DAYS
     default: UNKNOWN
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
@@ -5114,6 +5120,7 @@ definitions:
     enum:
       - HOUR
       - DAY
+      - MINUTE
     default: HOUR
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
