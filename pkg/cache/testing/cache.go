@@ -49,6 +49,16 @@ func (c *inMemoryCache) Put(key interface{}, value interface{}, expiration time.
 	return nil
 }
 
+func (c *inMemoryCache) PutIfAbsent(key string, value interface{}, expiration time.Duration) (bool, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if _, ok := c.data[key]; ok {
+		return false, nil
+	}
+	c.data[key] = value
+	return true, nil
+}
+
 func (c *inMemoryCache) PutIfNewer(
 	key, genKey string,
 	value []byte,

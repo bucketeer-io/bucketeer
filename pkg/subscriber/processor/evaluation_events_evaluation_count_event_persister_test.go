@@ -806,8 +806,8 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 					},
 				},
 			},
-			expectedEventCountKeys: 1,
-			expectedUserCountKeys:  1,
+			expectedEventCountKeys: 3, // 1 bucket × 3 tiers (minute, hour, day)
+			expectedUserCountKeys:  3,
 			expectedFailCount:      0,
 			expectFlushCalled:      true,
 		},
@@ -844,8 +844,8 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 					},
 				},
 			},
-			expectedEventCountKeys: 1, // all 3 events share same key
-			expectedUserCountKeys:  1, // all 3 events share same key
+			expectedEventCountKeys: 3, // all 3 events share the same bucket × 3 tiers
+			expectedUserCountKeys:  3, // all 3 events share the same bucket × 3 tiers
 			expectedFailCount:      0,
 			expectFlushCalled:      true,
 		},
@@ -873,8 +873,8 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 					},
 				},
 			},
-			expectedEventCountKeys: 2, // different variations
-			expectedUserCountKeys:  2,
+			expectedEventCountKeys: 6, // 2 variations × 3 tiers
+			expectedUserCountKeys:  6,
 			expectedFailCount:      0,
 			expectFlushCalled:      true,
 		},
@@ -902,8 +902,8 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 					},
 				},
 			},
-			expectedEventCountKeys: 1, // both map to "default" variation
-			expectedUserCountKeys:  1,
+			expectedEventCountKeys: 3, // both map to "default" variation (1 bucket × 3 tiers)
+			expectedUserCountKeys:  3,
 			expectedFailCount:      0,
 			expectFlushCalled:      true,
 		},
@@ -1033,15 +1033,15 @@ func TestIncrementEnvEvents_AggregatedIncrementMagnitude(t *testing.T) {
 	fails := persister.incrementEnvEvents(envEvents)
 	assert.Empty(t, fails, "no failures expected for successful flush")
 
-	ecKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-1", "variation-A", "env-1", hour1)
-	ucKey := persister.newEvaluationCountkeyV2(userCountKey, "feature-1", "variation-A", "env-1", hour1)
+	ecKey := legacyHourlyCountKey(eventCountKey, "feature-1", "variation-A", "env-1", hour1)
+	ucKey := legacyHourlyCountKey(userCountKey, "feature-1", "variation-A", "env-1", hour1)
 
 	assert.Equal(t, int64(nEvents), mockCache.lastEventCounts[ecKey],
 		"three events same bucket should produce a single IncrementBy with delta 3")
 	require.Contains(t, mockCache.lastUserCounts, ucKey)
 	assert.Len(t, mockCache.lastUserCounts[ucKey], nEvents, "three distinct users for PFADD set")
-	assert.Equal(t, 1, mockCache.execCount, "exactly one IncrementBy call for the single ec key")
-	assert.Equal(t, 1, mockCache.pfaddCallCount, "exactly one PFADD call for the single uc key")
+	assert.Equal(t, 3, mockCache.execCount, "one IncrementBy call per tier (minute, hour, day)")
+	assert.Equal(t, 3, mockCache.pfaddCallCount, "one PFADD call per tier (minute, hour, day)")
 }
 
 func TestFlushAggregatedCounts(t *testing.T) {
@@ -1113,8 +1113,8 @@ func TestFlushAggregatedCounts(t *testing.T) {
 			name: "admin format keys (MakeKey admin env)",
 			seed: func(p *evaluationCountEventPersister) (map[string]int64, map[string]map[string]struct{}) {
 				hour1 := int64(1709974800)
-				ecKey := p.newEvaluationCountkeyV2(eventCountKey, "feature-admin", "varA", storage.AdminEnvironmentID, hour1)
-				ucKey := p.newEvaluationCountkeyV2(userCountKey, "feature-admin", "varA", storage.AdminEnvironmentID, hour1)
+				ecKey := legacyHourlyCountKey(eventCountKey, "feature-admin", "varA", storage.AdminEnvironmentID, hour1)
+				ucKey := legacyHourlyCountKey(userCountKey, "feature-admin", "varA", storage.AdminEnvironmentID, hour1)
 				return map[string]int64{ecKey: 77},
 					map[string]map[string]struct{}{ucKey: {"user-a": {}, "user-b": {}}}
 			},
@@ -1499,7 +1499,7 @@ func TestIncrementEnvEvents_PartialFlushFailure(t *testing.T) {
 		evaluationCountCacher: &mockEvaluationCountCache{},
 		logger:                zap.NewNop(),
 	}
-	failECKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-bad", "variation-B", "env-1", hour1)
+	failECKey := legacyHourlyCountKey(eventCountKey, "feature-bad", "variation-B", "env-1", hour1)
 	persister.evaluationCountCacher.(*mockEvaluationCountCache).failOnECKey = failECKey
 
 	fails := persister.incrementEnvEvents(envEvents)
@@ -1545,7 +1545,7 @@ func TestIncrementEnvEvents_SharedKeyPairFailure(t *testing.T) {
 		evaluationCountCacher: &mockEvaluationCountCache{},
 		logger:                zap.NewNop(),
 	}
-	failECKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-shared", "variation-A", "env-1", hour1)
+	failECKey := legacyHourlyCountKey(eventCountKey, "feature-shared", "variation-A", "env-1", hour1)
 	persister.evaluationCountCacher.(*mockEvaluationCountCache).failOnECKey = failECKey
 
 	fails := persister.incrementEnvEvents(envEvents)
@@ -1600,7 +1600,7 @@ func TestIncrementEnvEvents_MultiSourceMetricsAttribution(t *testing.T) {
 		evaluationCountCacher: &mockEvaluationCountCache{},
 		logger:                zap.NewNop(),
 	}
-	failECKey := persister.newEvaluationCountkeyV2(eventCountKey, "feature-X", "variation-A", "env-1", hour1)
+	failECKey := legacyHourlyCountKey(eventCountKey, "feature-X", "variation-A", "env-1", hour1)
 	persister.evaluationCountCacher.(*mockEvaluationCountCache).failOnECKey = failECKey
 
 	fails := persister.incrementEnvEvents(envEvents)
@@ -1726,7 +1726,10 @@ type mockEvaluationCountCache struct {
 	execCount        int // Number of IncrementBy calls (direct INCRBY operations)
 	pfaddCallCount   int // Number of direct PFAdd calls
 	pfaddCalls       []pfaddCall
-	incrbyCallOrder  []string // Track order of operations
+	incrbyCallOrder  []string                 // Track order of operations
+	expireCalls      map[string]time.Duration // key → TTL of the last Expire call
+	putIfAbsentKey   string                   // key of the last PutIfAbsent call
+	putIfAbsentValue interface{}              // value of the last PutIfAbsent call
 }
 
 func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
@@ -1843,7 +1846,26 @@ func (m *mockEvaluationCountCache) PFMerge(dest string, expiration time.Duration
 
 // Expirer interface methods
 func (m *mockEvaluationCountCache) Expire(key string, expiration time.Duration) (bool, error) {
-	return false, nil
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.expireCalls == nil {
+		m.expireCalls = make(map[string]time.Duration)
+	}
+	m.expireCalls[key] = expiration
+	return true, nil
+}
+
+// AbsentPutter interface methods
+func (m *mockEvaluationCountCache) PutIfAbsent(
+	key string,
+	value interface{},
+	expiration time.Duration,
+) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.putIfAbsentKey = key
+	m.putIfAbsentValue = value
+	return true, nil
 }
 
 type mockPipeClient struct {
