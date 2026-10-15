@@ -644,33 +644,43 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 	var err error
 
 	if c.clientType == ClientTypeCluster {
-		// Use cluster-aware approach
+		// MGET requires all of its keys in one hash slot, so group them by slot.
 		slotMap := make(map[int][]string)
 		for _, key := range keys {
 			slot := keyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
-		// Create a map to store results temporarily
-		resultMap := make(map[string]interface{}, len(keys))
-
-		for _, slotKeys := range slotMap {
-			slotReply, slotErr := c.rc.MGet(context.TODO(), slotKeys...).Result()
-			if slotErr != nil {
-				err = slotErr
-				break
-			}
-			// Store results in the map
-			for i, key := range slotKeys {
-				resultMap[key] = slotReply[i]
-			}
+		// Issue one MGET per slot inside a single pipeline. The cluster
+		// pipeline groups the commands by node and queries the nodes
+		// concurrently, so the latency is roughly one round trip per node
+		// instead of one sequential round trip per slot.
+		pipe := c.rc.Pipeline()
+		slotCmds := make(map[int]*goredis.SliceCmd, len(slotMap))
+		for slot, slotKeys := range slotMap {
+			slotCmds[slot] = pipe.MGet(context.TODO(), slotKeys...)
 		}
+		_, err = pipe.Exec(context.TODO())
 
 		if err == nil {
-			// Populate the reply slice in the original order
-			reply = make([]interface{}, len(keys))
-			for i, key := range keys {
-				reply[i] = resultMap[key]
+			// Store results in a map, then populate the reply slice in the
+			// original key order.
+			resultMap := make(map[string]interface{}, len(keys))
+			for slot, cmd := range slotCmds {
+				slotReply, slotErr := cmd.Result()
+				if slotErr != nil {
+					err = slotErr
+					break
+				}
+				for i, key := range slotMap[slot] {
+					resultMap[key] = slotReply[i]
+				}
+			}
+			if err == nil {
+				reply = make([]interface{}, len(keys))
+				for i, key := range keys {
+					reply[i] = resultMap[key]
+				}
 			}
 		}
 	} else {
@@ -970,7 +980,13 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 	var err error
 
 	if c.clientType == ClientTypeCluster {
-		// Use cluster-aware approach
+		// Use cluster-aware approach.
+		//
+		// WARNING: summing per-slot PFCOUNTs is NOT a union cardinality: a
+		// user present in HLLs on different slots is counted once per slot.
+		// With multiple keys this therefore overcounts unless the keys are
+		// known to be disjoint. To count unique users across keys, merge
+		// them into one key with PFMerge and PFCount that single key.
 		slotMap := make(map[int][]string)
 		for _, key := range keys {
 			slot := keyHashSlot(key)

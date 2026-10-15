@@ -22,7 +22,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
+	xsync "golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -59,6 +61,10 @@ const (
 	pfMergeKey                   = "pfmerge-key"
 	pfMergeKind                  = "pfmerge"
 	pfMergeExpiration            = 10 * time.Minute
+	// countFetchConcurrency bounds how many per-day (or per-hour) count
+	// fetches run in parallel per variation, so long time ranges cannot
+	// flood Redis with concurrent requests.
+	countFetchConcurrency = 8
 )
 
 var (
@@ -430,14 +436,23 @@ func (s *eventCounterService) getHourlyUserCounts(
 	days [][]string,
 	featureID, environmentId string,
 ) ([]float64, error) {
+	// The hours are independent, so count them in parallel.
 	hours := days[0]
-	counts := make([]float64, 0, len(hours))
-	for _, hour := range hours {
-		c, err := s.evaluationCountCacher.GetUserCount(hour)
-		if err != nil {
-			return nil, err
-		}
-		counts = append(counts, float64(c))
+	counts := make([]float64, len(hours))
+	var eg xsync.Group
+	eg.SetLimit(countFetchConcurrency)
+	for i, hour := range hours {
+		eg.Go(func() error {
+			c, err := s.evaluationCountCacher.GetUserCount(hour)
+			if err != nil {
+				return err
+			}
+			counts[i] = float64(c)
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 	return counts, nil
 }
@@ -446,18 +461,29 @@ func (s *eventCounterService) getDailyUserCounts(
 	days [][]string,
 	featureID, environmentId, variationID string,
 ) ([]float64, error) {
-	counts := make([]float64, 0, len(days))
-	for _, day := range days {
-		c, err := s.countUniqueUser(
-			day,
-			featureID,
-			environmentId,
-			variationID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		counts = append(counts, c)
+	// The days are independent, so count them in parallel. Every
+	// countUniqueUser call merges into its own unique destination key, so
+	// the parallel merges cannot interfere with each other.
+	counts := make([]float64, len(days))
+	var eg xsync.Group
+	eg.SetLimit(countFetchConcurrency)
+	for i, day := range days {
+		eg.Go(func() error {
+			c, err := s.countUniqueUser(
+				day,
+				featureID,
+				environmentId,
+				variationID,
+			)
+			if err != nil {
+				return err
+			}
+			counts[i] = c
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 	return counts, nil
 }
@@ -580,7 +606,11 @@ func newPFMergeKey(
 ) string {
 	return cache.MakeKey(
 		fmt.Sprintf("%s:%s", pfMergeKind, kind),
-		fmt.Sprintf("%s:%s:%s", pfMergeKey, featureID, variationID),
+		// The unique suffix guarantees that concurrent merges (parallel days
+		// within one request, or concurrent requests for the same feature
+		// and variation) never share a destination key. The key is deleted
+		// right after counting; its expiration only guards against leaks.
+		fmt.Sprintf("%s:%s:%s:%s", pfMergeKey, featureID, variationID, uuid.New().String()),
 		environmentId,
 	)
 }

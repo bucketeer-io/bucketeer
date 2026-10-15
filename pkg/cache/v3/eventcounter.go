@@ -20,8 +20,14 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 )
+
+// getEventCountsConcurrency bounds how many per-day count fetches run in
+// parallel so a long time range cannot flood Redis with concurrent requests.
+const getEventCountsConcurrency = 8
 
 type EventCounterCache interface {
 	GetEventCounts(keys []string) ([]float64, error)
@@ -75,21 +81,30 @@ func (*eventCounterCache) getEventValues(values []interface{}) ([]float64, error
 }
 
 func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
-	eventVals := make([]float64, 0, len(keys))
-	for _, day := range keys {
-		values, err := c.cache.GetMulti(day, true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get multiple keys: %w", err)
-		}
-		dayTotal, err := c.getEventValues(values)
-		if err != nil {
-			return nil, err
-		}
-		var totalVal float64
-		for _, v := range dayTotal {
-			totalVal += v
-		}
-		eventVals = append(eventVals, totalVal)
+	// The days are independent, so fetch them in parallel.
+	eventVals := make([]float64, len(keys))
+	var eg errgroup.Group
+	eg.SetLimit(getEventCountsConcurrency)
+	for i, day := range keys {
+		eg.Go(func() error {
+			values, err := c.cache.GetMulti(day, true)
+			if err != nil {
+				return fmt.Errorf("failed to get multiple keys: %w", err)
+			}
+			dayTotal, err := c.getEventValues(values)
+			if err != nil {
+				return err
+			}
+			var totalVal float64
+			for _, v := range dayTotal {
+				totalVal += v
+			}
+			eventVals[i] = totalVal
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 	return eventVals, nil
 }
