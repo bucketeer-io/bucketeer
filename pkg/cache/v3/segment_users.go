@@ -110,24 +110,7 @@ func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environ
 func (c *segmentUsersCache) scan(multiCache cache.MultiGetCache, environmentId string) ([]string, error) {
 	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentId)
 	key := keyPrefix + "*"
-	var cursor uint64
-	var k []string
-	var err error
-	keys := []string{}
-	for {
-		cursor, k, err = multiCache.Scan(cursor, key, segmentUsersMaxSize)
-		if err != nil {
-			break
-		}
-		keys = append(keys, k...)
-		if cursor == 0 {
-			break
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	return keys, nil
+	return multiCache.ScanKeys(key, segmentUsersMaxSize)
 }
 
 func (c *segmentUsersCache) Evict(segmentID, environmentId string) error {

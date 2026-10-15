@@ -210,20 +210,19 @@ func (mr *MockMultiGetCacheMockRecorder) SMembers(key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockMultiGetCache)(nil).SMembers), key)
 }
 
-// Scan mocks base method.
-func (m *MockMultiGetCache) Scan(cursor, key, count any) (uint64, []string, error) {
+// ScanKeys mocks base method.
+func (m *MockMultiGetCache) ScanKeys(match string, count int64) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Scan", cursor, key, count)
-	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].([]string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "ScanKeys", match, count)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// Scan indicates an expected call of Scan.
-func (mr *MockMultiGetCacheMockRecorder) Scan(cursor, key, count any) *gomock.Call {
+// ScanKeys indicates an expected call of ScanKeys.
+func (mr *MockMultiGetCacheMockRecorder) ScanKeys(match, count any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetCache)(nil).Scan), cursor, key, count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanKeys", reflect.TypeOf((*MockMultiGetCache)(nil).ScanKeys), match, count)
 }
 
 // MockMultiGetDeleteCountCache is a mock of MultiGetDeleteCountCache interface.
@@ -468,20 +467,19 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) SMembers(key any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).SMembers), key)
 }
 
-// Scan mocks base method.
-func (m *MockMultiGetDeleteCountCache) Scan(cursor, key, count any) (uint64, []string, error) {
+// ScanKeys mocks base method.
+func (m *MockMultiGetDeleteCountCache) ScanKeys(match string, count int64) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Scan", cursor, key, count)
-	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].([]string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "ScanKeys", match, count)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// Scan indicates an expected call of Scan.
-func (mr *MockMultiGetDeleteCountCacheMockRecorder) Scan(cursor, key, count any) *gomock.Call {
+// ScanKeys indicates an expected call of ScanKeys.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) ScanKeys(match, count any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Scan), cursor, key, count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanKeys", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).ScanKeys), match, count)
 }
 
 // MockGetter is a mock of Getter interface.
@@ -617,20 +615,19 @@ func (mr *MockMultiGetterMockRecorder) SMembers(key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockMultiGetter)(nil).SMembers), key)
 }
 
-// Scan mocks base method.
-func (m *MockMultiGetter) Scan(cursor, key, count any) (uint64, []string, error) {
+// ScanKeys mocks base method.
+func (m *MockMultiGetter) ScanKeys(match string, count int64) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Scan", cursor, key, count)
-	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].([]string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "ScanKeys", match, count)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// Scan indicates an expected call of Scan.
-func (mr *MockMultiGetterMockRecorder) Scan(cursor, key, count any) *gomock.Call {
+// ScanKeys indicates an expected call of ScanKeys.
+func (mr *MockMultiGetterMockRecorder) ScanKeys(match, count any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetter)(nil).Scan), cursor, key, count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanKeys", reflect.TypeOf((*MockMultiGetter)(nil).ScanKeys), match, count)
 }
 
 // MockPutter is a mock of Putter interface.

@@ -84,9 +84,9 @@ func (c *inMemoryCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]inter
 	return nil, nil
 }
 
-func (c *inMemoryCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
+func (c *inMemoryCache) ScanKeys(match string, count int64) ([]string, error) {
 	// TODO: implement
-	return 0, nil, nil
+	return nil, nil
 }
 
 func (c *inMemoryCache) SMembers(key string) ([]string, error) {

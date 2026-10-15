@@ -163,15 +163,19 @@ func (r *redisCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interfac
 	}
 }
 
-func (r *redisCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
-	c, keys, err := r.client.Scan(cursor.(uint64), key.(string), count.(int64))
+func (r *redisCache) ScanKeys(match string, count int64) ([]string, error) {
+	keys := []string{}
+	err := r.client.ScanAll(match, count, func(k []string) error {
+		keys = append(keys, k...)
+		return nil
+	})
 	switch err {
 	case nil:
-		return c, keys, nil
+		return keys, nil
 	case redis.ErrNil:
-		return 0, nil, cache.ErrNotFound
+		return nil, cache.ErrNotFound
 	default:
-		return 0, nil, err
+		return nil, err
 	}
 }
 

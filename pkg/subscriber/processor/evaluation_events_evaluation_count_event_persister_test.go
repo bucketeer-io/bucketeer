@@ -1765,8 +1765,8 @@ func (m *mockEvaluationCountCache) DeleteWithGeneration(key, genKey string) erro
 func (m *mockEvaluationCountCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {
 	return nil, nil
 }
-func (m *mockEvaluationCountCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
-	return 0, nil, nil
+func (m *mockEvaluationCountCache) ScanKeys(match string, count int64) ([]string, error) {
+	return nil, nil
 }
 func (m *mockEvaluationCountCache) SMembers(key string) ([]string, error) { return nil, nil }
 
