@@ -797,6 +797,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			promClient,
 			jobs.WithLogger(logger),
 		),
+		rediscounter.NewEvaluationDailyCountBackfiller(
+			cachev3.NewRedisCache(persistentRedisClient),
+			environmentClient,
+			jobs.WithTimeout(30*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 

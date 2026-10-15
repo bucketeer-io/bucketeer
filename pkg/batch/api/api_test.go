@@ -843,6 +843,12 @@ func newBatchService(t *testing.T,
 			nil,
 			jobs.WithLogger(logger),
 		),
+		rediscounter.NewEvaluationDailyCountBackfiller(
+			cacheMock,
+			environmentMockClient,
+			jobs.WithTimeout(30*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 	return service
