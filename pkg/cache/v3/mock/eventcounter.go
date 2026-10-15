@@ -11,7 +11,6 @@ package mock
 
 import (
 	reflect "reflect"
-	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -39,18 +38,19 @@ func (m *MockEventCounterCache) EXPECT() *MockEventCounterCacheMockRecorder {
 	return m.recorder
 }
 
-// DeleteKey mocks base method.
-func (m *MockEventCounterCache) DeleteKey(key string) error {
+// CountUniqueUsers mocks base method.
+func (m *MockEventCounterCache) CountUniqueUsers(keys []string) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteKey", key)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CountUniqueUsers", keys)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// DeleteKey indicates an expected call of DeleteKey.
-func (mr *MockEventCounterCacheMockRecorder) DeleteKey(key any) *gomock.Call {
+// CountUniqueUsers indicates an expected call of CountUniqueUsers.
+func (mr *MockEventCounterCacheMockRecorder) CountUniqueUsers(keys any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKey", reflect.TypeOf((*MockEventCounterCache)(nil).DeleteKey), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUniqueUsers", reflect.TypeOf((*MockEventCounterCache)(nil).CountUniqueUsers), keys)
 }
 
 // GetEventCounts mocks base method.
@@ -126,20 +126,6 @@ func (m *MockEventCounterCache) GetUserCountsV2(keys []string) ([]float64, error
 func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(keys any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCountsV2", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCountsV2), keys)
-}
-
-// MergeMultiKeys mocks base method.
-func (m *MockEventCounterCache) MergeMultiKeys(dest string, keys []string, expiration time.Duration) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys, expiration)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// MergeMultiKeys indicates an expected call of MergeMultiKeys.
-func (mr *MockEventCounterCacheMockRecorder) MergeMultiKeys(dest, keys, expiration any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).MergeMultiKeys), dest, keys, expiration)
 }
 
 // UpdateUserCount mocks base method.

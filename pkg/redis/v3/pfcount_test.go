@@ -50,13 +50,38 @@ func TestPFCountClusterSameSlotKeys(t *testing.T) {
 	assert.Equal(t, int64(3), count)
 }
 
-func TestPFCountClusterCrossSlotRejected(t *testing.T) {
+func TestPFCountClusterCrossSlotAllKeysMissing(t *testing.T) {
 	t.Parallel()
 	_, c := newMiniredisClient(t, ClientTypeCluster)
 
 	keys := []string{"env:uc:1:feature:variation", "env:uc:2:feature:variation"}
 	require.NotEqual(t, keyHashSlot(keys[0]), keyHashSlot(keys[1]))
 
+	// Cross-slot keys go through the staged-union path; when none of the
+	// source keys exist, the union is empty and nothing is staged.
+	count, err := c.PFCount(keys...)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+}
+
+func TestPFCountClusterCrossSlotErrorCleansUpStagingKeys(t *testing.T) {
+	t.Parallel()
+	// The happy cross-slot path cannot run against miniredis: it stores
+	// HLLs as a dedicated type, so MGET cannot fetch their raw values the
+	// way real Redis does (where HLLs are plain strings). Instead, store
+	// plain strings so the values are fetched and staged, and let the
+	// staged PFCOUNT fail (miniredis rejects PFCOUNT on string keys) to
+	// verify the error surfaces and the staging keys are cleaned up.
+	mr, c := newMiniredisClient(t, ClientTypeCluster)
+
+	keys := []string{"env:uc:1:feature:variation", "env:uc:2:feature:variation"}
+	require.NotEqual(t, keyHashSlot(keys[0]), keyHashSlot(keys[1]))
+	require.NoError(t, mr.Set(keys[0], "not-an-hll"))
+	require.NoError(t, mr.Set(keys[1], "not-an-hll-either"))
+
 	_, err := c.PFCount(keys...)
-	assert.ErrorIs(t, err, ErrPFCountCrossSlot)
+	require.Error(t, err)
+
+	// Only the two source keys may remain; all staging keys must be gone.
+	assert.ElementsMatch(t, keys, mr.Keys())
 }

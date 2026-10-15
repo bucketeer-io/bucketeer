@@ -18,7 +18,6 @@ package v3
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -35,8 +34,10 @@ type EventCounterCache interface {
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
 	GetUserCountsV2(keys []string) ([]float64, error)
-	MergeMultiKeys(dest string, keys []string, expiration time.Duration) error
-	DeleteKey(key string) error
+	// CountUniqueUsers returns the union cardinality of the user-count HLLs
+	// stored at the given keys. In cluster mode, keys spanning multiple hash
+	// slots are counted through short-lived staging keys.
+	CountUniqueUsers(keys []string) (int64, error)
 	UpdateUserCount(key, userID string) error
 }
 
@@ -137,16 +138,10 @@ func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 	return nil
 }
 
-func (c *eventCounterCache) MergeMultiKeys(dest string, keys []string, expiration time.Duration) error {
-	if err := c.cache.PFMerge(dest, expiration, keys...); err != nil {
-		return fmt.Errorf("failed to merge keys: %w", err)
+func (c *eventCounterCache) CountUniqueUsers(keys []string) (int64, error) {
+	count, err := c.cache.PFCount(keys...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count unique users: %w", err)
 	}
-	return nil
-}
-
-func (c *eventCounterCache) DeleteKey(key string) error {
-	if err := c.cache.Delete(key); err != nil {
-		return fmt.Errorf("failed to delete key: %w", err)
-	}
-	return nil
+	return count, nil
 }

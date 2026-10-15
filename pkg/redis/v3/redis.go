@@ -82,13 +82,7 @@ const (
 var (
 	ErrNil         = goredis.Nil
 	ErrInvalidType = errors.New("redis: invalid type")
-	// ErrPFCountCrossSlot is returned by PFCount in cluster mode when the
-	// keys hash to more than one slot. The union cardinality of HLLs in
-	// different slots cannot be computed per slot and summed (users present
-	// in several slots would be counted once per slot); merge the keys into
-	// a single destination with PFMerge and PFCount that key instead.
-	ErrPFCountCrossSlot = errors.New("redis: PFCount keys must hash to a single slot in cluster mode")
-	ErrInvalidDB        = errors.New("redis: db index must not be negative")
+	ErrInvalidDB   = errors.New("redis: db index must not be negative")
 )
 
 type poolStats goredis.PoolStats
@@ -827,11 +821,38 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 	return err
 }
 
-// pfMergeStagingTTL bounds the lifetime of the temporary keys used to stage
-// source HLL values during a cluster PFMerge. The keys are deleted right
-// after the merge; the TTL only guarantees they cannot leak forever when the
-// process dies mid-operation or the cleanup fails.
-const pfMergeStagingTTL = time.Minute
+// hllStagingTTL bounds the lifetime of the temporary keys used to stage
+// source HLL values during a cluster PFMerge or PFCount. The keys are deleted
+// right after the operation; the TTL only guarantees they cannot leak forever
+// when the process dies mid-operation or the cleanup fails.
+const hllStagingTTL = time.Minute
+
+// fetchHLLValues returns the raw values of the keys that exist (GetMulti
+// groups the keys by slot and fetches all slots in one pipeline).
+func (c *client) fetchHLLValues(keys []string) ([][]byte, error) {
+	values, err := c.GetMulti(keys, true)
+	if err != nil {
+		return nil, err
+	}
+	blobs := make([][]byte, 0, len(values))
+	for _, v := range values {
+		// Missing keys are returned as empty strings; keep existing values only.
+		if b, ok := v.([]byte); ok && len(b) > 0 {
+			blobs = append(blobs, b)
+		}
+	}
+	return blobs, nil
+}
+
+// newStagedKeys returns n unique keys that all hash to the slot of the given
+// hash tag.
+func newStagedKeys(tag string, n int) []string {
+	staged := make([]string, 0, n)
+	for i := 0; i < n; i++ {
+		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
+	}
+	return staged
+}
 
 // pfMergeCluster merges HyperLogLog values whose keys may live in different
 // cluster slots. PFMERGE requires all of its keys in one slot, so the source
@@ -840,17 +861,9 @@ const pfMergeStagingTTL = time.Minute
 // into dest keeps PFMERGE's native semantics: concurrent writes to dest are
 // merged rather than overwritten.
 func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration time.Duration, keys ...string) error {
-	// Fetch all source HLL objects (GetMulti groups the keys by slot).
-	values, err := c.GetMulti(keys, true)
+	blobs, err := c.fetchHLLValues(keys)
 	if err != nil {
 		return err
-	}
-	blobs := make([][]byte, 0, len(values))
-	for _, v := range values {
-		// Missing keys are returned as empty strings; keep existing values only.
-		if b, ok := v.([]byte); ok && len(b) > 0 {
-			blobs = append(blobs, b)
-		}
 	}
 	if len(blobs) == 0 {
 		// Nothing to merge. Keep parity with the standalone branch: PFMERGE
@@ -868,10 +881,7 @@ func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration tim
 		// "{tag}..." staging key; merge in a random slot and copy the result.
 		return c.pfMergeClusterViaTmpDest(ctx, dest, expiration, blobs)
 	}
-	staged := make([]string, 0, len(blobs))
-	for range blobs {
-		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
-	}
+	staged := newStagedKeys(tag, len(blobs))
 	defer c.bestEffortDel(ctx, staged)
 
 	// All staged keys share dest's hash slot, so a single transactional
@@ -879,7 +889,7 @@ func (c *client) pfMergeCluster(ctx context.Context, dest string, expiration tim
 	// sets the expiration.
 	pipe := c.rc.TxPipeline()
 	for i, b := range blobs {
-		pipe.Set(ctx, staged[i], b, pfMergeStagingTTL)
+		pipe.Set(ctx, staged[i], b, hllStagingTTL)
 	}
 	pipe.PFMerge(ctx, dest, staged...)
 	pipe.Expire(ctx, dest, expiration)
@@ -908,19 +918,16 @@ func (c *client) pfMergeClusterViaTmpDest(
 	}
 
 	tag := uuid.New().String()
-	staged := make([]string, 0, len(blobs))
-	for range blobs {
-		staged = append(staged, fmt.Sprintf("{%s}%s", tag, uuid.New().String()))
-	}
+	staged := newStagedKeys(tag, len(blobs))
 	tmpDest := fmt.Sprintf("{%s}%s", tag, uuid.New().String())
 	defer c.bestEffortDel(ctx, append(staged, tmpDest))
 
 	pipe := c.rc.TxPipeline()
 	for i, b := range blobs {
-		pipe.Set(ctx, staged[i], b, pfMergeStagingTTL)
+		pipe.Set(ctx, staged[i], b, hllStagingTTL)
 	}
 	pipe.PFMerge(ctx, tmpDest, staged...)
-	pipe.Expire(ctx, tmpDest, pfMergeStagingTTL)
+	pipe.Expire(ctx, tmpDest, hllStagingTTL)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return err
 	}
@@ -986,18 +993,15 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 	var err error
 
 	if c.clientType == ClientTypeCluster {
-		// PFCOUNT requires all of its keys in one hash slot. Summing per-slot
-		// PFCOUNTs is NOT a union cardinality (a user present in HLLs on
-		// different slots would be counted once per slot), so cross-slot
-		// requests are rejected instead of returning an inflated count. To
-		// count unique users across slots, merge the keys into a single
-		// destination with PFMerge and PFCount that key.
+		// PFCOUNT requires all of its keys in one hash slot. Keys in one
+		// slot (including the single-key case) are counted directly; keys
+		// spanning slots go through the staged union emulation.
 		slots := make(map[int]bool, 1)
 		for _, key := range keys {
 			slots[keyHashSlot(key)] = true
 		}
 		if len(slots) > 1 {
-			err = ErrPFCountCrossSlot
+			count, err = c.pfCountCluster(context.TODO(), keys)
 		} else {
 			count, err = c.rc.PFCount(context.TODO(), keys...).Result()
 		}
@@ -1015,6 +1019,39 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return count, err
+}
+
+// pfCountCluster computes the union cardinality of HLLs whose keys span
+// multiple cluster slots. Summing per-slot PFCOUNTs would NOT be a union (a
+// user present in HLLs on different slots would be counted once per slot),
+// so the values are fetched client side, staged under short-lived keys
+// sharing one hash slot, and counted server side with a single PFCOUNT.
+//
+// Note: although PFCount is conceptually a read, this emulation writes
+// TTL-guarded staging keys, like the cluster PFMerge does.
+func (c *client) pfCountCluster(ctx context.Context, keys []string) (int64, error) {
+	blobs, err := c.fetchHLLValues(keys)
+	if err != nil {
+		return 0, err
+	}
+	if len(blobs) == 0 {
+		// None of the keys exist: the union is empty.
+		return 0, nil
+	}
+	staged := newStagedKeys(uuid.New().String(), len(blobs))
+	defer c.bestEffortDel(ctx, staged)
+
+	// All staged keys share one hash slot, so a single transactional
+	// pipeline on that node stages the values and counts their union.
+	pipe := c.rc.TxPipeline()
+	for i, b := range blobs {
+		pipe.Set(ctx, staged[i], b, hllStagingTTL)
+	}
+	countCmd := pipe.PFCount(ctx, staged...)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return 0, err
+	}
+	return countCmd.Result()
 }
 
 func (c *client) IncrByFloat(key string, value float64) (float64, error) {
