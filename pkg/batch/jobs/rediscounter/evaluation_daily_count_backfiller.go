@@ -107,15 +107,16 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 
 	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
 	earliest := today - backfillDays*daySeconds
-	// On the persister's deployment day the marker points at the NEXT UTC
-	// midnight: today's daily keys only cover events since the deploy, so the
-	// current day must keep being served from the hourly fallback. Moving the
-	// marker back today would put the incomplete daily key in charge; refuse
-	// and let the operator re-run once the first full dual-written day has
-	// started.
+	// Right after the persister's deployment the marker points at a FUTURE UTC
+	// midnight (the rollout window): the daily keys of the current days only
+	// cover events written by the new pods, so those days must keep being
+	// served from the hourly fallback. Moving the marker back now would put an
+	// incomplete daily key in charge; refuse and let the operator re-run once
+	// the marker's day has started (then every day before it is fully
+	// elapsed and can be materialized from the complete hourly keys).
 	if cutover > today {
 		return fmt.Errorf(
-			"batch: daily cutover %d is in the future (persister deployed today); re-run after the next UTC midnight",
+			"batch: daily cutover %d is in the future (persister rollout window); re-run on or after that UTC day",
 			cutover,
 		)
 	}
@@ -280,15 +281,23 @@ type dayGroup struct {
 	suffix string
 }
 
-// collectHourlyKeysByDay scans the environment's hourly keys of one kind and
-// groups the existing keys by (UTC day, feature:variation suffix), limited to
-// days in [earliest, endExclusive). Days without any hourly key get no entry:
-// both the daily key and the hourly fallback correctly yield 0 for them.
+// collectHourlyKeysByDay scans the environment's hourly keys of one kind to
+// discover which (UTC day, feature:variation suffix) groups exist in
+// [earliest, endExclusive), and returns, for each group, ALL 24 hourly keys of
+// that day (constructed, not scanned). Days without any hourly key get no
+// entry: both the daily key and the hourly fallback correctly yield 0 for them.
 //
-// ScanKeys (cluster-exhaustive, unlike the removed cursor Scan) enumerates
-// every cluster master, and the dedup below guards against a key being
-// reported more than once (SCAN semantics), which would inflate the summed
-// daily event count.
+// The scan is only used for discovery. Reading the constructed 24 keys rather
+// than the scanned ones means an hourly key that is created after the SCAN
+// but before the reads (a late event for a day that previously had no
+// counter for that hour) is still included; the stabilization loop in
+// backfillEventCountDay then has a complete view to converge on. Missing
+// hourly keys read as absent (ignoreNotFound / PFMERGE of a missing key is a
+// no-op), so constructing keys that never existed is harmless.
+//
+// ScanKeys is cluster-exhaustive (it enumerates every master), and because
+// groups are a set, a key reported more than once by SCAN cannot inflate the
+// result.
 func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
 	environmentId, kind string,
 	earliest, endExclusive int64,
@@ -306,12 +315,7 @@ func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
 		return nil, err
 	}
 	groups := make(map[dayGroup][]string)
-	seen := make(map[string]struct{}, len(keys))
 	for _, key := range keys {
-		if _, duplicate := seen[key]; duplicate {
-			continue
-		}
-		seen[key] = struct{}{}
 		match := keyRegex.FindStringSubmatch(key)
 		if len(match) != 3 {
 			// Not an hourly counter key (e.g. a pfmerge staging key).
@@ -326,9 +330,26 @@ func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
 			continue
 		}
 		group := dayGroup{dayTs: dayTs, suffix: match[2]}
-		groups[group] = append(groups[group], key)
+		if _, known := groups[group]; known {
+			continue
+		}
+		groups[group] = hourlyKeysOfDay(kind, environmentId, group)
 	}
 	return groups, nil
+}
+
+// hourlyKeysOfDay constructs the 24 hourly keys of one (day, feature:variation)
+// group, in hour order.
+func hourlyKeysOfDay(kind, environmentId string, group dayGroup) []string {
+	keys := make([]string, 0, 24)
+	for hour := int64(0); hour < 24; hour++ {
+		keys = append(keys, cache.MakeKey(
+			kind,
+			fmt.Sprintf("%d:%s", group.dayTs+hour*3600, group.suffix),
+			environmentId,
+		))
+	}
+	return keys
 }
 
 // backfillEventCountDayAttempts bounds the snapshot-stabilization loop below.

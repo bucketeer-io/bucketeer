@@ -259,7 +259,10 @@ func TestMoveCutoverBackNeverForward(t *testing.T) {
 	assert.Equal(t, strconv.FormatInt(today-25*daySeconds, 10), marker, "an earlier day must move the marker back")
 }
 
-func TestCollectHourlyKeysByDayDeduplicates(t *testing.T) {
+// The scan only discovers (day, feature:variation) groups; the keys read for a
+// group are all 24 constructed hourly keys of that day, each exactly once,
+// regardless of which (or how many times) keys were reported by SCAN.
+func TestCollectHourlyKeysByDayExpandsToAllHoursExactlyOnce(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -283,10 +286,62 @@ func TestCollectHourlyKeysByDayDeduplicates(t *testing.T) {
 	groups, err := backfiller.collectHourlyKeysByDay("dev", "ec", today-30*daySeconds, today)
 	require.NoError(t, err)
 	require.Len(t, groups, 1)
-	assert.ElementsMatch(t,
-		[]string{keyA, keyB},
-		groups[dayGroup{dayTs: day, suffix: "feature-1:variation-A"}],
-		"every hourly key must appear exactly once")
+
+	expected := make([]string, 0, 24)
+	for hour := 0; hour < 24; hour++ {
+		expected = append(expected, hourlyKey("ec", day, hour))
+	}
+	got := groups[dayGroup{dayTs: day, suffix: "feature-1:variation-A"}]
+	assert.Equal(t, expected, got, "all 24 hourly keys of the day, in order, each exactly once")
+	assert.Contains(t, got, keyA)
+	assert.Contains(t, got, keyB)
+}
+
+// An hourly key created after the SCAN (a late event for an hour that had no
+// counter when the job started) must still be counted: the job reads the
+// constructed 24 hourly keys, not the scanned snapshot.
+func TestBackfillEventCountDayIncludesHourlyKeysCreatedAfterScan(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	day := today - 2*daySeconds
+	dKey := dailyKey("ec1d", day)
+	allHours := make([]string, 0, 24)
+	for hour := 0; hour < 24; hour++ {
+		allHours = append(allHours, hourlyKey("ec", day, hour))
+	}
+	// Values for the 24 hourly keys: hour 0 existed at scan time (5), hour 1
+	// is created between the scan and the read (1), the rest are absent.
+	snapshot := func(hour1 interface{}) []interface{} {
+		values := make([]interface{}, 24)
+		values[0] = "5"
+		values[1] = hour1
+		return values
+	}
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	gomock.InOrder(
+		// Only hour 0 existed when the scan ran.
+		mockCache.EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+			[]string{hourlyKey("ec", day, 0)}, nil),
+		// By the time the day is read, hour 1 exists too.
+		mockCache.EXPECT().GetMulti(allHours, true).Return(snapshot("1"), nil),
+		mockCache.EXPECT().Put(dKey, "6", cachev3.DailyCountTTL).Return(nil),
+		mockCache.EXPECT().GetMulti(allHours, true).Return(snapshot("1"), nil),
+		mockCache.EXPECT().Get(dKey).Return("6", nil),
+	)
+
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	groups, err := backfiller.collectHourlyKeysByDay("dev", "ec", today-30*daySeconds, today)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	hourlyKeys := groups[dayGroup{dayTs: day, suffix: "feature-1:variation-A"}]
+	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourlyKeys))
 }
 
 func TestBackfillEventCountDayStabilizesAgainstLiveWrites(t *testing.T) {
