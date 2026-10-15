@@ -226,6 +226,20 @@ func (mr *MockMultiGetCacheMockRecorder) Scan(cursor, key, count any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetCache)(nil).Scan), cursor, key, count)
 }
 
+// ScanAll mocks base method.
+func (m *MockMultiGetCache) ScanAll(match string, count int64, fn func([]string) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScanAll", match, count, fn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ScanAll indicates an expected call of ScanAll.
+func (mr *MockMultiGetCacheMockRecorder) ScanAll(match, count, fn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanAll", reflect.TypeOf((*MockMultiGetCache)(nil).ScanAll), match, count, fn)
+}
+
 // MockMultiGetDeleteCountCache is a mock of MultiGetDeleteCountCache interface.
 type MockMultiGetDeleteCountCache struct {
 	ctrl     *gomock.Controller
@@ -484,6 +498,20 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) Scan(cursor, key, count any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Scan), cursor, key, count)
 }
 
+// ScanAll mocks base method.
+func (m *MockMultiGetDeleteCountCache) ScanAll(match string, count int64, fn func([]string) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScanAll", match, count, fn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ScanAll indicates an expected call of ScanAll.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) ScanAll(match, count, fn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanAll", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).ScanAll), match, count, fn)
+}
+
 // MockGetter is a mock of Getter interface.
 type MockGetter struct {
 	ctrl     *gomock.Controller
@@ -631,6 +659,20 @@ func (m *MockMultiGetter) Scan(cursor, key, count any) (uint64, []string, error)
 func (mr *MockMultiGetterMockRecorder) Scan(cursor, key, count any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetter)(nil).Scan), cursor, key, count)
+}
+
+// ScanAll mocks base method.
+func (m *MockMultiGetter) ScanAll(match string, count int64, fn func([]string) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScanAll", match, count, fn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ScanAll indicates an expected call of ScanAll.
+func (mr *MockMultiGetterMockRecorder) ScanAll(match, count, fn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanAll", reflect.TypeOf((*MockMultiGetter)(nil).ScanAll), match, count, fn)
 }
 
 // MockPutter is a mock of Putter interface.

@@ -61,6 +61,12 @@ type PFGetter interface {
 type MultiGetter interface {
 	GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error)
 	Scan(cursor, key, count interface{}) (uint64, []string, error)
+	// ScanAll calls fn with every page of keys matching the pattern. Unlike
+	// Scan, it is exhaustive in Redis cluster mode (it visits every master
+	// node, while Scan reaches only one node per call). fn is never called
+	// concurrently, but the same key may be reported more than once, so
+	// callers must tolerate duplicates.
+	ScanAll(match string, count int64, fn func(keys []string) error) error
 	SMembers(key string) ([]string, error)
 }
 

@@ -163,6 +163,10 @@ func (r *redisCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interfac
 	}
 }
 
+func (r *redisCache) ScanAll(match string, count int64, fn func(keys []string) error) error {
+	return r.client.ScanAll(match, count, fn)
+}
+
 func (r *redisCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
 	c, keys, err := r.client.Scan(cursor.(uint64), key.(string), count.(int64))
 	switch err {

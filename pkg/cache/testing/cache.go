@@ -89,6 +89,11 @@ func (c *inMemoryCache) Scan(cursor, key, count interface{}) (uint64, []string, 
 	return 0, nil, nil
 }
 
+func (c *inMemoryCache) ScanAll(match string, count int64, fn func(keys []string) error) error {
+	// TODO: implement
+	return nil
+}
+
 func (c *inMemoryCache) SMembers(key string) ([]string, error) {
 	// TODO: implement
 	return nil, nil

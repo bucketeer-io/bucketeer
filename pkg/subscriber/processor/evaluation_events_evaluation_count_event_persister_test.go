@@ -1768,6 +1768,9 @@ func (m *mockEvaluationCountCache) GetMulti(keys interface{}, ignoreNotFound boo
 func (m *mockEvaluationCountCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
 	return 0, nil, nil
 }
+func (m *mockEvaluationCountCache) ScanAll(match string, count int64, fn func(keys []string) error) error {
+	return nil
+}
 func (m *mockEvaluationCountCache) SMembers(key string) ([]string, error) { return nil, nil }
 
 // Deleter interface methods

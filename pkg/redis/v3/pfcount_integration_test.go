@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -113,4 +114,52 @@ func TestClusterPFCountIntegration(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, leftover, "staging keys must be cleaned up")
+}
+
+// TestClusterScanAllIntegration verifies that ScanAll enumerates keys from
+// EVERY cluster master: plain Scan on a cluster client reaches only one node
+// per call and silently misses the rest, which is exactly what ScanAll exists
+// to fix (the daily-count backfill job relies on exhaustive enumeration).
+func TestClusterScanAllIntegration(t *testing.T) {
+	addr := os.Getenv("REDIS_CLUSTER_ADDR")
+	if addr == "" {
+		t.Skip("REDIS_CLUSTER_ADDR not set; skipping real-cluster integration test")
+	}
+	cl, err := NewClient(addr, WithRedisMode(RedisModeCluster))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cl.Close() })
+	c := cl.(*client)
+	require.Equal(t, ClientTypeCluster, c.clientType)
+
+	prefix := fmt.Sprintf("scanall-it-%d", time.Now().UnixNano())
+	// Enough keys to land on every master with overwhelming probability
+	// (slots are spread across 3 masters in the grokzen cluster).
+	expected := make([]string, 0, 50)
+	slots := make(map[int]bool)
+	for i := 0; i < 50; i++ {
+		key := fmt.Sprintf("%s:ec:%d:feature:variation", prefix, i)
+		require.NoError(t, c.Set(key, "1", time.Minute))
+		expected = append(expected, key)
+		slots[keyHashSlot(key)] = true
+	}
+	require.Greater(t, len(slots), 1, "test keys must span multiple slots")
+	t.Cleanup(func() {
+		for _, key := range expected {
+			_ = c.Del(key)
+		}
+	})
+
+	// The callback must never run concurrently (asserted via the running
+	// flag) and must deliver every key from every master.
+	var running atomic.Bool
+	keys := []string{}
+	err = c.ScanAll(prefix+":ec:*", 10, func(page []string) error {
+		require.True(t, running.CompareAndSwap(false, true), "fn must not be called concurrently")
+		defer running.Store(false)
+		keys = append(keys, page...)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, expected, keys,
+		"ScanAll must deliver every key from every master")
 }
