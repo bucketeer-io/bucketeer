@@ -29,6 +29,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	evmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	redis "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
@@ -206,6 +207,142 @@ func TestBackfillerSkipsDaysCoveredByCutover(t *testing.T) {
 	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
 	require.NoError(t, err)
 	assert.Equal(t, strconv.FormatInt(today-backfillDays*daySeconds, 10), marker)
+}
+
+func TestBackfillerRejectsFutureCutover(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	mr, redisCache, backfiller := newMiniredisBackfiller(t, mockController)
+
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	// Deployment-day situation: the persister just started, so the marker
+	// points at the NEXT UTC midnight. Backfilling now and moving the marker
+	// back would hand today's reads to its incomplete daily key.
+	futureCutover := today + daySeconds
+	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(futureCutover, 10), 0))
+	require.NoError(t, redisCache.Put(hourlyKey("ec", today-2*daySeconds, 1), "4", 0))
+
+	err := backfiller.Run(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "in the future")
+
+	assert.False(t, mr.Exists(dailyKey("ec1d", today-2*daySeconds)), "nothing must be materialized")
+	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(futureCutover, 10), marker, "the marker must stay untouched")
+}
+
+func TestMoveCutoverBackNeverForward(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	mr, redisCache, backfiller := newMiniredisBackfiller(t, mockController)
+
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	current := today - 20*daySeconds
+	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(current, 10), 0))
+
+	// The marker is re-read right before writing, so a marker that was
+	// already moved further back (e.g. by a concurrent run finishing first)
+	// is never overwritten with a later day.
+	require.NoError(t, backfiller.moveCutoverBack(today-10*daySeconds))
+	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(current, 10), marker, "a later day must never replace the marker")
+
+	require.NoError(t, backfiller.moveCutoverBack(today-25*daySeconds))
+	marker, err = mr.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(today-25*daySeconds, 10), marker, "an earlier day must move the marker back")
+}
+
+func TestCollectHourlyKeysByDayDeduplicates(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	day := today - 2*daySeconds
+	keyA := hourlyKey("ec", day, 3)
+	keyB := hourlyKey("ec", day, 7)
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	// SCAN may report the same key more than once (rehashing, or slot
+	// migration across cluster nodes); counting it twice would inflate the
+	// summed daily value.
+	mockCache.EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+		[]string{keyA, keyA, keyB, "dev:ec:pfmerge-staging"}, nil)
+
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	groups, err := backfiller.collectHourlyKeysByDay("dev", "ec", today-30*daySeconds, today)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	assert.ElementsMatch(t,
+		[]string{keyA, keyB},
+		groups[dayGroup{dayTs: day, suffix: "feature-1:variation-A"}],
+		"every hourly key must appear exactly once")
+}
+
+func TestBackfillEventCountDayStabilizesAgainstLiveWrites(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	const dKey = "dev:ec1d:0:feature-1:variation-A"
+	hourly := []string{"dev:ec:0:feature-1:variation-A"}
+
+	// A late event increments the hourly key between the first snapshot and
+	// the SET; the job must notice the changed sum and rewrite the daily key
+	// before verifying.
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	gomock.InOrder(
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5"}, nil),
+		mockCache.EXPECT().Put(dKey, "5", cachev3.DailyCountTTL).Return(nil),
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"6"}, nil),
+		mockCache.EXPECT().Put(dKey, "6", cachev3.DailyCountTTL).Return(nil),
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"6"}, nil),
+		mockCache.EXPECT().Get(dKey).Return([]byte("6"), nil),
+	)
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+}
+
+func TestBackfillEventCountDayGivesUpWhenNeverStable(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	const dKey = "dev:ec1d:0:feature-1:variation-A"
+	hourly := []string{"dev:ec:0:feature-1:variation-A"}
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	// The hourly sum changes on every read: after the bounded attempts the
+	// job must fail (and be re-run) instead of publishing a stale snapshot.
+	sum := 0
+	mockCache.EXPECT().GetMulti(hourly, true).DoAndReturn(
+		func(interface{}, bool) ([]interface{}, error) {
+			sum++
+			return []interface{}{strconv.Itoa(sum)}, nil
+		}).Times(backfillEventCountDayAttempts + 1)
+	mockCache.EXPECT().Put(dKey, gomock.Any(), cachev3.DailyCountTTL).
+		Return(nil).Times(backfillEventCountDayAttempts)
+
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	err := backfiller.backfillEventCountDay(dKey, hourly)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "kept changing")
 }
 
 func TestBackfillerNoWorkWhenMarkerCoversWindow(t *testing.T) {

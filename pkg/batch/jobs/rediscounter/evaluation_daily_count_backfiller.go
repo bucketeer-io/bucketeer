@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -108,6 +107,18 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 
 	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
 	earliest := today - backfillDays*daySeconds
+	// On the persister's deployment day the marker points at the NEXT UTC
+	// midnight: today's daily keys only cover events since the deploy, so the
+	// current day must keep being served from the hourly fallback. Moving the
+	// marker back today would put the incomplete daily key in charge; refuse
+	// and let the operator re-run once the first full dual-written day has
+	// started.
+	if cutover > today {
+		return fmt.Errorf(
+			"batch: daily cutover %d is in the future (persister deployed today); re-run after the next UTC midnight",
+			cutover,
+		)
+	}
 	// Only fully elapsed days that the reader still serves from the hourly
 	// fallback (days strictly before the cutover) need materializing. Days on
 	// or after the cutover already have complete live-written daily keys.
@@ -144,14 +155,8 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 
 	// Every materialized day passed verification: move the cutover marker
 	// back to the earliest backfilled day (never forward).
-	if earliest < cutover {
-		if err := b.cache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(earliest, 10), 0); err != nil {
-			return fmt.Errorf("batch: failed to move the daily cutover marker back: %w", err)
-		}
-		b.logger.Info("Daily cutover marker moved back",
-			zap.Int64("from", cutover),
-			zap.Int64("to", earliest),
-		)
+	if err := b.moveCutoverBack(earliest); err != nil {
+		return err
 	}
 
 	b.logger.Info("Finished the evaluation daily count backfill",
@@ -183,10 +188,33 @@ func (b *evaluationDailyCountBackfiller) getCutoverMarker() (int64, error) {
 	return cutover, nil
 }
 
+// moveCutoverBack moves the cutover marker back to earliest, but never
+// forward: the marker is re-read right before writing so that a concurrent or
+// earlier run that already moved it further back is not undone.
+func (b *evaluationDailyCountBackfiller) moveCutoverBack(earliest int64) error {
+	current, err := b.getCutoverMarker()
+	if err != nil {
+		return err
+	}
+	if earliest >= current {
+		return nil
+	}
+	if err := b.cache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(earliest, 10), 0); err != nil {
+		return fmt.Errorf("batch: failed to move the daily cutover marker back: %w", err)
+	}
+	b.logger.Info("Daily cutover marker moved back",
+		zap.Int64("from", current),
+		zap.Int64("to", earliest),
+	)
+	return nil
+}
+
+// listEnvironments deliberately includes archived environments: the cutover
+// marker is global, so an environment that is unarchived later would
+// otherwise be left with pre-cutover days that have no daily keys.
 func (b *evaluationDailyCountBackfiller) listEnvironments(ctx context.Context) ([]*envproto.EnvironmentV2, error) {
 	resp, err := b.envClient.ListEnvironmentsV2(ctx, &envproto.ListEnvironmentsV2Request{
 		PageSize: 0,
-		Archived: &wrapperspb.BoolValue{Value: false},
 	})
 	if err != nil {
 		b.logger.Error("Failed to list environments", zap.Error(err))
@@ -256,6 +284,11 @@ type dayGroup struct {
 // groups the existing keys by (UTC day, feature:variation suffix), limited to
 // days in [earliest, endExclusive). Days without any hourly key get no entry:
 // both the daily key and the hourly fallback correctly yield 0 for them.
+//
+// ScanKeys (cluster-exhaustive, unlike the removed cursor Scan) enumerates
+// every cluster master, and the dedup below guards against a key being
+// reported more than once (SCAN semantics), which would inflate the summed
+// daily event count.
 func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
 	environmentId, kind string,
 	earliest, endExclusive int64,
@@ -268,63 +301,71 @@ func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
 		keyRegex = regexp.MustCompile(fmt.Sprintf("^%s:%s:([0-9]+):(.+)$", environmentId, kind))
 	}
 
+	keys, err := b.cache.ScanKeys(pattern, redisScanMaxSize)
+	if err != nil {
+		return nil, err
+	}
 	groups := make(map[dayGroup][]string)
-	var cursor uint64
-	for {
-		nextCursor, keys, err := b.cache.Scan(cursor, pattern, redisScanMaxSize)
+	seen := make(map[string]struct{}, len(keys))
+	for _, key := range keys {
+		if _, duplicate := seen[key]; duplicate {
+			continue
+		}
+		seen[key] = struct{}{}
+		match := keyRegex.FindStringSubmatch(key)
+		if len(match) != 3 {
+			// Not an hourly counter key (e.g. a pfmerge staging key).
+			continue
+		}
+		hourTs, err := strconv.ParseInt(match[1], 10, 64)
 		if err != nil {
-			return nil, err
+			continue
 		}
-		for _, key := range keys {
-			match := keyRegex.FindStringSubmatch(key)
-			if len(match) != 3 {
-				// Not an hourly counter key (e.g. a pfmerge staging key).
-				continue
-			}
-			hourTs, err := strconv.ParseInt(match[1], 10, 64)
-			if err != nil {
-				continue
-			}
-			dayTs := (hourTs / daySeconds) * daySeconds
-			if dayTs < earliest || dayTs >= endExclusive {
-				continue
-			}
-			group := dayGroup{dayTs: dayTs, suffix: match[2]}
-			groups[group] = append(groups[group], key)
+		dayTs := (hourTs / daySeconds) * daySeconds
+		if dayTs < earliest || dayTs >= endExclusive {
+			continue
 		}
-		cursor = nextCursor
-		if cursor == 0 {
-			break
-		}
+		group := dayGroup{dayTs: dayTs, suffix: match[2]}
+		groups[group] = append(groups[group], key)
 	}
 	return groups, nil
 }
 
+// backfillEventCountDayAttempts bounds the snapshot-stabilization loop below.
+const backfillEventCountDayAttempts = 3
+
 // backfillEventCountDay sets the daily ec key to the sum of the day's hourly
-// values and verifies the write by reading it back. The day has fully
-// elapsed, so the hourly source data is immutable and re-running recomputes
-// the same value.
+// values. Although the day has elapsed, late events bucketed by their original
+// timestamps can still land in it: the persister increments the hourly AND
+// daily keys, and a late event racing between our hourly read and the SET
+// would have its daily increment overwritten by the stale snapshot. To close
+// that window the hourly sum is re-read after the SET and the write is
+// repeated until it is stable, then verified by reading the daily key back.
 func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, hourlyKeys []string) error {
-	values, err := b.cache.GetMulti(hourlyKeys, true)
+	sum, err := b.sumHourlyEventCounts(hourlyKeys)
 	if err != nil {
-		return fmt.Errorf("get hourly event counts: %w", err)
+		return err
 	}
-	var sum int64
-	for _, v := range values {
-		s, ok := toString(v)
-		if !ok || s == "" {
-			continue
+	stable := false
+	for attempt := 0; attempt < backfillEventCountDayAttempts; attempt++ {
+		if err := b.cache.Put(dailyKey, strconv.FormatInt(sum, 10), cachev3.DailyCountTTL); err != nil {
+			return fmt.Errorf("set daily event count: %w", err)
 		}
-		n, err := strconv.ParseInt(s, 10, 64)
+		again, err := b.sumHourlyEventCounts(hourlyKeys)
 		if err != nil {
-			return fmt.Errorf("parse hourly event count: %w", err)
+			return err
 		}
-		sum += n
+		if again == sum {
+			stable = true
+			break
+		}
+		sum = again
 	}
-	if err := b.cache.Put(dailyKey, strconv.FormatInt(sum, 10), cachev3.DailyCountTTL); err != nil {
-		return fmt.Errorf("set daily event count: %w", err)
+	if !stable {
+		return fmt.Errorf("batch: daily event count for key %s kept changing (live writes); re-run the backfill",
+			dailyKey)
 	}
-	// Verification: the daily key must hold exactly the hourly sum.
+	// Verification: the daily key must hold exactly the (stable) hourly sum.
 	stored, err := b.cache.Get(dailyKey)
 	if err != nil {
 		return fmt.Errorf("read back daily event count: %w", err)
@@ -342,6 +383,26 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 			dailyKey, got, sum)
 	}
 	return nil
+}
+
+func (b *evaluationDailyCountBackfiller) sumHourlyEventCounts(hourlyKeys []string) (int64, error) {
+	values, err := b.cache.GetMulti(hourlyKeys, true)
+	if err != nil {
+		return 0, fmt.Errorf("get hourly event counts: %w", err)
+	}
+	var sum int64
+	for _, v := range values {
+		s, ok := toString(v)
+		if !ok || s == "" {
+			continue
+		}
+		n, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("parse hourly event count: %w", err)
+		}
+		sum += n
+	}
+	return sum, nil
 }
 
 // backfillUserCountDay merges the day's hourly HLLs into the daily uc key and

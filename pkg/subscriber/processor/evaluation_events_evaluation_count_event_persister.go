@@ -271,6 +271,14 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			userID := getUserID(e.UserId, e.User)
 			// Every event is written to all three tiers (minute, hour, day)
 			// in the same flush, which keeps the tiers mutually consistent.
+			//
+			// Retry semantics are the same at-least-once semantics the hourly
+			// tier always had: if any tier's write fails the event is Nacked,
+			// and redelivery re-increments the tiers that did succeed. That
+			// bounded over-count on partial Redis failures predates the tiers
+			// (an INCRBY applied but reported as failed was always retried)
+			// and is the accepted tradeoff in the redesign doc (§2.4); the
+			// uc side stays exact because PFADD is idempotent.
 			for _, pair := range p.newEvaluationCountKeyPairs(e.FeatureId, vID, environmentId, e.Timestamp) {
 				aggregator.addEvent(pair.ecKey, pair.ucKey, userID)
 				if ecKeyToEventIDs[pair.ecKey] == nil {
