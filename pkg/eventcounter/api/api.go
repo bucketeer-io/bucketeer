@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	xsync "golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -411,7 +410,9 @@ func (s *eventCounterService) getHourlyUserCounts(
 	// The hours are independent, so count them in parallel.
 	hours := days[0]
 	counts := make([]float64, len(hours))
-	var eg xsync.Group
+	// The local errgroup recovers panics inside the goroutines, which plain
+	// x/sync/errgroup would let crash the process.
+	var eg errgroup.Group
 	eg.SetLimit(countFetchConcurrency)
 	for i, hour := range hours {
 		eg.Go(func() error {
@@ -434,7 +435,7 @@ func (s *eventCounterService) getDailyUserCounts(
 ) ([]float64, error) {
 	// The days are independent, so count them in parallel.
 	counts := make([]float64, len(days))
-	var eg xsync.Group
+	var eg errgroup.Group
 	eg.SetLimit(countFetchConcurrency)
 	for i, day := range days {
 		eg.Go(func() error {

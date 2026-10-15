@@ -19,9 +19,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
 )
 
 // getEventCountsConcurrency bounds how many per-day count fetches run in
@@ -82,7 +81,9 @@ func (*eventCounterCache) getEventValues(values []interface{}) ([]float64, error
 }
 
 func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
-	// The days are independent, so fetch them in parallel.
+	// The days are independent, so fetch them in parallel. The local errgroup
+	// recovers panics inside the goroutines, which plain x/sync/errgroup
+	// would let crash the process.
 	eventVals := make([]float64, len(keys))
 	var eg errgroup.Group
 	eg.SetLimit(getEventCountsConcurrency)
