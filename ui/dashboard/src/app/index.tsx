@@ -59,8 +59,11 @@ import {
   setCurrentEnvIdStorage
 } from 'storage/environment';
 import { getIsLoginFirstTimeStorage } from 'storage/login';
-import { getNavigationCollapsedStorage } from 'storage/navigation';
 import { getOrgIdStorage } from 'storage/organization';
+import {
+  getNavigationCollapsedStorage,
+  setNavigationCollapsedStorage
+} from 'storage/navigation';
 import {
   getCurrentProjectEnvironmentStorage,
   setCurrentProjectEnvironmentStorage
@@ -137,9 +140,31 @@ export const Root = memo(() => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(
     getNavigationCollapsedStorage
   );
+  const [isTabletNavExpanded, setIsTabletNavExpanded] = useState(false);
   const [showMenu, setShowMenu] = useState<boolean>(false);
   const { isMobile, fromTabletScreen } = useScreen();
   const isTablet = !isMobile && !fromTabletScreen;
+  const isNavigationCollapsed = isTablet
+    ? !isTabletNavExpanded
+    : isNavCollapsed;
+  const handleNavigationCollapsed = (collapsed: boolean) => {
+    if (isTablet) {
+      setIsTabletNavExpanded(!collapsed);
+      return;
+    }
+    setIsNavCollapsed(collapsed);
+    setNavigationCollapsedStorage(collapsed);
+  };
+
+  // Tablet expansion is temporary; preserve the desktop preference on resize.
+  useEffect(() => {
+    setIsTabletNavExpanded(false);
+  }, [isTablet, location]);
+
+  // Do not reopen a stale mobile drawer after resizing back to mobile.
+  useEffect(() => {
+    setShowMenu(false);
+  }, [isMobile]);
   const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
     useAuth();
 
@@ -210,8 +235,8 @@ export const Root = memo(() => {
           </div>
           {!isMobile ? (
             <Navigation
-              isCollapsed={isNavCollapsed}
-              onToggleCollapsed={setIsNavCollapsed}
+              isCollapsed={isNavigationCollapsed}
+              onToggleCollapsed={handleNavigationCollapsed}
             />
           ) : (
             <Drawer
@@ -221,8 +246,8 @@ export const Root = memo(() => {
               className="!z-30"
             >
               <Navigation
-                isCollapsed={isNavCollapsed}
-                onToggleCollapsed={setIsNavCollapsed}
+                isCollapsed={isNavigationCollapsed}
+                onToggleCollapsed={handleNavigationCollapsed}
               />
             </Drawer>
           )}
