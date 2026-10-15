@@ -261,7 +261,19 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	// the daily-tier keys, older days fall back to their 24 hourly keys.
 	var dailyCutover int64
 	if timestampUnit == ecproto.Timeseries_DAY {
-		dailyCutover = s.getDailyCutover()
+		dailyCutover, err = s.getDailyCutover()
+		if err != nil {
+			s.logger.Error(
+				"Failed to get the daily cutover marker",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("featureId", req.FeatureId),
+					zap.String("timeRange", req.TimeRange.String()),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
 	}
 	vIDs := getVariationIDs(resp.Feature.Variations)
 
@@ -584,35 +596,33 @@ func (*eventCounterService) getCountKeys(
 }
 
 // getDailyCutover returns the unix timestamp of the first UTC midnight served
-// from the daily tier, or 0 when the marker is absent or unreadable — in that
-// case every day falls back to hourly keys, which is exactly the
-// pre-daily-tier behavior and always safe.
-func (s *eventCounterService) getDailyCutover() int64 {
+// from the daily tier, or 0 when the marker is absent. An absent marker means
+// the daily tier was never declared complete, so every day falls back to
+// hourly keys: exactly the pre-daily-tier behavior and always safe.
+//
+// Any other failure (Redis error, corrupt value) is returned to the caller
+// and fails the request. Falling back to hourly keys in that case would be
+// wrong, not safe: hourly keys are only retained ~30 days while the daily
+// tier holds 60/90 days, so a transient marker read error would silently
+// truncate a 60/90-day chart to 30 days of data followed by zeros. A failed
+// request is retried by the client; a silently truncated one is not.
+func (s *eventCounterService) getDailyCutover() (int64, error) {
 	value, err := s.counterCache.Get(cachev3.EvaluationDailyCutoverKey)
 	if err != nil {
-		if !errors.Is(err, cache.ErrNotFound) {
-			s.logger.Warn("Failed to get the daily cutover marker; falling back to hourly keys",
-				zap.Error(err),
-			)
+		if errors.Is(err, cache.ErrNotFound) {
+			return 0, nil
 		}
-		return 0
+		return 0, fmt.Errorf("get daily cutover marker: %w", err)
 	}
 	b, err := cache.Bytes(value)
 	if err != nil {
-		s.logger.Warn("Daily cutover marker has an unexpected type; falling back to hourly keys",
-			zap.Error(err),
-		)
-		return 0
+		return 0, fmt.Errorf("daily cutover marker has an unexpected type: %w", err)
 	}
 	cutover, err := strconv.ParseInt(string(b), 10, 64)
 	if err != nil {
-		s.logger.Warn("Failed to parse the daily cutover marker; falling back to hourly keys",
-			zap.Error(err),
-			zap.ByteString("value", b),
-		)
-		return 0
+		return 0, fmt.Errorf("parse daily cutover marker %q: %w", string(b), err)
 	}
-	return cutover
+	return cutover, nil
 }
 
 func (s *eventCounterService) logCountError(

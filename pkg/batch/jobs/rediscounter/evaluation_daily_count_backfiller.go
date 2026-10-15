@@ -359,9 +359,25 @@ const backfillEventCountDayAttempts = 3
 // values. Although the day has elapsed, late events bucketed by their original
 // timestamps can still land in it: the persister increments the hourly AND
 // daily keys, and a late event racing between our hourly read and the SET
-// would have its daily increment overwritten by the stale snapshot. To close
+// would have its daily increment overwritten by the stale snapshot. To narrow
 // that window the hourly sum is re-read after the SET and the write is
 // repeated until it is stable, then verified by reading the daily key back.
+//
+// Known residual race (accepted): the persister's hourly and daily INCRBYs
+// for one event travel in the same pipeline but hash to different cluster
+// nodes, so there is no ordering between them. If the hourly INCRBY lands
+// before our read and the daily INCRBY lands after our SET and verification,
+// the day ends up over-counted by that one event (daily = sum + 1) and the
+// stable-sum check cannot see it. Closing this entirely would require the
+// live writers to be paused while the job runs; with a running persister
+// the window is one cross-node pipeline skew (sub-millisecond to a few
+// milliseconds) for a late event, days old, that must arrive while this
+// exact (day, feature, variation) is being processed. Because the job is
+// idempotent and always re-derives the daily value from the hourly keys, a
+// later re-run (while the hourly keys are still retained) re-converges any
+// day affected by the race. Operators who need an exact migration can scale
+// the evaluation count persister to zero for the duration of the run; events
+// buffer in Pub/Sub and nothing is lost.
 func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, hourlyKeys []string) error {
 	sum, err := b.sumHourlyEventCounts(hourlyKeys)
 	if err != nil {

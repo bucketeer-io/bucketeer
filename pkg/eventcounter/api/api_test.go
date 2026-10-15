@@ -925,11 +925,15 @@ func TestGetDailyCutover(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc     string
-		setup    func(*cachemock.MockMultiGetDeleteCountCache)
-		expected int64
+		desc        string
+		setup       func(*cachemock.MockMultiGetDeleteCountCache)
+		expected    int64
+		expectedErr bool
 	}{
 		{
+			// Absent is the only case that may fall back to hourly keys: the
+			// daily tier was never declared complete, so hourly keys hold
+			// everything there is.
 			desc: "marker absent falls back to zero",
 			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
 				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return(nil, cache.ErrNotFound)
@@ -937,18 +941,28 @@ func TestGetDailyCutover(t *testing.T) {
 			expected: 0,
 		},
 		{
-			desc: "redis error falls back to zero",
+			// A transient error must propagate: falling back to hourly keys
+			// would silently truncate 60/90-day history to the ~30 days of
+			// hourly retention.
+			desc: "redis error is propagated",
 			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
 				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return(nil, errors.New("internal"))
 			},
-			expected: 0,
+			expectedErr: true,
 		},
 		{
-			desc: "unparsable marker falls back to zero",
+			desc: "unexpected value type is propagated",
+			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
+				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return(12345, nil)
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "unparsable marker is propagated",
 			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
 				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return([]byte("not-a-number"), nil)
 			},
-			expected: 0,
+			expectedErr: true,
 		},
 		{
 			desc: "valid marker",
@@ -963,7 +977,13 @@ func TestGetDailyCutover(t *testing.T) {
 			m := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 			p.setup(m)
 			s := &eventCounterService{counterCache: m, logger: zap.NewNop()}
-			assert.Equal(t, p.expected, s.getDailyCutover())
+			cutover, err := s.getDailyCutover()
+			if p.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, p.expected, cutover)
 		})
 	}
 }
@@ -1187,6 +1207,42 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				EnvironmentId: environmentId,
 				FeatureId:     fID,
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expectedErr: statusInternal.Err(),
+		},
+		{
+			// A transient marker read failure must fail the request, not
+			// silently fall back to hourly keys: hourly keys only cover ~30
+			// days, so a 90-day chart would come back truncated to 30 days
+			// of data followed by zeros while the daily tier still holds the
+			// full history.
+			desc: "error: daily cutover marker read failed must not truncate history",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentId: environmentId,
+					Id:            fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				counterCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+				counterCache.EXPECT().
+					Get(cachev3.EvaluationDailyCutoverKey).
+					Return(nil, errors.New("redis: connection reset"))
+				s.counterCache = counterCache
+				// No count key may be read when the marker is unreadable.
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					GetEventCountsV2(gomock.Any()).Times(0)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					CountUniqueUsers(gomock.Any()).Times(0)
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_NINETY_DAYS,
 			},
 			expectedErr: statusInternal.Err(),
 		},
