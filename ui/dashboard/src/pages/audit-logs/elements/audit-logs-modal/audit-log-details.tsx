@@ -117,7 +117,7 @@ const AuditLogDetailsModal = ({
         {isLoading ? (
           <FormLoading />
         ) : error ? (
-          <div className="typo-para-medium text-gray-500">
+          <div className="typo-para-medium text-gray-500 dark:text-dark-gray-200">
             <Trans
               i18nKey={'form:not-found-entity'}
               values={{
@@ -132,7 +132,7 @@ const AuditLogDetailsModal = ({
                 <AuditLogAvatar editor={auditLog?.editor} className="size-8" />
                 <div
                   className={cn(
-                    'flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate',
+                    'flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 dark:text-dark-gray-300 truncate',
                     {
                       'gap-x-0': isLanguageJapanese
                     }
@@ -161,7 +161,7 @@ const AuditLogDetailsModal = ({
               <DateTooltip
                 align="start"
                 trigger={
-                  <div className="typo-para-small text-gray-500 w-fit">
+                  <div className="typo-para-small text-gray-500 dark:text-dark-gray-200 w-fit">
                     {dateTime}
                   </div>
                 }
@@ -169,7 +169,7 @@ const AuditLogDetailsModal = ({
               />
             </div>
             {auditLog?.options?.comment && (
-              <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
+              <div className="flex items-center w-full p-3 bg-gray-100 dark:bg-dark-black-700 rounded typo-para-small text-gray-600 dark:text-dark-gray-200 break-all border-l-4 border-gray-500 dark:border-dark-black-600">
                 {auditLog?.options?.comment}
               </div>
             )}
@@ -190,7 +190,7 @@ const AuditLogDetailsModal = ({
                 </TabsList>
               )}
 
-              <p className="typo-para-small text-gray-500 uppercase">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200 uppercase">
                 {t(
                   currentTab === AuditLogTab.SNAPSHOT
                     ? 'current-version'

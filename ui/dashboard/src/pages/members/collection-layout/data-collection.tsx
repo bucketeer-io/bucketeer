@@ -120,7 +120,7 @@ export const useColumns = ({
               />
 
               {isPendingInvite && (
-                <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
+                <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 dark:bg-accent-orange-900/30 typo-para-small text-accent-orange-500">
                   {t(`table:pending-invite`)}
                 </div>
               )}
@@ -136,7 +136,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium capitalize">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium capitalize">
             {t(String(account.organizationRole).split('_')[1]?.toLowerCase())}
           </div>
         );
@@ -172,7 +172,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {isNever ? t('never') : formatDateTime(account.lastSeen)}
               </div>
             }

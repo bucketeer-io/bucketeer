@@ -68,7 +68,7 @@ const Variations = () => {
     <div className="flex flex-col w-full gap-y-4">
       {variations.map((item, variationIndex) => (
         <div key={item.flagVariation} className="flex flex-col w-full">
-          <div className="flex items-center gap-x-2 mb-3 typo-para-small text-gray-600">
+          <div className="flex items-center gap-x-2 mb-3 typo-para-small text-gray-600 dark:text-dark-gray-200">
             <FlagVariationPolygon index={variationIndex} />
             <Trans
               i18nKey={'form:feature-flags.variation'}
@@ -126,7 +126,7 @@ const Variations = () => {
                                 setVariationSelected(null);
                               }}
                               title={
-                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 font-bold">
+                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 dark:text-dark-gray-200 font-bold">
                                   <FlagVariationPolygon
                                     index={variationIndex}
                                   />

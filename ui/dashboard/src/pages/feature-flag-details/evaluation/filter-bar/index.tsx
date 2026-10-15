@@ -27,7 +27,9 @@ const FilterBar = ({
   return (
     <div className="flex items-center w-full justify-between">
       <div className="flex items-center gap-x-2">
-        <p className="typo-head-bold-small text-gray-800">{t('evaluation')}</p>
+        <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
+          {t('evaluation')}
+        </p>
         <Tooltip
           align="start"
           alignOffset={-90}
@@ -54,7 +56,9 @@ const FilterBar = ({
           trigger={
             <div className="flex items-center gap-x-2">
               <Icon icon={IconThreeLines} size="sm" />
-              <p className="text-gray-600">{timeRangeLabel}</p>
+              <p className="text-gray-600 dark:text-dark-gray-200">
+                {timeRangeLabel}
+              </p>
             </div>
           }
           value={currentFilter}

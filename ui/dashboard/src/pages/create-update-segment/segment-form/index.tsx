@@ -251,8 +251,8 @@ const SegmentForm = ({
         className="flex flex-col size-full gap-y-6"
       >
         <div className="flex flex-col w-full gap-y-4">
-          <div className="flex flex-col w-full p-5 gap-y-5 bg-white rounded-lg shadow-card">
-            <p className="typo-para-medium text-gray-700">
+          <div className="flex flex-col w-full p-5 gap-y-5 bg-white dark:bg-dark-black-800 rounded-lg shadow-card dark:shadow-dark-card">
+            <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
               {t('form:general-info')}
             </p>
             <Form.Field
@@ -293,21 +293,21 @@ const SegmentForm = ({
             />
           </div>
 
-          <div className="flex flex-col w-full p-5 gap-y-5 bg-white rounded-lg shadow-card">
+          <div className="flex flex-col w-full p-5 gap-y-5 bg-white dark:bg-dark-black-800 rounded-lg shadow-card dark:shadow-dark-card">
             <div>
-              <p className="typo-para-medium text-gray-700 mb-2">
+              <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300 mb-2">
                 {t('form:list-of-users-ids')}
-                <span className="typo-para-small text-gray-500 ml-2">
+                <span className="typo-para-small text-gray-500 dark:text-dark-gray-200 ml-2">
                   ({t('form:optional')})
                 </span>
               </p>
-              <p className="typo-para-small text-gray-600">
+              <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
                 {t('form:list-of-users-ids-description')}
               </p>
             </div>
 
             {isUpdate && userSegment && (
-              <div className="flex items-center justify-between gap-x-4 w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50">
+              <div className="flex items-center justify-between gap-x-4 w-full rounded border-l-4 p-4 border-accent-blue-500 bg-accent-blue-50 dark:bg-accent-blue-900/30">
                 <div className="flex items-center gap-x-2">
                   <Icon
                     icon={IconInfoFilled}
@@ -371,7 +371,7 @@ const SegmentForm = ({
                           <label
                             htmlFor={'upload'}
                             className={cn(
-                              'cursor-pointer typo-para-small text-gray-700',
+                              'cursor-pointer typo-para-small text-gray-700 dark:text-dark-gray-300',
                               {
                                 'cursor-not-allowed': isDisabled
                               }
@@ -384,7 +384,7 @@ const SegmentForm = ({
                           <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
                             <Upload
                               files={files}
-                              className="border-l border-primary-500 pl-4"
+                              className="border-l border-primary-500 dark:border-dark-purple-300 pl-4"
                               uploadClassName="min-h-[200px] h-[200px]"
                               onChange={files => {
                                 setFiles(files);
@@ -419,7 +419,7 @@ const SegmentForm = ({
                           <label
                             htmlFor={'typing'}
                             className={cn(
-                              'cursor-pointer typo-para-small text-gray-700',
+                              'cursor-pointer typo-para-small text-gray-700 dark:text-dark-gray-300',
                               {
                                 'cursor-not-allowed': isDisabled
                               }
@@ -433,7 +433,7 @@ const SegmentForm = ({
                             <Divider
                               vertical
                               width={1}
-                              className="border-primary-500 !h-[120px]"
+                              className="border-primary-500 dark:border-dark-purple-300 !h-[120px]"
                             />
                             <TextArea
                               placeholder={t('form:placeholder-enter-user-ids')}
@@ -452,18 +452,18 @@ const SegmentForm = ({
           </div>
 
           {/* The included-user list and the rules are combined with OR. */}
-          <div className="flex-center self-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px] bg-gray-200 text-gray-600">
+          <div className="flex-center self-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px] bg-gray-200 dark:bg-dark-black-700 text-gray-600 dark:text-dark-gray-200">
             {t('common:or')}
           </div>
 
-          <div className="flex flex-col w-full p-5 bg-white rounded-lg shadow-card">
-            <p className="typo-para-medium text-gray-700 mb-2">
+          <div className="flex flex-col w-full p-5 bg-white dark:bg-dark-black-800 rounded-lg shadow-card dark:shadow-dark-card">
+            <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300 mb-2">
               {t('table:feature-flags.rules')}
-              <span className="typo-para-small text-gray-500 ml-2">
+              <span className="typo-para-small text-gray-500 dark:text-dark-gray-200 ml-2">
                 ({t('form:optional')})
               </span>
             </p>
-            <p className="typo-para-small text-gray-600 mb-4">
+            <p className="typo-para-small text-gray-600 dark:text-dark-gray-200 mb-4">
               {t('form:segment-rules.description')}
             </p>
 

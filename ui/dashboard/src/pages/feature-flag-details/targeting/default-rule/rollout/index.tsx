@@ -27,20 +27,20 @@ const DefaultRuleRollout = () => {
 
   return (
     <div className="flex flex-col w-full gap-y-6">
-      <p className="typo-para-medium text-gray-700">
+      <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
         {t('common:source-type.progressive-rollout')}
       </p>
       <div className="flex items-center w-full gap-x-2">
-        <p className="typo-para-medium text-gray-600">
+        <p className="typo-para-medium text-gray-600 dark:text-dark-gray-200">
           {t('table:results.variation')}
         </p>
         <FlagVariationPolygon index={0} />
-        <p className="typo-para-medium text-gray-600">
+        <p className="typo-para-medium text-gray-600 dark:text-dark-gray-200">
           {t('table:results.variation')}
         </p>
       </div>
       <div className="flex flex-col w-full gap-y-2">
-        <p className="typo-para-small text-gray-600">
+        <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
           {t('targeting.rollout-to')}
         </p>
         <div className="flex items-center gap-x-3">
@@ -51,19 +51,21 @@ const DefaultRuleRollout = () => {
               console.log(value);
             }}
           />
-          <p className="typo-para-small text-gray-600">{t('targeting.for')}</p>
+          <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+            {t('targeting.for')}
+          </p>
           <div className="flex items-center gap-x-2">
             <InputGroup
               addon={
                 <Dropdown
                   labelCustom="4"
-                  className="size-full !border-l border-r-0 border-y-0 !border-gray-400 rounded-l-none !shadow-none"
+                  className="size-full !border-l border-r-0 border-y-0 !border-gray-400 dark:!border-dark-black-700 rounded-l-none !shadow-none"
                   options={options}
                 />
               }
               addonSlot="right"
               className="w-[159px] overflow-hidden"
-              addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg w-[100px] typo-para-medium text-gray-700"
+              addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg w-[100px] typo-para-medium text-gray-700 dark:text-dark-gray-300"
             >
               <Input
                 onWheel={e => e.currentTarget.blur()}
@@ -82,12 +84,16 @@ const DefaultRuleRollout = () => {
           </div>
         </div>
         <div className="flex items-center gap-x-2 pl-3 pt-2">
-          <p className="typo-para-medium text-gray-600 w-16">100%</p>
-          <p className="typo-para-medium text-gray-600">
+          <p className="typo-para-medium text-gray-600 dark:text-dark-gray-200 w-16">
+            100%
+          </p>
+          <p className="typo-para-medium text-gray-600 dark:text-dark-gray-200">
             <Trans
               i18nKey={'form:targeting.total-duration'}
               components={{
-                b: <span className="typo-head-bold-small text-gray-700" />
+                b: (
+                  <span className="typo-head-bold-small text-gray-700 dark:text-dark-gray-300" />
+                )
               }}
               values={{
                 value: `20 hours`

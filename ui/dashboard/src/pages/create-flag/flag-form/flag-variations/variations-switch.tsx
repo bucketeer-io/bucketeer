@@ -12,7 +12,7 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 
 const buttonCls =
-  'typo-para-medium !text-gray-600 !shadow-none border border-gray-200 hover:border-gray-400 disabled:pointer-events-none';
+  'typo-para-medium !text-gray-600 dark:!text-dark-gray-200 !shadow-none border border-gray-200 dark:border-dark-black-700 hover:border-gray-400 dark:hover:border-dark-purple-300 disabled:pointer-events-none';
 const buttonActiveCls =
   '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500 disabled:pointer-events-none';
 
@@ -469,7 +469,7 @@ const VariationsSwitch = () => {
 
   return (
     <div className="flex items-center w-full justify-between">
-      <p className="typo-para-medium text-gray-700">
+      <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
         {t('feature-flags.flag-variations')}
       </p>
       <Form.Field

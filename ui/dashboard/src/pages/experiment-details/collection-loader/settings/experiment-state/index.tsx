@@ -95,9 +95,9 @@ const ExperimentState = ({
   };
 
   return (
-    <div className="flex items-center justify-between w-full min-w-fit px-4 py-2 gap-x-4 bg-gray-100 rounded-lg">
+    <div className="flex items-center justify-between w-full min-w-fit px-4 py-2 gap-x-4 bg-gray-100 dark:bg-dark-black-700 rounded-lg">
       <div className="flex items-center">
-        <div className="flex items-center gap-x-2 pr-3 border-r border-gray-400">
+        <div className="flex items-center gap-x-2 pr-3 border-r border-gray-400 dark:border-dark-black-800">
           <Icon
             icon={
               isRunning
@@ -111,7 +111,7 @@ const ExperimentState = ({
             size={'md'}
             className="[&>svg]:size-6"
           />
-          <p className="typo-head-bold-small text-gray-700 whitespace-nowrap">
+          <p className="typo-head-bold-small text-gray-700 dark:text-dark-gray-400 whitespace-nowrap">
             {t(
               isRunning
                 ? `experiment.running-experiment`
@@ -123,7 +123,7 @@ const ExperimentState = ({
             )}
           </p>
         </div>
-        <div className="px-3 typo-para-small text-gray-700 whitespace-nowrap">
+        <div className="px-3 typo-para-small text-gray-700 dark:text-dark-gray-300 whitespace-nowrap">
           <Trans
             i18nKey={
               isRunning
@@ -149,7 +149,7 @@ const ExperimentState = ({
             }}
           />
         </div>
-        <div className="flex items-center gap-x-3 pl-3 typo-para-small text-gray-700 whitespace-nowrap border-l border-gray-400">
+        <div className="flex items-center gap-x-3 pl-3 typo-para-small text-gray-700 dark:text-dark-gray-300 whitespace-nowrap border-l border-gray-400 dark:border-dark-black-800">
           <Icon icon={IconMember} size="sm" />
           <p>
             <Trans

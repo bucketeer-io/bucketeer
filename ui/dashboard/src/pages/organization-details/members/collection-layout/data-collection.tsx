@@ -43,7 +43,7 @@ export const useColumns = ({
         const accountName = joinName(firstName, lastName) || name;
 
         return (
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <AvatarImage
               image={avatarImageUrl || primaryAvatar}
               alt="member-avatar"
@@ -79,13 +79,13 @@ export const useColumns = ({
                     id={email}
                     name={email}
                     maxLines={1}
-                    className="text-gray-700 no-underline cursor-default min-w-[300px]"
+                    className="text-gray-700 dark:text-dark-gray-300 no-underline cursor-default min-w-[300px]"
                   />
                 }
                 maxLines={1}
               />
               {isPendingInvite && (
-                <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
+                <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 dark:bg-dark-purple-100 typo-para-small text-accent-orange-500">
                   {t('table:pending-invite')}
                 </div>
               )}
@@ -101,7 +101,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {t(String(account.organizationRole).split('_')[1]?.toLowerCase())}
           </div>
         );
@@ -133,7 +133,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {account.environmentRoles.length}
           </div>
         );
@@ -146,7 +146,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {Number(account.lastSeen) === 0
               ? t('never')
               : formatDateTime(account.lastSeen)}
@@ -165,7 +165,7 @@ export const useColumns = ({
       enableSorting: false,
       cell: () => {
         return (
-          <button className="flex-center text-gray-600">
+          <button className="flex-center text-gray-600 dark:text-dark-gray-200">
             <Icon icon={IconMoreHorizOutlined} size="sm" />
           </button>
         );

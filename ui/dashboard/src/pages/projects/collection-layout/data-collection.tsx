@@ -147,7 +147,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {project.environmentCount}
           </div>
         );
@@ -160,7 +160,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {project.featureFlagCount}
           </div>
         );
@@ -175,7 +175,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {formatDateTime(project.createdAt)}
               </div>
             }

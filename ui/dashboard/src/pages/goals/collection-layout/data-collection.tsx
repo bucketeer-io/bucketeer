@@ -24,9 +24,12 @@ const Tag = ({ tag, type }: { tag: string; type: ConnectionType }) => {
       className={cn(
         'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize whitespace-nowrap',
         {
-          'px-4 text-gray-600 bg-gray-100': type === 'UNKNOWN',
-          'text-primary-500 bg-primary-50': type === 'EXPERIMENT',
-          'text-accent-pink-500 bg-accent-pink-50': type === 'OPERATION'
+          'px-4 text-gray-600 bg-gray-100 dark:text-dark-gray-200 dark:bg-dark-black-700':
+            type === 'UNKNOWN',
+          'text-primary-500 dark:text-dark-purple-700 bg-primary-50 dark:bg-accent-blue-900/30':
+            type === 'EXPERIMENT',
+          'text-accent-pink-500 bg-accent-pink-50 dark:bg-accent-pink-900/30':
+            type === 'OPERATION'
         }
       )}
     >
@@ -76,7 +79,7 @@ export const useColumns = ({
                 </Link>
               }
             />
-            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
+            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 dark:text-dark-gray-200 group select-none">
               {id}
               <button
                 type="button"
@@ -134,7 +137,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {Number(goal.updatedAt) === 0
                   ? t('never')
                   : formatDateTime(goal.updatedAt)}
