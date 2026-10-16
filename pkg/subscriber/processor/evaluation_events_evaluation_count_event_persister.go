@@ -707,6 +707,11 @@ func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.C
 	}
 }
 
+// Flush writes the buffered last-used info so it isn't lost on shutdown.
+func (p *evaluationCountEventPersister) Flush() {
+	p.writeEnvLastUsedInfo()
+}
+
 func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 	p.envLastUsedCacheMutex.Lock()
 	defer p.envLastUsedCacheMutex.Unlock()

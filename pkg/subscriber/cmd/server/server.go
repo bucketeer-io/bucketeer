@@ -603,6 +603,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// This stops receiving new messages and allows in-flight messages to be processed.
 		multiPubSub.Stop()
 
+		// Write buffered processor data before the storage clients are closed.
+		pubSubProcessors.Flush()
+
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
 		go subscriptionClient.Close()

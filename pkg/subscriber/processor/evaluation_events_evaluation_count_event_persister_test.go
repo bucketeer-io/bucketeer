@@ -23,6 +23,7 @@ import (
 	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
@@ -2033,4 +2034,28 @@ func TestWriteDAURestoresBufferOnFailure(t *testing.T) {
 	)
 	p.writeDAU()
 	assert.Empty(t, p.dauBuf)
+}
+
+func TestPubSubProcessorsFlushWritesLastUsedInfo(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	storageMock := ftstoragemock.NewMockFeatureLastUsedInfoStorage(ctrl)
+	p := &evaluationCountEventPersister{
+		fluiStorage:      storageMock,
+		envLastUsedCache: make(environmentLastUsedInfoCache),
+		logger:           zap.NewNop(),
+	}
+	info := ftdomain.NewFeatureLastUsedInfo("feature-1", 1, time.Now().Unix(), "1.0.0")
+	p.envLastUsedCache["env-1"] = lastUsedInfoCache{info.ID(): info}
+
+	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").
+		Return(nil, nil)
+	storageMock.EXPECT().UpsertFeatureLastUsedInfo(gomock.Any(), info, "env-1").Return(nil)
+
+	processors := &PubSubProcessors{processorMap: map[string]subscriber.PubSubProcessor{
+		EvaluationCountEventPersisterName: p,
+	}}
+	processors.Flush()
+	assert.Empty(t, p.envLastUsedCache)
 }
