@@ -46,3 +46,6 @@
 .editor-wrapper .monaco-scrollable-element > .scrollbar > .slider {
   @apply rounded-md;
 }
+.iPadShowKeyboard{
+  @apply hidden;
+}

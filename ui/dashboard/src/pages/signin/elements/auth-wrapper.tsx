@@ -9,7 +9,7 @@ interface AuthWrapperProps {
 export const AuthWrapper = memo(({ children }: AuthWrapperProps) => {
   return (
     <div className="flex min-h-screen overflow-auto">
-      <div className="flex-1 grid place-items-center p-5 pr-0">
+      <div className="flex-1 grid place-items-center p-5 sm:pr-0">
         <div className="w-full max-w-[442px]">
           <div className="mb-12">
             <img src={logo} alt="bucketer-logo" />
@@ -17,7 +17,7 @@ export const AuthWrapper = memo(({ children }: AuthWrapperProps) => {
           {children}
         </div>
       </div>
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 hidden sm:block">
         <div className="bg-primary-additional flex items-center h-full rounded-3xl justify-end">
           <img
             src={authBackground}

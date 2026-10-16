@@ -33,29 +33,38 @@ const DialogModal = ({
   className,
   overlayCls
 }: ModalProps) => {
-  const onOpenChange = useCallback((v: boolean) => {
-    if (v === false) onClose();
-  }, []);
+  // Outside interactions are already blocked via onPointerDownOutside /
+  // onInteractOutside, so any close reaching here (Escape, Dialog.Close) is allowed
+  const onOpenChange = useCallback(
+    (v: boolean) => {
+      if (v === false) onClose();
+    },
+    [onClose]
+  );
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay
           className={cn(
-            'fixed inset-0 grid h-full w-full animate-fade z-50',
+            'fixed inset-0 grid h-full w-full animate-fade z-[400]',
             'place-items-center overflow-y-auto bg-overlay',
+            'p-6',
             overlayCls
           )}
         >
           <Dialog.Content
             className={cn(
-              'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
+              'relative w-full mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
               className
             )}
             onEscapeKeyDown={
               closeOnPressEscape ? undefined : event => event.preventDefault()
             }
             onPointerDownOutside={
+              closeOnClickOutside ? undefined : event => event.preventDefault()
+            }
+            onInteractOutside={
               closeOnClickOutside ? undefined : event => event.preventDefault()
             }
           >
@@ -67,10 +76,12 @@ const DialogModal = ({
               <div
                 className={cn('flex items-center justify-between px-4 py-3.5')}
               >
-                {title && (
-                  <Dialog.Title className="typo-head-bold-huge">
+                {title ? (
+                  <Dialog.Title className="typo-head-bold-small sm:typo-head-bold-huge">
                     {title}
                   </Dialog.Title>
+                ) : (
+                  <Dialog.Title className="sr-only" />
                 )}
                 <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>

@@ -194,39 +194,47 @@ const Strategy = ({
 
   return (
     <div className="px-2">
-      {label && (
-        <Form.Label
-          required={isRequired}
-          className={cn('relative w-fit mb-2 ml-14 text-gray-700')}
-        >
-          {label}
-        </Form.Label>
-      )}
-      <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase min-w-fit">
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-end">
+        <p className="typo-para-small text-gray-600 uppercase shrink-0 pb-0 sm:pb-3">
           {t('feature-flags.serve')}
         </p>
-        <Form.Field
-          control={control}
-          name={`${rootName}.currentOption`}
-          render={({ field }) => {
-            return (
-              <Form.Item className="flex flex-col flex-1 py-0 w-full">
-                <Form.Control>
-                  <Dropdown
-                    value={currentOption}
-                    options={options}
-                    onChange={val => handleChangeStrategy(val, field.onChange)}
-                    disabled={isDisabled}
-                    wrapTriggerStyle="flex flex-col grap-y-2 w-full"
-                    className="w-full"
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            );
-          }}
-        />
+
+        <div className="flex items-start w-full gap-x-4">
+          <div className="w-full">
+            {label && (
+              <Form.Label
+                required={isRequired}
+                className={cn('relative w-fit mb-2 text-gray-700')}
+              >
+                {label}
+              </Form.Label>
+            )}
+            <Form.Field
+              control={control}
+              name={`${rootName}.currentOption`}
+              render={({ field }) => {
+                return (
+                  <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
+                    <Form.Control>
+                      <Dropdown
+                        value={currentOption}
+                        options={options}
+                        onChange={val =>
+                          handleChangeStrategy(val, field.onChange)
+                        }
+                        disabled={isDisabled}
+                        wrapTriggerStyle="flex flex-col gap-y-2 w-full"
+                        contentClassName="min-w-[200px] w-full max-w-[300px]"
+                        className="w-full"
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {isShowPercentage && (
@@ -254,10 +262,10 @@ const Strategy = ({
             name={`${rootName}.${strategyName}.audience.percentage`}
             render={({ field }) => {
               return (
-                <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
                   <Form.Control>
                     <div>
-                      <div className="flex items-center w-full gap-x-2">
+                      <div className="flex flex-wrap items-center w-full gap-2">
                         {audienceTrafficOptions.map((item, index) => {
                           return (
                             <AudienceSelect
@@ -332,7 +340,7 @@ const Strategy = ({
           </div>
 
           {experimentPercentage > 0 && Number(experimentPercentage) !== 100 && (
-            <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+            <div className="flex flex-wrap items-center w-full gap-2 mt-0 sm:mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
               <Trans
                 i18nKey={
                   'form:experiments.define-audience.not-included-allocation'
@@ -349,14 +357,15 @@ const Strategy = ({
                       control={control}
                       name={`${rootName}.${strategyName}.audience.defaultVariation`}
                       render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                        <Form.Item className="flex flex-col flex-1 py-0 min-w-0 w-full">
                           <Form.Control>
                             <Dropdown
                               options={options.slice(0, -1)}
                               value={field.value}
                               onChange={field.onChange}
                               disabled={isDisabled}
-                              className="w-full"
+                              className="w-full !max-w-full"
+                              itemClassName="max-w-full"
                               wrapTriggerStyle="flex flex-col grap-y-2 w-full"
                             />
                           </Form.Control>
@@ -392,7 +401,7 @@ const Strategy = ({
             disabled={isDisabled}
             value={splitOptionType ?? ''}
             onValueChange={onChangeSplitType}
-            className="flex gap-x-6 mt-5 px-1"
+            className="flex flex-wrap gap-x-6 mt-5 px-1"
           >
             {splitExperimentOptions.map(({ label, value }) => (
               <div key={value} className="flex items-center gap-x-2">

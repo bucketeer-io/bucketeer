@@ -234,7 +234,7 @@ const TemplateSchedule = ({
           </Form.Item>
         )}
       />
-      <div className="flex w-full gap-x-4">
+      <div className="flex flex-col sm:flex-row w-full gap-4">
         <Form.Field
           control={control}
           name={`progressiveRollout.template.increments`}
@@ -318,7 +318,7 @@ const TemplateSchedule = ({
                   placeholder={t('select-frequency')}
                   disabled={isDisabled}
                   alignContent="end"
-                  className="min-w-[243px]"
+                  className="w-full sm:min-w-[243px]"
                 />
               </Form.Control>
             </Form.Item>
