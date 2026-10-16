@@ -58,6 +58,20 @@ func (p *PubSubProcessors) RegisterProcessor(name string, processor subscriber.P
 	p.processorMap[name] = processor
 }
 
+// Flusher is implemented by processors that buffer data in memory.
+type Flusher interface {
+	Flush()
+}
+
+// Flush writes the buffered data of every processor that implements Flusher.
+func (p *PubSubProcessors) Flush() {
+	for _, processor := range p.processorMap {
+		if f, ok := processor.(Flusher); ok {
+			f.Flush()
+		}
+	}
+}
+
 func (p *PubSubProcessors) GetProcessorByName(name string) (subscriber.PubSubProcessor, error) {
 	if p, ok := p.processorMap[name]; ok {
 		return p, nil
