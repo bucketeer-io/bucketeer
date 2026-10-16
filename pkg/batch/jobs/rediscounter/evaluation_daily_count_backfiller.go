@@ -32,10 +32,15 @@ import (
 )
 
 const (
-	// backfillDays is how far back daily keys are materialized: the last 30
-	// fully elapsed UTC days, matching the hourly retention horizon (hourly
-	// data older than that no longer exists anywhere).
-	backfillDays = 30
+	// backfillDays is how far back daily keys are materialized. It is one day
+	// LESS than the hourly retention of the redis counter deleter: the
+	// deleter removes hourly keys older than a rolling `now - retention`, so
+	// the UTC day that started exactly retention days ago is already losing
+	// its early hours while this job runs. Summing such a partially deleted
+	// day would publish a partial total as the complete daily count. With
+	// retention-1 days every hour of the oldest day stays deletable only
+	// from the NEXT UTC midnight, i.e. after this run.
+	backfillDays = int64(defaultCounterRetention/(24*time.Hour)) - 1
 	daySeconds   = int64(24 * 60 * 60)
 )
 
@@ -47,7 +52,8 @@ var (
 // evaluationDailyCountBackfiller is the one-shot, non-destructive migration
 // job of the evaluation timeseries key redesign (§3.3). For every
 // environment, feature, and variation it materializes the daily-tier keys
-// from the existing hourly keys, for the last 30 fully elapsed UTC days that
+// from the existing hourly keys, for the last 29 fully elapsed UTC days (one
+// less than the hourly retention, see backfillDays) that
 // are still served by the hourly fallback:
 //
 //   - ec1d: SET of the summed hourly ec values (recomputed from data that is
@@ -383,6 +389,25 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 	if err != nil {
 		return err
 	}
+	// Never lower an existing daily count. Hourly keys can only shrink by
+	// being deleted (retention cleanup), never by decrement, so a daily key
+	// above the hourly sum means the hourly data is no longer complete and
+	// the existing daily value (from an earlier run or from live writes) is
+	// the better one. Overwriting would publish a partial sum as the day's
+	// total. The window guard (backfillDays) prevents this for the normal
+	// schedule; this check covers operator-shortened retention and re-runs.
+	existing, err := b.getDailyEventCount(dailyKey)
+	if err != nil {
+		return err
+	}
+	if existing > sum {
+		b.logger.Warn("Existing daily event count exceeds the hourly sum; keeping the existing value",
+			zap.String("dailyKey", dailyKey),
+			zap.Int64("existing", existing),
+			zap.Int64("hourlySum", sum),
+		)
+		return nil
+	}
 	stable := false
 	for attempt := 0; attempt < backfillEventCountDayAttempts; attempt++ {
 		if err := b.cache.Put(dailyKey, strconv.FormatInt(sum, 10), cachev3.DailyCountTTL); err != nil {
@@ -403,23 +428,35 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 			dailyKey)
 	}
 	// Verification: the daily key must hold exactly the (stable) hourly sum.
-	stored, err := b.cache.Get(dailyKey)
+	got, err := b.getDailyEventCount(dailyKey)
 	if err != nil {
 		return fmt.Errorf("read back daily event count: %w", err)
-	}
-	s, ok := toString(stored)
-	if !ok {
-		return fmt.Errorf("batch: daily event count has an unexpected type: %v", stored)
-	}
-	got, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return fmt.Errorf("parse daily event count: %w", err)
 	}
 	if got != sum {
 		return fmt.Errorf("batch: daily event count verification failed: key %s has %d, hourly sum is %d",
 			dailyKey, got, sum)
 	}
 	return nil
+}
+
+// getDailyEventCount reads a daily ec key; a missing key reads as 0.
+func (b *evaluationDailyCountBackfiller) getDailyEventCount(dailyKey string) (int64, error) {
+	stored, err := b.cache.Get(dailyKey)
+	if err != nil {
+		if errors.Is(err, cache.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("get daily event count: %w", err)
+	}
+	s, ok := toString(stored)
+	if !ok {
+		return 0, fmt.Errorf("batch: daily event count has an unexpected type: %v", stored)
+	}
+	got, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse daily event count: %w", err)
+	}
+	return got, nil
 }
 
 func (b *evaluationDailyCountBackfiller) sumHourlyEventCounts(hourlyKeys []string) (int64, error) {

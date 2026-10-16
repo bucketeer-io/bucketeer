@@ -328,6 +328,7 @@ func TestBackfillEventCountDayIncludesHourlyKeysCreatedAfterScan(t *testing.T) {
 			[]string{hourlyKey("ec", day, 0)}, nil),
 		// By the time the day is read, hour 1 exists too.
 		mockCache.EXPECT().GetMulti(allHours, true).Return(snapshot("1"), nil),
+		mockCache.EXPECT().Get(dKey).Return(nil, cache.ErrNotFound),
 		mockCache.EXPECT().Put(dKey, "6", cachev3.DailyCountTTL).Return(nil),
 		mockCache.EXPECT().GetMulti(allHours, true).Return(snapshot("1"), nil),
 		mockCache.EXPECT().Get(dKey).Return("6", nil),
@@ -358,6 +359,7 @@ func TestBackfillEventCountDayStabilizesAgainstLiveWrites(t *testing.T) {
 	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 	gomock.InOrder(
 		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5"}, nil),
+		mockCache.EXPECT().Get(dKey).Return(nil, cache.ErrNotFound),
 		mockCache.EXPECT().Put(dKey, "5", cachev3.DailyCountTTL).Return(nil),
 		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"6"}, nil),
 		mockCache.EXPECT().Put(dKey, "6", cachev3.DailyCountTTL).Return(nil),
@@ -388,6 +390,7 @@ func TestBackfillEventCountDayGivesUpWhenNeverStable(t *testing.T) {
 			sum++
 			return []interface{}{strconv.Itoa(sum)}, nil
 		}).Times(backfillEventCountDayAttempts + 1)
+	mockCache.EXPECT().Get(dKey).Return(nil, cache.ErrNotFound)
 	mockCache.EXPECT().Put(dKey, gomock.Any(), cachev3.DailyCountTTL).
 		Return(nil).Times(backfillEventCountDayAttempts)
 
@@ -421,4 +424,82 @@ func TestBackfillerNoWorkWhenMarkerCoversWindow(t *testing.T) {
 	got, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
 	require.NoError(t, err)
 	assert.Equal(t, strconv.FormatInt(marker, 10), got, "the marker must never move forward")
+}
+
+// The backfill window must stay strictly inside the deleter's hourly
+// retention: the deleter removes hourly keys older than a rolling
+// `now - retention`, so the day that started exactly retention days ago is
+// already losing hours while the job runs, and summing it would publish a
+// partial total. Every hour of the oldest backfilled day must survive the
+// deleter until the next UTC midnight.
+func TestBackfillWindowIsInsideHourlyRetention(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int64(29), backfillDays)
+
+	now := time.Now().UTC()
+	today := now.Truncate(24 * time.Hour).Unix()
+	oldestDay := today - backfillDays*daySeconds
+	nextMidnight := today + daySeconds
+
+	deleterCutoff := func(at int64) int64 { return at - int64(defaultCounterRetention/time.Second) }
+	// At any point before the next midnight the deleter's cutoff is still
+	// before the first hour of the oldest day.
+	assert.Less(t, deleterCutoff(nextMidnight-1), oldestDay,
+		"deleter must not be able to remove any hour of the oldest backfilled day during the run")
+	// Whereas a 30-day window would include a day whose early hours are
+	// already deletable now (unless the run starts exactly at midnight).
+	thirtyDaysAgo := today - 30*daySeconds
+	assert.GreaterOrEqual(t, deleterCutoff(now.Unix()), thirtyDaysAgo,
+		"the day retention days ago is already (partially) deletable")
+}
+
+// If hourly keys of a day were already removed (operator-shortened retention,
+// or a re-run after the window moved), the partial hourly sum must not
+// replace a larger existing daily count.
+func TestBackfillEventCountDayNeverLowersExistingDailyCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	const dKey = "dev:ec1d:0:feature-1:variation-A"
+	hourly := []string{"dev:ec:0:feature-1:variation-A", "dev:ec:3600:feature-1:variation-A"}
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	// 13 of the day's hourly keys were deleted: the remaining ones sum to 11
+	// while the daily key, materialized by an earlier run, holds 24.
+	mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil)
+	mockCache.EXPECT().Get(dKey).Return([]byte("24"), nil)
+	mockCache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+}
+
+// A smaller existing daily count (live-written partial day before the
+// cutover, or late events since the last run) is still raised to the sum.
+func TestBackfillEventCountDayRaisesSmallerExistingDailyCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	const dKey = "dev:ec1d:0:feature-1:variation-A"
+	hourly := []string{"dev:ec:0:feature-1:variation-A"}
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	gomock.InOrder(
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"24"}, nil),
+		mockCache.EXPECT().Get(dKey).Return([]byte("11"), nil),
+		mockCache.EXPECT().Put(dKey, "24", cachev3.DailyCountTTL).Return(nil),
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"24"}, nil),
+		mockCache.EXPECT().Get(dKey).Return([]byte("24"), nil),
+	)
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
 }
