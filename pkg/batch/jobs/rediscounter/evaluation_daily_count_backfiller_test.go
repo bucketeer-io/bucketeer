@@ -455,9 +455,10 @@ func TestBackfillWindowIsInsideHourlyRetention(t *testing.T) {
 }
 
 // If hourly keys of a day were already removed (operator-shortened retention,
-// or a re-run after the window moved), the partial hourly sum must not
-// replace a larger existing daily count.
-func TestBackfillEventCountDayNeverLowersExistingDailyCount(t *testing.T) {
+// or a re-run after the window moved), the partial hourly sum must neither
+// replace the larger existing daily count nor be declared verified: the run
+// fails so the cutover marker is not moved over an unverifiable day.
+func TestBackfillEventCountDayFailsWhenHourlyHistoryIsIncomplete(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -467,8 +468,9 @@ func TestBackfillEventCountDayNeverLowersExistingDailyCount(t *testing.T) {
 
 	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 	// 13 of the day's hourly keys were deleted: the remaining ones sum to 11
-	// while the daily key, materialized by an earlier run, holds 24.
-	mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil)
+	// while the daily key, materialized by an earlier run, holds 24. The
+	// re-read confirms the hourly data is genuinely short, not just stale.
+	mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil).Times(2)
 	mockCache.EXPECT().Get(dKey).Return([]byte("24"), nil)
 	mockCache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
@@ -476,7 +478,100 @@ func TestBackfillEventCountDayNeverLowersExistingDailyCount(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
+	err := backfiller.backfillEventCountDay(dKey, hourly)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cutover marker left unchanged")
+}
+
+// A daily value above the hourly snapshot can also mean the snapshot is
+// stale: late events landed in both tiers between the hourly read and the
+// daily read. The job must re-read and then reconcile to the true total (3),
+// not keep the intermediate daily value (2).
+func TestBackfillEventCountDayReconcilesStaleSnapshotAboveDaily(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	const dKey = "dev:ec1d:0:feature-1:variation-A"
+	hourly := []string{"dev:ec:0:feature-1:variation-A"}
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	gomock.InOrder(
+		// Pre-deployment event: hourly=1, daily absent.
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"1"}, nil),
+		// Two late events land in both tiers before the daily read: daily=2.
+		mockCache.EXPECT().Get(dKey).Return([]byte("2"), nil),
+		// Re-read: hourly has caught up to 3.
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"3"}, nil),
+		mockCache.EXPECT().Put(dKey, "3", cachev3.DailyCountTTL).Return(nil),
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"3"}, nil),
+		mockCache.EXPECT().Get(dKey).Return([]byte("3"), nil),
+	)
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
 	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+}
+
+// A run that may cross UTC midnight (deadline on the next day) must choose
+// its oldest day from the deadline, because the midnight deleter removes
+// hour 00 of the day that is oldest-safe only for the start day.
+func TestBackfillerWindowUsesRunDeadlineAcrossMidnight(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	mr, redisCache, backfiller := newMiniredisBackfiller(t, mockController)
+
+	now := time.Now().UTC()
+	today := now.Truncate(24 * time.Hour).Unix()
+	nextMidnight := time.Unix(today+daySeconds, 0).UTC()
+	oldestForStartDay := today - backfillDays*daySeconds // unsafe if the run crosses midnight
+	oldestForDeadline := oldestForStartDay + daySeconds
+
+	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(today, 10), 0))
+	require.NoError(t, redisCache.Put(hourlyKey("ec", oldestForStartDay, 5), "7", 0))
+	require.NoError(t, redisCache.Put(hourlyKey("ec", oldestForDeadline, 5), "9", 0))
+
+	// Effective deadline just after the next UTC midnight: the run may
+	// straddle it. (Run caps the parent deadline with its own timeout, so the
+	// job timeout must reach past midnight too.)
+	backfiller.opts.Timeout = 48 * time.Hour
+	ctx, cancel := context.WithDeadline(context.Background(), nextMidnight.Add(10*time.Minute))
+	defer cancel()
+	require.NoError(t, backfiller.Run(ctx))
+
+	assert.False(t, mr.Exists(dailyKey("ec1d", oldestForStartDay)),
+		"the day whose hour 00 the midnight deleter may remove mid-run must be excluded")
+	assert.True(t, mr.Exists(dailyKey("ec1d", oldestForDeadline)))
+	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(oldestForDeadline, 10), marker,
+		"cutover must not move over the excluded day")
+}
+
+// If the run overshoots the deadline its window was derived from, the marker
+// must not be published.
+func TestBackfillerDoesNotPublishCutoverPastDeadline(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	_, redisCache, backfiller := newMiniredisBackfiller(t, mockController)
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(today, 10), 0))
+	require.NoError(t, redisCache.Put(hourlyKey("ec", today-2*daySeconds, 5), "7", 0))
+
+	// A deadline already in the past (but not yet enforced through ctx.Done
+	// because Run installs its own timeout on top).
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	err := backfiller.Run(ctx)
+	require.Error(t, err)
+	marker, getErr := redisCache.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, getErr)
+	assert.Equal(t, strconv.FormatInt(today, 10), string(marker.([]byte)), "marker unchanged")
 }
 
 // A smaller existing daily count (live-written partial day before the

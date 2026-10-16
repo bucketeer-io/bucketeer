@@ -116,8 +116,20 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 		return err
 	}
 
-	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
-	earliest := today - backfillDays*daySeconds
+	now := time.Now().UTC()
+	today := now.Truncate(24 * time.Hour).Unix()
+	// The oldest day is chosen from the run's DEADLINE, not its start: the
+	// backfillDays window is only safe until the next UTC midnight, and a run
+	// started shortly before midnight may still be reading its oldest day
+	// when the midnight deleter removes that day's hour 00. Using the
+	// deadline's day shifts the window one day later for such runs, so every
+	// hour read is protected for the whole run (the context deadline aborts
+	// the run before the marker moves if it overruns anyway).
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		deadline = now
+	}
+	earliest := deadline.UTC().Truncate(24*time.Hour).Unix() - backfillDays*daySeconds
 	// Right after the persister's deployment the marker points at a FUTURE UTC
 	// midnight (the rollout window): the daily keys of the current days only
 	// cover events written by the new pods, so those days must keep being
@@ -166,7 +178,13 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 	}
 
 	// Every materialized day passed verification: move the cutover marker
-	// back to the earliest backfilled day (never forward).
+	// back to the earliest backfilled day (never forward). Publishing is the
+	// one step that must not happen after the deadline that the window was
+	// derived from, so check it explicitly rather than relying on ctx.Err()
+	// having fired in between.
+	if time.Now().After(deadline) {
+		return fmt.Errorf("batch: backfill ran past its deadline %s; cutover marker left unchanged", deadline)
+	}
 	if err := b.moveCutoverBack(earliest); err != nil {
 		return err
 	}
@@ -396,22 +414,31 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 	}
 	// Never lower an existing daily count. Hourly keys can only shrink by
 	// being deleted (retention cleanup), never by decrement, so a daily key
-	// above the hourly sum means the hourly data is no longer complete and
-	// the existing daily value (from an earlier run or from live writes) is
-	// the better one. Overwriting would publish a partial sum as the day's
-	// total. The window guard (backfillDays) prevents this for the normal
-	// schedule; this check covers operator-shortened retention and re-runs.
+	// above the hourly sum means either (a) our hourly snapshot is stale
+	// (late events landed in both tiers between the two reads) or (b) the
+	// hourly data is no longer complete. Re-reading the hourly sum tells them
+	// apart: in (a) the fresh sum has caught up and the normal stabilization
+	// below takes over; in (b) it is still short, and the day cannot be
+	// verified from hourly data at all, so the run fails and the cutover
+	// marker stays where it is instead of publishing an unverifiable day.
+	// The window guard (backfillDays) prevents (b) for the normal schedule;
+	// this covers operator-shortened retention and re-runs.
 	existing, err := b.getDailyEventCount(dailyKey)
 	if err != nil {
 		return err
 	}
 	if existing > sum {
-		b.logger.Warn("Existing daily event count exceeds the hourly sum; keeping the existing value",
-			zap.String("dailyKey", dailyKey),
-			zap.Int64("existing", existing),
-			zap.Int64("hourlySum", sum),
-		)
-		return nil
+		sum, err = b.sumHourlyEventCounts(hourlyKeys)
+		if err != nil {
+			return err
+		}
+		if existing > sum {
+			return fmt.Errorf(
+				"batch: daily event count for key %s (%d) exceeds the hourly sum (%d); "+
+					"hourly history is incomplete, cannot verify, cutover marker left unchanged",
+				dailyKey, existing, sum,
+			)
+		}
 	}
 	stable := false
 	for attempt := 0; attempt < backfillEventCountDayAttempts; attempt++ {
