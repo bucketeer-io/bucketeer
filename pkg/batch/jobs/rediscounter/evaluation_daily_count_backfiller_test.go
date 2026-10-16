@@ -174,7 +174,11 @@ func TestBackfillerMaterializesDailyKeys(t *testing.T) {
 	assert.Equal(t, strconv.FormatInt(today-backfillDays*daySeconds, 10), marker)
 }
 
-func TestBackfillerSkipsDaysCoveredByCutover(t *testing.T) {
+// Days on/after the cutover are re-verified against their hourly keys too:
+// hourly and daily are both written per event, so a live-written daily key
+// that agrees with the hourly sum is rewritten with the same value, and one
+// that drifted is reconciled. This is what makes a re-run a recovery path.
+func TestBackfillerReverifiesDaysCoveredByCutover(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -183,26 +187,31 @@ func TestBackfillerSkipsDaysCoveredByCutover(t *testing.T) {
 
 	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
 	cutover := today - 5*daySeconds
-	coveredDay := today - 3*daySeconds   // >= cutover: live daily key is authoritative
-	fallbackDay := today - 10*daySeconds // < cutover: needs backfilling
+	consistentDay := today - 3*daySeconds // >= cutover, daily == hourly sum
+	driftedDay := today - 4*daySeconds    // >= cutover, daily over-counts by one
+	fallbackDay := today - 10*daySeconds  // < cutover: needs backfilling
 
 	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(cutover, 10), 0))
-
-	// The covered day has hourly data AND a live-written daily key that the
-	// backfill must not clobber.
-	require.NoError(t, redisCache.Put(hourlyKey("ec", coveredDay, 2), "5", 0))
-	require.NoError(t, redisCache.Put(dailyKey("ec1d", coveredDay), "999", 0))
+	require.NoError(t, redisCache.Put(hourlyKey("ec", consistentDay, 2), "5", 0))
+	require.NoError(t, redisCache.Put(dailyKey("ec1d", consistentDay), "5", 0))
+	require.NoError(t, redisCache.Put(hourlyKey("ec", driftedDay, 2), "6", 0))
+	require.NoError(t, redisCache.Put(dailyKey("ec1d", driftedDay), "7", 0))
 	require.NoError(t, redisCache.Put(hourlyKey("ec", fallbackDay, 2), "21", 0))
 
 	require.NoError(t, backfiller.Run(context.Background()))
 
-	got, err := mr.Get(dailyKey("ec1d", coveredDay))
-	require.NoError(t, err)
-	assert.Equal(t, "999", got, "days on/after the cutover must not be rewritten")
-
-	got, err = mr.Get(dailyKey("ec1d", fallbackDay))
-	require.NoError(t, err)
-	assert.Equal(t, "21", got, "days before the cutover must be materialized")
+	for _, p := range []struct {
+		day      int64
+		expected string
+	}{
+		{consistentDay, "5"},
+		{driftedDay, "6"},
+		{fallbackDay, "21"},
+	} {
+		got, err := mr.Get(dailyKey("ec1d", p.day))
+		require.NoError(t, err)
+		assert.Equal(t, p.expected, got, "day %d must equal its hourly sum", p.day)
+	}
 
 	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
 	require.NoError(t, err)
@@ -403,7 +412,11 @@ func TestBackfillEventCountDayGivesUpWhenNeverStable(t *testing.T) {
 	assert.Contains(t, err.Error(), "kept changing")
 }
 
-func TestBackfillerNoWorkWhenMarkerCoversWindow(t *testing.T) {
+// Once a run has moved the marker to the window start, a later run must
+// still do work: it is the only way to recover a day whose daily key drifted
+// from its hourly keys after publication (the documented live-write race).
+// The marker must never move forward in the process.
+func TestBackfillerRerunRecoversDriftedDayAfterMarkerMoved(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -411,19 +424,34 @@ func TestBackfillerNoWorkWhenMarkerCoversWindow(t *testing.T) {
 	mr, redisCache, backfiller := newMiniredisBackfiller(t, mockController)
 
 	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
-	// Marker already at (or before) the window start: the job is a no-op and
-	// must never move the marker forward.
+	day := today - 2*daySeconds
+	// Marker already before the window start (a previous run published it).
 	marker := today - (backfillDays+5)*daySeconds
 	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(marker, 10), 0))
-	require.NoError(t, redisCache.Put(hourlyKey("ec", today-2*daySeconds, 1), "4", 0))
+
+	// ec1d over-counts by one (race: the daily INCRBY landed after the
+	// previous run's SET + verification).
+	require.NoError(t, redisCache.Put(hourlyKey("ec", day, 1), "4", 0))
+	require.NoError(t, redisCache.Put(dailyKey("ec1d", day), "5", 0))
+	// uc1d misses a user (race: a live PFADD to uc1d was overwritten by the
+	// previous run's PFMERGE while the hourly PFADD landed after it).
+	_, err := redisCache.PFAdd(hourlyKey("uc", day, 1), "u1", "u2")
+	require.NoError(t, err)
+	_, err = redisCache.PFAdd(dailyKey("uc1d", day), "u1")
+	require.NoError(t, err)
 
 	require.NoError(t, backfiller.Run(context.Background()))
 
-	assert.False(t, mr.Exists(dailyKey("ec1d", today-2*daySeconds)),
-		"days already covered by the marker must not be materialized")
-	got, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
+	got, err := mr.Get(dailyKey("ec1d", day))
 	require.NoError(t, err)
-	assert.Equal(t, strconv.FormatInt(marker, 10), got, "the marker must never move forward")
+	assert.Equal(t, "4", got, "re-run must lower the over-counted daily key to the complete hourly sum")
+	count, err := redisCache.PFCount(dailyKey("uc1d", day))
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), count, "re-run must merge the missing user into uc1d")
+
+	markerAfter, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(marker, 10), markerAfter, "the marker must never move forward")
 }
 
 // The backfill window must stay strictly inside the deleter's hourly
@@ -454,11 +482,11 @@ func TestBackfillWindowIsInsideHourlyRetention(t *testing.T) {
 		"the day retention days ago is already (partially) deletable")
 }
 
-// If hourly keys of a day were already removed (operator-shortened retention,
-// or a re-run after the window moved), the partial hourly sum must neither
-// replace the larger existing daily count nor be declared verified: the run
-// fails so the cutover marker is not moved over an unverifiable day.
-func TestBackfillEventCountDayFailsWhenHourlyHistoryIsIncomplete(t *testing.T) {
+// Within the backfill window every hourly key is retained, so the hourly sum
+// is authoritative: a daily key that still exceeds it after a re-read is an
+// over-count (live-write race) and is lowered. This is the recovery path for
+// the documented race; it must not be mistaken for deleted history.
+func TestBackfillEventCountDayLowersOverCountedDailyKey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -467,20 +495,21 @@ func TestBackfillEventCountDayFailsWhenHourlyHistoryIsIncomplete(t *testing.T) {
 	hourly := []string{"dev:ec:0:feature-1:variation-A", "dev:ec:3600:feature-1:variation-A"}
 
 	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
-	// 13 of the day's hourly keys were deleted: the remaining ones sum to 11
-	// while the daily key, materialized by an earlier run, holds 24. The
-	// re-read confirms the hourly data is genuinely short, not just stale.
-	mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil).Times(2)
-	mockCache.EXPECT().Get(dKey).Return([]byte("24"), nil)
-	mockCache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	gomock.InOrder(
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil),
+		mockCache.EXPECT().Get(dKey).Return([]byte("12"), nil),
+		// Re-read confirms hourly is genuinely 11: the daily key over-counts.
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil),
+		mockCache.EXPECT().Put(dKey, "11", cachev3.DailyCountTTL).Return(nil),
+		mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"5", "6"}, nil),
+		mockCache.EXPECT().Get(dKey).Return([]byte("11"), nil),
+	)
 
 	backfiller := &evaluationDailyCountBackfiller{
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	err := backfiller.backfillEventCountDay(dKey, hourly)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "cutover marker left unchanged")
+	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
 }
 
 // A daily value above the hourly snapshot can also mean the snapshot is

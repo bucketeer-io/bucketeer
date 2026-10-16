@@ -143,15 +143,20 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 			cutover,
 		)
 	}
-	// Only fully elapsed days that the reader still serves from the hourly
-	// fallback (days strictly before the cutover) need materializing. Days on
-	// or after the cutover already have complete live-written daily keys.
-	endExclusive := min64(today, cutover)
+	// Every fully elapsed day in the window is (re)derived from its hourly
+	// keys, including days on/after the cutover whose daily keys were written
+	// live. Those are expected to already match (both tiers are written per
+	// event), so for them this is a verification that normally rewrites the
+	// same value; but it is also the recovery path: a day whose daily key
+	// drifted from its hourly keys (the documented race between a live
+	// cross-node daily INCRBY and this job's SET, or a uc1d PFMERGE racing a
+	// live PFADD) is reconciled by simply re-running the job while its hourly
+	// keys are still retained. Restricting the range to days before the
+	// cutover would make re-runs a no-op once the marker has moved. The
+	// current (partial) day is excluded.
+	endExclusive := today
 	if earliest >= endExclusive {
-		b.logger.Info("Nothing to backfill: the cutover marker already covers the backfill window",
-			zap.Int64("cutover", cutover),
-			zap.Int64("earliestBackfillDay", earliest),
-		)
+		b.logger.Info("Nothing to backfill: no fully elapsed day in the window")
 		return nil
 	}
 
@@ -401,10 +406,12 @@ const backfillEventCountDayAttempts = 3
 // live writers to be paused while the job runs; with a running persister
 // the window is one cross-node pipeline skew (sub-millisecond to a few
 // milliseconds) for a late event, days old, that must arrive while this
-// exact (day, feature, variation) is being processed. Because the job is
-// idempotent and always re-derives the daily value from the hourly keys, a
-// later re-run (while the hourly keys are still retained) re-converges any
-// day affected by the race. Operators who need an exact migration can scale
+// exact (day, feature, variation) is being processed. Because the job
+// re-derives EVERY day in the window from its hourly keys on every run
+// (including days already on/after the cutover marker, see Run) and lowers
+// a daily key that exceeds the complete hourly sum, a later re-run while the
+// hourly keys are still retained re-converges any day affected by the race.
+// Operators who need an exact migration can scale
 // the evaluation count persister to zero for the duration of the run; events
 // buffer in Pub/Sub and nothing is lost.
 func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, hourlyKeys []string) error {
@@ -412,17 +419,17 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 	if err != nil {
 		return err
 	}
-	// Never lower an existing daily count. Hourly keys can only shrink by
-	// being deleted (retention cleanup), never by decrement, so a daily key
-	// above the hourly sum means either (a) our hourly snapshot is stale
-	// (late events landed in both tiers between the two reads) or (b) the
-	// hourly data is no longer complete. Re-reading the hourly sum tells them
-	// apart: in (a) the fresh sum has caught up and the normal stabilization
-	// below takes over; in (b) it is still short, and the day cannot be
-	// verified from hourly data at all, so the run fails and the cutover
-	// marker stays where it is instead of publishing an unverifiable day.
-	// The window guard (backfillDays) prevents (b) for the normal schedule;
-	// this covers operator-shortened retention and re-runs.
+	// An existing daily count above the hourly sum means either (a) our
+	// hourly snapshot is stale (late events landed in both tiers between the
+	// two reads) or (b) the daily key over-counts (the documented race with a
+	// live cross-node daily INCRBY). Re-reading the hourly sum resolves (a):
+	// the fresh sum has caught up and the normal stabilization below takes
+	// over. If the daily value is still higher it is case (b), and the hourly
+	// sum wins: within the backfill window every hourly key of the day is
+	// guaranteed retained (backfillDays is derived from the deleter's
+	// retention, and hourly keys never carry a TTL), so hourly is the
+	// complete, authoritative source and lowering the daily key is the
+	// recovery for the race. This is logged because it should be rare.
 	existing, err := b.getDailyEventCount(dailyKey)
 	if err != nil {
 		return err
@@ -433,10 +440,10 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 			return err
 		}
 		if existing > sum {
-			return fmt.Errorf(
-				"batch: daily event count for key %s (%d) exceeds the hourly sum (%d); "+
-					"hourly history is incomplete, cannot verify, cutover marker left unchanged",
-				dailyKey, existing, sum,
+			b.logger.Warn("Daily event count exceeds the complete hourly sum; lowering it to the hourly sum",
+				zap.String("dailyKey", dailyKey),
+				zap.Int64("existing", existing),
+				zap.Int64("hourlySum", sum),
 			)
 		}
 	}
@@ -548,11 +555,4 @@ func toString(v interface{}) (string, bool) {
 	default:
 		return "", false
 	}
-}
-
-func min64(a, b int64) int64 {
-	if a < b {
-		return a
-	}
-	return b
 }
