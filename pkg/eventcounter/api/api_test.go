@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand/v2"
 	"testing"
 	"time"
@@ -24,11 +25,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	eccachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/domain"
@@ -758,7 +763,6 @@ func TestGetStartTime(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc              string
-		inputLocation     *time.Location
 		inputEndAt        time.Time
 		inputDurationDays int
 		expected          time.Time
@@ -766,24 +770,22 @@ func TestGetStartTime(t *testing.T) {
 	}{
 		{
 			desc:              "success",
-			inputLocation:     jpLocation,
 			inputEndAt:        time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC),
 			inputDurationDays: 10,
-			expected:          time.Date(2020, 12, 15, 0, 0, 0, 0, jpLocation),
+			expected:          time.Date(2020, 12, 15, 0, 0, 0, 0, time.UTC),
 			expectedErr:       nil,
 		},
 		{
-			desc:              "over prime meridian",
-			inputLocation:     jpLocation,
-			inputEndAt:        time.Date(2020, 12, 25, 23, 0, 0, 0, time.UTC),
+			desc:              "bucket boundaries are UTC midnights regardless of input zone",
+			inputEndAt:        time.Date(2020, 12, 25, 8, 0, 0, 0, jpLocation), // 2020-12-24 23:00 UTC
 			inputDurationDays: 10,
-			expected:          time.Date(2020, 12, 16, 0, 0, 0, 0, jpLocation),
+			expected:          time.Date(2020, 12, 14, 0, 0, 0, 0, time.UTC),
 			expectedErr:       nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := truncateDate(p.inputLocation, getStartTime(p.inputLocation, p.inputEndAt, p.inputDurationDays))
+			actual := truncateDate(getStartTime(p.inputEndAt, p.inputDurationDays))
 			assert.Equal(t, p.expected.Unix(), actual.Unix())
 		})
 	}
@@ -793,7 +795,7 @@ func TestGetDailyTimestamps(t *testing.T) {
 	t.Parallel()
 
 	endAt := time.Date(2020, 12, 25, 8, 0, 0, 0, jpLocation)
-	startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 3))
+	startAt := truncateDate(getStartTime(endAt, 3))
 
 	patterns := []struct {
 		desc             string
@@ -826,7 +828,7 @@ func TestGetOneDayTimestamps(t *testing.T) {
 	t.Parallel()
 
 	endAt := time.Now()
-	startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 30))
+	startAt := truncateDate(getStartTime(endAt, 30))
 
 	patterns := []struct {
 		desc             string
@@ -856,19 +858,134 @@ func TestGetOneDayTimestamps(t *testing.T) {
 	}
 }
 
-func TestGetHourlyTimestamps(t *testing.T) {
+func TestGetCountKeys(t *testing.T) {
 	t.Parallel()
 
-	endAt := time.Now()
-	startAt := getStartTime(jpLocation, endAt, 3)
-	expected := [][]int64{}
-	expected = append(expected, getOneDayTimestamps(startAt))
-	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 1)))
-	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 2)))
-	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 3)))
-	daily := getDailyTimestamps(startAt, 3)
-	actual := getHourlyTimeStamps(daily, ecproto.Timeseries_DAY)
-	assert.Equal(t, expected, actual)
+	s := &eventCounterService{}
+	environmentId := "env-1"
+	fID := "fid"
+	vID := "vid"
+	day1 := time.Date(2024, 3, 8, 0, 0, 0, 0, time.UTC).Unix()
+	day2 := time.Date(2024, 3, 9, 0, 0, 0, 0, time.UTC).Unix()
+	day3 := time.Date(2024, 3, 10, 0, 0, 0, 0, time.UTC).Unix()
+
+	t.Run("minute unit: one minute-tier key per point", func(t *testing.T) {
+		keys := s.getEventCountKeys([]int64{day1, day2}, ecproto.Timeseries_MINUTE, 0, environmentId, fID, vID)
+		assert.Equal(t, [][]string{{
+			fmt.Sprintf("env-1:ec1m:%d:fid:vid", day1),
+			fmt.Sprintf("env-1:ec1m:%d:fid:vid", day2),
+		}}, keys)
+	})
+
+	t.Run("hour unit: one hourly key per point, same keys as before", func(t *testing.T) {
+		keys := s.getEventCountKeys([]int64{day1, day2}, ecproto.Timeseries_HOUR, 0, environmentId, fID, vID)
+		assert.Equal(t, [][]string{{
+			fmt.Sprintf("env-1:ec:%d:fid:vid", day1),
+			fmt.Sprintf("env-1:ec:%d:fid:vid", day2),
+		}}, keys)
+	})
+
+	t.Run("day unit without cutover: every day falls back to 24 hourly keys", func(t *testing.T) {
+		keys := s.getUserCountKeys([]int64{day1, day2}, ecproto.Timeseries_DAY, 0, environmentId, fID, vID)
+		require.Len(t, keys, 2)
+		for i, day := range []int64{day1, day2} {
+			require.Len(t, keys[i], 24)
+			for h := 0; h < 24; h++ {
+				assert.Equal(t, fmt.Sprintf("env-1:uc:%d:fid:vid", day+int64(h)*3600), keys[i][h])
+			}
+		}
+	})
+
+	t.Run("day unit with cutover: each day served from exactly one source", func(t *testing.T) {
+		// Cutover at day2: day1 falls back to hourly keys, day2/day3 are
+		// served from the daily tier.
+		keys := s.getUserCountKeys([]int64{day1, day2, day3}, ecproto.Timeseries_DAY, day2, environmentId, fID, vID)
+		require.Len(t, keys, 3)
+		assert.Len(t, keys[0], 24)
+		for _, k := range keys[0] {
+			assert.Contains(t, k, ":uc:", "pre-cutover day must only read hourly keys")
+		}
+		assert.Equal(t, []string{fmt.Sprintf("env-1:uc1d:%d:fid:vid", day2)}, keys[1])
+		assert.Equal(t, []string{fmt.Sprintf("env-1:uc1d:%d:fid:vid", day3)}, keys[2])
+		// No key may appear in more than one point (no double counting path).
+		seen := map[string]struct{}{}
+		for _, point := range keys {
+			for _, k := range point {
+				_, dup := seen[k]
+				assert.False(t, dup, "key %s served twice", k)
+				seen[k] = struct{}{}
+			}
+		}
+	})
+}
+
+func TestGetDailyCutover(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*cachemock.MockMultiGetDeleteCountCache)
+		expected    int64
+		expectedErr bool
+	}{
+		{
+			// Absent is the only case that may fall back to hourly keys: the
+			// daily tier was never declared complete, so hourly keys hold
+			// everything there is.
+			desc: "marker absent falls back to zero",
+			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
+				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return(nil, cache.ErrNotFound)
+			},
+			expected: 0,
+		},
+		{
+			// A transient error must propagate: falling back to hourly keys
+			// would silently truncate 60/90-day history to the ~30 days of
+			// hourly retention.
+			desc: "redis error is propagated",
+			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
+				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return(nil, errors.New("internal"))
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "unexpected value type is propagated",
+			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
+				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return(12345, nil)
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "unparsable marker is propagated",
+			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
+				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return([]byte("not-a-number"), nil)
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "valid marker",
+			setup: func(m *cachemock.MockMultiGetDeleteCountCache) {
+				m.EXPECT().Get(cachev3.EvaluationDailyCutoverKey).Return([]byte("1709942400"), nil)
+			},
+			expected: 1709942400,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			m := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+			p.setup(m)
+			s := &eventCounterService{counterCache: m, logger: zap.NewNop()}
+			cutover, err := s.getDailyCutover()
+			if p.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, p.expected, cutover)
+		})
+	}
 }
 
 func TestGetTotalEventCounts(t *testing.T) {
@@ -942,6 +1059,24 @@ func TestGetTimestamps(t *testing.T) {
 			desc:         "success: THIRTY_DAYS",
 			input:        ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS,
 			expectedLen:  30,
+			expectedUnit: ecproto.Timeseries_DAY,
+		},
+		{
+			desc:         "success: ONE_HOUR",
+			input:        ecproto.GetEvaluationTimeseriesCountRequest_ONE_HOUR,
+			expectedLen:  60,
+			expectedUnit: ecproto.Timeseries_MINUTE,
+		},
+		{
+			desc:         "success: SIXTY_DAYS",
+			input:        ecproto.GetEvaluationTimeseriesCountRequest_SIXTY_DAYS,
+			expectedLen:  60,
+			expectedUnit: ecproto.Timeseries_DAY,
+		},
+		{
+			desc:         "success: NINETY_DAYS",
+			input:        ecproto.GetEvaluationTimeseriesCountRequest_NINETY_DAYS,
+			expectedLen:  90,
 			expectedUnit: ecproto.Timeseries_DAY,
 		},
 	}
@@ -1072,6 +1207,42 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				EnvironmentId: environmentId,
 				FeatureId:     fID,
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expectedErr: statusInternal.Err(),
+		},
+		{
+			// A transient marker read failure must fail the request, not
+			// silently fall back to hourly keys: hourly keys only cover ~30
+			// days, so a 90-day chart would come back truncated to 30 days
+			// of data followed by zeros while the daily tier still holds the
+			// full history.
+			desc: "error: daily cutover marker read failed must not truncate history",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentId: environmentId,
+					Id:            fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				counterCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+				counterCache.EXPECT().
+					Get(cachev3.EvaluationDailyCutoverKey).
+					Return(nil, errors.New("redis: connection reset"))
+				s.counterCache = counterCache
+				// No count key may be read when the marker is unreadable.
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					GetEventCountsV2(gomock.Any()).Times(0)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					CountUniqueUsers(gomock.Any()).Times(0)
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_NINETY_DAYS,
 			},
 			expectedErr: statusInternal.Err(),
 		},
@@ -1549,7 +1720,8 @@ func getUserCountKeysV2(vID, fID, environmentId string, timeStamps [][]int64) []
 }
 
 func getDate(t time.Time) int64 {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation).Unix()
+	u := t.UTC()
+	return time.Date(u.Year(), u.Month(), u.Day(), 0, 0, 0, 0, time.UTC).Unix()
 }
 
 func newEventCounterService(t *testing.T, mockController *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *eventCounterService {
@@ -1593,12 +1765,20 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller, spe
 		},
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	// The daily cutover marker is absent by default, so daily ranges fall
+	// back to hourly keys exactly like the pre-daily-tier read path.
+	counterCacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	counterCacheMock.EXPECT().
+		Get(cachev3.EvaluationDailyCutoverKey).
+		Return(nil, cache.ErrNotFound).
+		AnyTimes()
 	return &eventCounterService{
 		experimentClient:        experimentclientmock.NewMockClient(mockController),
 		featureClient:           featureclientmock.NewMockClient(mockController),
 		accountClient:           accountClientMock,
 		experimentResultStorage: opmock.NewMockExperimentResultStorage(mockController),
 		evaluationCountCacher:   eccachemock.NewMockEventCounterCache(mockController),
+		counterCache:            counterCacheMock,
 		eventStorage:            dwhmock.NewMockEventStorage(mockController),
 		metrics:                 reg,
 		location:                jpLocation,
@@ -1627,14 +1807,18 @@ func newUUID(t *testing.T) string {
 
 func getFourteenDaysTimestamps() [][]int64 {
 	endAt := time.Now()
-	startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 13))
+	startAt := truncateDate(getStartTime(endAt, 13))
 	dailyTimeStamps := getDailyTimestamps(startAt, 13)
-	return getHourlyTimeStamps(dailyTimeStamps, ecproto.Timeseries_DAY)
+	hourly := make([][]int64, 0, len(dailyTimeStamps))
+	for _, day := range dailyTimeStamps {
+		hourly = append(hourly, getOneDayTimestamps(time.Unix(day, 0).UTC()))
+	}
+	return hourly
 }
 
 func getTwentyFourHoursTimestamps() []int64 {
 	endAt := time.Now()
-	startAt := truncateHour(jpLocation, getStartTime(jpLocation, endAt, 1))
+	startAt := truncateHour(getStartTime(endAt, 1))
 	return getOneDayTimestamps(startAt)
 }
 

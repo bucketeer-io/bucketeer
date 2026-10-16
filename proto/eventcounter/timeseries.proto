@@ -26,6 +26,7 @@ message Timeseries {
   enum Unit {
     HOUR = 0;
     DAY = 1;
+    MINUTE = 2;
   }
   repeated int64 timestamps = 1;
   repeated double values = 2;

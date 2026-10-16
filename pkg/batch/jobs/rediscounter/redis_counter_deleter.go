@@ -37,9 +37,19 @@ const (
 	redisScanMaxSize  = int64(100)
 	redisChunkMaxSize = 100
 	day               = 24 * 60 * 60
+	// defaultCounterRetention keeps the historical 30-day cutoff for the
+	// hourly ec/uc keys. Once every supported range is served from the
+	// TTL-owned daily tier, the hourly retention can be shrunk operationally
+	// (to ~25 hours) through the per-kind retention configuration.
+	defaultCounterRetention = 30 * day * time.Second
 )
 
 var (
+	// kinds lists the key kinds this job owns. The minute/day tier kinds
+	// (ec1m/uc1m/ec1d/uc1d) must NEVER be added here: they are TTL-owned,
+	// and their names are deliberately invisible to this job's scan
+	// prefixes ("<env>:ec:*" can never match "<env>:ec1m:…" because of the
+	// colon after the kind).
 	kinds = []string{
 		ec.UserCountPrefix,
 		ec.EventCountPrefix,
@@ -52,13 +62,20 @@ var (
 type redisCounterDeleter struct {
 	envClient envclient.Client
 	cache     cache.MultiGetDeleteCountCache
-	opts      *jobs.Options
-	logger    *zap.Logger
+	// retentions overrides the retention cutoff per kind; kinds without an
+	// entry use defaultCounterRetention.
+	retentions map[string]time.Duration
+	opts       *jobs.Options
+	logger     *zap.Logger
 }
 
+// NewRedisCounterDeleter creates the job that deletes expired hourly counter
+// keys. retentions optionally overrides the cutoff per kind ("ec"/"uc"); pass
+// nil to keep the default 30 days for both.
 func NewRedisCounterDeleter(
 	redis cache.MultiGetDeleteCountCache,
 	environmentClient envclient.Client,
+	retentions map[string]time.Duration,
 	opts ...jobs.Option) jobs.Job {
 
 	dopts := &jobs.Options{
@@ -69,11 +86,21 @@ func NewRedisCounterDeleter(
 		opt(dopts)
 	}
 	return &redisCounterDeleter{
-		cache:     redis,
-		envClient: environmentClient,
-		opts:      dopts,
-		logger:    dopts.Logger.Named("redis-counter-deleter"),
+		cache:      redis,
+		envClient:  environmentClient,
+		retentions: retentions,
+		opts:       dopts,
+		logger:     dopts.Logger.Named("redis-counter-deleter"),
 	}
+}
+
+// retentionFor returns the configured retention for the kind, falling back to
+// the default 30 days.
+func (r *redisCounterDeleter) retentionFor(kind string) time.Duration {
+	if d, ok := r.retentions[kind]; ok && d > 0 {
+		return d
+	}
+	return defaultCounterRetention
 }
 
 func (r *redisCounterDeleter) Run(ctx context.Context) (lastErr error) {
@@ -137,13 +164,14 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentId, kind string) (int,
 		)
 		return 0, nil
 	}
-	filteredKeys, err := r.filterKeysOlderThanThirtyOneDays(environmentId, kind, keys)
+	filteredKeys, err := r.filterKeysOlderThanRetention(environmentId, kind, keys)
 	if err != nil {
 		return 0, err
 	}
-	r.logger.Debug("Filtered keys older than 31 days",
+	r.logger.Debug("Filtered keys older than the retention",
 		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
+		zap.Duration("retention", r.retentionFor(kind)),
 		zap.Int("filteredKeysSize", len(filteredKeys)),
 	)
 	// To avoid blocking Redis for too much time while deleting all the keys
@@ -197,10 +225,11 @@ func (r *redisCounterDeleter) isTemporaryKey(key string) bool {
 	return strings.Contains(key, "pfmerge-key")
 }
 
-func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
+func (r *redisCounterDeleter) filterKeysOlderThanRetention(
 	environmentId, kind string,
 	keys []string,
 ) ([]string, error) {
+	retention := r.retentionFor(kind)
 	filteredKeys := make([]string, 0, len(keys))
 	skippedKeys := make([]string, 0)
 	for _, key := range keys {
@@ -239,7 +268,7 @@ func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 			return nil, errParseInt
 		}
 		now := time.Now()
-		if now.Unix()-createdAt < 30*day {
+		if time.Duration(now.Unix()-createdAt)*time.Second < retention {
 			continue
 		}
 		filteredKeys = append(filteredKeys, key)

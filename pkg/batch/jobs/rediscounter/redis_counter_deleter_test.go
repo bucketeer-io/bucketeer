@@ -292,7 +292,7 @@ func TestScan(t *testing.T) {
 	}
 }
 
-func TestFilterKeysOlderThanThirtyOneDays(t *testing.T) {
+func TestFilterKeysOlderThanRetention(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -376,7 +376,7 @@ func TestFilterKeysOlderThanThirtyOneDays(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			deleter := newMockRedisCounterDeleter(t, mockController)
-			keys, err := deleter.filterKeysOlderThanThirtyOneDays(
+			keys, err := deleter.filterKeysOlderThanRetention(
 				p.inputEnvNamespace,
 				p.inputKind,
 				p.inputKeys,

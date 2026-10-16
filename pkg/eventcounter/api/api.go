@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -55,6 +56,7 @@ const (
 	opsGoalUserCountPrefix       = "autoops:goal"
 	defaultVariationID           = "default"
 	twentyFourHours              = 24
+	oneHourMinutes               = 60
 	// countFetchConcurrency bounds how many per-day (or per-hour) count
 	// fetches run in parallel per variation, so long time ranges cannot
 	// flood Redis with concurrent requests.
@@ -85,8 +87,13 @@ type eventCounterService struct {
 	experimentResultStorage operationaldatabase.ExperimentResultStorage
 	metrics                 metrics.Registerer
 	evaluationCountCacher   cachev3.EventCounterCache
-	location                *time.Location
-	logger                  *zap.Logger
+	// counterCache is raw access to the counter Redis, used to read the
+	// daily-tier cutover marker (cachev3.EvaluationDailyCutoverKey).
+	counterCache cache.Getter
+	// location is a display-only concern. Counter bucket boundaries are
+	// always truncated in UTC to match the persister's keys.
+	location *time.Location
+	logger   *zap.Logger
 }
 
 func NewEventCounterService(
@@ -118,6 +125,7 @@ func NewEventCounterService(
 		experimentResultStorage: experimentResultStorage,
 		metrics:                 r,
 		evaluationCountCacher:   cachev3.NewEventCountCache(redis),
+		counterCache:            redis,
 		location:                loc,
 		logger:                  dopts.logger.Named("api"),
 	}
@@ -249,7 +257,24 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	if err != nil {
 		return nil, statusUnknownTimeRange.Err()
 	}
-	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
+	// Daily ranges mix two sources: days on/after the cutover are served from
+	// the daily-tier keys, older days fall back to their 24 hourly keys.
+	var dailyCutover int64
+	if timestampUnit == ecproto.Timeseries_DAY {
+		dailyCutover, err = s.getDailyCutover()
+		if err != nil {
+			s.logger.Error(
+				"Failed to get the daily cutover marker",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("featureId", req.FeatureId),
+					zap.String("timeRange", req.TimeRange.String()),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
+	}
 	vIDs := getVariationIDs(resp.Feature.Variations)
 
 	variationEventCountsMap := make(map[string][]float64, len(vIDs))
@@ -265,7 +290,9 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 
 			// Get event data
 			eventCountKeys := s.getEventCountKeys(
-				hourlyTimeStamps,
+				timestamps,
+				timestampUnit,
+				dailyCutover,
 				req.EnvironmentId,
 				req.FeatureId,
 				variationID,
@@ -284,7 +311,9 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 
 			// Get user data
 			userCountKeys := s.getUserCountKeys(
-				hourlyTimeStamps,
+				timestamps,
+				timestampUnit,
+				dailyCutover,
 				req.EnvironmentId,
 				req.FeatureId,
 				variationID,
@@ -378,9 +407,12 @@ func (s *eventCounterService) getEventCounts(
 	keys [][]string,
 	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
-	if unit == ecproto.Timeseries_HOUR {
+	if unit == ecproto.Timeseries_HOUR || unit == ecproto.Timeseries_MINUTE {
+		// One key per point: a single pipelined GetMulti.
 		return s.evaluationCountCacher.GetEventCounts(keys[0])
 	}
+	// One key set per point (a daily key or a day's hourly fallback keys),
+	// each summed into one point value.
 	return s.evaluationCountCacher.GetEventCountsV2(keys)
 }
 
@@ -398,16 +430,18 @@ func (s *eventCounterService) getUserCounts(
 	keys [][]string,
 	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
-	if unit == ecproto.Timeseries_HOUR {
-		return s.getHourlyUserCounts(keys)
+	if unit == ecproto.Timeseries_HOUR || unit == ecproto.Timeseries_MINUTE {
+		return s.getSingleKeyUserCounts(keys)
 	}
 	return s.getDailyUserCounts(keys)
 }
 
-func (s *eventCounterService) getHourlyUserCounts(
+// getSingleKeyUserCounts counts the ranges whose points map to exactly one
+// key each (hour and minute units).
+func (s *eventCounterService) getSingleKeyUserCounts(
 	days [][]string,
 ) ([]float64, error) {
-	// The hours are independent, so count them in parallel.
+	// The buckets are independent, so count them in parallel.
 	hours := days[0]
 	counts := make([]float64, len(hours))
 	// The local errgroup recovers panics inside the goroutines, which plain
@@ -430,6 +464,10 @@ func (s *eventCounterService) getHourlyUserCounts(
 	return counts, nil
 }
 
+// getDailyUserCounts counts one value per day. A day served from the daily
+// tier has a single uc1d key; a fallback day has 24 hourly keys unioned by
+// one CountUniqueUsers call. Both are HLL unions, so the sources can never
+// double count a user.
 func (s *eventCounterService) getDailyUserCounts(
 	days [][]string,
 ) ([]float64, error) {
@@ -463,6 +501,11 @@ func (s *eventCounterService) flattenAry(
 	return flat
 }
 
+// getTotalUserCounts unions every key the range used — daily keys and any
+// fallback hourly keys together — in ONE CountUniqueUsers call. HLL union
+// over mixed granularities is still an exact union, so mixing tiers can never
+// double count a user. Cross-slot keys are handled transparently by the
+// cluster-safe PFCount in pkg/redis/v3.
 func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
 ) (int64, error) {
@@ -470,40 +513,116 @@ func (s *eventCounterService) getTotalUserCounts(
 	return s.evaluationCountCacher.CountUniqueUsers(flat)
 }
 
-func (*eventCounterService) getEventCountKeys(
-	hourlyTimeStamps [][]int64,
+func (s *eventCounterService) getEventCountKeys(
+	timestamps []int64,
+	unit ecproto.Timeseries_Unit,
+	dailyCutover int64,
 	environmentId string,
 	featureID string,
 	vID string,
 ) [][]string {
-	eventCountKeys := make([][]string, 0, len(hourlyTimeStamps))
-	for _, twentyFourHours := range hourlyTimeStamps {
-		ecHourlyKeys := make([]string, 0, len(twentyFourHours))
-		for _, hour := range twentyFourHours {
-			ec := newEvaluationCountkey(EventCountPrefix, featureID, vID, environmentId, hour)
-			ecHourlyKeys = append(ecHourlyKeys, ec)
-		}
-		eventCountKeys = append(eventCountKeys, ecHourlyKeys)
-	}
-	return eventCountKeys
+	return s.getCountKeys(
+		cachev3.EventCountMinuteKind,
+		EventCountPrefix,
+		cachev3.EventCountDailyKind,
+		timestamps, unit, dailyCutover, environmentId, featureID, vID,
+	)
 }
 
-func (*eventCounterService) getUserCountKeys(
-	hourlyTimeStamps [][]int64,
+func (s *eventCounterService) getUserCountKeys(
+	timestamps []int64,
+	unit ecproto.Timeseries_Unit,
+	dailyCutover int64,
 	environmentId string,
 	featureID string,
 	vID string,
 ) [][]string {
-	userCountKeys := make([][]string, 0, len(hourlyTimeStamps))
-	for _, twentyFourHours := range hourlyTimeStamps {
-		ucHourlyKeys := make([]string, 0, len(twentyFourHours))
-		for _, hour := range twentyFourHours {
-			uc := newEvaluationCountkey(UserCountPrefix, featureID, vID, environmentId, hour)
-			ucHourlyKeys = append(ucHourlyKeys, uc)
+	return s.getCountKeys(
+		cachev3.UserCountMinuteKind,
+		UserCountPrefix,
+		cachev3.UserCountDailyKind,
+		timestamps, unit, dailyCutover, environmentId, featureID, vID,
+	)
+}
+
+// getCountKeys returns the Redis keys backing each point of the range:
+//
+//   - MINUTE unit: one minute-tier key per point.
+//   - HOUR unit: one hourly key per point (byte-identical to the historical
+//     24-hours behavior).
+//   - DAY unit: per day, either the single daily-tier key (when the UTC day
+//     starts on/after the cutover marker) or the day's 24 hourly keys (the
+//     fallback for days that predate the daily tier). Each day is served from
+//     exactly one source, so no double counting path exists. A zero cutover
+//     (marker absent) serves every day from hourly keys.
+func (*eventCounterService) getCountKeys(
+	minuteKind, hourlyKind, dailyKind string,
+	timestamps []int64,
+	unit ecproto.Timeseries_Unit,
+	dailyCutover int64,
+	environmentId string,
+	featureID string,
+	vID string,
+) [][]string {
+	switch unit {
+	case ecproto.Timeseries_MINUTE:
+		keys := make([]string, 0, len(timestamps))
+		for _, ts := range timestamps {
+			keys = append(keys, newEvaluationCountkey(minuteKind, featureID, vID, environmentId, ts))
 		}
-		userCountKeys = append(userCountKeys, ucHourlyKeys)
+		return [][]string{keys}
+	case ecproto.Timeseries_HOUR:
+		keys := make([]string, 0, len(timestamps))
+		for _, ts := range timestamps {
+			keys = append(keys, newEvaluationCountkey(hourlyKind, featureID, vID, environmentId, ts))
+		}
+		return [][]string{keys}
+	default: // ecproto.Timeseries_DAY
+		pointKeys := make([][]string, 0, len(timestamps))
+		for _, day := range timestamps {
+			if dailyCutover > 0 && day >= dailyCutover {
+				key := newEvaluationCountkey(dailyKind, featureID, vID, environmentId, day)
+				pointKeys = append(pointKeys, []string{key})
+				continue
+			}
+			hourlyKeys := make([]string, 0, twentyFourHours)
+			for _, hour := range getOneDayTimestamps(time.Unix(day, 0).UTC()) {
+				hourlyKeys = append(hourlyKeys, newEvaluationCountkey(hourlyKind, featureID, vID, environmentId, hour))
+			}
+			pointKeys = append(pointKeys, hourlyKeys)
+		}
+		return pointKeys
 	}
-	return userCountKeys
+}
+
+// getDailyCutover returns the unix timestamp of the first UTC midnight served
+// from the daily tier, or 0 when the marker is absent. An absent marker means
+// the daily tier was never declared complete, so every day falls back to
+// hourly keys: exactly the pre-daily-tier behavior and always safe.
+//
+// Any other failure (Redis error, corrupt value) is returned to the caller
+// and fails the request. Falling back to hourly keys in that case would be
+// wrong, not safe: hourly keys are only retained ~30 days while the daily
+// tier holds 60/90 days, so a transient marker read error would silently
+// truncate a 60/90-day chart to 30 days of data followed by zeros. A failed
+// request is retried by the client; a silently truncated one is not.
+func (s *eventCounterService) getDailyCutover() (int64, error) {
+	value, err := s.counterCache.Get(cachev3.EvaluationDailyCutoverKey)
+	if err != nil {
+		if errors.Is(err, cache.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("get daily cutover marker: %w", err)
+	}
+	b, err := cache.Bytes(value)
+	if err != nil {
+		return 0, fmt.Errorf("daily cutover marker has an unexpected type: %w", err)
+	}
+	cutover, err := strconv.ParseInt(string(b), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse daily cutover marker %q: %w", string(b), err)
+	}
+	return cutover, nil
 }
 
 func (s *eventCounterService) logCountError(
@@ -528,16 +647,26 @@ func (s *eventCounterService) logCountError(
 	)
 }
 
-func truncateDate(loc *time.Location, t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+// All bucket truncation happens in UTC to match the persister's keys. The
+// previous location-based truncation only worked because whole-hour-offset
+// zones share hour boundaries with UTC; fractional-offset zones (e.g.
+// UTC+5:30) would miss every key, and the daily tier is materialized at UTC
+// midnights forever.
+func truncateDate(t time.Time) time.Time {
+	u := t.UTC()
+	return time.Date(u.Year(), u.Month(), u.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-func truncateHour(loc *time.Location, t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, loc)
+func truncateHour(t time.Time) time.Time {
+	return t.UTC().Truncate(time.Hour)
 }
 
-func getStartTime(loc *time.Location, endAt time.Time, durationDays int) time.Time {
-	return endAt.In(loc).AddDate(0, 0, -durationDays)
+func truncateMinute(t time.Time) time.Time {
+	return t.UTC().Truncate(time.Minute)
+}
+
+func getStartTime(endAt time.Time, durationDays int) time.Time {
+	return endAt.UTC().AddDate(0, 0, -durationDays)
 }
 
 func newEvaluationCountkey(
@@ -565,25 +694,45 @@ func (s *eventCounterService) getTimestamps(
 ) ([]int64, ecproto.Timeseries_Unit, error) {
 	endAt := time.Now()
 	switch timeRange {
+	case ecproto.GetEvaluationTimeseriesCountRequest_ONE_HOUR:
+		// 60 one-minute points ending at the current (partial) minute.
+		truncated := truncateMinute(endAt.Add(-time.Hour)).Add(time.Minute)
+		return getMinuteTimestamps(truncated, oneHourMinutes), ecproto.Timeseries_MINUTE, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
-		startAt := getStartTime(s.location, endAt, 1)
-		truncated := truncateHour(s.location, startAt).Add(time.Hour * 1)
+		startAt := getStartTime(endAt, 1)
+		truncated := truncateHour(startAt).Add(time.Hour * 1)
 		return getOneDayTimestamps(truncated), ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
-		startAt := getStartTime(s.location, endAt, 6)
-		truncated := truncateDate(s.location, startAt)
+		startAt := getStartTime(endAt, 6)
+		truncated := truncateDate(startAt)
 		return getDailyTimestamps(truncated, 6), ecproto.Timeseries_DAY, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS:
-		startAt := getStartTime(s.location, endAt, 13)
-		truncated := truncateDate(s.location, startAt)
+		startAt := getStartTime(endAt, 13)
+		truncated := truncateDate(startAt)
 		return getDailyTimestamps(truncated, 13), ecproto.Timeseries_DAY, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS:
-		startAt := getStartTime(s.location, endAt, 29)
-		truncated := truncateDate(s.location, startAt)
+		startAt := getStartTime(endAt, 29)
+		truncated := truncateDate(startAt)
 		return getDailyTimestamps(truncated, 29), ecproto.Timeseries_DAY, nil
+	case ecproto.GetEvaluationTimeseriesCountRequest_SIXTY_DAYS:
+		startAt := getStartTime(endAt, 59)
+		truncated := truncateDate(startAt)
+		return getDailyTimestamps(truncated, 59), ecproto.Timeseries_DAY, nil
+	case ecproto.GetEvaluationTimeseriesCountRequest_NINETY_DAYS:
+		startAt := getStartTime(endAt, 89)
+		truncated := truncateDate(startAt)
+		return getDailyTimestamps(truncated, 89), ecproto.Timeseries_DAY, nil
 	default:
 		return nil, 0, errUnknownTimeRange
 	}
+}
+
+func getMinuteTimestamps(startAt time.Time, count int) []int64 {
+	timestamps := make([]int64, 0, count)
+	for i := 0; i < count; i++ {
+		timestamps = append(timestamps, startAt.Add(time.Duration(i)*time.Minute).Unix())
+	}
+	return timestamps
 }
 
 func getDailyTimestamps(startAt time.Time, limit int) []int64 {
@@ -591,30 +740,6 @@ func getDailyTimestamps(startAt time.Time, limit int) []int64 {
 	for i := 0; i <= limit; i++ {
 		ts := startAt.AddDate(0, 0, i).Unix()
 		timestamps = append(timestamps, ts)
-	}
-	return timestamps
-}
-
-/*
-getHourlyTimeStamps returns a two-dimensional array. For example,
-
-[
-
-	["2014-11-01 00:00:00", "2014-11-01 01:00:00", "2014-11-01 02:00:00", "2014-11-01 03:00:00", ...],
-	["2014-11-02 00:00:00", "2014-11-02 01:00:00", "2014-11-02 02:00:00", "2014-11-02 03:00:00", ...],
-	["2014-11-03 00:00:00", "2014-11-03 01:00:00", "2014-11-03 02:00:00", "2014-11-03 03:00:00", ...],
-	...
-
-]
-*/
-func getHourlyTimeStamps(days []int64, unit ecproto.Timeseries_Unit) [][]int64 {
-	if unit == ecproto.Timeseries_HOUR {
-		return [][]int64{days}
-	}
-	timestamps := make([][]int64, 0, len(days))
-	for _, day := range days {
-		t := time.Unix(int64(day), 0)
-		timestamps = append(timestamps, getOneDayTimestamps(t))
 	}
 	return timestamps
 }

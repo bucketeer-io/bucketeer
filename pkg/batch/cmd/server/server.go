@@ -720,6 +720,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rediscounter.NewRedisCounterDeleter(
 			cachev3.NewRedisCache(persistentRedisClient),
 			environmentClient,
+			// Keep the default 30-day retention for the hourly ec/uc keys.
+			// The shrink to ~25h happens operationally after the daily tier
+			// fully covers every supported range.
+			nil,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -791,6 +795,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			cachev3.NewMAUCache(cachev3.NewRedisCache(persistentRedisClient)),
 			monthlySummaryStorage,
 			promClient,
+			jobs.WithLogger(logger),
+		),
+		rediscounter.NewEvaluationDailyCountBackfiller(
+			cachev3.NewRedisCache(persistentRedisClient),
+			environmentClient,
+			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		logger,

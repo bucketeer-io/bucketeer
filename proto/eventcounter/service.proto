@@ -49,6 +49,9 @@ message GetEvaluationTimeseriesCountRequest {
     SEVEN_DAYS = 2;
     FOURTEEN_DAYS = 3;
     THIRTY_DAYS = 4;
+    ONE_HOUR = 5;
+    SIXTY_DAYS = 6;
+    NINETY_DAYS = 7;
   }
   reserved 1;
   string feature_id = 2 [(google.api.field_behavior) = REQUIRED];

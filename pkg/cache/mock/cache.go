@@ -437,6 +437,21 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) Put(key, value, expiration a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Put), key, value, expiration)
 }
 
+// PutIfAbsent mocks base method.
+func (m *MockMultiGetDeleteCountCache) PutIfAbsent(key string, value any, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfAbsent", key, value, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfAbsent indicates an expected call of PutIfAbsent.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) PutIfAbsent(key, value, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfAbsent", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PutIfAbsent), key, value, expiration)
+}
+
 // PutIfNewer mocks base method.
 func (m *MockMultiGetDeleteCountCache) PutIfNewer(key, genKey string, value []byte, generation int64, expiration time.Duration) (bool, error) {
 	m.ctrl.T.Helper()
@@ -665,6 +680,44 @@ func (m *MockPutter) Put(key, value any, expiration time.Duration) error {
 func (mr *MockPutterMockRecorder) Put(key, value, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockPutter)(nil).Put), key, value, expiration)
+}
+
+// MockAbsentPutter is a mock of AbsentPutter interface.
+type MockAbsentPutter struct {
+	ctrl     *gomock.Controller
+	recorder *MockAbsentPutterMockRecorder
+}
+
+// MockAbsentPutterMockRecorder is the mock recorder for MockAbsentPutter.
+type MockAbsentPutterMockRecorder struct {
+	mock *MockAbsentPutter
+}
+
+// NewMockAbsentPutter creates a new mock instance.
+func NewMockAbsentPutter(ctrl *gomock.Controller) *MockAbsentPutter {
+	mock := &MockAbsentPutter{ctrl: ctrl}
+	mock.recorder = &MockAbsentPutterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockAbsentPutter) EXPECT() *MockAbsentPutterMockRecorder {
+	return m.recorder
+}
+
+// PutIfAbsent mocks base method.
+func (m *MockAbsentPutter) PutIfAbsent(key string, value any, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfAbsent", key, value, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfAbsent indicates an expected call of PutIfAbsent.
+func (mr *MockAbsentPutterMockRecorder) PutIfAbsent(key, value, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfAbsent", reflect.TypeOf((*MockAbsentPutter)(nil).PutIfAbsent), key, value, expiration)
 }
 
 // MockConditionalPutter is a mock of ConditionalPutter interface.

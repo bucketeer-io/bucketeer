@@ -4490,6 +4490,9 @@ paths:
             - SEVEN_DAYS
             - FOURTEEN_DAYS
             - THIRTY_DAYS
+            - ONE_HOUR
+            - SIXTY_DAYS
+            - NINETY_DAYS
           default: UNKNOWN
         - name: environmentId
           in: query
@@ -9702,6 +9705,9 @@ definitions:
       - SEVEN_DAYS
       - FOURTEEN_DAYS
       - THIRTY_DAYS
+      - ONE_HOUR
+      - SIXTY_DAYS
+      - NINETY_DAYS
     default: UNKNOWN
   GoalAutoOpsRuleReference:
     type: object
@@ -9844,6 +9850,7 @@ definitions:
     enum:
       - HOUR
       - DAY
+      - MINUTE
     default: HOUR
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
