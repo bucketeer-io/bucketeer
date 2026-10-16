@@ -59,11 +59,11 @@ import {
   setCurrentEnvIdStorage
 } from 'storage/environment';
 import { getIsLoginFirstTimeStorage } from 'storage/login';
-import { getOrgIdStorage } from 'storage/organization';
 import {
   getNavigationCollapsedStorage,
   setNavigationCollapsedStorage
 } from 'storage/navigation';
+import { getOrgIdStorage } from 'storage/organization';
 import {
   getCurrentProjectEnvironmentStorage,
   setCurrentProjectEnvironmentStorage
