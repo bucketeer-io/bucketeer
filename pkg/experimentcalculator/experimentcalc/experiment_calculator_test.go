@@ -17,6 +17,8 @@ package experimentcalc
 
 import (
 	"context"
+	"net"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +32,7 @@ import (
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2/mock"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
@@ -724,4 +727,68 @@ func TestCalculateSummary_SafeToStopFlags(t *testing.T) {
 		assert.False(t, goalResult.Summary.CvrSafeToStop,
 			"CVR BF=12 < 20: safe_to_stop must be false even though prob=0.97")
 	})
+}
+
+func TestRunDoesNotWriteResultWhenSamplingFails(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	registerer := metricsmock.NewMockRegisterer(mockController)
+	registerer.EXPECT().MustRegister(gomock.Any()).Return().AnyTimes()
+
+	// A closed server makes every httpstan call fail, like an httpstan restart.
+	srv := httptest.NewServer(nil)
+	host, port, err := net.SplitHostPort(srv.Listener.Addr().String())
+	assert.NoError(t, err)
+	srv.Close()
+
+	ecClient := ecclient.NewMockClient(mockController)
+	ecClient.EXPECT().GetExperimentEvaluationCount(gomock.Any(), gomock.Any()).Return(
+		&eventcounter.GetExperimentEvaluationCountResponse{
+			VariationCounts: []*eventcounter.VariationCount{
+				{VariationId: "vid1", UserCount: 100},
+				{VariationId: "vid2", UserCount: 100},
+			},
+		}, nil).AnyTimes()
+	ecClient.EXPECT().GetExperimentGoalCount(gomock.Any(), gomock.Any()).Return(
+		&eventcounter.GetExperimentGoalCountResponse{
+			VariationCounts: []*eventcounter.VariationCount{
+				{VariationId: "vid1", UserCount: 10},
+				{VariationId: "vid2", UserCount: 20},
+			},
+		}, nil).AnyTimes()
+	storage := storagemock.NewMockExperimentResultStorage(mockController)
+	storage.EXPECT().UpdateExperimentResult(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	calc := NewExperimentCalculator(
+		stan.NewStan(host, port, registerer, zap.NewNop()),
+		stanModelID,
+		envclient.NewMockClient(mockController),
+		ecClient,
+		experimentclient.NewMockClient(mockController),
+		featureclient.NewMockClient(mockController),
+		storage,
+		registerer,
+		jpLocation,
+		zap.NewNop(),
+	)
+	now := time.Now().Unix()
+	err = calc.Run(context.Background(), &domain.ExperimentCalculatorReq{
+		EnvironmentId: "env-1",
+		Experiment: &experimentproto.Experiment{
+			Id:              "exp-1",
+			FeatureId:       "feature-1",
+			FeatureVersion:  1,
+			GoalIds:         []string{"goal-1"},
+			BaseVariationId: "vid1",
+			Variations: []*featureproto.Variation{
+				{Id: "vid1"},
+				{Id: "vid2"},
+			},
+			StartAt: now - 3600,
+			StopAt:  now + 3600,
+		},
+	})
+	assert.ErrorIs(t, err, errFailedToSample)
 }
