@@ -114,7 +114,13 @@ type evaluationCountEventPersister struct {
 	envLastUsedCacheMutex               sync.Mutex
 	userAttributesCacheMutex            sync.Mutex
 	dauBufferMutex                      sync.Mutex
-	logger                              *zap.Logger
+	// dailyCutover is the marker value this process tries to SETNX (unix
+	// seconds, fixed on the first attempt); dailyCutoverExists records that
+	// the marker is known to exist in Redis.
+	dailyCutoverMutex  sync.Mutex
+	dailyCutover       int64
+	dailyCutoverExists bool
+	logger             *zap.Logger
 }
 
 func NewEvaluationCountEventPersister(
@@ -300,7 +306,13 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	}
 
 	eventCounts, userCounts := aggregator.flush()
-	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts)
+	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts, ecKeyToEventIDs)
+	// The marker is normally written at startup; keep retrying on the flush
+	// path until it is known to exist, so a Redis outage at startup cannot
+	// leave the cluster without a marker (readers would then stay on the
+	// hourly fallback and, once hourly retention is shortened, lose history
+	// that the daily tier still holds).
+	p.ensureDailyCutoverMarker()
 
 	if err != nil {
 		// Only mark events whose ecKey failed in Redis
@@ -431,6 +443,17 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 //   - INCRBY runs only after PFADD succeeded. If INCRBY fails, PFADD is
 //     already done (idempotent) so retry is safe.
 //
+// Across tiers of the same event: an event is written to three key pairs
+// (minute, hour, day). If the PFADD of any of them fails the event is Nacked
+// and redelivered, so the events behind a failed uc key must not be counted
+// by the INCRBYs of their other tiers either, or redelivery would count them
+// twice there. ecKeyEvents (ec key, any tier → IDs of the events aggregated
+// into it) lets phase 2 subtract those events from every ec key they touch,
+// which keeps PFADD failures exact across tiers, as they were with a single
+// tier. Only an INCRBY failure can still over-count on redelivery (the
+// at-least-once semantics the hourly tier always had, see §2.4). When
+// ecKeyEvents is nil only the failed pair's own INCRBY is skipped.
+//
 // Across key pairs: all pairs are attempted even if some fail. Pipelines
 // expose per-command errors through each Cmder, so a failure on one key does
 // not hide the outcome of the others. The caller receives the set of failed
@@ -446,6 +469,7 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	eventCounts map[string]int64,
 	userCounts map[string]map[string]struct{},
+	ecKeyEvents map[string]map[string]struct{},
 ) (map[string]struct{}, error) {
 	if len(eventCounts) == 0 && len(userCounts) == 0 {
 		return nil, nil
@@ -463,7 +487,8 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		ttl      time.Duration
 		// pfadd holds the queued PFADD so its outcome can be inspected after
 		// the first pipeline ran.
-		pfadd *goredis.IntCmd
+		pfadd       *goredis.IntCmd
+		pfaddFailed bool
 		// incrby holds the queued INCRBY for the second pipeline.
 		incrby *goredis.IntCmd
 	}
@@ -530,6 +555,9 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 		}
 		ucPairs = append(ucPairs, pair)
 	}
+	// IDs of the events behind a failed PFADD: they will be redelivered, so
+	// none of their tiers may count them in this flush.
+	failedEvents := make(map[string]struct{})
 	if len(ucPairs) > 0 {
 		cmds, err := ucPipe.Exec()
 		for _, pair := range ucPairs {
@@ -540,7 +568,10 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 				markFailed(pair)
 				// Skip INCRBY for this pair; PFADD is idempotent so the
 				// redelivered events can safely redo both commands.
-				pair.ecKey = ""
+				pair.pfaddFailed = true
+				for id := range ecKeyEvents[pair.ecKey] {
+					failedEvents[id] = struct{}{}
+				}
 			}
 		}
 		p.logExpireErrors(ucExpires, cmds, err)
@@ -551,8 +582,23 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	ecExpires := make(map[string]*goredis.BoolCmd)
 	ecPairs := make([]*keyPair, 0, len(keyPairs))
 	for _, pair := range keyPairs {
-		if pair.ecKey == "" {
+		if pair.ecKey == "" || pair.pfaddFailed {
 			continue
+		}
+		// Take the events whose other tier failed out of this key's count;
+		// they are counted here when redelivered.
+		if len(failedEvents) > 0 {
+			for id := range ecKeyEvents[pair.ecKey] {
+				if _, failed := failedEvents[id]; failed {
+					pair.ecCount--
+				}
+			}
+			if pair.ecCount <= 0 {
+				// Every event of this key is being redelivered; nothing to
+				// write and nothing to fail (they are Nacked via the key that
+				// failed).
+				continue
+			}
 		}
 		pair.incrby = ecPipe.IncrBy(pair.ecKey, pair.ecCount)
 		if pair.ttl > 0 {
@@ -758,29 +804,55 @@ const dailyCutoverRolloutDays = 2
 
 // writeDailyCutoverMarker records, once per cluster (SETNX), the first UTC
 // midnight from which the daily tier is complete.
+//
+// The cutover value is fixed on the first attempt (relative to this process'
+// start, which is when its daily writes began) and reused by retries, so a
+// delayed SETNX never pushes the cutover later than necessary. A failure is
+// non-fatal: while the marker is missing readers serve every day from hourly
+// keys (the pre-redesign behavior), and ensureDailyCutoverMarker retries on
+// the flush path until the marker is known to exist.
 func (p *evaluationCountEventPersister) writeDailyCutoverMarker() {
-	cutover := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, dailyCutoverRolloutDays)
+	p.dailyCutoverMutex.Lock()
+	defer p.dailyCutoverMutex.Unlock()
+	if p.dailyCutoverExists {
+		return
+	}
+	if p.dailyCutover == 0 {
+		p.dailyCutover = time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, dailyCutoverRolloutDays).Unix()
+	}
 	set, err := p.evaluationCountCacher.PutIfAbsent(
 		cachev3.EvaluationDailyCutoverKey,
-		strconv.FormatInt(cutover.Unix(), 10),
+		strconv.FormatInt(p.dailyCutover, 10),
 		0, // the marker must never expire
 	)
 	if err != nil {
-		// Non-fatal: while the marker is missing, readers serve every day
-		// from hourly keys (the pre-redesign behavior), and the next
-		// persister startup retries the SETNX.
-		p.logger.Error("Failed to write the daily cutover marker",
+		p.logger.Error("Failed to write the daily cutover marker; will retry on the next flush",
 			zap.Error(err),
 			zap.String("key", cachev3.EvaluationDailyCutoverKey),
 		)
 		return
 	}
+	// Either we set it or another replica/deployment already had: the marker
+	// exists, no further attempts are needed.
+	p.dailyCutoverExists = true
 	if set {
 		p.logger.Info("Daily cutover marker written",
 			zap.String("key", cachev3.EvaluationDailyCutoverKey),
-			zap.Int64("cutoverTimestamp", cutover.Unix()),
+			zap.Int64("cutoverTimestamp", p.dailyCutover),
 		)
 	}
+}
+
+// ensureDailyCutoverMarker retries the marker SETNX until it is known to
+// exist. It is a no-op (one mutex check) once it has succeeded.
+func (p *evaluationCountEventPersister) ensureDailyCutoverMarker() {
+	p.dailyCutoverMutex.Lock()
+	exists := p.dailyCutoverExists
+	p.dailyCutoverMutex.Unlock()
+	if exists {
+		return
+	}
+	p.writeDailyCutoverMarker()
 }
 
 // bufferDAU buffers DAU entries in memory grouped by date and (envID, sourceID).

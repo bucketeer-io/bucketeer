@@ -391,6 +391,135 @@ func TestFlushAggregatedCountsExpireFailureDoesNotFailPair(t *testing.T) {
 	}
 }
 
+func tierTestEvent(featureID, userID string, ts int64) *eventproto.EvaluationEvent {
+	return &eventproto.EvaluationEvent{
+		FeatureId:      featureID,
+		VariationId:    "variation-A",
+		Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+		UserId:         userID,
+		User:           &userproto.User{Id: userID},
+		Timestamp:      ts,
+		FeatureVersion: 1,
+	}
+}
+
+// A PFADD failure in one tier must keep the event out of the INCRBYs of its
+// other tiers: the event is Nacked and redelivered, and redelivery writes all
+// tiers. Before this guard the hour and day tiers were incremented in the
+// failed flush and again on redelivery (double count), whereas with a single
+// tier a failed PFADD never incremented anything and retries were exact.
+func TestFlushPFAddFailureInOneTierIsExactAcrossTiersOnRedelivery(t *testing.T) {
+	t.Parallel()
+
+	// Two events in the same hour and day but different minutes.
+	tsA := time.Date(2024, 3, 9, 9, 23, 45, 0, time.UTC).Unix()
+	tsB := time.Date(2024, 3, 9, 9, 41, 10, 0, time.UTC).Unix()
+	mockCache := &mockEvaluationCountCache{}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+	pairsA := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", tsA)
+	pairsB := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", tsB)
+	minuteA, hour, day := pairsA[0], pairsA[1], pairsA[2]
+	minuteB := pairsB[0]
+	require.Equal(t, hour.ecKey, pairsB[1].ecKey, "both events share the hourly key")
+	require.Equal(t, day.ecKey, pairsB[2].ecKey, "both events share the daily key")
+
+	// First delivery: the minute-tier PFADD of event A fails.
+	mockCache.failOnUCKey = minuteA.ucKey
+	envEvents := environmentEventMap{"env-1": eventMap{
+		"event-A": tierTestEvent("feature-1", "user-A", tsA),
+		"event-B": tierTestEvent("feature-1", "user-B", tsB),
+	}}
+	fails := persister.incrementEnvEvents(envEvents)
+	assert.Equal(t, map[string]bool{"event-A": true}, fails, "only event A is Nacked")
+
+	assert.NotContains(t, mockCache.lastEventCounts, minuteA.ecKey, "failed tier not incremented")
+	assert.Equal(t, int64(1), mockCache.lastEventCounts[minuteB.ecKey])
+	assert.Equal(t, int64(1), mockCache.lastEventCounts[hour.ecKey],
+		"hourly key counts only event B; event A will be redelivered")
+	assert.Equal(t, int64(1), mockCache.lastEventCounts[day.ecKey],
+		"daily key counts only event B; event A will be redelivered")
+
+	// Redelivery of event A alone, Redis healthy again.
+	mockCache.failOnUCKey = ""
+	fails = persister.incrementEnvEvents(environmentEventMap{"env-1": eventMap{
+		"event-A": tierTestEvent("feature-1", "user-A", tsA),
+	}})
+	assert.Empty(t, fails)
+
+	assert.Equal(t, int64(1), mockCache.lastEventCounts[minuteA.ecKey])
+	assert.Equal(t, int64(1), mockCache.lastEventCounts[minuteB.ecKey])
+	assert.Equal(t, int64(2), mockCache.lastEventCounts[hour.ecKey], "exactly two events in the hour")
+	assert.Equal(t, int64(2), mockCache.lastEventCounts[day.ecKey], "exactly two events in the day")
+	assert.Len(t, mockCache.lastUserCounts[hour.ucKey], 2)
+	assert.Len(t, mockCache.lastUserCounts[day.ucKey], 2)
+}
+
+// When the failed tier's events are the only events of a sibling key, that
+// key gets no INCRBY at all and is not reported as failed (its events are
+// already Nacked through the key that failed).
+func TestFlushPFAddFailureSkipsSiblingKeysWithNoRemainingEvents(t *testing.T) {
+	t.Parallel()
+
+	ts := time.Date(2024, 3, 9, 9, 23, 45, 0, time.UTC).Unix()
+	mockCache := &mockEvaluationCountCache{}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts)
+	mockCache.failOnUCKey = pairs[1].ucKey // hourly PFADD fails
+
+	fails := persister.incrementEnvEvents(environmentEventMap{"env-1": eventMap{
+		"event-1": tierTestEvent("feature-1", "user-1", ts),
+	}})
+	assert.Equal(t, map[string]bool{"event-1": true}, fails)
+	assert.Empty(t, mockCache.lastEventCounts, "no tier may be incremented when any PFADD failed")
+	assert.Equal(t, 0, mockCache.execCount, "no INCRBY issued")
+}
+
+// The marker SETNX must be retried after a failed startup write; otherwise a
+// Redis outage at startup on every replica would leave the cluster without a
+// marker, readers would stay on the hourly fallback forever, and the daily
+// history would be hidden once hourly retention is shortened.
+func TestDailyCutoverMarkerIsRetriedOnFlushUntilWritten(t *testing.T) {
+	t.Parallel()
+
+	ts := time.Date(2024, 3, 9, 9, 23, 45, 0, time.UTC).Unix()
+	mockCache := &mockEvaluationCountCache{shouldFailPutIfAbsent: true}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		logger:                zap.NewNop(),
+	}
+
+	// Startup write fails (Redis unavailable).
+	persister.writeDailyCutoverMarker()
+	assert.Equal(t, 1, mockCache.putIfAbsentCount)
+	assert.Empty(t, mockCache.putIfAbsentKey)
+	firstAttemptValue := persister.dailyCutover
+	require.NotZero(t, firstAttemptValue)
+
+	// Still failing: the flush path retries.
+	events := environmentEventMap{"env-1": eventMap{"event-1": tierTestEvent("feature-1", "user-1", ts)}}
+	persister.incrementEnvEvents(events)
+	assert.Equal(t, 2, mockCache.putIfAbsentCount)
+
+	// Redis recovers: the next flush writes the marker with the value fixed
+	// at the first attempt (the daily writes started at startup).
+	mockCache.shouldFailPutIfAbsent = false
+	persister.incrementEnvEvents(events)
+	assert.Equal(t, 3, mockCache.putIfAbsentCount)
+	assert.Equal(t, cachev3.EvaluationDailyCutoverKey, mockCache.putIfAbsentKey)
+	assert.Equal(t, strconv.FormatInt(firstAttemptValue, 10), mockCache.putIfAbsentValue)
+
+	// Once it exists, no further SETNX is issued.
+	persister.incrementEnvEvents(events)
+	persister.incrementEnvEvents(events)
+	assert.Equal(t, 3, mockCache.putIfAbsentCount)
+}
+
 func TestWriteDailyCutoverMarker(t *testing.T) {
 	t.Parallel()
 

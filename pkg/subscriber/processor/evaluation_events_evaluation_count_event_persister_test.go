@@ -1141,7 +1141,7 @@ func TestFlushAggregatedCounts(t *testing.T) {
 			}
 
 			// Execute flush
-			failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts)
+			failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts, nil)
 
 			// Verify
 			assert.NoError(t, err, "flush should succeed")
@@ -1310,7 +1310,7 @@ func TestFlushAggregatedCounts_Failures(t *testing.T) {
 			}
 
 			// Execute flush
-			failedKeys, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts)
+			failedKeys, err := persister.flushAggregatedCounts(tt.eventCounts, tt.userCounts, nil)
 
 			// Verify success/failure
 			if tt.expectedSuccess {
@@ -1651,7 +1651,7 @@ func TestFlushAggregatedCounts_AllPairsFail(t *testing.T) {
 		logger:                zap.NewNop(),
 	}
 
-	failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts)
+	failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts, nil)
 
 	assert.Error(t, err)
 	assert.Equal(t, 2, len(failedKeys), "all ecKeys must be in failedKeys when all pairs fail")
@@ -1685,7 +1685,7 @@ func TestFlushAggregatedCounts_PartialFailure(t *testing.T) {
 		logger:                zap.NewNop(),
 	}
 
-	failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts)
+	failedKeys, err := persister.flushAggregatedCounts(eventCounts, userCounts, nil)
 
 	// Should return error for partial failure
 	assert.Error(t, err)
@@ -1719,26 +1719,29 @@ type pfaddCall struct {
 // describe the commands Redis would actually have received regardless of the
 // transport.
 type mockEvaluationCountCache struct {
-	mu               sync.Mutex
-	flushCalled      bool
-	lastEventCounts  map[string]int64
-	lastUserCounts   map[string]map[string]struct{}
-	shouldFailFlush  bool   // Simulates a connection-level failure (Exec returns no results)
-	shouldFailPFAdd  bool   // Simulates PFADD failure for all keys
-	shouldFailIncrBy bool   // Simulates INCRBY failure for all keys
-	shouldFailExpire bool   // Simulates EXPIRE failure for all keys
-	failOnECKey      string // If set, INCRBY fails only for this specific key
-	pipelineExecuted bool
-	pipelineCount    int // Number of pipelines created
-	execCallCount    int // Number of pipeline Exec round trips
-	execCount        int // Number of INCRBY commands
-	pfaddCallCount   int // Number of PFADD commands
-	pfaddCalls       []pfaddCall
-	incrbyCallOrder  []string                 // Order of PFADD/INCRBY commands
-	commandOrder     []string                 // Order of every command incl. EXPIRE
-	expireCalls      map[string]time.Duration // key → TTL of the last Expire call
-	putIfAbsentKey   string                   // key of the last PutIfAbsent call
-	putIfAbsentValue interface{}              // value of the last PutIfAbsent call
+	mu                    sync.Mutex
+	flushCalled           bool
+	lastEventCounts       map[string]int64
+	lastUserCounts        map[string]map[string]struct{}
+	shouldFailFlush       bool   // Simulates a connection-level failure (Exec returns no results)
+	shouldFailPFAdd       bool   // Simulates PFADD failure for all keys
+	shouldFailIncrBy      bool   // Simulates INCRBY failure for all keys
+	shouldFailExpire      bool   // Simulates EXPIRE failure for all keys
+	failOnECKey           string // If set, INCRBY fails only for this specific key
+	failOnUCKey           string // If set, PFADD fails only for this specific key
+	shouldFailPutIfAbsent bool   // Simulates SETNX failure (Redis unavailable)
+	putIfAbsentCount      int    // Number of PutIfAbsent calls
+	pipelineExecuted      bool
+	pipelineCount         int // Number of pipelines created
+	execCallCount         int // Number of pipeline Exec round trips
+	execCount             int // Number of INCRBY commands
+	pfaddCallCount        int // Number of PFADD commands
+	pfaddCalls            []pfaddCall
+	incrbyCallOrder       []string                 // Order of PFADD/INCRBY commands
+	commandOrder          []string                 // Order of every command incl. EXPIRE
+	expireCalls           map[string]time.Duration // key → TTL of the last Expire call
+	putIfAbsentKey        string                   // key of the last PutIfAbsent call
+	putIfAbsentValue      interface{}              // value of the last PutIfAbsent call
 }
 
 func (m *mockEvaluationCountCache) Pipeline(tx bool) redisv3.PipeClient {
@@ -1826,7 +1829,7 @@ func (m *mockEvaluationCountCache) applyPFAdd(key string, els ...string) (int64,
 	m.incrbyCallOrder = append(m.incrbyCallOrder, "PFADD:"+key)
 	m.commandOrder = append(m.commandOrder, "PFADD:"+key)
 
-	if m.shouldFailPFAdd || m.shouldFailFlush {
+	if m.shouldFailPFAdd || m.shouldFailFlush || (m.failOnUCKey != "" && m.failOnUCKey == key) {
 		err := assert.AnError
 		m.pfaddCalls = append(m.pfaddCalls, pfaddCall{key: key, els: els, err: err})
 		return 0, err
@@ -1887,6 +1890,10 @@ func (m *mockEvaluationCountCache) PutIfAbsent(
 ) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.putIfAbsentCount++
+	if m.shouldFailPutIfAbsent {
+		return false, assert.AnError
+	}
 	m.putIfAbsentKey = key
 	m.putIfAbsentValue = value
 	return true, nil

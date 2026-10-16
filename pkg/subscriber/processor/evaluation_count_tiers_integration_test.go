@@ -169,7 +169,7 @@ func TestClusterEvaluationCountTiersIntegration(t *testing.T) {
 		}
 	}
 	eventCounts, userCounts := aggregator.flush()
-	failed, err := persister.flushAggregatedCounts(eventCounts, userCounts)
+	failed, err := persister.flushAggregatedCounts(eventCounts, userCounts, nil)
 	require.NoError(t, err)
 	require.Empty(t, failed)
 
