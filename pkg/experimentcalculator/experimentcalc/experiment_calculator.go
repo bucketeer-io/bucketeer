@@ -199,6 +199,15 @@ func (e ExperimentCalculator) createExperimentResult(
 			gr, err := e.calcGoalResult(ctx, evalVc, goalVc, experiment)
 			if err != nil {
 				// Keep the previous result instead of storing empty distributions.
+				e.logger.Error("ExperimentCalculator skipped updating the experiment result because the calculation failed",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.String("namespace", envNamespace),
+						zap.String("experimentId", experiment.Id),
+						zap.String("goalId", goalID),
+						zap.Int64("endAt", timestamp),
+						zap.Error(err),
+					)...,
+				)
 				return nil, err
 			}
 			gr.GoalId = goalID
