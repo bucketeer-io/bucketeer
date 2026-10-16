@@ -33,13 +33,18 @@ import (
 
 const (
 	// backfillDays is how far back daily keys are materialized. It is one day
-	// LESS than the hourly retention of the redis counter deleter: the
-	// deleter removes hourly keys older than a rolling `now - retention`, so
-	// the UTC day that started exactly retention days ago is already losing
-	// its early hours while this job runs. Summing such a partially deleted
-	// day would publish a partial total as the complete daily count. With
-	// retention-1 days every hour of the oldest day stays deletable only
-	// from the NEXT UTC midnight, i.e. after this run.
+	// LESS than the hourly retention of the redis counter deleter (30d → 29).
+	//
+	// The deleter's cutoff is a rolling instant (`now - 720h`), while this
+	// job sums whole UTC days. Example: a run at 15:00 UTC has a cutoff of
+	// 15:00 UTC 30 days ago, so the UTC day that started 30 days ago at
+	// 00:00 has already lost hours 00-14 (or may lose them mid-run); summing
+	// it would publish a partial total as the complete daily count. The day
+	// that started 29 days ago only becomes deletable at the NEXT UTC
+	// midnight, i.e. after this run, whatever time of day it executes.
+	//
+	// Month lengths are irrelevant: both retention and this window are
+	// fixed 24h multiples, not calendar months.
 	backfillDays = int64(defaultCounterRetention/(24*time.Hour)) - 1
 	daySeconds   = int64(24 * 60 * 60)
 )
