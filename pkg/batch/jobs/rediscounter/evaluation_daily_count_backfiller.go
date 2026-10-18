@@ -289,9 +289,9 @@ func (b *evaluationDailyCountBackfiller) backfillEnvironment(
 			)
 			var err error
 			if pair.hourlyKind == cachev3.EventCountHourKind {
-				err = b.backfillEventCountDay(dailyKey, hourlyKeys)
+				err = b.backfillEventCountDay(ctx, dailyKey, hourlyKeys)
 			} else {
-				err = b.backfillUserCountDay(dailyKey, hourlyKeys)
+				err = b.backfillUserCountDay(ctx, dailyKey, hourlyKeys)
 			}
 			if err != nil {
 				b.logger.Error("Failed to backfill daily key",
@@ -414,7 +414,11 @@ const backfillEventCountDayAttempts = 3
 // Operators who need an exact migration can scale
 // the evaluation count persister to zero for the duration of the run; events
 // buffer in Pub/Sub and nothing is lost.
-func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, hourlyKeys []string) error {
+func (b *evaluationDailyCountBackfiller) backfillEventCountDay(
+	ctx context.Context,
+	dailyKey string,
+	hourlyKeys []string,
+) error {
 	sum, err := b.sumHourlyEventCounts(hourlyKeys)
 	if err != nil {
 		return err
@@ -449,6 +453,9 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 	}
 	stable := false
 	for attempt := 0; attempt < backfillEventCountDayAttempts; attempt++ {
+		if err := checkDeadline(ctx); err != nil {
+			return err
+		}
 		if err := b.cache.Put(dailyKey, strconv.FormatInt(sum, 10), cachev3.DailyCountTTL); err != nil {
 			return fmt.Errorf("set daily event count: %w", err)
 		}
@@ -474,6 +481,26 @@ func (b *evaluationDailyCountBackfiller) backfillEventCountDay(dailyKey string, 
 	if got != sum {
 		return fmt.Errorf("batch: daily event count verification failed: key %s has %d, hourly sum is %d",
 			dailyKey, got, sum)
+	}
+	return nil
+}
+
+// checkDeadline guards every write to a daily key. The hourly sum is only
+// authoritative while the run is within the deadline its window was derived
+// from: past it, the midnight deleter may have removed hours of the oldest
+// day, and a read that was delayed across the deadline would yield a partial
+// sum. Writing that sum would lower an already published, correct daily
+// total (the marker may already cover the day). The reads themselves are
+// harmless; the write is what must not happen. A missing deadline (no
+// timeout configured) never blocks.
+func checkDeadline(ctx context.Context) error {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return nil
+	}
+	if now := time.Now(); now.After(deadline) {
+		return fmt.Errorf("batch: backfill deadline %s passed before writing a daily key; "+
+			"hourly data is no longer guaranteed complete, write skipped", deadline)
 	}
 	return nil
 }
@@ -522,7 +549,14 @@ func (b *evaluationDailyCountBackfiller) sumHourlyEventCounts(hourlyKeys []strin
 // verifies that the daily union covers the hourly union. PFMERGE is an
 // idempotent union: re-running, and racing with live writes to the daily key,
 // can only grow it, never lose users.
-func (b *evaluationDailyCountBackfiller) backfillUserCountDay(dailyKey string, hourlyKeys []string) error {
+func (b *evaluationDailyCountBackfiller) backfillUserCountDay(
+	ctx context.Context,
+	dailyKey string,
+	hourlyKeys []string,
+) error {
+	if err := checkDeadline(ctx); err != nil {
+		return err
+	}
 	if err := b.cache.PFMerge(dailyKey, cachev3.DailyCountTTL, hourlyKeys...); err != nil {
 		return fmt.Errorf("merge hourly user counts: %w", err)
 	}

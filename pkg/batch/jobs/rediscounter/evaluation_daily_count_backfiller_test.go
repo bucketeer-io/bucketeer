@@ -351,7 +351,7 @@ func TestBackfillEventCountDayIncludesHourlyKeysCreatedAfterScan(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, groups, 1)
 	hourlyKeys := groups[dayGroup{dayTs: day, suffix: "feature-1:variation-A"}]
-	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourlyKeys))
+	require.NoError(t, backfiller.backfillEventCountDay(context.Background(), dKey, hourlyKeys))
 }
 
 func TestBackfillEventCountDayStabilizesAgainstLiveWrites(t *testing.T) {
@@ -379,7 +379,7 @@ func TestBackfillEventCountDayStabilizesAgainstLiveWrites(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+	require.NoError(t, backfiller.backfillEventCountDay(context.Background(), dKey, hourly))
 }
 
 func TestBackfillEventCountDayGivesUpWhenNeverStable(t *testing.T) {
@@ -407,7 +407,7 @@ func TestBackfillEventCountDayGivesUpWhenNeverStable(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	err := backfiller.backfillEventCountDay(dKey, hourly)
+	err := backfiller.backfillEventCountDay(context.Background(), dKey, hourly)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "kept changing")
 }
@@ -509,7 +509,7 @@ func TestBackfillEventCountDayLowersOverCountedDailyKey(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+	require.NoError(t, backfiller.backfillEventCountDay(context.Background(), dKey, hourly))
 }
 
 // A daily value above the hourly snapshot can also mean the snapshot is
@@ -540,7 +540,7 @@ func TestBackfillEventCountDayReconcilesStaleSnapshotAboveDaily(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+	require.NoError(t, backfiller.backfillEventCountDay(context.Background(), dKey, hourly))
 }
 
 // A run that may cross UTC midnight (deadline on the next day) must choose
@@ -625,5 +625,59 @@ func TestBackfillEventCountDayRaisesSmallerExistingDailyCount(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	require.NoError(t, backfiller.backfillEventCountDay(dKey, hourly))
+	require.NoError(t, backfiller.backfillEventCountDay(context.Background(), dKey, hourly))
+}
+
+// A hourly read that is delayed across both the job deadline and UTC midnight
+// can observe a day the midnight deleter has already trimmed. The partial sum
+// must not be written: the day was already published at its complete value
+// and the marker covers it, so a write would hand readers the lower total.
+// The deadline is checked before every daily write, not only before moving
+// the marker.
+func TestBackfillEventCountDayDoesNotWritePastDeadline(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	const dKey = "dev:ec1d:0:feature-1:variation-A"
+	hourly := []string{"dev:ec:0:feature-1:variation-A", "dev:ec:3600:feature-1:variation-A"}
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(50*time.Millisecond))
+	defer cancel()
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	// The read crosses the deadline (and, in production, midnight: hour 00
+	// is gone, so the sum is 23 instead of the published 24).
+	mockCache.EXPECT().GetMulti(hourly, true).DoAndReturn(
+		func(interface{}, bool) ([]interface{}, error) {
+			<-ctx.Done()
+			return []interface{}{"11", "12"}, nil
+		})
+	mockCache.EXPECT().Get(dKey).Return([]byte("24"), nil)
+	// Re-read (daily > sum) still sees the trimmed day.
+	mockCache.EXPECT().GetMulti(hourly, true).Return([]interface{}{"11", "12"}, nil)
+	mockCache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	backfiller := &evaluationDailyCountBackfiller{cache: mockCache, logger: zap.NewNop()}
+	err := backfiller.backfillEventCountDay(ctx, dKey, hourly)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "deadline")
+}
+
+func TestBackfillUserCountDayDoesNotWritePastDeadline(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	mockCache.EXPECT().PFMerge(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	backfiller := &evaluationDailyCountBackfiller{cache: mockCache, logger: zap.NewNop()}
+	err := backfiller.backfillUserCountDay(ctx, "dev:uc1d:0:feature-1:variation-A",
+		[]string{"dev:uc:0:feature-1:variation-A"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "deadline")
 }
