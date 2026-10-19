@@ -1958,7 +1958,7 @@ func TestWriteEnvLastUsedInfoRetainsCacheOnFailure(t *testing.T) {
 	// because the Pub/Sub messages were already acked.
 	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").
 		Return(nil, errors.New("mysql: deadlock"))
-	p.writeEnvLastUsedInfo()
+	p.writeEnvLastUsedInfo(context.Background())
 	assert.Len(t, p.envLastUsedCache, 1)
 	assert.Contains(t, p.envLastUsedCache, "env-1")
 
@@ -1967,7 +1967,7 @@ func TestWriteEnvLastUsedInfoRetainsCacheOnFailure(t *testing.T) {
 	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").
 		Return(nil, nil)
 	storageMock.EXPECT().UpsertFeatureLastUsedInfo(gomock.Any(), info, "env-1").Return(nil)
-	p.writeEnvLastUsedInfo()
+	p.writeEnvLastUsedInfo(context.Background())
 	assert.Empty(t, p.envLastUsedCache)
 }
 
@@ -1992,7 +1992,7 @@ func TestWriteEnvLastUsedInfoRemovesOnlySuccessfulEnvironments(t *testing.T) {
 	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-ng").
 		Return(nil, errors.New("mysql: deadlock"))
 
-	p.writeEnvLastUsedInfo()
+	p.writeEnvLastUsedInfo(context.Background())
 	assert.Len(t, p.envLastUsedCache, 1)
 	assert.Contains(t, p.envLastUsedCache, "env-ng")
 }
@@ -2058,4 +2058,61 @@ func TestPubSubProcessorsFlushWritesLastUsedInfo(t *testing.T) {
 	}}
 	processors.Flush()
 	assert.Empty(t, p.envLastUsedCache)
+}
+
+func TestFlushWaitsForInFlightWorkers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	storageMock := ftstoragemock.NewMockFeatureLastUsedInfoStorage(ctrl)
+	p := &evaluationCountEventPersister{
+		fluiStorage:      storageMock,
+		envLastUsedCache: make(environmentLastUsedInfoCache),
+		logger:           zap.NewNop(),
+	}
+	// A worker still processing a batch when shutdown starts.
+	p.workers.Add(1)
+	go func() {
+		defer p.workers.Done()
+		time.Sleep(50 * time.Millisecond)
+		p.cacheEnvLastUsedInfo(&eventproto.EvaluationEvent{
+			FeatureId:      "feature-1",
+			FeatureVersion: 1,
+			Timestamp:      time.Now().Unix(),
+		}, "env-1")
+	}()
+
+	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").
+		Return(nil, nil)
+	storageMock.EXPECT().UpsertFeatureLastUsedInfo(gomock.Any(), gomock.Any(), "env-1").Return(nil)
+
+	p.Flush()
+	assert.Empty(t, p.envLastUsedCache)
+}
+
+func TestWriteEnvLastUsedInfoBoundsStorageCalls(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	storageMock := ftstoragemock.NewMockFeatureLastUsedInfoStorage(ctrl)
+	p := &evaluationCountEventPersister{
+		fluiStorage:      storageMock,
+		envLastUsedCache: make(environmentLastUsedInfoCache),
+		logger:           zap.NewNop(),
+	}
+	info := ftdomain.NewFeatureLastUsedInfo("feature-1", 1, time.Now().Unix(), "1.0.0")
+	p.envLastUsedCache["env-1"] = lastUsedInfoCache{info.ID(): info}
+
+	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").DoAndReturn(
+		func(ctx context.Context, _ []string, _ string) ([]*ftdomain.FeatureLastUsedInfo, error) {
+			_, ok := ctx.Deadline()
+			assert.True(t, ok)
+			<-ctx.Done()
+			return nil, ctx.Err()
+		})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	p.writeEnvLastUsedInfo(ctx)
+	assert.Contains(t, p.envLastUsedCache, "env-1")
 }
