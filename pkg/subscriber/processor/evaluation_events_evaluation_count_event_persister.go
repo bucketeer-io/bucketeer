@@ -43,10 +43,6 @@ const (
 	userCountKey       = "uc"
 	defaultVariationID = "default"
 	userDataAppVersion = "app_version"
-
-	lastUsedInfoWriteTimeout = 10 * time.Second
-	flushWorkersWaitTimeout  = 10 * time.Second
-	flushWriteTimeout        = 20 * time.Second
 )
 
 type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
@@ -85,7 +81,6 @@ type evaluationCountEventPersister struct {
 	envLastUsedCacheMutex               sync.Mutex
 	userAttributesCacheMutex            sync.Mutex
 	dauBufferMutex                      sync.Mutex
-	workers                             sync.WaitGroup
 	logger                              *zap.Logger
 }
 
@@ -141,8 +136,6 @@ func NewEvaluationCountEventPersister(
 }
 
 func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
-	p.workers.Add(1)
-	defer p.workers.Done()
 	batch := make(map[string]*puller.Message)
 	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.FlushInterval) * time.Second)
 	defer ticker.Stop()
@@ -706,33 +699,18 @@ func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.C
 	for {
 		select {
 		case <-ctx.Done():
+			// The buffered entries are intentionally not written on shutdown.
+			// Last-used info is not critical: the next evaluation of the flag records it again,
+			// and a graceful shutdown must finish within the Spot VM preemption window (under 15s).
 			return nil
 		case <-ticker.C:
 			p.logger.Debug("Write FlagLastUsedInfo cache timer triggered")
-			p.writeEnvLastUsedInfo(context.Background())
+			p.writeEnvLastUsedInfo()
 		}
 	}
 }
 
-// Flush writes the buffered last-used info so it isn't lost on shutdown.
-func (p *evaluationCountEventPersister) Flush() {
-	// Wait for in-flight batches so their last-used info is included.
-	done := make(chan struct{})
-	go func() {
-		p.workers.Wait()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-time.After(flushWorkersWaitTimeout):
-		p.logger.Warn("Timed out waiting for workers before flushing feature last-used info")
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), flushWriteTimeout)
-	defer cancel()
-	p.writeEnvLastUsedInfo(ctx)
-}
-
-func (p *evaluationCountEventPersister) writeEnvLastUsedInfo(ctx context.Context) {
+func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 	p.envLastUsedCacheMutex.Lock()
 	defer p.envLastUsedCacheMutex.Unlock()
 
@@ -741,10 +719,7 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo(ctx context.Context
 		for _, v := range cache {
 			info = append(info, v)
 		}
-		envCtx, cancel := context.WithTimeout(ctx, lastUsedInfoWriteTimeout)
-		err := p.upsertMultiFeatureLastUsedInfo(envCtx, info, environmentId)
-		cancel()
-		if err != nil {
+		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentId); err != nil {
 			// Keep the entries so they are retried on the next cycle.
 			// The Pub/Sub messages were already acked when the evaluation counts
 			// were written to Redis, so dropping the entries here would lose the
