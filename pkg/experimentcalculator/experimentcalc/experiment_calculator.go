@@ -202,6 +202,7 @@ func (e ExperimentCalculator) createExperimentResult(
 				e.logger.Error("ExperimentCalculator skipped updating the experiment result because the calculation failed",
 					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
+						zap.String("featureId", experiment.FeatureId),
 						zap.String("experimentId", experiment.Id),
 						zap.String("goalId", goalID),
 						zap.Int64("endAt", timestamp),
