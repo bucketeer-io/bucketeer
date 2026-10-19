@@ -134,14 +134,18 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 	// midnight (the rollout window): the daily keys of the current days only
 	// cover events written by the new pods, so those days must keep being
 	// served from the hourly fallback. Moving the marker back now would put an
-	// incomplete daily key in charge; refuse and let the operator re-run once
-	// the marker's day has started (then every day before it is fully
-	// elapsed and can be materialized from the complete hourly keys).
+	// incomplete daily key in charge, so skip until the marker's day has
+	// started (then every day before it is fully elapsed and can be
+	// materialized from the complete hourly keys). This is the expected state
+	// for the first days after a deploy, not a failure: returning an error
+	// here would surface as a failed job (alerts, retries by the caller).
 	if cutover > today {
-		return fmt.Errorf(
-			"batch: daily cutover %d is in the future (persister rollout window); re-run on or after that UTC day",
-			cutover,
+		b.logger.Info("Skipping the evaluation daily count backfill: the cutover marker is still in the future "+
+			"(persister rollout window); nothing to do until that UTC day",
+			zap.Int64("cutover", cutover),
+			zap.Int64("today", today),
 		)
+		return nil
 	}
 	// Every fully elapsed day in the window is (re)derived from its hourly
 	// keys, including days on/after the cutover whose daily keys were written

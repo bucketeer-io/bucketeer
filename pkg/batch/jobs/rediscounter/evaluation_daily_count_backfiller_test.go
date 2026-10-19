@@ -218,7 +218,10 @@ func TestBackfillerReverifiesDaysCoveredByCutover(t *testing.T) {
 	assert.Equal(t, strconv.FormatInt(today-backfillDays*daySeconds, 10), marker)
 }
 
-func TestBackfillerRejectsFutureCutover(t *testing.T) {
+// While the marker is in the future (rollout window) the job is a clean
+// no-op, not a failure: it writes nothing, leaves the marker alone, and
+// returns nil so the batch API does not report/retry it as an error.
+func TestBackfillerSkipsWhileCutoverInFuture(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -233,9 +236,7 @@ func TestBackfillerRejectsFutureCutover(t *testing.T) {
 	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(futureCutover, 10), 0))
 	require.NoError(t, redisCache.Put(hourlyKey("ec", today-2*daySeconds, 1), "4", 0))
 
-	err := backfiller.Run(context.Background())
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "in the future")
+	require.NoError(t, backfiller.Run(context.Background()), "expected state, must not surface as a failed job")
 
 	assert.False(t, mr.Exists(dailyKey("ec1d", today-2*daySeconds)), "nothing must be materialized")
 	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
