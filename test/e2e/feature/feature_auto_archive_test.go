@@ -43,6 +43,8 @@ const (
 	autoArchiveTimeout       = 3 * time.Minute
 	autoArchiveRetryTimes    = 30
 	autoArchiveRetryInterval = 5 * time.Second
+	// Re-send the event if it is lost, e.g. when a subscriber pod shuts down before writing it.
+	lastUsedInfoResendInterval = 30 * time.Second
 	// thresholdForArchiving is set to 1 (minimum allowed value) to archive features
 	// with LastUsedInfo older than 1 day. Tests use timestamps from yesterday.
 	thresholdForArchiving = 1
@@ -80,7 +82,7 @@ func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
 	registerEvaluationEventWithTimestamp(t, f, twoDaysAgo)
 
 	// Wait for last used info to be recorded
-	waitForLastUsedInfo(t, featureClient, featureID)
+	waitForLastUsedInfo(t, featureClient, featureID, twoDaysAgo)
 
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
@@ -144,8 +146,8 @@ func TestFeatureAutoArchiver_PrerequisiteDependency(t *testing.T) {
 	registerEvaluationEventWithTimestamp(t, childFeature, twoDaysAgo)
 
 	// Wait for last used info to be recorded
-	waitForLastUsedInfo(t, featureClient, parentFeatureID)
-	waitForLastUsedInfo(t, featureClient, childFeatureID)
+	waitForLastUsedInfo(t, featureClient, parentFeatureID, twoDaysAgo)
+	waitForLastUsedInfo(t, featureClient, childFeatureID, twoDaysAgo)
 
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
@@ -212,7 +214,7 @@ func TestFeatureAutoArchiver_BulkArchive(t *testing.T) {
 
 	// Wait for last used info to be recorded for all features
 	for _, featureID := range featureIDs {
-		waitForLastUsedInfo(t, featureClient, featureID)
+		waitForLastUsedInfo(t, featureClient, featureID, twoDaysAgo)
 	}
 
 	// Get original auto-archive settings
@@ -267,7 +269,7 @@ func TestFeatureAutoArchiver_DisabledEnvironment(t *testing.T) {
 	registerEvaluationEventWithTimestamp(t, f, twoDaysAgo)
 
 	// Wait for last used info to be recorded
-	waitForLastUsedInfo(t, featureClient, featureID)
+	waitForLastUsedInfo(t, featureClient, featureID, twoDaysAgo)
 
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
@@ -309,10 +311,11 @@ func TestFeatureAutoArchiver_RecentlyUsedNotArchived(t *testing.T) {
 	f := getFeature(t, featureID, featureClient)
 
 	// Register an evaluation event with current timestamp (just used)
-	registerEvaluationEventWithTimestamp(t, f, time.Now())
+	now := time.Now()
+	registerEvaluationEventWithTimestamp(t, f, now)
 
 	// Wait for last used info to be recorded
-	waitForLastUsedInfo(t, featureClient, featureID)
+	waitForLastUsedInfo(t, featureClient, featureID, now)
 
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
@@ -546,18 +549,26 @@ func registerEvaluationEventWithTimestamp(t *testing.T, f *feature.Feature, time
 		},
 	}
 	req := &gatewayproto.RegisterEventsRequest{Events: events}
-	_, err = c.RegisterEvents(ctx, req)
+	resp, err := c.RegisterEvents(ctx, req)
 	if err != nil {
 		t.Fatal("Failed to register events:", err)
 	}
+	if len(resp.Errors) > 0 {
+		t.Fatalf("Failed to register events: %v", resp.Errors)
+	}
 }
 
-func waitForLastUsedInfo(t *testing.T, client featureclient.Client, featureID string) {
+func waitForLastUsedInfo(t *testing.T, client featureclient.Client, featureID string, timestamp time.Time) {
 	t.Helper()
+	lastSent := time.Now()
 	for i := 0; i < featureRecorderRetryTimes; i++ {
 		f := getFeature(t, featureID, client)
 		if f.LastUsedInfo != nil {
 			return
+		}
+		if time.Since(lastSent) >= lastUsedInfoResendInterval {
+			registerEvaluationEventWithTimestamp(t, f, timestamp)
+			lastSent = time.Now()
 		}
 		time.Sleep(2 * time.Second)
 	}
