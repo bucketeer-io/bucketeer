@@ -1016,6 +1016,9 @@ func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.C
 	for {
 		select {
 		case <-ctx.Done():
+			// The buffered entries are intentionally not written on shutdown.
+			// Last-used info is not critical: the next evaluation of the flag records it again,
+			// and a graceful shutdown must finish within the Spot VM preemption window (under 15s).
 			return nil
 		case <-ticker.C:
 			p.logger.Debug("Write FlagLastUsedInfo cache timer triggered")
