@@ -800,7 +800,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rediscounter.NewEvaluationDailyCountBackfiller(
 			cachev3.NewRedisCache(persistentRedisClient),
 			environmentClient,
-			jobs.WithTimeout(30*time.Minute),
+			// Just under the 3600s envoy route / curl limits on the manual
+			// trigger path, so the job's own deadline is always the one that
+			// fires (and leaves the cutover marker untouched).
+			jobs.WithTimeout(55*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		logger,

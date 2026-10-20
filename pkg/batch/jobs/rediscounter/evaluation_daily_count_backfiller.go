@@ -88,7 +88,7 @@ func NewEvaluationDailyCountBackfiller(
 	opts ...jobs.Option) jobs.Job {
 
 	dopts := &jobs.Options{
-		Timeout: 30 * time.Minute,
+		Timeout: 55 * time.Minute,
 		Logger:  zap.NewNop(),
 	}
 	for _, opt := range opts {
@@ -174,16 +174,41 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 	if err != nil {
 		return err
 	}
-	backfilled := 0
+	// Environments whose daily keys are materialized: every environment the
+	// environment service knows, plus the admin environment. Its keys have
+	// no "<env>:" prefix (MakeKey with an empty environment ID) and the
+	// environment API never lists it, yet the cutover marker is global, so
+	// skipping it would leave any admin hourly history unreadable through
+	// the daily path once the marker moves back. Hourly keys of any other
+	// environment that only exists in Redis are left alone.
+	environmentIDs := make([]string, 0, len(envs)+1)
 	for _, env := range envs {
+		environmentIDs = append(environmentIDs, env.Id)
+	}
+	environmentIDs = append(environmentIDs, "")
+	backfilled := 0
+	for _, pair := range countKindPairs {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		n, err := b.backfillEnvironment(ctx, env.Id, earliest, endExclusive)
+		// One cluster-wide SCAN per kind, not one per environment: SCAN
+		// walks the whole keyspace whatever the MATCH pattern, so N
+		// environments would cost N full walks of a multi-million-key
+		// cluster (the discovery phase alone would exceed the job timeout).
+		daysByEnv, err := b.collectHourlyKeysByDay(pair.hourlyKind, earliest, endExclusive)
 		if err != nil {
 			return err
 		}
-		backfilled += n
+		for _, environmentID := range environmentIDs {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			n, err := b.backfillEnvironment(ctx, environmentID, pair, daysByEnv[environmentID])
+			if err != nil {
+				return err
+			}
+			backfilled += n
+		}
 	}
 
 	// Every materialized day passed verification: move the cutover marker
@@ -262,52 +287,53 @@ func (b *evaluationDailyCountBackfiller) listEnvironments(ctx context.Context) (
 	return resp.Environments, nil
 }
 
-// backfillEnvironment materializes and verifies the daily keys of one
-// environment. It returns the number of materialized (feature, variation,
-// day, kind) daily keys.
+// countKindPair maps an hourly kind to the daily kind materialized from it.
+type countKindPair struct {
+	hourlyKind string
+	dailyKind  string
+}
+
+var countKindPairs = []countKindPair{
+	{cachev3.EventCountHourKind, cachev3.EventCountDailyKind},
+	{cachev3.UserCountHourKind, cachev3.UserCountDailyKind},
+}
+
+// backfillEnvironment materializes and verifies the daily keys of one kind
+// for one environment, given that environment's (day, suffix) groups from
+// collectHourlyKeysByDay. It returns the number of materialized (feature,
+// variation, day) daily keys.
 func (b *evaluationDailyCountBackfiller) backfillEnvironment(
 	ctx context.Context,
 	environmentId string,
-	earliest, endExclusive int64,
+	pair countKindPair,
+	days map[dayGroup][]string,
 ) (int, error) {
 	backfilled := 0
-	for _, pair := range []struct {
-		hourlyKind string
-		dailyKind  string
-	}{
-		{cachev3.EventCountHourKind, cachev3.EventCountDailyKind},
-		{cachev3.UserCountHourKind, cachev3.UserCountDailyKind},
-	} {
-		days, err := b.collectHourlyKeysByDay(environmentId, pair.hourlyKind, earliest, endExclusive)
-		if err != nil {
+	for group, hourlyKeys := range days {
+		if err := ctx.Err(); err != nil {
 			return backfilled, err
 		}
-		for group, hourlyKeys := range days {
-			if err := ctx.Err(); err != nil {
-				return backfilled, err
-			}
-			dailyKey := cache.MakeKey(
-				pair.dailyKind,
-				fmt.Sprintf("%d:%s", group.dayTs, group.suffix),
-				environmentId,
-			)
-			var err error
-			if pair.hourlyKind == cachev3.EventCountHourKind {
-				err = b.backfillEventCountDay(ctx, dailyKey, hourlyKeys)
-			} else {
-				err = b.backfillUserCountDay(ctx, dailyKey, hourlyKeys)
-			}
-			if err != nil {
-				b.logger.Error("Failed to backfill daily key",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("dailyKey", dailyKey),
-					zap.Strings("hourlyKeys", hourlyKeys),
-				)
-				return backfilled, err
-			}
-			backfilled++
+		dailyKey := cache.MakeKey(
+			pair.dailyKind,
+			fmt.Sprintf("%d:%s", group.dayTs, group.suffix),
+			environmentId,
+		)
+		var err error
+		if pair.hourlyKind == cachev3.EventCountHourKind {
+			err = b.backfillEventCountDay(ctx, dailyKey, hourlyKeys)
+		} else {
+			err = b.backfillUserCountDay(ctx, dailyKey, hourlyKeys)
 		}
+		if err != nil {
+			b.logger.Error("Failed to backfill daily key",
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("dailyKey", dailyKey),
+				zap.Strings("hourlyKeys", hourlyKeys),
+			)
+			return backfilled, err
+		}
+		backfilled++
 	}
 	return backfilled, nil
 }
@@ -319,11 +345,32 @@ type dayGroup struct {
 	suffix string
 }
 
-// collectHourlyKeysByDay scans the environment's hourly keys of one kind to
-// discover which (UTC day, feature:variation suffix) groups exist in
-// [earliest, endExclusive), and returns, for each group, ALL 24 hourly keys of
-// that day (constructed, not scanned). Days without any hourly key get no
-// entry: both the daily key and the hourly fallback correctly yield 0 for them.
+// hourlyKeyPattern is the SCAN MATCH pattern for the hourly keys of one kind
+// across every environment: "<env>:<kind>:<hourTs>:<suffix>" and, for the
+// admin environment, "<kind>:<hourTs>:<suffix>". It also matches keys whose
+// environment ID merely ends in the kind name; hourlyKeyRegex rejects those.
+func hourlyKeyPattern(kind string) string {
+	return "*" + kind + ":*"
+}
+
+// hourlyKeyRegex parses "<env>:<kind>:<hourTs>:<suffix>" (or the admin form
+// without "<env>:") into (env, hourTs, suffix). The optional env segment
+// cannot contain ":".
+func hourlyKeyRegex(kind string) *regexp.Regexp {
+	return regexp.MustCompile(fmt.Sprintf("^(?:([^:]+):)?%s:([0-9]+):(.+)$", regexp.QuoteMeta(kind)))
+}
+
+// collectHourlyKeysByDay scans the hourly keys of one kind, cluster-wide, to
+// discover which (environment, UTC day, feature:variation suffix) groups
+// exist in [earliest, endExclusive), and returns, per environment and per
+// group, ALL 24 hourly keys of that day (constructed, not scanned). Days
+// without any hourly key get no entry: both the daily key and the hourly
+// fallback correctly yield 0 for them.
+//
+// A single SCAN serves every environment. Redis evaluates MATCH only after
+// walking the keyspace, so the cost of a SCAN is the total number of keys in
+// the cluster regardless of the pattern; scanning per environment would
+// multiply that cost by the number of environments.
 //
 // The scan is only used for discovery. Reading the constructed 24 keys rather
 // than the scanned ones means an hourly key that is created after the SCAN
@@ -337,29 +384,25 @@ type dayGroup struct {
 // groups are a set, a key reported more than once by SCAN cannot inflate the
 // result.
 func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
-	environmentId, kind string,
+	kind string,
 	earliest, endExclusive int64,
-) (map[dayGroup][]string, error) {
-	pattern := cache.MakeKeyPrefix(kind, environmentId) + "*"
-	var keyRegex *regexp.Regexp
-	if environmentId == "" {
-		keyRegex = regexp.MustCompile(fmt.Sprintf("^%s:([0-9]+):(.+)$", kind))
-	} else {
-		keyRegex = regexp.MustCompile(fmt.Sprintf("^%s:%s:([0-9]+):(.+)$", environmentId, kind))
-	}
-
-	keys, err := b.cache.ScanKeys(pattern, redisScanMaxSize)
+) (map[string]map[dayGroup][]string, error) {
+	keyRegex := hourlyKeyRegex(kind)
+	scanStart := time.Now()
+	keys, err := b.cache.ScanKeys(hourlyKeyPattern(kind), redisScanMaxSize)
 	if err != nil {
 		return nil, err
 	}
-	groups := make(map[dayGroup][]string)
+	byEnv := make(map[string]map[dayGroup][]string)
+	groupCount := 0
 	for _, key := range keys {
 		match := keyRegex.FindStringSubmatch(key)
-		if len(match) != 3 {
+		if len(match) != 4 {
 			// Not an hourly counter key (e.g. a pfmerge staging key).
 			continue
 		}
-		hourTs, err := strconv.ParseInt(match[1], 10, 64)
+		environmentId := match[1]
+		hourTs, err := strconv.ParseInt(match[2], 10, 64)
 		if err != nil {
 			continue
 		}
@@ -367,13 +410,26 @@ func (b *evaluationDailyCountBackfiller) collectHourlyKeysByDay(
 		if dayTs < earliest || dayTs >= endExclusive {
 			continue
 		}
-		group := dayGroup{dayTs: dayTs, suffix: match[2]}
+		groups := byEnv[environmentId]
+		if groups == nil {
+			groups = make(map[dayGroup][]string)
+			byEnv[environmentId] = groups
+		}
+		group := dayGroup{dayTs: dayTs, suffix: match[3]}
 		if _, known := groups[group]; known {
 			continue
 		}
 		groups[group] = hourlyKeysOfDay(kind, environmentId, group)
+		groupCount++
 	}
-	return groups, nil
+	b.logger.Info("Scanned hourly keys",
+		zap.String("kind", kind),
+		zap.Int("scannedKeys", len(keys)),
+		zap.Int("environments", len(byEnv)),
+		zap.Int("dailyKeysToBackfill", groupCount),
+		zap.Duration("elapsedTime", time.Since(scanStart)),
+	)
+	return byEnv, nil
 }
 
 // hourlyKeysOfDay constructs the 24 hourly keys of one (day, feature:variation)

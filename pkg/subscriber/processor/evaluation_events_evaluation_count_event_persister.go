@@ -120,7 +120,17 @@ type evaluationCountEventPersister struct {
 	dailyCutoverMutex  sync.Mutex
 	dailyCutover       int64
 	dailyCutoverExists bool
-	logger             *zap.Logger
+	// now overrides the flush write time (minute-tier cutoff) in tests;
+	// nil means time.Now.
+	now    func() time.Time
+	logger *zap.Logger
+}
+
+func (p *evaluationCountEventPersister) timeNow() time.Time {
+	if p.now != nil {
+		return p.now()
+	}
+	return time.Now()
 }
 
 func NewEvaluationCountEventPersister(
@@ -264,6 +274,8 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	// The metrics key of each successfully parsed event, used to report
 	// evaluationEventCounter only for events whose writes succeeded.
 	eventMetricsKeys := make(map[string]metricsKey, totalEvents)
+	// One write time for the whole flush (minute-tier cutoff).
+	now := p.timeNow()
 
 	for environmentId, events := range envEvents {
 		for id, e := range events {
@@ -278,8 +290,9 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			}
 
 			userID := getUserID(e.UserId, e.User)
-			// Every event is written to all three tiers (minute, hour, day)
-			// in the same flush, which keeps the tiers mutually consistent.
+			// Every event is written to all its tiers (hour, day, and minute
+			// while the minute bucket is still readable) in the same flush,
+			// which keeps the tiers mutually consistent.
 			//
 			// Retry semantics are the same at-least-once semantics the hourly
 			// tier always had: if any tier's write fails the event is Nacked,
@@ -288,7 +301,7 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 			// (an INCRBY applied but reported as failed was always retried)
 			// and is the accepted tradeoff in the redesign doc (§2.4); the
 			// uc side stays exact because PFADD is idempotent.
-			for _, pair := range p.newEvaluationCountKeyPairs(e.FeatureId, vID, environmentId, e.Timestamp) {
+			for _, pair := range p.newEvaluationCountKeyPairs(e.FeatureId, vID, environmentId, e.Timestamp, now) {
 				aggregator.addEvent(pair.ecKey, pair.ucKey, userID)
 				if ecKeyToEventIDs[pair.ecKey] == nil {
 					ecKeyToEventIDs[pair.ecKey] = make(map[string]struct{})
@@ -741,34 +754,59 @@ type countKeyPair struct {
 	ttl   time.Duration
 }
 
-// newEvaluationCountKeyPairs builds the ec/uc key pairs of all three tiers
-// (minute, hour, day) written for one event. All buckets are truncated in
-// UTC; see cachev3.EvaluationDailyCutoverKey for why the daily boundary must
-// stay fixed forever.
+// newEvaluationCountKeyPairs builds the ec/uc key pairs of the tiers written
+// for one event: hour and day always, minute only while the event's minute
+// bucket is still readable (see minuteTierWritable). All buckets are
+// truncated in UTC; see cachev3.EvaluationDailyCutoverKey for why the daily
+// boundary must stay fixed forever.
+//
+// now is the write time of the flush; it decides the minute-tier cutoff and
+// is passed in (rather than read here) so the cutoff is testable and the same
+// for every event of one flush.
 func (p *evaluationCountEventPersister) newEvaluationCountKeyPairs(
 	featureID, variationID, environmentId string,
 	timestamp int64,
+	now time.Time,
 ) []countKeyPair {
-	minuteTs := truncateUnixUTC(timestamp, time.Minute)
 	hourTs := truncateUnixUTC(timestamp, time.Hour)
 	dayTs := truncateUnixUTC(timestamp, 24*time.Hour)
-	return []countKeyPair{
-		{
+	pairs := make([]countKeyPair, 0, len(countKindTiers))
+	if minuteTs := truncateUnixUTC(timestamp, time.Minute); minuteTierWritable(minuteTs, now) {
+		pairs = append(pairs, countKeyPair{
 			ecKey: newEvaluationCountKey(cachev3.EventCountMinuteKind, featureID, variationID, environmentId, minuteTs),
 			ucKey: newEvaluationCountKey(cachev3.UserCountMinuteKind, featureID, variationID, environmentId, minuteTs),
 			ttl:   cachev3.MinuteCountTTL,
-		},
-		{
+		})
+	}
+	return append(pairs,
+		countKeyPair{
 			ecKey: newEvaluationCountKey(cachev3.EventCountHourKind, featureID, variationID, environmentId, hourTs),
 			ucKey: newEvaluationCountKey(cachev3.UserCountHourKind, featureID, variationID, environmentId, hourTs),
 			ttl:   0,
 		},
-		{
+		countKeyPair{
 			ecKey: newEvaluationCountKey(cachev3.EventCountDailyKind, featureID, variationID, environmentId, dayTs),
 			ucKey: newEvaluationCountKey(cachev3.UserCountDailyKind, featureID, variationID, environmentId, dayTs),
 			ttl:   cachev3.DailyCountTTL,
 		},
-	}
+	)
+}
+
+// minuteTierWritable reports whether a minute bucket is worth writing at
+// time now. Minute keys only serve the "past hour" range and expire after
+// MinuteCountTTL, so a bucket already older than the TTL at write time can
+// never be read: by the time any reader's one-hour window could include it,
+// the key would have expired (and the window never reaches that far back
+// anyway). Clients that upload buffered events days or weeks late would
+// otherwise create one short-lived, never-read key per (minute, feature,
+// variation); on a large installation that was the majority of the minute
+// tier. The hour and day tiers are unaffected: late events are always
+// counted there, which is where every range longer than an hour reads from.
+//
+// Future-dated buckets (client clock skew) are written: they become readable
+// once wall-clock time reaches them, well within their TTL.
+func minuteTierWritable(minuteTs int64, now time.Time) bool {
+	return minuteTs >= now.Add(-cachev3.MinuteCountTTL).Unix()
 }
 
 func newEvaluationCountKey(
