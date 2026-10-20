@@ -178,6 +178,116 @@ func TestBackfillerMaterializesDailyKeys(t *testing.T) {
 // hourly and daily are both written per event, so a live-written daily key
 // that agrees with the hourly sum is rewritten with the same value, and one
 // that drifted is reconciled. This is what makes a re-run a recovery path.
+// End to end through Run with several environments sharing one Redis: the
+// single cluster-wide scan must route every (day, suffix) group to its own
+// environment's daily key (never mixing environments that share a feature
+// ID), handle the prefix-less admin environment, and leave alone the keys of
+// an environment Redis knows but the environment service does not list.
+func TestBackfillerRunMaterializesEveryEnvironmentFromOneScan(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	mr := miniredis.RunT(t)
+	client, err := redis.NewClient(
+		mr.Addr(),
+		redis.WithRedisMode(redis.RedisModeStandalone),
+		redis.WithLogger(zap.NewNop()),
+	)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.Close() })
+	redisCache := cachev3.NewRedisCache(client)
+
+	envClient := evmock.NewMockClient(mockController)
+	envClient.EXPECT().ListEnvironmentsV2(gomock.Any(), gomock.Any()).Return(
+		&evproto.ListEnvironmentsV2Response{
+			// "" is the admin environment; "ghost" exists only in Redis.
+			Environments: []*evproto.EnvironmentV2{{Id: "dev"}, {Id: "prod"}, {Id: ""}},
+		}, nil).AnyTimes()
+	backfiller := &evaluationDailyCountBackfiller{
+		envClient: envClient,
+		cache:     redisCache,
+		opts:      &jobs.Options{Timeout: 10 * time.Second},
+		logger:    zap.NewNop(),
+	}
+
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	day := today - 2*daySeconds
+	require.NoError(t, redisCache.Put(cachev3.EvaluationDailyCutoverKey, strconv.FormatInt(today, 10), 0))
+
+	key := func(env, kind string, hour int) string {
+		return cache.MakeKey(kind, fmt.Sprintf("%d:feature-1:variation-A", day+int64(hour)*3600), env)
+	}
+	// Same feature/variation/day in every environment, different values.
+	for k, v := range map[string]string{
+		key("dev", "ec", 1):   "1",
+		key("dev", "ec", 2):   "1",
+		key("prod", "ec", 1):  "10",
+		key("prod", "ec", 20): "10",
+		key("", "ec", 5):      "100",
+		key("ghost", "ec", 5): "1000",
+	} {
+		require.NoError(t, redisCache.Put(k, v, 0))
+	}
+	for k, users := range map[string][]string{
+		key("dev", "uc", 1):   {"d1"},
+		key("prod", "uc", 1):  {"p1", "p2"},
+		key("prod", "uc", 20): {"p3"},
+		key("", "uc", 5):      {"a1", "a2", "a3"},
+		key("ghost", "uc", 5): {"g1"},
+	} {
+		_, err := redisCache.PFAdd(k, users...)
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, backfiller.Run(context.Background()))
+
+	dailyOf := func(env, kind string) string {
+		return cache.MakeKey(kind, fmt.Sprintf("%d:feature-1:variation-A", day), env)
+	}
+	for _, p := range []struct {
+		env   string
+		ec    string
+		users int64
+	}{
+		{"dev", "2", 1},
+		{"prod", "20", 3},
+		{"", "100", 3},
+	} {
+		got, err := mr.Get(dailyOf(p.env, "ec1d"))
+		require.NoError(t, err, "env %q", p.env)
+		assert.Equal(t, p.ec, got, "ec1d of env %q", p.env)
+		count, err := redisCache.PFCount(dailyOf(p.env, "uc1d"))
+		require.NoError(t, err)
+		assert.Equal(t, p.users, count, "uc1d of env %q", p.env)
+	}
+	assert.False(t, mr.Exists(dailyOf("ghost", "ec1d")), "unlisted environment is not backfilled")
+	assert.False(t, mr.Exists(dailyOf("ghost", "uc1d")))
+	assert.Equal(t, "1000", mustGet(t, mr, key("ghost", "ec", 5)), "and its hourly keys are untouched")
+
+	marker, err := mr.Get(cachev3.EvaluationDailyCutoverKey)
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(today-backfillDays*daySeconds, 10), marker)
+}
+
+func mustGet(t *testing.T, mr *miniredis.Miniredis, key string) string {
+	t.Helper()
+	v, err := mr.Get(key)
+	require.NoError(t, err)
+	return v
+}
+
+func TestNewEvaluationDailyCountBackfillerDefaultTimeoutFitsTriggerPath(t *testing.T) {
+	t.Parallel()
+	job := NewEvaluationDailyCountBackfiller(nil, nil)
+	b, ok := job.(*evaluationDailyCountBackfiller)
+	require.True(t, ok)
+	// The manual trigger path (cronjob curl -m 3600, envoy route timeouts
+	// 3600s) must never be the deadline that fires: the job's own must.
+	assert.Equal(t, 55*time.Minute, b.opts.Timeout)
+	assert.Less(t, b.opts.Timeout, time.Hour)
+}
+
 func TestBackfillerReverifiesDaysCoveredByCutover(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
