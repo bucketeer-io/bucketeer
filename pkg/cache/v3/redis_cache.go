@@ -141,6 +141,11 @@ func (r *redisCache) DeleteWithGeneration(key, genKey string) error {
 	return r.client.Eval(context.Background(), deleteWithGenerationScript, []string{key, genKey}).Err()
 }
 
+// PutIfAbsent implements cache.AbsentPutter via Redis SETNX.
+func (r *redisCache) PutIfAbsent(key string, value interface{}, expiration time.Duration) (bool, error) {
+	return r.client.SetNX(context.Background(), key, value, expiration)
+}
+
 func (r *redisCache) SAdd(key string, members ...interface{}) (int64, error) {
 	return r.client.SAdd(key, members...)
 }

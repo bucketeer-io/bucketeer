@@ -18,6 +18,7 @@ package v3
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
@@ -26,6 +27,49 @@ import (
 // getEventCountsConcurrency bounds how many per-day count fetches run in
 // parallel so a long time range cannot flood Redis with concurrent requests.
 const getEventCountsConcurrency = 8
+
+// Evaluation count keys come in three tiers sharing one format,
+// "<environmentId>:<kind>:<bucketTimestamp>:<featureId>:<variationId>"
+// (no environment prefix for the admin environment):
+//
+//   - minute tier (ec1m/uc1m): 1-minute UTC buckets serving the "past hour"
+//     view, expired by TTL.
+//   - hour tier (ec/uc): 1-hour UTC buckets serving the "past 24 hours" view,
+//     deleted by the redis-counter-deleter batch job (no TTL).
+//   - day tier (ec1d/uc1d): UTC-midnight buckets serving the multi-day views,
+//     expired by TTL.
+//
+// The minute/day kind names deliberately do NOT extend "ec:"/"uc:" with a
+// colon: the deleter scans "<env>:ec:*" / "<env>:uc:*" and aborts its whole
+// run on keys whose timestamp segment it cannot parse, so the new kinds must
+// stay invisible to those scan prefixes ("<env>:ec1m:" etc. never match).
+const (
+	EventCountMinuteKind = "ec1m"
+	UserCountMinuteKind  = "uc1m"
+	EventCountHourKind   = "ec"
+	UserCountHourKind    = "uc"
+	EventCountDailyKind  = "ec1d"
+	UserCountDailyKind   = "uc1d"
+
+	// MinuteCountTTL keeps minute buckets around for twice the 1-hour window
+	// they serve, so a "past hour" read never hits an expired bucket.
+	MinuteCountTTL = 2 * time.Hour
+	// DailyCountTTL keeps daily buckets just beyond the longest supported
+	// range (90 days).
+	DailyCountTTL = 92 * 24 * time.Hour
+)
+
+// EvaluationDailyCutoverKey holds the unix timestamp (seconds) of the first
+// UTC midnight that is fully covered by the daily tier: days starting on or
+// after it are served from ec1d/uc1d keys, days before it fall back to the
+// day's 24 hourly keys (§3.1 Option A of the timeseries key redesign).
+//
+// The persister writes it once with SETNX on startup, pointing at the UTC
+// midnight after the deploy (the deploy day itself is incomplete in the daily
+// tier). The backfill job moves it back to the earliest backfilled day after
+// a verified run. When the marker is absent, readers serve every day from
+// hourly keys, which is exactly the pre-redesign behavior.
+const EvaluationDailyCutoverKey = "system:ec1d:cutover"
 
 type EventCounterCache interface {
 	GetEventCounts(keys []string) ([]float64, error)

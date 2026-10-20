@@ -44,6 +44,10 @@ enum BatchJob {
   FeatureAutoArchiver = 19;
   ScheduledFlagChangeExecutor = 20;
   MonthlySummarizer = 21;
+  // One-shot migration job for the evaluation timeseries key redesign:
+  // materializes ec1d/uc1d daily keys from the existing hourly keys.
+  // Triggered manually via ExecuteBatchJob; safe and idempotent to re-run.
+  EvaluationDailyCountBackfiller = 22;
 }
 
 message BatchJobRequest {

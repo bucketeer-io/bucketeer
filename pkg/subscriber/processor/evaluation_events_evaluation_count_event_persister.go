@@ -19,10 +19,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -39,11 +41,42 @@ import (
 )
 
 const (
-	eventCountKey      = "ec"
-	userCountKey       = "uc"
+	eventCountKey      = cachev3.EventCountHourKind
+	userCountKey       = cachev3.UserCountHourKind
 	defaultVariationID = "default"
 	userDataAppVersion = "app_version"
 )
+
+// countKindTTLs maps each evaluation count kind to the TTL applied after
+// every write. The hourly tier has no TTL (zero): its cleanup is owned by the
+// redis-counter-deleter batch job, exactly as before the minute/day tiers
+// were introduced.
+var countKindTTLs = map[string]time.Duration{
+	cachev3.EventCountMinuteKind: cachev3.MinuteCountTTL,
+	cachev3.UserCountMinuteKind:  cachev3.MinuteCountTTL,
+	cachev3.EventCountHourKind:   0,
+	cachev3.UserCountHourKind:    0,
+	cachev3.EventCountDailyKind:  cachev3.DailyCountTTL,
+	cachev3.UserCountDailyKind:   cachev3.DailyCountTTL,
+}
+
+// countKindTier maps a kind to a kind-agnostic tier label used to pair an ec
+// key with the uc key written for the same bucket. The label must encode the
+// tier: at a UTC midnight the minute, hour, and day buckets share the same
+// timestamp, so pairing on the suffix alone would mix tiers.
+type countKindTier struct {
+	kind string
+	tier string
+}
+
+var countKindTiers = []countKindTier{
+	{cachev3.EventCountMinuteKind, "1m"},
+	{cachev3.UserCountMinuteKind, "1m"},
+	{cachev3.EventCountDailyKind, "1d"},
+	{cachev3.UserCountDailyKind, "1d"},
+	{cachev3.EventCountHourKind, "1h"},
+	{cachev3.UserCountHourKind, "1h"},
+}
 
 type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
 type environmentLastUsedInfoCache map[string]lastUsedInfoCache
@@ -81,7 +114,13 @@ type evaluationCountEventPersister struct {
 	envLastUsedCacheMutex               sync.Mutex
 	userAttributesCacheMutex            sync.Mutex
 	dauBufferMutex                      sync.Mutex
-	logger                              *zap.Logger
+	// dailyCutover is the marker value this process tries to SETNX (unix
+	// seconds, fixed on the first attempt); dailyCutoverExists records that
+	// the marker is known to exist in Redis.
+	dailyCutoverMutex  sync.Mutex
+	dailyCutover       int64
+	dailyCutoverExists bool
+	logger             *zap.Logger
 }
 
 func NewEvaluationCountEventPersister(
@@ -123,6 +162,11 @@ func NewEvaluationCountEventPersister(
 		dauBufferMutex:                      sync.Mutex{},
 		logger:                              logger,
 	}
+	// Record the daily-tier cutover marker so readers know from which UTC day
+	// the ec1d/uc1d keys are complete (date-based fallback, §3.1 Option A of
+	// the timeseries key redesign). SETNX: only the first dual-writing
+	// deployment ever sets it.
+	e.writeDailyCutoverMarker()
 	// write flag last used info cache periodically
 	//nolint:errcheck
 	go e.writeFlagLastUsedInfoCache(ctx)
@@ -213,14 +257,13 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 		featureId     string
 		variationId   string
 	}
-	metricsAgg := make(map[metricsKey]int64)
 
-	// Reverse mapping: ecKey → set of event IDs that contributed to it.
+	// Reverse mapping: every ec key (any tier) → set of event IDs that
+	// contributed to it, so a failed write Nacks exactly the affected events.
 	ecKeyToEventIDs := make(map[string]map[string]struct{})
-
-	// Tracks per-metricsKey event counts for each ecKey, so we can correctly
-	// subtract failed counts across multiple sourceIds that share an ecKey.
-	ecKeyToMetricsCounts := make(map[string]map[metricsKey]int64)
+	// The metrics key of each successfully parsed event, used to report
+	// evaluationEventCounter only for events whose writes succeeded.
+	eventMetricsKeys := make(map[string]metricsKey, totalEvents)
 
 	for environmentId, events := range envEvents {
 		for id, e := range events {
@@ -234,33 +277,42 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 				continue
 			}
 
-			ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-			ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 			userID := getUserID(e.UserId, e.User)
-
-			aggregator.addEvent(ecKey, ucKey, userID)
-
-			if ecKeyToEventIDs[ecKey] == nil {
-				ecKeyToEventIDs[ecKey] = make(map[string]struct{})
+			// Every event is written to all three tiers (minute, hour, day)
+			// in the same flush, which keeps the tiers mutually consistent.
+			//
+			// Retry semantics are the same at-least-once semantics the hourly
+			// tier always had: if any tier's write fails the event is Nacked,
+			// and redelivery re-increments the tiers that did succeed. That
+			// bounded over-count on partial Redis failures predates the tiers
+			// (an INCRBY applied but reported as failed was always retried)
+			// and is the accepted tradeoff in the redesign doc (§2.4); the
+			// uc side stays exact because PFADD is idempotent.
+			for _, pair := range p.newEvaluationCountKeyPairs(e.FeatureId, vID, environmentId, e.Timestamp) {
+				aggregator.addEvent(pair.ecKey, pair.ucKey, userID)
+				if ecKeyToEventIDs[pair.ecKey] == nil {
+					ecKeyToEventIDs[pair.ecKey] = make(map[string]struct{})
+				}
+				ecKeyToEventIDs[pair.ecKey][id] = struct{}{}
 			}
-			ecKeyToEventIDs[ecKey][id] = struct{}{}
 
-			mKey := metricsKey{
+			eventMetricsKeys[id] = metricsKey{
 				environmentId: environmentId,
 				sourceId:      e.SourceId.String(),
 				featureId:     e.FeatureId,
 				variationId:   vID,
 			}
-			metricsAgg[mKey]++
-			if ecKeyToMetricsCounts[ecKey] == nil {
-				ecKeyToMetricsCounts[ecKey] = make(map[metricsKey]int64)
-			}
-			ecKeyToMetricsCounts[ecKey][mKey]++
 		}
 	}
 
 	eventCounts, userCounts := aggregator.flush()
-	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts)
+	failedECKeys, err := p.flushAggregatedCounts(eventCounts, userCounts, ecKeyToEventIDs)
+	// The marker is normally written at startup; keep retrying on the flush
+	// path until it is known to exist, so a Redis outage at startup cannot
+	// leave the cluster without a marker (readers would then stay on the
+	// hourly fallback and, once hourly retention is shortened, lose history
+	// that the daily tier still holds).
+	p.ensureDailyCutoverMarker()
 
 	if err != nil {
 		// Only mark events whose ecKey failed in Redis
@@ -273,23 +325,21 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 		}
 	}
 
-	failedMetricsCounts := make(map[metricsKey]int64)
-	for ecKey := range failedECKeys {
-		for mKey, count := range ecKeyToMetricsCounts[ecKey] {
-			failedMetricsCounts[mKey] += count
+	// Report metrics only for the events whose writes succeeded.
+	metricsAgg := make(map[metricsKey]int64)
+	for id, mKey := range eventMetricsKeys {
+		if _, failed := fails[id]; failed {
+			continue
 		}
+		metricsAgg[mKey]++
 	}
-
 	for key, count := range metricsAgg {
-		succeeded := count - failedMetricsCounts[key]
-		if succeeded > 0 {
-			evaluationEventCounter.WithLabelValues(
-				key.environmentId,
-				key.sourceId,
-				key.featureId,
-				key.variationId,
-			).Add(float64(succeeded))
-		}
+		evaluationEventCounter.WithLabelValues(
+			key.environmentId,
+			key.sourceId,
+			key.featureId,
+			key.variationId,
+		).Add(float64(count))
 	}
 
 	return fails
@@ -381,72 +431,82 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-// flushAggregatedCounts writes aggregated counts to Redis using individual calls
-// with PFADD-before-INCRBY ordering per key pair.
+// flushAggregatedCounts writes aggregated counts to Redis in two pipelined
+// phases, preserving PFADD-before-INCRBY ordering per key pair:
 //
-// Why not pipelines? While go-redis pipelines do expose per-command errors via
-// each Cmder's .Err() method after Exec(), individual calls were chosen as the
-// simpler correctness-first approach. Pipeline optimization (batching all PFADDs
-// then all INCRBYs with per-command error inspection) is planned as a follow-up.
+//  1. One pipeline with PFADD (+ EXPIRE for TTL tiers) for every uc key.
+//  2. One pipeline with INCRBY (+ EXPIRE for TTL tiers) for every ec key whose
+//     PFADD succeeded (or that has no uc side).
 //
 // Within each key pair:
 //   - PFADD runs first (idempotent). If it fails, INCRBY is skipped.
-//   - INCRBY runs only after PFADD succeeds. If INCRBY fails, PFADD is
+//   - INCRBY runs only after PFADD succeeded. If INCRBY fails, PFADD is
 //     already done (idempotent) so retry is safe.
 //
-// Across key pairs: all pairs are attempted even if some fail. The caller
-// receives the set of failed ecKeys so it can Nack only the affected events,
-// preventing over-counting of already-succeeded key pairs on retry.
+// Across tiers of the same event: an event is written to three key pairs
+// (minute, hour, day). If the PFADD of any of them fails the event is Nacked
+// and redelivered, so the events behind a failed uc key must not be counted
+// by the INCRBYs of their other tiers either, or redelivery would count them
+// twice there. ecKeyEvents (ec key, any tier → IDs of the events aggregated
+// into it) lets phase 2 subtract those events from every ec key they touch,
+// which keeps PFADD failures exact across tiers, as they were with a single
+// tier. Only an INCRBY failure can still over-count on redelivery (the
+// at-least-once semantics the hourly tier always had, see §2.4). When
+// ecKeyEvents is nil only the failed pair's own INCRBY is skipped.
+//
+// Across key pairs: all pairs are attempted even if some fail. Pipelines
+// expose per-command errors through each Cmder, so a failure on one key does
+// not hide the outcome of the others. The caller receives the set of failed
+// ecKeys so it can Nack only the affected events, preventing over-counting of
+// already-succeeded key pairs on retry.
+//
+// Each EXPIRE is queued right after the mutation of the same key. In a Redis
+// Cluster a pipeline is split per node and executed in order within a node,
+// and a key and its EXPIRE always hash to the same node, so the mutation and
+// its TTL reach Redis back-to-back instead of as two independent round trips.
+// Three tiers per event therefore cost two round trips per flush instead of
+// up to twelve synchronous calls.
 func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	eventCounts map[string]int64,
 	userCounts map[string]map[string]struct{},
+	ecKeyEvents map[string]map[string]struct{},
 ) (map[string]struct{}, error) {
 	if len(eventCounts) == 0 && len(userCounts) == 0 {
 		return nil, nil
 	}
 
-	// Match up ec and uc keys by extracting the common suffix
-	// Admin keys: "ec:timestamp:featureID:variationID" / "uc:timestamp:featureID:variationID"
-	// Non-admin keys: "envID:ec:timestamp:featureID:variationID" / "envID:uc:timestamp:featureID:variationID"
+	// Match up the ec and uc keys written for the same bucket.
+	// Admin keys: "<kind>:timestamp:featureID:variationID"
+	// Non-admin keys: "envID:<kind>:timestamp:featureID:variationID"
 	type keyPair struct {
 		ecKey    string
 		ecCount  int64
 		ucKey    string
 		ucUsers  []string
 		hasUsers bool
+		ttl      time.Duration
+		// pfadd holds the queued PFADD so its outcome can be inspected after
+		// the first pipeline ran.
+		pfadd       *goredis.IntCmd
+		pfaddFailed bool
+		// incrby holds the queued INCRBY for the second pipeline.
+		incrby *goredis.IntCmd
 	}
 
-	// Extract suffix to pair ec/uc keys
-	// Keys format: Admin: "ec:timestamp:feat:var", Non-admin: "envID:ec:timestamp:feat:var"
-	// We extract the common suffix after the kind to pair them correctly
 	keyPairs := make(map[string]*keyPair)
-
-	extractKey := func(key, kind string) string {
-		// Extract a pairing key that includes environment ID so different envs never pair together.
-		// Non-admin: "envID:kind:suffix" → "envID:suffix"
-		// Admin: "kind:suffix" → "suffix"
-		pattern := ":" + kind + ":"
-		idx := strings.Index(key, pattern)
-		if idx >= 0 {
-			envPrefix := key[:idx]
-			suffix := key[idx+len(pattern):]
-			return envPrefix + ":" + suffix
-		}
-		// Admin format: "kind:suffix"
-		return strings.TrimPrefix(key, kind+":")
-	}
 
 	// Build ec side of key pairs: extract pairing key and populate ecKey/ecCount.
 	// If uc was already processed, add to existing pair; otherwise create new pair.
 	for ecKey, count := range eventCounts {
-		suffix := extractKey(ecKey, eventCountKey)
-		if pair, exists := keyPairs[suffix]; exists {
+		kind, pairingKey := splitCountKey(ecKey)
+		if pair, exists := keyPairs[pairingKey]; exists {
 			pair.ecKey = ecKey
 			pair.ecCount = count
 		} else {
-			keyPairs[suffix] = &keyPair{
+			keyPairs[pairingKey] = &keyPair{
 				ecKey:   ecKey,
 				ecCount: count,
+				ttl:     countKindTTLs[kind],
 			}
 		}
 	}
@@ -454,60 +514,110 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	// Build uc side of key pairs: extract pairing key and populate ucKey/ucUsers.
 	// If ec was already processed, add to existing pair; otherwise create new pair.
 	for ucKey, userIDSet := range userCounts {
-		suffix := extractKey(ucKey, userCountKey)
+		kind, pairingKey := splitCountKey(ucKey)
 		userIDs := make([]string, 0, len(userIDSet))
 		for userID := range userIDSet {
 			userIDs = append(userIDs, userID)
 		}
 
-		if pair, exists := keyPairs[suffix]; exists {
+		if pair, exists := keyPairs[pairingKey]; exists {
 			pair.ucKey = ucKey
 			pair.ucUsers = userIDs
 			pair.hasUsers = len(userIDs) > 0
 		} else {
-			keyPairs[suffix] = &keyPair{
+			keyPairs[pairingKey] = &keyPair{
 				ucKey:    ucKey,
 				ucUsers:  userIDs,
 				hasUsers: len(userIDs) > 0,
+				ttl:      countKindTTLs[kind],
 			}
 		}
 	}
 
 	failedECKeys := make(map[string]struct{})
-
-	for _, pair := range keyPairs {
-		// Step 1: PFADD first (idempotent - safe to retry)
-		if pair.hasUsers && pair.ucKey != "" {
-			_, err := p.evaluationCountCacher.PFAdd(pair.ucKey, pair.ucUsers...)
-			if err != nil {
-				if !strings.Contains(err.Error(), "client is closed") {
-					p.logger.Error("Failed to add users to HyperLogLog",
-						zap.Error(err),
-						zap.String("ucKey", pair.ucKey),
-					)
-				}
-				if pair.ecKey != "" {
-					failedECKeys[pair.ecKey] = struct{}{}
-				}
-				continue
-			}
-		}
-
-		// Step 2: INCRBY only if PFADD succeeded
+	markFailed := func(pair *keyPair) {
 		if pair.ecKey != "" {
-			_, err := p.evaluationCountCacher.IncrementBy(pair.ecKey, pair.ecCount)
-			if err != nil {
-				if !strings.Contains(err.Error(), "client is closed") {
-					p.logger.Error("Failed to increment event count",
-						zap.Error(err),
-						zap.String("ecKey", pair.ecKey),
-						zap.Int64("count", pair.ecCount),
-					)
+			failedECKeys[pair.ecKey] = struct{}{}
+		}
+	}
+
+	// Phase 1: PFADD (+EXPIRE) for every uc key in one pipeline.
+	ucPipe := p.evaluationCountCacher.Pipeline(false)
+	ucExpires := make(map[string]*goredis.BoolCmd)
+	ucPairs := make([]*keyPair, 0, len(keyPairs))
+	for _, pair := range keyPairs {
+		if !pair.hasUsers || pair.ucKey == "" {
+			continue
+		}
+		pair.pfadd = ucPipe.PFAdd(pair.ucKey, pair.ucUsers...)
+		if pair.ttl > 0 {
+			ucExpires[pair.ucKey] = ucPipe.Expire(pair.ucKey, pair.ttl)
+		}
+		ucPairs = append(ucPairs, pair)
+	}
+	// IDs of the events behind a failed PFADD: they will be redelivered, so
+	// none of their tiers may count them in this flush.
+	failedEvents := make(map[string]struct{})
+	if len(ucPairs) > 0 {
+		cmds, err := ucPipe.Exec()
+		for _, pair := range ucPairs {
+			if cmdErr := pipelineCmdErr(pair.pfadd, cmds, err); cmdErr != nil {
+				p.logFlushError("Failed to add users to HyperLogLog", cmdErr,
+					zap.String("ucKey", pair.ucKey),
+				)
+				markFailed(pair)
+				// Skip INCRBY for this pair; PFADD is idempotent so the
+				// redelivered events can safely redo both commands.
+				pair.pfaddFailed = true
+				for id := range ecKeyEvents[pair.ecKey] {
+					failedEvents[id] = struct{}{}
 				}
-				failedECKeys[pair.ecKey] = struct{}{}
+			}
+		}
+		p.logExpireErrors(ucExpires, cmds, err)
+	}
+
+	// Phase 2: INCRBY (+EXPIRE) for every surviving ec key in one pipeline.
+	ecPipe := p.evaluationCountCacher.Pipeline(false)
+	ecExpires := make(map[string]*goredis.BoolCmd)
+	ecPairs := make([]*keyPair, 0, len(keyPairs))
+	for _, pair := range keyPairs {
+		if pair.ecKey == "" || pair.pfaddFailed {
+			continue
+		}
+		// Take the events whose other tier failed out of this key's count;
+		// they are counted here when redelivered.
+		if len(failedEvents) > 0 {
+			for id := range ecKeyEvents[pair.ecKey] {
+				if _, failed := failedEvents[id]; failed {
+					pair.ecCount--
+				}
+			}
+			if pair.ecCount <= 0 {
+				// Every event of this key is being redelivered; nothing to
+				// write and nothing to fail (they are Nacked via the key that
+				// failed).
 				continue
 			}
 		}
+		pair.incrby = ecPipe.IncrBy(pair.ecKey, pair.ecCount)
+		if pair.ttl > 0 {
+			ecExpires[pair.ecKey] = ecPipe.Expire(pair.ecKey, pair.ttl)
+		}
+		ecPairs = append(ecPairs, pair)
+	}
+	if len(ecPairs) > 0 {
+		cmds, err := ecPipe.Exec()
+		for _, pair := range ecPairs {
+			if cmdErr := pipelineCmdErr(pair.incrby, cmds, err); cmdErr != nil {
+				p.logFlushError("Failed to increment event count", cmdErr,
+					zap.String("ecKey", pair.ecKey),
+					zap.Int64("count", pair.ecCount),
+				)
+				markFailed(pair)
+			}
+		}
+		p.logExpireErrors(ecExpires, cmds, err)
 	}
 
 	if len(failedECKeys) > 0 {
@@ -525,17 +635,224 @@ func (p *evaluationCountEventPersister) flushAggregatedCounts(
 	return nil, nil
 }
 
-func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
-	kind, featureID, variationID, environmentId string,
+// pipelineCmdErr returns the error of one queued pipeline command. When Exec
+// could not run the pipeline at all (no per-command results), the Exec error
+// applies to every queued command.
+func pipelineCmdErr(cmd goredis.Cmder, cmds []goredis.Cmder, execErr error) error {
+	if len(cmds) == 0 && execErr != nil {
+		return execErr
+	}
+	if cmd == nil {
+		return nil
+	}
+	return cmd.Err()
+}
+
+// logExpireErrors reports failed EXPIREs without failing the key pair: the
+// counter write already succeeded, so Nacking the events would guarantee a
+// double count on redelivery just to retry a TTL, and every later write to
+// the same bucket queues the EXPIRE again anyway. Because EXPIRE is pipelined
+// right behind the mutation of the same key, a key can only end up without
+// expiry if Redis accepted the mutation and then rejected the EXPIRE of its
+// very last write, which is rare and bounded.
+func (p *evaluationCountEventPersister) logExpireErrors(
+	expires map[string]*goredis.BoolCmd,
+	cmds []goredis.Cmder,
+	execErr error,
+) {
+	for key, cmd := range expires {
+		if err := pipelineCmdErr(cmd, cmds, execErr); err != nil {
+			p.logFlushError("Failed to set TTL on evaluation count key", err,
+				zap.String("key", key),
+			)
+		}
+	}
+}
+
+// logFlushError logs a Redis write failure unless it is the expected
+// "client is closed" error raised during shutdown.
+func (p *evaluationCountEventPersister) logFlushError(msg string, err error, fields ...zap.Field) {
+	if strings.Contains(err.Error(), "client is closed") {
+		return
+	}
+	p.logger.Error(msg, append([]zap.Field{zap.Error(err)}, fields...)...)
+}
+
+// splitCountKey extracts the kind segment of an evaluation count key and
+// returns it together with a pairing key that is identical for the ec and uc
+// keys of the same tier and bucket (and only for those).
+//
+// Keys look like "<env>:<kind>:<bucketTs>:<featureId>:<variationId>", or
+// "<kind>:<bucketTs>:<featureId>:<variationId>" for the admin environment.
+// The kind is identified positionally and must be followed by the numeric
+// bucket timestamp, so feature or environment IDs that happen to equal a kind
+// name (e.g. a feature called "ec1m") are never mistaken for the kind.
+func splitCountKey(key string) (kind, pairingKey string) {
+	first, rest, ok := strings.Cut(key, ":")
+	if !ok {
+		return "", key
+	}
+	if kt, isKind := countKindTierOf(first); isKind && startsWithBucketTimestamp(rest) {
+		// Admin key: "<kind>:<bucketTs>:...".
+		return kt.kind, kt.tier + ":" + rest
+	}
+	second, rest, ok := strings.Cut(rest, ":")
+	if !ok {
+		return "", key
+	}
+	if kt, isKind := countKindTierOf(second); isKind && startsWithBucketTimestamp(rest) {
+		// Environment key: "<env>:<kind>:<bucketTs>:...".
+		return kt.kind, first + ":" + kt.tier + ":" + rest
+	}
+	// Unknown kind: pair by the full key (no TTL applies).
+	return "", key
+}
+
+func countKindTierOf(segment string) (countKindTier, bool) {
+	for _, kt := range countKindTiers {
+		if kt.kind == segment {
+			return kt, true
+		}
+	}
+	return countKindTier{}, false
+}
+
+// startsWithBucketTimestamp reports whether s begins with a non-empty
+// all-digit segment, i.e. the bucket timestamp that always follows the kind.
+func startsWithBucketTimestamp(s string) bool {
+	ts, _, _ := strings.Cut(s, ":")
+	if ts == "" {
+		return false
+	}
+	for _, r := range ts {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// countKeyPair is the ec/uc key pair of one tier plus the TTL to apply after
+// each write. A zero TTL means no expiry is set (the hourly tier is cleaned
+// up by the redis-counter-deleter batch job instead).
+type countKeyPair struct {
+	ecKey string
+	ucKey string
+	ttl   time.Duration
+}
+
+// newEvaluationCountKeyPairs builds the ec/uc key pairs of all three tiers
+// (minute, hour, day) written for one event. All buckets are truncated in
+// UTC; see cachev3.EvaluationDailyCutoverKey for why the daily boundary must
+// stay fixed forever.
+func (p *evaluationCountEventPersister) newEvaluationCountKeyPairs(
+	featureID, variationID, environmentId string,
 	timestamp int64,
+) []countKeyPair {
+	minuteTs := truncateUnixUTC(timestamp, time.Minute)
+	hourTs := truncateUnixUTC(timestamp, time.Hour)
+	dayTs := truncateUnixUTC(timestamp, 24*time.Hour)
+	return []countKeyPair{
+		{
+			ecKey: newEvaluationCountKey(cachev3.EventCountMinuteKind, featureID, variationID, environmentId, minuteTs),
+			ucKey: newEvaluationCountKey(cachev3.UserCountMinuteKind, featureID, variationID, environmentId, minuteTs),
+			ttl:   cachev3.MinuteCountTTL,
+		},
+		{
+			ecKey: newEvaluationCountKey(cachev3.EventCountHourKind, featureID, variationID, environmentId, hourTs),
+			ucKey: newEvaluationCountKey(cachev3.UserCountHourKind, featureID, variationID, environmentId, hourTs),
+			ttl:   0,
+		},
+		{
+			ecKey: newEvaluationCountKey(cachev3.EventCountDailyKind, featureID, variationID, environmentId, dayTs),
+			ucKey: newEvaluationCountKey(cachev3.UserCountDailyKind, featureID, variationID, environmentId, dayTs),
+			ttl:   cachev3.DailyCountTTL,
+		},
+	}
+}
+
+func newEvaluationCountKey(
+	kind, featureID, variationID, environmentId string,
+	bucketTs int64,
 ) string {
-	t := time.Unix(timestamp, 0)
-	date := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, time.UTC)
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
+		fmt.Sprintf("%d:%s:%s", bucketTs, featureID, variationID),
 		environmentId,
 	)
+}
+
+// truncateUnixUTC truncates a unix timestamp to the given UTC bucket size.
+// time.Time.Truncate rounds down on the absolute timeline (a whole number of
+// days since the zero time, which is a UTC midnight), so 24*time.Hour yields
+// UTC midnights regardless of the host timezone — unlike deriving wall-clock
+// fields from time.Unix, which depends on the pod's TZ.
+func truncateUnixUTC(ts int64, bucket time.Duration) int64 {
+	return time.Unix(ts, 0).UTC().Truncate(bucket).Unix()
+}
+
+// dailyCutoverRolloutDays is how many UTC midnights after the first new
+// persister starts the daily tier is declared complete. The deploy day itself
+// is incomplete (events before the deploy were never dual-written), and the
+// NEXT midnight is not safe either: during a rolling update the old,
+// hourly-only pods keep consuming events for a while, so a pod starting just
+// before midnight would declare a day complete that old pods are still
+// writing hourly-only. Skipping one more midnight gives the rollout a full day
+// to drain; the extra day is simply served from the (correct) hourly fallback
+// and materialized by the backfill job.
+const dailyCutoverRolloutDays = 2
+
+// writeDailyCutoverMarker records, once per cluster (SETNX), the first UTC
+// midnight from which the daily tier is complete.
+//
+// The cutover value is fixed on the first attempt (relative to this process'
+// start, which is when its daily writes began) and reused by retries, so a
+// delayed SETNX never pushes the cutover later than necessary. A failure is
+// non-fatal: while the marker is missing readers serve every day from hourly
+// keys (the pre-redesign behavior), and ensureDailyCutoverMarker retries on
+// the flush path until the marker is known to exist.
+func (p *evaluationCountEventPersister) writeDailyCutoverMarker() {
+	p.dailyCutoverMutex.Lock()
+	defer p.dailyCutoverMutex.Unlock()
+	if p.dailyCutoverExists {
+		return
+	}
+	if p.dailyCutover == 0 {
+		p.dailyCutover = time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, dailyCutoverRolloutDays).Unix()
+	}
+	set, err := p.evaluationCountCacher.PutIfAbsent(
+		cachev3.EvaluationDailyCutoverKey,
+		strconv.FormatInt(p.dailyCutover, 10),
+		0, // the marker must never expire
+	)
+	if err != nil {
+		p.logger.Error("Failed to write the daily cutover marker; will retry on the next flush",
+			zap.Error(err),
+			zap.String("key", cachev3.EvaluationDailyCutoverKey),
+		)
+		return
+	}
+	// Either we set it or another replica/deployment already had: the marker
+	// exists, no further attempts are needed.
+	p.dailyCutoverExists = true
+	if set {
+		p.logger.Info("Daily cutover marker written",
+			zap.String("key", cachev3.EvaluationDailyCutoverKey),
+			zap.Int64("cutoverTimestamp", p.dailyCutover),
+		)
+	}
+}
+
+// ensureDailyCutoverMarker retries the marker SETNX until it is known to
+// exist. It is a no-op (one mutex check) once it has succeeded.
+func (p *evaluationCountEventPersister) ensureDailyCutoverMarker() {
+	p.dailyCutoverMutex.Lock()
+	exists := p.dailyCutoverExists
+	p.dailyCutoverMutex.Unlock()
+	if exists {
+		return
+	}
+	p.writeDailyCutoverMarker()
 }
 
 // bufferDAU buffers DAU entries in memory grouped by date and (envID, sourceID).

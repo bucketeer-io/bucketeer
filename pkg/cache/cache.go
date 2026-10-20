@@ -48,6 +48,7 @@ type MultiGetDeleteCountCache interface {
 	Expirer
 	PFGetter
 	PFMerger
+	AbsentPutter
 }
 
 type Getter interface {
@@ -67,6 +68,14 @@ type MultiGetter interface {
 
 type Putter interface {
 	Put(key interface{}, value interface{}, expiration time.Duration) error
+}
+
+// AbsentPutter writes a value only when the key does not exist yet.
+type AbsentPutter interface {
+	// PutIfAbsent stores value under key unless the key already exists
+	// (Redis SETNX semantics). It returns true when the value was written.
+	// A zero expiration means the key never expires.
+	PutIfAbsent(key string, value interface{}, expiration time.Duration) (bool, error)
 }
 
 // ConditionalPutter writes a value guarded by a monotonic generation so that
