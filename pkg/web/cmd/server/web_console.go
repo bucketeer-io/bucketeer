@@ -15,6 +15,7 @@
 package server
 
 import (
+	"errors"
 	"io/fs"
 	"net/http"
 	"os"
@@ -31,24 +32,38 @@ type spaFileSystem struct {
 }
 
 // Open method for spaFileSystem
-func (fs *spaFileSystem) Open(name string) (http.File, error) {
+func (sfs *spaFileSystem) Open(name string) (http.File, error) {
 	// First try with original path
-	f, err := fs.root.Open(name)
+	f, err := sfs.root.Open(name)
+	if errors.Is(err, fs.ErrInvalid) {
+		// embed.FS rejects invalid UTF-8 paths with ErrInvalid; http.FileServer maps
+		// that to 500. Treat as missing so clients get 404 instead.
+		return nil, fs.ErrNotExist
+	}
+	if err == nil {
+		return f, nil
+	}
 	if !os.IsNotExist(err) {
-		return f, err
+		return nil, err
 	}
 
 	// If file not found and we have a prefix, try stripping it
-	if fs.prefix != "" && strings.HasPrefix(name, fs.prefix) {
-		strippedName := strings.TrimPrefix(name, fs.prefix)
-		f, err = fs.root.Open(strippedName)
+	if sfs.prefix != "" && strings.HasPrefix(name, sfs.prefix) {
+		strippedName := strings.TrimPrefix(name, sfs.prefix)
+		f, err = sfs.root.Open(strippedName)
+		if errors.Is(err, fs.ErrInvalid) {
+			return nil, fs.ErrNotExist
+		}
+		if err == nil {
+			return f, nil
+		}
 		if !os.IsNotExist(err) {
-			return f, err
+			return nil, err
 		}
 	}
 
 	// If still not found, return index.html
-	return fs.root.Open("index.html")
+	return sfs.root.Open("index.html")
 }
 
 // fontCacheHandler adds cache headers for font files
