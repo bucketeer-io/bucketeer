@@ -181,8 +181,9 @@ func TestBackfillerMaterializesDailyKeys(t *testing.T) {
 // End to end through Run with several environments sharing one Redis: the
 // single cluster-wide scan must route every (day, suffix) group to its own
 // environment's daily key (never mixing environments that share a feature
-// ID), handle the prefix-less admin environment, and leave alone the keys of
-// an environment Redis knows but the environment service does not list.
+// ID), handle the prefix-less admin environment even though the environment
+// service never lists it, and leave alone the keys of any other environment
+// Redis knows but the environment service does not list.
 func TestBackfillerRunMaterializesEveryEnvironmentFromOneScan(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -201,8 +202,9 @@ func TestBackfillerRunMaterializesEveryEnvironmentFromOneScan(t *testing.T) {
 	envClient := evmock.NewMockClient(mockController)
 	envClient.EXPECT().ListEnvironmentsV2(gomock.Any(), gomock.Any()).Return(
 		&evproto.ListEnvironmentsV2Response{
-			// "" is the admin environment; "ghost" exists only in Redis.
-			Environments: []*evproto.EnvironmentV2{{Id: "dev"}, {Id: "prod"}, {Id: ""}},
+			// As in production, the admin environment ("" / prefix-less
+			// keys) is NOT listed; "ghost" exists only in Redis.
+			Environments: []*evproto.EnvironmentV2{{Id: "dev"}, {Id: "prod"}},
 		}, nil).AnyTimes()
 	backfiller := &evaluationDailyCountBackfiller{
 		envClient: envClient,

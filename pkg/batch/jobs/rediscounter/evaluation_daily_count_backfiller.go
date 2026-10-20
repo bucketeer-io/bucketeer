@@ -174,6 +174,18 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 	if err != nil {
 		return err
 	}
+	// Environments whose daily keys are materialized: every environment the
+	// environment service knows, plus the admin environment. Its keys have
+	// no "<env>:" prefix (MakeKey with an empty environment ID) and the
+	// environment API never lists it, yet the cutover marker is global, so
+	// skipping it would leave any admin hourly history unreadable through
+	// the daily path once the marker moves back. Hourly keys of any other
+	// environment that only exists in Redis are left alone.
+	environmentIDs := make([]string, 0, len(envs)+1)
+	for _, env := range envs {
+		environmentIDs = append(environmentIDs, env.Id)
+	}
+	environmentIDs = append(environmentIDs, "")
 	backfilled := 0
 	for _, pair := range countKindPairs {
 		if err := ctx.Err(); err != nil {
@@ -187,11 +199,11 @@ func (b *evaluationDailyCountBackfiller) Run(ctx context.Context) (lastErr error
 		if err != nil {
 			return err
 		}
-		for _, env := range envs {
+		for _, environmentID := range environmentIDs {
 			if err := ctx.Err(); err != nil {
 				return err
 			}
-			n, err := b.backfillEnvironment(ctx, env.Id, pair, daysByEnv[env.Id])
+			n, err := b.backfillEnvironment(ctx, environmentID, pair, daysByEnv[environmentID])
 			if err != nil {
 				return err
 			}
