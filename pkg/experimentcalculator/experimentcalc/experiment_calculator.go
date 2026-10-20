@@ -196,7 +196,21 @@ func (e ExperimentCalculator) createExperimentResult(
 				)
 				return nil, errFailedToGetGoalEventCount
 			}
-			gr := e.calcGoalResult(ctx, evalVc, goalVc, experiment)
+			gr, err := e.calcGoalResult(ctx, evalVc, goalVc, experiment)
+			if err != nil {
+				// Keep the previous result instead of storing empty distributions.
+				e.logger.Error("ExperimentCalculator skipped updating the experiment result because the calculation failed",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.String("namespace", envNamespace),
+						zap.String("featureId", experiment.FeatureId),
+						zap.String("experimentId", experiment.Id),
+						zap.String("goalId", goalID),
+						zap.Int64("endAt", timestamp),
+						zap.Error(err),
+					)...,
+				)
+				return nil, err
+			}
 			gr.GoalId = goalID
 			e.appendVariationResult(ctx, timestamp, goalResult, gr.VariationResults)
 		}
@@ -367,7 +381,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	evalVariationCounts,
 	goalVariationCounts map[string]*eventcounter.VariationCount,
 	experiment *experiment.Experiment,
-) *eventcounter.GoalResult {
+) (*eventcounter.GoalResult, error) {
 	goalResult := &eventcounter.GoalResult{}
 	length := len(goalVariationCounts)
 	vids := make([]string, 0, length)
@@ -385,7 +399,7 @@ func (e ExperimentCalculator) calcGoalResult(
 					zap.Any("experiment", experiment),
 				)...,
 			)
-			return goalResult
+			return goalResult, nil
 		}
 		vids = append(vids, vid)
 		evalVariationCount := evalVariationCounts[vid]
@@ -418,7 +432,7 @@ func (e ExperimentCalculator) calcGoalResult(
 					zap.Any("experiment", experiment),
 				)...,
 			)
-			return goalResult
+			return goalResult, nil
 		}
 	}
 
@@ -434,7 +448,7 @@ func (e ExperimentCalculator) calcGoalResult(
 				zap.Int64s("eval_user_counts", evalUc),
 			)...,
 		)
-		return goalResult
+		return nil, sampleErr
 	}
 	for vid, vr := range cvrResult {
 		vrs[vid].CvrProb = copyDistributionSummary(vr.CvrProb)
@@ -452,7 +466,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		if goalUc[i] == 0 || valueMeans[i] == 0 || valueVars[i] == 0 {
 			calculationExceptionCounter.WithLabelValues(valuesAreZero).Inc()
 			// skip it if the value is zero
-			return goalResult
+			return goalResult, nil
 		}
 	}
 	// nil src uses the global RNG; tests inject a seeded source for determinism.
@@ -463,7 +477,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		vrs[vid].GoalValueSumPerUserProbBeatBaseline = copyDistributionSummary(vr.GoalValueSumPerUserProbBeatBaseline)
 	}
 	calculationCounter.WithLabelValues(calculationSuccess).Inc()
-	return goalResult
+	return goalResult, nil
 }
 
 func (e ExperimentCalculator) appendVariationResult(
