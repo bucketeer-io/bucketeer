@@ -82,7 +82,7 @@ func isHexDigit(c byte) bool {
 
 func hasDisallowedControlChars(path string) bool {
 	for _, r := range path {
-		if r < 0x20 || r == 0x7f {
+		if r < 0x20 || (r >= 0x7f && r <= 0x9f) {
 			return true
 		}
 	}

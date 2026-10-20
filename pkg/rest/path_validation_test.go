@@ -26,12 +26,6 @@ import (
 func TestRejectInvalidRequestPathMiddleware(t *testing.T) {
 	t.Parallel()
 
-	nextCalled := false
-	handler := rejectInvalidRequestPathMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		nextCalled = true
-		w.WriteHeader(http.StatusOK)
-	}))
-
 	patterns := []struct {
 		desc       string
 		target     string
@@ -66,8 +60,11 @@ func TestRejectInvalidRequestPathMiddleware(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
-			nextCalled = false
+			nextCalled := false
+			handler := rejectInvalidRequestPathMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				nextCalled = true
+				w.WriteHeader(http.StatusOK)
+			}))
 			req := httptest.NewRequest(http.MethodGet, p.target, nil)
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
@@ -91,6 +88,15 @@ func TestInvalidRequestPathStatus_incompletePercentEncoding(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	req.RequestURI = "/foo%2"
+	status, reject := invalidRequestPathStatus(req)
+	require.True(t, reject)
+	assert.Equal(t, http.StatusBadRequest, status)
+}
+
+func TestInvalidRequestPathStatus_utf8C1ControlChar(t *testing.T) {
+	t.Parallel()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo%C2%85", nil)
 	status, reject := invalidRequestPathStatus(req)
 	require.True(t, reject)
 	assert.Equal(t, http.StatusBadRequest, status)
