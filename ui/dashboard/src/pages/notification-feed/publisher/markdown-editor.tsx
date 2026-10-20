@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import MDEditor, { commands, ICommand } from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
+import { useTheme } from 'hooks/use-theme';
 import { useTranslation } from 'i18n';
 import { TFunction } from 'i18next';
 import { AtSign } from 'lucide-react';
@@ -54,6 +55,7 @@ const MarkdownEditor = ({
   placeholder
 }: MarkdownEditorProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>('edit');
 
   const tabs: { key: Mode; label: string }[] = [
@@ -63,10 +65,10 @@ const MarkdownEditor = ({
 
   return (
     <div
-      data-color-mode="light"
-      className="overflow-hidden rounded-lg border border-gray-300"
+      data-color-mode={theme}
+      className="overflow-hidden rounded-lg border border-gray-300 dark:border-dark-black-600"
     >
-      <div className="flex items-center gap-1 border-b border-gray-200 px-2 pt-2">
+      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-dark-black-700 px-2 pt-2">
         {tabs.map(tab => (
           <Button
             key={tab.key}
@@ -77,7 +79,7 @@ const MarkdownEditor = ({
               'h-auto rounded-t-md border-b-2 px-3 py-1.5 typo-para-medium transition-colors',
               mode === tab.key
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-gray-500 dark:text-dark-gray-200 hover:text-gray-700 dark:hover:text-dark-gray-400'
             )}
           >
             {tab.label}

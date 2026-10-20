@@ -27,14 +27,14 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
           <div className="flex w-full flex-col gap-1">
             <span
               className={cn(
-                'truncate typo-para-medium font-medium text-gray-900',
+                'truncate typo-para-medium font-medium text-gray-900 dark:text-dark-gray-400',
                 onDelete && 'pr-8'
               )}
             >
               {draft.title}
             </span>
             {draft.content && (
-              <p className="line-clamp-2 typo-para-small text-gray-500">
+              <p className="line-clamp-2 typo-para-small text-gray-500 dark:text-dark-gray-200">
                 {markdownToText(draft.content)}
               </p>
             )}
@@ -42,10 +42,10 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
         }
         footer={
           <div className="flex w-full items-center justify-between">
-            <span className="typo-para-small text-gray-500">
+            <span className="typo-para-small text-gray-500 dark:text-dark-gray-200">
               {draft.createdBy.split('@')[0]}
             </span>
-            <span className="typo-para-tiny text-gray-500">
+            <span className="typo-para-tiny text-gray-500 dark:text-dark-gray-200">
               {formatDateTime(draft.updatedAt)}
             </span>
           </div>
@@ -57,7 +57,7 @@ const DraftCard = ({ draft, active, onClick, onDelete }: DraftCardProps) => {
         <button
           type="button"
           aria-label={t('delete')}
-          className="absolute right-4 top-4 shrink-0 text-gray-500 hover:text-accent-red-500"
+          className="absolute right-4 top-4 shrink-0 text-gray-500 dark:text-dark-gray-200 hover:text-accent-red-500 dark:hover:text-accent-red-400"
           onClick={e => {
             e.stopPropagation();
             onDelete();

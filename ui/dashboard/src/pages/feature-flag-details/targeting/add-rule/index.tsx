@@ -77,9 +77,6 @@ const AddRule = ({
 
   return (
     <>
-      {/* Spine plus — its own dropdown so the menu opens *below the plus
-          circle*, not below the centred "+ Add Rule" button. Absolutely
-          positioned to align with the EvaluationFlow spine. */}
       <div
         className="absolute top-1/2 -translate-y-1/2 z-10"
         style={{ left: `${ADD_NODE_LEFT_OFFSET_PX}px` }}
@@ -89,9 +86,6 @@ const AddRule = ({
           isTruncate={false}
           alignContent="start"
           wrapTriggerStyle="!w-fit"
-          // `[&>div]:overflow-visible` lets the spine plus's `ring-4 ring-white`
-          // halo (which masks the spine line behind it) extend beyond the
-          // dropdown trigger's default overflow-hidden.
           className="!w-fit !p-0 !border-0 !shadow-none !bg-transparent [&>div]:overflow-visible"
           trigger={
             <DisabledButtonTooltip
@@ -100,10 +94,10 @@ const AddRule = ({
               trigger={
                 <span
                   className={cn(
-                    'flex size-5 items-center justify-center rounded-full bg-white border border-dashed ring-4 ring-white transition-colors',
+                    'flex size-5 items-center justify-center rounded-full bg-white dark:bg-dark-black-800 border border-dashed ring-4 ring-white dark:ring-dark-black-800 transition-colors',
                     editable
-                      ? 'border-gray-400 text-gray-500 cursor-pointer hover:border-primary-500 hover:text-primary-500'
-                      : 'border-gray-300 text-gray-400 cursor-not-allowed opacity-60'
+                      ? 'border-gray-400 dark:border-dark-black-700 text-gray-500 dark:text-dark-gray-200 cursor-pointer hover:border-primary-500 dark:hover:border-dark-purple-300 hover:text-primary-500 dark:hover:text-dark-purple-700'
+                      : 'border-gray-300 dark:border-dark-black-700 text-gray-400 dark:text-dark-gray-200 cursor-not-allowed opacity-60'
                   )}
                 >
                   <span className="sr-only">
@@ -121,13 +115,13 @@ const AddRule = ({
       <Dropdown
         {...sharedDropdownProps}
         alignContent="center"
-        className="w-full [&>div]:flex-center border-dashed !shadow-none"
+        className="w-full [&>div]:flex-center border-dashed !shadow-none dark:border-dark-black-700"
         trigger={
           <DisabledButtonTooltip
             align="center"
             hidden={editable}
             trigger={
-              <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500">
+              <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500  dark:!text-dark-purple-400">
                 <Icon icon={IconPlus} size={'md'} />
                 {t('table:feature-flags.add-rule')}
               </div>

@@ -128,12 +128,12 @@ const DashboardPage = () => {
           onClose={onCloseSlider}
         >
           <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
-            <div className="typo-para-big text-gray-700 px-20 text-center">
+            <div className="typo-para-big text-gray-700 dark:text-dark-gray-300 px-20 text-center">
               {`This experiment has the following goals connected to it`}
             </div>
           </div>
 
-          <div className="absolute bottom-0 bg-gray-50 w-full rounded-b-lg">
+          <div className="absolute bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={<Button variant="secondary">{`Cancel`}</Button>}
               secondaryButton={<Button>{`Create Goal`}</Button>}
@@ -148,18 +148,18 @@ const DashboardPage = () => {
         >
           <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
             <IconGoal />
-            <div className="typo-para-big text-gray-700 px-20 text-center">
+            <div className="typo-para-big text-gray-700 dark:text-dark-gray-300 px-20 text-center">
               {`This experiment has the following goals connected to it:`}
             </div>
-            <div className="w-full rounded px-4 py-3 bg-gray-100">
+            <div className="w-full rounded px-4 py-3 bg-gray-100 dark:bg-dark-black-700">
               <div className="typo-para-medium">
-                <span className="text-gray-700 mr-2">{`1.`}</span>
+                <span className="text-gray-700 dark:text-dark-gray-300 mr-2">{`1.`}</span>
                 <span className="text-primary-500 underline">
                   {`This is a big name for the first goal name`}
                 </span>
               </div>
               <div className="typo-para-medium mt-3">
-                <span className="text-gray-700 mr-2">{`2.`}</span>
+                <span className="text-gray-700 dark:text-dark-gray-300 mr-2">{`2.`}</span>
                 <span className="text-primary-500 underline">
                   {`This is a big name for the second goal name`}
                 </span>

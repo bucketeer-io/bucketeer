@@ -86,7 +86,7 @@ const DefaultRule = ({
   return (
     <Card>
       {waitingRunningRollouts.length > 0 && (
-        <div className="flex items-center gap-x-3 p-4 rounded bg-accent-blue-50 border-l-4 border-accent-blue-500 text-accent-blue-500 typo-para-medium">
+        <div className="flex items-center gap-x-3 p-4 rounded bg-accent-blue-50 dark:bg-accent-blue-900/30 border-l-4 border-accent-blue-500 text-accent-blue-500 typo-para-medium">
           <Icon icon={IconInfoFilled} color="accent-blue-500" size="sm" />
           <div className="flex items-center [&>a]:ml-1">
             <Trans
@@ -106,7 +106,7 @@ const DefaultRule = ({
       <div className="flex justify-between">
         <div className="flex flex-col w-full gap-y-3">
           <div className="flex items-center gap-x-2">
-            <p className="typo-para-medium text-gray-700">
+            <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
               {t('targeting.default-rule')}
             </p>
             <Tooltip
@@ -121,13 +121,13 @@ const DefaultRule = ({
               className="max-w-[400px]"
             />
           </div>
-          <p className="typo-para-small text-gray-500">
+          <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
             {t('targeting.default-rule-desc')}
           </p>
         </div>
         {editableDefaultRule && (
           <div
-            className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+            className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 dark:border-dark-black-700 hover:border-gray-800 dark:hover:border-dark-purple-300"
             onClick={() => {
               handleDiscardChanges(DiscardChangesType.DEFAULT);
             }}
@@ -135,7 +135,7 @@ const DefaultRule = ({
             <Icon
               icon={IconUndoOutlined}
               size={'sm'}
-              className="flex-center text-gray-500 group-hover:text-gray-700"
+              className="flex-center text-gray-500 dark:text-dark-gray-200 group-hover:text-gray-700 dark:group-hover:text-dark-gray-400"
             />
           </div>
         )}

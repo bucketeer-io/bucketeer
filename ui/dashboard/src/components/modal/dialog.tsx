@@ -49,7 +49,7 @@ const DialogModal = ({
         >
           <Dialog.Content
             className={cn(
-              'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
+              'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50 dark:bg-dark-black-800',
               className
             )}
             onEscapeKeyDown={
@@ -65,7 +65,9 @@ const DialogModal = ({
               })}
             >
               <div
-                className={cn('flex items-center justify-between px-4 py-3.5')}
+                className={cn(
+                  'flex items-center justify-between px-4 py-3.5 dark:text-dark-gray-400'
+                )}
               >
                 {title && (
                   <Dialog.Title className="typo-head-bold-huge">

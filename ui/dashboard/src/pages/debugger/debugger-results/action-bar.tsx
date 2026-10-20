@@ -42,7 +42,7 @@ const ActionBar = ({
 
   return (
     <div className="flex items-center w-full justify-between gap-x-4">
-      <p className="typo-head-bold-small text-gray-800 whitespace-nowrap">
+      <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400 whitespace-nowrap">
         {t('debugger-results')}
       </p>
       <div className="flex items-center gap-x-4">

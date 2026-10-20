@@ -97,7 +97,7 @@ const UploadFiles = ({
     <div className={cn('flex flex-col w-full gap-y-2 h-fit', className)}>
       <div
         className={cn(
-          'flex h-fit w-full border border-dashed border-gray-400 rounded-lg bg-gray-100',
+          'flex h-fit w-full border border-dashed border-gray-400 dark:border-dark-black-700 rounded-lg bg-gray-100 dark:bg-dark-black-700',
           uploadClassName
         )}
       >
@@ -110,7 +110,7 @@ const UploadFiles = ({
           className="hidden"
         />
         <div
-          className="flex-center flex-col size-full gap-y-4 cursor-pointer py-4"
+          className="flex-center flex-col size-full gap-y-4 cursor-pointer py-4 dark:bg-dark-black-900"
           onDrop={handleDrop}
           onDragOver={preventAndStopFnc}
           onDragEnter={preventAndStopFnc}
@@ -119,7 +119,7 @@ const UploadFiles = ({
         >
           <Icon icon={IconUpload} color="primary-500" />
           {children || (
-            <div className="flex-center flex-col gap-y-2 typo-para-small text-gray-600">
+            <div className="flex-center flex-col gap-y-2 typo-para-small text-gray-600 dark:text-dark-gray-200">
               <div>
                 <Trans
                   i18nKey="form:upload-files"
@@ -142,12 +142,14 @@ const UploadFiles = ({
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex items-center w-full gap-x-4 p-1 border-2 border-dashed border-gray-300 rounded-md"
+              className="flex items-center w-full gap-x-4 p-1 border-2 border-dashed border-gray-300 dark:border-dark-black-700 rounded-md dark:bg-dark-black-800"
             >
               <Icon icon={IconFolder} size={'xl'} color="gray-500" />
               <div className="flex flex-col flex-1 gap-y-1 truncate">
-                <p className="typo-para-small text-gray-800">{file.name}</p>
-                <p className="typo-para-tiny text-gray-600">
+                <p className="typo-para-small text-gray-800 dark:text-dark-gray-400">
+                  {file.name}
+                </p>
+                <p className="typo-para-tiny text-gray-600 dark:text-dark-gray-200">
                   {formatFileSize(file.size)}
                 </p>
               </div>

@@ -78,17 +78,17 @@ const ChatPopover = memo(
     const isEmpty = messages.length === 0;
 
     return (
-      <div className="flex h-[500px] w-[380px] flex-col rounded-xl border border-gray-200 bg-white shadow-lg">
+      <div className="flex h-[500px] w-[380px] flex-col rounded-xl border border-gray-200 dark:border-dark-black-700 bg-white dark:bg-dark-black-800 shadow-lg dark:shadow-dark-card">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h3 className="typo-para-medium font-semibold text-gray-800">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-dark-black-700 px-4 py-3">
+          <h3 className="typo-para-medium font-semibold text-gray-800 dark:text-dark-gray-400">
             {t('ai-chat:title')}
           </h3>
           <div className="flex items-center gap-2">
             {messages.length > 0 && (
               <button
                 type="button"
-                className="rounded typo-para-tiny text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                className="rounded typo-para-tiny text-gray-400 dark:text-dark-gray-200 hover:text-gray-600 dark:hover:text-dark-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-300"
                 onClick={onClear}
               >
                 {t('ai-chat:clear')}
@@ -96,7 +96,7 @@ const ChatPopover = memo(
             )}
             <button
               type="button"
-              className="rounded text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-300"
+              className="rounded text-gray-400 dark:text-dark-gray-200 hover:text-gray-600 dark:hover:text-dark-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-300"
               onClick={onClose}
               aria-label={t('ai-chat:close')}
             >
@@ -107,7 +107,7 @@ const ChatPopover = memo(
 
         {/* Flag Selector */}
         {showFlagSelector && onSelectFlag && (
-          <div className="border-b border-gray-200 px-4 py-2">
+          <div className="border-b border-gray-200 dark:border-dark-black-700 px-4 py-2">
             <FlagSelector
               selectedFlagId={selectedFlagId}
               onSelectFlag={onSelectFlag}
@@ -119,12 +119,12 @@ const ChatPopover = memo(
         <ScrollArea className="flex-1 px-4 py-3">
           {isEmpty ? (
             <div className="flex flex-col gap-4">
-              <p className="typo-para-small text-gray-500">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
                 {t('ai-chat:welcome')}
               </p>
               {suggestions.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="typo-para-tiny font-medium text-gray-600">
+                  <p className="typo-para-tiny font-medium text-gray-600 dark:text-dark-gray-200">
                     {t('ai-chat:suggestions-title')}
                   </p>
                   {suggestions.map(s => (
@@ -152,7 +152,7 @@ const ChatPopover = memo(
                     'max-w-[90%] rounded-lg px-3 py-2',
                     msg.role === 'user'
                       ? 'ml-auto bg-primary-500 text-white'
-                      : 'mr-auto bg-gray-100 text-gray-700'
+                      : 'mr-auto bg-gray-100 dark:bg-dark-black-700 text-gray-700 dark:text-dark-gray-300'
                   )}
                 >
                   {msg.role === 'user' ? (
@@ -160,7 +160,7 @@ const ChatPopover = memo(
                       {msg.content}
                     </p>
                   ) : msg.content ? (
-                    <div className="typo-para-small prose-sm prose-gray max-w-none [&_a]:text-primary-500 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4 [&_p]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:my-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:my-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:my-1 [&_code]:rounded [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:text-xs [&_pre]:rounded [&_pre]:bg-gray-200 [&_pre]:p-2 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2 [&_blockquote]:italic">
+                    <div className="typo-para-small prose-sm prose-gray max-w-none [&_a]:text-primary-500 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4 [&_p]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:my-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:my-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:my-1 [&_code]:rounded [&_code]:bg-gray-200 dark:[&_code]:bg-dark-black-900 [&_code]:px-1 [&_code]:text-xs [&_pre]:rounded [&_pre]:bg-gray-200 dark:[&_pre]:bg-dark-black-900 [&_pre]:p-2 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 dark:[&_blockquote]:border-dark-black-700 [&_blockquote]:pl-2 [&_blockquote]:italic">
                       <Markdown>{msg.content}</Markdown>
                     </div>
                   ) : (
@@ -180,7 +180,7 @@ const ChatPopover = memo(
           )}
           {errorKey && (
             <div
-              className="mt-2 rounded-lg bg-accent-red-50 px-3 py-2"
+              className="mt-2 rounded-lg bg-accent-red-50 dark:bg-accent-red-900/30 px-3 py-2"
               role="alert"
             >
               <p className="typo-para-tiny text-accent-red-500">
@@ -198,7 +198,7 @@ const ChatPopover = memo(
         {/* Input */}
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 border-t border-gray-200 px-4 py-3"
+          className="flex items-center gap-2 border-t border-gray-200 dark:border-dark-black-700 px-4 py-3"
         >
           <input
             type="text"
@@ -210,10 +210,10 @@ const ChatPopover = memo(
             disabled={isStreaming}
             maxLength={MAX_INPUT_LENGTH}
             className={cn(
-              'flex-1 rounded-lg border border-gray-200 px-3 py-2',
-              'typo-para-small text-gray-700 placeholder:text-gray-400',
+              'flex-1 rounded-lg border border-gray-200 dark:border-dark-black-700 dark:bg-dark-black-900 px-3 py-2',
+              'typo-para-small text-gray-700 dark:text-dark-gray-300 placeholder:text-gray-400 dark:placeholder:text-dark-gray-200',
               'focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300',
-              'disabled:cursor-not-allowed disabled:bg-gray-50'
+              'disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-dark-black-700'
             )}
           />
           <Button

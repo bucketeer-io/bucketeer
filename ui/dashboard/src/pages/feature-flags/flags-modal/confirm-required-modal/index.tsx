@@ -177,7 +177,7 @@ const ConfirmationRequiredModal = ({
       onClose={onClose}
     >
       <div className="flex flex-col w-full gap-y-5 items-start pt-5">
-        <div className="typo-para-small text-gray-600 w-full px-5">
+        <div className="typo-para-small text-gray-600 dark:text-dark-gray-200 w-full px-5">
           {t('table:feature-flags.confirm-required-desc')}
         </div>
         <FormProvider {...form}>
@@ -222,7 +222,7 @@ const ConfirmationRequiredModal = ({
                           />
                           <label
                             htmlFor="active_now"
-                            className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                            className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                           >
                             {t('update-now')}
                           </label>
@@ -232,7 +232,7 @@ const ConfirmationRequiredModal = ({
                           <RadioGroupItem id="schedule" value="SCHEDULE" />
                           <label
                             htmlFor="schedule"
-                            className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
+                            className="typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 cursor-pointer"
                           >
                             {t('form:feature-flags.schedule')}
                           </label>
@@ -279,7 +279,7 @@ const ConfirmationRequiredModal = ({
                 </div>
               )}
               {!isEnabling && hasRolloutRunning && (
-                <div className="flex w-full gap-x-3 p-4 mt-5 rounded-md bg-accent-yellow-50 typo-para-small">
+                <div className="flex w-full gap-x-3 p-4 mt-5 rounded-md bg-accent-yellow-50 dark:bg-accent-yellow-900/30 typo-para-small">
                   <Icon icon={IconToastWarning} />
                   <p className="w-full typo-para-medium text-accent-yellow-700">
                     <Trans

@@ -269,7 +269,7 @@ export const ReactDateRangePicker = memo<ReactDateRangePickerProps>(
               className="flex-center"
             />
           )}
-          <p className="typo-para-medium text-gray-700 truncate">
+          <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300 truncate">
             {triggerLabel}
           </p>
         </Button>

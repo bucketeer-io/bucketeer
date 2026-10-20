@@ -213,7 +213,7 @@ const CreateFlagForm = ({
 
   return (
     <div ref={refFormModel} className={cn('w-full p-5 pb-28', className)}>
-      <p className="text-gray-700 typo-head-bold-small mb-2">
+      <p className="text-gray-700 dark:text-dark-gray-300 typo-head-bold-small mb-2">
         {t('form:general-info')}
       </p>
       <FormProvider {...form}>
@@ -324,7 +324,7 @@ const CreateFlagForm = ({
             />
           </div>
           <Divider className="mt-2.5 mb-4" />
-          <p className="text-gray-700 typo-head-bold-small mb-2">
+          <p className="text-gray-700 dark:text-dark-gray-300 typo-head-bold-small mb-2">
             {t('form:feature-flags.flag-variations')}
           </p>
           <Form.Field
@@ -507,7 +507,7 @@ const CreateFlagForm = ({
               }}
             />
           </div>
-          <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg z-[999]">
+          <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg z-[999]">
             <ButtonBar
               primaryButton={
                 <Button variant="secondary" onClick={onClose}>

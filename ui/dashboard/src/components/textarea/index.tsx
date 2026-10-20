@@ -20,11 +20,11 @@ const TextArea = forwardRef(
           ref={ref}
           {...props}
           id={id}
-          className="p-3 border border-gray-400 rounded-lg w-full text-gray-700 typo-para-medium resize-none"
+          className="p-3 border border-gray-400 dark:border-dark-purple-100 rounded-lg w-full text-gray-700 dark:text-dark-gray-400 bg-white dark:bg-dark-black-900 typo-para-medium resize-none focus:outline-none focus:border-primary-500 dark:focus:border-dark-purple-300 placeholder:text-gray-400 dark:placeholder:text-dark-gray-200 disabled:bg-gray-100 dark:disabled:bg-dark-black-700 disabled:text-gray-400 dark:disabled:text-dark-gray-200"
         />
         {IconLeft && (
           <button onClick={onClickIcon}>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-gray-200">
               <Icon icon={IconLeft} size="sm" />
             </div>
           </button>

@@ -87,7 +87,7 @@ export const PrerequisiteDiscardItem = ({
         <div className="flex items-start mt-1">
           <ActionIcon labelType={labelType} />
         </div>
-        <div className="typo-para-medium text-gray-700">
+        <div className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
           <Trans
             i18nKey={`form:${labelType.toLowerCase()}_prerequisite-discard-desc`}
             values={{
@@ -133,7 +133,7 @@ export const IndividualDiscardItem = ({
         <div className="flex items-start mt-1">
           <ActionIcon labelType={labelType} />
         </div>
-        <div className="inline-flex flex-wrap gap-1 typo-para-medium text-gray-700">
+        <div className="inline-flex flex-wrap gap-1 typo-para-medium text-gray-700 dark:text-dark-gray-300">
           <Trans
             i18nKey={`form:${labelType.toLowerCase()}_individual-discard-desc`}
             values={{
@@ -181,7 +181,7 @@ const RuleHeader = ({
   if ((isNewRule || isDeleteRule) && clauseLabels && clauseLabels.length > 0) {
     return (
       <div className="flex w-full gap-x-2 mb-3">
-        <div className="typo-para-medium text-gray-700 flex flex-col gap-1">
+        <div className="typo-para-medium text-gray-700 dark:text-dark-gray-300 flex flex-col gap-1">
           {clauseLabels.map((clauseLabel, index) => (
             <div key={index} className={isDeleteRule ? 'line-through' : ''}>
               <strong>{index === 0 ? t('common:if') : t('common:and')}</strong>{' '}
@@ -206,7 +206,7 @@ const RuleHeader = ({
           <ActionIcon labelType={labelType} />
         </div>
       )}
-      <div className="typo-para-medium text-gray-700">
+      <div className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
         {isNewRule || isDeleteRule ? (
           <div className="inline items-center">
             <div className="inline">
@@ -254,7 +254,7 @@ const AudienceChange = ({
 }) => {
   const { t } = useTranslation(['common', 'form']);
   return (
-    <div className="text-gray-700">
+    <div className="text-gray-700 dark:text-dark-gray-300">
       <div className="flex w-full gap-x-2 items-center">
         <div className="inline mt-2">
           <div className="inline">
@@ -340,7 +340,7 @@ const StrategyList = ({ variations }: { variations?: VariationPercent[] }) =>
 
           {!isNil(v.weight) ? (
             <div className="flex items-center">
-              <p className="text-left max-w-[100px] tabular-nums text-gray-700 truncate">
+              <p className="text-left max-w-[100px] tabular-nums text-gray-700 dark:text-dark-gray-300 truncate">
                 — {v.weight}
               </p>
               <p>%</p>
@@ -357,7 +357,7 @@ export const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
   const { t } = useTranslation(['common', 'form']);
 
   const RuleLabel = (ruleLabel: string[], isNewRule: boolean) => (
-    <p>
+    <p className="text-gray-700 dark:text-dark-gray-300">
       {isNewRule && (
         <span className="px-1 font-bold text-accent-red-400">
           ({t('common:new')})
@@ -376,11 +376,11 @@ export const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
   );
 
   return (
-    <div className="pl-4">
+    <div className="pl-4 typo-para-medium text-gray-700 dark:text-dark-gray-300">
       <ol className="leading-7 space-y-2">
         {ruleOrders.labels.map((ruleLabel: string[], index: number) => (
           <li key={`label-${index}`}>
-            <div className="flex gap-1">
+            <div className="flex gap-1 text-gray-700 dark:text-dark-gray-300">
               <span>{index + 1}.</span>
               {RuleLabel(
                 ruleLabel,
@@ -397,9 +397,7 @@ export const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
                   label={v.variation}
                   index={v.variationIndex || 0}
                 />
-                {!isNil(v.weight) && (
-                  <p className="text-gray-700"> - ({v.weight}%)</p>
-                )}
+                {!isNil(v.weight) && <p> - ({v.weight}%)</p>}
               </div>
             ))}
           </li>
@@ -505,7 +503,7 @@ const DiscardChangeModal = ({
             actionSegmentRule === 'edit-rule' &&
             ruleDiscardChange === DiscardChangesType.CUSTOM &&
             isEdit && (
-              <div className="flex gap-1 items-center typo-para-medium leading-4 text-gray-700 font-bold">
+              <div className="flex gap-1 items-center typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 font-bold">
                 <Trans
                   i18nKey={'common:custom-segment-rule'}
                   values={{ rule: ruleIndex! + 1 }}
@@ -513,7 +511,7 @@ const DiscardChangeModal = ({
               </div>
             )}
           {ruleLabel && (
-            <div className="flex gap-1 items-center typo-para-medium leading-4 text-gray-700 font-bold">
+            <div className="flex gap-1 items-center typo-para-medium leading-4 text-gray-700 dark:text-dark-gray-300 font-bold">
               {typeof ruleLabel === 'string' ? (
                 <Trans i18nKey={ruleLabel} />
               ) : (
@@ -549,8 +547,13 @@ const DiscardChangeModal = ({
                 item?.changeType === 'reorder' &&
                 item.ruleOrders && (
                   <div key={`reorder-${index}`} className="flex flex-col gap-2">
-                    <div className="flex gap-1 items-center typo-para-medium text-gray-700">
-                      <Icon icon={IconArrowUpDown} size="sm" color="gray-600" />
+                    <div className="flex gap-1 items-center typo-para-medium text-gray-700 dark:text-dark-gray-300">
+                      <Icon
+                        icon={IconArrowUpDown}
+                        size="sm"
+                        color="gray-600"
+                        className="dark:text-dark-gray-300"
+                      />
                       <span className="font-medium">
                         <Trans i18nKey="form:custom-rule-reorder-discard-desc" />
                       </span>

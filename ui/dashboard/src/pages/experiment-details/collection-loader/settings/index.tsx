@@ -199,7 +199,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col w-full gap-y-6">
             <div className="flex items-center w-full justify-between">
-              <p className="text-gray-800 typo-head-bold-small">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
                 {t('common:settings')}
               </p>
               <DisabledButtonTooltip
@@ -216,8 +216,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
               />
             </div>
 
-            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
-              <p className="text-gray-800 typo-head-bold-small">
+            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
                 {t('general-info')}
               </p>
               <Form.Field
@@ -371,8 +371,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 />
               </div>
             </div>
-            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
-              <p className="text-gray-800 typo-head-bold-small">
+            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
                 {t('common:flag')}
               </p>
               <Form.Field
@@ -424,8 +424,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 />
               )}
             </div>
-            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
-              <p className="text-gray-800 typo-head-bold-small">
+            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card">
+              <p className="text-gray-800 dark:text-dark-gray-400 typo-head-bold-small">
                 {t('common:goals')}
               </p>
               <Form.Field

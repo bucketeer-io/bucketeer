@@ -18,7 +18,9 @@ const HeaderDetails = ({ feature }: { feature: Feature }) => {
   return (
     <div className="flex flex-col w-full gap-y-4 mt-4">
       <div className="flex items-center gap-x-2">
-        <h1 className="text-gray-900 typo-head-bold-huge">{feature.name}</h1>
+        <h1 className="text-gray-900 dark:text-dark-gray-400 typo-head-bold-huge">
+          {feature.name}
+        </h1>
         <FlagStatus status={getFlagStatus(feature)} />
         <Icon
           icon={IconChevronRight}

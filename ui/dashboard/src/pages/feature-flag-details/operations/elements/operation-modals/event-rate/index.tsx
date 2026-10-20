@@ -54,7 +54,7 @@ const CreateNewOptionButton = ({
   <Button
     type="button"
     variant="text"
-    className="h-10 self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
+    className="h-10 self-center w-full bg-white dark:bg-dark-black-800 hover:bg-gray-100 dark:hover:bg-dark-purple-100 sticky left-0 right-0 bottom-0 border-t border-gray-200 dark:border-dark-black-700"
     onClick={onClick}
   >
     <Icon icon={IconPlus} color="primary-500" size={'xs'} />
@@ -220,20 +220,20 @@ const EventRateOperationModal = ({
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-y-5 w-full p-5 pb-28">
             <div className="flex flex-col gap-y-3">
-              <p className="typo-head-bold-small text-gray-800">
+              <p className="typo-head-bold-small text-gray-800 dark:text-dark-gray-400">
                 {t('feature-flags.kill-switch')}
               </p>
-              <p className="typo-para-small text-gray-500">
+              <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
                 {t('table:feature-flags.event-rate-create-desc')}
               </p>
             </div>
             <div className="flex items-center w-full">
               <div className="pr-4">
-                <p className="flex-center w-[42px] h-[26px] rounded-[3px] bg-accent-pink-50 typo-para-small text-accent-pink-500">
+                <p className="flex-center w-[42px] h-[26px] rounded-[3px] bg-accent-pink-50 dark:bg-accent-pink-900/30 typo-para-small text-accent-pink-500">
                   {t('common:if')}
                 </p>
               </div>
-              <div className="flex flex-col flex-1 max-w-[430px] pl-4 gap-y-4 border-l border-primary-500">
+              <div className="flex flex-col flex-1 max-w-[430px] pl-4 gap-y-4 border-l border-primary-500 dark:border-dark-purple-300">
                 <Form.Field
                   control={form.control}
                   name={`variationId`}
@@ -462,7 +462,7 @@ const EventRateOperationModal = ({
               </div>
             </div>
           </div>
-          <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+          <div className="absolute left-0 bottom-0 bg-gray-50 dark:bg-dark-black-800 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={
                 <Button type="button" variant="secondary" onClick={onClose}>

@@ -36,9 +36,11 @@ export const ChartCard = memo(function ChartCard({
       : null;
 
   return (
-    <div className="bg-white">
+    <div className="bg-white dark:bg-dark-black-800">
       <div className="flex items-center gap-x-1 mb-4">
-        <h3 className="typo-para-small text-gray-600">{title}</h3>
+        <h3 className="typo-para-small text-gray-600 dark:text-dark-gray-200">
+          {title}
+        </h3>
 
         {!!description && (
           <Tooltip
@@ -55,15 +57,15 @@ export const ChartCard = memo(function ChartCard({
       <div className="flex items-center gap-x-5 min-w-0">
         {currentMonth != null && (
           <div className="flex-shrink-0">
-            <p className="typo-para-small text-gray-500">
+            <p className="typo-para-small text-gray-500 dark:text-dark-gray-200">
               {t('insights.current-month')}
             </p>
-            <h1 className="text-4xl font-bold py-3">
+            <h1 className="text-4xl font-bold py-3 dark:text-dark-gray-400">
               {formatLargeNumber(currentMonth)}
             </h1>
             {pctChange != null && (
               <p
-                className={`typo-para-small ${pctChange >= 0 ? 'text-green-600' : 'text-red-500'}`}
+                className={`typo-para-small ${pctChange >= 0 ? 'text-green-600 dark:text-accent-green-400' : 'text-red-500 dark:text-accent-red-400'}`}
               >
                 {pctChange >= 0 ? '+' : ''}
                 {pctChange.toFixed(1)}% {t('insights.vs-last-month')}
@@ -85,7 +87,7 @@ export const ChartCard = memo(function ChartCard({
                       className="inline-block w-10 h-2.5 rounded-sm flex-shrink-0"
                       style={{ backgroundColor: color as string }}
                     />
-                    <span className="typo-para-small text-gray-500 truncate max-w-[120px]">
+                    <span className="typo-para-small text-gray-500 dark:text-dark-gray-200 truncate max-w-[120px]">
                       {ds.label}
                     </span>
                   </div>

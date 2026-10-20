@@ -58,7 +58,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const notification = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
+          <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
             {notification.environmentName}
           </div>
         );
@@ -75,7 +75,7 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 dark:text-dark-gray-300 typo-para-medium">
                 {isNever ? t('never') : formatDateTime(notification.createdAt)}
               </div>
             }

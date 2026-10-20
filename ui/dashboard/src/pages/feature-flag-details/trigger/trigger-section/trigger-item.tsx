@@ -54,12 +54,12 @@ const TriggerItem = ({
   }, []);
 
   return (
-    <div className="flex w-full min-w-fit gap-x-3 p-6 bg-white border border-gray-400 rounded-lg">
+    <div className="flex w-full min-w-fit gap-x-3 p-6 bg-white dark:bg-dark-black-800 border border-gray-400 dark:border-dark-purple-300 rounded-lg">
       <Icon icon={IconWebhook} />
       <div className="flex flex-col flex-1 gap-y-4">
         <div className="flex items-center w-full justify-between">
           <div className="flex items-center gap-x-2">
-            <p className="typo-para-medium text-gray-700">
+            <p className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
               {t('trigger.generic-trigger')}
             </p>
             <FeatureFlagStatus
@@ -74,7 +74,7 @@ const TriggerItem = ({
               <Icon icon={IconWatch} size={'xxs'} />
               <DateTooltip
                 trigger={
-                  <div className="text-gray-500 typo-para-small whitespace-nowrap">
+                  <div className="text-gray-500 dark:text-dark-gray-200 typo-para-small whitespace-nowrap">
                     {Number(updatedAt) === 0 ? (
                       t('never')
                     ) : (
@@ -98,13 +98,15 @@ const TriggerItem = ({
           </div>
         </div>
         {description && (
-          <p className="typo-para-medium text-gray-500">{description}</p>
+          <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200">
+            {description}
+          </p>
         )}
 
-        <Divider className="border-gray-300" />
+        <Divider className="border-gray-300 dark:border-dark-purple-300" />
         {isNewlyCreated ? (
           <div className="flex flex-col gap-y-3">
-            <p className="typo-para-medium text-gray-500 uppercase">
+            <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200 uppercase">
               {t('trigger.trigger-url')}
             </p>
             <div className="flex items-center gap-x-2">
@@ -127,15 +129,15 @@ const TriggerItem = ({
         ) : (
           <div className="grid grid-cols-12 w-full gap-x-4">
             <div className="flex flex-col gap-y-3 col-span-2">
-              <p className="typo-para-medium text-gray-500 uppercase">
+              <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200 uppercase">
                 {t('trigger.action')}
               </p>
-              <p className="typo-para-medium text-gray-700">
+              <p className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                 {t(`trigger.${isOnFlag ? 'turn-on-flag' : 'turn-off-flag'}`)}
               </p>
             </div>
             <div className="flex flex-col gap-y-3 col-span-4">
-              <p className="typo-para-medium text-gray-500 uppercase">
+              <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200 uppercase">
                 {t('trigger.trigger-url')}
               </p>
               <p className="typo-para-medium text-primary-500 truncate">
@@ -143,16 +145,18 @@ const TriggerItem = ({
               </p>
             </div>
             <div className="flex flex-col gap-y-3 col-span-3">
-              <p className="typo-para-medium text-gray-500 uppercase">
+              <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200 uppercase">
                 {t('trigger.triggered-times')}
               </p>
-              <p className="typo-para-medium text-gray-700">{triggerCount}</p>
+              <p className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
+                {triggerCount}
+              </p>
             </div>
             <div className="flex flex-col gap-y-3 col-span-3">
-              <p className="typo-para-medium text-gray-500 uppercase">
+              <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200 uppercase">
                 {t('trigger.last-triggered')}
               </p>
-              <p className="typo-para-medium text-gray-700">
+              <p className="typo-para-medium text-gray-700 dark:text-dark-gray-400">
                 {Number(lastTriggeredAt) === 0
                   ? '-'
                   : formatDateTime(lastTriggeredAt)}
