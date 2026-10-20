@@ -964,7 +964,9 @@ func TestIncrementEnvEvents_Aggregation(t *testing.T) {
 
 			persister := &evaluationCountEventPersister{
 				evaluationCountCacher: mockCache,
-				logger:                zap.NewNop(),
+				// Flush "at" the fixture hour so the minute tier is written.
+				now:    func() time.Time { return time.Unix(hour1, 0) },
+				logger: zap.NewNop(),
 			}
 
 			// Execute
@@ -1027,6 +1029,7 @@ func TestIncrementEnvEvents_AggregatedIncrementMagnitude(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(hour1, 0) },
 		logger:                zap.NewNop(),
 	}
 

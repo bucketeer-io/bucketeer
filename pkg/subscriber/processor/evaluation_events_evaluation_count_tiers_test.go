@@ -42,7 +42,7 @@ func TestNewEvaluationCountKeyPairs(t *testing.T) {
 	dayTs := time.Date(2024, 3, 9, 0, 0, 0, 0, time.UTC).Unix()
 
 	p := &evaluationCountEventPersister{logger: zap.NewNop()}
-	pairs := p.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts)
+	pairs := p.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts, time.Unix(ts, 0))
 	require.Len(t, pairs, 3)
 
 	assert.Equal(t, fmt.Sprintf("env-1:ec1m:%d:feature-1:variation-A", minuteTs), pairs[0].ecKey)
@@ -66,6 +66,105 @@ func TestNewEvaluationCountKeyPairs(t *testing.T) {
 		legacyHourlyCountKey(userCountKey, "feature-1", "variation-A", "env-1", ts),
 		pairs[1].ucKey,
 	)
+}
+
+func TestMinuteTierWritable(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 10, 20, 12, 30, 0, 0, time.UTC)
+	cutoff := now.Add(-cachev3.MinuteCountTTL)
+	patterns := []struct {
+		desc     string
+		minuteTs int64
+		expected bool
+	}{
+		{desc: "current minute", minuteTs: now.Truncate(time.Minute).Unix(), expected: true},
+		{desc: "future minute (client clock skew)", minuteTs: now.Add(45 * time.Minute).Unix(), expected: true},
+		{desc: "one minute inside the TTL", minuteTs: cutoff.Add(time.Minute).Unix(), expected: true},
+		{desc: "exactly at the TTL boundary", minuteTs: cutoff.Unix(), expected: true},
+		{desc: "one minute past the TTL", minuteTs: cutoff.Add(-time.Minute).Unix(), expected: false},
+		{desc: "a week late", minuteTs: now.AddDate(0, 0, -7).Unix(), expected: false},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, minuteTierWritable(p.minuteTs, now))
+		})
+	}
+}
+
+// Late events (clients uploading buffered events hours or weeks later) must
+// still be counted in the hour and day tiers, but must not create minute keys
+// nobody can ever read.
+func TestNewEvaluationCountKeyPairsSkipsMinuteTierForLateEvents(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 10, 20, 12, 30, 0, 0, time.UTC)
+	ts := now.AddDate(0, 0, -7).Add(9*time.Hour + 23*time.Minute + 45*time.Second).Unix()
+	hourTs := truncateUnixUTC(ts, time.Hour)
+	dayTs := truncateUnixUTC(ts, 24*time.Hour)
+
+	p := &evaluationCountEventPersister{logger: zap.NewNop()}
+	pairs := p.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts, now)
+	require.Len(t, pairs, 2, "minute tier skipped, hour and day kept")
+
+	assert.Equal(t, fmt.Sprintf("env-1:ec:%d:feature-1:variation-A", hourTs), pairs[0].ecKey)
+	assert.Equal(t, fmt.Sprintf("env-1:uc:%d:feature-1:variation-A", hourTs), pairs[0].ucKey)
+	assert.Equal(t, time.Duration(0), pairs[0].ttl)
+	assert.Equal(t, fmt.Sprintf("env-1:ec1d:%d:feature-1:variation-A", dayTs), pairs[1].ecKey)
+	assert.Equal(t, fmt.Sprintf("env-1:uc1d:%d:feature-1:variation-A", dayTs), pairs[1].ucKey)
+	assert.Equal(t, cachev3.DailyCountTTL, pairs[1].ttl)
+	for _, pair := range pairs {
+		assert.NotContains(t, pair.ecKey, ":ec1m:")
+		assert.NotContains(t, pair.ucKey, ":uc1m:")
+	}
+}
+
+// End to end through the flush: a late event and a fresh event in the same
+// batch; only the fresh one produces minute keys, both are counted hourly and
+// daily, and the late event is Acked (skipping its minute tier is not a
+// failure).
+func TestIncrementEnvEventsLateEventCountedWithoutMinuteKeys(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 10, 20, 12, 30, 0, 0, time.UTC)
+	freshTs := now.Add(-2 * time.Minute).Unix()
+	lateTs := now.AddDate(0, 0, -7).Unix()
+	mockCache := &mockEvaluationCountCache{}
+	persister := &evaluationCountEventPersister{
+		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return now },
+		logger:                zap.NewNop(),
+	}
+
+	fails := persister.incrementEnvEvents(environmentEventMap{"env-1": eventMap{
+		"fresh": tierTestEvent("feature-1", "user-1", freshTs),
+		"late":  tierTestEvent("feature-1", "user-2", lateTs),
+	}})
+	require.Empty(t, fails)
+
+	fresh := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", freshTs, now)
+	late := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", lateTs, now)
+	require.Len(t, fresh, 3)
+	require.Len(t, late, 2)
+
+	// Fresh event: all three tiers.
+	for _, pair := range fresh {
+		assert.Equal(t, int64(1), mockCache.lastEventCounts[pair.ecKey], pair.ecKey)
+		assert.Contains(t, mockCache.lastUserCounts[pair.ucKey], "user-1", pair.ucKey)
+	}
+	// Late event: hour and day only.
+	for _, pair := range late {
+		assert.Equal(t, int64(1), mockCache.lastEventCounts[pair.ecKey], pair.ecKey)
+		assert.Contains(t, mockCache.lastUserCounts[pair.ucKey], "user-2", pair.ucKey)
+	}
+	minuteKeys := 0
+	for key := range mockCache.lastEventCounts {
+		if strings.Contains(key, ":ec1m:") {
+			minuteKeys++
+		}
+	}
+	assert.Equal(t, 1, minuteKeys, "only the fresh event's minute bucket is written")
+	assert.Equal(t, cachev3.MinuteCountTTL, mockCache.expireCalls[fresh[0].ecKey])
 }
 
 // legacyHourlyCountKey reproduces the pre-redesign hourly key construction
@@ -209,6 +308,7 @@ func TestFlushAggregatedCountsAppliesTierTTLs(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(ts, 0) },
 		logger:                zap.NewNop(),
 	}
 
@@ -228,7 +328,7 @@ func TestFlushAggregatedCountsAppliesTierTTLs(t *testing.T) {
 	fails := persister.incrementEnvEvents(envEvents)
 	require.Empty(t, fails)
 
-	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts)
+	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts, time.Unix(ts, 0))
 	minute, hour, day := pairs[0], pairs[1], pairs[2]
 
 	assert.Equal(t, cachev3.MinuteCountTTL, mockCache.expireCalls[minute.ecKey])
@@ -248,6 +348,7 @@ func TestFlushAggregatedCountsTierTTLsWithKindLikeFeatureID(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(ts, 0) },
 		logger:                zap.NewNop(),
 	}
 
@@ -267,7 +368,7 @@ func TestFlushAggregatedCountsTierTTLsWithKindLikeFeatureID(t *testing.T) {
 	fails := persister.incrementEnvEvents(envEvents)
 	require.Empty(t, fails)
 
-	pairs := persister.newEvaluationCountKeyPairs("ec1m", "uc", "env-1", ts)
+	pairs := persister.newEvaluationCountKeyPairs("ec1m", "uc", "env-1", ts, time.Unix(ts, 0))
 	minute, hour, day := pairs[0], pairs[1], pairs[2]
 
 	assert.Equal(t, cachev3.MinuteCountTTL, mockCache.expireCalls[minute.ecKey])
@@ -293,6 +394,7 @@ func TestFlushAggregatedCountsPipelinesTiers(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(ts, 0) },
 		logger:                zap.NewNop(),
 	}
 
@@ -365,6 +467,7 @@ func TestFlushAggregatedCountsExpireFailureDoesNotFailPair(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{shouldFailExpire: true}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(ts, 0) },
 		logger:                zap.NewNop(),
 	}
 
@@ -384,7 +487,7 @@ func TestFlushAggregatedCountsExpireFailureDoesNotFailPair(t *testing.T) {
 	fails := persister.incrementEnvEvents(envEvents)
 	assert.Empty(t, fails, "EXPIRE failures must not Nack events")
 
-	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts)
+	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts, time.Unix(ts, 0))
 	for _, pair := range pairs {
 		assert.Equal(t, int64(1), mockCache.lastEventCounts[pair.ecKey])
 		assert.Contains(t, mockCache.lastUserCounts[pair.ucKey], "user-1")
@@ -417,10 +520,11 @@ func TestFlushPFAddFailureInOneTierIsExactAcrossTiersOnRedelivery(t *testing.T) 
 	mockCache := &mockEvaluationCountCache{}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(tsA, 0) },
 		logger:                zap.NewNop(),
 	}
-	pairsA := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", tsA)
-	pairsB := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", tsB)
+	pairsA := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", tsA, time.Unix(tsA, 0))
+	pairsB := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", tsB, time.Unix(tsB, 0))
 	minuteA, hour, day := pairsA[0], pairsA[1], pairsA[2]
 	minuteB := pairsB[0]
 	require.Equal(t, hour.ecKey, pairsB[1].ecKey, "both events share the hourly key")
@@ -467,9 +571,10 @@ func TestFlushPFAddFailureSkipsSiblingKeysWithNoRemainingEvents(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(ts, 0) },
 		logger:                zap.NewNop(),
 	}
-	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts)
+	pairs := persister.newEvaluationCountKeyPairs("feature-1", "variation-A", "env-1", ts, time.Unix(ts, 0))
 	mockCache.failOnUCKey = pairs[1].ucKey // hourly PFADD fails
 
 	fails := persister.incrementEnvEvents(environmentEventMap{"env-1": eventMap{
@@ -491,6 +596,7 @@ func TestDailyCutoverMarkerIsRetriedOnFlushUntilWritten(t *testing.T) {
 	mockCache := &mockEvaluationCountCache{shouldFailPutIfAbsent: true}
 	persister := &evaluationCountEventPersister{
 		evaluationCountCacher: mockCache,
+		now:                   func() time.Time { return time.Unix(ts, 0) },
 		logger:                zap.NewNop(),
 	}
 

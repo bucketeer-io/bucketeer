@@ -161,7 +161,7 @@ func TestClusterEvaluationCountTiersIntegration(t *testing.T) {
 			// persister's job, not the test's.
 			ts := days[d].Add(time.Duration(he.hour)*time.Hour + 42*time.Minute + 7*time.Second).Unix()
 			for _, user := range he.users {
-				for _, pair := range persister.newEvaluationCountKeyPairs(featureID, variationID, environmentId, ts) {
+				for _, pair := range persister.newEvaluationCountKeyPairs(featureID, variationID, environmentId, ts, time.Unix(ts, 0)) {
 					aggregator.addEvent(pair.ecKey, pair.ucKey, user)
 					track(pair.ecKey, pair.ucKey)
 				}
