@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 )
 
 type middleware func(http.Handler) http.Handler
@@ -89,5 +90,14 @@ func splitURLPath(path string) (string, string, string) {
 	if len(parts) != 4 {
 		return "unknown", "unknown", "unknown"
 	}
-	return parts[1], parts[2], parts[3]
+	return prometheusLabelValue(parts[1]), prometheusLabelValue(parts[2]), prometheusLabelValue(parts[3])
+}
+
+// prometheusLabelValue returns a label safe for Prometheus CounterVec/HistogramVec.
+// Invalid UTF-8 in URL path segments must not reach WithLabelValues (it panics).
+func prometheusLabelValue(value string) string {
+	if value == "" || !utf8.ValidString(value) {
+		return "unknown"
+	}
+	return value
 }

@@ -101,3 +101,23 @@ func TestInvalidRequestPathStatus_utf8C1ControlChar(t *testing.T) {
 	require.True(t, reject)
 	assert.Equal(t, http.StatusBadRequest, status)
 }
+
+func TestRESTMiddlewareChain_invalidUTF8PathSegment(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("application handler must not run for invalid path")
+	})
+	mws := newMiddleWares()
+	mws.Append(MetricsServerMiddleware)
+	mws.Append(rejectInvalidRequestPathMiddleware)
+	handler := mws.Handle(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/v1/foo/%85", nil)
+	rec := httptest.NewRecorder()
+	require.NotPanics(t, func() {
+		handler.ServeHTTP(rec, req)
+	})
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
