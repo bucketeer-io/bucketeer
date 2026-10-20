@@ -34,7 +34,13 @@ import (
 )
 
 const (
-	redisScanMaxSize  = int64(100)
+	// redisScanMaxSize is the SCAN COUNT hint. SCAN walks the entire keyspace
+	// whatever the MATCH pattern, so the number of round trips per full walk
+	// is roughly keys/COUNT: on a multi-million-key cluster, 100 meant tens
+	// of thousands of round trips per scan and scans of 20+ minutes. 1000
+	// keeps each SCAN call cheap (sub-millisecond on the server) while
+	// cutting the walk 10x.
+	redisScanMaxSize  = int64(1000)
 	redisChunkMaxSize = 100
 	day               = 24 * 60 * 60
 	// defaultCounterRetention keeps the historical 30-day cutoff for the

@@ -286,15 +286,17 @@ func TestCollectHourlyKeysByDayExpandsToAllHoursExactlyOnce(t *testing.T) {
 	// SCAN may report the same key more than once (rehashing, or slot
 	// migration across cluster nodes); counting it twice would inflate the
 	// summed daily value.
-	mockCache.EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+	mockCache.EXPECT().ScanKeys("*ec:*", redisScanMaxSize).Return(
 		[]string{keyA, keyA, keyB, "dev:ec:pfmerge-staging"}, nil)
 
 	backfiller := &evaluationDailyCountBackfiller{
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	groups, err := backfiller.collectHourlyKeysByDay("dev", "ec", today-30*daySeconds, today)
+	byEnv, err := backfiller.collectHourlyKeysByDay("ec", today-30*daySeconds, today)
 	require.NoError(t, err)
+	require.Len(t, byEnv, 1)
+	groups := byEnv["dev"]
 	require.Len(t, groups, 1)
 
 	expected := make([]string, 0, 24)
@@ -334,7 +336,7 @@ func TestBackfillEventCountDayIncludesHourlyKeysCreatedAfterScan(t *testing.T) {
 	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 	gomock.InOrder(
 		// Only hour 0 existed when the scan ran.
-		mockCache.EXPECT().ScanKeys("dev:ec:*", redisScanMaxSize).Return(
+		mockCache.EXPECT().ScanKeys("*ec:*", redisScanMaxSize).Return(
 			[]string{hourlyKey("ec", day, 0)}, nil),
 		// By the time the day is read, hour 1 exists too.
 		mockCache.EXPECT().GetMulti(allHours, true).Return(snapshot("1"), nil),
@@ -348,11 +350,98 @@ func TestBackfillEventCountDayIncludesHourlyKeysCreatedAfterScan(t *testing.T) {
 		cache:  mockCache,
 		logger: zap.NewNop(),
 	}
-	groups, err := backfiller.collectHourlyKeysByDay("dev", "ec", today-30*daySeconds, today)
+	byEnv, err := backfiller.collectHourlyKeysByDay("ec", today-30*daySeconds, today)
 	require.NoError(t, err)
+	groups := byEnv["dev"]
 	require.Len(t, groups, 1)
 	hourlyKeys := groups[dayGroup{dayTs: day, suffix: "feature-1:variation-A"}]
 	require.NoError(t, backfiller.backfillEventCountDay(context.Background(), dKey, hourlyKeys))
+}
+
+// One cluster-wide SCAN per kind discovers every environment's days at once
+// (including the admin environment, whose keys have no "<env>:" prefix),
+// and only the keys of the requested kind: other tiers, other kinds, staging
+// keys, and environments whose ID merely ends in the kind name are ignored.
+func TestCollectHourlyKeysByDayGroupsAllEnvironmentsFromOneScan(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	today := time.Now().UTC().Truncate(24 * time.Hour).Unix()
+	day := today - 2*daySeconds
+	hour := day + 5*3600
+
+	mockCache := cachemock.NewMockMultiGetDeleteCountCache(mockController)
+	// Exactly one SCAN, with the cluster-wide pattern, however many
+	// environments exist.
+	mockCache.EXPECT().ScanKeys("*ec:*", redisScanMaxSize).Times(1).Return([]string{
+		fmt.Sprintf("dev:ec:%d:feature-1:variation-A", hour),
+		fmt.Sprintf("prod:ec:%d:feature-1:variation-A", hour),
+		fmt.Sprintf("prod:ec:%d:feature-2:variation-B", hour+3600),
+		fmt.Sprintf("ec:%d:feature-1:variation-A", hour), // admin environment
+		fmt.Sprintf("dev:uc:%d:feature-1:variation-A", hour),
+		fmt.Sprintf("dev:ec1d:%d:feature-1:variation-A", day),
+		fmt.Sprintf("dev:ec1m:%d:feature-1:variation-A", hour),
+		fmt.Sprintf("myspec:%d:feature-1:variation-A", hour), // env "myspec" has no kind segment
+		"dev:ec:pfmerge-staging",
+		"system:ec1d:cutover",
+	}, nil)
+
+	backfiller := &evaluationDailyCountBackfiller{
+		cache:  mockCache,
+		logger: zap.NewNop(),
+	}
+	byEnv, err := backfiller.collectHourlyKeysByDay("ec", today-30*daySeconds, today)
+	require.NoError(t, err)
+	require.Len(t, byEnv, 3, "dev, prod and the admin environment")
+
+	require.Len(t, byEnv["dev"], 1)
+	require.Len(t, byEnv["prod"], 2)
+	require.Len(t, byEnv[""], 1)
+
+	adminKeys := byEnv[""][dayGroup{dayTs: day, suffix: "feature-1:variation-A"}]
+	require.Len(t, adminKeys, 24)
+	assert.Equal(t, fmt.Sprintf("ec:%d:feature-1:variation-A", day), adminKeys[0], "admin keys keep the prefix-less form")
+
+	prodKeys := byEnv["prod"][dayGroup{dayTs: day, suffix: "feature-2:variation-B"}]
+	require.Len(t, prodKeys, 24)
+	assert.Equal(t, fmt.Sprintf("prod:ec:%d:feature-2:variation-B", day+23*3600), prodKeys[23])
+}
+
+func TestHourlyKeyRegexRejectsOtherKindsAndTiers(t *testing.T) {
+	t.Parallel()
+
+	re := hourlyKeyRegex("ec")
+	patterns := []struct {
+		key      string
+		matches  bool
+		env      string
+		hourTs   string
+		suffixOf string
+	}{
+		{key: "dev:ec:1792454400:f:v", matches: true, env: "dev", hourTs: "1792454400", suffixOf: "f:v"},
+		{key: "ec:1792454400:f:v", matches: true, env: "", hourTs: "1792454400", suffixOf: "f:v"},
+		{key: "ec:ec:1792454400:f:v", matches: true, env: "ec", hourTs: "1792454400", suffixOf: "f:v"},
+		{key: "dev:uc:1792454400:f:v", matches: false},
+		{key: "dev:ec1d:1792454400:f:v", matches: false},
+		{key: "dev:ec1m:1792454400:f:v", matches: false},
+		{key: "spec:1792454400:f:v", matches: false},
+		{key: "dev:ec:notatimestamp:f:v", matches: false},
+		{key: "dev:ec:1792454400", matches: false},
+	}
+	for _, p := range patterns {
+		t.Run(p.key, func(t *testing.T) {
+			m := re.FindStringSubmatch(p.key)
+			if !p.matches {
+				assert.Nil(t, m)
+				return
+			}
+			require.Len(t, m, 4)
+			assert.Equal(t, p.env, m[1])
+			assert.Equal(t, p.hourTs, m[2])
+			assert.Equal(t, p.suffixOf, m[3])
+		})
+	}
 }
 
 func TestBackfillEventCountDayStabilizesAgainstLiveWrites(t *testing.T) {
