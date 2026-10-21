@@ -1237,37 +1237,7 @@ func (s *server) registerPubSubProcessorMap(
 		}
 	}
 
-	// On-demand persisters consume the shared evaluation and goal topics.
-	// The dedicated persisters are always on and consume the DWH/OPS topics,
-	// so they are only registered when configured.
-	dwhPersisters := map[string]interface{}{}
-	opsPersisters := map[string]interface{}{}
-	if onDemandProcessorsConfigMap != nil {
-		dwhPersisters[processor.EvaluationCountEventDWHPersisterName] =
-			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName]
-		dwhPersisters[processor.GoalCountEventDWHPersisterName] =
-			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName]
-		opsPersisters[processor.EvaluationCountEventOPSPersisterName] =
-			onDemandProcessorsConfigMap[processor.EvaluationCountEventOPSPersisterName]
-		opsPersisters[processor.GoalCountEventOPSPersisterName] =
-			onDemandProcessorsConfigMap[processor.GoalCountEventOPSPersisterName]
-	}
-	for _, name := range []string{
-		processor.EvaluationEventDWHPersisterName,
-		processor.GoalEventDWHPersisterName,
-	} {
-		if config, ok := processorsConfigMap[name]; ok {
-			dwhPersisters[name] = config
-		}
-	}
-	for _, name := range []string{
-		processor.EvaluationEventOPSPersisterName,
-		processor.GoalEventOPSPersisterName,
-	} {
-		if config, ok := processorsConfigMap[name]; ok {
-			opsPersisters[name] = config
-		}
-	}
+	dwhPersisters, opsPersisters := eventPersisterConfigs(processorsConfigMap, onDemandProcessorsConfigMap)
 
 	if len(dwhPersisters) > 0 {
 		// Initialize the data-warehouse client(s) here, separately from the operational
@@ -1338,6 +1308,40 @@ func (s *server) registerPubSubProcessorMap(
 	}
 
 	return processors, dwhCleanup, nil
+}
+
+// eventPersisterConfigs collects the configured DWH and OPS persisters.
+// On-demand persisters consume the shared evaluation and goal topics; the
+// dedicated ones are always on and consume the DWH/OPS topics.
+func eventPersisterConfigs(
+	processorsConfigMap, onDemandProcessorsConfigMap map[string]interface{},
+) (map[string]interface{}, map[string]interface{}) {
+	dwhPersisters := map[string]interface{}{}
+	opsPersisters := map[string]interface{}{}
+	collect := func(dst, src map[string]interface{}, names ...string) {
+		for _, name := range names {
+			if config, ok := src[name]; ok {
+				dst[name] = config
+			}
+		}
+	}
+	collect(dwhPersisters, onDemandProcessorsConfigMap,
+		processor.EvaluationCountEventDWHPersisterName,
+		processor.GoalCountEventDWHPersisterName,
+	)
+	collect(opsPersisters, onDemandProcessorsConfigMap,
+		processor.EvaluationCountEventOPSPersisterName,
+		processor.GoalCountEventOPSPersisterName,
+	)
+	collect(dwhPersisters, processorsConfigMap,
+		processor.EvaluationEventDWHPersisterName,
+		processor.GoalEventDWHPersisterName,
+	)
+	collect(opsPersisters, processorsConfigMap,
+		processor.EvaluationEventOPSPersisterName,
+		processor.GoalEventOPSPersisterName,
+	)
+	return dwhPersisters, opsPersisters
 }
 
 // dwhPersisterConfig returns the config holding the data-warehouse settings,
