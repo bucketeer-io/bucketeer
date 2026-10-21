@@ -171,3 +171,52 @@ func TestResolveCacheInvalidationConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestDWHPersisterConfig(t *testing.T) {
+	t.Parallel()
+
+	onDemand := map[string]interface{}{"name": "onDemand"}
+	evalDedicated := map[string]interface{}{"name": "evalDedicated"}
+	goalDedicated := map[string]interface{}{"name": "goalDedicated"}
+	patterns := []struct {
+		desc       string
+		persisters map[string]interface{}
+		expected   interface{}
+	}{
+		{
+			desc:       "no persisters",
+			persisters: map[string]interface{}{},
+			expected:   nil,
+		},
+		{
+			desc: "prefers the on-demand evaluation persister",
+			persisters: map[string]interface{}{
+				processor.EvaluationCountEventDWHPersisterName: onDemand,
+				processor.EvaluationEventDWHPersisterName:      evalDedicated,
+				processor.GoalEventDWHPersisterName:            goalDedicated,
+			},
+			expected: onDemand,
+		},
+		{
+			desc: "falls back to the dedicated evaluation persister",
+			persisters: map[string]interface{}{
+				processor.EvaluationEventDWHPersisterName: evalDedicated,
+				processor.GoalEventDWHPersisterName:       goalDedicated,
+			},
+			expected: evalDedicated,
+		},
+		{
+			desc: "falls back to the dedicated goal persister",
+			persisters: map[string]interface{}{
+				processor.GoalEventDWHPersisterName: goalDedicated,
+			},
+			expected: goalDedicated,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, dwhPersisterConfig(p.persisters))
+		})
+	}
+}

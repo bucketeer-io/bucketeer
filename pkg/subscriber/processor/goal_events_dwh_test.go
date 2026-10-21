@@ -53,6 +53,7 @@ func newTestGoalEvtWriter(
 		logger:                  zap.NewNop(),
 		maxRetryGoalEventPeriod: time.Hour,
 		retryGoalEventInterval:  time.Minute,
+		subscriberType:          subscriberGoalEventDWH,
 	}
 }
 

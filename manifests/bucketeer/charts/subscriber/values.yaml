@@ -249,6 +249,20 @@ subscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
+  # Always-on persisters for the dedicated DWH/OPS topics. Opt-in: set the topic and
+  # subscription, and add the matching entry under `processors`.
+  # Names: evaluationEventDWHPersister, evaluationEventOPSPersister,
+  #        goalEventDWHPersister, goalEventOPSPersister
+  # evaluationEventDWHPersister:
+  #   pubSubType: google
+  #   project:
+  #   topic:
+  #   subscription:
+  #   pullerNumGoroutines: 5
+  #   pullerMaxOutstandingMessages: 1000
+  #   pullerMaxOutstandingBytes: 100000000
+  #   maxMps: 100
+  #   workerNum: 1
 
 onDemandSubscribers:
   evaluationCountEventDWHPersister:
@@ -329,6 +343,28 @@ processors:
       slack:
         webhookURL: ""
   emailSender: {}
+  # Processors for the dedicated DWH/OPS topic persisters (see `subscribers`).
+  # The DWH ones need an empty `dataWarehouse` map, filled from global settings.
+  # evaluationEventDWHPersister:
+  #   flushSize: 100
+  #   flushInterval: 10
+  #   flushTimeout: 10
+  #   dataWarehouse: {}
+  # evaluationEventOPSPersister:
+  #   flushSize: 100
+  #   flushInterval: 10
+  #   flushTimeout: 10
+  # goalEventDWHPersister:
+  #   flushSize: 100
+  #   flushInterval: 10
+  #   flushTimeout: 10
+  #   maxRetryGoalEventPeriod: 86400 # 24 hours
+  #   retryGoalEventInterval: 300 # 5 minutes
+  #   dataWarehouse: {}
+  # goalEventOPSPersister:
+  #   flushSize: 100
+  #   flushInterval: 10
+  #   flushTimeout: 10
 
 onDemandProcessors:
   evaluationCountEventDWHPersister:

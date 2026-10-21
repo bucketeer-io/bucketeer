@@ -43,6 +43,7 @@ type evalEvtWriter struct {
 	cache            cachev3.ExperimentsCache
 	flightgroup      singleflight.Group
 	location         *time.Location
+	subscriberType   string
 	logger           *zap.Logger
 }
 
@@ -54,12 +55,14 @@ func NewEvalEventWriter(
 	cache cachev3.ExperimentsCache,
 	location *time.Location,
 	evalWriter dwhstorage.EvalEventWriter,
+	subscriberType string,
 ) Writer {
 	return &evalEvtWriter{
 		writer:           evalWriter,
 		experimentClient: exClient,
 		cache:            cache,
 		location:         location,
+		subscriberType:   subscriberType,
 		logger:           l,
 	}
 }
@@ -77,7 +80,7 @@ func (w *evalEvtWriter) Write(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)
-			subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeFailedToListExperiments).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -94,11 +97,11 @@ func (w *evalEvtWriter) Write(
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
 					if errors.Is(err, ErrExperimentNotFound) {
-						subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeExperimentNotFound).Inc()
+						subscriberHandledCounter.WithLabelValues(w.subscriberType, codeExperimentNotFound).Inc()
 						continue
 					}
 					if errors.Is(err, ErrEvaluationEventIssuedAfterExperimentEnded) {
-						subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeEventIssuedAfterExperimentEnded).Inc()
+						subscriberHandledCounter.WithLabelValues(w.subscriberType, codeEventIssuedAfterExperimentEnded).Inc()
 						continue
 					}
 					if !retriable {
@@ -114,7 +117,7 @@ func (w *evalEvtWriter) Write(
 					continue
 				}
 				evalEvents = append(evalEvents, e)
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
@@ -128,7 +131,7 @@ func (w *evalEvtWriter) Write(
 	}
 	fs, err := w.writer.AppendRows(ctx, evalEvents)
 	if err != nil {
-		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeFailedToAppendEvaluationEvents).Inc()
+		subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToAppendEvaluationEvents).Inc()
 		w.logger.Error("Failed to append rows to evaluation_event table",
 			zap.Error(err),
 		)

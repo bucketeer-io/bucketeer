@@ -34,6 +34,11 @@ const (
 	subscriberSegmentUser           = "SegmentUser"
 	subscriberDemoOrganizationEvent = "DemoOrganizationEvent"
 	subscriberCacheRefresher        = "CacheRefresher"
+	// Labels for the persisters consuming the dedicated DWH/OPS topics
+	subscriberDedicatedEvaluationEventDWH = "DedicatedEvaluationEventDWH"
+	subscriberDedicatedEvaluationEventOPS = "DedicatedEvaluationEventOPS"
+	subscriberDedicatedGoalEventDWH       = "DedicatedGoalEventDWH"
+	subscriberDedicatedGoalEventOPS       = "DedicatedGoalEventOPS"
 )
 
 const (

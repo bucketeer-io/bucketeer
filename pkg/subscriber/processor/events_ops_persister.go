@@ -79,24 +79,32 @@ func NewEventsOPSPersister(
 		logger:                   logger,
 	}
 	switch persisterName {
-	case EvaluationCountEventOPSPersisterName:
+	case EvaluationCountEventOPSPersisterName, EvaluationEventOPSPersisterName:
 		e.subscriberType = subscriberEvaluationEventOPS
+		if persisterName == EvaluationEventOPSPersisterName {
+			e.subscriberType = subscriberDedicatedEvaluationEventOPS
+		}
 		e.updater = NewEvalUserCountUpdater(
 			ctx,
 			ftClient,
 			opsClient,
 			cachev3.NewEventCountCache(cachev3.NewRedisCache(redisClient)),
 			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient)),
+			e.subscriberType,
 			logger,
 		)
-	case GoalCountEventOPSPersisterName:
+	case GoalCountEventOPSPersisterName, GoalEventOPSPersisterName:
 		e.subscriberType = subscriberGoalEventOPS
+		if persisterName == GoalEventOPSPersisterName {
+			e.subscriberType = subscriberDedicatedGoalEventOPS
+		}
 		e.updater = NewGoalUserCountUpdater(
 			ctx,
 			ftClient,
 			opsClient,
 			cachev3.NewEventCountCache(cachev3.NewRedisCache(redisClient)),
 			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient)),
+			e.subscriberType,
 			logger,
 		)
 	}

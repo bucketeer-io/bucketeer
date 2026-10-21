@@ -137,7 +137,7 @@ func (w *goalEvtWriter) handleFailedBatch(ctx context.Context, msg *retryMessage
 		lg.Error("Append failed batch", zap.Error(err))
 		msg.RetryCount++
 		if err := w.storeRetryMessage(msg); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 		return
@@ -158,7 +158,7 @@ func (w *goalEvtWriter) handleFailedBatch(ctx context.Context, msg *retryMessage
 		msg.RetryCount++
 		msg.FailedEvents = still
 		if err := w.storeRetryMessage(msg); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 	} else {
@@ -172,13 +172,13 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		lg.Error("List experiments failed", zap.Error(err))
 		msg.RetryCount++
 		if err := w.storeRetryMessage(msg); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 		return
 	}
 	if len(experiments) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoExperiments).Inc()
+		subscriberHandledCounter.WithLabelValues(w.subscriberType, codeRetryMessageNoExperiments).Inc()
 		w.deleteKey(ctx, key)
 		return
 	}
@@ -197,7 +197,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 	)
 	if err != nil {
 		if errors.Is(err, ErrExperimentNotFound) {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeExperimentNotFound).Inc()
 			lg.Error("Experiment not found, deleting retry message")
 			w.deleteKey(ctx, key)
 		} else if errors.Is(err, ErrGoalEventOlderThanEvaluation) {
@@ -210,7 +210,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 			lg.Error("Linking failed", zap.Error(err))
 			msg.RetryCount++
 			if err := w.storeRetryMessage(msg); err != nil {
-				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 				lg.Error("Failed to store retry message", zap.Error(err))
 			}
 		}
@@ -225,7 +225,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		}
 	}
 	if len(events) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoGoalEvents).Inc()
+		subscriberHandledCounter.WithLabelValues(w.subscriberType, codeRetryMessageNoGoalEvents).Inc()
 		w.deleteKey(ctx, key)
 		return
 	}
@@ -236,7 +236,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		msg.RetryCount++
 		msg.FailedEvents = events
 		if err := w.storeRetryMessage(msg); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 		return
@@ -255,11 +255,11 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		msg.RetryCount++
 		msg.FailedEvents = failed
 		if err := w.storeRetryMessage(msg); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 	} else {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageAppendSuccess).Inc()
+		subscriberHandledCounter.WithLabelValues(w.subscriberType, codeRetryMessageAppendSuccess).Inc()
 		w.deleteKey(ctx, key)
 	}
 }

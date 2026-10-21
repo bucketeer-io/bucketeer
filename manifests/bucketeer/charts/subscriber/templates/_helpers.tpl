@@ -65,3 +65,33 @@ Create chart name and version as used by the chart label.
   {{- false }}
 {{- end }}
 {{- end -}}
+
+{{- /* Overwrites a processor's dataWarehouse settings with the global ones */}}
+{{- define "subscriber.injectDataWarehouse" -}}
+{{- $g := .global.dataWarehouse }}
+{{- $_ := set .config "dataWarehouse" (dict
+  "type" $g.type
+  "batchSize" $g.batchSize
+  "timezone" $g.timezone
+  "mysql" (dict
+    "useMainConnection" $g.mysql.useMainConnection
+    "host" $g.mysql.host
+    "port" $g.mysql.port
+    "user" $g.mysql.user
+    "password" $g.mysql.password
+    "database" $g.mysql.database)
+  "postgres" (dict
+    "host" $g.postgres.host
+    "port" $g.postgres.port
+    "user" $g.postgres.user
+    "password" $g.postgres.password
+    "database" $g.postgres.database
+    "sslMode" (default "" $g.postgres.sslMode)
+    "sslRootCert" (default "" $g.postgres.sslRootCert)
+    "sslCert" (default "" $g.postgres.sslCert)
+    "sslKey" (default "" $g.postgres.sslKey))
+  "bigquery" (dict
+    "project" $g.bigquery.project
+    "dataset" $g.bigquery.dataset
+    "location" $g.bigquery.location)) }}
+{{- end -}}
