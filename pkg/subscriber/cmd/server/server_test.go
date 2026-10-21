@@ -212,6 +212,13 @@ func TestDWHPersisterConfig(t *testing.T) {
 			},
 			expected: goalDedicated,
 		},
+		{
+			desc: "falls back to the on-demand goal persister",
+			persisters: map[string]interface{}{
+				processor.GoalCountEventDWHPersisterName: onDemand,
+			},
+			expected: onDemand,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

@@ -1351,6 +1351,7 @@ func dwhPersisterConfig(persisters map[string]interface{}) interface{} {
 		processor.EvaluationCountEventDWHPersisterName,
 		processor.EvaluationEventDWHPersisterName,
 		processor.GoalEventDWHPersisterName,
+		processor.GoalCountEventDWHPersisterName,
 	} {
 		if config, ok := persisters[name]; ok {
 			return config
