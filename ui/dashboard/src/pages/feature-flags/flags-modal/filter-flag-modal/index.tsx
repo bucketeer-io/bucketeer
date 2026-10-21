@@ -62,7 +62,6 @@ const FilterFlagModal = ({
     getAccountLabel
   } = useAccountsLoader({
     organizationId: currentEnvironment.organizationId,
-    environmentId: currentEnvironment.id,
     enabled: hasMaintainerFilter,
     preloadEmails: selectedMaintainer ? [selectedMaintainer] : []
   });
