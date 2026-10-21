@@ -129,7 +129,7 @@
     "typescript-eslint": "^8.70.1",
     "unplugin-fonts": "^1.1.1",
     "uuid": "^14.0.2",
-    "vite": "^7.3.6",
+    "vite": "^7.3.7",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-svgr": "^4.2.0",
     "vite-tsconfig-paths": "^5.0.1",
