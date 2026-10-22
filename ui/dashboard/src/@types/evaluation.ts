@@ -1,6 +1,7 @@
 export enum TimeseriesUnit {
   HOUR = 'HOUR',
-  DAY = 'DAY'
+  DAY = 'DAY',
+  MINUTE = 'MINUTE'
 }
 
 export enum EvaluationTimeRange {
@@ -8,7 +9,10 @@ export enum EvaluationTimeRange {
   TWENTY_FOUR_HOURS = 'TWENTY_FOUR_HOURS',
   SEVEN_DAYS = 'SEVEN_DAYS',
   FOURTEEN_DAYS = 'FOURTEEN_DAYS',
-  THIRTY_DAYS = 'THIRTY_DAYS'
+  THIRTY_DAYS = 'THIRTY_DAYS',
+  ONE_HOUR = 'ONE_HOUR',
+  SIXTY_DAYS = 'SIXTY_DAYS',
+  NINETY_DAYS = 'NINETY_DAYS'
 }
 
 export interface EvaluationCollection {

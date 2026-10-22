@@ -1,9 +1,12 @@
 import {
+  evaluationTimeRanges,
   evaluationTimeseriesCount,
   EvaluationTimeseriesCountParams
 } from '@api/evaluation';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EvaluationCollection, QueryOptionsRespond } from '@types';
+
+export { evaluationTimeRanges };
 
 type QueryOptions = QueryOptionsRespond<EvaluationCollection> & {
   params?: EvaluationTimeseriesCountParams;

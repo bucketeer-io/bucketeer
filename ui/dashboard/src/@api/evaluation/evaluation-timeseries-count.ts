@@ -10,6 +10,17 @@ export interface EvaluationTimeseriesCountParams {
   timeRange: EvaluationTimeRange;
 }
 
+// Shortest window first. UNKNOWN is a proto default, not a chart range.
+export const evaluationTimeRanges = [
+  EvaluationTimeRange.ONE_HOUR,
+  EvaluationTimeRange.TWENTY_FOUR_HOURS,
+  EvaluationTimeRange.SEVEN_DAYS,
+  EvaluationTimeRange.FOURTEEN_DAYS,
+  EvaluationTimeRange.THIRTY_DAYS,
+  EvaluationTimeRange.SIXTY_DAYS,
+  EvaluationTimeRange.NINETY_DAYS
+] as const;
+
 export const evaluationTimeseriesCount = async (
   _params?: EvaluationTimeseriesCountParams
 ): Promise<EvaluationCollection> => {
