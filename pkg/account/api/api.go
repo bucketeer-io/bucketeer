@@ -26,6 +26,8 @@ import (
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	auditlogstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -59,21 +61,25 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type AccountService struct {
-	environmentClient environmentclient.Client
-	dbClient          database.Client
-	accountStorage    v2.AccountStorage
-	tagStorage        tagstorage.TagStorage
-	teamStorage       teamstorage.TeamStorage
-	auditLogStorage   auditlogstorage.AuditLogStorage
-	publisher         publisher.Publisher
-	opts              *options
-	logger            *zap.Logger
+	environmentClient  environmentclient.Client
+	dbClient           database.Client
+	authClient         authclient.Client
+	accountStorage     v2.AccountStorage
+	credentialsStorage authstorage.CredentialsStorage
+	tagStorage         tagstorage.TagStorage
+	teamStorage        teamstorage.TeamStorage
+	auditLogStorage    auditlogstorage.AuditLogStorage
+	publisher          publisher.Publisher
+	opts               *options
+	logger             *zap.Logger
 }
 
 func NewAccountService(
 	e environmentclient.Client,
 	dbClient database.Client,
 	accountStorage v2.AccountStorage,
+	authClient authclient.Client,
+	credentialsStorage authstorage.CredentialsStorage,
 	tagStorage tagstorage.TagStorage,
 	teamStorage teamstorage.TeamStorage,
 	auditLogStorage auditlogstorage.AuditLogStorage,
@@ -85,15 +91,17 @@ func NewAccountService(
 		opt(&options)
 	}
 	return &AccountService{
-		environmentClient: e,
-		dbClient:          dbClient,
-		accountStorage:    accountStorage,
-		tagStorage:        tagStorage,
-		teamStorage:       teamStorage,
-		auditLogStorage:   auditLogStorage,
-		publisher:         publisher,
-		opts:              &options,
-		logger:            options.logger.Named("api"),
+		environmentClient:  e,
+		dbClient:           dbClient,
+		authClient:         authClient,
+		accountStorage:     accountStorage,
+		credentialsStorage: credentialsStorage,
+		tagStorage:         tagStorage,
+		teamStorage:        teamStorage,
+		auditLogStorage:    auditLogStorage,
+		publisher:          publisher,
+		opts:               &options,
+		logger:             options.logger.Named("api"),
 	}
 }
 
