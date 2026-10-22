@@ -18,7 +18,7 @@ import {
   DropdownValue
 } from 'components/dropdown';
 import Spinner from 'components/spinner';
-import DropdownList from 'elements/dropdown-list';
+import DropdownList, { DropdownListHandle } from 'elements/dropdown-list';
 
 export interface DropdownMenuWithSearchProps {
   align?: 'start' | 'center' | 'end';
@@ -108,7 +108,8 @@ const DropdownMenuWithSearch = ({
 }: DropdownMenuWithSearchProps) => {
   const { t } = useTranslation(['common']);
   const inputSearchRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<DropdownListHandle>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -138,6 +139,14 @@ const DropdownMenuWithSearch = ({
     const timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
     return () => clearTimeout(timerId);
   }, [hideSearchInput, isOpen]);
+
+  const getFirstEnabledItem = useCallback(
+    () =>
+      contentRef.current?.querySelector<HTMLElement>(
+        `[data-option-index="${dropdownOptions.findIndex(option => !option.disabled)}"]:not([data-disabled])`
+      ),
+    [dropdownOptions]
+  );
 
   const onClearSearchValue = useCallback(() => {
     setSearchValue('');
@@ -189,6 +198,17 @@ const DropdownMenuWithSearch = ({
               }
             : {}
         }
+        onKeyDown={event => {
+          // Move focus back to the search input from the first result
+          if (
+            event.key === 'ArrowUp' &&
+            !hideSearchInput &&
+            event.target === getFirstEnabledItem()
+          ) {
+            event.preventDefault();
+            inputSearchRef.current?.focus();
+          }
+        }}
       >
         {!hideSearchInput && (
           <DropdownMenuSearch
@@ -204,19 +224,28 @@ const DropdownMenuWithSearch = ({
               onSearchChange?.(value);
               handleFocusSearchInput();
             }}
-            onKeyDown={event =>
+            onKeyDown={event => {
+              if (event.key.length === 1) event.stopPropagation();
               onKeyDown?.({
                 event,
                 searchValue,
                 matchOptions: dropdownOptions,
                 onClearSearchValue
-              })
-            }
+              });
+              if (event.key === 'ArrowDown' && !event.defaultPrevented) {
+                if (dropdownOptions.some(option => !option.disabled)) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  listRef.current?.focusFirstEnabled();
+                }
+              }
+            }}
           />
         )}
         {dropdownOptions?.length > 0 ? (
           <>
             <DropdownList
+              ref={listRef}
               options={dropdownOptions}
               itemSize={itemSize}
               itemSelected={itemSelected}

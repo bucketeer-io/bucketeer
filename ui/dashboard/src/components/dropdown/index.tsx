@@ -247,7 +247,7 @@ const DropdownMenuItem = forwardRef<
         ref={ref}
         disabled={disabled}
         className={cn(
-          'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+          'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[highlighted]:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
           { '!bg-gray-100': isSelectedItem },
           className
         )}
