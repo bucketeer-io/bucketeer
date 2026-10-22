@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	linkedEventsMemoryCacheTTL = 10 * time.Second
+	linkedEventsMemoryCacheTTL = 1 * time.Minute
 	// Same window as the experiment cacher, since events may arrive late
 	linkedExperimentsStopAtWindow = 2 * 24 * time.Hour
 
@@ -51,8 +51,7 @@ const (
 	typeExperiments   = "Experiments"
 	typeAutoOpsRules  = "AutoOpsRules"
 
-	cacheLayerDatabase = "Database"
-	codeLoadFailed     = "LoadFailed"
+	codeLoadFailed = "LoadFailed"
 )
 
 var errLinkedTargetsLoadFailed = errors.New("gateway: failed to load linked targets")
@@ -321,10 +320,8 @@ func (p *LinkedEventPublisher) listExperiments(
 		Archived: &wrapperspb.BoolValue{Value: false},
 	})
 	if err != nil {
-		cacheCounter.WithLabelValues(callerGatewayService, typeExperiments, cacheLayerDatabase, codeInternalError).Inc()
 		return nil, err
 	}
-	cacheCounter.WithLabelValues(callerGatewayService, typeExperiments, cacheLayerDatabase, codeOK).Inc()
 	return resp.Experiments, nil
 }
 
@@ -342,10 +339,8 @@ func (p *LinkedEventPublisher) listAutoOpsRules(
 		EnvironmentId: environmentID,
 	})
 	if err != nil {
-		cacheCounter.WithLabelValues(callerGatewayService, typeAutoOpsRules, cacheLayerDatabase, codeInternalError).Inc()
 		return nil, err
 	}
-	cacheCounter.WithLabelValues(callerGatewayService, typeAutoOpsRules, cacheLayerDatabase, codeOK).Inc()
 	return resp.AutoOpsRules, nil
 }
 
