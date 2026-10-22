@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { accountsFetcher } from '@api/account';
 import {
   ACCOUNTS_QUERY_KEY,
@@ -29,17 +29,23 @@ export const useAccountsLoader = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
-    useInfiniteQueryAccounts({
-      params: {
-        pageSize,
-        searchKeyword: searchQuery,
-        organizationId,
-        environmentId,
-        environmentRole
-      },
-      enabled
-    });
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage
+  } = useInfiniteQueryAccounts({
+    params: {
+      pageSize,
+      searchKeyword: searchQuery,
+      organizationId,
+      environmentId,
+      environmentRole
+    },
+    enabled
+  });
 
   const accumulatedAccounts = useMemo<Account[]>(
     () => data?.pages.flatMap(page => page.accounts) ?? [],
@@ -138,11 +144,22 @@ export const useAccountsLoader = ({
     [accumulatedAccounts]
   );
 
+  const hasLoadedRef = useRef(false);
+  if (data) hasLoadedRef.current = true;
+
   const isInitialLoading =
-    enabled && isLoading && accumulatedAccounts.length === 0;
+    enabled &&
+    isLoading &&
+    !searchQuery &&
+    !hasLoadedRef.current &&
+    accumulatedAccounts.length === 0;
 
   const isSearching =
-    isTyping || (enabled && isLoading && accumulatedAccounts.length === 0);
+    isTyping ||
+    (isFetching &&
+      !isFetchingNextPage &&
+      !isInitialLoading &&
+      (!!searchQuery || accumulatedAccounts.length === 0));
 
   return {
     accounts: allAccounts,

@@ -1,4 +1,12 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  ReactNode,
+  Ref,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef
+} from 'react';
 import {
   FixedSizeList,
   ListChildComponentProps,
@@ -22,8 +30,13 @@ interface RowWithDataProps {
   onSelectOption: (value: DropdownValue) => void;
 }
 
-const List =
-  FixedSizeList as unknown as React.ComponentType<FixedSizeListProps>;
+const List = FixedSizeList as unknown as React.ComponentType<
+  FixedSizeListProps & { ref?: Ref<FixedSizeList> }
+>;
+
+export interface DropdownListHandle {
+  focusFirstEnabled: () => void;
+}
 
 const RowWithData = ({
   index,
@@ -45,6 +58,7 @@ const RowWithData = ({
   return (
     <DropdownMenuItem
       key={index}
+      data-option-index={index}
       style={style}
       isSelectedItem={itemSelected === currentItem?.value}
       isSelected={selectedOptions?.includes(
@@ -60,12 +74,29 @@ const RowWithData = ({
       onSelectOption={() =>
         onSelectOption(currentItem[selectedFieldValue] as string)
       }
+      onPointerMove={event => {
+        if (
+          event.currentTarget
+            .closest('[role="menu"]')
+            ?.querySelector('input:focus')
+        )
+          event.preventDefault();
+      }}
+      onPointerLeave={event => {
+        if (
+          event.currentTarget
+            .closest('[role="menu"]')
+            ?.querySelector('input:focus')
+        )
+          event.preventDefault();
+      }}
       className={className}
     />
   );
 };
 
 interface DropdownListProps extends RowWithDataProps {
+  ref?: Ref<DropdownListHandle>;
   itemSelected?: string;
   height?: number;
   maxHeight?: number;
@@ -78,6 +109,7 @@ interface DropdownListProps extends RowWithDataProps {
 }
 
 const DropdownList = ({
+  ref,
   height,
   maxHeight = 200,
   width = '100%',
@@ -95,6 +127,37 @@ const DropdownList = ({
   onHasMoreOptions,
   onSelectOption
 }: DropdownListProps) => {
+  const listRef = useRef<FixedSizeList>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const focusFrameRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (focusFrameRef.current !== null)
+        cancelAnimationFrame(focusFrameRef.current);
+    },
+    []
+  );
+
+  useImperativeHandle(ref, () => ({
+    focusFirstEnabled: () => {
+      const index = options.findIndex(option => !option.disabled);
+      if (index === -1) return;
+      if (focusFrameRef.current !== null)
+        cancelAnimationFrame(focusFrameRef.current);
+      listRef.current?.scrollToItem(index, 'start');
+      // Wait for react-window to mount the row after scrolling.
+      focusFrameRef.current = requestAnimationFrame(() => {
+        focusFrameRef.current = null;
+        outerRef.current
+          ?.querySelector<HTMLElement>(
+            `[data-option-index="${index}"]:not([data-disabled])`
+          )
+          ?.focus();
+      });
+    }
+  }));
+
   const isLoadingMoreRef = useRef(isLoadingMore);
   isLoadingMoreRef.current = isLoadingMore;
   const isFetchingRef = useRef(false);
@@ -133,6 +196,8 @@ const DropdownList = ({
 
   return (
     <List
+      ref={listRef}
+      outerRef={outerRef}
       height={maxHeightList}
       width={width}
       itemSize={itemSize}
