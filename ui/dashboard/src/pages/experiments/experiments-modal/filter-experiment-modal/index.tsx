@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryAccounts } from '@queries/accounts';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isEmpty } from 'utils/data-type';
@@ -13,6 +13,7 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 export type FilterProps = {
   onSubmit: (v: Partial<ExperimentFilters>) => void;
@@ -38,18 +39,31 @@ const FilterExperimentModal = ({
     experimentFilterOptions[0]
   ]);
 
-  const { data: collection, isLoading } = useQueryAccounts({
-    params: {
-      cursor: String(0),
-      environmentId: currentEnvironment?.id,
-      organizationId: currentEnvironment?.organizationId
-    },
-    enabled: !!selectedFilters?.find(
-      item => item.value === FilterTypes.MAINTAINER
-    )
-  });
+  const hasMaintainerFilter = !!selectedFilters.find(
+    item => item.value === FilterTypes.MAINTAINER
+  );
 
-  const accounts = collection?.accounts || [];
+  const selectedMaintainer = useMemo(() => {
+    const filter = selectedFilters.find(
+      item => item.value === FilterTypes.MAINTAINER
+    );
+    return typeof filter?.filterValue === 'string' ? filter.filterValue : '';
+  }, [selectedFilters]);
+
+  const {
+    emailOptions,
+    isInitialLoading: isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onSearchChange: onAccountSearchChange,
+    getAccountLabel
+  } = useAccountsLoader({
+    organizationId: currentEnvironment.organizationId,
+    enabled: hasMaintainerFilter,
+    preloadEmails: selectedMaintainer ? [selectedMaintainer] : []
+  });
 
   const remainingFilterOptions = useMemo(
     () =>
@@ -75,18 +89,9 @@ const FilterExperimentModal = ({
   const getValueOptions = useCallback(
     (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
-      const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
-      if (isMaintainerFilter) {
-        const options = accounts.map(item => ({
-          label: item.email,
-          value: item.email
-        }));
-
-        return options;
-      }
       return experimentStatusOptions;
     },
-    [accounts, experimentStatusOptions]
+    [experimentStatusOptions]
   );
 
   const handleSetFilterOnInit = useCallback(() => {
@@ -120,7 +125,7 @@ const FilterExperimentModal = ({
         const { value: filterType, filterValue } = filterOption;
         const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
         return isMaintainerFilter
-          ? filterValue || ''
+          ? getAccountLabel(filterValue as string)
           : Array.isArray(filterValue)
             ? filterValue
                 .map(
@@ -134,7 +139,7 @@ const FilterExperimentModal = ({
       }
       return '';
     },
-    [experimentStatusOptions]
+    [experimentStatusOptions, getAccountLabel]
   );
 
   const handleChangeFilterValue = useCallback(
@@ -256,30 +261,49 @@ const FilterExperimentModal = ({
               />
 
               <p className="typo-para-medium text-gray-600">is</p>
-              <Dropdown
-                disabled={isLoading || !filterType}
-                placeholder={t(`select-value`)}
-                labelCustom={handleGetLabelFilterValue(filterOption)}
-                className={cn('w-full max-w-[280px] truncate', {
-                  capitalize: isStatusFilter
-                })}
-                contentClassName={cn('w-[235px]', {
-                  'pt-0 w-[300px]': isMaintainerFilter,
-                  'hidden-scroll': valueOptions?.length > 15
-                })}
-                value={
-                  isStatusFilter && Array.isArray(filterOption?.filterValue)
-                    ? filterOption.filterValue
-                    : (filterOption.filterValue as string)
-                }
-                options={valueOptions as DropdownOption[]}
-                isSearchable={isMaintainerFilter}
-                onChange={value =>
-                  handleChangeFilterValue(value as string, filterIndex)
-                }
-                multiselect={isStatusFilter}
-                isListItem={isMaintainerFilter || isStatusFilter}
-              />
+              {isMaintainerFilter ? (
+                <DropdownMenuWithSearch
+                  disabled={isLoadingAccounts}
+                  isLoading={isLoadingAccounts}
+                  placeholder={t(`select-value`)}
+                  itemSelected={filterOption?.filterValue as string}
+                  label={handleGetLabelFilterValue(filterOption) as string}
+                  options={emailOptions}
+                  isHasMore={hasMaintainerFilter && hasMore}
+                  isLoadingMore={isLoadingMore}
+                  onHasMoreOptions={loadMore}
+                  isSearching={isSearching}
+                  onSearchChange={onAccountSearchChange}
+                  onSelectOption={value =>
+                    handleChangeFilterValue(value as string, filterIndex)
+                  }
+                  triggerClassName="w-full max-w-[280px] truncate"
+                  contentClassName="w-[300px]"
+                />
+              ) : (
+                <Dropdown
+                  disabled={!filterType}
+                  placeholder={t(`select-value`)}
+                  labelCustom={handleGetLabelFilterValue(filterOption)}
+                  className={cn('w-full max-w-[280px] truncate', {
+                    capitalize: isStatusFilter
+                  })}
+                  contentClassName={cn('w-[235px]', {
+                    'hidden-scroll': valueOptions?.length > 15
+                  })}
+                  value={
+                    isStatusFilter && Array.isArray(filterOption?.filterValue)
+                      ? filterOption.filterValue
+                      : (filterOption.filterValue as string)
+                  }
+                  options={valueOptions as DropdownOption[]}
+                  onChange={value =>
+                    handleChangeFilterValue(value as string, filterIndex)
+                  }
+                  multiselect={isStatusFilter}
+                  isListItem={isStatusFilter}
+                />
+              )}
 
               <Button
                 variant={'grey'}
