@@ -281,10 +281,13 @@
     "event-count": "Event Count",
     "variation-counts": "Variation Counts",
     "total-evaluations": "Total evaluations <desc>{{value}}</desc>",
+    "past-hour": "Past hour",
     "last-24h": "Last 24 hours",
     "last-7-days": "Last 7 days",
     "last-14-days": "Last 14 days",
     "last-30-days": "Last 30 days",
+    "last-2-months": "Last 2 months",
+    "last-3-months": "Last 3 months",
     "tooltip-content": "Shows real-time counts of evaluation events and unique users who received this flag."
   },
   "code-refs": {

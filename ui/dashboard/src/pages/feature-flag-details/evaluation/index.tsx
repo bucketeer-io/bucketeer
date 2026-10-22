@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryEvaluation } from '@queries/evaluation';
+import { evaluationTimeRanges, useQueryEvaluation } from '@queries/evaluation';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { EvaluationTimeRange, Feature } from '@types';
+import { EvaluationTimeRange, Feature, TimeseriesUnit } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import {
@@ -19,6 +19,29 @@ import { EvaluationChart } from './evaluation-chart';
 import EvaluationTable from './evaluation-table';
 import FilterBar from './filter-bar';
 import { EvaluationFilters, EvaluationTab, TimeRangeOption } from './types';
+
+const timeRangeLabelKey: Record<(typeof evaluationTimeRanges)[number], string> =
+  {
+    [EvaluationTimeRange.ONE_HOUR]: 'table:evaluation.past-hour',
+    [EvaluationTimeRange.TWENTY_FOUR_HOURS]: 'table:evaluation.last-24h',
+    [EvaluationTimeRange.SEVEN_DAYS]: 'table:evaluation.last-7-days',
+    [EvaluationTimeRange.FOURTEEN_DAYS]: 'table:evaluation.last-14-days',
+    [EvaluationTimeRange.THIRTY_DAYS]: 'table:evaluation.last-30-days',
+    [EvaluationTimeRange.SIXTY_DAYS]: 'table:evaluation.last-2-months',
+    [EvaluationTimeRange.NINETY_DAYS]: 'table:evaluation.last-3-months'
+  };
+
+const chartTimeUnit = (
+  unit: TimeseriesUnit | undefined,
+  period: EvaluationTimeRange
+): 'minute' | 'hour' | 'day' => {
+  if (unit === TimeseriesUnit.MINUTE) return 'minute';
+  if (unit === TimeseriesUnit.HOUR) return 'hour';
+  if (unit === TimeseriesUnit.DAY) return 'day';
+  if (period === EvaluationTimeRange.ONE_HOUR) return 'minute';
+  if (period === EvaluationTimeRange.TWENTY_FOUR_HOURS) return 'hour';
+  return 'day';
+};
 
 const EvaluationPage = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['common', 'table']);
@@ -49,25 +72,12 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
   });
 
   const timeRangeOptions: TimeRangeOption[] = useMemo(
-    () => [
-      {
-        label: t('table:evaluation.last-30-days'),
-        value: EvaluationTimeRange.THIRTY_DAYS
-      },
-      {
-        label: t('table:evaluation.last-14-days'),
-        value: EvaluationTimeRange.FOURTEEN_DAYS
-      },
-      {
-        label: t('table:evaluation.last-7-days'),
-        value: EvaluationTimeRange.SEVEN_DAYS
-      },
-      {
-        label: t('table:evaluation.last-24h'),
-        value: EvaluationTimeRange.TWENTY_FOUR_HOURS
-      }
-    ],
-    []
+    () =>
+      evaluationTimeRanges.map(value => ({
+        label: t(timeRangeLabelKey[value]),
+        value
+      })),
+    [t]
   );
 
   const timeRangeCurrent = useMemo(
@@ -174,11 +184,10 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
                   data={chartData}
                   variationValues={variationValues}
                   timeseries={timeseries}
-                  unit={
-                    filters.period === EvaluationTimeRange.TWENTY_FOUR_HOURS
-                      ? 'hour'
-                      : 'day'
-                  }
+                  unit={chartTimeUnit(
+                    countData[0]?.timeseries?.unit,
+                    filters.period
+                  )}
                   setDataSets={setDataSets}
                 />
               </>

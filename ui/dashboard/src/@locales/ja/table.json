@@ -281,10 +281,13 @@
     "event-count": "イベント数",
     "variation-counts": "バリエーション数",
     "total-evaluations": "総評価数 <desc>{{value}}</desc>",
+    "past-hour": "過去1時間",
     "last-24h": "過去24時間",
     "last-7-days": "過去7日間",
     "last-14-days": "過去14日間",
     "last-30-days": "過去30日間",
+    "last-2-months": "過去2ヶ月",
+    "last-3-months": "過去3ヶ月",
     "tooltip-content": "評価イベントのリアルタイムカウントごとのフラグを受け取ったユニークユーザーを表示します。"
   },
   "code-refs": {

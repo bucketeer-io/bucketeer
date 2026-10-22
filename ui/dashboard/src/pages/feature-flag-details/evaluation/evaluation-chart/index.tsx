@@ -14,7 +14,6 @@ import {
   PointElement,
   TimeScale,
   TimeSeriesScale,
-  TimeUnit,
   Tooltip
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
@@ -33,9 +32,15 @@ interface TimeseriesStackedLineChartProps {
   variationValues: Option[];
   timeseries: Array<string>;
   data: Array<Array<number>>;
-  unit: string;
+  unit: 'minute' | 'hour' | 'day';
   setDataSets: (datasets: DatasetReduceType[]) => void;
 }
+
+// 30-day charts have 30 daily points. Longer daily ranges (60/90) and the
+// 60-point minute range need fewer labels so HH:mm / day text stays readable.
+const MINUTE_TICK_LIMIT = 12;
+const LONG_DAY_TICK_LIMIT = 10;
+const LONG_DAY_POINT_THRESHOLD = 31;
 
 interface DatasetType extends ChartDataset<'line'> {
   value: string;
@@ -69,6 +74,12 @@ export const EvaluationChart = forwardRef(
     const maxValue = Math.max(...data.flat());
     const useSymlog = maxValue > 100;
     const logBase = getLogBase(maxValue);
+    const maxTicksLimit =
+      unit === 'minute'
+        ? MINUTE_TICK_LIMIT
+        : unit === 'day' && timeseries.length > LONG_DAY_POINT_THRESHOLD
+          ? LONG_DAY_TICK_LIMIT
+          : undefined;
 
     const chartData: ChartData<
       'line',
@@ -130,12 +141,20 @@ export const EvaluationChart = forwardRef(
         x: {
           type: 'time',
           time: {
-            unit: unit as TimeUnit,
-            displayFormats: { hour: 'HH:mm' }
+            unit,
+            displayFormats: { minute: 'HH:mm', hour: 'HH:mm' }
           },
           ticks: {
             align: 'center' as const,
             source: 'data',
+            ...(maxTicksLimit
+              ? {
+                  autoSkip: true,
+                  maxTicksLimit,
+                  minRotation: 0,
+                  maxRotation: 0
+                }
+              : {}),
             font: {
               family: 'Sofia Pro',
               size: 14,
