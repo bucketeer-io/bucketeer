@@ -119,6 +119,7 @@ type options struct {
 	metricsWorkers                    int
 	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
+	linkedEventPublisher              *LinkedEventPublisher
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
 }
@@ -207,6 +208,12 @@ func WithFeatureFlagDiffGracePeriod(d time.Duration) Option {
 func WithInMemoryCache(c *cachev3.InMemoryCache) Option {
 	return func(opts *options) {
 		opts.inMemoryCache = c
+	}
+}
+
+func WithLinkedEventPublisher(p *LinkedEventPublisher) Option {
+	return func(opts *options) {
+		opts.linkedEventPublisher = p
 	}
 }
 
@@ -433,6 +440,11 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 			)...,
 		)
 		return nil, ErrInternal
+	}
+	if p := s.opts.linkedEventPublisher; p != nil {
+		if errs := p.Publish(ctx, envAPIKey.Environment.Id, []publisher.Message{event}, nil); len(errs) > 0 {
+			return nil, ErrInternal
+		}
 	}
 	eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeOK)
 	return &gwproto.TrackResponse{}, nil
@@ -1827,7 +1839,22 @@ func (s *grpcGatewayService) RegisterEvents(
 	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.UrlCode)
 	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
 	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
-	errs = s.mergeMaps(errs, goalErrors, evalErrors)
+	linkedErrors := make(map[string]*gwproto.RegisterEventsResponse_Error)
+	if p := s.opts.linkedEventPublisher; p != nil {
+		failed := p.Publish(
+			ctx,
+			envAPIKey.Environment.Id,
+			excludeFailed(goalMessages, goalErrors),
+			excludeFailed(evaluationMessages, evalErrors),
+		)
+		for id, err := range failed {
+			linkedErrors[id] = &gwproto.RegisterEventsResponse_Error{
+				Retriable: !errors.Is(err, publisher.ErrBadMessage),
+				Message:   "Failed to publish event",
+			}
+		}
+	}
+	errs = s.mergeMaps(errs, goalErrors, evalErrors, linkedErrors)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {
 			eventCounter.WithLabelValues(callerGatewayService, typeRegisterEvent, codeInvalidTimestampRequest).Inc()

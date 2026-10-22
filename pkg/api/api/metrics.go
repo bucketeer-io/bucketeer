@@ -181,6 +181,13 @@ var (
 			Name:      "api_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
+	linkedEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_linked_events_total",
+			Help:      "Total number of events published to the dedicated linked event topics",
+		}, []string{"topic", "code"})
 	metricsQueueDepthGauge = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: "bucketeer",
@@ -359,6 +366,7 @@ func registerMetrics(r metrics.Registerer) {
 		r.MustRegister(
 			cacheCounter,
 			eventCounter,
+			linkedEventCounter,
 			metricsQueueDepthGauge,
 			metricsWorkerPanicCounter,
 			metricsOverflowCounter,

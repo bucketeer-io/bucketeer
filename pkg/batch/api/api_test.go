@@ -819,7 +819,7 @@ func newBatchService(t *testing.T,
 		cacher.NewAutoOpsRulesCacher(
 			environmentMockClient,
 			autoOpsRulesMockClient,
-			redisMockClient,
+			[]cache.MultiGetCache{redisMockClient},
 		),
 		deleter.NewTagDeleter(tagStorageMock, featureStorageMock),
 		autoarchive.NewFeatureAutoArchiver(

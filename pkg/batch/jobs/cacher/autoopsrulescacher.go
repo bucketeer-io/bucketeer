@@ -17,6 +17,7 @@ package cacher
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -33,7 +34,7 @@ import (
 type autoOpsRulesCacher struct {
 	environmentClient envclient.Client
 	autoOpsClient     aoclient.Client
-	cache             cachev3.AutoOpsRulesCache
+	caches            []cachev3.AutoOpsRulesCache
 	opts              *jobs.Options
 	logger            *zap.Logger
 }
@@ -41,7 +42,7 @@ type autoOpsRulesCacher struct {
 func NewAutoOpsRulesCacher(
 	environmentClient envclient.Client,
 	autoOpsClient aoclient.Client,
-	cache cache.MultiGetCache,
+	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -50,10 +51,14 @@ func NewAutoOpsRulesCacher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	caches := make([]cachev3.AutoOpsRulesCache, 0, len(multiCaches))
+	for _, cache := range multiCaches {
+		caches = append(caches, cachev3.NewAutoOpsRulesCache(cache))
+	}
 	return &autoOpsRulesCacher{
 		environmentClient: environmentClient,
 		autoOpsClient:     autoOpsClient,
-		cache:             cachev3.NewAutoOpsRulesCache(cache),
+		caches:            caches,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("auto-ops-rules-cacher"),
 	}
@@ -75,10 +80,7 @@ func (c *autoOpsRulesCacher) Run(ctx context.Context) (lastErr error) {
 			c.logger.Error("Failed to list auto ops rules", zap.String("environmentId", env.Id))
 			return err
 		}
-		if err := c.cache.Put(&aoproto.AutoOpsRules{AutoOpsRules: autoOpsRules}, env.Id); err != nil {
-			c.logger.Error("Failed to cache auto ops rules", zap.String("environmentId", env.Id))
-			continue
-		}
+		c.putCache(&aoproto.AutoOpsRules{AutoOpsRules: autoOpsRules}, env.Id)
 	}
 	return nil
 }
@@ -109,4 +111,22 @@ func (c *autoOpsRulesCacher) listAutoOpsRules(
 		return nil, err
 	}
 	return resp.AutoOpsRules, nil
+}
+
+// Save the auto ops rules by environment in all redis instances
+func (c *autoOpsRulesCacher) putCache(rules *aoproto.AutoOpsRules, environmentID string) {
+	var wg sync.WaitGroup
+	for _, cache := range c.caches {
+		wg.Add(1)
+		go func(cache cachev3.AutoOpsRulesCache) {
+			defer wg.Done()
+			if err := cache.Put(rules, environmentID); err != nil {
+				c.logger.Error("Failed to cache auto ops rules",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+				)
+			}
+		}(cache)
+	}
+	wg.Wait()
 }

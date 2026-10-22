@@ -265,6 +265,10 @@ services:
       - BUCKETEER_API_POSTGRES_SSL_ROOT_CERT=/usr/local/certs/postgres/tls.crt
       - BUCKETEER_API_GOAL_TOPIC=goal
       - BUCKETEER_API_EVALUATION_TOPIC=evaluation
+      - BUCKETEER_API_EVALUATION_DWH_TOPIC=evaluation-events-dwh
+      - BUCKETEER_API_EVALUATION_OPS_TOPIC=evaluation-events-ops
+      - BUCKETEER_API_GOAL_DWH_TOPIC=goal-events-dwh
+      - BUCKETEER_API_GOAL_OPS_TOPIC=goal-events-ops
       - BUCKETEER_API_METRICS_TOPIC=metrics
       - BUCKETEER_API_PUBLISH_NUM_GOROUTINES=200
       - BUCKETEER_API_PUBLISH_TIMEOUT=1m

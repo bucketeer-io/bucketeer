@@ -1083,6 +1083,20 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 	}
 	publish(s.goalPublisher, goalMessages, typeGoal)
 	publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
+	if p := s.opts.linkedEventPublisher; p != nil {
+		failed := p.Publish(
+			req.Context(),
+			envAPIKey.Environment.Id,
+			excludeFailed(goalMessages, errs),
+			excludeFailed(evaluationMessages, errs),
+		)
+		for id, err := range failed {
+			errs[id] = &registerEventsResponseError{
+				Retriable: !errors.Is(err, publisher.ErrBadMessage),
+				Message:   "Failed to publish event",
+			}
+		}
+	}
 	publish(s.metricsPublisher, metricsMessages, typeMetrics)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {

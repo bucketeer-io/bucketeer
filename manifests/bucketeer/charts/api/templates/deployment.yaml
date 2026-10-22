@@ -103,6 +103,14 @@ spec:
               value: "{{ .Values.env.goalTopic }}"
             - name: BUCKETEER_API_EVALUATION_TOPIC
               value: "{{ .Values.env.evaluationTopic }}"
+            - name: BUCKETEER_API_EVALUATION_DWH_TOPIC
+              value: "{{ .Values.env.evaluationDWHTopic }}"
+            - name: BUCKETEER_API_EVALUATION_OPS_TOPIC
+              value: "{{ .Values.env.evaluationOPSTopic }}"
+            - name: BUCKETEER_API_GOAL_DWH_TOPIC
+              value: "{{ .Values.env.goalDWHTopic }}"
+            - name: BUCKETEER_API_GOAL_OPS_TOPIC
+              value: "{{ .Values.env.goalOPSTopic }}"
             - name: BUCKETEER_API_METRICS_TOPIC
               value: "{{ .Values.env.metricsTopic }}"
             - name: BUCKETEER_API_PUBLISH_NUM_GOROUTINES

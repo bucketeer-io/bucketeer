@@ -765,9 +765,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cacher.NewAutoOpsRulesCacher(
 			environmentClient,
 			autoOpsClient,
-			// Because the event-perister-ops uses persistent redis
-			// We must use the same instance for caching.
-			cachev3.NewRedisCache(persistentRedisClient),
+			// The ops persisters read the persistent redis, and the api gateway reads the non-persistent ones
+			append([]cache.MultiGetCache{cachev3.NewRedisCache(persistentRedisClient)}, nonPersistentRedisCaches...),
 			jobs.WithLogger(logger),
 		),
 		deleter.NewTagDeleter(

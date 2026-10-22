@@ -31,6 +31,11 @@ env:
   pubsubEmulatorHost:
   goalTopic:
   evaluationTopic:
+  # Dedicated topics for the events linked to experiments and auto ops rules. Empty disables them.
+  evaluationDWHTopic:
+  evaluationOPSTopic:
+  goalDWHTopic:
+  goalOPSTopic:
   metricsTopic:
   publishNumGoroutines: 200
   publishTimeout: 1m

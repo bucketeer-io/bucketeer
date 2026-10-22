@@ -104,6 +104,10 @@ type server struct {
 	evaluationTopic                   *string
 	evaluationTopicProject            *string
 	metricsTopic                      *string
+	evaluationDWHTopic                *string
+	evaluationOPSTopic                *string
+	goalDWHTopic                      *string
+	goalOPSTopic                      *string
 	publishNumGoroutines              *int
 	publishTimeout                    *time.Duration
 	metricsWorkers                    *int
@@ -210,6 +214,22 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"GCP Project id to use for PubSub to publish EvaluationEvent.",
 		).String(),
 		metricsTopic: cmd.Flag("metrics-topic", "Topic to use for publishing MetricsEvent.").String(),
+		evaluationDWHTopic: cmd.Flag(
+			"evaluation-dwh-topic",
+			"Topic to use for publishing EvaluationEvent linked to experiments. Empty disables it.",
+		).String(),
+		evaluationOPSTopic: cmd.Flag(
+			"evaluation-ops-topic",
+			"Topic to use for publishing EvaluationEvent linked to auto ops rules. Empty disables it.",
+		).String(),
+		goalDWHTopic: cmd.Flag(
+			"goal-dwh-topic",
+			"Topic to use for publishing GoalEvent linked to experiments. Empty disables it.",
+		).String(),
+		goalOPSTopic: cmd.Flag(
+			"goal-ops-topic",
+			"Topic to use for publishing GoalEvent linked to auto ops rules. Empty disables it.",
+		).String(),
 		publishNumGoroutines: cmd.Flag(
 			"publish-num-goroutines",
 			"The number of goroutines for publishing.",
@@ -495,6 +515,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 	}
 
+	createLinkedPublisher := func(topic, project string) (publisher.Publisher, error) {
+		if topic == "" {
+			return nil, nil
+		}
+		return pubsubClient.CreatePublisherInProject(topic, project)
+	}
+	var linkedTopics api.LinkedEventTopics
+	if linkedTopics.EvaluationDWH, err = createLinkedPublisher(*s.evaluationDWHTopic, evaluationTopicProject); err != nil {
+		return err
+	}
+	if linkedTopics.EvaluationOPS, err = createLinkedPublisher(*s.evaluationOPSTopic, evaluationTopicProject); err != nil {
+		return err
+	}
+	if linkedTopics.GoalDWH, err = createLinkedPublisher(*s.goalDWHTopic, goalTopicProject); err != nil {
+		return err
+	}
+	if linkedTopics.GoalOPS, err = createLinkedPublisher(*s.goalOPSTopic, goalTopicProject); err != nil {
+		return err
+	}
+
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
 		return err
@@ -743,6 +783,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 	}
 
+	linkedEventPublisher := api.NewLinkedEventPublisher(
+		linkedTopics,
+		redisV3Cache,
+		experimentClient,
+		autoOpsClient,
+		logger,
+	)
+
 	service := api.NewGrpcGatewayService(
 		ctx,
 		featureClient,
@@ -769,6 +817,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
+		api.WithLinkedEventPublisher(linkedEventPublisher),
 		api.WithMetrics(registerer),
 		api.WithMetricsWorkers(*s.metricsWorkers),
 		api.WithMetricsQueueSize(*s.metricsQueueSize),
@@ -864,6 +913,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
+		api.WithLinkedEventPublisher(linkedEventPublisher),
 		api.WithMetrics(registerer),
 		api.WithLogger(logger),
 	)
@@ -932,6 +982,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// These are fast cleanup operations that can run asynchronously.
 		go goalPublisher.Stop()
 		go evaluationPublisher.Stop()
+		for _, p := range []publisher.Publisher{
+			linkedTopics.EvaluationDWH, linkedTopics.EvaluationOPS, linkedTopics.GoalDWH, linkedTopics.GoalOPS,
+		} {
+			if p != nil {
+				go p.Stop()
+			}
+		}
 		if metricsPublisher != nil {
 			go metricsPublisher.Stop()
 		}
