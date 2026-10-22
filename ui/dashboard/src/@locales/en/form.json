@@ -297,6 +297,7 @@
       "start-date": "The earliest date on which the schedule can start running. The first execution will occur on the first day that matches the repeat pattern on or after this date.",
       "end": "Choose when the recurring schedule should stop: set a specific end date, limit the number of executions, or let it continue indefinitely."
     },
+    "view-recurring": "View Recurring Schedule",
     "edit-recurring": "Edit Recurring Schedule",
     "stop-recurring": "Stop Recurring Schedule",
     "delete-recurring": "Delete Recurring Schedule"

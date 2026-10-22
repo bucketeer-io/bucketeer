@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { IconMoreHorizOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { Popover, PopoverProps, PopoverValue } from 'components/popover';
+import { formatPopoverOptions } from './utils';
 
 interface Props extends PopoverProps<PopoverValue> {
   isNeedAdminAccess?: boolean;
@@ -29,15 +30,10 @@ const DisabledPopoverTooltip = ({
     return '';
   }, [envEditable, isOrganizationAdmin, isNeedAdminAccess, content]);
 
-  const formattedOptions = useMemo(() => {
-    if (!tooltipContent) return options;
-    return (options || []).map(item => ({
-      ...item,
-      tooltip: tooltipContent || item?.tooltip,
-      disabled:
-        item.disabled || (!!tooltipContent && !content) || !!item?.tooltip
-    }));
-  }, [tooltipContent, options, content]);
+  const formattedOptions = useMemo(
+    () => formatPopoverOptions(options, tooltipContent, content),
+    [tooltipContent, options, content]
+  );
 
   return (
     <Popover

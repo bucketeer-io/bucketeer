@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
-import { AutoOpsRule, Rollout } from '@types';
+import { Rollout } from '@types';
 import { cn } from 'utils/style';
 import { IconInfoFilled, IconPlus, IconTrash, IconWatch } from '@icons';
 import { ScheduleOperationFormType } from 'pages/feature-flag-details/operations/form-schema';
@@ -25,14 +25,12 @@ const WarningMessage = ({ description }: { description: string }) => {
 
 const ScheduleList = ({
   isCreate,
-  isFinishedTab,
-  rollouts,
-  selectedData
+  isDisabled,
+  rollouts
 }: {
   isCreate: boolean;
-  isFinishedTab: boolean;
+  isDisabled: boolean;
   rollouts: Rollout[];
-  selectedData?: AutoOpsRule;
 }) => {
   const { t } = useTranslation(['form', 'common']);
   const [conflictWithRolloutIndexes, setConflictWithRolloutIndexes] = useState<
@@ -81,11 +79,9 @@ const ScheduleList = ({
 
   const isDisabledField = useCallback(
     (wasPassed?: boolean) => {
-      return (
-        (isFinishedTab && !!selectedData) || (!isCreate ? !!wasPassed : false)
-      );
+      return isDisabled || (!isCreate ? !!wasPassed : false);
     },
-    [isFinishedTab, isCreate, selectedData]
+    [isDisabled, isCreate]
   );
 
   useEffect(() => {
@@ -258,7 +254,7 @@ const ScheduleList = ({
         type="button"
         variant={'text'}
         className="flex items-center h-6 self-start p-0"
-        disabled={isFinishedTab && !!selectedData}
+        disabled={isDisabled}
         onClick={handleAddDate}
       >
         <Icon icon={IconPlus} size="md" className="flex-center" />
