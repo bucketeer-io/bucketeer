@@ -754,9 +754,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// Subscribe to the cache-invalidation topic, which is published by the
 	// subscriber service after it refreshes L2. This pod uses only the
 	// configured cache-invalidation topic for that purpose.
+	linkedEventPublisher := api.NewLinkedEventPublisher(
+		linkedTopics,
+		redisV3Cache,
+		experimentClient,
+		autoOpsClient,
+		logger,
+	)
+
 	if *s.cacheInvalidationTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
-			invalidatorCtx, pubsubClient, streamDispatcher, inMemoryCache, *s.cacheInvalidationTopic, logger,
+			invalidatorCtx,
+			pubsubClient,
+			streamDispatcher,
+			inMemoryCache,
+			linkedEventPublisher,
+			*s.cacheInvalidationTopic,
+			logger,
 		)
 		if err != nil {
 			return err
@@ -782,14 +796,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 	}
-
-	linkedEventPublisher := api.NewLinkedEventPublisher(
-		linkedTopics,
-		redisV3Cache,
-		experimentClient,
-		autoOpsClient,
-		logger,
-	)
 
 	service := api.NewGrpcGatewayService(
 		ctx,
@@ -1043,6 +1049,7 @@ func (s *server) startCacheInvalidator(
 	pubsubClient factory.Client,
 	dispatcher *stream.Dispatcher,
 	inMemoryCache *cachev3.InMemoryCache,
+	linkedEventPublisher *api.LinkedEventPublisher,
 	topic string,
 	logger *zap.Logger,
 ) (func(), error) {
@@ -1078,6 +1085,7 @@ func (s *server) startCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
 		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
+		linkedEventPublisher,
 		dispatcher,
 		logger,
 	)

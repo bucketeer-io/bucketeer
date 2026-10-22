@@ -35,6 +35,7 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
@@ -267,4 +268,83 @@ func newLinkedTestGoal(t *testing.T, id, goalID string) *eventproto.Event {
 	e, err := anypb.New(&eventproto.GoalEvent{GoalId: goalID})
 	require.NoError(t, err)
 	return &eventproto.Event{Id: id, Event: e, EnvironmentId: linkedTestEnvID}
+}
+
+func TestLinkedEventPublisherSkipsDisabledRoutes(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	m := newLinkedTestMocks(ctrl)
+	// No cache or client calls are expected because goal routes are disabled
+	lp := NewLinkedEventPublisher(
+		LinkedEventTopics{EvaluationDWH: m.evalDWH},
+		m.cache, m.expClient, m.autoOpsClient, zap.NewNop(),
+	)
+	goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
+	assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+}
+
+func TestLinkedEventPublisherEvict(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		setup        func(*linkedTestMocks, func() *LinkedEventPublisher)
+		evictBetween bool
+	}{
+		{
+			desc:         "reloads after eviction",
+			evictBetween: true,
+			setup: func(m *linkedTestMocks, _ func() *LinkedEventPublisher) {
+				m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(
+					marshalLinkedTest(t, &experimentproto.Experiments{}), nil).Times(2)
+			},
+		},
+		{
+			desc: "does not store a snapshot loaded during eviction",
+			setup: func(m *linkedTestMocks, lp func() *LinkedEventPublisher) {
+				gomock.InOrder(
+					m.cache.EXPECT().Get(linkedTestEnvID+":experiment").DoAndReturn(func(string) (interface{}, error) {
+						lp().Evict(linkedTestEnvID)
+						return marshalLinkedTest(t, &experimentproto.Experiments{}), nil
+					}),
+					m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(
+						marshalLinkedTest(t, &experimentproto.Experiments{}), nil),
+				)
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := newLinkedTestMocks(ctrl)
+			var lp *LinkedEventPublisher
+			p.setup(m, func() *LinkedEventPublisher { return lp })
+			lp = NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
+			goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
+			assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+			if p.evictBetween {
+				lp.Evict(linkedTestEnvID)
+			}
+			assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+		})
+	}
+}
+
+func TestCacheInvalidatorEvictsLinkedTargets(t *testing.T) {
+	t.Parallel()
+	for _, entityType := range []domaineventproto.Event_EntityType{
+		domaineventproto.Event_EXPERIMENT,
+		domaineventproto.Event_AUTOOPS_RULE,
+	} {
+		t.Run(entityType.String(), func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := newLinkedTestMocks(ctrl)
+			lp := NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
+			lp.targets[linkedTestEnvID] = &linkedTargets{}
+			ci := NewCacheInvalidator(nil, nil, nil, lp, nil, zap.NewNop())
+			require.NoError(t, ci.evict(&domaineventproto.Event{EntityType: entityType, EnvironmentId: linkedTestEnvID}))
+			assert.NotContains(t, lp.targets, linkedTestEnvID)
+		})
+	}
 }

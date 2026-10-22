@@ -78,9 +78,11 @@ type LinkedEventPublisher struct {
 	memoryCacheTTL         time.Duration
 	mu                     sync.RWMutex
 	targets                map[string]*linkedTargets
-	flightgroup            singleflight.Group
-	now                    func() time.Time
-	logger                 *zap.Logger
+	// Bumped on eviction so an in-flight load does not store a stale snapshot
+	generations map[string]uint64
+	flightgroup singleflight.Group
+	now         func() time.Time
+	logger      *zap.Logger
 }
 
 type linkedTargets struct {
@@ -112,6 +114,7 @@ func NewLinkedEventPublisher(
 		autoOpsClient:          autoOpsClient,
 		memoryCacheTTL:         linkedEventsMemoryCacheTTL,
 		targets:                make(map[string]*linkedTargets),
+		generations:            make(map[string]uint64),
 		now:                    time.Now,
 		logger:                 logger.Named("linked-event-publisher"),
 	}
@@ -125,6 +128,12 @@ func (p *LinkedEventPublisher) Publish(
 	evaluations []publisher.Message,
 ) map[string]error {
 	errs := make(map[string]error)
+	if p.topics.GoalDWH == nil && p.topics.GoalOPS == nil {
+		goals = nil
+	}
+	if p.topics.EvaluationDWH == nil && p.topics.EvaluationOPS == nil {
+		evaluations = nil
+	}
 	if len(goals) == 0 && len(evaluations) == 0 {
 		return errs
 	}
@@ -254,7 +263,19 @@ func (p *LinkedEventPublisher) getTargets(ctx context.Context, environmentID str
 	}
 }
 
+// Evict drops the environment's targets when its experiments or auto ops rules change.
+func (p *LinkedEventPublisher) Evict(environmentID string) {
+	p.mu.Lock()
+	delete(p.targets, environmentID)
+	p.generations[environmentID]++
+	p.mu.Unlock()
+	p.flightgroup.Forget(environmentID)
+}
+
 func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
+	p.mu.RLock()
+	generation := p.generations[environmentID]
+	p.mu.RUnlock()
 	t := &linkedTargets{
 		experimentFeatures:   make(map[string]struct{}),
 		experimentGoals:      make(map[string]struct{}),
@@ -295,7 +316,9 @@ func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID st
 	}
 	t.expiresAt = p.now().Add(p.memoryCacheTTL)
 	p.mu.Lock()
-	p.targets[environmentID] = t
+	if p.generations[environmentID] == generation {
+		p.targets[environmentID] = t
+	}
 	p.mu.Unlock()
 	return t, nil
 }
