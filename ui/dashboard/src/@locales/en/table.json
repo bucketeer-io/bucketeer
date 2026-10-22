@@ -288,6 +288,7 @@
     "last-30-days": "Last 30 days",
     "last-2-months": "Last 2 months",
     "last-3-months": "Last 3 months",
+    "refresh": "Refresh",
     "tooltip-content": "Shows real-time counts of evaluation events and unique users who received this flag."
   },
   "code-refs": {

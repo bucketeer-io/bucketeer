@@ -52,6 +52,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
   const searchFilters: Partial<EvaluationFilters> = searchOptions;
 
   const [dataSets, setDataSets] = useState<DatasetReduceType[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const defaultFilters = {
     tab: EvaluationTab.EVENT_COUNT,
@@ -62,7 +63,11 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
   const [filters, setFilters] =
     usePartialState<EvaluationFilters>(defaultFilters);
 
-  const { data: evaluationCollection, isLoading } = useQueryEvaluation({
+  const {
+    data: evaluationCollection,
+    isLoading,
+    refetch
+  } = useQueryEvaluation({
     params: {
       environmentId: currentEnvironment.id,
       featureId: feature.id,
@@ -130,6 +135,15 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     [countData]
   );
 
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const onChangeFilters = (values: Partial<EvaluationFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
@@ -146,6 +160,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
       <FilterBar
         isLoading={isLoading}
+        isRefreshing={isRefreshing}
         currentFilter={timeRangeCurrent}
         timeRangeOptions={timeRangeOptions}
         timeRangeLabel={timeRangeLabel}
@@ -154,6 +169,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
             period: range
           })
         }
+        onRefresh={onRefresh}
       />
       <Card className="h-full">
         <Tabs

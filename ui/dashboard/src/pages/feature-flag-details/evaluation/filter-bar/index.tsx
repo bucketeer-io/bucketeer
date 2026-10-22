@@ -1,4 +1,7 @@
-import { IconLaunchOutlined } from 'react-icons-material-design';
+import {
+  IconLaunchOutlined,
+  IconRefreshOutlined
+} from 'react-icons-material-design';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import { EvaluationTimeRange } from '@types';
@@ -11,16 +14,20 @@ import { TimeRangeOption } from '../types';
 
 const FilterBar = ({
   isLoading,
+  isRefreshing,
   timeRangeOptions,
   timeRangeLabel,
   currentFilter,
-  onChangeTimeRange
+  onChangeTimeRange,
+  onRefresh
 }: {
   isLoading: boolean;
+  isRefreshing: boolean;
   timeRangeOptions: TimeRangeOption[];
   timeRangeLabel: string;
   currentFilter: string;
   onChangeTimeRange: (timeRange: EvaluationTimeRange) => void;
+  onRefresh: () => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -64,7 +71,26 @@ const FilterBar = ({
           onChange={value => onChangeTimeRange(value as EvaluationTimeRange)}
           alignContent="end"
           className="px-4 py-[13.5px]"
+          contentClassName="max-h-none overflow-y-visible"
           wrapTriggerStyle="!w-fit"
+        />
+        <Tooltip
+          content={t('table:evaluation.refresh')}
+          trigger={
+            <button
+              type="button"
+              aria-label={t('table:evaluation.refresh')}
+              disabled={isLoading || isRefreshing}
+              onClick={onRefresh}
+              className="flex items-center justify-center size-[53px] shrink-0 border border-gray-400 rounded-lg bg-white text-gray-600 hover:shadow-border-gray-400 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 disabled:!shadow-none"
+            >
+              <Icon
+                icon={IconRefreshOutlined}
+                size="sm"
+                className={isRefreshing ? 'animate-spin' : undefined}
+              />
+            </button>
+          }
         />
       </div>
     </div>

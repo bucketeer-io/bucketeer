@@ -288,6 +288,7 @@
     "last-30-days": "過去30日間",
     "last-2-months": "過去2ヶ月",
     "last-3-months": "過去3ヶ月",
+    "refresh": "更新",
     "tooltip-content": "評価イベントのリアルタイムカウントごとのフラグを受け取ったユニークユーザーを表示します。"
   },
   "code-refs": {
