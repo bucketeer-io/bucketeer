@@ -34,6 +34,7 @@ import {
 } from 'pages/feature-flag-details/operations/types';
 import {
   createDatetimeClausesList,
+  getScheduleModalAccess,
   isRecurringOperation,
   timeOfDayToSeconds
 } from 'pages/feature-flag-details/operations/utils';
@@ -411,11 +412,24 @@ const ScheduleOperationModal = ({
 
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
 
-  const isDisabledMode = isFinishedTab && !!selectedData;
+  const {
+    isViewMode,
+    isDisabled: isDisabledMode,
+    canSubmit
+  } = getScheduleModalAccess({
+    actionType,
+    editable,
+    isFinishedTab,
+    hasSelectedData: !!selectedData
+  });
 
   return (
     <SlideModal
-      title={t(`common:${isCreate ? 'new' : 'update'}-operation`)}
+      title={
+        isViewMode
+          ? t('feature-flags.operation-details')
+          : t(`common:${isCreate ? 'new' : 'update'}-operation`)
+      }
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -482,8 +496,7 @@ const ScheduleOperationModal = ({
               <RecurringScheduleList isDisabled={isDisabledMode} />
             ) : (
               <ScheduleList
-                selectedData={selectedData}
-                isFinishedTab={isFinishedTab}
+                isDisabled={isDisabledMode}
                 isCreate={isCreate}
                 rollouts={rollouts}
               />
@@ -497,17 +510,19 @@ const ScheduleOperationModal = ({
                 </Button>
               }
               secondaryButton={
-                <Button
-                  type="submit"
-                  loading={isSubmitting}
-                  disabled={!isValid || isDisabledMode || !editable}
-                >
-                  {t(
-                    isCreate
-                      ? `feature-flags.create-operation`
-                      : 'common:update-operation'
-                  )}
-                </Button>
+                canSubmit && (
+                  <Button
+                    type="submit"
+                    loading={isSubmitting}
+                    disabled={!isValid || isDisabledMode}
+                  >
+                    {t(
+                      isCreate
+                        ? `feature-flags.create-operation`
+                        : 'common:update-operation'
+                    )}
+                  </Button>
+                )
               }
             />
           </div>

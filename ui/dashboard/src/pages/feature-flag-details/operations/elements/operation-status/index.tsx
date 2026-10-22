@@ -25,7 +25,7 @@ import {
   OperationCombinedType,
   OpsTypeMap
 } from '../../types';
-import { isRecurringOperation } from '../../utils';
+import { canViewRecurringOperation, isRecurringOperation } from '../../utils';
 
 const statusVariants = cva(
   'flex-center px-2 py-1.5 rounded-[3px] typo-para-small',
@@ -168,7 +168,8 @@ const OperationStatus = ({
       {
         label: t('feature-flags.operation-details'),
         icon: IconOperationDetails,
-        value: 'DETAILS'
+        value: 'DETAILS',
+        allowViewer: true
       },
       {
         label: (
@@ -192,6 +193,16 @@ const OperationStatus = ({
           ? 'recurring'
           : 'schedule';
     return [
+      ...(canViewRecurringOperation(isRecurring, editable)
+        ? [
+            {
+              label: t('feature-flags.view-recurring'),
+              icon: IconOperationDetails,
+              value: 'DETAILS',
+              allowViewer: true
+            }
+          ]
+        : []),
       ...(isRollout
         ? []
         : [

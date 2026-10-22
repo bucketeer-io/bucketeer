@@ -6,7 +6,7 @@ import {
   OpsEventRateClauseOperator,
   RuleStrategyVariation
 } from '@types';
-import { ActionTypeMap, ScheduleItem } from './types';
+import { ActionTypeMap, OperationActionType, ScheduleItem } from './types';
 
 export const createInitialDatetimeClause = (lastTime?: number) => ({
   time: dayjs(lastTime ? new Date(lastTime) : new Date())
@@ -213,4 +213,28 @@ export const timeOfDayToSeconds = (date: Date): number => {
 
 export const isRecurringOperation = (clauses: AutoOpsRuleClause[]): boolean => {
   return clauses?.some(c => c.isRecurring) ?? false;
+};
+
+export const canViewRecurringOperation = (
+  isRecurring: boolean,
+  editable: boolean
+): boolean => isRecurring && !editable;
+
+export const getScheduleModalAccess = ({
+  actionType,
+  editable,
+  isFinishedTab,
+  hasSelectedData
+}: {
+  actionType: OperationActionType;
+  editable: boolean;
+  isFinishedTab: boolean;
+  hasSelectedData: boolean;
+}) => {
+  const isViewMode = actionType === 'DETAILS';
+  return {
+    isViewMode,
+    isDisabled: (isFinishedTab && hasSelectedData) || isViewMode || !editable,
+    canSubmit: !isViewMode && editable
+  };
 };
