@@ -47,6 +47,7 @@ type evalGoalUpdater struct {
 	eventCounterCache cachev3.EventCounterCache
 	autoOpsRulesCache cachev3.AutoOpsRulesCache
 	flightgroup       singleflight.Group
+	subscriberType    string
 	logger            *zap.Logger
 }
 
@@ -56,6 +57,7 @@ func NewGoalUserCountUpdater(
 	autoOpsClient aoclient.Client,
 	eventCounterCache cachev3.EventCounterCache,
 	autoOpsRulesCache cachev3.AutoOpsRulesCache,
+	subscriberType string,
 	logger *zap.Logger,
 ) Updater {
 	return &evalGoalUpdater{
@@ -64,6 +66,7 @@ func NewGoalUserCountUpdater(
 		autoOpsClient:     autoOpsClient,
 		eventCounterCache: eventCounterCache,
 		autoOpsRulesCache: autoOpsRulesCache,
+		subscriberType:    subscriberType,
 		logger:            logger,
 	}
 }
@@ -77,7 +80,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToListAutoOpsRules).Inc()
+			subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToListAutoOpsRules).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -94,7 +97,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 				if err != nil {
 					if errors.Is(err, ErrAutoOpsRuleNotFound) {
 						// If there is nothing to link, we don't report it as an error
-						subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeAutoOpsRuleNotFound).Inc()
+						subscriberHandledCounter.WithLabelValues(u.subscriberType, codeAutoOpsRuleNotFound).Inc()
 						u.logger.Debug(
 							"There is no auto ops rules to link the goal event",
 							zap.Error(err),
@@ -114,7 +117,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 					fails[id] = retriable
 					continue
 				}
-				subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(u.subscriberType, codeLinked).Inc()
 			default:
 				u.logger.Error(
 					"Unexpected message type while trying to persister a goal event",
@@ -146,12 +149,12 @@ func (u *evalGoalUpdater) updateUserCount(
 		Ids:           featureIDs,
 	})
 	if err != nil {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToGetFeatures).Inc()
+		subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToGetFeatures).Inc()
 		return true, err
 	}
 	// At this point get features can't be empty
 	if len(resp.Features) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeGetFeaturesReturnedEmpty).Inc()
+		subscriberHandledCounter.WithLabelValues(u.subscriberType, codeGetFeaturesReturnedEmpty).Inc()
 		return true, ErrFeatureEmptyList
 	}
 	userID := getUserID(event.UserId, event.User)
@@ -165,7 +168,7 @@ func (u *evalGoalUpdater) updateUserCount(
 				zap.String("featureId", r.featureID),
 				zap.String("environmentId", environmentId),
 			)
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToFindFeatureVersion).Inc()
+			subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToFindFeatureVersion).Inc()
 			return false, err
 		}
 		// Update the user count per clause
@@ -227,7 +230,7 @@ func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 		}
 		clauses, err := autoOpsRule.ExtractOpsEventRateClauses()
 		if err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToExtractOpsEventRateClauses).Inc()
+			subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToExtractOpsEventRateClauses).Inc()
 			continue
 		}
 		if len(clauses) == 0 {
@@ -289,7 +292,7 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 			featureVersion,
 		)
 		if err := u.eventCounterCache.UpdateUserCount(key, userID); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToUpdateUserCount).Inc()
+			subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToUpdateUserCount).Inc()
 			return err
 		}
 	}

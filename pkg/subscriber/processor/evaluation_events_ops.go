@@ -40,6 +40,7 @@ type evalEvtUpdater struct {
 	eventCounterCache cachev3.EventCounterCache
 	autoOpsRulesCache cachev3.AutoOpsRulesCache
 	flightgroup       singleflight.Group
+	subscriberType    string
 	logger            *zap.Logger
 }
 
@@ -49,6 +50,7 @@ func NewEvalUserCountUpdater(
 	autoOpsClient aoclient.Client,
 	eventCounterCache cachev3.EventCounterCache,
 	autoOpsRulesCache cachev3.AutoOpsRulesCache,
+	subscriberType string,
 	logger *zap.Logger,
 ) Updater {
 	return &evalEvtUpdater{
@@ -57,6 +59,7 @@ func NewEvalUserCountUpdater(
 		autoOpsClient:     autoOpsClient,
 		eventCounterCache: eventCounterCache,
 		autoOpsRulesCache: autoOpsRulesCache,
+		subscriberType:    subscriberType,
 		logger:            logger,
 	}
 }
@@ -70,7 +73,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)
-			subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeFailedToListAutoOpsRules).Inc()
+			subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToListAutoOpsRules).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -87,7 +90,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 				if err != nil {
 					if errors.Is(err, ErrAutoOpsRuleNotFound) {
 						// If there is nothing to link, we don't report it as an error
-						subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeAutoOpsRuleNotFound).Inc()
+						subscriberHandledCounter.WithLabelValues(u.subscriberType, codeAutoOpsRuleNotFound).Inc()
 						continue
 					}
 					if !retriable {
@@ -101,7 +104,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 					fails[id] = retriable
 					continue
 				}
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(u.subscriberType, codeLinked).Inc()
 			default:
 				u.logger.Error(
 					"Unexpected message type while trying to persister an evaluation event",
@@ -207,7 +210,7 @@ func (u *evalEvtUpdater) linkOpsEventRateByVariationID(
 	r := &aodomain.AutoOpsRule{AutoOpsRule: rule}
 	clauses, err := r.ExtractOpsEventRateClauses()
 	if err != nil {
-		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeFailedToExtractOpsEventRateClauses).Inc()
+		subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToExtractOpsEventRateClauses).Inc()
 		return nil, err
 	}
 	ids := make([]string, 0, len(clauses))
@@ -239,7 +242,7 @@ func (u *evalEvtUpdater) updateUserCountPerClause(
 			featureVersion,
 		)
 		if err := u.eventCounterCache.UpdateUserCount(key, userID); err != nil {
-			subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeFailedToUpdateUserCount).Inc()
+			subscriberHandledCounter.WithLabelValues(u.subscriberType, codeFailedToUpdateUserCount).Inc()
 			return err
 		}
 	}

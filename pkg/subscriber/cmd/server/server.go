@@ -1093,11 +1093,11 @@ func (s *server) registerPubSubProcessorMap(
 	// dwhCleanup closes any dedicated data-warehouse client created below.
 	var dwhCleanup func()
 
+	var processorsConfigMap map[string]interface{}
 	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)
 	if err != nil {
 		logger.Error("subscriber: failed to read processors config", zap.Error(err))
 	} else {
-		var processorsConfigMap map[string]interface{}
 		if err := json.Unmarshal(processorsConfigBytes, &processorsConfigMap); err != nil {
 			logger.Error("subscriber: failed to unmarshal processors config",
 				zap.Error(err),
@@ -1224,24 +1224,25 @@ func (s *server) registerPubSubProcessorMap(
 		)
 	}
 
+	var onDemandProcessorsConfigMap map[string]interface{}
 	onDemandProcessorsConfigBytes, err := os.ReadFile(*s.onDemandProcessorsConfig)
 	if err != nil {
 		logger.Error("subscriber: failed to read onDemand processors config", zap.Error(err))
 	} else {
-		var onDemandProcessorsConfigMap map[string]interface{}
 		if err := json.Unmarshal(onDemandProcessorsConfigBytes, &onDemandProcessorsConfigMap); err != nil {
 			logger.Error("subscriber: failed to unmarshal onDemand processors config",
 				zap.Error(err),
 			)
 			return nil, nil, err
 		}
+	}
 
+	dwhPersisters, opsPersisters := eventPersisterConfigs(processorsConfigMap, onDemandProcessorsConfigMap)
+
+	if len(dwhPersisters) > 0 {
 		// Initialize the data-warehouse client(s) here, separately from the operational
-		// database client. The DWH backend (bigquery, mysql, postgres) is resolved from
-		// the events DWH persister config; eval and goal persisters share it.
-		dwhConfig, err := parseDWHConfig(
-			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
-		)
+		// database client. All DWH persisters share the same backend (bigquery, mysql, postgres).
+		dwhConfig, err := parseDWHConfig(dwhPersisterConfig(dwhPersisters))
 		if err != nil {
 			logger.Error("subscriber: failed to parse data warehouse config", zap.Error(err))
 			return nil, nil, err
@@ -1260,66 +1261,41 @@ func (s *server) registerPubSubProcessorMap(
 		}
 		dwhCleanup = cleanup
 
-		evaluationEventsDWHPersister, err := processor.NewEventsDWHPersister(
-			ctx,
-			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
-			evalEventWriter,
-			goalEventWriter,
-			goalEventStorage,
-			experimentStorage,
-			dwhLocation,
-			nonPersistentRedisClient, // use non-persistent redis instance here
-			persistentRedisClient,    // use persistent redis instance here for goal retry events
-			exClient,
-			ftClient,
-			processor.EvaluationCountEventDWHPersisterName,
-			logger,
-		)
-		if err != nil {
-			if dwhCleanup != nil {
-				dwhCleanup()
+		for name, config := range dwhPersisters {
+			p, err := processor.NewEventsDWHPersister(
+				ctx,
+				config,
+				evalEventWriter,
+				goalEventWriter,
+				goalEventStorage,
+				experimentStorage,
+				dwhLocation,
+				nonPersistentRedisClient, // use non-persistent redis instance here
+				persistentRedisClient,    // use persistent redis instance here for goal retry events
+				exClient,
+				ftClient,
+				name,
+				logger,
+			)
+			if err != nil {
+				if dwhCleanup != nil {
+					dwhCleanup()
+				}
+				return nil, nil, err
 			}
-			return nil, nil, err
+			processors.RegisterProcessor(name, p)
 		}
-		processors.RegisterProcessor(
-			processor.EvaluationCountEventDWHPersisterName,
-			evaluationEventsDWHPersister,
-		)
+	}
 
-		goalEventsDWHPersister, err := processor.NewEventsDWHPersister(
+	for name, config := range opsPersisters {
+		p, err := processor.NewEventsOPSPersister(
 			ctx,
-			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
-			evalEventWriter,
-			goalEventWriter,
-			goalEventStorage,
-			experimentStorage,
-			dwhLocation,
-			nonPersistentRedisClient, // use non-persistent redis instance here
-			persistentRedisClient,    // use persistent redis instance here for goal retry events
-			exClient,
-			ftClient,
-			processor.GoalCountEventDWHPersisterName,
-			logger,
-		)
-		if err != nil {
-			if dwhCleanup != nil {
-				dwhCleanup()
-			}
-			return nil, nil, err
-		}
-		processors.RegisterProcessor(
-			processor.GoalCountEventDWHPersisterName,
-			goalEventsDWHPersister,
-		)
-
-		evaluationEventsOPSPersister, err := processor.NewEventsOPSPersister(
-			ctx,
-			onDemandProcessorsConfigMap[processor.EvaluationCountEventOPSPersisterName],
+			config,
 			autoOpsRuleStorage,
 			persistentRedisClient, // use persistent redis instance here
 			opsClient,
 			ftClient,
-			processor.EvaluationCountEventOPSPersisterName,
+			name,
 			logger,
 		)
 		if err != nil {
@@ -1328,28 +1304,60 @@ func (s *server) registerPubSubProcessorMap(
 			}
 			return nil, nil, err
 		}
-		processors.RegisterProcessor(processor.EvaluationCountEventOPSPersisterName, evaluationEventsOPSPersister)
-
-		goalEventsOPSPersister, err := processor.NewEventsOPSPersister(
-			ctx,
-			onDemandProcessorsConfigMap[processor.GoalCountEventOPSPersisterName],
-			autoOpsRuleStorage,
-			persistentRedisClient, // use persistent redis instance here
-			opsClient,
-			ftClient,
-			processor.GoalCountEventOPSPersisterName,
-			logger,
-		)
-		if err != nil {
-			if dwhCleanup != nil {
-				dwhCleanup()
-			}
-			return nil, nil, err
-		}
-		processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
+		processors.RegisterProcessor(name, p)
 	}
 
 	return processors, dwhCleanup, nil
+}
+
+// eventPersisterConfigs collects the configured DWH and OPS persisters.
+// On-demand persisters consume the shared evaluation and goal topics; the
+// dedicated ones are always on and consume the DWH/OPS topics.
+func eventPersisterConfigs(
+	processorsConfigMap, onDemandProcessorsConfigMap map[string]interface{},
+) (map[string]interface{}, map[string]interface{}) {
+	dwhPersisters := map[string]interface{}{}
+	opsPersisters := map[string]interface{}{}
+	collect := func(dst, src map[string]interface{}, names ...string) {
+		for _, name := range names {
+			if config, ok := src[name]; ok {
+				dst[name] = config
+			}
+		}
+	}
+	collect(dwhPersisters, onDemandProcessorsConfigMap,
+		processor.EvaluationCountEventDWHPersisterName,
+		processor.GoalCountEventDWHPersisterName,
+	)
+	collect(opsPersisters, onDemandProcessorsConfigMap,
+		processor.EvaluationCountEventOPSPersisterName,
+		processor.GoalCountEventOPSPersisterName,
+	)
+	collect(dwhPersisters, processorsConfigMap,
+		processor.EvaluationEventDWHPersisterName,
+		processor.GoalEventDWHPersisterName,
+	)
+	collect(opsPersisters, processorsConfigMap,
+		processor.EvaluationEventOPSPersisterName,
+		processor.GoalEventOPSPersisterName,
+	)
+	return dwhPersisters, opsPersisters
+}
+
+// dwhPersisterConfig returns the config holding the data-warehouse settings,
+// preferring the on-demand evaluation persister for backward compatibility.
+func dwhPersisterConfig(persisters map[string]interface{}) interface{} {
+	for _, name := range []string{
+		processor.EvaluationCountEventDWHPersisterName,
+		processor.EvaluationEventDWHPersisterName,
+		processor.GoalEventDWHPersisterName,
+		processor.GoalCountEventDWHPersisterName,
+	} {
+		if config, ok := persisters[name]; ok {
+			return config
+		}
+	}
+	return nil
 }
 
 func (s *server) readEmailConfig(

@@ -98,12 +98,18 @@ func NewEventsDWHPersister(
 	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(redisClient))
 
 	switch persisterName {
-	case EvaluationCountEventDWHPersisterName:
+	case EvaluationCountEventDWHPersisterName, EvaluationEventDWHPersisterName:
 		e.subscriberType = subscriberEvaluationEventDWH
-		e.writer = NewEvalEventWriter(logger, exClient, experimentsCache, location, evalEventWriter)
+		if persisterName == EvaluationEventDWHPersisterName {
+			e.subscriberType = subscriberDedicatedEvaluationEventDWH
+		}
+		e.writer = NewEvalEventWriter(logger, exClient, experimentsCache, location, evalEventWriter, e.subscriberType)
 
-	case GoalCountEventDWHPersisterName:
+	case GoalCountEventDWHPersisterName, GoalEventDWHPersisterName:
 		e.subscriberType = subscriberGoalEventDWH
+		if persisterName == GoalEventDWHPersisterName {
+			e.subscriberType = subscriberDedicatedGoalEventDWH
+		}
 		maxRetryPeriod := time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod) * time.Second
 		retryInterval := time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval) * time.Second
 		e.writer = NewGoalEventWriter(
@@ -118,6 +124,7 @@ func NewEventsDWHPersister(
 			retryInterval,
 			goalEventWriter,
 			goalEventStorage,
+			e.subscriberType,
 		)
 	}
 	return e, nil

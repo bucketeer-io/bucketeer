@@ -171,3 +171,123 @@ func TestResolveCacheInvalidationConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestDWHPersisterConfig(t *testing.T) {
+	t.Parallel()
+
+	onDemand := map[string]interface{}{"name": "onDemand"}
+	evalDedicated := map[string]interface{}{"name": "evalDedicated"}
+	goalDedicated := map[string]interface{}{"name": "goalDedicated"}
+	patterns := []struct {
+		desc       string
+		persisters map[string]interface{}
+		expected   interface{}
+	}{
+		{
+			desc:       "no persisters",
+			persisters: map[string]interface{}{},
+			expected:   nil,
+		},
+		{
+			desc: "prefers the on-demand evaluation persister",
+			persisters: map[string]interface{}{
+				processor.EvaluationCountEventDWHPersisterName: onDemand,
+				processor.EvaluationEventDWHPersisterName:      evalDedicated,
+				processor.GoalEventDWHPersisterName:            goalDedicated,
+			},
+			expected: onDemand,
+		},
+		{
+			desc: "falls back to the dedicated evaluation persister",
+			persisters: map[string]interface{}{
+				processor.EvaluationEventDWHPersisterName: evalDedicated,
+				processor.GoalEventDWHPersisterName:       goalDedicated,
+			},
+			expected: evalDedicated,
+		},
+		{
+			desc: "falls back to the dedicated goal persister",
+			persisters: map[string]interface{}{
+				processor.GoalEventDWHPersisterName: goalDedicated,
+			},
+			expected: goalDedicated,
+		},
+		{
+			desc: "falls back to the on-demand goal persister",
+			persisters: map[string]interface{}{
+				processor.GoalCountEventDWHPersisterName: onDemand,
+			},
+			expected: onDemand,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, dwhPersisterConfig(p.persisters))
+		})
+	}
+}
+
+func TestEventPersisterConfigs(t *testing.T) {
+	t.Parallel()
+
+	legacyDWH := map[string]interface{}{"name": "legacyDWH"}
+	legacyOPS := map[string]interface{}{"name": "legacyOPS"}
+	dedicatedDWH := map[string]interface{}{"name": "dedicatedDWH"}
+	dedicatedOPS := map[string]interface{}{"name": "dedicatedOPS"}
+	patterns := []struct {
+		desc        string
+		processors  map[string]interface{}
+		onDemand    map[string]interface{}
+		expectedDWH map[string]interface{}
+		expectedOPS map[string]interface{}
+	}{
+		{
+			desc:        "nothing configured",
+			expectedDWH: map[string]interface{}{},
+			expectedOPS: map[string]interface{}{},
+		},
+		{
+			desc: "dedicated only with an empty on-demand config",
+			processors: map[string]interface{}{
+				processor.EvaluationEventDWHPersisterName: dedicatedDWH,
+				processor.EvaluationEventOPSPersisterName: dedicatedOPS,
+				processor.AuditLogPersisterName:           map[string]interface{}{},
+			},
+			onDemand: map[string]interface{}{},
+			expectedDWH: map[string]interface{}{
+				processor.EvaluationEventDWHPersisterName: dedicatedDWH,
+			},
+			expectedOPS: map[string]interface{}{
+				processor.EvaluationEventOPSPersisterName: dedicatedOPS,
+			},
+		},
+		{
+			desc: "legacy and dedicated together",
+			processors: map[string]interface{}{
+				processor.GoalEventDWHPersisterName: dedicatedDWH,
+				processor.GoalEventOPSPersisterName: dedicatedOPS,
+			},
+			onDemand: map[string]interface{}{
+				processor.GoalCountEventDWHPersisterName: legacyDWH,
+				processor.GoalCountEventOPSPersisterName: legacyOPS,
+			},
+			expectedDWH: map[string]interface{}{
+				processor.GoalCountEventDWHPersisterName: legacyDWH,
+				processor.GoalEventDWHPersisterName:      dedicatedDWH,
+			},
+			expectedOPS: map[string]interface{}{
+				processor.GoalCountEventOPSPersisterName: legacyOPS,
+				processor.GoalEventOPSPersisterName:      dedicatedOPS,
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			dwh, ops := eventPersisterConfigs(p.processors, p.onDemand)
+			assert.Equal(t, p.expectedDWH, dwh)
+			assert.Equal(t, p.expectedOPS, ops)
+		})
+	}
+}

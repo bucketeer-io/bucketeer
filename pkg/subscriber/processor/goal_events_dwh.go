@@ -54,6 +54,7 @@ type goalEvtWriter struct {
 	logger                  *zap.Logger
 	maxRetryGoalEventPeriod time.Duration
 	retryGoalEventInterval  time.Duration
+	subscriberType          string
 }
 
 // NewGoalEventWriter wraps an already-initialized data-warehouse goal-event writer and
@@ -70,6 +71,7 @@ func NewGoalEventWriter(
 	retryGoalEventInterval time.Duration,
 	goalWriter dwhstorage.GoalEventWriter,
 	eventStorage ecdwh.EventStorage,
+	subscriberType string,
 ) Writer {
 	if retryGoalEventInterval == 0 {
 		retryGoalEventInterval = defaultRetryGoalEventInterval
@@ -103,6 +105,7 @@ func NewGoalEventWriter(
 		logger:                  logger,
 		maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
 		retryGoalEventInterval:  retryGoalEventInterval,
+		subscriberType:          subscriberType,
 	}
 	w.StartRetryProcessor(ctx)
 	return w
@@ -121,7 +124,7 @@ func (w *goalEvtWriter) Write(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToListExperiments).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -138,7 +141,7 @@ func (w *goalEvtWriter) Write(
 				if err != nil {
 					if errors.Is(err, ErrExperimentNotFound) {
 						// If there is nothing to link, we don't report it as an error
-						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
+						subscriberHandledCounter.WithLabelValues(w.subscriberType, codeExperimentNotFound).Inc()
 						continue
 					}
 					if errors.Is(err, ErrGoalEventOlderThanEvaluation) {
@@ -160,7 +163,7 @@ func (w *goalEvtWriter) Write(
 					continue
 				}
 				goalEvents = append(goalEvents, e...)
-				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
@@ -174,7 +177,7 @@ func (w *goalEvtWriter) Write(
 	}
 	fs, err := w.writer.AppendRows(ctx, goalEvents)
 	if err != nil {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToAppendGoalEvents).Inc()
+		subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToAppendGoalEvents).Inc()
 		w.logger.Error("Failed to append rows to goal_event table",
 			zap.Error(err),
 		)
@@ -298,13 +301,13 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			// If the goal event was issued before the experiment started running,
 			// we ignore those events to avoid issues in the conversion rate
 			if exp.StartAt > event.Timestamp {
-				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeEventOlderThanExperiment).Inc()
+				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeEventOlderThanExperiment).Inc()
 				continue
 			}
 			// If the goal event was issued after the experiment ended,
 			// we ignore those events to avoid issues in the conversion rate
 			if exp.StopAt < event.Timestamp {
-				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedAfterExperimentEnded).Inc()
+				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeGoalEventIssuedAfterExperimentEnded).Inc()
 				continue
 			}
 			exps = append(exps, exp)
@@ -333,7 +336,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 					zap.String("environmentId", environmentID),
 					zap.Any("goalEvent", event),
 				)
-				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeUserEvaluationNotFound).Inc()
+				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeUserEvaluationNotFound).Inc()
 				if storeRetryOnMiss {
 					if err := w.storeRetryMessage(&retryMessage{
 						GoalEvent:     event,
@@ -341,7 +344,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 						RetryCount:    0,
 						ID:            id,
 					}); err != nil {
-						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+						subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
 						w.logger.Error("Failed to store retry message",
 							zap.Error(err),
 							zap.String("environmentId", environmentID),
@@ -357,7 +360,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 				zap.String("environmentId", environmentID),
 				zap.Any("goalEvent", event),
 			)
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToGetUserEvaluation).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToGetUserEvaluation).Inc()
 			return nil, true, err
 		}
 		w.logger.Debug("Evaluation found",
@@ -371,7 +374,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		// sent the goal event before evaluating the user (incorrect implementation),
 		// so it must be discarded instead of retried.
 		if event.Timestamp < eval.Timestamp {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedBeforeEvaluation).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeGoalEventIssuedBeforeEvaluation).Inc()
 			w.logger.Warn("Goal event is older than the user's latest evaluation, discarding it",
 				zap.String("environmentId", environmentID),
 				zap.Any("goalEvent", event),

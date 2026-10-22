@@ -604,6 +604,62 @@ subscriber:
       pullerMaxOutstandingBytes: 1000000000
       maxMps: 50
       workerNum: 1
+    evaluationEventDWHPersister:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
+      project: ${global.pubsub.project}
+      topic: evaluation-events-dwh
+      subscription: evaluation-events-dwh-persister
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    evaluationEventOPSPersister:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
+      project: ${global.pubsub.project}
+      topic: evaluation-events-ops
+      subscription: evaluation-events-ops-persister
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    goalEventDWHPersister:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
+      project: ${global.pubsub.project}
+      topic: goal-events-dwh
+      subscription: goal-events-dwh-persister
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    goalEventOPSPersister:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisMode: ${global.pubsub.redis.mode}
+      project: ${global.pubsub.project}
+      topic: goal-events-ops
+      subscription: goal-events-ops-persister
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
 
   onDemandSubscribers:
     evaluationCountEventDWHPersister:
@@ -704,6 +760,28 @@ subscriber:
         slack:
           webhookURL: ""
     emailSender: {}
+    evaluationEventDWHPersister:
+      flushSize: 1
+      flushInterval: 1
+      flushTimeout: 30
+      # Data warehouse configuration will be injected from global settings by Helm template
+      dataWarehouse: {}
+    evaluationEventOPSPersister:
+      flushSize: 1
+      flushInterval: 1
+      flushTimeout: 30
+    goalEventDWHPersister:
+      flushSize: 1
+      flushInterval: 1
+      flushTimeout: 30
+      maxRetryGoalEventPeriod: 43200 # 12 hours
+      retryGoalEventInterval: 1 # Reduced for faster retries in dev/test with Redis Stream
+      # Data warehouse configuration will be injected from global settings by Helm template
+      dataWarehouse: {}
+    goalEventOPSPersister:
+      flushSize: 1
+      flushInterval: 1
+      flushTimeout: 30
 
   onDemandProcessors:
     evaluationCountEventDWHPersister:
