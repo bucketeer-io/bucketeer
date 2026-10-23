@@ -12,8 +12,9 @@ package mock
 import (
 	reflect "reflect"
 
-	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	gomock "go.uber.org/mock/gomock"
+
+	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 // MockExperimentsCache is a mock of ExperimentsCache interface.
