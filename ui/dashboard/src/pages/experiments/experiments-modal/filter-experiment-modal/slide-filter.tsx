@@ -9,6 +9,7 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import SlideModal from 'components/modal/slide';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import useExperimentFilterLogic from './use-filter-experiment-logic';
 
 export type FilterProps = {
@@ -31,7 +32,12 @@ const FilterExperimentSlide = ({
     selectedFilters,
     isDisabledAddButton,
     isDisabledSubmitButton,
-    isLoading,
+    isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onAccountSearchChange,
     remainingFilterOptions,
     setSelectedFilters,
     onConfirmHandler,
@@ -83,31 +89,52 @@ const FilterExperimentSlide = ({
 
                   <div className="flex min-w-0 items-center gap-3 mt-3 pl-3">
                     <p className="typo-para-medium text-gray-600">{t('is')}</p>
-                    <Dropdown
-                      disabled={isLoading || !filterType}
-                      placeholder={t(`select-value`)}
-                      labelCustom={handleGetLabelFilterValue(filterOption)}
-                      className={cn('w-full truncate py-2', {
-                        capitalize: isStatusFilter
-                      })}
-                      contentClassName={cn('w-[235px]', {
-                        'pt-0 w-[300px]': isMaintainerFilter,
-                        'hidden-scroll': valueOptions?.length > 15
-                      })}
-                      value={
-                        isStatusFilter &&
-                        Array.isArray(filterOption?.filterValue)
-                          ? filterOption.filterValue
-                          : (filterOption.filterValue as string)
-                      }
-                      options={valueOptions as DropdownOption[]}
-                      isSearchable={isMaintainerFilter}
-                      onChange={value =>
-                        handleChangeFilterValue(value as string, filterIndex)
-                      }
-                      multiselect={isStatusFilter}
-                      isListItem={isMaintainerFilter || isStatusFilter}
-                    />
+                    {isMaintainerFilter ? (
+                      <DropdownMenuWithSearch
+                        disabled={isLoadingAccounts}
+                        isLoading={isLoadingAccounts}
+                        placeholder={t(`select-value`)}
+                        itemSelected={filterOption?.filterValue as string}
+                        label={
+                          handleGetLabelFilterValue(filterOption) as string
+                        }
+                        options={valueOptions as DropdownOption[]}
+                        isHasMore={hasMore}
+                        isLoadingMore={isLoadingMore}
+                        onHasMoreOptions={loadMore}
+                        isSearching={isSearching}
+                        onSearchChange={onAccountSearchChange}
+                        onSelectOption={value =>
+                          handleChangeFilterValue(value as string, filterIndex)
+                        }
+                        triggerClassName="w-full truncate py-2"
+                        contentClassName="w-[300px]"
+                      />
+                    ) : (
+                      <Dropdown
+                        disabled={!filterType}
+                        placeholder={t(`select-value`)}
+                        labelCustom={handleGetLabelFilterValue(filterOption)}
+                        className={cn('w-full truncate py-2', {
+                          capitalize: isStatusFilter
+                        })}
+                        contentClassName={cn('w-[235px]', {
+                          'hidden-scroll': valueOptions?.length > 15
+                        })}
+                        value={
+                          isStatusFilter &&
+                          Array.isArray(filterOption?.filterValue)
+                            ? filterOption.filterValue
+                            : (filterOption.filterValue as string)
+                        }
+                        options={valueOptions as DropdownOption[]}
+                        onChange={value =>
+                          handleChangeFilterValue(value as string, filterIndex)
+                        }
+                        multiselect={isStatusFilter}
+                        isListItem={isStatusFilter}
+                      />
+                    )}
 
                     <Button
                       variant={'grey'}

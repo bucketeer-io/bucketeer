@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryAccounts } from '@queries/accounts';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { isEmpty } from 'utils/data-type';
 import { ExperimentFilters } from 'pages/experiments/types';
@@ -16,17 +16,31 @@ const useExperimentFilterLogic = (
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     experimentFilterOptions[0]
   ]);
-  const { data: collection, isLoading } = useQueryAccounts({
-    params: {
-      cursor: String(0),
-      environmentId: currentEnvironment?.id,
-      organizationId: currentEnvironment?.organizationId
-    },
-    enabled: !!selectedFilters?.find(
+  const hasMaintainerFilter = !!selectedFilters.find(
+    item => item.value === FilterTypes.MAINTAINER
+  );
+
+  const selectedMaintainer = useMemo(() => {
+    const filter = selectedFilters.find(
       item => item.value === FilterTypes.MAINTAINER
-    )
+    );
+    return typeof filter?.filterValue === 'string' ? filter.filterValue : '';
+  }, [selectedFilters]);
+
+  const {
+    emailOptions,
+    isInitialLoading: isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onSearchChange: onAccountSearchChange,
+    getAccountLabel
+  } = useAccountsLoader({
+    organizationId: currentEnvironment.organizationId,
+    enabled: hasMaintainerFilter,
+    preloadEmails: selectedMaintainer ? [selectedMaintainer] : []
   });
-  const accounts = collection?.accounts || [];
   const remainingFilterOptions = useMemo(
     () =>
       experimentFilterOptions.filter(
@@ -48,16 +62,10 @@ const useExperimentFilterLogic = (
     (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
       const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
-      if (isMaintainerFilter) {
-        const options = accounts.map(item => ({
-          label: item.email,
-          value: item.email
-        }));
-        return options;
-      }
+      if (isMaintainerFilter) return emailOptions;
       return experimentStatusOptions;
     },
-    [accounts, experimentStatusOptions]
+    [emailOptions, experimentStatusOptions]
   );
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
@@ -85,7 +93,7 @@ const useExperimentFilterLogic = (
         const { value: filterType, filterValue } = filterOption;
         const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
         return isMaintainerFilter
-          ? filterValue || ''
+          ? getAccountLabel(filterValue as string)
           : Array.isArray(filterValue)
             ? filterValue
                 .map(
@@ -99,7 +107,7 @@ const useExperimentFilterLogic = (
       }
       return '';
     },
-    [experimentStatusOptions]
+    [experimentStatusOptions, getAccountLabel]
   );
   const handleChangeFilterValue = useCallback(
     (value: string | number, filterIndex: number) => {
@@ -158,7 +166,12 @@ const useExperimentFilterLogic = (
     selectedFilters,
     isDisabledAddButton,
     isDisabledSubmitButton,
-    isLoading,
+    isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore: hasMaintainerFilter && hasMore,
+    loadMore,
+    onAccountSearchChange,
     remainingFilterOptions,
     setSelectedFilters,
     onConfirmHandler,

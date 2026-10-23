@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAccountsLoader } from 'hooks/use-accounts-loading-more';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { isEmpty } from 'utils/data-type';
 import { FlagFilters } from 'pages/feature-flags/types';
@@ -19,15 +19,30 @@ const useFilterFlagLogic = (
     flagFilterOptions[0]
   ]);
 
-  const { data: collection, isLoading } = useQueryAccounts({
-    params: {
-      cursor: String(0),
-      environmentId: currentEnvironment?.id,
-      organizationId: currentEnvironment?.organizationId
-    },
-    enabled: !!selectedFilters?.find(
+  const hasMaintainerFilter = !!selectedFilters.find(
+    item => item.value === FilterTypes.MAINTAINER
+  );
+
+  const selectedMaintainer = useMemo(() => {
+    const filter = selectedFilters.find(
       item => item.value === FilterTypes.MAINTAINER
-    )
+    );
+    return typeof filter?.filterValue === 'string' ? filter.filterValue : '';
+  }, [selectedFilters]);
+
+  const {
+    emailOptions,
+    isInitialLoading: isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onSearchChange: onAccountSearchChange,
+    getAccountLabel
+  } = useAccountsLoader({
+    organizationId: currentEnvironment.organizationId,
+    enabled: hasMaintainerFilter,
+    preloadEmails: selectedMaintainer ? [selectedMaintainer] : []
   });
 
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
@@ -39,7 +54,6 @@ const useFilterFlagLogic = (
     enabled: !!selectedFilters?.find(item => item.value === FilterTypes.TAGS)
   });
 
-  const accounts = useMemo(() => collection?.accounts || [], [collection]);
   const tags = useMemo(() => tagCollection?.tags || [], [tagCollection]);
 
   const remainingFilterOptions = useMemo(
@@ -74,10 +88,7 @@ const useFilterFlagLogic = (
         isMaintainerFilter || isTagFilter || isStatusFilter;
       if (isHaveSearchingDropdown) {
         const options = isMaintainerFilter
-          ? accounts.map(item => ({
-              label: item.email,
-              value: item.email
-            }))
+          ? emailOptions
           : isTagFilter
             ? tags.map(item => ({
                 label: item.name,
@@ -90,7 +101,7 @@ const useFilterFlagLogic = (
 
       return booleanOptions;
     },
-    [accounts, tags, flagStatusOptions, booleanOptions]
+    [emailOptions, tags, flagStatusOptions, booleanOptions]
   );
 
   const handleSetFilterOnInit = useCallback(() => {
@@ -154,7 +165,7 @@ const useFilterFlagLogic = (
         const isStatusFilter = filterType === FilterTypes.STATUS;
 
         return isMaintainerFilter
-          ? filterValue || ''
+          ? getAccountLabel(filterValue as string)
           : isTagFilter
             ? (Array.isArray(filterValue) &&
                 tags.length &&
@@ -168,7 +179,7 @@ const useFilterFlagLogic = (
       }
       return '';
     },
-    [tags, flagStatusOptions, booleanOptions]
+    [tags, flagStatusOptions, booleanOptions, getAccountLabel]
   );
 
   const handleChangeFilterValue = useCallback(
@@ -250,9 +261,13 @@ const useFilterFlagLogic = (
 
   return {
     selectedFilters,
-    accounts,
     tags,
-    isLoading,
+    isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore: hasMaintainerFilter && hasMore,
+    loadMore,
+    onAccountSearchChange,
     isLoadingTags,
     remainingFilterOptions,
     isDisabledAddButton,

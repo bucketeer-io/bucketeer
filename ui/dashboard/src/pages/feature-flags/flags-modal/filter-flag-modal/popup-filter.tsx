@@ -9,6 +9,7 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import useFilterFlagLogic from './use-filter-flag-logic';
 
 export type FilterProps = {
@@ -29,7 +30,12 @@ const FilterFlagPopup = ({
   const { t } = useTranslation(['common']);
   const {
     selectedFilters,
-    isLoading,
+    isLoadingAccounts,
+    isLoadingMore,
+    isSearching,
+    hasMore,
+    loadMore,
+    onAccountSearchChange,
     isLoadingTags,
     remainingFilterOptions,
     isDisabledAddButton,
@@ -83,32 +89,46 @@ const FilterFlagPopup = ({
                 contentClassName="w-[270px]"
               />
               <p className="typo-para-medium text-gray-600">{t('is')}</p>
-              <Dropdown
-                disabled={
-                  (isTagFilter && isLoadingTags) ||
-                  (isMaintainerFilter && isLoading) ||
-                  !filterType
-                }
-                loading={
-                  (isTagFilter && isLoadingTags) ||
-                  (isMaintainerFilter && isLoading)
-                }
-                isListItem={isHaveSearchingDropdown}
-                multiselect={isTagFilter}
-                placeholder={t(`select-value`)}
-                value={filterOption?.filterValue as DropdownValue}
-                labelCustom={handleGetLabelFilterValue(filterOption)}
-                isSearchable={isHaveSearchingDropdown}
-                options={valueOptions as DropdownOption[]}
-                onChange={value =>
-                  handleChangeFilterValue(value as DropdownValue, filterIndex)
-                }
-                className="w-full truncate"
-                contentClassName={cn('w-[235px]', {
-                  'pt-0 w-[300px]': isHaveSearchingDropdown,
-                  'hidden-scroll': valueOptions?.length > 15
-                })}
-              />
+              {isMaintainerFilter ? (
+                <DropdownMenuWithSearch
+                  disabled={isLoadingAccounts}
+                  isLoading={isLoadingAccounts}
+                  placeholder={t(`select-value`)}
+                  itemSelected={filterOption?.filterValue as string}
+                  label={handleGetLabelFilterValue(filterOption) as string}
+                  options={valueOptions as DropdownOption[]}
+                  isHasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  onHasMoreOptions={loadMore}
+                  isSearching={isSearching}
+                  onSearchChange={onAccountSearchChange}
+                  onSelectOption={value =>
+                    handleChangeFilterValue(value as DropdownValue, filterIndex)
+                  }
+                  triggerClassName="w-full truncate"
+                  contentClassName="w-[300px]"
+                />
+              ) : (
+                <Dropdown
+                  disabled={(isTagFilter && isLoadingTags) || !filterType}
+                  loading={isTagFilter && isLoadingTags}
+                  isListItem={isHaveSearchingDropdown}
+                  multiselect={isTagFilter}
+                  placeholder={t(`select-value`)}
+                  value={filterOption?.filterValue as DropdownValue}
+                  labelCustom={handleGetLabelFilterValue(filterOption)}
+                  isSearchable={isHaveSearchingDropdown}
+                  options={valueOptions as DropdownOption[]}
+                  onChange={value =>
+                    handleChangeFilterValue(value as DropdownValue, filterIndex)
+                  }
+                  className="w-full truncate"
+                  contentClassName={cn('w-[235px]', {
+                    'pt-0 w-[300px]': isHaveSearchingDropdown,
+                    'hidden-scroll': valueOptions?.length > 15
+                  })}
+                />
+              )}
 
               <Button
                 variant={'grey'}
