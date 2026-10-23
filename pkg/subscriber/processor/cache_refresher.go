@@ -33,6 +33,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -43,14 +44,6 @@ import (
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-)
-
-const (
-	// experimentRefreshLookback matches the batch experiment-cacher (see
-	// pkg/batch/jobs/cacher/experimentcacher.go): we keep STOPPED
-	// experiments in cache for two days after stop so late-arriving
-	// evaluation/goal events still resolve.
-	experimentRefreshLookback = 2 * 24 * time.Hour
 )
 
 const (
@@ -507,7 +500,7 @@ func (c *cacheRefresher) refreshAPIKey(
 // refreshExperiments rebuilds the experiments L2 cache for the affected
 // environment. Mirrors the batch experiment-cacher: only RUNNING and
 // STOPPED experiments are cached, and STOPPED ones drop out
-// experimentRefreshLookback after their stop_at because late-arriving
+// StoppedExperimentEventWindow after their stop_at because late-arriving
 // evaluation/goal events still need to resolve them.
 func (c *cacheRefresher) refreshExperiments(
 	ctx context.Context,
@@ -520,7 +513,7 @@ func (c *cacheRefresher) refreshExperiments(
 	resp, err := c.experimentClient.ListExperiments(fetchCtx, &experimentproto.ListExperimentsRequest{
 		PageSize:      0,
 		EnvironmentId: event.EnvironmentId,
-		StopAt:        time.Now().Add(-experimentRefreshLookback).Unix(),
+		StopAt:        time.Now().Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
 		Statuses: []experimentproto.Experiment_Status{
 			experimentproto.Experiment_RUNNING,
 			experimentproto.Experiment_STOPPED,

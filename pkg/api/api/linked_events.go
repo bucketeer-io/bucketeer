@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -39,8 +40,6 @@ import (
 
 const (
 	linkedEventsMemoryCacheTTL = 1 * time.Minute
-	// Same window as the experiment cacher, since events may arrive late
-	linkedExperimentsStopAtWindow = 2 * 24 * time.Hour
 
 	topicEvaluationDWH = "EvaluationDWH"
 	topicEvaluationOPS = "EvaluationOPS"
@@ -54,7 +53,10 @@ const (
 	codeLoadFailed = "LoadFailed"
 )
 
-var errLinkedTargetsLoadFailed = errors.New("gateway: failed to load linked targets")
+var (
+	errLinkedTargetsLoadFailed = errors.New("gateway: failed to load linked targets")
+	errInvalidLinkedEvent      = errors.New("gateway: invalid linked event")
+)
 
 // LinkedEventTopics holds the dedicated publishers. A nil publisher disables that topic.
 type LinkedEventTopics struct {
@@ -120,7 +122,8 @@ func NewLinkedEventPublisher(
 	}
 }
 
-// Publish publishes the linked events and returns the errors by event ID.
+// Publish publishes the events linked to experiments or auto ops rules to the dedicated topics
+// and returns the errors by event ID.
 func (p *LinkedEventPublisher) Publish(
 	ctx context.Context,
 	environmentID string,
@@ -152,36 +155,55 @@ func (p *LinkedEventPublisher) Publish(
 		linkedEventCounter.WithLabelValues(codeAll, codeLoadFailed).Add(float64(len(errs)))
 		return errs
 	}
-	var evalDWH, evalOPS, goalDWH, goalOPS []publisher.Message
-	for _, m := range evaluations {
-		e := &eventproto.EvaluationEvent{}
-		if !unmarshalEvent(m, e) {
-			continue
-		}
-		if targets.linkEvaluationDWH(e) {
-			evalDWH = append(evalDWH, m)
-		}
-		if targets.linkEvaluationOPS(e) {
-			evalOPS = append(evalOPS, m)
-		}
-	}
-	for _, m := range goals {
-		e := &eventproto.GoalEvent{}
-		if !unmarshalEvent(m, e) {
-			continue
-		}
-		if _, ok := targets.experimentGoals[e.GoalId]; ok {
-			goalDWH = append(goalDWH, m)
-		}
-		if _, ok := targets.opsGoals[e.GoalId]; ok {
-			goalOPS = append(goalOPS, m)
-		}
-	}
+	evalDWH, evalOPS := p.linkEvaluations(targets, environmentID, evaluations)
+	goalDWH, goalOPS := p.linkGoals(targets, environmentID, goals)
 	p.publish(ctx, p.topics.EvaluationDWH, evalDWH, topicEvaluationDWH, environmentID, errs)
 	p.publish(ctx, p.topics.EvaluationOPS, evalOPS, topicEvaluationOPS, environmentID, errs)
 	p.publish(ctx, p.topics.GoalDWH, goalDWH, topicGoalDWH, environmentID, errs)
 	p.publish(ctx, p.topics.GoalOPS, goalOPS, topicGoalOPS, environmentID, errs)
 	return errs
+}
+
+// linkEvaluations returns the evaluations linked to experiments (DWH) and auto ops rules (OPS).
+func (p *LinkedEventPublisher) linkEvaluations(
+	targets *linkedTargets,
+	environmentID string,
+	evaluations []publisher.Message,
+) (dwh, ops []publisher.Message) {
+	for _, m := range evaluations {
+		e := &eventproto.EvaluationEvent{}
+		if !p.unmarshalEvent(m, e, typeEvaluation, environmentID) {
+			continue
+		}
+		if _, ok := targets.experimentFeatures[fmt.Sprintf("%s:%d", e.FeatureId, e.FeatureVersion)]; ok {
+			dwh = append(dwh, m)
+		}
+		if _, ok := targets.opsFeatureVariations[e.FeatureId+":"+e.VariationId]; ok {
+			ops = append(ops, m)
+		}
+	}
+	return dwh, ops
+}
+
+// linkGoals returns the goals linked to experiments (DWH) and auto ops rules (OPS).
+func (p *LinkedEventPublisher) linkGoals(
+	targets *linkedTargets,
+	environmentID string,
+	goals []publisher.Message,
+) (dwh, ops []publisher.Message) {
+	for _, m := range goals {
+		e := &eventproto.GoalEvent{}
+		if !p.unmarshalEvent(m, e, typeGoal, environmentID) {
+			continue
+		}
+		if _, ok := targets.experimentGoals[e.GoalId]; ok {
+			dwh = append(dwh, m)
+		}
+		if _, ok := targets.opsGoals[e.GoalId]; ok {
+			ops = append(ops, m)
+		}
+	}
+	return dwh, ops
 }
 
 func (p *LinkedEventPublisher) publish(
@@ -220,22 +242,26 @@ func (p *LinkedEventPublisher) publish(
 	linkedEventCounter.WithLabelValues(topic, codeOK).Add(float64(len(messages) - len(multiErrs)))
 }
 
-func unmarshalEvent(m publisher.Message, dst proto.Message) bool {
-	ev, ok := m.(*eventproto.Event)
-	if !ok || ev.Event == nil {
+func (p *LinkedEventPublisher) unmarshalEvent(
+	m publisher.Message,
+	dst proto.Message,
+	eventType, environmentID string,
+) bool {
+	err := errInvalidLinkedEvent
+	if ev, ok := m.(*eventproto.Event); ok && ev.Event != nil {
+		err = ev.Event.UnmarshalTo(dst)
+	}
+	if err != nil {
+		p.logger.Error("Failed to unmarshal linked event",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+			zap.String("type", eventType),
+			zap.String("id", m.GetId()),
+		)
+		linkedEventCounter.WithLabelValues(eventType, codeUnmarshalFailed).Inc()
 		return false
 	}
-	return ev.Event.UnmarshalTo(dst) == nil
-}
-
-func (t *linkedTargets) linkEvaluationDWH(e *eventproto.EvaluationEvent) bool {
-	_, ok := t.experimentFeatures[fmt.Sprintf("%s:%d", e.FeatureId, e.FeatureVersion)]
-	return ok
-}
-
-func (t *linkedTargets) linkEvaluationOPS(e *eventproto.EvaluationEvent) bool {
-	_, ok := t.opsFeatureVariations[e.FeatureId+":"+e.VariationId]
-	return ok
+	return true
 }
 
 func (p *LinkedEventPublisher) getTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
@@ -272,6 +298,8 @@ func (p *LinkedEventPublisher) Evict(environmentID string) {
 	p.flightgroup.Forget(environmentID)
 }
 
+// loadTargets builds the environment's linked targets from its experiments and auto ops rules,
+// and stores them in memory unless the environment was evicted while loading.
 func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
 	p.mu.RLock()
 	generation := p.generations[environmentID]
@@ -339,8 +367,10 @@ func (p *LinkedEventPublisher) listExperiments(
 		return exps.Experiments, nil
 	}
 	cacheCounter.WithLabelValues(callerGatewayService, typeExperiments, cacheLayerExternal, codeMiss).Inc()
+	// Captured before reading so a newer snapshot from the cache refresher wins
+	generation := p.now().UnixNano()
 	resp, err := p.experimentClient.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
-		StopAt:        p.now().Add(-linkedExperimentsStopAtWindow).Unix(),
+		StopAt:        p.now().Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
 		PageSize:      0,
 		EnvironmentId: environmentID,
 		Statuses: []experimentproto.Experiment_Status{
@@ -351,6 +381,13 @@ func (p *LinkedEventPublisher) listExperiments(
 	})
 	if err != nil {
 		return nil, err
+	}
+	exps := &experimentproto.Experiments{Experiments: resp.Experiments}
+	if _, err := p.experimentsRedisCache.PutIfNewer(exps, environmentID, generation); err != nil {
+		p.logger.Error("Failed to cache experiments",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
 	}
 	return resp.Experiments, nil
 }
@@ -364,6 +401,7 @@ func (p *LinkedEventPublisher) listAutoOpsRules(
 		return rules.AutoOpsRules, nil
 	}
 	cacheCounter.WithLabelValues(callerGatewayService, typeAutoOpsRules, cacheLayerExternal, codeMiss).Inc()
+	generation := p.now().UnixNano()
 	resp, err := p.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
 		PageSize:      0,
 		EnvironmentId: environmentID,
@@ -371,10 +409,17 @@ func (p *LinkedEventPublisher) listAutoOpsRules(
 	if err != nil {
 		return nil, err
 	}
+	rules := &aoproto.AutoOpsRules{AutoOpsRules: resp.AutoOpsRules}
+	if _, err := p.autoOpsRulesRedisCache.PutIfNewer(rules, environmentID, generation); err != nil {
+		p.logger.Error("Failed to cache auto ops rules",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
+	}
 	return resp.AutoOpsRules, nil
 }
 
-// excludeFailed drops the events that failed on the main topics since the SDK retries them
+// excludeFailed drops the events that failed on the dedicated topics, so a retry does not publish them twice
 func excludeFailed[T any](messages []publisher.Message, failed map[string]T) []publisher.Message {
 	result := make([]publisher.Message, 0, len(messages))
 	for _, m := range messages {

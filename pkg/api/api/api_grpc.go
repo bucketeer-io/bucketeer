@@ -1836,23 +1836,20 @@ func (s *grpcGatewayService) RegisterEvents(
 	}
 	// MetricsEvents are saved asynchronously for performance, since there is no user impact even if they are lost.
 	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.UrlCode)
-	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
-	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	linkedErrors := make(map[string]*gwproto.RegisterEventsResponse_Error)
 	if p := s.opts.linkedEventPublisher; p != nil {
-		failed := p.Publish(
-			ctx,
-			envAPIKey.Environment.Id,
-			excludeFailed(goalMessages, goalErrors),
-			excludeFailed(evaluationMessages, evalErrors),
-		)
+		failed := p.Publish(ctx, envAPIKey.Environment.Id, goalMessages, evaluationMessages)
 		for id, err := range failed {
 			linkedErrors[id] = &gwproto.RegisterEventsResponse_Error{
 				Retriable: !errors.Is(err, publisher.ErrBadMessage),
 				Message:   "Failed to publish event",
 			}
 		}
+		goalMessages = excludeFailed(goalMessages, linkedErrors)
+		evaluationMessages = excludeFailed(evaluationMessages, linkedErrors)
 	}
+	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
+	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	errs = s.mergeMaps(errs, goalErrors, evalErrors, linkedErrors)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {

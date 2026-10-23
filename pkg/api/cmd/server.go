@@ -117,6 +117,7 @@ type server struct {
 	codeRefService                    *string
 	pushService                       *string
 	auditLogService                   *string
+	autoOpsService                    *string
 	tagService                        *string
 	teamService                       *string
 	subscriptionService               *string
@@ -266,6 +267,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"audit-log-service",
 			"bucketeer-audit-log-service address.",
 		).Default("audit-log:9090").String(),
+		autoOpsService: cmd.Flag(
+			"auto-ops-service",
+			"bucketeer-auto-ops-service address.",
+		).Default("auto-ops:9090").String(),
 		tagService: cmd.Flag(
 			"tag-service",
 			"bucketeer-tag-service address.",
@@ -595,7 +600,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	autoOpsClient, err := autoopsclient.NewClient(*s.auditLogService, *s.certPath,
+	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
 		client.WithBlock(),

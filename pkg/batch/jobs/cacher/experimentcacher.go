@@ -28,12 +28,9 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	expclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	expdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	expproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
-)
-
-const (
-	day = 24 * time.Hour
 )
 
 type experimentCacher struct {
@@ -114,7 +111,7 @@ func (c *experimentCacher) listExperiments(
 		// Because the evaluation and goal events may be sent with a delay
 		// for many reasons from the client side, we still calculate
 		// the results for two days after it stopped.
-		StopAt:        time.Now().Add(-2 * day).Unix(),
+		StopAt:        time.Now().Add(-expdomain.StoppedExperimentEventWindow).Unix(),
 		PageSize:      0,
 		EnvironmentId: environmentID,
 		Statuses: []expproto.Experiment_Status{

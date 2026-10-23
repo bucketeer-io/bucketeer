@@ -28,6 +28,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	ft "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	dwhstorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
@@ -418,7 +419,7 @@ func (w *goalEvtWriter) listExperiments(
 				// Because the evaluation and goal events may be sent with a delay
 				// for many reasons from the client side, we still calculate
 				// the results for two days after it stopped.
-				StopAt:        time.Now().In(w.location).Add(-2 * day).Unix(),
+				StopAt:        time.Now().In(w.location).Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
 				PageSize:      0,
 				EnvironmentId: environmentId,
 				Statuses: []exproto.Experiment_Status{

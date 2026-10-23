@@ -92,6 +92,7 @@ env:
   pushService: localhost:9001
   codeRefService: localhost:9001
   auditLogService: localhost:9001
+  autoOpsService: localhost:9001
   tagService: localhost:9001
   teamService: localhost:9001
   subscriptionService: localhost:9001

@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -42,6 +43,7 @@ import (
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const linkedTestEnvID = "env-1"
@@ -113,6 +115,11 @@ func TestLinkedEventPublisherPublish(t *testing.T) {
 					&experimentproto.ListExperimentsResponse{Experiments: experiments.Experiments}, nil)
 				m.autoOpsClient.EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(
 					&aoproto.ListAutoOpsRulesResponse{AutoOpsRules: rules.AutoOpsRules}, nil)
+				// The database result is written back to redis
+				for _, key := range []string{linkedTestEnvID + ":experiment", linkedTestEnvID + ":autoOpsRule"} {
+					m.cache.EXPECT().PutIfNewer(key, "{"+key+"}:gen", gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(true, nil)
+				}
 				m.expectPublish(nil)
 			},
 			expectedPublished: linked,
@@ -404,4 +411,76 @@ func TestGrpcTrackIgnoresLinkedEventFailure(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, &gwproto.TrackResponse{}, actual)
+}
+
+func TestLinkedEventPublisherSkipsInvalidEvents(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	m := newLinkedTestMocks(ctrl)
+	m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, &experimentproto.Experiments{
+		Experiments: []*experimentproto.Experiment{{Id: "exp-1", GoalIds: []string{"goal-1"}}},
+	}), nil)
+	m.expectPublish(nil)
+	lp := NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
+	// An evaluation event sent as a goal cannot be unmarshaled
+	goals := []publisher.Message{
+		newLinkedTestGoal(t, "g-1", "goal-1"),
+		newLinkedTestEvaluation(t, "g-invalid", "feature-1", 1, "variation-a"),
+	}
+	assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+	assert.Equal(t, map[string][]string{topicGoalDWH: {"g-1"}}, m.published)
+}
+
+func TestGrpcRegisterEventsSkipsMainTopicsOnLinkedFailure(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	m := newLinkedTestMocks(ctrl)
+	gs := newGrpcGatewayServiceWithMock(t, ctrl)
+	linkedID, plainID := newUUID(t), newUUID(t)
+	gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+		&accountproto.EnvironmentAPIKey{
+			Environment: &environmentproto.EnvironmentV2{Id: linkedTestEnvID},
+			ApiKey:      &accountproto.APIKey{Id: "id-0", Role: accountproto.APIKey_SDK_CLIENT},
+		}, nil)
+	m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, &experimentproto.Experiments{
+		Experiments: []*experimentproto.Experiment{{Id: "exp-1", GoalIds: []string{"goal-linked"}}},
+	}), nil)
+	m.expectPublish(map[string]error{linkedID: errors.New("publish error")})
+	var mainPublished []string
+	gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, messages []publisher.Message) map[string]error {
+			for _, msg := range messages {
+				mainPublished = append(mainPublished, msg.GetId())
+			}
+			return nil
+		})
+	gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(nil)
+	opts := *gs.opts
+	opts.linkedEventPublisher = NewLinkedEventPublisher(
+		LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop(),
+	)
+	gs.opts = &opts
+	newGoal := func(id, goalID string) *eventproto.Event {
+		e, err := anypb.New(&eventproto.GoalEvent{
+			Timestamp: time.Now().Unix(),
+			GoalId:    goalID,
+			UserId:    "user-id",
+			User:      &userproto.User{Id: "user-id"},
+		})
+		require.NoError(t, err)
+		return &eventproto.Event{Id: id, Event: e}
+	}
+	actual, err := gs.RegisterEvents(
+		metadata.NewIncomingContext(context.Background(), metadata.MD{"authorization": []string{"api-key"}}),
+		&gwproto.RegisterEventsRequest{Events: []*eventproto.Event{
+			newGoal(linkedID, "goal-linked"),
+			newGoal(plainID, "goal-plain"),
+		}},
+	)
+	require.NoError(t, err)
+	// The failed event is retried, so it must not be counted on the main topic yet
+	assert.Equal(t, []string{plainID}, mainPublished)
+	assert.Equal(t, map[string]*gwproto.RegisterEventsResponse_Error{
+		linkedID: {Retriable: true, Message: "Failed to publish event"},
+	}, actual.Errors)
 }

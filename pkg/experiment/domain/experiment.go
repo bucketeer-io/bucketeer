@@ -27,6 +27,9 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
+// StoppedExperimentEventWindow is how long a stopped experiment still links late events
+const StoppedExperimentEventWindow = 2 * 24 * time.Hour
+
 var (
 	ErrExperimentBeforeStart = pkgErr.NewErrorInvalidArgNotMatchFormat(
 		pkgErr.ExperimentPackageName,
