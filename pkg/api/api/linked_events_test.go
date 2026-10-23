@@ -32,6 +32,7 @@ import (
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -118,7 +119,7 @@ func TestLinkedEventPublisherPublish(t *testing.T) {
 				// The database result is written back to redis
 				for key, ttl := range map[string]time.Duration{
 					linkedTestEnvID + ":experiment":  0,
-					linkedTestEnvID + ":autoOpsRule": linkedAutoOpsRulesRedisCacheTTL,
+					linkedTestEnvID + ":autoOpsRule": cachev3.NonPersistentAutoOpsRulesCacheTTL,
 				} {
 					m.cache.EXPECT().PutIfNewer(key, "{"+key+"}:gen", gomock.Any(), gomock.Any(), ttl).Return(true, nil)
 				}
@@ -395,8 +396,11 @@ func TestGrpcTrackIgnoresLinkedEventFailure(t *testing.T) {
 		Experiments: []*experimentproto.Experiment{{Id: "exp-1", GoalIds: []string{"goal-1"}}},
 	}), nil)
 	// A retry would get a new event ID and duplicate the goal on the main topic
+	release, done := make(chan struct{}), make(chan struct{})
 	m.goalDWH.EXPECT().PublishMulti(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(_ context.Context, messages []publisher.Message) map[string]error {
+			defer close(done)
+			<-release
 			return map[string]error{messages[0].GetId(): errors.New("publish error")}
 		})
 	opts := *gs.opts
@@ -411,8 +415,11 @@ func TestGrpcTrackIgnoresLinkedEventFailure(t *testing.T) {
 		Tag:       "tag",
 		Timestamp: time.Now().Unix(),
 	})
+	// Returns while the linked publish is still blocked
 	require.NoError(t, err)
 	assert.Equal(t, &gwproto.TrackResponse{}, actual)
+	close(release)
+	<-done
 }
 
 func TestLinkedEventPublisherSkipsInvalidEvents(t *testing.T) {

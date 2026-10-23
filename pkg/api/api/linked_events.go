@@ -40,8 +40,8 @@ import (
 
 const (
 	linkedEventsMemoryCacheTTL = 1 * time.Minute
-	// The batch cacher refreshes only the persistent redis, so expire the gateway's write-back
-	linkedAutoOpsRulesRedisCacheTTL = 5 * time.Minute
+	// Detached from the request since Track publishes in the background
+	linkedEventsTrackPublishTimeout = 10 * time.Second
 
 	topicEvaluationDWH = "EvaluationDWH"
 	topicEvaluationOPS = "EvaluationOPS"
@@ -113,7 +113,7 @@ func NewLinkedEventPublisher(
 	return &LinkedEventPublisher{
 		topics:                 topics,
 		experimentsRedisCache:  cachev3.NewExperimentsCache(redisCache),
-		autoOpsRulesRedisCache: cachev3.NewAutoOpsRulesCache(redisCache, linkedAutoOpsRulesRedisCacheTTL),
+		autoOpsRulesRedisCache: cachev3.NewAutoOpsRulesCache(redisCache, cachev3.NonPersistentAutoOpsRulesCacheTTL),
 		experimentClient:       experimentClient,
 		autoOpsClient:          autoOpsClient,
 		memoryCacheTTL:         linkedEventsMemoryCacheTTL,

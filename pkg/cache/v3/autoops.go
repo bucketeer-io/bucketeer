@@ -27,6 +27,8 @@ import (
 
 const (
 	autoOpsRuleKind = "autoOpsRule"
+	// NonPersistentAutoOpsRulesCacheTTL bounds staleness, since the batch cacher refreshes only the persistent redis
+	NonPersistentAutoOpsRulesCacheTTL = 5 * time.Minute
 )
 
 type AutoOpsRulesCache interface {

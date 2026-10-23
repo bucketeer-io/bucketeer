@@ -441,9 +441,13 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		)
 		return nil, ErrInternal
 	}
-	// Best effort: a retry gets a new event ID, so failing here would duplicate the goal
+	// Best effort and off the response path: a retry gets a new event ID, so it would duplicate the goal
 	if p := s.opts.linkedEventPublisher; p != nil {
-		p.Publish(ctx, envAPIKey.Environment.Id, []publisher.Message{event}, nil)
+		go func() {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), linkedEventsTrackPublishTimeout)
+			defer cancel()
+			p.Publish(ctx, envAPIKey.Environment.Id, []publisher.Message{event}, nil)
+		}()
 	}
 	eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeOK)
 	return &gwproto.TrackResponse{}, nil
