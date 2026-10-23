@@ -58,7 +58,7 @@ export const ChartCard = memo(function ChartCard({
             <p className="typo-para-small text-gray-500">
               {t('insights.current-month')}
             </p>
-            <h1 className="text-4xl font-bold py-3">
+            <h1 className="text-2xl md:text-4xl font-bold py-2 md:py-3">
               {formatLargeNumber(currentMonth)}
             </h1>
             {pctChange != null && (

@@ -1,6 +1,7 @@
 import { ReactNode, useCallback } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import * as Dialog from '@radix-ui/react-dialog';
+import { useScreen } from 'hooks/use-screen';
 import { cn } from 'utils/style';
 import Button from 'components/button';
 import Divider from 'components/divider';
@@ -23,20 +24,33 @@ const SlideModal = ({
   isOpen,
   onClose,
   children,
-  shouldCloseOnOverlayClick = true
+  shouldCloseOnOverlayClick
 }: SliderProps) => {
+  const { isMobile } = useScreen();
+  // On mobile, overlay clicks are blocked (via onPointerDownOutside /
+  // onInteractOutside) to avoid clashing with the unsaved-leave-page flow.
+  // On desktop we allow the overlay click to dismiss the slide. A caller can
+  // force either behavior by passing shouldCloseOnOverlayClick explicitly.
+  const closeOnOverlayClick = shouldCloseOnOverlayClick ?? !isMobile;
   const onOpenChange = useCallback(
     (v: boolean) => {
-      if (v === false && shouldCloseOnOverlayClick) onClose();
+      if (v === false) onClose();
     },
-    [shouldCloseOnOverlayClick]
+    [onClose]
   );
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 h-full w-full animate-fade bg-overlay" />
-        <Dialog.Content>
+        <Dialog.Content
+          onPointerDownOutside={
+            closeOnOverlayClick ? undefined : e => e.preventDefault()
+          }
+          onInteractOutside={
+            closeOnOverlayClick ? undefined : e => e.preventDefault()
+          }
+        >
           <div
             className={cn(
               'fixed z-50 flex h-full w-full flex-col rounded-l-lg bg-gray-50 max-w-[542px]',
