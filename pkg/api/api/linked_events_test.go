@@ -116,9 +116,11 @@ func TestLinkedEventPublisherPublish(t *testing.T) {
 				m.autoOpsClient.EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(
 					&aoproto.ListAutoOpsRulesResponse{AutoOpsRules: rules.AutoOpsRules}, nil)
 				// The database result is written back to redis
-				for _, key := range []string{linkedTestEnvID + ":experiment", linkedTestEnvID + ":autoOpsRule"} {
-					m.cache.EXPECT().PutIfNewer(key, "{"+key+"}:gen", gomock.Any(), gomock.Any(), gomock.Any()).
-						Return(true, nil)
+				for key, ttl := range map[string]time.Duration{
+					linkedTestEnvID + ":experiment":  0,
+					linkedTestEnvID + ":autoOpsRule": linkedAutoOpsRulesRedisCacheTTL,
+				} {
+					m.cache.EXPECT().PutIfNewer(key, "{"+key+"}:gen", gomock.Any(), gomock.Any(), ttl).Return(true, nil)
 				}
 				m.expectPublish(nil)
 			},

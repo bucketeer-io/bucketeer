@@ -53,7 +53,7 @@ func NewAutoOpsRulesCacher(
 	return &autoOpsRulesCacher{
 		environmentClient: environmentClient,
 		autoOpsClient:     autoOpsClient,
-		cache:             cachev3.NewAutoOpsRulesCache(cache),
+		cache:             cachev3.NewAutoOpsRulesCache(cache, 0),
 		opts:              dopts,
 		logger:            dopts.Logger.Named("auto-ops-rules-cacher"),
 	}

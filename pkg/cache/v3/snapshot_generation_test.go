@@ -48,7 +48,7 @@ func TestSnapshotPutIfNewerWriteOrdering(t *testing.T) {
 		{
 			desc: "auto ops rules",
 			run: func(t *testing.T, c inMemoryMultiGetCache) string {
-				rc := NewAutoOpsRulesCache(c)
+				rc := NewAutoOpsRulesCache(c, 0)
 				newer := &aoproto.AutoOpsRules{AutoOpsRules: []*aoproto.AutoOpsRule{{Id: "new-rule"}}}
 				accepted, err := rc.PutIfNewer(newer, environmentId, refresherGeneration)
 				require.NoError(t, err)

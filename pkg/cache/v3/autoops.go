@@ -26,8 +26,7 @@ import (
 )
 
 const (
-	autoOpsRuleKind     = "autoOpsRule"
-	autoOpsRuleCacheTTL = time.Duration(0)
+	autoOpsRuleKind = "autoOpsRule"
 )
 
 type AutoOpsRulesCache interface {
@@ -41,10 +40,11 @@ type AutoOpsRulesCache interface {
 
 type autoOpsRulesCache struct {
 	cache cache.MultiGetCache
+	ttl   time.Duration
 }
 
-func NewAutoOpsRulesCache(c cache.MultiGetCache) AutoOpsRulesCache {
-	return &autoOpsRulesCache{cache: c}
+func NewAutoOpsRulesCache(c cache.MultiGetCache, ttl time.Duration) AutoOpsRulesCache {
+	return &autoOpsRulesCache{cache: c, ttl: ttl}
 }
 
 func (c *autoOpsRulesCache) Get(environmentId string) (*aoproto.AutoOpsRules, error) {
@@ -71,7 +71,7 @@ func (c *autoOpsRulesCache) Put(autoOps *aoproto.AutoOpsRules, environmentId str
 		return err
 	}
 	key := c.key(environmentId)
-	return c.cache.Put(key, buffer, autoOpsRuleCacheTTL)
+	return c.cache.Put(key, buffer, c.ttl)
 }
 
 func (c *autoOpsRulesCache) PutIfNewer(
@@ -88,7 +88,7 @@ func (c *autoOpsRulesCache) PutIfNewer(
 		c.generationKey(environmentId),
 		buffer,
 		generation,
-		autoOpsRuleCacheTTL,
+		c.ttl,
 	)
 }
 
