@@ -12,9 +12,8 @@ package mock
 import (
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	autoops "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockAutoOpsRulesCache is a mock of AutoOpsRulesCache interface.
@@ -81,4 +80,19 @@ func (m *MockAutoOpsRulesCache) Put(autoOps *autoops.AutoOpsRules, environmentId
 func (mr *MockAutoOpsRulesCacheMockRecorder) Put(autoOps, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Put), autoOps, environmentId)
+}
+
+// PutIfNewer mocks base method.
+func (m *MockAutoOpsRulesCache) PutIfNewer(autoOps *autoops.AutoOpsRules, environmentId string, generation int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", autoOps, environmentId, generation)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockAutoOpsRulesCacheMockRecorder) PutIfNewer(autoOps, environmentId, generation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).PutIfNewer), autoOps, environmentId, generation)
 }

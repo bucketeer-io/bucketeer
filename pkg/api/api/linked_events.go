@@ -319,6 +319,13 @@ func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID st
 	if p.generations[environmentID] == generation {
 		p.targets[environmentID] = t
 	}
+	// Drop expired entries of idle environments
+	now := p.now()
+	for id, entry := range p.targets {
+		if !now.Before(entry.expiresAt) {
+			delete(p.targets, id)
+		}
+	}
 	p.mu.Unlock()
 	return t, nil
 }

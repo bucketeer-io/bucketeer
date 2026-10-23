@@ -75,12 +75,14 @@ func (c *autoOpsRulesCacher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range envs {
+		// Captured before reading so a newer snapshot from the cache refresher wins
+		generation := time.Now().UnixNano()
 		autoOpsRules, err := c.listAutoOpsRules(ctx, env.Id)
 		if err != nil {
 			c.logger.Error("Failed to list auto ops rules", zap.String("environmentId", env.Id))
 			return err
 		}
-		c.putCache(&aoproto.AutoOpsRules{AutoOpsRules: autoOpsRules}, env.Id)
+		c.putCache(&aoproto.AutoOpsRules{AutoOpsRules: autoOpsRules}, env.Id, generation)
 	}
 	return nil
 }
@@ -114,13 +116,13 @@ func (c *autoOpsRulesCacher) listAutoOpsRules(
 }
 
 // Save the auto ops rules by environment in all redis instances
-func (c *autoOpsRulesCacher) putCache(rules *aoproto.AutoOpsRules, environmentID string) {
+func (c *autoOpsRulesCacher) putCache(rules *aoproto.AutoOpsRules, environmentID string, generation int64) {
 	var wg sync.WaitGroup
 	for _, cache := range c.caches {
 		wg.Add(1)
 		go func(cache cachev3.AutoOpsRulesCache) {
 			defer wg.Done()
-			if err := cache.Put(rules, environmentID); err != nil {
+			if _, err := cache.PutIfNewer(rules, environmentID, generation); err != nil {
 				c.logger.Error("Failed to cache auto ops rules",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),

@@ -19,6 +19,7 @@ import (
 	"errors"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,13 +31,17 @@ import (
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 const linkedTestEnvID = "env-1"
@@ -347,4 +352,56 @@ func TestCacheInvalidatorEvictsLinkedTargets(t *testing.T) {
 			assert.NotContains(t, lp.targets, linkedTestEnvID)
 		})
 	}
+}
+
+func TestLinkedEventPublisherDropsExpiredTargets(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	m := newLinkedTestMocks(ctrl)
+	m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, &experimentproto.Experiments{}), nil)
+	lp := NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
+	now := time.Now()
+	lp.now = func() time.Time { return now }
+	lp.targets["idle-env"] = &linkedTargets{expiresAt: now.Add(-time.Second)}
+	lp.targets["active-env"] = &linkedTargets{expiresAt: now.Add(time.Second)}
+	goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
+	assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+	assert.NotContains(t, lp.targets, "idle-env")
+	assert.Contains(t, lp.targets, "active-env")
+	assert.Contains(t, lp.targets, linkedTestEnvID)
+}
+
+func TestGrpcTrackIgnoresLinkedEventFailure(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	m := newLinkedTestMocks(ctrl)
+	gs := newGrpcGatewayServiceWithMock(t, ctrl)
+	gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+		&accountproto.EnvironmentAPIKey{
+			Environment: &environmentproto.EnvironmentV2{Id: linkedTestEnvID},
+			ApiKey:      &accountproto.APIKey{Id: "id-0", Role: accountproto.APIKey_SDK_CLIENT},
+		}, nil)
+	gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, &experimentproto.Experiments{
+		Experiments: []*experimentproto.Experiment{{Id: "exp-1", GoalIds: []string{"goal-1"}}},
+	}), nil)
+	// A retry would get a new event ID and duplicate the goal on the main topic
+	m.goalDWH.EXPECT().PublishMulti(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, messages []publisher.Message) map[string]error {
+			return map[string]error{messages[0].GetId(): errors.New("publish error")}
+		})
+	opts := *gs.opts
+	opts.linkedEventPublisher = NewLinkedEventPublisher(
+		LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop(),
+	)
+	gs.opts = &opts
+	actual, err := gs.Track(context.Background(), &gwproto.TrackRequest{
+		Apikey:    "api-key",
+		Userid:    "user-id",
+		Goalid:    "goal-1",
+		Tag:       "tag",
+		Timestamp: time.Now().Unix(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, &gwproto.TrackResponse{}, actual)
 }

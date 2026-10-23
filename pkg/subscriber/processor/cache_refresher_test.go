@@ -436,8 +436,8 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 						},
 					}, nil)
 				m.experimentsCache.EXPECT().
-					Put(gomock.Any(), "env-1").
-					Return(nil)
+					PutIfNewer(gomock.Any(), "env-1", gomock.Any()).
+					Return(true, nil)
 				m.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 		},
@@ -459,8 +459,8 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 						},
 					}, nil)
 				m.autoOpsRulesCache.EXPECT().
-					Put(gomock.Any(), "env-1").
-					Return(nil)
+					PutIfNewer(gomock.Any(), "env-1", gomock.Any()).
+					Return(true, nil)
 				m.invalidationPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 		},

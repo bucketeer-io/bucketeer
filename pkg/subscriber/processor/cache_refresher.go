@@ -515,6 +515,8 @@ func (c *cacheRefresher) refreshExperiments(
 ) error {
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
+	// Captured before reading so the batch cacher cannot overwrite a newer snapshot
+	generation := c.now().UnixNano()
 	resp, err := c.experimentClient.ListExperiments(fetchCtx, &experimentproto.ListExperimentsRequest{
 		PageSize:      0,
 		EnvironmentId: event.EnvironmentId,
@@ -529,7 +531,7 @@ func (c *cacheRefresher) refreshExperiments(
 		return err
 	}
 	experiments := &experimentproto.Experiments{Experiments: resp.Experiments}
-	if err := c.experimentsCache.Put(experiments, event.EnvironmentId); err != nil {
+	if _, err := c.experimentsCache.PutIfNewer(experiments, event.EnvironmentId, generation); err != nil {
 		return err
 	}
 	c.logger.Debug("Refreshed experiments redis cache",
@@ -549,6 +551,8 @@ func (c *cacheRefresher) refreshAutoOpsRules(
 ) error {
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
+	// Captured before reading so the batch cacher cannot overwrite a newer snapshot
+	generation := c.now().UnixNano()
 	resp, err := c.autoOpsClient.ListAutoOpsRules(fetchCtx, &autoopsproto.ListAutoOpsRulesRequest{
 		PageSize:      0,
 		EnvironmentId: event.EnvironmentId,
@@ -557,7 +561,7 @@ func (c *cacheRefresher) refreshAutoOpsRules(
 		return err
 	}
 	autoOpsRules := &autoopsproto.AutoOpsRules{AutoOpsRules: resp.AutoOpsRules}
-	if err := c.autoOpsRulesCache.Put(autoOpsRules, event.EnvironmentId); err != nil {
+	if _, err := c.autoOpsRulesCache.PutIfNewer(autoOpsRules, event.EnvironmentId, generation); err != nil {
 		return err
 	}
 	c.logger.Debug("Refreshed auto ops rules redis cache",

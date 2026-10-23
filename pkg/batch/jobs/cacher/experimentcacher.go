@@ -80,12 +80,14 @@ func (c *experimentCacher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range envs {
+		// Captured before reading so a newer snapshot from the cache refresher wins
+		generation := time.Now().UnixNano()
 		experiments, err := c.listExperiments(ctx, env.Id)
 		if err != nil {
 			c.logger.Error("Failed to list experiments", zap.String("environmentId", env.Id))
 			return err
 		}
-		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
+		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id, generation)
 	}
 	return nil
 }
@@ -130,7 +132,7 @@ func (c *experimentCacher) listExperiments(
 
 // Save the experiments by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string) int {
+func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string, generation int64) int {
 	var updatedInstances int
 	var mu sync.Mutex     // Mutex to safely update `updatedInstances` across goroutines
 	var wg sync.WaitGroup // Use a WaitGroup to wait for all goroutines to finish
@@ -138,7 +140,7 @@ func (c *experimentCacher) putCache(experiments *expproto.Experiments, environme
 		wg.Add(1) // Increment the WaitGroup counter
 		go func(cache cachev3.ExperimentsCache) {
 			defer wg.Done()
-			if err := cache.Put(experiments, environmentID); err != nil {
+			if _, err := cache.PutIfNewer(experiments, environmentID, generation); err != nil {
 				// Log the error, but do not stop the other goroutines
 				c.logger.Error("Failed to cache experiments",
 					zap.Error(err),

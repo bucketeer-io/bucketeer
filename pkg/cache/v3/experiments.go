@@ -33,6 +33,9 @@ const (
 type ExperimentsCache interface {
 	Get(environmentId string) (*exproto.Experiments, error)
 	Put(experiments *exproto.Experiments, environmentId string) error
+	// PutIfNewer stores the snapshot unless a newer generation is cached.
+	// generation is the UnixNano time captured before reading the snapshot.
+	PutIfNewer(experiments *exproto.Experiments, environmentId string, generation int64) (bool, error)
 	Evict(environmentId string) error
 }
 
@@ -71,8 +74,31 @@ func (c *experimentsCache) Put(experiments *exproto.Experiments, environmentId s
 	return c.cache.Put(key, buffer, experimentCacheTTL)
 }
 
+func (c *experimentsCache) PutIfNewer(
+	experiments *exproto.Experiments,
+	environmentId string,
+	generation int64,
+) (bool, error) {
+	buffer, err := proto.Marshal(experiments)
+	if err != nil {
+		return false, err
+	}
+	return c.cache.PutIfNewer(
+		c.key(environmentId),
+		c.generationKey(environmentId),
+		buffer,
+		generation,
+		experimentCacheTTL,
+	)
+}
+
 func (c *experimentsCache) Evict(environmentId string) error {
 	return evictKey(c.cache, c.key(environmentId))
+}
+
+// generationKey shares the hash slot of the snapshot key, as the conditional write requires
+func (c *experimentsCache) generationKey(environmentId string) string {
+	return fmt.Sprintf("{%s}:gen", c.key(environmentId))
 }
 
 func (c *experimentsCache) key(environmentId string) string {

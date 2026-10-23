@@ -33,6 +33,9 @@ const (
 type AutoOpsRulesCache interface {
 	Get(environmentId string) (*aoproto.AutoOpsRules, error)
 	Put(autoOps *aoproto.AutoOpsRules, environmentId string) error
+	// PutIfNewer stores the snapshot unless a newer generation is cached.
+	// generation is the UnixNano time captured before reading the snapshot.
+	PutIfNewer(autoOps *aoproto.AutoOpsRules, environmentId string, generation int64) (bool, error)
 	Evict(environmentId string) error
 }
 
@@ -71,8 +74,31 @@ func (c *autoOpsRulesCache) Put(autoOps *aoproto.AutoOpsRules, environmentId str
 	return c.cache.Put(key, buffer, autoOpsRuleCacheTTL)
 }
 
+func (c *autoOpsRulesCache) PutIfNewer(
+	autoOps *aoproto.AutoOpsRules,
+	environmentId string,
+	generation int64,
+) (bool, error) {
+	buffer, err := proto.Marshal(autoOps)
+	if err != nil {
+		return false, err
+	}
+	return c.cache.PutIfNewer(
+		c.key(environmentId),
+		c.generationKey(environmentId),
+		buffer,
+		generation,
+		autoOpsRuleCacheTTL,
+	)
+}
+
 func (c *autoOpsRulesCache) Evict(environmentId string) error {
 	return evictKey(c.cache, c.key(environmentId))
+}
+
+// generationKey shares the hash slot of the snapshot key, as the conditional write requires
+func (c *autoOpsRulesCache) generationKey(environmentId string) string {
+	return fmt.Sprintf("{%s}:gen", c.key(environmentId))
 }
 
 func (c *autoOpsRulesCache) key(environmentId string) string {
