@@ -28,12 +28,9 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	expclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	expdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	expproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
-)
-
-const (
-	day = 24 * time.Hour
 )
 
 type experimentCacher struct {
@@ -80,12 +77,14 @@ func (c *experimentCacher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range envs {
+		// Captured before reading so a newer snapshot from the cache refresher wins
+		generation := time.Now().UnixNano()
 		experiments, err := c.listExperiments(ctx, env.Id)
 		if err != nil {
 			c.logger.Error("Failed to list experiments", zap.String("environmentId", env.Id))
 			return err
 		}
-		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
+		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id, generation)
 	}
 	return nil
 }
@@ -112,7 +111,7 @@ func (c *experimentCacher) listExperiments(
 		// Because the evaluation and goal events may be sent with a delay
 		// for many reasons from the client side, we still calculate
 		// the results for two days after it stopped.
-		StopAt:        time.Now().Add(-2 * day).Unix(),
+		StopAt:        time.Now().Add(-expdomain.StoppedExperimentEventWindow).Unix(),
 		PageSize:      0,
 		EnvironmentId: environmentID,
 		Statuses: []expproto.Experiment_Status{
@@ -130,7 +129,7 @@ func (c *experimentCacher) listExperiments(
 
 // Save the experiments by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string) int {
+func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string, generation int64) int {
 	var updatedInstances int
 	var mu sync.Mutex     // Mutex to safely update `updatedInstances` across goroutines
 	var wg sync.WaitGroup // Use a WaitGroup to wait for all goroutines to finish
@@ -138,7 +137,7 @@ func (c *experimentCacher) putCache(experiments *expproto.Experiments, environme
 		wg.Add(1) // Increment the WaitGroup counter
 		go func(cache cachev3.ExperimentsCache) {
 			defer wg.Done()
-			if err := cache.Put(experiments, environmentID); err != nil {
+			if _, err := cache.PutIfNewer(experiments, environmentID, generation); err != nil {
 				// Log the error, but do not stop the other goroutines
 				c.logger.Error("Failed to cache experiments",
 					zap.Error(err),

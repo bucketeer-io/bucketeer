@@ -53,7 +53,7 @@ func NewAutoOpsRulesCacher(
 	return &autoOpsRulesCacher{
 		environmentClient: environmentClient,
 		autoOpsClient:     autoOpsClient,
-		cache:             cachev3.NewAutoOpsRulesCache(cache),
+		cache:             cachev3.NewAutoOpsRulesCache(cache, 0),
 		opts:              dopts,
 		logger:            dopts.Logger.Named("auto-ops-rules-cacher"),
 	}
@@ -70,12 +70,14 @@ func (c *autoOpsRulesCacher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range envs {
+		// Captured before reading so a newer snapshot from the cache refresher wins
+		generation := time.Now().UnixNano()
 		autoOpsRules, err := c.listAutoOpsRules(ctx, env.Id)
 		if err != nil {
 			c.logger.Error("Failed to list auto ops rules", zap.String("environmentId", env.Id))
 			return err
 		}
-		if err := c.cache.Put(&aoproto.AutoOpsRules{AutoOpsRules: autoOpsRules}, env.Id); err != nil {
+		if _, err := c.cache.PutIfNewer(&aoproto.AutoOpsRules{AutoOpsRules: autoOpsRules}, env.Id, generation); err != nil {
 			c.logger.Error("Failed to cache auto ops rules", zap.String("environmentId", env.Id))
 			continue
 		}

@@ -1081,6 +1081,17 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			continue
 		}
 	}
+	if p := s.opts.linkedEventPublisher; p != nil {
+		failed := p.Publish(req.Context(), envAPIKey.Environment.Id, goalMessages, evaluationMessages)
+		for id, err := range failed {
+			errs[id] = &registerEventsResponseError{
+				Retriable: !errors.Is(err, publisher.ErrBadMessage),
+				Message:   "Failed to publish event",
+			}
+		}
+		goalMessages = excludeFailed(goalMessages, failed)
+		evaluationMessages = excludeFailed(evaluationMessages, failed)
+	}
 	publish(s.goalPublisher, goalMessages, typeGoal)
 	publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	publish(s.metricsPublisher, metricsMessages, typeMetrics)

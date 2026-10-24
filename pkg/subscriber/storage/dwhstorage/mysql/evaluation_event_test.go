@@ -17,6 +17,7 @@ package mysql
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -63,7 +64,9 @@ func TestEvaluationEventStorage_CreateEvaluationEvents(t *testing.T) {
 			desc: "success",
 			setup: func(s *evaluationEventStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Cond(func(q any) bool { return strings.HasSuffix(q.(string), " ON DUPLICATE KEY UPDATE id = id") }),
+					gomock.Any(),
 				).Return(nil, nil)
 			},
 			input:       []dwhstorage.EvaluationEventParams{validEvent},

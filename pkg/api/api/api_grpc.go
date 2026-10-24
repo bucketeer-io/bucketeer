@@ -119,6 +119,7 @@ type options struct {
 	metricsWorkers                    int
 	metricsQueueSize                  int
 	inMemoryCache                     *cachev3.InMemoryCache
+	linkedEventPublisher              *LinkedEventPublisher
 	metrics                           metrics.Registerer
 	logger                            *zap.Logger
 }
@@ -207,6 +208,12 @@ func WithFeatureFlagDiffGracePeriod(d time.Duration) Option {
 func WithInMemoryCache(c *cachev3.InMemoryCache) Option {
 	return func(opts *options) {
 		opts.inMemoryCache = c
+	}
+}
+
+func WithLinkedEventPublisher(p *LinkedEventPublisher) Option {
+	return func(opts *options) {
+		opts.linkedEventPublisher = p
 	}
 }
 
@@ -433,6 +440,14 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 			)...,
 		)
 		return nil, ErrInternal
+	}
+	// Best effort and off the response path: a retry gets a new event ID, so it would duplicate the goal
+	if p := s.opts.linkedEventPublisher; p != nil {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), linkedEventsTrackPublishTimeout)
+			defer cancel()
+			p.Publish(ctx, envAPIKey.Environment.Id, []publisher.Message{event}, nil)
+		}()
 	}
 	eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeOK)
 	return &gwproto.TrackResponse{}, nil
@@ -1825,9 +1840,21 @@ func (s *grpcGatewayService) RegisterEvents(
 	}
 	// MetricsEvents are saved asynchronously for performance, since there is no user impact even if they are lost.
 	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.UrlCode)
+	linkedErrors := make(map[string]*gwproto.RegisterEventsResponse_Error)
+	if p := s.opts.linkedEventPublisher; p != nil {
+		failed := p.Publish(ctx, envAPIKey.Environment.Id, goalMessages, evaluationMessages)
+		for id, err := range failed {
+			linkedErrors[id] = &gwproto.RegisterEventsResponse_Error{
+				Retriable: !errors.Is(err, publisher.ErrBadMessage),
+				Message:   "Failed to publish event",
+			}
+		}
+		goalMessages = excludeFailed(goalMessages, linkedErrors)
+		evaluationMessages = excludeFailed(evaluationMessages, linkedErrors)
+	}
 	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
 	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
-	errs = s.mergeMaps(errs, goalErrors, evalErrors)
+	errs = s.mergeMaps(errs, goalErrors, evalErrors, linkedErrors)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {
 			eventCounter.WithLabelValues(callerGatewayService, typeRegisterEvent, codeInvalidTimestampRequest).Inc()

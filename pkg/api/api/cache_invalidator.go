@@ -31,6 +31,7 @@ type cacheInvalidator struct {
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	linkedEventPublisher   *LinkedEventPublisher
 	streamDispatcher       *stream.Dispatcher
 	logger                 *zap.Logger
 }
@@ -39,6 +40,7 @@ func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	linkedEventPublisher *LinkedEventPublisher,
 	streamDispatcher *stream.Dispatcher,
 	logger *zap.Logger,
 ) *cacheInvalidator {
@@ -46,6 +48,7 @@ func NewCacheInvalidator(
 		featuresCache:          featuresCache,
 		segmentUsersCache:      segmentUsersCache,
 		environmentAPIKeyCache: environmentAPIKeyCache,
+		linkedEventPublisher:   linkedEventPublisher,
 		streamDispatcher:       streamDispatcher,
 		logger:                 logger.Named("cache-invalidator"),
 	}
@@ -119,6 +122,14 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 			zap.String("segmentId", event.EntityId),
 			zap.String("type", event.Type.String()),
 		)
+	case domaineventproto.Event_EXPERIMENT, domaineventproto.Event_AUTOOPS_RULE:
+		if ci.linkedEventPublisher == nil {
+			return nil
+		}
+		ci.linkedEventPublisher.Evict(event.EnvironmentId)
+		cacheInvalidationCounter.WithLabelValues(
+			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
+		).Inc()
 	case domaineventproto.Event_APIKEY:
 		secrets, err := domaineventdomain.ExtractAPIKeySecrets(event)
 		if err != nil {

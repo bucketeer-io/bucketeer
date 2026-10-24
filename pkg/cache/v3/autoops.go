@@ -26,22 +26,27 @@ import (
 )
 
 const (
-	autoOpsRuleKind     = "autoOpsRule"
-	autoOpsRuleCacheTTL = time.Duration(0)
+	autoOpsRuleKind = "autoOpsRule"
+	// NonPersistentAutoOpsRulesCacheTTL bounds staleness, since the batch cacher refreshes only the persistent redis
+	NonPersistentAutoOpsRulesCacheTTL = 5 * time.Minute
 )
 
 type AutoOpsRulesCache interface {
 	Get(environmentId string) (*aoproto.AutoOpsRules, error)
 	Put(autoOps *aoproto.AutoOpsRules, environmentId string) error
+	// PutIfNewer stores the snapshot unless a newer generation is cached.
+	// generation is the UnixNano time captured before reading the snapshot.
+	PutIfNewer(autoOps *aoproto.AutoOpsRules, environmentId string, generation int64) (bool, error)
 	Evict(environmentId string) error
 }
 
 type autoOpsRulesCache struct {
 	cache cache.MultiGetCache
+	ttl   time.Duration
 }
 
-func NewAutoOpsRulesCache(c cache.MultiGetCache) AutoOpsRulesCache {
-	return &autoOpsRulesCache{cache: c}
+func NewAutoOpsRulesCache(c cache.MultiGetCache, ttl time.Duration) AutoOpsRulesCache {
+	return &autoOpsRulesCache{cache: c, ttl: ttl}
 }
 
 func (c *autoOpsRulesCache) Get(environmentId string) (*aoproto.AutoOpsRules, error) {
@@ -68,11 +73,34 @@ func (c *autoOpsRulesCache) Put(autoOps *aoproto.AutoOpsRules, environmentId str
 		return err
 	}
 	key := c.key(environmentId)
-	return c.cache.Put(key, buffer, autoOpsRuleCacheTTL)
+	return c.cache.Put(key, buffer, c.ttl)
+}
+
+func (c *autoOpsRulesCache) PutIfNewer(
+	autoOps *aoproto.AutoOpsRules,
+	environmentId string,
+	generation int64,
+) (bool, error) {
+	buffer, err := proto.Marshal(autoOps)
+	if err != nil {
+		return false, err
+	}
+	return c.cache.PutIfNewer(
+		c.key(environmentId),
+		c.generationKey(environmentId),
+		buffer,
+		generation,
+		c.ttl,
+	)
 }
 
 func (c *autoOpsRulesCache) Evict(environmentId string) error {
 	return evictKey(c.cache, c.key(environmentId))
+}
+
+// generationKey shares the hash slot of the snapshot key, as the conditional write requires
+func (c *autoOpsRulesCache) generationKey(environmentId string) string {
+	return fmt.Sprintf("{%s}:gen", c.key(environmentId))
 }
 
 func (c *autoOpsRulesCache) key(environmentId string) string {

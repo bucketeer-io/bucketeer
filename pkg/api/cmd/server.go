@@ -104,6 +104,10 @@ type server struct {
 	evaluationTopic                   *string
 	evaluationTopicProject            *string
 	metricsTopic                      *string
+	evaluationDWHTopic                *string
+	evaluationOPSTopic                *string
+	goalDWHTopic                      *string
+	goalOPSTopic                      *string
 	publishNumGoroutines              *int
 	publishTimeout                    *time.Duration
 	metricsWorkers                    *int
@@ -113,6 +117,7 @@ type server struct {
 	codeRefService                    *string
 	pushService                       *string
 	auditLogService                   *string
+	autoOpsService                    *string
 	tagService                        *string
 	teamService                       *string
 	subscriptionService               *string
@@ -210,6 +215,22 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"GCP Project id to use for PubSub to publish EvaluationEvent.",
 		).String(),
 		metricsTopic: cmd.Flag("metrics-topic", "Topic to use for publishing MetricsEvent.").String(),
+		evaluationDWHTopic: cmd.Flag(
+			"evaluation-dwh-topic",
+			"Topic to use for publishing EvaluationEvent linked to experiments. Empty disables it.",
+		).String(),
+		evaluationOPSTopic: cmd.Flag(
+			"evaluation-ops-topic",
+			"Topic to use for publishing EvaluationEvent linked to auto ops rules. Empty disables it.",
+		).String(),
+		goalDWHTopic: cmd.Flag(
+			"goal-dwh-topic",
+			"Topic to use for publishing GoalEvent linked to experiments. Empty disables it.",
+		).String(),
+		goalOPSTopic: cmd.Flag(
+			"goal-ops-topic",
+			"Topic to use for publishing GoalEvent linked to auto ops rules. Empty disables it.",
+		).String(),
 		publishNumGoroutines: cmd.Flag(
 			"publish-num-goroutines",
 			"The number of goroutines for publishing.",
@@ -246,6 +267,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"audit-log-service",
 			"bucketeer-audit-log-service address.",
 		).Default("audit-log:9090").String(),
+		autoOpsService: cmd.Flag(
+			"auto-ops-service",
+			"bucketeer-auto-ops-service address.",
+		).Default("auto-ops:9090").String(),
 		tagService: cmd.Flag(
 			"tag-service",
 			"bucketeer-tag-service address.",
@@ -495,6 +520,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 	}
 
+	createLinkedPublisher := func(topic, project string) (publisher.Publisher, error) {
+		if topic == "" {
+			return nil, nil
+		}
+		return pubsubClient.CreatePublisherInProject(topic, project)
+	}
+	var linkedTopics api.LinkedEventTopics
+	if linkedTopics.EvaluationDWH, err = createLinkedPublisher(*s.evaluationDWHTopic, evaluationTopicProject); err != nil {
+		return err
+	}
+	if linkedTopics.EvaluationOPS, err = createLinkedPublisher(*s.evaluationOPSTopic, evaluationTopicProject); err != nil {
+		return err
+	}
+	if linkedTopics.GoalDWH, err = createLinkedPublisher(*s.goalDWHTopic, goalTopicProject); err != nil {
+		return err
+	}
+	if linkedTopics.GoalOPS, err = createLinkedPublisher(*s.goalOPSTopic, goalTopicProject); err != nil {
+		return err
+	}
+
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
 		return err
@@ -555,7 +600,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	autoOpsClient, err := autoopsclient.NewClient(*s.auditLogService, *s.certPath,
+	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
 		client.WithBlock(),
@@ -714,9 +759,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// Subscribe to the cache-invalidation topic, which is published by the
 	// subscriber service after it refreshes L2. This pod uses only the
 	// configured cache-invalidation topic for that purpose.
+	linkedEventPublisher := api.NewLinkedEventPublisher(
+		linkedTopics,
+		redisV3Cache,
+		experimentClient,
+		autoOpsClient,
+		logger,
+	)
+
 	if *s.cacheInvalidationTopic != "" {
 		cleanup, err := s.startCacheInvalidator(
-			invalidatorCtx, pubsubClient, streamDispatcher, inMemoryCache, *s.cacheInvalidationTopic, logger,
+			invalidatorCtx,
+			pubsubClient,
+			streamDispatcher,
+			inMemoryCache,
+			linkedEventPublisher,
+			*s.cacheInvalidationTopic,
+			logger,
 		)
 		if err != nil {
 			return err
@@ -769,6 +828,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
+		api.WithLinkedEventPublisher(linkedEventPublisher),
 		api.WithMetrics(registerer),
 		api.WithMetricsWorkers(*s.metricsWorkers),
 		api.WithMetricsQueueSize(*s.metricsQueueSize),
@@ -864,6 +924,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithFeatureFlagDiffGracePeriod(*s.featureFlagDiffGracePeriod),
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
+		api.WithLinkedEventPublisher(linkedEventPublisher),
 		api.WithMetrics(registerer),
 		api.WithLogger(logger),
 	)
@@ -932,6 +993,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// These are fast cleanup operations that can run asynchronously.
 		go goalPublisher.Stop()
 		go evaluationPublisher.Stop()
+		for _, p := range []publisher.Publisher{
+			linkedTopics.EvaluationDWH, linkedTopics.EvaluationOPS, linkedTopics.GoalDWH, linkedTopics.GoalOPS,
+		} {
+			if p != nil {
+				go p.Stop()
+			}
+		}
 		if metricsPublisher != nil {
 			go metricsPublisher.Stop()
 		}
@@ -986,6 +1054,7 @@ func (s *server) startCacheInvalidator(
 	pubsubClient factory.Client,
 	dispatcher *stream.Dispatcher,
 	inMemoryCache *cachev3.InMemoryCache,
+	linkedEventPublisher *api.LinkedEventPublisher,
 	topic string,
 	logger *zap.Logger,
 ) (func(), error) {
@@ -1021,6 +1090,7 @@ func (s *server) startCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
 		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
+		linkedEventPublisher,
 		dispatcher,
 		logger,
 	)
