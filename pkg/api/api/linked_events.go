@@ -40,6 +40,8 @@ import (
 
 const (
 	linkedEventsMemoryCacheTTL = 1 * time.Minute
+	// Bounds reloads when evictions keep arriving during a load
+	linkedTargetsMaxLoadAttempts = 3
 	// Detached from the request since Track publishes in the background
 	linkedEventsTrackPublishTimeout = 10 * time.Second
 
@@ -300,12 +302,39 @@ func (p *LinkedEventPublisher) Evict(environmentID string) {
 	p.flightgroup.Forget(environmentID)
 }
 
-// loadTargets builds the environment's linked targets from its experiments and auto ops rules,
-// and stores them in memory unless the environment was evicted while loading.
+// loadTargets builds the environment's linked targets and stores them in memory.
+// When the environment is evicted while loading, it reloads so waiting callers do not get the stale targets.
 func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
-	p.mu.RLock()
-	generation := p.generations[environmentID]
-	p.mu.RUnlock()
+	for attempt := 1; ; attempt++ {
+		p.mu.RLock()
+		generation := p.generations[environmentID]
+		p.mu.RUnlock()
+		t, err := p.buildTargets(ctx, environmentID)
+		if err != nil {
+			return nil, err
+		}
+		p.mu.Lock()
+		evicted := p.generations[environmentID] != generation
+		if evicted && attempt < linkedTargetsMaxLoadAttempts {
+			p.mu.Unlock()
+			continue
+		}
+		if !evicted {
+			p.targets[environmentID] = t
+		}
+		// Drop expired entries of idle environments
+		now := p.now()
+		for id, entry := range p.targets {
+			if !now.Before(entry.expiresAt) {
+				delete(p.targets, id)
+			}
+		}
+		p.mu.Unlock()
+		return t, nil
+	}
+}
+
+func (p *LinkedEventPublisher) buildTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
 	t := &linkedTargets{
 		experimentFeatures:   make(map[string]struct{}),
 		experimentGoals:      make(map[string]struct{}),
@@ -345,18 +374,6 @@ func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID st
 		}
 	}
 	t.expiresAt = p.now().Add(p.memoryCacheTTL)
-	p.mu.Lock()
-	if p.generations[environmentID] == generation {
-		p.targets[environmentID] = t
-	}
-	// Drop expired entries of idle environments
-	now := p.now()
-	for id, entry := range p.targets {
-		if !now.Before(entry.expiresAt) {
-			delete(p.targets, id)
-		}
-	}
-	p.mu.Unlock()
 	return t, nil
 }
 

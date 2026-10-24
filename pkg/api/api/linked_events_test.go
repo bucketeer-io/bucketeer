@@ -313,19 +313,6 @@ func TestLinkedEventPublisherEvict(t *testing.T) {
 					marshalLinkedTest(t, &experimentproto.Experiments{}), nil).Times(2)
 			},
 		},
-		{
-			desc: "does not store a snapshot loaded during eviction",
-			setup: func(m *linkedTestMocks, lp func() *LinkedEventPublisher) {
-				gomock.InOrder(
-					m.cache.EXPECT().Get(linkedTestEnvID+":experiment").DoAndReturn(func(string) (interface{}, error) {
-						lp().Evict(linkedTestEnvID)
-						return marshalLinkedTest(t, &experimentproto.Experiments{}), nil
-					}),
-					m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(
-						marshalLinkedTest(t, &experimentproto.Experiments{}), nil),
-				)
-			},
-		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -492,4 +479,62 @@ func TestGrpcRegisterEventsSkipsMainTopicsOnLinkedFailure(t *testing.T) {
 	assert.Equal(t, map[string]*gwproto.RegisterEventsResponse_Error{
 		linkedID: {Retriable: true, Message: "Failed to publish event"},
 	}, actual.Errors)
+}
+
+func TestLinkedEventPublisherReloadsWhenEvictedDuringLoad(t *testing.T) {
+	t.Parallel()
+	stale := &experimentproto.Experiments{}
+	fresh := &experimentproto.Experiments{
+		Experiments: []*experimentproto.Experiment{{Id: "exp-1", GoalIds: []string{"goal-1"}}},
+	}
+	patterns := []struct {
+		desc string
+		// Number of loads that see an eviction while loading
+		evictions         int
+		expectedLoads     int
+		expectedPublished map[string][]string
+		expectedStored    bool
+	}{
+		{
+			desc:              "reloads and returns the fresh targets",
+			evictions:         1,
+			expectedLoads:     2,
+			expectedPublished: map[string][]string{topicGoalDWH: {"g-1"}},
+			expectedStored:    true,
+		},
+		{
+			desc:              "stops after the max attempts without storing",
+			evictions:         linkedTargetsMaxLoadAttempts,
+			expectedLoads:     linkedTargetsMaxLoadAttempts,
+			expectedPublished: map[string][]string{topicGoalDWH: {"g-1"}},
+			expectedStored:    false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := newLinkedTestMocks(ctrl)
+			var lp *LinkedEventPublisher
+			loads := 0
+			m.cache.EXPECT().Get(linkedTestEnvID + ":experiment").DoAndReturn(func(string) (interface{}, error) {
+				loads++
+				if loads <= p.evictions {
+					lp.Evict(linkedTestEnvID)
+					// The last attempt still reads the fresh experiments
+					if loads < linkedTargetsMaxLoadAttempts {
+						return marshalLinkedTest(t, stale), nil
+					}
+				}
+				return marshalLinkedTest(t, fresh), nil
+			}).Times(p.expectedLoads)
+			m.expectPublish(nil)
+			lp = NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
+			goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
+			assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+			assert.Equal(t, p.expectedPublished, m.published)
+			_, stored := lp.targets[linkedTestEnvID]
+			assert.Equal(t, p.expectedStored, stored)
+		})
+	}
 }
