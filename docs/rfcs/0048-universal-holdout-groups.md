@@ -65,7 +65,7 @@ Two new tables, added to `migration/mysql/` and `migration/postgres/` (Atlas). B
 | `assignment_type` | INT | `0=HASH`, `1=SEGMENT` |
 | `sampling_seed` | VARCHAR(255) | HASH only; the **environment's holdout hash key**: issued when the environment's first group is created, copied verbatim onto every later group in the environment, then fixed (§4.2.1) |
 | `bucket_start` | DECIMAL(6,3) | HASH only; start of the group's bucket range in [0,100), drawn randomly at creation, then fixed (§4.2.1) |
-| `percentage` | DECIMAL(6,3) | HASH only; 0 < `percentage` ≤ 50, e.g. `5` means "about 5% of all users". Capped at 50 so the holdout range and its equal-size comparison range (§4.4) always fit; GrowthBook applies the same cap |
+| `percentage` | DECIMAL(6,3) | HASH only; 0 < `percentage` ≤ 50, e.g. `5` means "about 5% of all users". Cap enforced because holdout + comparison arcs total **2 × percentage** on **[0, 1)** and must not overlap (§4.2.1); GrowthBook applies the same cap |
 | `segment_id` | VARCHAR(255) | SEGMENT only; fixed at creation, and the segment itself is locked while the group is serving (§4.2.2) |
 | `status` | INT | `0=WAITING`, `1=RUNNING`, `2=STOPPED`, `3=FORCE_STOPPED`, `4=ANALYSIS`. A group is **serving** while `RUNNING` or `ANALYSIS`; every guard in this RFC that protects a live group applies to both statuses (§4.6) |
 | `start_at`, `stop_at` | BIGINT | epoch seconds |
@@ -100,7 +100,10 @@ Indexes: `(environment_id, status)` on `holdout_group`; `(holdout_group_id, envi
 
 - **Flag-independent**: the hash input contains no feature ID, so the same users are held out everywhere. This is the one property none of the existing primitives — `Audience`, rollout, targeting — can provide.
 - **Environment-scoped seed, per-group range.** The hash input contains no *group ID* either; the group's identity enters only through its bucket range. The seed is issued once per environment (with the first group) and copied onto every group, so all groups in an environment bucket users along the same axis, while the random `bucket_start` gives each successive group a fresh slice — no user is a permanent holdout resident across periods. This choice is made now, before v1, because membership is immutable: a group-scoped seed could never be migrated later, and it would permanently foreclose two things the environment axis gets for free — the matched comparison sample of §4.4 (the range adjacent to the holdout's), and, if the single-serving-group rule of §4.6 is ever lifted, concurrent HASH groups on explicitly disjoint ranges with no assignment bookkeeping (§6.4).
-- **The comparison range.** The range `[bucket_start + percentage, bucket_start + 2 × percentage) / 100` — the same-size slice immediately above the holdout's — is reserved for measurement (§4.4). It has **no effect on serving**: users in it are evaluated by the normal path, byte-identically. `percentage ≤ 50` guarantees the two ranges never overlap.
+- **The comparison range.** The range `[bucket_start + percentage, bucket_start + 2 × percentage) / 100` — the same-size slice immediately above the holdout's on the circle — is reserved for measurement (§4.4). It has **no effect on serving**: users in it are evaluated by the normal path, byte-identically.
+- **Wraparound at 1.0.** Both holdout and comparison ranges are intervals on **[0, 1)** with wrap: if an endpoint exceeds 1.0, it continues from 0.0. Ranges are arcs on the circle, not only contiguous segments on a number line. Example: `bucket_start = 97`, `percentage = 5` (on a 0–100 scale) → holdout covers **[97, 100) ∪ [0, 2)** (5% of users); comparison covers **[2, 7)** (the next 5%). A high `bucket_start` does **not** leave “no room” for the comparison band — wrap places the comparison slice after the holdout arc.
+- **Why `percentage ≤ 50`.** Holdout and comparison each occupy an arc of length `percentage / 100` on **[0, 1)**. They are adjacent and must not overlap. That requires **2 × percentage ≤ 100** (i.e. **percentage ≤ 50**). At 5% holdout, roughly **5%** of users are held out, **5%** fall in the comparison band (derived `not_in_holdout` only), and the remaining **~90%** are in neither band — normal serving, no derived program row (§4.4). At the cap **50%**, the two arcs partition the entire circle (50% + 50%); there is no third “rest” band for measurement, which is why 50% is the maximum.
+- **`bucket_start` assignment (server-only).** The UI collects **`percentage`** only; **`bucket_start` is not client-supplied**. On **`CreateHoldoutGroup`** with HASH assignment, the holdout domain/service draws **`bucket_start`** uniformly on **[0, 100)** using a CSPRNG (e.g. `crypto/rand`), persists it on `holdout_group` in the same transaction as the insert, and never changes it afterward (§4.6). The dashboard may show the stored value **read-only** on the group detail page for transparency; there is no admin control to pick or edit the start. **`sampling_seed`** for the environment is also issued in this create path (generated on the environment's first group, copied verbatim onto every later group in the environment — §4.2.1); it is not chosen by murmur3 and not sent by the SDK. **Murmur3** (`evaluation/go/bucketeer.go`) only maps each **user** to a fixed **`b ∈ [0, 1)`**; **`IsHeldOut`** compares **`b`** to the stored **`bucket_start`** arc. The subscriber and calculator **read** `bucket_start`; they do **not** randomize it.
 
 #### 4.2.2 SEGMENT mode
 
@@ -183,7 +186,7 @@ When goals are configured, the group is given a **synthetic feature identity** s
 
 When measurement is enabled, the service creates an **internal experiment row** (`experiment.kind = HOLDOUT`, a new field defaulting to `KIND_EXPERIMENT` for every existing row) pointing at that synthetic identity, with `base_variation_id = in_holdout`. Consequences:
 
-- The subscriber links goal events by goal ID against `listExperiments`, and the internal experiment is returned by that same call, so **goal linking needs no change at all**.
+- The subscriber links goal events by goal ID against `listExperiments`, and the internal experiment is returned by that same call. **`listExperiments` itself is unchanged**, but the linker in `goal_events_dwh.go` gains holdout-aware branches (§4.4, goal linking and retry).
 - The experiment calculator picks it up and produces a standard `experiment_result`.
 - `ListExperimentsRequest` gains `repeated Kind kinds`. An empty list means no filter, so the existing internal callers — the subscriber (`goal_events_dwh.go`, `evaluation_events_dwh.go`, `cache_refresher.go`) and the experiment calculator — keep receiving the internal row unchanged. The dashboard's Experiments page sends `kinds = [KIND_EXPERIMENT]`, so internal rows never appear there. The internal row is created through the domain layer, bypassing the public API's feature-existence validation.
 - Places that would otherwise treat the internal row as an ordinary experiment branch on `kind = HOLDOUT`:
@@ -210,6 +213,23 @@ The comparison arm is a **matched sample, not the whole non-holdout population**
 - Reading the served reason for the holdout arm means **measurement needs no SDK support**. A held-out user reached through an SDK too old to serve the holdout (§4.3.2) produces no derived row on those days — their bucket is in the holdout range, not the comparison range — so an outdated SDK thins the holdout arm's exposure rather than putting treated users into the comparison group. The residual bias (such a user's good-path days still count as `in_holdout` while they intermittently received treatments) is bounded by the mixed-path overlap metric on the compatibility panel (§4.3.2).
 - SEGMENT mode has no hash, so it keeps the full non-holdout population as the comparison arm and pays the corresponding event volume; together with its observational nature (§4.2.2) this is surfaced when the mode is chosen.
 
+**Goal linking and retry (`goal_events_dwh`).** Goal events carry no `reason`; the subscriber attributes them by finding experiment(s) whose `goal_ids` contain the event's `goal_id`, then loading the user's latest matching row from `evaluation_event` (`QueryUserEvaluation` on the experiment's `feature_id` and `feature_version`, within the experiment window). If no row exists, today's implementation enqueues a **Redis retry** (`storeRetryOnMiss`) and polls for up to `maxRetryGoalEventPeriod`, on the assumption a client evaluation may still arrive. That assumption is **false** for holdout users on a **per-flag experiment**: §4.4 and §4.8 require that `HOLDOUT`-reason evaluations are **never** written to the target flag's experiment trail, so a qualifying row for that experiment will **never** appear. Without an explicit branch, holdout users' goal events would retry until the period expires — wasted Redis traffic and misleading ops signals — even though the outcome is permanently "not in this experiment."
+
+| Situation | `evaluation_event` row for lookup | Goal for this experiment | Retry? |
+|---|---|---|---|
+| Holdout user, **flag** experiment (`kind = EXPERIMENT`) on a target flag | **Never** (by design) | Not stored in DWH | **No** — discard immediately; do not call `storeRetryMessage` |
+| Non-holdout user, flag experiment, eval not in DWH yet | Not yet | Not stored yet | **Yes** — existing Redis retry (eval may arrive late) |
+| Non-holdout user, flag experiment, eval present | Yes | Stored (reason copied from eval) | N/A |
+| **Holdout program** experiment (`kind = HOLDOUT`), measurement enabled | Derived row on synthetic `feature_id` (= group UUID) | Stored when linked | **Yes** if derived row not yet visible — same race as today (eval/derive then goal) |
+| Holdout serving only (`goal_ids` empty), goal id matches a **flag** experiment only | No row for holdout user | Not stored | **No** — same permanent miss as first row |
+| Goal timestamp older than latest eval | Eval exists but too new | Not stored | **No** — same as today (`ErrGoalEventOlderThanEvaluation`) |
+
+**Permanent exclusion (no retry).** When linking against a **flag** experiment, before `storeRetryOnMiss` the subscriber must decide that the miss is permanent: the environment has a **serving** holdout group, the flag is a **current target**, and `IsHeldOut(group, user)` is true (SEGMENT mode: segment membership at link time, using the same segment-user set as evaluation). Treat the outcome like `ErrGoalEventOlderThanEvaluation` on the fresh path (ack, no Redis) and delete any retry key on the retry processor path. HASH mode must not depend on a `HOLDOUT` row in the DWH — membership is known from the group config and user id alone.
+
+**Holdout measurement linking.** For `kind = HOLDOUT`, lookup uses the synthetic `feature_id`, not the target flag. A missing row usually means the derived exposure row has not been written yet — **retain retry**. Holdout users reach this path only when the group's `goal_ids` include the event's goal (program-level KPIs). Reusing the **same** `goal_id` on a flag experiment and the holdout program experiment lets one goal event match both; v1 should **reject** configuring overlapping goals between a serving holdout internal experiment and a flag experiment, or filter flag experiments out when a holdout experiment also matches — otherwise linking becomes ambiguous.
+
+**Evaluation persister (`evaluation_events_dwh`).** When an evaluation event's `reason` is `HOLDOUT`, do **not** append a row attributed to the target flag's experiment (even if one is running). Optionally write only the derived synthetic row described above when measurement is enabled. Non-holdout evaluations on target flags follow the existing experiment-linking path unchanged.
+
 ### 4.5 API and governance
 
 New RPCs on `FeatureService` (`proto/feature/service.proto`), console-facing via the web gateway:
@@ -232,7 +252,7 @@ Every mutation writes an audit log event (`HOLDOUT_GROUP_CREATED`, `_UPDATED`, `
 
 Validation:
 
-- `CreateHoldoutGroup` / `StartHoldoutGroup`, and `UpdateHoldoutGroup` when it changes `start_at`, `start_analysis_at` or `stop_at`: the resulting `[start_at, stop_at)` window must not intersect another `WAITING`, `RUNNING` or `ANALYSIS` group in the environment; `start_at < start_analysis_at < stop_at` when an analysis period is scheduled; `assignment_type` decides whether `percentage` or `segment_id` is required; `percentage` is in `(0, 50]`; `segment_id` must exist in the environment and must not be referenced by a serving group (§4.2.2).
+- `CreateHoldoutGroup` / `StartHoldoutGroup`, and `UpdateHoldoutGroup` when it changes `start_at`, `start_analysis_at` or `stop_at`: the resulting `[start_at, stop_at)` window must not intersect another `WAITING`, `RUNNING` or `ANALYSIS` group in the environment; `start_at < start_analysis_at < stop_at` when an analysis period is scheduled; `assignment_type` decides whether `percentage` or `segment_id` is required; `percentage` is in `(0, 50]`; `segment_id` must exist in the environment and must not be referenced by a serving group (§4.2.2). On **`CreateHoldoutGroup`**, reject any client-provided **`bucket_start`** or **`sampling_seed`**; for HASH mode the server assigns both as in §4.2.1. Concurrent creates that race on the environment's first group must still yield one canonical seed (transaction or row lock on the environment axis).
 - `AddHoldoutGroupFeatures`: the flag exists, is not archived, and is not a current target of any other group (a `holdout_group_feature` row with `removed_at = 0` whose group is `WAITING`, `RUNNING` or `ANALYSIS`; rows left by stopped or archived groups do not count); `holdout_variation_id` is one of the flag's variations; the group is `WAITING` or `RUNNING` — **not `ANALYSIS`**, whose frozen flag list is the point of the stage (§4.6).
 - `UpdateFeature` (and every variation write path): **removing a variation that a current target row of a `WAITING`, `RUNNING` or `ANALYSIS` group references as `holdout_variation_id` is rejected**, with an error naming the group — the same pattern as the archive guard. Without this, a variation edit needing only `Environment_EDITOR` would leave the holdout serving a dangling variation ID.
 
@@ -260,10 +280,10 @@ Validation:
 
 ### 4.7 UI
 
-- **Holdout Groups page** (new, environment-scoped, next to Experiments): list with status, assignment mode, size, target-flag count, period; detail page with Overview, Target flags (add/remove, per-flag `holdout_variation_id`, `added_at`), Results (existing experiment-result component, showing the whole-period and analysis-period readouts side by side, §4.6), and the SDK compatibility panel from §4.3.2, plus manual Start / Start analysis / Stop actions. The whole page is read-only below `Organization_ADMIN`.
+- **Holdout Groups page** (new, environment-scoped, next to Experiments): list with status, assignment mode, size, target-flag count, goal count, period; **detail page with three tabs** — **Overview** (assignment metadata including read-only **hash ring start** for HASH, goals, schedule, target flags table with add/remove, per-flag `holdout_variation_id` and `added_at`, plus the SDK compatibility panel from §4.3.2), **Coverage report** (§ below), **Results** (existing experiment-result component: whole-period and analysis-period readouts side by side when goals are configured, §4.6); manual Start / Start analysis / Stop on the detail page. The whole page is read-only below `Organization_ADMIN`.
 - **Coverage report** (v1, on the detail page): flags created or first enabled in the environment during the group's period that are not targets of the group. Every such flag reaches held-out users and dilutes the cumulative readout toward zero, so the gap must be visible while it can still be fixed, not discovered at the end. Entries can be added to the group in place or dismissed with a note. (GrowthBook and Statsig solve the same problem with default enrollment; the coverage report keeps Bucketeer's explicit opt-in while removing its silent failure mode.)
 - **Add-flags dialog**: the `holdout_variation_id` picker defaults to the flag's current default/off variation, labeled as recommended. Selecting any other variation requires an explicit confirmation, since choosing a treatment variation silently inverts the control group for that flag.
-- **Create wizard**: a radio choice between "by percentage (hash)" and "by user segment", switching the input below it between a percentage field and a segment picker; the SEGMENT option carries the §4.2.2 warning. Measurement is a separate optional step — "measure in Bucketeer" (goal picker) or "analyze externally" (explains the `Reason.HOLDOUT` join, §4.4) — so a serving-only group is a first-class path, not a form with fields left blank.
+- **Create wizard**: a radio choice between "by percentage (hash)" and "by user segment", switching the input below it between a percentage field and a segment picker; the SEGMENT option carries the §4.2.2 warning. For HASH mode, short copy under the percentage field explains that holdout and comparison slices are placed at a **random position on the hash ring when the group is created** (§4.2.1) and cannot be changed later — no start-offset control. Measurement is a separate optional step — "measure in Bucketeer" (goal picker) or "analyze externally" (explains the `Reason.HOLDOUT` join, §4.4) — so a serving-only group is a first-class path, not a form with fields left blank.
 - **Edit screen**: the assignment mode and everything it implies — percentage, segment, seed, bucket range — are read-only, with a note that changing them means recreating the group; the target-flag list next to them stays editable (§4.6).
 - **Flag detail page**: a read-only badge — "This flag is subject to a holdout" — linking to the group by name, identical in both assignment modes. Nothing about the holdout is editable from here; the targeting UI stays editable because it still governs everyone outside the holdout. Without the badge, a flag owner sees a slice of users not getting the new variation with no way to find out why — usually ending in a mistaken rollback.
 - **Segment list and detail pages**: a segment referenced by a serving group says so and has its edit and delete actions disabled, mirroring the API-level lock of §4.2.2.
@@ -272,13 +292,47 @@ Validation:
 - **Flag archive action**: disabled for a flag that belongs to a live group, with a link to the group (§4.6).
 - **Debugger**: `DebugEvaluateFeatures` surfaces `Reason.HOLDOUT` so an operator can confirm why a user got a given variation.
 
+#### 4.7.1 UI prototype (stakeholder mock)
+
+An interactive **dashboard mock** (no API wiring) lives under `ui/dashboard/src/pages/holdouts-prototype/` for review before Phase 5. It shows an amber **UI prototype** banner; data is hard-coded in `mock-data.ts`.
+
+**How to view**
+
+1. `cd ui/dashboard && yarn start`
+2. Sign in and open an environment.
+3. Sidebar: **Experimentation → Holdout groups** (below Experiments).
+
+**Routes to review** (replace `{env}` with the environment URL code):
+
+| URL | Purpose |
+|---|---|
+| `/{env}/holdouts` | List |
+| `/{env}/holdouts/new` | Create wizard (basics → target flags → goals) |
+| `/{env}/holdouts/hld-q1-2026-product` | Detail — Overview, Coverage report, Results |
+| `/{env}/holdouts/hld-h2-growth` | Detail — scheduled group, goals set, no target flags yet |
+
+Create step 2: multi-flag selection via **Select feature flags…** (searchable picker aligned with the experiment create flow). The add-many modal uses checkboxes and a per-flag holdout variation selector.
+
+**Stakeholder checklist** (confirm before building Phase 5):
+
+- Sidebar placement and naming
+- Multi-flag opt-in (explicit list, not auto-enroll)
+- Per-flag holdout variation picker (default/off recommended)
+- Create flow: basics → flags → goals (the mock requires goals for review; production still supports serving-only per §4.4)
+- Detail tabs: Overview (includes target flags), Coverage report, Results
+- HASH create: **percentage** only; **hash ring start** read-only on Overview after create (§4.2.1)
+
+**Suggested screenshots:** sidebar entry, list, create steps 1–2, add-flags modal, detail Overview, Results placeholder.
+
+**Cleanup:** When the real Holdout Groups page ships, delete `pages/holdouts-prototype/` and drop this subsection (or mark it archived).
+
 ### 4.8 Interaction with existing features
 
 Auto-ops, flag triggers, prerequisites and the kill switch all change flag configuration, which the holdout short-circuits for its members — the consequences are in §4.3.1. The remaining interactions:
 
 | Feature | Interaction |
 |---|---|
-| Experiments | An experiment on a target flag measures only non-holdout users, and its sample size shrinks by the holdout share (noted in the experiment UI). The subscriber does not write `HOLDOUT`-reason events to the flag's own experiment (§4.4). Goal events then find no evaluation row for that experiment and are dropped. |
+| Experiments | An experiment on a target flag measures only non-holdout users, and its sample size shrinks by the holdout share (noted in the experiment UI). The subscriber does not write `HOLDOUT`-reason events to the flag's own experiment (§4.4). Goal events for holdout users then find no evaluation row for that experiment and are **dropped without entering the Redis retry queue** — a permanent miss, not a late eval (§4.4, goal linking and retry). Non-holdout users keep today's retry-until-eval behavior. |
 | Progressive rollout | Continues to operate on non-holdout traffic. A rollout reaching 100% does not release holdout users — that is the point. |
 | Segments | In SEGMENT mode, `UpdateSegment`, `BulkUploadSegmentUsers` and `DeleteSegment` are rejected for a segment referenced by a serving group (§4.2.2). |
 | Variations | Deleting a variation referenced as a live group's `holdout_variation_id` is rejected (§4.5, §4.6). Other variation edits (names, values) remain free. |
@@ -292,7 +346,7 @@ Auto-ops, flag triggers, prerequisites and the kill switch all change flag confi
 | 1 | Proto (including the `ANALYSIS` status and `StartHoldoutGroupAnalysis`), DB migrations, domain + storage + API (both assignment modes, environment-scoped seed and bucket ranges, org-admin authorization, single-serving-group enforcement, segment lock, variation guard), audit logs. No evaluation behavior yet. |
 | 2 | Evaluation: `evaluation/go`, `evaluation/typescript`, conformance fixtures, `Reason.HOLDOUT`, holdout-first ordering, segment-user plumbing, server-side path in `cmd/api` including holdout-aware `UserEvaluationsID` and forced re-evaluation. Every client SDK becomes holdout-capable here. |
 | 3 | Delivery to local-evaluation SDKs: `GetFeatureFlagsResponse.holdout_groups`, change detection, cache, compatibility metrics. Go/Node SDK releases follow in their own repos. |
-| 4 | Measurement (opt-in per group): internal experiments, `experiment.kind` and its write guard on `ExperimentService`, derived evaluation rows with the matched comparison sample and the `HOLDOUT`-reason filter in the subscriber, dedupe, 50/50 SRM, analysis-period experiment. |
+| 4 | Measurement (opt-in per group): internal experiments, `experiment.kind` and its write guard on `ExperimentService`, derived evaluation rows with the matched comparison sample and the `HOLDOUT`-reason filter in the subscriber, holdout-aware goal linking (permanent discard vs Redis retry, §4.4), dedupe, 50/50 SRM, analysis-period experiment. |
 | 5 | Dashboard: Holdout Groups page, coverage report, flag indicator, disable confirmation, results tab (both windows), compatibility panel with the mixed-path overlap metric. |
 | 6 | E2E tests (`test/e2e/gateway`), docs. |
 
