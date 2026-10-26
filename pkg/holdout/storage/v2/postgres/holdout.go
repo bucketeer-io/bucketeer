@@ -523,5 +523,8 @@ func listOrders(
 	if orderDirection == proto.ListHoldoutGroupsRequest_DESC {
 		direction = pgstorage.OrderDirectionDesc
 	}
-	return []*pgstorage.Order{pgstorage.NewOrder(column, direction)}, nil
+	return []*pgstorage.Order{
+		pgstorage.NewOrder(column, direction),
+		pgstorage.NewOrder("id", direction),
+	}, nil
 }

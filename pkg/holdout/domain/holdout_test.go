@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 )
 
 func TestAssignHashCopiesEnvironmentSeed(t *testing.T) {
-	t.Parallel()
 	restore := stubHashRandom("unused-new-seed", 12.5)
 	defer restore()
 
@@ -41,6 +41,12 @@ func TestAssignHashCopiesEnvironmentSeed(t *testing.T) {
 	assert.Equal(t, 12.5, bucket)
 }
 
+func TestNormalizePercentageRejectsNaN(t *testing.T) {
+	t.Parallel()
+	_, err := NormalizePercentage(math.NaN())
+	assert.ErrorIs(t, err, ErrPercentageOutOfRange)
+}
+
 func TestRandomBucketStartInRange(t *testing.T) {
 	t.Parallel()
 	for i := 0; i < 20; i++ {
@@ -52,7 +58,6 @@ func TestRandomBucketStartInRange(t *testing.T) {
 }
 
 func TestNewHoldoutGroupHash(t *testing.T) {
-	t.Parallel()
 	restore := stubHashRandom("generated-seed", 3)
 	defer restore()
 	now := time.Now().Unix()

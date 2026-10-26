@@ -523,5 +523,8 @@ func listOrders(
 	if orderDirection == proto.ListHoldoutGroupsRequest_DESC {
 		direction = mysqlstorage.OrderDirectionDesc
 	}
-	return []*mysqlstorage.Order{mysqlstorage.NewOrder(column, direction)}, nil
+	return []*mysqlstorage.Order{
+		mysqlstorage.NewOrder(column, direction),
+		mysqlstorage.NewOrder("id", direction),
+	}, nil
 }

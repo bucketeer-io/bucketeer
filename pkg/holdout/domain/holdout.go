@@ -191,7 +191,7 @@ func RejectClientAssignment(bucketStart *wrapperspb.DoubleValue, samplingSeed *w
 
 func NormalizePercentage(percentage float64) (float64, error) {
 	rounded := math.Round(percentage*1000) / 1000
-	if rounded <= 0 || rounded > maxPercentage {
+	if math.IsNaN(rounded) || rounded <= 0 || rounded > maxPercentage {
 		return 0, ErrPercentageOutOfRange
 	}
 	return rounded, nil
@@ -214,7 +214,7 @@ func ValidatePeriod(startAt, stopAt, startAnalysisAt, now int64, requireFutureSt
 	if requireFutureStop && stopAt <= now {
 		return ErrStopAtBeforeNow
 	}
-	if startAnalysisAt != 0 && !(startAt < startAnalysisAt && startAnalysisAt < stopAt) {
+	if startAnalysisAt != 0 && (startAt >= startAnalysisAt || startAnalysisAt >= stopAt) {
 		return ErrAnalysisPeriodInvalid
 	}
 	return nil
