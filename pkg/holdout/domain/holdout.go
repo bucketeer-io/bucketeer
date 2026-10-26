@@ -79,6 +79,9 @@ var (
 	ErrBeforeStop = pkgErr.NewErrorFailedPrecondition(
 		pkgErr.HoldoutPackageName, "stop_at has not passed",
 	).WithMessageKey("HoldoutBeforeStop")
+	ErrAfterStop = pkgErr.NewErrorFailedPrecondition(
+		pkgErr.HoldoutPackageName, "stop_at has already passed",
+	).WithMessageKey("HoldoutAfterStop")
 	ErrAnalysisFrozen = pkgErr.NewErrorFailedPrecondition(
 		pkgErr.HoldoutPackageName, "target flags cannot be added during the analysis period",
 	).WithMessageKey("HoldoutAnalysisFrozen")
@@ -478,26 +481,33 @@ func (g *HoldoutGroup) Update(p UpdateParams) error {
 	}
 	serving := IsServing(g.Status)
 	stopped := g.Status == featureproto.HoldoutGroup_STOPPED || g.Status == featureproto.HoldoutGroup_FORCE_STOPPED
+	// Validate every field into locals first so a rejected update leaves the group untouched.
+	name := g.Name
+	description := g.Description
+	startAt := g.StartAt
+	stopAt := g.StopAt
+	startAnalysisAt := g.StartAnalysisAt
+	goalIDs := g.GoalIds
 	if p.Name != nil {
 		if err := ValidateName(p.Name.Value); err != nil {
 			return err
 		}
-		g.Name = p.Name.Value
+		name = p.Name.Value
 	}
 	if p.Description != nil {
-		g.Description = p.Description.Value
+		description = p.Description.Value
 	}
 	if p.StartAt != nil {
 		if serving || stopped {
 			return ErrStartAtImmutable
 		}
-		g.StartAt = p.StartAt.Value
+		startAt = p.StartAt.Value
 	}
 	if p.StopAt != nil {
 		if stopped {
 			return ErrInvalidStatus
 		}
-		g.StopAt = p.StopAt.Value
+		stopAt = p.StopAt.Value
 	}
 	if p.StartAnalysisAt != nil {
 		if stopped {
@@ -506,9 +516,12 @@ func (g *HoldoutGroup) Update(p UpdateParams) error {
 		if g.Status == featureproto.HoldoutGroup_ANALYSIS && p.StartAnalysisAt.Value == 0 {
 			return ErrAnalysisPeriodInvalid
 		}
-		g.StartAnalysisAt = p.StartAnalysisAt.Value
+		startAnalysisAt = p.StartAnalysisAt.Value
 	}
 	if p.GoalIDsSet {
+		if stopped {
+			return ErrInvalidStatus
+		}
 		next, err := DedupeStrings(p.GoalIDs)
 		if err != nil {
 			return err
@@ -516,15 +529,18 @@ func (g *HoldoutGroup) Update(p UpdateParams) error {
 		if serving && !isSuperset(next, g.GoalIds) {
 			return ErrGoalsCannotBeRemoved
 		}
-		if stopped {
-			return ErrInvalidStatus
-		}
-		g.GoalIds = next
+		goalIDs = next
 	}
 	requireFutureStop := g.Status == featureproto.HoldoutGroup_WAITING || serving
-	if err := ValidatePeriod(g.StartAt, g.StopAt, g.StartAnalysisAt, p.Now, requireFutureStop); err != nil {
+	if err := ValidatePeriod(startAt, stopAt, startAnalysisAt, p.Now, requireFutureStop); err != nil {
 		return err
 	}
+	g.Name = name
+	g.Description = description
+	g.StartAt = startAt
+	g.StopAt = stopAt
+	g.StartAnalysisAt = startAnalysisAt
+	g.GoalIds = goalIDs
 	g.UpdatedBy = p.UpdatedBy
 	g.UpdatedAt = p.Now
 	return nil
@@ -553,20 +569,26 @@ func (g *HoldoutGroup) Start(now int64) error {
 	if g.Deleted || g.Archived || g.Status != featureproto.HoldoutGroup_WAITING {
 		return ErrInvalidStatus
 	}
-	if g.StartAt > now {
-		g.StartAt = now
+	startAt := g.StartAt
+	if startAt > now {
+		startAt = now
 	}
-	if err := ValidatePeriod(g.StartAt, g.StopAt, g.StartAnalysisAt, now, true); err != nil {
+	if err := ValidatePeriod(startAt, g.StopAt, g.StartAnalysisAt, now, true); err != nil {
 		return err
 	}
+	g.StartAt = startAt
 	g.Status = featureproto.HoldoutGroup_RUNNING
 	g.UpdatedAt = now
 	return nil
 }
 
+// StartAnalysis moves RUNNING to ANALYSIS. A group whose stop_at has passed must be stopped instead.
 func (g *HoldoutGroup) StartAnalysis(now int64) error {
 	if g.Deleted || g.Archived || g.Status != featureproto.HoldoutGroup_RUNNING {
 		return ErrInvalidStatus
+	}
+	if g.StopAt <= now {
+		return ErrAfterStop
 	}
 	g.Status = featureproto.HoldoutGroup_ANALYSIS
 	g.AnalysisStartedAt = now
@@ -584,8 +606,10 @@ func (g *HoldoutGroup) StopManual(now int64) error {
 	return nil
 }
 
+// FinishScheduled moves a group whose stop_at has passed to STOPPED. It also accepts a WAITING
+// group whose whole window was missed, so it stops holding its target flags.
 func (g *HoldoutGroup) FinishScheduled(now int64) error {
-	if g.Deleted || g.Archived || !IsServing(g.Status) {
+	if g.Deleted || g.Archived || !IsActive(g.Status) {
 		return ErrInvalidStatus
 	}
 	if g.StopAt > now {
@@ -718,9 +742,12 @@ func NewFeatureAlreadyAddedError(featureID string) error {
 	).WithMessageKey("HoldoutFeatureAlreadyAdded")
 }
 
-// DueForScheduledStart reports a WAITING group whose start_at has passed.
+// DueForScheduledStart reports a WAITING group whose start_at has passed and whose stop_at has not.
+// A WAITING group whose whole window was missed is reported by DueForScheduledStop instead.
 func DueForScheduledStart(g *featureproto.HoldoutGroup, now time.Time) bool {
-	return g.GetStatus() == featureproto.HoldoutGroup_WAITING && g.GetStartAt() <= now.Unix()
+	return g.GetStatus() == featureproto.HoldoutGroup_WAITING &&
+		g.GetStartAt() <= now.Unix() &&
+		g.GetStopAt() > now.Unix()
 }
 
 // DueForScheduledAnalysis reports a RUNNING group whose analysis time has passed.
@@ -731,7 +758,8 @@ func DueForScheduledAnalysis(g *featureproto.HoldoutGroup, now time.Time) bool {
 		g.GetStopAt() > now.Unix()
 }
 
-// DueForScheduledStop reports a serving group whose stop_at has passed.
+// DueForScheduledStop reports an active group whose stop_at has passed, including a WAITING
+// group whose whole window was missed.
 func DueForScheduledStop(g *featureproto.HoldoutGroup, now time.Time) bool {
-	return IsServing(g.GetStatus()) && g.GetStopAt() <= now.Unix()
+	return IsActive(g.GetStatus()) && g.GetStopAt() <= now.Unix()
 }

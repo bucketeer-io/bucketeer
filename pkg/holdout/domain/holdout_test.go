@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -238,6 +239,71 @@ func TestScheduledFinish(t *testing.T) {
 	group.StopAt = now
 	require.NoError(t, group.FinishScheduled(now))
 	assert.Equal(t, featureproto.HoldoutGroup_STOPPED, group.Status)
+}
+
+func TestScheduledFinishMissedWindow(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	// The batch never ran during [start_at, stop_at): the group is still WAITING after stop_at.
+	group := waitingGroup(now-200, now-100, 0)
+	assert.ErrorIs(t, group.Start(now), ErrStopAtBeforeNow)
+	assert.Equal(t, featureproto.HoldoutGroup_WAITING, group.Status)
+
+	assert.False(t, DueForScheduledStart(group.HoldoutGroup, time.Unix(now, 0)))
+	assert.True(t, DueForScheduledStop(group.HoldoutGroup, time.Unix(now, 0)))
+	require.NoError(t, group.FinishScheduled(now))
+	assert.Equal(t, featureproto.HoldoutGroup_STOPPED, group.Status)
+	assert.Equal(t, now, group.StoppedAt)
+
+	// A WAITING group whose stop_at is still ahead must not be finished.
+	pending := waitingGroup(now-10, now+100, 0)
+	assert.ErrorIs(t, pending.FinishScheduled(now), ErrBeforeStop)
+	assert.Equal(t, featureproto.HoldoutGroup_WAITING, pending.Status)
+}
+
+func TestStartAnalysisRejectsExpiredPeriod(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	group := waitingGroup(now-100, now+100, now)
+	require.NoError(t, group.Start(now-50))
+
+	// now == stop_at is already outside the half-open window.
+	group.StopAt = now
+	assert.ErrorIs(t, group.StartAnalysis(now), ErrAfterStop)
+	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, group.Status)
+	assert.Zero(t, group.AnalysisStartedAt)
+
+	group.StopAt = now + 1
+	require.NoError(t, group.StartAnalysis(now))
+	assert.Equal(t, featureproto.HoldoutGroup_ANALYSIS, group.Status)
+	assert.Equal(t, now, group.AnalysisStartedAt)
+}
+
+func TestRejectedUpdateLeavesGroupUntouched(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	group := waitingGroup(now+100, now+1000, 0)
+	group.Description = "before"
+	group.GoalIds = []string{"g1"}
+	before := group.Clone()
+
+	// Name and description are valid, but the period is not: nothing may be applied.
+	err := group.Update(UpdateParams{
+		Name:        wrapperspb.String("renamed"),
+		Description: wrapperspb.String("after"),
+		StopAt:      wrapperspb.Int64(now + 50),
+		GoalIDsSet:  true,
+		GoalIDs:     []string{"g1", "g2"},
+		UpdatedBy:   "admin",
+		Now:         now,
+	})
+	assert.ErrorIs(t, err, ErrPeriodInvalid)
+	assert.True(t, proto.Equal(before.HoldoutGroup, group.HoldoutGroup))
+
+	// A manual start that fails validation must not clamp start_at.
+	expired := waitingGroup(now+10, now+20, 0)
+	assert.ErrorIs(t, expired.Start(now+20), ErrStopAtBeforeNow)
+	assert.Equal(t, now+10, expired.StartAt)
 }
 
 func TestDeleteOnlyWhileWaiting(t *testing.T) {
