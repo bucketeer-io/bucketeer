@@ -281,6 +281,11 @@ func TestNewGRPCStatus_VariationInUse(t *testing.T) {
 			errorType:      pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
 			expectedReason: "VARIATION_IN_USE_BY_FEATURE_FLAG_RULE",
 		},
+		{
+			name:           "holdout",
+			errorType:      pkgErr.ErrorTypeVariationInUseByHoldout,
+			expectedReason: "VARIATION_IN_USE_BY_HOLDOUT",
+		},
 	}
 
 	for _, tt := range tests {
