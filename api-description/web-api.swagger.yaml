@@ -6390,6 +6390,398 @@ paths:
           default: UNKNOWN
       tags:
         - goal
+  /v1/holdout_group:
+    get:
+      summary: Get Holdout Group
+      description: Get a holdout group. Requires Environment Viewer.
+      operationId: web.v1.holdout_group.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Holdout Group
+    delete:
+      summary: Delete Holdout Group
+      description: Delete a holdout group that has never served. Requires Organization Admin.
+      operationId: web.v1.holdout_group.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureDeleteHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Holdout Group
+    post:
+      summary: Create Holdout Group
+      description: Create a holdout group. Requires Organization Admin.
+      operationId: web.v1.holdout_group.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureCreateHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureCreateHoldoutGroupRequest'
+      tags:
+        - Holdout Group
+    patch:
+      summary: Update Holdout Group
+      description: Update a holdout group. Requires Organization Admin. Assignment fields are immutable.
+      operationId: web.v1.holdout_group.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureUpdateHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureUpdateHoldoutGroupRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_group/archive:
+    post:
+      summary: Archive Holdout Group
+      description: Archive a stopped holdout group. Requires Organization Admin.
+      operationId: web.v1.holdout_group.archive
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureArchiveHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureArchiveHoldoutGroupRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_group/features:
+    post:
+      summary: Add Holdout Group Features
+      description: Add target flags to a waiting or running holdout group. Requires Organization Admin.
+      operationId: web.v1.holdout_group.add_features
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureAddHoldoutGroupFeaturesResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureAddHoldoutGroupFeaturesRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_group/remove_features:
+    post:
+      summary: Remove Holdout Group Features
+      description: Remove target flags from a holdout group. Requires Organization Admin.
+      operationId: web.v1.holdout_group.remove_features
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureRemoveHoldoutGroupFeaturesResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureRemoveHoldoutGroupFeaturesRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_group/start:
+    post:
+      summary: Start Holdout Group
+      description: Start a waiting holdout group. Requires Organization Admin.
+      operationId: web.v1.holdout_group.start
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureStartHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureStartHoldoutGroupRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_group/start_analysis:
+    post:
+      summary: Start Holdout Group Analysis
+      description: Move a running holdout group into the analysis period. Requires Organization Admin.
+      operationId: web.v1.holdout_group.start_analysis
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureStartHoldoutGroupAnalysisResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureStartHoldoutGroupAnalysisRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_group/stop:
+    post:
+      summary: Stop Holdout Group
+      description: Stop a serving holdout group. Requires Organization Admin.
+      operationId: web.v1.holdout_group.stop
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureStopHoldoutGroupResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureStopHoldoutGroupRequest'
+      tags:
+        - Holdout Group
+  /v1/holdout_groups:
+    get:
+      summary: List Holdout Groups
+      description: List holdout groups. Requires Environment Viewer.
+      operationId: web.v1.holdout_group.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListHoldoutGroupsResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - STATUS
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: statuses
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - WAITING
+              - RUNNING
+              - STOPPED
+              - FORCE_STOPPED
+              - ANALYSIS
+          collectionFormat: multi
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+      tags:
+        - Holdout Group
   /v1/insights/error_rates:
     get:
       summary: Get Insights Error Rates
@@ -9740,6 +10132,12 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/experimentExperimentStatus'
+  HoldoutGroupAssignmentType:
+    type: string
+    enum:
+      - HASH
+      - SEGMENT
+    default: HASH
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -9816,6 +10214,16 @@ definitions:
        - CONFLICT_TYPE_OVERLAPPING_SCHEDULE: Another schedule modifies same field
        - CONFLICT_TYPE_DEPENDENCY_MISSING: Referenced variation/rule will be deleted
        - CONFLICT_TYPE_INVALID_REFERENCE: Referenced variation/rule doesn't exist
+  StopHoldoutGroupRequestMode:
+    type: string
+    enum:
+      - MANUAL
+      - SCHEDULED
+    default: MANUAL
+    description: |2-
+       - MANUAL: Stop immediately. Status becomes FORCE_STOPPED.
+       - SCHEDULED: Complete a serving group whose stop_at has passed. Status becomes
+      STOPPED. Used by the status batch job.
   SubscriptionSourceType:
     type: string
     enum:
@@ -11578,6 +11986,7 @@ definitions:
       - CODEREF
       - TEAM
       - SCHEDULED_FLAG_CHANGE
+      - HOLDOUT_GROUP
     default: FEATURE
   domainEventType:
     type: string
@@ -11779,8 +12188,19 @@ definitions:
       - SCHEDULED_FLAG_CHANGE_FAILED
       - SCHEDULED_FLAG_CHANGE_SKIPPED
       - SCHEDULED_FLAG_CHANGE_APPLIED_NOW
+      - HOLDOUT_GROUP_CREATED
+      - HOLDOUT_GROUP_UPDATED
+      - HOLDOUT_GROUP_FEATURE_ADDED
+      - HOLDOUT_GROUP_FEATURE_REMOVED
+      - HOLDOUT_GROUP_STARTED
+      - HOLDOUT_GROUP_ANALYSIS_STARTED
+      - HOLDOUT_GROUP_STOPPED
+      - HOLDOUT_GROUP_ARCHIVED
+      - HOLDOUT_GROUP_DELETED
     default: UNKNOWN
-    title: '- SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)'
+    title: |-
+      - SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)
+       - HOLDOUT_GROUP_CREATED: Holdout groups (2100-2110)
   domainLocalizedMessage:
     type: object
     properties:
@@ -12905,6 +13325,42 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
+  featureAddHoldoutGroupFeaturesRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureHoldoutGroupFeatureInput'
+    required:
+      - id
+      - environmentId
+      - features
+  featureAddHoldoutGroupFeaturesResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
+  featureArchiveHoldoutGroupRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+    required:
+      - id
+      - environmentId
+  featureArchiveHoldoutGroupResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
   featureAudience:
     type: object
     properties:
@@ -13098,6 +13554,52 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  featureCreateHoldoutGroupRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      assignmentType:
+        $ref: '#/definitions/HoldoutGroupAssignmentType'
+      percentage:
+        type: number
+        format: double
+      segmentId:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      startAnalysisAt:
+        type: string
+        format: int64
+      goalIds:
+        type: array
+        items:
+          type: string
+      bucketStart:
+        type: number
+        format: double
+        description: Rejected when set. The server assigns bucket_start.
+      samplingSeed:
+        type: string
+        description: Rejected when set. The server assigns sampling_seed.
+    required:
+      - environmentId
+      - name
+      - startAt
+      - stopAt
+  featureCreateHoldoutGroupResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
   featureCreateScheduledFlagChangeRequest:
     type: object
     properties:
@@ -13192,6 +13694,8 @@ definitions:
   featureDeleteFeatureResponse:
     type: object
   featureDeleteFlagTriggerResponse:
+    type: object
+  featureDeleteHoldoutGroupResponse:
     type: object
   featureDeleteScheduledFlagChangeResponse:
     type: object
@@ -13411,6 +13915,11 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  featureGetHoldoutGroupResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
   featureGetScheduledFlagChangeResponse:
     type: object
     properties:
@@ -13433,6 +13942,125 @@ definitions:
         type: array
         items:
           type: string
+  featureHoldoutGroup:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      assignmentType:
+        $ref: '#/definitions/HoldoutGroupAssignmentType'
+      samplingSeed:
+        type: string
+        description: HASH only. Environment holdout hash key, assigned by the server.
+      bucketStart:
+        type: number
+        format: double
+        description: HASH only. Start of the bucket range on [0, 100), assigned by the server.
+      percentage:
+        type: number
+        format: double
+        description: HASH only. 0 < percentage <= 50.
+      segmentId:
+        type: string
+        description: SEGMENT only. Fixed at creation.
+      status:
+        $ref: '#/definitions/featureHoldoutGroupStatus'
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      startAnalysisAt:
+        type: string
+        format: int64
+        description: Scheduled entry into ANALYSIS. 0 means no analysis period.
+      analysisStartedAt:
+        type: string
+        format: int64
+        description: When ANALYSIS actually began. 0 means not started.
+      stoppedAt:
+        type: string
+        format: int64
+        description: When the group was stopped. 0 means not stopped.
+      goalIds:
+        type: array
+        items:
+          type: string
+      experimentId:
+        type: string
+        description: Empty until measurement creates an internal experiment (Phase 4).
+      analysisExperimentId:
+        type: string
+        description: Empty until the group enters ANALYSIS (Phase 4).
+      createdBy:
+        type: string
+      updatedBy:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      archived:
+        type: boolean
+      deleted:
+        type: boolean
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureHoldoutGroupFeature'
+        description: Current targets (removed_at = 0). Populated on read; not a column.
+    description: |-
+      HoldoutGroup is an environment-scoped control group. Membership is fixed at
+      creation. Phase 1 stores and manages the group; evaluation does not read it.
+  featureHoldoutGroupFeature:
+    type: object
+    properties:
+      id:
+        type: string
+      holdoutGroupId:
+        type: string
+      featureId:
+        type: string
+      environmentId:
+        type: string
+      holdoutVariationId:
+        type: string
+      addedAt:
+        type: string
+        format: int64
+      removedAt:
+        type: string
+        format: int64
+        description: 0 means the flag is still a current target.
+  featureHoldoutGroupFeatureInput:
+    type: object
+    properties:
+      featureId:
+        type: string
+      holdoutVariationId:
+        type: string
+    required:
+      - featureId
+      - holdoutVariationId
+  featureHoldoutGroupStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - STOPPED
+      - FORCE_STOPPED
+      - ANALYSIS
+    default: WAITING
   featureListEnabledFeaturesResponse:
     type: object
     properties:
@@ -13496,6 +14124,34 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/ListFlagTriggersResponseFlagTriggerWithUrl'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  featureListHoldoutGroupsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - STATUS
+    default: DEFAULT
+  featureListHoldoutGroupsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListHoldoutGroupsResponse:
+    type: object
+    properties:
+      holdoutGroups:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureHoldoutGroup'
       cursor:
         type: string
       totalCount:
@@ -13604,6 +14260,26 @@ definitions:
       - ERROR_EXCEPTION
       - ERROR_CACHE_NOT_FOUND
     default: TARGET
+  featureRemoveHoldoutGroupFeaturesRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      featureIds:
+        type: array
+        items:
+          type: string
+    required:
+      - id
+      - environmentId
+      - featureIds
+  featureRemoveHoldoutGroupFeaturesResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
   featureRolloutStrategy:
     type: object
     properties:
@@ -13908,6 +14584,53 @@ definitions:
       - INCLUDED
       - EXCLUDED
     default: INCLUDED
+  featureStartHoldoutGroupAnalysisRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+    required:
+      - id
+      - environmentId
+  featureStartHoldoutGroupAnalysisResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
+  featureStartHoldoutGroupRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+    required:
+      - id
+      - environmentId
+  featureStartHoldoutGroupResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
+  featureStopHoldoutGroupRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      mode:
+        $ref: '#/definitions/StopHoldoutGroupRequestMode'
+    required:
+      - id
+      - environmentId
+  featureStopHoldoutGroupResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
   featureStrategy:
     type: object
     properties:
@@ -14041,6 +14764,37 @@ definitions:
       url:
         type: string
         description: If reset is true, new generated trigger hook URL will be returned.
+  featureUpdateHoldoutGroupRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      startAnalysisAt:
+        type: string
+        format: int64
+      goalIds:
+        $ref: '#/definitions/commonStringListValue'
+        description: When set, replaces goal_ids. Omitted leaves them unchanged.
+    required:
+      - id
+      - environmentId
+  featureUpdateHoldoutGroupResponse:
+    type: object
+    properties:
+      holdoutGroup:
+        $ref: '#/definitions/featureHoldoutGroup'
   featureUpdateScheduledFlagChangeRequest:
     type: object
     properties:

@@ -13,9 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"
+
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockClient is a mock of Client interface.

@@ -6972,6 +6972,7 @@ definitions:
       - CODEREF
       - TEAM
       - SCHEDULED_FLAG_CHANGE
+      - HOLDOUT_GROUP
     default: FEATURE
   domainEventType:
     type: string
@@ -7173,8 +7174,19 @@ definitions:
       - SCHEDULED_FLAG_CHANGE_FAILED
       - SCHEDULED_FLAG_CHANGE_SKIPPED
       - SCHEDULED_FLAG_CHANGE_APPLIED_NOW
+      - HOLDOUT_GROUP_CREATED
+      - HOLDOUT_GROUP_UPDATED
+      - HOLDOUT_GROUP_FEATURE_ADDED
+      - HOLDOUT_GROUP_FEATURE_REMOVED
+      - HOLDOUT_GROUP_STARTED
+      - HOLDOUT_GROUP_ANALYSIS_STARTED
+      - HOLDOUT_GROUP_STOPPED
+      - HOLDOUT_GROUP_ARCHIVED
+      - HOLDOUT_GROUP_DELETED
     default: UNKNOWN
-    title: '- SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)'
+    title: |-
+      - SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)
+       - HOLDOUT_GROUP_CREATED: Holdout groups (2100-2110)
   domainLocalizedMessage:
     type: object
     properties:
