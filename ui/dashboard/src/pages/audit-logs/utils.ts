@@ -82,8 +82,6 @@ export const getPathName = (
       return `/pushes`;
     case 'EXPERIMENT':
       return `/experiments/${id}/results`;
-    case 'HOLDOUT_GROUP':
-      return `/holdouts/${id}`;
     case 'SEGMENT':
       return '/segments';
     default:
