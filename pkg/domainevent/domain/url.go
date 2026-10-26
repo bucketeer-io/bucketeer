@@ -26,6 +26,7 @@ const (
 	urlTemplateFeature      = "%s/%s/features/%s"
 	urlTemplateGoal         = "%s/%s/goals/%s"
 	urlTemplateExperiment   = "%s/%s/experiments/%s"
+	urlTemplateHoldout      = "%s/%s/holdouts/%s"
 	urlTemplateAccount      = "%s/%s/accounts/%s"
 	urlTemplateAPIKey       = "%s/%s/apikeys/%s"
 	urlTemplateSegment      = "%s/%s/segments/%s"
@@ -87,6 +88,8 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 	case proto.Event_SCHEDULED_FLAG_CHANGE:
 		// Scheduled flag changes link to the feature flag page
 		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
+	case proto.Event_HOLDOUT_GROUP:
+		return fmt.Sprintf(urlTemplateHoldout, url, envURLCode, id), nil
 	}
 	return "", ErrUnknownEntityType
 }

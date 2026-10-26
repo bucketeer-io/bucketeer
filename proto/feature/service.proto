@@ -24,6 +24,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/common/string.proto";
 import "proto/feature/feature.proto";
+import "proto/feature/holdout.proto";
 import "proto/feature/rule.proto";
 import "proto/feature/scheduled_feature_change.proto";
 import "proto/feature/evaluation.proto";
@@ -1732,6 +1733,146 @@ service FeatureService {
       returns (FlagTriggerWebhookResponse) {
     option (google.api.http) = {
       post: "/webhook/triggers/{token}"
+    };
+  }
+  rpc CreateHoldoutGroup(CreateHoldoutGroupRequest)
+      returns (CreateHoldoutGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Holdout Group"
+      description: "Create a holdout group. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.create"
+    };
+  }
+  rpc GetHoldoutGroup(GetHoldoutGroupRequest)
+      returns (GetHoldoutGroupResponse) {
+    option (google.api.http) = {
+      get: "/v1/holdout_group"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Holdout Group"
+      description: "Get a holdout group. Requires Environment Viewer."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.get"
+    };
+  }
+  rpc ListHoldoutGroups(ListHoldoutGroupsRequest)
+      returns (ListHoldoutGroupsResponse) {
+    option (google.api.http) = {
+      get: "/v1/holdout_groups"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Holdout Groups"
+      description: "List holdout groups. Requires Environment Viewer."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.list"
+    };
+  }
+  rpc UpdateHoldoutGroup(UpdateHoldoutGroupRequest)
+      returns (UpdateHoldoutGroupResponse) {
+    option (google.api.http) = {
+      patch: "/v1/holdout_group"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Holdout Group"
+      description: "Update a holdout group. Requires Organization Admin. Assignment fields are immutable."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.update"
+    };
+  }
+  rpc StartHoldoutGroup(StartHoldoutGroupRequest)
+      returns (StartHoldoutGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group/start"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Start Holdout Group"
+      description: "Start a waiting holdout group. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.start"
+    };
+  }
+  rpc StartHoldoutGroupAnalysis(StartHoldoutGroupAnalysisRequest)
+      returns (StartHoldoutGroupAnalysisResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group/start_analysis"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Start Holdout Group Analysis"
+      description: "Move a running holdout group into the analysis period. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.start_analysis"
+    };
+  }
+  rpc StopHoldoutGroup(StopHoldoutGroupRequest)
+      returns (StopHoldoutGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group/stop"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Stop Holdout Group"
+      description: "Stop a serving holdout group. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.stop"
+    };
+  }
+  rpc ArchiveHoldoutGroup(ArchiveHoldoutGroupRequest)
+      returns (ArchiveHoldoutGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group/archive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Archive Holdout Group"
+      description: "Archive a stopped holdout group. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.archive"
+    };
+  }
+  rpc DeleteHoldoutGroup(DeleteHoldoutGroupRequest)
+      returns (DeleteHoldoutGroupResponse) {
+    option (google.api.http) = {
+      delete: "/v1/holdout_group"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Holdout Group"
+      description: "Delete a holdout group that has never served. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.delete"
+    };
+  }
+  rpc AddHoldoutGroupFeatures(AddHoldoutGroupFeaturesRequest)
+      returns (AddHoldoutGroupFeaturesResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group/features"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Add Holdout Group Features"
+      description: "Add target flags to a waiting or running holdout group. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.add_features"
+    };
+  }
+  rpc RemoveHoldoutGroupFeatures(RemoveHoldoutGroupFeaturesRequest)
+      returns (RemoveHoldoutGroupFeaturesResponse) {
+    option (google.api.http) = {
+      post: "/v1/holdout_group/remove_features"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Remove Holdout Group Features"
+      description: "Remove target flags from a holdout group. Requires Organization Admin."
+      tags: "Holdout Group"
+      operation_id: "web.v1.holdout_group.remove_features"
     };
   }
 }

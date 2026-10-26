@@ -75,6 +75,8 @@ WebhookRule: "Webhook rule"
 FlagTrigger: "Flag Trigger"
 CodeReference: "Code reference"
 ScheduledFlagChange: "Scheduled flag change"
+HoldoutGroup: "Holdout group"
+HoldoutGroupAnalysis: "Holdout group analysis"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }} is required"

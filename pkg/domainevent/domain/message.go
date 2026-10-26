@@ -19,6 +19,16 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
+func holdoutMessage(localizer locale.Localizer, template, subject string) *proto.LocalizedMessage {
+	return &proto.LocalizedMessage{
+		Locale: localizer.GetLocale(),
+		Message: localizer.MustLocalizeWithTemplate(
+			template,
+			localizer.MustLocalizeWithTemplate(subject),
+		),
+	}
+}
+
 func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *proto.LocalizedMessage {
 	// handle loc if multi-lang is necessary
 	switch eventType {
@@ -1580,6 +1590,24 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
 			),
 		}
+	case proto.Event_HOLDOUT_GROUP_CREATED:
+		return holdoutMessage(localizer, locale.CreatedTemplate, locale.HoldoutGroup)
+	case proto.Event_HOLDOUT_GROUP_UPDATED:
+		return holdoutMessage(localizer, locale.UpdatedTemplate, locale.HoldoutGroup)
+	case proto.Event_HOLDOUT_GROUP_FEATURE_ADDED:
+		return holdoutMessage(localizer, locale.AddedTemplate, locale.FeatureFlag)
+	case proto.Event_HOLDOUT_GROUP_FEATURE_REMOVED:
+		return holdoutMessage(localizer, locale.DeletedTemplate, locale.FeatureFlag)
+	case proto.Event_HOLDOUT_GROUP_STARTED:
+		return holdoutMessage(localizer, locale.StartedTemplate, locale.HoldoutGroup)
+	case proto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED:
+		return holdoutMessage(localizer, locale.StartedTemplate, locale.HoldoutGroupAnalysis)
+	case proto.Event_HOLDOUT_GROUP_STOPPED:
+		return holdoutMessage(localizer, locale.StoppedTemplate, locale.HoldoutGroup)
+	case proto.Event_HOLDOUT_GROUP_ARCHIVED:
+		return holdoutMessage(localizer, locale.ArchivedTemplate, locale.HoldoutGroup)
+	case proto.Event_HOLDOUT_GROUP_DELETED:
+		return holdoutMessage(localizer, locale.DeletedTemplate, locale.HoldoutGroup)
 	}
 
 	return &proto.LocalizedMessage{

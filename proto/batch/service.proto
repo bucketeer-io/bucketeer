@@ -48,6 +48,8 @@ enum BatchJob {
   // materializes ec1d/uc1d daily keys from the existing hourly keys.
   // Triggered manually via ExecuteBatchJob; safe and idempotent to re-run.
   EvaluationDailyCountBackfiller = 22;
+  // Advances holdout groups on start_at, start_analysis_at, and stop_at.
+  HoldoutGroupStatusUpdater = 23;
 }
 
 message BatchJobRequest {

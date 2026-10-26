@@ -38,6 +38,14 @@ func TestLocalizedMessage(t *testing.T) {
 		expected       *proto.LocalizedMessage
 	}{
 		{
+			desc:           "holdout group created",
+			inputEventType: proto.Event_HOLDOUT_GROUP_CREATED,
+			expected: &proto.LocalizedMessage{
+				Locale:  locale.Ja,
+				Message: "ホールドアウトグループが作成されました",
+			},
+		},
+		{
 			desc:           "unknown match",
 			inputEventType: proto.Event_UNKNOWN,
 			expected: &proto.LocalizedMessage{
