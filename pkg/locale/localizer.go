@@ -106,6 +106,8 @@ const (
 	CodeReference                = "CodeReference"
 	Team                         = "Team"
 	ScheduledFlagChange          = "ScheduledFlagChange"
+	HoldoutGroup                 = "HoldoutGroup"
+	HoldoutGroupAnalysis         = "HoldoutGroupAnalysis"
 	// error sentence
 	RequiredFieldTemplate = "RequiredField"
 	InternalServerError   = "InternalServerError"

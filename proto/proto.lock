@@ -52647,6 +52647,10 @@
                 "integer": 21
               },
               {
+                "name": "DOMAIN_EVENT_HOLDOUT_GROUP",
+                "integer": 22
+              },
+              {
                 "name": "FEATURE_STALE",
                 "integer": 100
               },

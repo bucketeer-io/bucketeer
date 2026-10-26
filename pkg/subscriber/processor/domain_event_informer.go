@@ -237,6 +237,8 @@ func (d domainEventInformer) convSourceType(
 		return subscriptionproto.Subscription_DOMAIN_EVENT_TEAM, nil
 	case domaineventproto.Event_SCHEDULED_FLAG_CHANGE:
 		return subscriptionproto.Subscription_DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE, nil
+	case domaineventproto.Event_HOLDOUT_GROUP:
+		return subscriptionproto.Subscription_DOMAIN_EVENT_HOLDOUT_GROUP, nil
 	}
 	return subscriptionproto.Subscription_SourceType(0), ErrUnknownSourceType
 }

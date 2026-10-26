@@ -75,6 +75,8 @@ FlagTrigger: "フラグトリガー"
 CodeReference: "コードリファレンス"
 Team: "チーム"
 ScheduledFlagChange: "スケジュールフラグ変更"
+HoldoutGroup: "ホールドアウトグループ"
+HoldoutGroupAnalysis: "ホールドアウトグループの分析"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }}は必須です"

@@ -34,6 +34,11 @@ func TestURL(t *testing.T) {
 			inputEntityType: proto.Event_FEATURE,
 			expected:        "url/env/features/id",
 		},
+		{
+			desc:            "holdout group",
+			inputEntityType: proto.Event_HOLDOUT_GROUP,
+			expected:        "url/env/holdouts/id",
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
