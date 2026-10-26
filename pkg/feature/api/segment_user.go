@@ -112,6 +112,9 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	}
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+		if err := s.ensureSegmentNotLockedByHoldout(contextWithTx, req.SegmentId, req.EnvironmentId); err != nil {
+			return err
+		}
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
 			return err

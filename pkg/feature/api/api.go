@@ -23,6 +23,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	v2ts "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
@@ -59,6 +60,7 @@ type FeatureService struct {
 	segmentStorage             v2fs.SegmentStorage
 	segmentUserStorage         v2fs.SegmentUserStorage
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
+	holdoutStorage             v2hs.HoldoutStorage
 	tagStorage                 v2ts.TagStorage
 	dbClient                   database.Client
 	accountClient              accountclient.Client
@@ -85,6 +87,7 @@ func NewFeatureService(
 	flagTriggerStorage v2fs.FlagTriggerStorage,
 	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
+	holdoutStorage v2hs.HoldoutStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -109,6 +112,7 @@ func NewFeatureService(
 		segmentStorage:             segmentStorage,
 		segmentUserStorage:         segmentUserStorage,
 		scheduledFlagChangeStorage: scheduledFlagChangeStorage,
+		holdoutStorage:             holdoutStorage,
 		tagStorage:                 tagStorage,
 		dbClient:                   dbClient,
 		accountClient:              accountClient,
@@ -148,6 +152,32 @@ func (s *FeatureService) checkEnvironmentRole(
 				return nil, err
 			}
 			return resp.Account, nil
+		},
+		s.logger,
+		statusUnauthenticated.Err(),
+		statusPermissionDenied.Err(),
+		func(err error) error { return api.NewGRPCStatus(err).Err() },
+	)
+}
+
+func (s *FeatureService) checkOrganizationRole(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	environmentID string,
+) (*eventproto.Editor, error) {
+	return role.CheckOrganizationRoleByEnvironmentIDWithLog(
+		ctx,
+		requiredRole,
+		environmentID,
+		func(email string) (*accountproto.GetAccountV2Response, error) {
+			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
+				Email:         email,
+				EnvironmentId: environmentID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return &accountproto.GetAccountV2Response{Account: resp.Account}, nil
 		},
 		s.logger,
 		statusUnauthenticated.Err(),

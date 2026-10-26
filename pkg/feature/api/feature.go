@@ -753,6 +753,9 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	// Check if this is an archive request and if other features depend on this one.
 	// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
 	if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
+		if err := s.rejectHoldoutFeatureArchive(ctx, req.EnvironmentId, feature.Id); err != nil {
+			return nil, nil, err
+		}
 		if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
 			return nil, nil, statusInvalidArchive.Err()
 		}
@@ -775,6 +778,12 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 			)
 			// Don't fail the archive operation, just log the error
 		}
+	}
+
+	if err := s.rejectHoldoutVariationRemoval(
+		ctx, req.EnvironmentId, req.Id, req.VariationChanges,
+	); err != nil {
+		return nil, nil, err
 	}
 
 	updated, err := feature.Update(
