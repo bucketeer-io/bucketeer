@@ -36,6 +36,7 @@ const (
 	CoderefPackageName      = "coderef"
 	TeamPackageName         = "team"
 	ExperimentPackageName   = "experiment"
+	HoldoutPackageName      = "holdout"
 	AuthPackageName         = "auth"
 	AIChatPackageName       = "aichat"
 
@@ -71,6 +72,7 @@ const (
 	ErrorTypeVariationInUseByIndividualTarget ErrorType = "VariationInUseByIndividualTargetingError"
 	ErrorTypeVariationInUseByPrerequisite     ErrorType = "VariationInUseByPrerequisiteError"
 	ErrorTypeVariationInUseByFeatureFlagRule  ErrorType = "VariationInUseByFeatureFlagRuleError"
+	ErrorTypeVariationInUseByHoldout          ErrorType = "VariationInUseByHoldoutError"
 )
 
 type BktError struct {
@@ -132,7 +134,8 @@ func AsVariationInUseError(err error) (*BktError, bool) {
 		ErrorTypeVariationInUseByTargetingRule,
 		ErrorTypeVariationInUseByIndividualTarget,
 		ErrorTypeVariationInUseByPrerequisite,
-		ErrorTypeVariationInUseByFeatureFlagRule:
+		ErrorTypeVariationInUseByFeatureFlagRule,
+		ErrorTypeVariationInUseByHoldout:
 		return bktErr, true
 	}
 	return nil, false

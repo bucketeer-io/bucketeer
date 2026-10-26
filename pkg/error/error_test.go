@@ -433,6 +433,13 @@ func TestAsVariationInUseError(t *testing.T) {
 			),
 			expected: true,
 		},
+		{
+			desc: "true: holdout",
+			err: NewErrorVariationInUse(
+				HoldoutPackageName, ErrorTypeVariationInUseByHoldout, "in use", nil,
+			),
+			expected: true,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

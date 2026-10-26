@@ -135,6 +135,8 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "VARIATION_IN_USE_BY_PREREQUISITE"
 	case pkgErr.ErrorTypeVariationInUseByFeatureFlagRule:
 		return "VARIATION_IN_USE_BY_FEATURE_FLAG_RULE"
+	case pkgErr.ErrorTypeVariationInUseByHoldout:
+		return "VARIATION_IN_USE_BY_HOLDOUT"
 	default:
 		return "UNKNOWN"
 	}
@@ -168,7 +170,8 @@ func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 		pkgErr.ErrorTypeVariationInUseByTargetingRule,
 		pkgErr.ErrorTypeVariationInUseByIndividualTarget,
 		pkgErr.ErrorTypeVariationInUseByPrerequisite,
-		pkgErr.ErrorTypeVariationInUseByFeatureFlagRule:
+		pkgErr.ErrorTypeVariationInUseByFeatureFlagRule,
+		pkgErr.ErrorTypeVariationInUseByHoldout:
 		return codes.FailedPrecondition
 	case pkgErr.ErrorTypeUnavailable:
 		return codes.Unavailable
