@@ -22,6 +22,7 @@ import "google/protobuf/wrappers.proto";
 
 import "proto/feature/clause.proto";
 import "proto/feature/feature.proto";
+import "proto/feature/holdout.proto";
 import "proto/feature/rule.proto";
 import "proto/feature/variation.proto";
 import "proto/feature/strategy.proto";
@@ -66,6 +67,7 @@ message Event {
     CODEREF = 18;
     TEAM = 19;
     SCHEDULED_FLAG_CHANGE = 20;
+    HOLDOUT_GROUP = 21;
   }
   enum Type {
     UNKNOWN = 0;
@@ -272,6 +274,16 @@ message Event {
     SCHEDULED_FLAG_CHANGE_FAILED = 2004;
     SCHEDULED_FLAG_CHANGE_SKIPPED = 2005;
     SCHEDULED_FLAG_CHANGE_APPLIED_NOW = 2006;
+    // Holdout groups (2100-2110)
+    HOLDOUT_GROUP_CREATED = 2100;
+    HOLDOUT_GROUP_UPDATED = 2101;
+    HOLDOUT_GROUP_FEATURE_ADDED = 2102;
+    HOLDOUT_GROUP_FEATURE_REMOVED = 2103;
+    HOLDOUT_GROUP_STARTED = 2104;
+    HOLDOUT_GROUP_ANALYSIS_STARTED = 2105;
+    HOLDOUT_GROUP_STOPPED = 2106;
+    HOLDOUT_GROUP_ARCHIVED = 2107;
+    HOLDOUT_GROUP_DELETED = 2108;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -1470,6 +1482,54 @@ message ScheduledFlagChangeSkippedEvent {
   repeated string change_summaries = 9;
   string originally_scheduled_by = 10;
   int64 originally_created_at = 11;
+}
+
+message HoldoutGroupCreatedEvent {
+  string id = 1;
+  string name = 2;
+  bucketeer.feature.HoldoutGroup.AssignmentType assignment_type = 3;
+  double percentage = 4;
+  string segment_id = 5;
+  int64 start_at = 6;
+  int64 stop_at = 7;
+  int64 start_analysis_at = 8;
+  repeated string goal_ids = 9;
+}
+
+message HoldoutGroupUpdatedEvent {
+  string id = 1;
+}
+
+message HoldoutGroupFeatureAddedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string holdout_variation_id = 3;
+}
+
+message HoldoutGroupFeatureRemovedEvent {
+  string id = 1;
+  string feature_id = 2;
+}
+
+message HoldoutGroupStartedEvent {
+  string id = 1;
+}
+
+message HoldoutGroupAnalysisStartedEvent {
+  string id = 1;
+}
+
+message HoldoutGroupStoppedEvent {
+  string id = 1;
+  bucketeer.feature.HoldoutGroup.Status status = 2;
+}
+
+message HoldoutGroupArchivedEvent {
+  string id = 1;
+}
+
+message HoldoutGroupDeletedEvent {
+  string id = 1;
 }
 
 // When user clicks "Apply Now" to execute immediately

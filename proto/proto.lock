@@ -10301,6 +10301,10 @@
               {
                 "name": "EvaluationDailyCountBackfiller",
                 "integer": 22
+              },
+              {
+                "name": "HoldoutGroupStatusUpdater",
+                "integer": 23
               }
             ],
             "reserved_ids": [
@@ -18476,6 +18480,10 @@
               {
                 "name": "SCHEDULED_FLAG_CHANGE",
                 "integer": 20
+              },
+              {
+                "name": "HOLDOUT_GROUP",
+                "integer": 21
               }
             ],
             "reserved_ids": [
@@ -19325,6 +19333,42 @@
               {
                 "name": "SCHEDULED_FLAG_CHANGE_APPLIED_NOW",
                 "integer": 2006
+              },
+              {
+                "name": "HOLDOUT_GROUP_CREATED",
+                "integer": 2100
+              },
+              {
+                "name": "HOLDOUT_GROUP_UPDATED",
+                "integer": 2101
+              },
+              {
+                "name": "HOLDOUT_GROUP_FEATURE_ADDED",
+                "integer": 2102
+              },
+              {
+                "name": "HOLDOUT_GROUP_FEATURE_REMOVED",
+                "integer": 2103
+              },
+              {
+                "name": "HOLDOUT_GROUP_STARTED",
+                "integer": 2104
+              },
+              {
+                "name": "HOLDOUT_GROUP_ANALYSIS_STARTED",
+                "integer": 2105
+              },
+              {
+                "name": "HOLDOUT_GROUP_STOPPED",
+                "integer": 2106
+              },
+              {
+                "name": "HOLDOUT_GROUP_ARCHIVED",
+                "integer": 2107
+              },
+              {
+                "name": "HOLDOUT_GROUP_DELETED",
+                "integer": 2108
               }
             ],
             "reserved_ids": [
@@ -23405,6 +23449,157 @@
             ]
           },
           {
+            "name": "HoldoutGroupCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "assignment_type",
+                "type": "bucketeer.feature.HoldoutGroup.AssignmentType"
+              },
+              {
+                "id": 4,
+                "name": "percentage",
+                "type": "double"
+              },
+              {
+                "id": 5,
+                "name": "segment_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "start_at",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "stop_at",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "start_analysis_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "goal_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupFeatureAddedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "holdout_variation_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupFeatureRemovedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupStartedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupAnalysisStartedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupStoppedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "status",
+                "type": "bucketeer.feature.HoldoutGroup.Status"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupArchivedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "ScheduledFlagChangeAppliedNowEvent",
             "fields": [
               {
@@ -23473,6 +23668,9 @@
           },
           {
             "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/feature/holdout.proto"
           },
           {
             "path": "proto/feature/rule.proto"
@@ -29753,6 +29951,876 @@
             "reserved_ids": [
               3
             ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.feature"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "feature:/:holdout.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "HoldoutGroup.Status",
+            "enum_fields": [
+              {
+                "name": "WAITING"
+              },
+              {
+                "name": "RUNNING",
+                "integer": 1
+              },
+              {
+                "name": "STOPPED",
+                "integer": 2
+              },
+              {
+                "name": "FORCE_STOPPED",
+                "integer": 3
+              },
+              {
+                "name": "ANALYSIS",
+                "integer": 4
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroup.AssignmentType",
+            "enum_fields": [
+              {
+                "name": "HASH"
+              },
+              {
+                "name": "SEGMENT",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "ListHoldoutGroupsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "NAME",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              },
+              {
+                "name": "STATUS",
+                "integer": 4
+              }
+            ]
+          },
+          {
+            "name": "ListHoldoutGroupsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "StopHoldoutGroupRequest.Mode",
+            "enum_fields": [
+              {
+                "name": "MANUAL"
+              },
+              {
+                "name": "SCHEDULED",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "HoldoutGroup",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "assignment_type",
+                "type": "AssignmentType"
+              },
+              {
+                "id": 6,
+                "name": "sampling_seed",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "bucket_start",
+                "type": "double"
+              },
+              {
+                "id": 8,
+                "name": "percentage",
+                "type": "double"
+              },
+              {
+                "id": 9,
+                "name": "segment_id",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "status",
+                "type": "Status"
+              },
+              {
+                "id": 11,
+                "name": "start_at",
+                "type": "int64"
+              },
+              {
+                "id": 12,
+                "name": "stop_at",
+                "type": "int64"
+              },
+              {
+                "id": 13,
+                "name": "start_analysis_at",
+                "type": "int64"
+              },
+              {
+                "id": 14,
+                "name": "analysis_started_at",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "stopped_at",
+                "type": "int64"
+              },
+              {
+                "id": 16,
+                "name": "goal_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 17,
+                "name": "experiment_id",
+                "type": "string"
+              },
+              {
+                "id": 18,
+                "name": "analysis_experiment_id",
+                "type": "string"
+              },
+              {
+                "id": 19,
+                "name": "created_by",
+                "type": "string"
+              },
+              {
+                "id": 20,
+                "name": "updated_by",
+                "type": "string"
+              },
+              {
+                "id": 21,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 22,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 23,
+                "name": "archived",
+                "type": "bool"
+              },
+              {
+                "id": 24,
+                "name": "deleted",
+                "type": "bool"
+              },
+              {
+                "id": 25,
+                "name": "features",
+                "type": "HoldoutGroupFeature",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupFeature",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "holdout_group_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "holdout_variation_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "added_at",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "removed_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "HoldoutGroupFeatureInput",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "holdout_variation_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CreateHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "assignment_type",
+                "type": "HoldoutGroup.AssignmentType"
+              },
+              {
+                "id": 5,
+                "name": "percentage",
+                "type": "double"
+              },
+              {
+                "id": 6,
+                "name": "segment_id",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "start_at",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 8,
+                "name": "stop_at",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 9,
+                "name": "start_analysis_at",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "goal_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "bucket_start",
+                "type": "google.protobuf.DoubleValue"
+              },
+              {
+                "id": 12,
+                "name": "sampling_seed",
+                "type": "google.protobuf.StringValue"
+              }
+            ]
+          },
+          {
+            "name": "CreateHoldoutGroupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "GetHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetHoldoutGroupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "ListHoldoutGroupsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "statuses",
+                "type": "HoldoutGroup.Status",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "search_keyword",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListHoldoutGroupsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_groups",
+                "type": "HoldoutGroup",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "UpdateHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "start_at",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 6,
+                "name": "stop_at",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 7,
+                "name": "start_analysis_at",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 8,
+                "name": "goal_ids",
+                "type": "bucketeer.common.StringListValue"
+              }
+            ]
+          },
+          {
+            "name": "UpdateHoldoutGroupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "StartHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "StartHoldoutGroupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "StartHoldoutGroupAnalysisRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "StartHoldoutGroupAnalysisResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "StopHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "mode",
+                "type": "Mode"
+              }
+            ]
+          },
+          {
+            "name": "StopHoldoutGroupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "ArchiveHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ArchiveHoldoutGroupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "DeleteHoldoutGroupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteHoldoutGroupResponse"
+          },
+          {
+            "name": "AddHoldoutGroupFeaturesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "features",
+                "type": "HoldoutGroupFeatureInput",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AddHoldoutGroupFeaturesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          },
+          {
+            "name": "RemoveHoldoutGroupFeaturesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "feature_ids",
+                "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "RemoveHoldoutGroupFeaturesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_group",
+                "type": "HoldoutGroup"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "proto/common/string.proto"
           }
         ],
         "package": {
@@ -37047,6 +38115,445 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "CreateHoldoutGroup",
+                "in_type": "CreateHoldoutGroupRequest",
+                "out_type": "CreateHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a holdout group. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetHoldoutGroup",
+                "in_type": "GetHoldoutGroupRequest",
+                "out_type": "GetHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/holdout_group"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a holdout group. Requires Environment Viewer."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListHoldoutGroups",
+                "in_type": "ListHoldoutGroupsRequest",
+                "out_type": "ListHoldoutGroupsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/holdout_groups"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Holdout Groups"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List holdout groups. Requires Environment Viewer."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateHoldoutGroup",
+                "in_type": "UpdateHoldoutGroupRequest",
+                "out_type": "UpdateHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/holdout_group"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a holdout group. Requires Organization Admin. Assignment fields are immutable."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.update"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "StartHoldoutGroup",
+                "in_type": "StartHoldoutGroupRequest",
+                "out_type": "StartHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group/start"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Start Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Start a waiting holdout group. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "StartHoldoutGroupAnalysis",
+                "in_type": "StartHoldoutGroupAnalysisRequest",
+                "out_type": "StartHoldoutGroupAnalysisResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group/start_analysis"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Start Holdout Group Analysis"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Move a running holdout group into the analysis period. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.start_analysis"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "StopHoldoutGroup",
+                "in_type": "StopHoldoutGroupRequest",
+                "out_type": "StopHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group/stop"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Stop Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Stop a serving holdout group. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.stop"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ArchiveHoldoutGroup",
+                "in_type": "ArchiveHoldoutGroupRequest",
+                "out_type": "ArchiveHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group/archive"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Archive Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Archive a stopped holdout group. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.archive"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteHoldoutGroup",
+                "in_type": "DeleteHoldoutGroupRequest",
+                "out_type": "DeleteHoldoutGroupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/holdout_group"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Holdout Group"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a holdout group that has never served. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "AddHoldoutGroupFeatures",
+                "in_type": "AddHoldoutGroupFeaturesRequest",
+                "out_type": "AddHoldoutGroupFeaturesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group/features"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Add Holdout Group Features"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Add target flags to a waiting or running holdout group. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.add_features"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "RemoveHoldoutGroupFeatures",
+                "in_type": "RemoveHoldoutGroupFeaturesRequest",
+                "out_type": "RemoveHoldoutGroupFeaturesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/holdout_group/remove_features"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Remove Holdout Group Features"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Remove target flags from a holdout group. Requires Organization Admin."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Holdout Group"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.holdout_group.remove_features"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -37069,6 +38576,9 @@
           },
           {
             "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/feature/holdout.proto"
           },
           {
             "path": "proto/feature/rule.proto"

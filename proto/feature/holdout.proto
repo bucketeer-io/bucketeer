@@ -1,0 +1,237 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.feature;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/feature";
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/wrappers.proto";
+
+import "proto/common/string.proto";
+
+// HoldoutGroup is an environment-scoped control group. Membership is fixed at
+// creation. Phase 1 stores and manages the group; evaluation does not read it.
+message HoldoutGroup {
+  enum Status {
+    WAITING = 0;
+    RUNNING = 1;
+    STOPPED = 2;
+    FORCE_STOPPED = 3;
+    ANALYSIS = 4;
+  }
+  enum AssignmentType {
+    HASH = 0;
+    SEGMENT = 1;
+  }
+
+  string id = 1;
+  string environment_id = 2;
+  string name = 3;
+  string description = 4;
+  AssignmentType assignment_type = 5;
+  // HASH only. Environment holdout hash key, assigned by the server.
+  string sampling_seed = 6;
+  // HASH only. Start of the bucket range on [0, 100), assigned by the server.
+  double bucket_start = 7;
+  // HASH only. 0 < percentage <= 50.
+  double percentage = 8;
+  // SEGMENT only. Fixed at creation.
+  string segment_id = 9;
+  Status status = 10;
+  int64 start_at = 11;
+  int64 stop_at = 12;
+  // Scheduled entry into ANALYSIS. 0 means no analysis period.
+  int64 start_analysis_at = 13;
+  // When ANALYSIS actually began. 0 means not started.
+  int64 analysis_started_at = 14;
+  // When the group was stopped. 0 means not stopped.
+  int64 stopped_at = 15;
+  repeated string goal_ids = 16;
+  // Empty until measurement creates an internal experiment (Phase 4).
+  string experiment_id = 17;
+  // Empty until the group enters ANALYSIS (Phase 4).
+  string analysis_experiment_id = 18;
+  string created_by = 19;
+  string updated_by = 20;
+  int64 created_at = 21;
+  int64 updated_at = 22;
+  bool archived = 23;
+  bool deleted = 24;
+  // Current targets (removed_at = 0). Populated on read; not a column.
+  repeated HoldoutGroupFeature features = 25;
+}
+
+message HoldoutGroupFeature {
+  string id = 1;
+  string holdout_group_id = 2;
+  string feature_id = 3;
+  string environment_id = 4;
+  string holdout_variation_id = 5;
+  int64 added_at = 6;
+  // 0 means the flag is still a current target.
+  int64 removed_at = 7;
+}
+
+message HoldoutGroupFeatureInput {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string holdout_variation_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CreateHoldoutGroupRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
+  string description = 3;
+  HoldoutGroup.AssignmentType assignment_type = 4;
+  double percentage = 5;
+  string segment_id = 6;
+  int64 start_at = 7 [(google.api.field_behavior) = REQUIRED];
+  int64 stop_at = 8 [(google.api.field_behavior) = REQUIRED];
+  int64 start_analysis_at = 9;
+  repeated string goal_ids = 10;
+  // Rejected when set. The server assigns bucket_start.
+  google.protobuf.DoubleValue bucket_start = 11;
+  // Rejected when set. The server assigns sampling_seed.
+  google.protobuf.StringValue sampling_seed = 12;
+}
+
+message CreateHoldoutGroupResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message GetHoldoutGroupRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetHoldoutGroupResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message ListHoldoutGroupsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    NAME = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+    STATUS = 4;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 page_size = 2;
+  string cursor = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  repeated HoldoutGroup.Status statuses = 6;
+  google.protobuf.BoolValue archived = 7;
+  string search_keyword = 8;
+}
+
+message ListHoldoutGroupsResponse {
+  repeated HoldoutGroup holdout_groups = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message UpdateHoldoutGroupRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue description = 4;
+  google.protobuf.Int64Value start_at = 5;
+  google.protobuf.Int64Value stop_at = 6;
+  google.protobuf.Int64Value start_analysis_at = 7;
+  // When set, replaces goal_ids. Omitted leaves them unchanged.
+  bucketeer.common.StringListValue goal_ids = 8;
+}
+
+message UpdateHoldoutGroupResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message StartHoldoutGroupRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message StartHoldoutGroupResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message StartHoldoutGroupAnalysisRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message StartHoldoutGroupAnalysisResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message StopHoldoutGroupRequest {
+  enum Mode {
+    // Stop immediately. Status becomes FORCE_STOPPED.
+    MANUAL = 0;
+    // Complete a serving group whose stop_at has passed. Status becomes
+    // STOPPED. Used by the status batch job.
+    SCHEDULED = 1;
+  }
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  Mode mode = 3;
+}
+
+message StopHoldoutGroupResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message ArchiveHoldoutGroupRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ArchiveHoldoutGroupResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message DeleteHoldoutGroupRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteHoldoutGroupResponse {}
+
+message AddHoldoutGroupFeaturesRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  repeated HoldoutGroupFeatureInput features = 3
+      [(google.api.field_behavior) = REQUIRED];
+}
+
+message AddHoldoutGroupFeaturesResponse {
+  HoldoutGroup holdout_group = 1;
+}
+
+message RemoveHoldoutGroupFeaturesRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  repeated string feature_ids = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message RemoveHoldoutGroupFeaturesResponse {
+  HoldoutGroup holdout_group = 1;
+}

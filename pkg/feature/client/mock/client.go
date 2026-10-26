@@ -13,10 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"
-
-	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockClient is a mock of Client interface.
@@ -40,6 +39,46 @@ func NewMockClient(ctrl *gomock.Controller) *MockClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
+}
+
+// AddHoldoutGroupFeatures mocks base method.
+func (m *MockClient) AddHoldoutGroupFeatures(ctx context.Context, in *feature.AddHoldoutGroupFeaturesRequest, opts ...grpc.CallOption) (*feature.AddHoldoutGroupFeaturesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddHoldoutGroupFeatures", varargs...)
+	ret0, _ := ret[0].(*feature.AddHoldoutGroupFeaturesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddHoldoutGroupFeatures indicates an expected call of AddHoldoutGroupFeatures.
+func (mr *MockClientMockRecorder) AddHoldoutGroupFeatures(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddHoldoutGroupFeatures", reflect.TypeOf((*MockClient)(nil).AddHoldoutGroupFeatures), varargs...)
+}
+
+// ArchiveHoldoutGroup mocks base method.
+func (m *MockClient) ArchiveHoldoutGroup(ctx context.Context, in *feature.ArchiveHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.ArchiveHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ArchiveHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.ArchiveHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ArchiveHoldoutGroup indicates an expected call of ArchiveHoldoutGroup.
+func (mr *MockClientMockRecorder) ArchiveHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveHoldoutGroup", reflect.TypeOf((*MockClient)(nil).ArchiveHoldoutGroup), varargs...)
 }
 
 // BulkCloneFeature mocks base method.
@@ -174,6 +213,26 @@ func (mr *MockClientMockRecorder) CreateFlagTrigger(ctx, in any, opts ...any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFlagTrigger", reflect.TypeOf((*MockClient)(nil).CreateFlagTrigger), varargs...)
 }
 
+// CreateHoldoutGroup mocks base method.
+func (m *MockClient) CreateHoldoutGroup(ctx context.Context, in *feature.CreateHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.CreateHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.CreateHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateHoldoutGroup indicates an expected call of CreateHoldoutGroup.
+func (mr *MockClientMockRecorder) CreateHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateHoldoutGroup", reflect.TypeOf((*MockClient)(nil).CreateHoldoutGroup), varargs...)
+}
+
 // CreateScheduledFlagChange mocks base method.
 func (m *MockClient) CreateScheduledFlagChange(ctx context.Context, in *feature.CreateScheduledFlagChangeRequest, opts ...grpc.CallOption) (*feature.CreateScheduledFlagChangeResponse, error) {
 	m.ctrl.T.Helper()
@@ -272,6 +331,26 @@ func (mr *MockClientMockRecorder) DeleteFlagTrigger(ctx, in any, opts ...any) *g
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlagTrigger", reflect.TypeOf((*MockClient)(nil).DeleteFlagTrigger), varargs...)
+}
+
+// DeleteHoldoutGroup mocks base method.
+func (m *MockClient) DeleteHoldoutGroup(ctx context.Context, in *feature.DeleteHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.DeleteHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.DeleteHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteHoldoutGroup indicates an expected call of DeleteHoldoutGroup.
+func (mr *MockClientMockRecorder) DeleteHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteHoldoutGroup", reflect.TypeOf((*MockClient)(nil).DeleteHoldoutGroup), varargs...)
 }
 
 // DeleteScheduledFlagChange mocks base method.
@@ -434,6 +513,26 @@ func (mr *MockClientMockRecorder) GetFlagTrigger(ctx, in any, opts ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTrigger", reflect.TypeOf((*MockClient)(nil).GetFlagTrigger), varargs...)
 }
 
+// GetHoldoutGroup mocks base method.
+func (m *MockClient) GetHoldoutGroup(ctx context.Context, in *feature.GetHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.GetHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.GetHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHoldoutGroup indicates an expected call of GetHoldoutGroup.
+func (mr *MockClientMockRecorder) GetHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHoldoutGroup", reflect.TypeOf((*MockClient)(nil).GetHoldoutGroup), varargs...)
+}
+
 // GetScheduledFlagChange mocks base method.
 func (m *MockClient) GetScheduledFlagChange(ctx context.Context, in *feature.GetScheduledFlagChangeRequest, opts ...grpc.CallOption) (*feature.GetScheduledFlagChangeResponse, error) {
 	m.ctrl.T.Helper()
@@ -574,6 +673,26 @@ func (mr *MockClientMockRecorder) ListFlagTriggers(ctx, in any, opts ...any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlagTriggers", reflect.TypeOf((*MockClient)(nil).ListFlagTriggers), varargs...)
 }
 
+// ListHoldoutGroups mocks base method.
+func (m *MockClient) ListHoldoutGroups(ctx context.Context, in *feature.ListHoldoutGroupsRequest, opts ...grpc.CallOption) (*feature.ListHoldoutGroupsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListHoldoutGroups", varargs...)
+	ret0, _ := ret[0].(*feature.ListHoldoutGroupsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListHoldoutGroups indicates an expected call of ListHoldoutGroups.
+func (mr *MockClientMockRecorder) ListHoldoutGroups(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHoldoutGroups", reflect.TypeOf((*MockClient)(nil).ListHoldoutGroups), varargs...)
+}
+
 // ListScheduledFlagChanges mocks base method.
 func (m *MockClient) ListScheduledFlagChanges(ctx context.Context, in *feature.ListScheduledFlagChangesRequest, opts ...grpc.CallOption) (*feature.ListScheduledFlagChangesResponse, error) {
 	m.ctrl.T.Helper()
@@ -654,6 +773,86 @@ func (mr *MockClientMockRecorder) ListTags(ctx, in any, opts ...any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockClient)(nil).ListTags), varargs...)
 }
 
+// RemoveHoldoutGroupFeatures mocks base method.
+func (m *MockClient) RemoveHoldoutGroupFeatures(ctx context.Context, in *feature.RemoveHoldoutGroupFeaturesRequest, opts ...grpc.CallOption) (*feature.RemoveHoldoutGroupFeaturesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveHoldoutGroupFeatures", varargs...)
+	ret0, _ := ret[0].(*feature.RemoveHoldoutGroupFeaturesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveHoldoutGroupFeatures indicates an expected call of RemoveHoldoutGroupFeatures.
+func (mr *MockClientMockRecorder) RemoveHoldoutGroupFeatures(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveHoldoutGroupFeatures", reflect.TypeOf((*MockClient)(nil).RemoveHoldoutGroupFeatures), varargs...)
+}
+
+// StartHoldoutGroup mocks base method.
+func (m *MockClient) StartHoldoutGroup(ctx context.Context, in *feature.StartHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.StartHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "StartHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.StartHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartHoldoutGroup indicates an expected call of StartHoldoutGroup.
+func (mr *MockClientMockRecorder) StartHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartHoldoutGroup", reflect.TypeOf((*MockClient)(nil).StartHoldoutGroup), varargs...)
+}
+
+// StartHoldoutGroupAnalysis mocks base method.
+func (m *MockClient) StartHoldoutGroupAnalysis(ctx context.Context, in *feature.StartHoldoutGroupAnalysisRequest, opts ...grpc.CallOption) (*feature.StartHoldoutGroupAnalysisResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "StartHoldoutGroupAnalysis", varargs...)
+	ret0, _ := ret[0].(*feature.StartHoldoutGroupAnalysisResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartHoldoutGroupAnalysis indicates an expected call of StartHoldoutGroupAnalysis.
+func (mr *MockClientMockRecorder) StartHoldoutGroupAnalysis(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartHoldoutGroupAnalysis", reflect.TypeOf((*MockClient)(nil).StartHoldoutGroupAnalysis), varargs...)
+}
+
+// StopHoldoutGroup mocks base method.
+func (m *MockClient) StopHoldoutGroup(ctx context.Context, in *feature.StopHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.StopHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "StopHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.StopHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StopHoldoutGroup indicates an expected call of StopHoldoutGroup.
+func (mr *MockClientMockRecorder) StopHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopHoldoutGroup", reflect.TypeOf((*MockClient)(nil).StopHoldoutGroup), varargs...)
+}
+
 // UpdateFeature mocks base method.
 func (m *MockClient) UpdateFeature(ctx context.Context, in *feature.UpdateFeatureRequest, opts ...grpc.CallOption) (*feature.UpdateFeatureResponse, error) {
 	m.ctrl.T.Helper()
@@ -692,6 +891,26 @@ func (mr *MockClientMockRecorder) UpdateFlagTrigger(ctx, in any, opts ...any) *g
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFlagTrigger", reflect.TypeOf((*MockClient)(nil).UpdateFlagTrigger), varargs...)
+}
+
+// UpdateHoldoutGroup mocks base method.
+func (m *MockClient) UpdateHoldoutGroup(ctx context.Context, in *feature.UpdateHoldoutGroupRequest, opts ...grpc.CallOption) (*feature.UpdateHoldoutGroupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateHoldoutGroup", varargs...)
+	ret0, _ := ret[0].(*feature.UpdateHoldoutGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateHoldoutGroup indicates an expected call of UpdateHoldoutGroup.
+func (mr *MockClientMockRecorder) UpdateHoldoutGroup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateHoldoutGroup", reflect.TypeOf((*MockClient)(nil).UpdateHoldoutGroup), varargs...)
 }
 
 // UpdateScheduledFlagChange mocks base method.
