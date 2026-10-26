@@ -37,12 +37,12 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            **/node_modules
-            **/.eslintcache
+            evaluation/typescript/node_modules
+            evaluation/typescript/.eslintcache
             ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-evaluation-ts-yarn-${{ hashFiles('evaluation/typescript/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-evaluation-ts-yarn-
       - name: Init
         run: yarn install --frozen-lockfile
         
@@ -62,12 +62,14 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            **/node_modules
-            **/.eslintcache
+            evaluation/typescript/node_modules
+            evaluation/typescript/.eslintcache
             ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-evaluation-ts-yarn-${{ hashFiles('evaluation/typescript/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-evaluation-ts-yarn-
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
       - name: Format
         run: make fmt
       - name: Lint
@@ -89,14 +91,18 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            **/node_modules
-            **/.eslintcache
+            evaluation/typescript/node_modules
+            evaluation/typescript/.eslintcache
             ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-evaluation-ts-yarn-${{ hashFiles('evaluation/typescript/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-evaluation-ts-yarn-
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
       - name: Install Protoc
         uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generated proto code
         run: make gen_proto
       - name: Unit test
@@ -118,14 +124,18 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            **/node_modules
-            **/.eslintcache
+            evaluation/typescript/node_modules
+            evaluation/typescript/.eslintcache
             ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-evaluation-ts-yarn-${{ hashFiles('evaluation/typescript/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-evaluation-ts-yarn-
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
       - name: Install Protoc
         uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generated proto code
         run: make gen_proto
       - name: Package Build
