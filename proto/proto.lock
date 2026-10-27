@@ -30041,6 +30041,30 @@
             ]
           },
           {
+            "name": "StartHoldoutGroupRequest.Mode",
+            "enum_fields": [
+              {
+                "name": "MANUAL"
+              },
+              {
+                "name": "SCHEDULED",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "StartHoldoutGroupAnalysisRequest.Mode",
+            "enum_fields": [
+              {
+                "name": "MANUAL"
+              },
+              {
+                "name": "SCHEDULED",
+                "integer": 1
+              }
+            ]
+          },
+          {
             "name": "StopHoldoutGroupRequest.Mode",
             "enum_fields": [
               {
@@ -30554,6 +30578,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 3,
+                "name": "mode",
+                "type": "Mode"
               }
             ]
           },
@@ -30591,6 +30620,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 3,
+                "name": "mode",
+                "type": "Mode"
               }
             ]
           },

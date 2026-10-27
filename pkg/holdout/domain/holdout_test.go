@@ -237,6 +237,50 @@ func TestStatusTransitions(t *testing.T) {
 	assert.True(t, group.Archived)
 }
 
+func TestStartScheduledKeepsSavedStart(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	group := waitingGroup(now-10, now+100, 0)
+	require.NoError(t, group.StartScheduled(now))
+	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, group.Status)
+	assert.Equal(t, now-10, group.StartAt)
+
+	postponed := waitingGroup(now+100, now+1000, 0)
+	assert.ErrorIs(t, postponed.StartScheduled(now), ErrBeforeStart)
+	assert.Equal(t, featureproto.HoldoutGroup_WAITING, postponed.Status)
+	assert.Equal(t, now+100, postponed.StartAt)
+
+	expired := waitingGroup(now-200, now-100, 0)
+	assert.ErrorIs(t, expired.StartScheduled(now), ErrAfterStop)
+	assert.Equal(t, featureproto.HoldoutGroup_WAITING, expired.Status)
+}
+
+func TestStartAnalysisScheduledRequiresDueTime(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	group := waitingGroup(now-100, now+100, now-10)
+	require.NoError(t, group.Start(now-50))
+	require.NoError(t, group.StartAnalysisScheduled(now))
+	assert.Equal(t, featureproto.HoldoutGroup_ANALYSIS, group.Status)
+	assert.Equal(t, now, group.AnalysisStartedAt)
+
+	cleared := waitingGroup(now-100, now+100, 0)
+	require.NoError(t, cleared.Start(now-50))
+	assert.ErrorIs(t, cleared.StartAnalysisScheduled(now), ErrBeforeAnalysis)
+	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, cleared.Status)
+
+	postponed := waitingGroup(now-100, now+100, now+10)
+	require.NoError(t, postponed.Start(now-50))
+	assert.ErrorIs(t, postponed.StartAnalysisScheduled(now), ErrBeforeAnalysis)
+	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, postponed.Status)
+
+	expired := waitingGroup(now-100, now+100, now-10)
+	require.NoError(t, expired.Start(now-50))
+	expired.StopAt = now
+	assert.ErrorIs(t, expired.StartAnalysisScheduled(now), ErrAfterStop)
+	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, expired.Status)
+}
+
 func TestScheduledFinish(t *testing.T) {
 	t.Parallel()
 	now := time.Now().Unix()

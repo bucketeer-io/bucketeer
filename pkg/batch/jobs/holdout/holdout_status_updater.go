@@ -85,9 +85,23 @@ func (u *statusUpdater) Run(ctx context.Context) (lastErr error) {
 			lastErr = err
 			continue
 		}
+		// Stops run before starts. List order is by name, so a due waiting group
+		// can appear ahead of the expired group that still occupies its period.
+		// Stopping that predecessor in this run lets the successor start now.
+		now := time.Now()
+		var stops, rest []*featureproto.HoldoutGroup
 		for _, group := range groups {
-			if err = u.updateStatus(ctx, env.Id, group); err != nil {
-				lastErr = err
+			if domain.DueForScheduledStop(group, now) {
+				stops = append(stops, group)
+				continue
+			}
+			rest = append(rest, group)
+		}
+		for _, batch := range [][]*featureproto.HoldoutGroup{stops, rest} {
+			for _, group := range batch {
+				if err = u.updateStatus(ctx, env.Id, group); err != nil {
+					lastErr = err
+				}
 			}
 		}
 	}
@@ -121,6 +135,7 @@ func (u *statusUpdater) start(
 	_, err := u.featureClient.StartHoldoutGroup(ctx, &featureproto.StartHoldoutGroupRequest{
 		Id:            group.Id,
 		EnvironmentId: environmentID,
+		Mode:          featureproto.StartHoldoutGroupRequest_SCHEDULED,
 	})
 	if err != nil {
 		u.logger.Error("Failed to start holdout group",
@@ -140,6 +155,7 @@ func (u *statusUpdater) startAnalysis(
 	_, err := u.featureClient.StartHoldoutGroupAnalysis(ctx, &featureproto.StartHoldoutGroupAnalysisRequest{
 		Id:            group.Id,
 		EnvironmentId: environmentID,
+		Mode:          featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
 	})
 	if err != nil {
 		u.logger.Error("Failed to start holdout group analysis",

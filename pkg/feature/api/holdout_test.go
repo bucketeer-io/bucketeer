@@ -318,6 +318,35 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	})
 
+	t.Run("scheduled start leaves a postponed group waiting", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
+	t.Run("scheduled start keeps the saved start time", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		group := waitingHoldout(now)
+		group.StartAt = now - 10
+		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_STARTED)
+		resp, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, featureproto.HoldoutGroup_RUNNING, resp.HoldoutGroup.Status)
+		assert.Equal(t, now-10, resp.HoldoutGroup.StartAt)
+	})
+
 	t.Run("manual analysis", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
@@ -328,6 +357,40 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED)
 		resp, err := service.StartHoldoutGroupAnalysis(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupAnalysisRequest{
 			Id: "hg", EnvironmentId: "ns0",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, featureproto.HoldoutGroup_ANALYSIS, resp.HoldoutGroup.Status)
+		assert.NotZero(t, resp.HoldoutGroup.AnalysisStartedAt)
+	})
+
+	t.Run("scheduled analysis waits for start_analysis_at", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		group := waitingHoldout(now)
+		group.Status = featureproto.HoldoutGroup_RUNNING
+		group.StartAt = now - 10
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		_, err := service.StartHoldoutGroupAnalysis(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupAnalysisRequest{
+			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
+	t.Run("scheduled analysis starts when the time has passed", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		group := waitingHoldout(now)
+		group.Status = featureproto.HoldoutGroup_RUNNING
+		group.StartAt = now - 100
+		group.StartAnalysisAt = now - 10
+		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED)
+		resp, err := service.StartHoldoutGroupAnalysis(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupAnalysisRequest{
+			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, featureproto.HoldoutGroup_ANALYSIS, resp.HoldoutGroup.Status)

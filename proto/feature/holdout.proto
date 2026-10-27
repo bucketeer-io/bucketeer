@@ -165,8 +165,16 @@ message UpdateHoldoutGroupResponse {
 }
 
 message StartHoldoutGroupRequest {
+  enum Mode {
+    // Start immediately. A future start_at is clamped to now.
+    MANUAL = 0;
+    // Start a waiting group whose start_at has passed and whose stop_at has
+    // not. The saved start_at is left unchanged. Used by the status batch job.
+    SCHEDULED = 1;
+  }
   string id = 1 [(google.api.field_behavior) = REQUIRED];
   string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  Mode mode = 3;
 }
 
 message StartHoldoutGroupResponse {
@@ -174,8 +182,16 @@ message StartHoldoutGroupResponse {
 }
 
 message StartHoldoutGroupAnalysisRequest {
+  enum Mode {
+    // Enter analysis immediately, including before start_analysis_at.
+    MANUAL = 0;
+    // Enter analysis only when start_analysis_at has passed and stop_at has
+    // not. Used by the status batch job.
+    SCHEDULED = 1;
+  }
   string id = 1 [(google.api.field_behavior) = REQUIRED];
   string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  Mode mode = 3;
 }
 
 message StartHoldoutGroupAnalysisResponse {

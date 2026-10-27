@@ -63,6 +63,7 @@ func TestUpdateStatus(t *testing.T) {
 					StartHoldoutGroup(gomock.Any(), &featureproto.StartHoldoutGroupRequest{
 						Id:            "hg",
 						EnvironmentId: "env",
+						Mode:          featureproto.StartHoldoutGroupRequest_SCHEDULED,
 					}).
 					Return(&featureproto.StartHoldoutGroupResponse{}, nil)
 			},
@@ -95,6 +96,7 @@ func TestUpdateStatus(t *testing.T) {
 					StartHoldoutGroupAnalysis(gomock.Any(), &featureproto.StartHoldoutGroupAnalysisRequest{
 						Id:            "hg",
 						EnvironmentId: "env",
+						Mode:          featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
 					}).
 					Return(&featureproto.StartHoldoutGroupAnalysisResponse{}, nil)
 			},
@@ -198,7 +200,9 @@ func TestRun(t *testing.T) {
 			},
 		}, nil)
 		updater.featureClient.(*fcmock.MockClient).EXPECT().StartHoldoutGroup(
-			gomock.Any(), &featureproto.StartHoldoutGroupRequest{Id: "due", EnvironmentId: "env"},
+			gomock.Any(), &featureproto.StartHoldoutGroupRequest{
+				Id: "due", EnvironmentId: "env", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+			},
 		).Return(&featureproto.StartHoldoutGroupResponse{}, nil)
 		assert.NoError(t, updater.Run(context.Background()))
 	})
@@ -216,6 +220,43 @@ func TestRun(t *testing.T) {
 			gomock.Any(), gomock.Any(),
 		).Return(nil, errors.New("groups failed"))
 		assert.EqualError(t, updater.Run(context.Background()), "groups failed")
+	})
+
+	t.Run("stops an expired predecessor before starting the successor listed first", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		updater := newStatusUpdater(t, controller)
+		updater.environmentClient.(*envmock.MockClient).EXPECT().ListEnvironmentsV2(
+			gomock.Any(), gomock.Any(),
+		).Return(&environmentproto.ListEnvironmentsV2Response{
+			Environments: []*environmentproto.EnvironmentV2{{Id: "env"}},
+		}, nil)
+		updater.featureClient.(*fcmock.MockClient).EXPECT().ListHoldoutGroups(
+			gomock.Any(), gomock.Any(),
+		).Return(&featureproto.ListHoldoutGroupsResponse{
+			HoldoutGroups: []*featureproto.HoldoutGroup{
+				{Id: "successor", Status: featureproto.HoldoutGroup_WAITING, StartAt: past, StopAt: future},
+				{Id: "predecessor", Status: featureproto.HoldoutGroup_RUNNING, StartAt: past - 100, StopAt: past},
+				{Id: "missed", Status: featureproto.HoldoutGroup_WAITING, StartAt: past - 200, StopAt: past},
+			},
+		}, nil)
+		stopPredecessor := updater.featureClient.(*fcmock.MockClient).EXPECT().StopHoldoutGroup(
+			gomock.Any(), &featureproto.StopHoldoutGroupRequest{
+				Id: "predecessor", EnvironmentId: "env", Mode: featureproto.StopHoldoutGroupRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StopHoldoutGroupResponse{}, nil)
+		stopMissed := updater.featureClient.(*fcmock.MockClient).EXPECT().StopHoldoutGroup(
+			gomock.Any(), &featureproto.StopHoldoutGroupRequest{
+				Id: "missed", EnvironmentId: "env", Mode: featureproto.StopHoldoutGroupRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StopHoldoutGroupResponse{}, nil)
+		startSuccessor := updater.featureClient.(*fcmock.MockClient).EXPECT().StartHoldoutGroup(
+			gomock.Any(), &featureproto.StartHoldoutGroupRequest{
+				Id: "successor", EnvironmentId: "env", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StartHoldoutGroupResponse{}, nil)
+		gomock.InOrder(stopPredecessor, stopMissed, startSuccessor)
+		assert.NoError(t, updater.Run(context.Background()))
 	})
 }
 
