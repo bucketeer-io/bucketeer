@@ -259,6 +259,8 @@ type grpcGatewayService struct {
 	evaluationPublisher         publisher.Publisher
 	featuresCache               cachev3.FeaturesCache
 	featuresRedisCache          cachev3.FeaturesCache
+	holdoutGroupCache           cachev3.HoldoutGroupCache
+	holdoutGroupRedisCache      cachev3.HoldoutGroupCache
 	segmentUsersCache           cachev3.SegmentUsersCache
 	segmentUsersRedisCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
@@ -325,6 +327,8 @@ func NewGrpcGatewayService(
 		evaluationPublisher:         ep,
 		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
 		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
+		holdoutGroupCache:           cachev3.NewHoldoutGroupCache(inMemoryCache, options.featuresMemoryCacheTTL),
+		holdoutGroupRedisCache:      cachev3.NewHoldoutGroupCache(redisV3Cache, 0),
 		segmentUsersCache:           cachev3.NewSegmentUsersCache(inMemoryCache, options.segmentUsersMemoryCacheTTL),
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
@@ -549,7 +553,9 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: "no_evaluations",
 		}, nil
 	}
-	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
+	group := s.liveHoldoutGroup(environmentId)
+	countHoldoutEvaluation(group, sourceID)
+	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag, holdoutGroups(group)...)
 	if req.UserEvaluationsId == ueid {
 		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone, sourceID).Inc()
@@ -569,7 +575,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		}, nil
 	}
 
-	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
+	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, environmentId, group)
 	if err != nil {
 		if isCallerContextErr(err) {
 			evaluationsCounter.WithLabelValues(
@@ -612,6 +618,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			segmentUsersMap,
 			segmentsMap,
 			req.Tag,
+			holdoutGroups(group)...,
 		)
 		if err != nil {
 			evaluationsCounter.WithLabelValues(
@@ -654,6 +661,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.UserEvaluationCondition.EvaluatedAt,
 			req.UserEvaluationCondition.UserAttributesUpdated,
 			req.Tag,
+			holdoutGroups(group)...,
 		)
 		if err != nil {
 			evaluationsCounter.WithLabelValues(
@@ -787,7 +795,8 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id)
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id, group)
 	if err != nil {
 		if isCallerContextErr(err) {
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -803,7 +812,9 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	evaluator := evaluation.NewEvaluator()
-	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, segmentsMap, req.Tag)
+	evaluations, err := evaluator.EvaluateFeatures(
+		features, req.User, segmentUsersMap, segmentsMap, req.Tag, holdoutGroups(group)...,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -1483,11 +1494,17 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	environmentId string,
+	group *featureproto.HoldoutGroup,
 ) (map[string][]*featureproto.SegmentUser, map[string]*featureproto.Segment, error) {
 	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		for _, id := range evaluator.ListSegmentIDs(f) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	if group != nil {
+		for _, id := range evaluation.HoldoutSegmentIDs([]*featureproto.HoldoutGroup{group}) {
 			mapIDs[id] = struct{}{}
 		}
 	}

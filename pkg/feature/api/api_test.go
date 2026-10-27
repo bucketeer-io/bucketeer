@@ -127,6 +127,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		a,
 		e,
 		cachev3mock.NewMockFeaturesCache(c),
+		nil,
 		at,
 		env,
 		cachev3mock.NewMockSegmentUsersCache(c),

@@ -72,6 +72,10 @@ type HoldoutStorage interface {
 	// GetEnvironmentSamplingSeed returns the canonical HASH seed, or empty when the environment has none.
 	GetEnvironmentSamplingSeed(ctx context.Context, environmentID string) (string, error)
 	ListActiveGroups(ctx context.Context, environmentID string) ([]domain.GroupSnapshot, error)
+	// GetLiveServingGroup returns the newest RUNNING or ANALYSIS group that is
+	// not deleted or archived, with its current target features attached.
+	// ErrHoldoutGroupNotFound when the environment has no serving group.
+	GetLiveServingGroup(ctx context.Context, environmentID string) (*domain.HoldoutGroup, error)
 	// ListLiveFeatureTargets returns current target rows of WAITING, RUNNING, or ANALYSIS groups.
 	ListLiveFeatureTargets(ctx context.Context, environmentID, featureID string) ([]domain.FeatureTarget, error)
 }

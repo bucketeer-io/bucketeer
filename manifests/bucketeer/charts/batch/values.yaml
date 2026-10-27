@@ -224,6 +224,9 @@ cronjob:
     - name: experiment-cacher
       jobId: ExperimentCacher
       schedule: "* * * * *"
+    - name: holdout-group-cacher
+      jobId: HoldoutGroupCacher
+      schedule: "* * * * *"
     - name: auto-ops-rules-cacher
       jobId: AutoOpsRulesCacher
       schedule: "* * * * *"

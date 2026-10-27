@@ -61,6 +61,8 @@ type gatewayService struct {
 	segmentUsersRedisCache      cachev3.SegmentUsersCache
 	featuresCache               cachev3.FeaturesCache
 	featuresRedisCache          cachev3.FeaturesCache
+	holdoutGroupCache           cachev3.HoldoutGroupCache
+	holdoutGroupRedisCache      cachev3.HoldoutGroupCache
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	flightgroup                 singleflight.Group
@@ -106,6 +108,8 @@ func NewGatewayService(
 		metricsPublisher:            mp,
 		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
 		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
+		holdoutGroupCache:           cachev3.NewHoldoutGroupCache(inMemoryCache, options.featuresMemoryCacheTTL),
+		holdoutGroupRedisCache:      cachev3.NewHoldoutGroupCache(redisV3Cache, 0),
 		segmentUsersCache:           cachev3.NewSegmentUsersCache(inMemoryCache, options.segmentUsersMemoryCacheTTL),
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
@@ -297,7 +301,9 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		)
 		return
 	}
-	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features)
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	countHoldoutEvaluation(group, reqBody.SourceID.String())
+	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features, holdoutGroups(group)...)
 	if reqBody.UserEvaluationsID == ueid {
 		rest.ReturnSuccessResponse(
 			w,
@@ -314,6 +320,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		features,
 		envAPIKey.Environment.Id,
 		reqBody.Tag,
+		group,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -368,6 +375,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		features,
 		envAPIKey.Environment.Id,
 		reqBody.Tag,
+		s.liveHoldoutGroup(envAPIKey.Environment.Id),
 	)
 	if err != nil {
 		s.logger.Error(
@@ -425,11 +433,17 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	evaluator := evaluation.NewEvaluator(
 		evaluation.WithSecondsForAdjustment(int64(s.opts.featureFlagDiffGracePeriod / time.Second)),
 	)
+	group := s.liveHoldoutGroup(environmentID)
 
 	// The same process of getting segment users as grpcGatewayService.getSegmentUsersMap()
 	mapIDs := make(map[string]struct{})
 	for _, feat := range features {
 		for _, id := range evaluator.ListSegmentIDs(feat) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	if group != nil {
+		for _, id := range evaluation.HoldoutSegmentIDs([]*featureproto.HoldoutGroup{group}) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -451,12 +465,12 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	// flags are re-evaluated on every reconnect initial put.
 	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
 		features, user, segmentUsersMap, segmentsMap,
-		prevUEID, evaluatedAt, checkUserAttributes, tag,
+		prevUEID, evaluatedAt, checkUserAttributes, tag, holdoutGroups(group)...,
 	)
 	if err != nil {
 		return "", nil, err
 	}
-	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features)
+	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features, holdoutGroups(group)...)
 	return ueid, evaluations, nil
 }
 
@@ -707,11 +721,17 @@ func (s *gatewayService) evaluateFeatures(
 	user *userproto.User,
 	features []*featureproto.Feature,
 	environmentId, tag string,
+	group *featureproto.HoldoutGroup,
 ) (*featureproto.UserEvaluations, error) {
 	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		for _, id := range evaluator.ListSegmentIDs(f) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	if group != nil {
+		for _, id := range evaluation.HoldoutSegmentIDs([]*featureproto.HoldoutGroup{group}) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -726,7 +746,9 @@ func (s *gatewayService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, mapSegments, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(
+		features, user, mapSegmentUsers, mapSegments, tag, holdoutGroups(group)...,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",

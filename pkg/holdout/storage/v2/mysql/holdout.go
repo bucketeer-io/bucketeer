@@ -49,6 +49,8 @@ var (
 	selectSamplingSeedSQL string
 	//go:embed sql/holdout/select_active_groups.sql
 	selectActiveGroupsSQL string
+	//go:embed sql/holdout/select_live_serving_group.sql
+	selectLiveServingGroupSQL string
 	//go:embed sql/holdout/select_live_feature_targets.sql
 	selectLiveFeatureTargetsSQL string
 )
@@ -120,6 +122,35 @@ func (s *holdoutStorage) GetHoldoutGroupForUpdate(
 	id, environmentID string,
 ) (*domain.HoldoutGroup, error) {
 	return s.get(ctx, selectHoldoutGroupSQL+" FOR UPDATE", id, environmentID)
+}
+
+func (s *holdoutStorage) GetLiveServingGroup(
+	ctx context.Context,
+	environmentID string,
+) (*domain.HoldoutGroup, error) {
+	group, err := scanHoldoutGroup(s.qe.QueryRowContext(
+		ctx,
+		selectLiveServingGroupSQL,
+		environmentID,
+		false,
+		false,
+		int32(proto.HoldoutGroup_RUNNING),
+		int32(proto.HoldoutGroup_ANALYSIS),
+	))
+	if err != nil {
+		if errors.Is(err, mysqlstorage.ErrNoRows) {
+			return nil, v2hs.ErrHoldoutGroupNotFound
+		}
+		return nil, err
+	}
+	features, err := s.ListCurrentFeatures(ctx, environmentID, []string{group.Id})
+	if err != nil {
+		return nil, err
+	}
+	for _, feature := range features {
+		group.Features = append(group.Features, feature.HoldoutGroupFeature)
+	}
+	return group, nil
 }
 
 func (s *holdoutStorage) get(

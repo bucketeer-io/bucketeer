@@ -288,7 +288,7 @@ func TestCacheInvalidatorEvictsLinkedTargets(t *testing.T) {
 			for _, kind := range []string{linkedTargetsExperiments, linkedTargetsAutoOpsRules} {
 				lp.targets[linkedTargetsKey(linkedTestEnvID, kind)] = &linkedTargets{}
 			}
-			ci := NewCacheInvalidator(nil, nil, nil, lp, nil, zap.NewNop())
+			ci := NewCacheInvalidator(nil, nil, nil, nil, lp, nil, zap.NewNop())
 			require.NoError(t, ci.evict(&domaineventproto.Event{EntityType: entityType, EnvironmentId: linkedTestEnvID}))
 			assert.Empty(t, lp.targets)
 		})

@@ -66,6 +66,7 @@ type FeatureService struct {
 	accountClient              accountclient.Client
 	experimentClient           experimentclient.Client
 	featuresCache              cachev3.FeaturesCache
+	holdoutGroupCache          cachev3.HoldoutGroupCache
 	autoOpsClient              autoopsclient.Client
 	environmentClient          envclient.Client
 	segmentUsersCache          cachev3.SegmentUsersCache
@@ -120,6 +121,7 @@ func NewFeatureService(
 		autoOpsClient:              autoOpsClient,
 		environmentClient:          environmentClient,
 		featuresCache:              cachev3.NewFeaturesCache(v3Cache, 0),
+		holdoutGroupCache:          cachev3.NewHoldoutGroupCache(v3Cache, 0),
 		segmentUsersCache:          cachev3.NewSegmentUsersCache(v3Cache, 0),
 		userAttributesCache:        cachev3.NewUserAttributesCache(persistentRedisV3Cache),
 		segmentUsersPublisher:      segmentUsersPublisher,

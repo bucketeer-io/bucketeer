@@ -1090,6 +1090,7 @@ func (s *server) startCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
 		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
+		cachev3.NewHoldoutGroupCache(inMemoryCache, 0),
 		linkedEventPublisher,
 		dispatcher,
 		logger,

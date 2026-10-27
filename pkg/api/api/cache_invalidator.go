@@ -31,6 +31,7 @@ type cacheInvalidator struct {
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	holdoutGroupCache      cachev3.HoldoutGroupCache
 	linkedEventPublisher   *LinkedEventPublisher
 	streamDispatcher       *stream.Dispatcher
 	logger                 *zap.Logger
@@ -40,6 +41,7 @@ func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	holdoutGroupCache cachev3.HoldoutGroupCache,
 	linkedEventPublisher *LinkedEventPublisher,
 	streamDispatcher *stream.Dispatcher,
 	logger *zap.Logger,
@@ -48,6 +50,7 @@ func NewCacheInvalidator(
 		featuresCache:          featuresCache,
 		segmentUsersCache:      segmentUsersCache,
 		environmentAPIKeyCache: environmentAPIKeyCache,
+		holdoutGroupCache:      holdoutGroupCache,
 		linkedEventPublisher:   linkedEventPublisher,
 		streamDispatcher:       streamDispatcher,
 		logger:                 logger.Named("cache-invalidator"),
@@ -86,6 +89,27 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 
 func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 	switch event.EntityType {
+	case domaineventproto.Event_HOLDOUT_GROUP:
+		if ci.holdoutGroupCache == nil {
+			return nil
+		}
+		if err := ci.holdoutGroupCache.Evict(event.EnvironmentId); err != nil {
+			ci.logger.Warn("Failed to evict holdout group cache",
+				zap.Error(err),
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("entityId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return err
+		}
+		cacheInvalidationCounter.WithLabelValues(
+			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
+		).Inc()
+		ci.logger.Debug("Evicted holdout group cache",
+			zap.String("environmentId", event.EnvironmentId),
+			zap.String("entityId", event.EntityId),
+			zap.String("type", event.Type.String()),
+		)
 	case domaineventproto.Event_FEATURE:
 		if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
 			ci.logger.Warn("Failed to evict features cache",

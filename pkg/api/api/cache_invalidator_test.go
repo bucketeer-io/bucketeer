@@ -173,7 +173,9 @@ func TestCacheInvalidatorHandleMessage(t *testing.T) {
 			segmentUsersCache := cachev3.NewSegmentUsersCache(inMemoryCache, 10*time.Minute)
 			environmentAPIKeyCache := cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 10*time.Minute)
 
-			invalidator := NewCacheInvalidator(featuresCache, segmentUsersCache, environmentAPIKeyCache, nil, nil, zap.NewNop())
+			invalidator := NewCacheInvalidator(
+				featuresCache, segmentUsersCache, environmentAPIKeyCache, nil, nil, nil, zap.NewNop(),
+			)
 
 			if p.setupCache != nil {
 				p.setupCache(featuresCache, segmentUsersCache, environmentAPIKeyCache)
@@ -193,4 +195,26 @@ func TestCacheInvalidatorHandleMessage(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCacheInvalidatorEvictsHoldoutGroup(t *testing.T) {
+	t.Parallel()
+	inMemoryCache := cachev3.NewInMemoryCache()
+	holdoutCache := cachev3.NewHoldoutGroupCache(inMemoryCache, 0)
+	require.NoError(t, holdoutCache.Put(&featureproto.HoldoutGroup{Id: "hg"}, "env-1"))
+	require.NoError(t, holdoutCache.Put(&featureproto.HoldoutGroup{Id: "other"}, "env-2"))
+	invalidator := NewCacheInvalidator(nil, nil, nil, holdoutCache, nil, nil, zap.NewNop())
+	data, err := proto.Marshal(&domaineventproto.Event{
+		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+		EntityId:      "hg",
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_HOLDOUT_GROUP_CREATED,
+	})
+	require.NoError(t, err)
+	invalidator.handleMessage(&puller.Message{Data: data})
+	_, err = holdoutCache.Get("env-1")
+	assert.Error(t, err)
+	kept, err := holdoutCache.Get("env-2")
+	require.NoError(t, err)
+	assert.Equal(t, "other", kept.Id)
 }

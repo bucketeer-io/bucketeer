@@ -855,6 +855,12 @@ func newBatchService(t *testing.T,
 			featureMockClient,
 			jobs.WithLogger(logger),
 		),
+		cacher.NewHoldoutGroupCacher(
+			environmentMockClient,
+			nil,
+			nil,
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 	return service
