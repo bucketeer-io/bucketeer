@@ -62,8 +62,11 @@ func invalidateHoldoutFill(environmentID string, evict func()) {
 	}
 }
 
-// commitHoldoutFill stores the Redis snapshot when no invalidation landed
+// commitHoldoutFill stores a Redis snapshot when no invalidation landed
 // since epoch was observed. It reports whether the snapshot was stored.
+// Feature fills and holdout fills share the epoch: a holdout start evicts
+// both caches, and an in-flight feature fill must not put the pre-start
+// feature list back afterwards.
 func commitHoldoutFill(environmentID string, epoch uint64, put func()) bool {
 	gate := holdoutGate(environmentID)
 	gate.mu.Lock()
@@ -151,6 +154,32 @@ func CachedHoldoutTargetIDs(
 	logger *zap.Logger,
 ) map[string]struct{} {
 	return evaluation.HoldoutTargetFeatureIDs(loadLiveHoldoutGroup(memory, redis, environmentID, logger))
+}
+
+// FillFeatureSnapshot reads a feature snapshot and stores it in memory when
+// no invalidation has landed since the read started. REST, gRPC, and the
+// stream dispatcher fill L1 through this, so a holdout start cannot be
+// overwritten by an in-flight pre-start snapshot. The read is retried once.
+// When both attempts race an invalidation, the latest snapshot is returned
+// and left out of memory.
+func FillFeatureSnapshot(
+	environmentID string,
+	read func() (*featureproto.Features, error),
+	put func(*featureproto.Features),
+) (*featureproto.Features, error) {
+	var latest *featureproto.Features
+	for attempt := 0; attempt < 2; attempt++ {
+		epoch := loadHoldoutFillEpoch(environmentID)
+		features, err := read()
+		if err != nil {
+			return nil, err
+		}
+		latest = features
+		if put == nil || commitHoldoutFill(environmentID, epoch, func() { put(features) }) {
+			return features, nil
+		}
+	}
+	return latest, nil
 }
 
 func holdoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutGroup {

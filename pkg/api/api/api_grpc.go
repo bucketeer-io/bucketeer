@@ -1421,17 +1421,19 @@ func (s *grpcGatewayService) getFeatures(
 	if err == nil {
 		return fs.Features, nil
 	}
-	// L2: Redis cache (kept warm by batch cacher)
-	fs, err = getFeaturesFromCache(
-		environmentId,
-		s.featuresRedisCache,
-		callerGatewayService,
-		cacheLayerExternal,
-	)
+	// L2: Redis cache (kept warm by batch cacher). The fill records the
+	// invalidation epoch before the read, so a holdout start that evicts L1
+	// while this read is in flight cannot be overwritten by the pre-start list.
+	fs, err = FillFeatureSnapshot(environmentId, func() (*featureproto.Features, error) {
+		return s.featuresRedisCache.Get(environmentId)
+	}, func(features *featureproto.Features) {
+		putFeaturesCache(ctx, features, environmentId, s.featuresCache, s.logger)
+	})
 	if err == nil {
-		putFeaturesCache(ctx, fs, environmentId, s.featuresCache, s.logger)
+		cacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
 		return fs.Features, nil
 	}
+	cacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeMiss).Inc()
 	// L3: feature service (DB)
 	features, err := s.listFeatures(ctx, environmentId)
 	if err != nil {

@@ -182,10 +182,11 @@ func ClearanceSnapshot(stoppedAt int64) *ftproto.HoldoutGroup {
 }
 
 // unavailableHoldoutUpdatedAt marks a clearance used when the snapshot
-// cannot be read. It is earlier than any real stop time, so it does not
-// move a client's cursor. It only keeps the snapshot non-nil so a disabled
-// flag with no off variation stays omitted instead of falling through to a
-// normal variation.
+// cannot be read. It is earlier than any real stop time. holdoutStale
+// treats it as stale so a client that still has a HOLDOUT assignment is
+// fully reconciled, instead of merging one unrelated flag and then
+// short-circuiting on the new evaluation ID. The snapshot stays non-nil so
+// a disabled flag with no off variation stays omitted.
 const unavailableHoldoutUpdatedAt int64 = 1
 
 // UnavailableHoldoutSnapshot is the clearance returned when the holdout
@@ -221,16 +222,18 @@ func ServingHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
 }
 
 // EvaluationHoldout is the snapshot the evaluator should see.
-// A serving group is returned as-is. An empty snapshot whose updated_at is
-// set is the clearance signal written when serving stopped: it assigns
-// nothing, and it forces a full re-evaluation while the client's cursor is
-// behind that revision. UpdatedAt 0 means the environment has never stopped
-// a group and is not a signal.
+// A serving group is returned as-is. An empty snapshot is the clearance
+// written when nothing is serving. It assigns nothing. A non-zero updated_at
+// is the stop revision and forces a full re-evaluation while the client's
+// cursor is behind it. UpdatedAt 0 means the environment has never stopped
+// a group and is not that signal, but it is still a snapshot: a disabled
+// flag kept only so a dependency can resolve must not fall through to a
+// normal variation or be delivered for local evaluation.
 func EvaluationHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
 	if serving := ServingHoldout(group); serving != nil {
 		return serving
 	}
-	if group != nil && group.Id == "" && group.UpdatedAt > 0 {
+	if group != nil && group.Id == "" {
 		return group
 	}
 	return nil
@@ -367,6 +370,11 @@ func holdoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
 	for _, group := range groups {
 		if group == nil || group.UpdatedAt == 0 {
 			continue
+		}
+		// A cache miss has no real revision. Treating it as fresh lets a
+		// partial flag diff leave a cached HOLDOUT assignment in place.
+		if group.UpdatedAt == unavailableHoldoutUpdatedAt {
+			return true
 		}
 		if evaluatedAt < group.UpdatedAt {
 			return true

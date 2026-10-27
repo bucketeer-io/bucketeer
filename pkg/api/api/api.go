@@ -927,11 +927,16 @@ func (s *gatewayService) getFeatures(
 		return fs.Features, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerInMemory, codeMiss).Inc()
-	// L2: Redis cache (kept warm by batch cacher)
-	fs, err = s.featuresRedisCache.Get(environmentId)
+	// L2: Redis cache (kept warm by batch cacher). The fill records the
+	// invalidation epoch before the read, so a holdout start that evicts L1
+	// while this read is in flight cannot be overwritten by the pre-start list.
+	fs, err = FillFeatureSnapshot(environmentId, func() (*featureproto.Features, error) {
+		return s.featuresRedisCache.Get(environmentId)
+	}, func(features *featureproto.Features) {
+		putFeaturesCache(ctx, features, environmentId, s.featuresCache, s.logger)
+	})
 	if err == nil {
 		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
-		putFeaturesCache(ctx, fs, environmentId, s.featuresCache, s.logger)
 		return fs.Features, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeMiss).Inc()

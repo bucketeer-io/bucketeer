@@ -222,6 +222,84 @@ func TestEvaluateFeaturesByEvaluatedAtHoldoutForcesFullUpdate(t *testing.T) {
 	}
 }
 
+func TestUnavailableHoldoutForcesFullUpdateWhenAnotherFlagChanged(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	user := &userproto.User{Id: "user-1"}
+	evaluatedAt := now - 100
+	target := flagWithVariations("target", true, "off", "hold", "on")
+	target.UpdatedAt = now - 1000
+	fresh := flagWithVariations("fresh", true, "off", "hold", "on")
+	fresh.UpdatedAt = now - 10
+
+	got, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+		[]*ftproto.Feature{target, fresh},
+		user, nil, nil,
+		"previous",
+		evaluatedAt,
+		false,
+		"",
+		UnavailableHoldoutSnapshot(),
+	)
+	require.NoError(t, err)
+	assert.True(t, got.ForceUpdate)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range got.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	require.Contains(t, byID, "target")
+	require.Contains(t, byID, "fresh")
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["target"].Reason.Type)
+	assert.Equal(t, "on", byID["target"].VariationId)
+}
+
+func TestZeroRevisionSnapshotOmitsDisabledDependency(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	// The prerequisite expects the variation a normal evaluation would assign,
+	// so falling through would satisfy the dependent.
+	dependent := flagWithVariations("dependent", true, "off", "hold", "on")
+	dependent.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	snapshot := EvaluationHoldout(ClearanceSnapshot(0))
+	require.NotNil(t, snapshot)
+
+	cached := ftdomain.FilterForServing([]*ftproto.Feature{dependent, disabled, orphan}, nil)
+	cachedIDs := make([]string, 0, len(cached))
+	for _, feature := range cached {
+		cachedIDs = append(cachedIDs, feature.Id)
+	}
+	assert.Equal(t, []string{"dependent", "flag"}, cachedIDs)
+
+	kept, removed := FeaturesForServerEval(cached, snapshot)
+	assert.Empty(t, removed)
+	evaluations, err := NewEvaluator().EvaluateFeatures(kept, user, nil, nil, "", snapshot)
+	require.NoError(t, err)
+	require.Len(t, evaluations.Evaluations, 1)
+	assert.Equal(t, "dependent", evaluations.Evaluations[0].FeatureId)
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, evaluations.Evaluations[0].Reason.Type)
+	assert.Equal(t, "off", evaluations.Evaluations[0].VariationId)
+	assert.Contains(t, evaluations.ArchivedFeatureIds, "flag")
+
+	visible, hidden := FeaturesForLocalEval(cached, snapshot)
+	require.Len(t, visible, 1)
+	assert.Equal(t, "dependent", visible[0].Id)
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+}
+
 func BenchmarkEvaluateFeatures(b *testing.B) {
 	features := make([]*ftproto.Feature, 0, 32)
 	for i := 0; i < 32; i++ {

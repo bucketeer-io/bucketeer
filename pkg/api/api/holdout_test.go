@@ -62,10 +62,13 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 		got := loadLiveHoldoutGroup(memory, redis, "env", zap.NewNop())
 		assert.Equal(t, live, got)
 	})
-	t.Run("empty snapshot is not a live group", func(t *testing.T) {
+	t.Run("empty snapshot stays a snapshot", func(t *testing.T) {
 		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
-		memory.EXPECT().Get("env").Return(&featureproto.HoldoutGroup{}, nil)
-		assert.Nil(t, loadLiveHoldoutGroup(memory, nil, "env", zap.NewNop()))
+		empty := &featureproto.HoldoutGroup{}
+		memory.EXPECT().Get("env").Return(empty, nil)
+		got := loadLiveHoldoutGroup(memory, nil, "env", zap.NewNop())
+		assert.Empty(t, got.GetId())
+		assert.Equal(t, int64(0), got.GetUpdatedAt())
 	})
 	t.Run("clearance snapshot keeps the stop revision", func(t *testing.T) {
 		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
@@ -122,6 +125,42 @@ func TestLoadLiveHoldoutGroupDoesNotRestoreAStoppedSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, cached.Id)
 	assert.Equal(t, int64(20), cached.UpdatedAt)
+}
+
+func TestFeatureFillDoesNotRestorePreHoldoutSnapshot(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	environmentID := "env-feature-fill"
+	memory := cachev3.NewFeaturesCache(cachev3.NewInMemoryCache(), time.Minute)
+	redis := cachev3mock.NewMockFeaturesCache(controller)
+	before := &featureproto.Features{Features: []*featureproto.Feature{
+		{Id: "normal", Enabled: true, OffVariation: "on"},
+	}}
+	after := &featureproto.Features{Features: []*featureproto.Feature{
+		{Id: "normal", Enabled: true, OffVariation: "on"},
+		{Id: "targeted", Enabled: false},
+	}}
+	redis.EXPECT().Get(environmentID).DoAndReturn(func(string) (*featureproto.Features, error) {
+		invalidateHoldoutFill(environmentID, func() {
+			require.NoError(t, memory.Evict(environmentID))
+		})
+		return before, nil
+	})
+	redis.EXPECT().Get(environmentID).Return(after, nil)
+
+	got, err := FillFeatureSnapshot(environmentID, func() (*featureproto.Features, error) {
+		return redis.Get(environmentID)
+	}, func(features *featureproto.Features) {
+		require.NoError(t, memory.Put(features, environmentID))
+	})
+	require.NoError(t, err)
+	require.Len(t, got.Features, 2)
+	assert.Equal(t, "targeted", got.Features[1].Id)
+
+	cached, err := memory.Get(environmentID)
+	require.NoError(t, err)
+	require.Len(t, cached.Features, 2)
+	assert.Equal(t, "targeted", cached.Features[1].Id)
 }
 
 func TestRemovedIDsForTag(t *testing.T) {
