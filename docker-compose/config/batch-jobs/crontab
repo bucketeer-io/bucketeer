@@ -4,6 +4,9 @@
 # Experiment Status Updater - every minute (dev override)
 * * * * * /usr/local/bin/run-batch-job.sh ExperimentStatusUpdater
 
+# Holdout Group Status Updater - every minute (dev override)
+* * * * * /usr/local/bin/run-batch-job.sh HoldoutGroupStatusUpdater
+
 # Experiment Running Watcher - daily at 1:00 AM
 0 1 * * * /usr/local/bin/run-batch-job.sh ExperimentRunningWatcher
 

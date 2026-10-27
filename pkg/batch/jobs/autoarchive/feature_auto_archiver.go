@@ -170,6 +170,17 @@ func (a *featureAutoArchiver) processEnvironment(
 		zap.Int("evaluatedCount", len(results)),
 	)
 
+	archivableIDs, err = a.excludeHoldoutTargets(ctx, env.Id, archivableIDs)
+	if err != nil {
+		return err
+	}
+	if len(archivableIDs) == 0 {
+		a.logger.Info("No archivable features remain after holdout exclusions",
+			zap.String("environmentId", env.Id),
+		)
+		return nil
+	}
+
 	// Archive features in bulk
 	bulkResult := domain.ArchiveFeaturesInBulk(ctx, archivableIDs, env.Id, a)
 
@@ -189,6 +200,62 @@ func (a *featureAutoArchiver) processEnvironment(
 	}
 
 	return nil
+}
+
+// ListHoldoutGroups rejects a page size above 100.
+const holdoutListPageSize int64 = 100
+
+// excludeHoldoutTargets drops flags that are current targets of a live holdout group.
+func (a *featureAutoArchiver) excludeHoldoutTargets(
+	ctx context.Context,
+	environmentID string,
+	featureIDs []string,
+) ([]string, error) {
+	protected := make(map[string]struct{})
+	cursor := ""
+	for {
+		resp, err := a.featureClient.ListHoldoutGroups(ctx, &featureproto.ListHoldoutGroupsRequest{
+			EnvironmentId: environmentID,
+			PageSize:      holdoutListPageSize,
+			Cursor:        cursor,
+			Statuses: []featureproto.HoldoutGroup_Status{
+				featureproto.HoldoutGroup_WAITING,
+				featureproto.HoldoutGroup_RUNNING,
+				featureproto.HoldoutGroup_ANALYSIS,
+			},
+		})
+		if err != nil {
+			a.logger.Error("Failed to list holdout groups",
+				zap.String("environmentId", environmentID),
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		for _, group := range resp.GetHoldoutGroups() {
+			for _, feature := range group.GetFeatures() {
+				protected[feature.GetFeatureId()] = struct{}{}
+			}
+		}
+		if len(resp.GetHoldoutGroups()) == 0 || int64(len(resp.GetHoldoutGroups())) < holdoutListPageSize {
+			break
+		}
+		cursor = resp.GetCursor()
+	}
+	if len(protected) == 0 {
+		return featureIDs, nil
+	}
+	filtered := make([]string, 0, len(featureIDs))
+	for _, id := range featureIDs {
+		if _, ok := protected[id]; ok {
+			a.logger.Info("Skipping feature targeted by a live holdout group",
+				zap.String("environmentId", environmentID),
+				zap.String("featureId", id),
+			)
+			continue
+		}
+		filtered = append(filtered, id)
+	}
+	return filtered, nil
 }
 
 // listNonArchivedFeatures retrieves all non-archived features for the given environment.

@@ -39,6 +39,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
+	holdoutjob "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/holdout"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/monthlysummary"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
@@ -804,6 +805,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			// trigger path, so the job's own deadline is always the one that
 			// fires (and leaves the cutover marker untouched).
 			jobs.WithTimeout(55*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		holdoutjob.NewHoldoutGroupStatusUpdater(
+			environmentClient,
+			featureClient,
 			jobs.WithLogger(logger),
 		),
 		logger,

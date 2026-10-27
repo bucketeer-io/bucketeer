@@ -52,6 +52,7 @@ const (
 	JobScheduledFlagChangeExecutor    = "scheduled_flag_change_executor"
 	JobMonthlySummarizer              = "monthly_summarizer"
 	JobEvaluationDailyCountBackfiller = "evaluation_daily_count_backfiller"
+	JobHoldoutGroupStatusUpdater      = "holdout_group_status_updater"
 
 	// Error types
 	ErrorTypeTimeout    = "Timeout"

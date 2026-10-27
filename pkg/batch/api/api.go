@@ -50,6 +50,7 @@ type batchService struct {
 	scheduledFlagChangeExecutor    jobs.Job
 	monthlySummarizer              jobs.Job
 	evaluationDailyCountBackfiller jobs.Job
+	holdoutGroupStatusUpdater      jobs.Job
 	logger                         *zap.Logger
 }
 
@@ -61,7 +62,8 @@ func NewBatchService(
 	featureFlagCacher, segmentUserCacher, apiKeyCacher,
 	experimentCacher, autoOpsRulesCacher, tagDeleter,
 	featureAutoArchiver, scheduledFlagChangeExecutor,
-	monthlySummarizer, evaluationDailyCountBackfiller jobs.Job,
+	monthlySummarizer, evaluationDailyCountBackfiller,
+	holdoutGroupStatusUpdater jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -83,6 +85,7 @@ func NewBatchService(
 		scheduledFlagChangeExecutor:    scheduledFlagChangeExecutor,
 		monthlySummarizer:              monthlySummarizer,
 		evaluationDailyCountBackfiller: evaluationDailyCountBackfiller,
+		holdoutGroupStatusUpdater:      holdoutGroupStatusUpdater,
 		logger:                         logger.Named("batch-service"),
 	}
 }
@@ -127,6 +130,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.monthlySummarizer.Run(ctx)
 	case batch.BatchJob_EvaluationDailyCountBackfiller:
 		err = s.evaluationDailyCountBackfiller.Run(ctx)
+	case batch.BatchJob_HoldoutGroupStatusUpdater:
+		err = s.holdoutGroupStatusUpdater.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromIncomingContext(ctx).AddFields(
