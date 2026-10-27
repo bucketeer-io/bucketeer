@@ -405,7 +405,7 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 		}
 		created := make([]*holdoutdomain.HoldoutGroupFeature, 0, len(req.Features))
 		for _, input := range req.Features {
-			row, err := s.prepareHoldoutFeature(txCtx, group, input, now)
+			row, feature, err := s.prepareHoldoutFeature(txCtx, group, input, now)
 			if err != nil {
 				return err
 			}
@@ -425,6 +425,7 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 				&eventproto.HoldoutGroupFeatureAddedEvent{
 					Id: group.Id, FeatureId: input.FeatureId, HoldoutVariationId: input.HoldoutVariationId,
 				},
+				feature,
 			)
 			if err != nil {
 				return err
@@ -485,6 +486,13 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 			); err != nil {
 				return err
 			}
+			feature, err := s.featureStorage.GetFeature(txCtx, featureID, req.EnvironmentId)
+			if err != nil {
+				if errors.Is(err, v2fs.ErrFeatureNotFound) {
+					return pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "feature not found", "feature_id")
+				}
+				return err
+			}
 			groupEvent, err := newHoldoutEvent(
 				editor, req.EnvironmentId, group.Id, eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED,
 				&eventproto.HoldoutGroupFeatureRemovedEvent{Id: group.Id, FeatureId: featureID},
@@ -496,6 +504,7 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 			featureEvent, err := newFeatureHoldoutEvent(
 				editor, req.EnvironmentId, featureID, eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED,
 				&eventproto.HoldoutGroupFeatureRemovedEvent{Id: group.Id, FeatureId: featureID},
+				feature.Feature,
 			)
 			if err != nil {
 				return err
@@ -581,35 +590,39 @@ func (s *FeatureService) prepareHoldoutFeature(
 	group *holdoutdomain.HoldoutGroup,
 	input *featureproto.HoldoutGroupFeatureInput,
 	now int64,
-) (*holdoutdomain.HoldoutGroupFeature, error) {
+) (*holdoutdomain.HoldoutGroupFeature, *featureproto.Feature, error) {
 	feature, err := s.featureStorage.GetFeature(ctx, input.FeatureId, group.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			return nil, pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "feature not found", "feature_id")
+			return nil, nil, pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "feature not found", "feature_id")
 		}
-		return nil, err
+		return nil, nil, err
 	}
 	if feature.Archived || feature.Deleted {
-		return nil, holdoutdomain.NewFeatureUnavailableError(input.FeatureId)
+		return nil, nil, holdoutdomain.NewFeatureUnavailableError(input.FeatureId)
 	}
 	if !holdoutdomain.VariationBelongsToFeature(input.HoldoutVariationId, feature.Variations) {
-		return nil, holdoutdomain.NewVariationNotOnFeatureError(input.FeatureId, input.HoldoutVariationId)
+		return nil, nil, holdoutdomain.NewVariationNotOnFeatureError(input.FeatureId, input.HoldoutVariationId)
 	}
 	targets, err := s.holdoutStorage.ListLiveFeatureTargets(ctx, group.EnvironmentId, input.FeatureId)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for _, target := range targets {
 		if target.GroupID == group.Id {
-			return nil, holdoutdomain.NewFeatureAlreadyAddedError(input.FeatureId)
+			return nil, nil, holdoutdomain.NewFeatureAlreadyAddedError(input.FeatureId)
 		}
 	}
 	if conflict, ok := holdoutdomain.ConflictingFeatureTarget(input.FeatureId, group.Id, targets); ok {
-		return nil, holdoutdomain.NewFeatureInUseError(input.FeatureId, conflict)
+		return nil, nil, holdoutdomain.NewFeatureInUseError(input.FeatureId, conflict)
 	}
-	return holdoutdomain.NewHoldoutGroupFeature(
+	row, err := holdoutdomain.NewHoldoutGroupFeature(
 		group.Id, group.EnvironmentId, input.FeatureId, input.HoldoutVariationId, now,
 	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return row, feature.Feature, nil
 }
 
 func (s *FeatureService) loadHoldoutGroup(
@@ -879,6 +892,7 @@ func newFeatureHoldoutEvent(
 	environmentID, featureID string,
 	eventType eventproto.Event_Type,
 	event proto.Message,
+	feature *featureproto.Feature,
 ) (*eventproto.Event, error) {
 	return domainevent.NewEvent(
 		editor,
@@ -887,7 +901,7 @@ func newFeatureHoldoutEvent(
 		eventType,
 		event,
 		environmentID,
-		nil,
+		feature,
 		nil,
 	)
 }

@@ -24,6 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
@@ -498,6 +499,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		expectHoldoutEvents(t, service, controller, 2, eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED)
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
+		expectFeature(service, "flag", "var", false)
 		storage.EXPECT().RemoveHoldoutGroupFeature(gomock.Any(), "ns0", "hg", "flag", gomock.Any()).Return(nil)
 		storage.EXPECT().UpdateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return(nil, nil)
@@ -524,6 +526,42 @@ func TestExecuteScheduledFlagChangeLocksEnvironmentBeforeRead(t *testing.T) {
 		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
 	)
 	assert.Equal(t, codes.NotFound, status.Code(err))
+}
+
+func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service, storage := newHoldoutService(t, controller)
+	expectTx(service)
+	storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil).Times(2)
+	service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage).EXPECT().
+		GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
+		Return(&featuredomain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
+			Id:            "sfc",
+			FeatureId:     "fid",
+			EnvironmentId: "ns0",
+			Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			Payload: &featureproto.ScheduledChangePayload{
+				Archived: wrapperspb.Bool(true),
+			},
+		}}, nil)
+	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+		gomock.Any(), "fid", "ns0",
+	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
+	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
+		gomock.Any(), gomock.Any(),
+	).Return([]*featureproto.Feature{{Id: "fid"}}, 0, int64(0), nil)
+	storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "fid").Return([]holdoutdomain.FeatureTarget{{
+		GroupID: "hg", GroupName: "holdout", FeatureID: "fid",
+	}}, nil)
+	service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage).EXPECT().
+		UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
+
+	_, err := service.ExecuteScheduledFlagChange(
+		createContextWithTokenRoleUnassigned(),
+		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
+	)
+	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 }
 
 func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
@@ -660,7 +698,14 @@ func expectHoldoutEvents(
 		func(_ context.Context, messages []publisher.Message) map[string]error {
 			require.Len(t, messages, count)
 			for _, message := range messages {
-				assert.Equal(t, eventType, message.(*eventproto.Event).Type)
+				event := message.(*eventproto.Event)
+				assert.Equal(t, eventType, event.Type)
+				if event.EntityType != eventproto.Event_FEATURE {
+					continue
+				}
+				var decoded featureproto.Feature
+				require.NoError(t, protojson.Unmarshal([]byte(event.EntityData), &decoded))
+				assert.NotEmpty(t, decoded.Id)
 			}
 			return nil
 		},

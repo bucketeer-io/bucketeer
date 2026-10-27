@@ -742,7 +742,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, err
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	// Publish domain event and update cache (post-transaction operations)

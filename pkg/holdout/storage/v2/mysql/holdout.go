@@ -81,8 +81,29 @@ func (s *holdoutStorage) UpdateHoldoutGroup(ctx context.Context, group *domain.H
 	if err != nil {
 		return err
 	}
-	if rows != 1 {
+	return s.confirmHoldoutGroupUpdate(ctx, group, rows)
+}
+
+// confirmHoldoutGroupUpdate treats a zero-row update of an existing group as
+// success. MySQL reports zero rows when every column is unchanged, which
+// happens when the same admin adds or removes a target in the same second.
+func (s *holdoutStorage) confirmHoldoutGroupUpdate(
+	ctx context.Context,
+	group *domain.HoldoutGroup,
+	rows int64,
+) error {
+	if rows == 1 {
+		return nil
+	}
+	if rows != 0 {
 		return v2hs.ErrHoldoutGroupUnexpectedAffectedRows
+	}
+	_, err := s.GetHoldoutGroup(ctx, group.Id, group.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
+			return v2hs.ErrHoldoutGroupUnexpectedAffectedRows
+		}
+		return err
 	}
 	return nil
 }
