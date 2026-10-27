@@ -363,6 +363,9 @@ batch-server:
       - name: experiment-status-updater
         jobId: ExperimentStatusUpdater
         schedule: "* * * * *"
+      - name: holdout-group-status-updater
+        jobId: HoldoutGroupStatusUpdater
+        schedule: "* * * * *"
       - name: experiment-running-watcher
         jobId: ExperimentRunningWatcher
         schedule: "0 1 * * *"

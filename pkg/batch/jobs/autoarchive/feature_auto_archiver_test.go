@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
@@ -126,6 +127,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 						createTestFeature("feature-2", oldTime),
 					}, 2, int64(2), nil)
 				// CheckCodeReferences is false, so no code ref storage call
+				expectNoHoldoutTargets(a, 1)
 				a.featureClient.(*featureclientmock.MockClient).EXPECT().
 					UpdateFeature(gomock.Any(), gomock.Any()).
 					Return(&featureproto.UpdateFeatureResponse{}, nil).
@@ -155,6 +157,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 						"feature-1": 0, // no code refs, can archive
 						"feature-2": 1, // has code refs, cannot archive
 					}, nil)
+				expectNoHoldoutTargets(a, 1)
 				a.featureClient.(*featureclientmock.MockClient).EXPECT().
 					UpdateFeature(gomock.Any(), gomock.Any()).
 					Return(&featureproto.UpdateFeatureResponse{}, nil).
@@ -178,6 +181,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 						createTestFeature("feature-1", oldTime),
 						createTestFeature("feature-2", oldTime),
 					}, 2, int64(2), nil)
+				expectNoHoldoutTargets(a, 1)
 				gomock.InOrder(
 					a.featureClient.(*featureclientmock.MockClient).EXPECT().
 						UpdateFeature(gomock.Any(), gomock.Any()).
@@ -206,6 +210,7 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 					Return([]*featureproto.Feature{
 						createTestFeature("feature-1", oldTime),
 					}, 1, int64(1), nil)
+				expectNoHoldoutTargets(a, 2)
 				a.featureClient.(*featureclientmock.MockClient).EXPECT().
 					UpdateFeature(gomock.Any(), gomock.Any()).
 					Return(&featureproto.UpdateFeatureResponse{}, nil)
@@ -238,12 +243,85 @@ func TestFeatureAutoArchiver_Run(t *testing.T) {
 						createTestFeatureWithPrerequisite("feature-2", oldTime, "feature-1"), // depends on feature-1
 					}, 2, int64(2), nil)
 				// Only feature-2 should be archived (feature-1 has dependents)
+				expectNoHoldoutTargets(a, 1)
 				a.featureClient.(*featureclientmock.MockClient).EXPECT().
 					UpdateFeature(gomock.Any(), gomock.Any()).
 					Return(&featureproto.UpdateFeatureResponse{}, nil).
 					Times(1)
 			},
 			expectedError: false,
+		},
+		{
+			desc: "success: skip a flag targeted by a live holdout group",
+			setup: func(a *featureAutoArchiver) {
+				now := time.Now().Unix()
+				oldTime := now - (100 * 24 * 60 * 60)
+				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
+					ListAutoArchiveEnabledEnvironments(gomock.Any()).
+					Return([]*environmentdomain.EnvironmentV2{
+						createTestEnvironment("env-1", 60, false),
+					}, nil)
+				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
+					ListFeatures(gomock.Any(), gomock.Any()).
+					Return([]*featureproto.Feature{
+						createTestFeature("feature-1", oldTime),
+						createTestFeature("feature-2", oldTime),
+					}, 2, int64(2), nil)
+				a.featureClient.(*featureclientmock.MockClient).EXPECT().
+					ListHoldoutGroups(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(
+						_ context.Context,
+						req *featureproto.ListHoldoutGroupsRequest,
+						_ ...grpc.CallOption,
+					) (*featureproto.ListHoldoutGroupsResponse, error) {
+						if req.Cursor == "" {
+							groups := make([]*featureproto.HoldoutGroup, int(holdoutListPageSize))
+							for i := range groups {
+								groups[i] = &featureproto.HoldoutGroup{Id: "page"}
+							}
+							return &featureproto.ListHoldoutGroupsResponse{
+								HoldoutGroups: groups,
+								Cursor:        "next",
+							}, nil
+						}
+						return &featureproto.ListHoldoutGroupsResponse{
+							HoldoutGroups: []*featureproto.HoldoutGroup{{
+								Id:       "live",
+								Features: []*featureproto.HoldoutGroupFeature{{FeatureId: "feature-1"}},
+							}},
+						}, nil
+					}).Times(2)
+				a.featureClient.(*featureclientmock.MockClient).EXPECT().
+					UpdateFeature(gomock.Any(), &featureproto.UpdateFeatureRequest{
+						Id:            "feature-2",
+						EnvironmentId: "env-1",
+						Archived:      wrapperspb.Bool(true),
+						Comment:       "Archived automatically due to inactivity (environment setting)",
+					}).
+					Return(&featureproto.UpdateFeatureResponse{}, nil)
+			},
+			expectedError: false,
+		},
+		{
+			desc: "error: listing holdout groups fails",
+			setup: func(a *featureAutoArchiver) {
+				now := time.Now().Unix()
+				oldTime := now - (100 * 24 * 60 * 60)
+				a.envStorage.(*environmentstoragemock.MockEnvironmentStorage).EXPECT().
+					ListAutoArchiveEnabledEnvironments(gomock.Any()).
+					Return([]*environmentdomain.EnvironmentV2{
+						createTestEnvironment("env-1", 60, false),
+					}, nil)
+				a.ftStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().
+					ListFeatures(gomock.Any(), gomock.Any()).
+					Return([]*featureproto.Feature{
+						createTestFeature("feature-1", oldTime),
+					}, 1, int64(1), nil)
+				a.featureClient.(*featureclientmock.MockClient).EXPECT().
+					ListHoldoutGroups(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("holdout list failed"))
+			},
+			expectedError: true,
 		},
 	}
 
@@ -324,6 +402,13 @@ func TestFeatureAutoArchiver_ArchiveFeature(t *testing.T) {
 			}
 		})
 	}
+}
+
+func expectNoHoldoutTargets(a *featureAutoArchiver, times int) {
+	a.featureClient.(*featureclientmock.MockClient).EXPECT().
+		ListHoldoutGroups(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListHoldoutGroupsResponse{}, nil).
+		Times(times)
 }
 
 func newMockFeatureAutoArchiver(t *testing.T, c *gomock.Controller) *featureAutoArchiver {

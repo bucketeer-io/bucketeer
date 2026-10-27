@@ -77,6 +77,12 @@ var (
 	ErrInvalidStatus = pkgErr.NewErrorFailedPrecondition(
 		pkgErr.HoldoutPackageName, "holdout group status does not allow this operation",
 	).WithMessageKey("HoldoutInvalidStatus")
+	ErrBeforeStart = pkgErr.NewErrorFailedPrecondition(
+		pkgErr.HoldoutPackageName, "start_at has not passed",
+	).WithMessageKey("HoldoutBeforeStart")
+	ErrBeforeAnalysis = pkgErr.NewErrorFailedPrecondition(
+		pkgErr.HoldoutPackageName, "start_analysis_at has not passed",
+	).WithMessageKey("HoldoutBeforeAnalysis")
 	ErrBeforeStop = pkgErr.NewErrorFailedPrecondition(
 		pkgErr.HoldoutPackageName, "stop_at has not passed",
 	).WithMessageKey("HoldoutBeforeStop")
@@ -591,6 +597,26 @@ func (g *HoldoutGroup) Start(now int64) error {
 	return nil
 }
 
+// StartScheduled moves WAITING to RUNNING when start_at has passed and stop_at has not.
+// It does not clamp start_at, so a start postponed after the batch listed the group stays waiting.
+func (g *HoldoutGroup) StartScheduled(now int64) error {
+	if g.Deleted || g.Archived || g.Status != featureproto.HoldoutGroup_WAITING {
+		return ErrInvalidStatus
+	}
+	if g.StartAt > now {
+		return ErrBeforeStart
+	}
+	if g.StopAt <= now {
+		return ErrAfterStop
+	}
+	if err := ValidatePeriod(g.StartAt, g.StopAt, g.StartAnalysisAt, now, true); err != nil {
+		return err
+	}
+	g.Status = featureproto.HoldoutGroup_RUNNING
+	g.UpdatedAt = now
+	return nil
+}
+
 // StartAnalysis moves RUNNING to ANALYSIS. A group whose stop_at has passed must be stopped instead.
 func (g *HoldoutGroup) StartAnalysis(now int64) error {
 	if g.Deleted || g.Archived || g.Status != featureproto.HoldoutGroup_RUNNING {
@@ -598,6 +624,24 @@ func (g *HoldoutGroup) StartAnalysis(now int64) error {
 	}
 	if g.StopAt <= now {
 		return ErrAfterStop
+	}
+	g.Status = featureproto.HoldoutGroup_ANALYSIS
+	g.AnalysisStartedAt = now
+	g.UpdatedAt = now
+	return nil
+}
+
+// StartAnalysisScheduled moves RUNNING to ANALYSIS only when start_analysis_at has passed
+// and stop_at has not. A cleared or postponed analysis time leaves the group running.
+func (g *HoldoutGroup) StartAnalysisScheduled(now int64) error {
+	if g.Deleted || g.Archived || g.Status != featureproto.HoldoutGroup_RUNNING {
+		return ErrInvalidStatus
+	}
+	if g.StopAt <= now {
+		return ErrAfterStop
+	}
+	if g.StartAnalysisAt == 0 || g.StartAnalysisAt > now {
+		return ErrBeforeAnalysis
 	}
 	g.Status = featureproto.HoldoutGroup_ANALYSIS
 	g.AnalysisStartedAt = now

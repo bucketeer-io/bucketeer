@@ -10215,16 +10215,6 @@ definitions:
        - CONFLICT_TYPE_OVERLAPPING_SCHEDULE: Another schedule modifies same field
        - CONFLICT_TYPE_DEPENDENCY_MISSING: Referenced variation/rule will be deleted
        - CONFLICT_TYPE_INVALID_REFERENCE: Referenced variation/rule doesn't exist
-  StopHoldoutGroupRequestMode:
-    type: string
-    enum:
-      - MANUAL
-      - SCHEDULED
-    default: MANUAL
-    description: |2-
-       - MANUAL: Stop immediately. Status becomes FORCE_STOPPED.
-       - SCHEDULED: Complete a serving group whose stop_at has passed. Status becomes
-      STOPPED. Used by the status batch job.
   SubscriptionSourceType:
     type: string
     enum:
@@ -14593,9 +14583,21 @@ definitions:
         type: string
       environmentId:
         type: string
+      mode:
+        $ref: '#/definitions/featureStartHoldoutGroupAnalysisRequestMode'
     required:
       - id
       - environmentId
+  featureStartHoldoutGroupAnalysisRequestMode:
+    type: string
+    enum:
+      - MANUAL
+      - SCHEDULED
+    default: MANUAL
+    description: |2-
+       - MANUAL: Enter analysis immediately, including before start_analysis_at.
+       - SCHEDULED: Enter analysis only when start_analysis_at has passed and stop_at has
+      not. Used by the status batch job.
   featureStartHoldoutGroupAnalysisResponse:
     type: object
     properties:
@@ -14608,9 +14610,21 @@ definitions:
         type: string
       environmentId:
         type: string
+      mode:
+        $ref: '#/definitions/featureStartHoldoutGroupRequestMode'
     required:
       - id
       - environmentId
+  featureStartHoldoutGroupRequestMode:
+    type: string
+    enum:
+      - MANUAL
+      - SCHEDULED
+    default: MANUAL
+    description: |2-
+       - MANUAL: Start immediately. A future start_at is clamped to now.
+       - SCHEDULED: Start a waiting group whose start_at has passed and whose stop_at has
+      not. The saved start_at is left unchanged. Used by the status batch job.
   featureStartHoldoutGroupResponse:
     type: object
     properties:
@@ -14624,10 +14638,20 @@ definitions:
       environmentId:
         type: string
       mode:
-        $ref: '#/definitions/StopHoldoutGroupRequestMode'
+        $ref: '#/definitions/featureStopHoldoutGroupRequestMode'
     required:
       - id
       - environmentId
+  featureStopHoldoutGroupRequestMode:
+    type: string
+    enum:
+      - MANUAL
+      - SCHEDULED
+    default: MANUAL
+    description: |2-
+       - MANUAL: Stop immediately. Status becomes FORCE_STOPPED.
+       - SCHEDULED: Complete a serving group whose stop_at has passed. Status becomes
+      STOPPED. Used by the status batch job.
   featureStopHoldoutGroupResponse:
     type: object
     properties:

@@ -188,6 +188,9 @@ cronjob:
     - name: experiment-status-updater
       jobId: ExperimentStatusUpdater
       schedule: "*/30 * * * *"
+    - name: holdout-group-status-updater
+      jobId: HoldoutGroupStatusUpdater
+      schedule: "*/30 * * * *"
     - name: experiment-running-watcher
       jobId: ExperimentRunningWatcher
       schedule: "0 1 * * *"

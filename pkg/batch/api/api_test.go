@@ -34,6 +34,7 @@ import (
 	cacher "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/cacher"
 	deleter "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
+	holdoutjob "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/holdout"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/monthlysummary"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
@@ -847,6 +848,11 @@ func newBatchService(t *testing.T,
 			cacheMock,
 			environmentMockClient,
 			jobs.WithTimeout(30*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		holdoutjob.NewHoldoutGroupStatusUpdater(
+			environmentMockClient,
+			featureMockClient,
 			jobs.WithLogger(logger),
 		),
 		logger,

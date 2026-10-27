@@ -292,7 +292,13 @@ func (s *FeatureService) StartHoldoutGroup(
 	group, err := s.transitionHoldout(ctx, req.Id, req.EnvironmentId, func(
 		group *holdoutdomain.HoldoutGroup, now int64, active []holdoutdomain.GroupSnapshot,
 	) error {
-		if err := group.Start(now); err != nil {
+		var err error
+		if req.Mode == featureproto.StartHoldoutGroupRequest_SCHEDULED {
+			err = group.StartScheduled(now)
+		} else {
+			err = group.Start(now)
+		}
+		if err != nil {
 			return err
 		}
 		if serving, ok := holdoutdomain.OtherServingGroup(group.Id, active); ok {
@@ -318,6 +324,9 @@ func (s *FeatureService) StartHoldoutGroupAnalysis(
 	group, err := s.transitionHoldout(ctx, req.Id, req.EnvironmentId, func(
 		group *holdoutdomain.HoldoutGroup, now int64, _ []holdoutdomain.GroupSnapshot,
 	) error {
+		if req.Mode == featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED {
+			return group.StartAnalysisScheduled(now)
+		}
 		return group.StartAnalysis(now)
 	}, eventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED, func(group *holdoutdomain.HoldoutGroup) proto.Message {
 		return &eventproto.HoldoutGroupAnalysisStartedEvent{Id: group.Id}
