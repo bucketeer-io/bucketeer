@@ -31,6 +31,7 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	mockFeatureStorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	holdoutmock "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -1089,6 +1090,56 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 			assert.Equal(t, p.expected, err)
 		})
 	}
+}
+
+func TestExecuteAutoOpsLocksEnvironmentBeforeRead(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := createAutoOpsService(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	service.holdoutStorage = storage
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
+	rule := &domain.AutoOpsRule{AutoOpsRule: &autoopsproto.AutoOpsRule{Id: "rule"}}
+	gomock.InOrder(
+		service.autoOpsStorage.(*storagemock.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+			gomock.Any(), "rule", "ns0",
+		).Return(rule, nil),
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil),
+		service.autoOpsStorage.(*storagemock.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+			gomock.Any(), "rule", "ns0",
+		).Return(nil, v2as.ErrAutoOpsRuleNotFound),
+	)
+	_, err := service.ExecuteAutoOps(createContextWithTokenRoleOwner(t), &autoopsproto.ExecuteAutoOpsRequest{
+		Id: "rule", ClauseId: "clause", EnvironmentId: "ns0",
+	})
+	assert.Error(t, err)
+}
+
+func TestExecuteProgressiveRolloutLocksEnvironmentBeforeRead(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := createAutoOpsService(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	service.holdoutStorage = storage
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
+	gomock.InOrder(
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil),
+		service.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
+			gomock.Any(), "aid", "ns0",
+		).Return(nil, v2as.ErrProgressiveRolloutNotFound),
+	)
+	_, err := service.ExecuteProgressiveRollout(createContextWithTokenRoleOwner(t), &autoopsproto.ExecuteProgressiveRolloutRequest{
+		Id: "aid", EnvironmentId: "ns0", ScheduleId: "sid",
+	})
+	assert.Error(t, err)
 }
 
 func TestExecuteProgressiveRolloutMySQL(t *testing.T) {

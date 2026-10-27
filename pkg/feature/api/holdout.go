@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	holdoutdomain "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
@@ -70,12 +71,15 @@ func (s *FeatureService) CreateHoldoutGroup(
 		if conflict, ok := holdoutdomain.OverlappingGroup(req.StartAt, req.StopAt, "", active); ok {
 			return holdoutdomain.NewPeriodOverlapError(conflict)
 		}
+		segmentID := req.SegmentId
 		if req.AssignmentType == featureproto.HoldoutGroup_SEGMENT {
-			if err := s.ensureSegmentExists(txCtx, req.SegmentId, req.EnvironmentId); err != nil {
+			segment, err := s.ensureSegmentExists(txCtx, req.SegmentId, req.EnvironmentId)
+			if err != nil {
 				return err
 			}
-			if serving, ok := holdoutdomain.ServingGroupForSegment(req.SegmentId, active); ok {
-				return holdoutdomain.NewSegmentLockedError(req.SegmentId, serving)
+			segmentID = segment.Id
+			if serving, ok := holdoutdomain.ServingGroupForSegment(segmentID, active); ok {
+				return holdoutdomain.NewSegmentLockedError(segmentID, serving)
 			}
 		}
 		var seed string
@@ -91,7 +95,7 @@ func (s *FeatureService) CreateHoldoutGroup(
 			Description:     req.Description,
 			AssignmentType:  req.AssignmentType,
 			Percentage:      req.Percentage,
-			SegmentID:       req.SegmentId,
+			SegmentID:       segmentID,
 			StartAt:         req.StartAt,
 			StopAt:          req.StopAt,
 			StartAnalysisAt: req.StartAnalysisAt,
@@ -166,6 +170,9 @@ func (s *FeatureService) ListHoldoutGroups(
 	}
 	if err := requireEnvironment(req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
+	}
+	if req.PageSize > maxPageSizePerRequest {
+		return nil, statusExceededMaxPageSizePerRequest.Err()
 	}
 	groups, next, total, err := s.holdoutStorage.ListHoldoutGroups(ctx, v2hs.ListHoldoutGroupsParams{
 		EnvironmentID:  req.EnvironmentId,
@@ -598,13 +605,20 @@ func (s *FeatureService) prepareHoldoutFeature(
 		}
 		return nil, nil, err
 	}
+	if input.FeatureId != feature.Id {
+		return nil, nil, pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.HoldoutPackageName,
+			"feature_id must use its canonical spelling",
+			"feature_id",
+		)
+	}
 	if feature.Archived || feature.Deleted {
-		return nil, nil, holdoutdomain.NewFeatureUnavailableError(input.FeatureId)
+		return nil, nil, holdoutdomain.NewFeatureUnavailableError(feature.Id)
 	}
 	if !holdoutdomain.VariationBelongsToFeature(input.HoldoutVariationId, feature.Variations) {
 		return nil, nil, holdoutdomain.NewVariationNotOnFeatureError(input.FeatureId, input.HoldoutVariationId)
 	}
-	targets, err := s.holdoutStorage.ListLiveFeatureTargets(ctx, group.EnvironmentId, input.FeatureId)
+	targets, err := s.holdoutStorage.ListLiveFeatureTargets(ctx, group.EnvironmentId, feature.Id)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -617,7 +631,7 @@ func (s *FeatureService) prepareHoldoutFeature(
 		return nil, nil, holdoutdomain.NewFeatureInUseError(input.FeatureId, conflict)
 	}
 	row, err := holdoutdomain.NewHoldoutGroupFeature(
-		group.Id, group.EnvironmentId, input.FeatureId, input.HoldoutVariationId, now,
+		group.Id, group.EnvironmentId, feature.Id, input.HoldoutVariationId, now,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -698,21 +712,24 @@ func (s *FeatureService) revalidateSegmentForActivation(
 	return nil
 }
 
-func (s *FeatureService) ensureSegmentExists(ctx context.Context, segmentID, environmentID string) error {
+func (s *FeatureService) ensureSegmentExists(
+	ctx context.Context,
+	segmentID, environmentID string,
+) (*domain.Segment, error) {
 	if segmentID == "" {
-		return holdoutdomain.ErrSegmentRequired
+		return nil, holdoutdomain.ErrSegmentRequired
 	}
 	segment, _, err := s.segmentStorage.GetSegment(ctx, segmentID, environmentID)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) {
-			return pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
+			return nil, pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
 		}
-		return err
+		return nil, err
 	}
 	if segment.Deleted {
-		return pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
+		return nil, pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
 	}
-	return nil
+	return segment, nil
 }
 
 func (s *FeatureService) validateGoalIDs(ctx context.Context, environmentID string, goalIDs []string) error {

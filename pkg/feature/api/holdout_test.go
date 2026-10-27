@@ -122,6 +122,31 @@ func TestCreateHoldoutGroup(t *testing.T) {
 		assert.Empty(t, resp.HoldoutGroup.SamplingSeed)
 	})
 
+	t.Run("segment group stores the canonical segment id", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		expectHoldoutEvents(t, service, controller, 1, eventproto.Event_HOLDOUT_GROUP_CREATED)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+			gomock.Any(), "SEG", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CreateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
+
+		resp, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
+			EnvironmentId:  "ns0",
+			Name:           "segment holdout",
+			AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+			SegmentId:      "SEG",
+			StartAt:        now + 100,
+			StopAt:         now + 1_000,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "seg", resp.HoldoutGroup.SegmentId)
+	})
+
 	t.Run("overlapping period is rejected", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
@@ -184,6 +209,17 @@ func TestGetAndListHoldoutGroups(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), listed.TotalCount)
 		assert.Equal(t, "1", listed.Cursor)
+	})
+
+	t.Run("page size above the maximum is rejected", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, _ := newHoldoutService(t, controller)
+		_, err := service.ListHoldoutGroups(createContextWithTokenRoleUnassigned(), &featureproto.ListHoldoutGroupsRequest{
+			EnvironmentId: "ns0",
+			PageSize:      int64(maxPageSizePerRequest + 1),
+		})
+		assert.Equal(t, statusExceededMaxPageSizePerRequest.Err(), err)
 	})
 }
 
@@ -406,6 +442,26 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		require.Len(t, resp.HoldoutGroup.Features, 1)
 	})
 
+	t.Run("noncanonical feature id is rejected", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+			gomock.Any(), "FLAG", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{
+			Id:         "flag",
+			Variations: []*featureproto.Variation{{Id: "var"}},
+		}}, nil)
+		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+			Id: "hg", EnvironmentId: "ns0",
+			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "FLAG", HoldoutVariationId: "var"}},
+		})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
 	t.Run("add is frozen during analysis", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
@@ -508,6 +564,23 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+}
+
+func TestUpdateEnableFeatureLocksEnvironmentBeforeRead(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service, storage := newHoldoutService(t, controller)
+	expectTx(service)
+	gomock.InOrder(
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil),
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+			gomock.Any(), "fid", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil),
+	)
+	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().UpdateFeature(
+		gomock.Any(), gomock.Any(), "ns0",
+	).Return(nil)
+	require.NoError(t, service.updateEnableFeature(context.Background(), "fid", "ns0", true))
 }
 
 func TestExecuteScheduledFlagChangeLocksEnvironmentBeforeRead(t *testing.T) {

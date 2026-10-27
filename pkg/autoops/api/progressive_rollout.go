@@ -337,6 +337,11 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	}
 	var events []publisher.Message
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+		// The rollout writes the whole flag row. Lock before the first read so
+		// the repeatable-read snapshot cannot drop a variation enrolled later.
+		if err := s.lockHoldoutEnvironment(contextWithTx, req.EnvironmentId); err != nil {
+			return err
+		}
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err

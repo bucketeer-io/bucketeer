@@ -1025,6 +1025,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountClient,
 		authClient,
 		domainTopicPublisher,
+		autoopsapi.WithHoldoutStorage(holdoutStorage),
 		autoopsapi.WithLogger(logger),
 	)
 	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
