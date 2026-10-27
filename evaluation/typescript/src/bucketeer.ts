@@ -130,6 +130,73 @@ export function holdoutSegmentIds(groups: HoldoutGroup[] | undefined): string[] 
   return ids;
 }
 
+// HoldoutMembership resolves membership lazily and at most once per group for
+// one evaluation. Membership is flag-independent (RFC 0048 §4.2.1), so the first
+// flag a group targets pays one hash (HASH) or one scan of the group's own
+// segment (SEGMENT); later flags reuse the answer, and an evaluation that
+// touches no targeted flag never hashes at all. Matches evaluation/go.
+export class HoldoutMembership {
+  // undefined: unresolved; indexed like groups.
+  private readonly state: (boolean | undefined)[];
+
+  constructor(
+    private readonly groups: HoldoutGroup[],
+    private readonly user: User,
+    private readonly mapSegmentUsers: Map<string, SegmentUser[]>,
+  ) {
+    this.state = new Array<boolean | undefined>(groups.length);
+  }
+
+  static create(
+    groups: HoldoutGroup[] | undefined,
+    user: User,
+    mapSegmentUsers: Map<string, SegmentUser[]>,
+  ): HoldoutMembership | undefined {
+    if (!groups || groups.length === 0) {
+      return undefined;
+    }
+    return new HoldoutMembership(groups, user, mapSegmentUsers);
+  }
+
+  // variationFor returns the group and holdout variation to serve for featureId,
+  // or undefined when no group the user belongs to targets it.
+  variationFor(featureId: string): { group: HoldoutGroup; variationId: string } | undefined {
+    for (let i = 0; i < this.groups.length; i++) {
+      const group = this.groups[i];
+      if (!group) {
+        continue;
+      }
+      const variationId = holdoutTargetVariation(group, featureId);
+      if (variationId === undefined) {
+        continue;
+      }
+      if (this.isMember(i)) {
+        return { group, variationId };
+      }
+      // At most one serving group targets a flag. A miss stays on the normal path.
+      break;
+    }
+    return undefined;
+  }
+
+  private isMember(i: number): boolean {
+    let member = this.state[i];
+    if (member === undefined) {
+      const group = this.groups[i];
+      if (!group) {
+        return false;
+      }
+      const segmentUsers =
+        group.getAssignmentType() === HoldoutAssignment.SEGMENT
+          ? this.mapSegmentUsers.get(group.getSegmentId()) || []
+          : [];
+      member = isHeldOut(group, this.user, segmentUsers);
+      this.state[i] = member;
+    }
+    return member;
+  }
+}
+
 export function holdoutTargetVariation(group: HoldoutGroup, featureId: string): string | undefined {
   for (const feature of group.getFeaturesList()) {
     if (currentHoldoutTarget(feature, featureId)) {

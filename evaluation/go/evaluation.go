@@ -170,7 +170,10 @@ func (e *evaluator) evaluate(
 ) (*ftproto.UserEvaluations, error) {
 
 	flagVariations := map[string]string{}
-	holdoutSegments := HoldoutSegmentIDs(groups)
+	// Membership is flag-independent (RFC 0048 §4.2.1): it is resolved at
+	// most once per group, on the first targeted flag, and never when no
+	// evaluated flag is targeted or no group is passed.
+	holdout := newHoldoutMembership(groups, user, mapSegmentUsers)
 	// fs need to be sorted in order from upstream to downstream.
 	sortedFs, err := ftdomain.TopologicalSort(fs)
 	if err != nil {
@@ -183,10 +186,7 @@ func (e *evaluator) evaluate(
 		for _, id := range e.ListSegmentIDs(feature) {
 			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
 		}
-		for _, id := range holdoutSegments {
-			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
-		}
-		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations, groups...)
+		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations, holdout)
 		if err != nil {
 			return nil, err
 		}
@@ -285,24 +285,17 @@ func (e *evaluator) assignUser(
 	segmentUsers []*ftproto.SegmentUser,
 	segments map[string]*ftproto.Segment,
 	flagVariations map[string]string,
-	groups ...*ftproto.HoldoutGroup,
+	holdout *holdoutMembership,
 ) (*ftproto.Reason, *ftproto.Variation, error) {
 	// Holdout is first: a held-out user always receives the group's variation,
 	// including when the flag is disabled or a prerequisite is unsatisfied.
-	for _, group := range groups {
-		variationID, targeted := holdoutVariationID(group, feature.Id)
-		if !targeted {
-			continue
-		}
-		if IsHeldOut(group, user, segmentUsers) {
-			variation, err := findVariation(variationID, feature.Variations)
-			return &ftproto.Reason{
-				Type:           ftproto.Reason_HOLDOUT,
-				HoldoutGroupId: group.Id,
-			}, variation, err
-		}
-		// At most one serving group targets a flag. A miss stays on the normal path.
-		break
+	// Membership is memoized across flags by holdout (nil when no group).
+	if group, variationID, ok := holdout.variationFor(feature.Id); ok {
+		variation, err := findVariation(variationID, feature.Variations)
+		return &ftproto.Reason{
+			Type:           ftproto.Reason_HOLDOUT,
+			HoldoutGroupId: group.Id,
+		}, variation, err
 	}
 	for _, pf := range feature.Prerequisites {
 		variation, ok := flagVariations[pf.FeatureId]

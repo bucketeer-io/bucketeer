@@ -217,3 +217,101 @@ func TestEvaluationHoldout(t *testing.T) {
 		UpdatedAt: 50,
 	}))
 }
+
+func TestHoldoutMembership(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	segmentGroup := func(id, segmentID string, features ...*ftproto.HoldoutGroupFeature) *ftproto.HoldoutGroup {
+		return &ftproto.HoldoutGroup{
+			Id:             id,
+			EnvironmentId:  "env",
+			AssignmentType: ftproto.HoldoutGroup_SEGMENT,
+			SegmentId:      segmentID,
+			Features:       features,
+		}
+	}
+	target := &ftproto.HoldoutGroupFeature{FeatureId: "flag", HoldoutVariationId: "hold"}
+	removed := &ftproto.HoldoutGroupFeature{FeatureId: "flag", HoldoutVariationId: "hold", RemovedAt: 1}
+	included := map[string][]*ftproto.SegmentUser{
+		"seg": {{SegmentId: "seg", UserId: user.Id, State: ftproto.SegmentUser_INCLUDED}},
+		// Another flag's segment also lists the user; it must not be consulted.
+		"other": {{SegmentId: "seg", UserId: user.Id, State: ftproto.SegmentUser_INCLUDED}},
+	}
+
+	t.Run("nil receiver and empty input", func(t *testing.T) {
+		t.Parallel()
+		var none *holdoutMembership
+		_, _, ok := none.variationFor("flag")
+		assert.False(t, ok)
+		assert.Nil(t, newHoldoutMembership(nil, user, included))
+	})
+	t.Run("segment member of the group's own segment", func(t *testing.T) {
+		t.Parallel()
+		group := segmentGroup("hg", "seg", target)
+		got, variationID, ok := newHoldoutMembership([]*ftproto.HoldoutGroup{group}, user, included).variationFor("flag")
+		require.True(t, ok)
+		assert.Same(t, group, got)
+		assert.Equal(t, "hold", variationID)
+	})
+	t.Run("only the group's segment is scanned", func(t *testing.T) {
+		t.Parallel()
+		// The user row is filed under key "other", not under the group's segment.
+		group := segmentGroup("hg", "seg", target)
+		users := map[string][]*ftproto.SegmentUser{"other": included["other"]}
+		_, _, ok := newHoldoutMembership([]*ftproto.HoldoutGroup{group}, user, users).variationFor("flag")
+		assert.False(t, ok)
+	})
+	t.Run("untargeted flag does not resolve membership", func(t *testing.T) {
+		t.Parallel()
+		group := segmentGroup("hg", "seg", target)
+		m := newHoldoutMembership([]*ftproto.HoldoutGroup{group}, user, included)
+		_, _, ok := m.variationFor("other-flag")
+		assert.False(t, ok)
+		assert.Equal(t, uint8(0), m.state[0], "no lookup for a flag the group does not target")
+		_, _, ok = m.variationFor("flag")
+		assert.True(t, ok)
+		assert.Equal(t, uint8(1), m.state[0])
+	})
+	t.Run("membership is resolved once and reused", func(t *testing.T) {
+		t.Parallel()
+		group := segmentGroup("hg", "seg", target, &ftproto.HoldoutGroupFeature{FeatureId: "flag2", HoldoutVariationId: "h2"})
+		// Deliberately give the lookup a map we mutate after the first call: a
+		// second resolution would observe the removal.
+		users := map[string][]*ftproto.SegmentUser{"seg": included["seg"]}
+		m := newHoldoutMembership([]*ftproto.HoldoutGroup{group}, user, users)
+		_, _, ok := m.variationFor("flag")
+		require.True(t, ok)
+		delete(users, "seg")
+		_, variationID, ok := m.variationFor("flag2")
+		assert.True(t, ok)
+		assert.Equal(t, "h2", variationID)
+	})
+	t.Run("removed target and clearance snapshot are not targets", func(t *testing.T) {
+		t.Parallel()
+		_, _, ok := newHoldoutMembership([]*ftproto.HoldoutGroup{segmentGroup("hg", "seg", removed)}, user, included).variationFor("flag")
+		assert.False(t, ok)
+		_, _, ok = newHoldoutMembership([]*ftproto.HoldoutGroup{ClearanceSnapshot(42)}, user, included).variationFor("flag")
+		assert.False(t, ok)
+	})
+	t.Run("a miss on the targeting group does not fall through to another group", func(t *testing.T) {
+		t.Parallel()
+		miss := segmentGroup("miss", "none", target)
+		hit := segmentGroup("hit", "seg", target)
+		_, _, ok := newHoldoutMembership([]*ftproto.HoldoutGroup{miss, hit}, user, included).variationFor("flag")
+		assert.False(t, ok, "at most one serving group targets a flag")
+	})
+}
+
+func TestClearanceSnapshot(t *testing.T) {
+	t.Parallel()
+	snapshot := ClearanceSnapshot(42)
+	assert.Empty(t, snapshot.Id)
+	assert.Empty(t, snapshot.Features)
+	assert.Equal(t, int64(42), snapshot.UpdatedAt)
+	// It is the signal EvaluationHoldout passes through, and it is stale for an older cursor.
+	assert.Same(t, snapshot, EvaluationHoldout(snapshot))
+	assert.True(t, holdoutStale([]*ftproto.HoldoutGroup{snapshot}, 41))
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{snapshot}, 42))
+	// A never-stopped environment is not a signal.
+	assert.Nil(t, EvaluationHoldout(ClearanceSnapshot(0)))
+}

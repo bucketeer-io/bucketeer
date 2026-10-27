@@ -98,6 +98,81 @@ func HoldoutSegmentIDs(groups []*ftproto.HoldoutGroup) []string {
 	return ids
 }
 
+// holdoutMembership resolves membership lazily and at most once per group
+// for one evaluation. Membership is flag-independent (RFC 0048 §4.2.1), so
+// the first flag a group targets pays one hash (HASH) or one scan of the
+// group's own segment (SEGMENT); later flags reuse the answer, and an
+// evaluation that touches no targeted flag never hashes at all.
+type holdoutMembership struct {
+	groups          []*ftproto.HoldoutGroup
+	user            *userproto.User
+	mapSegmentUsers map[string][]*ftproto.SegmentUser
+	// 0 unresolved, 1 member, 2 not a member; indexed like groups.
+	state []uint8
+}
+
+func newHoldoutMembership(
+	groups []*ftproto.HoldoutGroup,
+	user *userproto.User,
+	mapSegmentUsers map[string][]*ftproto.SegmentUser,
+) *holdoutMembership {
+	if len(groups) == 0 {
+		return nil
+	}
+	return &holdoutMembership{
+		groups:          groups,
+		user:            user,
+		mapSegmentUsers: mapSegmentUsers,
+		state:           make([]uint8, len(groups)),
+	}
+}
+
+// variationFor returns the group and holdout variation to serve for
+// featureID, or false when no group the user belongs to targets it.
+// A nil receiver means no groups were passed.
+func (m *holdoutMembership) variationFor(featureID string) (*ftproto.HoldoutGroup, string, bool) {
+	if m == nil {
+		return nil, "", false
+	}
+	for i, group := range m.groups {
+		variationID, targeted := holdoutVariationID(group, featureID)
+		if !targeted {
+			continue
+		}
+		if m.isMember(i) {
+			return group, variationID, true
+		}
+		// At most one serving group targets a flag. A miss stays on the normal path.
+		break
+	}
+	return nil, "", false
+}
+
+func (m *holdoutMembership) isMember(i int) bool {
+	if m.state[i] == 0 {
+		group := m.groups[i]
+		var segmentUsers []*ftproto.SegmentUser
+		if group.AssignmentType == ftproto.HoldoutGroup_SEGMENT {
+			segmentUsers = m.mapSegmentUsers[group.SegmentId]
+		}
+		if IsHeldOut(group, m.user, segmentUsers) {
+			m.state[i] = 1
+		} else {
+			m.state[i] = 2
+		}
+	}
+	return m.state[i] == 1
+}
+
+// ClearanceSnapshot is the empty snapshot the cacher stores when no group is
+// serving. It assigns nothing; stoppedAt is the updated_at of the newest
+// stopped group, so a client whose cursor is behind it is forced to a full
+// re-evaluation and drops cached HOLDOUT assignments (RFC 0048 §4.3.2).
+// stoppedAt 0 means the environment has never stopped a group.
+func ClearanceSnapshot(stoppedAt int64) *ftproto.HoldoutGroup {
+	return &ftproto.HoldoutGroup{UpdatedAt: stoppedAt}
+}
+
 func holdoutVariationID(group *ftproto.HoldoutGroup, featureID string) (string, bool) {
 	if group == nil {
 		return "", false

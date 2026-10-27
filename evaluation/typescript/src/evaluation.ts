@@ -8,12 +8,7 @@ import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
-import {
-  holdoutRequiresFullEval,
-  holdoutSegmentIds,
-  holdoutTargetVariation,
-  isHeldOut,
-} from './bucketeer';
+import { HoldoutMembership, holdoutRequiresFullEval } from './bucketeer';
 import type { HoldoutGroup } from './bucketeer';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 import { createReason } from './modelFactory';
@@ -160,7 +155,10 @@ class Evaluator {
     holdoutGroups?: HoldoutGroup[],
   ): UserEvaluations {
     const flagVariations: { [key: string]: string } = {};
-    const holdoutSegments = holdoutSegmentIds(holdoutGroups);
+    // Membership is flag-independent (RFC 0048 §4.2.1): it is resolved at most
+    // once per group, on the first targeted flag, and never when no evaluated
+    // flag is targeted or no group is passed.
+    const holdout = HoldoutMembership.create(holdoutGroups, user, mapSegmentUsers);
     // fs need to be sorted in order from upstream to downstream.
     const sortedFeatures = topologicalSort(features);
 
@@ -168,9 +166,9 @@ class Evaluator {
     const archivedIDs: string[] = [];
 
     for (const feature of sortedFeatures) {
-      const segmentUsers = this.listSegmentIDs(feature)
-        .concat(holdoutSegments)
-        .flatMap((id) => mapSegmentUsers.get(id) || []);
+      const segmentUsers = this.listSegmentIDs(feature).flatMap(
+        (id) => mapSegmentUsers.get(id) || [],
+      );
 
       const [reason, variation] = this.assignUser(
         feature,
@@ -178,7 +176,7 @@ class Evaluator {
         segmentUsers,
         mapSegments,
         flagVariations,
-        holdoutGroups,
+        holdout,
       );
       // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       // This must be set for ALL features (including archived) for dependency resolution to work
@@ -269,24 +267,16 @@ class Evaluator {
     segmentUsers: SegmentUser[],
     segments: Map<string, Segment> | null,
     flagVariations: { [key: string]: string },
-    holdoutGroups?: HoldoutGroup[],
+    holdout?: HoldoutMembership,
   ): [Reason, Variation] {
     // Holdout is first: a held-out user always receives the group's variation,
     // including when the flag is disabled or a prerequisite is unsatisfied.
-    if (holdoutGroups) {
-      for (const group of holdoutGroups) {
-        const variationId = holdoutTargetVariation(group, feature.getId());
-        if (variationId === undefined) {
-          continue;
-        }
-        if (isHeldOut(group, user, segmentUsers)) {
-          const variation = this.findVariation(variationId, feature.getVariationsList());
-          const reason = createReason('', Reason.Type.HOLDOUT, group.getId());
-          return [reason, variation];
-        }
-        // At most one serving group targets a flag. A miss stays on the normal path.
-        break;
-      }
+    // Membership is memoized across flags by holdout (undefined when no group).
+    const held = holdout?.variationFor(feature.getId());
+    if (held) {
+      const variation = this.findVariation(held.variationId, feature.getVariationsList());
+      const reason = createReason('', Reason.Type.HOLDOUT, held.group.getId());
+      return [reason, variation];
     }
     for (const pf of feature.getPrerequisitesList()) {
       const variationId = flagVariations[pf.getFeatureId()];

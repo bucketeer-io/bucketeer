@@ -41,11 +41,16 @@ func TestAssignUserHoldout(t *testing.T) {
 
 	held := targetingGroup("hg", start, 10, "flag", "hold")
 	miss := targetingGroup("hg", outside, 10, "flag", "hold")
+	// Membership is memoized per evaluation and handed to assignUser. The
+	// memo is single-use state, so each subtest builds its own.
+	membership := func(group *ftproto.HoldoutGroup) *holdoutMembership {
+		return newHoldoutMembership([]*ftproto.HoldoutGroup{group}, user, nil)
+	}
 
 	t.Run("disabled flag still serves the holdout variation", func(t *testing.T) {
 		t.Parallel()
 		flag := flagWithVariations("flag", false, "off", "hold", "on")
-		reason, variation, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, held)
+		reason, variation, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, membership(held))
 		require.NoError(t, err)
 		assert.Equal(t, ftproto.Reason_HOLDOUT, reason.Type)
 		assert.Equal(t, "hg", reason.HoldoutGroupId)
@@ -56,7 +61,7 @@ func TestAssignUserHoldout(t *testing.T) {
 		flag := flagWithVariations("flag", true, "off", "hold", "on")
 		flag.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "parent", VariationId: "expected"}}
 		reason, variation, err := NewEvaluator().assignUser(
-			flag, user, nil, nil, map[string]string{"parent": "other"}, held,
+			flag, user, nil, nil, map[string]string{"parent": "other"}, membership(held),
 		)
 		require.NoError(t, err)
 		assert.Equal(t, ftproto.Reason_HOLDOUT, reason.Type)
@@ -65,7 +70,7 @@ func TestAssignUserHoldout(t *testing.T) {
 	t.Run("user outside the arc keeps the off variation", func(t *testing.T) {
 		t.Parallel()
 		flag := flagWithVariations("flag", false, "off", "hold", "on")
-		reason, variation, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, miss)
+		reason, variation, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, membership(miss))
 		require.NoError(t, err)
 		assert.Equal(t, ftproto.Reason_OFF_VARIATION, reason.Type)
 		assert.Empty(t, reason.HoldoutGroupId)
@@ -74,9 +79,9 @@ func TestAssignUserHoldout(t *testing.T) {
 	t.Run("flag the group does not target is unchanged", func(t *testing.T) {
 		t.Parallel()
 		flag := flagWithVariations("other", true, "off", "hold", "on")
-		withGroup, variation, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, held)
+		withGroup, variation, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, membership(held))
 		require.NoError(t, err)
-		without, baseline, err := NewEvaluator().assignUser(flag, user, nil, nil, nil)
+		without, baseline, err := NewEvaluator().assignUser(flag, user, nil, nil, nil, nil)
 		require.NoError(t, err)
 		assert.Equal(t, without.Type, withGroup.Type)
 		assert.Equal(t, baseline.Id, variation.Id)

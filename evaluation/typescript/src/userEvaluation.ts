@@ -27,7 +27,7 @@ function sortedHoldoutGroups(groups: HoldoutGroup[] | undefined): HoldoutGroup[]
     return [];
   }
   return groups
-    .filter((group) => group.getId() !== '')
+    .filter((group) => group && group.getId() !== '')
     .sort((a, b) => (a.getId() < b.getId() ? -1 : a.getId() > b.getId() ? 1 : 0));
 }
 
