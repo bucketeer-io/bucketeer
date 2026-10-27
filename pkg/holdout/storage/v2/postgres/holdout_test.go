@@ -446,6 +446,43 @@ func TestGetLiveServingGroup(t *testing.T) {
 	})
 }
 
+func TestGetClearedHoldoutUpdatedAt(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("no stopped group", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(),
+			"env",
+			int32(proto.HoldoutGroup_STOPPED),
+			int32(proto.HoldoutGroup_FORCE_STOPPED),
+		).Return(row)
+		updatedAt, err := storage.GetClearedHoldoutUpdatedAt(context.Background(), "env")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), updatedAt)
+	})
+	t.Run("newest stop time", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+			*(dest[0].(*int64)) = int64(1700000000)
+			return nil
+		})
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(),
+			"env",
+			int32(proto.HoldoutGroup_STOPPED),
+			int32(proto.HoldoutGroup_FORCE_STOPPED),
+		).Return(row)
+		updatedAt, err := storage.GetClearedHoldoutUpdatedAt(context.Background(), "env")
+		require.NoError(t, err)
+		assert.Equal(t, int64(1700000000), updatedAt)
+	})
+}
+
 func newHoldoutStorageWithMock(t *testing.T, controller *gomock.Controller) *holdoutStorage {
 	t.Helper()
 	return &holdoutStorage{qe: mock.NewMockQueryExecer(controller)}

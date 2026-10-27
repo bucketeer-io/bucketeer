@@ -102,7 +102,9 @@ func (c *holdoutGroupCacher) listAllEnvironments(
 }
 
 // liveSnapshot is the proto stored in every redis. A missing group is an empty
-// snapshot so readers do not fall through to MySQL.
+// snapshot so readers do not fall through to MySQL. Its updated_at is the
+// newest stop time, stable across cacher runs, so clients drop cached HOLDOUT
+// assignments. Zero means the environment has never stopped a group.
 func (c *holdoutGroupCacher) liveSnapshot(
 	ctx context.Context,
 	environmentID string,
@@ -110,14 +112,25 @@ func (c *holdoutGroupCacher) liveSnapshot(
 	group, err := c.storage.GetLiveServingGroup(ctx, environmentID)
 	if err != nil {
 		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			return &ftproto.HoldoutGroup{}, nil
+			return c.clearedSnapshot(ctx, environmentID)
 		}
 		return nil, err
 	}
 	if group == nil || group.HoldoutGroup == nil {
-		return &ftproto.HoldoutGroup{}, nil
+		return c.clearedSnapshot(ctx, environmentID)
 	}
 	return group.HoldoutGroup, nil
+}
+
+func (c *holdoutGroupCacher) clearedSnapshot(
+	ctx context.Context,
+	environmentID string,
+) (*ftproto.HoldoutGroup, error) {
+	updatedAt, err := c.storage.GetClearedHoldoutUpdatedAt(ctx, environmentID)
+	if err != nil {
+		return nil, err
+	}
+	return &ftproto.HoldoutGroup{UpdatedAt: updatedAt}, nil
 }
 
 func (c *holdoutGroupCacher) putCache(group *ftproto.HoldoutGroup, environmentID string) int {

@@ -103,7 +103,34 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		cacheMock := cachev3mock.NewMockHoldoutGroupCache(controller)
 		storage := holdoutmock.NewMockHoldoutStorage(controller)
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(0), nil)
 		cacheMock.EXPECT().Put(&featureproto.HoldoutGroup{}, "env").Return(nil)
+		service := &FeatureService{
+			holdoutGroupCache: cacheMock,
+			holdoutStorage:    storage,
+			logger:            zap.NewNop(),
+		}
+		service.refreshHoldoutCache(ctx, "env")
+	})
+	t.Run("stamps the stop time on the empty snapshot", func(t *testing.T) {
+		cacheMock := cachev3mock.NewMockHoldoutGroupCache(controller)
+		storage := holdoutmock.NewMockHoldoutStorage(controller)
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(1700000000), nil)
+		cacheMock.EXPECT().Put(&featureproto.HoldoutGroup{UpdatedAt: 1700000000}, "env").Return(nil)
+		service := &FeatureService{
+			holdoutGroupCache: cacheMock,
+			holdoutStorage:    storage,
+			logger:            zap.NewNop(),
+		}
+		service.refreshHoldoutCache(ctx, "env")
+	})
+	t.Run("evicts when the clearance read fails", func(t *testing.T) {
+		cacheMock := cachev3mock.NewMockHoldoutGroupCache(controller)
+		storage := holdoutmock.NewMockHoldoutStorage(controller)
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(0), errors.New("db"))
+		cacheMock.EXPECT().Evict("env").Return(nil)
 		service := &FeatureService{
 			holdoutGroupCache: cacheMock,
 			holdoutStorage:    storage,

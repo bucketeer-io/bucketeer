@@ -62,6 +62,12 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 		memory.EXPECT().Get("env").Return(&featureproto.HoldoutGroup{}, nil)
 		assert.Nil(t, loadLiveHoldoutGroup(memory, nil, "env", zap.NewNop()))
 	})
+	t.Run("clearance snapshot keeps the stop revision", func(t *testing.T) {
+		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
+		cleared := &featureproto.HoldoutGroup{UpdatedAt: 1700000000}
+		memory.EXPECT().Get("env").Return(cleared, nil)
+		assert.Equal(t, cleared, loadLiveHoldoutGroup(memory, nil, "env", zap.NewNop()))
+	})
 	t.Run("both misses stay off the database", func(t *testing.T) {
 		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
 		redis := cachev3mock.NewMockHoldoutGroupCache(controller)

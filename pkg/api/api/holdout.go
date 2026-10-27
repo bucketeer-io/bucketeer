@@ -35,7 +35,7 @@ func loadLiveHoldoutGroup(
 	if memory != nil {
 		group, err := memory.Get(environmentID)
 		if err == nil {
-			return evaluation.ServingHoldout(group)
+			return evaluation.EvaluationHoldout(group)
 		}
 		if logger != nil && !errors.Is(err, cache.ErrNotFound) {
 			logger.Debug("Failed to get the holdout group from memory",
@@ -65,7 +65,7 @@ func loadLiveHoldoutGroup(
 			)
 		}
 	}
-	return evaluation.ServingHoldout(group)
+	return evaluation.EvaluationHoldout(group)
 }
 
 func holdoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutGroup {

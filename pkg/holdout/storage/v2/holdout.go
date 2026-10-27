@@ -76,6 +76,11 @@ type HoldoutStorage interface {
 	// not deleted or archived, with its current target features attached.
 	// ErrHoldoutGroupNotFound when the environment has no serving group.
 	GetLiveServingGroup(ctx context.Context, environmentID string) (*domain.HoldoutGroup, error)
+	// GetClearedHoldoutUpdatedAt is the updated_at of the newest STOPPED or
+	// FORCE_STOPPED group, including archived ones. The empty cache snapshot
+	// stores it so a client whose evaluatedAt is still behind the stop gets a
+	// full re-evaluation. Returns 0 when the environment has never stopped a group.
+	GetClearedHoldoutUpdatedAt(ctx context.Context, environmentID string) (int64, error)
 	// ListLiveFeatureTargets returns current target rows of WAITING, RUNNING, or ANALYSIS groups.
 	ListLiveFeatureTargets(ctx context.Context, environmentID, featureID string) ([]domain.FeatureTarget, error)
 }

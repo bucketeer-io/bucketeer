@@ -59,9 +59,33 @@ func TestHoldoutGroupCacherRun(t *testing.T) {
 		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
 			GetLiveServingGroup(gomock.Any(), "env").
 			Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
+			GetClearedHoldoutUpdatedAt(gomock.Any(), "env").
+			Return(int64(0), nil)
 		for _, cache := range cacher.caches {
 			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
 				Put(&ftproto.HoldoutGroup{}, "env").
+				Return(nil)
+		}
+		assert.NoError(t, cacher.Run(ctx))
+	})
+
+	t.Run("stopped group keeps its stop time on the empty snapshot", func(t *testing.T) {
+		cacher := newHoldoutGroupCacher(t, controller)
+		cacher.environmentClient.(*envclientmock.MockClient).EXPECT().
+			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			Return(&envproto.ListEnvironmentsV2Response{
+				Environments: []*envproto.EnvironmentV2{{Id: "env"}},
+			}, nil)
+		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
+			GetLiveServingGroup(gomock.Any(), "env").
+			Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
+			GetClearedHoldoutUpdatedAt(gomock.Any(), "env").
+			Return(int64(1700000000), nil)
+		for _, cache := range cacher.caches {
+			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
+				Put(&ftproto.HoldoutGroup{UpdatedAt: 1700000000}, "env").
 				Return(nil)
 		}
 		assert.NoError(t, cacher.Run(ctx))

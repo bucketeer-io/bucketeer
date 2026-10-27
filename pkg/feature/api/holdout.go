@@ -851,12 +851,7 @@ func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID 
 	group, err := s.holdoutStorage.GetLiveServingGroup(ctx, environmentID)
 	if err != nil {
 		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			if putErr := s.holdoutGroupCache.Put(&featureproto.HoldoutGroup{}, environmentID); putErr != nil {
-				s.logger.Error("Failed to cache the empty holdout snapshot",
-					zap.Error(putErr),
-					zap.String("environmentId", environmentID),
-				)
-			}
+			s.cacheClearedHoldout(ctx, environmentID)
 			return
 		}
 		s.logger.Error("Failed to read the live holdout group",
@@ -877,6 +872,31 @@ func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID 
 	}
 	if putErr := s.holdoutGroupCache.Put(snapshot, environmentID); putErr != nil {
 		s.logger.Error("Failed to cache the live holdout group",
+			zap.Error(putErr),
+			zap.String("environmentId", environmentID),
+		)
+	}
+}
+
+// cacheClearedHoldout stores the empty snapshot with the newest stop time.
+// A later cacher run reads the same row, so the revision does not move.
+func (s *FeatureService) cacheClearedHoldout(ctx context.Context, environmentID string) {
+	updatedAt, err := s.holdoutStorage.GetClearedHoldoutUpdatedAt(ctx, environmentID)
+	if err != nil {
+		s.logger.Error("Failed to read the cleared holdout revision",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
+		if evictErr := s.holdoutGroupCache.Evict(environmentID); evictErr != nil {
+			s.logger.Error("Failed to evict the holdout group cache",
+				zap.Error(evictErr),
+				zap.String("environmentId", environmentID),
+			)
+		}
+		return
+	}
+	if putErr := s.holdoutGroupCache.Put(&featureproto.HoldoutGroup{UpdatedAt: updatedAt}, environmentID); putErr != nil {
+		s.logger.Error("Failed to cache the empty holdout snapshot",
 			zap.Error(putErr),
 			zap.String("environmentId", environmentID),
 		)

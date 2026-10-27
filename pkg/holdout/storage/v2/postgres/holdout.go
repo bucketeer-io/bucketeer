@@ -51,6 +51,8 @@ var (
 	selectActiveGroupsSQL string
 	//go:embed sql/holdout/select_live_serving_group.sql
 	selectLiveServingGroupSQL string
+	//go:embed sql/holdout/select_cleared_holdout_updated_at.sql
+	selectClearedHoldoutUpdatedAtSQL string
 	//go:embed sql/holdout/select_live_feature_targets.sql
 	selectLiveFeatureTargetsSQL string
 )
@@ -151,6 +153,24 @@ func (s *holdoutStorage) GetLiveServingGroup(
 		group.Features = append(group.Features, feature.HoldoutGroupFeature)
 	}
 	return group, nil
+}
+
+func (s *holdoutStorage) GetClearedHoldoutUpdatedAt(ctx context.Context, environmentID string) (int64, error) {
+	var updatedAt int64
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectClearedHoldoutUpdatedAtSQL,
+		environmentID,
+		int32(proto.HoldoutGroup_STOPPED),
+		int32(proto.HoldoutGroup_FORCE_STOPPED),
+	).Scan(&updatedAt)
+	if err != nil {
+		if errors.Is(err, pgstorage.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return updatedAt, nil
 }
 
 func (s *holdoutStorage) get(
