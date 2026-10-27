@@ -428,11 +428,8 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "flag").Return(nil, nil)
 		storage.EXPECT().CreateHoldoutGroupFeatures(gomock.Any(), gomock.Any()).Return(nil)
 		storage.EXPECT().UpdateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
-		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return([]*holdoutdomain.HoldoutGroupFeature{{
-			HoldoutGroupFeature: &featureproto.HoldoutGroupFeature{
-				HoldoutGroupId: "hg", FeatureId: "flag", HoldoutVariationId: "var",
-			},
-		}}, nil)
+		// The current targets are loaded before the change, inside the transaction.
+		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return(nil, nil)
 
 		resp, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
@@ -440,6 +437,8 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, resp.HoldoutGroup.Features, 1)
+		assert.Equal(t, "flag", resp.HoldoutGroup.Features[0].FeatureId)
+		assert.Equal(t, "var", resp.HoldoutGroup.Features[0].HoldoutVariationId)
 	})
 
 	t.Run("noncanonical feature id is rejected", func(t *testing.T) {
@@ -558,11 +557,21 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		expectFeature(service, "flag", "var", false)
 		storage.EXPECT().RemoveHoldoutGroupFeature(gomock.Any(), "ns0", "hg", "flag", gomock.Any()).Return(nil)
 		storage.EXPECT().UpdateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
-		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return(nil, nil)
-		_, err := service.RemoveHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.RemoveHoldoutGroupFeaturesRequest{
+		// The current targets are loaded before the change, inside the transaction.
+		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return([]*holdoutdomain.HoldoutGroupFeature{
+			{HoldoutGroupFeature: &featureproto.HoldoutGroupFeature{
+				HoldoutGroupId: "hg", FeatureId: "flag", HoldoutVariationId: "var",
+			}},
+			{HoldoutGroupFeature: &featureproto.HoldoutGroupFeature{
+				HoldoutGroupId: "hg", FeatureId: "other", HoldoutVariationId: "var",
+			}},
+		}, nil)
+		resp, err := service.RemoveHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.RemoveHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0", FeatureIds: []string{"flag"},
 		})
 		require.NoError(t, err)
+		require.Len(t, resp.HoldoutGroup.Features, 1)
+		assert.Equal(t, "other", resp.HoldoutGroup.Features[0].FeatureId)
 	})
 }
 
@@ -773,16 +782,39 @@ func expectHoldoutEvents(
 			for _, message := range messages {
 				event := message.(*eventproto.Event)
 				assert.Equal(t, eventType, event.Type)
-				if event.EntityType != eventproto.Event_FEATURE {
-					continue
+				switch event.EntityType {
+				case eventproto.Event_FEATURE:
+					var decoded featureproto.Feature
+					require.NoError(t, protojson.Unmarshal([]byte(event.EntityData), &decoded))
+					assert.NotEmpty(t, decoded.Id)
+					// The flag itself did not change: both snapshots must be the same.
+					assert.Equal(t, event.EntityData, event.PreviousEntityData)
+				case eventproto.Event_HOLDOUT_GROUP:
+					assertHoldoutTargetSnapshots(t, event)
 				}
-				var decoded featureproto.Feature
-				require.NoError(t, protojson.Unmarshal([]byte(event.EntityData), &decoded))
-				assert.NotEmpty(t, decoded.Id)
 			}
 			return nil
 		},
 	)
+}
+
+// assertHoldoutTargetSnapshots checks that a target add/remove event records
+// the membership change in its before/after group snapshots.
+func assertHoldoutTargetSnapshots(t *testing.T, event *eventproto.Event) {
+	t.Helper()
+	if event.Type != eventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED &&
+		event.Type != eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED {
+		return
+	}
+	var current, previous featureproto.HoldoutGroup
+	require.NoError(t, protojson.Unmarshal([]byte(event.EntityData), &current))
+	require.NoError(t, protojson.Unmarshal([]byte(event.PreviousEntityData), &previous))
+	assert.NotEqual(t, previous.UpdatedAt, current.UpdatedAt)
+	if event.Type == eventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED {
+		assert.Len(t, current.Features, len(previous.Features)+1)
+		return
+	}
+	assert.Len(t, current.Features, len(previous.Features)-1)
 }
 
 func expectTransition(

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -406,17 +407,30 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 		if err != nil {
 			return err
 		}
-		previous := group.Clone()
 		if err := group.CanAddFeatures(); err != nil {
 			return err
 		}
 		created := make([]*holdoutdomain.HoldoutGroupFeature, 0, len(req.Features))
+		features := make([]*featureproto.Feature, 0, len(req.Features))
 		for _, input := range req.Features {
 			row, feature, err := s.prepareHoldoutFeature(txCtx, group, input, now)
 			if err != nil {
 				return err
 			}
 			created = append(created, row)
+			features = append(features, feature)
+		}
+		// Load the current targets before applying the change so the audit
+		// snapshots show the membership before and after.
+		if err := s.attachCurrentFeatures(txCtx, req.EnvironmentId, []*holdoutdomain.HoldoutGroup{group}); err != nil {
+			return err
+		}
+		previous := group.Clone()
+		for _, row := range created {
+			group.Features = append(group.Features, row.HoldoutGroupFeature)
+		}
+		group.Touch(editor.Email, now)
+		for i, input := range req.Features {
 			groupEvent, err := newHoldoutEvent(
 				editor, req.EnvironmentId, group.Id, eventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED,
 				&eventproto.HoldoutGroupFeatureAddedEvent{
@@ -432,7 +446,7 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 				&eventproto.HoldoutGroupFeatureAddedEvent{
 					Id: group.Id, FeatureId: input.FeatureId, HoldoutVariationId: input.HoldoutVariationId,
 				},
-				feature,
+				features[i],
 			)
 			if err != nil {
 				return err
@@ -442,7 +456,6 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 		if err := s.holdoutStorage.CreateHoldoutGroupFeatures(txCtx, created); err != nil {
 			return err
 		}
-		group.Touch(editor.Email, now)
 		updated = group
 		return s.holdoutStorage.UpdateHoldoutGroup(txCtx, group)
 	})
@@ -451,9 +464,6 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 	}
 	if err := s.publishHoldoutEvents(ctx, events); err != nil {
 		return nil, err
-	}
-	if err := s.attachCurrentFeatures(ctx, req.EnvironmentId, []*holdoutdomain.HoldoutGroup{updated}); err != nil {
-		return nil, s.holdoutError(ctx, "Failed to load holdout group features", req.EnvironmentId, err)
 	}
 	return &featureproto.AddHoldoutGroupFeaturesResponse{HoldoutGroup: updated.HoldoutGroup}, nil
 }
@@ -483,10 +493,16 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 		if err != nil {
 			return err
 		}
-		previous := group.Clone()
 		if err := group.CanRemoveFeatures(); err != nil {
 			return err
 		}
+		// Load the current targets first so the audit snapshots show the
+		// membership before and after this change.
+		if err := s.attachCurrentFeatures(txCtx, req.EnvironmentId, []*holdoutdomain.HoldoutGroup{group}); err != nil {
+			return err
+		}
+		previous := group.Clone()
+		features := make([]*featureproto.Feature, 0, len(req.FeatureIds))
 		for _, featureID := range req.FeatureIds {
 			if err := s.holdoutStorage.RemoveHoldoutGroupFeature(
 				txCtx, req.EnvironmentId, group.Id, featureID, now,
@@ -500,6 +516,11 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 				}
 				return err
 			}
+			features = append(features, feature.Feature)
+			group.Features = removeHoldoutFeature(group.Features, feature.Id)
+		}
+		group.Touch(editor.Email, now)
+		for i, featureID := range req.FeatureIds {
 			groupEvent, err := newHoldoutEvent(
 				editor, req.EnvironmentId, group.Id, eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED,
 				&eventproto.HoldoutGroupFeatureRemovedEvent{Id: group.Id, FeatureId: featureID},
@@ -511,14 +532,13 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 			featureEvent, err := newFeatureHoldoutEvent(
 				editor, req.EnvironmentId, featureID, eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED,
 				&eventproto.HoldoutGroupFeatureRemovedEvent{Id: group.Id, FeatureId: featureID},
-				feature.Feature,
+				features[i],
 			)
 			if err != nil {
 				return err
 			}
 			events = append(events, groupEvent, featureEvent)
 		}
-		group.Touch(editor.Email, now)
 		updated = group
 		return s.holdoutStorage.UpdateHoldoutGroup(txCtx, group)
 	})
@@ -527,9 +547,6 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 	}
 	if err := s.publishHoldoutEvents(ctx, events); err != nil {
 		return nil, err
-	}
-	if err := s.attachCurrentFeatures(ctx, req.EnvironmentId, []*holdoutdomain.HoldoutGroup{updated}); err != nil {
-		return nil, s.holdoutError(ctx, "Failed to load holdout group features", req.EnvironmentId, err)
 	}
 	return &featureproto.RemoveHoldoutGroupFeaturesResponse{HoldoutGroup: updated.HoldoutGroup}, nil
 }
@@ -904,6 +921,9 @@ func newHoldoutEvent(
 	)
 }
 
+// newFeatureHoldoutEvent records a holdout membership change on the flag's own
+// history. The flag itself is unchanged, so the same snapshot is used on both
+// sides; otherwise the audit log would diff the whole flag against nothing.
 func newFeatureHoldoutEvent(
 	editor *eventproto.Editor,
 	environmentID, featureID string,
@@ -919,8 +939,24 @@ func newFeatureHoldoutEvent(
 		event,
 		environmentID,
 		feature,
-		nil,
+		feature,
 	)
+}
+
+// removeHoldoutFeature drops featureID from the in-memory target list. IDs are
+// matched case-insensitively to mirror the storage lookup on MySQL.
+func removeHoldoutFeature(
+	features []*featureproto.HoldoutGroupFeature,
+	featureID string,
+) []*featureproto.HoldoutGroupFeature {
+	out := features[:0]
+	for _, feature := range features {
+		if strings.EqualFold(feature.GetFeatureId(), featureID) {
+			continue
+		}
+		out = append(out, feature)
+	}
+	return out
 }
 
 func requireHoldoutID(id, environmentID string) error {
