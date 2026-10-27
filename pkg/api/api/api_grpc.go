@@ -1451,32 +1451,10 @@ func (s *grpcGatewayService) listFeatures(
 	ctx context.Context,
 	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	features := []*featureproto.Feature{}
-	cursor := ""
 	targets := CachedHoldoutTargetIDs(
 		s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentId, s.logger,
 	)
-	for {
-		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-			PageSize:      listRequestSize,
-			Cursor:        cursor,
-			EnvironmentId: environmentId,
-		})
-		if err != nil {
-			return nil, err
-		}
-		for _, f := range resp.Features {
-			if !keepEvaluableFeature(f, targets) {
-				continue
-			}
-			features = append(features, f)
-		}
-		featureSize := len(resp.Features)
-		if featureSize == 0 || featureSize < listRequestSize {
-			return features, nil
-		}
-		cursor = resp.Cursor
-	}
+	return ListFeatures(ctx, s.featureClient, environmentId, targets)
 }
 
 func getFeaturesFromCache(

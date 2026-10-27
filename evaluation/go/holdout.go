@@ -264,14 +264,12 @@ func HoldoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
 }
 
 // FeaturesForServerEval drops disabled flags with no off variation that the
-// snapshot no longer targets. Those flags stay in the feature cache until
-// the next feature refresh, and without this filter the evaluator would
-// assign them a normal variation after the group stops or the snapshot is a
-// clearance. A flag that another kept flag depends on, as a prerequisite or
-// a FEATURE_FLAG rule, stays in the slice so dependency resolution can run.
-// The evaluator then omits its evaluation. A nil snapshot leaves the slice
-// unchanged. removed is the IDs a partial evaluation must report so clients
-// delete them.
+// snapshot no longer targets. The feature cache applies the same dependency
+// rule, so a flag another cached flag still needs is still here after a
+// refresh. This filter keeps that flag too, and the evaluator then omits
+// its evaluation. Without the filter, a clearance would assign the flag a
+// normal variation. A nil snapshot leaves the slice unchanged. removed is
+// the IDs a partial evaluation must report so clients delete them.
 func FeaturesForServerEval(
 	features []*ftproto.Feature,
 	group *ftproto.HoldoutGroup,

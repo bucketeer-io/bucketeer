@@ -286,6 +286,31 @@ func TestListFeaturesKeepsDisabledHoldoutTarget(t *testing.T) {
 	assert.Equal(t, "normal", got[1].Id)
 }
 
+func TestListFeaturesKeepsDependencyOfStoppedTarget(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	client := featureclientmock.NewMockClient(controller)
+	client.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(&featureproto.ListFeaturesResponse{
+		Features: []*featureproto.Feature{
+			{
+				Id:           "dependent",
+				Enabled:      true,
+				OffVariation: "off",
+				Prerequisites: []*featureproto.Prerequisite{
+					{FeatureId: "flag", VariationId: "on"},
+				},
+			},
+			{Id: "flag", Enabled: false},
+			{Id: "dropped", Enabled: false},
+		},
+	}, nil)
+	got, err := ListFeatures(context.Background(), client, "env", nil)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	assert.Equal(t, "dependent", got[0].Id)
+	assert.Equal(t, "flag", got[1].Id)
+}
+
 func TestCountHoldoutEvaluationRequiresTargets(t *testing.T) {
 	t.Parallel()
 	metric := holdoutEvaluationsCounter.WithLabelValues("holdout-unit")

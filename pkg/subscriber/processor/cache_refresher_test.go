@@ -834,6 +834,55 @@ func TestCacheRefresherKeepsDisabledHoldoutTarget(t *testing.T) {
 	}))
 }
 
+func TestCacheRefresherKeepsDependencyAfterHoldoutStops(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, nil,
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{
+					Id:           "dependent",
+					Enabled:      true,
+					OffVariation: "off",
+					Prerequisites: []*featureproto.Prerequisite{
+						{FeatureId: "flag", VariationId: "on"},
+					},
+				},
+				{Id: "flag", Enabled: false},
+				{Id: "orphan", Enabled: false},
+			},
+		}, nil)
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(nil, v2hs.ErrHoldoutGroupNotFound)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 2)
+			assert.Equal(t, "dependent", features.Features[0].Id)
+			assert.Equal(t, "flag", features.Features[1].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	}))
+}
+
 func TestCacheRefresherHoldoutStartRefreshesFeatures(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

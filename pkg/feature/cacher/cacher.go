@@ -170,19 +170,13 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 
 // removeOldFeatures filters out archived feature flags over thirty days ago
 // and disabled flags that have no off variation. A current holdout target is
-// kept so members can still be assigned the holdout variation.
+// kept so members can still be assigned the holdout variation. A former
+// target stays when another cached flag still depends on it.
 func (c *featureFlagCacher) removeOldFeatures(
 	features []*ftproto.Feature,
 	holdoutTargets map[string]struct{},
 ) []*ftproto.Feature {
-	result := make([]*ftproto.Feature, 0, len(features))
-	for _, f := range features {
-		_, targeted := holdoutTargets[f.Id]
-		if ftdomain.KeepForServing(&ftdomain.Feature{Feature: f}, targeted) {
-			result = append(result, f)
-		}
-	}
-	return result
+	return ftdomain.FilterForServing(features, holdoutTargets)
 }
 
 func (c *featureFlagCacher) currentHoldoutTargets(

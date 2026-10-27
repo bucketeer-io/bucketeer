@@ -38,6 +38,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
@@ -968,14 +969,16 @@ func (s *gatewayService) listFeatures(
 
 // ListFeatures loads the environment's evaluable features from the feature service.
 // holdoutTargets keeps a disabled flag that has no off variation when it is a
-// current holdout target.
+// current holdout target. A former target also stays when another flag still
+// depends on it. Pages are collected first so that dependency can be on a
+// later page.
 func ListFeatures(
 	ctx context.Context,
 	featureClient featureclient.Client,
 	environmentId string,
 	holdoutTargets map[string]struct{},
 ) ([]*featureproto.Feature, error) {
-	features := []*featureproto.Feature{}
+	var features []*featureproto.Feature
 	cursor := ""
 	for {
 		resp, err := featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
@@ -986,15 +989,10 @@ func ListFeatures(
 		if err != nil {
 			return nil, err
 		}
-		for _, f := range resp.Features {
-			if !keepEvaluableFeature(f, holdoutTargets) {
-				continue
-			}
-			features = append(features, f)
-		}
+		features = append(features, resp.Features...)
 		featureSize := len(resp.Features)
 		if featureSize == 0 || featureSize < listRequestSize {
-			return features, nil
+			return featuredomain.FilterForServing(features, holdoutTargets), nil
 		}
 		cursor = resp.Cursor
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
@@ -430,6 +431,44 @@ func TestFeaturesForServerEvalKeepsDependencyNodes(t *testing.T) {
 	assert.Equal(t, "off", byID["dependent"].VariationId)
 	require.Contains(t, byID, "rule-dependent")
 	assert.Equal(t, ftproto.Reason_DEFAULT, byID["rule-dependent"].Reason.Type)
+}
+
+func TestStoppedHoldoutCacheKeepsDependencyNodes(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	dependent := flagWithVariations("dependent", true, "off", "hold", "on")
+	dependent.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	// A refresh after the group stops has no current targets. The cache
+	// filter has to keep the dependency or the evaluator never sees it.
+	cached := ftdomain.FilterForServing([]*ftproto.Feature{dependent, disabled, orphan}, nil)
+	cachedIDs := make([]string, 0, len(cached))
+	for _, feature := range cached {
+		cachedIDs = append(cachedIDs, feature.Id)
+	}
+	assert.Equal(t, []string{"dependent", "flag"}, cachedIDs)
+
+	kept, removed := FeaturesForServerEval(cached, ClearanceSnapshot(10))
+	assert.Empty(t, removed)
+	evaluations, err := NewEvaluator().EvaluateFeatures(kept, user, nil, nil, "", ClearanceSnapshot(10))
+	require.NoError(t, err)
+	require.Len(t, evaluations.Evaluations, 1)
+	assert.Equal(t, "dependent", evaluations.Evaluations[0].FeatureId)
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, evaluations.Evaluations[0].Reason.Type)
+	assert.Equal(t, "off", evaluations.Evaluations[0].VariationId)
+	assert.Contains(t, evaluations.ArchivedFeatureIds, "flag")
 }
 
 func TestFeaturesForEvalFiltersClearedDisabledTarget(t *testing.T) {

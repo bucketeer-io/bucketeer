@@ -418,7 +418,7 @@ func (c *cacheRefresher) fetchAllFeatures(
 	ctx context.Context,
 	environmentID string,
 ) (*featureproto.Features, error) {
-	features := []*featureproto.Feature{}
+	var listed []*featureproto.Feature
 	cursor := ""
 	targets, err := c.holdoutTargetIDs(ctx, environmentID)
 	if err != nil {
@@ -433,20 +433,18 @@ func (c *cacheRefresher) fetchAllFeatures(
 		if err != nil {
 			return nil, err
 		}
-		for _, f := range resp.Features {
-			_, targeted := targets[f.Id]
-			if !featuredomain.KeepForServing(&featuredomain.Feature{Feature: f}, targeted) {
-				continue
-			}
-			features = append(features, f)
-		}
+		// Filter after every page is loaded. A dependency can sit on a
+		// later page than the flag that needs it.
+		listed = append(listed, resp.Features...)
 		featureSize := len(resp.Features)
 		if featureSize == 0 || featureSize < cacheRefresherListPageSize {
 			break
 		}
 		cursor = resp.Cursor
 	}
-	return &featureproto.Features{Features: features}, nil
+	return &featureproto.Features{
+		Features: featuredomain.FilterForServing(listed, targets),
+	}, nil
 }
 
 func (c *cacheRefresher) holdoutTargetIDs(

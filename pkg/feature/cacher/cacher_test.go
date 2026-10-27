@@ -347,6 +347,23 @@ func TestRemoveOldFeaturesKeepsHoldoutTarget(t *testing.T) {
 	assert.Equal(t, []*ftproto.Feature{disabled, kept}, actual)
 }
 
+func TestRemoveOldFeaturesKeepsDependencyOfStoppedTarget(t *testing.T) {
+	t.Parallel()
+	disabled := &ftproto.Feature{Id: "flag", Enabled: false}
+	dependent := &ftproto.Feature{
+		Id:           "dependent",
+		Enabled:      true,
+		OffVariation: "off",
+		Prerequisites: []*ftproto.Prerequisite{
+			{FeatureId: "flag", VariationId: "on"},
+		},
+	}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	cacher := &featureFlagCacher{}
+	actual := cacher.removeOldFeatures([]*ftproto.Feature{dependent, disabled, orphan}, nil)
+	assert.Equal(t, []*ftproto.Feature{dependent, disabled}, actual)
+}
+
 func TestPutCache(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
