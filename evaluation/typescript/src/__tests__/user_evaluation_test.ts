@@ -3,6 +3,7 @@ import * as userEvaluation from '../userEvaluation';
 import { Evaluation } from '../proto/feature/evaluation_pb';
 import { GenerateFeaturesID, UserEvaluationsID, sortMapKeys } from '../userEvaluation';
 import { Feature } from '../proto/feature/feature_pb';
+import type { HoldoutGroup } from '../bucketeer';
 
 // Helper function to create an Evaluation object
 function NewEvaluation(id: string): Evaluation {
@@ -170,6 +171,34 @@ UserEvaluationsIDTestCases.forEach(({ desc, userID, userMetadata, features, expe
     const actual = UserEvaluationsID(userID, userMetadata, features ?? []);
     t.is(actual, expected, desc);
   });
+});
+
+function holdoutGroup(id: string, updatedAt: number): HoldoutGroup {
+  return {
+    getId: () => id,
+    getEnvironmentId: () => '',
+    getAssignmentType: () => 0,
+    getSamplingSeed: () => '',
+    getBucketStart: () => 0,
+    getPercentage: () => 0,
+    getSegmentId: () => '',
+    getUpdatedAt: () => updatedAt,
+    getFeaturesList: () => [],
+  };
+}
+
+test('UserEvaluationsID includes the live holdout group', (t) => {
+  const features = [NewFeature('feature-1', 1000)];
+  const without = UserEvaluationsID('user-1', {}, features);
+  const groupA = holdoutGroup('hg-a', 50);
+  const groupB = holdoutGroup('hg-b', 60);
+  const withA = UserEvaluationsID('user-1', {}, [NewFeature('feature-1', 1000)], [groupA]);
+  t.is(withA, '13300710561474652895');
+  t.not(withA, without);
+  t.is(
+    UserEvaluationsID('user-1', {}, [NewFeature('feature-1', 1000)], [groupA, groupB]),
+    UserEvaluationsID('user-1', {}, [NewFeature('feature-1', 1000)], [groupB, groupA]),
+  );
 });
 
 // Define test case structure

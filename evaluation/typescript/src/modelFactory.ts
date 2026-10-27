@@ -244,9 +244,14 @@ export function createEvaluation(
 
 //TODO: should we set the ruleId to empty string as default?
 //TODO: create optional constructor for Reason
-export function createReason(ruleId: string, type: Reason.TypeMap[keyof Reason.TypeMap]): Reason {
+export function createReason(
+  ruleId: string,
+  type: Reason.TypeMap[keyof Reason.TypeMap],
+  holdoutGroupId = '',
+): Reason {
   const reason = new Reason();
   reason.setType(type);
   reason.setRuleId(ruleId);
+  reason.setHoldoutGroupId(holdoutGroupId);
   return reason;
 }

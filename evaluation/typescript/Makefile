@@ -103,7 +103,8 @@ gen_proto: clean_proto
 	$(shell find $(PROTO_TARGETS) -type f -name "*.proto" \
 		-not -name "*service*.proto" \
 		-not -name "*scheduled*.proto" \
-		-not -name "*trigger*.proto")
+		-not -name "*trigger*.proto" \
+		-not -name "holdout.proto")
 
 .PHONY: clean_proto
 clean_proto:

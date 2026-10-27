@@ -8,6 +8,13 @@ import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
+import {
+  holdoutRequiresFullEval,
+  holdoutSegmentIds,
+  holdoutTargetVariation,
+  isHeldOut,
+} from './bucketeer';
+import type { HoldoutGroup } from './bucketeer';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 import { createReason } from './modelFactory';
 import * as yaml from 'js-yaml';
@@ -38,8 +45,17 @@ class Evaluator {
     mapSegmentUsers: Map<string, SegmentUser[]>,
     mapSegments: Map<string, Segment> | null,
     targetTag: string,
+    holdoutGroups?: HoldoutGroup[],
   ): Promise<UserEvaluations> {
-    return this.evaluate(features, user, mapSegmentUsers, mapSegments, false, targetTag);
+    return this.evaluate(
+      features,
+      user,
+      mapSegmentUsers,
+      mapSegments,
+      false,
+      targetTag,
+      holdoutGroups,
+    );
   }
 
   // GetPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
@@ -61,14 +77,43 @@ class Evaluator {
     evaluatedAt: number,
     userAttributesUpdated: boolean,
     targetTag: string,
+    holdoutGroups?: HoldoutGroup[],
   ): UserEvaluations {
     if (prevUEID === '') {
-      return this.evaluate(features, user, mapSegmentUsers, mapSegments, true, targetTag);
+      return this.evaluate(
+        features,
+        user,
+        mapSegmentUsers,
+        mapSegments,
+        true,
+        targetTag,
+        holdoutGroups,
+      );
     }
 
     const now = Math.floor(Date.now() / 1000);
     if (evaluatedAt < now - SECONDS_TO_RE_EVALUATE_ALL) {
-      return this.evaluate(features, user, mapSegmentUsers, mapSegments, true, targetTag);
+      return this.evaluate(
+        features,
+        user,
+        mapSegmentUsers,
+        mapSegments,
+        true,
+        targetTag,
+        holdoutGroups,
+      );
+    }
+    // A holdout change does not bump feature updatedAt.
+    if (holdoutRequiresFullEval(holdoutGroups, evaluatedAt)) {
+      return this.evaluate(
+        features,
+        user,
+        mapSegmentUsers,
+        mapSegments,
+        true,
+        targetTag,
+        holdoutGroups,
+      );
     }
 
     const adjustedEvalAt = evaluatedAt - SECONDS_FOR_ADJUSTMENT;
@@ -81,11 +126,27 @@ class Evaluator {
     // If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
     // it is considered unusual and a force update should be performed.
     if (updatedFeatures.length === 0) {
-      return this.evaluate(features, user, mapSegmentUsers, mapSegments, true, targetTag);
+      return this.evaluate(
+        features,
+        user,
+        mapSegmentUsers,
+        mapSegments,
+        true,
+        targetTag,
+        holdoutGroups,
+      );
     }
 
     const evalTargets = this.getEvalFeatures(updatedFeatures, features);
-    return this.evaluate(evalTargets, user, mapSegmentUsers, mapSegments, false, targetTag);
+    return this.evaluate(
+      evalTargets,
+      user,
+      mapSegmentUsers,
+      mapSegments,
+      false,
+      targetTag,
+      holdoutGroups,
+    );
   }
 
   private evaluate(
@@ -95,8 +156,10 @@ class Evaluator {
     mapSegments: Map<string, Segment> | null,
     forceUpdate: boolean,
     targetTag: string,
+    holdoutGroups?: HoldoutGroup[],
   ): UserEvaluations {
     const flagVariations: { [key: string]: string } = {};
+    const holdoutSegments = holdoutSegmentIds(holdoutGroups);
     // fs need to be sorted in order from upstream to downstream.
     const sortedFeatures = topologicalSort(features);
 
@@ -104,9 +167,9 @@ class Evaluator {
     const archivedIDs: string[] = [];
 
     for (const feature of sortedFeatures) {
-      const segmentUsers = this.listSegmentIDs(feature).flatMap(
-        (id) => mapSegmentUsers.get(id) || [],
-      );
+      const segmentUsers = this.listSegmentIDs(feature)
+        .concat(holdoutSegments)
+        .flatMap((id) => mapSegmentUsers.get(id) || []);
 
       const [reason, variation] = this.assignUser(
         feature,
@@ -114,6 +177,7 @@ class Evaluator {
         segmentUsers,
         mapSegments,
         flagVariations,
+        holdoutGroups,
       );
       // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       // This must be set for ALL features (including archived) for dependency resolution to work
@@ -164,6 +228,7 @@ class Evaluator {
       user.getId(),
       arrayToRecord(user.getDataMap().toArray()),
       features,
+      holdoutGroups,
     );
     const userEvaluations = NewUserEvaluations(id, evaluations, archivedIDs, forceUpdate);
     return userEvaluations;
@@ -203,7 +268,25 @@ class Evaluator {
     segmentUsers: SegmentUser[],
     segments: Map<string, Segment> | null,
     flagVariations: { [key: string]: string },
+    holdoutGroups?: HoldoutGroup[],
   ): [Reason, Variation] {
+    // Holdout is first: a held-out user always receives the group's variation,
+    // including when the flag is disabled or a prerequisite is unsatisfied.
+    if (holdoutGroups) {
+      for (const group of holdoutGroups) {
+        const variationId = holdoutTargetVariation(group, feature.getId());
+        if (variationId === undefined) {
+          continue;
+        }
+        if (isHeldOut(group, user, segmentUsers)) {
+          const variation = this.findVariation(variationId, feature.getVariationsList());
+          const reason = createReason('', Reason.Type.HOLDOUT, group.getId());
+          return [reason, variation];
+        }
+        // At most one serving group targets a flag. A miss stays on the normal path.
+        break;
+      }
+    }
     for (const pf of feature.getPrerequisitesList()) {
       const variationId = flagVariations[pf.getFeatureId()];
       if (!variationId) {

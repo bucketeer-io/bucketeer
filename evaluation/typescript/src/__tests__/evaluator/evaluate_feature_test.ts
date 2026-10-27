@@ -116,7 +116,7 @@ test('EvaluateFeature', async (t) => {
         variationName: 'Variation A',
         variationValue: 'A',
         variation: { id: 'variation-A', name: 'Variation A', value: 'A', description: '' },
-        reason: { ruleId: '', type: Reason.Type.OFF_VARIATION },
+        reason: { holdoutGroupId: '', ruleId: '', type: Reason.Type.OFF_VARIATION },
       },
       expectedError: null,
     },
@@ -134,7 +134,7 @@ test('EvaluateFeature', async (t) => {
         variationName: 'Variation B',
         variationValue: 'B',
         variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '' },
-        reason: { ruleId: '', type: Reason.Type.DEFAULT },
+        reason: { holdoutGroupId: '', ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
     },
@@ -152,7 +152,7 @@ test('EvaluateFeature', async (t) => {
         variationName: 'Variation B',
         variationValue: 'B',
         variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '' },
-        reason: { ruleId: '', type: Reason.Type.DEFAULT },
+        reason: { holdoutGroupId: '', ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
     },
@@ -170,7 +170,7 @@ test('EvaluateFeature', async (t) => {
         variationName: 'Variation A',
         variationValue: 'A',
         variation: { id: 'variation-A', name: 'Variation A', value: 'A', description: '' },
-        reason: { ruleId: '', type: Reason.Type.PREREQUISITE },
+        reason: { holdoutGroupId: '', ruleId: '', type: Reason.Type.PREREQUISITE },
       },
       expectedError: null,
     },
@@ -188,7 +188,7 @@ test('EvaluateFeature', async (t) => {
         variationName: 'Variation B',
         variationValue: 'B',
         variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '' },
-        reason: { ruleId: '', type: Reason.Type.DEFAULT },
+        reason: { holdoutGroupId: '', ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
     },
@@ -282,7 +282,7 @@ config:
           value: '{"config":{"enabled":false,"timeout":60}}',
           description: '',
         },
-        reason: { ruleId: '', type: Reason.Type.DEFAULT },
+        reason: { holdoutGroupId: '', ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
     },
@@ -314,10 +314,7 @@ config:
           const jsonData = JSON.parse(actual.getVariationValue());
           t.is(jsonData.config.enabled, false, 'YAML parsed correctly');
           t.is(jsonData.config.timeout, 60, 'YAML parsed correctly');
-          t.false(
-            actual.getVariationValue().includes('#'),
-            'YAML comments should be stripped',
-          );
+          t.false(actual.getVariationValue().includes('#'), 'YAML comments should be stripped');
         }
       }
     } catch (error) {

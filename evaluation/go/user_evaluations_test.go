@@ -157,6 +157,21 @@ func TestUserEvaluationsID(t *testing.T) {
 		actual := UserEvaluationsID(p.userID, p.userMetadata, p.features)
 		assert.Equal(t, p.expected, actual, p.desc)
 	}
+
+	features := []*ftproto.Feature{{Id: "feature-1", UpdatedAt: 1000}}
+	without := UserEvaluationsID("user-1", nil, features)
+	assert.Equal(t, without, UserEvaluationsID("user-1", nil, features, nil))
+	groupA := &ftproto.HoldoutGroup{Id: "hg-a", UpdatedAt: 50}
+	groupB := &ftproto.HoldoutGroup{Id: "hg-b", UpdatedAt: 60}
+	withA := UserEvaluationsID("user-1", nil, features, groupA)
+	assert.Equal(t, "13300710561474652895", withA)
+	assert.NotEqual(t, without, withA)
+	assert.Equal(t, withA, UserEvaluationsID("user-1", nil, features, groupA))
+	assert.Equal(t,
+		UserEvaluationsID("user-1", nil, features, groupA, groupB),
+		UserEvaluationsID("user-1", nil, features, groupB, groupA),
+	)
+	assert.NotEqual(t, withA, UserEvaluationsID("user-1", nil, features, &ftproto.HoldoutGroup{Id: "hg-a", UpdatedAt: 51}))
 }
 
 func TestGenerateFeaturesID(t *testing.T) {

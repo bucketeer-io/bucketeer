@@ -1,0 +1,134 @@
+{
+  "environmentId": "env-holdout",
+  "seed": "env-seed",
+  "segmentUsers": [
+    {"segmentId": "seg-1", "userId": "segment-user", "state": "INCLUDED"},
+    {"segmentId": "seg-1", "userId": "excluded-user", "state": "EXCLUDED"}
+  ],
+  "cases": [
+    {
+      "desc": "HASH membership inside the arc",
+      "userId": "user-3",
+      "group": {"id": "hg-hash", "assignmentType": "HASH", "bucketStart": 10, "percentage": 20, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-hash"}]
+    },
+    {
+      "desc": "HASH membership outside the arc",
+      "userId": "user-0",
+      "group": {"id": "hg-hash", "assignmentType": "HASH", "bucketStart": 10, "percentage": 20, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "HASH membership wraps onto the high side",
+      "userId": "user-4",
+      "group": {"id": "hg-wrap", "assignmentType": "HASH", "bucketStart": 97, "percentage": 5, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-wrap"}]
+    },
+    {
+      "desc": "HASH membership wraps onto the low side",
+      "userId": "user-27",
+      "group": {"id": "hg-wrap", "assignmentType": "HASH", "bucketStart": 97, "percentage": 5, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-wrap"}]
+    },
+    {
+      "desc": "HASH comparison band is not held out",
+      "userId": "user-44",
+      "group": {"id": "hg-wrap", "assignmentType": "HASH", "bucketStart": 97, "percentage": 5, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "50 percent cap holds the lower half",
+      "userId": "user-1",
+      "group": {"id": "hg-fifty", "assignmentType": "HASH", "bucketStart": 0, "percentage": 50, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-fifty"}]
+    },
+    {
+      "desc": "50 percent cap leaves the upper half on the normal path",
+      "userId": "user-2",
+      "group": {"id": "hg-fifty", "assignmentType": "HASH", "bucketStart": 0, "percentage": 50, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "percentage rounding includes a user inside 33.333",
+      "userId": "user-41",
+      "group": {"id": "hg-round", "assignmentType": "HASH", "bucketStart": 0, "percentage": 33.333, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-round"}]
+    },
+    {
+      "desc": "percentage rounding excludes a user at the 33.333 end",
+      "userId": "user-72",
+      "group": {"id": "hg-round", "assignmentType": "HASH", "bucketStart": 0, "percentage": 33.333, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "percentage 33.3334 rounds to the same 33.333 endpoint",
+      "userId": "user-72",
+      "group": {"id": "hg-round", "assignmentType": "HASH", "bucketStart": 0, "percentage": 33.3334, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "SEGMENT mode holds an included user",
+      "userId": "segment-user",
+      "group": {"id": "hg-segment", "assignmentType": "SEGMENT", "segmentId": "seg-1", "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-segment"}]
+    },
+    {
+      "desc": "SEGMENT mode does not hold an excluded user",
+      "userId": "excluded-user",
+      "group": {"id": "hg-segment", "assignmentType": "SEGMENT", "segmentId": "seg-1", "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "SEGMENT mode does not hold an absent user",
+      "userId": "user-0",
+      "group": {"id": "hg-segment", "assignmentType": "SEGMENT", "segmentId": "seg-1", "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}]
+    },
+    {
+      "desc": "held-out user receives the holdout variation when the flag is disabled",
+      "userId": "user-3",
+      "group": {"id": "hg-hash", "assignmentType": "HASH", "bucketStart": 10, "percentage": 20, "targets": [{"featureId": "flag", "variationId": "hold"}]},
+      "features": [{"id": "flag", "enabled": false, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"}],
+      "expected": [{"featureId": "flag", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-hash"}]
+    },
+    {
+      "desc": "held-out user keeps the holdout variation when a prerequisite is unsatisfied",
+      "userId": "user-3",
+      "group": {"id": "hg-hash", "assignmentType": "HASH", "bucketStart": 10, "percentage": 20, "targets": [{"featureId": "child", "variationId": "hold"}]},
+      "features": [
+        {"id": "parent", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"},
+        {"id": "child", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on", "prerequisites": [{"featureId": "parent", "variationId": "other"}]}
+      ],
+      "expected": [
+        {"featureId": "parent", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""},
+        {"featureId": "child", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-hash"}
+      ]
+    },
+    {
+      "desc": "downstream prerequisite resolves against the holdout variation",
+      "userId": "user-3",
+      "group": {"id": "hg-hash", "assignmentType": "HASH", "bucketStart": 10, "percentage": 20, "targets": [{"featureId": "parent", "variationId": "hold"}]},
+      "features": [
+        {"id": "parent", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on"},
+        {"id": "child", "enabled": true, "offVariation": "off", "variations": ["off", "hold", "on"], "defaultVariation": "on", "prerequisites": [{"featureId": "parent", "variationId": "hold"}]}
+      ],
+      "expected": [
+        {"featureId": "parent", "variationId": "hold", "reason": "HOLDOUT", "holdoutGroupId": "hg-hash"},
+        {"featureId": "child", "variationId": "on", "reason": "DEFAULT", "holdoutGroupId": ""}
+      ]
+    }
+  ]
+}

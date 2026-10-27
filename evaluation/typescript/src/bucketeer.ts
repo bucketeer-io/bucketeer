@@ -1,4 +1,34 @@
 import murmurHash3 from 'murmurhash3js';
+import { SegmentUser } from './proto/feature/segment_pb';
+import { User } from './proto/user/user_pb';
+
+// Matches proto HoldoutGroup.AssignmentType. The evaluator takes this shape so it
+// does not import holdout.proto, which depends on google.api.field_behavior.
+export const HoldoutAssignment = {
+  HASH: 0,
+  SEGMENT: 1,
+} as const;
+
+export interface HoldoutFeature {
+  getFeatureId(): string;
+  getHoldoutVariationId(): string;
+  getRemovedAt(): number;
+}
+
+export interface HoldoutGroup {
+  getId(): string;
+  getEnvironmentId(): string;
+  getAssignmentType(): number;
+  getSamplingSeed(): string;
+  getBucketStart(): number;
+  getPercentage(): number;
+  getSegmentId(): string;
+  getUpdatedAt(): number;
+  getFeaturesList(): HoldoutFeature[];
+}
+
+// Thousandths of a percent on [0, 100). Matches DECIMAL(6,3).
+const HOLDOUT_PERCENT_SCALE = 100000;
 
 class Bucketeer {
   // Calculate the input hash of the target property and map it to a float64 between [0,1]
@@ -34,6 +64,106 @@ class Bucketeer {
     // Normalize the combined value to the range [0,1].
     return full / maxValue;
   }
+}
+
+const holdoutBucketeer = new Bucketeer();
+
+// isHeldOut matches evaluation/go IsHeldOut. HASH uses one murmur3 hash.
+// SEGMENT checks included segment users and ignores segment rules.
+export function isHeldOut(
+  group: HoldoutGroup | null | undefined,
+  user: User | null | undefined,
+  segmentUsers: SegmentUser[],
+): boolean {
+  if (!group || !user) {
+    return false;
+  }
+  if (group.getAssignmentType() === HoldoutAssignment.SEGMENT) {
+    return containsIncludedSegmentUser(group.getSegmentId(), user.getId(), segmentUsers);
+  }
+  if (group.getAssignmentType() !== HoldoutAssignment.HASH) {
+    return false;
+  }
+  if (group.getSamplingSeed() === '' || group.getPercentage() <= 0) {
+    return false;
+  }
+  const bucket = holdoutBucketeer.bucket(
+    `holdout-${group.getEnvironmentId()}-${user.getId()}-${group.getSamplingSeed()}`,
+  );
+  return holdoutArcContains(bucket, group.getBucketStart(), group.getPercentage());
+}
+
+export function holdoutArcContains(
+  bucket: number,
+  bucketStart: number,
+  percentage: number,
+): boolean {
+  const start = Math.round(bucketStart * 1000);
+  const end = Math.round((bucketStart + percentage) * 1000);
+  let pos = Math.round(bucket * HOLDOUT_PERCENT_SCALE);
+  if (pos >= HOLDOUT_PERCENT_SCALE) {
+    pos = 0;
+  }
+  if (end <= HOLDOUT_PERCENT_SCALE) {
+    return pos >= start && pos < end;
+  }
+  return pos >= start || pos < end - HOLDOUT_PERCENT_SCALE;
+}
+
+export function holdoutSegmentIds(groups: HoldoutGroup[] | undefined): string[] {
+  if (!groups || groups.length === 0) {
+    return [];
+  }
+  const ids: string[] = [];
+  for (const group of groups) {
+    if (
+      !group ||
+      group.getAssignmentType() !== HoldoutAssignment.SEGMENT ||
+      group.getSegmentId() === ''
+    ) {
+      continue;
+    }
+    if (!ids.includes(group.getSegmentId())) {
+      ids.push(group.getSegmentId());
+    }
+  }
+  return ids;
+}
+
+export function holdoutTargetVariation(group: HoldoutGroup, featureId: string): string | undefined {
+  for (const feature of group.getFeaturesList()) {
+    if (currentHoldoutTarget(feature, featureId)) {
+      return feature.getHoldoutVariationId();
+    }
+  }
+  return undefined;
+}
+
+function currentHoldoutTarget(feature: HoldoutFeature, featureId: string): boolean {
+  return feature.getRemovedAt() === 0 && feature.getFeatureId() === featureId;
+}
+
+export function holdoutRequiresFullEval(
+  groups: HoldoutGroup[] | undefined,
+  evaluatedAt: number,
+): boolean {
+  if (!groups) {
+    return false;
+  }
+  return groups.some((group) => group.getId() !== '' && evaluatedAt < group.getUpdatedAt());
+}
+
+function containsIncludedSegmentUser(
+  segmentId: string,
+  userId: string,
+  segmentUsers: SegmentUser[],
+): boolean {
+  return segmentUsers.some(
+    (segmentUser) =>
+      segmentUser.getSegmentId() === segmentId &&
+      segmentUser.getUserId() === userId &&
+      segmentUser.getState() === SegmentUser.State.INCLUDED,
+  );
 }
 
 export { Bucketeer };

@@ -93,8 +93,8 @@ Indexes: `(environment_id, status)` on `holdout_group`; `(holdout_group_id, envi
 
 `IsHeldOut(group, user)` lives in the shared evaluation library:
 
-- **HASH**: the user's bucket is `b = bucket("holdout-{environmentID}-{userID}-{seed}")`, using the existing murmur3-128 bucketer (`evaluation/go/bucketeer.go`), and the user is held out when `b` falls inside the group's range `[bucket_start, bucket_start + percentage) / 100`, wrapping at 1.0.
-- **SEGMENT**: the user is a member of the referenced segment.
+- **HASH**: the user's bucket is `b = bucket("holdout-{environmentID}-{userID}-{seed}")`, using the existing murmur3-128 bucketer (`evaluation/go/bucketeer.go`), and the user is held out when `b` falls inside the group's range `[bucket_start, bucket_start + percentage) / 100`, wrapping at 1.0. `bucket_start`, `percentage`, and `b` are rounded to the DECIMAL(6,3) grid (thousandths of a percent on [0, 100)) before the half-open comparison, so the exclusive end does not depend on binary float error. A stored percentage of `33.333` therefore ends at `0.33333`, and `33.3334` rounds to the same endpoint.
+- **SEGMENT**: the user is an included member of the referenced segment. Evaluation checks the segment users passed in for `segment_id` and state `INCLUDED`. Segment rules are not consulted. An excluded or absent user is not held out.
 
 #### 4.2.1 HASH mode (default)
 
@@ -169,7 +169,7 @@ The honest risk: **an old server SDK ignores the unknown field and silently serv
 - The detail page shows an **SDK compatibility** panel built from that metric, listing non-compliant source/version pairs, and the group cannot be moved to `RUNNING` while unacknowledged incompatible clients are reporting. The panel also tracks the **mixed-path overlap** — held-out users who were also served through an incompatible SDK in the same day (§4.4) — so the residual contamination is a measured number rather than a guess.
 - Requests are never rejected. Breaking production traffic to protect a measurement is the wrong trade.
 
-Caching mirrors the feature flags path: a `HoldoutGroupCache` with the same shape as the existing experiments cache, refreshed by the `cacher` batch job and evicted on write. SEGMENT mode reuses the existing segment-users cache.
+Caching mirrors the feature flags path: a `HoldoutGroupCache` with the same shape as the existing experiments cache, refreshed by the `cacher` batch job and on every holdout write. The gateway reads that cache only. A miss is treated as no live group and is not filled from MySQL on the request path; the cacher stores an empty snapshot when nothing is serving, so a miss is the cold-cache case rather than "no group". SEGMENT mode reuses the existing segment-users cache.
 
 ### 4.4 Measurement
 
