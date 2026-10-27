@@ -19,7 +19,6 @@ import (
 	"errors"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -941,15 +940,16 @@ func newFeatureHoldoutEvent(
 	)
 }
 
-// removeHoldoutFeature drops featureID from the in-memory target list. IDs are
-// matched case-insensitively to mirror the storage lookup on MySQL.
+// removeHoldoutFeature drops featureID from the in-memory target list.
+// Enrollment stores canonical IDs and callers pass the loaded feature.Id, so
+// an exact match mirrors what storage removed on both MySQL and PostgreSQL.
 func removeHoldoutFeature(
 	features []*featureproto.HoldoutGroupFeature,
 	featureID string,
 ) []*featureproto.HoldoutGroupFeature {
 	out := features[:0]
 	for _, feature := range features {
-		if strings.EqualFold(feature.GetFeatureId(), featureID) {
+		if feature.GetFeatureId() == featureID {
 			continue
 		}
 		out = append(out, feature)

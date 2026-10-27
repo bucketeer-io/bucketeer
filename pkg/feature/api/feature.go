@@ -709,7 +709,9 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 		)
 		return nil, nil, err
 	}
-	if feature.Deleted {
+	// MySQL resolves the ID case-insensitively; keep the exact-match semantics
+	// of the previous list scan so downstream checks keyed on req.Id hold.
+	if feature.Deleted || feature.Id != req.Id {
 		err := statusFeatureNotFound.Err()
 		s.logger.Error(
 			"Failed to find feature",

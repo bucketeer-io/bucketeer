@@ -593,21 +593,28 @@ func TestUpdateEnableFeatureLocksFlagRow(t *testing.T) {
 	require.NoError(t, service.updateEnableFeature(context.Background(), "fid", "ns0", true))
 }
 
-func TestExecuteScheduledFlagChangeLocksScheduleAndFlagRows(t *testing.T) {
+func pendingScheduledChange(payload *featureproto.ScheduledChangePayload) *featuredomain.ScheduledFlagChange {
+	return &featuredomain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
+		Id:            "sfc",
+		FeatureId:     "fid",
+		EnvironmentId: "ns0",
+		Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		Payload:       payload,
+	}}
+}
+
+func TestExecuteScheduledFlagChangeLocksFlagBeforeSchedule(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service, _ := newHoldoutService(t, controller)
 	expectTx(service)
 	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
 	gomock.InOrder(
-		// Both reads are locking reads so the MySQL snapshot is taken after the flag lock.
-		scheduled.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc", "ns0").
-			Return(&featuredomain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
-				Id:            "sfc",
-				FeatureId:     "fid",
-				EnvironmentId: "ns0",
-				Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
-			}}, nil),
+		// The flag ID is resolved with a plain read outside the transaction...
+		scheduled.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
+			Return(pendingScheduledChange(nil), nil),
+		// ...so the flag row can be locked before the schedule row, matching
+		// the order archive uses (flag lock, then cancel its schedules).
 		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 			gomock.Any(), "fid", "ns0",
 		).Return(nil, v2fs.ErrFeatureNotFound),
@@ -620,22 +627,42 @@ func TestExecuteScheduledFlagChangeLocksScheduleAndFlagRows(t *testing.T) {
 	assert.Equal(t, codes.NotFound, status.Code(err))
 }
 
+func TestExecuteScheduledFlagChangeRechecksScheduleUnderLock(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service, _ := newHoldoutService(t, controller)
+	expectTx(service)
+	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
+	executed := pendingScheduledChange(nil)
+	executed.Status = featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED
+	gomock.InOrder(
+		scheduled.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
+			Return(pendingScheduledChange(nil), nil),
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "fid", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil),
+		// Another executor finished this schedule between the plain read and the lock.
+		scheduled.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc", "ns0").
+			Return(executed, nil),
+	)
+	_, err := service.ExecuteScheduledFlagChange(
+		createContextWithTokenRoleUnassigned(),
+		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
+	)
+	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+}
+
 func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service, storage := newHoldoutService(t, controller)
 	expectTx(service)
-	service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage).EXPECT().
-		GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc", "ns0").
-		Return(&featuredomain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
-			Id:            "sfc",
-			FeatureId:     "fid",
-			EnvironmentId: "ns0",
-			Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
-			Payload: &featureproto.ScheduledChangePayload{
-				Archived: wrapperspb.Bool(true),
-			},
-		}}, nil)
+	archive := &featureproto.ScheduledChangePayload{Archived: wrapperspb.Bool(true)}
+	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
+	scheduled.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
+		Return(pendingScheduledChange(archive), nil)
+	scheduled.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc", "ns0").
+		Return(pendingScheduledChange(archive), nil)
 	// Once by the executor, once by updateFeatureWithinTransaction; both are locking reads.
 	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 		gomock.Any(), "fid", "ns0",
@@ -646,8 +673,7 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 	storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "fid").Return([]holdoutdomain.FeatureTarget{{
 		GroupID: "hg", GroupName: "holdout", FeatureID: "fid",
 	}}, nil)
-	service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage).EXPECT().
-		UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
+	scheduled.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
 
 	_, err := service.ExecuteScheduledFlagChange(
 		createContextWithTokenRoleUnassigned(),

@@ -471,6 +471,10 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 			return f(ctxWithTx)
 		},
 	)
+	// Plain read outside the transaction resolves the flag ID; the locking
+	// read inside it re-checks the schedule after the flag row is locked.
+	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
+		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
 	scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc-id", "ns0").
 		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
 	featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
@@ -551,6 +555,10 @@ func TestExecuteScheduledFlagChange_TransientErrorKeepsSchedulePending(t *testin
 			return f(ctx)
 		},
 	)
+	// Plain read outside the transaction resolves the flag ID; the locking
+	// read inside it re-checks the schedule after the flag row is locked.
+	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
+		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
 	scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc-id", "ns0").
 		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
 	featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), "feature-id", "ns0").Return(feature, nil)

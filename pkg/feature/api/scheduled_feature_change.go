@@ -656,36 +656,40 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	// forever.
 	var failureReason string
 
+	// Resolve the flag ID outside the transaction so the lock order inside it
+	// can be flag row first, then schedule row. Archiving a flag (which cancels
+	// its pending schedules) takes the same order, so the two cannot deadlock.
+	// A plain read here is safe: it is not part of the transaction snapshot.
+	// The schedule is re-read under its lock below before it is trusted.
+	pending, err := s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctx, req.Id, req.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
+			return nil, statusScheduledFlagChangeNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to get scheduled flag change for execution",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, statusInternal.Err()
+	}
+	if !pending.IsPending() {
+		return nil, statusScheduledFlagChangeNotPending.Err()
+	}
+	featureID := pending.FeatureId
+	// Seed with the unlocked copy so a permanent failure before the schedule
+	// row is locked (e.g. the flag no longer exists) can still be marked FAILED.
+	sfc = pending
+
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		// Both reads below are locking reads. On MySQL REPEATABLE READ a
 		// locking read does not pin the transaction snapshot, so the first
 		// consistent read (the holdout target guard) still sees an enrollment
-		// that committed just before the flag lock was granted. Locking the
-		// schedule row also stops two executors from running the same schedule.
-		var err error
-		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChangeForUpdate(ctxWithTx, req.Id, req.EnvironmentId)
-		if err != nil {
-			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
-				return statusScheduledFlagChangeNotFound.Err()
-			}
-			s.logger.Error(
-				"Failed to get scheduled flag change for execution",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return statusInternal.Err()
-		}
-
-		// Only allow executing pending schedules
-		if !sfc.IsPending() {
-			return statusScheduledFlagChangeNotPending.Err()
-		}
-
-		// Lock the flag row before the first consistent read of this transaction.
-		feature, err := s.featureStorage.GetFeatureForUpdate(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
+		// that committed just before the flag lock was granted.
+		feature, err := s.featureStorage.GetFeatureForUpdate(ctxWithTx, featureID, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2fs.ErrFeatureNotFound) {
 				failureReason = "Feature not found"
@@ -696,7 +700,43 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
-					zap.String("featureId", sfc.FeatureId),
+					zap.String("featureId", featureID),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
+		}
+
+		// Lock the schedule row so two executors cannot run the same schedule,
+		// then re-check it: it may have been executed or cancelled since the
+		// unlocked read above.
+		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChangeForUpdate(ctxWithTx, req.Id, req.EnvironmentId)
+		if err != nil {
+			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
+				return statusScheduledFlagChangeNotFound.Err()
+			}
+			s.logger.Error(
+				"Failed to lock scheduled flag change for execution",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
+		}
+		if !sfc.IsPending() {
+			return statusScheduledFlagChangeNotPending.Err()
+		}
+		if sfc.FeatureId != featureID {
+			// The locked flag is not the one this schedule targets; do not
+			// apply it under the wrong lock.
+			s.logger.Error(
+				"Scheduled flag change target changed between reads",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("id", req.Id),
+					zap.String("featureId", featureID),
+					zap.String("lockedFeatureId", sfc.FeatureId),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
