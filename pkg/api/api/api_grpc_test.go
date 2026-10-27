@@ -40,6 +40,7 @@ import (
 	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	coderefclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/client/mock"
 	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
@@ -2276,6 +2277,88 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A hidden holdout target is reported in ArchivedFeatureFlagIds on every diff
+// poll. Those synthetic removals must not count as "something changed" for the
+// empty-diff fallback: when a visible flag changed but fell behind the diff
+// window, the SDK must still get the full set with ForceUpdate instead of
+// adopting the new feature-flags ID without that flag.
+func TestGrpcGetFeatureFlagsHiddenHoldoutTargetDoesNotSuppressForceResync(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	timeNow := time.Now()
+	apiKey := "api-key-id"
+	envNamespace := "ns0"
+	tag := "tag"
+	visible := &featureproto.Feature{
+		Id:        "visible",
+		Version:   2,
+		Tags:      []string{tag},
+		Enabled:   true,
+		UpdatedAt: timeNow.Add(-40 * time.Minute).Unix(),
+	}
+	hidden := &featureproto.Feature{
+		Id:        "hidden",
+		Version:   1,
+		Tags:      []string{tag},
+		Enabled:   false,
+		UpdatedAt: timeNow.Add(-40 * time.Minute).Unix(),
+	}
+	expectAPIKey := func(gs *grpcGatewayService) {
+		gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+			&accountproto.EnvironmentAPIKey{
+				Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+				ApiKey: &accountproto.APIKey{
+					Id:       apiKey,
+					Role:     accountproto.APIKey_SDK_SERVER,
+					Disabled: false,
+				},
+			}, nil)
+		gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+			&featureproto.Features{Features: []*featureproto.Feature{visible, hidden}}, nil)
+	}
+	newService := func() *grpcGatewayService {
+		gs := newGrpcGatewayServiceWithMock(t, mockController)
+		gs.holdoutGroupCache = cachev3.NewHoldoutGroupCache(cachev3.NewInMemoryCache(), time.Minute)
+		require.NoError(t, gs.holdoutGroupCache.Put(evaluation.ClearanceSnapshot(0), envNamespace))
+		expectAPIKey(gs)
+		return gs
+	}
+	ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{"authorization": []string{apiKey}})
+	visibleOnlyID := evaluation.GenerateFeaturesID([]*featureproto.Feature{visible})
+
+	// The visible flag changed, but the client's cursor is ahead of its
+	// UpdatedAt plus the grace window, so the timestamp diff excludes it.
+	actual, err := newService().GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
+		Tag:            tag,
+		FeatureFlagsId: "stale-id",
+		RequestedAt:    timeNow.Add(-5 * time.Minute).Unix(),
+		SourceId:       eventproto.SourceId_GO_SERVER,
+		SdkVersion:     "v0.0.1",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, visibleOnlyID, actual.FeatureFlagsId)
+	assert.True(t, actual.ForceUpdate, "the hidden flag's removal must not mask the missed visible change")
+	assert.Equal(t, []*featureproto.Feature{visible}, actual.Features)
+	assert.Empty(t, actual.ArchivedFeatureFlagIds)
+	assert.NotContains(t, actual.Features, hidden)
+
+	// A regular diff still names the hidden flag so the SDK deletes it.
+	actual, err = newService().GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
+		Tag:            tag,
+		FeatureFlagsId: "stale-id",
+		RequestedAt:    timeNow.Add(-45 * time.Minute).Unix(),
+		SourceId:       eventproto.SourceId_GO_SERVER,
+		SdkVersion:     "v0.0.1",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, visibleOnlyID, actual.FeatureFlagsId)
+	assert.False(t, actual.ForceUpdate)
+	assert.Equal(t, []*featureproto.Feature{visible}, actual.Features)
+	assert.Equal(t, []string{"hidden"}, actual.ArchivedFeatureFlagIds)
 }
 
 func TestGrpcGetEvaluationsValidation(t *testing.T) {

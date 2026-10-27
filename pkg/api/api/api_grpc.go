@@ -1026,9 +1026,6 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
-	// Hidden holdout targets are not locally evaluable. Name them so a diff
-	// deletes a variation the SDK cached before the flag was withheld.
-	archivedIDs = append(archivedIDs, hiddenFeatureIDs(hidden)...)
 	// Force-recover fallback: ffID mismatched but the diff filter still
 	// excluded every flag AND there are no archives. Should be rare with
 	// the grace window above but kept as a defense-in-depth: returning an
@@ -1036,6 +1033,11 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	// change and silently stay stale. Return the full set with
 	// ForceUpdate=true so the SDK reconciles. Tracked under a distinct
 	// metric label for observability.
+	//
+	// Hidden holdout targets are appended below, after this check. They are
+	// repeated on every diff poll, so counting them here would let a
+	// persistent hidden flag mask a visible change that fell behind the
+	// window, and the SDK would adopt the new ffID without receiving it.
 	if len(updatedFeatures) == 0 && len(archivedIDs) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeForceAll).Inc()
@@ -1057,6 +1059,9 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ForceUpdate:            true,
 		}, nil
 	}
+	// Hidden holdout targets are not locally evaluable. Name them so a diff
+	// deletes a variation the SDK cached before the flag was withheld.
+	archivedIDs = append(archivedIDs, hiddenFeatureIDs(hidden)...)
 	getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 		environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff).Inc()
 	return &gwproto.GetFeatureFlagsResponse{

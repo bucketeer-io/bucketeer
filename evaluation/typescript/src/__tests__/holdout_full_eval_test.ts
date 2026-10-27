@@ -1,6 +1,11 @@
 import test from 'ava';
 import { Evaluator } from '../evaluation';
-import { HoldoutAssignment } from '../bucketeer';
+import {
+  HoldoutAssignment,
+  UNAVAILABLE_HOLDOUT_UPDATED_AT,
+  issuedWithoutHoldout,
+} from '../bucketeer';
+import { UserEvaluationsID } from '../userEvaluation';
 import type { HoldoutFeature, HoldoutGroup } from '../bucketeer';
 import { Feature } from '../proto/feature/feature_pb';
 import { Reason } from '../proto/feature/reason_pb';
@@ -147,4 +152,97 @@ test('holdout cursor uses the feature-diff grace window and a stop revision', (t
     t.is(stale?.getReason()?.getType(), tc.staleReason, tc.name);
     t.is(stale?.getVariationId(), tc.staleVariation, tc.name);
   });
+});
+
+test('unavailable holdout snapshot is always stale', (t) => {
+  const now = Math.floor(Date.now() / 1000);
+  const features = [flag('stale', now - 1000), flag('fresh', now - 10)];
+  const actual = new Evaluator().evaluateFeaturesByEvaluatedAt(
+    [...features],
+    createUser('user-1', null),
+    new Map(),
+    null,
+    'previous',
+    now - 100,
+    false,
+    '',
+    [group('', UNAVAILABLE_HOLDOUT_UPDATED_AT, false)],
+  );
+  t.true(actual.getForceUpdate());
+  t.deepEqual(
+    actual.getEvaluationsList().map((evaluation) => evaluation.getFeatureId()),
+    ['stale', 'fresh'],
+  );
+});
+
+// An ID issued while the holdout snapshot was unavailable covers evaluations
+// without holdout assignments. After recovery the live group can predate the
+// client's cursor, so the staleness check does not fire. The marked ID must
+// force a full evaluation that restores HOLDOUT instead of a diff.
+test('recovery after an unavailable holdout snapshot forces a full evaluation', (t) => {
+  const now = Math.floor(Date.now() / 1000);
+  const evaluatedAt = now - 100;
+  const features = [flag('stale', now - 1000), flag('fresh', now - 10)];
+  const user = createUser('user-1', null);
+  const live = group('hg', now - 5000, true);
+
+  const outageID = UserEvaluationsID(
+    user.getId(),
+    {},
+    [...features],
+    [group('', UNAVAILABLE_HOLDOUT_UPDATED_AT, false)],
+  );
+  t.true(issuedWithoutHoldout(outageID));
+  t.is(
+    outageID,
+    UserEvaluationsID(
+      user.getId(),
+      {},
+      [...features],
+      [group('', UNAVAILABLE_HOLDOUT_UPDATED_AT, false)],
+    ),
+  );
+  t.not(outageID, UserEvaluationsID(user.getId(), {}, [...features]));
+  t.false(issuedWithoutHoldout(UserEvaluationsID(user.getId(), {}, [...features], [live])));
+  t.false(
+    issuedWithoutHoldout(
+      UserEvaluationsID(user.getId(), {}, [...features], [group('', now, false)]),
+    ),
+  );
+
+  const evaluator = new Evaluator();
+  const recovered = evaluator.evaluateFeaturesByEvaluatedAt(
+    [...features],
+    user,
+    new Map(),
+    null,
+    outageID,
+    evaluatedAt,
+    false,
+    '',
+    [live],
+  );
+  t.true(recovered.getForceUpdate());
+  const stale = recovered
+    .getEvaluationsList()
+    .find((evaluation) => evaluation.getFeatureId() === 'stale');
+  t.is(stale?.getReason()?.getType(), Reason.Type.HOLDOUT);
+  t.is(stale?.getVariationId(), 'hold');
+
+  const diff = evaluator.evaluateFeaturesByEvaluatedAt(
+    [...features],
+    user,
+    new Map(),
+    null,
+    'previous',
+    evaluatedAt,
+    false,
+    '',
+    [live],
+  );
+  t.false(diff.getForceUpdate());
+  t.deepEqual(
+    diff.getEvaluationsList().map((evaluation) => evaluation.getFeatureId()),
+    ['fresh'],
+  );
 });

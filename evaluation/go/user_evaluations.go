@@ -79,7 +79,13 @@ func UserEvaluationsID(
 			)
 		}
 	}
-	return strconv.FormatUint(h.Sum64(), 10)
+	id := strconv.FormatUint(h.Sum64(), 10)
+	// An ID issued without a readable holdout snapshot is marked so the next
+	// evaluation after the snapshot is back runs in full. See IssuedWithoutHoldout.
+	if holdoutUnavailable(groups) {
+		return unavailableUEIDPrefix + id
+	}
+	return id
 }
 
 func sortedHoldoutTargets(group *ftproto.HoldoutGroup) []*ftproto.HoldoutGroupFeature {

@@ -8,7 +8,7 @@ import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
-import { HoldoutMembership, holdoutRequiresFullEval } from './bucketeer';
+import { HoldoutMembership, holdoutRequiresFullEval, issuedWithoutHoldout } from './bucketeer';
 import type { HoldoutGroup } from './bucketeer';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 import { createReason } from './modelFactory';
@@ -77,7 +77,11 @@ class Evaluator {
     targetTag: string,
     holdoutGroups?: HoldoutGroup[],
   ): UserEvaluations {
-    if (prevUEID === '') {
+    // An ID issued while the holdout snapshot was unavailable covers
+    // evaluations with no holdout assignments. A live group restored after
+    // that may predate the client's cursor, so the staleness check below
+    // would not catch it; reconcile in full instead of merging a diff.
+    if (prevUEID === '' || issuedWithoutHoldout(prevUEID)) {
       return this.evaluate(
         features,
         user,

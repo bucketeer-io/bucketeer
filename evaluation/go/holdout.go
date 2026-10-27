@@ -17,6 +17,7 @@ package evaluation
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -195,6 +196,33 @@ func UnavailableHoldoutSnapshot() *ftproto.HoldoutGroup {
 	return ClearanceSnapshot(unavailableHoldoutUpdatedAt)
 }
 
+// unavailableUEIDPrefix marks a user evaluations ID that was issued while
+// the holdout snapshot was unavailable. The evaluations behind that ID were
+// computed without holdout assignments. When the snapshot is readable again,
+// a live group whose updated_at predates the client's cursor would otherwise
+// pass the staleness check, and a partial diff would adopt the live ID
+// without restoring HOLDOUT for its targets. The prefix lets the next
+// evaluation detect that recovery and run a full one. The ID is opaque to
+// SDKs, which only store it and send it back.
+const unavailableUEIDPrefix = "unavailable-holdout:"
+
+// holdoutUnavailable reports whether any snapshot is the unavailable marker.
+func holdoutUnavailable(groups []*ftproto.HoldoutGroup) bool {
+	for _, group := range groups {
+		if group != nil && group.Id == "" && group.UpdatedAt == unavailableHoldoutUpdatedAt {
+			return true
+		}
+	}
+	return false
+}
+
+// IssuedWithoutHoldout reports whether ueid was issued while the holdout
+// snapshot was unavailable, so the client's cached evaluations have no
+// holdout assignments and must be fully reconciled.
+func IssuedWithoutHoldout(ueid string) bool {
+	return strings.HasPrefix(ueid, unavailableUEIDPrefix)
+}
+
 func holdoutVariationID(group *ftproto.HoldoutGroup, featureID string) (string, bool) {
 	if group == nil {
 		return "", false
@@ -280,19 +308,35 @@ func FeaturesForServerEval(
 	if group == nil {
 		return features, nil
 	}
-	targets := HoldoutTargetFeatureIDs(group)
+	// Every environment carries a snapshot once the cacher has run, so this
+	// runs for every evaluation request. Nothing to drop is the common case:
+	// find out before building the lookup map or walking dependencies.
+	var targets map[string]struct{}
+	var droppable map[string]struct{}
+	for _, feature := range features {
+		if feature == nil || feature.Id == "" || feature.Enabled || feature.OffVariation != "" {
+			continue
+		}
+		if targets == nil {
+			targets = HoldoutTargetFeatureIDs(group)
+		}
+		if _, targeted := targets[feature.Id]; targeted {
+			continue
+		}
+		if droppable == nil {
+			droppable = make(map[string]struct{})
+		}
+		droppable[feature.Id] = struct{}{}
+	}
+	if len(droppable) == 0 {
+		return features, nil
+	}
 	byID := make(map[string]*ftproto.Feature, len(features))
-	droppable := make(map[string]struct{})
 	for _, feature := range features {
 		if feature == nil || feature.Id == "" {
 			continue
 		}
 		byID[feature.Id] = feature
-		if !feature.Enabled && feature.OffVariation == "" {
-			if _, targeted := targets[feature.Id]; !targeted {
-				droppable[feature.Id] = struct{}{}
-			}
-		}
 	}
 	// Dependencies of a flag that will be evaluated have to stay in the
 	// graph. Walk from those flags so a dropped prerequisite of another
@@ -373,7 +417,7 @@ func holdoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
 		}
 		// A cache miss has no real revision. Treating it as fresh lets a
 		// partial flag diff leave a cached HOLDOUT assignment in place.
-		if group.UpdatedAt == unavailableHoldoutUpdatedAt {
+		if group.Id == "" && group.UpdatedAt == unavailableHoldoutUpdatedAt {
 			return true
 		}
 		if evaluatedAt < group.UpdatedAt {

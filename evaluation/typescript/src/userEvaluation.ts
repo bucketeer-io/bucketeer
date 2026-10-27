@@ -1,5 +1,6 @@
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Feature } from './proto/feature/feature_pb';
+import { UNAVAILABLE_UEID_PREFIX, holdoutUnavailable } from './bucketeer';
 import type { HoldoutGroup } from './bucketeer';
 import fnv from 'fnv-plus';
 
@@ -123,6 +124,11 @@ function UserEvaluationsID(
   // Generate the FNV-1a 64-bit hash
   const hash = fnv.hash(hashInput, 64);
 
+  // An ID issued without a readable holdout snapshot is marked so the next
+  // evaluation after the snapshot is back runs in full.
+  if (holdoutUnavailable(holdoutGroups)) {
+    return UNAVAILABLE_UEID_PREFIX + hash.dec();
+  }
   // Return the hashed value as a decimal string
   return hash.dec();
 }

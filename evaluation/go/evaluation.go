@@ -128,7 +128,11 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	targetTag string,
 	groups ...*ftproto.HoldoutGroup,
 ) (*ftproto.UserEvaluations, error) {
-	if prevUEID == "" {
+	// An ID issued while the holdout snapshot was unavailable covers
+	// evaluations with no holdout assignments. A live group restored after
+	// that may predate the client's cursor, so the staleness check below
+	// would not catch it; reconcile in full instead of merging a diff.
+	if prevUEID == "" || IssuedWithoutHoldout(prevUEID) {
 		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
 	}
 	now := time.Now()

@@ -218,6 +218,32 @@ function currentHoldoutTarget(feature: HoldoutFeature, featureId: string): boole
   return feature.getRemovedAt() === 0 && feature.getFeatureId() === featureId;
 }
 
+// UNAVAILABLE_HOLDOUT_UPDATED_AT marks a clearance used when the holdout
+// snapshot cannot be read. It is earlier than any real stop time and is
+// always treated as stale. Mirrors unavailableHoldoutUpdatedAt in Go.
+export const UNAVAILABLE_HOLDOUT_UPDATED_AT = 1;
+
+// UNAVAILABLE_UEID_PREFIX marks a user evaluations ID issued while the holdout
+// snapshot was unavailable. Mirrors unavailableUEIDPrefix in Go.
+export const UNAVAILABLE_UEID_PREFIX = 'unavailable-holdout:';
+
+export function holdoutUnavailable(groups: HoldoutGroup[] | undefined): boolean {
+  if (!groups) {
+    return false;
+  }
+  return groups.some(
+    (group) =>
+      group && group.getId() === '' && group.getUpdatedAt() === UNAVAILABLE_HOLDOUT_UPDATED_AT,
+  );
+}
+
+// issuedWithoutHoldout reports whether ueid was issued while the holdout
+// snapshot was unavailable, so the cached evaluations carry no holdout
+// assignments and must be fully reconciled.
+export function issuedWithoutHoldout(ueid: string): boolean {
+  return ueid.startsWith(UNAVAILABLE_UEID_PREFIX);
+}
+
 export function holdoutRequiresFullEval(
   groups: HoldoutGroup[] | undefined,
   evaluatedAt: number,
@@ -227,7 +253,13 @@ export function holdoutRequiresFullEval(
   }
   // UpdatedAt 0 means the environment has never stopped a group.
   // An empty id with a timestamp is the snapshot written when serving stopped.
-  return groups.some((group) => group.getUpdatedAt() !== 0 && evaluatedAt < group.getUpdatedAt());
+  // The unavailable marker has no real revision and is always stale.
+  return groups.some(
+    (group) =>
+      group.getUpdatedAt() !== 0 &&
+      ((group.getId() === '' && group.getUpdatedAt() === UNAVAILABLE_HOLDOUT_UPDATED_AT) ||
+        evaluatedAt < group.getUpdatedAt()),
+  );
 }
 
 function containsIncludedSegmentUser(

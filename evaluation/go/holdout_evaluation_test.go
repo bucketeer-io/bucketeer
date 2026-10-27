@@ -253,6 +253,59 @@ func TestUnavailableHoldoutForcesFullUpdateWhenAnotherFlagChanged(t *testing.T) 
 	assert.Equal(t, "on", byID["target"].VariationId)
 }
 
+// A holdout-cache outage issues evaluations without holdout assignments. When
+// the cache recovers, the live group's updated_at can predate the client's
+// cursor, so the staleness check does not fire. The ID issued during the
+// outage carries a marker and the next evaluation must be a full one that
+// restores HOLDOUT for the target, instead of a diff with only the fresh flag.
+func TestRecoveryAfterUnavailableHoldoutForcesFullUpdate(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	user := &userproto.User{Id: "user-1"}
+	target := flagWithVariations("target", true, "off", "hold", "on")
+	target.UpdatedAt = now - 1000
+	fresh := flagWithVariations("fresh", true, "off", "hold", "on")
+	fresh.UpdatedAt = now - 10
+	features := []*ftproto.Feature{target, fresh}
+	group := targetingGroup("group", 0, 100, "target", "hold")
+	group.UpdatedAt = now - 5000 // started long before the client's cursor
+	evaluatedAt := now - 100
+
+	// During the outage the ID is marked and the member gets the normal variation.
+	outageID := UserEvaluationsID(user.Id, user.Data, features, UnavailableHoldoutSnapshot())
+	assert.True(t, IssuedWithoutHoldout(outageID))
+	assert.Equal(t, outageID, UserEvaluationsID(user.Id, user.Data, features, UnavailableHoldoutSnapshot()),
+		"the marked ID must be stable so polls during the outage still short-circuit")
+	assert.NotEqual(t, outageID, UserEvaluationsID(user.Id, user.Data, features))
+	assert.False(t, IssuedWithoutHoldout(UserEvaluationsID(user.Id, user.Data, features, group)))
+	assert.False(t, IssuedWithoutHoldout(UserEvaluationsID(user.Id, user.Data, features, ClearanceSnapshot(now))))
+
+	// Recovery: the live group is old, only "fresh" passes the timestamp diff.
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{group}, evaluatedAt-10))
+	got, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+		features, user, nil, nil, outageID, evaluatedAt, false, "", group,
+	)
+	require.NoError(t, err)
+	assert.True(t, got.ForceUpdate)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range got.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	require.Contains(t, byID, "target")
+	require.Contains(t, byID, "fresh")
+	assert.Equal(t, ftproto.Reason_HOLDOUT, byID["target"].Reason.Type)
+	assert.Equal(t, "hold", byID["target"].VariationId)
+
+	// An unmarked previous ID with the same inputs still takes the diff path.
+	diff, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+		features, user, nil, nil, "previous", evaluatedAt, false, "", group,
+	)
+	require.NoError(t, err)
+	assert.False(t, diff.ForceUpdate)
+	require.Len(t, diff.Evaluations, 1)
+	assert.Equal(t, "fresh", diff.Evaluations[0].FeatureId)
+}
+
 func TestZeroRevisionSnapshotOmitsDisabledDependency(t *testing.T) {
 	t.Parallel()
 	user := &userproto.User{Id: "user-1"}
