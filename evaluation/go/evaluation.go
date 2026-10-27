@@ -192,6 +192,11 @@ func (e *evaluator) evaluate(
 		}
 		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations, holdout)
 		if errors.Is(err, errFeatureOmitted) {
+			// A partial evaluation has to name the flag. Otherwise a client
+			// that merges the diff keeps the variation from when it was enabled.
+			if targetTag == "" || tagExist(feature.Tags, targetTag) {
+				archivedIDs = append(archivedIDs, feature.Id)
+			}
 			continue
 		}
 		if err != nil {

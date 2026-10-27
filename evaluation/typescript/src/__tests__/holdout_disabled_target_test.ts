@@ -91,4 +91,22 @@ test('a disabled holdout target without an off variation is assigned only to mem
   );
   const ids = nonMember.getEvaluationsList().map((evaluation) => evaluation.getFeatureId());
   t.deepEqual(ids, ['sibling']);
+  t.deepEqual(nonMember.getArchivedFeatureIdsList(), ['flag']);
+
+  const now = Math.floor(Date.now() / 1000);
+  const stale = disabledFlag();
+  stale.setUpdatedAt(now);
+  const partial = evaluator.evaluateFeaturesByEvaluatedAt(
+    [stale, sibling()],
+    user,
+    new Map(),
+    null,
+    'prev',
+    now - 5,
+    false,
+    '',
+    [group(0)],
+  );
+  t.false(partial.getForceUpdate());
+  t.deepEqual(partial.getArchivedFeatureIdsList(), ['flag']);
 });

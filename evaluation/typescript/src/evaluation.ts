@@ -184,6 +184,11 @@ class Evaluator {
         // A non-member of a disabled holdout target with no off variation is
         // omitted. Members returned the holdout variation before this.
         if (err === EVALUATOR_ERRORS.FeatureOmitted) {
+          // A partial evaluation has to name the flag. Otherwise a consumer
+          // that merges the diff keeps the variation from when it was enabled.
+          if (targetTag === '' || this.tagExist(feature.getTagsList(), targetTag)) {
+            archivedIDs.push(feature.getId());
+          }
           continue;
         }
         throw err;

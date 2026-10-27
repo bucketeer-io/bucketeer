@@ -201,9 +201,16 @@ func TestCacheInvalidatorEvictsHoldoutGroup(t *testing.T) {
 	t.Parallel()
 	inMemoryCache := cachev3.NewInMemoryCache()
 	holdoutCache := cachev3.NewHoldoutGroupCache(inMemoryCache, 0)
+	featuresCache := cachev3.NewFeaturesCache(inMemoryCache, 0)
 	require.NoError(t, holdoutCache.Put(&featureproto.HoldoutGroup{Id: "hg"}, "env-1"))
 	require.NoError(t, holdoutCache.Put(&featureproto.HoldoutGroup{Id: "other"}, "env-2"))
-	invalidator := NewCacheInvalidator(nil, nil, nil, holdoutCache, nil, nil, zap.NewNop())
+	require.NoError(t, featuresCache.Put(&featureproto.Features{
+		Features: []*featureproto.Feature{{Id: "flag"}},
+	}, "env-1"))
+	require.NoError(t, featuresCache.Put(&featureproto.Features{
+		Features: []*featureproto.Feature{{Id: "other-flag"}},
+	}, "env-2"))
+	invalidator := NewCacheInvalidator(featuresCache, nil, nil, holdoutCache, nil, nil, zap.NewNop())
 	data, err := proto.Marshal(&domaineventproto.Event{
 		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
 		EntityId:      "hg",
@@ -217,4 +224,10 @@ func TestCacheInvalidatorEvictsHoldoutGroup(t *testing.T) {
 	kept, err := holdoutCache.Get("env-2")
 	require.NoError(t, err)
 	assert.Equal(t, "other", kept.Id)
+	_, err = featuresCache.Get("env-1")
+	assert.Error(t, err)
+	otherFeatures, err := featuresCache.Get("env-2")
+	require.NoError(t, err)
+	require.Len(t, otherFeatures.Features, 1)
+	assert.Equal(t, "other-flag", otherFeatures.Features[0].Id)
 }

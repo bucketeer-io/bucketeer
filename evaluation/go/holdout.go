@@ -248,6 +248,71 @@ func HoldoutTargetFeatureIDs(group *ftproto.HoldoutGroup) map[string]struct{} {
 	return ids
 }
 
+// HoldoutStale reports whether the client's cursor is behind a holdout
+// revision. The caller passes evaluatedAt minus the feature-diff grace
+// window. A live group and a clearance snapshot (empty id, updated_at of
+// the stop) both count. UpdatedAt 0 is not a revision.
+func HoldoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
+	return holdoutStale(groups, evaluatedAt)
+}
+
+// FeaturesForServerEval drops disabled flags with no off variation that the
+// snapshot no longer targets. Those flags stay in the feature cache until
+// the next feature refresh, and without this filter the evaluator would
+// assign them a normal variation after the group stops or the snapshot is a
+// clearance. A nil snapshot leaves the slice unchanged.
+// removed is the IDs a partial evaluation must report so clients delete them.
+func FeaturesForServerEval(
+	features []*ftproto.Feature,
+	group *ftproto.HoldoutGroup,
+) (kept []*ftproto.Feature, removed []string) {
+	if group == nil {
+		return features, nil
+	}
+	targets := HoldoutTargetFeatureIDs(group)
+	kept = make([]*ftproto.Feature, 0, len(features))
+	for _, feature := range features {
+		if feature != nil && !feature.Enabled && feature.OffVariation == "" {
+			if _, targeted := targets[feature.Id]; !targeted {
+				if feature.Id != "" {
+					removed = append(removed, feature.Id)
+				}
+				continue
+			}
+		}
+		kept = append(kept, feature)
+	}
+	return kept, removed
+}
+
+// FeaturesForLocalEval splits flags for GetFeatureFlags. Local evaluation
+// does not receive holdout metadata yet, so a disabled flag with no off
+// variation is withheld while a serving group targets it, and after serving
+// stops while the feature cache may still contain it. A nil snapshot leaves
+// the slice unchanged.
+func FeaturesForLocalEval(
+	features []*ftproto.Feature,
+	group *ftproto.HoldoutGroup,
+) (visible, hidden []*ftproto.Feature) {
+	if group == nil {
+		return features, nil
+	}
+	targets := HoldoutTargetFeatureIDs(group)
+	clearance := group.Id == "" && group.UpdatedAt > 0
+	visible = make([]*ftproto.Feature, 0, len(features))
+	for _, feature := range features {
+		if feature != nil && !feature.Enabled && feature.OffVariation == "" {
+			_, targeted := targets[feature.Id]
+			if clearance || targeted {
+				hidden = append(hidden, feature)
+				continue
+			}
+		}
+		visible = append(visible, feature)
+	}
+	return visible, hidden
+}
+
 // holdoutStale reports whether the client's cursor is behind a holdout
 // revision. The caller passes evaluatedAt minus the feature-diff grace
 // window. A live group and a clearance snapshot (empty id, updated_at of

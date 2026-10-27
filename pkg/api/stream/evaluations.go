@@ -239,8 +239,10 @@ func (h *EvaluationsHandler) sendPatch(
 		sseErrorsCounter.WithLabelValues(envID, tag, sourceID, errorTypeEvaluationPatch).Inc()
 		return "", 0, err
 	}
-	if len(evals.Evaluations) == 0 && len(evals.ArchivedFeatureIds) == 0 {
-		// Skip sending when no diff.
+	if !evals.ForceUpdate && len(evals.Evaluations) == 0 && len(evals.ArchivedFeatureIds) == 0 {
+		// Skip sending when no diff. An empty ForceUpdate still has to be
+		// delivered so the client drops the assignment it cached for a flag
+		// that is no longer in the snapshot.
 		ssePatchCounter.WithLabelValues(envID, tag, sourceID, patchCodeNone).Inc()
 		return ueid, newEvaluatedAt, nil
 	}

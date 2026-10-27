@@ -833,3 +833,52 @@ func TestCacheRefresherKeepsDisabledHoldoutTarget(t *testing.T) {
 		Type:          domaineventproto.Event_FEATURE_UPDATED,
 	}))
 }
+
+func TestCacheRefresherHoldoutStartRefreshesFeatures(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, holdoutCache,
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	group := &featureproto.HoldoutGroup{
+		Id:       "hg",
+		Features: []*featureproto.HoldoutGroupFeature{{FeatureId: "targeted"}},
+	}
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil).Times(2)
+	holdoutCache.EXPECT().
+		PutIfNewer(group, "env-1", refresherFixedGeneration).
+		Return(true, nil)
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{Id: "targeted", Enabled: false},
+				{Id: "normal", Enabled: true, OffVariation: "on"},
+			},
+		}, nil)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 2)
+			assert.Equal(t, "targeted", features.Features[0].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+		EnvironmentId: "env-1",
+		EntityId:      "hg",
+		Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+	}))
+}

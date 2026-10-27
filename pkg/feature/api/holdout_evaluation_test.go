@@ -127,12 +127,17 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		}
 		service.refreshHoldoutCache(ctx, "env")
 	})
-	t.Run("evicts when the clearance read fails", func(t *testing.T) {
+	t.Run("writes a barrier when the clearance read fails", func(t *testing.T) {
 		cacheMock := cachev3mock.NewMockHoldoutGroupCache(controller)
 		storage := holdoutmock.NewMockHoldoutStorage(controller)
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, v2hs.ErrHoldoutGroupNotFound)
 		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(0), errors.New("db"))
-		cacheMock.EXPECT().Evict("env").Return(nil)
+		cacheMock.EXPECT().PutIfNewer(gomock.Any(), "env", gomock.Any()).
+			DoAndReturn(func(group *featureproto.HoldoutGroup, _ string, _ int64) (bool, error) {
+				assert.Empty(t, group.Id)
+				assert.Positive(t, group.UpdatedAt)
+				return true, nil
+			})
 		service := &FeatureService{
 			holdoutGroupCache: cacheMock,
 			holdoutStorage:    storage,
@@ -154,11 +159,16 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		}
 		service.refreshHoldoutCache(ctx, "env")
 	})
-	t.Run("evicts when the read fails", func(t *testing.T) {
+	t.Run("writes a barrier when the read fails", func(t *testing.T) {
 		cacheMock := cachev3mock.NewMockHoldoutGroupCache(controller)
 		storage := holdoutmock.NewMockHoldoutStorage(controller)
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, errors.New("db"))
-		cacheMock.EXPECT().Evict("env").Return(nil)
+		cacheMock.EXPECT().PutIfNewer(gomock.Any(), "env", gomock.Any()).
+			DoAndReturn(func(group *featureproto.HoldoutGroup, _ string, _ int64) (bool, error) {
+				assert.Empty(t, group.Id)
+				assert.Positive(t, group.UpdatedAt)
+				return true, nil
+			})
 		service := &FeatureService{
 			holdoutGroupCache: cacheMock,
 			holdoutStorage:    storage,

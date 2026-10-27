@@ -843,9 +843,10 @@ func (s *FeatureService) liveHoldoutGroup(environmentID string) *featureproto.Ho
 }
 
 // refreshHoldoutCache writes the serving snapshot the gateway reads.
-// The generation is captured before the storage read. A storage error evicts
-// the key so a stale RUNNING group cannot keep serving. A rejected write means
-// a newer snapshot is already cached.
+// The generation is captured before the storage read. A storage error writes
+// a generation-guarded empty snapshot so an older in-flight read cannot put
+// the previous group back. A rejected write means a newer snapshot is already
+// cached.
 func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID string) {
 	if s.holdoutGroupCache == nil || s.holdoutStorage == nil || environmentID == "" {
 		return
@@ -857,12 +858,10 @@ func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID 
 			zap.Error(err),
 			zap.String("environmentId", environmentID),
 		)
-		if evictErr := s.holdoutGroupCache.Evict(environmentID); evictErr != nil {
-			s.logger.Error("Failed to evict the holdout group cache",
-				zap.Error(evictErr),
-				zap.String("environmentId", environmentID),
-			)
-		}
+		// Evicting would delete the generation marker and let the in-flight
+		// older read put the pre-stop group back. A guarded empty snapshot
+		// keeps that marker so the older write is rejected.
+		s.putHoldoutBarrier(environmentID, generation)
 		return
 	}
 	accepted, putErr := s.holdoutGroupCache.PutIfNewer(snapshot, environmentID, generation)
@@ -875,6 +874,28 @@ func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID 
 	}
 	if !accepted {
 		s.logger.Info("Skipped holdout cache write: a newer snapshot is already cached",
+			zap.String("environmentId", environmentID),
+			zap.Int64("generation", generation),
+		)
+	}
+}
+
+// putHoldoutBarrier stores an empty snapshot under the generation captured
+// before the failed read. The value has to stay in place: PutIfNewer accepts
+// any write once the value is gone, even if the generation marker remains.
+func (s *FeatureService) putHoldoutBarrier(environmentID string, generation int64) {
+	barrier := evaluation.ClearanceSnapshot(time.Now().Unix())
+	accepted, err := s.holdoutGroupCache.PutIfNewer(barrier, environmentID, generation)
+	if err != nil {
+		s.logger.Error("Failed to cache the holdout read barrier",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+			zap.Int64("generation", generation),
+		)
+		return
+	}
+	if !accepted {
+		s.logger.Info("Skipped holdout read barrier: a newer snapshot is already cached",
 			zap.String("environmentId", environmentID),
 			zap.Int64("generation", generation),
 		)

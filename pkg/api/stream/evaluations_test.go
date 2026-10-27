@@ -201,6 +201,16 @@ func TestPatch(t *testing.T) {
 			expectSend: false,
 		},
 		{
+			desc:        "empty force update is delivered",
+			evaluatedAt: 1000,
+			evals: &featureproto.UserEvaluations{
+				Id:          "eval-2",
+				Evaluations: []*featureproto.Evaluation{},
+				ForceUpdate: true,
+			},
+			expectSend: true,
+		},
+		{
 			desc:        "evaluate error",
 			evaluatedAt: 1000,
 			evalErr:     errors.New("eval failed"),

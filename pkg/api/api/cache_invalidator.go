@@ -90,17 +90,32 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 	switch event.EntityType {
 	case domaineventproto.Event_HOLDOUT_GROUP:
-		if ci.holdoutGroupCache == nil {
+		if ci.holdoutGroupCache == nil && ci.featuresCache == nil {
 			return nil
 		}
-		if err := ci.holdoutGroupCache.Evict(event.EnvironmentId); err != nil {
-			ci.logger.Warn("Failed to evict holdout group cache",
-				zap.Error(err),
-				zap.String("environmentId", event.EnvironmentId),
-				zap.String("entityId", event.EntityId),
-				zap.String("type", event.Type.String()),
-			)
-			return err
+		if ci.holdoutGroupCache != nil {
+			if err := ci.holdoutGroupCache.Evict(event.EnvironmentId); err != nil {
+				ci.logger.Warn("Failed to evict holdout group cache",
+					zap.Error(err),
+					zap.String("environmentId", event.EnvironmentId),
+					zap.String("entityId", event.EntityId),
+					zap.String("type", event.Type.String()),
+				)
+				return err
+			}
+		}
+		// The feature snapshot changes with the holdout targets. Drop it too
+		// so the following stream refetch does not reuse a stale L1 copy.
+		if ci.featuresCache != nil {
+			if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
+				ci.logger.Warn("Failed to evict features cache for holdout change",
+					zap.Error(err),
+					zap.String("environmentId", event.EnvironmentId),
+					zap.String("entityId", event.EntityId),
+					zap.String("type", event.Type.String()),
+				)
+				return err
+			}
 		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,

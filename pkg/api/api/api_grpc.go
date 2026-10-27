@@ -542,9 +542,8 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	features := f.([]*featureproto.Feature)
-	filteredByTag := s.filterByTag(features, req.Tag)
-
-	if len(features) == 0 {
+	group := s.liveHoldoutGroup(environmentId)
+	if len(features) == 0 && !evaluation.HoldoutStale(holdoutGroups(group), s.holdoutAdjustedAt(req)) {
 		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures, sourceID).Inc()
 		return &gwproto.GetEvaluationsResponse{
@@ -553,7 +552,8 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: "no_evaluations",
 		}, nil
 	}
-	group := s.liveHoldoutGroup(environmentId)
+	filteredByTag := s.filterByTag(features, req.Tag)
+	filteredByTag, removed := evaluation.FeaturesForServerEval(filteredByTag, group)
 	countHoldoutEvaluation(group, sourceID)
 	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag, holdoutGroups(group)...)
 	if req.UserEvaluationsId == ueid {
@@ -613,7 +613,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
-			features,
+			filteredByTag,
 			req.User,
 			segmentUsersMap,
 			segmentsMap,
@@ -653,7 +653,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeOld, sourceID).Inc()
 	} else {
 		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
-			features,
+			filteredByTag,
 			req.User,
 			segmentUsersMap,
 			segmentsMap,
@@ -703,6 +703,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeDiff, sourceID).Inc()
 		}
 	}
+	appendRemovedFeatureIDs(evaluations, removed)
 	s.logger.Debug(
 		"Features length when UEID is different",
 		log.FieldsFromIncomingContext(ctx).AddFields(
@@ -719,6 +720,18 @@ func (s *grpcGatewayService) GetEvaluations(
 		Evaluations:       evaluations,
 		UserEvaluationsId: ueid,
 	}, nil
+}
+
+func (s *grpcGatewayService) holdoutAdjustedAt(req *gwproto.GetEvaluationsRequest) int64 {
+	evaluatedAt := int64(0)
+	if req.UserEvaluationCondition != nil {
+		evaluatedAt = req.UserEvaluationCondition.EvaluatedAt
+	}
+	grace := int64(0)
+	if s.opts != nil {
+		grace = int64(s.opts.featureFlagDiffGracePeriod / time.Second)
+	}
+	return evaluatedAt - grace
 }
 
 func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvaluationsRequest) error {
@@ -914,7 +927,9 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetFeatureFlags).Inc()
 		return nil, err
 	}
-	// Filter flags by tag if needed
+	// Filter flags by tag if needed. Disabled holdout targets stay in the
+	// shared feature cache for server evaluation, but local evaluation has
+	// no holdout metadata yet, so they are withheld here.
 	features := f.([]*featureproto.Feature)
 	var targetFeatures []*featureproto.Feature
 	if req.Tag == "" {
@@ -922,8 +937,9 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	} else {
 		targetFeatures = s.filterByTag(features, req.Tag)
 	}
+	targetFeatures, hidden := evaluation.FeaturesForLocalEval(targetFeatures, s.liveHoldoutGroup(environmentId))
 	now := time.Now()
-	if len(targetFeatures) == 0 {
+	if len(targetFeatures) == 0 && len(hidden) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
@@ -1004,6 +1020,9 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
+	// Hidden holdout targets are not locally evaluable. Name them so a diff
+	// deletes a variation the SDK cached before the flag was withheld.
+	archivedIDs = append(archivedIDs, hiddenFeatureIDs(hidden)...)
 	// Force-recover fallback: ffID mismatched but the diff filter still
 	// excluded every flag AND there are no archives. Should be rare with
 	// the grace window above but kept as a defense-in-depth: returning an

@@ -94,6 +94,26 @@ func holdoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutGrou
 	return []*featureproto.HoldoutGroup{group}
 }
 
+func appendRemovedFeatureIDs(evals *featureproto.UserEvaluations, removed []string) {
+	if evals == nil || len(removed) == 0 {
+		return
+	}
+	evals.ArchivedFeatureIds = append(evals.ArchivedFeatureIds, removed...)
+}
+
+func hiddenFeatureIDs(hidden []*featureproto.Feature) []string {
+	if len(hidden) == 0 {
+		return nil
+	}
+	ids := make([]string, 0, len(hidden))
+	for _, feature := range hidden {
+		if feature != nil && feature.Id != "" {
+			ids = append(ids, feature.Id)
+		}
+	}
+	return ids
+}
+
 func countHoldoutEvaluation(group *featureproto.HoldoutGroup, sourceID string) {
 	if group == nil || len(group.Features) == 0 {
 		return

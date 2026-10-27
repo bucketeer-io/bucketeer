@@ -323,6 +323,15 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	generation := c.now().UnixNano()
 	snapshot, err := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
 	if err != nil {
+		// A failed read must not delete the generation marker. An empty
+		// snapshot written at this generation rejects the older in-flight read.
+		barrier := evaluation.ClearanceSnapshot(c.now().Unix())
+		if _, putErr := c.holdoutGroupCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
+			return putErr
+		}
+		if pubErr := c.publishCacheInvalidation(ctx, event); pubErr != nil {
+			return pubErr
+		}
 		return err
 	}
 	accepted, err := c.holdoutGroupCache.PutIfNewer(snapshot, event.EnvironmentId, generation)
@@ -337,6 +346,12 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 			zap.Int64("generation", generation),
 		)
 	}
+	// The feature snapshot is what keeps a disabled holdout target reachable.
+	// Refresh it before the invalidation so gateway pods drop both caches and
+	// the stream refetch sees the flag.
+	if err := c.refreshEnvironmentFeatures(ctx, event); err != nil {
+		return err
+	}
 	return c.publishCacheInvalidation(ctx, event)
 }
 
@@ -344,6 +359,19 @@ func (c *cacheRefresher) refreshFeatures(
 	ctx context.Context,
 	event *domaineventproto.Event,
 ) error {
+	if err := c.refreshEnvironmentFeatures(ctx, event); err != nil {
+		return err
+	}
+	return c.publishCacheInvalidation(ctx, event)
+}
+
+func (c *cacheRefresher) refreshEnvironmentFeatures(
+	ctx context.Context,
+	event *domaineventproto.Event,
+) error {
+	if c.featureClient == nil || c.featuresCache == nil {
+		return nil
+	}
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
 	// The generation is the time the read started, captured before the first
@@ -367,20 +395,20 @@ func (c *cacheRefresher) refreshFeatures(
 			zap.String("type", event.Type.String()),
 			zap.Int("featuresCount", len(features.Features)),
 		)
-	} else {
-		// A newer snapshot is already in L2. Nothing to write, but api pods
-		// still need the invalidation so their L1 picks up that snapshot.
-		cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterRefresher, event.EnvironmentId)
-		// Info, not Debug: rejections are rare (two writers raced) and the
-		// environment ID is what an operator needs to investigate them.
-		c.logger.Info("Skipped features redis cache write: a newer snapshot is already cached",
-			zap.String("environmentId", event.EnvironmentId),
-			zap.String("entityId", event.EntityId),
-			zap.String("type", event.Type.String()),
-			zap.Int64("generation", generation),
-		)
+		return nil
 	}
-	return c.publishCacheInvalidation(ctx, event)
+	// A newer snapshot is already in L2. Nothing to write, but api pods
+	// still need the invalidation so their L1 picks up that snapshot.
+	cachev3.RecordFeaturesPutRejectedStale(cachev3.FeaturesWriterRefresher, event.EnvironmentId)
+	// Info, not Debug: rejections are rare (two writers raced) and the
+	// environment ID is what an operator needs to investigate them.
+	c.logger.Info("Skipped features redis cache write: a newer snapshot is already cached",
+		zap.String("environmentId", event.EnvironmentId),
+		zap.String("entityId", event.EntityId),
+		zap.String("type", event.Type.String()),
+		zap.Int64("generation", generation),
+	)
+	return nil
 }
 
 // fetchAllFeatures pages through ListFeatures the same way the API service

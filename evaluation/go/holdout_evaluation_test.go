@@ -300,6 +300,51 @@ func TestDisabledHoldoutTargetWithoutOffVariation(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, nonMember.Evaluations, 1)
 	assert.Equal(t, "sibling", nonMember.Evaluations[0].FeatureId)
+	assert.Equal(t, []string{"flag"}, nonMember.ArchivedFeatureIds)
+
+	now := time.Now().Unix()
+	disabled.UpdatedAt = now
+	partial, err := evaluator.EvaluateFeaturesByEvaluatedAt(
+		[]*ftproto.Feature{disabled, sibling},
+		user, nil, nil,
+		"prev", now-5, false, "",
+		targetingGroup("hg", 0, 0, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	assert.False(t, partial.ForceUpdate)
+	assert.Equal(t, []string{"flag"}, partial.ArchivedFeatureIds)
+	for _, evaluation := range partial.Evaluations {
+		assert.NotEqual(t, "flag", evaluation.FeatureId)
+	}
+}
+
+func TestFeaturesForEvalFiltersClearedDisabledTarget(t *testing.T) {
+	t.Parallel()
+	disabled := &ftproto.Feature{Id: "flag", Enabled: false}
+	enabled := &ftproto.Feature{Id: "on", Enabled: true, OffVariation: "on"}
+	features := []*ftproto.Feature{disabled, enabled}
+
+	kept, removed := FeaturesForServerEval(features, nil)
+	require.Len(t, kept, 2)
+	assert.Empty(t, removed)
+
+	kept, removed = FeaturesForServerEval(features, ClearanceSnapshot(10))
+	require.Len(t, kept, 1)
+	assert.Equal(t, "on", kept[0].Id)
+	assert.Equal(t, []string{"flag"}, removed)
+
+	visible, hidden := FeaturesForLocalEval(features, &ftproto.HoldoutGroup{
+		Id:       "hg",
+		Features: []*ftproto.HoldoutGroupFeature{{FeatureId: "flag"}},
+	})
+	require.Len(t, visible, 1)
+	assert.Equal(t, "on", visible[0].Id)
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+
+	visible, hidden = FeaturesForLocalEval(features, ClearanceSnapshot(10))
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
 }
 
 func flagWithVariations(id string, enabled bool, off, hold, on string) *ftproto.Feature {

@@ -290,7 +290,9 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		return
 	}
 	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-	if len(features) == 0 {
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	features, removed := evaluation.FeaturesForServerEval(features, group)
+	if len(features) == 0 && len(removed) == 0 {
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
@@ -300,7 +302,6 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		)
 		return
 	}
-	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
 	countHoldoutEvaluation(group, reqBody.SourceID.String())
 	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features, holdoutGroups(group)...)
 	if reqBody.UserEvaluationsID == ueid {
@@ -333,6 +334,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
+	appendRemovedFeatureIDs(evaluations, removed)
 	rest.ReturnSuccessResponse(
 		w,
 		&getEvaluationsResponse{
@@ -363,6 +365,8 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	fs, _ = evaluation.FeaturesForServerEval(fs, group)
 	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
@@ -374,7 +378,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		features,
 		envAPIKey.Environment.Id,
 		reqBody.Tag,
-		s.liveHoldoutGroup(envAPIKey.Environment.Id),
+		group,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -421,18 +425,40 @@ func (s *gatewayService) evaluateFeaturesForStream(
 		}
 		shared = f.([]*featureproto.Feature)
 	}
-	if len(shared) == 0 {
-		return "", s.emptyUserEvaluations(), nil
+	group := s.liveHoldoutGroup(environmentID)
+	kept, removed := evaluation.FeaturesForServerEval(shared, group)
+	grace := int64(0)
+	if s.opts != nil {
+		grace = int64(s.opts.featureFlagDiffGracePeriod / time.Second)
+	}
+	// An empty feature list still has to clear a client that cached the last
+	// holdout assignment. ForceUpdate is the clearance signal; removed IDs
+	// cover a partial update that drops a disabled target.
+	if len(kept) == 0 {
+		stale := evaluation.HoldoutStale(holdoutGroups(group), evaluatedAt-grace)
+		if !stale && len(removed) == 0 {
+			return "", s.emptyUserEvaluations(), nil
+		}
+		id := evaluation.UserEvaluationsID(user.Id, user.Data, kept, holdoutGroups(group)...)
+		if removed == nil {
+			removed = []string{}
+		}
+		return id, &featureproto.UserEvaluations{
+			Id:                 id,
+			Evaluations:        []*featureproto.Evaluation{},
+			ArchivedFeatureIds: removed,
+			ForceUpdate:        stale,
+			CreatedAt:          time.Now().Unix(),
+		}, nil
 	}
 	// singleflight and dispatched snapshots share the same slice across callers.
 	// Copy to avoid data races from in-place sort in UserEvaluationsID.
-	features := make([]*featureproto.Feature, len(shared))
-	copy(features, shared)
+	features := make([]*featureproto.Feature, len(kept))
+	copy(features, kept)
 
 	evaluator := evaluation.NewEvaluator(
-		evaluation.WithSecondsForAdjustment(int64(s.opts.featureFlagDiffGracePeriod / time.Second)),
+		evaluation.WithSecondsForAdjustment(grace),
 	)
-	group := s.liveHoldoutGroup(environmentID)
 
 	// The same process of getting segment users as grpcGatewayService.getSegmentUsersMap()
 	mapIDs := make(map[string]struct{})
@@ -469,6 +495,7 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	if err != nil {
 		return "", nil, err
 	}
+	appendRemovedFeatureIDs(evaluations, removed)
 	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features, holdoutGroups(group)...)
 	return ueid, evaluations, nil
 }
