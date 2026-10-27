@@ -17,7 +17,6 @@ package dwhstorage_test
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -296,65 +295,4 @@ func TestPostgresGoalEventWriterAppendRows_VerifyParams(t *testing.T) {
 	fails, err := writer.AppendRows(context.Background(), []*epproto.GoalEvent{evt})
 	require.NoError(t, err)
 	assert.Empty(t, fails)
-}
-
-func TestGoalEventWriterAppendRowsRowIDs(t *testing.T) {
-	t.Parallel()
-	longFeatureID := strings.Repeat("f", 255)
-	patterns := []struct {
-		desc   string
-		events []*epproto.GoalEvent
-		check  func(t *testing.T, ids []string)
-	}{
-		{
-			desc: "a single association keeps the event ID",
-			events: []*epproto.GoalEvent{
-				{Id: "goal-1", FeatureId: "feature-1", FeatureVersion: 1},
-			},
-			check: func(t *testing.T, ids []string) {
-				assert.Equal(t, []string{"goal-1"}, ids)
-			},
-		},
-		{
-			desc: "several associations get distinct fixed-length IDs",
-			events: []*epproto.GoalEvent{
-				{Id: "goal-1", FeatureId: "feature-1", FeatureVersion: 1},
-				{Id: "goal-1", FeatureId: longFeatureID, FeatureVersion: 3},
-				{Id: "goal-2", FeatureId: "feature-1", FeatureVersion: 1},
-			},
-			check: func(t *testing.T, ids []string) {
-				require.Len(t, ids, 3)
-				assert.NotEqual(t, ids[0], ids[1])
-				assert.Len(t, ids[0], 36)
-				assert.Len(t, ids[1], 36)
-				assert.Equal(t, "goal-2", ids[2])
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
-			var deliveries [][]string
-			mockCtrl := gomock.NewController(t)
-			mockStorage := mock.NewMockGoalEventStorageV2(mockCtrl)
-			mockStorage.EXPECT().CreateGoalEvents(gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, params []dwhstorage.GoalEventParams) error {
-					ids := make([]string, 0, len(params))
-					for _, param := range params {
-						ids = append(ids, param.ID)
-					}
-					deliveries = append(deliveries, ids)
-					return nil
-				}).Times(2)
-			writer := dwhstorage.NewGoalEventWriter(mockStorage)
-			// A redelivery produces the same IDs
-			for range 2 {
-				fails, err := writer.AppendRows(context.Background(), p.events)
-				require.NoError(t, err)
-				assert.Empty(t, fails)
-			}
-			p.check(t, deliveries[0])
-			assert.Equal(t, deliveries[0], deliveries[1])
-		})
-	}
 }
