@@ -64,8 +64,8 @@ func TestHoldoutGroupCacherRun(t *testing.T) {
 			Return(int64(0), nil)
 		for _, cache := range cacher.caches {
 			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
-				Put(&ftproto.HoldoutGroup{}, "env").
-				Return(nil)
+				PutIfNewer(&ftproto.HoldoutGroup{}, "env", gomock.Any()).
+				Return(true, nil)
 		}
 		assert.NoError(t, cacher.Run(ctx))
 	})
@@ -85,8 +85,8 @@ func TestHoldoutGroupCacherRun(t *testing.T) {
 			Return(int64(1700000000), nil)
 		for _, cache := range cacher.caches {
 			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
-				Put(&ftproto.HoldoutGroup{UpdatedAt: 1700000000}, "env").
-				Return(nil)
+				PutIfNewer(&ftproto.HoldoutGroup{UpdatedAt: 1700000000}, "env", gomock.Any()).
+				Return(true, nil)
 		}
 		assert.NoError(t, cacher.Run(ctx))
 	})
@@ -104,8 +104,8 @@ func TestHoldoutGroupCacherRun(t *testing.T) {
 			Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
 		for _, cache := range cacher.caches {
 			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
-				Put(group, "env").
-				Return(nil)
+				PutIfNewer(group, "env", gomock.Any()).
+				Return(true, nil)
 		}
 		assert.NoError(t, cacher.Run(ctx))
 	})
@@ -122,6 +122,25 @@ func TestHoldoutGroupCacherRun(t *testing.T) {
 			Return(nil, errors.New("db"))
 		err := cacher.Run(ctx)
 		assert.EqualError(t, err, "db")
+	})
+
+	t.Run("stale write is not an error", func(t *testing.T) {
+		cacher := newHoldoutGroupCacher(t, controller)
+		group := &ftproto.HoldoutGroup{Id: "hg", EnvironmentId: "env"}
+		cacher.environmentClient.(*envclientmock.MockClient).EXPECT().
+			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			Return(&envproto.ListEnvironmentsV2Response{
+				Environments: []*envproto.EnvironmentV2{{Id: "env"}},
+			}, nil)
+		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
+			GetLiveServingGroup(gomock.Any(), "env").
+			Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
+		for _, cache := range cacher.caches {
+			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
+				PutIfNewer(group, "env", gomock.Any()).
+				Return(false, nil)
+		}
+		assert.NoError(t, cacher.Run(ctx))
 	})
 }
 

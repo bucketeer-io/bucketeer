@@ -38,7 +38,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
-	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
@@ -934,14 +933,20 @@ func (s *gatewayService) listFeatures(
 	ctx context.Context,
 	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	return ListFeatures(ctx, s.featureClient, environmentId)
+	targets := CachedHoldoutTargetIDs(
+		s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentId, s.logger,
+	)
+	return ListFeatures(ctx, s.featureClient, environmentId, targets)
 }
 
 // ListFeatures loads the environment's evaluable features from the feature service.
+// holdoutTargets keeps a disabled flag that has no off variation when it is a
+// current holdout target.
 func ListFeatures(
 	ctx context.Context,
 	featureClient featureclient.Client,
 	environmentId string,
+	holdoutTargets map[string]struct{},
 ) ([]*featureproto.Feature, error) {
 	features := []*featureproto.Feature{}
 	cursor := ""
@@ -955,12 +960,7 @@ func ListFeatures(
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			ff := featuredomain.Feature{Feature: f}
-			if ff.IsDisabledAndOffVariationEmpty() {
-				continue
-			}
-			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-			if ff.IsArchivedBeforeLastThirtyDays() {
+			if !keepEvaluableFeature(f, holdoutTargets) {
 				continue
 			}
 			features = append(features, f)

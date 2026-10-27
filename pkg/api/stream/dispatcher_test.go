@@ -434,6 +434,48 @@ func TestDispatcherHandleEvent(t *testing.T) {
 			clientTag: "android",
 		},
 		{
+			desc: "holdout started notifies every open stream",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+				EnvironmentId: envID,
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "holdout stopped notifies every open stream",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_STOPPED,
+				EnvironmentId: envID,
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "holdout target change notifies every open stream",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED,
+				EnvironmentId: envID,
+			},
+			clientTag:    "ios",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "holdout created is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_CREATED,
+				EnvironmentId: envID,
+			},
+			clientTag: "android",
+		},
+		{
 			desc: "unknown entity type is ignored",
 			event: &domaineventproto.Event{
 				EntityType:    domaineventproto.Event_GOAL,

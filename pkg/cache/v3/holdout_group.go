@@ -16,6 +16,7 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,14 +27,23 @@ import (
 )
 
 const (
-	holdoutGroupKind = "holdout_group"
+	holdoutGroupKind             = "holdout_group"
+	holdoutGroupGenerationSuffix = "gen"
 )
 
 // HoldoutGroupCache stores one serving snapshot per environment.
 // An empty Id is the sentinel for "nothing is serving".
 type HoldoutGroupCache interface {
 	Get(environmentID string) (*ftproto.HoldoutGroup, error)
+	// Put unconditionally overwrites the cached snapshot. Snapshot writers that
+	// may run concurrently must use PutIfNewer instead.
 	Put(group *ftproto.HoldoutGroup, environmentID string) error
+	// PutIfNewer stores the snapshot only if generation is not older than the
+	// generation currently cached. generation is the time (UnixNano) captured
+	// before the writer read the snapshot from storage. Returns false when the
+	// write was rejected as stale; that is not an error.
+	PutIfNewer(group *ftproto.HoldoutGroup, environmentID string, generation int64) (bool, error)
+	// Evict atomically removes the snapshot and its generation marker.
 	Evict(environmentID string) error
 }
 
@@ -70,10 +80,39 @@ func (c *holdoutGroupCache) Put(group *ftproto.HoldoutGroup, environmentID strin
 	return c.cache.Put(c.key(environmentID), buffer, c.ttl)
 }
 
+func (c *holdoutGroupCache) PutIfNewer(
+	group *ftproto.HoldoutGroup,
+	environmentID string,
+	generation int64,
+) (bool, error) {
+	if group == nil {
+		return false, errors.New("holdout group cannot be nil")
+	}
+	buffer, err := proto.Marshal(group)
+	if err != nil {
+		return false, err
+	}
+	return c.cache.PutIfNewer(
+		c.key(environmentID),
+		c.generationKey(environmentID),
+		buffer,
+		generation,
+		c.ttl,
+	)
+}
+
 func (c *holdoutGroupCache) Evict(environmentID string) error {
-	return evictKey(c.cache, c.key(environmentID))
+	// Both keys must go in one atomic step. Deleting them separately would let
+	// a concurrent PutIfNewer land between the two deletes and lose its marker.
+	return c.cache.DeleteWithGeneration(c.key(environmentID), c.generationKey(environmentID))
 }
 
 func (c *holdoutGroupCache) key(environmentID string) string {
 	return fmt.Sprintf("%s:%s", environmentID, holdoutGroupKind)
+}
+
+// generationKey wraps the value key in a Redis hash tag so the value and the
+// marker share a cluster slot. The value key itself is unchanged.
+func (c *holdoutGroupCache) generationKey(environmentID string) string {
+	return fmt.Sprintf("{%s}:%s", c.key(environmentID), holdoutGroupGenerationSuffix)
 }

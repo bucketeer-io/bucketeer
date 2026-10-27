@@ -259,6 +259,49 @@ func BenchmarkEvaluateFeatures(b *testing.B) {
 	})
 }
 
+func TestDisabledHoldoutTargetWithoutOffVariation(t *testing.T) {
+	t.Parallel()
+	evaluator := NewEvaluator()
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	sibling := flagWithVariations("sibling", true, "off", "hold", "on")
+	user := &userproto.User{Id: "user-1"}
+
+	member, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{disabled, sibling},
+		user, nil, nil, "",
+		targetingGroup("hg", 0, 100, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	require.Len(t, member.Evaluations, 2)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range member.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.Equal(t, ftproto.Reason_HOLDOUT, byID["flag"].Reason.Type)
+	assert.Equal(t, "hold", byID["flag"].VariationId)
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["sibling"].Reason.Type)
+
+	nonMember, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{disabled, sibling},
+		user, nil, nil, "",
+		targetingGroup("hg", 0, 0, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	require.Len(t, nonMember.Evaluations, 1)
+	assert.Equal(t, "sibling", nonMember.Evaluations[0].FeatureId)
+}
+
 func flagWithVariations(id string, enabled bool, off, hold, on string) *ftproto.Feature {
 	return &ftproto.Feature{
 		Id:           id,

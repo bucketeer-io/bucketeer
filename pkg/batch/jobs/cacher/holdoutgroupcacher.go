@@ -17,7 +17,6 @@ package cacher
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -76,7 +75,9 @@ func (c *holdoutGroupCacher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range envs {
-		snapshot, err := c.liveSnapshot(ctx, env.Id)
+		// Captured before the read so a slower writer cannot overwrite a newer snapshot.
+		generation := time.Now().UnixNano()
+		snapshot, err := v2hs.ServingSnapshot(ctx, c.storage, env.Id)
 		if err != nil {
 			c.logger.Error("Failed to read the live holdout group",
 				zap.Error(err),
@@ -84,7 +85,7 @@ func (c *holdoutGroupCacher) Run(ctx context.Context) (lastErr error) {
 			)
 			return err
 		}
-		c.putCache(snapshot, env.Id)
+		c.putCache(snapshot, env.Id, generation)
 	}
 	return nil
 }
@@ -101,39 +102,11 @@ func (c *holdoutGroupCacher) listAllEnvironments(
 	return resp.Environments, nil
 }
 
-// liveSnapshot is the proto stored in every redis. A missing group is an empty
-// snapshot so readers do not fall through to MySQL. Its updated_at is the
-// newest stop time, stable across cacher runs, so clients drop cached HOLDOUT
-// assignments. Zero means the environment has never stopped a group.
-func (c *holdoutGroupCacher) liveSnapshot(
-	ctx context.Context,
+func (c *holdoutGroupCacher) putCache(
+	group *ftproto.HoldoutGroup,
 	environmentID string,
-) (*ftproto.HoldoutGroup, error) {
-	group, err := c.storage.GetLiveServingGroup(ctx, environmentID)
-	if err != nil {
-		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			return c.clearedSnapshot(ctx, environmentID)
-		}
-		return nil, err
-	}
-	if group == nil || group.HoldoutGroup == nil {
-		return c.clearedSnapshot(ctx, environmentID)
-	}
-	return group.HoldoutGroup, nil
-}
-
-func (c *holdoutGroupCacher) clearedSnapshot(
-	ctx context.Context,
-	environmentID string,
-) (*ftproto.HoldoutGroup, error) {
-	updatedAt, err := c.storage.GetClearedHoldoutUpdatedAt(ctx, environmentID)
-	if err != nil {
-		return nil, err
-	}
-	return &ftproto.HoldoutGroup{UpdatedAt: updatedAt}, nil
-}
-
-func (c *holdoutGroupCacher) putCache(group *ftproto.HoldoutGroup, environmentID string) int {
+	generation int64,
+) int {
 	var updatedInstances int
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -141,10 +114,18 @@ func (c *holdoutGroupCacher) putCache(group *ftproto.HoldoutGroup, environmentID
 		wg.Add(1)
 		go func(cache cachev3.HoldoutGroupCache) {
 			defer wg.Done()
-			if err := cache.Put(group, environmentID); err != nil {
+			accepted, err := cache.PutIfNewer(group, environmentID, generation)
+			if err != nil {
 				c.logger.Error("Failed to cache holdout group",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
+				)
+				return
+			}
+			if !accepted {
+				c.logger.Info("Skipped holdout cache write: a newer snapshot is already cached",
+					zap.String("environmentId", environmentID),
+					zap.Int64("generation", generation),
 				)
 				return
 			}

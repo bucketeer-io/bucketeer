@@ -170,14 +170,28 @@ class Evaluator {
         (id) => mapSegmentUsers.get(id) || [],
       );
 
-      const [reason, variation] = this.assignUser(
-        feature,
-        user,
-        segmentUsers,
-        mapSegments,
-        flagVariations,
-        holdout,
-      );
+      let assigned: [Reason, Variation] | undefined;
+      try {
+        assigned = this.assignUser(
+          feature,
+          user,
+          segmentUsers,
+          mapSegments,
+          flagVariations,
+          holdout,
+        );
+      } catch (err) {
+        // A non-member of a disabled holdout target with no off variation is
+        // omitted. Members returned the holdout variation before this.
+        if (err === EVALUATOR_ERRORS.FeatureOmitted) {
+          continue;
+        }
+        throw err;
+      }
+      if (!assigned) {
+        continue;
+      }
+      const [reason, variation] = assigned;
       // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       // This must be set for ALL features (including archived) for dependency resolution to work
       flagVariations[feature.getId()] = variation.getId();
@@ -278,6 +292,15 @@ class Evaluator {
       const reason = createReason('', Reason.Type.HOLDOUT, held.group.getId());
       return [reason, variation];
     }
+    // Non-members of a disabled holdout target with no off variation get no
+    // row. Other disabled flags keep the historical fall-through.
+    if (
+      holdout?.targets(feature.getId()) &&
+      !feature.getEnabled() &&
+      feature.getOffVariation() === ''
+    ) {
+      throw EVALUATOR_ERRORS.FeatureOmitted;
+    }
     for (const pf of feature.getPrerequisitesList()) {
       const variationId = flagVariations[pf.getFeatureId()];
       if (!variationId) {
@@ -294,7 +317,6 @@ class Evaluator {
         }
       }
     }
-    // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
     if (!feature.getEnabled() && feature.getOffVariation() !== '') {
       const variation = this.findVariation(feature.getOffVariation(), feature.getVariationsList());
       const reason = createReason('', Reason.Type.OFF_VARIATION);

@@ -706,6 +706,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// L1→L2 cascade: after CI evicts L1, this repopulates it for subsequent evaluations.
 	featuresL1Cache := cachev3.NewFeaturesCache(inMemoryCache, *s.featuresMemoryCacheTTL)
 	featuresL2Cache := cachev3.NewFeaturesCache(redisV3Cache, 0)
+	holdoutL1Cache := cachev3.NewHoldoutGroupCache(inMemoryCache, *s.featuresMemoryCacheTTL)
+	holdoutL2Cache := cachev3.NewHoldoutGroupCache(redisV3Cache, 0)
 	streamDispatcher := stream.NewDispatcher(
 		*s.sseMaxConnections,
 		func(envID string) ([]*featureproto.Feature, error) {
@@ -730,7 +732,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		stream.WithFeaturesRefetcher(func(envID string) ([]*featureproto.Feature, error) {
 			ctx, cancel := context.WithTimeout(context.Background(), featuresRefetchTimeout)
 			defer cancel()
-			fs, err := api.ListFeatures(ctx, featureClient, envID)
+			fs, err := api.ListFeatures(
+				ctx,
+				featureClient,
+				envID,
+				api.CachedHoldoutTargetIDs(holdoutL1Cache, holdoutL2Cache, envID, logger),
+			)
 			if err != nil {
 				return nil, err
 			}

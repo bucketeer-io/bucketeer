@@ -48,6 +48,9 @@ import (
 	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
 	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
+	holdoutmysql "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mysql"
+	holdoutpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
@@ -353,6 +356,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var segmentUserStorage v2fs.SegmentUserStorage
 	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	var accountStorage accstorage.AccountStorage
+	var holdoutStorage v2hs.HoldoutStorage
 	var auditLogStorage v2als.AuditLogStorage
 	var experimentStorage operationalstorage.ExperimentStorage
 	var autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage
@@ -370,6 +374,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
 		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
+		holdoutStorage = holdoutpostgres.NewHoldoutStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
 		experimentStorage = oppostgres.NewExperimentStorage(postgresClient)
 		autoOpsRuleStorage = oppostgres.NewAutoOpsRuleStorage(postgresClient)
@@ -380,6 +385,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
 		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
+		holdoutStorage = holdoutmysql.NewHoldoutStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
 		experimentStorage = opmysql.NewExperimentStorage(mysqlClient)
 		autoOpsRuleStorage = opmysql.NewAutoOpsRuleStorage(mysqlClient)
@@ -545,6 +551,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushStorage,
 		auditLogStorage,
 		accountStorage,
+		holdoutStorage,
 		experimentStorage,
 		autoOpsRuleStorage,
 		persistentRedisClient,
@@ -1076,6 +1083,7 @@ func (s *server) registerPubSubProcessorMap(
 	pushStorage pushstorage.PushStorage,
 	auditLogStorage v2als.AuditLogStorage,
 	accountStorage accstorage.AccountStorage,
+	holdoutStorage v2hs.HoldoutStorage,
 	experimentStorage operationalstorage.ExperimentStorage,
 	autoOpsRuleStorage operationalstorage.AutoOpsRuleStorage,
 	persistentRedisClient redisv3.Client,
@@ -1132,6 +1140,8 @@ func (s *server) registerPubSubProcessorMap(
 				cachev3.NewEnvironmentAPIKeyCache(nonPersistentRedisCache, 0),
 				cachev3.NewExperimentsCache(nonPersistentRedisCache),
 				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache, cachev3.NonPersistentAutoOpsRulesCacheTTL),
+				holdoutStorage,
+				cachev3.NewHoldoutGroupCache(nonPersistentRedisCache, 0),
 				cacheInvalidationPublisher,
 				logger,
 			),

@@ -148,6 +148,20 @@ func (m *holdoutMembership) variationFor(featureID string) (*ftproto.HoldoutGrou
 	return nil, "", false
 }
 
+// targets reports whether any group targets featureID, including when the
+// user is not a member. A nil receiver means no groups were passed.
+func (m *holdoutMembership) targets(featureID string) bool {
+	if m == nil {
+		return false
+	}
+	for _, group := range m.groups {
+		if _, targeted := holdoutVariationID(group, featureID); targeted {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *holdoutMembership) isMember(i int) bool {
 	if m.state[i] == 0 {
 		group := m.groups[i]
@@ -213,6 +227,25 @@ func EvaluationHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
 		return group
 	}
 	return nil
+}
+
+// HoldoutTargetFeatureIDs is the set of current target feature IDs.
+// An empty id is a clearance snapshot and has no targets. Removed rows are skipped.
+func HoldoutTargetFeatureIDs(group *ftproto.HoldoutGroup) map[string]struct{} {
+	if group == nil || group.Id == "" {
+		return nil
+	}
+	ids := make(map[string]struct{}, len(group.Features))
+	for _, feature := range group.Features {
+		if feature == nil || feature.FeatureId == "" || feature.RemovedAt != 0 {
+			continue
+		}
+		ids[feature.FeatureId] = struct{}{}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	return ids
 }
 
 // holdoutStale reports whether the client's cursor is behind a holdout

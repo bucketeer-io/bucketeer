@@ -1219,6 +1219,23 @@ func (f *Feature) IsDisabledAndOffVariationEmpty() bool {
 	return f.OffVariation == ""
 }
 
+// KeepForServing reports whether a flag belongs in the evaluation snapshot.
+// A current holdout target stays even when it is disabled and has no off
+// variation, so a member can still be assigned the holdout variation.
+// Flags archived more than thirty days ago are still dropped.
+func KeepForServing(f *Feature, holdoutTarget bool) bool {
+	if f == nil || f.Feature == nil {
+		return false
+	}
+	if f.IsArchivedBeforeLastThirtyDays() {
+		return false
+	}
+	if holdoutTarget {
+		return true
+	}
+	return !f.IsDisabledAndOffVariationEmpty()
+}
+
 /*
 IsArchivedBeforeLastThirtyDays returns a bool value
 indicating whether the feature flag was archived within the last thirty days.

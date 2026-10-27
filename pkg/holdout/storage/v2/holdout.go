@@ -18,6 +18,7 @@ package v2
 import (
 	"context"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -83,6 +84,40 @@ type HoldoutStorage interface {
 	GetClearedHoldoutUpdatedAt(ctx context.Context, environmentID string) (int64, error)
 	// ListLiveFeatureTargets returns current target rows of WAITING, RUNNING, or ANALYSIS groups.
 	ListLiveFeatureTargets(ctx context.Context, environmentID, featureID string) ([]domain.FeatureTarget, error)
+}
+
+// ServingSnapshot is the proto stored in the holdout cache.
+// A missing group becomes an empty snapshot whose updated_at is the newest
+// stop time, so every writer (batch cacher, feature service, subscriber)
+// publishes the same revision.
+func ServingSnapshot(
+	ctx context.Context,
+	storage HoldoutStorage,
+	environmentID string,
+) (*proto.HoldoutGroup, error) {
+	group, err := storage.GetLiveServingGroup(ctx, environmentID)
+	if err != nil {
+		if errors.Is(err, ErrHoldoutGroupNotFound) {
+			return clearedServingSnapshot(ctx, storage, environmentID)
+		}
+		return nil, err
+	}
+	if group == nil || group.HoldoutGroup == nil {
+		return clearedServingSnapshot(ctx, storage, environmentID)
+	}
+	return group.HoldoutGroup, nil
+}
+
+func clearedServingSnapshot(
+	ctx context.Context,
+	storage HoldoutStorage,
+	environmentID string,
+) (*proto.HoldoutGroup, error) {
+	updatedAt, err := storage.GetClearedHoldoutUpdatedAt(ctx, environmentID)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.HoldoutGroup{UpdatedAt: updatedAt}, nil
 }
 
 type ListHoldoutGroupsParams struct {

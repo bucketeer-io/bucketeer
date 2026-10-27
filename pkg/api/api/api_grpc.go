@@ -1428,6 +1428,9 @@ func (s *grpcGatewayService) listFeatures(
 ) ([]*featureproto.Feature, error) {
 	features := []*featureproto.Feature{}
 	cursor := ""
+	targets := CachedHoldoutTargetIDs(
+		s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentId, s.logger,
+	)
 	for {
 		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 			PageSize:      listRequestSize,
@@ -1438,12 +1441,7 @@ func (s *grpcGatewayService) listFeatures(
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			ff := featuredomain.Feature{Feature: f}
-			if ff.IsDisabledAndOffVariationEmpty() {
-				continue
-			}
-			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-			if ff.IsArchivedBeforeLastThirtyDays() {
+			if !keepEvaluableFeature(f, targets) {
 				continue
 			}
 			features = append(features, f)

@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 )
 
 type featureFlagCacherJob struct {
@@ -37,6 +38,7 @@ type featureFlagCacherJob struct {
 func NewFeatureFlagCacher(
 	ftStorage ftstorage.FeatureStorage,
 	multiCaches []cache.MultiGetCache,
+	holdoutStorage v2hs.HoldoutStorage,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -46,7 +48,12 @@ func NewFeatureFlagCacher(
 		opt(dopts)
 	}
 	return &featureFlagCacherJob{
-		cacher: ftcacher.NewFeatureFlagCacher(ftStorage, multiCaches, dopts.Logger),
+		cacher: ftcacher.NewFeatureFlagCacher(
+			ftStorage,
+			multiCaches,
+			dopts.Logger,
+			ftcacher.WithHoldoutStorage(holdoutStorage),
+		),
 		opts:   dopts,
 		logger: dopts.Logger.Named("feature-flag-cacher-job"),
 	}

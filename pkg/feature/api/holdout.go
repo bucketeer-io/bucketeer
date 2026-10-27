@@ -843,17 +843,16 @@ func (s *FeatureService) liveHoldoutGroup(environmentID string) *featureproto.Ho
 }
 
 // refreshHoldoutCache writes the serving snapshot the gateway reads.
-// A storage error evicts the key so a stale RUNNING group cannot keep serving.
+// The generation is captured before the storage read. A storage error evicts
+// the key so a stale RUNNING group cannot keep serving. A rejected write means
+// a newer snapshot is already cached.
 func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID string) {
 	if s.holdoutGroupCache == nil || s.holdoutStorage == nil || environmentID == "" {
 		return
 	}
-	group, err := s.holdoutStorage.GetLiveServingGroup(ctx, environmentID)
+	generation := time.Now().UnixNano()
+	snapshot, err := v2hs.ServingSnapshot(ctx, s.holdoutStorage, environmentID)
 	if err != nil {
-		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			s.cacheClearedHoldout(ctx, environmentID)
-			return
-		}
 		s.logger.Error("Failed to read the live holdout group",
 			zap.Error(err),
 			zap.String("environmentId", environmentID),
@@ -866,39 +865,18 @@ func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID 
 		}
 		return
 	}
-	snapshot := &featureproto.HoldoutGroup{}
-	if group != nil && group.HoldoutGroup != nil {
-		snapshot = group.HoldoutGroup
-	}
-	if putErr := s.holdoutGroupCache.Put(snapshot, environmentID); putErr != nil {
+	accepted, putErr := s.holdoutGroupCache.PutIfNewer(snapshot, environmentID, generation)
+	if putErr != nil {
 		s.logger.Error("Failed to cache the live holdout group",
 			zap.Error(putErr),
 			zap.String("environmentId", environmentID),
 		)
-	}
-}
-
-// cacheClearedHoldout stores the empty snapshot with the newest stop time.
-// A later cacher run reads the same row, so the revision does not move.
-func (s *FeatureService) cacheClearedHoldout(ctx context.Context, environmentID string) {
-	updatedAt, err := s.holdoutStorage.GetClearedHoldoutUpdatedAt(ctx, environmentID)
-	if err != nil {
-		s.logger.Error("Failed to read the cleared holdout revision",
-			zap.Error(err),
-			zap.String("environmentId", environmentID),
-		)
-		if evictErr := s.holdoutGroupCache.Evict(environmentID); evictErr != nil {
-			s.logger.Error("Failed to evict the holdout group cache",
-				zap.Error(evictErr),
-				zap.String("environmentId", environmentID),
-			)
-		}
 		return
 	}
-	if putErr := s.holdoutGroupCache.Put(&featureproto.HoldoutGroup{UpdatedAt: updatedAt}, environmentID); putErr != nil {
-		s.logger.Error("Failed to cache the empty holdout snapshot",
-			zap.Error(putErr),
+	if !accepted {
+		s.logger.Info("Skipped holdout cache write: a newer snapshot is already cached",
 			zap.String("environmentId", environmentID),
+			zap.Int64("generation", generation),
 		)
 	}
 }

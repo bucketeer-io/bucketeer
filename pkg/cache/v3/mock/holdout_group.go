@@ -12,9 +12,8 @@ package mock
 import (
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockHoldoutGroupCache is a mock of HoldoutGroupCache interface.
@@ -81,4 +80,19 @@ func (m *MockHoldoutGroupCache) Put(group *feature.HoldoutGroup, environmentID s
 func (mr *MockHoldoutGroupCacheMockRecorder) Put(group, environmentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockHoldoutGroupCache)(nil).Put), group, environmentID)
+}
+
+// PutIfNewer mocks base method.
+func (m *MockHoldoutGroupCache) PutIfNewer(group *feature.HoldoutGroup, environmentID string, generation int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfNewer", group, environmentID, generation)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfNewer indicates an expected call of PutIfNewer.
+func (mr *MockHoldoutGroupCacheMockRecorder) PutIfNewer(group, environmentID, generation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfNewer", reflect.TypeOf((*MockHoldoutGroupCache)(nil).PutIfNewer), group, environmentID, generation)
 }

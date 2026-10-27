@@ -57,3 +57,33 @@ func TestHoldoutGroupCache(t *testing.T) {
 	_, err = c.Get("env")
 	assert.ErrorIs(t, err, cache.ErrNotFound)
 }
+
+func TestHoldoutGroupCachePutIfNewer(t *testing.T) {
+	t.Parallel()
+	mem := NewInMemoryCache()
+	c := NewHoldoutGroupCache(mem, 0)
+	newer := &ftproto.HoldoutGroup{Id: "new", UpdatedAt: 2}
+	older := &ftproto.HoldoutGroup{Id: "old", UpdatedAt: 1}
+
+	accepted, err := c.PutIfNewer(newer, "env", 200)
+	require.NoError(t, err)
+	assert.True(t, accepted)
+	accepted, err = c.PutIfNewer(older, "env", 100)
+	require.NoError(t, err)
+	assert.False(t, accepted)
+	got, err := c.Get("env")
+	require.NoError(t, err)
+	assert.Equal(t, "new", got.Id)
+
+	require.NoError(t, c.Evict("env"))
+	_, err = c.Get("env")
+	assert.ErrorIs(t, err, cache.ErrNotFound)
+	// Evict removes the generation marker, so a later write is accepted.
+	accepted, err = c.PutIfNewer(older, "env", 100)
+	require.NoError(t, err)
+	assert.True(t, accepted)
+
+	accepted, err = c.PutIfNewer(nil, "env", 1)
+	require.Error(t, err)
+	assert.False(t, accepted)
+}

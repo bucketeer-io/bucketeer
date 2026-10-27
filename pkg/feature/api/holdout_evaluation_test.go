@@ -104,7 +104,7 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		storage := holdoutmock.NewMockHoldoutStorage(controller)
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, v2hs.ErrHoldoutGroupNotFound)
 		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(0), nil)
-		cacheMock.EXPECT().Put(&featureproto.HoldoutGroup{}, "env").Return(nil)
+		cacheMock.EXPECT().PutIfNewer(&featureproto.HoldoutGroup{}, "env", gomock.Any()).Return(true, nil)
 		service := &FeatureService{
 			holdoutGroupCache: cacheMock,
 			holdoutStorage:    storage,
@@ -117,7 +117,9 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		storage := holdoutmock.NewMockHoldoutStorage(controller)
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, v2hs.ErrHoldoutGroupNotFound)
 		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(1700000000), nil)
-		cacheMock.EXPECT().Put(&featureproto.HoldoutGroup{UpdatedAt: 1700000000}, "env").Return(nil)
+		cacheMock.EXPECT().
+			PutIfNewer(&featureproto.HoldoutGroup{UpdatedAt: 1700000000}, "env", gomock.Any()).
+			Return(true, nil)
 		service := &FeatureService{
 			holdoutGroupCache: cacheMock,
 			holdoutStorage:    storage,
@@ -144,7 +146,7 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		group := &featureproto.HoldoutGroup{Id: "hg"}
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").
 			Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
-		cacheMock.EXPECT().Put(group, "env").Return(nil)
+		cacheMock.EXPECT().PutIfNewer(group, "env", gomock.Any()).Return(true, nil)
 		service := &FeatureService{
 			holdoutGroupCache: cacheMock,
 			holdoutStorage:    storage,

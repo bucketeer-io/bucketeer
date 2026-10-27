@@ -47,6 +47,10 @@ var (
 	ErrVariationNotFound             = errors.New("evaluator: variation not found")
 	ErrUnsupportedStrategy           = errors.New("evaluator: unsupported strategy")
 	ErrYAMLToJSONConversion          = errors.New("evaluator: failed to convert YAML to JSON")
+	// errFeatureOmitted is a disabled flag with no off variation. Holdout
+	// members return before this. Everyone else gets no evaluation, which is
+	// the same result as leaving the flag out of the feature list.
+	errFeatureOmitted = errors.New("evaluator: feature omitted")
 )
 
 func EvaluationID(featureID string, featureVersion int32, userID string) string {
@@ -187,6 +191,9 @@ func (e *evaluator) evaluate(
 			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
 		}
 		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations, holdout)
+		if errors.Is(err, errFeatureOmitted) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -297,6 +304,12 @@ func (e *evaluator) assignUser(
 			HoldoutGroupId: group.Id,
 		}, variation, err
 	}
+	// A holdout target that is disabled and has no off variation is omitted for
+	// non-members. That matches the previous cache filter: they receive no row.
+	// Flags that are not holdout targets keep the historical fall-through.
+	if holdout.targets(feature.Id) && !feature.Enabled && feature.OffVariation == "" {
+		return nil, nil, errFeatureOmitted
+	}
 	for _, pf := range feature.Prerequisites {
 		variation, ok := flagVariations[pf.FeatureId]
 		if !ok {
@@ -309,7 +322,6 @@ func (e *evaluator) assignUser(
 			}
 		}
 	}
-	// It doesn't assign the user in case of the feature is disabled and OffVariation is not set
 	if !feature.Enabled && feature.OffVariation != "" {
 		variation, err := findVariation(feature.OffVariation, feature.Variations)
 		return &ftproto.Reason{Type: ftproto.Reason_OFF_VARIATION}, variation, err

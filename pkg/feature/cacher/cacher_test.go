@@ -328,10 +328,23 @@ func TestRemoveOldFeatures(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			cacher := &featureFlagCacher{}
-			actual := cacher.removeOldFeatures(p.input)
+			actual := cacher.removeOldFeatures(p.input, nil)
 			assert.True(t, compareFeatureSlices(t, p.expected, actual))
 		})
 	}
+}
+
+func TestRemoveOldFeaturesKeepsHoldoutTarget(t *testing.T) {
+	t.Parallel()
+	disabled := &ftproto.Feature{Id: "targeted", Enabled: false}
+	other := &ftproto.Feature{Id: "other", Enabled: false}
+	kept := &ftproto.Feature{Id: "normal", Enabled: true, OffVariation: "on"}
+	cacher := &featureFlagCacher{}
+	actual := cacher.removeOldFeatures(
+		[]*ftproto.Feature{disabled, other, kept},
+		map[string]struct{}{"targeted": {}},
+	)
+	assert.Equal(t, []*ftproto.Feature{disabled, kept}, actual)
 }
 
 func TestPutCache(t *testing.T) {

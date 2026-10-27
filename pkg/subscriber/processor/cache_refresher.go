@@ -27,6 +27,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -36,6 +37,7 @@ import (
 	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
@@ -94,6 +96,8 @@ type cacheRefresher struct {
 	environmentAPIKeyCache     cachev3.EnvironmentAPIKeyCache
 	experimentsCache           cachev3.ExperimentsCache
 	autoOpsRulesCache          cachev3.AutoOpsRulesCache
+	holdoutStorage             v2hs.HoldoutStorage
+	holdoutGroupCache          cachev3.HoldoutGroupCache
 	cacheInvalidationPublisher publisher.Publisher
 	logger                     *zap.Logger
 	// now supplies the features snapshot generation; overridable in tests.
@@ -115,6 +119,8 @@ func NewCacheRefresher(
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
 	experimentsCache cachev3.ExperimentsCache,
 	autoOpsRulesCache cachev3.AutoOpsRulesCache,
+	holdoutStorage v2hs.HoldoutStorage,
+	holdoutGroupCache cachev3.HoldoutGroupCache,
 	cacheInvalidationPublisher publisher.Publisher,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
@@ -128,6 +134,8 @@ func NewCacheRefresher(
 		environmentAPIKeyCache:     environmentAPIKeyCache,
 		experimentsCache:           experimentsCache,
 		autoOpsRulesCache:          autoOpsRulesCache,
+		holdoutStorage:             holdoutStorage,
+		holdoutGroupCache:          holdoutGroupCache,
 		cacheInvalidationPublisher: cacheInvalidationPublisher,
 		logger:                     logger.Named("cache-refresher"),
 		now:                        time.Now,
@@ -277,8 +285,8 @@ func (c *cacheRefresher) handleMessage(ctx context.Context, msg *puller.Message)
 }
 
 // refresh performs the fetch -> Put -> publish sequence for one event.
-// All five entity types (FEATURE, SEGMENT, APIKEY, EXPERIMENT,
-// AUTOOPS_RULE) follow the same flow: fetch the fresh state from the
+// FEATURE, SEGMENT, APIKEY, EXPERIMENT, AUTOOPS_RULE, and HOLDOUT_GROUP
+// follow the same flow: fetch the fresh state from the
 // owning service, write it to L2, then announce on the cache-invalidation
 // topic so api pods drop their L1 entries. Delete-shaped events
 // (e.g. SEGMENT_DELETED) short-circuit to evict-then-announce inside
@@ -295,9 +303,41 @@ func (c *cacheRefresher) refresh(ctx context.Context, event *domaineventproto.Ev
 		return c.refreshExperiments(ctx, event)
 	case domaineventproto.Event_AUTOOPS_RULE:
 		return c.refreshAutoOpsRules(ctx, event)
+	case domaineventproto.Event_HOLDOUT_GROUP:
+		return c.refreshHoldoutGroup(ctx, event)
 	default:
 		return nil
 	}
+}
+
+func (c *cacheRefresher) refreshHoldoutGroup(
+	ctx context.Context,
+	event *domaineventproto.Event,
+) error {
+	if c.holdoutStorage == nil || c.holdoutGroupCache == nil {
+		return nil
+	}
+	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
+	defer cancel()
+	// Captured before the read so a minute-cacher snapshot cannot overwrite a newer stop.
+	generation := c.now().UnixNano()
+	snapshot, err := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
+	if err != nil {
+		return err
+	}
+	accepted, err := c.holdoutGroupCache.PutIfNewer(snapshot, event.EnvironmentId, generation)
+	if err != nil {
+		return err
+	}
+	if !accepted {
+		c.logger.Info("Skipped holdout redis cache write: a newer snapshot is already cached",
+			zap.String("environmentId", event.EnvironmentId),
+			zap.String("entityId", event.EntityId),
+			zap.String("type", event.Type.String()),
+			zap.Int64("generation", generation),
+		)
+	}
+	return c.publishCacheInvalidation(ctx, event)
 }
 
 func (c *cacheRefresher) refreshFeatures(
@@ -352,6 +392,10 @@ func (c *cacheRefresher) fetchAllFeatures(
 ) (*featureproto.Features, error) {
 	features := []*featureproto.Feature{}
 	cursor := ""
+	targets, err := c.holdoutTargetIDs(ctx, environmentID)
+	if err != nil {
+		return nil, err
+	}
 	for {
 		resp, err := c.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 			PageSize:      cacheRefresherListPageSize,
@@ -362,11 +406,8 @@ func (c *cacheRefresher) fetchAllFeatures(
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			ff := featuredomain.Feature{Feature: f}
-			if ff.IsDisabledAndOffVariationEmpty() {
-				continue
-			}
-			if ff.IsArchivedBeforeLastThirtyDays() {
+			_, targeted := targets[f.Id]
+			if !featuredomain.KeepForServing(&featuredomain.Feature{Feature: f}, targeted) {
 				continue
 			}
 			features = append(features, f)
@@ -378,6 +419,26 @@ func (c *cacheRefresher) fetchAllFeatures(
 		cursor = resp.Cursor
 	}
 	return &featureproto.Features{Features: features}, nil
+}
+
+func (c *cacheRefresher) holdoutTargetIDs(
+	ctx context.Context,
+	environmentID string,
+) (map[string]struct{}, error) {
+	if c.holdoutStorage == nil || environmentID == "" {
+		return nil, nil
+	}
+	group, err := c.holdoutStorage.GetLiveServingGroup(ctx, environmentID)
+	if err != nil {
+		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if group == nil {
+		return nil, nil
+	}
+	return evaluation.HoldoutTargetFeatureIDs(group.HoldoutGroup), nil
 }
 
 func (c *cacheRefresher) refreshSegmentUsers(

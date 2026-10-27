@@ -26,6 +26,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
@@ -128,6 +129,101 @@ func TestGatewayEvaluateFeaturesHoldout(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, featureproto.Reason_OFF_VARIATION, without.Evaluations[0].Reason.Type)
+}
+
+func TestGatewayEvaluateDisabledHoldoutTarget(t *testing.T) {
+	t.Parallel()
+	service := &gatewayService{logger: zap.NewNop()}
+	disabled := &featureproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*featureproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &featureproto.Strategy{
+			Type:          featureproto.Strategy_FIXED,
+			FixedStrategy: &featureproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	sibling := &featureproto.Feature{
+		Id:           "sibling",
+		Enabled:      true,
+		OffVariation: "off",
+		Variations: []*featureproto.Variation{
+			{Id: "off", Value: "off"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &featureproto.Strategy{
+			Type:          featureproto.Strategy_FIXED,
+			FixedStrategy: &featureproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	group := &featureproto.HoldoutGroup{
+		Id:             "hg",
+		EnvironmentId:  "env",
+		Status:         featureproto.HoldoutGroup_RUNNING,
+		AssignmentType: featureproto.HoldoutGroup_HASH,
+		SamplingSeed:   "seed",
+		Percentage:     100,
+		Features: []*featureproto.HoldoutGroupFeature{{
+			FeatureId:          "flag",
+			HoldoutVariationId: "hold",
+		}},
+	}
+	member, err := service.evaluateFeatures(
+		context.Background(),
+		&userproto.User{Id: "user-1"},
+		[]*featureproto.Feature{disabled, sibling},
+		"env",
+		"",
+		group,
+	)
+	require.NoError(t, err)
+	require.Len(t, member.Evaluations, 2)
+	byID := map[string]*featureproto.Evaluation{}
+	for _, evaluation := range member.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.Equal(t, featureproto.Reason_HOLDOUT, byID["flag"].Reason.Type)
+	assert.Equal(t, "hold", byID["flag"].VariationId)
+	assert.Equal(t, "sibling", byID["sibling"].FeatureId)
+
+	group.Percentage = 0
+	nonMember, err := service.evaluateFeatures(
+		context.Background(),
+		&userproto.User{Id: "user-1"},
+		[]*featureproto.Feature{disabled, sibling},
+		"env",
+		"",
+		group,
+	)
+	require.NoError(t, err)
+	require.Len(t, nonMember.Evaluations, 1)
+	assert.Equal(t, "sibling", nonMember.Evaluations[0].FeatureId)
+}
+
+func TestListFeaturesKeepsDisabledHoldoutTarget(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	client := featureclientmock.NewMockClient(controller)
+	client.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(&featureproto.ListFeaturesResponse{
+		Features: []*featureproto.Feature{
+			{Id: "kept", Enabled: false},
+			{Id: "dropped", Enabled: false},
+			{Id: "normal", Enabled: true, OffVariation: "on"},
+		},
+	}, nil)
+	got, err := ListFeatures(
+		context.Background(),
+		client,
+		"env",
+		map[string]struct{}{"kept": {}},
+	)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	assert.Equal(t, "kept", got[0].Id)
+	assert.Equal(t, "normal", got[1].Id)
 }
 
 func TestCountHoldoutEvaluationRequiresTargets(t *testing.T) {

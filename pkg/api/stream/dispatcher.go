@@ -252,6 +252,34 @@ func (d *Dispatcher) HandleEvent(e *domaineventproto.Event) {
 		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
 			p.allTags = true
 		})
+	case domaineventproto.Event_HOLDOUT_GROUP:
+		// A holdout start, stop, or target change can move every flag in the
+		// environment, so every open stream re-evaluates.
+		if !holdoutEventChangesAssignments(e.Type) {
+			return
+		}
+		if !d.hasConns(e.EnvironmentId) {
+			return
+		}
+		d.enqueue(e.EnvironmentId, e.Type, func(p *pendingDispatch) {
+			p.allTags = true
+		})
+	}
+}
+
+func holdoutEventChangesAssignments(t domaineventproto.Event_Type) bool {
+	switch t {
+	case domaineventproto.Event_HOLDOUT_GROUP_UPDATED,
+		domaineventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED,
+		domaineventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED,
+		domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+		domaineventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED,
+		domaineventproto.Event_HOLDOUT_GROUP_STOPPED,
+		domaineventproto.Event_HOLDOUT_GROUP_ARCHIVED,
+		domaineventproto.Event_HOLDOUT_GROUP_DELETED:
+		return true
+	default:
+		return false
 	}
 }
 

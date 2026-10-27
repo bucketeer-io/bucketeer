@@ -5,6 +5,7 @@ const EVALUATOR_ERRORS = {
   PrerequisiteVariationNotFound: new Error('evaluator: prerequisite variation not found'),
   VariationNotFound: new Error('evaluator: variation not found'),
   UnsupportedStrategy: new Error('evaluator: unsupported strategy'),
+  FeatureOmitted: new Error('evaluator: feature omitted'),
 };
 
 export { EVALUATOR_ERRORS };

@@ -22,6 +22,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -66,6 +67,24 @@ func loadLiveHoldoutGroup(
 		}
 	}
 	return evaluation.EvaluationHoldout(group)
+}
+
+// CachedHoldoutTargetIDs reads the serving snapshot and returns its current
+// target feature IDs. A miss or a clearance snapshot returns nil.
+func CachedHoldoutTargetIDs(
+	memory, redis cachev3.HoldoutGroupCache,
+	environmentID string,
+	logger *zap.Logger,
+) map[string]struct{} {
+	return evaluation.HoldoutTargetFeatureIDs(loadLiveHoldoutGroup(memory, redis, environmentID, logger))
+}
+
+func keepEvaluableFeature(f *featureproto.Feature, holdoutTargets map[string]struct{}) bool {
+	if f == nil {
+		return false
+	}
+	_, targeted := holdoutTargets[f.Id]
+	return featuredomain.KeepForServing(&featuredomain.Feature{Feature: f}, targeted)
 }
 
 func holdoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutGroup {
