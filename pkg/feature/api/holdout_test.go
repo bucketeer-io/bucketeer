@@ -578,6 +578,25 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 	})
 }
 
+func TestRemoveHoldoutFeatureMatchesExactID(t *testing.T) {
+	t.Parallel()
+	// PostgreSQL treats "flag" and "FLAG" as distinct flags, and storage only
+	// removes the exact ID, so the in-memory list must do the same.
+	features := []*featureproto.HoldoutGroupFeature{
+		{FeatureId: "flag"},
+		{FeatureId: "FLAG"},
+		{FeatureId: "other"},
+	}
+	out := removeHoldoutFeature(features, "flag")
+	require.Len(t, out, 2)
+	assert.Equal(t, "FLAG", out[0].FeatureId)
+	assert.Equal(t, "other", out[1].FeatureId)
+
+	// Removing an ID that is not present leaves the list unchanged.
+	out = removeHoldoutFeature(out, "missing")
+	require.Len(t, out, 2)
+}
+
 func TestUpdateEnableFeatureLocksFlagRow(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

@@ -3033,6 +3033,43 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: statusInvalidArchive.Err(),
 		},
 		{
+			// MySQL resolves IDs case-insensitively, so the locking read for
+			// "FID" returns the flag "fid". The update must be rejected as not
+			// found, as the previous exact-match list scan did, so downstream
+			// checks keyed on the request ID are never skipped.
+			desc: "fail: case-variant feature id is rejected as not found",
+			setup: func(s *FeatureService) {
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{},
+					nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(
+					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
+					nil,
+				)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "FID", gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
+				// No ListFeatures, no UpdateFeature: the request stops here.
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "FID",
+				Name:          wrapperspb.String("name"),
+			},
+			expectedErr: statusFeatureNotFound.Err(),
+		},
+		{
 			// Regression test: domain validation errors from the update
 			// transaction must surface as InvalidArgument with structured
 			// details, not as codes.Unknown (HTTP 500).
