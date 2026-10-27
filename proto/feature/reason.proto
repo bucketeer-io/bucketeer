@@ -25,6 +25,9 @@ message Reason {
     CLIENT = 4 [deprecated = true];
     OFF_VARIATION = 5;
     PREREQUISITE = 6;
+    // HOLDOUT is assigned before any flag state is consulted. Older SDKs
+    // surface the unknown enum value rather than failing.
+    HOLDOUT = 7;
     ERROR_NO_EVALUATIONS = 20;
     ERROR_FLAG_NOT_FOUND = 21;
     ERROR_WRONG_TYPE = 22;
@@ -35,4 +38,6 @@ message Reason {
   }
   Type type = 1;
   string rule_id = 2;
+  // Set when type is HOLDOUT. Identifies the serving group.
+  string holdout_group_id = 3;
 }

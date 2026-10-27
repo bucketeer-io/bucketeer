@@ -1,4 +1,6 @@
 import { Evaluator, getFeatureIDsDependsOn } from './evaluation';
+import { HoldoutAssignment, HoldoutMembership } from './bucketeer';
+import type { HoldoutFeature, HoldoutGroup } from './bucketeer';
 import { SegmentUser, SegmentUsers } from './proto/feature/segment_pb';
 import { Feature } from './proto/feature/feature_pb';
 import { NewUserEvaluations } from './userEvaluation';
@@ -30,6 +32,8 @@ import {
 } from './modelFactory';
 
 export { Evaluator, NewUserEvaluations, Evaluation, UserEvaluations, getFeatureIDsDependsOn };
+export { HoldoutAssignment, HoldoutMembership };
+export type { HoldoutFeature, HoldoutGroup };
 export { User, SegmentUser, SegmentUsers, Feature };
 export { Strategy, Clause, Reason, Rule, Target, Variation, Prerequisite, FeatureLastUsedInfo };
 export { SourceId };
@@ -49,4 +53,3 @@ export {
   createUser,
   createVariation,
 };
-

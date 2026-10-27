@@ -8026,6 +8026,9 @@ definitions:
         $ref: '#/definitions/featureReasonType'
       ruleId:
         type: string
+      holdoutGroupId:
+        type: string
+        description: Set when type is HOLDOUT. Identifies the serving group.
   featureReasonType:
     type: string
     enum:
@@ -8035,6 +8038,7 @@ definitions:
       - CLIENT
       - OFF_VARIATION
       - PREREQUISITE
+      - HOLDOUT
       - ERROR_NO_EVALUATIONS
       - ERROR_FLAG_NOT_FOUND
       - ERROR_WRONG_TYPE
@@ -8043,6 +8047,9 @@ definitions:
       - ERROR_EXCEPTION
       - ERROR_CACHE_NOT_FOUND
     default: TARGET
+    description: |2-
+       - HOLDOUT: HOLDOUT is assigned before any flag state is consulted. Older SDKs
+      surface the unknown enum value rather than failing.
   featureRolloutStrategy:
     type: object
     properties:

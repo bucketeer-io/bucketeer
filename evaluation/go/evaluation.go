@@ -104,8 +104,9 @@ func (e *evaluator) EvaluateFeatures(
 	mapSegmentUsers map[string][]*ftproto.SegmentUser,
 	mapSegments map[string]*ftproto.Segment,
 	targetTag string,
+	groups ...*ftproto.HoldoutGroup,
 ) (*ftproto.UserEvaluations, error) {
-	return e.evaluate(fs, user, mapSegmentUsers, mapSegments, false, targetTag)
+	return e.evaluate(fs, user, mapSegmentUsers, mapSegments, false, targetTag, groups)
 }
 
 func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
@@ -117,15 +118,25 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	evaluatedAt int64,
 	userAttributesUpdated bool,
 	targetTag string,
+	groups ...*ftproto.HoldoutGroup,
 ) (*ftproto.UserEvaluations, error) {
 	if prevUEID == "" {
-		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag)
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
 	}
 	now := time.Now()
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
-		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag)
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
 	}
+	// A holdout change does not bump feature.UpdatedAt. Compare it with the
+	// same grace window as the feature diff, so a same-second update or one
+	// that lands just behind the cursor still forces a full re-evaluation.
+	// An empty snapshot carries the updated_at of the group that stopped
+	// serving and uses the same check, so clients drop cached HOLDOUT
+	// assignments instead of merging a partial flag diff.
 	adjustedEvalAt := evaluatedAt - e.secondsForAdjustment
+	if holdoutStale(groups, adjustedEvalAt) {
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
+	}
 	updatedFeatures := make([]*ftproto.Feature, 0, len(fs))
 	for _, feature := range fs {
 		if feature.UpdatedAt > adjustedEvalAt {
@@ -139,13 +150,13 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	// If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
 	// it is considered unusual and a force update should be performed.
 	if len(updatedFeatures) == 0 {
-		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag)
+		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
 	}
 	evalTargets, err := e.getEvalFeatures(updatedFeatures, fs)
 	if err != nil {
 		return nil, err
 	}
-	return e.evaluate(evalTargets, user, mapSegmentUsers, mapSegments, false, targetTag)
+	return e.evaluate(evalTargets, user, mapSegmentUsers, mapSegments, false, targetTag, groups)
 }
 
 func (e *evaluator) evaluate(
@@ -155,9 +166,14 @@ func (e *evaluator) evaluate(
 	mapSegments map[string]*ftproto.Segment,
 	forceUpdate bool,
 	targetTag string,
+	groups []*ftproto.HoldoutGroup,
 ) (*ftproto.UserEvaluations, error) {
 
 	flagVariations := map[string]string{}
+	// Membership is flag-independent (RFC 0048 §4.2.1): it is resolved at
+	// most once per group, on the first targeted flag, and never when no
+	// evaluated flag is targeted or no group is passed.
+	holdout := newHoldoutMembership(groups, user, mapSegmentUsers)
 	// fs need to be sorted in order from upstream to downstream.
 	sortedFs, err := ftdomain.TopologicalSort(fs)
 	if err != nil {
@@ -170,7 +186,7 @@ func (e *evaluator) evaluate(
 		for _, id := range e.ListSegmentIDs(feature) {
 			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
 		}
-		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations)
+		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations, holdout)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +235,7 @@ func (e *evaluator) evaluate(
 		evaluations = append(evaluations, evaluation)
 	}
 	// FIXME: Remove id once all SDKs will be updated.
-	id := UserEvaluationsID(user.Id, user.Data, fs)
+	id := UserEvaluationsID(user.Id, user.Data, fs, groups...)
 	userEvaluations := NewUserEvaluations(id, evaluations, archivedIDs, forceUpdate)
 	return userEvaluations.UserEvaluations, nil
 }
@@ -269,7 +285,18 @@ func (e *evaluator) assignUser(
 	segmentUsers []*ftproto.SegmentUser,
 	segments map[string]*ftproto.Segment,
 	flagVariations map[string]string,
+	holdout *holdoutMembership,
 ) (*ftproto.Reason, *ftproto.Variation, error) {
+	// Holdout is first: a held-out user always receives the group's variation,
+	// including when the flag is disabled or a prerequisite is unsatisfied.
+	// Membership is memoized across flags by holdout (nil when no group).
+	if group, variationID, ok := holdout.variationFor(feature.Id); ok {
+		variation, err := findVariation(variationID, feature.Variations)
+		return &ftproto.Reason{
+			Type:           ftproto.Reason_HOLDOUT,
+			HoldoutGroupId: group.Id,
+		}, variation, err
+	}
 	for _, pf := range feature.Prerequisites {
 		variation, ok := flagVariations[pf.FeatureId]
 		if !ok {

@@ -50,6 +50,8 @@ enum BatchJob {
   EvaluationDailyCountBackfiller = 22;
   // Advances holdout groups on start_at, start_analysis_at, and stop_at.
   HoldoutGroupStatusUpdater = 23;
+  // Refreshes the per-environment live holdout group used by evaluation.
+  HoldoutGroupCacher = 24;
 }
 
 message BatchJobRequest {

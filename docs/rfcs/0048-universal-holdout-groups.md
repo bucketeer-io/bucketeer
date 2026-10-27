@@ -91,10 +91,10 @@ Indexes: `(environment_id, status)` on `holdout_group`; `(holdout_group_id, envi
 
 ### 4.2 Membership
 
-`IsHeldOut(group, user)` lives in the shared evaluation library:
+`IsHeldOut(group, user)` lives in the shared evaluation library. Membership is flag-independent, so the evaluator resolves it at most once per group per evaluation, on the first flag the group targets, and reuses the answer for every other flag; an evaluation that touches no targeted flag never computes it.
 
-- **HASH**: the user's bucket is `b = bucket("holdout-{environmentID}-{userID}-{seed}")`, using the existing murmur3-128 bucketer (`evaluation/go/bucketeer.go`), and the user is held out when `b` falls inside the group's range `[bucket_start, bucket_start + percentage) / 100`, wrapping at 1.0.
-- **SEGMENT**: the user is a member of the referenced segment.
+- **HASH**: the user's bucket is `b = bucket("holdout-{environmentID}-{userID}-{seed}")`, using the existing murmur3-128 bucketer (`evaluation/go/bucketeer.go`), and the user is held out when `b` falls inside the group's range `[bucket_start, bucket_start + percentage) / 100`, wrapping at 1.0. `bucket_start`, `percentage`, and `b` are rounded to the DECIMAL(6,3) grid (thousandths of a percent on [0, 100)) before the half-open comparison, so the exclusive end does not depend on binary float error. A stored percentage of `33.333` therefore ends at `0.33333`, and `33.3334` rounds to the same endpoint.
+- **SEGMENT**: the user is an included member of the referenced segment. Evaluation checks the segment users passed in for `segment_id` and state `INCLUDED`. Segment rules are not consulted. An excluded or absent user is not held out.
 
 #### 4.2.1 HASH mode (default)
 
@@ -157,7 +157,7 @@ Two delivery paths already exist, and they have very different exposure:
 On the server-evaluated path, change detection (`UserEvaluationsID`, `EvaluateFeaturesByEvaluatedAt`) looks only at each flag's `UpdatedAt`, so a holdout change would never reach a client. Two changes fix this:
 
 - `UserEvaluationsID` also hashes the live group's ID and `updated_at` (§4.6).
-- An `evaluatedAt` older than the group's `updated_at` forces a full re-evaluation (`ForceUpdate`).
+- An `evaluatedAt` older than the group's `updated_at` forces a full re-evaluation (`ForceUpdate`). The comparison uses the same grace window as the feature diff (`evaluatedAt - grace < updated_at`), so a holdout update in the same second as the cursor, or one that arrives just behind it, still forces a full re-evaluation. When serving stops, the empty cache snapshot keeps the `updated_at` of the newest stopped group. A cursor behind that revision forces a full re-evaluation, so clients drop cached `HOLDOUT` assignments instead of merging a partial flag diff. An empty snapshot with `updated_at` 0 means the environment has never stopped a group and does not force an update. Later cacher runs reuse that same stop time. Because `updated_at` is bumped by every edit (§4.6), including a name, description or goal change that does not affect serving, each such edit makes every active client's next request a full re-evaluation once. This is accepted for phase 2; if it proves costly, the cache snapshot can carry a serving-only revision (status transitions and target-flag changes) in place of `updated_at`, with no SDK impact since the value is only compared server-side.
 
 For the local-evaluation path, `GetFeatureFlagsResponse` gains `repeated HoldoutGroup holdout_groups`, always sent in full (the list is tiny and never diffed). It is repeated even though only one group serves at a time (§4.6), so lifting that restriction later costs no wire-format change. It rides on `GetFeatureFlags` rather than a new RPC because a separate endpoint would let the flag and holdout snapshots drift, leaving windows where the holdout is not yet applied or still applied after it ended.
 
@@ -169,7 +169,7 @@ The honest risk: **an old server SDK ignores the unknown field and silently serv
 - The detail page shows an **SDK compatibility** panel built from that metric, listing non-compliant source/version pairs, and the group cannot be moved to `RUNNING` while unacknowledged incompatible clients are reporting. The panel also tracks the **mixed-path overlap** — held-out users who were also served through an incompatible SDK in the same day (§4.4) — so the residual contamination is a measured number rather than a guess.
 - Requests are never rejected. Breaking production traffic to protect a measurement is the wrong trade.
 
-Caching mirrors the feature flags path: a `HoldoutGroupCache` with the same shape as the existing experiments cache, refreshed by the `cacher` batch job and evicted on write. SEGMENT mode reuses the existing segment-users cache.
+Caching mirrors the feature flags path: a `HoldoutGroupCache` with the same shape as the existing experiments cache, refreshed by the `cacher` batch job and on every holdout write. The gateway reads that cache only. A miss is treated as no live group and is not filled from MySQL on the request path; the cacher stores an empty snapshot when nothing is serving, so a miss is the cold-cache case rather than "no group". SEGMENT mode reuses the existing segment-users cache.
 
 ### 4.4 Measurement
 

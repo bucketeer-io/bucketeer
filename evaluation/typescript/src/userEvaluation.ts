@@ -1,5 +1,6 @@
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Feature } from './proto/feature/feature_pb';
+import type { HoldoutGroup } from './bucketeer';
 import fnv from 'fnv-plus';
 
 //
@@ -19,6 +20,15 @@ function NewUserEvaluations(
   userEvaluations.setForceUpdate(forceUpdate);
 
   return userEvaluations;
+}
+
+function sortedHoldoutGroups(groups: HoldoutGroup[] | undefined): HoldoutGroup[] {
+  if (!groups || groups.length === 0) {
+    return [];
+  }
+  return groups
+    .filter((group) => group && group.getId() !== '')
+    .sort((a, b) => (a.getId() < b.getId() ? -1 : a.getId() > b.getId() ? 1 : 0));
 }
 
 function sortMapKeys(data: Record<string, string>): string[] {
@@ -58,6 +68,7 @@ function UserEvaluationsID(
   userID: string,
   userMetadata: Record<string, string>, // equivalent to map[string]string in Go
   features: Feature[],
+  holdoutGroups?: HoldoutGroup[],
 ): string {
   // Sort features by ID
   features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
@@ -74,6 +85,11 @@ function UserEvaluationsID(
   // Append feature details to the hash input
   features.forEach((feature) => {
     hashInput += `${feature.getId()}:${feature.getUpdatedAt()}`;
+  });
+
+  // Hash live groups after features so a missing group leaves the ID unchanged.
+  sortedHoldoutGroups(holdoutGroups).forEach((group) => {
+    hashInput += `${group.getId()}:${group.getUpdatedAt()}`;
   });
 
   // Generate the FNV-1a 64-bit hash

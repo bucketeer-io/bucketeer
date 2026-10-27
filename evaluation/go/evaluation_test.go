@@ -1621,7 +1621,7 @@ func TestAssignUserOffVariation(t *testing.T) {
 		f.Enabled = p.enabled
 		f.OffVariation = p.offVariation
 		f.Prerequisites = p.prerequisite
-		reason, variation, err := evaluator.assignUser(f, user, nil, nil, p.Flagvariations)
+		reason, variation, err := evaluator.assignUser(f, user, nil, nil, p.Flagvariations, nil)
 		assert.Equal(t, p.expectedReason, reason)
 		assert.Equal(t, p.expectedVariation, variation)
 		assert.Equal(t, p.expectedError, err)
@@ -1659,7 +1659,7 @@ func TestAssignUserTarget(t *testing.T) {
 	}
 	for _, p := range patterns {
 		user := &userproto.User{Id: p.userID}
-		reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
+		reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil, nil)
 		assert.Equal(t, p.expectedReason, reason.Type)
 		assert.Equal(t, p.expectedVariationID, variation.Id)
 		assert.NoError(t, err)
@@ -1673,7 +1673,7 @@ func TestAssignUserRuleSet(t *testing.T) {
 	}
 	f := makeFeature("test-feature")
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1694,7 +1694,7 @@ func TestAssignUserWithNoDefaultStrategy(t *testing.T) {
 	f.DefaultStrategy = nil
 
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil, nil)
 	if reason != nil {
 		t.Fatalf("Failed to assign user. Reason should be nil: %v", reason)
 	}
@@ -1713,7 +1713,7 @@ func TestAssignUserDefaultStrategy(t *testing.T) {
 	}
 	f := makeFeature("test-feature")
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1752,7 +1752,7 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 		},
 	}
 	evaluator := NewEvaluator()
-	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil)
+	reason, variation, err := evaluator.assignUser(f, user, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}
@@ -1764,7 +1764,7 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 	}
 	// Channge sampling seed to change assigned variation.
 	f.SamplingSeed = "sampling-seed"
-	reason, variation, err = evaluator.assignUser(f, user, nil, nil, nil)
+	reason, variation, err = evaluator.assignUser(f, user, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
 	}

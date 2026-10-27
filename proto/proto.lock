@@ -10305,6 +10305,10 @@
               {
                 "name": "HoldoutGroupStatusUpdater",
                 "integer": 23
+              },
+              {
+                "name": "HoldoutGroupCacher",
+                "integer": 24
               }
             ],
             "reserved_ids": [
@@ -30936,6 +30940,10 @@
                 "integer": 6
               },
               {
+                "name": "HOLDOUT",
+                "integer": 7
+              },
+              {
                 "name": "ERROR_NO_EVALUATIONS",
                 "integer": 20
               },
@@ -30978,6 +30986,11 @@
               {
                 "id": 2,
                 "name": "rule_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "holdout_group_id",
                 "type": "string"
               }
             ]

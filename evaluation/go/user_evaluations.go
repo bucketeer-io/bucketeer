@@ -44,7 +44,12 @@ func NewUserEvaluations(
 	}}
 }
 
-func UserEvaluationsID(userID string, userMetadata map[string]string, features []*ftproto.Feature) string {
+func UserEvaluationsID(
+	userID string,
+	userMetadata map[string]string,
+	features []*ftproto.Feature,
+	groups ...*ftproto.HoldoutGroup,
+) string {
 	sort.SliceStable(features, func(i, j int) bool {
 		return features[i].Id < features[j].Id
 	})
@@ -61,7 +66,27 @@ func UserEvaluationsID(userID string, userMetadata map[string]string, features [
 	for _, feature := range features {
 		fmt.Fprintf(h, "%s:%d", feature.Id, feature.UpdatedAt)
 	}
+	// Hash live groups after features so a nil group leaves the ID unchanged.
+	for _, group := range sortedHoldoutGroups(groups) {
+		fmt.Fprintf(h, "%s:%d", group.Id, group.UpdatedAt)
+	}
 	return strconv.FormatUint(h.Sum64(), 10)
+}
+
+func sortedHoldoutGroups(groups []*ftproto.HoldoutGroup) []*ftproto.HoldoutGroup {
+	if len(groups) == 0 {
+		return nil
+	}
+	live := make([]*ftproto.HoldoutGroup, 0, len(groups))
+	for _, group := range groups {
+		if group != nil && group.Id != "" {
+			live = append(live, group)
+		}
+	}
+	sort.Slice(live, func(i, j int) bool {
+		return live[i].Id < live[j].Id
+	})
+	return live
 }
 
 func sortMapKeys(data map[string]string) []string {
