@@ -17,6 +17,9 @@ package dwhstorage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
+	"github.com/google/uuid"
 
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
@@ -101,6 +104,12 @@ func (w *sqlGoalEventWriter) AppendRows(
 		return fails, nil
 	}
 
+	// A goal linked to experiments on several features has one row per feature
+	associations := make(map[string]int, len(events))
+	for _, evt := range events {
+		associations[evt.Id]++
+	}
+
 	// Prepare batch parameters
 	batchEvents := make([]GoalEventParams, 0, len(events))
 	for _, evt := range events {
@@ -111,7 +120,7 @@ func (w *sqlGoalEventWriter) AppendRows(
 		}
 
 		batchEvents = append(batchEvents, GoalEventParams{
-			ID:             evt.Id,
+			ID:             goalRowID(evt, associations[evt.Id]),
 			EnvironmentID:  evt.EnvironmentId,
 			Timestamp:      evt.Timestamp,
 			GoalID:         evt.GoalId,
@@ -138,4 +147,14 @@ func (w *sqlGoalEventWriter) AppendRows(
 	}
 
 	return fails, nil
+}
+
+// goalRowID keeps the event ID for a single association, matching the rows written before per-feature IDs.
+// Several associations get a fixed-length ID derived from the event ID and the feature.
+func goalRowID(evt *epproto.GoalEvent, associations int) string {
+	if associations <= 1 {
+		return evt.Id
+	}
+	name := fmt.Sprintf("%s:%s:%d", evt.Id, evt.FeatureId, evt.FeatureVersion)
+	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(name)).String()
 }

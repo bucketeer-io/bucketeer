@@ -91,7 +91,7 @@ func (s *goalEventStorage) createGoalEventsBatch(
 
 		args = append(
 			args,
-			event.RowID(),
+			event.ID,
 			event.EnvironmentID,
 			timestampSeconds,
 			event.GoalID,

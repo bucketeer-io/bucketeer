@@ -73,24 +73,6 @@ func TestGoalEventStorage_CreateGoalEvents(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			desc: "success: one row per linked feature",
-			setup: func(s *goalEventStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(_ context.Context, _ string, args ...any) (any, error) {
-					// 13 args per event, starting with the row ID
-					assert.Equal(t, "id-1:feature-1:1", args[0])
-					assert.Equal(t, "id-1:feature-2:3", args[13])
-					return nil, nil
-				})
-			},
-			input: []dwhstorage.GoalEventParams{
-				{ID: "id-1", EnvironmentID: "env-1", GoalID: "goal-1", UserID: "user-1", FeatureID: "feature-1", FeatureVersion: 1},
-				{ID: "id-1", EnvironmentID: "env-1", GoalID: "goal-1", UserID: "user-1", FeatureID: "feature-2", FeatureVersion: 3},
-			},
-			expectedErr: false,
-		},
-		{
 			desc:        "error: missing required field",
 			setup:       func(s *goalEventStorage) {},
 			input:       []dwhstorage.GoalEventParams{{ID: "", EnvironmentID: "env"}},
