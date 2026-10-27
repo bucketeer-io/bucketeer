@@ -811,16 +811,17 @@ func TestDispatcherDispatchReplacesPendingEvent(t *testing.T) {
 	default:
 	}
 
-	// A holdout start replaces the pending feature snapshot and must not keep
-	// it. Nil tells the stream to read the feature cache.
-	d.dispatch(event{environmentID: "env-1", tags: []string{"tag-A"}, features: older})
+	// A holdout change does not alter flag contents. Like a segment event it
+	// keeps the pending snapshot, which was verified for an earlier feature
+	// change; the holdout itself is read from its own cache.
+	d.dispatch(event{environmentID: "env-1", tags: []string{"tag-A"}, features: newer})
 	d.dispatch(event{
 		environmentID: "env-1",
 		eventType:     domaineventproto.Event_HOLDOUT_GROUP_STARTED,
 	})
 	got = <-ch
 	assert.Equal(t, domaineventproto.Event_HOLDOUT_GROUP_STARTED, got.eventType)
-	assert.Nil(t, got.features)
+	assert.Equal(t, newer, got.features)
 }
 
 func featureJSON(t *testing.T, id string, version int32, tags ...string) string {

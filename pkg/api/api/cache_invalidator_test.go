@@ -207,9 +207,6 @@ func TestCacheInvalidatorEvictsHoldoutGroup(t *testing.T) {
 	require.NoError(t, featuresCache.Put(&featureproto.Features{
 		Features: []*featureproto.Feature{{Id: "flag"}},
 	}, "env-1"))
-	require.NoError(t, featuresCache.Put(&featureproto.Features{
-		Features: []*featureproto.Feature{{Id: "other-flag"}},
-	}, "env-2"))
 	invalidator := NewCacheInvalidator(featuresCache, nil, nil, holdoutCache, nil, nil, zap.NewNop())
 	data, err := proto.Marshal(&domaineventproto.Event{
 		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
@@ -224,10 +221,9 @@ func TestCacheInvalidatorEvictsHoldoutGroup(t *testing.T) {
 	kept, err := holdoutCache.Get("env-2")
 	require.NoError(t, err)
 	assert.Equal(t, "other", kept.Id)
-	_, err = featuresCache.Get("env-1")
-	assert.Error(t, err)
-	otherFeatures, err := featuresCache.Get("env-2")
+	// A holdout change does not alter flag contents: the feature cache stays.
+	features, err := featuresCache.Get("env-1")
 	require.NoError(t, err)
-	require.Len(t, otherFeatures.Features, 1)
-	assert.Equal(t, "other-flag", otherFeatures.Features[0].Id)
+	require.Len(t, features.Features, 1)
+	assert.Equal(t, "flag", features.Features[0].Id)
 }

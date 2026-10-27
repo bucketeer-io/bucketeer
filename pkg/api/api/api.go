@@ -291,9 +291,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		return
 	}
 	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-	group := s.liveHoldoutGroup(req.Context(), envAPIKey.Environment.Id)
-	features, removed := evaluation.FeaturesForServerEval(features, group)
-	if len(features) == 0 && len(removed) == 0 {
+	if len(features) == 0 {
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
@@ -303,6 +301,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		)
 		return
 	}
+	group := s.liveHoldoutGroup(req.Context(), envAPIKey.Environment.Id)
 	countHoldoutEvaluation(group, reqBody.SourceID.String())
 	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features, holdoutGroups(group)...)
 	if reqBody.UserEvaluationsID == ueid {
@@ -335,7 +334,6 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	appendRemovedFeatureIDs(evaluations, removed)
 	rest.ReturnSuccessResponse(
 		w,
 		&getEvaluationsResponse{
@@ -367,7 +365,6 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	group := s.liveHoldoutGroup(req.Context(), envAPIKey.Environment.Id)
-	fs, _ = evaluation.FeaturesForServerEval(fs, group)
 	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
@@ -426,36 +423,18 @@ func (s *gatewayService) evaluateFeaturesForStream(
 		}
 		shared = f.([]*featureproto.Feature)
 	}
+	if len(shared) == 0 {
+		return "", s.emptyUserEvaluations(), nil
+	}
 	group := s.liveHoldoutGroup(ctx, environmentID)
-	kept, removed := evaluation.FeaturesForServerEval(shared, group)
 	grace := int64(0)
 	if s.opts != nil {
 		grace = int64(s.opts.featureFlagDiffGracePeriod / time.Second)
 	}
-	// An empty feature list still has to clear a client that cached the last
-	// holdout assignment. ForceUpdate is the clearance signal; removed IDs
-	// cover a partial update that drops a disabled target.
-	if len(kept) == 0 {
-		stale := evaluation.HoldoutStale(holdoutGroups(group), evaluatedAt-grace)
-		if !stale && len(removed) == 0 {
-			return "", s.emptyUserEvaluations(), nil
-		}
-		id := evaluation.UserEvaluationsID(user.Id, user.Data, kept, holdoutGroups(group)...)
-		if removed == nil {
-			removed = []string{}
-		}
-		return id, &featureproto.UserEvaluations{
-			Id:                 id,
-			Evaluations:        []*featureproto.Evaluation{},
-			ArchivedFeatureIds: removed,
-			ForceUpdate:        stale,
-			CreatedAt:          time.Now().Unix(),
-		}, nil
-	}
 	// singleflight and dispatched snapshots share the same slice across callers.
 	// Copy to avoid data races from in-place sort in UserEvaluationsID.
-	features := make([]*featureproto.Feature, len(kept))
-	copy(features, kept)
+	features := make([]*featureproto.Feature, len(shared))
+	copy(features, shared)
 
 	evaluator := evaluation.NewEvaluator(
 		evaluation.WithSecondsForAdjustment(grace),
@@ -496,7 +475,6 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	if err != nil {
 		return "", nil, err
 	}
-	appendRemovedFeatureIDs(evaluations, removed)
 	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features, holdoutGroups(group)...)
 	return ueid, evaluations, nil
 }
@@ -927,16 +905,11 @@ func (s *gatewayService) getFeatures(
 		return fs.Features, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerInMemory, codeMiss).Inc()
-	// L2: Redis cache (kept warm by batch cacher). The fill records the
-	// invalidation epoch before the read, so a holdout start that evicts L1
-	// while this read is in flight cannot be overwritten by the pre-start list.
-	fs, err = FillFeatureSnapshot(environmentId, func() (*featureproto.Features, error) {
-		return s.featuresRedisCache.Get(environmentId)
-	}, func(features *featureproto.Features) {
-		putFeaturesCache(ctx, features, environmentId, s.featuresCache, s.logger)
-	})
+	// L2: Redis cache (kept warm by batch cacher)
+	fs, err = s.featuresRedisCache.Get(environmentId)
 	if err == nil {
 		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
+		putFeaturesCache(ctx, fs, environmentId, s.featuresCache, s.logger)
 		return fs.Features, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeMiss).Inc()
@@ -966,24 +939,16 @@ func (s *gatewayService) listFeatures(
 	ctx context.Context,
 	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	targets := CachedHoldoutTargetIDs(
-		s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentId, s.logger,
-	)
-	return ListFeatures(ctx, s.featureClient, environmentId, targets)
+	return ListFeatures(ctx, s.featureClient, environmentId)
 }
 
 // ListFeatures loads the environment's evaluable features from the feature service.
-// holdoutTargets keeps a disabled flag that has no off variation when it is a
-// current holdout target. A former target also stays when another flag still
-// depends on it. Pages are collected first so that dependency can be on a
-// later page.
 func ListFeatures(
 	ctx context.Context,
 	featureClient featureclient.Client,
 	environmentId string,
-	holdoutTargets map[string]struct{},
 ) ([]*featureproto.Feature, error) {
-	var features []*featureproto.Feature
+	features := []*featureproto.Feature{}
 	cursor := ""
 	for {
 		resp, err := featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
@@ -994,10 +959,20 @@ func ListFeatures(
 		if err != nil {
 			return nil, err
 		}
-		features = append(features, resp.Features...)
+		for _, f := range resp.Features {
+			ff := featuredomain.Feature{Feature: f}
+			if ff.IsDisabledAndOffVariationEmpty() {
+				continue
+			}
+			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
+			if ff.IsArchivedBeforeLastThirtyDays() {
+				continue
+			}
+			features = append(features, f)
+		}
 		featureSize := len(resp.Features)
 		if featureSize == 0 || featureSize < listRequestSize {
-			return featuredomain.FilterForServing(features, holdoutTargets), nil
+			return features, nil
 		}
 		cursor = resp.Cursor
 	}

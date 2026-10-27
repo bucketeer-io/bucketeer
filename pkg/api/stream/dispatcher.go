@@ -644,11 +644,10 @@ func (d *Dispatcher) dispatch(ev event) {
 		next := ev
 		select {
 		case pending := <-c.ch:
-			// A segment event has no snapshot; keep the pending one, which was verified for an
-			// earlier feature change. The segment change itself is evaluated from the cache.
-			// A holdout assignment change must not inherit that snapshot: its own is nil so
-			// the stream reads the feature cache refreshed for the new targets.
-			if next.features == nil && !holdoutEventChangesAssignments(next.eventType) {
+			// A segment or holdout event has no snapshot; keep the pending one, which was
+			// verified for an earlier feature change. The segment or holdout change itself is
+			// evaluated from its own cache.
+			if next.features == nil {
 				next.features = pending.features
 			}
 		default:

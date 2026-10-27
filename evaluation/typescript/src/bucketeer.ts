@@ -181,12 +181,6 @@ export class HoldoutMembership {
     return undefined;
   }
 
-  // hasSnapshot reports whether evaluation was given a holdout snapshot.
-  // A clearance and an unavailable snapshot both count.
-  hasSnapshot(): boolean {
-    return this.groups.length > 0;
-  }
-
   private isMember(i: number): boolean {
     let member = this.state[i];
     if (member === undefined) {

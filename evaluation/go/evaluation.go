@@ -47,14 +47,6 @@ var (
 	ErrVariationNotFound             = errors.New("evaluator: variation not found")
 	ErrUnsupportedStrategy           = errors.New("evaluator: unsupported strategy")
 	ErrYAMLToJSONConversion          = errors.New("evaluator: failed to convert YAML to JSON")
-	// errFeatureOmitted is a disabled flag with no off variation. Holdout
-	// members return before this. Everyone else gets no evaluation, which is
-	// the same result as leaving the flag out of the feature list.
-	errFeatureOmitted = errors.New("evaluator: feature omitted")
-	// omittedPrerequisiteVariation is recorded for an omitted flag so a
-	// dependent sees an unsatisfied prerequisite instead of a missing one.
-	// A missing result aborts the whole evaluation.
-	omittedPrerequisiteVariation = "\x00"
 )
 
 func EvaluationID(featureID string, featureVersion int32, userID string) string {
@@ -199,17 +191,6 @@ func (e *evaluator) evaluate(
 			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
 		}
 		reason, variation, err := e.assignUser(feature, user, segmentUsers, mapSegments, flagVariations, holdout)
-		if errors.Is(err, errFeatureOmitted) {
-			// A partial evaluation has to name the flag. Otherwise a client
-			// that merges the diff keeps the variation from when it was enabled.
-			if targetTag == "" || tagExist(feature.Tags, targetTag) {
-				archivedIDs = append(archivedIDs, feature.Id)
-			}
-			// Dependents still need a result. An empty one is unsatisfied,
-			// which keeps the omitted flag out of the response.
-			flagVariations[feature.Id] = omittedPrerequisiteVariation
-			continue
-		}
 		if err != nil {
 			return nil, err
 		}
@@ -320,26 +301,19 @@ func (e *evaluator) assignUser(
 			HoldoutGroupId: group.Id,
 		}, variation, err
 	}
-	// A snapshot is present (a serving group, a clearance, or a stand-in for a
-	// cache that could not be read). The user was not assigned HOLDOUT above.
-	// Omit every disabled flag with no off variation, including a former
-	// target: falling through would serve a normal variation. No snapshot
-	// keeps the historical fall-through for flags that were never held out.
-	if holdout.hasSnapshot() && !feature.Enabled && feature.OffVariation == "" {
-		return nil, nil, errFeatureOmitted
-	}
 	for _, pf := range feature.Prerequisites {
 		variation, ok := flagVariations[pf.FeatureId]
 		if !ok {
 			return nil, nil, ErrPrerequisiteVariationNotFound
 		}
-		if variation == omittedPrerequisiteVariation || pf.VariationId != variation {
+		if pf.VariationId != variation {
 			if feature.OffVariation != "" {
 				variation, err := findVariation(feature.OffVariation, feature.Variations)
 				return &ftproto.Reason{Type: ftproto.Reason_PREREQUISITE}, variation, err
 			}
 		}
 	}
+	// It doesn't assign the user in case of the feature is disabled and OffVariation is not set
 	if !feature.Enabled && feature.OffVariation != "" {
 		variation, err := findVariation(feature.OffVariation, feature.Variations)
 		return &ftproto.Reason{Type: ftproto.Reason_OFF_VARIATION}, variation, err

@@ -19,7 +19,6 @@ package cacher
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -30,7 +29,6 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -50,23 +48,11 @@ type FeatureFlagCacher interface {
 }
 
 type featureFlagCacher struct {
-	ftStorage      ftstorage.FeatureStorage
-	holdoutStorage v2hs.HoldoutStorage
-	caches         []cachev3.FeaturesCache
-	logger         *zap.Logger
+	ftStorage ftstorage.FeatureStorage
+	caches    []cachev3.FeaturesCache
+	logger    *zap.Logger
 	// now supplies the snapshot generation; overridable in tests.
 	now func() time.Time
-}
-
-// Option configures a FeatureFlagCacher.
-type Option func(*featureFlagCacher)
-
-// WithHoldoutStorage keeps current holdout targets in the feature cache even
-// when a flag is disabled and has no off variation.
-func WithHoldoutStorage(storage v2hs.HoldoutStorage) Option {
-	return func(c *featureFlagCacher) {
-		c.holdoutStorage = storage
-	}
 }
 
 // NewFeatureFlagCacher creates a new FeatureFlagCacher.
@@ -74,22 +60,17 @@ func NewFeatureFlagCacher(
 	ftStorage ftstorage.FeatureStorage,
 	multiCaches []cache.MultiGetCache,
 	logger *zap.Logger,
-	opts ...Option,
 ) FeatureFlagCacher {
 	caches := make([]cachev3.FeaturesCache, 0, len(multiCaches))
 	for _, c := range multiCaches {
 		caches = append(caches, cachev3.NewFeaturesCache(c, 0))
 	}
-	cacher := &featureFlagCacher{
+	return &featureFlagCacher{
 		ftStorage: ftStorage,
 		caches:    caches,
 		logger:    logger.Named("feature-flag-cacher"),
 		now:       time.Now,
 	}
-	for _, opt := range opts {
-		opt(cacher)
-	}
-	return cacher
 }
 
 // RefreshEnvironmentCache updates the Redis cache for a specific environment.
@@ -113,7 +94,7 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 	}
 	recordListFeatures(cacherTypeFeatureFlag, scopeSingle, environmentID, codeSuccess, time.Since(startTime).Seconds())
 
-	filtered := c.removeOldFeatures(features, c.currentHoldoutTargets(ctx, environmentID))
+	filtered := c.removeOldFeatures(features)
 	fts := &ftproto.Features{
 		Id:       evaluation.GenerateFeaturesID(filtered),
 		Features: filtered,
@@ -141,7 +122,7 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 	recordListFeatures(cacherTypeFeatureFlag, scopeBatch, environmentIDAll, codeSuccess, time.Since(startTime).Seconds())
 
 	for _, envFt := range envFts {
-		filtered := c.removeOldFeatures(envFt.Features, c.currentHoldoutTargets(ctx, envFt.EnvironmentId))
+		filtered := c.removeOldFeatures(envFt.Features)
 		fts := &ftproto.Features{
 			Id:       evaluation.GenerateFeaturesID(filtered),
 			Features: filtered,
@@ -152,43 +133,16 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 	return nil
 }
 
-// removeOldFeatures filters out archived feature flags over thirty days ago
-// and disabled flags that have no off variation. A current holdout target is
-// kept so members can still be assigned the holdout variation. A former
-// target stays when another cached flag still depends on it.
-func (c *featureFlagCacher) removeOldFeatures(
-	features []*ftproto.Feature,
-	holdoutTargets map[string]struct{},
-) []*ftproto.Feature {
-	return ftdomain.FilterForServing(features, holdoutTargets)
-}
-
-// currentHoldoutTargets is the set of feature IDs the live holdout group
-// targets. The feature cache must not depend on the holdout tables being
-// healthy: a read error is logged and treated as "no targets", so the
-// refresh proceeds with the historical filter instead of leaving every
-// flag in the environment stale.
-func (c *featureFlagCacher) currentHoldoutTargets(
-	ctx context.Context,
-	environmentID string,
-) map[string]struct{} {
-	if c.holdoutStorage == nil || environmentID == "" {
-		return nil
-	}
-	group, err := c.holdoutStorage.GetLiveServingGroup(ctx, environmentID)
-	if err != nil {
-		if !errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			c.logger.Error("Failed to list holdout targets for cache update; refreshing without them",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-			)
+// removeOldFeatures filters out archived feature flags over thirty days ago.
+func (c *featureFlagCacher) removeOldFeatures(features []*ftproto.Feature) []*ftproto.Feature {
+	result := make([]*ftproto.Feature, 0, len(features))
+	for _, f := range features {
+		ft := ftdomain.Feature{Feature: f}
+		if !ft.IsDisabledAndOffVariationEmpty() && !ft.IsArchivedBeforeLastThirtyDays() {
+			result = append(result, f)
 		}
-		return nil
 	}
-	if group == nil {
-		return nil
-	}
-	return evaluation.HoldoutTargetFeatureIDs(group.HoldoutGroup)
+	return result
 }
 
 // putCache saves features to all Redis instances and records metrics.

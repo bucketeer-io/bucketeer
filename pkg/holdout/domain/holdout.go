@@ -780,6 +780,17 @@ func NewFeatureUnavailableError(featureID string) error {
 	).WithMessageKey("HoldoutFeatureUnavailable")
 }
 
+// NewFeatureNotServableError rejects a flag that is disabled and has no off
+// variation. Every flag created through the API has an off variation; such
+// a flag is not served to SDKs, so a member could never receive its holdout
+// variation. The guard keeps that invariant explicit at enrollment.
+func NewFeatureNotServableError(featureID string) error {
+	return pkgErr.NewErrorFailedPrecondition(
+		pkgErr.HoldoutPackageName,
+		fmt.Sprintf("feature %s is disabled and has no off variation", featureID),
+	).WithMessageKey("HoldoutFeatureNotServable")
+}
+
 func NewVariationNotOnFeatureError(featureID, variationID string) error {
 	return pkgErr.NewErrorInvalidArgNotMatchFormat(
 		pkgErr.HoldoutPackageName,

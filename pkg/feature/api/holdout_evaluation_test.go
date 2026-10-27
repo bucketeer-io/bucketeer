@@ -91,49 +91,9 @@ func TestEvaluateFeaturesCacheMissLeavesTheFlagOff(t *testing.T) {
 	assert.Equal(t, "off", evaluations.Evaluations[0].VariationId)
 }
 
-func TestEvaluateFeaturesClearanceOmitsDisabledFlagWithoutOffVariation(t *testing.T) {
-	t.Parallel()
-	controller := gomock.NewController(t)
-	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
-	holdoutCache.EXPECT().Get("env").Return(&featureproto.HoldoutGroup{UpdatedAt: 1700000000}, nil)
-	service := &FeatureService{
-		holdoutGroupCache: holdoutCache,
-		logger:            zap.NewNop(),
-	}
-	evaluations, err := service.evaluateFeatures(
-		context.Background(),
-		[]*featureproto.Feature{{Id: "flag", Enabled: false}},
-		&userproto.User{Id: "user-1"},
-		"env",
-		"",
-	)
-	require.NoError(t, err)
-	assert.Empty(t, evaluations.Evaluations)
-	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
-}
-
-func TestEvaluateFeaturesCacheMissOmitsDisabledFlagWithoutOffVariation(t *testing.T) {
-	t.Parallel()
-	controller := gomock.NewController(t)
-	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
-	holdoutCache.EXPECT().Get("env").Return(nil, cache.ErrNotFound)
-	service := &FeatureService{
-		holdoutGroupCache: holdoutCache,
-		logger:            zap.NewNop(),
-	}
-	evaluations, err := service.evaluateFeatures(
-		context.Background(),
-		[]*featureproto.Feature{{Id: "flag", Enabled: false}},
-		&userproto.User{Id: "user-1"},
-		"env",
-		"",
-	)
-	require.NoError(t, err)
-	assert.Empty(t, evaluations.Evaluations)
-	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
-}
-
-func TestEvaluateFeaturesCacheErrorOmitsDisabledFlagWithoutOffVariation(t *testing.T) {
+// A cache read error is an unavailable snapshot: it assigns nothing and the
+// debugger evaluates the flag as it would without a holdout group.
+func TestEvaluateFeaturesCacheErrorLeavesTheFlagOff(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
@@ -144,14 +104,15 @@ func TestEvaluateFeaturesCacheErrorOmitsDisabledFlagWithoutOffVariation(t *testi
 	}
 	evaluations, err := service.evaluateFeatures(
 		context.Background(),
-		[]*featureproto.Feature{{Id: "flag", Enabled: false}},
+		[]*featureproto.Feature{disabledFlag()},
 		&userproto.User{Id: "user-1"},
 		"env",
 		"",
 	)
 	require.NoError(t, err)
-	assert.Empty(t, evaluations.Evaluations)
-	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
+	require.Len(t, evaluations.Evaluations, 1)
+	assert.Equal(t, featureproto.Reason_OFF_VARIATION, evaluations.Evaluations[0].Reason.Type)
+	assert.Equal(t, "off", evaluations.Evaluations[0].VariationId)
 }
 
 func TestRefreshHoldoutCache(t *testing.T) {
