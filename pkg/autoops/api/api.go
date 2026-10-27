@@ -37,7 +37,6 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -51,8 +50,7 @@ import (
 )
 
 type options struct {
-	logger         *zap.Logger
-	holdoutStorage v2hs.HoldoutStorage
+	logger *zap.Logger
 }
 
 type Option func(*options)
@@ -63,19 +61,12 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
-func WithHoldoutStorage(storage v2hs.HoldoutStorage) Option {
-	return func(opts *options) {
-		opts.holdoutStorage = storage
-	}
-}
-
 type AutoOpsService struct {
 	dbClient         database.Client
 	opsCountStorage  v2os.OpsCountStorage
 	autoOpsStorage   v2as.AutoOpsRuleStorage
 	prStorage        v2as.ProgressiveRolloutStorage
 	featureStorage   v2fs.FeatureStorage
-	holdoutStorage   v2hs.HoldoutStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
 	accountClient    accountclient.Client
@@ -108,7 +99,6 @@ func NewAutoOpsService(
 		dbClient:         dbClient,
 		opsCountStorage:  opsCountStorage,
 		featureStorage:   featureStorage,
-		holdoutStorage:   dopts.holdoutStorage,
 		autoOpsStorage:   autoOpsStorage,
 		prStorage:        prStorage,
 		featureClient:    featureClient,
@@ -119,13 +109,6 @@ func NewAutoOpsService(
 		opts:             dopts,
 		logger:           dopts.logger.Named("api"),
 	}
-}
-
-func (s *AutoOpsService) lockHoldoutEnvironment(ctx context.Context, environmentID string) error {
-	if s.holdoutStorage == nil || environmentID == "" {
-		return nil
-	}
-	return s.holdoutStorage.LockEnvironment(ctx, environmentID)
 }
 
 func (s *AutoOpsService) Register(server *grpc.Server) {
@@ -939,11 +922,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	}
 
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		// Enable and disable write the whole flag row. Lock before the first
-		// read so this save cannot replace a variation enrolled afterward.
-		if err := s.lockHoldoutEnvironment(contextWithTx, req.EnvironmentId); err != nil {
-			return err
-		}
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -964,7 +942,10 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if executeClause.ExecutedAt != 0 {
 			return statusClauseAlreadyExecuted.Err()
 		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
+		// Enable and disable write the whole flag row. A locking read returns
+		// the latest committed flag, so this save cannot drop a variation that
+		// a concurrent request added and enrolled in a holdout.
+		feature, err := s.featureStorage.GetFeatureForUpdate(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}

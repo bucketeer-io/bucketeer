@@ -681,13 +681,47 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	editor *eventproto.Editor,
 	req *featureproto.UpdateFeatureRequest,
 ) (*eventproto.Event, *featureproto.Feature, error) {
-	// Holdout enrollment locks the environment before it reads the flag.
-	// Direct updates take the same lock here, before their first read.
-	// Scheduled execution locks at the start of its own transaction, because
-	// this helper runs after that transaction has already read.
-	if err := s.lockHoldoutEnvironment(ctx, req.EnvironmentId); err != nil {
+	// Lock the flag row before any other read in this transaction. Concurrent
+	// writers of the same flag, and holdout enrollment of it, serialize here,
+	// and the snapshot is taken after the lock so the guards below see the
+	// latest committed holdout targets.
+	feature, err := s.featureStorage.GetFeatureForUpdate(ctx, req.Id, req.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
+			err := statusFeatureNotFound.Err()
+			s.logger.Error(
+				"Failed to find feature",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return nil, nil, err
+		}
+		s.logger.Error(
+			"Failed to get feature for update",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
 		return nil, nil, err
 	}
+	if feature.Deleted {
+		err := statusFeatureNotFound.Err()
+		s.logger.Error(
+			"Failed to find feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	// The full list is only needed for prerequisite and dependency checks.
 	deleted := false
 	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
 		EnvironmentID: req.EnvironmentId,
@@ -698,25 +732,6 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 			"Failed to list features",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, nil, err
-	}
-	var feature *domain.Feature
-	for _, f := range features {
-		if f.Id == req.Id {
-			feature = &domain.Feature{Feature: f}
-			break
-		}
-	}
-	if feature == nil {
-		err := statusFeatureNotFound.Err()
-		s.logger.Error(
-			"Failed to find feature",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
@@ -920,10 +935,9 @@ func (s *FeatureService) DeleteFeature(
 	}
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		if err := s.lockHoldoutEnvironment(contextWithTx, req.EnvironmentId); err != nil {
-			return err
-		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, req.Id, req.EnvironmentId)
+		// Lock the flag row first so the holdout target guard below sees the
+		// latest committed enrollment.
+		feature, err := s.featureStorage.GetFeatureForUpdate(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",

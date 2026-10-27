@@ -543,12 +543,9 @@ func (s *FeatureService) updateEnableFeature(
 ) error {
 	var event *eventproto.Event
 	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		// Enable and disable write the whole flag row. Lock before the read so
+		// Enable and disable write the whole flag row. Lock the row on read so
 		// this save cannot replace a variation enrolled after the snapshot.
-		if err := s.lockHoldoutEnvironment(contextWithTx, environmentId); err != nil {
-			return err
-		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, featureId, environmentId)
+		feature, err := s.featureStorage.GetFeatureForUpdate(contextWithTx, featureId, environmentId)
 		if err != nil {
 			return err
 		}

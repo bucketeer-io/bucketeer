@@ -36,6 +36,8 @@ var (
 	countSegmentsSQL string
 	//go:embed sql/segment/get_segment.sql
 	getSegmentSQLQuery string
+	//go:embed sql/segment/lock_segment.sql
+	lockSegmentSQLQuery string
 	//go:embed sql/segment/update_segment.sql
 	updateSegmentSQLQuery string
 	//go:embed sql/segment/insert_segment.sql
@@ -118,6 +120,22 @@ func (s *segmentStorage) UpdateSegment(
 		return v2fs.ErrSegmentUnexpectedAffectedRows
 	}
 	return nil
+}
+
+// GetSegmentForUpdate locks the segment row first because the read query joins
+// and aggregates, which cannot carry FOR UPDATE portably.
+func (s *segmentStorage) GetSegmentForUpdate(
+	ctx context.Context,
+	id, environmentId string,
+) (*domain.Segment, []string, error) {
+	var lockedID string
+	if err := s.qe.QueryRowContext(ctx, lockSegmentSQLQuery, id, environmentId).Scan(&lockedID); err != nil {
+		if errors.Is(err, mysqlstorage.ErrNoRows) {
+			return nil, nil, v2fs.ErrSegmentNotFound
+		}
+		return nil, nil, err
+	}
+	return s.GetSegment(ctx, id, environmentId)
 }
 
 func (s *segmentStorage) GetSegment(

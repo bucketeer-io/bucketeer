@@ -271,7 +271,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
-		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 			gomock.Any(), "seg", "ns0",
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg", Deleted: true}}, nil, nil)
 		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
@@ -291,7 +291,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
-		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 			gomock.Any(), "seg", "ns0",
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{
 			Id: "seg", Status: featureproto.Segment_UPLOADING,
@@ -448,7 +448,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		expectTx(service)
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
-		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 			gomock.Any(), "FLAG", "ns0",
 		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{
 			Id:         "flag",
@@ -554,7 +554,10 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		expectHoldoutEvents(t, service, controller, 2, eventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED)
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
-		expectFeature(service, "flag", "var", false)
+		// Removal only reads the flag for the event; it does not need the row lock.
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+			gomock.Any(), "flag", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "flag"}}, nil)
 		storage.EXPECT().RemoveHoldoutGroupFeature(gomock.Any(), "ns0", "hg", "flag", gomock.Any()).Return(nil)
 		storage.EXPECT().UpdateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 		// The current targets are loaded before the change, inside the transaction.
@@ -575,34 +578,41 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 	})
 }
 
-func TestUpdateEnableFeatureLocksEnvironmentBeforeRead(t *testing.T) {
+func TestUpdateEnableFeatureLocksFlagRow(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
-	service, storage := newHoldoutService(t, controller)
+	service, _ := newHoldoutService(t, controller)
 	expectTx(service)
-	gomock.InOrder(
-		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil),
-		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
-			gomock.Any(), "fid", "ns0",
-		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil),
-	)
+	// The whole-row save reads the flag with a row lock, never a plain read.
+	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+		gomock.Any(), "fid", "ns0",
+	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
 	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().UpdateFeature(
 		gomock.Any(), gomock.Any(), "ns0",
 	).Return(nil)
 	require.NoError(t, service.updateEnableFeature(context.Background(), "fid", "ns0", true))
 }
 
-func TestExecuteScheduledFlagChangeLocksEnvironmentBeforeRead(t *testing.T) {
+func TestExecuteScheduledFlagChangeLocksScheduleAndFlagRows(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
-	service, storage := newHoldoutService(t, controller)
+	service, _ := newHoldoutService(t, controller)
 	expectTx(service)
 	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
 	gomock.InOrder(
-		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil),
-		scheduled.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
-			Return(nil, v2fs.ErrScheduledFlagChangeNotFound),
+		// Both reads are locking reads so the MySQL snapshot is taken after the flag lock.
+		scheduled.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc", "ns0").
+			Return(&featuredomain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
+				Id:            "sfc",
+				FeatureId:     "fid",
+				EnvironmentId: "ns0",
+				Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			}}, nil),
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "fid", "ns0",
+		).Return(nil, v2fs.ErrFeatureNotFound),
 	)
+	scheduled.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
 	_, err := service.ExecuteScheduledFlagChange(
 		createContextWithTokenRoleUnassigned(),
 		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
@@ -615,9 +625,8 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 	controller := gomock.NewController(t)
 	service, storage := newHoldoutService(t, controller)
 	expectTx(service)
-	storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil).Times(2)
 	service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage).EXPECT().
-		GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
+		GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc", "ns0").
 		Return(&featuredomain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
 			Id:            "sfc",
 			FeatureId:     "fid",
@@ -627,9 +636,10 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 				Archived: wrapperspb.Bool(true),
 			},
 		}}, nil)
-	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+	// Once by the executor, once by updateFeatureWithinTransaction; both are locking reads.
+	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 		gomock.Any(), "fid", "ns0",
-	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
+	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil).Times(2)
 	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
 		gomock.Any(), gomock.Any(),
 	).Return([]*featureproto.Feature{{Id: "fid"}}, 0, int64(0), nil)
@@ -667,7 +677,9 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		service, storage := newHoldoutService(t, controller)
 		expectEnvironment(service)
 		expectTx(service)
-		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "fid", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
 		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
 			gomock.Any(), gomock.Any(),
 		).Return([]*featureproto.Feature{{Id: "fid"}}, 0, int64(0), nil)
@@ -686,7 +698,9 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		service, storage := newHoldoutService(t, controller)
 		expectEnvironment(service)
 		expectTx(service)
-		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "fid", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
 		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
 			gomock.Any(), gomock.Any(),
 		).Return([]*featureproto.Feature{{Id: "fid"}}, 0, int64(0), nil)
@@ -709,8 +723,7 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		service, storage := newHoldoutService(t, controller)
 		expectEnvironment(service)
 		expectTx(service)
-		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
-		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 			gomock.Any(), "fid", "ns0",
 		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
 		storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "fid").Return([]holdoutdomain.FeatureTarget{{
@@ -729,7 +742,10 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		expectTx(service)
 		expectTx(service)
 		expectTx(service)
-		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil).Times(3)
+		// Each writer locks the segment row first, then checks serving groups.
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil).Times(3)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return([]holdoutdomain.GroupSnapshot{{
 			ID: "hg", Name: "holdout", SegmentID: "seg", Status: featureproto.HoldoutGroup_RUNNING,
 		}}, nil).Times(3)
@@ -843,7 +859,7 @@ func expectGoal(service *FeatureService, goalID string) {
 }
 
 func expectFeature(service *FeatureService, featureID, variationID string, archived bool) {
-	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 		gomock.Any(), featureID, "ns0",
 	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{
 		Id:         featureID,

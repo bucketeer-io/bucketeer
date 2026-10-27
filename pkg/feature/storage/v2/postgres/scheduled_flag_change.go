@@ -150,11 +150,25 @@ func (s *scheduledFlagChangeStorage) GetScheduledFlagChange(
 	ctx context.Context,
 	id, environmentID string,
 ) (*domain.ScheduledFlagChange, error) {
+	return s.getScheduledFlagChange(ctx, getScheduledFlagChangeSQL, id, environmentID)
+}
+
+func (s *scheduledFlagChangeStorage) GetScheduledFlagChangeForUpdate(
+	ctx context.Context,
+	id, environmentID string,
+) (*domain.ScheduledFlagChange, error) {
+	return s.getScheduledFlagChange(ctx, getScheduledFlagChangeSQL+" FOR UPDATE", id, environmentID)
+}
+
+func (s *scheduledFlagChangeStorage) getScheduledFlagChange(
+	ctx context.Context,
+	query, id, environmentID string,
+) (*domain.ScheduledFlagChange, error) {
 	sfc := proto.ScheduledFlagChange{}
 	var status int32
 	err := s.qe.QueryRowContext(
 		ctx,
-		getScheduledFlagChangeSQL,
+		query,
 		id,
 		environmentID,
 	).Scan(

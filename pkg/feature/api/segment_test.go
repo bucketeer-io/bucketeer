@@ -241,7 +241,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -314,7 +314,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.All(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -341,7 +341,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.All(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -389,7 +389,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.All(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -434,7 +434,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.All(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -806,7 +806,7 @@ func TestSegmentDomainEventPublishedAfterCommitMySQL(t *testing.T) {
 					*committed = true
 					return err
 				})
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -846,7 +846,7 @@ func TestSegmentDomainEventPublishedAfterCommitMySQL(t *testing.T) {
 					*committed = true
 					return err
 				})
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{
@@ -908,7 +908,7 @@ func TestUpdateSegmentPublishFailureMySQL(t *testing.T) {
 	).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
 		return fn(ctx)
 	})
-	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(&domain.Segment{
 		Segment: &featureproto.Segment{

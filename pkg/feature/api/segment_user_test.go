@@ -129,7 +129,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{},
@@ -197,7 +197,7 @@ func TestBulkUploadSegmentUsersPublishOrderingMySQL(t *testing.T) {
 		committed = true
 		return err
 	})
-	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+	service.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(&domain.Segment{
 		Segment: &featureproto.Segment{},

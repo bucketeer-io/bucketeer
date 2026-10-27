@@ -337,16 +337,16 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	}
 	var events []publisher.Message
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		// The rollout writes the whole flag row. Lock before the first read so
-		// the repeatable-read snapshot cannot drop a variation enrolled later.
-		if err := s.lockHoldoutEnvironment(contextWithTx, req.EnvironmentId); err != nil {
-			return err
-		}
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId)
+		// The rollout writes the whole flag row. A locking read returns the
+		// latest committed flag, so this save cannot drop a variation that a
+		// concurrent request added and enrolled in a holdout.
+		feature, err := s.featureStorage.GetFeatureForUpdate(
+			contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId,
+		)
 		if err != nil {
 			return err
 		}

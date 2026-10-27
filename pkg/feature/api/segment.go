@@ -177,10 +177,9 @@ func (s *FeatureService) DeleteSegment(
 	}
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		if err := s.ensureSegmentNotLockedByHoldout(contextWithTx, req.Id, req.EnvironmentId); err != nil {
-			return err
-		}
-		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
+		// Lock the segment row before any other read, then check that no
+		// serving holdout group references it.
+		segment, _, err := s.segmentStorage.GetSegmentForUpdate(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -189,6 +188,9 @@ func (s *FeatureService) DeleteSegment(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
+			return err
+		}
+		if err := s.ensureSegmentNotLockedByHoldout(contextWithTx, segment.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		eventPb, err = domainevent.NewEvent(
@@ -329,10 +331,9 @@ func (s *FeatureService) UpdateSegment(
 	var updatedSegment *featureproto.Segment
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		if err := s.ensureSegmentNotLockedByHoldout(contextWithTx, req.Id, req.EnvironmentId); err != nil {
-			return err
-		}
-		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
+		// Lock the segment row before any other read, then check that no
+		// serving holdout group references it.
+		segment, _, err := s.segmentStorage.GetSegmentForUpdate(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -341,6 +342,9 @@ func (s *FeatureService) UpdateSegment(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
+			return err
+		}
+		if err := s.ensureSegmentNotLockedByHoldout(contextWithTx, segment.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		updated, err := segment.UpdateSegment(req.Name, req.Description)

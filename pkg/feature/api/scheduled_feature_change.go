@@ -657,14 +657,13 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	var failureReason string
 
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		// MySQL REPEATABLE READ fixes the snapshot at the first consistent read.
-		// Lock the environment before that read so a holdout enrollment that
-		// commits afterward cannot be missed by ListLiveFeatureTargets.
-		if err := s.lockHoldoutEnvironment(ctxWithTx, req.EnvironmentId); err != nil {
-			return err
-		}
+		// Both reads below are locking reads. On MySQL REPEATABLE READ a
+		// locking read does not pin the transaction snapshot, so the first
+		// consistent read (the holdout target guard) still sees an enrollment
+		// that committed just before the flag lock was granted. Locking the
+		// schedule row also stops two executors from running the same schedule.
 		var err error
-		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
+		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChangeForUpdate(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
 				return statusScheduledFlagChangeNotFound.Err()
@@ -685,8 +684,8 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 			return statusScheduledFlagChangeNotPending.Err()
 		}
 
-		// Get the feature
-		feature, err := s.featureStorage.GetFeature(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
+		// Lock the flag row before the first consistent read of this transaction.
+		feature, err := s.featureStorage.GetFeatureForUpdate(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2fs.ErrFeatureNotFound) {
 				failureReason = "Feature not found"

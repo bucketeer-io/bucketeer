@@ -87,6 +87,22 @@ func (mr *MockSegmentStorageMockRecorder) GetSegment(ctx, id, environmentId any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegment", reflect.TypeOf((*MockSegmentStorage)(nil).GetSegment), ctx, id, environmentId)
 }
 
+// GetSegmentForUpdate mocks base method.
+func (m *MockSegmentStorage) GetSegmentForUpdate(ctx context.Context, id, environmentId string) (*domain.Segment, []string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSegmentForUpdate", ctx, id, environmentId)
+	ret0, _ := ret[0].(*domain.Segment)
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetSegmentForUpdate indicates an expected call of GetSegmentForUpdate.
+func (mr *MockSegmentStorageMockRecorder) GetSegmentForUpdate(ctx, id, environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentForUpdate", reflect.TypeOf((*MockSegmentStorage)(nil).GetSegmentForUpdate), ctx, id, environmentId)
+}
+
 // ListAllInUseSegments mocks base method.
 func (m *MockSegmentStorage) ListAllInUseSegments(ctx context.Context) ([]*v2.InUseSegment, error) {
 	m.ctrl.T.Helper()

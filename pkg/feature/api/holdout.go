@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -410,9 +411,14 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 		if err := group.CanAddFeatures(); err != nil {
 			return err
 		}
-		created := make([]*holdoutdomain.HoldoutGroupFeature, 0, len(req.Features))
-		features := make([]*featureproto.Feature, 0, len(req.Features))
-		for _, input := range req.Features {
+		// Flag rows are locked in a fixed order so two enrollments that share
+		// flags cannot deadlock on each other. Flag writers lock only their
+		// own row and never the environment, so the order environment → flag
+		// is acyclic.
+		inputs := sortedHoldoutFeatureInputs(req.Features)
+		created := make([]*holdoutdomain.HoldoutGroupFeature, 0, len(inputs))
+		features := make([]*featureproto.Feature, 0, len(inputs))
+		for _, input := range inputs {
 			row, feature, err := s.prepareHoldoutFeature(txCtx, group, input, now)
 			if err != nil {
 				return err
@@ -430,7 +436,7 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 			group.Features = append(group.Features, row.HoldoutGroupFeature)
 		}
 		group.Touch(editor.Email, now)
-		for i, input := range req.Features {
+		for i, input := range inputs {
 			groupEvent, err := newHoldoutEvent(
 				editor, req.EnvironmentId, group.Id, eventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED,
 				&eventproto.HoldoutGroupFeatureAddedEvent{
@@ -615,7 +621,9 @@ func (s *FeatureService) prepareHoldoutFeature(
 	input *featureproto.HoldoutGroupFeatureInput,
 	now int64,
 ) (*holdoutdomain.HoldoutGroupFeature, *featureproto.Feature, error) {
-	feature, err := s.featureStorage.GetFeature(ctx, input.FeatureId, group.EnvironmentId)
+	// Lock the flag row: a concurrent archive, delete, or whole-row save of
+	// this flag waits here until the enrollment is committed and then sees it.
+	feature, err := s.featureStorage.GetFeatureForUpdate(ctx, input.FeatureId, group.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			return nil, nil, pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "feature not found", "feature_id")
@@ -701,7 +709,9 @@ func (s *FeatureService) attachCurrentFeatures(
 
 // revalidateSegmentForActivation reloads a SEGMENT cohort inside the transition
 // transaction. Create checked the segment, but a later delete or upload can
-// finish while the group is still WAITING.
+// finish while the group is still WAITING. The row lock is taken after the
+// environment lock; segment writers lock only the segment row, so the order is
+// acyclic and a concurrent edit waits until RUNNING is committed.
 func (s *FeatureService) revalidateSegmentForActivation(
 	ctx context.Context,
 	previous, group *holdoutdomain.HoldoutGroup,
@@ -711,7 +721,7 @@ func (s *FeatureService) revalidateSegmentForActivation(
 		group.AssignmentType != featureproto.HoldoutGroup_SEGMENT {
 		return nil
 	}
-	segment, _, err := s.segmentStorage.GetSegment(ctx, group.SegmentId, group.EnvironmentId)
+	segment, _, err := s.segmentStorage.GetSegmentForUpdate(ctx, group.SegmentId, group.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) {
 			return pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
@@ -851,16 +861,6 @@ func (s *FeatureService) rejectHoldoutVariationRemoval(
 	return nil
 }
 
-// lockHoldoutEnvironment serializes flag and segment writes with holdout
-// mutations. Both sides lock environment_v2 first, so neither waits on the
-// other's feature or segment row. A nil storage keeps existing tests working.
-func (s *FeatureService) lockHoldoutEnvironment(ctx context.Context, environmentID string) error {
-	if s.holdoutStorage == nil || environmentID == "" {
-		return nil
-	}
-	return s.holdoutStorage.LockEnvironment(ctx, environmentID)
-}
-
 // rejectHoldoutFeatureArchive blocks archiving or deleting a flag that is a current holdout target.
 func (s *FeatureService) rejectHoldoutFeatureArchive(
 	ctx context.Context,
@@ -879,18 +879,16 @@ func (s *FeatureService) rejectHoldoutFeatureArchive(
 	return holdoutdomain.NewFeatureTargetedError(featureID, targets[0])
 }
 
-// ensureSegmentNotLockedByHoldout rejects edits to a segment referenced by a serving group.
+// ensureSegmentNotLockedByHoldout rejects edits to a segment referenced by a
+// serving group. Callers must already hold the segment row lock
+// (GetSegmentForUpdate); StartHoldoutGroup takes the same row lock before it
+// commits RUNNING, so the two cannot interleave.
 func (s *FeatureService) ensureSegmentNotLockedByHoldout(
 	ctx context.Context,
 	segmentID, environmentID string,
 ) error {
 	if s.holdoutStorage == nil || segmentID == "" {
 		return nil
-	}
-	// Same environment lock as StartHoldoutGroup, taken before the segment row
-	// is written, so a start cannot commit RUNNING between this read and the write.
-	if err := s.holdoutStorage.LockEnvironment(ctx, environmentID); err != nil {
-		return err
 	}
 	groups, err := s.holdoutStorage.ListActiveGroups(ctx, environmentID)
 	if err != nil {
@@ -989,6 +987,19 @@ func optionalBool(value *wrapperspb.BoolValue) *bool {
 	}
 	v := value.GetValue()
 	return &v
+}
+
+// sortedHoldoutFeatureInputs returns a copy ordered by feature ID, the order in
+// which enrollment locks flag rows.
+func sortedHoldoutFeatureInputs(
+	inputs []*featureproto.HoldoutGroupFeatureInput,
+) []*featureproto.HoldoutGroupFeatureInput {
+	out := make([]*featureproto.HoldoutGroupFeatureInput, len(inputs))
+	copy(out, inputs)
+	sort.SliceStable(out, func(i, j int) bool {
+		return out[i].GetFeatureId() < out[j].GetFeatureId()
+	})
+	return out
 }
 
 func featureInputs(featureIDs []string) []*featureproto.HoldoutGroupFeatureInput {
