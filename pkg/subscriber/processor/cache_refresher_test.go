@@ -931,3 +931,47 @@ func TestCacheRefresherHoldoutStartRefreshesFeatures(t *testing.T) {
 		Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
 	}))
 }
+
+// The feature cache must not depend on the holdout tables being healthy. A
+// holdout storage error during a feature refresh is logged and the snapshot
+// is written with the historical filter.
+func TestCacheRefresherFeatureRefreshSurvivesHoldoutStorageError(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, cachev3mock.NewMockHoldoutGroupCache(controller),
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(nil, errors.New("holdout db down"))
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{Id: "disabled-no-off", Enabled: false},
+				{Id: "normal", Enabled: true, OffVariation: "on"},
+			},
+		}, nil)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 1)
+			assert.Equal(t, "normal", features.Features[0].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+		EntityId:      "normal",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	}))
+}

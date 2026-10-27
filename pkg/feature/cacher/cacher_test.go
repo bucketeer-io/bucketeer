@@ -32,6 +32,8 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	mockcachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	mockftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
+	holdoutmock "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -727,4 +729,59 @@ func compareFeatureSlices(t *testing.T, slice1, slice2 []*ftproto.Feature) bool 
 		}
 	}
 	return true
+}
+
+// The feature cache must not depend on the holdout tables being healthy. A
+// holdout storage error is logged and the environment is refreshed with the
+// historical filter, so flags do not go stale across every environment.
+func TestRefreshCachesSurviveHoldoutStorageError(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	features := []*ftproto.Feature{
+		{Id: "disabled-no-off", Enabled: false},
+		{Id: "normal", Enabled: true, OffVariation: "on"},
+	}
+	expectFiltered := func(fc *featureFlagCacher, envID string) {
+		fc.caches[0].(*mockcachev3.MockFeaturesCache).EXPECT().
+			PutIfNewer(gomock.Any(), envID, fixedGeneration).
+			DoAndReturn(func(fts *ftproto.Features, _ string, _ int64) (bool, error) {
+				require.Len(t, fts.Features, 1)
+				assert.Equal(t, "normal", fts.Features[0].Id)
+				return true, nil
+			})
+	}
+
+	t.Run("single environment", func(t *testing.T) {
+		fc := newFeatureFlagCacherWithMock(t, controller, 1)
+		holdoutStorage := holdoutmock.NewMockHoldoutStorage(controller)
+		fc.holdoutStorage = holdoutStorage
+		holdoutStorage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(nil, errors.New("holdout db down"))
+		fc.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
+			ListFeaturesByEnvironment(gomock.Any(), "env-1").
+			Return(features, nil)
+		expectFiltered(fc, "env-1")
+		assert.NoError(t, fc.RefreshEnvironmentCache(context.Background(), "env-1"))
+	})
+
+	t.Run("all environments", func(t *testing.T) {
+		fc := newFeatureFlagCacherWithMock(t, controller, 1)
+		holdoutStorage := holdoutmock.NewMockHoldoutStorage(controller)
+		fc.holdoutStorage = holdoutStorage
+		holdoutStorage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(nil, errors.New("holdout db down"))
+		holdoutStorage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-2").
+			Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		fc.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
+			ListAllEnvironmentFeatures(gomock.Any()).
+			Return([]*ftproto.EnvironmentFeature{
+				{EnvironmentId: "env-1", Features: features},
+				{EnvironmentId: "env-2", Features: features},
+			}, nil)
+		expectFiltered(fc, "env-1")
+		expectFiltered(fc, "env-2")
+		assert.NoError(t, fc.RefreshAllEnvironmentCaches(context.Background()))
+	})
 }

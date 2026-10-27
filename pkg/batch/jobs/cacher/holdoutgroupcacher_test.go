@@ -110,18 +110,39 @@ func TestHoldoutGroupCacherRun(t *testing.T) {
 		assert.NoError(t, cacher.Run(ctx))
 	})
 
-	t.Run("storage error stops the job", func(t *testing.T) {
+	t.Run("storage error is reported after the remaining environments are refreshed", func(t *testing.T) {
+		cacher := newHoldoutGroupCacher(t, controller)
+		group := &ftproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-2"}
+		cacher.environmentClient.(*envclientmock.MockClient).EXPECT().
+			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			Return(&envproto.ListEnvironmentsV2Response{
+				Environments: []*envproto.EnvironmentV2{{Id: "env-1"}, {Id: "env-2"}},
+			}, nil)
+		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
+			GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(nil, errors.New("db"))
+		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
+			GetLiveServingGroup(gomock.Any(), "env-2").
+			Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
+		for _, cache := range cacher.caches {
+			cache.(*cachev3mock.MockHoldoutGroupCache).EXPECT().
+				PutIfNewer(group, "env-2", gomock.Any()).
+				Return(true, nil)
+		}
+		err := cacher.Run(ctx)
+		assert.EqualError(t, err, "db")
+	})
+
+	t.Run("a canceled context stops the run", func(t *testing.T) {
 		cacher := newHoldoutGroupCacher(t, controller)
 		cacher.environmentClient.(*envclientmock.MockClient).EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
 			Return(&envproto.ListEnvironmentsV2Response{
-				Environments: []*envproto.EnvironmentV2{{Id: "env"}},
+				Environments: []*envproto.EnvironmentV2{{Id: "env-1"}, {Id: "env-2"}},
 			}, nil)
-		cacher.storage.(*holdoutmock.MockHoldoutStorage).EXPECT().
-			GetLiveServingGroup(gomock.Any(), "env").
-			Return(nil, errors.New("db"))
-		err := cacher.Run(ctx)
-		assert.EqualError(t, err, "db")
+		canceled, cancel := context.WithCancel(ctx)
+		cancel()
+		assert.ErrorIs(t, cacher.Run(canceled), context.Canceled)
 	})
 
 	t.Run("stale write is not an error", func(t *testing.T) {

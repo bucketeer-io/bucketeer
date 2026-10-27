@@ -420,10 +420,7 @@ func (c *cacheRefresher) fetchAllFeatures(
 ) (*featureproto.Features, error) {
 	var listed []*featureproto.Feature
 	cursor := ""
-	targets, err := c.holdoutTargetIDs(ctx, environmentID)
-	if err != nil {
-		return nil, err
-	}
+	targets := c.holdoutTargetIDs(ctx, environmentID)
 	for {
 		resp, err := c.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 			PageSize:      cacheRefresherListPageSize,
@@ -447,24 +444,30 @@ func (c *cacheRefresher) fetchAllFeatures(
 	}, nil
 }
 
+// holdoutTargetIDs is the set of feature IDs the live holdout group targets.
+// A feature-cache refresh must not fail because the holdout tables are
+// unavailable: a read error is logged and treated as "no targets".
 func (c *cacheRefresher) holdoutTargetIDs(
 	ctx context.Context,
 	environmentID string,
-) (map[string]struct{}, error) {
+) map[string]struct{} {
 	if c.holdoutStorage == nil || environmentID == "" {
-		return nil, nil
+		return nil
 	}
 	group, err := c.holdoutStorage.GetLiveServingGroup(ctx, environmentID)
 	if err != nil {
-		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			return nil, nil
+		if !errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
+			c.logger.Error("Failed to list holdout targets for cache refresh; refreshing without them",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
 		}
-		return nil, err
+		return nil
 	}
 	if group == nil {
-		return nil, nil
+		return nil
 	}
-	return evaluation.HoldoutTargetFeatureIDs(group.HoldoutGroup), nil
+	return evaluation.HoldoutTargetFeatureIDs(group.HoldoutGroup)
 }
 
 func (c *cacheRefresher) refreshSegmentUsers(

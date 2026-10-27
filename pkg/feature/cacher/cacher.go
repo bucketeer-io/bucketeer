@@ -113,15 +113,7 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 	}
 	recordListFeatures(cacherTypeFeatureFlag, scopeSingle, environmentID, codeSuccess, time.Since(startTime).Seconds())
 
-	targets, err := c.currentHoldoutTargets(ctx, environmentID)
-	if err != nil {
-		c.logger.Error("Failed to list holdout targets for cache update",
-			zap.Error(err),
-			zap.String("environmentId", environmentID),
-		)
-		return err
-	}
-	filtered := c.removeOldFeatures(features, targets)
+	filtered := c.removeOldFeatures(features, c.currentHoldoutTargets(ctx, environmentID))
 	fts := &ftproto.Features{
 		Id:       evaluation.GenerateFeaturesID(filtered),
 		Features: filtered,
@@ -149,15 +141,7 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 	recordListFeatures(cacherTypeFeatureFlag, scopeBatch, environmentIDAll, codeSuccess, time.Since(startTime).Seconds())
 
 	for _, envFt := range envFts {
-		targets, err := c.currentHoldoutTargets(ctx, envFt.EnvironmentId)
-		if err != nil {
-			c.logger.Error("Failed to list holdout targets for cache update",
-				zap.Error(err),
-				zap.String("environmentId", envFt.EnvironmentId),
-			)
-			return err
-		}
-		filtered := c.removeOldFeatures(envFt.Features, targets)
+		filtered := c.removeOldFeatures(envFt.Features, c.currentHoldoutTargets(ctx, envFt.EnvironmentId))
 		fts := &ftproto.Features{
 			Id:       evaluation.GenerateFeaturesID(filtered),
 			Features: filtered,
@@ -179,24 +163,32 @@ func (c *featureFlagCacher) removeOldFeatures(
 	return ftdomain.FilterForServing(features, holdoutTargets)
 }
 
+// currentHoldoutTargets is the set of feature IDs the live holdout group
+// targets. The feature cache must not depend on the holdout tables being
+// healthy: a read error is logged and treated as "no targets", so the
+// refresh proceeds with the historical filter instead of leaving every
+// flag in the environment stale.
 func (c *featureFlagCacher) currentHoldoutTargets(
 	ctx context.Context,
 	environmentID string,
-) (map[string]struct{}, error) {
+) map[string]struct{} {
 	if c.holdoutStorage == nil || environmentID == "" {
-		return nil, nil
+		return nil
 	}
 	group, err := c.holdoutStorage.GetLiveServingGroup(ctx, environmentID)
 	if err != nil {
-		if errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
-			return nil, nil
+		if !errors.Is(err, v2hs.ErrHoldoutGroupNotFound) {
+			c.logger.Error("Failed to list holdout targets for cache update; refreshing without them",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
 		}
-		return nil, err
+		return nil
 	}
 	if group == nil {
-		return nil, nil
+		return nil
 	}
-	return evaluation.HoldoutTargetFeatureIDs(group.HoldoutGroup), nil
+	return evaluation.HoldoutTargetFeatureIDs(group.HoldoutGroup)
 }
 
 // putCache saves features to all Redis instances and records metrics.

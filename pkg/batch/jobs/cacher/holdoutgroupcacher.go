@@ -74,7 +74,13 @@ func (c *holdoutGroupCacher) Run(ctx context.Context) (lastErr error) {
 		c.logger.Error("Failed to list all environments", zap.Error(err))
 		return err
 	}
+	// One environment's failure must not leave the remaining environments
+	// with a stale snapshot until the next run. Refresh every environment
+	// and report the last error afterwards.
 	for _, env := range envs {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		// Captured before the read so a slower writer cannot overwrite a newer snapshot.
 		generation := time.Now().UnixNano()
 		snapshot, err := v2hs.ServingSnapshot(ctx, c.storage, env.Id)
@@ -83,11 +89,12 @@ func (c *holdoutGroupCacher) Run(ctx context.Context) (lastErr error) {
 				zap.Error(err),
 				zap.String("environmentId", env.Id),
 			)
-			return err
+			lastErr = err
+			continue
 		}
 		c.putCache(snapshot, env.Id, generation)
 	}
-	return nil
+	return lastErr
 }
 
 func (c *holdoutGroupCacher) listAllEnvironments(
