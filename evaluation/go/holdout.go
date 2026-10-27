@@ -155,20 +155,6 @@ func (m *holdoutMembership) hasSnapshot() bool {
 	return m != nil && len(m.groups) > 0
 }
 
-// targets reports whether any group targets featureID, including when the
-// user is not a member. A nil receiver means no groups were passed.
-func (m *holdoutMembership) targets(featureID string) bool {
-	if m == nil {
-		return false
-	}
-	for _, group := range m.groups {
-		if _, targeted := holdoutVariationID(group, featureID); targeted {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *holdoutMembership) isMember(i int) bool {
 	if m.state[i] == 0 {
 		group := m.groups[i]

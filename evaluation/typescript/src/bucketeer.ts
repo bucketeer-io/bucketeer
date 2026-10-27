@@ -185,14 +185,6 @@ export class HoldoutMembership {
     return this.groups.length > 0;
   }
 
-  // targets reports whether any group targets featureId, including when the
-  // user is not a member.
-  targets(featureId: string): boolean {
-    return this.groups.some(
-      (group) => group !== undefined && holdoutTargetVariation(group, featureId) !== undefined,
-    );
-  }
-
   private isMember(i: number): boolean {
     let member = this.state[i];
     if (member === undefined) {
