@@ -12,8 +12,9 @@ package mock
 import (
 	reflect "reflect"
 
-	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gomock "go.uber.org/mock/gomock"
+
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockHoldoutGroupCache is a mock of HoldoutGroupCache interface.
