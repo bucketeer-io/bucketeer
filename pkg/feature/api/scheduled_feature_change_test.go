@@ -471,9 +471,13 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 			return f(ctxWithTx)
 		},
 	)
+	// Plain read outside the transaction resolves the flag ID; the locking
+	// read inside it re-checks the schedule after the flag row is locked.
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
 		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
-	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+	scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc-id", "ns0").
+		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
+	featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
 
 	// The FAILED status must be persisted after (outside) the failed transaction,
 	// otherwise the rollback would discard it and the batch executor would
@@ -551,9 +555,13 @@ func TestExecuteScheduledFlagChange_TransientErrorKeepsSchedulePending(t *testin
 			return f(ctx)
 		},
 	)
+	// Plain read outside the transaction resolves the flag ID; the locking
+	// read inside it re-checks the schedule after the flag row is locked.
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
 		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
-	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+	scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc-id", "ns0").
+		Return(&domain.ScheduledFlagChange{ScheduledFlagChange: sfc}, nil)
+	featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
 	// The prerequisite lookup fails with a transient storage error (not "not found").
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "prereq-feature-id", "ns0").
 		Return(nil, errors.New("db connection lost"))

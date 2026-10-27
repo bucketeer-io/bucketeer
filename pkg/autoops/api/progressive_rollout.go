@@ -341,7 +341,12 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId)
+		// The rollout writes the whole flag row. A locking read returns the
+		// latest committed flag, so this save cannot drop a variation that a
+		// concurrent request added and enrolled in a holdout.
+		feature, err := s.featureStorage.GetFeatureForUpdate(
+			contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId,
+		)
 		if err != nil {
 			return err
 		}

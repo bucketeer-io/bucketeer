@@ -70,6 +70,13 @@ type ScheduledFlagChangeStorage interface {
 	DeleteScheduledFlagChange(ctx context.Context, id, environmentID string) error
 	// GetScheduledFlagChange retrieves a scheduled flag change by ID
 	GetScheduledFlagChange(ctx context.Context, id, environmentID string) (*domain.ScheduledFlagChange, error)
+	// GetScheduledFlagChangeForUpdate reads the schedule with a row lock so two
+	// executors cannot run the same schedule, and so the read does not pin the
+	// transaction snapshot before the flag row is locked.
+	GetScheduledFlagChangeForUpdate(
+		ctx context.Context,
+		id, environmentID string,
+	) (*domain.ScheduledFlagChange, error)
 	// ListScheduledFlagChanges lists scheduled flag changes with filtering and pagination
 	ListScheduledFlagChanges(
 		ctx context.Context,

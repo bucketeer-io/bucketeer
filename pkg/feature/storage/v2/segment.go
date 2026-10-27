@@ -40,6 +40,10 @@ type SegmentStorage interface {
 	CreateSegment(ctx context.Context, segment *domain.Segment, environmentId string) error
 	UpdateSegment(ctx context.Context, segment *domain.Segment, environmentId string) error
 	GetSegment(ctx context.Context, id, environmentId string) (*domain.Segment, []string, error)
+	// GetSegmentForUpdate locks the segment row, then reads it, so segment
+	// writers and holdout activation serialize on the segment. Call it before
+	// any other read in the transaction.
+	GetSegmentForUpdate(ctx context.Context, id, environmentId string) (*domain.Segment, []string, error)
 	ListSegments(
 		ctx context.Context,
 		params ListSegmentsParams,

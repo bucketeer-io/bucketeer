@@ -86,6 +86,21 @@ func (mr *MockScheduledFlagChangeStorageMockRecorder) GetScheduledFlagChange(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledFlagChange", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).GetScheduledFlagChange), ctx, id, environmentID)
 }
 
+// GetScheduledFlagChangeForUpdate mocks base method.
+func (m *MockScheduledFlagChangeStorage) GetScheduledFlagChangeForUpdate(ctx context.Context, id, environmentID string) (*domain.ScheduledFlagChange, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetScheduledFlagChangeForUpdate", ctx, id, environmentID)
+	ret0, _ := ret[0].(*domain.ScheduledFlagChange)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledFlagChangeForUpdate indicates an expected call of GetScheduledFlagChangeForUpdate.
+func (mr *MockScheduledFlagChangeStorageMockRecorder) GetScheduledFlagChangeForUpdate(ctx, id, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledFlagChangeForUpdate", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).GetScheduledFlagChangeForUpdate), ctx, id, environmentID)
+}
+
 // ListDueScheduledFlagChanges mocks base method.
 func (m *MockScheduledFlagChangeStorage) ListDueScheduledFlagChanges(ctx context.Context, now int64, limit int) ([]*feature.ScheduledFlagChange, error) {
 	m.ctrl.T.Helper()

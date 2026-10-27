@@ -942,7 +942,10 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if executeClause.ExecutedAt != 0 {
 			return statusClauseAlreadyExecuted.Err()
 		}
-		feature, err := s.featureStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
+		// Enable and disable write the whole flag row. A locking read returns
+		// the latest committed flag, so this save cannot drop a variation that
+		// a concurrent request added and enrolled in a holdout.
+		feature, err := s.featureStorage.GetFeatureForUpdate(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}

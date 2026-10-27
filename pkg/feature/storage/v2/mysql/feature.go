@@ -154,11 +154,25 @@ func (s *featureStorage) GetFeature(
 	ctx context.Context,
 	id, environmentID string,
 ) (*domain.Feature, error) {
+	return s.getFeature(ctx, selectFeatureSQLQuery, id, environmentID)
+}
+
+func (s *featureStorage) GetFeatureForUpdate(
+	ctx context.Context,
+	id, environmentID string,
+) (*domain.Feature, error) {
+	return s.getFeature(ctx, selectFeatureSQLQuery+" FOR UPDATE", id, environmentID)
+}
+
+func (s *featureStorage) getFeature(
+	ctx context.Context,
+	query, id, environmentID string,
+) (*domain.Feature, error) {
 	feature := proto.Feature{}
 	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 	err := s.qe.QueryRowContext(
 		ctx,
-		selectFeatureSQLQuery,
+		query,
 		id,
 		environmentID,
 	).Scan(

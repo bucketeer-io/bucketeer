@@ -2948,6 +2948,21 @@ func TestUpdateFeature(t *testing.T) {
 					// The error is expected because another feature depends on the target
 					assert.Error(t, err)
 				}).Return(statusInvalidArchive.Err())
+				// The target flag is lock-read first; the list is for the dependency check.
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "target-feature", gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id: "target-feature",
+					Variations: []*featureproto.Variation{
+						{Id: targetVID, Value: "true", Name: "true"},
+						{Id: targetVID2, Value: "false", Name: "false"},
+					},
+					OffVariation: targetVID2,
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: targetVID},
+					},
+				}}, nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
@@ -3018,6 +3033,43 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: statusInvalidArchive.Err(),
 		},
 		{
+			// MySQL resolves IDs case-insensitively, so the locking read for
+			// "FID" returns the flag "fid". The update must be rejected as not
+			// found, as the previous exact-match list scan did, so downstream
+			// checks keyed on the request ID are never skipped.
+			desc: "fail: case-variant feature id is rejected as not found",
+			setup: func(s *FeatureService) {
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{},
+					nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(
+					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
+					nil,
+				)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "FID", gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
+				// No ListFeatures, no UpdateFeature: the request stops here.
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "FID",
+				Name:          wrapperspb.String("name"),
+			},
+			expectedErr: statusFeatureNotFound.Err(),
+		},
+		{
 			// Regression test: domain validation errors from the update
 			// transaction must surface as InvalidArgument with structured
 			// details, not as codes.Unknown (HTTP 500).
@@ -3043,6 +3095,23 @@ func TestUpdateFeature(t *testing.T) {
 				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
 					return fn(ctx)
 				})
+				// The target flag is lock-read first; the list is for the dependency check.
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "fid", gomock.Any(),
+				).Return(&domain.Feature{Feature: &featureproto.Feature{
+					Id:            "fid",
+					VariationType: featureproto.Feature_STRING,
+					Variations: []*featureproto.Variation{
+						{Id: vID1, Value: "true", Name: "true"},
+						{Id: vID2, Value: "false", Name: "false"},
+					},
+					OffVariation: vID2,
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: vID1},
+					},
+					Tags: []string{"test"},
+				}}, nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
@@ -3115,53 +3184,42 @@ func TestUpdateFeature(t *testing.T) {
 					err := fn(ctx)
 					require.NoError(t, err)
 				}).Return(nil)
+				existing := &featureproto.Feature{
+					Id: "fid",
+					Variations: []*featureproto.Variation{
+						{Id: vID1, Value: "true", Name: "true"},
+						{Id: vID2, Value: "false", Name: "false"},
+					},
+					OffVariation: vID2,
+					Rules: []*featureproto.Rule{
+						{
+							Id: rID,
+							Strategy: &featureproto.Strategy{
+								Type:          featureproto.Strategy_FIXED,
+								FixedStrategy: &featureproto.FixedStrategy{Variation: vID2},
+							},
+							Clauses: []*featureproto.Clause{
+								{
+									Id:       cID,
+									Operator: featureproto.Clause_SEGMENT,
+									Values:   []string{"segment-id"},
+								},
+							},
+						},
+					},
+					DefaultStrategy: &featureproto.Strategy{
+						Type:          featureproto.Strategy_FIXED,
+						FixedStrategy: &featureproto.FixedStrategy{Variation: vID1},
+					},
+					Tags: []string{"android"},
+				}
+				// The target flag is lock-read first; the list is for the dependency check.
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "fid", gomock.Any(),
+				).Return(&domain.Feature{Feature: proto.Clone(existing).(*featureproto.Feature)}, nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
-				).Return([]*featureproto.Feature{
-					{
-						Id: "fid",
-						Variations: []*featureproto.Variation{
-							{
-								Id:    vID1,
-								Value: "true",
-								Name:  "true",
-							},
-							{
-								Id:    vID2,
-								Value: "false",
-								Name:  "false",
-							},
-						},
-						OffVariation: vID2,
-						Rules: []*featureproto.Rule{
-							{
-								Id: rID,
-								Strategy: &featureproto.Strategy{
-									Type: featureproto.Strategy_FIXED,
-									FixedStrategy: &featureproto.FixedStrategy{
-										Variation: vID2,
-									},
-								},
-								Clauses: []*featureproto.Clause{
-									{
-										Id:       cID,
-										Operator: featureproto.Clause_SEGMENT,
-										Values: []string{
-											"segment-id",
-										},
-									},
-								},
-							},
-						},
-						DefaultStrategy: &featureproto.Strategy{
-							Type: featureproto.Strategy_FIXED,
-							FixedStrategy: &featureproto.FixedStrategy{
-								Variation: vID1,
-							},
-						},
-						Tags: []string{"android"},
-					},
-				}, 0, int64(0), nil)
+				).Return([]*featureproto.Feature{existing}, 0, int64(0), nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)

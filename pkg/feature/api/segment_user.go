@@ -112,8 +112,13 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	}
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
+		// Lock the segment row before any other read, then check that no
+		// serving holdout group references it.
+		segment, _, err := s.segmentStorage.GetSegmentForUpdate(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
+			return err
+		}
+		if err := s.ensureSegmentNotLockedByHoldout(contextWithTx, segment.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		if segment.Status == featureproto.Segment_UPLOADING {

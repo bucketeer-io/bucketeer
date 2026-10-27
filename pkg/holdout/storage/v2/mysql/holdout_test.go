@@ -70,8 +70,27 @@ func TestUpdateHoldoutGroup(t *testing.T) {
 		storage.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 			gomock.Any(), gomock.Any(), gomock.Any(),
 		).Return(result, nil)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(row)
 		err := storage.UpdateHoldoutGroup(context.Background(), group)
 		assert.ErrorIs(t, err, v2hs.ErrHoldoutGroupUnexpectedAffectedRows)
+	})
+	t.Run("unchanged existing row", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		result := mock.NewMockResult(controller)
+		result.EXPECT().RowsAffected().Return(int64(0), nil)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(result, nil)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(nil)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(row)
+		assert.NoError(t, storage.UpdateHoldoutGroup(context.Background(), group))
 	})
 	t.Run("success", func(t *testing.T) {
 		storage := newHoldoutStorageWithMock(t, controller)

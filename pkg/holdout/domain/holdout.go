@@ -19,6 +19,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -373,7 +374,12 @@ func OtherServingGroup(selfID string, others []GroupSnapshot) (GroupSnapshot, bo
 // ServingGroupForSegment returns a serving group that references segmentID.
 func ServingGroupForSegment(segmentID string, others []GroupSnapshot) (GroupSnapshot, bool) {
 	for _, other := range others {
-		if other.SegmentID == segmentID && IsServing(other.Status) {
+		if segmentID == "" || other.SegmentID == "" {
+			continue
+		}
+		// MySQL compares these ids case-insensitively. Match that here so an
+		// uppercased UUID cannot skip a serving group's segment lock.
+		if strings.EqualFold(other.SegmentID, segmentID) && IsServing(other.Status) {
 			return other, true
 		}
 	}
@@ -383,7 +389,10 @@ func ServingGroupForSegment(segmentID string, others []GroupSnapshot) (GroupSnap
 // ConflictingFeatureTarget returns a current target of another active group.
 func ConflictingFeatureTarget(featureID, selfGroupID string, targets []FeatureTarget) (FeatureTarget, bool) {
 	for _, target := range targets {
-		if target.FeatureID != featureID || target.GroupID == selfGroupID {
+		if featureID == "" || target.FeatureID == "" {
+			continue
+		}
+		if !strings.EqualFold(target.FeatureID, featureID) || target.GroupID == selfGroupID {
 			continue
 		}
 		if IsActive(target.Status) {

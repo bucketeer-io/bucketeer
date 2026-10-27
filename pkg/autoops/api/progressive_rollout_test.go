@@ -30,6 +30,7 @@ import (
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	mockFeatureStorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
@@ -1091,6 +1092,64 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 	}
 }
 
+func TestExecuteAutoOpsLocksFeatureRow(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := createAutoOpsService(controller)
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
+	rule := &domain.AutoOpsRule{AutoOpsRule: &autoopsproto.AutoOpsRule{
+		Id:        "rule",
+		FeatureId: "fid",
+		Clauses:   []*autoopsproto.Clause{{Id: "clause"}},
+	}}
+	gomock.InOrder(
+		service.autoOpsStorage.(*storagemock.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+			gomock.Any(), "rule", "ns0",
+		).Return(rule, nil),
+		service.autoOpsStorage.(*storagemock.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+			gomock.Any(), "rule", "ns0",
+		).Return(rule, nil),
+		// The flag is read with a row lock, never with a plain read.
+		service.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "fid", "ns0",
+		).Return(nil, v2fs.ErrFeatureNotFound),
+	)
+	_, err := service.ExecuteAutoOps(createContextWithTokenRoleOwner(t), &autoopsproto.ExecuteAutoOpsRequest{
+		Id: "rule", ClauseId: "clause", EnvironmentId: "ns0",
+	})
+	assert.Error(t, err)
+}
+
+func TestExecuteProgressiveRolloutLocksFeatureRow(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := createAutoOpsService(controller)
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
+	gomock.InOrder(
+		service.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
+			gomock.Any(), "aid", "ns0",
+		).Return(&domain.ProgressiveRollout{ProgressiveRollout: &autoopsproto.ProgressiveRollout{
+			Id: "aid", FeatureId: "fid",
+		}}, nil),
+		// The flag is read with a row lock, never with a plain read.
+		service.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "fid", "ns0",
+		).Return(nil, v2fs.ErrFeatureNotFound),
+	)
+	_, err := service.ExecuteProgressiveRollout(createContextWithTokenRoleOwner(t), &autoopsproto.ExecuteProgressiveRolloutRequest{
+		Id: "aid", EnvironmentId: "ns0", ScheduleId: "sid",
+	})
+	assert.Error(t, err)
+}
+
 func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -1133,7 +1192,7 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(&domain.ProgressiveRollout{
 					ProgressiveRollout: &autoopsproto.ProgressiveRollout{},
 				}, nil)
-				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeature(
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&ftdomain.Feature{}, nil)
 			},

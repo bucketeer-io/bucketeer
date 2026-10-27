@@ -188,6 +188,11 @@ func TestOtherServingGroup(t *testing.T) {
 		ID: "g", SegmentID: "seg", Status: featureproto.HoldoutGroup_WAITING,
 	}})
 	assert.False(t, ok)
+	locked, ok = ServingGroupForSegment("SEG", []GroupSnapshot{{
+		ID: "g", Name: "g", SegmentID: "seg", Status: featureproto.HoldoutGroup_RUNNING,
+	}})
+	assert.True(t, ok)
+	assert.Equal(t, "g", locked.ID)
 }
 
 func TestConflictingFeatureTarget(t *testing.T) {
@@ -204,6 +209,9 @@ func TestConflictingFeatureTarget(t *testing.T) {
 	assert.False(t, ok)
 	_, ok = ConflictingFeatureTarget("other", "self", targets)
 	assert.False(t, ok)
+	got, ok = ConflictingFeatureTarget("FLAG", "self", targets)
+	assert.True(t, ok)
+	assert.Equal(t, "g1", got.GroupID)
 }
 
 func TestStatusTransitions(t *testing.T) {

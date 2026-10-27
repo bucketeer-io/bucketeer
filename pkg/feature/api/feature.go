@@ -681,6 +681,49 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	editor *eventproto.Editor,
 	req *featureproto.UpdateFeatureRequest,
 ) (*eventproto.Event, *featureproto.Feature, error) {
+	// Lock the flag row before any other read in this transaction. Concurrent
+	// writers of the same flag, and holdout enrollment of it, serialize here,
+	// and the snapshot is taken after the lock so the guards below see the
+	// latest committed holdout targets.
+	feature, err := s.featureStorage.GetFeatureForUpdate(ctx, req.Id, req.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
+			err := statusFeatureNotFound.Err()
+			s.logger.Error(
+				"Failed to find feature",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return nil, nil, err
+		}
+		s.logger.Error(
+			"Failed to get feature for update",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	// MySQL resolves the ID case-insensitively; keep the exact-match semantics
+	// of the previous list scan so downstream checks keyed on req.Id hold.
+	if feature.Deleted || feature.Id != req.Id {
+		err := statusFeatureNotFound.Err()
+		s.logger.Error(
+			"Failed to find feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	// The full list is only needed for prerequisite and dependency checks.
 	deleted := false
 	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
 		EnvironmentID: req.EnvironmentId,
@@ -691,25 +734,6 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 			"Failed to list features",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, nil, err
-	}
-	var feature *domain.Feature
-	for _, f := range features {
-		if f.Id == req.Id {
-			feature = &domain.Feature{Feature: f}
-			break
-		}
-	}
-	if feature == nil {
-		err := statusFeatureNotFound.Err()
-		s.logger.Error(
-			"Failed to find feature",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
@@ -753,6 +777,9 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	// Check if this is an archive request and if other features depend on this one.
 	// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
 	if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
+		if err := s.rejectHoldoutFeatureArchive(ctx, req.EnvironmentId, feature.Id); err != nil {
+			return nil, nil, err
+		}
 		if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
 			return nil, nil, statusInvalidArchive.Err()
 		}
@@ -775,6 +802,12 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 			)
 			// Don't fail the archive operation, just log the error
 		}
+	}
+
+	if err := s.rejectHoldoutVariationRemoval(
+		ctx, req.EnvironmentId, req.Id, req.VariationChanges,
+	); err != nil {
+		return nil, nil, err
 	}
 
 	updated, err := feature.Update(
@@ -904,7 +937,9 @@ func (s *FeatureService) DeleteFeature(
 	}
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		feature, err := s.featureStorage.GetFeature(contextWithTx, req.Id, req.EnvironmentId)
+		// Lock the flag row first so the holdout target guard below sees the
+		// latest committed enrollment.
+		feature, err := s.featureStorage.GetFeatureForUpdate(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
@@ -951,6 +986,9 @@ func (s *FeatureService) DeleteFeature(
 			)
 		}
 
+		if err := s.rejectHoldoutFeatureArchive(contextWithTx, req.EnvironmentId, feature.Id); err != nil {
+			return err
+		}
 		err = feature.Delete()
 		if err != nil {
 			s.logger.Error(

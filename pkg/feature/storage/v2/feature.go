@@ -72,6 +72,10 @@ type FeatureStorage interface {
 	CreateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
 	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
 	GetFeature(ctx context.Context, id, environmentID string) (*domain.Feature, error)
+	// GetFeatureForUpdate reads the flag with a row lock so whole-row writers and
+	// holdout enrollment serialize on the flag. Call it before any other read in
+	// the transaction so the snapshot is taken after the lock is held.
+	GetFeatureForUpdate(ctx context.Context, id, environmentID string) (*domain.Feature, error)
 	GetFeatureByVersion(ctx context.Context, id string, version int32, environmentID string) (*domain.Feature, error)
 	ListFeatures(ctx context.Context, p ListFeaturesParams) ([]*proto.Feature, int, int64, error)
 	GetFeatureSummary(
