@@ -17,6 +17,7 @@ package dwhstorage
 
 import (
 	"context"
+	"fmt"
 
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
@@ -71,4 +72,9 @@ type GoalEventParams struct {
 	FeatureVersion int32
 	VariationID    string
 	Reason         string
+}
+
+// RowID is the stored ID. A goal linked to experiments on several features is stored once per feature.
+func (p GoalEventParams) RowID() string {
+	return fmt.Sprintf("%s:%s:%d", p.ID, p.FeatureID, p.FeatureVersion)
 }
