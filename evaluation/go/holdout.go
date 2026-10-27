@@ -187,6 +187,19 @@ func ClearanceSnapshot(stoppedAt int64) *ftproto.HoldoutGroup {
 	return &ftproto.HoldoutGroup{UpdatedAt: stoppedAt}
 }
 
+// unavailableHoldoutUpdatedAt marks a clearance used when the snapshot
+// cannot be read. It is earlier than any real stop time, so it does not
+// move a client's cursor. It only keeps the snapshot non-nil so a disabled
+// flag with no off variation stays omitted instead of falling through to a
+// normal variation.
+const unavailableHoldoutUpdatedAt int64 = 1
+
+// UnavailableHoldoutSnapshot is the clearance returned when the holdout
+// cache cannot be read. A miss stays nil: that is "no group".
+func UnavailableHoldoutSnapshot() *ftproto.HoldoutGroup {
+	return ClearanceSnapshot(unavailableHoldoutUpdatedAt)
+}
+
 func holdoutVariationID(group *ftproto.HoldoutGroup, featureID string) (string, bool) {
 	if group == nil {
 		return "", false
@@ -286,10 +299,10 @@ func FeaturesForServerEval(
 }
 
 // FeaturesForLocalEval splits flags for GetFeatureFlags. Local evaluation
-// does not receive holdout metadata yet, so a disabled flag with no off
-// variation is withheld while a serving group targets it, and after serving
-// stops while the feature cache may still contain it. A nil snapshot leaves
-// the slice unchanged.
+// does not receive holdout metadata yet, so any snapshot — a serving group
+// or a clearance — withholds every disabled flag with no off variation,
+// including a former target of a group that is still running. A nil snapshot
+// leaves the slice unchanged.
 func FeaturesForLocalEval(
 	features []*ftproto.Feature,
 	group *ftproto.HoldoutGroup,
@@ -297,16 +310,11 @@ func FeaturesForLocalEval(
 	if group == nil {
 		return features, nil
 	}
-	targets := HoldoutTargetFeatureIDs(group)
-	clearance := group.Id == "" && group.UpdatedAt > 0
 	visible = make([]*ftproto.Feature, 0, len(features))
 	for _, feature := range features {
 		if feature != nil && !feature.Enabled && feature.OffVariation == "" {
-			_, targeted := targets[feature.Id]
-			if clearance || targeted {
-				hidden = append(hidden, feature)
-				continue
-			}
+			hidden = append(hidden, feature)
+			continue
 		}
 		visible = append(visible, feature)
 	}

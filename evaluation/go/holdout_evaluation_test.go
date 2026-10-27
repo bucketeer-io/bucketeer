@@ -345,6 +345,17 @@ func TestFeaturesForEvalFiltersClearedDisabledTarget(t *testing.T) {
 	visible, hidden = FeaturesForLocalEval(features, ClearanceSnapshot(10))
 	require.Len(t, hidden, 1)
 	assert.Equal(t, "flag", hidden[0].Id)
+
+	// A former target of a group that is still running is hidden too.
+	visible, hidden = FeaturesForLocalEval(features, &ftproto.HoldoutGroup{Id: "hg"})
+	require.Len(t, visible, 1)
+	assert.Equal(t, "on", visible[0].Id)
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+
+	visible, hidden = FeaturesForLocalEval(features, nil)
+	require.Len(t, visible, 2)
+	assert.Empty(t, hidden)
 }
 
 func flagWithVariations(id string, enabled bool, off, hold, on string) *ftproto.Feature {

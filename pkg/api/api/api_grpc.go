@@ -552,8 +552,11 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: "no_evaluations",
 		}, nil
 	}
-	filteredByTag := s.filterByTag(features, req.Tag)
-	filteredByTag, removed := evaluation.FeaturesForServerEval(filteredByTag, group)
+	// The evaluator applies the tag itself. Filtering first drops every flag
+	// on an empty tag and drops prerequisites that live on another tag.
+	evaluable, removed := evaluation.FeaturesForServerEval(features, group)
+	filteredByTag := s.filterByTag(evaluable, req.Tag)
+	removed = s.removedIDsForTag(features, removed, req.Tag)
 	countHoldoutEvaluation(group, sourceID)
 	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag, holdoutGroups(group)...)
 	if req.UserEvaluationsId == ueid {
@@ -575,7 +578,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		}, nil
 	}
 
-	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, environmentId, group)
+	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, evaluable, environmentId, group)
 	if err != nil {
 		if isCallerContextErr(err) {
 			evaluationsCounter.WithLabelValues(
@@ -613,7 +616,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
-			filteredByTag,
+			evaluable,
 			req.User,
 			segmentUsersMap,
 			segmentsMap,
@@ -653,7 +656,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeOld, sourceID).Inc()
 	} else {
 		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
-			filteredByTag,
+			evaluable,
 			req.User,
 			segmentUsersMap,
 			segmentsMap,
@@ -804,11 +807,14 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	// Drop a disabled flag with no off variation before selecting it and its
+	// dependencies. Otherwise a leftover target is evaluated as a normal flag.
+	fs, _ = evaluation.FeaturesForServerEval(fs, group)
 	features, err := s.getTargetFeatures(fs, req.FeatureId)
 	if err != nil {
 		return nil, err
 	}
-	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
 	segmentUsersMap, segmentsMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id, group)
 	if err != nil {
 		if isCallerContextErr(err) {
@@ -2153,6 +2159,38 @@ func (s *grpcGatewayService) filterOutArchivedFeatures(fs []*featureproto.Featur
 		result = append(result, f)
 	}
 	return result
+}
+
+// removedIDsForTag keeps removal IDs for the tag the client asked for.
+// An empty tag covers the whole snapshot, so every removal is reported.
+func (s *grpcGatewayService) removedIDsForTag(
+	features []*featureproto.Feature,
+	removed []string,
+	tag string,
+) []string {
+	if tag == "" || len(removed) == 0 {
+		return removed
+	}
+	byID := make(map[string]*featureproto.Feature, len(features))
+	for _, feature := range features {
+		if feature != nil && feature.Id != "" {
+			byID[feature.Id] = feature
+		}
+	}
+	scoped := make([]string, 0, len(removed))
+	for _, id := range removed {
+		feature := byID[id]
+		if feature == nil {
+			continue
+		}
+		for _, featureTag := range feature.Tags {
+			if featureTag == tag {
+				scoped = append(scoped, id)
+				break
+			}
+		}
+	}
+	return scoped
 }
 
 func (s *grpcGatewayService) filterByTag(fs []*featureproto.Feature, tag string) []*featureproto.Feature {

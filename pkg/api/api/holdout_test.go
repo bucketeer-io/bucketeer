@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -24,6 +25,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
@@ -76,6 +78,27 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 		redis.EXPECT().Get("env").Return(nil, cache.ErrNotFound)
 		assert.Nil(t, loadLiveHoldoutGroup(memory, redis, "env", zap.NewNop()))
 	})
+	t.Run("a read error keeps disabled flags omitted", func(t *testing.T) {
+		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
+		redis := cachev3mock.NewMockHoldoutGroupCache(controller)
+		memory.EXPECT().Get("env").Return(nil, cache.ErrNotFound)
+		redis.EXPECT().Get("env").Return(nil, errors.New("redis"))
+		assert.Equal(t, evaluation.UnavailableHoldoutSnapshot(), loadLiveHoldoutGroup(memory, redis, "env", zap.NewNop()))
+	})
+}
+
+func TestRemovedIDsForTag(t *testing.T) {
+	t.Parallel()
+	service := &grpcGatewayService{}
+	features := []*featureproto.Feature{
+		{Id: "android-flag", Tags: []string{"android"}},
+		{Id: "ios-flag", Tags: []string{"ios"}},
+		{Id: "both", Tags: []string{"android", "ios"}},
+	}
+	removed := []string{"android-flag", "ios-flag", "both", "missing"}
+	assert.Equal(t, []string{"android-flag", "both"}, service.removedIDsForTag(features, removed, "android"))
+	assert.Equal(t, removed, service.removedIDsForTag(features, removed, ""))
+	assert.Empty(t, service.removedIDsForTag(features, nil, "android"))
 }
 
 func TestGatewayEvaluateFeaturesHoldout(t *testing.T) {

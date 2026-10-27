@@ -27,36 +27,48 @@ import (
 )
 
 // loadLiveHoldoutGroup reads the serving snapshot from memory, then redis.
-// A miss is "no live group". The gateway does not query MySQL.
+// A miss is "no live group". A read error is an unavailable snapshot, so a
+// disabled flag with no off variation stays omitted while the cache is down.
+// The gateway does not query MySQL.
 func loadLiveHoldoutGroup(
 	memory, redis cachev3.HoldoutGroupCache,
 	environmentID string,
 	logger *zap.Logger,
 ) *featureproto.HoldoutGroup {
+	readFailed := false
 	if memory != nil {
 		group, err := memory.Get(environmentID)
 		if err == nil {
 			return evaluation.EvaluationHoldout(group)
 		}
-		if logger != nil && !errors.Is(err, cache.ErrNotFound) {
-			logger.Debug("Failed to get the holdout group from memory",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-			)
+		if !errors.Is(err, cache.ErrNotFound) {
+			readFailed = true
+			if logger != nil {
+				logger.Debug("Failed to get the holdout group from memory",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+				)
+			}
 		}
 	}
 	if redis == nil {
+		if readFailed {
+			return evaluation.UnavailableHoldoutSnapshot()
+		}
 		return nil
 	}
 	group, err := redis.Get(environmentID)
 	if err != nil {
-		if logger != nil && !errors.Is(err, cache.ErrNotFound) {
+		if errors.Is(err, cache.ErrNotFound) {
+			return nil
+		}
+		if logger != nil {
 			logger.Debug("Failed to get the holdout group from redis",
 				zap.Error(err),
 				zap.String("environmentId", environmentID),
 			)
 		}
-		return nil
+		return evaluation.UnavailableHoldoutSnapshot()
 	}
 	if memory != nil {
 		if putErr := memory.Put(group, environmentID); putErr != nil && logger != nil {
