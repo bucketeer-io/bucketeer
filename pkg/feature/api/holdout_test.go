@@ -222,6 +222,48 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		assert.LessOrEqual(t, resp.HoldoutGroup.StartAt, time.Now().Unix())
 	})
 
+	t.Run("start rejects a missing segment", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		group := waitingHoldout(now)
+		group.AssignmentType = featureproto.HoldoutGroup_SEGMENT
+		group.SegmentId = "seg"
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg", Deleted: true}}, nil, nil)
+		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+			Id: "hg", EnvironmentId: "ns0",
+		})
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("start rejects a segment that is still uploading", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		group := waitingHoldout(now)
+		group.AssignmentType = featureproto.HoldoutGroup_SEGMENT
+		group.SegmentId = "seg"
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{
+			Id: "seg", Status: featureproto.Segment_UPLOADING,
+		}}, nil, nil)
+		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+			Id: "hg", EnvironmentId: "ns0",
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
 	t.Run("start rejected when another group is serving", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
@@ -486,6 +528,7 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		service, storage := newHoldoutService(t, controller)
 		expectEnvironment(service)
 		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
 			gomock.Any(), gomock.Any(),
 		).Return([]*featureproto.Feature{{Id: "fid"}}, 0, int64(0), nil)
@@ -504,6 +547,7 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		service, storage := newHoldoutService(t, controller)
 		expectEnvironment(service)
 		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
 			gomock.Any(), gomock.Any(),
 		).Return([]*featureproto.Feature{{Id: "fid"}}, 0, int64(0), nil)
@@ -520,6 +564,25 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	})
 
+	t.Run("delete is rejected while the flag is a holdout target", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectEnvironment(service)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeature(
+			gomock.Any(), "fid", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
+		storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "fid").Return([]holdoutdomain.FeatureTarget{{
+			GroupID: "hg", GroupName: "holdout", FeatureID: "fid",
+		}}, nil)
+		_, err := service.DeleteFeature(ctx, &featureproto.DeleteFeatureRequest{
+			Id: "fid", EnvironmentId: "ns0",
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
 	t.Run("serving holdout locks the segment", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
@@ -527,6 +590,7 @@ func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 		expectTx(service)
 		expectTx(service)
 		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil).Times(3)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return([]holdoutdomain.GroupSnapshot{{
 			ID: "hg", Name: "holdout", SegmentID: "seg", Status: featureproto.HoldoutGroup_RUNNING,
 		}}, nil).Times(3)

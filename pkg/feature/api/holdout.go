@@ -551,6 +551,9 @@ func (s *FeatureService) transitionHoldout(
 		if err := apply(group, now, active); err != nil {
 			return err
 		}
+		if err := s.revalidateSegmentForActivation(txCtx, previous, group); err != nil {
+			return err
+		}
 		group.UpdatedBy = editor.Email
 		event, err = newHoldoutEvent(
 			editor, environmentID, group.Id, eventType, eventMessage(group), group.HoldoutGroup, previous.HoldoutGroup,
@@ -648,6 +651,36 @@ func (s *FeatureService) attachCurrentFeatures(
 			continue
 		}
 		group.Features = append(group.Features, feature.HoldoutGroupFeature)
+	}
+	return nil
+}
+
+// revalidateSegmentForActivation reloads a SEGMENT cohort inside the transition
+// transaction. Create checked the segment, but a later delete or upload can
+// finish while the group is still WAITING.
+func (s *FeatureService) revalidateSegmentForActivation(
+	ctx context.Context,
+	previous, group *holdoutdomain.HoldoutGroup,
+) error {
+	if previous.Status != featureproto.HoldoutGroup_WAITING ||
+		group.Status != featureproto.HoldoutGroup_RUNNING ||
+		group.AssignmentType != featureproto.HoldoutGroup_SEGMENT {
+		return nil
+	}
+	segment, _, err := s.segmentStorage.GetSegment(ctx, group.SegmentId, group.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) {
+			return pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
+		}
+		return err
+	}
+	if segment.Deleted {
+		return pkgErr.NewErrorNotFound(pkgErr.HoldoutPackageName, "segment not found", "segment_id")
+	}
+	if segment.Status == featureproto.Segment_UPLOADING {
+		return pkgErr.NewErrorFailedPrecondition(
+			pkgErr.FeaturePackageName, "segment users already uploading",
+		).WithMessageKey("SegmentUsersAlreadyUploading")
 	}
 	return nil
 }
@@ -771,7 +804,17 @@ func (s *FeatureService) rejectHoldoutVariationRemoval(
 	return nil
 }
 
-// rejectHoldoutFeatureArchive blocks archiving a flag that is a current holdout target.
+// lockHoldoutEnvironment serializes flag and segment writes with holdout
+// mutations. Both sides lock environment_v2 first, so neither waits on the
+// other's feature or segment row. A nil storage keeps existing tests working.
+func (s *FeatureService) lockHoldoutEnvironment(ctx context.Context, environmentID string) error {
+	if s.holdoutStorage == nil || environmentID == "" {
+		return nil
+	}
+	return s.holdoutStorage.LockEnvironment(ctx, environmentID)
+}
+
+// rejectHoldoutFeatureArchive blocks archiving or deleting a flag that is a current holdout target.
 func (s *FeatureService) rejectHoldoutFeatureArchive(
 	ctx context.Context,
 	environmentID, featureID string,
@@ -796,6 +839,11 @@ func (s *FeatureService) ensureSegmentNotLockedByHoldout(
 ) error {
 	if s.holdoutStorage == nil || segmentID == "" {
 		return nil
+	}
+	// Same environment lock as StartHoldoutGroup, taken before the segment row
+	// is written, so a start cannot commit RUNNING between this read and the write.
+	if err := s.holdoutStorage.LockEnvironment(ctx, environmentID); err != nil {
+		return err
 	}
 	groups, err := s.holdoutStorage.ListActiveGroups(ctx, environmentID)
 	if err != nil {

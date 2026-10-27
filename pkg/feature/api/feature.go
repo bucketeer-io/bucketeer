@@ -681,6 +681,12 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	editor *eventproto.Editor,
 	req *featureproto.UpdateFeatureRequest,
 ) (*eventproto.Event, *featureproto.Feature, error) {
+	// Holdout enrollment locks the environment before it reads the flag.
+	// Take the same lock before this update, including a scheduled flag change,
+	// so archive and variation deletion cannot commit against a concurrent add.
+	if err := s.lockHoldoutEnvironment(ctx, req.EnvironmentId); err != nil {
+		return nil, nil, err
+	}
 	deleted := false
 	features, _, _, err := s.featureStorage.ListFeatures(ctx, v2fs.ListFeaturesParams{
 		EnvironmentID: req.EnvironmentId,
@@ -913,6 +919,9 @@ func (s *FeatureService) DeleteFeature(
 	}
 	var eventPb *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+		if err := s.lockHoldoutEnvironment(contextWithTx, req.EnvironmentId); err != nil {
+			return err
+		}
 		feature, err := s.featureStorage.GetFeature(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -960,6 +969,9 @@ func (s *FeatureService) DeleteFeature(
 			)
 		}
 
+		if err := s.rejectHoldoutFeatureArchive(contextWithTx, req.EnvironmentId, feature.Id); err != nil {
+			return err
+		}
 		err = feature.Delete()
 		if err != nil {
 			s.logger.Error(
