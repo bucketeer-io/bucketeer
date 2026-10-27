@@ -22,6 +22,19 @@ function NewUserEvaluations(
   return userEvaluations;
 }
 
+function sortedHoldoutTargets(
+  group: HoldoutGroup,
+): Array<{ featureId: string; variationId: string }> {
+  const features = group.getFeaturesList?.() ?? [];
+  return features
+    .filter((feature) => feature && feature.getFeatureId() !== '' && feature.getRemovedAt() === 0)
+    .map((feature) => ({
+      featureId: feature.getFeatureId(),
+      variationId: feature.getHoldoutVariationId(),
+    }))
+    .sort((a, b) => (a.featureId < b.featureId ? -1 : a.featureId > b.featureId ? 1 : 0));
+}
+
 function sortedHoldoutGroups(groups: HoldoutGroup[] | undefined): HoldoutGroup[] {
   if (!groups || groups.length === 0) {
     return [];
@@ -88,8 +101,13 @@ function UserEvaluationsID(
   });
 
   // Hash live groups after features so a missing group leaves the ID unchanged.
+  // Targets are part of the hash: two edits in the same second share UpdatedAt,
+  // and the ID still has to change when a target or its holdout variation changes.
   sortedHoldoutGroups(holdoutGroups).forEach((group) => {
     hashInput += `${group.getId()}:${group.getUpdatedAt()}`;
+    sortedHoldoutTargets(group).forEach((target) => {
+      hashInput += `:${target.featureId}:${target.variationId}`;
+    });
   });
 
   // Generate the FNV-1a 64-bit hash

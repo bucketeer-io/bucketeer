@@ -111,6 +111,27 @@ func TestEvaluateFeaturesClearanceOmitsDisabledFlagWithoutOffVariation(t *testin
 	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
 }
 
+func TestEvaluateFeaturesCacheMissOmitsDisabledFlagWithoutOffVariation(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
+	holdoutCache.EXPECT().Get("env").Return(nil, cache.ErrNotFound)
+	service := &FeatureService{
+		holdoutGroupCache: holdoutCache,
+		logger:            zap.NewNop(),
+	}
+	evaluations, err := service.evaluateFeatures(
+		context.Background(),
+		[]*featureproto.Feature{{Id: "flag", Enabled: false}},
+		&userproto.User{Id: "user-1"},
+		"env",
+		"",
+	)
+	require.NoError(t, err)
+	assert.Empty(t, evaluations.Evaluations)
+	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
+}
+
 func TestEvaluateFeaturesCacheErrorOmitsDisabledFlagWithoutOffVariation(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

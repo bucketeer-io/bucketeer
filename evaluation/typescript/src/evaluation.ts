@@ -16,6 +16,9 @@ import * as yaml from 'js-yaml';
 
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
+// Recorded for an omitted flag so a dependent sees an unsatisfied prerequisite
+// instead of a missing one. A missing result aborts the whole evaluation.
+const OMITTED_PREREQUISITE_VARIATION = '\0';
 
 export function EvaluationID(featureID: string, featureVersion: number, userID: string): string {
   return `${featureID}:${featureVersion}:${userID}`;
@@ -189,6 +192,9 @@ class Evaluator {
           if (targetTag === '' || this.tagExist(feature.getTagsList(), targetTag)) {
             archivedIDs.push(feature.getId());
           }
+          // Dependents still need a result. An empty one is unsatisfied,
+          // which keeps the omitted flag out of the response.
+          flagVariations[feature.getId()] = OMITTED_PREREQUISITE_VARIATION;
           continue;
         }
         throw err;
@@ -297,13 +303,10 @@ class Evaluator {
       const reason = createReason('', Reason.Type.HOLDOUT, held.group.getId());
       return [reason, variation];
     }
-    // Non-members of a disabled holdout target with no off variation get no
-    // row. Other disabled flags keep the historical fall-through.
-    if (
-      holdout?.targets(feature.getId()) &&
-      !feature.getEnabled() &&
-      feature.getOffVariation() === ''
-    ) {
+    // A snapshot is present and this user was not assigned HOLDOUT. Omit every
+    // disabled flag with no off variation, including a former target. No
+    // snapshot keeps the historical fall-through.
+    if (holdout?.hasSnapshot() && !feature.getEnabled() && feature.getOffVariation() === '') {
       throw EVALUATOR_ERRORS.FeatureOmitted;
     }
     for (const pf of feature.getPrerequisitesList()) {
@@ -311,7 +314,7 @@ class Evaluator {
       if (!variationId) {
         throw EVALUATOR_ERRORS.PrerequisiteVariationNotFound;
       }
-      if (pf.getVariationId() !== variationId) {
+      if (variationId === OMITTED_PREREQUISITE_VARIATION || pf.getVariationId() !== variationId) {
         if (feature.getOffVariation() !== '') {
           const variation = this.findVariation(
             feature.getOffVariation(),

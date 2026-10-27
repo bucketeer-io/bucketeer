@@ -3,6 +3,7 @@ import { Evaluator } from '../evaluation';
 import { HoldoutAssignment } from '../bucketeer';
 import type { HoldoutGroup } from '../bucketeer';
 import { Feature } from '../proto/feature/feature_pb';
+import { Prerequisite } from '../proto/feature/prerequisite_pb';
 import { Reason } from '../proto/feature/reason_pb';
 import { Strategy, FixedStrategy } from '../proto/feature/strategy_pb';
 import { Variation } from '../proto/feature/variation_pb';
@@ -75,8 +76,12 @@ test('a disabled holdout target without an off variation is assigned only to mem
   const user = createUser('user-1', null);
   const features = [disabledFlag(), sibling()];
 
-  const member = await evaluator.evaluateFeatures(features, user, new Map(), null, '', [group(100)]);
-  const memberById = new Map(member.getEvaluationsList().map((evaluation) => [evaluation.getFeatureId(), evaluation]));
+  const member = await evaluator.evaluateFeatures(features, user, new Map(), null, '', [
+    group(100),
+  ]);
+  const memberById = new Map(
+    member.getEvaluationsList().map((evaluation) => [evaluation.getFeatureId(), evaluation]),
+  );
   t.is(memberById.size, 2);
   t.is(memberById.get('flag')?.getReason()?.getType(), Reason.Type.HOLDOUT);
   t.is(memberById.get('flag')?.getVariationId(), 'hold');
@@ -109,4 +114,34 @@ test('a disabled holdout target without an off variation is assigned only to mem
   );
   t.false(partial.getForceUpdate());
   t.deepEqual(partial.getArchivedFeatureIdsList(), ['flag']);
+});
+
+test('an omitted holdout target does not abort its dependents', async (t) => {
+  const evaluator = new Evaluator();
+  const user = createUser('user-1', null);
+  const target = disabledFlag();
+  const dependent = sibling();
+  dependent.setId('dependent');
+  const prerequisite = new Prerequisite();
+  prerequisite.setFeatureId('flag');
+  prerequisite.setVariationId('on');
+  dependent.setPrerequisitesList([prerequisite]);
+  const unrelated = sibling();
+
+  const evaluations = await evaluator.evaluateFeatures(
+    [dependent, target, unrelated],
+    user,
+    new Map(),
+    null,
+    '',
+    [group(0)],
+  );
+  const byId = new Map(
+    evaluations.getEvaluationsList().map((evaluation) => [evaluation.getFeatureId(), evaluation]),
+  );
+  t.false(byId.has('flag'));
+  t.deepEqual(evaluations.getArchivedFeatureIdsList(), ['flag']);
+  t.is(byId.get('dependent')?.getReason()?.getType(), Reason.Type.PREREQUISITE);
+  t.is(byId.get('dependent')?.getVariationId(), 'off');
+  t.is(byId.get('sibling')?.getReason()?.getType(), Reason.Type.DEFAULT);
 });

@@ -318,6 +318,67 @@ func TestDisabledHoldoutTargetWithoutOffVariation(t *testing.T) {
 	}
 }
 
+func TestOmittedHoldoutTargetDoesNotAbortDependents(t *testing.T) {
+	t.Parallel()
+	evaluator := NewEvaluator()
+	user := &userproto.User{Id: "user-1"}
+	target := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	dependent := flagWithVariations("dependent", true, "off", "hold", "on")
+	dependent.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	unrelated := flagWithVariations("sibling", true, "off", "hold", "on")
+
+	// Percentage 0 holds nobody, so the disabled target is omitted.
+	evaluations, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{dependent, target, unrelated},
+		user, nil, nil, "",
+		targetingGroup("hg", 0, 0, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range evaluations.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.NotContains(t, byID, "flag")
+	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
+	require.Contains(t, byID, "dependent")
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, byID["dependent"].Reason.Type)
+	assert.Equal(t, "off", byID["dependent"].VariationId)
+	require.Contains(t, byID, "sibling")
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["sibling"].Reason.Type)
+
+	// A clearance is a snapshot with no targets. The disabled flag is still
+	// omitted, and a request with no snapshot keeps the historical default.
+	cleared, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{target, unrelated},
+		user, nil, nil, "",
+		ClearanceSnapshot(10),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"flag"}, cleared.ArchivedFeatureIds)
+	require.Len(t, cleared.Evaluations, 1)
+	assert.Equal(t, "sibling", cleared.Evaluations[0].FeatureId)
+
+	historical, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{target},
+		user, nil, nil, "",
+	)
+	require.NoError(t, err)
+	require.Len(t, historical.Evaluations, 1)
+	assert.Equal(t, ftproto.Reason_DEFAULT, historical.Evaluations[0].Reason.Type)
+	assert.Empty(t, historical.ArchivedFeatureIds)
+}
+
 func TestFeaturesForEvalFiltersClearedDisabledTarget(t *testing.T) {
 	t.Parallel()
 	disabled := &ftproto.Feature{Id: "flag", Enabled: false}

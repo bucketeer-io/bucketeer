@@ -93,16 +93,24 @@ func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 		if ci.holdoutGroupCache == nil && ci.featuresCache == nil {
 			return nil
 		}
-		if ci.holdoutGroupCache != nil {
-			if err := ci.holdoutGroupCache.Evict(event.EnvironmentId); err != nil {
-				ci.logger.Warn("Failed to evict holdout group cache",
-					zap.Error(err),
-					zap.String("environmentId", event.EnvironmentId),
-					zap.String("entityId", event.EntityId),
-					zap.String("type", event.Type.String()),
-				)
-				return err
+		// Bump the fill epoch before eviction and hold it across the delete.
+		// A request that already read the previous Redis snapshot then cannot
+		// write that snapshot back over the eviction.
+		var evictErr error
+		invalidateHoldoutFill(event.EnvironmentId, func() {
+			if ci.holdoutGroupCache == nil {
+				return
 			}
+			evictErr = ci.holdoutGroupCache.Evict(event.EnvironmentId)
+		})
+		if evictErr != nil {
+			ci.logger.Warn("Failed to evict holdout group cache",
+				zap.Error(evictErr),
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("entityId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return evictErr
 		}
 		// The feature snapshot changes with the holdout targets. Drop it too
 		// so the following stream refetch does not reuse a stale L1 copy.

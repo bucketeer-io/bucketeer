@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -74,9 +76,12 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 	t.Run("both misses stay off the database", func(t *testing.T) {
 		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
 		redis := cachev3mock.NewMockHoldoutGroupCache(controller)
-		memory.EXPECT().Get("env").Return(nil, cache.ErrNotFound)
-		redis.EXPECT().Get("env").Return(nil, cache.ErrNotFound)
-		assert.Nil(t, loadLiveHoldoutGroup(memory, redis, "env", zap.NewNop()))
+		memory.EXPECT().Get("env-miss").Return(nil, cache.ErrNotFound)
+		redis.EXPECT().Get("env-miss").Return(nil, cache.ErrNotFound)
+		assert.Equal(t,
+			evaluation.UnavailableHoldoutSnapshot(),
+			loadLiveHoldoutGroup(memory, redis, "env-miss", zap.NewNop()),
+		)
 	})
 	t.Run("a read error keeps disabled flags omitted", func(t *testing.T) {
 		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
@@ -85,6 +90,38 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 		redis.EXPECT().Get("env").Return(nil, errors.New("redis"))
 		assert.Equal(t, evaluation.UnavailableHoldoutSnapshot(), loadLiveHoldoutGroup(memory, redis, "env", zap.NewNop()))
 	})
+}
+
+func TestLoadLiveHoldoutGroupDoesNotRestoreAStoppedSnapshot(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	environmentID := "env-fill-race"
+	memory := cachev3.NewHoldoutGroupCache(cachev3.NewInMemoryCache(), time.Minute)
+	redis := cachev3mock.NewMockHoldoutGroupCache(controller)
+	running := &featureproto.HoldoutGroup{
+		Id:        "hg",
+		Status:    featureproto.HoldoutGroup_RUNNING,
+		UpdatedAt: 10,
+	}
+	cleared := &featureproto.HoldoutGroup{UpdatedAt: 20}
+	redis.EXPECT().Get(environmentID).DoAndReturn(func(string) (*featureproto.HoldoutGroup, error) {
+		invalidateHoldoutFill(environmentID, func() {
+			require.NoError(t, memory.Put(cleared, environmentID))
+		})
+		return running, nil
+	})
+	redis.EXPECT().Get(environmentID).Return(cleared, nil)
+
+	got := loadLiveHoldoutGroup(memory, redis, environmentID, zap.NewNop())
+	// The in-flight read observed the stop, so it does not answer with the
+	// group it already fetched. The retry reads the clearance.
+	assert.Empty(t, got.GetId())
+	assert.Equal(t, int64(20), got.GetUpdatedAt())
+
+	cached, err := memory.Get(environmentID)
+	require.NoError(t, err)
+	assert.Empty(t, cached.Id)
+	assert.Equal(t, int64(20), cached.UpdatedAt)
 }
 
 func TestRemovedIDsForTag(t *testing.T) {

@@ -51,6 +51,10 @@ var (
 	// members return before this. Everyone else gets no evaluation, which is
 	// the same result as leaving the flag out of the feature list.
 	errFeatureOmitted = errors.New("evaluator: feature omitted")
+	// omittedPrerequisiteVariation is recorded for an omitted flag so a
+	// dependent sees an unsatisfied prerequisite instead of a missing one.
+	// A missing result aborts the whole evaluation.
+	omittedPrerequisiteVariation = "\x00"
 )
 
 func EvaluationID(featureID string, featureVersion int32, userID string) string {
@@ -197,6 +201,9 @@ func (e *evaluator) evaluate(
 			if targetTag == "" || tagExist(feature.Tags, targetTag) {
 				archivedIDs = append(archivedIDs, feature.Id)
 			}
+			// Dependents still need a result. An empty one is unsatisfied,
+			// which keeps the omitted flag out of the response.
+			flagVariations[feature.Id] = omittedPrerequisiteVariation
 			continue
 		}
 		if err != nil {
@@ -309,10 +316,12 @@ func (e *evaluator) assignUser(
 			HoldoutGroupId: group.Id,
 		}, variation, err
 	}
-	// A holdout target that is disabled and has no off variation is omitted for
-	// non-members. That matches the previous cache filter: they receive no row.
-	// Flags that are not holdout targets keep the historical fall-through.
-	if holdout.targets(feature.Id) && !feature.Enabled && feature.OffVariation == "" {
+	// A snapshot is present (a serving group, a clearance, or a stand-in for a
+	// cache that could not be read). The user was not assigned HOLDOUT above.
+	// Omit every disabled flag with no off variation, including a former
+	// target: falling through would serve a normal variation. No snapshot
+	// keeps the historical fall-through for flags that were never held out.
+	if holdout.hasSnapshot() && !feature.Enabled && feature.OffVariation == "" {
 		return nil, nil, errFeatureOmitted
 	}
 	for _, pf := range feature.Prerequisites {
@@ -320,7 +329,7 @@ func (e *evaluator) assignUser(
 		if !ok {
 			return nil, nil, ErrPrerequisiteVariationNotFound
 		}
-		if pf.VariationId != variation {
+		if variation == omittedPrerequisiteVariation || pf.VariationId != variation {
 			if feature.OffVariation != "" {
 				variation, err := findVariation(feature.OffVariation, feature.Variations)
 				return &ftproto.Reason{Type: ftproto.Reason_PREREQUISITE}, variation, err

@@ -179,6 +179,12 @@ export class HoldoutMembership {
     return undefined;
   }
 
+  // hasSnapshot reports whether evaluation was given a holdout snapshot.
+  // A clearance and an unavailable snapshot both count.
+  hasSnapshot(): boolean {
+    return this.groups.length > 0;
+  }
+
   // targets reports whether any group targets featureId, including when the
   // user is not a member.
   targets(featureId: string): boolean {

@@ -836,12 +836,11 @@ func (s *FeatureService) liveHoldoutGroup(environmentID string) *featureproto.Ho
 				zap.Error(err),
 				zap.String("environmentId", environmentID),
 			)
-			// A failed read must not look like "no group". The clearance
-			// assigns nothing and keeps disabled flags with no off variation
-			// out of the evaluation.
-			return evaluation.UnavailableHoldoutSnapshot()
 		}
-		return nil
+		// A miss and a failed read must not look like "no group". The
+		// clearance assigns nothing and keeps a disabled flag with no off
+		// variation from falling through to a normal variation.
+		return evaluation.UnavailableHoldoutSnapshot()
 	}
 	// EvaluationHoldout keeps a clearance snapshot. ServingHoldout turns
 	// that snapshot into nil, and the disabled-flag filter would not run.

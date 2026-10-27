@@ -148,6 +148,13 @@ func (m *holdoutMembership) variationFor(featureID string) (*ftproto.HoldoutGrou
 	return nil, "", false
 }
 
+// hasSnapshot reports whether evaluation was given a holdout snapshot.
+// A nil receiver means no snapshot: a clearance and an unavailable snapshot
+// both count, because neither one should fall through to a normal variation.
+func (m *holdoutMembership) hasSnapshot() bool {
+	return m != nil && len(m.groups) > 0
+}
+
 // targets reports whether any group targets featureID, including when the
 // user is not a member. A nil receiver means no groups were passed.
 func (m *holdoutMembership) targets(featureID string) bool {
