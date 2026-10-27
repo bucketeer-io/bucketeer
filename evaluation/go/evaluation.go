@@ -127,12 +127,16 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
 		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
 	}
-	// A holdout change does not bump feature.UpdatedAt. An evaluatedAt older
-	// than the live group's updated_at has to re-evaluate every flag.
-	if holdoutStale(groups, evaluatedAt) {
+	// A holdout change does not bump feature.UpdatedAt. Compare it with the
+	// same grace window as the feature diff, so a same-second update or one
+	// that lands just behind the cursor still forces a full re-evaluation.
+	// An empty snapshot carries the updated_at of the group that stopped
+	// serving and uses the same check, so clients drop cached HOLDOUT
+	// assignments instead of merging a partial flag diff.
+	adjustedEvalAt := evaluatedAt - e.secondsForAdjustment
+	if holdoutStale(groups, adjustedEvalAt) {
 		return e.evaluate(fs, user, mapSegmentUsers, mapSegments, true, targetTag, groups)
 	}
-	adjustedEvalAt := evaluatedAt - e.secondsForAdjustment
 	updatedFeatures := make([]*ftproto.Feature, 0, len(fs))
 	for _, feature := range fs {
 		if feature.UpdatedAt > adjustedEvalAt {

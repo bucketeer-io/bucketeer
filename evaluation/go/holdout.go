@@ -124,10 +124,32 @@ func ServingHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
 	return group
 }
 
-// holdoutStale reports whether evaluatedAt is older than a live group's updated_at.
+// EvaluationHoldout is the snapshot the evaluator should see.
+// A serving group is returned as-is. An empty snapshot whose updated_at is
+// set is the clearance signal written when serving stopped: it assigns
+// nothing, and it forces a full re-evaluation while the client's cursor is
+// behind that revision. UpdatedAt 0 means the environment has never stopped
+// a group and is not a signal.
+func EvaluationHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
+	if serving := ServingHoldout(group); serving != nil {
+		return serving
+	}
+	if group != nil && group.Id == "" && group.UpdatedAt > 0 {
+		return group
+	}
+	return nil
+}
+
+// holdoutStale reports whether the client's cursor is behind a holdout
+// revision. The caller passes evaluatedAt minus the feature-diff grace
+// window. A live group and a clearance snapshot (empty id, updated_at of
+// the stop) both count. UpdatedAt 0 is not a revision.
 func holdoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
 	for _, group := range groups {
-		if group != nil && group.Id != "" && evaluatedAt < group.UpdatedAt {
+		if group == nil || group.UpdatedAt == 0 {
+			continue
+		}
+		if evaluatedAt < group.UpdatedAt {
 			return true
 		}
 	}

@@ -103,8 +103,10 @@ class Evaluator {
         holdoutGroups,
       );
     }
-    // A holdout change does not bump feature updatedAt.
-    if (holdoutRequiresFullEval(holdoutGroups, evaluatedAt)) {
+    // A holdout change does not bump feature updatedAt. The grace window
+    // matches the feature diff. An empty snapshot's updatedAt is the stop revision.
+    const adjustedEvalAt = evaluatedAt - SECONDS_FOR_ADJUSTMENT;
+    if (holdoutRequiresFullEval(holdoutGroups, adjustedEvalAt)) {
       return this.evaluate(
         features,
         user,
@@ -116,7 +118,6 @@ class Evaluator {
       );
     }
 
-    const adjustedEvalAt = evaluatedAt - SECONDS_FOR_ADJUSTMENT;
     const updatedFeatures = features.filter(
       (feature) =>
         feature.getUpdatedAt() > adjustedEvalAt ||

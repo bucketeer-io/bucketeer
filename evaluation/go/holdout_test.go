@@ -166,7 +166,10 @@ func TestHoldoutStale(t *testing.T) {
 	group := &ftproto.HoldoutGroup{Id: "hg", UpdatedAt: 2000}
 	assert.True(t, holdoutStale([]*ftproto.HoldoutGroup{group}, 1999))
 	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{group}, 2000))
-	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{{UpdatedAt: 2000}}, 1000))
+	// Empty id with a timestamp is the snapshot written when serving stopped.
+	assert.True(t, holdoutStale([]*ftproto.HoldoutGroup{{UpdatedAt: 2000}}, 1000))
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{{UpdatedAt: 2000}}, 2000))
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{{}}, 1000))
 	assert.False(t, holdoutStale(nil, 1000))
 }
 
@@ -198,4 +201,19 @@ func TestServingHoldout(t *testing.T) {
 	assert.Nil(t, ServingHoldout(&ftproto.HoldoutGroup{Id: "hg", Archived: true, Status: ftproto.HoldoutGroup_ANALYSIS}))
 	assert.Nil(t, ServingHoldout(&ftproto.HoldoutGroup{Id: "hg", Status: ftproto.HoldoutGroup_WAITING}))
 	assert.Nil(t, ServingHoldout(&ftproto.HoldoutGroup{Id: "hg", Status: ftproto.HoldoutGroup_STOPPED}))
+}
+
+func TestEvaluationHoldout(t *testing.T) {
+	t.Parallel()
+	live := &ftproto.HoldoutGroup{Id: "hg", Status: ftproto.HoldoutGroup_RUNNING}
+	cleared := &ftproto.HoldoutGroup{UpdatedAt: 50}
+	assert.Same(t, live, EvaluationHoldout(live))
+	assert.Same(t, cleared, EvaluationHoldout(cleared))
+	assert.Nil(t, EvaluationHoldout(nil))
+	assert.Nil(t, EvaluationHoldout(&ftproto.HoldoutGroup{}))
+	assert.Nil(t, EvaluationHoldout(&ftproto.HoldoutGroup{
+		Id:        "hg",
+		Status:    ftproto.HoldoutGroup_STOPPED,
+		UpdatedAt: 50,
+	}))
 }

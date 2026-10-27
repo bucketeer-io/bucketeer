@@ -157,7 +157,7 @@ Two delivery paths already exist, and they have very different exposure:
 On the server-evaluated path, change detection (`UserEvaluationsID`, `EvaluateFeaturesByEvaluatedAt`) looks only at each flag's `UpdatedAt`, so a holdout change would never reach a client. Two changes fix this:
 
 - `UserEvaluationsID` also hashes the live group's ID and `updated_at` (§4.6).
-- An `evaluatedAt` older than the group's `updated_at` forces a full re-evaluation (`ForceUpdate`).
+- An `evaluatedAt` older than the group's `updated_at` forces a full re-evaluation (`ForceUpdate`). The comparison uses the same grace window as the feature diff (`evaluatedAt - grace < updated_at`), so a holdout update in the same second as the cursor, or one that arrives just behind it, still forces a full re-evaluation. When serving stops, the empty cache snapshot keeps the `updated_at` of the newest stopped group. A cursor behind that revision forces a full re-evaluation, so clients drop cached `HOLDOUT` assignments instead of merging a partial flag diff. An empty snapshot with `updated_at` 0 means the environment has never stopped a group and does not force an update. Later cacher runs reuse that same stop time.
 
 For the local-evaluation path, `GetFeatureFlagsResponse` gains `repeated HoldoutGroup holdout_groups`, always sent in full (the list is tiny and never diffed). It is repeated even though only one group serves at a time (§4.6), so lifting that restriction later costs no wire-format change. It rides on `GetFeatureFlags` rather than a new RPC because a separate endpoint would let the flag and holdout snapshots drift, leaving windows where the holdout is not yet applied or still applied after it ended.
 

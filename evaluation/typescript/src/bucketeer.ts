@@ -150,7 +150,9 @@ export function holdoutRequiresFullEval(
   if (!groups) {
     return false;
   }
-  return groups.some((group) => group.getId() !== '' && evaluatedAt < group.getUpdatedAt());
+  // UpdatedAt 0 means the environment has never stopped a group.
+  // An empty id with a timestamp is the snapshot written when serving stopped.
+  return groups.some((group) => group.getUpdatedAt() !== 0 && evaluatedAt < group.getUpdatedAt());
 }
 
 function containsIncludedSegmentUser(

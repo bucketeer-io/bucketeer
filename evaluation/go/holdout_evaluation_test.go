@@ -122,29 +122,98 @@ func TestEvaluateFeaturesByEvaluatedAtHoldoutForcesFullUpdate(t *testing.T) {
 	if start > 90 {
 		start -= 10
 	}
+	evaluatedAt := now - 100
 	stale := flagWithVariations("stale", true, "off", "hold", "on")
 	stale.UpdatedAt = now - 1000
 	fresh := flagWithVariations("fresh", true, "off", "hold", "on")
 	fresh.UpdatedAt = now - 10
-	group := targetingGroup("hg", start, 10, "stale", "hold")
-	group.UpdatedAt = now - 50
-	evaluatedAt := now - 100
+	live := func(updatedAt int64) *ftproto.HoldoutGroup {
+		group := targetingGroup("hg", start, 10, "stale", "hold")
+		group.UpdatedAt = updatedAt
+		return group
+	}
 
-	full, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
-		[]*ftproto.Feature{stale, fresh}, user, nil, nil, "previous", evaluatedAt, false, "", group,
-	)
-	require.NoError(t, err)
-	assert.True(t, full.ForceUpdate)
-	assert.Len(t, full.Evaluations, 2)
-
-	group.UpdatedAt = evaluatedAt
-	partial, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
-		[]*ftproto.Feature{stale, fresh}, user, nil, nil, "previous", evaluatedAt, false, "", group,
-	)
-	require.NoError(t, err)
-	assert.False(t, partial.ForceUpdate)
-	require.Len(t, partial.Evaluations, 1)
-	assert.Equal(t, "fresh", partial.Evaluations[0].FeatureId)
+	// defaultSecondsForAdjustment is 10. The cursor is evaluatedAt-10.
+	tests := []struct {
+		name        string
+		group       *ftproto.HoldoutGroup
+		force       bool
+		featureIDs  []string
+		staleReason ftproto.Reason_Type
+	}{
+		{
+			name:        "holdout newer than the cursor",
+			group:       live(now - 50),
+			force:       true,
+			featureIDs:  []string{"stale", "fresh"},
+			staleReason: ftproto.Reason_HOLDOUT,
+		},
+		{
+			name:        "same second as evaluatedAt",
+			group:       live(evaluatedAt),
+			force:       true,
+			featureIDs:  []string{"stale", "fresh"},
+			staleReason: ftproto.Reason_HOLDOUT,
+		},
+		{
+			name:        "update inside the grace window",
+			group:       live(evaluatedAt - 9),
+			force:       true,
+			featureIDs:  []string{"stale", "fresh"},
+			staleReason: ftproto.Reason_HOLDOUT,
+		},
+		{
+			name:       "update older than the grace window",
+			group:      live(evaluatedAt - 10),
+			force:      false,
+			featureIDs: []string{"fresh"},
+		},
+		{
+			name:        "serving stopped",
+			group:       &ftproto.HoldoutGroup{UpdatedAt: now - 50},
+			force:       true,
+			featureIDs:  []string{"stale", "fresh"},
+			staleReason: ftproto.Reason_DEFAULT,
+		},
+		{
+			name:       "environment never stopped a group",
+			group:      &ftproto.HoldoutGroup{},
+			force:      false,
+			featureIDs: []string{"fresh"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+				[]*ftproto.Feature{stale, fresh},
+				user,
+				nil,
+				nil,
+				"previous",
+				evaluatedAt,
+				false,
+				"",
+				tt.group,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, tt.force, got.ForceUpdate)
+			ids := make([]string, 0, len(got.Evaluations))
+			for _, evaluation := range got.Evaluations {
+				ids = append(ids, evaluation.FeatureId)
+				if evaluation.FeatureId != "stale" {
+					continue
+				}
+				assert.Equal(t, tt.staleReason, evaluation.Reason.Type)
+				if tt.staleReason == ftproto.Reason_HOLDOUT {
+					assert.Equal(t, "hold", evaluation.VariationId)
+				} else {
+					assert.Equal(t, "on", evaluation.VariationId)
+				}
+			}
+			assert.Equal(t, tt.featureIDs, ids)
+		})
+	}
 }
 
 func BenchmarkEvaluateFeatures(b *testing.B) {
