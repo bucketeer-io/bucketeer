@@ -682,8 +682,9 @@ func (s *FeatureService) updateFeatureWithinTransaction(
 	req *featureproto.UpdateFeatureRequest,
 ) (*eventproto.Event, *featureproto.Feature, error) {
 	// Holdout enrollment locks the environment before it reads the flag.
-	// Take the same lock before this update, including a scheduled flag change,
-	// so archive and variation deletion cannot commit against a concurrent add.
+	// Direct updates take the same lock here, before their first read.
+	// Scheduled execution locks at the start of its own transaction, because
+	// this helper runs after that transaction has already read.
 	if err := s.lockHoldoutEnvironment(ctx, req.EnvironmentId); err != nil {
 		return nil, nil, err
 	}

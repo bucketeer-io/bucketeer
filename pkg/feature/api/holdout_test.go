@@ -29,6 +29,7 @@ import (
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	holdoutdomain "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	holdoutmock "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mock"
@@ -505,6 +506,24 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+}
+
+func TestExecuteScheduledFlagChangeLocksEnvironmentBeforeRead(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service, storage := newHoldoutService(t, controller)
+	expectTx(service)
+	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
+	gomock.InOrder(
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil),
+		scheduled.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc", "ns0").
+			Return(nil, v2fs.ErrScheduledFlagChangeNotFound),
+	)
+	_, err := service.ExecuteScheduledFlagChange(
+		createContextWithTokenRoleUnassigned(),
+		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
+	)
+	assert.Equal(t, codes.NotFound, status.Code(err))
 }
 
 func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {

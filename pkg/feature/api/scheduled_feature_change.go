@@ -657,6 +657,12 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	var failureReason string
 
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		// MySQL REPEATABLE READ fixes the snapshot at the first consistent read.
+		// Lock the environment before that read so a holdout enrollment that
+		// commits afterward cannot be missed by ListLiveFeatureTargets.
+		if err := s.lockHoldoutEnvironment(ctxWithTx, req.EnvironmentId); err != nil {
+			return err
+		}
 		var err error
 		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
