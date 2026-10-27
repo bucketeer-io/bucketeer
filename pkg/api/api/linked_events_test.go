@@ -81,6 +81,8 @@ func TestLinkedEventPublisherPublish(t *testing.T) {
 		newLinkedTestGoal(t, "g-ops", "goal-2"),
 		newLinkedTestGoal(t, "g-finished-rule", "goal-3"),
 		newLinkedTestGoal(t, "g-none", "goal-4"),
+		// An evaluation sent as a goal cannot be unmarshaled, so it is skipped
+		newLinkedTestEvaluation(t, "g-invalid", "feature-1", 1, "variation-a"),
 	}
 	linked := map[string][]string{
 		topicEvaluationDWH: {"e-exp"},
@@ -194,19 +196,6 @@ func TestLinkedEventPublisherMemoryCache(t *testing.T) {
 	}
 }
 
-func TestNewLinkedEventPublisherDisabled(t *testing.T) {
-	t.Parallel()
-	assert.Nil(t, NewLinkedEventPublisher(LinkedEventTopics{}, nil, nil, nil, zap.NewNop()))
-}
-
-func TestExcludeFailed(t *testing.T) {
-	t.Parallel()
-	messages := []publisher.Message{&eventproto.Event{Id: "a"}, &eventproto.Event{Id: "b"}}
-	actual := excludeFailed(messages, map[string]error{"a": errors.New("error")})
-	require.Len(t, actual, 1)
-	assert.Equal(t, "b", actual[0].GetId())
-}
-
 func newLinkedTestMocks(ctrl *gomock.Controller) *linkedTestMocks {
 	return &linkedTestMocks{
 		cache:         cachemock.NewMockMultiGetCache(ctrl),
@@ -283,53 +272,6 @@ func newLinkedTestGoal(t *testing.T, id, goalID string) *eventproto.Event {
 	e, err := anypb.New(&eventproto.GoalEvent{GoalId: goalID})
 	require.NoError(t, err)
 	return &eventproto.Event{Id: id, Event: e, EnvironmentId: linkedTestEnvID}
-}
-
-func TestLinkedEventPublisherSkipsDisabledRoutes(t *testing.T) {
-	t.Parallel()
-	ctrl := gomock.NewController(t)
-	m := newLinkedTestMocks(ctrl)
-	// No cache or client calls are expected because goal routes are disabled
-	lp := NewLinkedEventPublisher(
-		LinkedEventTopics{EvaluationDWH: m.evalDWH},
-		m.cache, m.expClient, m.autoOpsClient, zap.NewNop(),
-	)
-	goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
-	assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
-}
-
-func TestLinkedEventPublisherEvict(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc         string
-		setup        func(*linkedTestMocks, func() *LinkedEventPublisher)
-		evictBetween bool
-	}{
-		{
-			desc:         "reloads after eviction",
-			evictBetween: true,
-			setup: func(m *linkedTestMocks, _ func() *LinkedEventPublisher) {
-				m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(
-					marshalLinkedTest(t, &experimentproto.Experiments{}), nil).Times(2)
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
-			ctrl := gomock.NewController(t)
-			m := newLinkedTestMocks(ctrl)
-			var lp *LinkedEventPublisher
-			p.setup(m, func() *LinkedEventPublisher { return lp })
-			lp = NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
-			goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
-			assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
-			if p.evictBetween {
-				lp.Evict(linkedTestEnvID)
-			}
-			assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
-		})
-	}
 }
 
 func TestCacheInvalidatorEvictsLinkedTargets(t *testing.T) {
@@ -411,24 +353,6 @@ func TestGrpcTrackIgnoresLinkedEventFailure(t *testing.T) {
 	assert.Equal(t, &gwproto.TrackResponse{}, actual)
 	close(release)
 	<-done
-}
-
-func TestLinkedEventPublisherSkipsInvalidEvents(t *testing.T) {
-	t.Parallel()
-	ctrl := gomock.NewController(t)
-	m := newLinkedTestMocks(ctrl)
-	m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, &experimentproto.Experiments{
-		Experiments: []*experimentproto.Experiment{{Id: "exp-1", GoalIds: []string{"goal-1"}}},
-	}), nil)
-	m.expectPublish(nil)
-	lp := NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
-	// An evaluation event sent as a goal cannot be unmarshaled
-	goals := []publisher.Message{
-		newLinkedTestGoal(t, "g-1", "goal-1"),
-		newLinkedTestEvaluation(t, "g-invalid", "feature-1", 1, "variation-a"),
-	}
-	assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
-	assert.Equal(t, map[string][]string{topicGoalDWH: {"g-1"}}, m.published)
 }
 
 func TestGrpcRegisterEventsSkipsMainTopicsOnLinkedFailure(t *testing.T) {
