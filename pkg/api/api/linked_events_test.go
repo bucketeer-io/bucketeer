@@ -343,10 +343,12 @@ func TestCacheInvalidatorEvictsLinkedTargets(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			m := newLinkedTestMocks(ctrl)
 			lp := NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
-			lp.targets[linkedTestEnvID] = &linkedTargets{}
+			for _, kind := range []string{linkedTargetsExperiments, linkedTargetsAutoOpsRules} {
+				lp.targets[linkedTargetsKey(linkedTestEnvID, kind)] = &linkedTargets{}
+			}
 			ci := NewCacheInvalidator(nil, nil, nil, lp, nil, zap.NewNop())
 			require.NoError(t, ci.evict(&domaineventproto.Event{EntityType: entityType, EnvironmentId: linkedTestEnvID}))
-			assert.NotContains(t, lp.targets, linkedTestEnvID)
+			assert.Empty(t, lp.targets)
 		})
 	}
 }
@@ -359,13 +361,15 @@ func TestLinkedEventPublisherDropsExpiredTargets(t *testing.T) {
 	lp := NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
 	now := time.Now()
 	lp.now = func() time.Time { return now }
-	lp.targets["idle-env"] = &linkedTargets{expiresAt: now.Add(-time.Second)}
-	lp.targets["active-env"] = &linkedTargets{expiresAt: now.Add(time.Second)}
+	idleKey := linkedTargetsKey("idle-env", linkedTargetsExperiments)
+	activeKey := linkedTargetsKey("active-env", linkedTargetsExperiments)
+	lp.targets[idleKey] = &linkedTargets{expiresAt: now.Add(-time.Second)}
+	lp.targets[activeKey] = &linkedTargets{expiresAt: now.Add(time.Second)}
 	goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
 	assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
-	assert.NotContains(t, lp.targets, "idle-env")
-	assert.Contains(t, lp.targets, "active-env")
-	assert.Contains(t, lp.targets, linkedTestEnvID)
+	assert.NotContains(t, lp.targets, idleKey)
+	assert.Contains(t, lp.targets, activeKey)
+	assert.Contains(t, lp.targets, linkedTargetsKey(linkedTestEnvID, linkedTargetsExperiments))
 }
 
 func TestGrpcTrackIgnoresLinkedEventFailure(t *testing.T) {
@@ -493,6 +497,7 @@ func TestLinkedEventPublisherReloadsWhenEvictedDuringLoad(t *testing.T) {
 		evictions         int
 		expectedLoads     int
 		expectedPublished map[string][]string
+		expectedErrs      map[string]error
 		expectedStored    bool
 	}{
 		{
@@ -500,13 +505,15 @@ func TestLinkedEventPublisherReloadsWhenEvictedDuringLoad(t *testing.T) {
 			evictions:         1,
 			expectedLoads:     2,
 			expectedPublished: map[string][]string{topicGoalDWH: {"g-1"}},
+			expectedErrs:      map[string]error{},
 			expectedStored:    true,
 		},
 		{
-			desc:              "stops after the max attempts without storing",
+			desc:              "fails as retriable after the max attempts without storing",
 			evictions:         linkedTargetsMaxLoadAttempts,
 			expectedLoads:     linkedTargetsMaxLoadAttempts,
-			expectedPublished: map[string][]string{topicGoalDWH: {"g-1"}},
+			expectedPublished: map[string][]string{},
+			expectedErrs:      map[string]error{"g-1": errLinkedTargetsLoadFailed},
 			expectedStored:    false,
 		},
 	}
@@ -531,10 +538,61 @@ func TestLinkedEventPublisherReloadsWhenEvictedDuringLoad(t *testing.T) {
 			m.expectPublish(nil)
 			lp = NewLinkedEventPublisher(LinkedEventTopics{GoalDWH: m.goalDWH}, m.cache, m.expClient, m.autoOpsClient, zap.NewNop())
 			goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
-			assert.Empty(t, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
+			assert.Equal(t, p.expectedErrs, lp.Publish(context.Background(), linkedTestEnvID, goals, nil))
 			assert.Equal(t, p.expectedPublished, m.published)
-			_, stored := lp.targets[linkedTestEnvID]
+			_, stored := lp.targets[linkedTargetsKey(linkedTestEnvID, linkedTargetsExperiments)]
 			assert.Equal(t, p.expectedStored, stored)
+		})
+	}
+}
+
+func TestLinkedEventPublisherLoadsOnlyNeededTargets(t *testing.T) {
+	t.Parallel()
+	experiments := &experimentproto.Experiments{Experiments: []*experimentproto.Experiment{
+		{Id: "exp-1", FeatureId: "feature-1", FeatureVersion: 1},
+	}}
+	evaluations := []publisher.Message{newLinkedTestEvaluation(t, "e-1", "feature-1", 1, "variation-a")}
+	goals := []publisher.Message{newLinkedTestGoal(t, "g-1", "goal-1")}
+	patterns := []struct {
+		desc              string
+		setup             func(*linkedTestMocks)
+		goals             []publisher.Message
+		expectedPublished map[string][]string
+		expectedErrs      map[string]error
+	}{
+		{
+			desc: "success: an evaluation-only batch does not load auto ops rules",
+			setup: func(m *linkedTestMocks) {
+				m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, experiments), nil)
+			},
+			expectedPublished: map[string][]string{topicEvaluationDWH: {"e-1"}},
+			expectedErrs:      map[string]error{},
+		},
+		{
+			desc: "err: an auto ops rules failure only fails the goals",
+			setup: func(m *linkedTestMocks) {
+				m.cache.EXPECT().Get(linkedTestEnvID+":experiment").Return(marshalLinkedTest(t, experiments), nil)
+				m.cache.EXPECT().Get(linkedTestEnvID+":autoOpsRule").Return(nil, cache.ErrNotFound)
+				m.autoOpsClient.EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(nil, errors.New("db error"))
+			},
+			goals:             goals,
+			expectedPublished: map[string][]string{topicEvaluationDWH: {"e-1"}},
+			expectedErrs:      map[string]error{"g-1": errLinkedTargetsLoadFailed},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := newLinkedTestMocks(ctrl)
+			p.setup(m)
+			m.expectPublish(nil)
+			lp := NewLinkedEventPublisher(
+				LinkedEventTopics{EvaluationDWH: m.evalDWH, GoalOPS: m.goalOPS},
+				m.cache, m.expClient, m.autoOpsClient, zap.NewNop(),
+			)
+			assert.Equal(t, p.expectedErrs, lp.Publish(context.Background(), linkedTestEnvID, p.goals, evaluations))
+			assert.Equal(t, p.expectedPublished, m.published)
 		})
 	}
 }

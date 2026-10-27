@@ -50,6 +50,9 @@ const (
 	topicGoalDWH       = "GoalDWH"
 	topicGoalOPS       = "GoalOPS"
 
+	linkedTargetsExperiments  = "experiments"
+	linkedTargetsAutoOpsRules = "autoOpsRules"
+
 	typeLinkedTargets = "LinkedTargets"
 	typeExperiments   = "Experiments"
 	typeAutoOpsRules  = "AutoOpsRules"
@@ -59,6 +62,7 @@ const (
 
 var (
 	errLinkedTargetsLoadFailed = errors.New("gateway: failed to load linked targets")
+	errLinkedTargetsEvicted    = errors.New("gateway: linked targets kept being evicted while loading")
 	errInvalidLinkedEvent      = errors.New("gateway: invalid linked event")
 )
 
@@ -83,7 +87,8 @@ type LinkedEventPublisher struct {
 	autoOpsClient          autoopsclient.Client
 	memoryCacheTTL         time.Duration
 	mu                     sync.RWMutex
-	targets                map[string]*linkedTargets
+	// Keyed by environment ID and target kind
+	targets map[string]*linkedTargets
 	// Bumped on eviction so an in-flight load does not store a stale snapshot
 	generations map[string]uint64
 	flightgroup singleflight.Group
@@ -92,13 +97,30 @@ type LinkedEventPublisher struct {
 }
 
 type linkedTargets struct {
-	// featureID:featureVersion of experiments
-	experimentFeatures map[string]struct{}
-	experimentGoals    map[string]struct{}
-	// featureID:variationID of active event rate clauses
-	opsFeatureVariations map[string]struct{}
-	opsGoals             map[string]struct{}
-	expiresAt            time.Time
+	// featureID:featureVersion of experiments, or featureID:variationID of active event rate clauses
+	features  map[string]struct{}
+	goals     map[string]struct{}
+	expiresAt time.Time
+}
+
+func (t *linkedTargets) hasFeature(key string) bool {
+	if t == nil {
+		return false
+	}
+	_, ok := t.features[key]
+	return ok
+}
+
+func (t *linkedTargets) hasGoal(goalID string) bool {
+	if t == nil {
+		return false
+	}
+	_, ok := t.goals[goalID]
+	return ok
+}
+
+func linkedTargetsKey(environmentID, kind string) string {
+	return environmentID + ":" + kind
 }
 
 // NewLinkedEventPublisher returns nil when no dedicated topic is configured.
@@ -144,23 +166,40 @@ func (p *LinkedEventPublisher) Publish(
 	if len(goals) == 0 && len(evaluations) == 0 {
 		return errs
 	}
-	targets, err := p.getTargets(ctx, environmentID)
-	if err != nil {
-		p.logger.Error("Failed to load linked targets",
-			zap.Error(err),
-			zap.String("environmentId", environmentID),
-		)
-		for _, m := range goals {
-			errs[m.GetId()] = errLinkedTargetsLoadFailed
+	// Load only the targets this batch needs, so an unrelated lookup failure does not reject it
+	var experiments, autoOpsRules *linkedTargets
+	for _, r := range []struct {
+		kind                 string
+		evalTopic, goalTopic publisher.Publisher
+		dst                  **linkedTargets
+	}{
+		{linkedTargetsExperiments, p.topics.EvaluationDWH, p.topics.GoalDWH, &experiments},
+		{linkedTargetsAutoOpsRules, p.topics.EvaluationOPS, p.topics.GoalOPS, &autoOpsRules},
+	} {
+		needEvaluations := len(evaluations) > 0 && r.evalTopic != nil
+		needGoals := len(goals) > 0 && r.goalTopic != nil
+		if !needEvaluations && !needGoals {
+			continue
 		}
-		for _, m := range evaluations {
-			errs[m.GetId()] = errLinkedTargetsLoadFailed
+		t, err := p.getTargets(ctx, environmentID, r.kind)
+		if err != nil {
+			p.logger.Error("Failed to load linked targets",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+				zap.String("kind", r.kind),
+			)
+			if needEvaluations {
+				evaluations = failLoad(evaluations, errs)
+			}
+			if needGoals {
+				goals = failLoad(goals, errs)
+			}
+			continue
 		}
-		linkedEventCounter.WithLabelValues(codeAll, codeLoadFailed).Add(float64(len(errs)))
-		return errs
+		*r.dst = t
 	}
-	evalDWH, evalOPS := p.linkEvaluations(targets, environmentID, evaluations)
-	goalDWH, goalOPS := p.linkGoals(targets, environmentID, goals)
+	evalDWH, evalOPS := p.linkEvaluations(experiments, autoOpsRules, environmentID, evaluations)
+	goalDWH, goalOPS := p.linkGoals(experiments, autoOpsRules, environmentID, goals)
 	p.publish(ctx, p.topics.EvaluationDWH, evalDWH, topicEvaluationDWH, environmentID, errs)
 	p.publish(ctx, p.topics.EvaluationOPS, evalOPS, topicEvaluationOPS, environmentID, errs)
 	p.publish(ctx, p.topics.GoalDWH, goalDWH, topicGoalDWH, environmentID, errs)
@@ -168,9 +207,18 @@ func (p *LinkedEventPublisher) Publish(
 	return errs
 }
 
+// failLoad marks the events as retriable failures and drops them from the batch
+func failLoad(messages []publisher.Message, errs map[string]error) []publisher.Message {
+	for _, m := range messages {
+		errs[m.GetId()] = errLinkedTargetsLoadFailed
+	}
+	linkedEventCounter.WithLabelValues(codeAll, codeLoadFailed).Add(float64(len(messages)))
+	return nil
+}
+
 // linkEvaluations returns the evaluations linked to experiments (DWH) and auto ops rules (OPS).
 func (p *LinkedEventPublisher) linkEvaluations(
-	targets *linkedTargets,
+	experiments, autoOpsRules *linkedTargets,
 	environmentID string,
 	evaluations []publisher.Message,
 ) (dwh, ops []publisher.Message) {
@@ -179,10 +227,10 @@ func (p *LinkedEventPublisher) linkEvaluations(
 		if !p.unmarshalEvent(m, e, typeEvaluation, environmentID) {
 			continue
 		}
-		if _, ok := targets.experimentFeatures[fmt.Sprintf("%s:%d", e.FeatureId, e.FeatureVersion)]; ok {
+		if experiments.hasFeature(fmt.Sprintf("%s:%d", e.FeatureId, e.FeatureVersion)) {
 			dwh = append(dwh, m)
 		}
-		if _, ok := targets.opsFeatureVariations[e.FeatureId+":"+e.VariationId]; ok {
+		if autoOpsRules.hasFeature(e.FeatureId + ":" + e.VariationId) {
 			ops = append(ops, m)
 		}
 	}
@@ -191,7 +239,7 @@ func (p *LinkedEventPublisher) linkEvaluations(
 
 // linkGoals returns the goals linked to experiments (DWH) and auto ops rules (OPS).
 func (p *LinkedEventPublisher) linkGoals(
-	targets *linkedTargets,
+	experiments, autoOpsRules *linkedTargets,
 	environmentID string,
 	goals []publisher.Message,
 ) (dwh, ops []publisher.Message) {
@@ -200,10 +248,10 @@ func (p *LinkedEventPublisher) linkGoals(
 		if !p.unmarshalEvent(m, e, typeGoal, environmentID) {
 			continue
 		}
-		if _, ok := targets.experimentGoals[e.GoalId]; ok {
+		if experiments.hasGoal(e.GoalId) {
 			dwh = append(dwh, m)
 		}
-		if _, ok := targets.opsGoals[e.GoalId]; ok {
+		if autoOpsRules.hasGoal(e.GoalId) {
 			ops = append(ops, m)
 		}
 	}
@@ -268,19 +316,20 @@ func (p *LinkedEventPublisher) unmarshalEvent(
 	return true
 }
 
-func (p *LinkedEventPublisher) getTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
+func (p *LinkedEventPublisher) getTargets(ctx context.Context, environmentID, kind string) (*linkedTargets, error) {
+	key := linkedTargetsKey(environmentID, kind)
 	p.mu.RLock()
-	t, ok := p.targets[environmentID]
+	t, ok := p.targets[key]
 	p.mu.RUnlock()
 	if ok && p.now().Before(t.expiresAt) {
 		cacheCounter.WithLabelValues(callerGatewayService, typeLinkedTargets, cacheLayerInMemory, codeHit).Inc()
 		return t, nil
 	}
 	cacheCounter.WithLabelValues(callerGatewayService, typeLinkedTargets, cacheLayerInMemory, codeMiss).Inc()
-	ch := p.flightgroup.DoChan(environmentID, func() (interface{}, error) {
+	ch := p.flightgroup.DoChan(key, func() (interface{}, error) {
 		innerCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleflightFetchTimeout)
 		defer cancel()
-		return p.loadTargets(innerCtx, environmentID)
+		return p.loadTargets(innerCtx, environmentID, kind)
 	})
 	select {
 	case res := <-ch:
@@ -295,21 +344,26 @@ func (p *LinkedEventPublisher) getTargets(ctx context.Context, environmentID str
 
 // Evict drops the environment's targets when its experiments or auto ops rules change.
 func (p *LinkedEventPublisher) Evict(environmentID string) {
+	kinds := []string{linkedTargetsExperiments, linkedTargetsAutoOpsRules}
 	p.mu.Lock()
-	delete(p.targets, environmentID)
+	for _, kind := range kinds {
+		delete(p.targets, linkedTargetsKey(environmentID, kind))
+	}
 	p.generations[environmentID]++
 	p.mu.Unlock()
-	p.flightgroup.Forget(environmentID)
+	for _, kind := range kinds {
+		p.flightgroup.Forget(linkedTargetsKey(environmentID, kind))
+	}
 }
 
-// loadTargets builds the environment's linked targets and stores them in memory.
+// loadTargets builds the environment's linked targets of the kind and stores them in memory.
 // When the environment is evicted while loading, it reloads so waiting callers do not get the stale targets.
-func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
+func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID, kind string) (*linkedTargets, error) {
 	for attempt := 1; ; attempt++ {
 		p.mu.RLock()
 		generation := p.generations[environmentID]
 		p.mu.RUnlock()
-		t, err := p.buildTargets(ctx, environmentID)
+		t, err := p.buildTargets(ctx, environmentID, kind)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +374,7 @@ func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID st
 			continue
 		}
 		if !evicted {
-			p.targets[environmentID] = t
+			p.targets[linkedTargetsKey(environmentID, kind)] = t
 		}
 		// Drop expired entries of idle environments
 		now := p.now()
@@ -330,30 +384,31 @@ func (p *LinkedEventPublisher) loadTargets(ctx context.Context, environmentID st
 			}
 		}
 		p.mu.Unlock()
+		if evicted {
+			return nil, errLinkedTargetsEvicted
+		}
 		return t, nil
 	}
 }
 
-func (p *LinkedEventPublisher) buildTargets(ctx context.Context, environmentID string) (*linkedTargets, error) {
+func (p *LinkedEventPublisher) buildTargets(ctx context.Context, environmentID, kind string) (*linkedTargets, error) {
 	t := &linkedTargets{
-		experimentFeatures:   make(map[string]struct{}),
-		experimentGoals:      make(map[string]struct{}),
-		opsFeatureVariations: make(map[string]struct{}),
-		opsGoals:             make(map[string]struct{}),
+		features: make(map[string]struct{}),
+		goals:    make(map[string]struct{}),
 	}
-	if p.topics.EvaluationDWH != nil || p.topics.GoalDWH != nil {
+	switch kind {
+	case linkedTargetsExperiments:
 		experiments, err := p.listExperiments(ctx, environmentID)
 		if err != nil {
 			return nil, err
 		}
 		for _, exp := range experiments {
-			t.experimentFeatures[fmt.Sprintf("%s:%d", exp.FeatureId, exp.FeatureVersion)] = struct{}{}
+			t.features[fmt.Sprintf("%s:%d", exp.FeatureId, exp.FeatureVersion)] = struct{}{}
 			for _, goalID := range exp.GoalIds {
-				t.experimentGoals[goalID] = struct{}{}
+				t.goals[goalID] = struct{}{}
 			}
 		}
-	}
-	if p.topics.EvaluationOPS != nil || p.topics.GoalOPS != nil {
+	case linkedTargetsAutoOpsRules:
 		rules, err := p.listAutoOpsRules(ctx, environmentID)
 		if err != nil {
 			return nil, err
@@ -368,8 +423,8 @@ func (p *LinkedEventPublisher) buildTargets(ctx context.Context, environmentID s
 				continue
 			}
 			for _, clause := range clauses {
-				t.opsFeatureVariations[rule.FeatureId+":"+clause.VariationId] = struct{}{}
-				t.opsGoals[clause.GoalId] = struct{}{}
+				t.features[rule.FeatureId+":"+clause.VariationId] = struct{}{}
+				t.goals[clause.GoalId] = struct{}{}
 			}
 		}
 	}
