@@ -209,8 +209,10 @@ test('UserEvaluationsID changes when targets change in the same second', (t) => 
     ...holdoutGroup('hg-a', 50),
     getFeaturesList: () =>
       targets.map((target) => ({
+        getId: () => '',
         getFeatureId: () => target.featureId,
         getHoldoutVariationId: () => target.variationId,
+        getAddedAt: () => 0,
         getRemovedAt: () => target.removedAt ?? 0,
       })),
   });

@@ -10,8 +10,10 @@ export const HoldoutAssignment = {
 } as const;
 
 export interface HoldoutFeature {
+  getId(): string;
   getFeatureId(): string;
   getHoldoutVariationId(): string;
+  getAddedAt(): number;
   getRemovedAt(): number;
 }
 

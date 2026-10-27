@@ -379,6 +379,59 @@ func TestOmittedHoldoutTargetDoesNotAbortDependents(t *testing.T) {
 	assert.Empty(t, historical.ArchivedFeatureIds)
 }
 
+func TestFeaturesForServerEvalKeepsDependencyNodes(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	prerequisite := flagWithVariations("dependent", true, "off", "hold", "on")
+	prerequisite.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	rule := flagWithVariations("rule-dependent", true, "off", "hold", "on")
+	rule.Rules = []*ftproto.Rule{{
+		Id: "rule-1",
+		Clauses: []*ftproto.Clause{{
+			Id:        "clause-1",
+			Attribute: "flag",
+			Operator:  ftproto.Clause_FEATURE_FLAG,
+			Values:    []string{"on"},
+		}},
+	}}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	features := []*ftproto.Feature{prerequisite, rule, disabled, orphan}
+
+	kept, removed := FeaturesForServerEval(features, ClearanceSnapshot(10))
+	require.Equal(t, []string{"orphan"}, removed)
+	keptIDs := make([]string, 0, len(kept))
+	for _, feature := range kept {
+		keptIDs = append(keptIDs, feature.Id)
+	}
+	assert.ElementsMatch(t, []string{"dependent", "rule-dependent", "flag"}, keptIDs)
+
+	evaluations, err := NewEvaluator().EvaluateFeatures(kept, user, nil, nil, "", ClearanceSnapshot(10))
+	require.NoError(t, err)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range evaluations.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.NotContains(t, byID, "flag")
+	assert.Contains(t, evaluations.ArchivedFeatureIds, "flag")
+	require.Contains(t, byID, "dependent")
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, byID["dependent"].Reason.Type)
+	assert.Equal(t, "off", byID["dependent"].VariationId)
+	require.Contains(t, byID, "rule-dependent")
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["rule-dependent"].Reason.Type)
+}
+
 func TestFeaturesForEvalFiltersClearedDisabledTarget(t *testing.T) {
 	t.Parallel()
 	disabled := &ftproto.Feature{Id: "flag", Enabled: false}

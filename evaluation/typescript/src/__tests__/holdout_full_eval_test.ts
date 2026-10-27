@@ -38,8 +38,10 @@ function group(id: string, updatedAt: number, targets: boolean): HoldoutGroup {
   const features: HoldoutFeature[] = targets
     ? [
         {
+          getId: () => '',
           getFeatureId: () => 'stale',
           getHoldoutVariationId: () => 'hold',
+          getAddedAt: () => 0,
           getRemovedAt: () => 0,
         },
       ]

@@ -22,17 +22,27 @@ function NewUserEvaluations(
   return userEvaluations;
 }
 
-function sortedHoldoutTargets(
-  group: HoldoutGroup,
-): Array<{ featureId: string; variationId: string }> {
+function sortedHoldoutTargets(group: HoldoutGroup): Array<{
+  featureId: string;
+  variationId: string;
+  addedAt: number;
+  id: string;
+}> {
   const features = group.getFeaturesList?.() ?? [];
   return features
     .filter((feature) => feature && feature.getFeatureId() !== '' && feature.getRemovedAt() === 0)
     .map((feature) => ({
       featureId: feature.getFeatureId(),
       variationId: feature.getHoldoutVariationId(),
+      addedAt: feature.getAddedAt(),
+      id: feature.getId(),
     }))
-    .sort((a, b) => (a.featureId < b.featureId ? -1 : a.featureId > b.featureId ? 1 : 0));
+    .sort((a, b) => {
+      if (a.featureId !== b.featureId) {
+        return a.featureId < b.featureId ? -1 : 1;
+      }
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
 }
 
 function sortedHoldoutGroups(groups: HoldoutGroup[] | undefined): HoldoutGroup[] {
@@ -106,7 +116,7 @@ function UserEvaluationsID(
   sortedHoldoutGroups(holdoutGroups).forEach((group) => {
     hashInput += `${group.getId()}:${group.getUpdatedAt()}`;
     sortedHoldoutTargets(group).forEach((target) => {
-      hashInput += `:${target.featureId}:${target.variationId}`;
+      hashInput += `:${target.featureId}:${target.variationId}:${target.addedAt}:${target.id}`;
     });
   });
 

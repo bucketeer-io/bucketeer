@@ -211,6 +211,17 @@ func TestUserEvaluationsID(t *testing.T) {
 	assert.NotEqual(t, withTargets, UserEvaluationsID("user-1", nil, features, targetB))
 	assert.Equal(t, withTargets, UserEvaluationsID("user-1", nil, features, reordered))
 	assert.Equal(t, withA, UserEvaluationsID("user-1", nil, features, removed))
+	// Replacing the target row in the same second keeps the feature and the
+	// variation, and still has to change the ID the client sends back.
+	replaced := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{Id: "row-2", FeatureId: "flag-b", HoldoutVariationId: "hold-b", AddedAt: 50},
+			{Id: "row-1", FeatureId: "flag-a", HoldoutVariationId: "hold-a"},
+		},
+	}
+	assert.NotEqual(t, withTargets, UserEvaluationsID("user-1", nil, features, replaced))
 }
 
 func TestGenerateFeaturesID(t *testing.T) {

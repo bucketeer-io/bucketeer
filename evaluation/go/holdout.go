@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"math"
 
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
@@ -266,8 +267,11 @@ func HoldoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
 // snapshot no longer targets. Those flags stay in the feature cache until
 // the next feature refresh, and without this filter the evaluator would
 // assign them a normal variation after the group stops or the snapshot is a
-// clearance. A nil snapshot leaves the slice unchanged.
-// removed is the IDs a partial evaluation must report so clients delete them.
+// clearance. A flag that another kept flag depends on, as a prerequisite or
+// a FEATURE_FLAG rule, stays in the slice so dependency resolution can run.
+// The evaluator then omits its evaluation. A nil snapshot leaves the slice
+// unchanged. removed is the IDs a partial evaluation must report so clients
+// delete them.
 func FeaturesForServerEval(
 	features []*ftproto.Feature,
 	group *ftproto.HoldoutGroup,
@@ -276,15 +280,58 @@ func FeaturesForServerEval(
 		return features, nil
 	}
 	targets := HoldoutTargetFeatureIDs(group)
+	byID := make(map[string]*ftproto.Feature, len(features))
+	droppable := make(map[string]struct{})
+	for _, feature := range features {
+		if feature == nil || feature.Id == "" {
+			continue
+		}
+		byID[feature.Id] = feature
+		if !feature.Enabled && feature.OffVariation == "" {
+			if _, targeted := targets[feature.Id]; !targeted {
+				droppable[feature.Id] = struct{}{}
+			}
+		}
+	}
+	// Dependencies of a flag that will be evaluated have to stay in the
+	// graph. Walk from those flags so a dropped prerequisite of another
+	// dropped flag is kept only when something evaluated still needs it.
+	required := make(map[string]struct{})
+	var require func(id string)
+	require = func(id string) {
+		if _, seen := required[id]; seen {
+			return
+		}
+		feature, ok := byID[id]
+		if !ok {
+			return
+		}
+		required[id] = struct{}{}
+		for _, dep := range (&ftdomain.Feature{Feature: feature}).FeatureIDsDependsOn() {
+			require(dep)
+		}
+	}
+	for id := range byID {
+		if _, drop := droppable[id]; drop {
+			continue
+		}
+		require(id)
+	}
 	kept = make([]*ftproto.Feature, 0, len(features))
 	for _, feature := range features {
-		if feature != nil && !feature.Enabled && feature.OffVariation == "" {
-			if _, targeted := targets[feature.Id]; !targeted {
-				if feature.Id != "" {
-					removed = append(removed, feature.Id)
-				}
+		if feature == nil {
+			kept = append(kept, feature)
+			continue
+		}
+		if _, drop := droppable[feature.Id]; drop {
+			if _, keep := required[feature.Id]; keep {
+				kept = append(kept, feature)
 				continue
 			}
+			if feature.Id != "" {
+				removed = append(removed, feature.Id)
+			}
+			continue
 		}
 		kept = append(kept, feature)
 	}

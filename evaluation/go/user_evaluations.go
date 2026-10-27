@@ -67,13 +67,16 @@ func UserEvaluationsID(
 		fmt.Fprintf(h, "%s:%d", feature.Id, feature.UpdatedAt)
 	}
 	// Hash live groups after features so a nil group leaves the ID unchanged.
-	// Targets are part of the hash: two edits in the same second share
-	// UpdatedAt, and the ID still has to change when a target or its
-	// holdout variation changes.
+	// UpdatedAt is whole seconds, so the current target rows are part of the
+	// ID: feature, variation, when the row was added, and the row id. Two
+	// edits in the same second then cannot share an ID.
 	for _, group := range sortedHoldoutGroups(groups) {
 		fmt.Fprintf(h, "%s:%d", group.Id, group.UpdatedAt) // nolint:errcheck
 		for _, target := range sortedHoldoutTargets(group) {
-			fmt.Fprintf(h, ":%s:%s", target.FeatureId, target.HoldoutVariationId) // nolint:errcheck
+			fmt.Fprintf( // nolint:errcheck
+				h, ":%s:%s:%d:%s",
+				target.FeatureId, target.HoldoutVariationId, target.AddedAt, target.Id,
+			)
 		}
 	}
 	return strconv.FormatUint(h.Sum64(), 10)
@@ -91,7 +94,10 @@ func sortedHoldoutTargets(group *ftproto.HoldoutGroup) []*ftproto.HoldoutGroupFe
 		targets = append(targets, feature)
 	}
 	sort.Slice(targets, func(i, j int) bool {
-		return targets[i].FeatureId < targets[j].FeatureId
+		if targets[i].FeatureId != targets[j].FeatureId {
+			return targets[i].FeatureId < targets[j].FeatureId
+		}
+		return targets[i].Id < targets[j].Id
 	})
 	return targets
 }

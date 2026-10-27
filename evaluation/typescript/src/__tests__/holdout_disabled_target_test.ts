@@ -63,8 +63,10 @@ function group(percentage: number): HoldoutGroup {
     getUpdatedAt: () => 1,
     getFeaturesList: () => [
       {
+        getId: () => '',
         getFeatureId: () => 'flag',
         getHoldoutVariationId: () => 'hold',
+        getAddedAt: () => 0,
         getRemovedAt: () => 0,
       },
     ],
