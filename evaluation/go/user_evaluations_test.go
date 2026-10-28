@@ -172,6 +172,56 @@ func TestUserEvaluationsID(t *testing.T) {
 		UserEvaluationsID("user-1", nil, features, groupB, groupA),
 	)
 	assert.NotEqual(t, withA, UserEvaluationsID("user-1", nil, features, &ftproto.HoldoutGroup{Id: "hg-a", UpdatedAt: 51}))
+
+	// Same UpdatedAt, different targets. A client polling between two edits in
+	// one second must not treat the second edit as unchanged.
+	targetA := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{FeatureId: "flag-b", HoldoutVariationId: "hold-b"},
+			{FeatureId: "flag-a", HoldoutVariationId: "hold-a"},
+		},
+	}
+	targetB := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{FeatureId: "flag-a", HoldoutVariationId: "hold-a"},
+			{FeatureId: "flag-b", HoldoutVariationId: "other"},
+		},
+	}
+	reordered := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{FeatureId: "flag-a", HoldoutVariationId: "hold-a"},
+			{FeatureId: "flag-b", HoldoutVariationId: "hold-b"},
+		},
+	}
+	removed := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{FeatureId: "flag-a", HoldoutVariationId: "hold-a", RemovedAt: 50},
+		},
+	}
+	withTargets := UserEvaluationsID("user-1", nil, features, targetA)
+	assert.NotEqual(t, withA, withTargets)
+	assert.NotEqual(t, withTargets, UserEvaluationsID("user-1", nil, features, targetB))
+	assert.Equal(t, withTargets, UserEvaluationsID("user-1", nil, features, reordered))
+	assert.Equal(t, withA, UserEvaluationsID("user-1", nil, features, removed))
+	// Replacing the target row in the same second keeps the feature and the
+	// variation, and still has to change the ID the client sends back.
+	replaced := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{Id: "row-2", FeatureId: "flag-b", HoldoutVariationId: "hold-b", AddedAt: 50},
+			{Id: "row-1", FeatureId: "flag-a", HoldoutVariationId: "hold-a"},
+		},
+	}
+	assert.NotEqual(t, withTargets, UserEvaluationsID("user-1", nil, features, replaced))
 }
 
 func TestGenerateFeaturesID(t *testing.T) {

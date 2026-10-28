@@ -388,6 +388,101 @@ func TestListActiveGroupsAndTargets(t *testing.T) {
 	})
 }
 
+func TestGetLiveServingGroup(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("not found", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(),
+			"env", false, false,
+			int32(proto.HoldoutGroup_RUNNING), int32(proto.HoldoutGroup_ANALYSIS),
+		).Return(row)
+		group, err := storage.GetLiveServingGroup(context.Background(), "env")
+		assert.Nil(t, group)
+		assert.ErrorIs(t, err, v2hs.ErrHoldoutGroupNotFound)
+	})
+	t.Run("attaches current features", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+			*(dest[0].(*string)) = "hg-live"
+			*(dest[1].(*string)) = "env"
+			*(dest[9].(*int32)) = int32(proto.HoldoutGroup_ANALYSIS)
+			return nil
+		})
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(row)
+		rows := mock.NewMockRows(controller)
+		rows.EXPECT().Close().Return(nil)
+		rows.EXPECT().Next().Return(true)
+		rows.EXPECT().Next().Return(false)
+		rows.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+			*(dest[0].(*string)) = "row"
+			*(dest[1].(*string)) = "hg-live"
+			*(dest[2].(*string)) = "flag"
+			*(dest[3].(*string)) = "env"
+			*(dest[4].(*string)) = "hold"
+			*(dest[5].(*int64)) = int64(10)
+			*(dest[6].(*int64)) = int64(0)
+			return nil
+		})
+		rows.EXPECT().Err().Return(nil)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+			gomock.Any(), gomock.Any(), "env", "hg-live",
+		).Return(rows, nil)
+		group, err := storage.GetLiveServingGroup(context.Background(), "env")
+		require.NoError(t, err)
+		require.NotNil(t, group)
+		assert.Equal(t, "hg-live", group.Id)
+		assert.Equal(t, proto.HoldoutGroup_ANALYSIS, group.Status)
+		require.Len(t, group.Features, 1)
+		assert.Equal(t, "flag", group.Features[0].FeatureId)
+		assert.Equal(t, "hold", group.Features[0].HoldoutVariationId)
+	})
+}
+
+func TestGetClearedHoldoutUpdatedAt(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("no stopped group", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(),
+			"env",
+			int32(proto.HoldoutGroup_STOPPED),
+			int32(proto.HoldoutGroup_FORCE_STOPPED),
+		).Return(row)
+		updatedAt, err := storage.GetClearedHoldoutUpdatedAt(context.Background(), "env")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), updatedAt)
+	})
+	t.Run("newest stop time", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+			*(dest[0].(*int64)) = int64(1700000000)
+			return nil
+		})
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(),
+			"env",
+			int32(proto.HoldoutGroup_STOPPED),
+			int32(proto.HoldoutGroup_FORCE_STOPPED),
+		).Return(row)
+		updatedAt, err := storage.GetClearedHoldoutUpdatedAt(context.Background(), "env")
+		require.NoError(t, err)
+		assert.Equal(t, int64(1700000000), updatedAt)
+	})
+}
+
 func newHoldoutStorageWithMock(t *testing.T, controller *gomock.Controller) *holdoutStorage {
 	t.Helper()
 	return &holdoutStorage{qe: mock.NewMockQueryExecer(controller)}

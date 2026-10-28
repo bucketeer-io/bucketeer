@@ -1116,9 +1116,16 @@ func (s *FeatureService) evaluateFeatures(
 	tag string,
 ) (*featureproto.UserEvaluations, error) {
 	evaluator := evaluation.NewEvaluator()
+	group := s.liveHoldoutGroup(EnvironmentId)
+	features, removed := evaluation.FeaturesForServerEval(features, group)
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		for _, id := range evaluator.ListSegmentIDs(f) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	if group != nil {
+		for _, id := range evaluation.HoldoutSegmentIDs([]*featureproto.HoldoutGroup{group}) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -1135,7 +1142,9 @@ func (s *FeatureService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, mapSegments, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(
+		features, user, mapSegmentUsers, mapSegments, tag, holdoutGroups(group)...,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
@@ -1147,6 +1156,9 @@ func (s *FeatureService) evaluateFeatures(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if userEvaluations != nil && len(removed) > 0 {
+		userEvaluations.ArchivedFeatureIds = append(userEvaluations.ArchivedFeatureIds, removed...)
 	}
 	return userEvaluations, nil
 }

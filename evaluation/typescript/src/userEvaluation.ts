@@ -1,5 +1,6 @@
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Feature } from './proto/feature/feature_pb';
+import { UNAVAILABLE_UEID_PREFIX, holdoutUnavailable } from './bucketeer';
 import type { HoldoutGroup } from './bucketeer';
 import fnv from 'fnv-plus';
 
@@ -20,6 +21,29 @@ function NewUserEvaluations(
   userEvaluations.setForceUpdate(forceUpdate);
 
   return userEvaluations;
+}
+
+function sortedHoldoutTargets(group: HoldoutGroup): Array<{
+  featureId: string;
+  variationId: string;
+  addedAt: number;
+  id: string;
+}> {
+  const features = group.getFeaturesList?.() ?? [];
+  return features
+    .filter((feature) => feature && feature.getFeatureId() !== '' && feature.getRemovedAt() === 0)
+    .map((feature) => ({
+      featureId: feature.getFeatureId(),
+      variationId: feature.getHoldoutVariationId(),
+      addedAt: feature.getAddedAt(),
+      id: feature.getId(),
+    }))
+    .sort((a, b) => {
+      if (a.featureId !== b.featureId) {
+        return a.featureId < b.featureId ? -1 : 1;
+      }
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
 }
 
 function sortedHoldoutGroups(groups: HoldoutGroup[] | undefined): HoldoutGroup[] {
@@ -88,13 +112,23 @@ function UserEvaluationsID(
   });
 
   // Hash live groups after features so a missing group leaves the ID unchanged.
+  // Targets are part of the hash: two edits in the same second share UpdatedAt,
+  // and the ID still has to change when a target or its holdout variation changes.
   sortedHoldoutGroups(holdoutGroups).forEach((group) => {
     hashInput += `${group.getId()}:${group.getUpdatedAt()}`;
+    sortedHoldoutTargets(group).forEach((target) => {
+      hashInput += `:${target.featureId}:${target.variationId}:${target.addedAt}:${target.id}`;
+    });
   });
 
   // Generate the FNV-1a 64-bit hash
   const hash = fnv.hash(hashInput, 64);
 
+  // An ID issued without a readable holdout snapshot is marked so the next
+  // evaluation after the snapshot is back runs in full.
+  if (holdoutUnavailable(holdoutGroups)) {
+    return UNAVAILABLE_UEID_PREFIX + hash.dec();
+  }
   // Return the hashed value as a decimal string
   return hash.dec();
 }

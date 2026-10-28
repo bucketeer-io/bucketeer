@@ -803,6 +803,7 @@ func newBatchService(t *testing.T,
 		cacher.NewFeatureFlagCacher(
 			featureStorageMock,
 			[]cache.MultiGetCache{redisMockClient},
+			nil,
 		),
 		cacher.NewSegmentUserCacher(
 			segmentStorageMock,
@@ -853,6 +854,12 @@ func newBatchService(t *testing.T,
 		holdoutjob.NewHoldoutGroupStatusUpdater(
 			environmentMockClient,
 			featureMockClient,
+			jobs.WithLogger(logger),
+		),
+		cacher.NewHoldoutGroupCacher(
+			environmentMockClient,
+			nil,
+			nil,
 			jobs.WithLogger(logger),
 		),
 		logger,

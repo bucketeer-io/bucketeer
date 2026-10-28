@@ -17,7 +17,9 @@ package evaluation
 import (
 	"fmt"
 	"math"
+	"strings"
 
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
@@ -148,6 +150,13 @@ func (m *holdoutMembership) variationFor(featureID string) (*ftproto.HoldoutGrou
 	return nil, "", false
 }
 
+// hasSnapshot reports whether evaluation was given a holdout snapshot.
+// A nil receiver means no snapshot: a clearance and an unavailable snapshot
+// both count, because neither one should fall through to a normal variation.
+func (m *holdoutMembership) hasSnapshot() bool {
+	return m != nil && len(m.groups) > 0
+}
+
 func (m *holdoutMembership) isMember(i int) bool {
 	if m.state[i] == 0 {
 		group := m.groups[i]
@@ -171,6 +180,47 @@ func (m *holdoutMembership) isMember(i int) bool {
 // stoppedAt 0 means the environment has never stopped a group.
 func ClearanceSnapshot(stoppedAt int64) *ftproto.HoldoutGroup {
 	return &ftproto.HoldoutGroup{UpdatedAt: stoppedAt}
+}
+
+// unavailableHoldoutUpdatedAt marks a clearance used when the snapshot
+// cannot be read. It is earlier than any real stop time. holdoutStale
+// treats it as stale so a client that still has a HOLDOUT assignment is
+// fully reconciled, instead of merging one unrelated flag and then
+// short-circuiting on the new evaluation ID. The snapshot stays non-nil so
+// a disabled flag with no off variation stays omitted.
+const unavailableHoldoutUpdatedAt int64 = 1
+
+// UnavailableHoldoutSnapshot is the clearance returned when the holdout
+// cache cannot be read. A miss stays nil: that is "no group".
+func UnavailableHoldoutSnapshot() *ftproto.HoldoutGroup {
+	return ClearanceSnapshot(unavailableHoldoutUpdatedAt)
+}
+
+// unavailableUEIDPrefix marks a user evaluations ID that was issued while
+// the holdout snapshot was unavailable. The evaluations behind that ID were
+// computed without holdout assignments. When the snapshot is readable again,
+// a live group whose updated_at predates the client's cursor would otherwise
+// pass the staleness check, and a partial diff would adopt the live ID
+// without restoring HOLDOUT for its targets. The prefix lets the next
+// evaluation detect that recovery and run a full one. The ID is opaque to
+// SDKs, which only store it and send it back.
+const unavailableUEIDPrefix = "unavailable-holdout:"
+
+// holdoutUnavailable reports whether any snapshot is the unavailable marker.
+func holdoutUnavailable(groups []*ftproto.HoldoutGroup) bool {
+	for _, group := range groups {
+		if group != nil && group.Id == "" && group.UpdatedAt == unavailableHoldoutUpdatedAt {
+			return true
+		}
+	}
+	return false
+}
+
+// IssuedWithoutHoldout reports whether ueid was issued while the holdout
+// snapshot was unavailable, so the client's cached evaluations have no
+// holdout assignments and must be fully reconciled.
+func IssuedWithoutHoldout(ueid string) bool {
+	return strings.HasPrefix(ueid, unavailableUEIDPrefix)
 }
 
 func holdoutVariationID(group *ftproto.HoldoutGroup, featureID string) (string, bool) {
@@ -200,19 +250,160 @@ func ServingHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
 }
 
 // EvaluationHoldout is the snapshot the evaluator should see.
-// A serving group is returned as-is. An empty snapshot whose updated_at is
-// set is the clearance signal written when serving stopped: it assigns
-// nothing, and it forces a full re-evaluation while the client's cursor is
-// behind that revision. UpdatedAt 0 means the environment has never stopped
-// a group and is not a signal.
+// A serving group is returned as-is. An empty snapshot is the clearance
+// written when nothing is serving. It assigns nothing. A non-zero updated_at
+// is the stop revision and forces a full re-evaluation while the client's
+// cursor is behind it. UpdatedAt 0 means the environment has never stopped
+// a group and is not that signal, but it is still a snapshot: a disabled
+// flag kept only so a dependency can resolve must not fall through to a
+// normal variation or be delivered for local evaluation.
 func EvaluationHoldout(group *ftproto.HoldoutGroup) *ftproto.HoldoutGroup {
 	if serving := ServingHoldout(group); serving != nil {
 		return serving
 	}
-	if group != nil && group.Id == "" && group.UpdatedAt > 0 {
+	if group != nil && group.Id == "" {
 		return group
 	}
 	return nil
+}
+
+// HoldoutTargetFeatureIDs is the set of current target feature IDs.
+// An empty id is a clearance snapshot and has no targets. Removed rows are skipped.
+func HoldoutTargetFeatureIDs(group *ftproto.HoldoutGroup) map[string]struct{} {
+	if group == nil || group.Id == "" {
+		return nil
+	}
+	ids := make(map[string]struct{}, len(group.Features))
+	for _, feature := range group.Features {
+		if feature == nil || feature.FeatureId == "" || feature.RemovedAt != 0 {
+			continue
+		}
+		ids[feature.FeatureId] = struct{}{}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	return ids
+}
+
+// HoldoutStale reports whether the client's cursor is behind a holdout
+// revision. The caller passes evaluatedAt minus the feature-diff grace
+// window. A live group and a clearance snapshot (empty id, updated_at of
+// the stop) both count. UpdatedAt 0 is not a revision.
+func HoldoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
+	return holdoutStale(groups, evaluatedAt)
+}
+
+// FeaturesForServerEval drops disabled flags with no off variation that the
+// snapshot no longer targets. The feature cache applies the same dependency
+// rule, so a flag another cached flag still needs is still here after a
+// refresh. This filter keeps that flag too, and the evaluator then omits
+// its evaluation. Without the filter, a clearance would assign the flag a
+// normal variation. A nil snapshot leaves the slice unchanged. removed is
+// the IDs a partial evaluation must report so clients delete them.
+func FeaturesForServerEval(
+	features []*ftproto.Feature,
+	group *ftproto.HoldoutGroup,
+) (kept []*ftproto.Feature, removed []string) {
+	if group == nil {
+		return features, nil
+	}
+	// Every environment carries a snapshot once the cacher has run, so this
+	// runs for every evaluation request. Nothing to drop is the common case:
+	// find out before building the lookup map or walking dependencies.
+	var targets map[string]struct{}
+	var droppable map[string]struct{}
+	for _, feature := range features {
+		if feature == nil || feature.Id == "" || feature.Enabled || feature.OffVariation != "" {
+			continue
+		}
+		if targets == nil {
+			targets = HoldoutTargetFeatureIDs(group)
+		}
+		if _, targeted := targets[feature.Id]; targeted {
+			continue
+		}
+		if droppable == nil {
+			droppable = make(map[string]struct{})
+		}
+		droppable[feature.Id] = struct{}{}
+	}
+	if len(droppable) == 0 {
+		return features, nil
+	}
+	byID := make(map[string]*ftproto.Feature, len(features))
+	for _, feature := range features {
+		if feature == nil || feature.Id == "" {
+			continue
+		}
+		byID[feature.Id] = feature
+	}
+	// Dependencies of a flag that will be evaluated have to stay in the
+	// graph. Walk from those flags so a dropped prerequisite of another
+	// dropped flag is kept only when something evaluated still needs it.
+	required := make(map[string]struct{})
+	var require func(id string)
+	require = func(id string) {
+		if _, seen := required[id]; seen {
+			return
+		}
+		feature, ok := byID[id]
+		if !ok {
+			return
+		}
+		required[id] = struct{}{}
+		for _, dep := range (&ftdomain.Feature{Feature: feature}).FeatureIDsDependsOn() {
+			require(dep)
+		}
+	}
+	for id := range byID {
+		if _, drop := droppable[id]; drop {
+			continue
+		}
+		require(id)
+	}
+	kept = make([]*ftproto.Feature, 0, len(features))
+	for _, feature := range features {
+		if feature == nil {
+			kept = append(kept, feature)
+			continue
+		}
+		if _, drop := droppable[feature.Id]; drop {
+			if _, keep := required[feature.Id]; keep {
+				kept = append(kept, feature)
+				continue
+			}
+			if feature.Id != "" {
+				removed = append(removed, feature.Id)
+			}
+			continue
+		}
+		kept = append(kept, feature)
+	}
+	return kept, removed
+}
+
+// FeaturesForLocalEval splits flags for GetFeatureFlags. Local evaluation
+// does not receive holdout metadata yet, so any snapshot — a serving group
+// or a clearance — withholds every disabled flag with no off variation,
+// including a former target of a group that is still running. A nil snapshot
+// leaves the slice unchanged.
+func FeaturesForLocalEval(
+	features []*ftproto.Feature,
+	group *ftproto.HoldoutGroup,
+) (visible, hidden []*ftproto.Feature) {
+	if group == nil {
+		return features, nil
+	}
+	visible = make([]*ftproto.Feature, 0, len(features))
+	for _, feature := range features {
+		if feature != nil && !feature.Enabled && feature.OffVariation == "" {
+			hidden = append(hidden, feature)
+			continue
+		}
+		visible = append(visible, feature)
+	}
+	return visible, hidden
 }
 
 // holdoutStale reports whether the client's cursor is behind a holdout
@@ -223,6 +414,11 @@ func holdoutStale(groups []*ftproto.HoldoutGroup, evaluatedAt int64) bool {
 	for _, group := range groups {
 		if group == nil || group.UpdatedAt == 0 {
 			continue
+		}
+		// A cache miss has no real revision. Treating it as fresh lets a
+		// partial flag diff leave a cached HOLDOUT assignment in place.
+		if group.Id == "" && group.UpdatedAt == unavailableHoldoutUpdatedAt {
+			return true
 		}
 		if evaluatedAt < group.UpdatedAt {
 			return true

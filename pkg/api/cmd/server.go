@@ -706,6 +706,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// L1→L2 cascade: after CI evicts L1, this repopulates it for subsequent evaluations.
 	featuresL1Cache := cachev3.NewFeaturesCache(inMemoryCache, *s.featuresMemoryCacheTTL)
 	featuresL2Cache := cachev3.NewFeaturesCache(redisV3Cache, 0)
+	holdoutL1Cache := cachev3.NewHoldoutGroupCache(inMemoryCache, *s.featuresMemoryCacheTTL)
+	holdoutL2Cache := cachev3.NewHoldoutGroupCache(redisV3Cache, 0)
 	streamDispatcher := stream.NewDispatcher(
 		*s.sseMaxConnections,
 		func(envID string) ([]*featureproto.Feature, error) {
@@ -713,15 +715,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			if err == nil {
 				return fs.Features, nil
 			}
-			fs, err = featuresL2Cache.Get(envID)
+			fs, err = api.FillFeatureSnapshot(envID, func() (*featureproto.Features, error) {
+				return featuresL2Cache.Get(envID)
+			}, func(features *featureproto.Features) {
+				if putErr := featuresL1Cache.Put(features, envID); putErr != nil {
+					logger.Warn("Failed to repopulate L1 features cache",
+						zap.String("environmentId", envID),
+						zap.Error(putErr),
+					)
+				}
+			})
 			if err != nil {
 				return nil, err
-			}
-			if putErr := featuresL1Cache.Put(fs, envID); putErr != nil {
-				logger.Warn("Failed to repopulate L1 features cache",
-					zap.String("environmentId", envID),
-					zap.Error(putErr),
-				)
 			}
 			return fs.Features, nil
 		},
@@ -730,17 +735,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		stream.WithFeaturesRefetcher(func(envID string) ([]*featureproto.Feature, error) {
 			ctx, cancel := context.WithTimeout(context.Background(), featuresRefetchTimeout)
 			defer cancel()
-			fs, err := api.ListFeatures(ctx, featureClient, envID)
+			fs, err := api.FillFeatureSnapshot(envID, func() (*featureproto.Features, error) {
+				features, err := api.ListFeatures(
+					ctx,
+					featureClient,
+					envID,
+					api.CachedHoldoutTargetIDs(holdoutL1Cache, holdoutL2Cache, envID, logger),
+				)
+				if err != nil {
+					return nil, err
+				}
+				return &featureproto.Features{Features: features}, nil
+			}, func(features *featureproto.Features) {
+				if putErr := featuresL1Cache.Put(features, envID); putErr != nil {
+					logger.Warn("Failed to repopulate L1 features cache",
+						zap.String("environmentId", envID),
+						zap.Error(putErr),
+					)
+				}
+			})
 			if err != nil {
 				return nil, err
 			}
-			if putErr := featuresL1Cache.Put(&featureproto.Features{Features: fs}, envID); putErr != nil {
-				logger.Warn("Failed to repopulate L1 features cache",
-					zap.String("environmentId", envID),
-					zap.Error(putErr),
-				)
-			}
-			return fs, nil
+			return fs.Features, nil
 		}),
 	)
 	invalidatorCtx, invalidatorCancel := context.WithCancel(context.Background())
@@ -1090,6 +1107,7 @@ func (s *server) startCacheInvalidator(
 		cachev3.NewFeaturesCache(inMemoryCache, 0),
 		cachev3.NewSegmentUsersCache(inMemoryCache, 0),
 		cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, 0),
+		cachev3.NewHoldoutGroupCache(inMemoryCache, 0),
 		linkedEventPublisher,
 		dispatcher,
 		logger,

@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
@@ -221,6 +222,137 @@ func TestEvaluateFeaturesByEvaluatedAtHoldoutForcesFullUpdate(t *testing.T) {
 	}
 }
 
+func TestUnavailableHoldoutForcesFullUpdateWhenAnotherFlagChanged(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	user := &userproto.User{Id: "user-1"}
+	evaluatedAt := now - 100
+	target := flagWithVariations("target", true, "off", "hold", "on")
+	target.UpdatedAt = now - 1000
+	fresh := flagWithVariations("fresh", true, "off", "hold", "on")
+	fresh.UpdatedAt = now - 10
+
+	got, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+		[]*ftproto.Feature{target, fresh},
+		user, nil, nil,
+		"previous",
+		evaluatedAt,
+		false,
+		"",
+		UnavailableHoldoutSnapshot(),
+	)
+	require.NoError(t, err)
+	assert.True(t, got.ForceUpdate)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range got.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	require.Contains(t, byID, "target")
+	require.Contains(t, byID, "fresh")
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["target"].Reason.Type)
+	assert.Equal(t, "on", byID["target"].VariationId)
+}
+
+// A holdout-cache outage issues evaluations without holdout assignments. When
+// the cache recovers, the live group's updated_at can predate the client's
+// cursor, so the staleness check does not fire. The ID issued during the
+// outage carries a marker and the next evaluation must be a full one that
+// restores HOLDOUT for the target, instead of a diff with only the fresh flag.
+func TestRecoveryAfterUnavailableHoldoutForcesFullUpdate(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	user := &userproto.User{Id: "user-1"}
+	target := flagWithVariations("target", true, "off", "hold", "on")
+	target.UpdatedAt = now - 1000
+	fresh := flagWithVariations("fresh", true, "off", "hold", "on")
+	fresh.UpdatedAt = now - 10
+	features := []*ftproto.Feature{target, fresh}
+	group := targetingGroup("group", 0, 100, "target", "hold")
+	group.UpdatedAt = now - 5000 // started long before the client's cursor
+	evaluatedAt := now - 100
+
+	// During the outage the ID is marked and the member gets the normal variation.
+	outageID := UserEvaluationsID(user.Id, user.Data, features, UnavailableHoldoutSnapshot())
+	assert.True(t, IssuedWithoutHoldout(outageID))
+	assert.Equal(t, outageID, UserEvaluationsID(user.Id, user.Data, features, UnavailableHoldoutSnapshot()),
+		"the marked ID must be stable so polls during the outage still short-circuit")
+	assert.NotEqual(t, outageID, UserEvaluationsID(user.Id, user.Data, features))
+	assert.False(t, IssuedWithoutHoldout(UserEvaluationsID(user.Id, user.Data, features, group)))
+	assert.False(t, IssuedWithoutHoldout(UserEvaluationsID(user.Id, user.Data, features, ClearanceSnapshot(now))))
+
+	// Recovery: the live group is old, only "fresh" passes the timestamp diff.
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{group}, evaluatedAt-10))
+	got, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+		features, user, nil, nil, outageID, evaluatedAt, false, "", group,
+	)
+	require.NoError(t, err)
+	assert.True(t, got.ForceUpdate)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range got.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	require.Contains(t, byID, "target")
+	require.Contains(t, byID, "fresh")
+	assert.Equal(t, ftproto.Reason_HOLDOUT, byID["target"].Reason.Type)
+	assert.Equal(t, "hold", byID["target"].VariationId)
+
+	// An unmarked previous ID with the same inputs still takes the diff path.
+	diff, err := NewEvaluator().EvaluateFeaturesByEvaluatedAt(
+		features, user, nil, nil, "previous", evaluatedAt, false, "", group,
+	)
+	require.NoError(t, err)
+	assert.False(t, diff.ForceUpdate)
+	require.Len(t, diff.Evaluations, 1)
+	assert.Equal(t, "fresh", diff.Evaluations[0].FeatureId)
+}
+
+func TestZeroRevisionSnapshotOmitsDisabledDependency(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	// The prerequisite expects the variation a normal evaluation would assign,
+	// so falling through would satisfy the dependent.
+	dependent := flagWithVariations("dependent", true, "off", "hold", "on")
+	dependent.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	snapshot := EvaluationHoldout(ClearanceSnapshot(0))
+	require.NotNil(t, snapshot)
+
+	cached := ftdomain.FilterForServing([]*ftproto.Feature{dependent, disabled, orphan}, nil)
+	cachedIDs := make([]string, 0, len(cached))
+	for _, feature := range cached {
+		cachedIDs = append(cachedIDs, feature.Id)
+	}
+	assert.Equal(t, []string{"dependent", "flag"}, cachedIDs)
+
+	kept, removed := FeaturesForServerEval(cached, snapshot)
+	assert.Empty(t, removed)
+	evaluations, err := NewEvaluator().EvaluateFeatures(kept, user, nil, nil, "", snapshot)
+	require.NoError(t, err)
+	require.Len(t, evaluations.Evaluations, 1)
+	assert.Equal(t, "dependent", evaluations.Evaluations[0].FeatureId)
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, evaluations.Evaluations[0].Reason.Type)
+	assert.Equal(t, "off", evaluations.Evaluations[0].VariationId)
+	assert.Contains(t, evaluations.ArchivedFeatureIds, "flag")
+
+	visible, hidden := FeaturesForLocalEval(cached, snapshot)
+	require.Len(t, visible, 1)
+	assert.Equal(t, "dependent", visible[0].Id)
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+}
+
 func BenchmarkEvaluateFeatures(b *testing.B) {
 	features := make([]*ftproto.Feature, 0, 32)
 	for i := 0; i < 32; i++ {
@@ -257,6 +389,257 @@ func BenchmarkEvaluateFeatures(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestDisabledHoldoutTargetWithoutOffVariation(t *testing.T) {
+	t.Parallel()
+	evaluator := NewEvaluator()
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	sibling := flagWithVariations("sibling", true, "off", "hold", "on")
+	user := &userproto.User{Id: "user-1"}
+
+	member, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{disabled, sibling},
+		user, nil, nil, "",
+		targetingGroup("hg", 0, 100, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	require.Len(t, member.Evaluations, 2)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range member.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.Equal(t, ftproto.Reason_HOLDOUT, byID["flag"].Reason.Type)
+	assert.Equal(t, "hold", byID["flag"].VariationId)
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["sibling"].Reason.Type)
+
+	nonMember, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{disabled, sibling},
+		user, nil, nil, "",
+		targetingGroup("hg", 0, 0, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	require.Len(t, nonMember.Evaluations, 1)
+	assert.Equal(t, "sibling", nonMember.Evaluations[0].FeatureId)
+	assert.Equal(t, []string{"flag"}, nonMember.ArchivedFeatureIds)
+
+	now := time.Now().Unix()
+	disabled.UpdatedAt = now
+	partial, err := evaluator.EvaluateFeaturesByEvaluatedAt(
+		[]*ftproto.Feature{disabled, sibling},
+		user, nil, nil,
+		"prev", now-5, false, "",
+		targetingGroup("hg", 0, 0, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	assert.False(t, partial.ForceUpdate)
+	assert.Equal(t, []string{"flag"}, partial.ArchivedFeatureIds)
+	for _, evaluation := range partial.Evaluations {
+		assert.NotEqual(t, "flag", evaluation.FeatureId)
+	}
+}
+
+func TestOmittedHoldoutTargetDoesNotAbortDependents(t *testing.T) {
+	t.Parallel()
+	evaluator := NewEvaluator()
+	user := &userproto.User{Id: "user-1"}
+	target := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	dependent := flagWithVariations("dependent", true, "off", "hold", "on")
+	dependent.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	unrelated := flagWithVariations("sibling", true, "off", "hold", "on")
+
+	// Percentage 0 holds nobody, so the disabled target is omitted.
+	evaluations, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{dependent, target, unrelated},
+		user, nil, nil, "",
+		targetingGroup("hg", 0, 0, "flag", "hold"),
+	)
+	require.NoError(t, err)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range evaluations.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.NotContains(t, byID, "flag")
+	assert.Equal(t, []string{"flag"}, evaluations.ArchivedFeatureIds)
+	require.Contains(t, byID, "dependent")
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, byID["dependent"].Reason.Type)
+	assert.Equal(t, "off", byID["dependent"].VariationId)
+	require.Contains(t, byID, "sibling")
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["sibling"].Reason.Type)
+
+	// A clearance is a snapshot with no targets. The disabled flag is still
+	// omitted, and a request with no snapshot keeps the historical default.
+	cleared, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{target, unrelated},
+		user, nil, nil, "",
+		ClearanceSnapshot(10),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"flag"}, cleared.ArchivedFeatureIds)
+	require.Len(t, cleared.Evaluations, 1)
+	assert.Equal(t, "sibling", cleared.Evaluations[0].FeatureId)
+
+	historical, err := evaluator.EvaluateFeatures(
+		[]*ftproto.Feature{target},
+		user, nil, nil, "",
+	)
+	require.NoError(t, err)
+	require.Len(t, historical.Evaluations, 1)
+	assert.Equal(t, ftproto.Reason_DEFAULT, historical.Evaluations[0].Reason.Type)
+	assert.Empty(t, historical.ArchivedFeatureIds)
+}
+
+func TestFeaturesForServerEvalKeepsDependencyNodes(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	prerequisite := flagWithVariations("dependent", true, "off", "hold", "on")
+	prerequisite.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	rule := flagWithVariations("rule-dependent", true, "off", "hold", "on")
+	rule.Rules = []*ftproto.Rule{{
+		Id: "rule-1",
+		Clauses: []*ftproto.Clause{{
+			Id:        "clause-1",
+			Attribute: "flag",
+			Operator:  ftproto.Clause_FEATURE_FLAG,
+			Values:    []string{"on"},
+		}},
+	}}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	features := []*ftproto.Feature{prerequisite, rule, disabled, orphan}
+
+	kept, removed := FeaturesForServerEval(features, ClearanceSnapshot(10))
+	require.Equal(t, []string{"orphan"}, removed)
+	keptIDs := make([]string, 0, len(kept))
+	for _, feature := range kept {
+		keptIDs = append(keptIDs, feature.Id)
+	}
+	assert.ElementsMatch(t, []string{"dependent", "rule-dependent", "flag"}, keptIDs)
+
+	evaluations, err := NewEvaluator().EvaluateFeatures(kept, user, nil, nil, "", ClearanceSnapshot(10))
+	require.NoError(t, err)
+	byID := map[string]*ftproto.Evaluation{}
+	for _, evaluation := range evaluations.Evaluations {
+		byID[evaluation.FeatureId] = evaluation
+	}
+	assert.NotContains(t, byID, "flag")
+	assert.Contains(t, evaluations.ArchivedFeatureIds, "flag")
+	require.Contains(t, byID, "dependent")
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, byID["dependent"].Reason.Type)
+	assert.Equal(t, "off", byID["dependent"].VariationId)
+	require.Contains(t, byID, "rule-dependent")
+	assert.Equal(t, ftproto.Reason_DEFAULT, byID["rule-dependent"].Reason.Type)
+}
+
+func TestStoppedHoldoutCacheKeepsDependencyNodes(t *testing.T) {
+	t.Parallel()
+	user := &userproto.User{Id: "user-1"}
+	disabled := &ftproto.Feature{
+		Id:      "flag",
+		Enabled: false,
+		Variations: []*ftproto.Variation{
+			{Id: "hold", Value: "hold"},
+			{Id: "on", Value: "on"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "on"},
+		},
+	}
+	dependent := flagWithVariations("dependent", true, "off", "hold", "on")
+	dependent.Prerequisites = []*ftproto.Prerequisite{{FeatureId: "flag", VariationId: "on"}}
+	orphan := &ftproto.Feature{Id: "orphan", Enabled: false}
+	// A refresh after the group stops has no current targets. The cache
+	// filter has to keep the dependency or the evaluator never sees it.
+	cached := ftdomain.FilterForServing([]*ftproto.Feature{dependent, disabled, orphan}, nil)
+	cachedIDs := make([]string, 0, len(cached))
+	for _, feature := range cached {
+		cachedIDs = append(cachedIDs, feature.Id)
+	}
+	assert.Equal(t, []string{"dependent", "flag"}, cachedIDs)
+
+	kept, removed := FeaturesForServerEval(cached, ClearanceSnapshot(10))
+	assert.Empty(t, removed)
+	evaluations, err := NewEvaluator().EvaluateFeatures(kept, user, nil, nil, "", ClearanceSnapshot(10))
+	require.NoError(t, err)
+	require.Len(t, evaluations.Evaluations, 1)
+	assert.Equal(t, "dependent", evaluations.Evaluations[0].FeatureId)
+	assert.Equal(t, ftproto.Reason_PREREQUISITE, evaluations.Evaluations[0].Reason.Type)
+	assert.Equal(t, "off", evaluations.Evaluations[0].VariationId)
+	assert.Contains(t, evaluations.ArchivedFeatureIds, "flag")
+}
+
+func TestFeaturesForEvalFiltersClearedDisabledTarget(t *testing.T) {
+	t.Parallel()
+	disabled := &ftproto.Feature{Id: "flag", Enabled: false}
+	enabled := &ftproto.Feature{Id: "on", Enabled: true, OffVariation: "on"}
+	features := []*ftproto.Feature{disabled, enabled}
+
+	kept, removed := FeaturesForServerEval(features, nil)
+	require.Len(t, kept, 2)
+	assert.Empty(t, removed)
+
+	kept, removed = FeaturesForServerEval(features, ClearanceSnapshot(10))
+	require.Len(t, kept, 1)
+	assert.Equal(t, "on", kept[0].Id)
+	assert.Equal(t, []string{"flag"}, removed)
+
+	visible, hidden := FeaturesForLocalEval(features, &ftproto.HoldoutGroup{
+		Id:       "hg",
+		Features: []*ftproto.HoldoutGroupFeature{{FeatureId: "flag"}},
+	})
+	require.Len(t, visible, 1)
+	assert.Equal(t, "on", visible[0].Id)
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+
+	visible, hidden = FeaturesForLocalEval(features, ClearanceSnapshot(10))
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+
+	// A former target of a group that is still running is hidden too.
+	visible, hidden = FeaturesForLocalEval(features, &ftproto.HoldoutGroup{Id: "hg"})
+	require.Len(t, visible, 1)
+	assert.Equal(t, "on", visible[0].Id)
+	require.Len(t, hidden, 1)
+	assert.Equal(t, "flag", hidden[0].Id)
+
+	visible, hidden = FeaturesForLocalEval(features, nil)
+	require.Len(t, visible, 2)
+	assert.Empty(t, hidden)
 }
 
 func flagWithVariations(id string, enabled bool, off, hold, on string) *ftproto.Feature {

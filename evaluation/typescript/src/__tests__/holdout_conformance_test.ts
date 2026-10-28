@@ -112,8 +112,10 @@ fixture.segmentUsers.forEach((su) => {
 
 function buildGroup(group: ConformanceGroup): HoldoutGroup {
   const features: HoldoutFeature[] = group.targets.map((target) => ({
+    getId: () => '',
     getFeatureId: () => target.featureId,
     getHoldoutVariationId: () => target.variationId,
+    getAddedAt: () => 0,
     getRemovedAt: () => 0,
   }));
   return {

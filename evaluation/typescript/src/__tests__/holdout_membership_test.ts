@@ -9,8 +9,10 @@ user.setId('user-1');
 
 function target(featureId: string, variationId: string, removedAt = 0): HoldoutFeature {
   return {
+    getId: () => '',
     getFeatureId: () => featureId,
     getHoldoutVariationId: () => variationId,
+    getAddedAt: () => 0,
     getRemovedAt: () => removedAt,
   };
 }

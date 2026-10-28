@@ -27,7 +27,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
@@ -810,6 +812,9 @@ func (s *FeatureService) checkHoldoutAdmin(
 }
 
 func (s *FeatureService) publishHoldoutEvents(ctx context.Context, events []*eventproto.Event) error {
+	if len(events) > 0 {
+		s.refreshHoldoutCache(ctx, events[0].EnvironmentId)
+	}
 	if errs := s.publishDomainEvents(ctx, events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish holdout events",
@@ -818,6 +823,100 @@ func (s *FeatureService) publishHoldoutEvents(ctx context.Context, events []*eve
 		return statusInternal.Err()
 	}
 	return nil
+}
+
+func (s *FeatureService) liveHoldoutGroup(environmentID string) *featureproto.HoldoutGroup {
+	if s.holdoutGroupCache == nil {
+		return nil
+	}
+	group, err := s.holdoutGroupCache.Get(environmentID)
+	if err != nil {
+		if !errors.Is(err, cache.ErrNotFound) {
+			s.logger.Error("Failed to get the holdout group cache",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
+		}
+		// A miss and a failed read must not look like "no group". The
+		// clearance assigns nothing and keeps a disabled flag with no off
+		// variation from falling through to a normal variation.
+		return evaluation.UnavailableHoldoutSnapshot()
+	}
+	// EvaluationHoldout keeps a clearance snapshot. ServingHoldout turns
+	// that snapshot into nil, and the disabled-flag filter would not run.
+	return evaluation.EvaluationHoldout(group)
+}
+
+// refreshHoldoutCache writes the serving snapshot the gateway reads.
+// The generation is captured before the storage read. A storage error writes
+// a generation-guarded empty snapshot so an older in-flight read cannot put
+// the previous group back. A rejected write means a newer snapshot is already
+// cached.
+func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID string) {
+	if s.holdoutGroupCache == nil || s.holdoutStorage == nil || environmentID == "" {
+		return
+	}
+	generation := time.Now().UnixNano()
+	snapshot, err := v2hs.ServingSnapshot(ctx, s.holdoutStorage, environmentID)
+	if err != nil {
+		s.logger.Error("Failed to read the live holdout group",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
+		// Evicting would delete the generation marker and let the in-flight
+		// older read put the pre-stop group back. A guarded empty snapshot
+		// keeps that marker so the older write is rejected.
+		s.putHoldoutBarrier(environmentID, generation)
+		return
+	}
+	accepted, putErr := s.holdoutGroupCache.PutIfNewer(snapshot, environmentID, generation)
+	if putErr != nil {
+		s.logger.Error("Failed to cache the live holdout group",
+			zap.Error(putErr),
+			zap.String("environmentId", environmentID),
+		)
+		return
+	}
+	if !accepted {
+		s.logger.Info("Skipped holdout cache write: a newer snapshot is already cached",
+			zap.String("environmentId", environmentID),
+			zap.Int64("generation", generation),
+		)
+	}
+}
+
+// putHoldoutBarrier stores the unavailable snapshot under the generation
+// captured before the failed read. The value has to stay in place: PutIfNewer
+// accepts any write once the value is gone, even if the generation marker
+// remains. It is the unavailable snapshot, not a timestamped clearance, so
+// evaluation IDs issued while it is cached are marked and the next write of
+// the real snapshot forces clients into a full evaluation that restores
+// HOLDOUT. A timestamped clearance would issue unmarked IDs, and a restored
+// group older than the client's cursor would never be reconciled.
+func (s *FeatureService) putHoldoutBarrier(environmentID string, generation int64) {
+	barrier := evaluation.UnavailableHoldoutSnapshot()
+	accepted, err := s.holdoutGroupCache.PutIfNewer(barrier, environmentID, generation)
+	if err != nil {
+		s.logger.Error("Failed to cache the holdout read barrier",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+			zap.Int64("generation", generation),
+		)
+		return
+	}
+	if !accepted {
+		s.logger.Info("Skipped holdout read barrier: a newer snapshot is already cached",
+			zap.String("environmentId", environmentID),
+			zap.Int64("generation", generation),
+		)
+	}
+}
+
+func holdoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutGroup {
+	if group == nil {
+		return nil
+	}
+	return []*featureproto.HoldoutGroup{group}
 }
 
 func (s *FeatureService) holdoutError(ctx context.Context, message, environmentID string, err error) error {

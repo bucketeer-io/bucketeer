@@ -53,6 +53,7 @@ const (
 	JobMonthlySummarizer              = "monthly_summarizer"
 	JobEvaluationDailyCountBackfiller = "evaluation_daily_count_backfiller"
 	JobHoldoutGroupStatusUpdater      = "holdout_group_status_updater"
+	JobHoldoutGroupCacher             = "holdout_group_cacher"
 
 	// Error types
 	ErrorTypeTimeout    = "Timeout"

@@ -8,7 +8,7 @@ import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
-import { HoldoutMembership, holdoutRequiresFullEval } from './bucketeer';
+import { HoldoutMembership, holdoutRequiresFullEval, issuedWithoutHoldout } from './bucketeer';
 import type { HoldoutGroup } from './bucketeer';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 import { createReason } from './modelFactory';
@@ -16,6 +16,9 @@ import * as yaml from 'js-yaml';
 
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
+// Recorded for an omitted flag so a dependent sees an unsatisfied prerequisite
+// instead of a missing one. A missing result aborts the whole evaluation.
+const OMITTED_PREREQUISITE_VARIATION = '\0';
 
 export function EvaluationID(featureID: string, featureVersion: number, userID: string): string {
   return `${featureID}:${featureVersion}:${userID}`;
@@ -74,7 +77,11 @@ class Evaluator {
     targetTag: string,
     holdoutGroups?: HoldoutGroup[],
   ): UserEvaluations {
-    if (prevUEID === '') {
+    // An ID issued while the holdout snapshot was unavailable covers
+    // evaluations with no holdout assignments. A live group restored after
+    // that may predate the client's cursor, so the staleness check below
+    // would not catch it; reconcile in full instead of merging a diff.
+    if (prevUEID === '' || issuedWithoutHoldout(prevUEID)) {
       return this.evaluate(
         features,
         user,
@@ -170,14 +177,36 @@ class Evaluator {
         (id) => mapSegmentUsers.get(id) || [],
       );
 
-      const [reason, variation] = this.assignUser(
-        feature,
-        user,
-        segmentUsers,
-        mapSegments,
-        flagVariations,
-        holdout,
-      );
+      let assigned: [Reason, Variation] | undefined;
+      try {
+        assigned = this.assignUser(
+          feature,
+          user,
+          segmentUsers,
+          mapSegments,
+          flagVariations,
+          holdout,
+        );
+      } catch (err) {
+        // A non-member of a disabled holdout target with no off variation is
+        // omitted. Members returned the holdout variation before this.
+        if (err === EVALUATOR_ERRORS.FeatureOmitted) {
+          // A partial evaluation has to name the flag. Otherwise a consumer
+          // that merges the diff keeps the variation from when it was enabled.
+          if (targetTag === '' || this.tagExist(feature.getTagsList(), targetTag)) {
+            archivedIDs.push(feature.getId());
+          }
+          // Dependents still need a result. An empty one is unsatisfied,
+          // which keeps the omitted flag out of the response.
+          flagVariations[feature.getId()] = OMITTED_PREREQUISITE_VARIATION;
+          continue;
+        }
+        throw err;
+      }
+      if (!assigned) {
+        continue;
+      }
+      const [reason, variation] = assigned;
       // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       // This must be set for ALL features (including archived) for dependency resolution to work
       flagVariations[feature.getId()] = variation.getId();
@@ -278,12 +307,18 @@ class Evaluator {
       const reason = createReason('', Reason.Type.HOLDOUT, held.group.getId());
       return [reason, variation];
     }
+    // A snapshot is present and this user was not assigned HOLDOUT. Omit every
+    // disabled flag with no off variation, including a former target. No
+    // snapshot keeps the historical fall-through.
+    if (holdout?.hasSnapshot() && !feature.getEnabled() && feature.getOffVariation() === '') {
+      throw EVALUATOR_ERRORS.FeatureOmitted;
+    }
     for (const pf of feature.getPrerequisitesList()) {
       const variationId = flagVariations[pf.getFeatureId()];
       if (!variationId) {
         throw EVALUATOR_ERRORS.PrerequisiteVariationNotFound;
       }
-      if (pf.getVariationId() !== variationId) {
+      if (variationId === OMITTED_PREREQUISITE_VARIATION || pf.getVariationId() !== variationId) {
         if (feature.getOffVariation() !== '') {
           const variation = this.findVariation(
             feature.getOffVariation(),
@@ -294,7 +329,6 @@ class Evaluator {
         }
       }
     }
-    // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
     if (!feature.getEnabled() && feature.getOffVariation() !== '') {
       const variation = this.findVariation(feature.getOffVariation(), feature.getVariationsList());
       const reason = createReason('', Reason.Type.OFF_VARIATION);

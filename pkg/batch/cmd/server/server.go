@@ -67,6 +67,9 @@ import (
 	featuremysql "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mysql"
 	featurepostgres "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
+	holdoutmysql "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mysql"
+	holdoutpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/postgres"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	insightsmysql "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mysql"
 	insightspostgres "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/postgres"
@@ -421,6 +424,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var experimentResultStorage v2ecrs.ExperimentResultStorage
 	var monthlySummaryStorage insightsstorage.MonthlySummaryStorage
 	var scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
+	var holdoutStorage v2hs.HoldoutStorage
 	if *s.operationalDatabaseType == "postgres" {
 		if *s.postgresUser == "" || *s.postgresHost == "" || *s.postgresDBName == "" {
 			return fmt.Errorf("postgres-user, postgres-host, and postgres-db-name are required when storage-type=postgres")
@@ -440,6 +444,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentResultStorage = experimentcalcpostgres.NewExperimentResultStorage(postgresClient)
 		monthlySummaryStorage = insightspostgres.NewMonthlySummaryStorage(postgresClient)
 		scheduledFlagChangeStorage = featurepostgres.NewScheduledFlagChangeStorage(postgresClient)
+		holdoutStorage = holdoutpostgres.NewHoldoutStorage(postgresClient)
 	} else {
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
@@ -451,6 +456,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentResultStorage = experimentcalcmysql.NewExperimentResultStorage(mysqlClient)
 		monthlySummaryStorage = insightsmysql.NewMonthlySummaryStorage(mysqlClient)
 		scheduledFlagChangeStorage = featuremysql.NewScheduledFlagChangeStorage(mysqlClient)
+		holdoutStorage = holdoutmysql.NewHoldoutStorage(mysqlClient)
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -695,7 +701,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			autoOpsExecutor,
-			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(
+				featureStorage,
+				nonPersistentRedisCaches,
+				logger,
+				ftcacher.WithHoldoutStorage(holdoutStorage),
+			),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -706,7 +717,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
-			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(
+				featureStorage,
+				nonPersistentRedisCaches,
+				logger,
+				ftcacher.WithHoldoutStorage(holdoutStorage),
+			),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -714,7 +730,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			autoOpsClient,
 			progressiveRolloutExecutor,
-			ftcacher.NewFeatureFlagCacher(featureStorage, nonPersistentRedisCaches, logger),
+			ftcacher.NewFeatureFlagCacher(
+				featureStorage,
+				nonPersistentRedisCaches,
+				logger,
+				ftcacher.WithHoldoutStorage(holdoutStorage),
+			),
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
@@ -745,6 +766,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cacher.NewFeatureFlagCacher(
 			featureStorage,
 			nonPersistentRedisCaches,
+			holdoutStorage,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
@@ -810,6 +832,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		holdoutjob.NewHoldoutGroupStatusUpdater(
 			environmentClient,
 			featureClient,
+			jobs.WithLogger(logger),
+		),
+		cacher.NewHoldoutGroupCacher(
+			environmentClient,
+			holdoutStorage,
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		logger,

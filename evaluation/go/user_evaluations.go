@@ -67,10 +67,45 @@ func UserEvaluationsID(
 		fmt.Fprintf(h, "%s:%d", feature.Id, feature.UpdatedAt)
 	}
 	// Hash live groups after features so a nil group leaves the ID unchanged.
+	// UpdatedAt is whole seconds, so the current target rows are part of the
+	// ID: feature, variation, when the row was added, and the row id. Two
+	// edits in the same second then cannot share an ID.
 	for _, group := range sortedHoldoutGroups(groups) {
-		fmt.Fprintf(h, "%s:%d", group.Id, group.UpdatedAt)
+		fmt.Fprintf(h, "%s:%d", group.Id, group.UpdatedAt) // nolint:errcheck
+		for _, target := range sortedHoldoutTargets(group) {
+			fmt.Fprintf( // nolint:errcheck
+				h, ":%s:%s:%d:%s",
+				target.FeatureId, target.HoldoutVariationId, target.AddedAt, target.Id,
+			)
+		}
 	}
-	return strconv.FormatUint(h.Sum64(), 10)
+	id := strconv.FormatUint(h.Sum64(), 10)
+	// An ID issued without a readable holdout snapshot is marked so the next
+	// evaluation after the snapshot is back runs in full. See IssuedWithoutHoldout.
+	if holdoutUnavailable(groups) {
+		return unavailableUEIDPrefix + id
+	}
+	return id
+}
+
+func sortedHoldoutTargets(group *ftproto.HoldoutGroup) []*ftproto.HoldoutGroupFeature {
+	if group == nil || len(group.Features) == 0 {
+		return nil
+	}
+	targets := make([]*ftproto.HoldoutGroupFeature, 0, len(group.Features))
+	for _, feature := range group.Features {
+		if feature == nil || feature.FeatureId == "" || feature.RemovedAt != 0 {
+			continue
+		}
+		targets = append(targets, feature)
+	}
+	sort.Slice(targets, func(i, j int) bool {
+		if targets[i].FeatureId != targets[j].FeatureId {
+			return targets[i].FeatureId < targets[j].FeatureId
+		}
+		return targets[i].Id < targets[j].Id
+	})
+	return targets
 }
 
 func sortedHoldoutGroups(groups []*ftproto.HoldoutGroup) []*ftproto.HoldoutGroup {

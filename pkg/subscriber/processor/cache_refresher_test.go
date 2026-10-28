@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
@@ -39,6 +40,9 @@ import (
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
+	holdoutmock "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -97,6 +101,8 @@ func newCacheRefresherWithMocks(t *testing.T) (*cacheRefresher, *cacheRefresherM
 		m.environmentAPIKeyCache,
 		m.experimentsCache,
 		m.autoOpsRulesCache,
+		nil,
+		nil,
 		m.invalidationPublisher,
 		zap.NewNop(),
 	).(*cacheRefresher)
@@ -114,7 +120,9 @@ var (
 
 func TestNewCacheRefresherUsesWallClock(t *testing.T) {
 	t.Parallel()
-	p := NewCacheRefresher(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, zap.NewNop()).(*cacheRefresher)
+	p := NewCacheRefresher(
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, zap.NewNop(),
+	).(*cacheRefresher)
 	require.NotNil(t, p.now)
 	before := time.Now()
 	assert.False(t, p.now().Before(before))
@@ -724,4 +732,260 @@ func TestIsRepeatable(t *testing.T) {
 			assert.Equal(t, p.expected, isRepeatable(p.err))
 		})
 	}
+}
+
+func TestCacheRefresherHoldoutGroup(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		storage,
+		holdoutCache,
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+	event := &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+		EnvironmentId: "env-1",
+		EntityId:      "hg",
+		Type:          domaineventproto.Event_HOLDOUT_GROUP_STOPPED,
+	}
+
+	t.Run("writes the snapshot then publishes the invalidation", func(t *testing.T) {
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1"}
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
+		holdoutCache.EXPECT().
+			PutIfNewer(group, "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		require.NoError(t, refresher.refresh(context.Background(), event))
+	})
+
+	t.Run("empty snapshot still publishes", func(t *testing.T) {
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(nil, v2hs.ErrHoldoutGroupNotFound)
+		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env-1").
+			Return(int64(1700000000), nil)
+		holdoutCache.EXPECT().
+			PutIfNewer(&featureproto.HoldoutGroup{UpdatedAt: 1700000000}, "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		require.NoError(t, refresher.refresh(context.Background(), event))
+	})
+
+	t.Run("failed read writes the unavailable snapshot at the captured generation and publishes", func(t *testing.T) {
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(nil, errors.New("db"))
+		// The barrier keeps the generation marker so an older in-flight write is
+		// rejected, and it is the unavailable snapshot so evaluation IDs issued
+		// meanwhile are marked and recovery forces a full evaluation.
+		holdoutCache.EXPECT().
+			PutIfNewer(evaluation.UnavailableHoldoutSnapshot(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		assert.EqualError(t, refresher.refresh(context.Background(), event), "db")
+	})
+
+	t.Run("stale write still publishes", func(t *testing.T) {
+		group := &featureproto.HoldoutGroup{Id: "hg"}
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
+		holdoutCache.EXPECT().
+			PutIfNewer(group, "env-1", refresherFixedGeneration).
+			Return(false, nil)
+		publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		require.NoError(t, refresher.refresh(context.Background(), event))
+	})
+}
+
+func TestCacheRefresherKeepsDisabledHoldoutTarget(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, nil,
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{Id: "targeted", Enabled: false},
+				{Id: "dropped", Enabled: false},
+				{Id: "normal", Enabled: true, OffVariation: "on"},
+			},
+		}, nil)
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(&domain.HoldoutGroup{HoldoutGroup: &featureproto.HoldoutGroup{
+			Id:       "hg",
+			Features: []*featureproto.HoldoutGroupFeature{{FeatureId: "targeted"}},
+		}}, nil)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 2)
+			assert.Equal(t, "targeted", features.Features[0].Id)
+			assert.Equal(t, "normal", features.Features[1].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	}))
+}
+
+func TestCacheRefresherKeepsDependencyAfterHoldoutStops(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, nil,
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{
+					Id:           "dependent",
+					Enabled:      true,
+					OffVariation: "off",
+					Prerequisites: []*featureproto.Prerequisite{
+						{FeatureId: "flag", VariationId: "on"},
+					},
+				},
+				{Id: "flag", Enabled: false},
+				{Id: "orphan", Enabled: false},
+			},
+		}, nil)
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(nil, v2hs.ErrHoldoutGroupNotFound)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 2)
+			assert.Equal(t, "dependent", features.Features[0].Id)
+			assert.Equal(t, "flag", features.Features[1].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	}))
+}
+
+func TestCacheRefresherHoldoutStartRefreshesFeatures(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	holdoutCache := cachev3mock.NewMockHoldoutGroupCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, holdoutCache,
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	group := &featureproto.HoldoutGroup{
+		Id:       "hg",
+		Features: []*featureproto.HoldoutGroupFeature{{FeatureId: "targeted"}},
+	}
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil).Times(2)
+	holdoutCache.EXPECT().
+		PutIfNewer(group, "env-1", refresherFixedGeneration).
+		Return(true, nil)
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{Id: "targeted", Enabled: false},
+				{Id: "normal", Enabled: true, OffVariation: "on"},
+			},
+		}, nil)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 2)
+			assert.Equal(t, "targeted", features.Features[0].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+		EnvironmentId: "env-1",
+		EntityId:      "hg",
+		Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+	}))
+}
+
+// The feature cache must not depend on the holdout tables being healthy. A
+// holdout storage error during a feature refresh is logged and the snapshot
+// is written with the historical filter.
+func TestCacheRefresherFeatureRefreshSurvivesHoldoutStorageError(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	featureClient := featureclientmock.NewMockClient(controller)
+	storage := holdoutmock.NewMockHoldoutStorage(controller)
+	featuresCache := cachev3mock.NewMockFeaturesCache(controller)
+	publisher := publishermock.NewMockPublisher(controller)
+	refresher := NewCacheRefresher(
+		featureClient, nil, nil, nil,
+		featuresCache, nil, nil, nil, nil,
+		storage, cachev3mock.NewMockHoldoutGroupCache(controller),
+		publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	refresher.now = func() time.Time { return refresherFixedNow }
+
+	storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(nil, errors.New("holdout db down"))
+	featureClient.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return(&featureproto.ListFeaturesResponse{
+			Features: []*featureproto.Feature{
+				{Id: "disabled-no-off", Enabled: false},
+				{Id: "normal", Enabled: true, OffVariation: "on"},
+			},
+		}, nil)
+	featuresCache.EXPECT().
+		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+		DoAndReturn(func(features *featureproto.Features, _ string, _ int64) (bool, error) {
+			require.Len(t, features.Features, 1)
+			assert.Equal(t, "normal", features.Features[0].Id)
+			return true, nil
+		})
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	require.NoError(t, refresher.refresh(context.Background(), &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_FEATURE,
+		EnvironmentId: "env-1",
+		EntityId:      "normal",
+		Type:          domaineventproto.Event_FEATURE_UPDATED,
+	}))
 }

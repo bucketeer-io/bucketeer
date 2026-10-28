@@ -214,6 +214,13 @@ var (
 				"(not lost); sustained rates during normal operation indicate the pool " +
 				"is undersized for current load.",
 		})
+	holdoutEvaluationsCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_holdout_evaluations_total",
+			Help:      "Total number of GetEvaluations requests served while a live holdout group has target features",
+		}, []string{"source_id"})
 	evaluationsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -371,6 +378,7 @@ func registerMetrics(r metrics.Registerer) {
 			metricsWorkerPanicCounter,
 			metricsOverflowCounter,
 			evaluationsCounter,
+			holdoutEvaluationsCounter,
 			getFeatureFlagsCounter,
 			getSegmentUsersCounter,
 			requestTotal,

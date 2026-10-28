@@ -201,6 +201,48 @@ test('UserEvaluationsID includes the live holdout group', (t) => {
   );
 });
 
+test('UserEvaluationsID changes when targets change in the same second', (t) => {
+  const features = [NewFeature('feature-1', 1000)];
+  const group = (
+    targets: Array<{ featureId: string; variationId: string; removedAt?: number }>,
+  ): HoldoutGroup => ({
+    ...holdoutGroup('hg-a', 50),
+    getFeaturesList: () =>
+      targets.map((target) => ({
+        getId: () => '',
+        getFeatureId: () => target.featureId,
+        getHoldoutVariationId: () => target.variationId,
+        getAddedAt: () => 0,
+        getRemovedAt: () => target.removedAt ?? 0,
+      })),
+  });
+  const withTargets = UserEvaluationsID('user-1', {}, features, [
+    group([
+      { featureId: 'flag-b', variationId: 'hold-b' },
+      { featureId: 'flag-a', variationId: 'hold-a' },
+    ]),
+  ]);
+  t.not(withTargets, UserEvaluationsID('user-1', {}, features, [holdoutGroup('hg-a', 50)]));
+  t.not(
+    withTargets,
+    UserEvaluationsID('user-1', {}, features, [
+      group([
+        { featureId: 'flag-a', variationId: 'hold-a' },
+        { featureId: 'flag-b', variationId: 'other' },
+      ]),
+    ]),
+  );
+  t.is(
+    withTargets,
+    UserEvaluationsID('user-1', {}, features, [
+      group([
+        { featureId: 'flag-a', variationId: 'hold-a' },
+        { featureId: 'flag-b', variationId: 'hold-b' },
+      ]),
+    ]),
+  );
+});
+
 // Define test case structure
 type GenerateFeaturesIDTestCase = {
   desc: string;

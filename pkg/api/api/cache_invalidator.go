@@ -31,6 +31,7 @@ type cacheInvalidator struct {
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	holdoutGroupCache      cachev3.HoldoutGroupCache
 	linkedEventPublisher   *LinkedEventPublisher
 	streamDispatcher       *stream.Dispatcher
 	logger                 *zap.Logger
@@ -40,6 +41,7 @@ func NewCacheInvalidator(
 	featuresCache cachev3.FeaturesCache,
 	segmentUsersCache cachev3.SegmentUsersCache,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	holdoutGroupCache cachev3.HoldoutGroupCache,
 	linkedEventPublisher *LinkedEventPublisher,
 	streamDispatcher *stream.Dispatcher,
 	logger *zap.Logger,
@@ -48,6 +50,7 @@ func NewCacheInvalidator(
 		featuresCache:          featuresCache,
 		segmentUsersCache:      segmentUsersCache,
 		environmentAPIKeyCache: environmentAPIKeyCache,
+		holdoutGroupCache:      holdoutGroupCache,
 		linkedEventPublisher:   linkedEventPublisher,
 		streamDispatcher:       streamDispatcher,
 		logger:                 logger.Named("cache-invalidator"),
@@ -86,15 +89,64 @@ func (ci *cacheInvalidator) handleMessage(msg *puller.Message) {
 
 func (ci *cacheInvalidator) evict(event *domaineventproto.Event) error {
 	switch event.EntityType {
-	case domaineventproto.Event_FEATURE:
-		if err := ci.featuresCache.Evict(event.EnvironmentId); err != nil {
-			ci.logger.Warn("Failed to evict features cache",
-				zap.Error(err),
+	case domaineventproto.Event_HOLDOUT_GROUP:
+		if ci.holdoutGroupCache == nil && ci.featuresCache == nil {
+			return nil
+		}
+		// Bump the fill epoch before both evictions and hold it across the
+		// deletes. A request that already read the previous Redis feature
+		// snapshot then cannot write that snapshot back over the eviction.
+		var holdoutErr, featuresErr error
+		invalidateHoldoutFill(event.EnvironmentId, func() {
+			if ci.holdoutGroupCache != nil {
+				holdoutErr = ci.holdoutGroupCache.Evict(event.EnvironmentId)
+			}
+			if holdoutErr != nil {
+				return
+			}
+			if ci.featuresCache != nil {
+				featuresErr = ci.featuresCache.Evict(event.EnvironmentId)
+			}
+		})
+		if holdoutErr != nil {
+			ci.logger.Warn("Failed to evict holdout group cache",
+				zap.Error(holdoutErr),
 				zap.String("environmentId", event.EnvironmentId),
 				zap.String("entityId", event.EntityId),
 				zap.String("type", event.Type.String()),
 			)
-			return err
+			return holdoutErr
+		}
+		if featuresErr != nil {
+			ci.logger.Warn("Failed to evict features cache for holdout change",
+				zap.Error(featuresErr),
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("entityId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return featuresErr
+		}
+		cacheInvalidationCounter.WithLabelValues(
+			event.EntityType.String(), event.Type.String(), event.EnvironmentId,
+		).Inc()
+		ci.logger.Debug("Evicted holdout group cache",
+			zap.String("environmentId", event.EnvironmentId),
+			zap.String("entityId", event.EntityId),
+			zap.String("type", event.Type.String()),
+		)
+	case domaineventproto.Event_FEATURE:
+		var evictErr error
+		invalidateHoldoutFill(event.EnvironmentId, func() {
+			evictErr = ci.featuresCache.Evict(event.EnvironmentId)
+		})
+		if evictErr != nil {
+			ci.logger.Warn("Failed to evict features cache",
+				zap.Error(evictErr),
+				zap.String("environmentId", event.EnvironmentId),
+				zap.String("entityId", event.EntityId),
+				zap.String("type", event.Type.String()),
+			)
+			return evictErr
 		}
 		cacheInvalidationCounter.WithLabelValues(
 			event.EntityType.String(), event.Type.String(), event.EnvironmentId,

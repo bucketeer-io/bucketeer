@@ -434,6 +434,48 @@ func TestDispatcherHandleEvent(t *testing.T) {
 			clientTag: "android",
 		},
 		{
+			desc: "holdout started notifies every open stream",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+				EnvironmentId: envID,
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "holdout stopped notifies every open stream",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_STOPPED,
+				EnvironmentId: envID,
+			},
+			clientTag:    "android",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "holdout target change notifies every open stream",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED,
+				EnvironmentId: envID,
+			},
+			clientTag:    "ios",
+			wantDispatch: true,
+			wantTags:     nil,
+		},
+		{
+			desc: "holdout created is ignored",
+			event: &domaineventproto.Event{
+				EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+				Type:          domaineventproto.Event_HOLDOUT_GROUP_CREATED,
+				EnvironmentId: envID,
+			},
+			clientTag: "android",
+		},
+		{
 			desc: "unknown entity type is ignored",
 			event: &domaineventproto.Event{
 				EntityType:    domaineventproto.Event_GOAL,
@@ -768,6 +810,17 @@ func TestDispatcherDispatchReplacesPendingEvent(t *testing.T) {
 		t.Fatal("expected a single pending event")
 	default:
 	}
+
+	// A holdout start replaces the pending feature snapshot and must not keep
+	// it. Nil tells the stream to read the feature cache.
+	d.dispatch(event{environmentID: "env-1", tags: []string{"tag-A"}, features: older})
+	d.dispatch(event{
+		environmentID: "env-1",
+		eventType:     domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+	})
+	got = <-ch
+	assert.Equal(t, domaineventproto.Event_HOLDOUT_GROUP_STARTED, got.eventType)
+	assert.Nil(t, got.features)
 }
 
 func featureJSON(t *testing.T, id string, version int32, tags ...string) string {

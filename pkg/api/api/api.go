@@ -61,6 +61,8 @@ type gatewayService struct {
 	segmentUsersRedisCache      cachev3.SegmentUsersCache
 	featuresCache               cachev3.FeaturesCache
 	featuresRedisCache          cachev3.FeaturesCache
+	holdoutGroupCache           cachev3.HoldoutGroupCache
+	holdoutGroupRedisCache      cachev3.HoldoutGroupCache
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	flightgroup                 singleflight.Group
@@ -106,6 +108,8 @@ func NewGatewayService(
 		metricsPublisher:            mp,
 		featuresCache:               cachev3.NewFeaturesCache(inMemoryCache, options.featuresMemoryCacheTTL),
 		featuresRedisCache:          cachev3.NewFeaturesCache(redisV3Cache, 0),
+		holdoutGroupCache:           cachev3.NewHoldoutGroupCache(inMemoryCache, options.featuresMemoryCacheTTL),
+		holdoutGroupRedisCache:      cachev3.NewHoldoutGroupCache(redisV3Cache, 0),
 		segmentUsersCache:           cachev3.NewSegmentUsersCache(inMemoryCache, options.segmentUsersMemoryCacheTTL),
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
@@ -287,7 +291,9 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		return
 	}
 	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-	if len(features) == 0 {
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	features, removed := evaluation.FeaturesForServerEval(features, group)
+	if len(features) == 0 && len(removed) == 0 {
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
@@ -297,7 +303,8 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		)
 		return
 	}
-	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features)
+	countHoldoutEvaluation(group, reqBody.SourceID.String())
+	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features, holdoutGroups(group)...)
 	if reqBody.UserEvaluationsID == ueid {
 		rest.ReturnSuccessResponse(
 			w,
@@ -314,6 +321,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		features,
 		envAPIKey.Environment.Id,
 		reqBody.Tag,
+		group,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -327,6 +335,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
+	appendRemovedFeatureIDs(evaluations, removed)
 	rest.ReturnSuccessResponse(
 		w,
 		&getEvaluationsResponse{
@@ -357,6 +366,8 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	fs, _ = evaluation.FeaturesForServerEval(fs, group)
 	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
@@ -368,6 +379,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		features,
 		envAPIKey.Environment.Id,
 		reqBody.Tag,
+		group,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -414,22 +426,50 @@ func (s *gatewayService) evaluateFeaturesForStream(
 		}
 		shared = f.([]*featureproto.Feature)
 	}
-	if len(shared) == 0 {
-		return "", s.emptyUserEvaluations(), nil
+	group := s.liveHoldoutGroup(environmentID)
+	kept, removed := evaluation.FeaturesForServerEval(shared, group)
+	grace := int64(0)
+	if s.opts != nil {
+		grace = int64(s.opts.featureFlagDiffGracePeriod / time.Second)
+	}
+	// An empty feature list still has to clear a client that cached the last
+	// holdout assignment. ForceUpdate is the clearance signal; removed IDs
+	// cover a partial update that drops a disabled target.
+	if len(kept) == 0 {
+		stale := evaluation.HoldoutStale(holdoutGroups(group), evaluatedAt-grace)
+		if !stale && len(removed) == 0 {
+			return "", s.emptyUserEvaluations(), nil
+		}
+		id := evaluation.UserEvaluationsID(user.Id, user.Data, kept, holdoutGroups(group)...)
+		if removed == nil {
+			removed = []string{}
+		}
+		return id, &featureproto.UserEvaluations{
+			Id:                 id,
+			Evaluations:        []*featureproto.Evaluation{},
+			ArchivedFeatureIds: removed,
+			ForceUpdate:        stale,
+			CreatedAt:          time.Now().Unix(),
+		}, nil
 	}
 	// singleflight and dispatched snapshots share the same slice across callers.
 	// Copy to avoid data races from in-place sort in UserEvaluationsID.
-	features := make([]*featureproto.Feature, len(shared))
-	copy(features, shared)
+	features := make([]*featureproto.Feature, len(kept))
+	copy(features, kept)
 
 	evaluator := evaluation.NewEvaluator(
-		evaluation.WithSecondsForAdjustment(int64(s.opts.featureFlagDiffGracePeriod / time.Second)),
+		evaluation.WithSecondsForAdjustment(grace),
 	)
 
 	// The same process of getting segment users as grpcGatewayService.getSegmentUsersMap()
 	mapIDs := make(map[string]struct{})
 	for _, feat := range features {
 		for _, id := range evaluator.ListSegmentIDs(feat) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	if group != nil {
+		for _, id := range evaluation.HoldoutSegmentIDs([]*featureproto.HoldoutGroup{group}) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -451,12 +491,13 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	// flags are re-evaluated on every reconnect initial put.
 	evaluations, err := evaluator.EvaluateFeaturesByEvaluatedAt(
 		features, user, segmentUsersMap, segmentsMap,
-		prevUEID, evaluatedAt, checkUserAttributes, tag,
+		prevUEID, evaluatedAt, checkUserAttributes, tag, holdoutGroups(group)...,
 	)
 	if err != nil {
 		return "", nil, err
 	}
-	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features)
+	appendRemovedFeatureIDs(evaluations, removed)
+	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features, holdoutGroups(group)...)
 	return ueid, evaluations, nil
 }
 
@@ -707,11 +748,17 @@ func (s *gatewayService) evaluateFeatures(
 	user *userproto.User,
 	features []*featureproto.Feature,
 	environmentId, tag string,
+	group *featureproto.HoldoutGroup,
 ) (*featureproto.UserEvaluations, error) {
 	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		for _, id := range evaluator.ListSegmentIDs(f) {
+			mapIDs[id] = struct{}{}
+		}
+	}
+	if group != nil {
+		for _, id := range evaluation.HoldoutSegmentIDs([]*featureproto.HoldoutGroup{group}) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -726,7 +773,9 @@ func (s *gatewayService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, mapSegments, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(
+		features, user, mapSegmentUsers, mapSegments, tag, holdoutGroups(group)...,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
@@ -878,11 +927,16 @@ func (s *gatewayService) getFeatures(
 		return fs.Features, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerInMemory, codeMiss).Inc()
-	// L2: Redis cache (kept warm by batch cacher)
-	fs, err = s.featuresRedisCache.Get(environmentId)
+	// L2: Redis cache (kept warm by batch cacher). The fill records the
+	// invalidation epoch before the read, so a holdout start that evicts L1
+	// while this read is in flight cannot be overwritten by the pre-start list.
+	fs, err = FillFeatureSnapshot(environmentId, func() (*featureproto.Features, error) {
+		return s.featuresRedisCache.Get(environmentId)
+	}, func(features *featureproto.Features) {
+		putFeaturesCache(ctx, features, environmentId, s.featuresCache, s.logger)
+	})
 	if err == nil {
 		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
-		putFeaturesCache(ctx, fs, environmentId, s.featuresCache, s.logger)
 		return fs.Features, nil
 	}
 	restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeMiss).Inc()
@@ -912,16 +966,24 @@ func (s *gatewayService) listFeatures(
 	ctx context.Context,
 	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	return ListFeatures(ctx, s.featureClient, environmentId)
+	targets := CachedHoldoutTargetIDs(
+		s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentId, s.logger,
+	)
+	return ListFeatures(ctx, s.featureClient, environmentId, targets)
 }
 
 // ListFeatures loads the environment's evaluable features from the feature service.
+// holdoutTargets keeps a disabled flag that has no off variation when it is a
+// current holdout target. A former target also stays when another flag still
+// depends on it. Pages are collected first so that dependency can be on a
+// later page.
 func ListFeatures(
 	ctx context.Context,
 	featureClient featureclient.Client,
 	environmentId string,
+	holdoutTargets map[string]struct{},
 ) ([]*featureproto.Feature, error) {
-	features := []*featureproto.Feature{}
+	var features []*featureproto.Feature
 	cursor := ""
 	for {
 		resp, err := featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
@@ -932,20 +994,10 @@ func ListFeatures(
 		if err != nil {
 			return nil, err
 		}
-		for _, f := range resp.Features {
-			ff := featuredomain.Feature{Feature: f}
-			if ff.IsDisabledAndOffVariationEmpty() {
-				continue
-			}
-			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-			if ff.IsArchivedBeforeLastThirtyDays() {
-				continue
-			}
-			features = append(features, f)
-		}
+		features = append(features, resp.Features...)
 		featureSize := len(resp.Features)
 		if featureSize == 0 || featureSize < listRequestSize {
-			return features, nil
+			return featuredomain.FilterForServing(features, holdoutTargets), nil
 		}
 		cursor = resp.Cursor
 	}
