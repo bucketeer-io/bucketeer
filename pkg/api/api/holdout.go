@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"go.uber.org/zap"
@@ -84,8 +85,9 @@ func commitHoldoutFill(environmentID string, epoch uint64, put func()) bool {
 
 // holdoutSnapshotFallback reads the serving snapshot when both caches miss.
 // It is the L3 of the holdout snapshot, like the feature service is for the
-// features cache. nil disables it.
-type holdoutSnapshotFallback func(ctx context.Context) (*featureproto.HoldoutGroup, error)
+// features cache. nil disables it. epoch is the fill epoch the caller
+// observed before its cache reads; a shared read must not outlive it.
+type holdoutSnapshotFallback func(ctx context.Context, epoch uint64) (*featureproto.HoldoutGroup, error)
 
 // loadLiveHoldoutGroup reads the serving snapshot from memory, then redis,
 // then the fallback. Only when every layer fails is the snapshot unavailable,
@@ -139,7 +141,7 @@ func loadLiveHoldoutGroup(
 			if fallback == nil {
 				return evaluation.UnavailableHoldoutSnapshot()
 			}
-			group, err = fallback(ctx)
+			group, err = fallback(ctx, epoch)
 			if err != nil {
 				if logger != nil {
 					logger.Error("Failed to read the holdout snapshot from the feature service",
@@ -260,7 +262,13 @@ func (s *grpcGatewayService) liveHoldoutGroup(ctx context.Context, environmentID
 }
 
 // holdoutSnapshotFromService shares one feature-service read per environment
-// across the requests that miss both caches at the same time.
+// and fill epoch across the requests that miss both caches at the same time.
+// The epoch is part of the key: a request that starts after an invalidation
+// must not join a read begun before it, or commitHoldoutFill would accept
+// the pre-invalidation snapshot under the new epoch and restore a stopped
+// group to memory. The shared read is detached from the first caller's
+// cancellation like singleflightFetch, while each caller still gives up on
+// its own context so a closed stream does not wait out the fetch timeout.
 func holdoutSnapshotFromService(
 	flightgroup *singleflight.Group,
 	client featureclient.Client,
@@ -269,16 +277,22 @@ func holdoutSnapshotFromService(
 	if client == nil {
 		return nil
 	}
-	return func(ctx context.Context) (*featureproto.HoldoutGroup, error) {
-		result, err, _ := flightgroup.Do("holdout:"+environmentID, func() (interface{}, error) {
+	return func(ctx context.Context, epoch uint64) (*featureproto.HoldoutGroup, error) {
+		key := fmt.Sprintf("holdout:%s:%d", environmentID, epoch)
+		ch := flightgroup.DoChan(key, func() (interface{}, error) {
 			fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleflightFetchTimeout)
 			defer cancel()
 			return HoldoutServingSnapshot(fetchCtx, client, environmentID)
 		})
-		if err != nil {
-			return nil, err
+		select {
+		case res := <-ch:
+			if res.Err != nil {
+				return nil, res.Err
+			}
+			return res.Val.(*featureproto.HoldoutGroup), nil
+		case <-ctx.Done():
+			return nil, fmt.Errorf("%w: %w", errCallerCanceled, ctx.Err())
 		}
-		return result.(*featureproto.HoldoutGroup), nil
 	}
 }
 
