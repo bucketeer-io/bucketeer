@@ -76,6 +76,12 @@ func (u *statusUpdater) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range environments {
+		// The legacy environment has an empty ID. The holdout API requires an
+		// environment ID on every request, so no group can exist there; listing
+		// it would only fail the whole run with InvalidArgument.
+		if env.Id == "" {
+			continue
+		}
 		groups, err := u.listGroups(ctx, env.Id)
 		if err != nil {
 			u.logger.Error("Failed to list holdout groups",
