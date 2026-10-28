@@ -291,7 +291,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		return
 	}
 	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	group := s.liveHoldoutGroup(req.Context(), envAPIKey.Environment.Id)
 	features, removed := evaluation.FeaturesForServerEval(features, group)
 	if len(features) == 0 && len(removed) == 0 {
 		rest.ReturnSuccessResponse(
@@ -366,7 +366,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	group := s.liveHoldoutGroup(req.Context(), envAPIKey.Environment.Id)
 	fs, _ = evaluation.FeaturesForServerEval(fs, group)
 	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
 	if err != nil {
@@ -426,7 +426,7 @@ func (s *gatewayService) evaluateFeaturesForStream(
 		}
 		shared = f.([]*featureproto.Feature)
 	}
-	group := s.liveHoldoutGroup(environmentID)
+	group := s.liveHoldoutGroup(ctx, environmentID)
 	kept, removed := evaluation.FeaturesForServerEval(shared, group)
 	grace := int64(0)
 	if s.opts != nil {
