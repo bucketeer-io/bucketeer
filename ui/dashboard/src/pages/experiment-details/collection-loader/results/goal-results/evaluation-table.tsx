@@ -81,7 +81,7 @@ const EvaluationTable = ({
           />
         ))}
       </div>
-      <div className="divide-y divide-gray-300">
+      <div className="divide-y divide-gray-300 dark:divide-dark-black-700">
         {evaluationData?.map((item, i) => {
           const { experimentCount, evaluationCount } = item;
 

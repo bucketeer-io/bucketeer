@@ -24,10 +24,10 @@ const DebuggerAttributes = () => {
   return (
     <div className="flex flex-col w-full gap-y-5">
       <div className="flex flex-col w-full gap-y-3">
-        <p className="typo-para-medium text-gray-700">
+        <p className="typo-para-medium text-gray-700 dark:text-dark-gray-300">
           {t('form:user-attributes')}
         </p>
-        <p className="typo-para-small text-gray-600">
+        <p className="typo-para-small text-gray-600 dark:text-dark-gray-200">
           {t('form:user-attributes-desc')}
         </p>
       </div>

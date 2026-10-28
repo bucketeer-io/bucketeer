@@ -83,12 +83,12 @@ const Filter = ({
           <Button
             variant="secondary"
             onClick={onOpenFilter}
-            className="text-gray-700 shadow-border-gray-400 flex-1 lg:flex-none"
+            className="text-gray-700 dark:text-dark-gray-300 shadow-border-gray-400 dark:shadow-border-gray-500 flex-1 lg:flex-none"
           >
             <Icon icon={IconFilterListOutlined} size="sm" />
             {t('filter')}
             {filterCount && (
-              <div className="size-5 flex-center rounded-full bg-gray-200 text-[11px] text-gray-700">
+              <div className="size-5 flex-center rounded-full bg-gray-200 dark:bg-dark-purple-100 text-[11px] text-gray-700 dark:text-dark-gray-400">
                 {filterCount}
               </div>
             )}

@@ -24,7 +24,7 @@ const OperationInfoCard = ({
         />
         <div>
           <p className="font-bold text-primary-500">{title}</p>
-          <p className="typo-para-medium text-gray-500 w-full mt-2">
+          <p className="typo-para-medium text-gray-500 dark:text-dark-gray-200 w-full mt-2">
             {description}
           </p>
         </div>

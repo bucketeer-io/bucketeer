@@ -121,15 +121,15 @@ const SrmBanner = ({
 
   if (srmResult.status === SrmStatus.Mismatch) {
     return (
-      <div className="flex flex-col w-full overflow-hidden rounded-lg border border-accent-red-100 border-l-4 border-l-accent-red-500 bg-white shadow-card">
-        <div className="flex flex-col w-full gap-y-2 bg-accent-red-50 px-4 py-3">
+      <div className="flex flex-col w-full overflow-hidden rounded-lg border border-accent-red-100 dark:border-dark-black-700 border-l-4 border-l-accent-red-500 bg-white dark:bg-dark-black-800 shadow-card dark:shadow-dark-card">
+        <div className="flex flex-col w-full gap-y-2 bg-accent-red-50 dark:bg-accent-red-900/30 px-4 py-3">
           <div className="flex items-center w-full gap-x-2">
             <Icon icon={IconAlert} size="xs" color="accent-red-500" />
             <p className="typo-head-bold-small text-accent-red-500">
               {t('table:results.srm.mismatch-title')}
             </p>
           </div>
-          <p className="typo-para-small text-gray-700 pl-7">
+          <p className="typo-para-small text-gray-700 dark:text-dark-gray-300 pl-7">
             {chiSquareFired
               ? t('table:results.srm.mismatch-desc', {
                   pValue: formatPValue(srmResult.pValue),
@@ -161,7 +161,7 @@ const SrmBanner = ({
           </button>
         </div>
         {isDetailsOpen && (
-          <div className="bg-white px-4 pt-3 border-t border-accent-red-100 overflow-x-auto overflow-y-hidden">
+          <div className="bg-white dark:bg-dark-black-800 px-4 pt-3 border-t border-accent-red-100 dark:border-dark-black-700 overflow-x-auto overflow-y-hidden">
             <SrmVariationsTable
               variations={srmResult.variations}
               experimentVariations={experiment.variations}
@@ -174,7 +174,7 @@ const SrmBanner = ({
 
   if (srmResult.status === SrmStatus.Skipped) {
     return (
-      <div className="flex items-center w-full gap-x-2 rounded border-l-4 border-accent-blue-500 bg-accent-blue-50 p-4">
+      <div className="flex items-center w-full gap-x-2 rounded border-l-4 border-accent-blue-500 bg-accent-blue-50 dark:bg-accent-blue-900/30 p-4">
         <Icon icon={IconInfoFilled} size="xxs" color="accent-blue-500" />
         <p className="typo-para-small text-accent-blue-500">
           {t('table:results.srm.skipped-prefix', {
@@ -187,13 +187,13 @@ const SrmBanner = ({
 
   // SrmStatus.Ok — collapsed-by-default advanced disclosure.
   return (
-    <div className="flex flex-col w-full gap-y-2 rounded border border-gray-200 bg-white p-3">
+    <div className="flex flex-col w-full gap-y-2 rounded border border-gray-200 dark:border-dark-black-700 bg-white dark:bg-dark-black-800 p-3">
       <button
         type="button"
         onClick={() => setIsAdvancedOpen(prev => !prev)}
         className="flex items-center w-full justify-between gap-x-2"
       >
-        <p className="typo-para-small text-gray-700">
+        <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
           {t('table:results.srm.advanced')}
         </p>
         <Icon
@@ -208,7 +208,7 @@ const SrmBanner = ({
       </button>
       {isAdvancedOpen && (
         <div className="flex flex-col gap-y-3">
-          <p className="typo-para-small text-gray-700">
+          <p className="typo-para-small text-gray-700 dark:text-dark-gray-300">
             {t('table:results.srm.ok-summary', {
               pValue: formatPValue(srmResult.pValue)
             })}

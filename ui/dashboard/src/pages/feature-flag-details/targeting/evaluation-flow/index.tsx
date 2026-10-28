@@ -77,7 +77,9 @@ export const EvaluationFlow = ({
         aria-hidden
         className={cn(
           'absolute top-3 bottom-3 w-px pointer-events-none rounded-full',
-          muted ? 'bg-gray-200' : 'bg-gray-300'
+          muted
+            ? 'bg-gray-200 dark:bg-dark-black-700'
+            : 'bg-gray-300 dark:bg-dark-black-700'
         )}
         style={{ left: '14px' }}
       />
@@ -130,8 +132,8 @@ export const FlowStep = ({
               ? 'top-1/2 -translate-y-1/2 left-0'
               : '-top-5 left-0',
             resolvedTone === 'muted'
-              ? 'bg-gray-100 text-gray-500'
-              : 'bg-primary-50 text-primary-500'
+              ? 'bg-gray-100 dark:bg-dark-black-700 text-gray-500 dark:text-dark-gray-200'
+              : 'bg-primary-50 dark:bg-dark-purple-100 text-primary-500 dark:text-dark-purple-700'
           )}
         >
           {stepLabel}
@@ -150,17 +152,17 @@ interface FlowNodeProps {
 
 const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
   const baseClasses =
-    'absolute z-10 flex items-center justify-center rounded-full ring-4 ring-white';
+    'absolute z-10 flex items-center justify-center rounded-full ring-4 ring-white dark:ring-dark-black-800';
 
   const alignClasses =
     align === 'center' ? 'top-1/2 -translate-y-1/2' : 'top-4';
 
   const toneClasses =
     tone === 'muted'
-      ? 'bg-white border border-gray-300 text-gray-500'
+      ? 'bg-white dark:bg-dark-black-800 border border-gray-300 dark:border-dark-black-700 text-gray-500 dark:text-dark-gray-200'
       : tone === 'accent'
         ? 'bg-primary-500 text-white'
-        : 'bg-white border border-primary-300 text-primary-500';
+        : 'bg-white dark:bg-dark-black-800 border border-primary-300 dark:border-dark-purple-300 text-primary-500 dark:text-dark-purple-700';
 
   let content: ReactNode = null;
   let sizeClass = 'size-7';
@@ -174,12 +176,14 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
       break;
     case 'gate':
       sizeClass = 'size-7';
-      extraClass = 'bg-primary-50 border-primary-300';
+      extraClass =
+        'bg-primary-50 dark:bg-dark-purple-100 border-primary-300 dark:border-dark-purple-300';
       content = <Icon icon={IconFlagSwitch} size="xxs" color="primary-500" />;
       break;
     case 'gate-off':
       sizeClass = 'size-7';
-      extraClass = 'bg-gray-100 border-gray-400 text-gray-500';
+      extraClass =
+        'bg-gray-100 dark:bg-dark-black-700 border-gray-400 dark:border-dark-black-700 text-gray-500 dark:text-dark-gray-200';
       content = <Icon icon={IconFlagSwitch} size="xxs" color="gray-500" />;
       break;
     case 'prerequisite':
@@ -204,7 +208,10 @@ const FlowNode = ({ kind, align, tone }: FlowNodeProps) => {
       sizeClass = 'size-7';
       extraClass = 'border-2';
       content = (
-        <span className="size-2 rounded-full bg-gray-400" aria-hidden />
+        <span
+          className="size-2 rounded-full bg-gray-400 dark:bg-dark-gray-200"
+          aria-hidden
+        />
       );
       break;
   }

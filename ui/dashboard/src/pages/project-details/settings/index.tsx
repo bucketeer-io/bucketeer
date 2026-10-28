@@ -86,7 +86,9 @@ const ProjectSettings = ({ project }: { project: Project }) => {
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex lg:items-center justify-between flex-col lg:flex-row">
-            <p className="typo-head-bold-big">{t(`settings`)}</p>
+            <p className="typo-head-bold-big dark:text-dark-gray-400">
+              {t(`settings`)}
+            </p>
             <div className="flex items-center gap-4 mt-3 lg:mt-0">
               <Link target="_blank" to={DOCUMENTATION_LINKS.PROJECTS}>
                 <Button
@@ -114,7 +116,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
               />
             </div>
           </div>
-          <div className="p-5 shadow-card rounded-lg bg-white mt-6">
+          <div className="p-5 shadow-card rounded-lg bg-white dark:bg-dark-black-800 dark:shadow-dark-card mt-6">
             <Form.Field
               control={form.control}
               name="name"
