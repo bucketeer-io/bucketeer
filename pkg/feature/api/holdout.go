@@ -650,6 +650,12 @@ func (s *FeatureService) prepareHoldoutFeature(
 	if feature.Archived || feature.Deleted {
 		return nil, nil, holdoutdomain.NewFeatureUnavailableError(feature.Id)
 	}
+	// Such a flag is filtered out of the serving caches, so a member would
+	// never receive the holdout variation. The API does not allow creating
+	// one; this guards legacy rows.
+	if feature.IsDisabledAndOffVariationEmpty() {
+		return nil, nil, holdoutdomain.NewFeatureNotServableError(feature.Id)
+	}
 	if !holdoutdomain.VariationBelongsToFeature(input.HoldoutVariationId, feature.Variations) {
 		return nil, nil, holdoutdomain.NewVariationNotOnFeatureError(input.FeatureId, input.HoldoutVariationId)
 	}

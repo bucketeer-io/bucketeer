@@ -555,6 +555,28 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	})
 
+	t.Run("disabled flag with no off variation is rejected", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
+		service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+			gomock.Any(), "flag", "ns0",
+		).Return(&featuredomain.Feature{Feature: &featureproto.Feature{
+			Id:         "flag",
+			Enabled:    false,
+			Variations: []*featureproto.Variation{{Id: "var"}},
+		}}, nil)
+		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+			Id: "hg", EnvironmentId: "ns0",
+			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assert.Contains(t, err.Error(), "no off variation")
+	})
+
 	t.Run("variation must belong to the flag", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
@@ -967,12 +989,14 @@ func expectGoal(service *FeatureService, goalID string) {
 }
 
 func expectFeature(service *FeatureService, featureID, variationID string, archived bool) {
+	// Every flag created through the API has an off variation.
 	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 		gomock.Any(), featureID, "ns0",
 	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{
-		Id:         featureID,
-		Archived:   archived,
-		Variations: []*featureproto.Variation{{Id: variationID}},
+		Id:           featureID,
+		Archived:     archived,
+		OffVariation: variationID,
+		Variations:   []*featureproto.Variation{{Id: variationID}},
 	}}, nil)
 }
 

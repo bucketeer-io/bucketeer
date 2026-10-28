@@ -803,7 +803,6 @@ func newBatchService(t *testing.T,
 		cacher.NewFeatureFlagCacher(
 			featureStorageMock,
 			[]cache.MultiGetCache{redisMockClient},
-			nil,
 		),
 		cacher.NewSegmentUserCacher(
 			segmentStorageMock,

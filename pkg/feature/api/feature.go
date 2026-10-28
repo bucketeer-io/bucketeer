@@ -1117,7 +1117,6 @@ func (s *FeatureService) evaluateFeatures(
 ) (*featureproto.UserEvaluations, error) {
 	evaluator := evaluation.NewEvaluator()
 	group := s.liveHoldoutGroup(EnvironmentId)
-	features, removed := evaluation.FeaturesForServerEval(features, group)
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		for _, id := range evaluator.ListSegmentIDs(f) {
@@ -1156,9 +1155,6 @@ func (s *FeatureService) evaluateFeatures(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
-	}
-	if userEvaluations != nil && len(removed) > 0 {
-		userEvaluations.ArchivedFeatureIds = append(userEvaluations.ArchivedFeatureIds, removed...)
 	}
 	return userEvaluations, nil
 }

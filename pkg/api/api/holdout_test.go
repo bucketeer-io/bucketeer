@@ -122,8 +122,9 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 		memory.EXPECT().Put(cleared, "env-clear").Return(nil)
 		fallback := func(context.Context, uint64) (*featureproto.HoldoutGroup, error) { return cleared, nil }
 		got := loadLiveHoldoutGroup(context.Background(), memory, redis, "env-clear", fallback, zap.NewNop())
-		assert.Equal(t, cleared, got)
-		assert.False(t, evaluation.HoldoutStale(holdoutGroups(got), 1), "an environment without a group must not force updates")
+		// The clearance is cached, but updated_at 0 is not a stop revision, so
+		// the evaluator sees no group and nothing is forced.
+		assert.Nil(t, got, "an environment without a group must not force updates")
 	})
 	t.Run("a redis error also uses the fallback", func(t *testing.T) {
 		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
@@ -222,56 +223,6 @@ func TestLoadLiveHoldoutGroupFallbackDoesNotRestoreAStoppedSnapshot(t *testing.T
 	assert.Equal(t, int64(20), cached.UpdatedAt)
 }
 
-func TestFeatureFillDoesNotRestorePreHoldoutSnapshot(t *testing.T) {
-	t.Parallel()
-	controller := gomock.NewController(t)
-	environmentID := "env-feature-fill"
-	memory := cachev3.NewFeaturesCache(cachev3.NewInMemoryCache(), time.Minute)
-	redis := cachev3mock.NewMockFeaturesCache(controller)
-	before := &featureproto.Features{Features: []*featureproto.Feature{
-		{Id: "normal", Enabled: true, OffVariation: "on"},
-	}}
-	after := &featureproto.Features{Features: []*featureproto.Feature{
-		{Id: "normal", Enabled: true, OffVariation: "on"},
-		{Id: "targeted", Enabled: false},
-	}}
-	redis.EXPECT().Get(environmentID).DoAndReturn(func(string) (*featureproto.Features, error) {
-		invalidateHoldoutFill(environmentID, func() {
-			require.NoError(t, memory.Evict(environmentID))
-		})
-		return before, nil
-	})
-	redis.EXPECT().Get(environmentID).Return(after, nil)
-
-	got, err := FillFeatureSnapshot(environmentID, func() (*featureproto.Features, error) {
-		return redis.Get(environmentID)
-	}, func(features *featureproto.Features) {
-		require.NoError(t, memory.Put(features, environmentID))
-	})
-	require.NoError(t, err)
-	require.Len(t, got.Features, 2)
-	assert.Equal(t, "targeted", got.Features[1].Id)
-
-	cached, err := memory.Get(environmentID)
-	require.NoError(t, err)
-	require.Len(t, cached.Features, 2)
-	assert.Equal(t, "targeted", cached.Features[1].Id)
-}
-
-func TestRemovedIDsForTag(t *testing.T) {
-	t.Parallel()
-	service := &grpcGatewayService{}
-	features := []*featureproto.Feature{
-		{Id: "android-flag", Tags: []string{"android"}},
-		{Id: "ios-flag", Tags: []string{"ios"}},
-		{Id: "both", Tags: []string{"android", "ios"}},
-	}
-	removed := []string{"android-flag", "ios-flag", "both", "missing"}
-	assert.Equal(t, []string{"android-flag", "both"}, service.removedIDsForTag(features, removed, "android"))
-	assert.Equal(t, removed, service.removedIDsForTag(features, removed, ""))
-	assert.Empty(t, service.removedIDsForTag(features, nil, "android"))
-}
-
 func TestGatewayEvaluateFeaturesHoldout(t *testing.T) {
 	t.Parallel()
 	service := &gatewayService{logger: zap.NewNop()}
@@ -323,126 +274,6 @@ func TestGatewayEvaluateFeaturesHoldout(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, featureproto.Reason_OFF_VARIATION, without.Evaluations[0].Reason.Type)
-}
-
-func TestGatewayEvaluateDisabledHoldoutTarget(t *testing.T) {
-	t.Parallel()
-	service := &gatewayService{logger: zap.NewNop()}
-	disabled := &featureproto.Feature{
-		Id:      "flag",
-		Enabled: false,
-		Variations: []*featureproto.Variation{
-			{Id: "hold", Value: "hold"},
-			{Id: "on", Value: "on"},
-		},
-		DefaultStrategy: &featureproto.Strategy{
-			Type:          featureproto.Strategy_FIXED,
-			FixedStrategy: &featureproto.FixedStrategy{Variation: "on"},
-		},
-	}
-	sibling := &featureproto.Feature{
-		Id:           "sibling",
-		Enabled:      true,
-		OffVariation: "off",
-		Variations: []*featureproto.Variation{
-			{Id: "off", Value: "off"},
-			{Id: "on", Value: "on"},
-		},
-		DefaultStrategy: &featureproto.Strategy{
-			Type:          featureproto.Strategy_FIXED,
-			FixedStrategy: &featureproto.FixedStrategy{Variation: "on"},
-		},
-	}
-	group := &featureproto.HoldoutGroup{
-		Id:             "hg",
-		EnvironmentId:  "env",
-		Status:         featureproto.HoldoutGroup_RUNNING,
-		AssignmentType: featureproto.HoldoutGroup_HASH,
-		SamplingSeed:   "seed",
-		Percentage:     100,
-		Features: []*featureproto.HoldoutGroupFeature{{
-			FeatureId:          "flag",
-			HoldoutVariationId: "hold",
-		}},
-	}
-	member, err := service.evaluateFeatures(
-		context.Background(),
-		&userproto.User{Id: "user-1"},
-		[]*featureproto.Feature{disabled, sibling},
-		"env",
-		"",
-		group,
-	)
-	require.NoError(t, err)
-	require.Len(t, member.Evaluations, 2)
-	byID := map[string]*featureproto.Evaluation{}
-	for _, evaluation := range member.Evaluations {
-		byID[evaluation.FeatureId] = evaluation
-	}
-	assert.Equal(t, featureproto.Reason_HOLDOUT, byID["flag"].Reason.Type)
-	assert.Equal(t, "hold", byID["flag"].VariationId)
-	assert.Equal(t, "sibling", byID["sibling"].FeatureId)
-
-	group.Percentage = 0
-	nonMember, err := service.evaluateFeatures(
-		context.Background(),
-		&userproto.User{Id: "user-1"},
-		[]*featureproto.Feature{disabled, sibling},
-		"env",
-		"",
-		group,
-	)
-	require.NoError(t, err)
-	require.Len(t, nonMember.Evaluations, 1)
-	assert.Equal(t, "sibling", nonMember.Evaluations[0].FeatureId)
-}
-
-func TestListFeaturesKeepsDisabledHoldoutTarget(t *testing.T) {
-	t.Parallel()
-	controller := gomock.NewController(t)
-	client := featureclientmock.NewMockClient(controller)
-	client.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(&featureproto.ListFeaturesResponse{
-		Features: []*featureproto.Feature{
-			{Id: "kept", Enabled: false},
-			{Id: "dropped", Enabled: false},
-			{Id: "normal", Enabled: true, OffVariation: "on"},
-		},
-	}, nil)
-	got, err := ListFeatures(
-		context.Background(),
-		client,
-		"env",
-		map[string]struct{}{"kept": {}},
-	)
-	require.NoError(t, err)
-	require.Len(t, got, 2)
-	assert.Equal(t, "kept", got[0].Id)
-	assert.Equal(t, "normal", got[1].Id)
-}
-
-func TestListFeaturesKeepsDependencyOfStoppedTarget(t *testing.T) {
-	t.Parallel()
-	controller := gomock.NewController(t)
-	client := featureclientmock.NewMockClient(controller)
-	client.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(&featureproto.ListFeaturesResponse{
-		Features: []*featureproto.Feature{
-			{
-				Id:           "dependent",
-				Enabled:      true,
-				OffVariation: "off",
-				Prerequisites: []*featureproto.Prerequisite{
-					{FeatureId: "flag", VariationId: "on"},
-				},
-			},
-			{Id: "flag", Enabled: false},
-			{Id: "dropped", Enabled: false},
-		},
-	}, nil)
-	got, err := ListFeatures(context.Background(), client, "env", nil)
-	require.NoError(t, err)
-	require.Len(t, got, 2)
-	assert.Equal(t, "dependent", got[0].Id)
-	assert.Equal(t, "flag", got[1].Id)
 }
 
 func TestCountHoldoutEvaluationRequiresTargets(t *testing.T) {

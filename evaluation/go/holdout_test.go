@@ -210,8 +210,7 @@ func TestEvaluationHoldout(t *testing.T) {
 	assert.Same(t, live, EvaluationHoldout(live))
 	assert.Same(t, cleared, EvaluationHoldout(cleared))
 	assert.Nil(t, EvaluationHoldout(nil))
-	neverStopped := &ftproto.HoldoutGroup{}
-	assert.Same(t, neverStopped, EvaluationHoldout(neverStopped))
+	assert.Nil(t, EvaluationHoldout(&ftproto.HoldoutGroup{}))
 	assert.Nil(t, EvaluationHoldout(&ftproto.HoldoutGroup{
 		Id:        "hg",
 		Status:    ftproto.HoldoutGroup_STOPPED,
@@ -313,10 +312,10 @@ func TestClearanceSnapshot(t *testing.T) {
 	assert.Same(t, snapshot, EvaluationHoldout(snapshot))
 	assert.True(t, holdoutStale([]*ftproto.HoldoutGroup{snapshot}, 41))
 	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{snapshot}, 42))
-	// A never-stopped environment is not a re-evaluation signal, but the
-	// snapshot still reaches the evaluator so a disabled dependency is omitted.
-	neverStopped := ClearanceSnapshot(0)
-	assert.Same(t, neverStopped, EvaluationHoldout(neverStopped))
-	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{neverStopped}, 0))
+	// A never-stopped environment is not a signal.
+	assert.Nil(t, EvaluationHoldout(ClearanceSnapshot(0)))
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{ClearanceSnapshot(0)}, 0))
+	// The unavailable marker is always stale, but only on a clearance.
 	assert.True(t, holdoutStale([]*ftproto.HoldoutGroup{UnavailableHoldoutSnapshot()}, 1_700_000_000))
+	assert.False(t, holdoutStale([]*ftproto.HoldoutGroup{{Id: "hg", UpdatedAt: 1}}, 1_700_000_000))
 }
