@@ -542,7 +542,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	features := f.([]*featureproto.Feature)
-	group := s.liveHoldoutGroup(environmentId)
+	group := s.liveHoldoutGroup(ctx, environmentId)
 	if len(features) == 0 && !evaluation.HoldoutStale(holdoutGroups(group), s.holdoutAdjustedAt(req)) {
 		evaluationsCounter.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures, sourceID).Inc()
@@ -807,7 +807,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-	group := s.liveHoldoutGroup(envAPIKey.Environment.Id)
+	group := s.liveHoldoutGroup(ctx, envAPIKey.Environment.Id)
 	// Drop a disabled flag with no off variation before selecting it and its
 	// dependencies. Otherwise a leftover target is evaluated as a normal flag.
 	fs, _ = evaluation.FeaturesForServerEval(fs, group)
@@ -943,7 +943,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	} else {
 		targetFeatures = s.filterByTag(features, req.Tag)
 	}
-	targetFeatures, hidden := evaluation.FeaturesForLocalEval(targetFeatures, s.liveHoldoutGroup(environmentId))
+	targetFeatures, hidden := evaluation.FeaturesForLocalEval(targetFeatures, s.liveHoldoutGroup(ctx, environmentId))
 	now := time.Now()
 	if len(targetFeatures) == 0 && len(hidden) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,

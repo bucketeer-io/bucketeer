@@ -15,14 +15,18 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"sync"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -78,13 +82,21 @@ func commitHoldoutFill(environmentID string, epoch uint64, put func()) bool {
 	return true
 }
 
-// loadLiveHoldoutGroup reads the serving snapshot from memory, then redis.
-// A miss is "no live group". A read error is an unavailable snapshot, so a
-// disabled flag with no off variation stays omitted while the cache is down.
-// The gateway does not query MySQL.
+// holdoutSnapshotFallback reads the serving snapshot when both caches miss.
+// It is the L3 of the holdout snapshot, like the feature service is for the
+// features cache. nil disables it.
+type holdoutSnapshotFallback func(ctx context.Context) (*featureproto.HoldoutGroup, error)
+
+// loadLiveHoldoutGroup reads the serving snapshot from memory, then redis,
+// then the fallback. Only when every layer fails is the snapshot unavailable,
+// which marks the issued evaluation IDs so the client reconciles later. Redis
+// is kept warm by the batch cacher; the fallback covers the window before its
+// first run and a flushed cache, so a missing key never degrades evaluation.
 func loadLiveHoldoutGroup(
+	ctx context.Context,
 	memory, redis cachev3.HoldoutGroupCache,
 	environmentID string,
+	fallback holdoutSnapshotFallback,
 	logger *zap.Logger,
 ) *featureproto.HoldoutGroup {
 	readFailed := false
@@ -109,9 +121,6 @@ func loadLiveHoldoutGroup(
 		}
 		return nil
 	}
-	// A miss and a read error are both a missing snapshot. Serve the stand-in
-	// clearance so a disabled flag with no off variation stays omitted, and
-	// do not cache it: the next request should see Redis once it recovers.
 	var latest *featureproto.HoldoutGroup
 	for attempt := 0; attempt < 2; attempt++ {
 		epoch := loadHoldoutFillEpoch(environmentID)
@@ -123,7 +132,23 @@ func loadLiveHoldoutGroup(
 					zap.String("environmentId", environmentID),
 				)
 			}
-			return evaluation.UnavailableHoldoutSnapshot()
+			// A miss and a read error are both a missing snapshot. Read it
+			// from the feature service instead. Only memory is filled: Redis
+			// belongs to the cacher and the refresher, whose generation
+			// guard would otherwise have to arbitrate with every gateway pod.
+			if fallback == nil {
+				return evaluation.UnavailableHoldoutSnapshot()
+			}
+			group, err = fallback(ctx)
+			if err != nil {
+				if logger != nil {
+					logger.Error("Failed to read the holdout snapshot from the feature service",
+						zap.Error(err),
+						zap.String("environmentId", environmentID),
+					)
+				}
+				return evaluation.UnavailableHoldoutSnapshot()
+			}
 		}
 		latest = group
 		if memory == nil {
@@ -153,7 +178,9 @@ func CachedHoldoutTargetIDs(
 	environmentID string,
 	logger *zap.Logger,
 ) map[string]struct{} {
-	return evaluation.HoldoutTargetFeatureIDs(loadLiveHoldoutGroup(memory, redis, environmentID, logger))
+	return evaluation.HoldoutTargetFeatureIDs(
+		loadLiveHoldoutGroup(context.Background(), memory, redis, environmentID, nil, logger),
+	)
 }
 
 // FillFeatureSnapshot reads a feature snapshot and stores it in memory when
@@ -216,10 +243,88 @@ func countHoldoutEvaluation(group *featureproto.HoldoutGroup, sourceID string) {
 	holdoutEvaluationsCounter.WithLabelValues(sourceID).Inc()
 }
 
-func (s *gatewayService) liveHoldoutGroup(environmentID string) *featureproto.HoldoutGroup {
-	return loadLiveHoldoutGroup(s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentID, s.logger)
+func (s *gatewayService) liveHoldoutGroup(ctx context.Context, environmentID string) *featureproto.HoldoutGroup {
+	return loadLiveHoldoutGroup(
+		ctx, s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentID,
+		holdoutSnapshotFromService(&s.flightgroup, s.featureClient, environmentID),
+		s.logger,
+	)
 }
 
-func (s *grpcGatewayService) liveHoldoutGroup(environmentID string) *featureproto.HoldoutGroup {
-	return loadLiveHoldoutGroup(s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentID, s.logger)
+func (s *grpcGatewayService) liveHoldoutGroup(ctx context.Context, environmentID string) *featureproto.HoldoutGroup {
+	return loadLiveHoldoutGroup(
+		ctx, s.holdoutGroupCache, s.holdoutGroupRedisCache, environmentID,
+		holdoutSnapshotFromService(&s.flightgroup, s.featureClient, environmentID),
+		s.logger,
+	)
+}
+
+// holdoutSnapshotFromService shares one feature-service read per environment
+// across the requests that miss both caches at the same time.
+func holdoutSnapshotFromService(
+	flightgroup *singleflight.Group,
+	client featureclient.Client,
+	environmentID string,
+) holdoutSnapshotFallback {
+	if client == nil {
+		return nil
+	}
+	return func(ctx context.Context) (*featureproto.HoldoutGroup, error) {
+		result, err, _ := flightgroup.Do("holdout:"+environmentID, func() (interface{}, error) {
+			fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleflightFetchTimeout)
+			defer cancel()
+			return HoldoutServingSnapshot(fetchCtx, client, environmentID)
+		})
+		if err != nil {
+			return nil, err
+		}
+		return result.(*featureproto.HoldoutGroup), nil
+	}
+}
+
+// HoldoutServingSnapshot rebuilds the serving snapshot through the feature
+// service, with the same shape as storage.ServingSnapshot: the newest
+// serving group with its current targets, or an empty snapshot carrying the
+// updated_at of the newest stopped group so a client behind the stop still
+// gets a full evaluation.
+func HoldoutServingSnapshot(
+	ctx context.Context,
+	client featureclient.Client,
+	environmentID string,
+) (*featureproto.HoldoutGroup, error) {
+	live, err := client.ListHoldoutGroups(ctx, &featureproto.ListHoldoutGroupsRequest{
+		EnvironmentId:  environmentID,
+		PageSize:       1,
+		OrderBy:        featureproto.ListHoldoutGroupsRequest_UPDATED_AT,
+		OrderDirection: featureproto.ListHoldoutGroupsRequest_DESC,
+		Statuses: []featureproto.HoldoutGroup_Status{
+			featureproto.HoldoutGroup_RUNNING,
+			featureproto.HoldoutGroup_ANALYSIS,
+		},
+		Archived: wrapperspb.Bool(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(live.HoldoutGroups) > 0 {
+		return live.HoldoutGroups[0], nil
+	}
+	stopped, err := client.ListHoldoutGroups(ctx, &featureproto.ListHoldoutGroupsRequest{
+		EnvironmentId:  environmentID,
+		PageSize:       1,
+		OrderBy:        featureproto.ListHoldoutGroupsRequest_UPDATED_AT,
+		OrderDirection: featureproto.ListHoldoutGroupsRequest_DESC,
+		Statuses: []featureproto.HoldoutGroup_Status{
+			featureproto.HoldoutGroup_STOPPED,
+			featureproto.HoldoutGroup_FORCE_STOPPED,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var updatedAt int64
+	if len(stopped.HoldoutGroups) > 0 {
+		updatedAt = stopped.HoldoutGroups[0].UpdatedAt
+	}
+	return evaluation.ClearanceSnapshot(updatedAt), nil
 }

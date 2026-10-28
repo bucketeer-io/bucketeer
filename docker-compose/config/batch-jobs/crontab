@@ -43,6 +43,9 @@
 # Auto Ops Rules Cacher - every minute
 * * * * * /usr/local/bin/run-batch-job.sh AutoOpsRulesCacher
 
+# Holdout Group Cacher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh HoldoutGroupCacher
+
 # Tag Deleter - every minute (dev override)
 * * * * * /usr/local/bin/run-batch-job.sh TagDeleter
 
