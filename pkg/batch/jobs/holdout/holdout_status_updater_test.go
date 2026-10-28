@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
@@ -204,6 +205,26 @@ func TestRun(t *testing.T) {
 				Id: "due", EnvironmentId: "env", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
 			},
 		).Return(&featureproto.StartHoldoutGroupResponse{}, nil)
+		assert.NoError(t, updater.Run(context.Background()))
+	})
+
+	t.Run("skips the legacy environment with an empty ID", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		updater := newStatusUpdater(t, controller)
+		updater.environmentClient.(*envmock.MockClient).EXPECT().ListEnvironmentsV2(
+			gomock.Any(), gomock.Any(),
+		).Return(&environmentproto.ListEnvironmentsV2Response{
+			Environments: []*environmentproto.EnvironmentV2{{Id: ""}, {Id: "env"}},
+		}, nil)
+		// ListHoldoutGroups rejects an empty environment_id, so the legacy
+		// environment must not be queried; the other environments still are.
+		updater.featureClient.(*fcmock.MockClient).EXPECT().ListHoldoutGroups(
+			gomock.Any(), gomock.Any(),
+		).DoAndReturn(func(_ context.Context, req *featureproto.ListHoldoutGroupsRequest, _ ...grpc.CallOption) (*featureproto.ListHoldoutGroupsResponse, error) {
+			assert.Equal(t, "env", req.EnvironmentId)
+			return &featureproto.ListHoldoutGroupsResponse{}, nil
+		}).Times(1)
 		assert.NoError(t, updater.Run(context.Background()))
 	})
 
