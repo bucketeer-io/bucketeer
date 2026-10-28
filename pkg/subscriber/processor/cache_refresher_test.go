@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
@@ -775,6 +776,19 @@ func TestCacheRefresherHoldoutGroup(t *testing.T) {
 			Return(true, nil)
 		publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		require.NoError(t, refresher.refresh(context.Background(), event))
+	})
+
+	t.Run("failed read writes the unavailable snapshot at the captured generation and publishes", func(t *testing.T) {
+		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+			Return(nil, errors.New("db"))
+		// The barrier keeps the generation marker so an older in-flight write is
+		// rejected, and it is the unavailable snapshot so evaluation IDs issued
+		// meanwhile are marked and recovery forces a full evaluation.
+		holdoutCache.EXPECT().
+			PutIfNewer(evaluation.UnavailableHoldoutSnapshot(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		assert.EqualError(t, refresher.refresh(context.Background(), event), "db")
 	})
 
 	t.Run("stale write still publishes", func(t *testing.T) {

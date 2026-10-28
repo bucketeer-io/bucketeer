@@ -26,6 +26,7 @@ const (
 	errorTypeEvaluationPut            = "evaluation_put"
 	errorTypeEvaluationPatch          = "evaluation_patch"
 	errorTypeConnectionRefusedByLimit = "connection_refused_by_limit"
+	errorTypeHoldoutUnavailable       = "holdout_unavailable"
 
 	patchCodeDiff = "Diff"
 	patchCodeNone = "None"

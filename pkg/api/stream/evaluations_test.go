@@ -32,6 +32,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -272,22 +273,76 @@ func TestHandleExitsOnDispatcherShutdown(t *testing.T) {
 	}
 }
 
+func TestHandleClosesStreamWhenHoldoutSnapshotUnavailable(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, nil, zap.NewNop())
+	// The gateway marks IDs issued without a holdout snapshot. A stream must not
+	// keep such assignments alive until an unrelated domain event: it has to
+	// close so the reconnect forces a full evaluation that restores HOLDOUT.
+	markedUEID := "unavailable-holdout:ueid-1"
+	require.True(t, evaluation.IssuedWithoutHoldout(markedUEID))
+	rec := httptest.NewRecorder()
+	handleReturned := runStreamHandle(t, d, rec, fixedEvaluate(markedUEID))
+
+	select {
+	case <-handleReturned:
+	case <-time.After(time.Second):
+		t.Fatal("Handle kept the stream open after an evaluation without a holdout snapshot")
+	}
+	body := rec.Body.String()
+	assert.Contains(t, body, "event: put\n", "the fresh assignments must still be delivered")
+	assert.Contains(t, body, markedUEID)
+	assert.Contains(t, body, "event: error\n", "the stream must close with a retryable error")
+	assert.Contains(t, body, "holdout snapshot unavailable")
+	assert.Empty(t, snapshotConnCounts(d), "the connection must be deregistered")
+}
+
+func TestHandleKeepsStreamOpenWithHoldoutSnapshot(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, nil, zap.NewNop())
+	rec := httptest.NewRecorder()
+	handleReturned := runStreamHandle(t, d, rec, fixedEvaluate("ueid-1"))
+
+	select {
+	case <-handleReturned:
+		t.Fatal("Handle closed a stream whose evaluation had the holdout snapshot")
+	case <-time.After(100 * time.Millisecond):
+	}
+	d.Shutdown()
+	<-handleReturned
+	assert.NotContains(t, rec.Body.String(), "event: error\n")
+}
+
+func fixedEvaluate(ueid string) EvaluateFunc {
+	return func(
+		_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64, _ bool,
+		_ []*featureproto.Feature,
+	) (string, *featureproto.UserEvaluations, error) {
+		return ueid, &featureproto.UserEvaluations{
+			Id:          ueid,
+			Evaluations: []*featureproto.Evaluation{},
+		}, nil
+	}
+}
+
 // startBlockedStreamHandle runs Handle for one SSE connection in a goroutine and waits
 // until the connection is registered. The returned channel is closed when Handle returns.
 func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
 	t.Helper()
+	return runStreamHandle(t, d, httptest.NewRecorder(), fixedEvaluate("ueid-1"))
+}
+
+// runStreamHandle runs Handle for one SSE connection in a goroutine and waits
+// until the connection is registered or Handle returns. The returned channel
+// is closed when Handle returns.
+func runStreamHandle(
+	t *testing.T, d *Dispatcher, rec *httptest.ResponseRecorder, evaluate EvaluateFunc,
+) <-chan struct{} {
+	t.Helper()
 	h := NewEvaluationsHandler(
 		d,
 		time.Hour, // ensure the heartbeat ticker never fires during the test
-		func(
-			_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64, _ bool,
-			_ []*featureproto.Feature,
-		) (string, *featureproto.UserEvaluations, error) {
-			return "ueid-1", &featureproto.UserEvaluations{
-				Id:          "ueid-1",
-				Evaluations: []*featureproto.Evaluation{},
-			}, nil
-		},
+		evaluate,
 		func(_ context.Context, _ *http.Request) (*accountproto.EnvironmentAPIKey, error) {
 			return &accountproto.EnvironmentAPIKey{
 				Environment: &environmentproto.EnvironmentV2{Id: "env-1"},
@@ -305,7 +360,6 @@ func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
 	})
 	require.NoError(t, err)
 	httpReq := httptest.NewRequest(http.MethodPost, "/stream_evaluations", bytes.NewReader(body))
-	rec := httptest.NewRecorder()
 
 	handleReturned := make(chan struct{})
 	go func() {
@@ -314,7 +368,12 @@ func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
 	}()
 
 	require.Eventually(t, func() bool {
-		return len(snapshotConnCounts(d)) > 0
+		select {
+		case <-handleReturned:
+			return true
+		default:
+			return len(snapshotConnCounts(d)) > 0
+		}
 	}, time.Second, 10*time.Millisecond)
 
 	return handleReturned

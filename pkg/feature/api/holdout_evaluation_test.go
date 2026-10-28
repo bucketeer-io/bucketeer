@@ -24,6 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
@@ -197,8 +198,8 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		storage.EXPECT().GetClearedHoldoutUpdatedAt(gomock.Any(), "env").Return(int64(0), errors.New("db"))
 		cacheMock.EXPECT().PutIfNewer(gomock.Any(), "env", gomock.Any()).
 			DoAndReturn(func(group *featureproto.HoldoutGroup, _ string, _ int64) (bool, error) {
-				assert.Empty(t, group.Id)
-				assert.Positive(t, group.UpdatedAt)
+				assert.Equal(t, evaluation.UnavailableHoldoutSnapshot(), group,
+					"the barrier must be the unavailable snapshot so issued IDs are marked")
 				return true, nil
 			})
 		service := &FeatureService{
@@ -228,8 +229,8 @@ func TestRefreshHoldoutCache(t *testing.T) {
 		storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env").Return(nil, errors.New("db"))
 		cacheMock.EXPECT().PutIfNewer(gomock.Any(), "env", gomock.Any()).
 			DoAndReturn(func(group *featureproto.HoldoutGroup, _ string, _ int64) (bool, error) {
-				assert.Empty(t, group.Id)
-				assert.Positive(t, group.UpdatedAt)
+				assert.Equal(t, evaluation.UnavailableHoldoutSnapshot(), group,
+					"the barrier must be the unavailable snapshot so issued IDs are marked")
 				return true, nil
 			})
 		service := &FeatureService{

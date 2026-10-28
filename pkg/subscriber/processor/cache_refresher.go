@@ -323,9 +323,10 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	generation := c.now().UnixNano()
 	snapshot, err := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
 	if err != nil {
-		// A failed read must not delete the generation marker. An empty
-		// snapshot written at this generation rejects the older in-flight read.
-		barrier := evaluation.ClearanceSnapshot(c.now().Unix())
+		// A failed read must not delete the generation marker. The unavailable
+		// snapshot written at this generation rejects the older in-flight read,
+		// and marks evaluation IDs so recovery forces a full evaluation.
+		barrier := evaluation.UnavailableHoldoutSnapshot()
 		if _, putErr := c.holdoutGroupCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
 			return putErr
 		}

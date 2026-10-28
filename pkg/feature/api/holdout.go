@@ -885,11 +885,16 @@ func (s *FeatureService) refreshHoldoutCache(ctx context.Context, environmentID 
 	}
 }
 
-// putHoldoutBarrier stores an empty snapshot under the generation captured
-// before the failed read. The value has to stay in place: PutIfNewer accepts
-// any write once the value is gone, even if the generation marker remains.
+// putHoldoutBarrier stores the unavailable snapshot under the generation
+// captured before the failed read. The value has to stay in place: PutIfNewer
+// accepts any write once the value is gone, even if the generation marker
+// remains. It is the unavailable snapshot, not a timestamped clearance, so
+// evaluation IDs issued while it is cached are marked and the next write of
+// the real snapshot forces clients into a full evaluation that restores
+// HOLDOUT. A timestamped clearance would issue unmarked IDs, and a restored
+// group older than the client's cursor would never be reconciled.
 func (s *FeatureService) putHoldoutBarrier(environmentID string, generation int64) {
-	barrier := evaluation.ClearanceSnapshot(time.Now().Unix())
+	barrier := evaluation.UnavailableHoldoutSnapshot()
 	accepted, err := s.holdoutGroupCache.PutIfNewer(barrier, environmentID, generation)
 	if err != nil {
 		s.logger.Error("Failed to cache the holdout read barrier",

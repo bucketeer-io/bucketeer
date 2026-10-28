@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -155,6 +156,9 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 	evaluatedAt = newEvalAt
 	sseInitialPutDurationHistogram.WithLabelValues(envID, req.Tag, sourceID).
 		Observe(time.Since(requestStart).Seconds())
+	if h.closeIfHoldoutUnavailable(w, flusher, ueid, envID, req.Tag, sourceID, req.User.Id) {
+		return
+	}
 
 	ticker := time.NewTicker(h.heartbeatInterval)
 	defer ticker.Stop()
@@ -188,8 +192,35 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 				Observe(time.Since(ev.dispatchedAt).Seconds())
 			ueid = newUEID
 			evaluatedAt = newEvalAt
+			if h.closeIfHoldoutUnavailable(w, flusher, ueid, envID, req.Tag, sourceID, req.User.Id) {
+				return
+			}
 		}
 	}
+}
+
+// closeIfHoldoutUnavailable ends the stream when the evaluation ran without a
+// holdout snapshot. A stream only re-evaluates on domain events, so a client
+// that connected during a holdout cache miss would otherwise keep normal
+// assignments until an unrelated change arrives. The marked ID has already
+// been delivered, so the reconnect forces a full evaluation that restores
+// HOLDOUT once the snapshot is back.
+func (h *EvaluationsHandler) closeIfHoldoutUnavailable(
+	w io.Writer,
+	flusher http.Flusher,
+	ueid, envID, tag, sourceID, userID string,
+) bool {
+	if !evaluation.IssuedWithoutHoldout(ueid) {
+		return false
+	}
+	sseErrorsCounter.WithLabelValues(envID, tag, sourceID, errorTypeHoldoutUnavailable).Inc()
+	h.logger.Warn("Closing stream: holdout snapshot unavailable, client must reconnect",
+		zap.String("environmentID", envID),
+		zap.String("tag", tag),
+		zap.String("userID", userID),
+	)
+	sendErrorEvent(w, flusher, gatewayproto.StreamErrorEvent_INTERNAL, "holdout snapshot unavailable, retry")
+	return true
 }
 
 func (h *EvaluationsHandler) sendInitialPut(
