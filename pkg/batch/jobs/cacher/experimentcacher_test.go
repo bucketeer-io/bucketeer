@@ -35,6 +35,7 @@ func TestExperimentsPutCache(t *testing.T) {
 	defer controller.Finish()
 
 	envID := "env-id"
+	generation := int64(1_791_600_000_000_000_000)
 	experiments := &expproto.Experiments{
 		Experiments: []*expproto.Experiment{
 			{
@@ -54,30 +55,30 @@ func TestExperimentsPutCache(t *testing.T) {
 		{
 			desc: "err: error at index 0",
 			setup: func(fc *experimentCacher) {
-				fc.caches[0].(*mockcachev3.MockExperimentsCache).EXPECT().Put(experiments, envID).
-					Return(errors.New("internal error"))
-				fc.caches[1].(*mockcachev3.MockExperimentsCache).EXPECT().Put(experiments, envID).
-					Return(nil)
+				fc.caches[0].(*mockcachev3.MockExperimentsCache).EXPECT().PutIfNewer(experiments, envID, generation).
+					Return(false, errors.New("internal error"))
+				fc.caches[1].(*mockcachev3.MockExperimentsCache).EXPECT().PutIfNewer(experiments, envID, generation).
+					Return(true, nil)
 			},
 			expected: 1,
 		},
 		{
 			desc: "err: error at index 1",
 			setup: func(fc *experimentCacher) {
-				fc.caches[0].(*mockcachev3.MockExperimentsCache).EXPECT().Put(experiments, envID).
-					Return(nil)
-				fc.caches[1].(*mockcachev3.MockExperimentsCache).EXPECT().Put(experiments, envID).
-					Return(errors.New("internal error"))
+				fc.caches[0].(*mockcachev3.MockExperimentsCache).EXPECT().PutIfNewer(experiments, envID, generation).
+					Return(true, nil)
+				fc.caches[1].(*mockcachev3.MockExperimentsCache).EXPECT().PutIfNewer(experiments, envID, generation).
+					Return(false, errors.New("internal error"))
 			},
 			expected: 1,
 		},
 		{
 			desc: "success",
 			setup: func(fc *experimentCacher) {
-				fc.caches[0].(*mockcachev3.MockExperimentsCache).EXPECT().Put(experiments, envID).
-					Return(nil)
-				fc.caches[1].(*mockcachev3.MockExperimentsCache).EXPECT().Put(experiments, envID).
-					Return(nil)
+				fc.caches[0].(*mockcachev3.MockExperimentsCache).EXPECT().PutIfNewer(experiments, envID, generation).
+					Return(true, nil)
+				fc.caches[1].(*mockcachev3.MockExperimentsCache).EXPECT().PutIfNewer(experiments, envID, generation).
+					Return(true, nil)
 			},
 			expected: 2,
 		},
@@ -87,7 +88,7 @@ func TestExperimentsPutCache(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			cacher := newExperimentsFlagCacher(t, controller)
 			p.setup(cacher)
-			updatedInstances := cacher.putCache(experiments, envID)
+			updatedInstances := cacher.putCache(experiments, envID, generation)
 			assert.Equal(t, p.expected, updatedInstances)
 		})
 	}

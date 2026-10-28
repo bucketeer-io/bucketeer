@@ -27,14 +27,11 @@ import (
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
-)
-
-const (
-	day = 24 * time.Hour
 )
 
 type evalEvtWriter struct {
@@ -242,7 +239,7 @@ func (w *evalEvtWriter) listExperiments(
 				// Because the evaluation and goal events may be sent with a delay
 				// for many reasons from the client side, we still calculate
 				// the results for two days after it stopped.
-				StopAt:        time.Now().In(w.location).Add(-2 * day).Unix(),
+				StopAt:        time.Now().In(w.location).Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
 				PageSize:      0,
 				EnvironmentId: environmentId,
 				Statuses: []exproto.Experiment_Status{

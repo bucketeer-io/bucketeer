@@ -89,7 +89,7 @@ func NewEventsOPSPersister(
 			ftClient,
 			opsClient,
 			cachev3.NewEventCountCache(cachev3.NewRedisCache(redisClient)),
-			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient)),
+			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient), 0),
 			e.subscriberType,
 			logger,
 		)
@@ -103,7 +103,7 @@ func NewEventsOPSPersister(
 			ftClient,
 			opsClient,
 			cachev3.NewEventCountCache(cachev3.NewRedisCache(redisClient)),
-			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient)),
+			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient), 0),
 			e.subscriberType,
 			logger,
 		)

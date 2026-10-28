@@ -1131,7 +1131,7 @@ func (s *server) registerPubSubProcessorMap(
 				cachev3.NewSegmentUsersCache(nonPersistentRedisCache, 0),
 				cachev3.NewEnvironmentAPIKeyCache(nonPersistentRedisCache, 0),
 				cachev3.NewExperimentsCache(nonPersistentRedisCache),
-				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache),
+				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache, cachev3.NonPersistentAutoOpsRulesCacheTTL),
 				cacheInvalidationPublisher,
 				logger,
 			),

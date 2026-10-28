@@ -24,6 +24,10 @@ env:
       name: bucketeer
   goalTopic: goal
   evaluationTopic: evaluation
+  evaluationDWHTopic: evaluation-events-dwh
+  evaluationOPSTopic: evaluation-events-ops
+  goalDWHTopic: goal-events-dwh
+  goalOPSTopic: goal-events-ops
   metricsTopic: metrics
   cacheInvalidationTopic: cache-invalidation
   publishNumGoroutines: 200

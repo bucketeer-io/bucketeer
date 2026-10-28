@@ -111,6 +111,8 @@ func (s *evaluationEventStorage) createEvaluationEventsBatch(
 		)
 	}
 
+	// Skip events already written, since the same event can be delivered more than once
+	query.WriteString(" ON CONFLICT DO NOTHING")
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
 	if err != nil {
 		return fmt.Errorf("failed to execute batch insert: %w", err)

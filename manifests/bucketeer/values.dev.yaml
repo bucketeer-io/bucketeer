@@ -251,6 +251,10 @@ api:
     project: ${global.pubsub.project}
     goalTopic: goal
     evaluationTopic: evaluation
+    evaluationDWHTopic: evaluation-events-dwh
+    evaluationOPSTopic: evaluation-events-ops
+    goalDWHTopic: goal-events-dwh
+    goalOPSTopic: goal-events-ops
     metricsTopic: metrics
     publishNumGoroutines: 200
     publishTimeout: 1m

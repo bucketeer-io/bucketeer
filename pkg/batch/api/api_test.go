@@ -620,9 +620,9 @@ func TestExperimentCacher(t *testing.T) {
 				nil,
 			)
 		redisMockClient.EXPECT().
-			Put(gomock.Any(), gomock.Any(), gomock.Any()).
+			PutIfNewer(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Times(2).
-			Return(nil)
+			Return(true, nil)
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
 		Job: batchproto.BatchJob_ExperimentCacher,
@@ -676,9 +676,9 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 				nil,
 			)
 		redisMockClient.EXPECT().
-			Put(gomock.Any(), gomock.Any(), gomock.Any()).
+			PutIfNewer(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Times(2).
-			Return(nil)
+			Return(true, nil)
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
 		Job: batchproto.BatchJob_AutoOpsRulesCacher,
