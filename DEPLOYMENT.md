@@ -192,6 +192,24 @@ mkdir -p docker-compose/secrets
 echo "your-postgres-password" > docker-compose/secrets/postgres_password.txt
 ```
 
+**Reference existing Kubernetes Secrets from the Helm chart:**
+The chart renders every credential it receives through values (database passwords,
+the OAuth configuration with the Google client secret and demo password, the email
+provider configuration, the data warehouse configuration and the subscriber processor
+configuration) into Kubernetes `Secret` objects, never into ConfigMaps or literal
+container environment values. To keep the credentials out of the values files
+altogether, create the Secrets yourself and point the chart at them:
+- Database passwords: `global.operationalDatabase.mysql.existingSecret` /
+  `existingSecretKey` and `global.operationalDatabase.postgres.existingSecret` /
+  `existingSecretKey` (each service chart can override them under
+  `<chart>.env.operationalDatabase.<engine>`). The password is injected through a
+  `secretKeyRef`; when no existing Secret is set, the chart creates
+  `<service>-db-credentials` from `pass`.
+- OAuth configuration: `web.oauth.existingSecret`, a Secret with an
+  `oauth-config.json` key holding the complete `oauth` block as JSON.
+- Email configuration: `global.email.existingSecret`, a Secret with an
+  `email-config.json` key holding the complete `global.email` block as JSON.
+
 #### 2. Performance Configuration
 
 **Update resource limits for production:**

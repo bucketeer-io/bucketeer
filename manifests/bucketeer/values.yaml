@@ -43,14 +43,26 @@ global:
     type: mysql
     mysql:
       user: ""
+      # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass: ""
+      # Existing Secret to read the password from instead of `pass`. When set,
+      # `pass` is ignored. Each chart can override both values under its own
+      # env.operationalDatabase.mysql.
+      existingSecret: ""
+      existingSecretKey: "mysql-pass"
       host: ""
       port: 3306
       name: ""
       openConns: 50
     postgres:
       user: ""
+      # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass: ""
+      # Existing Secret to read the password from instead of `pass`. When set,
+      # `pass` is ignored. Each chart can override both values under its own
+      # env.operationalDatabase.postgres.
+      existingSecret: ""
+      existingSecretKey: "postgres-pass"
       host: ""
       port: 5432
       name: ""
@@ -111,9 +123,14 @@ global:
     emulatorHost: ""
     # Google Cloud project ID
     project: ""
-  # Global email configuration
+  # Global email configuration. The web and subscriber charts render this block
+  # as email-config.json into a Secret.
   email:
     enabled: false
+    # Existing Secret holding the complete email configuration under the
+    # `email-config.json` key (same JSON shape as this block). When set, the
+    # web and subscriber charts mount it instead of rendering this block.
+    existingSecret: ""
     provider: smtp
     smtp:
       host: smtp.gmail.com

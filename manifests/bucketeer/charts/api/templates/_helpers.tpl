@@ -46,3 +46,38 @@ Create chart name and version as used by the chart label.
 {{ template "api.fullname" . }}-service-token
 {{- end -}}
 {{- end -}}
+
+{{- define "api.db-credentials-secret" -}}
+{{ template "api.fullname" . }}-db-credentials
+{{- end -}}
+
+{{/*
+Name of the existing Secret that holds the password of the given database
+engine ("mysql" or "postgres"), or an empty string when the chart renders the
+password from values into its own Secret.
+Usage: include "api.db-password-existing-secret" (dict "root" . "engine" "mysql")
+*/}}
+{{- define "api.db-password-existing-secret" -}}
+{{- $local := index .root.Values.env.operationalDatabase .engine -}}
+{{- $global := index .root.Values.global.operationalDatabase .engine -}}
+{{- $local.existingSecret | default $global.existingSecret | default "" -}}
+{{- end -}}
+
+{{/*
+secretKeyRef fields (name and key) of the password env var of the given
+database engine ("mysql" or "postgres").
+Usage: include "api.db-password-secret-key-ref" (dict "root" . "engine" "mysql")
+*/}}
+{{- define "api.db-password-secret-key-ref" -}}
+{{- $local := index .root.Values.env.operationalDatabase .engine -}}
+{{- $global := index .root.Values.global.operationalDatabase .engine -}}
+{{- $defaultKey := printf "%s-pass" .engine -}}
+{{- $existing := include "api.db-password-existing-secret" . -}}
+{{- if $existing -}}
+name: {{ $existing | quote }}
+key: {{ $local.existingSecretKey | default $global.existingSecretKey | default $defaultKey | quote }}
+{{- else -}}
+name: {{ template "api.db-credentials-secret" .root }}
+key: {{ $defaultKey }}
+{{- end -}}
+{{- end -}}

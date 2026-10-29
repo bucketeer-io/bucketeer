@@ -72,7 +72,9 @@ spec:
             - name: BUCKETEER_API_MYSQL_USER
               value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_API_MYSQL_PASS
-              value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
+              valueFrom:
+                secretKeyRef:
+                  {{- include "api.db-password-secret-key-ref" (dict "root" . "engine" "mysql") | nindent 18 }}
             - name: BUCKETEER_API_MYSQL_HOST
               value: "{{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_API_MYSQL_PORT
@@ -82,7 +84,9 @@ spec:
             - name: BUCKETEER_API_POSTGRES_USER
               value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
             - name: BUCKETEER_API_POSTGRES_PASS
-              value: "{{ .Values.env.operationalDatabase.postgres.pass | default .Values.global.operationalDatabase.postgres.pass }}"
+              valueFrom:
+                secretKeyRef:
+                  {{- include "api.db-password-secret-key-ref" (dict "root" . "engine" "postgres") | nindent 18 }}
             - name: BUCKETEER_API_POSTGRES_HOST
               value: "{{ .Values.env.operationalDatabase.postgres.host | default .Values.global.operationalDatabase.postgres.host }}"
             - name: BUCKETEER_API_POSTGRES_PORT

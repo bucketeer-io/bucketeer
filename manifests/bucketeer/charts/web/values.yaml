@@ -24,13 +24,23 @@ env:
     type: "mysql"
     mysql:
       user:
+      # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass:
+      # Existing Secret to read the password from instead of `pass`. Leave
+      # empty to inherit global.operationalDatabase.mysql.
+      existingSecret:
+      existingSecretKey:
       host:
       port: 3306
       name:
     postgres:
       user:
+      # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass:
+      # Existing Secret to read the password from instead of `pass`. Leave
+      # empty to inherit global.operationalDatabase.postgres.
+      existingSecret:
+      existingSecretKey:
       host:
       port: 5432
       name:
@@ -138,7 +148,13 @@ tls:
     secrets:
 serviceToken:
   secret:
+# Rendered as oauth-config.json into a Secret.
 oauth:
+  # Existing Secret holding the complete OAuth configuration under the
+  # `oauth-config.json` key (same JSON shape as this block). When set, the
+  # chart mounts it instead of rendering this block. The demoSignIn values
+  # below are still published to the browser through env.js.
+  existingSecret:
   key:
     secret:
   issuer:

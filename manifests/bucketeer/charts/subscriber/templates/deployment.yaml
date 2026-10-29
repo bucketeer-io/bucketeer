@@ -38,8 +38,8 @@ spec:
           configMap:
             name: {{ template "subscriber.fullname" . }}-envoy-config
         - name: email-config
-          configMap:
-            name: {{ template "subscriber.fullname" . }}-email-config
+          secret:
+            secretName: {{ template "subscriber.email-config-secret" . }}
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -59,6 +59,9 @@ spec:
         - name: subscriber-config
           configMap:
             name: {{ template "subscriber.fullname" . }}-subscribers-config
+        - name: processors-config
+          secret:
+            secretName: {{ template "subscriber.fullname" . }}-processors-config
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "subscriber.fullname" . }}
       {{- end }}
@@ -113,7 +116,9 @@ spec:
             - name: BUCKETEER_SUBSCRIBER_MYSQL_USER
               value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_PASS
-              value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
+              valueFrom:
+                secretKeyRef:
+                  {{- include "subscriber.db-password-secret-key-ref" (dict "root" . "engine" "mysql") | nindent 18 }}
             - name: BUCKETEER_SUBSCRIBER_MYSQL_HOST
               value: "{{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_PORT
@@ -125,7 +130,9 @@ spec:
             - name: BUCKETEER_SUBSCRIBER_POSTGRES_USER
               value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
             - name: BUCKETEER_SUBSCRIBER_POSTGRES_PASS
-              value: "{{ .Values.env.operationalDatabase.postgres.pass | default .Values.global.operationalDatabase.postgres.pass }}"
+              valueFrom:
+                secretKeyRef:
+                  {{- include "subscriber.db-password-secret-key-ref" (dict "root" . "engine" "postgres") | nindent 18 }}
             - name: BUCKETEER_SUBSCRIBER_POSTGRES_HOST
               value: "{{ .Values.env.operationalDatabase.postgres.host | default .Values.global.operationalDatabase.postgres.host }}"
             - name: BUCKETEER_SUBSCRIBER_POSTGRES_PORT
@@ -165,9 +172,9 @@ spec:
             - name: BUCKETEER_SUBSCRIBER_ON_DEMAND_SUBSCRIBER_CONFIG
               value: /usr/local/conf/onDemandSubscribers.json
             - name: BUCKETEER_SUBSCRIBER_PROCESSORS_CONFIG
-              value: /usr/local/conf/processors.json
+              value: /usr/local/processors-config/processors.json
             - name: BUCKETEER_SUBSCRIBER_ON_DEMAND_PROCESSORS_CONFIG
-              value: /usr/local/conf/onDemandProcessors.json
+              value: /usr/local/processors-config/onDemandProcessors.json
             - name: BUCKETEER_SUBSCRIBER_KEY
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_SUBSCRIBER_OAUTH_PUBLIC_KEY
@@ -241,6 +248,9 @@ spec:
               readOnly: true
             - name: subscriber-config
               mountPath: /usr/local/conf
+              readOnly: true
+            - name: processors-config
+              mountPath: /usr/local/processors-config
               readOnly: true
           ports:
             - name: service

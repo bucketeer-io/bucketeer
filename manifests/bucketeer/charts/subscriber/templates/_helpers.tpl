@@ -56,6 +56,49 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
+{{- define "subscriber.email-config-secret" -}}
+{{- if .Values.global.email.existingSecret }}
+{{- printf "%s" .Values.global.email.existingSecret -}}
+{{- else -}}
+{{ template "subscriber.fullname" . }}-email-config
+{{- end -}}
+{{- end -}}
+
+{{- define "subscriber.db-credentials-secret" -}}
+{{ template "subscriber.fullname" . }}-db-credentials
+{{- end -}}
+
+{{/*
+Name of the existing Secret that holds the password of the given database
+engine ("mysql" or "postgres"), or an empty string when the chart renders the
+password from values into its own Secret.
+Usage: include "subscriber.db-password-existing-secret" (dict "root" . "engine" "mysql")
+*/}}
+{{- define "subscriber.db-password-existing-secret" -}}
+{{- $local := index .root.Values.env.operationalDatabase .engine -}}
+{{- $global := index .root.Values.global.operationalDatabase .engine -}}
+{{- $local.existingSecret | default $global.existingSecret | default "" -}}
+{{- end -}}
+
+{{/*
+secretKeyRef fields (name and key) of the password env var of the given
+database engine ("mysql" or "postgres").
+Usage: include "subscriber.db-password-secret-key-ref" (dict "root" . "engine" "mysql")
+*/}}
+{{- define "subscriber.db-password-secret-key-ref" -}}
+{{- $local := index .root.Values.env.operationalDatabase .engine -}}
+{{- $global := index .root.Values.global.operationalDatabase .engine -}}
+{{- $defaultKey := printf "%s-pass" .engine -}}
+{{- $existing := include "subscriber.db-password-existing-secret" . -}}
+{{- if $existing -}}
+name: {{ $existing | quote }}
+key: {{ $local.existingSecretKey | default $global.existingSecretKey | default $defaultKey | quote }}
+{{- else -}}
+name: {{ template "subscriber.db-credentials-secret" .root }}
+key: {{ $defaultKey }}
+{{- end -}}
+{{- end -}}
+
 {{- define "subscriber.deploy" -}}
 {{- if not .Values.gcpMultiCluster.enabled }}
   {{- true }}

@@ -37,11 +37,11 @@ spec:
           configMap:
             name: {{ template "web.fullname" . }}-envoy-config
         - name: oauth-config
-          configMap:
-            name: {{ template "web.fullname" . }}-oauth-config
+          secret:
+            secretName: {{ template "web.oauth-config-secret" . }}
         - name: email-config
-          configMap:
-            name: {{ template "web.fullname" . }}-email-config
+          secret:
+            secretName: {{ template "web.email-config-secret" . }}
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -65,8 +65,8 @@ spec:
           configMap:
             name: {{ template "web.name" . }}-env-js
         - name: datawarehouse-config
-          configMap:
-            name: {{ template "web.fullname" . }}-datawarehouse-config
+          secret:
+            secretName: {{ template "web.fullname" . }}-datawarehouse-config
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web.fullname" . }}
       {{- end }}
@@ -93,7 +93,9 @@ spec:
             - name: BUCKETEER_WEB_MYSQL_USER
               value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
             - name: BUCKETEER_WEB_MYSQL_PASS
-              value: "{{ .Values.env.operationalDatabase.mysql.pass | default .Values.global.operationalDatabase.mysql.pass }}"
+              valueFrom:
+                secretKeyRef:
+                  {{- include "web.db-password-secret-key-ref" (dict "root" . "engine" "mysql") | nindent 18 }}
             - name: BUCKETEER_WEB_MYSQL_HOST
               value: "{{ .Values.env.operationalDatabase.mysql.host | default .Values.global.operationalDatabase.mysql.host }}"
             - name: BUCKETEER_WEB_MYSQL_PORT
@@ -103,7 +105,9 @@ spec:
             - name: BUCKETEER_WEB_POSTGRES_USER
               value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
             - name: BUCKETEER_WEB_POSTGRES_PASS
-              value: "{{ .Values.env.operationalDatabase.postgres.pass | default .Values.global.operationalDatabase.postgres.pass }}"
+              valueFrom:
+                secretKeyRef:
+                  {{- include "web.db-password-secret-key-ref" (dict "root" . "engine" "postgres") | nindent 18 }}
             - name: BUCKETEER_WEB_POSTGRES_HOST
               value: "{{ .Values.env.operationalDatabase.postgres.host | default .Values.global.operationalDatabase.postgres.host }}"
             - name: BUCKETEER_WEB_POSTGRES_PORT

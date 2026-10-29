@@ -60,44 +60,4 @@ data:
     {{- $_ := set $config "redisTLSInsecureSkipVerify" $.Values.global.pubsub.redis.tlsInsecureSkipVerify }}
     {{- end }}
     {{ toJson .Values.onDemandSubscribers }}
-
-  processors.json: |-
-    {{- $processors := .Values.processors }}
-    {{- if not .Values.env.demoSiteEnabled }}
-    {{- $processors = omit $processors "demoOrganizationCreationNotifier" }}
-    {{- end }}
-    {{- range $name, $config := $processors }}
-    {{- if eq $name "segmentUserPersister" }}
-    {{- $_ := set $config "pubSubType" $.Values.global.pubsub.type }}
-    {{- $_ := set $config "redisServerName" $.Values.global.pubsub.redis.serverName }}
-    {{- $_ := set $config "redisAddr" $.Values.global.pubsub.redis.addr }}
-    {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
-    {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
-    {{- $_ := set $config "redisIdleTime" $.Values.global.pubsub.redis.idleTime }}
-    {{- $_ := set $config "redisMode" $.Values.global.pubsub.redis.mode }}
-    {{- $_ := set $config "redisDB" $.Values.global.pubsub.redis.db }}
-    {{- $_ := set $config "project" $.Values.global.pubsub.project }}
-    {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
-    {{- if hasKey $.Values.global.pubsub.redis "streamMaxLen" }}
-    {{- $_ := set $config "redisStreamMaxLen" $.Values.global.pubsub.redis.streamMaxLen }}
-    {{- end }}
-    {{- $_ := set $config "redisTLSEnabled" $.Values.global.pubsub.redis.tlsEnabled }}
-    {{- $_ := set $config "redisTLSCACert" $.Values.global.pubsub.redis.tlsCACert }}
-    {{- $_ := set $config "redisTLSCert" $.Values.global.pubsub.redis.tlsCert }}
-    {{- $_ := set $config "redisTLSKey" $.Values.global.pubsub.redis.tlsKey }}
-    {{- $_ := set $config "redisTLSInsecureSkipVerify" $.Values.global.pubsub.redis.tlsInsecureSkipVerify }}
-    {{- end }}
-    {{- if hasKey $config "dataWarehouse" }}
-    {{- include "subscriber.injectDataWarehouse" (dict "config" $config "global" $.Values.global) }}
-    {{- end }}
-    {{- end }}
-    {{ toJson $processors }}
-
-  onDemandProcessors.json: |-
-    {{- range $name, $config := .Values.onDemandProcessors }}
-    {{- if $config.dataWarehouse }}
-    {{- include "subscriber.injectDataWarehouse" (dict "config" $config "global" $.Values.global) }}
-    {{- end }}
-    {{- end }}
-    {{ toJson .Values.onDemandProcessors }}
 {{- end }}
