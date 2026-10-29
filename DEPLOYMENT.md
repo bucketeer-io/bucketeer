@@ -155,9 +155,10 @@ is pinned-refused). Token verification does check the issuer, though, so the `IS
 used to mint the service token must match the issuer the services are configured with.
 Set the same production URL in every place that defaults to `https://localhost`:
 `docker-compose/config/oauth-config.json` (`issuer`) and `BUCKETEER_BATCH_OAUTH_ISSUER`
-for Docker Compose, or `web.oauth.issuer` (umbrella chart) / `oauth.issuer` (standalone
-web chart) in your Helm values. A mismatch causes issuer-validation failures, not a
-startup refusal.
+for Docker Compose; for Helm, both `web.oauth.issuer` and `batch-server.oauth.issuer`
+in the umbrella chart (`oauth.issuer` in each standalone web/batch chart) — the batch
+service reads its own issuer and does not inherit the web one. A mismatch causes
+issuer-validation failures, not a startup refusal.
 
 **Disable the demo sign-in:**
 Set the demo sign-in to `false` (and never `isSystemAdmin: true`). The path differs per
