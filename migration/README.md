@@ -235,7 +235,10 @@ loss.
 
 2. **Preview rollback**:
    ```shell
-   make check-rollback-migration USER=bucketeer PASS=bucketeer HOST=localhost PORT=3306 DB=bucketeer COUNT=<N or VERSION=version>
+   # By count
+   make check-rollback-migration USER=bucketeer PASS=bucketeer HOST=localhost PORT=3306 DB=bucketeer COUNT=3
+   # Or by version
+   make check-rollback-migration USER=bucketeer PASS=bucketeer HOST=localhost PORT=3306 DB=bucketeer VERSION=20240815043128
    ```
 
 3. **Create database backup**:
@@ -245,7 +248,10 @@ loss.
 
 4. **Execute rollback**:
    ```shell
-   make rollback-migration USER=bucketeer PASS=bucketeer HOST=localhost PORT=3306 DB=bucketeer COUNT=<N or VERSION=version>
+   # By count
+   make rollback-migration USER=bucketeer PASS=bucketeer HOST=localhost PORT=3306 DB=bucketeer COUNT=3
+   # Or by version
+   make rollback-migration USER=bucketeer PASS=bucketeer HOST=localhost PORT=3306 DB=bucketeer VERSION=20240815043128
    ```
 
 5. **Verify application compatibility**: Ensure services work with rolled-back schema
@@ -256,11 +262,13 @@ For automated rollback workflows, Bucketeer provides pre-configured rollback con
 
 #### Kubernetes Rollback Job
 
-The Kubernetes rollback uses a Job resource that must be manually enabled and applied.
+The Kubernetes rollback uses a Job resource that must be manually enabled and created. Each invocation creates a new Job, allowing a dry run followed by execution without changing an immutable Job template.
 
 **Prerequisites**:
 
 - MySQL service must be accessible
+- Provision a separate, empty, disposable dev database reachable from the Job, using the same MySQL version as the target. For example, create `bucketeer_dev` on a dedicated dev MySQL service and grant the dev user permission to create and drop schema objects. Atlas uses and cleans this database; never use the target database or a database containing application data.
+- Set `rollback.devUrl` to that database URL. Unlike the local Make targets, the Kubernetes Job does not use Docker to start a dev database.
 - Helm values must be configured
 
 **Usage:**
@@ -269,29 +277,32 @@ The Kubernetes rollback uses a Job resource that must be manually enabled and ap
 # Dry-run preview
 helm template migration-rollback ./manifests/bucketeer-migration \
   --set rollback.enabled=true \
+  --set-string rollback.devUrl="mysql://dev_user:dev_password@dev-mysql.default.svc:3306/bucketeer_dev" \
   --set rollback.dryRun=true \
   --set rollback.count=1 \
   --set dbUrl="mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer" \
-  | kubectl apply -f -
+  | kubectl create -f -
 
 # Execute rollback
 helm template migration-rollback ./manifests/bucketeer-migration \
   --set rollback.enabled=true \
+  --set-string rollback.devUrl="mysql://dev_user:dev_password@dev-mysql.default.svc:3306/bucketeer_dev" \
   --set rollback.dryRun=false \
   --set rollback.count=3 \
   --set dbUrl="mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer" \
-  | kubectl apply -f -
+  | kubectl create -f -
 
 # Rollback to specific version
 helm template migration-rollback ./manifests/bucketeer-migration \
   --set rollback.enabled=true \
+  --set-string rollback.devUrl="mysql://dev_user:dev_password@dev-mysql.default.svc:3306/bucketeer_dev" \
   --set rollback.dryRun=false \
-  --set rollback.version=20240815043128 \
+  --set-string rollback.version=20240815043128 \
   --set dbUrl="mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer" \
-  | kubectl apply -f -
+  | kubectl create -f -
 ```
 
-**Note:** The migration chart uses the main `dbUrl` value for both migration and rollback operations.
+**Note:** The migration chart uses the main `dbUrl` value for both migration and rollback operations. Enabling rollback suppresses the normal migration Job. Use `kubectl create` for each run and wait for the preview Job to finish before creating the execution Job. Do not run rollback Jobs concurrently against the same target or dev database.
 
 #### Safety Features
 

@@ -1,6 +1,6 @@
 fullnameOverride: "bucketeer-migration"
 
-# Enable the migration job (set to false to disable)
+# Enable the migration job (suppressed when rollback.enabled is true)
 enabled: true
 
 annotations: {}
@@ -32,6 +32,12 @@ rollback:
   # Dry-run mode: If true, only previews changes without executing
   # Set to false to actually execute the rollback
   dryRun: true
+
+  # Required when rollback is enabled: reachable, empty, disposable database.
+  # Atlas uses and cleans this database; never point it at the target database.
+  # Use the same database engine and version as the target.
+  # E.g. mysql://user:password@dev-mysql:3306/bucketeer_dev
+  devUrl: ""
 
   # Rollback configuration
   # Option 1: Rollback last N migrations

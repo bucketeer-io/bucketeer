@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "bucketeer-migration.fullname" . }}-rollback
+  generateName: {{ include "bucketeer-migration.fullname" . }}-rollback-
   annotations: {{ toYaml .Values.annotations | nindent 4 }}
 spec:
   backoffLimit: {{ .Values.backoffLimit }}
@@ -21,13 +21,15 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: ROLLBACK_COUNT
-              value: "{{ .Values.rollback.count }}"
+              value: {{ .Values.rollback.count | toString | quote }}
             - name: ROLLBACK_VERSION
-              value: "{{ .Values.rollback.version }}"
+              value: {{ .Values.rollback.version | toString | quote }}
             - name: DB_URL
-              value: "{{ .Values.dbUrl }}"
+              value: {{ .Values.dbUrl | quote }}
+            - name: DEV_URL
+              value: {{ required "rollback.devUrl must point to a reachable, disposable dev database" .Values.rollback.devUrl | quote }}
             - name: DRY_RUN
-              value: "{{ .Values.rollback.dryRun }}"
+              value: {{ .Values.rollback.dryRun | toString | quote }}
           command:
             - sh
             - -c
@@ -50,7 +52,8 @@ spec:
               echo "Current Migration Status:"
               echo "---------------------------------------------------"
               atlas migrate status \
-                --url ${DB_URL} || {
+                --dir file:///migrations \
+                --url "${DB_URL}" || {
                 echo "❌ Failed to get migration status"
                 exit 1
               }
@@ -65,9 +68,10 @@ spec:
                 echo "Will rollback to version: ${ROLLBACK_VERSION}"
                 echo ""
                 atlas migrate down \
-                  --url ${DB_URL} \
-                  --dev-url docker://mysql/8/bucketeer \
-                  --to-version ${ROLLBACK_VERSION} \
+                  --dir file:///migrations \
+                  --url "${DB_URL}" \
+                  --dev-url "${DEV_URL}" \
+                  --to-version "${ROLLBACK_VERSION}" \
                   --dry-run || {
                   echo "❌ Rollback preview failed"
                   exit 1
@@ -75,9 +79,10 @@ spec:
               else
                 echo "Will rollback last ${ROLLBACK_COUNT:-1} migration(s)"
                 echo ""
-                atlas migrate down ${ROLLBACK_COUNT:-1} \
-                  --url ${DB_URL} \
-                  --dev-url docker://mysql/8/bucketeer \
+                atlas migrate down "${ROLLBACK_COUNT:-1}" \
+                  --dir file:///migrations \
+                  --url "${DB_URL}" \
+                  --dev-url "${DEV_URL}" \
                   --dry-run || {
                   echo "❌ Rollback preview failed"
                   exit 1
@@ -104,17 +109,21 @@ spec:
               if [ -n "${ROLLBACK_VERSION}" ]; then
                 echo "Rolling back to version: ${ROLLBACK_VERSION}"
                 atlas migrate down \
-                  --url ${DB_URL} \
-                  --dev-url docker://mysql/8/bucketeer \
-                  --to-version ${ROLLBACK_VERSION} || {
+                  --dir file:///migrations \
+                  --url "${DB_URL}" \
+                  --dev-url "${DEV_URL}" \
+                  --to-version "${ROLLBACK_VERSION}" \
+                  --auto-approve || {
                   echo "❌ Rollback failed"
                   exit 1
                 }
               else
                 echo "Rolling back last ${ROLLBACK_COUNT:-1} migration(s)"
-                atlas migrate down ${ROLLBACK_COUNT:-1} \
-                  --url ${DB_URL} \
-                  --dev-url docker://mysql/8/bucketeer || {
+                atlas migrate down "${ROLLBACK_COUNT:-1}" \
+                  --dir file:///migrations \
+                  --url "${DB_URL}" \
+                  --dev-url "${DEV_URL}" \
+                  --auto-approve || {
                   echo "❌ Rollback failed"
                   exit 1
                 }
@@ -125,7 +134,8 @@ spec:
               echo "Final Migration Status:"
               echo "---------------------------------------------------"
               atlas migrate status \
-                --url ${DB_URL}
+                --dir file:///migrations \
+                --url "${DB_URL}"
 
               echo ""
               echo "==================================================="
