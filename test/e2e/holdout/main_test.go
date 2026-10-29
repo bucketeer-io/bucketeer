@@ -155,19 +155,21 @@ func run(m *testing.M) (int, error) {
 }
 
 // environmentSetup owns the resources TestMain creates and reverses them in
-// cleanup: the environment is archived, the editor and viewer accounts get
-// their previous environment roles back, and the SDK keys are disabled.
+// cleanup: the environment is archived, the role granted to the editor and
+// viewer accounts on it is revoked, and the SDK keys are disabled.
 type environmentSetup struct {
 	envClient     environmentclient.Client
 	accountClient accountclient.Client
 	featureClient featureclient.Client
 	keyIDs        []string
-	accountRoles  map[string][]*accountproto.AccountV2_EnvironmentRole
+	// grantedTokens are the access tokens of the accounts that received a
+	// role on the holdout environment; cleanup revokes exactly that role.
+	grantedTokens []string
 	tempFiles     []string
 }
 
 func newEnvironmentSetup(ctx context.Context) (*environmentSetup, error) {
-	s := &environmentSetup{accountRoles: map[string][]*accountproto.AccountV2_EnvironmentRole{}}
+	s := &environmentSetup{}
 	var err error
 	s.envClient, err = newEnvironmentClient(*orgOwnerDefaultAccessTokenPath)
 	if err != nil {
@@ -188,12 +190,13 @@ func newEnvironmentSetup(ctx context.Context) (*environmentSetup, error) {
 		s.cleanup()
 		return nil, fmt.Errorf("get shared environment %q: %w", *environmentID, err)
 	}
-	// Environment names are capped at 50 characters and url codes at 50
-	// [a-z0-9-]; 16 hex characters keep both under the cap with a test ID.
-	// hack/delete-e2e-data-* match the "<prefix>-holdout-env-" name.
-	suffix := strings.ReplaceAll(mustUUID(), "-", "")[:16]
+	name, suffix, err := holdoutEnvironmentName()
+	if err != nil {
+		s.cleanup()
+		return nil, err
+	}
 	created, err := s.envClient.CreateEnvironmentV2(ctx, &environmentproto.CreateEnvironmentV2Request{
-		Name:        prefixed("holdout-env", suffix),
+		Name:        name,
 		UrlCode:     "e2e-test-holdout-" + suffix,
 		Description: "Dedicated environment for the holdout e2e suite. Archived by TestMain.",
 		ProjectId:   shared.Environment.ProjectId,
@@ -223,6 +226,34 @@ func newEnvironmentSetup(ctx context.Context) (*environmentSetup, error) {
 		}
 	}
 	return s, nil
+}
+
+const (
+	// Server-side caps (pkg/environment/api): name ≤ 50 bytes, url code
+	// ^[a-z0-9-]{1,50}$.
+	maxEnvironmentNameLength = 50
+	// Fewest random hex characters accepted before the run is refused
+	// rather than risking a name collision.
+	minEnvironmentSuffixLength = 8
+)
+
+// holdoutEnvironmentName returns "<prefix>[-<test-id>]-holdout-env-<hex>",
+// shrinking the random suffix so the name fits the server cap whatever the
+// test ID is. hack/delete-e2e-data-* match the same "-holdout-env-" shape.
+func holdoutEnvironmentName() (name, suffix string, err error) {
+	base := prefixed("holdout-env", "")
+	room := maxEnvironmentNameLength - len(base)
+	if room < minEnvironmentSuffixLength {
+		return "", "", fmt.Errorf(
+			"test ID %q is too long: the holdout environment name %q leaves %d bytes for a suffix, need %d",
+			*testID, base, room, minEnvironmentSuffixLength,
+		)
+	}
+	suffix = strings.ReplaceAll(mustUUID(), "-", "")
+	if room < len(suffix) {
+		suffix = suffix[:room]
+	}
+	return base + suffix, suffix, nil
 }
 
 func (s *environmentSetup) createAPIKey(
@@ -262,6 +293,40 @@ func (s *environmentSetup) grantEnvironmentRole(
 	tokenPath string,
 	role accountproto.AccountV2_Role_Environment,
 ) error {
+	if err := s.editEnvironmentRoles(ctx, tokenPath, func(roles []*accountproto.AccountV2_EnvironmentRole) []*accountproto.AccountV2_EnvironmentRole {
+		return append(roles, &accountproto.AccountV2_EnvironmentRole{EnvironmentId: holdoutEnv.id, Role: role})
+	}); err != nil {
+		return err
+	}
+	s.grantedTokens = append(s.grantedTokens, tokenPath)
+	return nil
+}
+
+// revokeEnvironmentRole removes only this run's holdout environment from the
+// account's roles. The list is re-read at revoke time instead of restored
+// from a snapshot, so a concurrent run that granted its own environment in
+// the meantime keeps its grant.
+func (s *environmentSetup) revokeEnvironmentRole(ctx context.Context, tokenPath string) error {
+	return s.editEnvironmentRoles(ctx, tokenPath, func(roles []*accountproto.AccountV2_EnvironmentRole) []*accountproto.AccountV2_EnvironmentRole {
+		kept := roles[:0]
+		for _, r := range roles {
+			if r.EnvironmentId != holdoutEnv.id {
+				kept = append(kept, r)
+			}
+		}
+		return kept
+	})
+}
+
+// editEnvironmentRoles reads the account behind tokenPath, applies edit to
+// its current environment roles and writes them back. The account domain
+// requires a language on every update, so the account's own language is
+// sent along unchanged ("en" only when the bootstrapped account has none).
+func (s *environmentSetup) editEnvironmentRoles(
+	ctx context.Context,
+	tokenPath string,
+	edit func([]*accountproto.AccountV2_EnvironmentRole) []*accountproto.AccountV2_EnvironmentRole,
+) error {
 	own, err := newAccountClient(tokenPath)
 	if err != nil {
 		return err
@@ -278,33 +343,18 @@ func (s *environmentSetup) grantEnvironmentRole(
 			Role:          r.Role,
 		})
 	}
-	s.accountRoles[me.Account.Email] = current
-	granted := append(append([]*accountproto.AccountV2_EnvironmentRole{}, current...),
-		&accountproto.AccountV2_EnvironmentRole{EnvironmentId: holdoutEnv.id, Role: role},
-	)
-	return s.setEnvironmentRoles(ctx, me.Account.Email, me.Account.Language, granted)
-}
-
-// setEnvironmentRoles replaces the account's environment roles. The account
-// domain requires a language on every update; the accounts bootstrapped by
-// hack/create-e2e-accounts have none, so the current value (or "en") is sent
-// along unchanged.
-func (s *environmentSetup) setEnvironmentRoles(
-	ctx context.Context,
-	email, language string,
-	roles []*accountproto.AccountV2_EnvironmentRole,
-) error {
+	language := me.Account.Language
 	if language == "" {
 		language = "en"
 	}
-	_, err := s.accountClient.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
-		Email:            email,
+	_, err = s.accountClient.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+		Email:            me.Account.Email,
 		OrganizationId:   *organizationID,
 		Language:         wrapperspb.String(language),
-		EnvironmentRoles: roles,
+		EnvironmentRoles: edit(current),
 	})
 	if err != nil {
-		return fmt.Errorf("update environment roles of %s: %w", email, err)
+		return fmt.Errorf("update environment roles of %s: %w", me.Account.Email, err)
 	}
 	return nil
 }
@@ -362,8 +412,8 @@ func (s *environmentSetup) cleanup() {
 	if holdoutEnv.id != "" && s.featureClient != nil {
 		s.sweepHoldoutGroups(ctx)
 	}
-	for email, roles := range s.accountRoles {
-		if err := s.setEnvironmentRoles(ctx, email, "", roles); err != nil {
+	for _, tokenPath := range s.grantedTokens {
+		if err := s.revokeEnvironmentRole(ctx, tokenPath); err != nil {
 			fmt.Fprintf(os.Stderr, "holdout e2e cleanup: %v\n", err)
 		}
 	}

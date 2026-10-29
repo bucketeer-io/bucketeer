@@ -58,8 +58,9 @@ var (
 		{table: "account_v2", targetField: "email"},
 	}
 	// Tables written by test/e2e/holdout in the environments it creates
-	// (named "<prefix>-holdout-env-<id>"). Rows are matched by environment,
-	// children before parents, then the environments themselves are deleted.
+	// (named "<prefix>-holdout-env-<id>", in the project of the shared e2e
+	// environment). Rows are matched by environment, children before
+	// parents, then the environments themselves are deleted.
 	holdoutEnvironmentTables = []string{
 		"holdout_group_feature",
 		"holdout_group",
@@ -233,26 +234,40 @@ func (c *command) holdoutEnvironmentNamePattern() string {
 	return prefixTestName + "-%" + holdoutEnvironmentNameSuffix + "%"
 }
 
+// holdoutEnvironmentsSubquery selects the holdout environments created by
+// test/e2e/holdout: matched by name and limited to the project of the shared
+// e2e environment, so a same-named environment elsewhere is never touched.
+// The project lookup is wrapped in a derived table so the statement is also
+// valid when environment_v2 itself is the delete target.
+const holdoutEnvironmentsSubquery = `
+	SELECT id FROM environment_v2
+	WHERE
+		name LIKE ? AND
+		project_id = (
+			SELECT project_id FROM (
+				SELECT project_id FROM environment_v2 WHERE id = ?
+			) AS shared_environment
+		)
+`
+
 func (c *command) constructDeleteQueryForHoldoutEnvironments(table string) (query string, args []interface{}) {
 	query = fmt.Sprintf(`
 		DELETE FROM
 			%s
 		WHERE
-			environment_id IN (
-				SELECT id FROM environment_v2 WHERE name LIKE ?
-			)
-	`, table)
-	args = []interface{}{c.holdoutEnvironmentNamePattern()}
+			environment_id IN (%s)
+	`, table, holdoutEnvironmentsSubquery)
+	args = []interface{}{c.holdoutEnvironmentNamePattern(), envNamespace}
 	return
 }
 
 func (c *command) constructDeleteHoldoutEnvironmentsQuery() (query string, args []interface{}) {
-	query = `
+	query = fmt.Sprintf(`
 		DELETE FROM
 			environment_v2
 		WHERE
-			name LIKE ?
-	`
-	args = []interface{}{c.holdoutEnvironmentNamePattern()}
+			id IN (SELECT id FROM (%s) AS holdout_environments)
+	`, holdoutEnvironmentsSubquery)
+	args = []interface{}{c.holdoutEnvironmentNamePattern(), envNamespace}
 	return
 }

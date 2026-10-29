@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	"github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -635,37 +636,52 @@ func requireAuditLogTypes(
 	client := newAuditLogClient(t)
 	var got []domainevent.Event_Type
 	require.Eventually(t, func() bool {
-		got = got[:0]
-		cursor := ""
-		for {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			resp, err := client.ListAuditLogs(ctx, &auditlog.ListAuditLogsRequest{
-				EnvironmentId:  holdoutEnv.id,
-				EntityType:     wrapperspb.Int32(int32(entityType)),
-				PageSize:       200,
-				Cursor:         cursor,
-				OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
-				OrderDirection: auditlog.ListAuditLogsRequest_ASC,
-				From:           since,
-				To:             time.Now().Unix() + 60,
-			})
-			cancel()
-			if err != nil {
-				t.Logf("ListAuditLogs: %v", err)
-				return false
-			}
-			for _, l := range resp.AuditLogs {
-				if l.EntityId == entityID {
-					got = append(got, l.Type)
-				}
-			}
-			if resp.Cursor == "" || len(resp.AuditLogs) == 0 || resp.Cursor == cursor {
-				break
-			}
-			cursor = resp.Cursor
+		var err error
+		got, err = listAuditLogTypes(client, entityType, entityID, since)
+		if err != nil {
+			t.Logf("ListAuditLogs: %v", err)
+			return false
 		}
 		return isSubsequence(want, got)
 	}, auditLogTimeout, 2*time.Second, "audit log for %s: want %v in order, got %v", entityID, want, got)
+}
+
+// listAuditLogTypes returns the event types recorded for entityID since the
+// given time, oldest first.
+func listAuditLogTypes(
+	client auditlogclient.Client,
+	entityType domainevent.Event_EntityType,
+	entityID string,
+	since int64,
+) ([]domainevent.Event_Type, error) {
+	var got []domainevent.Event_Type
+	cursor := ""
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		resp, err := client.ListAuditLogs(ctx, &auditlog.ListAuditLogsRequest{
+			EnvironmentId:  holdoutEnv.id,
+			EntityType:     wrapperspb.Int32(int32(entityType)),
+			PageSize:       200,
+			Cursor:         cursor,
+			OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
+			OrderDirection: auditlog.ListAuditLogsRequest_ASC,
+			From:           since,
+			To:             time.Now().Unix() + 60,
+		})
+		cancel()
+		if err != nil {
+			return nil, err
+		}
+		for _, l := range resp.AuditLogs {
+			if l.EntityId == entityID {
+				got = append(got, l.Type)
+			}
+		}
+		if resp.Cursor == "" || len(resp.AuditLogs) == 0 || resp.Cursor == cursor {
+			return got, nil
+		}
+		cursor = resp.Cursor
+	}
 }
 
 // isSubsequence reports whether want appears in got in order (not
@@ -753,11 +769,19 @@ func TestLifecycleScheduled(t *testing.T) {
 	})
 
 	t.Run("a missed window is stopped by the cron and releases its flags", func(t *testing.T) {
+		// The whole window must expire without a cron tick inside it,
+		// otherwise the cron would start the group instead of skipping it.
+		// The dev cron fires at second 0 of every minute; the window is
+		// placed well inside a minute.
+		awayFromCronTick(t, 5, 45)
 		now := time.Now().Unix()
 		spec := groupSpec{assignment: featureproto.HoldoutGroup_HASH, percentage: 50, startAt: now + 1, stopAt: now + 3}
 		group := createHoldoutGroup(t, client, spec.request(t))
 		addHoldoutFeatures(t, client, group.Id, target(flag, "B"))
 		waitUntilUnix(t, spec.stopAt)
+		// The window has expired and no cron run has seen it yet.
+		require.Equal(t, featureproto.HoldoutGroup_WAITING, getHoldoutGroup(t, client, group.Id).Status,
+			"group must still be WAITING once its window expired")
 		// No explicit trigger here: this leg proves the dev cron
 		// (every minute) runs the job. statusUpdaterTimeout covers one run.
 		var got *featureproto.HoldoutGroup
@@ -765,10 +789,29 @@ func TestLifecycleScheduled(t *testing.T) {
 			got = getHoldoutGroup(t, client, group.Id)
 			return got.Status == featureproto.HoldoutGroup_STOPPED
 		}, statusUpdaterTimeout, pollInterval, "missed WAITING group was not stopped by the cron; status %v", got.GetStatus())
-		assert.Zero(t, got.AnalysisStartedAt, "never served")
+		assert.Zero(t, got.AnalysisStartedAt, "never entered analysis")
 		assert.NotZero(t, got.StoppedAt)
+		// WAITING → STOPPED directly: a STOPPED entry without a STARTED one.
+		requireAuditLogTypes(t, domainevent.Event_HOLDOUT_GROUP, group.Id, now-60, domainevent.Event_HOLDOUT_GROUP_STOPPED)
+		types, err := listAuditLogTypes(newAuditLogClient(t), domainevent.Event_HOLDOUT_GROUP, group.Id, now-60)
+		require.NoError(t, err)
+		assert.NotContains(t, types, domainevent.Event_HOLDOUT_GROUP_STARTED, "the group was never started")
 		// The flag is released: another group can enroll it.
 		other := createHoldoutGroup(t, client, waitingHashSpec().request(t))
 		addHoldoutFeatures(t, client, other.Id, target(flag, "A"))
 	})
+}
+
+// awayFromCronTick blocks until the wall-clock second of the minute is in
+// [from, to], so a short window opened right after cannot contain the
+// HoldoutGroupStatusUpdater cron tick at second 0.
+func awayFromCronTick(t *testing.T, from, to int) {
+	t.Helper()
+	for {
+		sec := time.Now().Second()
+		if sec >= from && sec <= to {
+			return
+		}
+		time.Sleep(time.Second)
+	}
 }

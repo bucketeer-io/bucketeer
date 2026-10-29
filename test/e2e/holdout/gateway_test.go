@@ -312,11 +312,19 @@ func TestStopAndClearance(t *testing.T) {
 		assert.False(t, hasHoldoutReason(stale.Evaluations.Evaluations))
 		requireNormalEvaluation(t, stale.Evaluations.Evaluations, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
 
-		fresh := grpcGetEvaluations(t, s.tag, newUserID(t))
+		// A client that first connects after the stop: its second poll,
+		// chained from its own response, is not forced either.
+		freshUser := newUserID(t)
+		fresh := grpcGetEvaluations(t, s.tag, freshUser)
 		assert.False(t, hasHoldoutReason(fresh.Evaluations.Evaluations))
-		second := grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, stale.UserEvaluationsId, stale.Evaluations.CreatedAt)
+		second := grpcGetEvaluationsByEvaluatedAt(t, s.tag, freshUser, fresh.UserEvaluationsId, fresh.Evaluations.CreatedAt)
 		assert.False(t, second.Evaluations.ForceUpdate, "fresh client is not forced after clearance")
 		assert.Empty(t, second.Evaluations.Evaluations)
+		assert.Equal(t, fresh.UserEvaluationsId, second.UserEvaluationsId)
+		// The previously held-out client, once caught up, is not forced.
+		caughtUp := grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, stale.UserEvaluationsId, stale.Evaluations.CreatedAt)
+		assert.False(t, caughtUp.Evaluations.ForceUpdate)
+		assert.Empty(t, caughtUp.Evaluations.Evaluations)
 	}
 
 	t.Run("manual stop", func(t *testing.T) {
@@ -344,12 +352,13 @@ func TestStopAndClearance(t *testing.T) {
 	})
 
 	t.Run("scheduled stop", func(t *testing.T) {
-		// A real scheduled window: start_at now, stop_at 30 s ahead. Both
-		// transitions are taken by the HoldoutGroupStatusUpdater, run
+		// Both transitions are taken by the HoldoutGroupStatusUpdater, run
 		// explicitly here (the dev cron runs the same job every minute and
-		// can only take the same step; see TestLifecycleScheduled).
-		now := time.Now().Unix()
-		spec := groupSpec{assignment: featureproto.HoldoutGroup_HASH, percentage: 50, startAt: now, stopAt: now + 30}
+		// can only take the same step; see TestLifecycleScheduled). The
+		// window is opened wide so cache propagation (up to 150 s) cannot
+		// outlive it; stop_at is pulled in only once HOLDOUT is observed.
+		start, stop := time.Now().Unix(), time.Now().Add(servingWindow).Unix()
+		spec := groupSpec{assignment: featureproto.HoldoutGroup_HASH, percentage: 50, startAt: start, stopAt: stop}
 		third := createHoldoutGroup(t, client, spec.request(t))
 		addHoldoutFeatures(t, client, third.Id, target(s.flag, "C"))
 		heldOut, _ := pickUsers(t, third)
@@ -358,7 +367,10 @@ func TestStopAndClearance(t *testing.T) {
 		require.Equal(t, featureproto.HoldoutGroup_RUNNING, third.Status)
 		running := waitForHoldoutServing(t, s.tag, heldOut, s.flag.Id, s.holdoutVariation())
 		requireHoldoutEvaluation(t, running.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), third.Id)
-		waitUntilUnix(t, spec.stopAt)
+
+		stopAt := time.Now().Unix() + 5
+		updateHoldoutGroup(t, client, &featureproto.UpdateHoldoutGroupRequest{Id: third.Id, StopAt: wrapperspb.Int64(stopAt)})
+		waitUntilUnix(t, stopAt)
 		runBatchJob(t, btproto.BatchJob_HoldoutGroupStatusUpdater)
 		got := getHoldoutGroup(t, client, third.Id)
 		require.Equal(t, featureproto.HoldoutGroup_STOPPED, got.Status)
