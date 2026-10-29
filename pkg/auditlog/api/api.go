@@ -101,27 +101,8 @@ func (s *auditlogService) GetAuditLog(
 	req *proto.GetAuditLogRequest,
 ) (*proto.GetAuditLogResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if req.EnvironmentId == "" && req.OrganizationId == "" {
-		return nil, statusMissingEnvironmentOrOrganization.Err()
-	}
-	// organization_id requires the organization admin role, as in ListAuditLogs.
-	if req.OrganizationId != "" {
-		// System admins can read any organization's logs without being a member.
-		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
-			_, err := s.checkOrganizationRole(
-				ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-				req.OrganizationId)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		_, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId)
-		if err != nil {
-			return nil, err
-		}
+	if err := s.checkScopeRole(ctx, req.EnvironmentId, req.OrganizationId); err != nil {
+		return nil, err
 	}
 	if req.Id == "" {
 		s.logger.Error("Missing audit log id",
@@ -191,29 +172,10 @@ func (s *auditlogService) ListAuditLogs(
 	req *proto.ListAuditLogsRequest,
 ) (*proto.ListAuditLogsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	// organization_id requires the organization admin role; combined with
-	// environment_id it lists that environment's logs plus the organization's
-	// organization-level logs in one timeline.
-	if req.OrganizationId != "" {
-		// System admins can read any organization's logs without being a member.
-		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
-			_, err := s.checkOrganizationRole(
-				ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-				req.OrganizationId)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		if req.EnvironmentId == "" {
-			return nil, statusMissingEnvironmentOrOrganization.Err()
-		}
-		_, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId)
-		if err != nil {
-			return nil, err
-		}
+	// Combined with environment_id, organization_id lists that environment's
+	// logs plus the organization's organization-level logs in one timeline.
+	if err := s.checkScopeRole(ctx, req.EnvironmentId, req.OrganizationId); err != nil {
+		return nil, err
 	}
 	params, err := listAuditLogsParams(req)
 	if err != nil {
@@ -417,6 +379,41 @@ func (s *auditlogService) getAccountMapByEmails(
 		accountMap[accounts[i].Email] = accounts[i]
 	}
 	return accountMap, nil
+}
+
+// checkScopeRole authorizes the audit log scope used by GetAuditLog and
+// ListAuditLogs. Every ID the storage is filtered by is checked on its own:
+// organization_id requires the organization admin role and environment_id
+// requires the environment viewer role. When both IDs are set, both checks must
+// pass, so the organization role alone never grants access to an environment
+// that belongs to a different organization.
+func (s *auditlogService) checkScopeRole(
+	ctx context.Context,
+	environmentID, organizationID string,
+) error {
+	if environmentID == "" && organizationID == "" {
+		return statusMissingEnvironmentOrOrganization.Err()
+	}
+	if organizationID != "" {
+		// System admins can read any organization's logs without being a member.
+		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
+			_, err := s.checkOrganizationRole(
+				ctx, accountproto.AccountV2_Role_Organization_ADMIN,
+				organizationID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if environmentID != "" {
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			environmentID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *auditlogService) checkEnvironmentRole(
