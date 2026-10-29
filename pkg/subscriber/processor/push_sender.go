@@ -266,10 +266,13 @@ func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount str
 	if err := pushdomain.ValidateFCMServiceAccount([]byte(fcmServiceAccount)); err != nil {
 		return nil, fmt.Errorf("invalid fcm service account: %w", err)
 	}
-	// Create OAuth2 token source
-	creds, err := google.CredentialsFromJSON(
+	// Create OAuth2 token source with the non-deprecated typed loader, which rejects
+	// any credential whose type is not service_account. ValidateFCMServiceAccount above
+	// additionally rejects web/installed OAuth client blocks the loader does not catch.
+	creds, err := google.CredentialsFromJSONWithType(
 		ctx,
 		[]byte(fcmServiceAccount),
+		google.ServiceAccount,
 		"https://www.googleapis.com/auth/firebase.messaging",
 	)
 	if err != nil {
