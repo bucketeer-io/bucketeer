@@ -133,9 +133,9 @@ minikube/localenv cluster) generate a development OAuth key pair
 local use only — the private key can mint system-admin tokens.
 
 For a real deployment, provide your own managed secrets (Helm `oauth.key.secret` /
-`serviceToken.secret`) and use a non-`https://localhost` issuer. As a safety net the
-services refuse to start with the historically-leaked development key for any
-non-local issuer. To generate fresh material explicitly:
+`serviceToken.secret`) and use a non-`https://localhost` issuer. The old committed
+development key pair is in git history, so it must never be reused in a real
+deployment. To generate fresh material explicitly:
 ```bash
 # Generate a fresh OAuth key pair (writes tools/dev/cert/oauth-private.pem and oauth-public.pem)
 make -C tools/dev generate-oauth
@@ -150,9 +150,8 @@ make generate-service-token \
 ```
 
 **Keep the OAuth issuer consistent:**
-A regenerated key pair is accepted with any issuer (only the historically-leaked key
-is pinned-refused). Token verification does check the issuer, though, so the `ISSUER`
-used to mint the service token must match the issuer the services are configured with.
+Token verification checks the issuer, so the `ISSUER` used to mint the service token
+must match the issuer the services are configured with.
 Set the same production URL in every place that defaults to `https://localhost`:
 `docker-compose/config/oauth-config.json` (`issuer`) and `BUCKETEER_BATCH_OAUTH_ISSUER`
 for Docker Compose; for Helm, both `web.oauth.issuer` and `batch-server.oauth.issuer`
