@@ -150,7 +150,7 @@ func TestGetCodeReferencePostgres(t *testing.T) {
 				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(pgstorage.ErrNoRows)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), selectCodeReferenceSQL, "cr-id", "env-1",
 				).Return(row)
 			},
 			expectedErr: storage.ErrCodeReferenceNotFound,
@@ -161,7 +161,7 @@ func TestGetCodeReferencePostgres(t *testing.T) {
 				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errInternalCoderef)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), selectCodeReferenceSQL, "cr-id", "env-1",
 				).Return(row)
 			},
 			expectedErr: errInternalCoderef,
@@ -172,7 +172,7 @@ func TestGetCodeReferencePostgres(t *testing.T) {
 				row := pgmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), selectCodeReferenceSQL, "cr-id", "env-1",
 				).Return(row)
 			},
 			expectedErr: nil,
@@ -182,10 +182,18 @@ func TestGetCodeReferencePostgres(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			s := newCodeReferenceStorageWithMock(t, mockController)
 			p.setup(s)
-			_, err := s.GetCodeReference(context.Background(), "cr-id")
+			_, err := s.GetCodeReference(context.Background(), "cr-id", "env-1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func TestCodeReferenceSQLScopedByEnvironmentPostgres(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, selectCodeReferenceSQL, "id = $1")
+	assert.Contains(t, selectCodeReferenceSQL, "AND environment_id = $2")
+	assert.Contains(t, deleteCodeReferenceSQL, "id = $1")
+	assert.Contains(t, deleteCodeReferenceSQL, "AND environment_id = $2")
 }
 
 func TestListCodeReferencesPostgres(t *testing.T) {
@@ -338,7 +346,7 @@ func TestDeleteCodeReferencePostgres(t *testing.T) {
 			desc: "error",
 			setup: func(s *codeReferenceStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), deleteCodeReferenceSQL, "cr-id", "env-1",
 				).Return(nil, errInternalCoderef)
 			},
 			expectedErr: errInternalCoderef,
@@ -349,7 +357,7 @@ func TestDeleteCodeReferencePostgres(t *testing.T) {
 				result := pgmock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), deleteCodeReferenceSQL, "cr-id", "env-1",
 				).Return(result, nil)
 			},
 			expectedErr: storage.ErrCodeReferenceNotFound,
@@ -360,7 +368,7 @@ func TestDeleteCodeReferencePostgres(t *testing.T) {
 				result := pgmock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), deleteCodeReferenceSQL, "cr-id", "env-1",
 				).Return(result, nil)
 			},
 			expectedErr: nil,
@@ -370,7 +378,7 @@ func TestDeleteCodeReferencePostgres(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			s := newCodeReferenceStorageWithMock(t, mockController)
 			p.setup(s)
-			err := s.DeleteCodeReference(context.Background(), "cr-id")
+			err := s.DeleteCodeReference(context.Background(), "cr-id", "env-1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
