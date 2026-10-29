@@ -33,6 +33,12 @@ LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 # $(CERT_DIR); the e2e tests then authenticate with them instead of a service
 # token. All paths can be overridden by the caller (e.g. CI).
 CERT_DIR ?= tools/dev/cert
+# Local development OAuth key pair and service token (generated on demand, see
+# ensure-oauth-key / ensure-service-token). Deliberately pinned instead of using
+# $(CERT_DIR): docker-compose/compose.yml mounts and the tools/dev/Makefile secret
+# targets read this fixed directory, so an override would generate credentials
+# where nothing consumes them.
+DEV_OAUTH_CERT_DIR := tools/dev/cert
 # Only "require" by default: the dev certificate cannot name the minikube node IP.
 POSTGRES_SSL_MODE ?= require
 POSTGRES_SSL_ROOT_CERT ?= $(CERT_DIR)/postgres-tls.crt
@@ -354,17 +360,67 @@ create-postgres-event-tables-minikube:
 	POSTGRES_DB_NAME=bucketeer \
 	make create-postgres-event-tables
 
+# Go version from go.mod; selects the golang image used by go_run when the host
+# has no Go toolchain.
+GO_VERSION ?= $(shell awk '/^go /{print $$2}' go.mod)
+
+# go_run runs `go run $(1)` with the host toolchain, or inside the official golang
+# image when Go is not installed (e.g. a Docker-only host starting prebuilt images
+# with `make docker-compose-up SKIP_BUILD=true`). In the container the repository
+# is mounted at /src, so file arguments must be paths relative to the repository
+# root. The container runs as the invoking user so generated files are owned by
+# the host user.
+define go_run
+	if command -v go >/dev/null 2>&1; then \
+		go run $(1); \
+	else \
+		echo "Go toolchain not found; running in a golang:$(GO_VERSION) container..."; \
+		docker run --rm \
+			--user "$$(id -u):$$(id -g)" \
+			-e HOME=/tmp -e GOCACHE=/tmp/go-build -e GOMODCACHE=/tmp/go-mod \
+			-v "$(CURDIR)":/src -w /src \
+			golang:$(GO_VERSION) go run $(1); \
+	fi
+endef
+
 .PHONY: generate-service-token
 generate-service-token:
-	go run ./hack/generate-service-token generate \
-		--issuer=${ISSUER} \
-		--audience=bucketeer \
-		--email=${EMAIL} \
-		--role=OWNER \
-		--key=${OAUTH_KEY_PATH} \
-		--output=${SERVICE_TOKEN_PATH} \
-		--no-profile \
-		--no-gcp-trace-enabled
+	@$(call go_run,./hack/generate-service-token generate \
+		--issuer=$(ISSUER) --audience=bucketeer --email=$(EMAIL) --role=OWNER \
+		--key=$(OAUTH_KEY_PATH) --output=$(SERVICE_TOKEN_PATH) \
+		--no-profile --no-gcp-trace-enabled)
+
+# ensure-oauth-key / ensure-service-token generate the local development OAuth key
+# pair and service token in $(DEV_OAUTH_CERT_DIR) if they are missing. These files
+# are gitignored (the private key can mint system-admin tokens) and are created on
+# demand by docker-compose-setup and deploy-bucketeer, so local development works
+# without committing secrets to the repository.
+.PHONY: ensure-oauth-key
+ensure-oauth-key:
+	@if [ ! -f $(DEV_OAUTH_CERT_DIR)/oauth-private.pem ] || [ ! -f $(DEV_OAUTH_CERT_DIR)/oauth-public.pem ]; then \
+		echo "Generating development OAuth key pair in $(DEV_OAUTH_CERT_DIR)..."; \
+		mkdir -p $(DEV_OAUTH_CERT_DIR) && \
+		openssl genrsa -out $(DEV_OAUTH_CERT_DIR)/oauth-private.pem 4096 && \
+		openssl rsa -in $(DEV_OAUTH_CERT_DIR)/oauth-private.pem -pubout -out $(DEV_OAUTH_CERT_DIR)/oauth-public.pem && \
+		chmod 600 $(DEV_OAUTH_CERT_DIR)/oauth-private.pem && \
+		rm -f $(DEV_OAUTH_CERT_DIR)/service-token || \
+		{ echo "Failed to generate OAuth key pair" >&2; rm -f $(DEV_OAUTH_CERT_DIR)/oauth-private.pem $(DEV_OAUTH_CERT_DIR)/oauth-public.pem; exit 1; }; \
+	else \
+		echo "Development OAuth key pair already exists"; \
+	fi
+
+.PHONY: ensure-service-token
+ensure-service-token: ensure-oauth-key
+	@if [ ! -f $(DEV_OAUTH_CERT_DIR)/service-token ]; then \
+		echo "Generating development service token in $(DEV_OAUTH_CERT_DIR)..."; \
+		make generate-service-token \
+			ISSUER=https://localhost \
+			EMAIL=localenv@bucketeer.io \
+			OAUTH_KEY_PATH=$(DEV_OAUTH_CERT_DIR)/oauth-private.pem \
+			SERVICE_TOKEN_PATH=$(DEV_OAUTH_CERT_DIR)/service-token; \
+	else \
+		echo "Development service token already exists"; \
+	fi
 
 .PHONY: create-api-key
 create-api-key:
@@ -717,6 +773,7 @@ setup-aichat-secret:
 
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
+	make ensure-service-token
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
@@ -776,7 +833,7 @@ define detect_docker_compose
 endef
 
 .PHONY: docker-compose-setup
-docker-compose-setup:
+docker-compose-setup: ensure-service-token
 	$(call detect_docker_compose)
 	@echo "Setting up Docker Compose environment..."
 	@if [ ! -d "docker-compose/init-db" ]; then \

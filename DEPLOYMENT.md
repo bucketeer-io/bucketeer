@@ -125,6 +125,51 @@ cp your-ssl-cert.crt tools/dev/cert/tls.crt
 cp your-ssl-key.key tools/dev/cert/tls.key
 ```
 
+**Use a dedicated OAuth signing key and service token:**
+For local development, `make docker-compose-up` (and `make deploy-bucketeer` for the
+minikube/localenv cluster) generate a development OAuth key pair
+(`tools/dev/cert/oauth-private.pem` / `oauth-public.pem`) and a service token
+(`tools/dev/cert/service-token`) on first run. These are **gitignored** and are for
+local use only — the private key can mint system-admin tokens.
+
+The service token generator is a Go program; if Go is not installed on the host
+(for example a Docker-only server running prebuilt images), `make` runs it inside a
+`golang` container automatically, so no extra setup is needed.
+
+For a real deployment, provide your own managed secrets (Helm `oauth.key.secret` /
+`serviceToken.secret`) and use a non-`https://localhost` issuer. The old committed
+development key pair is in git history, so it must never be reused in a real
+deployment. To generate fresh material explicitly:
+```bash
+# Generate a fresh OAuth key pair (writes tools/dev/cert/oauth-private.pem and oauth-public.pem)
+make -C tools/dev generate-oauth
+
+# Generate a new service token signed by that key.
+# ISSUER must be your production OAuth issuer (not https://localhost).
+make generate-service-token \
+  ISSUER=https://your-domain.com \
+  EMAIL=service@your-domain.com \
+  OAUTH_KEY_PATH=tools/dev/cert/oauth-private.pem \
+  SERVICE_TOKEN_PATH=tools/dev/cert/service-token
+```
+
+**Keep the OAuth issuer consistent:**
+Token verification checks the issuer, so the `ISSUER` used to mint the service token
+must match the issuer the services are configured with.
+Set the same production URL in every place that defaults to `https://localhost`:
+`docker-compose/config/oauth-config.json` (`issuer`) and `BUCKETEER_BATCH_OAUTH_ISSUER`
+for Docker Compose; for Helm, both `web.oauth.issuer` and `batch-server.oauth.issuer`
+in the umbrella chart (`oauth.issuer` in each standalone web/batch chart) — the batch
+service reads its own issuer and does not inherit the web one. A mismatch causes
+issuer-validation failures, not a startup refusal.
+
+**Disable the demo sign-in:**
+Set the demo sign-in to `false` (and never `isSystemAdmin: true`). The path differs per
+deployment: `demoSignIn.enabled` in `docker-compose/config/oauth-config.json` for Docker
+Compose, and `web.oauth.demoSignIn.enabled` (umbrella chart) or `oauth.demoSignIn.enabled`
+(standalone web chart) in Helm values. The demo password is published to the browser via
+`env.js`, so a demo system admin must never be enabled in production.
+
 **Configure CORS policy:**
 Edit `docker-compose/config/nginx/bucketeer.conf`:
 ```nginx
