@@ -16,21 +16,208 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/slack-go/slack"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	subscriptiondomain "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	domainproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
+
+const testSlackWebhookURL = "https://hooks.slack.com/services/T000/B000/token"
+
+// roundTripperFunc lets a test intercept the outgoing webhook request
+// without opening a network connection.
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func newMAUCountNotification() *senderproto.Notification {
+	return &senderproto.Notification{
+		Type: senderproto.Notification_MauCount,
+		MauCountNotification: &senderproto.MauCountNotification{
+			EnvironmentName: "test-env",
+			EventCount:      1234,
+			UserCount:       567,
+			Month:           4,
+		},
+	}
+}
+
+func newSlackRecipient(webhookURL string) *subscriptionproto.Recipient {
+	return &subscriptionproto.Recipient{
+		Type:     subscriptionproto.Recipient_SlackChannel,
+		Language: subscriptionproto.Recipient_ENGLISH,
+		SlackChannelRecipient: &subscriptionproto.SlackChannelRecipient{
+			WebhookUrl: webhookURL,
+		},
+	}
+}
+
+func TestNewWebhookHTTPClient(t *testing.T) {
+	t.Parallel()
+
+	client := newWebhookHTTPClient()
+	assert.Equal(t, webhookTimeout, client.Timeout)
+	assert.NotZero(t, client.Timeout)
+	require.NotNil(t, client.CheckRedirect)
+	assert.Equal(t, http.ErrUseLastResponse, client.CheckRedirect(nil, nil))
+}
+
+func TestNotifyDeliversOnlyToSlackIncomingWebhooks(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc             string
+		webhookURL       string
+		expectedErr      error
+		expectedRequests int32
+	}{
+		{
+			desc:             "err: loopback address",
+			webhookURL:       "http://127.0.0.1:3100/internal",
+			expectedErr:      subscriptiondomain.ErrSlackWebhookURLInvalid,
+			expectedRequests: 0,
+		},
+		{
+			desc:             "err: link-local address",
+			webhookURL:       "http://169.254.169.254/latest/meta-data/",
+			expectedErr:      subscriptiondomain.ErrSlackWebhookURLInvalid,
+			expectedRequests: 0,
+		},
+		{
+			desc:             "err: other https host",
+			webhookURL:       "https://example.com/services/T000/B000/token",
+			expectedErr:      subscriptiondomain.ErrSlackWebhookURLInvalid,
+			expectedRequests: 0,
+		},
+		{
+			desc:             "success: Slack incoming webhook",
+			webhookURL:       testSlackWebhookURL,
+			expectedErr:      nil,
+			expectedRequests: 1,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			var requests int32
+			client := newWebhookHTTPClient()
+			client.Transport = roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				atomic.AddInt32(&requests, 1)
+				assert.Equal(t, http.MethodPost, req.Method)
+				assert.Equal(t, testSlackWebhookURL, req.URL.String())
+				assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
+				body, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				var msg slack.WebhookMessage
+				require.NoError(t, json.Unmarshal(body, &msg))
+				require.Len(t, msg.Attachments, 1)
+				assert.Contains(t, msg.Attachments[0].Text, "test-env")
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Status:     "200 OK",
+					Body:       io.NopCloser(strings.NewReader("ok")),
+					Request:    req,
+				}, nil
+			})
+			notifier := &slackNotifier{
+				webURL:     "https://example.com",
+				httpClient: client,
+				logger:     zap.NewNop(),
+			}
+			recipient := newSlackRecipient(p.webhookURL)
+			err := notifier.Notify(context.Background(), newMAUCountNotification(), recipient, recipient.Language)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedRequests, atomic.LoadInt32(&requests))
+		})
+	}
+}
+
+func TestPostWebhook(t *testing.T) {
+	t.Parallel()
+
+	var redirectTargetHits int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ok", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("/redirect", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/redirect-target", http.StatusFound)
+	})
+	mux.HandleFunc("/redirect-target", func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&redirectTargetHits, 1)
+		w.WriteHeader(http.StatusOK)
+	})
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		path        string
+		expectedErr bool
+	}{
+		{
+			desc:        "success: 200 OK",
+			ctx:         context.Background(),
+			path:        "/ok",
+			expectedErr: false,
+		},
+		{
+			desc:        "err: redirect is returned to the caller instead of being followed",
+			ctx:         context.Background(),
+			path:        "/redirect",
+			expectedErr: true,
+		},
+		{
+			desc:        "err: canceled context is honored",
+			ctx:         canceledCtx,
+			path:        "/ok",
+			expectedErr: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			notifier := &slackNotifier{
+				webURL:     "https://example.com",
+				httpClient: newWebhookHTTPClient(),
+				logger:     zap.NewNop(),
+			}
+			msg := &slack.WebhookMessage{Text: "hello"}
+			err := notifier.postWebhook(p.ctx, msg, server.URL+p.path)
+			if p.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+	assert.Equal(t, int32(0), atomic.LoadInt32(&redirectTargetHits))
+}
 
 func TestLastDays(t *testing.T) {
 	patterns := []struct {

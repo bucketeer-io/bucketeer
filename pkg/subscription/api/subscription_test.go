@@ -56,7 +56,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 				Name: "sname",
 				Recipient: &proto.Recipient{
 					Type:                  proto.Recipient_SlackChannel,
-					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 				},
 			},
 			expectedErr: statusSourceTypesRequired.Err(),
@@ -102,6 +102,40 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSlackRecipientWebhookURLRequired.Err(),
 		},
 		{
+			desc: "err: ErrSlackRecipientWebhookURLInvalid: not a Slack incoming webhook",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Recipient: &proto.Recipient{
+					Type: proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{
+						WebhookUrl: "http://169.254.169.254/latest/meta-data/",
+					},
+				},
+			},
+			expectedErr: statusSlackRecipientWebhookURLInvalid.Err(),
+		},
+		{
+			desc: "err: ErrSlackRecipientWebhookURLInvalid: Slack host over http",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Recipient: &proto.Recipient{
+					Type: proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{
+						WebhookUrl: "http://hooks.slack.com/services/T000/B000/token",
+					},
+				},
+			},
+			expectedErr: statusSlackRecipientWebhookURLInvalid.Err(),
+		},
+		{
 			desc: "err: ErrNameRequired",
 			input: &proto.CreateSubscriptionRequest{
 				SourceTypes: []proto.Subscription_SourceType{
@@ -110,7 +144,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 				},
 				Recipient: &proto.Recipient{
 					Type:                  proto.Recipient_SlackChannel,
-					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 				},
 			},
 			expectedErr: statusNameRequired.Err(),
@@ -138,7 +172,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 				},
 				Recipient: &proto.Recipient{
 					Type:                  proto.Recipient_SlackChannel,
-					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 				},
 			},
 			expectedErr: nil,

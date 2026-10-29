@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -40,6 +41,9 @@ import (
 
 const (
 	linkTemplate = "<%s|%s>"
+	// webhookTimeout bounds a single webhook delivery so that an unresponsive
+	// endpoint cannot stall the notification pipeline.
+	webhookTimeout = 10 * time.Second
 )
 
 var (
@@ -71,9 +75,10 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type slackNotifier struct {
-	webURL string
-	logger *zap.Logger
-	opts   *options
+	webURL     string
+	httpClient *http.Client
+	logger     *zap.Logger
+	opts       *options
 }
 
 func NewSlackNotifier(webURL string, opts ...Option) Notifier {
@@ -85,9 +90,22 @@ func NewSlackNotifier(webURL string, opts ...Option) Notifier {
 		registerMetrics(options.metrics)
 	}
 	return &slackNotifier{
-		webURL: webURL,
-		opts:   &options,
-		logger: options.logger.Named("sender"),
+		webURL:     webURL,
+		httpClient: newWebhookHTTPClient(),
+		opts:       &options,
+		logger:     options.logger.Named("sender"),
+	}
+}
+
+// newWebhookHTTPClient returns the client used to deliver webhook messages.
+// It enforces a request timeout and never follows redirects, so the request
+// always ends at the configured Slack endpoint.
+func newWebhookHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: webhookTimeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 }
 
@@ -118,6 +136,16 @@ func (n *slackNotifier) notify(
 	slackRecipient *subscriptionproto.SlackChannelRecipient,
 	language subscriptionproto.Recipient_Language,
 ) error {
+	// Subscriptions created before the URL was validated at creation time may
+	// still point elsewhere; never deliver to anything but a Slack incoming webhook.
+	if err := subscriptiondomain.ValidateSlackWebhookURL(slackRecipient.WebhookUrl); err != nil {
+		n.logger.Warn("Skipped a recipient whose webhook URL is not a Slack incoming webhook",
+			zap.Error(err),
+			// Avoid logging a webhook URL which contains secret.
+			zap.String("slackRecipientId", subscriptiondomain.SlackChannelRecipientID(slackRecipient.WebhookUrl)),
+		)
+		return err
+	}
 	localizer, err := n.newLocalizer(ctx, language)
 	if err != nil {
 		return err
@@ -350,7 +378,7 @@ func lastDays(now, stopAt time.Time) int {
 }
 
 func (n *slackNotifier) postWebhook(ctx context.Context, msg *slack.WebhookMessage, webhookURL string) error {
-	if err := slack.PostWebhook(webhookURL, msg); err != nil {
+	if err := slack.PostWebhookCustomHTTPContext(ctx, webhookURL, n.httpClient, msg); err != nil {
 		n.logger.Error("Failed to post a message",
 			zap.Error(err),
 			// Avoid logging a webhook URL which contains secret.
