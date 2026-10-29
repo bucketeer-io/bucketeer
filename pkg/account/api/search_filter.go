@@ -19,8 +19,6 @@ import (
 	"errors"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -29,6 +27,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func (s *AccountService) CreateSearchFilter(
@@ -53,30 +52,20 @@ func (s *AccountService) CreateSearchFilter(
 		return nil, err
 	}
 
-	// If the target account is a system admin, we must use the system admin organization ID
-	// Otherwise, it will return a not found error
-	// because the account doesn't exist in non-system admin organizations.
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email)
-	if err != nil && status.Code(err) != codes.NotFound {
+	if err := s.checkSearchFilterOwner(ctx, editor, req.Email, req.EnvironmentId); err != nil {
 		return nil, err
-	}
-	orgID := req.OrganizationId
-	if sysAdminAccount != nil {
-		orgID = sysAdminAccount.OrganizationId
 	}
 
 	if _, err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
-		req.Email,
-		orgID); err != nil {
+		req.EnvironmentId); err != nil {
 		s.logger.Error(
 			"Failed to create search filter",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("organizationID", orgID),
-				zap.String("email", req.Email),
+				zap.String("email", editor.Email),
 				zap.String("environmentID", req.EnvironmentId),
 				zap.String("searchFilterName", req.Command.Name),
 				zap.String("query", req.Command.Query),
@@ -115,30 +104,21 @@ func (s *AccountService) UpdateSearchFilter(
 		return nil, err
 	}
 
-	// If the target account is a system admin, we must use the system admin organization ID
-	// Otherwise, it will return a not found error
-	// because the account doesn't exist in non-system admin organizations.
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email)
-	if err != nil && status.Code(err) != codes.NotFound {
+	if err := s.checkSearchFilterOwner(ctx, editor, req.Email, req.EnvironmentId); err != nil {
 		return nil, err
-	}
-	orgID := req.OrganizationId
-	if sysAdminAccount != nil {
-		orgID = sysAdminAccount.OrganizationId
 	}
 
 	if _, err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		commands,
-		req.Email,
-		orgID); err != nil {
+		req.EnvironmentId); err != nil {
 		s.logger.Error(
 			"Failed to update search filter",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("organizationID", orgID),
-				zap.String("email", req.Email),
+				zap.String("email", editor.Email),
+				zap.String("environmentID", req.EnvironmentId),
 			)...,
 		)
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -187,30 +167,21 @@ func (s *AccountService) DeleteSearchFilter(
 		return nil, err
 	}
 
-	// If the target account is a system admin, we must use the system admin organization ID
-	// Otherwise, it will return a not found error
-	// because the account doesn't exist in non-system admin organizations.
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email)
-	if err != nil && status.Code(err) != codes.NotFound {
+	if err := s.checkSearchFilterOwner(ctx, editor, req.Email, req.EnvironmentId); err != nil {
 		return nil, err
-	}
-	orgID := req.OrganizationId
-	if sysAdminAccount != nil {
-		orgID = sysAdminAccount.OrganizationId
 	}
 
 	if _, err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
-		req.Email,
-		orgID); err != nil {
+		req.EnvironmentId); err != nil {
 		s.logger.Error(
 			"Failed to delete search filter",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("organizationID", orgID),
-				zap.String("email", req.Email),
+				zap.String("email", editor.Email),
+				zap.String("environmentID", req.EnvironmentId),
 				zap.String("searchFilterID", req.Command.Id),
 			)...,
 		)
@@ -224,4 +195,27 @@ func (s *AccountService) DeleteSearchFilter(
 	}
 
 	return &accountproto.DeleteSearchFilterResponse{}, nil
+}
+
+// checkSearchFilterOwner rejects search filter requests that target an account
+// other than the caller's own. Search filters are personal settings, and the
+// environment role check only authorizes the caller, so a request email that
+// differs from the authenticated editor is denied.
+func (s *AccountService) checkSearchFilterOwner(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	email, environmentID string,
+) error {
+	if email == editor.Email {
+		return nil
+	}
+	s.logger.Warn(
+		"Rejected search filter request for another account",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.String("email", editor.Email),
+			zap.String("requestEmail", email),
+			zap.String("environmentID", environmentID),
+		)...,
+	)
+	return statusPermissionDenied.Err()
 }
