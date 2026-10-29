@@ -733,13 +733,12 @@ func TestOpsEventRateAcrossEventFlows(t *testing.T) {
 	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.GoalTopic, newGoals(leftoverUsers[:1]))
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
-	assertOpsUserCounts(ctx, t, autoOpsClient, featureID, feature.Version, variationID,
+	assertOpsUserCounts(t, autoOpsClient, featureID, feature.Version, variationID,
 		int64(len(userIDs)), int64(len(gatewayUsers[:2])+len(dedicatedUsers[:2])+len(leftoverUsers[:1])))
 }
 
 // assertOpsUserCounts checks the persisted user counts of the feature's only event rate clause
 func assertOpsUserCounts(
-	ctx context.Context,
 	t *testing.T,
 	autoOpsClient autoopsclient.Client,
 	featureID string,
@@ -748,6 +747,9 @@ func assertOpsUserCounts(
 	wantEvaluations, wantGoals int64,
 ) {
 	t.Helper()
+	// The trigger wait can outlast the test's setup context
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 	ecClient := newEventCounterClient(t)
 	defer ecClient.Close()
 	rule := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)[0]
