@@ -114,10 +114,10 @@ func (s *codeReferenceStorage) UpdateCodeReference(ctx context.Context, cr *doma
 
 func (s *codeReferenceStorage) GetCodeReference(
 	ctx context.Context,
-	id string,
+	id, environmentID string,
 ) (*domain.CodeReference, error) {
 	codeRef := &domain.CodeReference{}
-	row := s.qe.QueryRowContext(ctx, selectCodeReferenceSQL, id)
+	row := s.qe.QueryRowContext(ctx, selectCodeReferenceSQL, id, environmentID)
 	err := row.Scan(
 		&codeRef.Id,
 		&codeRef.FeatureId,
@@ -202,8 +202,8 @@ func (s *codeReferenceStorage) ListCodeReferences(
 	return codeRefs, nextOffset, total, nil
 }
 
-func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id string) error {
-	result, err := s.qe.ExecContext(ctx, deleteCodeReferenceSQL, id)
+func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id, environmentID string) error {
+	result, err := s.qe.ExecContext(ctx, deleteCodeReferenceSQL, id, environmentID)
 	if err != nil {
 		return err
 	}

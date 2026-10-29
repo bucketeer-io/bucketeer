@@ -1,1 +1,1 @@
-DELETE FROM code_reference WHERE id = $1
+DELETE FROM code_reference WHERE id = $1 AND environment_id = $2
