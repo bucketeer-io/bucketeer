@@ -258,6 +258,14 @@ func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string
 }
 
 func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount string) (*fcmConfig, error) {
+	// Defense in depth: never exchange a credential that is not a Google
+	// service-account key file, even if a malicious one was stored before the
+	// API-level validation existed. This blocks "external_account" credentials
+	// whose credential_source would read a local file (e.g. the service token)
+	// or perform SSRF from this subscriber pod.
+	if err := pushdomain.ValidateFCMServiceAccount([]byte(fcmServiceAccount)); err != nil {
+		return nil, fmt.Errorf("invalid fcm service account: %w", err)
+	}
 	// Create OAuth2 token source
 	creds, err := google.CredentialsFromJSON(
 		ctx,

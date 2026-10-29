@@ -440,6 +440,15 @@ func (s *PushService) checkFCMServiceAccount(
 	pushes []*pushproto.Push,
 	fcmServiceAccount []byte,
 ) error {
+	// Reject any credential JSON that is not a Google service-account key file.
+	// "external_account"/"authorized_user" style credentials carry an
+	// attacker-controlled token_uri or credential_source (a local file or an
+	// arbitrary URL); accepting them would let a push editor make the subscriber
+	// read local files or perform SSRF when the token is later exchanged.
+	if err := domain.ValidateFCMServiceAccount(fcmServiceAccount); err != nil {
+		s.logger.Error("Invalid FCM service account", zap.Error(err))
+		return statusFCMServiceAccountInvalid.Err()
+	}
 	// Check if the JSON is a service account file
 	_, err := google.CredentialsFromJSON(
 		ctx,
