@@ -42,7 +42,8 @@ func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
 		EnvironmentId:  environmentId,
 		OrganizationId: event.OrganizationId,
 	}
-	// On failure the affected field is left empty rather than persisting a raw key.
+	// On failure the affected field is left empty rather than persisting a raw secret.
 	_ = ObfuscateAPIKey(auditlog.AuditLog)
+	_ = RedactSecretFields(auditlog.AuditLog)
 	return auditlog
 }

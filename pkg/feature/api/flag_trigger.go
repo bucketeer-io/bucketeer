@@ -87,6 +87,8 @@ func (s *FeatureService) CreateFlagTrigger(
 		if err := flagTrigger.GenerateToken(); err != nil {
 			return err
 		}
+		// The token is returned once, in the response URL. It is kept out of
+		// the event and its entity data so it never reaches the audit log.
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FLAG_TRIGGER,
@@ -98,13 +100,12 @@ func (s *FeatureService) CreateFlagTrigger(
 				Type:          flagTrigger.Type,
 				Action:        flagTrigger.Action,
 				Description:   flagTrigger.Description,
-				Token:         flagTrigger.Token,
 				CreatedAt:     flagTrigger.CreatedAt,
 				UpdatedAt:     flagTrigger.UpdatedAt,
 				EnvironmentId: flagTrigger.EnvironmentId,
 			},
 			request.EnvironmentId,
-			flagTrigger,
+			flagTrigger.WithoutToken(),
 			nil,
 		)
 		if err != nil {
@@ -188,8 +189,8 @@ func (s *FeatureService) UpdateFlagTrigger(
 				Disabled:    request.Disabled,
 			},
 			request.EnvironmentId,
-			updated,
-			flagTrigger,
+			updated.WithoutToken(),
+			flagTrigger.WithoutToken(),
 		)
 		if err != nil {
 			return err
@@ -265,8 +266,8 @@ func (s *FeatureService) DeleteFlagTrigger(
 				EnvironmentId: flagTrigger.EnvironmentId,
 			},
 			request.EnvironmentId,
-			nil,         // Current state: entity no longer exists
-			flagTrigger, // Previous state: what was deleted
+			nil,                        // Current state: entity no longer exists
+			flagTrigger.WithoutToken(), // Previous state: what was deleted
 		)
 		if err != nil {
 			return err
@@ -499,8 +500,8 @@ func (s *FeatureService) updateTriggerUsageInfo(
 				EnvironmentId:   flagTrigger.EnvironmentId,
 			},
 			flagTrigger.EnvironmentId,
-			flagTrigger,
-			prev,
+			flagTrigger.WithoutToken(),
+			prev.WithoutToken(),
 		)
 		if err != nil {
 			return err
