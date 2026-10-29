@@ -1,6 +1,6 @@
 module github.com/bucketeer-io/bucketeer/hack/delete-redis-retry-keys
 
-go 1.26.7
+go 1.26.10
 
 require (
 	github.com/bucketeer-io/bucketeer/v2 v2.0.0-00010101000000-000000000000

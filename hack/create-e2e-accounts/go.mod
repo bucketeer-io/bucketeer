@@ -1,6 +1,6 @@
 module github.com/bucketeer-io/bucketeer/hack/create-e2e-accounts
 
-go 1.26.7
+go 1.26.10
 
 require (
 	github.com/bucketeer-io/bucketeer/v2 v2.2.0
