@@ -45,5 +45,6 @@ func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
 	// On failure the affected field is left empty rather than persisting a raw secret.
 	_ = ObfuscateAPIKey(auditlog.AuditLog)
 	_ = RedactSecretFields(auditlog.AuditLog)
+	_ = MaskWebhookURL(auditlog.AuditLog)
 	return auditlog
 }

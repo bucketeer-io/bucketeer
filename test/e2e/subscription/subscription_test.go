@@ -108,8 +108,13 @@ func TestCreateListSubscription(t *testing.T) {
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
 	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+	// Read APIs never return the stored webhook URL, only its masked form.
+	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != domain.MaskWebhookURL(webhookURL) {
+		t.Fatalf(
+			"Incorrect webhook URL. Expected: %s actual: %s",
+			domain.MaskWebhookURL(webhookURL),
+			subscription.Recipient.SlackChannelRecipient.WebhookUrl,
+		)
 	}
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
@@ -185,8 +190,13 @@ func TestCreateUpdateSubscription(t *testing.T) {
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
 	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+	// Read APIs never return the stored webhook URL, only its masked form.
+	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != domain.MaskWebhookURL(webhookURL) {
+		t.Fatalf(
+			"Incorrect webhook URL. Expected: %s actual: %s",
+			domain.MaskWebhookURL(webhookURL),
+			subscription.Recipient.SlackChannelRecipient.WebhookUrl,
+		)
 	}
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
@@ -252,8 +262,13 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
 	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+	// Read APIs never return the stored webhook URL, only its masked form.
+	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != domain.MaskWebhookURL(webhookURL) {
+		t.Fatalf(
+			"Incorrect webhook URL. Expected: %s actual: %s",
+			domain.MaskWebhookURL(webhookURL),
+			subscription.Recipient.SlackChannelRecipient.WebhookUrl,
+		)
 	}
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
@@ -326,8 +341,13 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
 	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+	// Read APIs never return the stored webhook URL, only its masked form.
+	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != domain.MaskWebhookURL(webhookURL) {
+		t.Fatalf(
+			"Incorrect webhook URL. Expected: %s actual: %s",
+			domain.MaskWebhookURL(webhookURL),
+			subscription.Recipient.SlackChannelRecipient.WebhookUrl,
+		)
 	}
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)

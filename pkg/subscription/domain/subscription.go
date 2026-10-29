@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
+	pb "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -36,6 +37,11 @@ const (
 	slackWebhookHost       = "hooks.slack.com"
 	slackWebhookPathPrefix = "/services/"
 )
+
+// webhookURLMask replaces the path of a webhook URL when it is returned by the
+// API or recorded in the audit log. The path is the credential: anyone holding
+// the full URL can post to the channel.
+const webhookURLMask = "****"
 
 var (
 	ErrUnknownRecipient = err.NewErrorInvalidArgUnknown(
@@ -122,6 +128,45 @@ func ValidateSlackWebhookURL(webhookURL string) error {
 		return ErrSlackWebhookURLInvalid
 	}
 	return nil
+}
+
+// MaskWebhookURL hides the credential part of a webhook URL, keeping only the
+// scheme and host so the destination stays recognizable
+// (https://hooks.slack.com/services/T000/B000/token -> https://hooks.slack.com/****).
+// Values that are not URLs are replaced entirely, and masking an already masked
+// URL leaves it unchanged. It must be used everywhere a stored webhook URL is
+// returned or recorded; only the notification sender needs the original value.
+func MaskWebhookURL(webhookURL string) string {
+	if webhookURL == "" {
+		return ""
+	}
+	u, e := url.Parse(webhookURL)
+	if e != nil || u.Scheme == "" || u.Host == "" {
+		return webhookURLMask
+	}
+	return u.Scheme + "://" + u.Host + "/" + webhookURLMask
+}
+
+// MaskSubscriptionWebhookURL masks the webhook URL of the subscription in place.
+// Use it on subscriptions that are only returned, never persisted afterwards.
+func MaskSubscriptionWebhookURL(subscription *proto.Subscription) {
+	if subscription == nil || subscription.Recipient == nil || subscription.Recipient.SlackChannelRecipient == nil {
+		return
+	}
+	subscription.Recipient.SlackChannelRecipient.WebhookUrl = MaskWebhookURL(
+		subscription.Recipient.SlackChannelRecipient.WebhookUrl,
+	)
+}
+
+// CopyWithMaskedWebhookURL returns a deep copy of the subscription whose webhook
+// URL is masked, leaving the original untouched for persistence.
+func CopyWithMaskedWebhookURL(subscription *proto.Subscription) *proto.Subscription {
+	if subscription == nil {
+		return nil
+	}
+	masked := pb.Clone(subscription).(*proto.Subscription)
+	MaskSubscriptionWebhookURL(masked)
+	return masked
 }
 
 func (s *Subscription) UpdateSubscription(

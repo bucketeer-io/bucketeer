@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -80,19 +81,22 @@ func (s *SubscriptionService) CreateSubscription(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
+	// The webhook URL is only stored. It is masked in the domain event, which
+	// becomes the audit log, and in the response.
+	masked := domain.CopyWithMaskedWebhookURL(subscription.Subscription)
 	event, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_SUBSCRIPTION,
 		subscription.Id,
 		eventproto.Event_SUBSCRIPTION_CREATED,
 		&eventproto.SubscriptionCreatedEvent{
-			SourceTypes:     subscription.SourceTypes,
-			Recipient:       subscription.Recipient,
-			Name:            subscription.Name,
-			FeatureFlagTags: subscription.FeatureFlagTags,
+			SourceTypes:     masked.SourceTypes,
+			Recipient:       masked.Recipient,
+			Name:            masked.Name,
+			FeatureFlagTags: masked.FeatureFlagTags,
 		},
 		req.EnvironmentId,
-		subscription.Subscription,
+		masked,
 		nil,
 	)
 	if err != nil {
@@ -119,7 +123,7 @@ func (s *SubscriptionService) CreateSubscription(
 		return nil, err
 	}
 	return &subscriptionproto.CreateSubscriptionResponse{
-		Subscription: subscription.Subscription,
+		Subscription: masked,
 	}, nil
 }
 
@@ -176,7 +180,9 @@ func (s *SubscriptionService) updateSubscriptionMySQL(
 		if err != nil {
 			return err
 		}
-		updatedSubscription = updated.Subscription
+		// The event and the response carry masked copies; `updated` keeps the
+		// original webhook URL because it is what gets persisted below.
+		updatedSubscription = domain.CopyWithMaskedWebhookURL(updated.Subscription)
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_SUBSCRIPTION,
@@ -191,7 +197,7 @@ func (s *SubscriptionService) updateSubscriptionMySQL(
 			},
 			ID,
 			updatedSubscription,
-			subscription,
+			domain.CopyWithMaskedWebhookURL(subscription.Subscription),
 		)
 		if err != nil {
 			return err
@@ -256,8 +262,8 @@ func (s *SubscriptionService) DeleteSubscription(
 			eventproto.Event_SUBSCRIPTION_DELETED,
 			&eventproto.SubscriptionDeletedEvent{},
 			req.EnvironmentId,
-			nil,                       // Current state: entity no longer exists
-			subscription.Subscription, // Previous state: what was deleted
+			nil, // Current state: entity no longer exists
+			domain.CopyWithMaskedWebhookURL(subscription.Subscription), // Previous state: what was deleted
 		)
 		if err = s.subscriptionStorage.DeleteSubscription(contextWithTx, req.Id, req.EnvironmentId); err != nil {
 			return err
@@ -320,6 +326,7 @@ func (s *SubscriptionService) GetSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	domain.MaskSubscriptionWebhookURL(subscription.Subscription)
 	return &subscriptionproto.GetSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
 
@@ -370,11 +377,26 @@ func (s *SubscriptionService) ListSubscriptions(
 	if err != nil {
 		return nil, err
 	}
+	maskWebhookURLs(subscriptions)
 	return &subscriptionproto.ListSubscriptionsResponse{
 		Subscriptions: subscriptions,
 		Cursor:        cursor,
 		TotalCount:    totalCount,
 	}, nil
+}
+
+// maskWebhookURLs masks the webhook URL of every listed subscription in place.
+func maskWebhookURLs(subscriptions []*subscriptionproto.Subscription) {
+	for _, subscription := range subscriptions {
+		domain.MaskSubscriptionWebhookURL(subscription)
+	}
+}
+
+// isServiceTokenCaller reports whether the request was made with a service
+// token, the credential of internal jobs such as the notification sender.
+func isServiceTokenCaller(ctx context.Context) bool {
+	token, ok := rpc.GetAccessToken(ctx)
+	return ok && token.IsSystemAdmin && token.IsServiceToken
 }
 
 func (s *SubscriptionService) getAllowedEnvironments(
@@ -428,6 +450,12 @@ func (s *SubscriptionService) ListEnabledSubscriptions(
 	)
 	if err != nil {
 		return nil, err
+	}
+	// The notification sender (pkg/subscription/sender) calls this RPC with a
+	// service token and needs the webhook URL to deliver notifications. Every
+	// other caller gets the masked value, like in the other read RPCs.
+	if !isServiceTokenCaller(ctx) {
+		maskWebhookURLs(subscriptions)
 	}
 	return &subscriptionproto.ListEnabledSubscriptionsResponse{
 		Subscriptions: subscriptions,
