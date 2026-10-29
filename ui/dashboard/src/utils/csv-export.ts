@@ -10,13 +10,17 @@ const FORMULA_LEADING_CHARACTER = /^[=+\-@\t\r]/;
 // Converts a single value into a CSV field. A string that a spreadsheet would
 // evaluate as a formula is prefixed with a single quote so it is displayed as
 // text; numbers are written as-is so they stay numeric. Fields containing a
-// comma, a double quote or a line break are quoted.
+// comma, a double quote, a line feed or a carriage return are quoted so they
+// are always read as a single cell.
 export const escapeCSVValue = (value: CSVValue): string => {
   let s = String(value ?? '');
   if (typeof value === 'string' && FORMULA_LEADING_CHARACTER.test(s)) {
     s = `'${s}`;
   }
-  return s.includes(',') || s.includes('"') || s.includes('\n')
+  return s.includes(',') ||
+    s.includes('"') ||
+    s.includes('\n') ||
+    s.includes('\r')
     ? `"${s.replace(/"/g, '""')}"`
     : s;
 };

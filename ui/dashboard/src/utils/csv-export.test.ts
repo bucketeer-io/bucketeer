@@ -8,7 +8,10 @@ describe('escapeCSVValue', () => {
     expect(escapeCSVValue('-1+1')).toBe("'-1+1");
     expect(escapeCSVValue('@SUM(A1:A2)')).toBe("'@SUM(A1:A2)");
     expect(escapeCSVValue('\t=1+1')).toBe("'\t=1+1");
-    expect(escapeCSVValue('\r=1+1')).toBe("'\r=1+1");
+  });
+
+  it('prefixes and quotes a string starting with a carriage return', () => {
+    expect(escapeCSVValue('\r=1+1')).toBe('"\'\r=1+1"');
   });
 
   it('prefixes and quotes a formula that also contains commas and quotes', () => {
@@ -51,6 +54,11 @@ describe('escapeCSVValue', () => {
     expect(escapeCSVValue('a,b')).toBe('"a,b"');
     expect(escapeCSVValue('say "hi"')).toBe('"say ""hi"""');
     expect(escapeCSVValue('line1\nline2')).toBe('"line1\nline2"');
+    expect(escapeCSVValue('line1\r\nline2')).toBe('"line1\r\nline2"');
+  });
+
+  it('quotes a field with an embedded carriage return so it stays one cell', () => {
+    expect(escapeCSVValue('project\r=1+1')).toBe('"project\r=1+1"');
   });
 });
 
