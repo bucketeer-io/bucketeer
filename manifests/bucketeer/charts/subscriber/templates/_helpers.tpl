@@ -57,8 +57,9 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{- define "subscriber.email-config-secret" -}}
-{{- if .Values.global.email.existingSecret }}
-{{- printf "%s" .Values.global.email.existingSecret -}}
+{{- $email := .Values.global.email | default dict -}}
+{{- if $email.existingSecret }}
+{{- printf "%s" $email.existingSecret -}}
 {{- else -}}
 {{ template "subscriber.fullname" . }}-email-config
 {{- end -}}
