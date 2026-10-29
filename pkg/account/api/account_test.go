@@ -1345,13 +1345,14 @@ func TestUpdateAccountV2SelfServiceCannotEscalate(t *testing.T) {
 		Email:          "member@example.com",
 		OrganizationId: "org0",
 		FirstName:      wrapperspb.String("Attacker"),
-		// Escalation attempt: request OWNER and EDITOR everywhere.
+		// Escalation attempt: request OWNER, EDITOR everywhere, and self-disable.
 		OrganizationRole: &accountproto.UpdateAccountV2Request_OrganizationRoleValue{
 			Role: accountproto.AccountV2_Role_Organization_OWNER,
 		},
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{EnvironmentId: "env0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 		},
+		Disabled: wrapperspb.Bool(true),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, persisted)
