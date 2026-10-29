@@ -236,6 +236,12 @@ func (s *AccountService) UpdateAccountV2(
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
 	)
+	// selfServiceUpdate is true when the caller is not an organization admin and is
+	// only permitted to edit their own account. Such callers may change profile
+	// fields but must never change privilege fields (organization role, environment
+	// roles, disabled state); otherwise any member could promote themselves to
+	// owner.
+	selfServiceUpdate := false
 	if err != nil {
 		// If not admin, check if user is updating their own account
 		editor, err = s.checkOrganizationRole(
@@ -249,11 +255,26 @@ func (s *AccountService) UpdateAccountV2(
 		if editor.Email != req.Email {
 			return nil, statusPermissionDenied.Err()
 		}
+		selfServiceUpdate = true
 	}
 
 	err = validateUpdateAccountV2Request(req)
 	if err != nil {
 		return nil, err
+	}
+
+	// Privilege fields are only honoured for organization admins. For a
+	// self-service update they are ignored so the caller's current organization
+	// role, environment roles and disabled state are preserved regardless of what
+	// the request contains. This prevents a member from escalating their own
+	// privileges (e.g. to OWNER) via the self-update path.
+	organizationRole := req.OrganizationRole
+	environmentRoles := req.EnvironmentRoles
+	disabled := req.Disabled
+	if selfServiceUpdate {
+		organizationRole = nil
+		environmentRoles = nil
+		disabled = nil
 	}
 	updatedAccountPb, err := s.updateAccountV2NoCommandMysql(
 		ctx,
@@ -268,9 +289,9 @@ func (s *AccountService) UpdateAccountV2(
 		req.Avatar,
 		req.Tags,
 		req.TeamChanges,
-		req.OrganizationRole,
-		req.EnvironmentRoles,
-		req.Disabled,
+		organizationRole,
+		environmentRoles,
+		disabled,
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
