@@ -253,8 +253,7 @@ const ConfirmationRequiredModal = ({
   const {
     control,
     formState: { isDirty, isValid, isSubmitting },
-    watch,
-    setValue
+    watch
   } = form;
   const isRequireComment = watch('requireComment');
   const isShowSchedule = watch('scheduleType') === SCHEDULE_TYPE_SCHEDULE;
@@ -412,9 +411,7 @@ const ConfirmationRequiredModal = ({
                   name="comment"
                   render={({ field }) => (
                     <Form.Item className="py-0">
-                      <Form.Label
-                        required={isRequireComment && !isShowSchedule}
-                      >
+                      <Form.Label required={isRequireComment}>
                         {t('form:comment-for-update')}
                       </Form.Label>
                       <Form.Control>
@@ -477,14 +474,7 @@ const ConfirmationRequiredModal = ({
                             <RadioGroup
                               defaultValue={field.value}
                               className="flex flex-col w-full gap-y-4"
-                              onValueChange={value => {
-                                field.onChange(value);
-                                setValue(
-                                  'requireComment',
-                                  value !== SCHEDULE_TYPE_SCHEDULE &&
-                                    currentEnvironment.requireComment
-                                );
-                              }}
+                              onValueChange={field.onChange}
                             >
                               <div className="flex items-center gap-x-2">
                                 <RadioGroupItem

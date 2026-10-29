@@ -471,6 +471,9 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 			return f(ctxWithTx)
 		},
 	)
+	// No experiment on the flag and no comment required by the environment.
+	expectNoExperiments(service)
+	expectEnvironment(service)
 	// Plain read outside the transaction resolves the flag ID; the locking
 	// read inside it re-checks the schedule after the flag row is locked.
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").
@@ -555,6 +558,9 @@ func TestExecuteScheduledFlagChange_TransientErrorKeepsSchedulePending(t *testin
 			return f(ctx)
 		},
 	)
+	// No experiment on the flag and no comment required by the environment.
+	expectNoExperiments(service)
+	expectEnvironment(service)
 	// Plain read outside the transaction resolves the flag ID; the locking
 	// read inside it re-checks the schedule after the flag row is locked.
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").

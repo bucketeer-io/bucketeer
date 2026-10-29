@@ -711,6 +711,7 @@ func TestExecuteScheduledFlagChangeLocksFlagBeforeSchedule(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service, _ := newHoldoutService(t, controller)
+	expectEnvironment(service)
 	expectTx(service)
 	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
 	gomock.InOrder(
@@ -735,6 +736,7 @@ func TestExecuteScheduledFlagChangeRechecksScheduleUnderLock(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service, _ := newHoldoutService(t, controller)
+	expectEnvironment(service)
 	expectTx(service)
 	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)
 	executed := pendingScheduledChange(nil)
@@ -760,6 +762,7 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service, storage := newHoldoutService(t, controller)
+	expectEnvironment(service)
 	expectTx(service)
 	archive := &featureproto.ScheduledChangePayload{Archived: wrapperspb.Bool(true)}
 	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)

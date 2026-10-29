@@ -213,6 +213,7 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 		accountClient:              a,
 		autoOpsClient:              aoclientmock.NewMockClient(c),
 		experimentClient:           experimentclientmock.NewMockClient(c),
+		environmentClient:          envclientmock.NewMockClient(c),
 		featuresCache:              cachev3mock.NewMockFeaturesCache(c),
 		segmentUsersPublisher:      segmentUsersPublisher,
 		userAttributesCache:        cachev3mock.NewMockUserAttributesCache(c),
