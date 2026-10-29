@@ -49,6 +49,11 @@ var (
 		"webhook URL must be specified",
 		"WebhookURL",
 	))
+	statusSlackRecipientWebhookURLInvalid = api.NewGRPCStatus(err.NewErrorInvalidArgNotMatchFormat(
+		err.SubscriptionPackageName,
+		"webhook URL must be a Slack incoming webhook URL (https://hooks.slack.com/services/...)",
+		"WebhookURL",
+	))
 	statusInvalidCursor = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.SubscriptionPackageName, "cursor is invalid", "Cursor"),
 	)
