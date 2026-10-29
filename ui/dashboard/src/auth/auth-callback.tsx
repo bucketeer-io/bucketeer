@@ -3,12 +3,13 @@ import { useLocation, useNavigate } from 'react-router';
 import { exchangeToken, ExchangeTokenPayload } from '@api/auth';
 import { urls } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
-import { getCookieState } from 'cookie';
+import { getCookieState, removeCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
 import queryString from 'query-string';
 import { setTokenStorage } from 'storage/token';
 import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
+import { isValidOAuthState } from './oauth-state';
 
 export const AuthCallbackPage = memo(() => {
   const { syncSignIn, setIsGoogleAuthError, setIsInitialLoading } = useAuth();
@@ -37,14 +38,18 @@ export const AuthCallbackPage = memo(() => {
     const { code, state } = queryString.parse(query);
     const cookieState = getCookieState();
     setIsInitialLoading(true);
-    if (!!code && state === cookieState) {
-      if (typeof code === 'string') {
-        onGoogleLoginHandler({
-          code,
-          redirectUrl: urls.AUTH_REDIRECT,
-          type: 2 // Google auth type
-        });
-      }
+    if (
+      !!code &&
+      typeof code === 'string' &&
+      isValidOAuthState(state, cookieState)
+    ) {
+      // Each stored state is accepted once.
+      removeCookieState();
+      onGoogleLoginHandler({
+        code,
+        redirectUrl: urls.AUTH_REDIRECT,
+        type: 2 // Google auth type
+      });
     } else {
       throw new Error('exchange token failed.');
     }
