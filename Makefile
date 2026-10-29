@@ -375,7 +375,11 @@ generate-service-token:
 ensure-oauth-key:
 	@if [ ! -f $(CERT_DIR)/oauth-private.pem ] || [ ! -f $(CERT_DIR)/oauth-public.pem ]; then \
 		echo "Generating development OAuth key pair in $(CERT_DIR)..."; \
-		make -C tools/dev generate-oauth; \
+		mkdir -p $(CERT_DIR); \
+		openssl genrsa -out $(CERT_DIR)/oauth-private.pem 4096; \
+		openssl rsa -in $(CERT_DIR)/oauth-private.pem -pubout -out $(CERT_DIR)/oauth-public.pem; \
+		chmod 600 $(CERT_DIR)/oauth-private.pem; \
+		rm -f $(CERT_DIR)/service-token; \
 	else \
 		echo "Development OAuth key pair already exists"; \
 	fi
