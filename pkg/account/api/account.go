@@ -263,15 +263,24 @@ func (s *AccountService) UpdateAccountV2(
 		return nil, err
 	}
 
-	// Privilege fields are only honoured for organization admins. For a
-	// self-service update they are ignored so the caller's current organization
-	// role, environment roles and disabled state are preserved regardless of what
-	// the request contains. This prevents a member from escalating their own
-	// privileges (e.g. to OWNER) via the self-update path.
 	organizationRole := req.OrganizationRole
 	environmentRoles := req.EnvironmentRoles
 	disabled := req.Disabled
 	if selfServiceUpdate {
+		existing, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
+		if err != nil {
+			return nil, err
+		}
+		if selfServicePrivilegeChangeAttempted(existing, req) {
+			s.logger.Warn(
+				"Rejected self-service account update attempting to change privilege fields",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("organizationID", req.OrganizationId),
+					zap.String("email", req.Email),
+				)...,
+			)
+			return nil, statusPermissionDenied.Err()
+		}
 		organizationRole = nil
 		environmentRoles = nil
 		disabled = nil
@@ -855,4 +864,41 @@ func (s *AccountService) constructEnvironmentRoles(
 		requestEnvironmentRoles = append(requestEnvironmentRoles, editor.EnvironmentRoles...)
 	}
 	return requestEnvironmentRoles, nil
+}
+
+func selfServicePrivilegeChangeAttempted(
+	existing *domain.AccountV2,
+	req *accountproto.UpdateAccountV2Request,
+) bool {
+	if req.OrganizationRole != nil &&
+		req.OrganizationRole.Role != existing.OrganizationRole {
+		return true
+	}
+	if req.Disabled != nil && req.Disabled.Value != existing.Disabled {
+		return true
+	}
+	if len(req.EnvironmentRoles) > 0 &&
+		!environmentRolesEqual(req.EnvironmentRoles, existing.EnvironmentRoles) {
+		return true
+	}
+	return false
+}
+
+func environmentRolesEqual(
+	requested, existing []*accountproto.AccountV2_EnvironmentRole,
+) bool {
+	if len(requested) != len(existing) {
+		return false
+	}
+	existingByEnv := make(map[string]accountproto.AccountV2_Role_Environment, len(existing))
+	for _, r := range existing {
+		existingByEnv[r.EnvironmentId] = r.Role
+	}
+	for _, r := range requested {
+		role, ok := existingByEnv[r.EnvironmentId]
+		if !ok || role != r.Role {
+			return false
+		}
+	}
+	return true
 }
