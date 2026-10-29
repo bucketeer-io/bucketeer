@@ -1347,6 +1347,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
+		// Forward only the headers the web services consume as gRPC metadata.
+		// This keeps HTTP clients from setting arbitrary metadata through
+		// "Grpc-Metadata-*" headers, such as the API key metadata that is
+		// reserved for requests relayed by the public API gateway.
+		gatewayapi.WithIncomingHeaderMatcher(gatewayapi.AllowedIncomingHeaderMatcher("authorization")),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create web gRPC gateway: %w", err)

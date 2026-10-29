@@ -17,6 +17,7 @@ package gateway
 import (
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
@@ -48,6 +49,7 @@ type options struct {
 	httpReadTimeout           time.Duration
 	httpWriteTimeout          time.Duration
 	httpIdleTimeout           time.Duration
+	incomingHeaderMatcher     runtime.HeaderMatcherFunc
 }
 
 var defaultOptions = options{
@@ -163,5 +165,14 @@ func WithHTTPTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Opti
 		o.httpReadTimeout = readTimeout
 		o.httpWriteTimeout = writeTimeout
 		o.httpIdleTimeout = idleTimeout
+	}
+}
+
+// WithIncomingHeaderMatcher sets the function that decides which HTTP request
+// headers are forwarded to the gRPC services as metadata. When it is not set,
+// grpc-gateway's runtime.DefaultHeaderMatcher is used.
+func WithIncomingHeaderMatcher(matcher runtime.HeaderMatcherFunc) Option {
+	return func(o *options) {
+		o.incomingHeaderMatcher = matcher
 	}
 }
