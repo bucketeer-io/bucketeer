@@ -398,6 +398,80 @@ func TestGetInsightsLatency(t *testing.T) {
 	}
 }
 
+func TestGetInsightsLatencyEnvironmentIDQuoting(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	startAt := now.Add(-24 * time.Hour).Unix()
+	endAt := now.Unix()
+
+	patterns := []struct {
+		desc          string
+		systemAdmin   bool
+		envIDs        []string
+		expectedQuery string
+	}{
+		{
+			desc:        "system admin: environment id containing a double quote and PromQL syntax stays inside the label matcher",
+			systemAdmin: true,
+			envIDs:      []string{`env1"} or up{job=~".+`},
+			expectedQuery: recordingRuleLatencyAvg +
+				`{environment_id=~"^env1\"\\} or up\\{job=~\"\\.\\+$"}`,
+		},
+		{
+			desc:          "system admin: environment id containing a backslash is escaped",
+			systemAdmin:   true,
+			envIDs:        []string{`env\1`},
+			expectedQuery: recordingRuleLatencyAvg + `{environment_id=~"^env\\\\1$"}`,
+		},
+		{
+			desc:          "system admin: plain environment ids are passed through unchanged",
+			systemAdmin:   true,
+			envIDs:        []string{"env1", "env2"},
+			expectedQuery: recordingRuleLatencyAvg + `{environment_id=~"^(env1|env2)$"}`,
+		},
+		{
+			desc:          "viewer: plain environment id is passed through unchanged",
+			envIDs:        []string{"env1"},
+			expectedQuery: recordingRuleLatencyAvg + `{environment_id=~"^env1$"}`,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			var ctx context.Context
+			if p.systemAdmin {
+				ctx = createContextWithSystemAdminToken(t)
+			} else {
+				ctx = createContextWithToken(t)
+			}
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
+
+			s := newInsightsServiceForTest(
+				t,
+				mockController,
+				toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+				toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			)
+			s.promClient.(*prometheusmock.MockClient).EXPECT().
+				QueryRange(gomock.Any(), p.expectedQuery, gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(model.Matrix{}, nil)
+
+			actual, err := s.GetInsightsLatency(ctx, &insightsproto.GetInsightsTimeSeriesRequest{
+				EnvironmentIds: p.envIDs,
+				StartAt:        startAt,
+				EndAt:          endAt,
+			})
+			require.NoError(t, err)
+			assert.Empty(t, actual.Timeseries)
+		})
+	}
+}
+
 func TestGetInsightsRequests(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -921,6 +995,16 @@ func createContextWithToken(t *testing.T) context.Context {
 	tk := &token.AccessToken{
 		Email:         "test@example.com",
 		IsSystemAdmin: false,
+	}
+	ctx := context.TODO()
+	return context.WithValue(ctx, rpc.AccessTokenKey, tk)
+}
+
+func createContextWithSystemAdminToken(t *testing.T) context.Context {
+	t.Helper()
+	tk := &token.AccessToken{
+		Email:         "admin@example.com",
+		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.AccessTokenKey, tk)

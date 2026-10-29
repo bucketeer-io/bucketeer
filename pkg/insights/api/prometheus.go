@@ -48,16 +48,21 @@ func errorRatesQuery(envIDs, sourceIDs, apiIDs []string) string {
 	return recordingRuleErrorRate + buildSelector(envIDs, sourceIDs, apiIDs)
 }
 
+// buildSelector returns the PromQL label matchers for the given filter values.
+// Each matcher value is a regex (see buildRegex) emitted with %q so it becomes
+// a well-formed double-quoted PromQL string literal: quotes, backslashes and
+// control characters inside a value are escaped instead of terminating the
+// literal and being parsed as part of the query.
 func buildSelector(envIDs, sourceIDs, apiIDs []string) string {
 	var filters []string
 	if len(envIDs) > 0 {
-		filters = append(filters, fmt.Sprintf(`environment_id=~"%s"`, buildRegex(envIDs)))
+		filters = append(filters, fmt.Sprintf(`environment_id=~%q`, buildRegex(envIDs)))
 	}
 	if len(sourceIDs) > 0 {
-		filters = append(filters, fmt.Sprintf(`source_id=~"%s"`, buildRegex(sourceIDs)))
+		filters = append(filters, fmt.Sprintf(`source_id=~%q`, buildRegex(sourceIDs)))
 	}
 	if len(apiIDs) > 0 {
-		filters = append(filters, fmt.Sprintf(`method=~"%s"`, buildRegex(apiIDs)))
+		filters = append(filters, fmt.Sprintf(`method=~%q`, buildRegex(apiIDs)))
 	}
 	if len(filters) == 0 {
 		return ""
