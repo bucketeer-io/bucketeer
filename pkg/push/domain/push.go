@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"slices"
 	"time"
 
@@ -193,6 +194,72 @@ func validate(p *proto.Push) error {
 	}
 	if p.Tags == nil {
 		return ErrTagRequired
+	}
+	return nil
+}
+
+// allowedFCMTokenURIs is the set of token endpoints accepted in a Firebase
+// service-account key file. A valid key either omits token_uri or points at
+// Google's OAuth token endpoint.
+var allowedFCMTokenURIs = map[string]struct{}{
+	"":                                    {},
+	"https://oauth2.googleapis.com/token": {},
+	"https://accounts.google.com/o/oauth2/token": {},
+}
+
+var (
+	// ErrFCMServiceAccountRequired is returned when the FCM service account is empty.
+	ErrFCMServiceAccountRequired = err.NewErrorInvalidArgEmpty(
+		err.PushPackageName,
+		"fcm service account is required",
+		"fcmServiceAccount",
+	)
+	// ErrFCMServiceAccountInvalid is returned when the FCM service account is not a
+	// Google service-account key file. Rejecting every other credential type is a
+	// security control: google.CredentialsFromJSON honours the token_uri and, for
+	// the "external_account" family, an attacker-controlled credential_source (a
+	// local file or an arbitrary URL). A push editor could otherwise make the
+	// subscriber read local files (e.g. the service token) or perform SSRF when the
+	// token is exchanged.
+	ErrFCMServiceAccountInvalid = err.NewErrorInvalidArgNotMatchFormat(
+		err.PushPackageName,
+		"fcm service account must be a service_account key file",
+		"fcmServiceAccount",
+	)
+)
+
+// ValidateFCMServiceAccount ensures the provided JSON is a Google
+// service-account key file (type == "service_account") whose token endpoint is
+// Google's. Any other credential type (notably "external_account",
+// "external_account_authorized_user", "authorized_user" and
+// "impersonated_service_account") is rejected to prevent credential-source
+// abuse (arbitrary file read / SSRF) when the credential is later exchanged for
+// an access token.
+func ValidateFCMServiceAccount(fcmServiceAccount []byte) error {
+	if len(fcmServiceAccount) == 0 {
+		return ErrFCMServiceAccountRequired
+	}
+	var sa struct {
+		Type      string          `json:"type"`
+		TokenURI  string          `json:"token_uri"`
+		Web       json.RawMessage `json:"web"`
+		Installed json.RawMessage `json:"installed"`
+	}
+	if e := json.Unmarshal(fcmServiceAccount, &sa); e != nil {
+		return ErrFCMServiceAccountInvalid
+	}
+	if sa.Type != "service_account" {
+		return ErrFCMServiceAccountInvalid
+	}
+	// Reject OAuth client ("web"/"installed") blocks. google.CredentialsFromJSON
+	// tries ConfigFromJSON first and prioritises such a block over the declared
+	// type, returning a token source with no auth handler whose Token() call
+	// panics in the subscriber. A service-account key file never contains them.
+	if len(sa.Web) > 0 || len(sa.Installed) > 0 {
+		return ErrFCMServiceAccountInvalid
+	}
+	if _, ok := allowedFCMTokenURIs[sa.TokenURI]; !ok {
+		return ErrFCMServiceAccountInvalid
 	}
 	return nil
 }
