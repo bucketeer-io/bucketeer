@@ -21,6 +21,10 @@ import (
 // Token use values are stamped by the signer and checked by the matching
 // verifier. Access, refresh, and demo-creation tokens share one signing key,
 // so a token of one kind must not verify as another.
+// Access and refresh tokens that omit the claim still verify as themselves,
+// so a deployment can roll forward or back without replacing those tokens.
+// A demo-creation token must carry the claim: an access token has the same
+// issuer, audience, and email, and the two cannot be told apart without it.
 const (
 	TokenUseAccess  = "access"
 	TokenUseRefresh = "refresh"

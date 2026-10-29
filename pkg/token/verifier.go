@@ -69,8 +69,12 @@ func (v *verifier) VerifyAccessToken(rawAccessToken string) (*AccessToken, error
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
-	if err := checkTokenUse(t.TokenUse, TokenUseAccess); err != nil {
-		return nil, err
+	// Empty token_use is a token issued before the claim existed, including
+	// the service token. It still verifies here so the process can roll
+	// forward or back without a new token. Refresh and demo verifiers do
+	// not accept that token as their own kind.
+	if t.TokenUse != "" && t.TokenUse != TokenUseAccess {
+		return nil, fmt.Errorf("unexpected token_use %q, expected %q", t.TokenUse, TokenUseAccess)
 	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("id token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
@@ -100,14 +104,22 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
-	if err := checkTokenUse(t.TokenUse, TokenUseRefresh); err != nil {
-		return nil, err
-	}
-	if t.Issuer != v.issuer {
-		return nil, fmt.Errorf("refresh token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
-	}
-	if t.Audience != v.audience {
-		return nil, fmt.Errorf("expected audience %q got %q", v.audience, t.Audience)
+	switch t.TokenUse {
+	case TokenUseRefresh:
+		if t.Issuer != v.issuer {
+			return nil, fmt.Errorf("refresh token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
+		}
+		if t.Audience != v.audience {
+			return nil, fmt.Errorf("expected audience %q got %q", v.audience, t.Audience)
+		}
+	case "":
+		// Issued before token_use. Those refresh tokens also have no iss or aud.
+		// An access token always has both, so it cannot take this path.
+		if t.Issuer != "" || t.Audience != "" {
+			return nil, fmt.Errorf("unexpected token_use %q, expected %q", t.TokenUse, TokenUseRefresh)
+		}
+	default:
+		return nil, fmt.Errorf("unexpected token_use %q, expected %q", t.TokenUse, TokenUseRefresh)
 	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)

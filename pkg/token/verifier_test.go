@@ -404,6 +404,21 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	assert.Equal(t, issuer, demo.Issuer)
 	assert.Equal(t, audience, demo.Audience)
 
+	legacyAccessParsed, err := verifier.VerifyAccessToken(legacyAccess)
+	require.NoError(t, err)
+	assert.Empty(t, legacyAccessParsed.TokenUse)
+	assert.Equal(t, email, legacyAccessParsed.Email)
+	assert.Equal(t, issuer, legacyAccessParsed.Issuer)
+	assert.True(t, legacyAccessParsed.IsSystemAdmin)
+
+	legacyRefreshParsed, err := verifier.VerifyRefreshToken(legacyRefresh)
+	require.NoError(t, err)
+	assert.Empty(t, legacyRefreshParsed.TokenUse)
+	assert.Equal(t, email, legacyRefreshParsed.Email)
+	assert.Empty(t, legacyRefreshParsed.Issuer)
+	assert.Empty(t, legacyRefreshParsed.Audience)
+	assert.Equal(t, "org-1", legacyRefreshParsed.OrganizationID)
+
 	verifyAccess := func(raw string) error {
 		_, err := verifier.VerifyAccessToken(raw)
 		return err
@@ -490,12 +505,6 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 			wantSubstring: "email must be not empty",
 		},
 		{
-			name:          "access token without token_use is rejected as an access token",
-			raw:           legacyAccess,
-			verify:        verifyAccess,
-			wantSubstring: "token_use",
-		},
-		{
 			name:          "access token without token_use is rejected as a refresh token",
 			raw:           legacyAccess,
 			verify:        verifyRefresh,
@@ -508,9 +517,15 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 			wantSubstring: "token_use",
 		},
 		{
-			name:          "refresh token without token_use or issuer is rejected",
+			name:          "refresh token without token_use is rejected as an access token",
 			raw:           legacyRefresh,
-			verify:        verifyRefresh,
+			verify:        verifyAccess,
+			wantSubstring: "different provider",
+		},
+		{
+			name:          "refresh token without token_use is rejected as a demo creation token",
+			raw:           legacyRefresh,
+			verify:        verifyDemo,
 			wantSubstring: "token_use",
 		},
 	}
