@@ -263,16 +263,17 @@ func TestCheckOrganizationRole(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success get API key editor",
+			desc: "success: public API gateway request acts as the API key maintainer",
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
 				"apikey_token",
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				assert.Equal(t, "apikey_maintainer@example.com", email)
 				return &accountproto.GetAccountV2Response{
 					Account: &accountproto.AccountV2{
 						Email:            "apikey_maintainer@example.com",
@@ -301,10 +302,31 @@ func TestCheckOrganizationRole(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "err: API key editor get account fails",
+			desc: "err: public API gateway request is denied when the maintainer lacks the role",
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "apikey_maintainer@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrPermissionDenied,
+		},
+		{
+			desc: "err: public API gateway request is unauthenticated when the maintainer is not a member",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
 				"apikey_token",
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -314,7 +336,89 @@ func TestCheckOrganizationRole(t *testing.T) {
 				return nil, status.Error(codes.NotFound, "")
 			},
 			expected:    nil,
-			expectedErr: status.Error(codes.NotFound, ""),
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: public API gateway request is unauthenticated when the maintainer is disabled",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "apikey_maintainer@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						Disabled:         true,
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: API key metadata on a human system admin token does not grant admin access",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				assert.Equal(t, "admin@bucketeer.io", email)
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "success: API key metadata on a human system admin token is ignored for member-level reads",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				assert.Fail(t, "getAccountFunc should not be called for system admin member check")
+				return nil, nil
+			},
+			expected: &eventproto.Editor{
+				Email:   "admin@bucketeer.io",
+				Name:    "admin",
+				IsAdmin: true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: API key metadata on a member token does not grant the maintainer's role",
+			inputCtx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "member@example.com"},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				assert.Equal(t, "member@example.com", email)
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "member@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrPermissionDenied,
 		},
 		{
 			desc: "success: service token retains write access without account membership",
@@ -480,10 +584,10 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success get API key editor",
+			desc: "success: public API gateway request acts as the API key maintainer",
 			ctx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
 				"apikey_token",
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -491,6 +595,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				assert.Equal(t, "apikey_maintainer@example.com", email)
 				return &accountproto.AccountV2{
 					Email: "apikey_maintainer@example.com",
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -514,6 +619,161 @@ func TestCheckEnvironmentRole(t *testing.T) {
 				},
 			},
 			expectedErr: nil,
+		},
+		{
+			desc: "success: public API gateway request acts as a maintainer with an organization admin role",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email:            "apikey_maintainer@example.com",
+					Name:             "maintainer",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email: "apikey_maintainer@example.com",
+				Name:  "maintainer",
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+					Token:      "apikey_token",
+					Maintainer: "apikey_maintainer@example.com",
+					Name:       "apikey_name",
+				},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: public API gateway request is denied when the maintainer lacks the role",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email:            "apikey_maintainer@example.com",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_VIEWER},
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrPermissionDenied,
+		},
+		{
+			desc: "err: public API gateway request is unauthenticated when the maintainer is not a member",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: public API gateway request is unauthenticated when the maintainer is disabled",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_VIEWER,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email:            "apikey_maintainer@example.com",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					Disabled:         true,
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "err: API key metadata on a human system admin token does not grant write access",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				assert.Equal(t, "admin@bucketeer.io", email)
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc: "success: API key metadata on a human system admin token is ignored for reads",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_VIEWER,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				assert.Fail(t, "getAccountFunc should not be called for system admin viewer check")
+				return nil, nil
+			},
+			expected: &eventproto.Editor{
+				Email:   "admin@bucketeer.io",
+				Name:    "admin",
+				IsAdmin: true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: API key metadata on a member token does not grant the maintainer's role",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "viewer@example.com", Name: "viewer"},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				assert.Equal(t, "viewer@example.com", email)
+				return &accountproto.AccountV2{
+					Email:            "viewer@example.com",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_VIEWER},
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrPermissionDenied,
 		},
 		{
 			desc: "success: service token retains write access without account membership",
