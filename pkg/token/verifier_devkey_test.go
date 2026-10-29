@@ -96,17 +96,24 @@ func TestNewVerifierRejectsDevKeyForNonLocalIssuer(t *testing.T) {
 }
 
 // TestLeakedDevKeyFingerprintMatchesConstant ensures the fingerprint constant
-// used by the guard matches the leaked development key embedded above, so the
-// guard keeps rejecting that specific key.
+// used by the guard matches the historically leaked development public key.
 func TestLeakedDevKeyFingerprintMatchesConstant(t *testing.T) {
 	t.Parallel()
 
-	key, err := parseRSAPublicKey([]byte(devOAuthPublicKeyPEM))
+	testdataPath := filepath.Join("testdata", "leaked_dev_oauth_public.pem")
+	testdataPEM, err := os.ReadFile(testdataPath)
 	require.NoError(t, err)
-	fingerprint, err := publicKeyFingerprint(key)
-	require.NoError(t, err)
-	assert.Equal(t, devOAuthPublicKeyFingerprint, fingerprint,
-		"devOAuthPublicKeyFingerprint is out of sync with the embedded leaked dev key")
+	assert.Equal(t, devOAuthPublicKeyPEM, string(testdataPEM),
+		"embedded fixture must match pkg/token/testdata/leaked_dev_oauth_public.pem")
+
+	for _, pemData := range []string{devOAuthPublicKeyPEM, string(testdataPEM)} {
+		key, err := parseRSAPublicKey([]byte(pemData))
+		require.NoError(t, err)
+		fingerprint, err := publicKeyFingerprint(key)
+		require.NoError(t, err)
+		assert.Equal(t, devOAuthPublicKeyFingerprint, fingerprint,
+			"devOAuthPublicKeyFingerprint is out of sync with the leaked dev public key")
+	}
 }
 
 func TestIsLocalIssuer(t *testing.T) {
