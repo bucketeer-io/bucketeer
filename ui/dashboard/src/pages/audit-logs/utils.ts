@@ -25,12 +25,20 @@ export const getActionText = (
   }
 };
 
+// The highlighted JSON is inserted into the DOM as HTML (element text inside
+// the <span> wrappers added below), so the characters that would otherwise be
+// parsed as markup or character references must be escaped before the
+// highlighting regexes run. Quotes are left as-is: they are inert in text
+// content and the highlighting regexes rely on them to find JSON strings.
+const escapeHTML = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 export const convertJSONToRender = (json: string | null) => {
   if (!json) return null;
   if (typeof json != 'string') {
     json = JSON.stringify(json, null, 4);
   }
-  json = json
+  json = escapeHTML(json)
     .replace(
       /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?=\s*:))/g,
       '<span style="color: #e439ac">$1</span>'
