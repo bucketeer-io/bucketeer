@@ -149,11 +149,22 @@ make generate-service-token \
   SERVICE_TOKEN_PATH=tools/dev/cert/service-token
 ```
 
+**Keep the OAuth issuer consistent:**
+A regenerated key pair is accepted with any issuer (only the historically-leaked key
+is pinned-refused). Token verification does check the issuer, though, so the `ISSUER`
+used to mint the service token must match the issuer the services are configured with.
+Set the same production URL in every place that defaults to `https://localhost`:
+`docker-compose/config/oauth-config.json` (`issuer`) and `BUCKETEER_BATCH_OAUTH_ISSUER`
+for Docker Compose, or `web.oauth.issuer` (umbrella chart) / `oauth.issuer` (standalone
+web chart) in your Helm values. A mismatch causes issuer-validation failures, not a
+startup refusal.
+
 **Disable the demo sign-in:**
-Set `demoSignIn.enabled: false` (and never `isSystemAdmin: true`) in
-`docker-compose/config/oauth-config.json` / your Helm values. The demo password is
-published to the browser via `env.js`, so a demo system admin must never be enabled
-in production.
+Set the demo sign-in to `false` (and never `isSystemAdmin: true`). The path differs per
+deployment: `demoSignIn.enabled` in `docker-compose/config/oauth-config.json` for Docker
+Compose, and `web.oauth.demoSignIn.enabled` (umbrella chart) or `oauth.demoSignIn.enabled`
+(standalone web chart) in Helm values. The demo password is published to the browser via
+`env.js`, so a demo system admin must never be enabled in production.
 
 **Configure CORS policy:**
 Edit `docker-compose/config/nginx/bucketeer.conf`:
