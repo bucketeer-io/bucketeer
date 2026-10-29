@@ -6,6 +6,7 @@ import { TFunction } from 'i18next';
 import { AtSign } from 'lucide-react';
 import { cn } from 'utils/style';
 import Button from 'components/button';
+import { markdownPreviewOptions } from '../elements/markdown-content';
 import '../elements/markdown-content.css';
 import './markdown-editor.css';
 
@@ -90,6 +91,7 @@ const MarkdownEditor = ({
         onChange={next => onChange(next ?? '')}
         height={320}
         preview={mode}
+        previewOptions={markdownPreviewOptions}
         visibleDragbar={false}
         extraCommands={[]}
         commands={createToolbar(t)}
