@@ -138,6 +138,7 @@
     "vitest": "4.1.11"
   },
   "resolutions": {
+    "dompurify": "^3.4.17",
     "seroval": "^1.6.3",
     "seroval-plugins": "^1.6.3"
   }

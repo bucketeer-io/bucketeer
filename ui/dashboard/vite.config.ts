@@ -30,12 +30,7 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('react-date-range')) return 'react-date-range';
             if (id.includes('react-datepicker')) return 'react-datepicker';
-            if (
-              id.includes('monaco-editor') ||
-              id.includes('/marked/') ||
-              id.includes('/dompurify/')
-            )
-              return 'monaco';
+            if (id.includes('monaco-editor')) return 'monaco';
             if (id.includes('react-chartjs-2')) return 'react-chartjs-2';
             if (id.includes('chart.js')) return 'charts';
             if (id.includes('lodash')) return 'lodash';
