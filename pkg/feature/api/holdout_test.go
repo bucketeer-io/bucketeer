@@ -760,6 +760,7 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service, storage := newHoldoutService(t, controller)
+	expectEnvironment(service)
 	expectTx(service)
 	archive := &featureproto.ScheduledChangePayload{Archived: wrapperspb.Bool(true)}
 	scheduled := service.scheduledFlagChangeStorage.(*featurestoragemock.MockScheduledFlagChangeStorage)

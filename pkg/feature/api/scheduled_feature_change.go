@@ -743,6 +743,37 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 			return statusInternal.Err()
 		}
 
+		// Applying a schedule is a flag update, so the preconditions
+		// UpdateFeature checks before any change apply here as well, whether
+		// the schedule is run by the batch executor at its time or applied
+		// early by a user: the flag must not have a waiting or running
+		// experiment, and when the environment requires a comment the schedule
+		// itself must carry one (the "Applied from scheduled change" prefix
+		// added below does not count). They run under the row locks so the
+		// comment checked is the one that is applied. Like the other
+		// preconditions on the flag's current state, a failure is permanent:
+		// the schedule is marked FAILED with the reason so the batch executor
+		// does not retry it; a lookup error leaves it PENDING.
+		preconditionErr := s.validateFeatureStatus(ctx, featureID, req.EnvironmentId)
+		if preconditionErr == nil {
+			preconditionErr = s.validateEnvironmentSettings(ctx, req.EnvironmentId, sfc.Comment)
+		}
+		if preconditionErr != nil {
+			if isPermanentScheduledChangeError(preconditionErr) {
+				failureReason = preconditionErr.Error()
+			}
+			s.logger.Warn(
+				"Scheduled flag change does not meet the preconditions for updating the flag",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(preconditionErr),
+					zap.String("id", req.Id),
+					zap.String("featureId", featureID),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return preconditionErr
+		}
+
 		// Validate references still exist
 		if err := s.validateScheduledChangePayload(ctxWithTx, sfc.Payload, feature.Feature, req.EnvironmentId); err != nil {
 			if isPermanentScheduledChangeError(err) {

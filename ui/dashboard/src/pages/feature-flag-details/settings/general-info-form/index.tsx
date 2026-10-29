@@ -138,6 +138,14 @@ const GeneralInfoForm = ({
 
           const isScheduleUpdate = scheduleType === SCHEDULE_TYPE_SCHEDULE;
 
+          // The comment requirement of the environment applies to scheduled
+          // updates as well: the schedule's comment is what the update is
+          // recorded with when it is applied.
+          if (currentEnvironment.requireComment && !comment)
+            return setError('comment', {
+              message: t('message:required-field')
+            });
+
           if (isScheduleUpdate) {
             const payload: ScheduledChangePayload = {};
             if (rest.name !== feature.name) {
@@ -181,11 +189,6 @@ const GeneralInfoForm = ({
               onCloseSaveModal();
             }
           } else {
-            if (currentEnvironment.requireComment && !comment)
-              return setError('comment', {
-                message: t('message:required-field')
-              });
-
             const resp = await featureUpdater({
               id: flagId,
               environmentId: currentEnvironment.id,
