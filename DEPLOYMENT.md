@@ -125,6 +125,25 @@ cp your-ssl-cert.crt tools/dev/cert/tls.crt
 cp your-ssl-key.key tools/dev/cert/tls.key
 ```
 
+**Regenerate the OAuth signing key and service token:**
+The repository ships a development OAuth key pair (`tools/dev/cert/oauth-private.pem` /
+`oauth-public.pem`) and a long-lived service token (`tools/dev/cert/service-token`)
+that are **public** and intended only for local development. They must be
+regenerated for any non-local deployment — anyone with the committed key can forge
+system-admin tokens. The services refuse to start with the committed development
+key unless the OAuth issuer is local (`https://localhost`).
+```bash
+# Generate a fresh OAuth key pair and a new service token
+make -C tools/dev generate-oauth
+make generate-service-token
+```
+
+**Disable the demo sign-in:**
+Set `demoSignIn.enabled: false` (and never `isSystemAdmin: true`) in
+`docker-compose/config/oauth-config.json` / your Helm values. The demo password is
+published to the browser via `env.js`, so a demo system admin must never be enabled
+in production.
+
 **Configure CORS policy:**
 Edit `docker-compose/config/nginx/bucketeer.conf`:
 ```nginx
