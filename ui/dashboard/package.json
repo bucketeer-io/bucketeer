@@ -82,6 +82,7 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.18.4",
     "react-select": "^5.9.0",
+    "rehype-sanitize": "^6.0.0",
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "strip-markdown": "^6.0.0",
