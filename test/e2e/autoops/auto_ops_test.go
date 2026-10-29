@@ -35,6 +35,7 @@ import (
 	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
+	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
@@ -42,6 +43,7 @@ import (
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	eventcounterproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -731,6 +733,70 @@ func TestOpsEventRateAcrossEventFlows(t *testing.T) {
 	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.GoalTopic, newGoals(leftoverUsers[:1]))
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
+	assertOpsUserCounts(ctx, t, autoOpsClient, featureID, feature.Version, variationID,
+		int64(len(userIDs)), int64(len(gatewayUsers[:2])+len(dedicatedUsers[:2])+len(leftoverUsers[:1])))
+}
+
+// assertOpsUserCounts checks the persisted user counts of the feature's only event rate clause
+func assertOpsUserCounts(
+	ctx context.Context,
+	t *testing.T,
+	autoOpsClient autoopsclient.Client,
+	featureID string,
+	featureVersion int32,
+	variationID string,
+	wantEvaluations, wantGoals int64,
+) {
+	t.Helper()
+	ecClient := newEventCounterClient(t)
+	defer ecClient.Close()
+	rule := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)[0]
+	clauseID := rule.Clauses[0].Id
+	evalResp, err := ecClient.GetOpsEvaluationUserCount(ctx, &eventcounterproto.GetOpsEvaluationUserCountRequest{
+		OpsRuleId:      rule.Id,
+		ClauseId:       clauseID,
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		VariationId:    variationID,
+		EnvironmentId:  *environmentID,
+	})
+	if err != nil {
+		t.Fatalf("Failed to get the ops evaluation user count: %v", err)
+	}
+	goalResp, err := ecClient.GetOpsGoalUserCount(ctx, &eventcounterproto.GetOpsGoalUserCountRequest{
+		OpsRuleId:      rule.Id,
+		ClauseId:       clauseID,
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		VariationId:    variationID,
+		EnvironmentId:  *environmentID,
+	})
+	if err != nil {
+		t.Fatalf("Failed to get the ops goal user count: %v", err)
+	}
+	if evalResp.Count != wantEvaluations || goalResp.Count != wantGoals {
+		t.Fatalf("Unexpected ops user counts: evaluations=%d/%d goals=%d/%d",
+			evalResp.Count, wantEvaluations, goalResp.Count, wantGoals)
+	}
+}
+
+func newEventCounterClient(t *testing.T) ecclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*orgOwnerDefaultAccessTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := ecclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create event counter client:", err)
+	}
+	return client
 }
 
 func TestOpsEventRateBatch(t *testing.T) {

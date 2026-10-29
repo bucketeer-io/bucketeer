@@ -336,7 +336,8 @@ func TestExperimentCountAcrossEventFlows(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+	// Closed after the cleanup that stops the experiment, which is registered later
+	t.Cleanup(experimentClient.Close)
 	ecClient := newEventCounterClient(t)
 	defer ecClient.Close()
 	uuid := newUUID(t)
@@ -418,7 +419,8 @@ func TestExperimentCountAcrossEventFlows(t *testing.T) {
 }
 
 // waitForEventFlowCounts polls until the three users of TestExperimentCountAcrossEventFlows are counted
-// on variation A, with one evaluation and two goal events (0.2 + 0.3) each.
+// on variation A, with one evaluation and two goal events (0.2 + 0.3) each,
+// and the counts stay exact while the other persister may still deliver the gateway copies.
 func waitForEventFlowCounts(
 	t *testing.T,
 	ecClient ecclient.Client,
@@ -428,7 +430,11 @@ func waitForEventFlowCounts(
 	variationAID, variationBID string,
 ) {
 	t.Helper()
-	const users = 3
+	const (
+		users        = 3
+		stableChecks = 3
+	)
+	matched := 0
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout after %d attempts", retryTimes)
@@ -463,13 +469,21 @@ func waitForEventFlowCounts(
 		if evalA.UserCount != users || evalA.EventCount != users ||
 			goalA.UserCount != users || goalA.EventCount != 2*users ||
 			cmp.Diff(goalA.ValueSum, 0.5*users, compareFloatOpt) != "" {
+			if matched > 0 {
+				t.Fatalf("counts changed after matching the expected totals: evaluation A{users=%d events=%d} "+
+					"goal A{users=%d events=%d valueSum=%.2f}",
+					evalA.UserCount, evalA.EventCount, goalA.UserCount, goalA.EventCount, goalA.ValueSum)
+			}
 			t.Logf("Retry %d/%d: waiting for counts: evaluation A{users=%d/%d events=%d/%d} "+
 				"goal A{users=%d/%d events=%d/%d valueSum=%.2f/%.2f}",
 				i+1, retryTimes, evalA.UserCount, users, evalA.EventCount, users,
 				goalA.UserCount, users, goalA.EventCount, 2*users, goalA.ValueSum, 0.5*users)
 			continue
 		}
-		return
+		matched++
+		if matched == stableChecks {
+			return
+		}
 	}
 }
 
