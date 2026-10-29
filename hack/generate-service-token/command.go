@@ -73,7 +73,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to sign token", zap.Error(err))
 		return err
 	}
-	if err := os.WriteFile(*c.output, []byte(signedAccessToken), 0644); err != nil {
+	if err := os.WriteFile(*c.output, []byte(signedAccessToken), 0600); err != nil {
 		logger.Error("Failed to write token to file", zap.Error(err), zap.String("output", *c.output))
 		return err
 	}
