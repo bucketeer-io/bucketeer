@@ -98,17 +98,18 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 	}
 
 	cases := []struct {
-		name    string
-		comment string
-		// Experiments of the flag returned by the experiment service, or the
-		// error it returns.
-		experiments    []*experimentproto.Experiment
-		experimentsErr error
-		// Environment returned by the environment service. nil means the
-		// lookup must not happen because the experiment check already failed.
-		environment *envproto.EnvironmentV2
-		wantErr     error
-		wantCode    codes.Code
+		name string
+		// Comment of the schedule as returned by the plain read, and (when
+		// set) by the locking read inside the transaction, as after a
+		// concurrent edit of the schedule.
+		comment           string
+		commentUnderLock  *string
+		experiments       []*experimentproto.Experiment
+		experimentsErr    error
+		environment       *envproto.EnvironmentV2
+		environmentLookup bool
+		wantErr           error
+		wantCode          codes.Code
 		// wantFailed means the rejected schedule is persisted as FAILED with a
 		// reason so the batch executor does not retry it; otherwise a rejected
 		// schedule must stay PENDING.
@@ -127,11 +128,21 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 			wantFailed:  true,
 		},
 		{
-			name:        "rejects a schedule without a comment when the environment requires one",
-			comment:     "",
-			environment: &envproto.EnvironmentV2{Id: envID, RequireComment: true},
-			wantErr:     statusCommentRequiredForUpdating.Err(),
-			wantFailed:  true,
+			name:              "rejects a schedule without a comment when the environment requires one",
+			comment:           "",
+			environment:       &envproto.EnvironmentV2{Id: envID, RequireComment: true},
+			environmentLookup: true,
+			wantErr:           statusCommentRequiredForUpdating.Err(),
+			wantFailed:        true,
+		},
+		{
+			name:              "rejects a schedule whose comment was cleared before the row was locked",
+			comment:           "enable for the launch",
+			commentUnderLock:  new(string),
+			environment:       &envproto.EnvironmentV2{Id: envID, RequireComment: true},
+			environmentLookup: true,
+			wantErr:           statusCommentRequiredForUpdating.Err(),
+			wantFailed:        true,
 		},
 		{
 			name:           "leaves the schedule pending when the experiments cannot be listed",
@@ -139,19 +150,22 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 			wantCode:       codes.Unavailable,
 		},
 		{
-			name:        "applies a schedule once the experiment on the flag has finished",
-			experiments: []*experimentproto.Experiment{experiment(now-7200, now-3600, now-3600)},
-			environment: &envproto.EnvironmentV2{Id: envID},
+			name:              "applies a schedule once the experiment on the flag has finished",
+			experiments:       []*experimentproto.Experiment{experiment(now-7200, now-3600, now-3600)},
+			environment:       &envproto.EnvironmentV2{Id: envID},
+			environmentLookup: true,
 		},
 		{
-			name:        "applies a schedule with a comment when the environment requires one",
-			comment:     "enable for the launch",
-			environment: &envproto.EnvironmentV2{Id: envID, RequireComment: true},
+			name:              "applies a schedule with a comment when the environment requires one",
+			comment:           "enable for the launch",
+			environment:       &envproto.EnvironmentV2{Id: envID, RequireComment: true},
+			environmentLookup: true,
 		},
 		{
-			name:        "applies a schedule without a comment when the environment does not require one",
-			comment:     "",
-			environment: &envproto.EnvironmentV2{Id: envID},
+			name:              "applies a schedule without a comment when the environment does not require one",
+			comment:           "",
+			environment:       &envproto.EnvironmentV2{Id: envID},
+			environmentLookup: true,
 		},
 	}
 
@@ -163,13 +177,28 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 			defer controller.Finish()
 
 			service := createFeatureServiceNew(controller)
-			dbClient := service.dbClient.(*databasemock.MockClient)
 			featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 			scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 
-			// The schedule is resolved with a plain read before the preconditions run.
+			// Mark the transaction context so writes can be told apart from
+			// the FAILED write, which must happen after the rollback.
+			type txCtxKey struct{}
+			service.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+				gomock.Any(), gomock.Any(),
+			).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+				return fn(context.WithValue(ctx, txCtxKey{}, true))
+			})
+
+			// The plain read resolves the flag, then the flag and the schedule
+			// rows are locked and the schedule is re-read under its lock.
 			scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), scheduleID, envID).
 				Return(schedule(tc.comment), nil)
+			commentUnderLock := tc.comment
+			if tc.commentUnderLock != nil {
+				commentUnderLock = *tc.commentUnderLock
+			}
+			scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), scheduleID, envID).
+				Return(schedule(commentUnderLock), nil)
 			experiments := service.experimentClient.(*experimentclientmock.MockClient).EXPECT().
 				ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
 					FeatureId:     featureID,
@@ -181,7 +210,8 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 			} else {
 				experiments.Return(&experimentproto.ListExperimentsResponse{Experiments: tc.experiments}, nil)
 			}
-			if tc.environment != nil {
+			// The environment is only looked up once the experiment check passed.
+			if tc.environmentLookup {
 				service.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
 					gomock.Any(), &envproto.GetEnvironmentV2Request{Id: envID},
 				).Return(&envproto.GetEnvironmentV2Response{Environment: tc.environment}, nil)
@@ -189,14 +219,16 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 
 			rejected := tc.wantErr != nil || tc.wantCode != codes.OK
 			if rejected {
-				// A rejected schedule changes nothing: no transaction is opened
-				// and the flag is neither locked nor written.
-				dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).Times(0)
-				featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+				// A rejected schedule changes nothing: the flag is locked but
+				// neither read again for the update nor written.
+				featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), featureID, envID).Return(flag(), nil)
+				featureStorage.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Times(0)
 				featureStorage.EXPECT().UpdateFeature(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 				if tc.wantFailed {
 					scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).
-						DoAndReturn(func(_ context.Context, updated *domain.ScheduledFlagChange) error {
+						DoAndReturn(func(updateCtx context.Context, updated *domain.ScheduledFlagChange) error {
+							// Written after the rollback, not inside the transaction.
+							assert.Nil(t, updateCtx.Value(txCtxKey{}))
 							assert.Equal(
 								t,
 								featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_FAILED,
@@ -209,14 +241,11 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 					scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Times(0)
 				}
 			} else {
-				expectTx(service)
 				// Once by the executor, once by updateFeatureWithinTransaction.
 				featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), featureID, envID).
 					DoAndReturn(func(context.Context, string, string) (*domain.Feature, error) {
 						return flag(), nil
 					}).Times(2)
-				scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), scheduleID, envID).
-					Return(schedule(tc.comment), nil)
 				featureStorage.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
 					Return([]*featureproto.Feature{flag().Feature}, 0, int64(0), nil)
 				featureStorage.EXPECT().UpdateFeature(gomock.Any(), gomock.Any(), envID).
@@ -225,7 +254,8 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 						return nil
 					})
 				scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).
-					DoAndReturn(func(_ context.Context, updated *domain.ScheduledFlagChange) error {
+					DoAndReturn(func(updateCtx context.Context, updated *domain.ScheduledFlagChange) error {
+						assert.NotNil(t, updateCtx.Value(txCtxKey{}))
 						assert.Equal(
 							t,
 							featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED,
