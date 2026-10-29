@@ -77,6 +77,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to write token to file", zap.Error(err), zap.String("output", *c.output))
 		return err
 	}
+	// os.WriteFile does not change the mode of an existing file, so enforce 0600
+	// explicitly: the token is a long-lived system-admin credential and must not be
+	// readable by other local users even when overwriting a previous token.
+	if err := os.Chmod(*c.output, 0600); err != nil {
+		logger.Error("Failed to set token file permissions", zap.Error(err), zap.String("output", *c.output))
+		return err
+	}
 	logger.Info("Token generated")
 	return nil
 }
