@@ -132,13 +132,14 @@ minikube/localenv cluster) generate a development OAuth key pair
 (`tools/dev/cert/service-token`) on first run. These are **gitignored** and are for
 local use only — the private key can mint system-admin tokens.
 
+The service token generator is a Go program; if Go is not installed on the host
+(for example a Docker-only server running prebuilt images), `make` runs it inside a
+`golang` container automatically, so no extra setup is needed.
+
 For a real deployment, provide your own managed secrets (Helm `oauth.key.secret` /
 `serviceToken.secret`) and use a non-`https://localhost` issuer. The old committed
 development key pair is in git history, so it must never be reused in a real
-deployment. As a backstop, `token.NewVerifier` refuses that specific leaked public
-key when the configured issuer is not local (`https://localhost` and related hosts);
-a freshly generated key pair is accepted with any issuer. To generate fresh material
-explicitly:
+deployment. To generate fresh material explicitly:
 ```bash
 # Generate a fresh OAuth key pair (writes tools/dev/cert/oauth-private.pem and oauth-public.pem)
 make -C tools/dev generate-oauth
