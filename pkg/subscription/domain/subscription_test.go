@@ -136,6 +136,130 @@ func TestValidateSlackWebhookURL(t *testing.T) {
 	}
 }
 
+func TestMaskWebhookURL(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		{
+			desc:     "empty: nothing to mask",
+			input:    "",
+			expected: "",
+		},
+		{
+			desc:     "Slack incoming webhook: only scheme and host kept",
+			input:    "https://hooks.slack.com/services/T000/B000/token",
+			expected: "https://hooks.slack.com/****",
+		},
+		{
+			desc:     "userinfo, port, query and fragment dropped",
+			input:    "https://user:pass@example.com:8443/path/token?key=value#fragment",
+			expected: "https://example.com:8443/****",
+		},
+		{
+			desc:     "no path: still masked",
+			input:    "https://hooks.slack.com",
+			expected: "https://hooks.slack.com/****",
+		},
+		{
+			desc:     "not a URL: replaced entirely",
+			input:    "not-a-url",
+			expected: "****",
+		},
+		{
+			desc:     "unparsable: replaced entirely",
+			input:    "https://hooks.slack.com/services/%zz",
+			expected: "****",
+		},
+		{
+			desc:     "already masked: unchanged",
+			input:    "https://hooks.slack.com/****",
+			expected: "https://hooks.slack.com/****",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, MaskWebhookURL(p.input))
+		})
+	}
+}
+
+func newSlackSubscription(webhookURL string) *proto.Subscription {
+	return &proto.Subscription{
+		Id:          "id",
+		Name:        "name",
+		SourceTypes: []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_FEATURE},
+		Recipient: &proto.Recipient{
+			Type:                  proto.Recipient_SlackChannel,
+			SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
+			Language:              proto.Recipient_JAPANESE,
+		},
+		FeatureFlagTags: []string{"tag"},
+	}
+}
+
+func TestMaskSubscriptionWebhookURL(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil subscription: no panic", func(t *testing.T) {
+		t.Parallel()
+		MaskSubscriptionWebhookURL(nil)
+	})
+	t.Run("no recipient: untouched", func(t *testing.T) {
+		t.Parallel()
+		subscription := &proto.Subscription{Id: "id", Name: "name"}
+		MaskSubscriptionWebhookURL(subscription)
+		assert.Equal(t, &proto.Subscription{Id: "id", Name: "name"}, subscription)
+	})
+	t.Run("no slack channel recipient: untouched", func(t *testing.T) {
+		t.Parallel()
+		subscription := &proto.Subscription{Id: "id", Recipient: &proto.Recipient{Type: proto.Recipient_SlackChannel}}
+		MaskSubscriptionWebhookURL(subscription)
+		assert.Equal(
+			t,
+			&proto.Subscription{Id: "id", Recipient: &proto.Recipient{Type: proto.Recipient_SlackChannel}},
+			subscription,
+		)
+	})
+	t.Run("webhook URL masked in place, other fields kept", func(t *testing.T) {
+		t.Parallel()
+		subscription := newSlackSubscription("https://hooks.slack.com/services/T000/B000/token")
+		MaskSubscriptionWebhookURL(subscription)
+		expected := newSlackSubscription("https://hooks.slack.com/****")
+		assert.Equal(t, expected, subscription)
+	})
+}
+
+func TestCopyWithMaskedWebhookURL(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil subscription", func(t *testing.T) {
+		t.Parallel()
+		assert.Nil(t, CopyWithMaskedWebhookURL(nil))
+	})
+	t.Run("webhook URL masked in the copy, original untouched", func(t *testing.T) {
+		t.Parallel()
+		original := newSlackSubscription("https://hooks.slack.com/services/T000/B000/token")
+		masked := CopyWithMaskedWebhookURL(original)
+		assert.Equal(t, "https://hooks.slack.com/****", masked.Recipient.SlackChannelRecipient.WebhookUrl)
+		assert.Equal(t, original.Id, masked.Id)
+		assert.Equal(t, original.Name, masked.Name)
+		assert.Equal(t, original.SourceTypes, masked.SourceTypes)
+		assert.Equal(t, original.Recipient.Type, masked.Recipient.Type)
+		assert.Equal(t, original.Recipient.Language, masked.Recipient.Language)
+		assert.Equal(t, original.FeatureFlagTags, masked.FeatureFlagTags)
+		assert.Equal(
+			t,
+			"https://hooks.slack.com/services/T000/B000/token",
+			original.Recipient.SlackChannelRecipient.WebhookUrl,
+		)
+	})
+}
+
 func TestNewNotification(t *testing.T) {
 	t.Parallel()
 	sourceTypes := []proto.Subscription_SourceType{

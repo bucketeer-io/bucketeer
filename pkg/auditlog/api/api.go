@@ -133,6 +133,7 @@ func (s *auditlogService) GetAuditLog(
 	auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	s.obfuscateAPIKey(auditlog)
 	s.redactSecretFields(auditlog)
+	s.maskWebhookURL(auditlog)
 
 	// Editor avatars are stored per environment; organization-only scope skips them.
 	if req.EnvironmentId == "" {
@@ -215,6 +216,7 @@ func (s *auditlogService) ListAuditLogs(
 	}
 	s.obfuscateAPIKeys(auditlogs)
 	s.redactSecretFields(auditlogs...)
+	s.maskWebhookURLs(auditlogs)
 	return &proto.ListAuditLogsResponse{
 		AuditLogs:  auditlogs,
 		Cursor:     strconv.Itoa(nextCursor),
