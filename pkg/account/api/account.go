@@ -474,19 +474,23 @@ func (s *AccountService) DisableAccountV2(
 	}, nil
 }
 
+// updateAccountV2MySQL applies commands to the editor's own account. The account
+// is loaded through the environment the editor was authorized against, so the
+// write stays in the organization that owns that environment instead of an
+// organization named by the request.
 func (s *AccountService) updateAccountV2MySQL(
 	ctx context.Context,
 	editor *eventproto.Editor,
 	commands []command.Command,
-	email, organizationID string,
+	environmentID string,
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
 	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
+		account, err := s.getEditorAccountV2(contextWithTx, editor.Email, environmentID)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, organizationID)
+		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, account.OrganizationId)
 		if err != nil {
 			return err
 		}
@@ -499,6 +503,25 @@ func (s *AccountService) updateAccountV2MySQL(
 		return s.accountStorage.UpdateAccountV2(contextWithTx, account)
 	})
 	return updatedAccountPb, err
+}
+
+// getEditorAccountV2 returns the editor's account for the given environment.
+// System admin accounts belong to the system admin organization and have no
+// row in the organizations they view, so they are loaded from there first.
+// Any other account is loaded through the environment, which resolves to the
+// editor's account in the organization that owns it.
+func (s *AccountService) getEditorAccountV2(
+	ctx context.Context,
+	email, environmentID string,
+) (*domain.AccountV2, error) {
+	account, err := s.accountStorage.GetSystemAdminAccountV2(ctx, email)
+	if err == nil {
+		return account, nil
+	}
+	if !errors.Is(err, v2as.ErrSystemAdminAccountNotFound) {
+		return nil, err
+	}
+	return s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 }
 
 // updateAccountV2NoCommandMysql updates account properties, if the value is nil, it will not be updated.
