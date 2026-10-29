@@ -193,22 +193,29 @@ echo "your-postgres-password" > docker-compose/secrets/postgres_password.txt
 ```
 
 **Reference existing Kubernetes Secrets from the Helm chart:**
-The chart renders every credential it receives through values (database passwords,
-the OAuth configuration with the Google client secret and demo password, the email
-provider configuration, the data warehouse configuration and the subscriber processor
-configuration) into Kubernetes `Secret` objects, never into ConfigMaps or literal
-container environment values. To keep the credentials out of the values files
-altogether, create the Secrets yourself and point the chart at them:
+The chart renders the credentials it receives through values (the database passwords,
+the OAuth configuration with the Google client secret, the email provider
+configuration, the data warehouse configuration and the subscriber processor
+configuration) into Kubernetes `Secret` objects rather than ConfigMaps or literal
+container environment values. The exception is the demo sign-in password, which
+`env.js` publishes to the browser by design when the demo sign-in is enabled (see
+above). For the database passwords, the OAuth configuration and the email
+configuration you can also create the Secrets yourself and point the chart at them,
+so those values do not have to appear in a values file:
 - Database passwords: `global.operationalDatabase.mysql.existingSecret` /
   `existingSecretKey` and `global.operationalDatabase.postgres.existingSecret` /
   `existingSecretKey` (each service chart can override them under
   `<chart>.env.operationalDatabase.<engine>`). The password is injected through a
   `secretKeyRef`; when no existing Secret is set, the chart creates
-  `<service>-db-credentials` from `pass`.
+  `<service>-db-credentials` from `pass`, and changing `pass` rolls the pods. Pods do
+  not restart on their own when the content of an existing Secret changes.
 - OAuth configuration: `web.oauth.existingSecret`, a Secret with an
   `oauth-config.json` key holding the complete `oauth` block as JSON.
 - Email configuration: `global.email.existingSecret`, a Secret with an
   `email-config.json` key holding the complete `global.email` block as JSON.
+
+The data warehouse and subscriber processor configurations are always rendered by the
+chart from values; they have no existing-Secret override.
 
 #### 2. Performance Configuration
 

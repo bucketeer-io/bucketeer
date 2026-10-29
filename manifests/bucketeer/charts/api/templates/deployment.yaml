@@ -20,6 +20,7 @@ spec:
         release: {{ template "api.fullname" . }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+        checksum/db-credentials: {{ include (print $.Template.BasePath "/db-credentials-secret.yaml") . | sha256sum }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
       {{- with .Values.global.image.imagePullSecrets }}
