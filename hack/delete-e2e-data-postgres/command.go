@@ -36,6 +36,8 @@ const (
 var (
 	targetEntities = []*postgresE2EInfo{
 		{table: "subscription", targetField: "name"},
+		{table: "holdout_group_feature", targetField: "feature_id"},
+		{table: "holdout_group", targetField: "name"},
 		{table: "experiment_result", targetField: ""},
 		{table: "push", targetField: "name"},
 		{table: "ops_count", targetField: ""},
@@ -55,7 +57,22 @@ var (
 	targetEntitiesInOrganization = []*postgresE2EInfo{
 		{table: "account_v2", targetField: "email"},
 	}
+	// Tables written by test/e2e/holdout in the environments it creates
+	// (named "<prefix>-holdout-env-<id>"). Rows are matched by environment,
+	// children before parents, then the environments themselves are deleted.
+	holdoutEnvironmentTables = []string{
+		"holdout_group_feature",
+		"holdout_group",
+		"segment_user",
+		"segment",
+		"tag",
+		"feature",
+		"api_key",
+		"audit_log",
+	}
 )
+
+const holdoutEnvironmentNameSuffix = "holdout-env-"
 
 type postgresE2EInfo struct {
 	table       string
@@ -117,6 +134,18 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 			logger.Error("Failed to delete data in organization", zap.Error(err), zap.String("table", target.table))
 			return err
 		}
+	}
+	for _, table := range holdoutEnvironmentTables {
+		query, args := c.constructDeleteQueryForHoldoutEnvironments(table)
+		if _, err := client.ExecContext(ctx, query, args...); err != nil {
+			logger.Error("Failed to delete data in holdout environments", zap.Error(err), zap.String("table", table))
+			return err
+		}
+	}
+	query, args := c.constructDeleteHoldoutEnvironmentsQuery()
+	if _, err := client.ExecContext(ctx, query, args...); err != nil {
+		logger.Error("Failed to delete holdout environments", zap.Error(err))
+		return err
 	}
 	logger.Info("Done")
 	return nil
@@ -191,5 +220,39 @@ func (c *command) constructDeleteQueryForOrganization(target *postgresE2EInfo) (
 	args = []interface{}{
 		organizationID,
 	}
+	return
+}
+
+// holdoutEnvironmentNamePattern matches the environments created by
+// test/e2e/holdout: "e2e-test-<test-id>-holdout-env-<id>" when a test ID is
+// given, otherwise every "e2e-test-...holdout-env-<id>".
+func (c *command) holdoutEnvironmentNamePattern() string {
+	if *c.testID != "" {
+		return prefixTestName + "-" + *c.testID + "-" + holdoutEnvironmentNameSuffix + "%"
+	}
+	return prefixTestName + "-%" + holdoutEnvironmentNameSuffix + "%"
+}
+
+func (c *command) constructDeleteQueryForHoldoutEnvironments(table string) (query string, args []interface{}) {
+	query = fmt.Sprintf(`
+		DELETE FROM
+			%s
+		WHERE
+			environment_id IN (
+				SELECT id FROM environment_v2 WHERE name LIKE $1
+			)
+	`, table)
+	args = []interface{}{c.holdoutEnvironmentNamePattern()}
+	return
+}
+
+func (c *command) constructDeleteHoldoutEnvironmentsQuery() (query string, args []interface{}) {
+	query = `
+		DELETE FROM
+			environment_v2
+		WHERE
+			name LIKE $1
+	`
+	args = []interface{}{c.holdoutEnvironmentNamePattern()}
 	return
 }
