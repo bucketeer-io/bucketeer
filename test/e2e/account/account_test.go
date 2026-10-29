@@ -627,6 +627,14 @@ func TestUpdateSearchFilter(t *testing.T) {
 	}
 	created, cleanup := createOwnSearchFilter(t, ctx, c, email, initialSearchFilter)
 	defer cleanup()
+	// Making the test filter the default clears the current default for the same
+	// environment and target type on the shared account, so restore it afterwards.
+	previousDefault := findDefaultSearchFilter(
+		ownSearchFilters(t, ctx, c, email),
+		*environmentID,
+		accountproto.FilterTargetType_FEATURE_FLAG,
+	)
+	defer restoreDefaultSearchFilter(t, c, email, previousDefault)
 
 	requestSearchFilter := &accountproto.SearchFilter{
 		Name:             fmt.Sprintf("new-name-%s", uniqueSuffix()),
@@ -765,9 +773,46 @@ func findSearchFilterByID(filters []*accountproto.SearchFilter, id string) *acco
 	return nil
 }
 
+func findDefaultSearchFilter(
+	filters []*accountproto.SearchFilter,
+	environmentID string,
+	targetType accountproto.FilterTargetType,
+) *accountproto.SearchFilter {
+	for _, f := range filters {
+		if f.DefaultFilter && f.EnvironmentId == environmentID && f.FilterTargetType == targetType {
+			return f
+		}
+	}
+	return nil
+}
+
+// restoreDefaultSearchFilter makes filter the default again. It uses its own
+// context so it still runs after the test context has expired.
+func restoreDefaultSearchFilter(t *testing.T, c accountclient.Client, email string, filter *accountproto.SearchFilter) {
+	t.Helper()
+	if filter == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: *organizationID,
+		EnvironmentId:  *environmentID,
+		ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
+			Id:            filter.Id,
+			DefaultFilter: true,
+		},
+	})
+	if err != nil {
+		t.Logf("failed to restore default search filter %s: %v", filter.Id, err)
+	}
+}
+
 // createOwnSearchFilter creates a search filter on the caller's own account and
 // returns the stored filter together with a function that deletes it again, so
-// the shared e2e account does not accumulate filters across runs.
+// the shared e2e account does not accumulate filters across runs. The cleanup
+// uses its own context so it still runs after the test context has expired.
 func createOwnSearchFilter(
 	t *testing.T,
 	ctx context.Context,
@@ -804,12 +849,17 @@ func createOwnSearchFilter(
 		t.Fatalf("search filter %q was not created", filter.Name)
 	}
 	cleanup := func() {
-		_, _ = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		_, err := c.DeleteSearchFilter(cleanupCtx, &accountproto.DeleteSearchFilterRequest{
 			Email:          email,
 			OrganizationId: *organizationID,
 			EnvironmentId:  *environmentID,
 			Command:        &accountproto.DeleteSearchFilterCommand{Id: created.Id},
 		})
+		if err != nil {
+			t.Logf("failed to delete search filter %s: %v", created.Id, err)
+		}
 	}
 	return created, cleanup
 }
