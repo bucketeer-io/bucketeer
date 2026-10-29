@@ -104,7 +104,6 @@ type server struct {
 	evaluationTopic                   *string
 	evaluationTopicProject            *string
 	metricsTopic                      *string
-	dedicatedEventTopicsEnabled       *bool
 	evaluationDWHTopic                *string
 	evaluationOPSTopic                *string
 	goalDWHTopic                      *string
@@ -216,11 +215,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"GCP Project id to use for PubSub to publish EvaluationEvent.",
 		).String(),
 		metricsTopic: cmd.Flag("metrics-topic", "Topic to use for publishing MetricsEvent.").String(),
-		dedicatedEventTopicsEnabled: cmd.Flag(
-			"dedicated-event-topics-enabled",
-			"Publish the events linked to experiments and auto ops rules to the dedicated topics. "+
-				"Disabled keeps the old flow.",
-		).Default("false").Bool(),
 		evaluationDWHTopic: cmd.Flag(
 			"evaluation-dwh-topic",
 			"Topic to use for publishing EvaluationEvent linked to experiments. Empty disables it.",
@@ -527,7 +521,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	createLinkedPublisher := func(topic, project string) (publisher.Publisher, error) {
-		if !*s.dedicatedEventTopicsEnabled || topic == "" {
+		if topic == "" {
 			return nil, nil
 		}
 		return pubsubClient.CreatePublisherInProject(topic, project)

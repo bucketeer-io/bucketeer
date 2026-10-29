@@ -251,7 +251,6 @@ api:
     project: ${global.pubsub.project}
     goalTopic: goal
     evaluationTopic: evaluation
-    dedicatedEventTopicsEnabled: true
     evaluationDWHTopic: evaluation-events-dwh
     evaluationOPSTopic: evaluation-events-ops
     goalDWHTopic: goal-events-dwh

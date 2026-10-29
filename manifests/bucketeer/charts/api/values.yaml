@@ -31,9 +31,6 @@ env:
   pubsubEmulatorHost:
   goalTopic:
   evaluationTopic:
-  # Publishes the events linked to experiments and auto ops rules to the dedicated topics below.
-  # Disabled keeps the old flow.
-  dedicatedEventTopicsEnabled: false
   # Dedicated topics for the events linked to experiments and auto ops rules. Empty disables them.
   evaluationDWHTopic:
   evaluationOPSTopic:
