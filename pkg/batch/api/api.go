@@ -24,6 +24,8 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/proto/batch"
 )
 
@@ -94,6 +96,9 @@ func NewBatchService(
 
 func (s *batchService) ExecuteBatchJob(
 	ctx context.Context, req *batch.BatchJobRequest) (*batch.BatchJobResponse, error) {
+	if err := s.checkSystemAdminRole(ctx, req.Job); err != nil {
+		return nil, err
+	}
 	var err error
 	switch req.Job {
 	case batch.BatchJob_ExperimentStatusUpdater:
@@ -163,6 +168,30 @@ func (s *batchService) ExecuteBatchJob(
 		return nil, err
 	}
 	return &batch.BatchJobResponse{}, nil
+}
+
+// checkSystemAdminRole restricts ExecuteBatchJob to system admin tokens. The
+// jobs act on every organization at once and are triggered by the CronJobs and
+// the subscriber, which authenticate with the service token; any other
+// authenticated user is rejected with the status error returned by pkg/role.
+func (s *batchService) checkSystemAdminRole(ctx context.Context, job batch.BatchJob) error {
+	_, err := role.CheckSystemAdminRole(ctx)
+	if err == nil {
+		return nil
+	}
+	fields := []zap.Field{
+		zap.Error(err),
+		zap.String("job_name", job.String()),
+	}
+	if token, ok := rpc.GetAccessToken(ctx); ok {
+		fields = append(fields, zap.String("email", token.Email))
+	}
+	if status.Code(err) == codes.Unauthenticated {
+		s.logger.Warn("Unauthenticated", log.FieldsFromIncomingContext(ctx).AddFields(fields...)...)
+	} else {
+		s.logger.Warn("Permission denied", log.FieldsFromIncomingContext(ctx).AddFields(fields...)...)
+	}
+	return err
 }
 
 func (s *batchService) Register(server *grpc.Server) {
