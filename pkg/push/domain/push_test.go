@@ -104,6 +104,28 @@ func TestValidateFCMServiceAccount(t *testing.T) {
 			expected: ErrFCMServiceAccountInvalid,
 		},
 		{
+			// google.CredentialsFromJSON prioritises a "web" OAuth client block over
+			// the declared type, yielding a token source whose Token() call panics.
+			desc:     "err: service_account with web OAuth client block",
+			input:    `{"type":"service_account","web":{"client_id":"x","client_secret":"y","redirect_uris":["http://localhost"],"token_uri":"https://attacker.example.com/token"}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: service_account with installed OAuth client block",
+			input:    `{"type":"service_account","installed":{"client_id":"x","redirect_uris":["http://localhost"]}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: web OAuth client block without type",
+			input:    `{"web":{"client_id":"x","redirect_uris":["http://localhost"]}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
+			desc:     "err: installed OAuth client block without type",
+			input:    `{"installed":{"client_id":"x","redirect_uris":["http://localhost"]}}`,
+			expected: ErrFCMServiceAccountInvalid,
+		},
+		{
 			desc:     "success: valid service_account",
 			input:    validServiceAccount,
 			expected: nil,

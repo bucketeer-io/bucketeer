@@ -240,13 +240,22 @@ func ValidateFCMServiceAccount(fcmServiceAccount []byte) error {
 		return ErrFCMServiceAccountRequired
 	}
 	var sa struct {
-		Type     string `json:"type"`
-		TokenURI string `json:"token_uri"`
+		Type      string          `json:"type"`
+		TokenURI  string          `json:"token_uri"`
+		Web       json.RawMessage `json:"web"`
+		Installed json.RawMessage `json:"installed"`
 	}
 	if e := json.Unmarshal(fcmServiceAccount, &sa); e != nil {
 		return ErrFCMServiceAccountInvalid
 	}
 	if sa.Type != "service_account" {
+		return ErrFCMServiceAccountInvalid
+	}
+	// Reject OAuth client ("web"/"installed") blocks. google.CredentialsFromJSON
+	// tries ConfigFromJSON first and prioritises such a block over the declared
+	// type, returning a token source with no auth handler whose Token() call
+	// panics in the subscriber. A service-account key file never contains them.
+	if len(sa.Web) > 0 || len(sa.Installed) > 0 {
 		return ErrFCMServiceAccountInvalid
 	}
 	if _, ok := allowedFCMTokenURIs[sa.TokenURI]; !ok {
