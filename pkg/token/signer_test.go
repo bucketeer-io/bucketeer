@@ -91,6 +91,7 @@ func TestSign(t *testing.T) {
 			require.True(t, tc.token.IssuedAt.Equal(parsedToken.IssuedAt), des)
 			require.Equal(t, tc.token.Email, parsedToken.Email, des)
 			require.Equal(t, tc.token.IsSystemAdmin, parsedToken.IsSystemAdmin, des)
+			require.Equal(t, TokenUseAccess, parsedToken.TokenUse, des)
 		} else {
 			require.Error(t, err, des)
 		}
@@ -158,6 +159,7 @@ func TestSignDemoCreationToken(t *testing.T) {
 				require.True(t, tc.token.Expiry.Equal(parsedToken.Expiry), des)
 				require.True(t, tc.token.IssuedAt.Equal(parsedToken.IssuedAt), des)
 				require.Equal(t, tc.token.Email, parsedToken.Email, des)
+				require.Equal(t, TokenUseDemo, parsedToken.TokenUse, des)
 			} else {
 				require.Error(t, err, des)
 			}

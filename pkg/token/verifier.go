@@ -69,6 +69,9 @@ func (v *verifier) VerifyAccessToken(rawAccessToken string) (*AccessToken, error
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
+	if err := checkTokenUse(t.TokenUse, TokenUseAccess); err != nil {
+		return nil, err
+	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("id token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
 	}
@@ -97,6 +100,15 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
+	if err := checkTokenUse(t.TokenUse, TokenUseRefresh); err != nil {
+		return nil, err
+	}
+	if t.Issuer != v.issuer {
+		return nil, fmt.Errorf("refresh token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
+	}
+	if t.Audience != v.audience {
+		return nil, fmt.Errorf("expected audience %q got %q", v.audience, t.Audience)
+	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
 	}
@@ -119,6 +131,9 @@ func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationTo
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
+	if err := checkTokenUse(t.TokenUse, TokenUseDemo); err != nil {
+		return nil, err
+	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("demo token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
 	}
@@ -132,6 +147,13 @@ func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationTo
 		return nil, fmt.Errorf("email must be not empty")
 	}
 	return t, nil
+}
+
+func checkTokenUse(got, want string) error {
+	if got != want {
+		return fmt.Errorf("unexpected token_use %q, expected %q", got, want)
+	}
+	return nil
 }
 
 func parseRSAPublicKey(data []byte) (*rsa.PublicKey, error) {

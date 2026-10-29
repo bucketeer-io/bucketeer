@@ -17,10 +17,13 @@ package token
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -266,4 +269,270 @@ func createInvalidRawDemoToken(t *testing.T, signer Signer, demoToken *DemoCreat
 	parts := strings.Split(rawDemoToken, ".")
 	invalidSignature := base64.RawURLEncoding.EncodeToString([]byte("invalid-signature"))
 	return fmt.Sprintf("%s.%s.%s", parts[0], parts[1], invalidSignature)
+}
+
+// legacyAccessToken is the access-token payload from before token_use existed:
+// iss, aud, exp, and email, with no token_use claim.
+type legacyAccessToken struct {
+	Issuer        string    `json:"iss"`
+	Audience      string    `json:"aud"`
+	Expiry        time.Time `json:"exp"`
+	IssuedAt      time.Time `json:"iat"`
+	Email         string    `json:"email"`
+	IsSystemAdmin bool      `json:"is_system_admin"`
+}
+
+// legacyRefreshToken is the refresh-token payload from before token_use, iss, and aud existed.
+type legacyRefreshToken struct {
+	Email          string    `json:"email"`
+	Expiry         time.Time `json:"exp"`
+	IssuedAt       time.Time `json:"iat"`
+	OrganizationID string    `json:"organization_id"`
+}
+
+func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
+	t.Parallel()
+	issuer := "test_issuer"
+	audience := "test_audience"
+	email := "user@example.com"
+	signer, err := NewSigner("testdata/valid-private.pem")
+	require.NoError(t, err)
+	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	require.NoError(t, err)
+
+	now := time.Now()
+	// A caller-supplied token_use must not survive signing.
+	accessRaw, err := signer.SignAccessToken(&AccessToken{
+		Issuer:   issuer,
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+		TokenUse: TokenUseDemo,
+	})
+	require.NoError(t, err)
+	refreshRaw, err := signer.SignRefreshToken(&RefreshToken{
+		Issuer:         issuer,
+		Audience:       audience,
+		Email:          email,
+		Expiry:         now.Add(time.Hour),
+		IssuedAt:       now,
+		OrganizationID: "org-1",
+	})
+	require.NoError(t, err)
+	demoRaw, err := signer.SignDemoCreationToken(&DemoCreationToken{
+		Issuer:   issuer,
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+	})
+	require.NoError(t, err)
+	wrongIssuerRefresh, err := signer.SignRefreshToken(&RefreshToken{
+		Issuer:   "other-issuer",
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+	})
+	require.NoError(t, err)
+	wrongAudienceRefresh, err := signer.SignRefreshToken(&RefreshToken{
+		Issuer:   issuer,
+		Audience: "other-audience",
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+	})
+	require.NoError(t, err)
+	missingIssuerRefresh, err := signer.SignRefreshToken(&RefreshToken{
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+	})
+	require.NoError(t, err)
+	expiredRefresh, err := signer.SignRefreshToken(&RefreshToken{
+		Issuer:   issuer,
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(-time.Hour),
+		IssuedAt: now.Add(-2 * time.Hour),
+	})
+	require.NoError(t, err)
+	emptyEmailRefresh, err := signer.SignRefreshToken(&RefreshToken{
+		Issuer:   issuer,
+		Audience: audience,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+	})
+	require.NoError(t, err)
+
+	legacyAccess := signRawClaims(t, &legacyAccessToken{
+		Issuer:        issuer,
+		Audience:      audience,
+		Email:         email,
+		Expiry:        now.Add(time.Hour),
+		IssuedAt:      now,
+		IsSystemAdmin: true,
+	})
+	legacyRefresh := signRawClaims(t, &legacyRefreshToken{
+		Email:          email,
+		Expiry:         now.Add(time.Hour),
+		IssuedAt:       now,
+		OrganizationID: "org-1",
+	})
+
+	access, err := verifier.VerifyAccessToken(accessRaw)
+	require.NoError(t, err)
+	assert.Equal(t, TokenUseAccess, access.TokenUse)
+	assert.Equal(t, email, access.Email)
+	assert.Equal(t, issuer, access.Issuer)
+	assert.Equal(t, audience, access.Audience)
+
+	refresh, err := verifier.VerifyRefreshToken(refreshRaw)
+	require.NoError(t, err)
+	assert.Equal(t, TokenUseRefresh, refresh.TokenUse)
+	assert.Equal(t, email, refresh.Email)
+	assert.Equal(t, issuer, refresh.Issuer)
+	assert.Equal(t, audience, refresh.Audience)
+	assert.Equal(t, "org-1", refresh.OrganizationID)
+
+	demo, err := verifier.VerifyDemoCreationToken(demoRaw)
+	require.NoError(t, err)
+	assert.Equal(t, TokenUseDemo, demo.TokenUse)
+	assert.Equal(t, email, demo.Email)
+	assert.Equal(t, issuer, demo.Issuer)
+	assert.Equal(t, audience, demo.Audience)
+
+	verifyAccess := func(raw string) error {
+		_, err := verifier.VerifyAccessToken(raw)
+		return err
+	}
+	verifyRefresh := func(raw string) error {
+		_, err := verifier.VerifyRefreshToken(raw)
+		return err
+	}
+	verifyDemo := func(raw string) error {
+		_, err := verifier.VerifyDemoCreationToken(raw)
+		return err
+	}
+
+	cases := []struct {
+		name          string
+		raw           string
+		verify        func(string) error
+		wantSubstring string
+	}{
+		{
+			name:          "access token is rejected as a refresh token",
+			raw:           accessRaw,
+			verify:        verifyRefresh,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "access token is rejected as a demo creation token",
+			raw:           accessRaw,
+			verify:        verifyDemo,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "refresh token is rejected as an access token",
+			raw:           refreshRaw,
+			verify:        verifyAccess,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "refresh token is rejected as a demo creation token",
+			raw:           refreshRaw,
+			verify:        verifyDemo,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "demo creation token is rejected as an access token",
+			raw:           demoRaw,
+			verify:        verifyAccess,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "demo creation token is rejected as a refresh token",
+			raw:           demoRaw,
+			verify:        verifyRefresh,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "refresh token with the wrong issuer is rejected",
+			raw:           wrongIssuerRefresh,
+			verify:        verifyRefresh,
+			wantSubstring: "different provider",
+		},
+		{
+			name:          "refresh token with the wrong audience is rejected",
+			raw:           wrongAudienceRefresh,
+			verify:        verifyRefresh,
+			wantSubstring: "expected audience",
+		},
+		{
+			name:          "refresh token without an issuer is rejected",
+			raw:           missingIssuerRefresh,
+			verify:        verifyRefresh,
+			wantSubstring: "different provider",
+		},
+		{
+			name:          "expired refresh token is rejected",
+			raw:           expiredRefresh,
+			verify:        verifyRefresh,
+			wantSubstring: "expired",
+		},
+		{
+			name:          "refresh token without an email is rejected",
+			raw:           emptyEmailRefresh,
+			verify:        verifyRefresh,
+			wantSubstring: "email must be not empty",
+		},
+		{
+			name:          "access token without token_use is rejected as an access token",
+			raw:           legacyAccess,
+			verify:        verifyAccess,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "access token without token_use is rejected as a refresh token",
+			raw:           legacyAccess,
+			verify:        verifyRefresh,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "access token without token_use is rejected as a demo creation token",
+			raw:           legacyAccess,
+			verify:        verifyDemo,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "refresh token without token_use or issuer is rejected",
+			raw:           legacyRefresh,
+			verify:        verifyRefresh,
+			wantSubstring: "token_use",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.verify(tc.raw)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.wantSubstring)
+		})
+	}
+}
+
+func signRawClaims(t *testing.T, claims any) string {
+	t.Helper()
+	data, err := os.ReadFile("testdata/valid-private.pem")
+	require.NoError(t, err)
+	key, err := parseRSAPrivateKey(data)
+	require.NoError(t, err)
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.RS256, Key: key}, nil)
+	require.NoError(t, err)
+	raw, err := jwt.Signed(sig).Claims(claims).Serialize()
+	require.NoError(t, err)
+	return raw
 }

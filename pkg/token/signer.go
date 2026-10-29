@@ -63,15 +63,23 @@ func NewSignerWithPrivateKey(privateKey *rsa.PrivateKey) (Signer, error) {
 }
 
 func (s *signer) SignAccessToken(token *AccessToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).Serialize()
+	// token_use is stamped here, not taken from the caller, so an access token
+	// cannot be signed as a refresh or demo-creation token.
+	claims := *token
+	claims.TokenUse = TokenUseAccess
+	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
 func (s *signer) SignRefreshToken(token *RefreshToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).Serialize()
+	claims := *token
+	claims.TokenUse = TokenUseRefresh
+	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
 func (s *signer) SignDemoCreationToken(token *DemoCreationToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).Serialize()
+	claims := *token
+	claims.TokenUse = TokenUseDemo
+	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
 func parseRSAPrivateKey(data []byte) (*rsa.PrivateKey, error) {

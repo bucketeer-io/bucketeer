@@ -18,6 +18,15 @@ import (
 	"time"
 )
 
+// Token use values are stamped by the signer and checked by the matching
+// verifier. Access, refresh, and demo-creation tokens share one signing key,
+// so a token of one kind must not verify as another.
+const (
+	TokenUseAccess  = "access"
+	TokenUseRefresh = "refresh"
+	TokenUseDemo    = "demo"
+)
+
 type AccessToken struct {
 	Issuer         string    `json:"iss"`
 	Audience       string    `json:"aud"`
@@ -31,14 +40,18 @@ type AccessToken struct {
 	// hack/generate-service-token and used by internal batch/subscriber jobs).
 	// Service tokens are system admins that retain full write access across
 	// organizations, unlike human system admins which are read-only.
-	IsServiceToken bool `json:"is_service_token"`
+	IsServiceToken bool   `json:"is_service_token"`
+	TokenUse       string `json:"token_use"`
 }
 
 type RefreshToken struct {
+	Issuer         string    `json:"iss"`
+	Audience       string    `json:"aud"`
 	Email          string    `json:"email"`
 	Expiry         time.Time `json:"exp"`
 	IssuedAt       time.Time `json:"iat"`
 	OrganizationID string    `json:"organization_id"`
+	TokenUse       string    `json:"token_use"`
 }
 
 type DemoCreationToken struct {
@@ -47,4 +60,5 @@ type DemoCreationToken struct {
 	Expiry   time.Time `json:"exp"`
 	IssuedAt time.Time `json:"iat"`
 	Email    string    `json:"email"`
+	TokenUse string    `json:"token_use"`
 }
