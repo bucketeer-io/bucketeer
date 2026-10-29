@@ -366,6 +366,33 @@ generate-service-token:
 		--no-profile \
 		--no-gcp-trace-enabled
 
+# ensure-oauth-key / ensure-service-token generate the local development OAuth key
+# pair and service token if they are missing. These files are gitignored (the
+# private key can mint system-admin tokens) and are created on demand by
+# docker-compose-setup and deploy-bucketeer, so local development works without
+# committing secrets to the repository.
+.PHONY: ensure-oauth-key
+ensure-oauth-key:
+	@if [ ! -f $(CERT_DIR)/oauth-private.pem ] || [ ! -f $(CERT_DIR)/oauth-public.pem ]; then \
+		echo "Generating development OAuth key pair in $(CERT_DIR)..."; \
+		make -C tools/dev generate-oauth; \
+	else \
+		echo "Development OAuth key pair already exists"; \
+	fi
+
+.PHONY: ensure-service-token
+ensure-service-token: ensure-oauth-key
+	@if [ ! -f $(CERT_DIR)/service-token ]; then \
+		echo "Generating development service token in $(CERT_DIR)..."; \
+		make generate-service-token \
+			ISSUER=https://localhost \
+			EMAIL=localenv@bucketeer.io \
+			OAUTH_KEY_PATH=$(CERT_DIR)/oauth-private.pem \
+			SERVICE_TOKEN_PATH=$(CERT_DIR)/service-token; \
+	else \
+		echo "Development service token already exists"; \
+	fi
+
 .PHONY: create-api-key
 create-api-key:
 	go run ./hack/create-api-key create \
@@ -717,6 +744,7 @@ setup-aichat-secret:
 
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
+	make ensure-service-token
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
@@ -776,7 +804,7 @@ define detect_docker_compose
 endef
 
 .PHONY: docker-compose-setup
-docker-compose-setup:
+docker-compose-setup: ensure-service-token
 	$(call detect_docker_compose)
 	@echo "Setting up Docker Compose environment..."
 	@if [ ! -d "docker-compose/init-db" ]; then \

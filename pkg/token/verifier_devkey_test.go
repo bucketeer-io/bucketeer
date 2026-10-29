@@ -27,9 +27,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// devOAuthPublicKeyPEM mirrors tools/dev/cert/oauth-public.pem, the committed
-// development OAuth public key. TestDevOAuthPublicKeyFingerprintMatchesCommittedKey
-// keeps it, and the production fingerprint constant, in sync with that file.
+// devOAuthPublicKeyPEM is the development OAuth public key that was previously
+// committed as tools/dev/cert/oauth-public.pem. It is kept here as a fixture so
+// the guard's rejection of that specific (now-leaked) key stays tested; the key
+// pair itself is generated locally and gitignored.
 const devOAuthPublicKeyPEM = `-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAx7b6Kk1Rf0f8lBAJCkE1
 +hpiHbrTJbabSfO1pTB0VLOr32nRCPjBAcEseS7JdUmvBIKfeRGzoE17q9kbTuBI
@@ -94,27 +95,18 @@ func TestNewVerifierRejectsDevKeyForNonLocalIssuer(t *testing.T) {
 	}
 }
 
-// TestDevOAuthPublicKeyFingerprintMatchesCommittedKey fails if the committed dev
-// key is rotated without updating devOAuthPublicKeyFingerprint (and the embedded
-// PEM above), which would otherwise silently disable the guard.
-func TestDevOAuthPublicKeyFingerprintMatchesCommittedKey(t *testing.T) {
+// TestLeakedDevKeyFingerprintMatchesConstant ensures the fingerprint constant
+// used by the guard matches the leaked development key embedded above, so the
+// guard keeps rejecting that specific key.
+func TestLeakedDevKeyFingerprintMatchesConstant(t *testing.T) {
 	t.Parallel()
 
-	committed, err := os.ReadFile(filepath.Join("..", "..", "tools", "dev", "cert", "oauth-public.pem"))
+	key, err := parseRSAPublicKey([]byte(devOAuthPublicKeyPEM))
 	require.NoError(t, err)
-	committedKey, err := parseRSAPublicKey(committed)
+	fingerprint, err := publicKeyFingerprint(key)
 	require.NoError(t, err)
-	committedFingerprint, err := publicKeyFingerprint(committedKey)
-	require.NoError(t, err)
-	assert.Equal(t, devOAuthPublicKeyFingerprint, committedFingerprint,
-		"devOAuthPublicKeyFingerprint is out of sync with tools/dev/cert/oauth-public.pem")
-
-	embeddedKey, err := parseRSAPublicKey([]byte(devOAuthPublicKeyPEM))
-	require.NoError(t, err)
-	embeddedFingerprint, err := publicKeyFingerprint(embeddedKey)
-	require.NoError(t, err)
-	assert.Equal(t, devOAuthPublicKeyFingerprint, embeddedFingerprint,
-		"embedded dev OAuth public key is out of sync with tools/dev/cert/oauth-public.pem")
+	assert.Equal(t, devOAuthPublicKeyFingerprint, fingerprint,
+		"devOAuthPublicKeyFingerprint is out of sync with the embedded leaked dev key")
 }
 
 func TestIsLocalIssuer(t *testing.T) {

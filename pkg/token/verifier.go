@@ -31,13 +31,13 @@ import (
 )
 
 // devOAuthPublicKeyFingerprint is the SHA-256 (hex) of the PKIX/DER encoding of
-// the committed development OAuth public key (tools/dev/cert/oauth-public.pem).
-// That key pair is checked into the public repository and is only meant for
-// local development (docker-compose, the dev container and the localenv cluster,
-// all of which use the https://localhost issuer). Using it to verify tokens in a
-// real deployment would let anyone forge system-admin tokens, so NewVerifier
-// refuses it unless the issuer is local. Regenerate it with
-// `make -C tools/dev generate-oauth` if the key pair changes.
+// the development OAuth public key that used to be committed to the public
+// repository (tools/dev/cert/oauth-public.pem). The key pair is now generated
+// locally and gitignored, but the old key remains in git history, so its private
+// half is public forever. NewVerifier refuses this specific key for any non-local
+// issuer so it can never be reused to forge system-admin tokens in a real
+// deployment; local development (docker-compose, the dev container and the
+// localenv cluster) uses the https://localhost issuer and is unaffected.
 const devOAuthPublicKeyFingerprint = "fad5196defc62660595507a2f5496ec52237c9fb0bfb2122e13fda9f0e755acb"
 
 type Verifier interface {
@@ -84,9 +84,9 @@ func ensureNotInsecureDevKey(pubKey *rsa.PublicKey, issuer string) error {
 	}
 	if fingerprint == devOAuthPublicKeyFingerprint && !isLocalIssuer(issuer) {
 		return fmt.Errorf(
-			"token: refusing to verify tokens with the committed development OAuth key "+
-				"(tools/dev/cert/oauth-public.pem) for non-local issuer %q; regenerate the OAuth key pair "+
-				"for this deployment (e.g. make -C tools/dev generate-oauth)",
+			"token: refusing to verify tokens with the leaked development OAuth key "+
+				"(previously committed as tools/dev/cert/oauth-public.pem) for non-local issuer %q; "+
+				"generate a dedicated OAuth key pair for this deployment",
 			issuer,
 		)
 	}

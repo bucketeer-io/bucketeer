@@ -125,20 +125,23 @@ cp your-ssl-cert.crt tools/dev/cert/tls.crt
 cp your-ssl-key.key tools/dev/cert/tls.key
 ```
 
-**Regenerate the OAuth signing key and service token:**
-The repository ships a development OAuth key pair (`tools/dev/cert/oauth-private.pem` /
-`oauth-public.pem`) and a long-lived service token (`tools/dev/cert/service-token`)
-that are **public** and intended only for local development. They must be
-regenerated for any non-local deployment — anyone with the committed key can forge
-system-admin tokens. The services refuse to start with the committed development
-key unless the OAuth issuer is local (`https://localhost`).
+**Use a dedicated OAuth signing key and service token:**
+For local development, `make docker-compose-up` (and `make deploy-bucketeer` for the
+minikube/localenv cluster) generate a development OAuth key pair
+(`tools/dev/cert/oauth-private.pem` / `oauth-public.pem`) and a service token
+(`tools/dev/cert/service-token`) on first run. These are **gitignored** and are for
+local use only — the private key can mint system-admin tokens.
+
+For a real deployment, provide your own managed secrets (Helm `oauth.key.secret` /
+`serviceToken.secret`) and use a non-`https://localhost` issuer. As a safety net the
+services refuse to start with the historically-leaked development key for any
+non-local issuer. To generate fresh material explicitly:
 ```bash
 # Generate a fresh OAuth key pair (writes tools/dev/cert/oauth-private.pem and oauth-public.pem)
 make -C tools/dev generate-oauth
 
 # Generate a new service token signed by that key.
-# ISSUER must be your production OAuth issuer (not https://localhost), otherwise
-# the services refuse to start with this token's key pair.
+# ISSUER must be your production OAuth issuer (not https://localhost).
 make generate-service-token \
   ISSUER=https://your-domain.com \
   EMAIL=service@your-domain.com \
