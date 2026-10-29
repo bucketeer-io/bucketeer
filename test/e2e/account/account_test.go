@@ -26,6 +26,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -840,6 +842,15 @@ func createOwnSearchFilter(
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The filter now exists on the shared account. If any of the checks below
+	// fail, the caller never receives the cleanup function, so remove the filter
+	// by its unique name from here instead.
+	verified := false
+	defer func() {
+		if !verified {
+			deleteOwnSearchFilterByName(t, c, email, filter.Name)
+		}
+	}()
 	after := ownSearchFilters(t, ctx, c, email)
 	if len(after) != len(before)+1 {
 		t.Fatalf("different count of filters, expected: %d, actual: %d", len(before)+1, len(after))
@@ -848,20 +859,45 @@ func createOwnSearchFilter(
 	if created == nil {
 		t.Fatalf("search filter %q was not created", filter.Name)
 	}
-	cleanup := func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-		_, err := c.DeleteSearchFilter(cleanupCtx, &accountproto.DeleteSearchFilterRequest{
-			Email:          email,
-			OrganizationId: *organizationID,
-			EnvironmentId:  *environmentID,
-			Command:        &accountproto.DeleteSearchFilterCommand{Id: created.Id},
-		})
-		if err != nil {
-			t.Logf("failed to delete search filter %s: %v", created.Id, err)
-		}
+	verified = true
+	return created, func() { deleteOwnSearchFilter(t, c, email, created.Id) }
+}
+
+// deleteOwnSearchFilter deletes the caller's search filter with the given id on
+// a fresh context so it still runs after the test context has expired. A filter
+// that was already deleted by the test is not an error.
+func deleteOwnSearchFilter(t *testing.T, c accountclient.Client, email, id string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
+		Email:          email,
+		OrganizationId: *organizationID,
+		EnvironmentId:  *environmentID,
+		Command:        &accountproto.DeleteSearchFilterCommand{Id: id},
+	})
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Logf("failed to delete search filter %s: %v", id, err)
 	}
-	return created, cleanup
+}
+
+// deleteOwnSearchFilterByName looks up the caller's search filter by name on a
+// fresh context and deletes it when it exists.
+func deleteOwnSearchFilterByName(t *testing.T, c accountclient.Client, email, name string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	resp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: *organizationID,
+	})
+	if err != nil {
+		t.Logf("failed to look up search filter %q for cleanup: %v", name, err)
+		return
+	}
+	if f := findSearchFilterByName(resp.Account.SearchFilters, name); f != nil {
+		deleteOwnSearchFilter(t, c, email, f.Id)
+	}
 }
 
 func newAccountClient(t *testing.T, token *string) accountclient.Client {
