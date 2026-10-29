@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -36,6 +37,8 @@ const (
 var (
 	targetEntities = []*mysqlE2EInfo{
 		{table: "subscription", targetField: "name"},
+		{table: "holdout_group_feature", targetField: "feature_id"},
+		{table: "holdout_group", targetField: "name"},
 		{table: "experiment_result", targetField: ""},
 		{table: "push", targetField: "name"},
 		{table: "ops_count", targetField: ""},
@@ -55,7 +58,23 @@ var (
 	targetEntitiesInOrganization = []*mysqlE2EInfo{
 		{table: "account_v2", targetField: "email"},
 	}
+	// Tables written by test/e2e/holdout in the environments it creates
+	// (named "<prefix>-holdout-env-<id>", in the project of the shared e2e
+	// environment). Rows are matched by environment, children before
+	// parents, then the environments themselves are deleted.
+	holdoutEnvironmentTables = []string{
+		"holdout_group_feature",
+		"holdout_group",
+		"segment_user",
+		"segment",
+		"tag",
+		"feature",
+		"api_key",
+		"audit_log",
+	}
 )
+
+const holdoutEnvironmentNameSuffix = "holdout-env-"
 
 type mysqlE2EInfo struct {
 	table       string
@@ -117,6 +136,18 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 			logger.Error("Failed to delete data in organization", zap.Error(err), zap.String("table", target.table))
 			return err
 		}
+	}
+	for _, table := range holdoutEnvironmentTables {
+		query, args := c.constructDeleteQueryForHoldoutEnvironments(table)
+		if _, err := client.ExecContext(ctx, query, args...); err != nil {
+			logger.Error("Failed to delete data in holdout environments", zap.Error(err), zap.String("table", table))
+			return err
+		}
+	}
+	query, args := c.constructDeleteHoldoutEnvironmentsQuery()
+	if _, err := client.ExecContext(ctx, query, args...); err != nil {
+		logger.Error("Failed to delete holdout environments", zap.Error(err))
+		return err
 	}
 	logger.Info("Done")
 	return nil
@@ -191,5 +222,67 @@ func (c *command) constructDeleteQueryForOrganization(target *mysqlE2EInfo) (que
 	args = []interface{}{
 		organizationID,
 	}
+	return
+}
+
+// holdoutEnvironmentNamePattern matches the environments created by
+// test/e2e/holdout: "e2e-test-<test-id>-holdout-env-<id>" when a test ID is
+// given, otherwise every "e2e-test-...holdout-env-<id>". The test ID is
+// escaped so LIKE metacharacters in it ("_" and "%") match literally and a
+// run such as "run_1" cannot select the environment of "run-1".
+func (c *command) holdoutEnvironmentNamePattern() string {
+	if *c.testID != "" {
+		return prefixTestName + "-" + escapeLikePattern(*c.testID) + "-" + holdoutEnvironmentNameSuffix + "%"
+	}
+	return prefixTestName + "-%" + holdoutEnvironmentNameSuffix + "%"
+}
+
+// escapeLikePattern escapes the LIKE metacharacters and the escape character
+// itself, matching the ESCAPE clause used by holdoutEnvironmentsSubquery.
+func escapeLikePattern(s string) string {
+	return strings.NewReplacer(
+		likeEscapeChar, likeEscapeChar+likeEscapeChar,
+		"%", likeEscapeChar+"%",
+		"_", likeEscapeChar+"_",
+	).Replace(s)
+}
+
+const likeEscapeChar = `\`
+
+// holdoutEnvironmentsSubquery selects the holdout environments created by
+// test/e2e/holdout: matched by name and limited to the project of the shared
+// e2e environment, so a same-named environment elsewhere is never touched.
+// The project lookup is wrapped in a derived table so the statement is also
+// valid when environment_v2 itself is the delete target.
+const holdoutEnvironmentsSubquery = `
+	SELECT id FROM environment_v2
+	WHERE
+		name LIKE ? ESCAPE '\\' AND
+		project_id = (
+			SELECT project_id FROM (
+				SELECT project_id FROM environment_v2 WHERE id = ?
+			) AS shared_environment
+		)
+`
+
+func (c *command) constructDeleteQueryForHoldoutEnvironments(table string) (query string, args []interface{}) {
+	query = fmt.Sprintf(`
+		DELETE FROM
+			%s
+		WHERE
+			environment_id IN (%s)
+	`, table, holdoutEnvironmentsSubquery)
+	args = []interface{}{c.holdoutEnvironmentNamePattern(), envNamespace}
+	return
+}
+
+func (c *command) constructDeleteHoldoutEnvironmentsQuery() (query string, args []interface{}) {
+	query = fmt.Sprintf(`
+		DELETE FROM
+			environment_v2
+		WHERE
+			id IN (SELECT id FROM (%s) AS holdout_environments)
+	`, holdoutEnvironmentsSubquery)
+	args = []interface{}{c.holdoutEnvironmentNamePattern(), envNamespace}
 	return
 }
