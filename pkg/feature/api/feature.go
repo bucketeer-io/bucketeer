@@ -1592,6 +1592,15 @@ func (s *FeatureService) CloneFeature(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
+	// The source feature is read from req.EnvironmentId, so the caller needs
+	// read access to the source environment in addition to write access to
+	// the target environment.
+	if _, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId,
+	); err != nil {
+		return nil, err
+	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.TargetEnvironmentId,
@@ -1708,6 +1717,15 @@ func (s *FeatureService) BulkCloneFeature(
 	req *featureproto.BulkCloneFeatureRequest,
 ) (*featureproto.BulkCloneFeatureResponse, error) {
 	if err := validateBulkCloneFeatureRequest(req); err != nil {
+		return nil, err
+	}
+	// The source feature is read from req.EnvironmentId, so the caller needs
+	// read access to the source environment in addition to write access to
+	// every target environment.
+	if _, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId,
+	); err != nil {
 		return nil, err
 	}
 	// Check EDITOR permission on ALL target environments upfront.
