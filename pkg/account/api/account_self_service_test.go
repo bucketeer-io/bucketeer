@@ -27,8 +27,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	alstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
-	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
