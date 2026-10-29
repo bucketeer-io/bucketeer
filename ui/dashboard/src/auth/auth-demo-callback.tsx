@@ -3,13 +3,14 @@ import { useLocation, useNavigate } from 'react-router';
 import { exchangeDemoToken, ExchangeTokenPayload } from '@api/auth';
 import { urls } from 'configs';
 import { PAGE_PATH_DEMO_SITE } from 'constants/routing';
-import { getCookieState } from 'cookie';
+import { getCookieState, removeCookieState } from 'cookie';
 import { ServerErrorType, useSubmit } from 'hooks';
 import { useTranslation } from 'i18n';
 import queryString from 'query-string';
 import { setDemoTokenStorage } from 'storage/demo-token';
 import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
+import { isValidOAuthState } from './oauth-state';
 
 export const AuthDemoCallbackPage = memo(() => {
   const { t } = useTranslation(['common', 'message']);
@@ -40,7 +41,13 @@ export const AuthDemoCallbackPage = memo(() => {
     const { code, state } = queryString.parse(query);
     const cookieState = getCookieState();
 
-    if (!!code && typeof code === 'string' && state === cookieState) {
+    if (
+      !!code &&
+      typeof code === 'string' &&
+      isValidOAuthState(state, cookieState)
+    ) {
+      // Each stored state is accepted once.
+      removeCookieState();
       onGoogleDemoHandler({
         code,
         redirectUrl: urls.AUTH_DEMO_REDIRECT,
