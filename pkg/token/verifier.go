@@ -32,8 +32,7 @@ import (
 
 // devOAuthPublicKeyFingerprint is the SHA-256 (hex) of the PKIX/DER encoding of
 // the development OAuth public key that used to be committed to the public
-// repository (tools/dev/cert/oauth-public.pem; see also
-// pkg/token/testdata/leaked_dev_oauth_public.pem). The key pair is now generated
+// repository (tools/dev/cert/oauth-public.pem). The key pair is now generated
 // locally and gitignored, but the old key remains in git history, so its private
 // half is public forever. NewVerifier refuses this specific key for any non-local
 // issuer so it can never be reused to forge system-admin tokens in a real
