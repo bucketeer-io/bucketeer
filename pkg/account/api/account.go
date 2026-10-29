@@ -236,6 +236,12 @@ func (s *AccountService) UpdateAccountV2(
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
 	)
+	// selfServiceUpdate is true when the caller is not an organization admin and is
+	// only permitted to edit their own account. Such callers may change profile
+	// fields but must never change privilege fields (organization role, environment
+	// roles, disabled state); otherwise any member could promote themselves to
+	// owner.
+	selfServiceUpdate := false
 	if err != nil {
 		// If not admin, check if user is updating their own account
 		editor, err = s.checkOrganizationRole(
@@ -249,11 +255,35 @@ func (s *AccountService) UpdateAccountV2(
 		if editor.Email != req.Email {
 			return nil, statusPermissionDenied.Err()
 		}
+		selfServiceUpdate = true
 	}
 
 	err = validateUpdateAccountV2Request(req)
 	if err != nil {
 		return nil, err
+	}
+
+	organizationRole := req.OrganizationRole
+	environmentRoles := req.EnvironmentRoles
+	disabled := req.Disabled
+	if selfServiceUpdate {
+		existing, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
+		if err != nil {
+			return nil, err
+		}
+		if selfServicePrivilegeChangeAttempted(existing, req) {
+			s.logger.Warn(
+				"Rejected self-service account update attempting to change privilege fields",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("organizationID", req.OrganizationId),
+					zap.String("email", req.Email),
+				)...,
+			)
+			return nil, statusPermissionDenied.Err()
+		}
+		organizationRole = nil
+		environmentRoles = nil
+		disabled = nil
 	}
 	updatedAccountPb, err := s.updateAccountV2NoCommandMysql(
 		ctx,
@@ -268,9 +298,9 @@ func (s *AccountService) UpdateAccountV2(
 		req.Avatar,
 		req.Tags,
 		req.TeamChanges,
-		req.OrganizationRole,
-		req.EnvironmentRoles,
-		req.Disabled,
+		organizationRole,
+		environmentRoles,
+		disabled,
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -834,4 +864,41 @@ func (s *AccountService) constructEnvironmentRoles(
 		requestEnvironmentRoles = append(requestEnvironmentRoles, editor.EnvironmentRoles...)
 	}
 	return requestEnvironmentRoles, nil
+}
+
+func selfServicePrivilegeChangeAttempted(
+	existing *domain.AccountV2,
+	req *accountproto.UpdateAccountV2Request,
+) bool {
+	if req.OrganizationRole != nil &&
+		req.OrganizationRole.Role != existing.OrganizationRole {
+		return true
+	}
+	if req.Disabled != nil && req.Disabled.Value != existing.Disabled {
+		return true
+	}
+	if len(req.EnvironmentRoles) > 0 &&
+		!environmentRolesEqual(req.EnvironmentRoles, existing.EnvironmentRoles) {
+		return true
+	}
+	return false
+}
+
+func environmentRolesEqual(
+	requested, existing []*accountproto.AccountV2_EnvironmentRole,
+) bool {
+	if len(requested) != len(existing) {
+		return false
+	}
+	existingByEnv := make(map[string]accountproto.AccountV2_Role_Environment, len(existing))
+	for _, r := range existing {
+		existingByEnv[r.EnvironmentId] = r.Role
+	}
+	for _, r := range requested {
+		role, ok := existingByEnv[r.EnvironmentId]
+		if !ok || role != r.Role {
+			return false
+		}
+	}
+	return true
 }
