@@ -27,6 +27,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -500,11 +501,22 @@ func pickUsers(t *testing.T, g *featureproto.HoldoutGroup) (heldOut, notHeldOut 
 
 // ---- gateway ----
 
+// newOneShotGatewayClient opens a connection for a single RPC helper. The
+// caller closes it on return so polling loops do not accumulate one open
+// connection per attempt until the test ends.
+func newOneShotGatewayClient(t *testing.T, apiKeyPath string) gatewayclient.Client {
+	t.Helper()
+	c, err := newGatewayClient(apiKeyPath)
+	require.NoError(t, err)
+	return c
+}
+
 // grpcGetEvaluationsWithRetry mirrors test/e2e/gateway: codes.Internal is
 // transient while the feature cache snapshot is inconsistent.
 func grpcGetEvaluationsWithRetry(t *testing.T, apiKeyPath string, req *gatewayproto.GetEvaluationsRequest) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
-	c := newGatewayClientT(t, apiKeyPath)
+	c := newOneShotGatewayClient(t, apiKeyPath)
+	defer c.Close()
 	var lastErr error
 	for i := 0; i < getEvaluationsRetryAttempts; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -560,7 +572,8 @@ func grpcGetEvaluationsByEvaluatedAt(t *testing.T, tag, userID, ueid string, eva
 
 func grpcGetEvaluation(t *testing.T, tag, featureID, userID string) *gatewayproto.GetEvaluationResponse {
 	t.Helper()
-	c := newGatewayClientT(t, holdoutEnv.clientKeyPath)
+	c := newOneShotGatewayClient(t, holdoutEnv.clientKeyPath)
+	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := c.GetEvaluation(ctx, &gatewayproto.GetEvaluationRequest{
@@ -574,7 +587,8 @@ func grpcGetEvaluation(t *testing.T, tag, featureID, userID string) *gatewayprot
 
 func grpcGetFeatureFlags(t *testing.T, tag, ffID string, requestedAt int64) *gatewayproto.GetFeatureFlagsResponse {
 	t.Helper()
-	c := newGatewayClientT(t, holdoutEnv.serverKeyPath)
+	c := newOneShotGatewayClient(t, holdoutEnv.serverKeyPath)
+	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := c.GetFeatureFlags(ctx, &gatewayproto.GetFeatureFlagsRequest{
@@ -590,7 +604,8 @@ func grpcGetFeatureFlags(t *testing.T, tag, ffID string, requestedAt int64) *gat
 
 func grpcGetSegmentUsers(t *testing.T, segmentIDs []string, requestedAt int64) *gatewayproto.GetSegmentUsersResponse {
 	t.Helper()
-	c := newGatewayClientT(t, holdoutEnv.serverKeyPath)
+	c := newOneShotGatewayClient(t, holdoutEnv.serverKeyPath)
+	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := c.GetSegmentUsers(ctx, &gatewayproto.GetSegmentUsersRequest{

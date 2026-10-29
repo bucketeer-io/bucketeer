@@ -753,6 +753,34 @@ func TestLifecycleScheduled(t *testing.T) {
 		)
 	})
 
+	t.Run("a late start still advances one step per run", func(t *testing.T) {
+		// Both start_at and start_analysis_at are already due when the job
+		// first sees the group, so an updater that chained the steps would
+		// reach ANALYSIS in one run. The two runs must both complete before
+		// the cron tick at second 0, which would otherwise take the second
+		// step for us.
+		awayFromCronTick(t, 5, 40)
+		now := time.Now().Unix()
+		spec := groupSpec{
+			assignment: featureproto.HoldoutGroup_HASH, percentage: 50,
+			startAt: now + 1, startAnalysisAt: now + 2, stopAt: now + 3600,
+		}
+		group := createHoldoutGroup(t, client, spec.request(t))
+		waitUntilUnix(t, spec.startAnalysisAt)
+		require.Equal(t, featureproto.HoldoutGroup_WAITING, getHoldoutGroup(t, client, group.Id).Status)
+
+		runBatchJob(t, btproto.BatchJob_HoldoutGroupStatusUpdater)
+		running := getHoldoutGroup(t, client, group.Id)
+		require.Equal(t, featureproto.HoldoutGroup_RUNNING, running.Status,
+			"first run must start the group only, even though analysis is also due")
+		assert.Zero(t, running.AnalysisStartedAt)
+
+		runBatchJob(t, btproto.BatchJob_HoldoutGroupStatusUpdater)
+		analysis := getHoldoutGroup(t, client, group.Id)
+		require.Equal(t, featureproto.HoldoutGroup_ANALYSIS, analysis.Status, "second run takes the next step")
+		assert.GreaterOrEqual(t, analysis.AnalysisStartedAt, spec.startAnalysisAt)
+	})
+
 	t.Run("SCHEDULED mode is stricter than MANUAL", func(t *testing.T) {
 		spec := waitingHashSpec()
 		group := createHoldoutGroup(t, client, spec.request(t))

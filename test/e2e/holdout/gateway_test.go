@@ -529,6 +529,12 @@ func TestServingStream(t *testing.T) {
 	for _, p := range other.DrainPatches(t, sseQuietWindow) {
 		assert.False(t, hasHoldoutReason(p.Evaluations.Evaluations), "non-held-out stream saw HOLDOUT")
 	}
+	// Both streams must still be open and error-free after the stop patch;
+	// DrainPatches fails on an error event or a closed stream, which a
+	// background reader alone would leave unobserved.
+	for _, p := range held.DrainPatches(t, sseQuietWindow) {
+		assert.False(t, hasHoldoutReason(p.Evaluations.Evaluations), "held-out stream saw HOLDOUT after Stop")
+	}
 	assert.Empty(t, held.Errors, "held-out stream received an error event")
 	assert.Empty(t, other.Errors, "non-held-out stream received an error event")
 	held.Close()

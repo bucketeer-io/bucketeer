@@ -576,14 +576,6 @@ func newGatewayClient(apiKeyPath string) (gatewayclient.Client, error) {
 	)
 }
 
-func newGatewayClientT(t *testing.T, apiKeyPath string) gatewayclient.Client {
-	t.Helper()
-	c, err := newGatewayClient(apiKeyPath)
-	require.NoError(t, err)
-	t.Cleanup(func() { c.Close() })
-	return c
-}
-
 // ---- naming ----
 
 func mustUUID() string {

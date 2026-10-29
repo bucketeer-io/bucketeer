@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -226,13 +227,27 @@ func (c *command) constructDeleteQueryForOrganization(target *postgresE2EInfo) (
 
 // holdoutEnvironmentNamePattern matches the environments created by
 // test/e2e/holdout: "e2e-test-<test-id>-holdout-env-<id>" when a test ID is
-// given, otherwise every "e2e-test-...holdout-env-<id>".
+// given, otherwise every "e2e-test-...holdout-env-<id>". The test ID is
+// escaped so LIKE metacharacters in it ("_" and "%") match literally and a
+// run such as "run_1" cannot select the environment of "run-1".
 func (c *command) holdoutEnvironmentNamePattern() string {
 	if *c.testID != "" {
-		return prefixTestName + "-" + *c.testID + "-" + holdoutEnvironmentNameSuffix + "%"
+		return prefixTestName + "-" + escapeLikePattern(*c.testID) + "-" + holdoutEnvironmentNameSuffix + "%"
 	}
 	return prefixTestName + "-%" + holdoutEnvironmentNameSuffix + "%"
 }
+
+// escapeLikePattern escapes the LIKE metacharacters and the escape character
+// itself, matching the ESCAPE clause used by holdoutEnvironmentsSubquery.
+func escapeLikePattern(s string) string {
+	return strings.NewReplacer(
+		likeEscapeChar, likeEscapeChar+likeEscapeChar,
+		"%", likeEscapeChar+"%",
+		"_", likeEscapeChar+"_",
+	).Replace(s)
+}
+
+const likeEscapeChar = `\`
 
 // holdoutEnvironmentsSubquery selects the holdout environments created by
 // test/e2e/holdout: matched by name and limited to the project of the shared
@@ -242,7 +257,7 @@ func (c *command) holdoutEnvironmentNamePattern() string {
 const holdoutEnvironmentsSubquery = `
 	SELECT id FROM environment_v2
 	WHERE
-		name LIKE $1 AND
+		name LIKE $1 ESCAPE '\' AND
 		project_id = (
 			SELECT project_id FROM (
 				SELECT project_id FROM environment_v2 WHERE id = $2
