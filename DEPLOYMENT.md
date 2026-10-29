@@ -133,9 +133,17 @@ regenerated for any non-local deployment — anyone with the committed key can f
 system-admin tokens. The services refuse to start with the committed development
 key unless the OAuth issuer is local (`https://localhost`).
 ```bash
-# Generate a fresh OAuth key pair and a new service token
+# Generate a fresh OAuth key pair (writes tools/dev/cert/oauth-private.pem and oauth-public.pem)
 make -C tools/dev generate-oauth
-make generate-service-token
+
+# Generate a new service token signed by that key.
+# ISSUER must be your production OAuth issuer (not https://localhost), otherwise
+# the services refuse to start with this token's key pair.
+make generate-service-token \
+  ISSUER=https://your-domain.com \
+  EMAIL=service@your-domain.com \
+  OAUTH_KEY_PATH=tools/dev/cert/oauth-private.pem \
+  SERVICE_TOKEN_PATH=tools/dev/cert/service-token
 ```
 
 **Disable the demo sign-in:**
