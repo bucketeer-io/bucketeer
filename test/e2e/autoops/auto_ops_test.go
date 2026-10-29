@@ -657,6 +657,82 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 }
 
+// TestOpsEventRateAcrossEventFlows checks that the old and new OPS persisters count the events together.
+// The events are split between the gateway, the dedicated topics only and the main topics only,
+// as left over from before the gateway filter. The rule needs 5 goals and a rate of at most 0.55,
+// so it only triggers with all of them: 5 goals over 10 evaluations is 0.5,
+// and any missing evaluations raise the rate to at least 0.625.
+func TestOpsEventRateAcrossEventFlows(t *testing.T) {
+	pubsubCfg := util.PubSubConfigFromEnv(t)
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	experimentClient := newExperimentClient(t)
+	defer experimentClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	goalID := createGoal(ctx, t, experimentClient)
+	variationID := feature.Variations[0].Id
+	clause := &autoopsproto.OpsEventRateClause{
+		VariationId:     variationID,
+		GoalId:          goalID,
+		MinCount:        int64(5),
+		ThreadsholdRate: float64(0.55),
+		Operator:        autoopsproto.OpsEventRateClause_LESS_OR_EQUAL,
+		ActionType:      autoopsproto.ActionType_DISABLE,
+	}
+	createAutoOpsRule(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		autoopsproto.OpsType_EVENT_RATE,
+		[]*autoopsproto.OpsEventRateClause{clause},
+		nil,
+	)
+
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
+
+	tag := feature.Tags[0]
+	userIDs := createUserIDs(t, 10)
+	gatewayUsers, dedicatedUsers, leftoverUsers := userIDs[:4], userIDs[4:8], userIDs[8:]
+	newEvaluations := func(users []string) []*eventproto.Event {
+		events := make([]*eventproto.Event, 0, len(users))
+		for _, uid := range users {
+			events = append(events, util.NewEvaluationEvent(
+				t, *environmentID, featureID, feature.Version, uid, variationID, tag, &featureproto.Reason{}))
+		}
+		return events
+	}
+	newGoals := func(users []string) []*eventproto.Event {
+		events := make([]*eventproto.Event, 0, len(users))
+		for _, uid := range users {
+			events = append(events, util.NewGoalEvent(t, *environmentID, goalID, uid, tag, 0.3, time.Now().Unix()))
+		}
+		return events
+	}
+
+	for _, uid := range gatewayUsers {
+		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, variationID, tag)
+	}
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.EvaluationOPSTopic, newEvaluations(dedicatedUsers))
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.EvaluationTopic, newEvaluations(leftoverUsers))
+	for _, uid := range gatewayUsers[:2] {
+		grpcRegisterGoalEvent(t, goalID, uid, tag)
+	}
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.GoalOPSTopic, newGoals(dedicatedUsers[:2]))
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.GoalTopic, newGoals(leftoverUsers[:1]))
+
+	checkIfAutoOpsRulesAreTriggered(t, featureID)
+}
+
 func TestOpsEventRateBatch(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
