@@ -38,6 +38,9 @@ import (
 const certPath = "testdata/server.crt"
 const keyPath = "testdata/server.key"
 
+// panicMessage makes the test handler panic so the server's recovery can be exercised.
+const panicMessage = "panic"
+
 type testService struct {
 }
 
@@ -46,6 +49,9 @@ func (s *testService) Register(server *grpc.Server) {
 }
 
 func (s *testService) Test(ctx context.Context, req *proto.TestRequest) (*proto.TestResponse, error) {
+	if req.Message == panicMessage {
+		panic("test handler panic")
+	}
 	return &proto.TestResponse{Message: "test"}, nil
 }
 
@@ -223,6 +229,33 @@ func TestRPCHandlerUnauthenticated(t *testing.T) {
 	}
 	if status.Code() != codes.Unauthenticated {
 		t.Fatal("code should be Unauthenticated")
+	}
+}
+
+func TestRPCHandlerRecoversFromPanic(t *testing.T) {
+	client := newRPCClient(t, &dummyPerRPCCredentials{
+		Metadata: map[string]string{
+			"authorization": "bearer dummy-token",
+		},
+	})
+	_, err := client.Test(context.TODO(), &proto.TestRequest{Message: panicMessage})
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		t.FailNow()
+	}
+	if st.Code() != codes.Internal {
+		t.Fatalf("code should be Internal, got %s", st.Code())
+	}
+	// The server must keep serving requests after a handler panicked.
+	resp, err := client.Test(context.TODO(), &proto.TestRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Message != "test" {
+		t.Fatal(resp)
 	}
 }
 
