@@ -544,7 +544,8 @@ func newFeatureClientAs(t *testing.T, tokenPath string) featureclient.Client {
 
 func newBatchClient(t *testing.T) btclient.Client {
 	t.Helper()
-	opts, err := dialOptions(*orgOwnerDefaultAccessTokenPath)
+	// Batch jobs can only be run by system admins.
+	opts, err := dialOptions(*sysAdminAccessTokenPath)
 	require.NoError(t, err)
 	c, err := btclient.NewClient(webGatewayTarget(), *webGatewayCert, opts...)
 	require.NoError(t, err)

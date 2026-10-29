@@ -54,10 +54,7 @@ const SaveWithCommentModal = ({
           control={control}
           render={({ field }) => (
             <Form.Item className="py-0 w-full">
-              <Form.Label
-                required={isRequired && !isShowSchedule}
-                optional={!isRequired || isShowSchedule}
-              >
+              <Form.Label required={isRequired} optional={!isRequired}>
                 {t('form:comment-for-update')}
               </Form.Label>
               <Form.Control>

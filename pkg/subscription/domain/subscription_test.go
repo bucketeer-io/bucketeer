@@ -24,6 +24,118 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
+func TestValidateSlackWebhookURL(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		input    string
+		expected error
+	}{
+		{
+			desc:     "err: empty",
+			input:    "",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: not a URL",
+			input:    "not-a-url",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: unparsable",
+			input:    "https://hooks.slack.com/services/%zz",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: http scheme",
+			input:    "http://hooks.slack.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: other host",
+			input:    "https://example.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: host that only ends with the Slack host",
+			input:    "https://evilhooks.slack.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: host that only starts with the Slack host",
+			input:    "https://hooks.slack.com.example.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: Slack host in the path only",
+			input:    "https://example.com/hooks.slack.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: Slack host in the userinfo only",
+			input:    "https://hooks.slack.com@example.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: userinfo",
+			input:    "https://user:pass@hooks.slack.com/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: explicit port",
+			input:    "https://hooks.slack.com:8443/services/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: loopback address",
+			input:    "http://127.0.0.1:3100/internal",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: link-local address",
+			input:    "http://169.254.169.254/latest/meta-data/",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: no path",
+			input:    "https://hooks.slack.com",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: root path",
+			input:    "https://hooks.slack.com/",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: path outside /services/",
+			input:    "https://hooks.slack.com/other/T000/B000/token",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: empty /services/ path",
+			input:    "https://hooks.slack.com/services/",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "err: /services without trailing slash",
+			input:    "https://hooks.slack.com/services",
+			expected: ErrSlackWebhookURLInvalid,
+		},
+		{
+			desc:     "success: Slack incoming webhook",
+			input:    "https://hooks.slack.com/services/T000/B000/token",
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, ValidateSlackWebhookURL(p.input))
+		})
+	}
+}
+
 func TestNewNotification(t *testing.T) {
 	t.Parallel()
 	sourceTypes := []proto.Subscription_SourceType{

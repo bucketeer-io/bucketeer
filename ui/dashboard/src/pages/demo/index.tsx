@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { authenticationUrl } from '@api/auth';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
 import { useAuth } from 'auth';
+import { generateOAuthState } from 'auth/oauth-state';
 import { urls } from 'configs';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
@@ -47,7 +48,7 @@ const AccessDemoPage = () => {
   );
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
-    const state = `${Date.now()}`;
+    const state = generateOAuthState();
     setCookieState(state);
     clearDemoTokenStorage();
 

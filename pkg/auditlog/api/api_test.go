@@ -142,6 +142,16 @@ func TestGetAuditLog(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
+				// The environment scope is authorized on its own, so the caller's
+				// account is also resolved for the requested environment.
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
+					Account: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), "id-1", "env-1", "org-1",
 				).Return(&proto.AuditLog{
@@ -496,6 +506,16 @@ func TestListAuditLogs(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
+				// The environment scope is authorized on its own, so the caller's
+				// account is also resolved for the requested environment.
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
+					Account: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
 					v2als.ListAuditLogsParams{

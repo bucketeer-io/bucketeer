@@ -17,7 +17,9 @@ package domain
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"net/url"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -27,11 +29,24 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
+// Slack incoming webhooks always have the form
+// https://hooks.slack.com/services/<team>/<channel>/<token>.
+const (
+	slackWebhookScheme     = "https"
+	slackWebhookHost       = "hooks.slack.com"
+	slackWebhookPathPrefix = "/services/"
+)
+
 var (
 	ErrUnknownRecipient = err.NewErrorInvalidArgUnknown(
 		err.SubscriptionPackageName,
 		"unknown recipient",
 		"recipient",
+	)
+	ErrSlackWebhookURLInvalid = err.NewErrorInvalidArgNotMatchFormat(
+		err.SubscriptionPackageName,
+		"webhook URL must be a Slack incoming webhook URL (https://hooks.slack.com/services/...)",
+		"webhook_url",
 	)
 	ErrSourceTypesMustHaveAtLeastOne = err.NewErrorInvalidArgNotMatchFormat(
 		err.SubscriptionPackageName,
@@ -89,6 +104,24 @@ func ID(recipient *proto.Recipient) (string, error) {
 func SlackChannelRecipientID(webhookURL string) string {
 	hashed := sha256.Sum256([]byte(webhookURL))
 	return hex.EncodeToString(hashed[:])
+}
+
+// ValidateSlackWebhookURL ensures the URL is a Slack incoming webhook:
+// the https scheme, exactly the hooks.slack.com host (no credentials, no port)
+// and a non-empty /services/ path. Notifications are only ever delivered to
+// Slack, so any other destination is rejected.
+func ValidateSlackWebhookURL(webhookURL string) error {
+	u, e := url.Parse(webhookURL)
+	if e != nil {
+		return ErrSlackWebhookURLInvalid
+	}
+	if u.Scheme != slackWebhookScheme || u.User != nil || u.Host != slackWebhookHost {
+		return ErrSlackWebhookURLInvalid
+	}
+	if !strings.HasPrefix(u.Path, slackWebhookPathPrefix) || len(u.Path) == len(slackWebhookPathPrefix) {
+		return ErrSlackWebhookURLInvalid
+	}
+	return nil
 }
 
 func (s *Subscription) UpdateSubscription(

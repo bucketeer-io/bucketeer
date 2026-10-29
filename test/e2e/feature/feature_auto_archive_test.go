@@ -365,7 +365,8 @@ func newEnvironmentClient(t *testing.T) environmentclient.Client {
 
 func newBatchClient(t *testing.T) btclient.Client {
 	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*orgOwnerDefaultAccessTokenPath)
+	// Batch jobs can only be run by system admins.
+	creds, err := rpcclient.NewPerRPCCredentials(*sysAdminAccessTokenPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}

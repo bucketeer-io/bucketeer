@@ -16,7 +16,6 @@
 package api
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -690,7 +689,7 @@ func executeMockBatchJob(t *testing.T,
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	service := newBatchService(t, controller, setupMock)
-	_, err := service.ExecuteBatchJob(context.Background(), request)
+	_, err := service.ExecuteBatchJob(createContextWithServiceToken(t), request)
 	assert.NoError(t, err)
 }
 

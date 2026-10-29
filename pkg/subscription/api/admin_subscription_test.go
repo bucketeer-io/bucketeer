@@ -77,7 +77,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					Name: "sname",
 					Recipient: &proto.Recipient{
 						Type:                  proto.Recipient_SlackChannel,
-						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 					},
 				},
 			},
@@ -133,6 +133,26 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSlackRecipientWebhookURLRequired.Err(),
 		},
 		{
+			desc:          "err: ErrSlackRecipientWebhookURLInvalid: not a Slack incoming webhook",
+			isSystemAdmin: true,
+			input: &proto.CreateAdminSubscriptionRequest{
+				Command: &proto.CreateAdminSubscriptionCommand{
+					Name: "sname",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "http://127.0.0.1:3100/internal",
+						},
+					},
+				},
+			},
+			expectedErr: statusSlackRecipientWebhookURLInvalid.Err(),
+		},
+		{
 			desc:          "err: ErrNameRequired",
 			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
@@ -143,7 +163,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 					Recipient: &proto.Recipient{
 						Type:                  proto.Recipient_SlackChannel,
-						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 					},
 				},
 			},
@@ -174,7 +194,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 					Recipient: &proto.Recipient{
 						Type:                  proto.Recipient_SlackChannel,
-						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 					},
 				},
 			},

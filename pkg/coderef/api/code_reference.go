@@ -99,7 +99,7 @@ func (s *CodeReferenceService) GetCodeReference(
 	if err := validateGetCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id)
+	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 			return nil, statusNotFound.Err()
@@ -294,7 +294,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	var updatedCodeRef *domain.CodeReference
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
-		codeRef, err = s.codeRefStorage.GetCodeReference(ctxWithTx, req.Id)
+		codeRef, err = s.codeRefStorage.GetCodeReference(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 				return statusNotFound.Err()
@@ -401,7 +401,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := validateDeleteCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id)
+	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 			return nil, statusNotFound.Err()
@@ -416,7 +416,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	if err := s.codeRefStorage.DeleteCodeReference(ctx, codeRef.Id); err != nil {
+	if err := s.codeRefStorage.DeleteCodeReference(ctx, codeRef.Id, req.EnvironmentId); err != nil {
 		s.logger.Error(
 			"Failed to delete code reference",
 			log.FieldsFromIncomingContext(ctx).AddFields(

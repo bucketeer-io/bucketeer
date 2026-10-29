@@ -148,7 +148,7 @@ func TestGetCodeReferenceMySQL(t *testing.T) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysqlstorage.ErrNoRows)
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), selectCodeReferenceSQL, "cr-id", "env-1",
 				).Return(row)
 			},
 			expectedErr: storage.ErrCodeReferenceNotFound,
@@ -159,7 +159,7 @@ func TestGetCodeReferenceMySQL(t *testing.T) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal"))
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), selectCodeReferenceSQL, "cr-id", "env-1",
 				).Return(row)
 			},
 			expectedErr: errors.New("internal"),
@@ -170,7 +170,7 @@ func TestGetCodeReferenceMySQL(t *testing.T) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), selectCodeReferenceSQL, "cr-id", "env-1",
 				).Return(row)
 			},
 			expectedErr: nil,
@@ -180,10 +180,18 @@ func TestGetCodeReferenceMySQL(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			s := &codeReferenceStorage{qe: mock.NewMockClient(mockController)}
 			p.setup(s)
-			_, err := s.GetCodeReference(context.Background(), "cr-id")
+			_, err := s.GetCodeReference(context.Background(), "cr-id", "env-1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func TestCodeReferenceSQLScopedByEnvironmentMySQL(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, selectCodeReferenceSQL, "id = ?")
+	assert.Contains(t, selectCodeReferenceSQL, "AND environment_id = ?")
+	assert.Contains(t, deleteCodeReferenceSQL, "id = ?")
+	assert.Contains(t, deleteCodeReferenceSQL, "AND environment_id = ?")
 }
 
 func TestListCodeReferencesMySQL(t *testing.T) {
@@ -336,7 +344,7 @@ func TestDeleteCodeReferenceMySQL(t *testing.T) {
 			desc: "error",
 			setup: func(s *codeReferenceStorage) {
 				s.qe.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), deleteCodeReferenceSQL, "cr-id", "env-1",
 				).Return(nil, errors.New("error"))
 			},
 			expectedErr: errors.New("error"),
@@ -347,7 +355,7 @@ func TestDeleteCodeReferenceMySQL(t *testing.T) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
 				s.qe.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), deleteCodeReferenceSQL, "cr-id", "env-1",
 				).Return(result, nil)
 			},
 			expectedErr: storage.ErrCodeReferenceNotFound,
@@ -358,7 +366,7 @@ func TestDeleteCodeReferenceMySQL(t *testing.T) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), deleteCodeReferenceSQL, "cr-id", "env-1",
 				).Return(result, nil)
 			},
 			expectedErr: nil,
@@ -368,7 +376,7 @@ func TestDeleteCodeReferenceMySQL(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			s := &codeReferenceStorage{qe: mock.NewMockClient(mockController)}
 			p.setup(s)
-			err := s.DeleteCodeReference(context.Background(), "cr-id")
+			err := s.DeleteCodeReference(context.Background(), "cr-id", "env-1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

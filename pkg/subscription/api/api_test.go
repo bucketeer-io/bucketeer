@@ -42,6 +42,7 @@ import (
 const (
 	adminSubscriptionKind = "AdminSubscription"
 	subscriptionKind      = "Subscription"
+	slackWebhookURL       = "https://hooks.slack.com/services/T000/B000/token"
 )
 
 func TestNewSubscriptionService(t *testing.T) {
@@ -188,7 +189,7 @@ func putSubscription(t *testing.T, s storage.Client, kind, namespace string, dis
 	}
 	recipient := &proto.Recipient{
 		Type:                  proto.Recipient_SlackChannel,
-		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
 	}
 	subscription, err := domain.NewSubscription("sname", sourceTypes, recipient, []string{"tag"})
 	subscription.Disabled = disabled

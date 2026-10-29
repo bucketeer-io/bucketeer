@@ -15,6 +15,7 @@
 package api
 
 import (
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
@@ -67,6 +68,10 @@ func (s *SubscriptionService) validateSlackRecipient(
 	}
 	if sr.WebhookUrl == "" {
 		return statusSlackRecipientWebhookURLRequired.Err()
+	}
+	// Only Slack incoming webhooks are accepted as a destination.
+	if err := domain.ValidateSlackWebhookURL(sr.WebhookUrl); err != nil {
+		return statusSlackRecipientWebhookURLInvalid.Err()
 	}
 	return nil
 }

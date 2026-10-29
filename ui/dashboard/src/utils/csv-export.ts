@@ -1,23 +1,44 @@
 import { DateTime } from 'luxon';
 import { InsightsMonthlySummaryResponse } from '@types';
 
-type CSVValue = string | number | null | undefined;
+export type CSVValue = string | number | null | undefined;
+
+// Spreadsheet applications evaluate a cell as a formula when its text starts
+// with one of these characters, even when the file is a plain CSV.
+const FORMULA_LEADING_CHARACTER = /^[=+\-@\t\r]/;
+
+// Converts a single value into a CSV field. A string that a spreadsheet would
+// evaluate as a formula is prefixed with a single quote so it is displayed as
+// text; numbers are written as-is so they stay numeric. Fields containing a
+// comma, a double quote, a line feed or a carriage return are quoted so they
+// are always read as a single cell.
+export const escapeCSVValue = (value: CSVValue): string => {
+  let s = String(value ?? '');
+  if (typeof value === 'string' && FORMULA_LEADING_CHARACTER.test(s)) {
+    s = `'${s}`;
+  }
+  return s.includes(',') ||
+    s.includes('"') ||
+    s.includes('\n') ||
+    s.includes('\r')
+    ? `"${s.replace(/"/g, '""')}"`
+    : s;
+};
+
+export const toCSVContent = (
+  header: CSVValue[],
+  rows: CSVValue[][]
+): string => {
+  const toRow = (fields: CSVValue[]) => fields.map(escapeCSVValue).join(',');
+  return [toRow(header), ...rows.map(toRow)].join('\n');
+};
 
 export const exportCSV = (
   header: CSVValue[],
   rows: CSVValue[][],
   filename: string
 ): void => {
-  const escape = (value: CSVValue): string => {
-    const s = String(value ?? '');
-    return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"`
-      : s;
-  };
-
-  const toRow = (fields: CSVValue[]) => fields.map(escape).join(',');
-
-  const csvContent = [toRow(header), ...rows.map(toRow)].join('\n');
+  const csvContent = toCSVContent(header, rows);
 
   const blob = new Blob(['\uFEFF' + csvContent], {
     type: 'text/csv;charset=utf-8;'

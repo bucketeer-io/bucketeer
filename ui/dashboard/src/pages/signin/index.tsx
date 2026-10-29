@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { authenticationUrl } from '@api/auth';
 import { useAuth } from 'auth';
+import { generateOAuthState } from 'auth/oauth-state';
 import { DEMO_SIGN_IN_ENABLED, urls } from 'configs';
 import { PAGE_PATH_AUTH_SIGNIN } from 'constants/routing';
 import { setCookieState } from 'cookie';
@@ -21,7 +22,7 @@ const SignIn = () => {
   const language = getLanguage();
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
-    const state = `${Date.now()}`;
+    const state = generateOAuthState();
     setCookieState(state);
     setIsGoogleAuthError(false);
 

@@ -177,9 +177,14 @@ func (s *Server) setupRPC() {
 		interceptors = append(interceptors, AuthUnaryServerInterceptor(s.verifier))
 	}
 
+	// The recovery interceptor must stay last so it wraps the handler directly
+	// and the interceptors above still see the resulting error.
+	interceptors = append(interceptors, RecoveryUnaryServerInterceptor(s.logger))
+
 	s.rpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(interceptors...),
+		grpc.ChainStreamInterceptor(RecoveryStreamServerInterceptor(s.logger)),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 	)
 	for _, service := range s.services {

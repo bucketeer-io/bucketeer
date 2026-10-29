@@ -26,6 +26,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -576,347 +578,325 @@ func TestDeleteAccount(t *testing.T) {
 	}
 }
 
+// Search filters are personal settings: the account service only lets callers
+// manage the filters of their own account, in the organization that owns the
+// environment they are authorized for. The tests below therefore operate on the
+// account behind the org owner token and clean up the filters they create.
 func TestCreateSearchFilter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
+	c := newAccountClient(t, orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		Tags:             []string{"tag"},
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
+	email := callerEmail(t, ctx, c)
 
 	requestSearchFilter := &accountproto.SearchFilter{
-		Name:             "name",
+		Name:             fmt.Sprintf("name-%s", uniqueSuffix()),
 		Query:            "query",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
+		EnvironmentId:    *environmentID,
 	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		EnvironmentId:  *environmentID,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             requestSearchFilter.Name,
-			Query:            requestSearchFilter.Query,
-			FilterTargetType: requestSearchFilter.FilterTargetType,
-			EnvironmentId:    requestSearchFilter.EnvironmentId,
-			DefaultFilter:    requestSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	created, cleanup := createOwnSearchFilter(t, ctx, c, email, requestSearchFilter)
+	defer cleanup()
 
-	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
+	if created.Query != requestSearchFilter.Query {
+		t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, created.Query)
 	}
-	if len(account.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+	if created.FilterTargetType != requestSearchFilter.FilterTargetType {
+		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, created.FilterTargetType)
 	}
-	if account.Account.SearchFilters[0].Name != requestSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", requestSearchFilter.Name, account.Account.SearchFilters[0].Name)
+	if created.DefaultFilter != requestSearchFilter.DefaultFilter {
+		t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, created.DefaultFilter)
 	}
-	if account.Account.SearchFilters[0].Query != requestSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, account.Account.SearchFilters[0].Query)
-	}
-	if account.Account.SearchFilters[0].FilterTargetType != requestSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
-	}
-	if account.Account.SearchFilters[0].DefaultFilter != requestSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
+	if created.EnvironmentId != requestSearchFilter.EnvironmentId {
+		t.Fatalf("different environment id of filters, expected: %v, actual: %v", requestSearchFilter.EnvironmentId, created.EnvironmentId)
 	}
 }
 
 func TestUpdateSearchFilter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
+	c := newAccountClient(t, orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		Tags:             []string{"tag"},
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
+	email := callerEmail(t, ctx, c)
+
 	initialSearchFilter := &accountproto.SearchFilter{
-		Name:             "name",
+		Name:             fmt.Sprintf("name-%s", uniqueSuffix()),
 		Query:            "query",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
+		EnvironmentId:    *environmentID,
 	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		EnvironmentId:  *environmentID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initialSearchFilter.Name,
-			Query:            initialSearchFilter.Query,
-			FilterTargetType: initialSearchFilter.FilterTargetType,
-			EnvironmentId:    initialSearchFilter.EnvironmentId,
-			DefaultFilter:    initialSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(account.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	if account.Account.SearchFilters[0].Name != initialSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, account.Account.SearchFilters[0].Name)
-	}
-	if account.Account.SearchFilters[0].Query != initialSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, account.Account.SearchFilters[0].Query)
-	}
-	if account.Account.SearchFilters[0].FilterTargetType != initialSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
-	}
-	if account.Account.SearchFilters[0].DefaultFilter != initialSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
-	}
+	created, cleanup := createOwnSearchFilter(t, ctx, c, email, initialSearchFilter)
+	defer cleanup()
+	// Making the test filter the default clears the current default for the same
+	// environment and target type on the shared account, so restore it afterwards.
+	previousDefault := findDefaultSearchFilter(
+		ownSearchFilters(t, ctx, c, email),
+		*environmentID,
+		accountproto.FilterTargetType_FEATURE_FLAG,
+	)
+	defer restoreDefaultSearchFilter(t, c, email, previousDefault)
 
 	requestSearchFilter := &accountproto.SearchFilter{
-		Name:             "new-name",
+		Name:             fmt.Sprintf("new-name-%s", uniqueSuffix()),
 		Query:            "new-query",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    true,
 		EnvironmentId:    *environmentID,
 	}
-
-	_, err = c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
+	_, err := c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
 		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		EnvironmentId:  requestSearchFilter.EnvironmentId,
+		OrganizationId: *organizationID,
+		EnvironmentId:  *environmentID,
 		ChangeNameCommand: &accountproto.ChangeSearchFilterNameCommand{
-			Id:   account.Account.SearchFilters[0].Id,
+			Id:   created.Id,
 			Name: requestSearchFilter.Name,
 		},
 		ChangeQueryCommand: &accountproto.ChangeSearchFilterQueryCommand{
-			Id:    account.Account.SearchFilters[0].Id,
+			Id:    created.Id,
 			Query: requestSearchFilter.Query,
 		},
 		ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
-			Id:            account.Account.SearchFilters[0].Id,
+			Id:            created.Id,
 			DefaultFilter: requestSearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	updateAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
+
+	updateSearchFilter := findSearchFilterByID(ownSearchFilters(t, ctx, c, email), created.Id)
+	if updateSearchFilter == nil {
+		t.Fatalf("search filter %s not found after update", created.Id)
 	}
-	if len(updateAccount.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	updateSearchFilter := updateAccount.Account.SearchFilters[0]
 	if updateSearchFilter.Name != requestSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, requestSearchFilter.Name)
+		t.Fatalf("different name of filters, expected: %v, actual: %v", requestSearchFilter.Name, updateSearchFilter.Name)
 	}
 	if updateSearchFilter.Query != requestSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, requestSearchFilter.Query)
+		t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, updateSearchFilter.Query)
 	}
 	if updateSearchFilter.FilterTargetType != requestSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, requestSearchFilter.FilterTargetType)
+		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, updateSearchFilter.FilterTargetType)
 	}
 	if updateSearchFilter.DefaultFilter != requestSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, requestSearchFilter.DefaultFilter)
+		t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, updateSearchFilter.DefaultFilter)
 	}
 }
 
 func TestDeleteSearchFilter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
+	c := newAccountClient(t, orgOwnerDefaultAccessTokenPath)
 	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		Tags:             []string{"tag"},
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
+	email := callerEmail(t, ctx, c)
 
-	initial1SearchFilter := &accountproto.SearchFilter{
-		Name:             "name1",
+	first, cleanupFirst := createOwnSearchFilter(t, ctx, c, email, &accountproto.SearchFilter{
+		Name:             fmt.Sprintf("name1-%s", uniqueSuffix()),
 		Query:            "query1",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		EnvironmentId:  *environmentID,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initial1SearchFilter.Name,
-			Query:            initial1SearchFilter.Query,
-			FilterTargetType: initial1SearchFilter.FilterTargetType,
-			EnvironmentId:    initial1SearchFilter.EnvironmentId,
-			DefaultFilter:    initial1SearchFilter.DefaultFilter,
-		},
+		EnvironmentId:    *environmentID,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	initial2SearchFilter := &accountproto.SearchFilter{
-		Name:             "name2",
+	defer cleanupFirst()
+	second, cleanupSecond := createOwnSearchFilter(t, ctx, c, email, &accountproto.SearchFilter{
+		Name:             fmt.Sprintf("name2-%s", uniqueSuffix()),
 		Query:            "query2",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
 		EnvironmentId:    *environmentID,
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		EnvironmentId:  *environmentID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initial2SearchFilter.Name,
-			Query:            initial2SearchFilter.Query,
-			FilterTargetType: initial2SearchFilter.FilterTargetType,
-			EnvironmentId:    initial2SearchFilter.EnvironmentId,
-			DefaultFilter:    initial2SearchFilter.DefaultFilter,
-		},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	defer cleanupSecond()
+	before := ownSearchFilters(t, ctx, c, email)
 
-	updatedAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+	_, err := c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
 		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(updatedAccount.Account.SearchFilters) != 2 {
-		t.Fatalf("different count of filters, expected: 2, actual: %v", len(updatedAccount.Account.SearchFilters))
-	}
-
-	deleteFilterID := updatedAccount.Account.SearchFilters[0].Id
-	_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
+		OrganizationId: *organizationID,
 		EnvironmentId:  *environmentID,
 		Command: &accountproto.DeleteSearchFilterCommand{
-			Id: deleteFilterID,
+			Id: first.Id,
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	filterRemovalAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+	after := ownSearchFilters(t, ctx, c, email)
+	if len(after) != len(before)-1 {
+		t.Fatalf("different count of filters, expected: %d, actual: %d", len(before)-1, len(after))
+	}
+	if findSearchFilterByID(after, first.Id) != nil {
+		t.Fatalf("search filter is not deleted")
+	}
+	if findSearchFilterByID(after, second.Id) == nil {
+		t.Fatalf("search filter %s was removed unexpectedly", second.Id)
+	}
+}
+
+// callerEmail returns the email of the account behind the client's access token.
+func callerEmail(t *testing.T, ctx context.Context, c accountclient.Client) string {
+	t.Helper()
+	me, err := c.GetMe(ctx, &accountproto.GetMeRequest{OrganizationId: *organizationID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return me.Account.Email
+}
+
+// ownSearchFilters returns the search filters stored on the caller's account in
+// the organization that owns the e2e environment.
+func ownSearchFilters(t *testing.T, ctx context.Context, c accountclient.Client, email string) []*accountproto.SearchFilter {
+	t.Helper()
+	resp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 		Email:          email,
-		OrganizationId: defaultOrganizationID,
+		OrganizationId: *organizationID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	return resp.Account.SearchFilters
+}
 
-	if len(filterRemovalAccount.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(filterRemovalAccount.Account.SearchFilters))
-	}
-	for _, f := range filterRemovalAccount.Account.SearchFilters {
-		if f.Id == deleteFilterID {
-			t.Fatalf("search filter is not deleted")
+func findSearchFilterByName(filters []*accountproto.SearchFilter, name string) *accountproto.SearchFilter {
+	for _, f := range filters {
+		if f.Name == name {
+			return f
 		}
+	}
+	return nil
+}
+
+func findSearchFilterByID(filters []*accountproto.SearchFilter, id string) *accountproto.SearchFilter {
+	for _, f := range filters {
+		if f.Id == id {
+			return f
+		}
+	}
+	return nil
+}
+
+func findDefaultSearchFilter(
+	filters []*accountproto.SearchFilter,
+	environmentID string,
+	targetType accountproto.FilterTargetType,
+) *accountproto.SearchFilter {
+	for _, f := range filters {
+		if f.DefaultFilter && f.EnvironmentId == environmentID && f.FilterTargetType == targetType {
+			return f
+		}
+	}
+	return nil
+}
+
+// restoreDefaultSearchFilter makes filter the default again. It uses its own
+// context so it still runs after the test context has expired.
+func restoreDefaultSearchFilter(t *testing.T, c accountclient.Client, email string, filter *accountproto.SearchFilter) {
+	t.Helper()
+	if filter == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: *organizationID,
+		EnvironmentId:  *environmentID,
+		ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
+			Id:            filter.Id,
+			DefaultFilter: true,
+		},
+	})
+	if err != nil {
+		t.Logf("failed to restore default search filter %s: %v", filter.Id, err)
+	}
+}
+
+// createOwnSearchFilter creates a search filter on the caller's own account and
+// returns the stored filter together with a function that deletes it again, so
+// the shared e2e account does not accumulate filters across runs. The cleanup
+// uses its own context so it still runs after the test context has expired.
+func createOwnSearchFilter(
+	t *testing.T,
+	ctx context.Context,
+	c accountclient.Client,
+	email string,
+	filter *accountproto.SearchFilter,
+) (*accountproto.SearchFilter, func()) {
+	t.Helper()
+	before := ownSearchFilters(t, ctx, c, email)
+	if findSearchFilterByName(before, filter.Name) != nil {
+		t.Fatalf("search filter %q already exists", filter.Name)
+	}
+	_, err := c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: *organizationID,
+		EnvironmentId:  *environmentID,
+		Command: &accountproto.CreateSearchFilterCommand{
+			Name:             filter.Name,
+			Query:            filter.Query,
+			FilterTargetType: filter.FilterTargetType,
+			EnvironmentId:    filter.EnvironmentId,
+			DefaultFilter:    filter.DefaultFilter,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The filter now exists on the shared account. If any of the checks below
+	// fail, the caller never receives the cleanup function, so remove the filter
+	// by its unique name from here instead.
+	verified := false
+	defer func() {
+		if !verified {
+			deleteOwnSearchFilterByName(t, c, email, filter.Name)
+		}
+	}()
+	after := ownSearchFilters(t, ctx, c, email)
+	if len(after) != len(before)+1 {
+		t.Fatalf("different count of filters, expected: %d, actual: %d", len(before)+1, len(after))
+	}
+	created := findSearchFilterByName(after, filter.Name)
+	if created == nil {
+		t.Fatalf("search filter %q was not created", filter.Name)
+	}
+	verified = true
+	return created, func() { deleteOwnSearchFilter(t, c, email, created.Id) }
+}
+
+// deleteOwnSearchFilter deletes the caller's search filter with the given id on
+// a fresh context so it still runs after the test context has expired. A filter
+// that was already deleted by the test is not an error.
+func deleteOwnSearchFilter(t *testing.T, c accountclient.Client, email, id string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
+		Email:          email,
+		OrganizationId: *organizationID,
+		EnvironmentId:  *environmentID,
+		Command:        &accountproto.DeleteSearchFilterCommand{Id: id},
+	})
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Logf("failed to delete search filter %s: %v", id, err)
+	}
+}
+
+// deleteOwnSearchFilterByName looks up the caller's search filter by name on a
+// fresh context and deletes it when it exists.
+func deleteOwnSearchFilterByName(t *testing.T, c accountclient.Client, email, name string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	resp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: *organizationID,
+	})
+	if err != nil {
+		t.Logf("failed to look up search filter %q for cleanup: %v", name, err)
+		return
+	}
+	if f := findSearchFilterByName(resp.Account.SearchFilters, name); f != nil {
+		deleteOwnSearchFilter(t, c, email, f.Id)
 	}
 }
 

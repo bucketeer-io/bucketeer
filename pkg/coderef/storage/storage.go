@@ -44,12 +44,16 @@ var (
 type CodeReferenceStorage interface {
 	CreateCodeReference(ctx context.Context, codeRef *domain.CodeReference) error
 	UpdateCodeReference(ctx context.Context, codeRef *domain.CodeReference) error
-	GetCodeReference(ctx context.Context, id string) (*domain.CodeReference, error)
+	// GetCodeReference returns the code reference with the given ID only if it
+	// belongs to the given environment; otherwise ErrCodeReferenceNotFound.
+	GetCodeReference(ctx context.Context, id, environmentID string) (*domain.CodeReference, error)
 	ListCodeReferences(
 		ctx context.Context,
 		params ListCodeReferencesParams,
 	) ([]*domain.CodeReference, int, int64, error)
-	DeleteCodeReference(ctx context.Context, id string) error
+	// DeleteCodeReference deletes the code reference with the given ID only if it
+	// belongs to the given environment; otherwise ErrCodeReferenceNotFound.
+	DeleteCodeReference(ctx context.Context, id, environmentID string) error
 	// GetCodeReferenceCountsByFeatureIDs returns a map of feature ID to code reference count
 	// for the given environment. This is used for bulk archivability evaluation.
 	GetCodeReferenceCountsByFeatureIDs(

@@ -38,7 +38,7 @@ func TestCreateGetDeleteAdminSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{
 		proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
 	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+	webhookURL := fmt.Sprintf("https://hooks.slack.com/services/%s/%s", prefixTestName, newUUID(t))
 	recipient := &proto.Recipient{
 		Type:                  proto.Recipient_SlackChannel,
 		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
@@ -105,7 +105,7 @@ func TestCreateListDeleteAdminSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{
 		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+	webhookURL := fmt.Sprintf("https://hooks.slack.com/services/%s/%s", prefixTestName, newUUID(t))
 	recipient := &proto.Recipient{
 		Type:                  proto.Recipient_SlackChannel,
 		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
@@ -173,7 +173,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{
 		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+	webhookURL := fmt.Sprintf("https://hooks.slack.com/services/%s/%s", prefixTestName, newUUID(t))
 	recipient := &proto.Recipient{
 		Type:                  proto.Recipient_SlackChannel,
 		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
