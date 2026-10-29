@@ -1,6 +1,6 @@
 module github.com/bucketeer-io/bucketeer/hack/create-e2e-accounts
 
-go 1.26.7
+go 1.26.10
 
 require (
 	github.com/bucketeer-io/bucketeer/v2 v2.2.0
@@ -26,7 +26,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.10.1 // indirect
