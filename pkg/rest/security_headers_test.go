@@ -1,0 +1,127 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package rest
+
+import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+var expectedSecurityHeaders = map[string]string{
+	"X-Frame-Options":           "DENY",
+	"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+	"X-Content-Type-Options":    "nosniff",
+	"Referrer-Policy":           "strict-origin-when-cross-origin",
+}
+
+func assertSecurityHeaders(t *testing.T, header http.Header) {
+	t.Helper()
+	for key, value := range expectedSecurityHeaders {
+		assert.Equal(t, []string{value}, header.Values(key), key)
+	}
+}
+
+func TestSecurityHeadersMiddleware(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc            string
+		handler         http.HandlerFunc
+		wantStatus      int
+		wantContentType string
+	}{
+		{
+			desc: "success response keeps the content type set by the handler",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("<!doctype html>"))
+			},
+			wantStatus:      http.StatusOK,
+			wantContentType: "text/html; charset=utf-8",
+		},
+		{
+			desc: "error response written with http.Error",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			},
+			wantStatus:      http.StatusNotFound,
+			wantContentType: "text/plain; charset=utf-8",
+		},
+		{
+			desc: "response written without an explicit status",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte("ok"))
+			},
+			wantStatus:      http.StatusOK,
+			wantContentType: "text/plain; charset=utf-8",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest(http.MethodGet, dummyURL, nil)
+			rec := httptest.NewRecorder()
+			securityHeadersMiddleware(p.handler).ServeHTTP(rec, req)
+			res := rec.Result()
+			defer res.Body.Close()
+			assert.Equal(t, p.wantStatus, res.StatusCode)
+			assert.Equal(t, p.wantContentType, res.Header.Get("Content-Type"))
+			assertSecurityHeaders(t, res.Header)
+		})
+	}
+}
+
+func TestServerResponsesIncludeSecurityHeaders(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc       string
+		path       string
+		wantStatus int
+	}{
+		{
+			desc:       "unknown path answered by the mux",
+			path:       "/",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			desc:       "path rejected by the request path middleware",
+			path:       "/.env",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			desc:       "malformed path rejected by the request path middleware",
+			path:       "/foo%85",
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+	client := newHTTPClient()
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			resp, err := client.Get(fmt.Sprintf("https://localhost:%d%s", port, p.path))
+			require.NoError(t, err)
+			defer resp.Body.Close()
+			assert.Equal(t, p.wantStatus, resp.StatusCode)
+			assertSecurityHeaders(t, resp.Header)
+		})
+	}
+}
