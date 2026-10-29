@@ -106,11 +106,10 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 	}
 	switch t.TokenUse {
 	case TokenUseRefresh:
-		if t.Issuer != v.issuer {
-			return nil, fmt.Errorf("refresh token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
-		}
-		if t.Audience != v.audience {
-			return nil, fmt.Errorf("expected audience %q got %q", v.audience, t.Audience)
+		// A refresh token must not carry iss or aud. The previous access and
+		// demo verifiers treat those claims as sufficient and ignore token_use.
+		if t.Issuer != "" || t.Audience != "" {
+			return nil, fmt.Errorf("refresh token must not include iss or aud")
 		}
 	case "":
 		// Issued before token_use. Those refresh tokens also have no iss or aud.

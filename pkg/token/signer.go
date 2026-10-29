@@ -73,6 +73,12 @@ func (s *signer) SignAccessToken(token *AccessToken) (string, error) {
 func (s *signer) SignRefreshToken(token *RefreshToken) (string, error) {
 	claims := *token
 	claims.TokenUse = TokenUseRefresh
+	// iss and aud are not written. The previous access and demo verifiers
+	// accept a token that carries them and do not read token_use, so a
+	// refresh token with those claims would verify as an access or demo
+	// token on a pod that has not been updated, for the refresh lifetime.
+	claims.Issuer = ""
+	claims.Audience = ""
 	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 

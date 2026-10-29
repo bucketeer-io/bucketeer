@@ -498,8 +498,8 @@ func assertIssuedTokenUses(t *testing.T, verifier token.Verifier, issued *authpr
 	refresh, err := verifier.VerifyRefreshToken(issued.RefreshToken)
 	require.NoError(t, err)
 	assert.Equal(t, token.TokenUseRefresh, refresh.TokenUse)
-	assert.Equal(t, "test-issuer", refresh.Issuer)
-	assert.Equal(t, "test-audience", refresh.Audience)
+	assert.Empty(t, refresh.Issuer)
+	assert.Empty(t, refresh.Audience)
 	assert.Equal(t, access.Email, refresh.Email)
 	assert.Equal(t, access.OrganizationID, refresh.OrganizationID)
 

@@ -49,8 +49,10 @@ type AccessToken struct {
 }
 
 type RefreshToken struct {
-	Issuer         string    `json:"iss"`
-	Audience       string    `json:"aud"`
+	// iss and aud are accepted only so a token that has them can be rejected.
+	// SignRefreshToken clears both. See that function.
+	Issuer         string    `json:"iss,omitempty"`
+	Audience       string    `json:"aud,omitempty"`
 	Email          string    `json:"email"`
 	Expiry         time.Time `json:"exp"`
 	IssuedAt       time.Time `json:"iat"`

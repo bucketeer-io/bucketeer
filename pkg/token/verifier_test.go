@@ -16,6 +16,7 @@ package token
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -328,29 +329,20 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 		IssuedAt: now,
 	})
 	require.NoError(t, err)
-	wrongIssuerRefresh, err := signer.SignRefreshToken(&RefreshToken{
-		Issuer:   "other-issuer",
-		Audience: audience,
-		Email:    email,
-		Expiry:   now.Add(time.Hour),
-		IssuedAt: now,
-	})
-	require.NoError(t, err)
-	wrongAudienceRefresh, err := signer.SignRefreshToken(&RefreshToken{
+	refreshWithIss := signRawClaims(t, &RefreshToken{
 		Issuer:   issuer,
-		Audience: "other-audience",
 		Email:    email,
 		Expiry:   now.Add(time.Hour),
 		IssuedAt: now,
+		TokenUse: TokenUseRefresh,
 	})
-	require.NoError(t, err)
-	missingIssuerRefresh, err := signer.SignRefreshToken(&RefreshToken{
+	refreshWithAud := signRawClaims(t, &RefreshToken{
 		Audience: audience,
 		Email:    email,
 		Expiry:   now.Add(time.Hour),
 		IssuedAt: now,
+		TokenUse: TokenUseRefresh,
 	})
-	require.NoError(t, err)
 	expiredRefresh, err := signer.SignRefreshToken(&RefreshToken{
 		Issuer:   issuer,
 		Audience: audience,
@@ -393,9 +385,10 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, TokenUseRefresh, refresh.TokenUse)
 	assert.Equal(t, email, refresh.Email)
-	assert.Equal(t, issuer, refresh.Issuer)
-	assert.Equal(t, audience, refresh.Audience)
+	assert.Empty(t, refresh.Issuer)
+	assert.Empty(t, refresh.Audience)
 	assert.Equal(t, "org-1", refresh.OrganizationID)
+	assertRefreshTokenOmitsIssuerAudience(t, refreshRaw)
 
 	demo, err := verifier.VerifyDemoCreationToken(demoRaw)
 	require.NoError(t, err)
@@ -475,22 +468,16 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 			wantSubstring: "token_use",
 		},
 		{
-			name:          "refresh token with the wrong issuer is rejected",
-			raw:           wrongIssuerRefresh,
+			name:          "refresh token that includes iss is rejected",
+			raw:           refreshWithIss,
 			verify:        verifyRefresh,
-			wantSubstring: "different provider",
+			wantSubstring: "must not include iss or aud",
 		},
 		{
-			name:          "refresh token with the wrong audience is rejected",
-			raw:           wrongAudienceRefresh,
+			name:          "refresh token that includes aud is rejected",
+			raw:           refreshWithAud,
 			verify:        verifyRefresh,
-			wantSubstring: "expected audience",
-		},
-		{
-			name:          "refresh token without an issuer is rejected",
-			raw:           missingIssuerRefresh,
-			verify:        verifyRefresh,
-			wantSubstring: "different provider",
+			wantSubstring: "must not include iss or aud",
 		},
 		{
 			name:          "expired refresh token is rejected",
@@ -537,6 +524,19 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.wantSubstring)
 		})
 	}
+}
+
+func assertRefreshTokenOmitsIssuerAudience(t *testing.T, raw string) {
+	t.Helper()
+	parts := strings.Split(raw, ".")
+	require.Len(t, parts, 3)
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	require.NoError(t, err)
+	var claims map[string]any
+	require.NoError(t, json.Unmarshal(payload, &claims))
+	assert.Empty(t, claims["iss"])
+	assert.Empty(t, claims["aud"])
+	assert.Equal(t, TokenUseRefresh, claims["token_use"])
 }
 
 func signRawClaims(t *testing.T, claims any) string {

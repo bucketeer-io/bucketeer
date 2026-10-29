@@ -647,8 +647,6 @@ func (s *authService) generateToken(
 
 	// Create refresh token
 	refreshToken := &token.RefreshToken{
-		Issuer:         s.issuer,
-		Audience:       s.audience,
 		Email:          userEmail,
 		OrganizationID: organizationID,
 		Expiry:         timeNow.Add(s.opts.refreshTokenTTL),
