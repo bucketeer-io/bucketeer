@@ -66,7 +66,7 @@
     "prettier": "^3.9.9",
     "prism-react-renderer": "^2.4.1",
     "query-string": "^9.5.1",
-    "re2js": "^2.8.6",
+    "re2js": "^2.8.7",
     "react": "^19.3.0",
     "react-chartjs-2": "^5.3.1",
     "react-date-range": "^2.0.1",
