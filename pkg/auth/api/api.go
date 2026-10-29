@@ -431,17 +431,16 @@ func (s *authService) SwitchOrganization(
 func (s *authService) getAuthenticator(
 	authType authproto.AuthType,
 ) (auth.Authenticator, error) {
-	var authenticator auth.Authenticator
 	switch authType {
 	case authproto.AuthType_AUTH_TYPE_GOOGLE:
-		authenticator = s.googleAuthenticator
-	case authproto.AuthType_AUTH_TYPE_GITHUB:
-
+		return s.googleAuthenticator, nil
 	default:
+		// Any auth type without a configured authenticator (including the
+		// not yet supported GitHub type) is rejected here, so callers never
+		// receive a nil authenticator.
 		s.logger.Error("Unknown auth type", zap.String("authType", authType.String()))
 		return nil, statusUnknownAuthType.Err()
 	}
-	return authenticator, nil
 }
 
 func (s *authService) getOrganizationsByEmail(
