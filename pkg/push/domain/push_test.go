@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	pb "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
@@ -209,6 +210,23 @@ func TestNewPush(t *testing.T) {
 			p.expected(t, actual, err)
 		})
 	}
+}
+
+func TestPushWithoutFCMServiceAccount(t *testing.T) {
+	t.Parallel()
+	push, err := NewPush("name-1", "sa", []string{"tag-1", "tag-2"})
+	assert.NoError(t, err)
+
+	copied := push.WithoutFCMServiceAccount()
+
+	assert.Equal(t, "", copied.FcmServiceAccount)
+	assert.Equal(t, "sa", push.FcmServiceAccount, "the original keeps its service account")
+	expected := pb.Clone(push.Push).(*pushproto.Push)
+	expected.FcmServiceAccount = ""
+	assert.True(t, pb.Equal(expected, copied.Push), "the other fields are copied")
+
+	copied.Tags[0] = "changed"
+	assert.Equal(t, []string{"tag-1", "tag-2"}, push.Tags, "the copy is detached from the original")
 }
 
 func TestSetDeleted(t *testing.T) {

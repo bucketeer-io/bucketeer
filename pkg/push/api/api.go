@@ -159,18 +159,19 @@ func (s *PushService) CreatePush(
 		if err := s.pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
+		// The FCM service account is kept out of the event and its entity
+		// data so it never reaches the audit log.
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_PUSH,
 			push.Id,
 			eventproto.Event_PUSH_CREATED,
 			&eventproto.PushCreatedEvent{
-				FcmServiceAccount: push.FcmServiceAccount,
-				Tags:              push.Tags,
-				Name:              push.Name,
+				Tags: push.Tags,
+				Name: push.Name,
 			},
 			req.EnvironmentId,
-			push,
+			push.WithoutFCMServiceAccount(),
 			nil,
 		)
 		if err != nil {
@@ -251,8 +252,8 @@ func (s *PushService) UpdatePush(
 				Tags: req.Tags,
 			},
 			req.EnvironmentId,
-			updated,
-			push,
+			updated.WithoutFCMServiceAccount(),
+			push.WithoutFCMServiceAccount(),
 		)
 		if err != nil {
 			return err
@@ -334,13 +335,12 @@ func (s *PushService) DeletePush(
 			push.Id,
 			eventproto.Event_PUSH_DELETED,
 			&eventproto.PushCreatedEvent{
-				FcmServiceAccount: push.FcmServiceAccount,
-				Tags:              push.Tags,
-				Name:              push.Name,
+				Tags: push.Tags,
+				Name: push.Name,
 			},
 			req.EnvironmentId,
-			nil,  // Current state: entity no longer exists
-			push, // Previous state: what was deleted
+			nil,                             // Current state: entity no longer exists
+			push.WithoutFCMServiceAccount(), // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

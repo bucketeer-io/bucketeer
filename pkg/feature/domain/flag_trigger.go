@@ -22,6 +22,7 @@ import (
 
 	"github.com/jinzhu/copier"
 
+	pb "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -118,4 +119,15 @@ func (ft *FlagTrigger) GenerateToken() error {
 	hashed := h.Sum(nil)
 	ft.Token = base64.RawURLEncoding.EncodeToString(hashed)
 	return nil
+}
+
+// WithoutToken returns a deep copy of the flag trigger with an empty token.
+// The token authorizes the trigger webhook, so it is returned only once, to
+// the editor who created or reset the trigger. Every other record of the
+// trigger, such as the domain event and the audit log built from it, must use
+// this copy so the token is never stored outside the flag trigger table.
+func (ft *FlagTrigger) WithoutToken() *FlagTrigger {
+	copied := &FlagTrigger{FlagTrigger: pb.Clone(ft.FlagTrigger).(*proto.FlagTrigger)}
+	copied.Token = ""
+	return copied
 }

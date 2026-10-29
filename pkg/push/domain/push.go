@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
+	pb "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -104,6 +105,17 @@ func (p *Push) Rename(name string) error {
 	p.Name = name
 	p.UpdatedAt = time.Now().Unix()
 	return nil
+}
+
+// WithoutFCMServiceAccount returns a deep copy of the push with an empty FCM
+// service account. The service account holds the private key used to send the
+// notifications, so it is read only by the sender. Every other record of the
+// push, such as the domain event and the audit log built from it, must use
+// this copy so the key is never stored outside the push table.
+func (p *Push) WithoutFCMServiceAccount() *Push {
+	copied := &Push{Push: pb.Clone(p.Push).(*proto.Push)}
+	copied.FcmServiceAccount = ""
+	return copied
 }
 
 func convMap(ss []string) (map[string]int, error) {
