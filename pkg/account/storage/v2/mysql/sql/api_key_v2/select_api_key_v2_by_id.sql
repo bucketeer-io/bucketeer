@@ -7,6 +7,7 @@ SELECT
     updated_at,
     description,
     api_key,
+    COALESCE(api_key_prefix, '') AS api_key_prefix,
     maintainer,
     last_used_at
 FROM

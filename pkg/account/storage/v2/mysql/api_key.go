@@ -40,8 +40,12 @@ var (
 	selectAPIKeyV2CountSQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key.sql
 	selectAPIKeyV2ByAPIKeySQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key_plaintext.sql
+	selectAPIKeyV2ByAPIKeyPlaintextSQLQuery string
 	//go:embed sql/api_key_v2/select_environment_api_key_v2.sql
 	selectEnvironmentAPIKeySQLQuery string
+	//go:embed sql/api_key_v2/select_environment_api_key_v2_plaintext.sql
+	selectEnvironmentAPIKeyPlaintextSQLQuery string
 	//go:embed sql/api_key_v2/select_all_environment_api_keys_v2.sql
 	selectAllEnvironmentAPIKeysSQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
@@ -49,6 +53,8 @@ var (
 )
 
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
+	// The key is still written to the api_key column until every row has been
+	// backfilled with its digest; lookups prefer the digest.
 	_, err := s.qe.ExecContext(
 		ctx,
 		insertAPIKeyV2SQLQuery,
@@ -62,6 +68,8 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.ApiKey,
 		k.Maintainer,
 		k.Description,
+		domain.HashAPIKey(k.ApiKey),
+		domain.APIKeyPrefix(k.ApiKey),
 	)
 	if err != nil {
 		if errors.Is(err, mysqlstorage.ErrDuplicateEntry) {
@@ -138,6 +146,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.UpdatedAt,
 		&apiKey.Description,
 		&apiKey.ApiKey,
+		&apiKey.ApiKeyPrefix,
 		&apiKey.Maintainer,
 		&apiKey.LastUsedAt,
 	)
@@ -156,13 +165,26 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 	apiKey string,
 	environmentID string,
 ) (*domain.APIKey, error) {
+	k, err := s.getAPIKeyByQuery(ctx, selectAPIKeyV2ByAPIKeySQLQuery, domain.HashAPIKey(apiKey), environmentID)
+	if !errors.Is(err, v2as.ErrAPIKeyNotFound) {
+		return k, err
+	}
+	// Keys created before the digest column existed are matched on the key
+	// itself until they are backfilled.
+	return s.getAPIKeyByQuery(ctx, selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, apiKey, environmentID)
+}
+
+func (s *accountStorage) getAPIKeyByQuery(
+	ctx context.Context,
+	query string,
+	args ...interface{},
+) (*domain.APIKey, error) {
 	apiKeyDB := proto.APIKey{}
 	var role int32
 	err := s.qe.QueryRowContext(
 		ctx,
-		selectAPIKeyV2ByAPIKeySQLQuery,
-		apiKey,
-		environmentID,
+		query,
+		args...,
 	).Scan(
 		&apiKeyDB.Id,
 		&apiKeyDB.Name,
@@ -172,6 +194,7 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 		&apiKeyDB.UpdatedAt,
 		&apiKeyDB.Description,
 		&apiKeyDB.ApiKey,
+		&apiKeyDB.ApiKeyPrefix,
 		&apiKeyDB.Maintainer,
 		&apiKeyDB.LastUsedAt,
 	)
@@ -209,6 +232,7 @@ func (s *accountStorage) ListAllEnvironmentAPIKeys(
 			&apiKeyDB.UpdatedAt,
 			&apiKeyDB.Description,
 			&apiKeyDB.ApiKey,
+			&apiKeyDB.ApiKeyPrefix,
 			&apiKeyDB.Maintainer,
 			&apiKeyDB.LastUsedAt,
 
@@ -247,14 +271,28 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 	ctx context.Context,
 	apiKey string,
 ) (*domain.EnvironmentAPIKey, error) {
+	k, err := s.getEnvironmentAPIKeyByQuery(ctx, selectEnvironmentAPIKeySQLQuery, domain.HashAPIKey(apiKey))
+	if !errors.Is(err, v2as.ErrAPIKeyNotFound) {
+		return k, err
+	}
+	// Keys created before the digest column existed are matched on the key
+	// itself until they are backfilled.
+	return s.getEnvironmentAPIKeyByQuery(ctx, selectEnvironmentAPIKeyPlaintextSQLQuery, apiKey)
+}
+
+func (s *accountStorage) getEnvironmentAPIKeyByQuery(
+	ctx context.Context,
+	query string,
+	arg string,
+) (*domain.EnvironmentAPIKey, error) {
 	apiKeyDB := proto.APIKey{}
 	envDB := envproto.EnvironmentV2{}
 	envApiKeyDB := proto.EnvironmentAPIKey{}
 	var role int32
 	err := s.qe.QueryRowContext(
 		ctx,
-		selectEnvironmentAPIKeySQLQuery,
-		apiKey,
+		query,
+		arg,
 	).Scan(
 		// API Key columns
 		&apiKeyDB.Id,
@@ -265,6 +303,7 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 		&apiKeyDB.UpdatedAt,
 		&apiKeyDB.Description,
 		&apiKeyDB.ApiKey,
+		&apiKeyDB.ApiKeyPrefix,
 		&apiKeyDB.Maintainer,
 		&apiKeyDB.LastUsedAt,
 
@@ -325,6 +364,7 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.Description,
 			&apiKey.EnvironmentName,
 			&apiKey.ApiKey,
+			&apiKey.ApiKeyPrefix,
 			&apiKey.Maintainer,
 			&apiKey.LastUsedAt,
 		)

@@ -28,6 +28,83 @@ func TestNewAPIKey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "name", a.Name)
 	assert.Equal(t, proto.APIKey_SDK_CLIENT, a.Role)
+	assert.Len(t, a.ApiKey, keyBytes*2)
+	assert.Equal(t, a.ApiKey[:apiKeyPrefixChars], a.ApiKeyPrefix)
+}
+
+func TestHashAPIKey(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		{
+			desc:  "empty",
+			input: "",
+			// SHA-256 of the empty string.
+			expected: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		},
+		{
+			desc:     "known vector",
+			input:    "abc",
+			expected: "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+		},
+		{
+			desc:     "generated key length",
+			input:    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			expected: "a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			got := HashAPIKey(p.input)
+			assert.Equal(t, p.expected, got)
+			assert.Len(t, got, 64)
+			assert.NotEqual(t, p.input, got)
+			// Deterministic: the same key always maps to the same digest.
+			assert.Equal(t, got, HashAPIKey(p.input))
+		})
+	}
+	assert.NotEqual(t, HashAPIKey("key-a"), HashAPIKey("key-b"))
+}
+
+func TestAPIKeyPrefix(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		{
+			desc:     "empty",
+			input:    "",
+			expected: "",
+		},
+		{
+			desc:     "shorter than the prefix: returned as is",
+			input:    "abc",
+			expected: "abc",
+		},
+		{
+			desc:     "same length as the prefix: returned as is",
+			input:    "abcdefgh",
+			expected: "abcdefgh",
+		},
+		{
+			desc:     "longer than the prefix: truncated",
+			input:    "abcdefghi",
+			expected: "abcdefgh",
+		},
+		{
+			desc:     "generated key length",
+			input:    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			expected: "01234567",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, APIKeyPrefix(p.input))
+		})
+	}
 }
 
 func TestGenerateKey(t *testing.T) {

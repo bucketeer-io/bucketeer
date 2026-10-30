@@ -8,5 +8,7 @@ INSERT INTO api_key (
     environment_id,
     api_key,
     maintainer,
-    description
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    description,
+    api_key_hash,
+    api_key_prefix
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
