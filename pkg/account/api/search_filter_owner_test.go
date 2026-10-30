@@ -223,7 +223,7 @@ func TestSearchFilterRequestsTargetCallerAccount(t *testing.T) {
 			ctx := createContextWithEmailToken(t, callerEmail, tc.systemAdmin)
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 
 			// Only the caller's own account is ever loaded. Looking up any other
 			// email or organization is an unexpected call and fails the test.
