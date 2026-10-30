@@ -540,6 +540,7 @@ func (s *PushService) ListPushes(
 	req *pushproto.ListPushesRequest,
 ) (*pushproto.ListPushesResponse, error) {
 	var filterEnvironmentIDs []string
+	hasAllowedEnvironment := true
 	if req.OrganizationId != "" {
 		// console v3
 		editor, err := s.checkOrganizationRole(
@@ -549,7 +550,7 @@ func (s *PushService) ListPushes(
 		if err != nil {
 			return nil, err
 		}
-		filterEnvironmentIDs = s.getAllowedEnvironments(req.EnvironmentIds, editor)
+		filterEnvironmentIDs, hasAllowedEnvironment = s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	} else {
 		// console v2
 		_, err := s.checkEnvironmentRole(
@@ -567,6 +568,19 @@ func (s *PushService) ListPushes(
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
+	}
+	if !hasAllowedEnvironment {
+		// The member has no role in any of the requested environments, so there
+		// is nothing to list. The storage treats an empty environment filter as
+		// no filter, which would return every push in the organization.
+		cursor := req.Cursor
+		if cursor == "" {
+			cursor = "0"
+		}
+		if _, err := strconv.Atoi(cursor); err != nil {
+			return nil, statusInvalidCursor.Err()
+		}
+		return &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: cursor}, nil
 	}
 	orderBy := req.OrderBy
 	pushes, cursor, totalCount, err := s.listPushes(ctx, v2ps.ListPushesParams{
@@ -593,10 +607,17 @@ func (s *PushService) ListPushes(
 	}, nil
 }
 
+// getAllowedEnvironments returns the environment IDs a list request is scoped
+// to. Admins and owners are not restricted, so the requested IDs are returned
+// as they are and an empty result means no environment filter. Members only
+// get the requested environments they have a role in, or all of their
+// environments when none is requested. The second value is false when a
+// member has no role in any of the requested environments: the empty filter
+// must then not be passed to the storage, which would treat it as no filter.
 func (s *PushService) getAllowedEnvironments(
 	reqEnvironmentIDs []string,
 	editor *eventproto.Editor,
-) []string {
+) ([]string, bool) {
 	filterEnvironmentIDs := make([]string, 0)
 	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
 		// only show API keys in allowed environments for member.
@@ -614,11 +635,11 @@ func (s *PushService) getAllowedEnvironments(
 				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
 			}
 		}
-	} else {
-		// if the user is an admin or owner, no need to filter environments.
-		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+		return filterEnvironmentIDs, len(filterEnvironmentIDs) > 0
 	}
-	return filterEnvironmentIDs
+	// if the user is an admin or owner, no need to filter environments.
+	filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	return filterEnvironmentIDs, true
 }
 
 func validateListPushesOrder(

@@ -180,7 +180,7 @@ func (s *AccountService) ListAPIKeys(
 	if err != nil {
 		return nil, err
 	}
-	filterEnvironmentIDs := s.getAllowedEnvironments(req.EnvironmentIds, editor)
+	filterEnvironmentIDs, hasAllowedEnvironment := s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	if req.OrganizationId == "" {
 		return nil, statusInvalidListAPIKeyRequest.Err()
 	}
@@ -191,6 +191,17 @@ func (s *AccountService) ListAPIKeys(
 	}
 	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
+	}
+	if !hasAllowedEnvironment {
+		// The member has no role in any of the requested environments, so there
+		// is nothing to list. The storage treats an empty environment filter as
+		// no filter, which would return every API key in the organization.
+		// The storage is not queried, so apply the order validation it would
+		// have performed to keep rejecting invalid requests.
+		if _, ok := proto.ListAPIKeysRequest_OrderBy_name[int32(req.OrderBy)]; !ok {
+			return nil, statusInvalidOrderBy.Err()
+		}
+		return &proto.ListAPIKeysResponse{ApiKeys: []*proto.APIKey{}, Cursor: cursor}, nil
 	}
 
 	params := v2as.ListAPIKeysParams{
@@ -235,10 +246,17 @@ func (s *AccountService) ListAPIKeys(
 	}, nil
 }
 
+// getAllowedEnvironments returns the environment IDs a list request is scoped
+// to. Admins and owners are not restricted, so the requested IDs are returned
+// as they are and an empty result means no environment filter. Members only
+// get the requested environments they have a role in, or all of their
+// environments when none is requested. The second value is false when a
+// member has no role in any of the requested environments: the empty filter
+// must then not be passed to the storage, which would treat it as no filter.
 func (s *AccountService) getAllowedEnvironments(
 	reqEnvironmentIDs []string,
 	editor *eventproto.Editor,
-) []string {
+) ([]string, bool) {
 	filterEnvironmentIDs := make([]string, 0)
 	if editor.OrganizationRole == proto.AccountV2_Role_Organization_MEMBER {
 		// only show API keys in allowed environments for member.
@@ -256,11 +274,11 @@ func (s *AccountService) getAllowedEnvironments(
 				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
 			}
 		}
-	} else {
-		// if the user is an admin or owner, no need to filter environments.
-		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+		return filterEnvironmentIDs, len(filterEnvironmentIDs) > 0
 	}
-	return filterEnvironmentIDs
+	// if the user is an admin or owner, no need to filter environments.
+	filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	return filterEnvironmentIDs, true
 }
 
 func (s *AccountService) GetEnvironmentAPIKey(

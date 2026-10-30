@@ -243,7 +243,19 @@ func (s *TagService) ListTags(
 			return nil, err
 		}
 		p.OrganizationID = req.OrganizationId
-		p.EnvironmentIDs = s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
+		var hasAllowedEnvironment bool
+		p.EnvironmentIDs, hasAllowedEnvironment = s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
+		if !hasAllowedEnvironment {
+			// The member has no role in the requested environment, so there is
+			// nothing to list. The storage treats an empty environment filter as
+			// no filter, which would return every tag in the organization.
+			// The storage is not queried, so apply the order validation it
+			// would have performed to keep rejecting invalid requests.
+			if _, ok := proto.ListTagsRequest_OrderBy_name[int32(req.OrderBy)]; !ok {
+				return nil, statusInvalidOrderBy.Err()
+			}
+			return &proto.ListTagsResponse{Tags: []*proto.Tag{}, Cursor: cursor}, nil
+		}
 	} else {
 		// Current console
 		_, err := s.checkEnvironmentRole(
@@ -454,10 +466,17 @@ func (s *TagService) checkOrganizationRole(
 	)
 }
 
+// getAllowedEnvironments returns the environment IDs a list request is scoped
+// to. Admins and owners are not restricted, so the requested IDs are returned
+// as they are and an empty result means no environment filter. Members only
+// get the requested environments they have a role in, or all of their
+// environments when none is requested. The second value is false when a
+// member has no role in any of the requested environments: the empty filter
+// must then not be passed to the storage, which would treat it as no filter.
 func (s *TagService) getAllowedEnvironments(
 	reqEnvironmentIDs []string,
 	editor *eventproto.Editor,
-) []string {
+) ([]string, bool) {
 	filterEnvironmentIDs := make([]string, 0)
 	if editor.OrganizationRole == accproto.AccountV2_Role_Organization_MEMBER {
 		// only show API keys in allowed environments for member.
@@ -475,11 +494,11 @@ func (s *TagService) getAllowedEnvironments(
 				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
 			}
 		}
-	} else {
-		// if the user is an admin or owner, no need to filter environments.
-		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+		return filterEnvironmentIDs, len(filterEnvironmentIDs) > 0
 	}
-	return filterEnvironmentIDs
+	// if the user is an admin or owner, no need to filter environments.
+	filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	return filterEnvironmentIDs, true
 }
 
 func (s *TagService) reportInternalServerError(
