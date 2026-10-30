@@ -16,6 +16,7 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,15 +40,21 @@ const (
 	eventTypePut   = "put"
 	eventTypePatch = "patch"
 	eventTypeError = "error"
+
+	// maxRequestBodyBytes caps the request body read before it is decoded.
+	// The request only carries the tag, the user and reconnect metadata, so
+	// anything larger is not a request a client would send.
+	maxRequestBodyBytes = 1024 * 1024 // 1MB
 )
 
 var (
-	errInvalidHttpMethod  = rest.NewErrStatus(http.StatusMethodNotAllowed, "gateway: invalid http method")
-	errInternal           = rest.NewErrStatus(http.StatusInternalServerError, "gateway: internal")
-	errTagRequired        = rest.NewErrStatus(http.StatusBadRequest, "gateway: tag is required")
-	errUserRequired       = rest.NewErrStatus(http.StatusBadRequest, "gateway: user is required")
-	errUserIDRequired     = rest.NewErrStatus(http.StatusBadRequest, "gateway: user id is required")
-	errServiceUnavailable = rest.NewErrStatus(http.StatusServiceUnavailable, "gateway: SSE connection limit reached")
+	errInvalidHttpMethod   = rest.NewErrStatus(http.StatusMethodNotAllowed, "gateway: invalid http method")
+	errInternal            = rest.NewErrStatus(http.StatusInternalServerError, "gateway: internal")
+	errRequestBodyTooLarge = rest.NewErrStatus(http.StatusRequestEntityTooLarge, "gateway: request body too large")
+	errTagRequired         = rest.NewErrStatus(http.StatusBadRequest, "gateway: tag is required")
+	errUserRequired        = rest.NewErrStatus(http.StatusBadRequest, "gateway: user is required")
+	errUserIDRequired      = rest.NewErrStatus(http.StatusBadRequest, "gateway: user id is required")
+	errServiceUnavailable  = rest.NewErrStatus(http.StatusServiceUnavailable, "gateway: SSE connection limit reached")
 )
 
 // sseUnmarshalOpts ignores unknown fields like the polling endpoints' encoding/json decoder.
@@ -104,7 +111,7 @@ func NewEvaluationsHandler(
 
 func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request) {
 	requestStart := time.Now()
-	envAPIKey, req, err := h.checkStreamEvaluationsRequest(httpReq)
+	envAPIKey, req, err := h.checkStreamEvaluationsRequest(w, httpReq)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
 		return
@@ -317,13 +324,29 @@ func sendErrorEvent(w io.Writer, flusher http.Flusher, code gatewayproto.StreamE
 }
 
 func (h *EvaluationsHandler) checkStreamEvaluationsRequest(
+	w http.ResponseWriter,
 	httpReq *http.Request,
 ) (*accountproto.EnvironmentAPIKey, *gatewayproto.StreamEvaluationsRequest, error) {
+	// The body is buffered before it is decoded, so cap how much of it is read.
+	// The capped reader replaces the request body before any early return so
+	// that anything reading the request after this handler, such as the logging
+	// middleware decoding the body of a rejected request, is capped too.
+	httpReq.Body = http.MaxBytesReader(w, httpReq.Body, maxRequestBodyBytes)
 	if httpReq.Method != http.MethodPost {
 		return nil, nil, errInvalidHttpMethod
 	}
 	rawBody, err := io.ReadAll(httpReq.Body)
 	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			h.logger.Warn(
+				"Rejected stream evaluations request with a body over the size limit",
+				log.FieldsFromIncomingContext(httpReq.Context()).AddFields(
+					zap.Int64("limit", maxBytesErr.Limit),
+				)...,
+			)
+			return nil, nil, errRequestBodyTooLarge
+		}
 		h.logger.Error(
 			"Failed to read stream evaluations request body",
 			log.FieldsFromIncomingContext(httpReq.Context()).AddFields(zap.Error(err))...,

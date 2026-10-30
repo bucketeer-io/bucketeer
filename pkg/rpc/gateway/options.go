@@ -49,6 +49,7 @@ type options struct {
 	httpReadTimeout           time.Duration
 	httpWriteTimeout          time.Duration
 	httpIdleTimeout           time.Duration
+	maxRequestBodyBytes       int64
 	incomingHeaderMatcher     runtime.HeaderMatcherFunc
 }
 
@@ -74,6 +75,12 @@ var defaultOptions = options{
 	httpReadTimeout:           30 * time.Second,
 	httpWriteTimeout:          30 * time.Second,
 	httpIdleTimeout:           60 * time.Second,
+	// The gRPC servers behind the gateway accept messages of at most 4MB
+	// (grpc-go default). The JSON form of a message is larger than its binary
+	// form (field names, base64 for bytes fields), so twice that keeps the
+	// gateway from rejecting a body the backend would still accept, while
+	// bounding how much of a request body is buffered before it is decoded.
+	maxRequestBodyBytes: 8 * 1024 * 1024, // 8MB
 }
 
 func WithMetrics(metrics metrics.Registerer) Option {
@@ -165,6 +172,15 @@ func WithHTTPTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Opti
 		o.httpReadTimeout = readTimeout
 		o.httpWriteTimeout = writeTimeout
 		o.httpIdleTimeout = idleTimeout
+	}
+}
+
+// WithMaxRequestBodyBytes sets the maximum number of bytes a handler reads
+// from a request body. A request whose body exceeds the limit fails to
+// decode and is rejected before it reaches the gRPC backend.
+func WithMaxRequestBodyBytes(maxRequestBodyBytes int64) Option {
+	return func(o *options) {
+		o.maxRequestBodyBytes = maxRequestBodyBytes
 	}
 }
 

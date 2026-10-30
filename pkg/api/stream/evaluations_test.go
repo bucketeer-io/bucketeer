@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,6 +34,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -73,6 +75,110 @@ func TestValidateStreamEvaluationsRequest(t *testing.T) {
 			assert.Equal(t, p.expectedErr, validateStreamEvaluationsRequest(p.req))
 		})
 	}
+}
+
+func TestCheckStreamEvaluationsRequestBodySizeLimit(t *testing.T) {
+	t.Parallel()
+	// bodyOfSize builds a valid request body of exactly size bytes by padding a
+	// user attribute, so the limit can be exercised at its boundary.
+	const bodyTemplate = `{"tag":"tag-A","user":{"id":"u-1","data":{"pad":"%s"}}}`
+	bodyOfSize := func(size int) []byte {
+		pad := size - len(fmt.Sprintf(bodyTemplate, ""))
+		return []byte(fmt.Sprintf(bodyTemplate, strings.Repeat("x", pad)))
+	}
+	typicalBody, err := protojson.Marshal(&gatewayproto.StreamEvaluationsRequest{
+		Tag:  "tag-A",
+		User: &userproto.User{Id: "u-1", Data: map[string]string{"plan": "pro"}},
+	})
+	require.NoError(t, err)
+
+	patterns := []struct {
+		desc                string
+		body                []byte
+		expectedErr         error
+		expectAPIKeyChecked bool
+	}{
+		{
+			desc:                "typical body is accepted",
+			body:                typicalBody,
+			expectAPIKeyChecked: true,
+		},
+		{
+			desc:                "body at the limit is accepted",
+			body:                bodyOfSize(maxRequestBodyBytes),
+			expectAPIKeyChecked: true,
+		},
+		{
+			desc:        "body over the limit is rejected before the api key check",
+			body:        bodyOfSize(maxRequestBodyBytes + 1),
+			expectedErr: errRequestBodyTooLarge,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			apiKeyChecked := false
+			h := &EvaluationsHandler{
+				checkRequest: func(_ context.Context, _ *http.Request) (*accountproto.EnvironmentAPIKey, error) {
+					apiKeyChecked = true
+					return &accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "env-1"},
+					}, nil
+				},
+				logger: zap.NewNop(),
+			}
+			httpReq := httptest.NewRequest(http.MethodPost, "/stream_evaluations", bytes.NewReader(p.body))
+
+			envAPIKey, req, err := h.checkStreamEvaluationsRequest(httptest.NewRecorder(), httpReq)
+
+			assert.Equal(t, p.expectAPIKeyChecked, apiKeyChecked)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+				assert.Nil(t, envAPIKey)
+				assert.Nil(t, req)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, "env-1", envAPIKey.Environment.Id)
+			// The whole body must have been read and decoded, padding included.
+			expected := &gatewayproto.StreamEvaluationsRequest{}
+			require.NoError(t, protojson.Unmarshal(p.body, expected))
+			assert.True(t, proto.Equal(expected, req))
+		})
+	}
+}
+
+// countingReader records how many bytes were read from the underlying reader.
+type countingReader struct {
+	io.Reader
+	n int
+}
+
+func (r *countingReader) Read(p []byte) (int, error) {
+	n, err := r.Reader.Read(p)
+	r.n += n
+	return n, err
+}
+
+// The REST logging middleware decodes the body of a failed request after the
+// handler returns. A request rejected before its body is read, such as one
+// with the wrong method, must therefore already have the capped body in place.
+func TestHandleCapsRequestBodyOfRejectedMethod(t *testing.T) {
+	t.Parallel()
+	h := &EvaluationsHandler{logger: zap.NewNop()}
+	handler := rest.LogServerMiddleware(zap.NewNop())(http.HandlerFunc(h.Handle))
+	// An unterminated JSON string keeps a decoder reading until the body ends.
+	body := &countingReader{Reader: io.MultiReader(
+		strings.NewReader(`"`),
+		bytes.NewReader(bytes.Repeat([]byte("x"), 3*maxRequestBodyBytes)),
+	)}
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/stream_evaluations", body))
+
+	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+	assert.LessOrEqual(t, body.n, maxRequestBodyBytes+1,
+		"nothing may read more than the cap (plus the byte that detects the overflow) from the connection")
 }
 
 type stubFlusher struct{}
