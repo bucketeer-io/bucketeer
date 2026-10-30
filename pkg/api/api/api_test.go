@@ -96,7 +96,7 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}, nil)
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put(gomock.Any()).Return(nil)
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put("test-key", gomock.Any()).Return(nil)
 			},
 			auth: "test-key",
 			expected: &accountproto.EnvironmentAPIKey{
@@ -145,7 +145,7 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}}, nil)
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put(gomock.Any()).Return(nil)
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put("test-key", gomock.Any()).Return(nil)
 			},
 			auth: "test-key",
 			expected: &accountproto.EnvironmentAPIKey{

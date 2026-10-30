@@ -1998,6 +1998,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			if err == nil {
 				putEnvironmentAPIKeyCache(
 					ctx,
+					apiKey,
 					envAPIKey,
 					s.environmentAPIKeyCache,
 					s.logger,
@@ -2021,6 +2022,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			envAPIKey = domainEnvAPIKey.EnvironmentAPIKey
 			putEnvironmentAPIKeyCache(
 				ctx,
+				apiKey,
 				envAPIKey,
 				s.environmentAPIKeyCache,
 				s.logger,
@@ -2065,13 +2067,17 @@ func getEnvironmentAPIKeyFromCache(
 	return nil, err
 }
 
+// putEnvironmentAPIKeyCache caches the environment API key under the key presented
+// by the client. The cache derives its key name from it, so the cached message does
+// not need to carry the key.
 func putEnvironmentAPIKeyCache(
 	ctx context.Context,
+	apiKey string,
 	envAPIKey *accountproto.EnvironmentAPIKey,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
 	logger *zap.Logger,
 ) {
-	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
+	if err := environmentAPIKeyCache.Put(apiKey, envAPIKey); err != nil {
 		logger.Error(
 			"Failed to cache environment APIKey",
 			log.FieldsFromIncomingContext(ctx).AddFields(
