@@ -16,6 +16,7 @@ package postgres
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -481,8 +482,35 @@ func TestSearchQueryBindSQL(t *testing.T) {
 				Columns: []string{"id", "name"},
 				Keyword: "test",
 			},
-			expectedSQL:  " (id LIKE $1 OR name LIKE $2)",
+			expectedSQL:  ` (id LIKE $1 ESCAPE '\' OR name LIKE $2 ESCAPE '\')`,
 			expectedArgs: []interface{}{"%test%", "%test%"},
+		},
+		{
+			desc: "Success: wildcards and the escape character are matched literally",
+			input: &SearchQuery{
+				Columns: []string{"name"},
+				Keyword: `100%_done\`,
+			},
+			expectedSQL:  ` (name LIKE $1 ESCAPE '\')`,
+			expectedArgs: []interface{}{`%100\%\_done\\%`},
+		},
+		{
+			desc: "Success: a keyword longer than the maximum is truncated by character",
+			input: &SearchQuery{
+				Columns: []string{"name"},
+				Keyword: strings.Repeat("あ", searchKeywordMaxLength) + "%tail",
+			},
+			expectedSQL:  ` (name LIKE $1 ESCAPE '\')`,
+			expectedArgs: []interface{}{"%" + strings.Repeat("あ", searchKeywordMaxLength) + "%"},
+		},
+		{
+			desc: "Success: a keyword at the maximum length is kept as it is",
+			input: &SearchQuery{
+				Columns: []string{"name"},
+				Keyword: strings.Repeat("a", searchKeywordMaxLength),
+			},
+			expectedSQL:  ` (name LIKE $1 ESCAPE '\')`,
+			expectedArgs: []interface{}{"%" + strings.Repeat("a", searchKeywordMaxLength) + "%"},
 		},
 	}
 	for _, p := range patterns {
@@ -792,7 +820,7 @@ func TestConstructCountQuery(t *testing.T) {
 					Keyword: "test",
 				},
 			},
-			expectedSQL:  "SELECT COUNT(1) FROM feature WHERE  (name LIKE $1 OR description LIKE $2) ",
+			expectedSQL:  `SELECT COUNT(1) FROM feature WHERE  (name LIKE $1 ESCAPE '\' OR description LIKE $2 ESCAPE '\') `,
 			expectedArgs: []interface{}{"%test%", "%test%"},
 		},
 		{

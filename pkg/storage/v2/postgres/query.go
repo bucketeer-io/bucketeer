@@ -20,6 +20,14 @@ import (
 	"strings"
 )
 
+// searchKeywordMaxLength is the maximum number of characters of a search
+// keyword that take part in the LIKE pattern; longer keywords are truncated.
+const searchKeywordMaxLength = 255
+
+// likeEscaper escapes the LIKE wildcards and the escape character itself so a
+// keyword is matched literally. The pattern must be used with ESCAPE '\'.
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
 // WritePlaceHolder formats a placeholder template using sequential indices.
 // Example: WritePlaceHolder("($%d, $%d)", 1, 2) -> "($1, $2)".
 func WritePlaceHolder(template string, start, count int) string {
@@ -255,15 +263,26 @@ func (q *SearchQuery) BindSQL(next int) (sql string, args []interface{}, nextAft
 	}
 	var sb strings.Builder
 	sb.WriteString(" (")
+	pattern := searchKeywordPattern(q.Keyword)
 	for i, col := range q.Columns {
 		if i != 0 {
 			sb.WriteString(" OR ")
 		}
-		sb.WriteString(fmt.Sprintf("%s LIKE $%d", col, next+i))
-		args = append(args, "%"+q.Keyword+"%")
+		sb.WriteString(fmt.Sprintf(`%s LIKE $%d ESCAPE '\'`, col, next+i))
+		args = append(args, pattern)
 	}
 	sb.WriteString(")")
 	return sb.String(), args, next + len(q.Columns)
+}
+
+// searchKeywordPattern builds the LIKE pattern that matches the keyword as a
+// literal substring: the keyword is truncated to searchKeywordMaxLength
+// characters and its wildcards are escaped before it is wrapped in %.
+func searchKeywordPattern(keyword string) string {
+	if runes := []rune(keyword); len(runes) > searchKeywordMaxLength {
+		keyword = string(runes[:searchKeywordMaxLength])
+	}
+	return "%" + likeEscaper.Replace(keyword) + "%"
 }
 
 type ExistsFilter struct {
