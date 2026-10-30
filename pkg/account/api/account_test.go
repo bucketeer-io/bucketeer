@@ -1255,6 +1255,12 @@ func TestListAccountsV2MySQL(t *testing.T) {
 						FirstName:        "Test",
 						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
 					},
 				}, nil)
 

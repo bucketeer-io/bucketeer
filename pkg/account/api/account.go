@@ -873,6 +873,14 @@ func (s *AccountService) ListAccountsV2(
 	if _, err := strconv.Atoi(cursor); err != nil {
 		return nil, statusInvalidCursor.Err()
 	}
+	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER &&
+		len(requestEnvironmentRoles) == 0 {
+		// The member has no role matching the requested environment, so there
+		// is nothing to list. The storage treats an empty environment role
+		// filter as the unrestricted admin filter, which would return every
+		// account in the organization.
+		return &accountproto.ListAccountsV2Response{Accounts: []*accountproto.AccountV2{}, Cursor: cursor}, nil
+	}
 
 	params := v2as.ListAccountsV2Params{
 		OrganizationID:   req.OrganizationId,
