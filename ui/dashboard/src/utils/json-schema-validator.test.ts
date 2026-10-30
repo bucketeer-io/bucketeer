@@ -77,13 +77,27 @@ describe('compileJsonSchema: schema definition', () => {
       { type: 'object' },
       { 'x-custom': 1, type: 'string' },
       { $schema: draft07, type: 'string' },
-      { minimum: 1, exclusiveMinimum: true },
-      { items: [{ type: 'string' }, { type: 'number' }] }
+      { $schema: draft04, minimum: 1, exclusiveMinimum: true },
+      { $schema: draft07, items: [{ type: 'string' }, { type: 'number' }] }
     ];
     for (const schema of valid) {
       expect(compile(schema)?.validate, JSON.stringify(schema)).toBeTypeOf(
         'function'
       );
+    }
+  });
+
+  it('rejects keyword shapes the declared draft does not accept', () => {
+    const invalid = [
+      // The default draft, 2020-12, dropped the list form of items and
+      // draft 6 replaced the boolean exclusive limits with numbers.
+      { items: [{ type: 'string' }] },
+      { minimum: 1, exclusiveMinimum: true },
+      { $schema: draft07, minimum: 1, exclusiveMinimum: true },
+      { $schema: draft04, exclusiveMinimum: 1 }
+    ];
+    for (const schema of invalid) {
+      expect(compile(schema), JSON.stringify(schema)).toBeNull();
     }
   });
 
@@ -95,6 +109,21 @@ describe('compileJsonSchema: schema definition', () => {
     expect(validatorFor({ $schema: draft07, ...schema })([1])).toEqual({
       valid: true
     });
+  });
+
+  it('cannot test values against schemas that embed another draft', () => {
+    const embedded = {
+      $id: 'https://example.com/tuple',
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      prefixItems: [{ type: 'string' }]
+    };
+    const compiled = compile({
+      $schema: draft07,
+      type: 'array',
+      items: embedded
+    });
+    expect(compiled).not.toBeNull();
+    expect(compiled!.validate).toBeNull();
   });
 
   it('resolves $ref to local definitions', () => {
