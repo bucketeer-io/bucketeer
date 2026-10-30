@@ -35,13 +35,13 @@ import Divider from 'components/divider';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface NotificationCreateUpdateModalProps {
   disabled?: boolean;
@@ -239,7 +239,7 @@ const NotificationCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={disabled}
                         {...field}
@@ -259,7 +259,7 @@ const NotificationCreateUpdateModal = ({
                       {t('slack-incoming-webhook')}
                     </Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         disabled={disabled || isEditNotification}
                         placeholder={`${t('form:placeholder-url')}`}
                         {...field}

@@ -16,11 +16,11 @@ import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface AddGoalModalProps {
   isOpen: boolean;
@@ -117,7 +117,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                 <Form.Item>
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       onChange={value => {
@@ -156,7 +156,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                     />
                   </Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:placeholder-goal-id')}`}
                       {...field}
                       name="goal-id"

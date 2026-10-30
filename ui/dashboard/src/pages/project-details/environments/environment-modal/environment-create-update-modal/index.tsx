@@ -35,6 +35,7 @@ import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface EnvironmentCreateUpdateModalProps {
   organizationId: string;
@@ -247,7 +248,7 @@ const EnvironmentCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         disabled={disabled}
                         placeholder={`${t('form:placeholder-name')}`}
                         {...field}
@@ -292,7 +293,7 @@ const EnvironmentCreateUpdateModal = ({
                       />
                     </Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         {...field}
                         value={field.value}
                         placeholder={`${t('form:placeholder-code')}`}
@@ -319,7 +320,7 @@ const EnvironmentCreateUpdateModal = ({
                     addonSlot="right"
                     className="w-full"
                   >
-                    <Input
+                    <InputWithTooltip
                       value={project?.name || ''}
                       placeholder={`${t(`project`)}`}
                       disabled

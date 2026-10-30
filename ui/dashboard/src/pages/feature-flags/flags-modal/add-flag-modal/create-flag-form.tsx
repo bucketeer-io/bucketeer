@@ -24,9 +24,9 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectMenu from 'elements/select-menu';
 import Variations from './variations';
 
@@ -228,7 +228,7 @@ const CreateFlagForm = ({
                     {t('name')}
                   </Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       onChange={value => {
@@ -267,7 +267,7 @@ const CreateFlagForm = ({
                     />
                   </Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:feature-flags.placeholder-flag')}`}
                       {...field}
                       name="flag-id"
@@ -293,7 +293,7 @@ const CreateFlagForm = ({
                     {t('form:description')}
                   </Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={t('form:placeholder-desc')}
                       {...field}
                     />

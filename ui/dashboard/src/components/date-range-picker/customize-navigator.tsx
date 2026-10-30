@@ -87,7 +87,7 @@ const CustomizeNavigator = memo(
                 const newDate = setYear(currFocusedDate, +value);
                 changeShownDate(newDate);
               }}
-              className="!shadow-none !border-none p-0"
+              className="!shadow-none !border-none p-0 min-w-[200px]"
               contentClassName="min-w-[120px]"
               sideOffsetContent={-8}
             />

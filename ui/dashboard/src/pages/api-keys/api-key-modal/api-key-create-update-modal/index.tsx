@@ -16,13 +16,13 @@ import { cn } from 'utils/style';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface APIKeyCreateUpdateModalProps {
   isOpen: boolean;
@@ -166,7 +166,7 @@ const APIKeyCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={disabled}
                         {...field}
