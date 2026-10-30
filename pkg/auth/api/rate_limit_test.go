@@ -296,26 +296,25 @@ func TestAuthService_RefreshToken_RateLimit(t *testing.T) {
 			},
 		},
 		{
-			desc:    "success: requests are counted per client address",
+			desc:    "success: rejected tokens are counted per client address",
 			limiter: newTestTokenLimiter,
-			run: func(t *testing.T, s *authService, refreshToken string, ac *accountclientmock.MockClient) {
+			run: func(t *testing.T, s *authService, _ string, _ *accountclientmock.MockClient) {
 				t.Helper()
+				req := &authproto.RefreshTokenRequest{RefreshToken: "not-a-token"}
 				for i := 0; i < testBurst+1; i++ {
-					_, err := s.RefreshToken(
-						contextWithClientAddress("203.0.113.10"),
-						&authproto.RefreshTokenRequest{RefreshToken: "not-a-token"},
-					)
+					_, err := s.RefreshToken(contextWithClientAddress("203.0.113.10"), req)
 					require.Error(t, err)
 				}
-				expectAccountLookup(ac)
-				resp, err := s.RefreshToken(
-					contextWithClientAddress("198.51.100.7"),
-					&authproto.RefreshTokenRequest{RefreshToken: refreshToken},
-				)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				assert.NotEmpty(t, resp.Token.AccessToken)
-				assert.NotEmpty(t, resp.Token.RefreshToken)
+				// The other address still has its own full burst before it is throttled.
+				other := contextWithClientAddress("198.51.100.7")
+				for i := 0; i < testBurst; i++ {
+					_, err := s.RefreshToken(other, req)
+					require.Error(t, err)
+					assert.Equal(t, statusUnauthenticated.Err().Error(), err.Error())
+				}
+				_, err := s.RefreshToken(other, req)
+				require.Error(t, err)
+				assert.Equal(t, statusTooManyRequests.Err().Error(), err.Error())
 			},
 		},
 		{
