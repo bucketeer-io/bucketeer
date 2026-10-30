@@ -219,7 +219,6 @@ web:
       isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io
-    kmsResourceName: vault
 api:
   env:
     logLevel: debug

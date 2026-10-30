@@ -229,6 +229,50 @@ so those values do not have to appear in a values file:
 The data warehouse and subscriber processor configurations are always rendered by the
 chart from values; they have no existing-Secret override.
 
+**Encrypt stored secrets (FCM service accounts and Slack webhook URLs):**
+Push configurations store a Firebase service-account key and notification
+subscriptions store a Slack incoming-webhook URL. By default (`encryption-type: none`)
+they are stored as they are. With `aead-local`, the web service encrypts them with
+AES-256-GCM before writing them to the database and the web and subscriber services
+decrypt them when they read them back, so a database dump is unusable without the
+key. The key is a 32-byte value, base64-encoded, supplied the same way as the OAuth
+key: a mounted file in Docker Compose and a Kubernetes `Secret` in Helm. The web and
+subscriber services must use the same key and key id. The batch service does not need
+the key, because it receives subscriptions through the web service.
+
+```bash
+# Generate a key (make docker-compose-setup / deploy-bucketeer do this on first run,
+# writing tools/dev/cert/encryption-key, which is gitignored)
+openssl rand -base64 32 > tools/dev/cert/encryption-key
+```
+
+Docker Compose: set the type and a key id in `.env` (the key is mounted from
+`tools/dev/cert/encryption-key`):
+```bash
+BUCKETEER_ENCRYPTION_TYPE=aead-local
+BUCKETEER_ENCRYPTION_KEY_ID=key-1
+```
+
+Helm: create the Secret and point the umbrella chart at it:
+```bash
+kubectl create secret generic bucketeer-encryption-key --from-file=key=tools/dev/cert/encryption-key
+```
+```yaml
+global:
+  encryption:
+    type: aead-local
+    keyId: key-1
+    secret: bucketeer-encryption-key
+```
+
+The key id is recorded in every encrypted value, so stored values written with a
+different key are reported instead of being silently misread; keep it stable for
+the lifetime of the key. Encryption applies to values written after it is enabled;
+existing rows keep their current form and remain readable until they are saved again.
+Switching back to `none` while encrypted rows exist makes those pushes and
+subscriptions unusable until the key is configured again, so treat the key like the
+OAuth key: back it up and never lose it.
+
 #### 2. Performance Configuration
 
 **Update resource limits for production:**

@@ -422,6 +422,22 @@ ensure-service-token: ensure-oauth-key
 		echo "Development service token already exists"; \
 	fi
 
+# ensure-encryption-key generates the local development key used to encrypt
+# stored secrets (FCM service accounts and Slack webhook URLs) when
+# encryption-type is aead-local. The file is gitignored and is created on demand
+# so the docker-compose key mounts always exist, whether encryption is on or off.
+.PHONY: ensure-encryption-key
+ensure-encryption-key:
+	@if [ ! -f $(DEV_OAUTH_CERT_DIR)/encryption-key ]; then \
+		echo "Generating development encryption key in $(DEV_OAUTH_CERT_DIR)..."; \
+		mkdir -p $(DEV_OAUTH_CERT_DIR) && \
+		openssl rand -base64 32 > $(DEV_OAUTH_CERT_DIR)/encryption-key && \
+		chmod 600 $(DEV_OAUTH_CERT_DIR)/encryption-key || \
+		{ echo "Failed to generate encryption key" >&2; rm -f $(DEV_OAUTH_CERT_DIR)/encryption-key; exit 1; }; \
+	else \
+		echo "Development encryption key already exists"; \
+	fi
+
 .PHONY: create-api-key
 create-api-key:
 	go run ./hack/create-api-key create \
@@ -774,9 +790,11 @@ setup-aichat-secret:
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
 	make ensure-service-token
+	make ensure-encryption-key
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
+	make -C tools/dev encryption-key-secret
 	make -C tools/dev postgres-cert-secret
 	make -C ./ build-go-embed
 	make -C ./ pull-dev-images
@@ -833,7 +851,7 @@ define detect_docker_compose
 endef
 
 .PHONY: docker-compose-setup
-docker-compose-setup: ensure-service-token
+docker-compose-setup: ensure-service-token ensure-encryption-key
 	$(call detect_docker_compose)
 	@echo "Setting up Docker Compose environment..."
 	@if [ ! -d "docker-compose/init-db" ]; then \

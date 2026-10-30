@@ -123,6 +123,21 @@ global:
     emulatorHost: ""
     # Google Cloud project ID
     project: ""
+  # Encryption of secrets stored in the operational database (FCM service
+  # accounts and Slack webhook URLs). The web chart encrypts them on write and
+  # the web and subscriber charts decrypt them on read, so both must see the
+  # same settings.
+  encryption:
+    # none: values are stored as they are (default).
+    # aead-local: values are encrypted with AES-256-GCM using the key below.
+    type: none
+    # Identifier recorded in every encrypted value so that keys can be rotated.
+    # Required when type is aead-local.
+    keyId: ""
+    # Existing Secret holding the base64-encoded 32-byte key under the `key`
+    # key (for example `openssl rand -base64 32`). Required when type is
+    # aead-local. Mounted read-only at /usr/local/encryption-key.
+    secret: ""
   # Global email configuration. The web and subscriber charts render this block
   # as email-config.json into a Secret.
   email:

@@ -65,4 +65,3 @@ oauth:
 
 webhook:
   baseURL: https://web-gateway.bucketeer.io
-  kmsResourceName: vault
