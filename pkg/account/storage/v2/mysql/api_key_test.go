@@ -17,9 +17,11 @@ package mysql
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -28,6 +30,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
+
+// testAPIKey has the length of a generated key (32 random bytes, hex encoded).
+const testAPIKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 func TestCreateAPIKeyMySQL(t *testing.T) {
 	t.Parallel()
@@ -66,6 +71,22 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: the digest and the prefix are stored next to the key",
+			setup: func(s *accountStorage) {
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), insertAPIKeyV2SQLQuery, gomock.Any(),
+				).DoAndReturn(func(_ context.Context, _ string, args ...interface{}) (mysql.Result, error) {
+					require.Len(t, args, 12)
+					assert.Equal(t, testAPIKey, args[7], "api_key")
+					assert.Equal(t, domain.HashAPIKey(testAPIKey), args[10], "api_key_hash")
+					assert.NotEqual(t, testAPIKey, args[10], "the digest must differ from the key")
+					assert.Equal(t, testAPIKey[:8], args[11], "api_key_prefix")
+					return nil, nil
+				})
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -73,7 +94,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			p.setup(storage)
 			err := storage.CreateAPIKey(
 				context.Background(),
-				&domain.APIKey{APIKey: &proto.APIKey{}},
+				&domain.APIKey{APIKey: &proto.APIKey{ApiKey: testAPIKey}},
 				"env-1",
 			)
 			assert.Equal(t, p.expectedErr, err)
@@ -250,48 +271,96 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	}
 }
 
+// scanResult returns a row whose Scan fails with err (nil for a found row).
+func scanResult(mockController *gomock.Controller, err error) *mock.MockRow {
+	row := mock.NewMockRow(mockController)
+	row.EXPECT().Scan(gomock.Any()).Return(err)
+	return row
+}
+
+// The fallback lookups must match on the key column alone, byte for byte.
+// Requiring the digest to be missing would make a row that is backfilled between
+// the digest lookup and the fallback match neither query. The table collation is
+// case-insensitive and pads trailing spaces, so the comparison has to be made on
+// binary strings to match the key exactly like the digest lookup does.
+func TestAPIKeyPlaintextFallbackQueriesMatchOnKeyOnlyMySQL(t *testing.T) {
+	t.Parallel()
+	for _, query := range []string{
+		selectEnvironmentAPIKeyPlaintextSQLQuery,
+		selectAPIKeyV2ByAPIKeyPlaintextSQLQuery,
+	} {
+		_, where, found := strings.Cut(query, "WHERE")
+		require.True(t, found)
+		assert.NotContains(t, where, "api_key_hash")
+		assert.Regexp(t, `CAST\((ak\.)?api_key AS BINARY\) = CAST\(\? AS BINARY\)`, where)
+		assert.NotRegexp(t, `\bapi_key = \?`, where)
+	}
+}
+
 func TestGetAPIKeyByAPIKeyMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	hash := domain.HashAPIKey(testAPIKey)
 	patterns := []struct {
 		desc        string
 		setup       func(*accountStorage)
 		expectedErr error
 	}{
 		{
-			desc: "error: ErrNoRows",
+			desc: "success: matched on the digest of the key",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, nil))
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: row without a digest yet is matched on the key itself",
+			setup: func(s *accountStorage) {
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, mysql.ErrNoRows))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
+				).Return(scanResult(mockController, nil))
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "error: ErrNoRows from both lookups",
+			setup: func(s *accountStorage) {
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, mysql.ErrNoRows))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
+				).Return(scanResult(mockController, mysql.ErrNoRows))
 			},
 			expectedErr: v2as.ErrAPIKeyNotFound,
 		},
 		{
-			desc: "error: internal",
+			desc: "error: internal error on the digest lookup is returned without falling back",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal error"))
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, errors.New("internal error")))
 			},
 			expectedErr: errors.New("internal error"),
 		},
 		{
-			desc: "success",
+			desc: "error: internal error on the fallback lookup",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, mysql.ErrNoRows))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
+				).Return(scanResult(mockController, errors.New("internal error")))
 			},
-			expectedErr: nil,
+			expectedErr: errors.New("internal error"),
 		},
 	}
 	for _, p := range patterns {
@@ -299,7 +368,7 @@ func TestGetAPIKeyByAPIKeyMySQL(t *testing.T) {
 			storage := &accountStorage{qe: mock.NewMockClient(mockController)}
 			p.setup(storage)
 			_, err := storage.GetAPIKeyByAPIKey(
-				context.Background(), "raw-api-key", "env-1",
+				context.Background(), testAPIKey, "env-1",
 			)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -311,43 +380,65 @@ func TestGetEnvironmentAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	hash := domain.HashAPIKey(testAPIKey)
 	patterns := []struct {
 		desc        string
 		setup       func(*accountStorage)
 		expectedErr error
 	}{
 		{
-			desc: "error: ErrNoRows",
+			desc: "success: matched on the digest of the key",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, nil))
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: row without a digest yet is matched on the key itself",
+			setup: func(s *accountStorage) {
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, mysql.ErrNoRows))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeyPlaintextSQLQuery, testAPIKey,
+				).Return(scanResult(mockController, nil))
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "error: ErrNoRows from both lookups",
+			setup: func(s *accountStorage) {
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, mysql.ErrNoRows))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeyPlaintextSQLQuery, testAPIKey,
+				).Return(scanResult(mockController, mysql.ErrNoRows))
 			},
 			expectedErr: v2as.ErrAPIKeyNotFound,
 		},
 		{
-			desc: "error: internal",
+			desc: "error: internal error on the digest lookup is returned without falling back",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal error"))
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, errors.New("internal error")))
 			},
 			expectedErr: errors.New("internal error"),
 		},
 		{
-			desc: "success",
+			desc: "error: internal error on the fallback lookup",
 			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, mysql.ErrNoRows))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeyPlaintextSQLQuery, testAPIKey,
+				).Return(scanResult(mockController, errors.New("internal error")))
 			},
-			expectedErr: nil,
+			expectedErr: errors.New("internal error"),
 		},
 	}
 	for _, p := range patterns {
@@ -355,7 +446,7 @@ func TestGetEnvironmentAPIKeyMySQL(t *testing.T) {
 			storage := &accountStorage{qe: mock.NewMockClient(mockController)}
 			p.setup(storage)
 			_, err := storage.GetEnvironmentAPIKey(
-				context.Background(), "raw-api-key",
+				context.Background(), testAPIKey,
 			)
 			assert.Equal(t, p.expectedErr, err)
 		})

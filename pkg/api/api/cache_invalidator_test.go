@@ -87,7 +87,7 @@ func TestCacheInvalidatorHandleMessage(t *testing.T) {
 				EntityData:    `{"api_key": "secret-123"}`,
 			},
 			setupCache: func(_ cachev3.FeaturesCache, _ cachev3.SegmentUsersCache, akc cachev3.EnvironmentAPIKeyCache) {
-				akc.Put(&accountproto.EnvironmentAPIKey{
+				akc.Put("secret-123", &accountproto.EnvironmentAPIKey{
 					ApiKey: &accountproto.APIKey{ApiKey: "secret-123"},
 				})
 			},
@@ -107,10 +107,10 @@ func TestCacheInvalidatorHandleMessage(t *testing.T) {
 				PreviousEntityData: `{"api_key": "old-secret"}`,
 			},
 			setupCache: func(_ cachev3.FeaturesCache, _ cachev3.SegmentUsersCache, akc cachev3.EnvironmentAPIKeyCache) {
-				akc.Put(&accountproto.EnvironmentAPIKey{
+				akc.Put("old-secret", &accountproto.EnvironmentAPIKey{
 					ApiKey: &accountproto.APIKey{ApiKey: "old-secret"},
 				})
-				akc.Put(&accountproto.EnvironmentAPIKey{
+				akc.Put("new-secret", &accountproto.EnvironmentAPIKey{
 					ApiKey: &accountproto.APIKey{ApiKey: "new-secret"},
 				})
 			},

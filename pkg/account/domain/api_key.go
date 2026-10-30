@@ -16,6 +16,7 @@ package domain
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"time"
 
@@ -30,6 +31,7 @@ import (
 const (
 	keyBytes           = 32
 	apiKeyVisibleChars = 4
+	apiKeyPrefixChars  = 8
 )
 
 // ObfuscateAPIKey shows the first and last apiKeyVisibleChars characters, with dots in the middle.
@@ -39,6 +41,24 @@ func ObfuscateAPIKey(input string) string {
 		return input[:apiKeyVisibleChars] + "...." + input[len(input)-apiKeyVisibleChars:]
 	}
 	return input
+}
+
+// HashAPIKey returns the hex-encoded SHA-256 digest of an API key. The digest is what
+// is stored and matched on, so a stored row does not need the key itself. Keys are
+// generated from crypto/rand, so a plain unsalted digest is sufficient and keeps the
+// per-request lookup cheap.
+func HashAPIKey(key string) string {
+	sum := sha256.Sum256([]byte(key))
+	return hex.EncodeToString(sum[:])
+}
+
+// APIKeyPrefix returns the first apiKeyPrefixChars characters of an API key. It is
+// stored next to the digest so the key can still be told apart in listings.
+func APIKeyPrefix(key string) string {
+	if len(key) <= apiKeyPrefixChars {
+		return key
+	}
+	return key[:apiKeyPrefixChars]
 }
 
 var (
@@ -74,14 +94,15 @@ func NewAPIKey(
 	now := time.Now().Unix()
 
 	return &APIKey{&proto.APIKey{
-		Id:          id.String(),
-		Name:        name,
-		Role:        role,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-		Maintainer:  maintainer,
-		ApiKey:      key,
-		Description: description,
+		Id:           id.String(),
+		Name:         name,
+		Role:         role,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+		Maintainer:   maintainer,
+		ApiKey:       key,
+		ApiKeyPrefix: APIKeyPrefix(key),
+		Description:  description,
 	}}, nil
 }
 

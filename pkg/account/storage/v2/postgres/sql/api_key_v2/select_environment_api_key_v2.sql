@@ -7,6 +7,7 @@ SELECT
     ak.updated_at AS api_key_updated_at,
     ak.description AS api_key_description,
     ak.api_key AS api_key_key,
+    COALESCE(ak.api_key_prefix, '') AS api_key_prefix,
     ak.maintainer AS api_key_maintainer,
     ak.last_used_at AS api_key_last_used_at,
 
@@ -27,4 +28,4 @@ SELECT
 FROM api_key ak
 JOIN environment_v2 env ON ak.environment_id = env.id
 JOIN project proj ON env.project_id = proj.id
-WHERE ak.api_key = $1
+WHERE ak.api_key_hash = $1

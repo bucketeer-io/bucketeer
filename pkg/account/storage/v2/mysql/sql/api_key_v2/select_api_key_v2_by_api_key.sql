@@ -7,10 +7,11 @@ SELECT
     updated_at,
     description,
     api_key,
+    COALESCE(api_key_prefix, '') AS api_key_prefix,
     maintainer,
     last_used_at
 FROM
     api_key
 WHERE
-    api_key = ? AND
+    api_key_hash = ? AND
     environment_id = ?

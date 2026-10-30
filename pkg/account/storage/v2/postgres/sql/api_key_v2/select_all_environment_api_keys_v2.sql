@@ -7,6 +7,7 @@ SELECT
     ak.updated_at AS api_key_updated_at,
     ak.description AS api_key_description,
     ak.api_key AS api_key_key,
+    COALESCE(ak.api_key_prefix, '') AS api_key_prefix,
     ak.maintainer AS api_key_maintainer,
     ak.last_used_at AS api_key_last_used_at,
 

@@ -535,7 +535,7 @@ func (c *cacheRefresher) refreshAPIKey(
 			}
 			return err
 		}
-		if err := c.environmentAPIKeyCache.Put(domainEnvAPIKey.EnvironmentAPIKey); err != nil {
+		if err := c.environmentAPIKeyCache.Put(secret, domainEnvAPIKey.EnvironmentAPIKey); err != nil {
 			return err
 		}
 		c.logger.Debug("Refreshed environment API key redis cache",
