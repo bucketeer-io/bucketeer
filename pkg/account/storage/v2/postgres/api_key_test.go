@@ -16,6 +16,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -308,6 +309,22 @@ func scanResult(mockController *gomock.Controller, err error) *pgmock.MockRow {
 	row := pgmock.NewMockRow(mockController)
 	row.EXPECT().Scan(gomock.Any()).Return(err)
 	return row
+}
+
+// The fallback lookups must match on the key column alone. Requiring the digest
+// to be missing would make a row that is backfilled between the digest lookup
+// and the fallback match neither query.
+func TestAPIKeyPlaintextFallbackQueriesMatchOnKeyOnlyPostgres(t *testing.T) {
+	t.Parallel()
+	for _, query := range []string{
+		selectEnvironmentAPIKeyPlaintextSQLQuery,
+		selectAPIKeyV2ByAPIKeyPlaintextSQLQuery,
+	} {
+		_, where, found := strings.Cut(query, "WHERE")
+		require.True(t, found)
+		assert.NotContains(t, where, "api_key_hash")
+		assert.Contains(t, where, "api_key = $1")
+	}
 }
 
 func TestGetAPIKeyByAPIKeyPostgres(t *testing.T) {

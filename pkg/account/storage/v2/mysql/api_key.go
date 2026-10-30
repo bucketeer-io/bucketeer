@@ -170,7 +170,8 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 		return k, err
 	}
 	// Keys created before the digest column existed are matched on the key
-	// itself until they are backfilled.
+	// itself until they are backfilled. The fallback does not require the digest
+	// to be missing, so a row backfilled between the two lookups still matches.
 	return s.getAPIKeyByQuery(ctx, selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, apiKey, environmentID)
 }
 
@@ -276,7 +277,8 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 		return k, err
 	}
 	// Keys created before the digest column existed are matched on the key
-	// itself until they are backfilled.
+	// itself until they are backfilled. The fallback does not require the digest
+	// to be missing, so a row backfilled between the two lookups still matches.
 	return s.getEnvironmentAPIKeyByQuery(ctx, selectEnvironmentAPIKeyPlaintextSQLQuery, apiKey)
 }
 

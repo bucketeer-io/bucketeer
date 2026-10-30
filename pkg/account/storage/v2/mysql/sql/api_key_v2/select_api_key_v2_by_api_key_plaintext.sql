@@ -1,5 +1,6 @@
--- Fallback for keys created before api_key_hash existed. Only rows that have not
--- been backfilled yet are matched on the api_key column.
+-- Fallback for keys created before api_key_hash existed. The api_key column is
+-- still accurate for every row, so a row that was backfilled between the digest
+-- lookup and this one is matched as well.
 SELECT
     id,
     name,
@@ -15,6 +16,5 @@ SELECT
 FROM
     api_key
 WHERE
-    api_key_hash IS NULL AND
     api_key = ? AND
     environment_id = ?
