@@ -30,6 +30,8 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
@@ -593,24 +595,73 @@ func TestGetPushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, true)
+	storedPush := func() *domain.Push {
+		return &domain.Push{
+			Push: &proto.Push{
+				Id:                "key-1",
+				Name:              "push-1",
+				FcmServiceAccount: string(fcmServiceAccountDummy),
+				Tags:              []string{"tag-1"},
+				EnvironmentId:     "ns0",
+			},
+		}
+	}
+	// The service account must never be returned to the client.
+	expectedPush := &proto.Push{
+		Id:            "key-1",
+		Name:          "push-1",
+		Tags:          []string{"tag-1"},
+		EnvironmentId: "ns0",
+	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*PushService)
-		req         *pushproto.GetPushRequest
-		expectedErr error
+		desc          string
+		isSystemAdmin bool
+		envID         *string
+		orgRole       *accountproto.AccountV2_Role_Organization
+		envRole       *accountproto.AccountV2_Role_Environment
+		setup         func(*PushService)
+		req           *pushproto.GetPushRequest
+		expected      *pushproto.GetPushResponse
+		expectedErr   error
 	}{
 		{
 			desc:        "err: ErrIDRequired",
-			req:         &pushproto.GetPushRequest{},
+			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:     toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			req:         &pushproto.GetPushRequest{EnvironmentId: "ns0"},
 			expectedErr: statusIDRequired.Err(),
 		},
 		{
-			desc: "err: ErrNotFound",
+			// The storage must not be called when the caller has no role in the
+			// environment, which the mock enforces by having no expectation set.
+			desc:    "err: ErrPermissionDenied: no role in the environment",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			req: &pushproto.GetPushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-1",
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "err: ErrPermissionDenied: viewer of another environment",
+			envID:   toPtr("ns1"),
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			req: &pushproto.GetPushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-1",
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc:    "err: ErrNotFound",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), "key-1", "ns0",
 				).Return(nil, v2ps.ErrPushNotFound)
 			},
 			req: &pushproto.GetPushRequest{
@@ -620,31 +671,77 @@ func TestGetPushMySQL(t *testing.T) {
 			expectedErr: statusNotFound.Err(),
 		},
 		{
-			desc: "success",
+			desc:    "err: ErrInternal",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Push{
-					Push: &proto.Push{
-						Id: "key-1",
-					},
-				}, nil)
+					gomock.Any(), "key-1", "ns0",
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.PushPackageName, "test"))
 			},
 			req: &pushproto.GetPushRequest{
 				EnvironmentId: "ns0",
 				Id:            "key-1",
 			},
-			expectedErr: nil,
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.PushPackageName, "test")).Err(),
+		},
+		{
+			desc:    "success: viewer of the environment",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), "key-1", "ns0",
+				).Return(storedPush(), nil)
+			},
+			req: &pushproto.GetPushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-1",
+			},
+			expected: &pushproto.GetPushResponse{Push: expectedPush},
+		},
+		{
+			desc:    "success: organization admin without an environment role",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_ADMIN),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), "key-1", "ns0",
+				).Return(storedPush(), nil)
+			},
+			req: &pushproto.GetPushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-1",
+			},
+			expected: &pushproto.GetPushResponse{Push: expectedPush},
+		},
+		{
+			desc:          "success: system admin without an environment role",
+			isSystemAdmin: true,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), "key-1", "ns0",
+				).Return(storedPush(), nil)
+			},
+			req: &pushproto.GetPushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-1",
+			},
+			expected: &pushproto.GetPushResponse{Push: expectedPush},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newPushServiceWithMock(t, mockController)
+			ctx := createContextWithToken(t, p.isSystemAdmin)
+			service := newPushService(mockController, p.envID, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.GetPush(ctx, p.req)
+			actual, err := service.GetPush(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, actual)
 		})
 	}
 }
