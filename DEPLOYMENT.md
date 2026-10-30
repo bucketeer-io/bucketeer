@@ -234,8 +234,9 @@ Push configurations store a Firebase service-account key and notification
 subscriptions store a Slack incoming-webhook URL. By default (`encryption-type: none`)
 they are stored as they are. With `aead-local`, the web service encrypts them with
 AES-256-GCM before writing them to the database and the web and subscriber services
-decrypt them when they read them back, so a database dump is unusable without the
-key. The key is a 32-byte value, base64-encoded, supplied the same way as the OAuth
+decrypt them when they read them back, so the values in the `push`, `subscription`
+and `admin_subscription` tables are unusable without the key. The key is a 32-byte
+value, base64-encoded, supplied the same way as the OAuth
 key: a mounted file in Docker Compose and a Kubernetes `Secret` in Helm. The web and
 subscriber services must use the same key and key id. The batch service does not need
 the key, because it receives subscriptions through the web service.
