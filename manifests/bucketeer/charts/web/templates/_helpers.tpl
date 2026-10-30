@@ -55,6 +55,18 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Encryption of secrets stored at rest, shared with the subscriber chart through
+global.encryption. "none" (the default) keeps the current plaintext storage.
+*/}}
+{{- define "web.encryption-type" -}}
+{{- (.Values.global.encryption | default dict).type | default "none" -}}
+{{- end -}}
+
+{{- define "web.encryption-enabled" -}}
+{{- if ne (include "web.encryption-type" .) "none" -}}true{{- end -}}
+{{- end -}}
+
 {{- define "web.oauth-config-secret" -}}
 {{- if .Values.oauth.existingSecret }}
 {{- printf "%s" .Values.oauth.existingSecret -}}

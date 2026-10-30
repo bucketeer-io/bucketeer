@@ -46,6 +46,12 @@ oauth-key-secret:
 	kubectl delete secret bucketeer-oauth-key --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret generic bucketeer-oauth-key --from-file public.pem=${CURDIR}/cert/oauth-public.pem --from-file private.pem=${CURDIR}/cert/oauth-private.pem --namespace $(NAMESPACE)
 
+# Key used to encrypt stored secrets when global.encryption.type is aead-local.
+encryption-key-secret:
+	kubectl config use-context minikube
+	kubectl delete secret bucketeer-encryption-key --namespace $(NAMESPACE) --ignore-not-found
+	kubectl create secret generic bucketeer-encryption-key --from-file key=${CURDIR}/cert/encryption-key --namespace $(NAMESPACE)
+
 # Pre-cache Docker images to persist them across minikube deletions
 pre-cache-docker-images:
 	@echo "Pre-caching Docker images to survive minikube deletions..."

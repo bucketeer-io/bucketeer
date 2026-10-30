@@ -57,6 +57,11 @@ spec:
           secret:
             secretName: {{ .Values.global.pubsub.redis.tlsSecretName }}
         {{- end }}
+        {{- if include "subscriber.encryption-enabled" . }}
+        - name: encryption-key-secret
+          secret:
+            secretName: {{ .Values.global.encryption.secret }}
+        {{- end }}
         - name: subscriber-config
           configMap:
             name: {{ template "subscriber.fullname" . }}-subscribers-config
@@ -180,6 +185,14 @@ spec:
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_SUBSCRIBER_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
+            - name: BUCKETEER_SUBSCRIBER_ENCRYPTION_TYPE
+              value: "{{ include "subscriber.encryption-type" . }}"
+            {{- if include "subscriber.encryption-enabled" . }}
+            - name: BUCKETEER_SUBSCRIBER_ENCRYPTION_KEY_ID
+              value: "{{ .Values.global.encryption.keyId }}"
+            - name: BUCKETEER_SUBSCRIBER_ENCRYPTION_KEY_PATH
+              value: /usr/local/encryption-key/key
+            {{- end }}
             - name: BUCKETEER_SUBSCRIBER_EMAIL_CONFIG_PATH
               value: /usr/local/email-config/email-config.json
             - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME
@@ -242,6 +255,11 @@ spec:
             {{- if .Values.global.pubsub.redis.tlsSecretName }}
             - name: redis-cert-secret
               mountPath: /usr/local/certs/redis
+              readOnly: true
+            {{- end }}
+            {{- if include "subscriber.encryption-enabled" . }}
+            - name: encryption-key-secret
+              mountPath: /usr/local/encryption-key
               readOnly: true
             {{- end }}
             - name: email-config

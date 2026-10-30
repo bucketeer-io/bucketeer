@@ -58,6 +58,7 @@ import (
 	coderefstorage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	coderefmysql "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mysql"
 	coderefpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/encryption"
 	environmentapi "github.com/bucketeer-io/bucketeer/v2/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -248,6 +249,9 @@ type server struct {
 	oauthPrivateKeyPath                     *string
 	webhookBaseURL                          *string
 	webhookKMSResourceName                  *string
+	encryptionType                          *string
+	encryptionKeyID                         *string
+	encryptionKeyPath                       *string
 	cloudService                            *string
 	webConsoleEnvJSPath                     *string
 	pubSubType                              *string
@@ -573,10 +577,25 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Path to private key for signing oauth token.",
 		).Required().String(),
 		webhookBaseURL: cmd.Flag("webhook-base-url", "the base url for incoming webhooks.").Required().String(),
+		// Deprecated: the flag was never read. It is still accepted so that
+		// deployments passing it keep starting; configure encryption-type instead.
 		webhookKMSResourceName: cmd.Flag(
 			"webhook-kms-resource-name",
-			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
-		).Required().String(),
+			"Deprecated and ignored. Use encryption-type instead.",
+		).Hidden().String(),
+		encryptionType: cmd.Flag(
+			"encryption-type",
+			"Encryption of stored secrets such as FCM service accounts and Slack webhook URLs (none, aead-local).",
+		).Default(encryption.TypeNone).String(),
+		encryptionKeyID: cmd.Flag(
+			"encryption-key-id",
+			"Identifier recorded in every encrypted value so that keys can be rotated. "+
+				"Required when encryption-type is aead-local.",
+		).String(),
+		encryptionKeyPath: cmd.Flag(
+			"encryption-key-path",
+			"Path to the file holding the base64-encoded 32-byte key. Required when encryption-type is aead-local.",
+		).String(),
 		cloudService:        cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
 		webConsoleEnvJSPath: cmd.Flag("web-console-env-js-path", "console env js path").Required().String(),
 		// PubSub configuration
@@ -706,6 +725,25 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go healthcheckServer.Run()
 
+	// Encryption of secrets stored at rest (FCM service accounts and Slack
+	// webhook URLs). The storages below are wrapped so that the rest of the
+	// application keeps working with plaintext values.
+	if *s.webhookKMSResourceName != "" {
+		logger.Warn("The webhook-kms-resource-name flag is deprecated and ignored; use encryption-type instead")
+	}
+	fieldEncryptor, err := encryption.New(ctx, encryption.Config{
+		Type:    *s.encryptionType,
+		KeyID:   *s.encryptionKeyID,
+		KeyPath: *s.encryptionKeyPath,
+	})
+	if err != nil {
+		logger.Error("Failed to configure encryption of stored secrets", zap.Error(err))
+		return err
+	}
+	if *s.encryptionType == encryption.TypeNone {
+		logger.Warn("Stored secrets are not encrypted at rest because encryption-type is none")
+	}
+
 	// TODO: postgres is in development and not fully supported yet.
 	var dbClient database.Client
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
@@ -803,6 +841,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		scheduledFlagChangeStorage = featuremysql.NewScheduledFlagChangeStorage(mysqlClient)
 		holdoutStorage = holdoutmysql.NewHoldoutStorage(mysqlClient)
 	}
+	pushStorage = v2ps.NewEncryptedPushStorage(pushStorage, fieldEncryptor)
+	subscriptionStorage = v2ns.NewEncryptedSubscriptionStorage(subscriptionStorage, fieldEncryptor)
+	adminSubscriptionStorage = v2ns.NewEncryptedAdminSubscriptionStorage(adminSubscriptionStorage, fieldEncryptor)
 
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(

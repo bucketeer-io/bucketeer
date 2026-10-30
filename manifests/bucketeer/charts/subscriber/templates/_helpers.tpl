@@ -47,6 +47,18 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Encryption of secrets stored at rest, shared with the web chart through
+global.encryption. "none" (the default) keeps the current plaintext storage.
+*/}}
+{{- define "subscriber.encryption-type" -}}
+{{- (.Values.global.encryption | default dict).type | default "none" -}}
+{{- end -}}
+
+{{- define "subscriber.encryption-enabled" -}}
+{{- if ne (include "subscriber.encryption-type" .) "none" -}}true{{- end -}}
+{{- end -}}
+
 
 {{- define "issuer-cert-secret" -}}
 {{- if .Values.tls.issuer.secret }}
