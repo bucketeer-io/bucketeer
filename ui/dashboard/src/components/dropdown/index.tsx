@@ -6,6 +6,7 @@ import {
   ReactNode,
   Ref,
   useCallback,
+  useId,
   useMemo,
   useRef,
   useState
@@ -115,6 +116,12 @@ const DropdownMenuTrigger = forwardRef<
       },
       [ariaLabel]
     );
+    // Plain-text labels get a tooltip with the full text when truncated
+    const labelTooltipId = `dropdown-trigger-${useId()}`;
+    const isTextLabel =
+      (typeof label === 'string' || typeof label === 'number') &&
+      label !== '' &&
+      !description;
 
     return (
       <DropdownMenuPrimitive.Trigger
@@ -138,6 +145,29 @@ const DropdownMenuTrigger = forwardRef<
           <div className="flex items-center w-full justify-between typo-para-medium overflow-hidden">
             {trigger ? (
               trigger
+            ) : isTextLabel ? (
+              <div className="min-w-0 flex-1">
+                <NameWithTooltip
+                  id={labelTooltipId}
+                  maxLines={1}
+                  align="start"
+                  content={
+                    <NameWithTooltip.Content
+                      id={labelTooltipId}
+                      content={label}
+                    />
+                  }
+                  trigger={
+                    <NameWithTooltip.Trigger
+                      id={labelTooltipId}
+                      name={label}
+                      maxLines={1}
+                      haveAction={false}
+                      className="text-inherit"
+                    />
+                  }
+                />
+              </div>
             ) : label ? (
               <div className="max-w-full truncate">
                 {label} {description && <span>{description}</span>}

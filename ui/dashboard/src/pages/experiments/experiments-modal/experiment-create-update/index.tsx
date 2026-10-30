@@ -32,7 +32,6 @@ import Divider from 'components/divider';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
@@ -42,6 +41,7 @@ import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectedGoalsList from 'elements/selected-goals-list';
 import VariationLabel from 'elements/variation-label';
 
@@ -392,7 +392,7 @@ const ExperimentCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('common:name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         disabled={disabled}
                         placeholder={`${t('placeholder-name')}`}
                         {...field}

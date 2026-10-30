@@ -23,11 +23,11 @@ import { ReactDatePicker } from 'components/date-time-picker';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectedGoalsList from 'elements/selected-goals-list';
 import VariationLabel from 'elements/variation-label';
 
@@ -227,7 +227,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Item className="py-0">
                     <Form.Label required>{t('common:name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         placeholder={`${t('placeholder-name')}`}
                         disabled={!editable}
                         {...field}

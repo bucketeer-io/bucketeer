@@ -14,7 +14,7 @@ import ReactCodeEditor from 'components/code-editor';
 import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 const Variations = ({
   variationType,
@@ -99,7 +99,7 @@ const Variations = ({
                   <Form.Item className="py-0">
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         {...field}
                         placeholder={t('form:placeholder-name')}
                         name="flag-variation-name"
@@ -170,7 +170,7 @@ const Variations = ({
                           />
                         </div>
                       ) : (
-                        <Input
+                        <InputWithTooltip
                           {...field}
                           placeholder={t(
                             'form:feature-flags.placeholder-variation'
