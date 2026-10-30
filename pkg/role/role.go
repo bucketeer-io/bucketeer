@@ -70,27 +70,22 @@ func CheckEnvironmentRole(
 	// token accidentally minted with is_service_token=true cannot escalate to
 	// admin without also being a system admin.
 	if token.IsSystemAdmin && token.IsServiceToken {
+		// The public API gateway relays requests with a service token and
+		// identifies the API key in the metadata. Those requests act as the
+		// key's maintainer, whose membership and role are checked like any
+		// other account, instead of inheriting the service token's access.
+		if publicAPIEditor := getAPIKeyEditor(ctx); publicAPIEditor != nil && publicAPIEditor.Token != "" {
+			return checkAPIKeyMaintainerEnvironmentRole(publicAPIEditor, requiredRole, environmentID, getAccountFunc)
+		}
 		return &eventproto.Editor{
 			Email:   token.Email,
 			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
-	publicAPIEditor := getAPIKeyEditor(ctx)
-	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
-		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err != nil {
-			return nil, err
-		}
-		account := accdomain.AccountV2{AccountV2: resp}
-		return &eventproto.Editor{
-			Email:            publicAPIEditor.Maintainer,
-			Name:             account.GetAccountFullName(),
-			PublicApiEditor:  publicAPIEditor,
-			EnvironmentRoles: account.EnvironmentRoles,
-			OrganizationRole: account.OrganizationRole,
-		}, nil
-	}
+	// API key metadata is only trusted on service token requests because only
+	// the public API gateway sets it. On any other request it is ignored and
+	// the caller is authorized as the account in its own token.
 
 	// System admins can read from any org without membership, but must be an org
 	// member with the appropriate role to write.
@@ -197,6 +192,42 @@ func checkRole(
 	}, nil
 }
 
+// checkAPIKeyMaintainerEnvironmentRole authorizes a request relayed by the
+// public API gateway as the maintainer of the API key, with the same
+// membership and role checks that apply to the maintainer's own requests.
+func checkAPIKeyMaintainerEnvironmentRole(
+	publicAPIEditor *eventproto.Editor_PublicAPIEditor,
+	requiredRole accountproto.AccountV2_Role_Environment,
+	environmentID string,
+	getAccountFunc func(email string) (*accountproto.AccountV2, error),
+) (*eventproto.Editor, error) {
+	resp, err := getAccountFunc(publicAPIEditor.Maintainer)
+	if err != nil {
+		if code := status.Code(err); code == codes.NotFound {
+			return nil, ErrUnauthenticated
+		}
+		return nil, ErrInternal
+	}
+	if resp.Disabled {
+		return nil, ErrUnauthenticated
+	}
+	account := accdomain.AccountV2{AccountV2: resp}
+	editor, err := checkRole(
+		publicAPIEditor.Maintainer,
+		account.GetAccountFullName(),
+		getRole(account.EnvironmentRoles, environmentID),
+		requiredRole,
+		account.EnvironmentRoles,
+		account.OrganizationRole,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	editor.PublicApiEditor = publicAPIEditor
+	return editor, nil
+}
+
 func CheckOrganizationRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Organization,
@@ -211,27 +242,20 @@ func CheckOrganizationRole(
 	// token accidentally minted with is_service_token=true cannot escalate to
 	// admin without also being a system admin.
 	if token.IsSystemAdmin && token.IsServiceToken {
+		// See CheckEnvironmentRole: requests relayed by the public API gateway
+		// act as the API key's maintainer and are checked against its role.
+		if publicAPIEditor := getAPIKeyEditor(ctx); publicAPIEditor != nil && publicAPIEditor.Token != "" {
+			return checkAPIKeyMaintainerOrganizationRole(publicAPIEditor, requiredRole, getAccountFunc)
+		}
 		return &eventproto.Editor{
 			Email:   token.Email,
 			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
-	publicAPIEditor := getAPIKeyEditor(ctx)
-	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
-		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err != nil {
-			return nil, err
-		}
-		account := accdomain.AccountV2{AccountV2: resp.Account}
-		return &eventproto.Editor{
-			Email:            publicAPIEditor.Maintainer,
-			Name:             account.GetAccountFullName(),
-			PublicApiEditor:  publicAPIEditor,
-			EnvironmentRoles: account.EnvironmentRoles,
-			OrganizationRole: account.OrganizationRole,
-		}, nil
-	}
+	// API key metadata is only trusted on service token requests because only
+	// the public API gateway sets it. On any other request it is ignored and
+	// the caller is authorized as the account in its own token.
 
 	// System admins can view any org without membership, but must be a member
 	// with the appropriate role for admin/write operations (e.g. creating API keys).
@@ -261,6 +285,37 @@ func CheckOrganizationRole(
 		IsAdmin:          token.IsSystemAdmin,
 		EnvironmentRoles: resp.Account.EnvironmentRoles,
 		OrganizationRole: resp.Account.OrganizationRole,
+	}, nil
+}
+
+// checkAPIKeyMaintainerOrganizationRole authorizes a request relayed by the
+// public API gateway as the maintainer of the API key, with the same
+// membership and role checks that apply to the maintainer's own requests.
+func checkAPIKeyMaintainerOrganizationRole(
+	publicAPIEditor *eventproto.Editor_PublicAPIEditor,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	getAccountFunc func(email string) (*accountproto.GetAccountV2Response, error),
+) (*eventproto.Editor, error) {
+	resp, err := getAccountFunc(publicAPIEditor.Maintainer)
+	if err != nil {
+		if code := status.Code(err); code == codes.NotFound {
+			return nil, ErrUnauthenticated
+		}
+		return nil, ErrInternal
+	}
+	if resp.Account.Disabled {
+		return nil, ErrUnauthenticated
+	}
+	if resp.Account.OrganizationRole < requiredRole {
+		return nil, ErrPermissionDenied
+	}
+	account := accdomain.AccountV2{AccountV2: resp.Account}
+	return &eventproto.Editor{
+		Email:            publicAPIEditor.Maintainer,
+		Name:             account.GetAccountFullName(),
+		PublicApiEditor:  publicAPIEditor,
+		EnvironmentRoles: account.EnvironmentRoles,
+		OrganizationRole: account.OrganizationRole,
 	}, nil
 }
 

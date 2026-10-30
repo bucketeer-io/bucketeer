@@ -331,11 +331,15 @@ func (g *Gateway) Start(ctx context.Context,
 	}
 
 	// Create a new ServeMux with our custom marshaler
-	mux := runtime.NewServeMux(
+	muxOpts := []runtime.ServeMuxOption{
 		runtime.WithErrorHandler(errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaler),
 		runtime.WithRoutingErrorHandler(g.customRoutingErrorHandler),
-	)
+	}
+	if g.opts.incomingHeaderMatcher != nil {
+		muxOpts = append(muxOpts, runtime.WithIncomingHeaderMatcher(g.opts.incomingHeaderMatcher))
+	}
+	mux := runtime.NewServeMux(muxOpts...)
 
 	// Create gRPC dial options with proper credentials and settings
 	var dialOpts []grpc.DialOption
