@@ -26,7 +26,16 @@ import (
 )
 
 const (
-	environmentAPIKeyKind = "environment_apikey"
+	// environmentAPIKeyKind names entries addressed by the digest of the key. It is
+	// distinct from legacyEnvironmentAPIKeyKind so that an entry written by this
+	// version is never read back by a version that still addresses entries by the
+	// key itself: that version would otherwise accept the digest as a key.
+	environmentAPIKeyKind = "environment_apikey_hash"
+	// legacyEnvironmentAPIKeyKind names the entries written before key names were
+	// hashed. They have no expiry, so they are removed whenever the matching entry
+	// is written or evicted; the periodic cacher writes every key, so a single run
+	// clears them all after a rollout.
+	legacyEnvironmentAPIKeyKind = "environment_apikey"
 )
 
 // EnvironmentAPIKeyCache is keyed by the API key presented by the client. The key
@@ -79,11 +88,17 @@ func (c *environmentAPIKeyCache) Put(apiKey string, environmentAPIKey *accountpr
 	if err != nil {
 		return err
 	}
-	return c.cache.Put(c.key(apiKey), buffer, c.ttl)
+	if err := c.cache.Put(c.key(apiKey), buffer, c.ttl); err != nil {
+		return err
+	}
+	return evictKey(c.cache, c.legacyKey(apiKey))
 }
 
 func (c *environmentAPIKeyCache) Evict(apiKey string) error {
-	return evictKey(c.cache, c.key(apiKey))
+	if err := evictKey(c.cache, c.key(apiKey)); err != nil {
+		return err
+	}
+	return evictKey(c.cache, c.legacyKey(apiKey))
 }
 
 func (c *environmentAPIKeyCache) key(apiKey string) string {
@@ -92,4 +107,9 @@ func (c *environmentAPIKeyCache) key(apiKey string) string {
 	// and don't yet know which environment it belongs to.
 	// The key is stored by its digest so the cache never holds the key itself.
 	return cache.MakeKey(environmentAPIKeyKind, accountdomain.HashAPIKey(apiKey), "")
+}
+
+// legacyKey is the name under which previous versions stored the entry for apiKey.
+func (c *environmentAPIKeyCache) legacyKey(apiKey string) string {
+	return cache.MakeKey(legacyEnvironmentAPIKeyKind, apiKey, "")
 }

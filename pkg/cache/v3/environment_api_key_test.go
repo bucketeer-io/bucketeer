@@ -16,6 +16,7 @@ package v3
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -50,6 +51,14 @@ func newEnvironmentAPIKey(apiKey string) *accountproto.EnvironmentAPIKey {
 	}
 }
 
+func hashedKeyName(apiKey string) string {
+	return fmt.Sprintf("%s:%s", environmentAPIKeyKind, accountdomain.HashAPIKey(apiKey))
+}
+
+func legacyKeyName(apiKey string) string {
+	return fmt.Sprintf("%s:%s", legacyEnvironmentAPIKeyKind, apiKey)
+}
+
 func TestEnvironmentAPIKeyCacheKey(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -60,12 +69,12 @@ func TestEnvironmentAPIKeyCacheKey(t *testing.T) {
 		{
 			desc:     "generated key: the key name holds the digest, not the key",
 			apiKey:   rawAPIKey,
-			expected: fmt.Sprintf("%s:%s", environmentAPIKeyKind, accountdomain.HashAPIKey(rawAPIKey)),
+			expected: "environment_apikey_hash:" + accountdomain.HashAPIKey(rawAPIKey),
 		},
 		{
 			desc:     "empty key",
 			apiKey:   "",
-			expected: fmt.Sprintf("%s:%s", environmentAPIKeyKind, accountdomain.HashAPIKey("")),
+			expected: "environment_apikey_hash:" + accountdomain.HashAPIKey(""),
 		},
 	}
 	for _, p := range patterns {
@@ -76,8 +85,23 @@ func TestEnvironmentAPIKeyCacheKey(t *testing.T) {
 			if p.apiKey != "" {
 				assert.NotContains(t, key, p.apiKey)
 			}
+			assert.Equal(t, legacyKeyName(p.apiKey), c.legacyKey(p.apiKey))
 		})
 	}
+}
+
+// A version that still addresses entries by the key itself looks up
+// "environment_apikey:<presented key>". An entry written by this version must
+// never be found under that name, otherwise presenting the digest of a key to
+// such a version would resolve to the key's entry.
+func TestEnvironmentAPIKeyCacheKeyIsNotLegacyName(t *testing.T) {
+	t.Parallel()
+	c := &environmentAPIKeyCache{}
+	digest := accountdomain.HashAPIKey(rawAPIKey)
+	assert.NotEqual(t, legacyKeyName(digest), c.key(rawAPIKey))
+	assert.NotEqual(t, legacyKeyName(rawAPIKey), c.key(rawAPIKey))
+	assert.True(t, strings.HasPrefix(c.key(rawAPIKey), environmentAPIKeyKind+":"))
+	assert.False(t, strings.HasPrefix(c.key(rawAPIKey), legacyEnvironmentAPIKeyKind+":"))
 }
 
 func TestEnvironmentAPIKeyCacheGet(t *testing.T) {
@@ -88,7 +112,7 @@ func TestEnvironmentAPIKeyCacheGet(t *testing.T) {
 	envAPIKey := newEnvironmentAPIKey(rawAPIKey)
 	data, err := proto.Marshal(envAPIKey)
 	require.NoError(t, err)
-	key := fmt.Sprintf("%s:%s", environmentAPIKeyKind, accountdomain.HashAPIKey(rawAPIKey))
+	key := hashedKeyName(rawAPIKey)
 
 	patterns := []struct {
 		desc        string
@@ -138,8 +162,10 @@ func TestEnvironmentAPIKeyCachePut(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	key := fmt.Sprintf("%s:%s", environmentAPIKeyKind, accountdomain.HashAPIKey(rawAPIKey))
+	key := hashedKeyName(rawAPIKey)
+	legacy := legacyKeyName(rawAPIKey)
 	ttl := time.Minute
+	errBacking := errors.New("backing cache error")
 
 	patterns := []struct {
 		desc        string
@@ -147,18 +173,30 @@ func TestEnvironmentAPIKeyCachePut(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "error: backing cache",
+			desc: "error: backing cache put",
 			setup: func(c *environmentAPIKeyCache) {
-				c.cache.(*cachemock.MockCache).EXPECT().
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
 					Put(key, gomock.Any(), ttl).
-					Return(cache.ErrNotFound)
+					Return(errBacking)
 			},
-			expectedErr: cache.ErrNotFound,
+			expectedErr: errBacking,
 		},
 		{
-			desc: "success: stored under the digest without the key itself",
+			desc: "error: removing the entry under the previous name",
 			setup: func(c *environmentAPIKeyCache) {
-				c.cache.(*cachemock.MockCache).EXPECT().
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
+					Put(key, gomock.Any(), ttl).
+					Return(nil)
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
+					Delete(legacy).
+					Return(errBacking)
+			},
+			expectedErr: errBacking,
+		},
+		{
+			desc: "success: stored under the digest without the key itself, previous name removed",
+			setup: func(c *environmentAPIKeyCache) {
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
 					Put(key, gomock.Any(), ttl).
 					DoAndReturn(func(_ interface{}, value interface{}, _ time.Duration) error {
 						data, ok := value.([]byte)
@@ -172,13 +210,16 @@ func TestEnvironmentAPIKeyCachePut(t *testing.T) {
 						assert.Equal(t, "env-id", cached.Environment.Id)
 						return nil
 					})
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
+					Delete(legacy).
+					Return(nil)
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			c := &environmentAPIKeyCache{cache: cachemock.NewMockCache(mockController), ttl: ttl}
+			c := &environmentAPIKeyCache{cache: cachemock.NewMockMultiGetDeleteCountCache(mockController), ttl: ttl}
 			p.setup(c)
 			envAPIKey := newEnvironmentAPIKey(rawAPIKey)
 			err := c.Put(rawAPIKey, envAPIKey)
@@ -194,13 +235,64 @@ func TestEnvironmentAPIKeyCachePutWithoutAPIKey(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	key := fmt.Sprintf("%s:%s", environmentAPIKeyKind, accountdomain.HashAPIKey(rawAPIKey))
-	c := &environmentAPIKeyCache{cache: cachemock.NewMockCache(mockController)}
-	c.cache.(*cachemock.MockCache).EXPECT().Put(key, gomock.Any(), time.Duration(0)).Return(nil)
+	c := &environmentAPIKeyCache{cache: cachemock.NewMockMultiGetDeleteCountCache(mockController)}
+	c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
+		Put(hashedKeyName(rawAPIKey), gomock.Any(), time.Duration(0)).
+		Return(nil)
+	c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().
+		Delete(legacyKeyName(rawAPIKey)).
+		Return(nil)
 	err := c.Put(rawAPIKey, &accountproto.EnvironmentAPIKey{
 		Environment: &environmentproto.EnvironmentV2{Id: "env-id"},
 	})
 	assert.NoError(t, err)
+}
+
+func TestEnvironmentAPIKeyCacheEvict(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	key := hashedKeyName(rawAPIKey)
+	legacy := legacyKeyName(rawAPIKey)
+	errBacking := errors.New("backing cache error")
+
+	patterns := []struct {
+		desc        string
+		setup       func(*environmentAPIKeyCache)
+		expectedErr error
+	}{
+		{
+			desc: "error: removing the digest entry",
+			setup: func(c *environmentAPIKeyCache) {
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(key).Return(errBacking)
+			},
+			expectedErr: errBacking,
+		},
+		{
+			desc: "error: removing the entry under the previous name",
+			setup: func(c *environmentAPIKeyCache) {
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(key).Return(nil)
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(legacy).Return(errBacking)
+			},
+			expectedErr: errBacking,
+		},
+		{
+			desc: "success: both the digest entry and the previous name are removed",
+			setup: func(c *environmentAPIKeyCache) {
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(key).Return(nil)
+				c.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(legacy).Return(nil)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			c := &environmentAPIKeyCache{cache: cachemock.NewMockMultiGetDeleteCountCache(mockController)}
+			p.setup(c)
+			assert.Equal(t, p.expectedErr, c.Evict(rawAPIKey))
+		})
+	}
 }
 
 func TestEnvironmentAPIKeyCacheInMemoryRoundTrip(t *testing.T) {
@@ -210,7 +302,17 @@ func TestEnvironmentAPIKeyCacheInMemoryRoundTrip(t *testing.T) {
 	backing := NewInMemoryCache(WithEvictionInterval(0))
 	c := NewEnvironmentAPIKeyCache(backing, 0)
 	envAPIKey := newEnvironmentAPIKey(rawAPIKey)
+
+	// An entry left by a previous version, addressed by the key itself.
+	legacyData, err := proto.Marshal(envAPIKey)
+	require.NoError(t, err)
+	require.NoError(t, backing.Put(legacyKeyName(rawAPIKey), legacyData, 0))
+
 	require.NoError(t, c.Put(rawAPIKey, envAPIKey))
+
+	// Writing the entry removed the one under the previous name.
+	_, err = backing.Get(legacyKeyName(rawAPIKey))
+	assert.Equal(t, cache.ErrNotFound, err)
 
 	// The presented key is matched through its digest.
 	got, err := c.Get(rawAPIKey)
@@ -220,8 +322,11 @@ func TestEnvironmentAPIKeyCacheInMemoryRoundTrip(t *testing.T) {
 	assert.Equal(t, accountdomain.ObfuscateAPIKey(rawAPIKey), got.ApiKey.ApiKey)
 	assert.Equal(t, accountdomain.APIKeyPrefix(rawAPIKey), got.ApiKey.ApiKeyPrefix)
 
-	// A different key does not resolve to the cached entry.
+	// A different key does not resolve to the cached entry, and neither does the
+	// digest of the key when it is presented as if it were a key.
 	_, err = c.Get(otherAPIKey)
+	assert.Equal(t, cache.ErrNotFound, err)
+	_, err = c.Get(accountdomain.HashAPIKey(rawAPIKey))
 	assert.Equal(t, cache.ErrNotFound, err)
 
 	// Neither key names nor values hold the key itself.
@@ -234,8 +339,12 @@ func TestEnvironmentAPIKeyCacheInMemoryRoundTrip(t *testing.T) {
 		return true
 	})
 
-	// Eviction by the presented key removes the entry.
+	// Eviction by the presented key removes the entry, including one left under
+	// the previous name.
+	require.NoError(t, backing.Put(legacyKeyName(rawAPIKey), legacyData, 0))
 	require.NoError(t, c.Evict(rawAPIKey))
 	_, err = c.Get(rawAPIKey)
+	assert.Equal(t, cache.ErrNotFound, err)
+	_, err = backing.Get(legacyKeyName(rawAPIKey))
 	assert.Equal(t, cache.ErrNotFound, err)
 }
