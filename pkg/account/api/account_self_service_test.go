@@ -150,7 +150,7 @@ func TestUpdateAccountV2SelfServicePrivilegeFields(t *testing.T) {
 			ctx := createContextWithEmailToken(t, "member@example.com", false)
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 
 			service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
 				GetAccountV2(gomock.Any(), "member@example.com", "org0").
