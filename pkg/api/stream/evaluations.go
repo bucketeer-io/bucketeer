@@ -327,13 +327,14 @@ func (h *EvaluationsHandler) checkStreamEvaluationsRequest(
 	w http.ResponseWriter,
 	httpReq *http.Request,
 ) (*accountproto.EnvironmentAPIKey, *gatewayproto.StreamEvaluationsRequest, error) {
+	// The body is buffered before it is decoded, so cap how much of it is read.
+	// The capped reader replaces the request body before any early return so
+	// that anything reading the request after this handler, such as the logging
+	// middleware decoding the body of a rejected request, is capped too.
+	httpReq.Body = http.MaxBytesReader(w, httpReq.Body, maxRequestBodyBytes)
 	if httpReq.Method != http.MethodPost {
 		return nil, nil, errInvalidHttpMethod
 	}
-	// The body is buffered before it is decoded, so cap how much of it is read.
-	// The capped reader replaces the request body so that anything reading the
-	// request after this handler, such as the logging middleware, is capped too.
-	httpReq.Body = http.MaxBytesReader(w, httpReq.Body, maxRequestBodyBytes)
 	rawBody, err := io.ReadAll(httpReq.Body)
 	if err != nil {
 		var maxBytesErr *http.MaxBytesError

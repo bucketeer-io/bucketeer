@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,6 +34,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -144,6 +146,39 @@ func TestCheckStreamEvaluationsRequestBodySizeLimit(t *testing.T) {
 			assert.True(t, proto.Equal(expected, req))
 		})
 	}
+}
+
+// countingReader records how many bytes were read from the underlying reader.
+type countingReader struct {
+	io.Reader
+	n int
+}
+
+func (r *countingReader) Read(p []byte) (int, error) {
+	n, err := r.Reader.Read(p)
+	r.n += n
+	return n, err
+}
+
+// The REST logging middleware decodes the body of a failed request after the
+// handler returns. A request rejected before its body is read, such as one
+// with the wrong method, must therefore already have the capped body in place.
+func TestHandleCapsRequestBodyOfRejectedMethod(t *testing.T) {
+	t.Parallel()
+	h := &EvaluationsHandler{logger: zap.NewNop()}
+	handler := rest.LogServerMiddleware(zap.NewNop())(http.HandlerFunc(h.Handle))
+	// An unterminated JSON string keeps a decoder reading until the body ends.
+	body := &countingReader{Reader: io.MultiReader(
+		strings.NewReader(`"`),
+		bytes.NewReader(bytes.Repeat([]byte("x"), 3*maxRequestBodyBytes)),
+	)}
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/stream_evaluations", body))
+
+	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+	assert.LessOrEqual(t, body.n, maxRequestBodyBytes+1,
+		"nothing may read more than the cap (plus the byte that detects the overflow) from the connection")
 }
 
 type stubFlusher struct{}
