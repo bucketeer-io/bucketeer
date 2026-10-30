@@ -34,6 +34,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
@@ -54,6 +55,11 @@ type options struct {
 	emailFilter       *regexp.Regexp
 	logger            *zap.Logger
 	isDemoSiteEnabled bool
+	// signInRateLimiter throttles SignIn attempts per submitted email.
+	signInRateLimiter *ratelimit.Limiter
+	// tokenRateLimiter throttles ExchangeToken requests and rejected
+	// RefreshToken requests per client address.
+	tokenRateLimiter *ratelimit.Limiter
 }
 
 var defaultOptions = options{
@@ -92,6 +98,23 @@ func WithLogger(logger *zap.Logger) Option {
 func WithDemoSiteEnabled(isDemoSiteEnabled bool) Option {
 	return func(opts *options) {
 		opts.isDemoSiteEnabled = isDemoSiteEnabled
+	}
+}
+
+// WithSignInRateLimiter throttles SignIn attempts. Attempts are counted per
+// submitted email. A nil limiter disables throttling.
+func WithSignInRateLimiter(limiter *ratelimit.Limiter) Option {
+	return func(opts *options) {
+		opts.signInRateLimiter = limiter
+	}
+}
+
+// WithTokenRateLimiter throttles ExchangeToken requests and RefreshToken
+// requests whose token is rejected. Requests are counted per client address.
+// A nil limiter disables throttling.
+func WithTokenRateLimiter(limiter *ratelimit.Limiter) Option {
+	return func(opts *options) {
+		opts.tokenRateLimiter = limiter
 	}
 }
 
@@ -221,6 +244,9 @@ func (s *authService) ExchangeToken(
 		)
 		return nil, err
 	}
+	if err := s.throttle(ctx, s.opts.tokenRateLimiter, "exchange_token", clientAddressFromContext(ctx)); err != nil {
+		return nil, err
+	}
 	authenticator, err := s.getAuthenticator(req.Type)
 	if err != nil {
 		s.logger.Error("Failed to get the authenticator",
@@ -299,6 +325,12 @@ func (s *authService) RefreshToken(
 			zap.Error(err),
 			zap.String("refresh_token", obfuscateString(req.RefreshToken, obfuscateTokenLength)),
 		)
+		// Only rejected tokens count toward the limit, so a client holding a
+		// valid refresh token is never throttled and never signed out because
+		// of other traffic from the same address.
+		if err := s.throttle(ctx, s.opts.tokenRateLimiter, "refresh_token", clientAddressFromContext(ctx)); err != nil {
+			return nil, err
+		}
 		return nil, statusUnauthenticated.Err()
 	}
 	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email)

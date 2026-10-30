@@ -15,6 +15,9 @@
 package api
 
 import (
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
@@ -44,4 +47,5 @@ var (
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied"))
 	statusUnauthenticated = api.NewGRPCStatus(
 		pkgErr.NewErrorUnauthenticated(pkgErr.AuthPackageName, "not authenticated"))
+	statusTooManyRequests = status.New(codes.ResourceExhausted, "auth: too many requests")
 )
