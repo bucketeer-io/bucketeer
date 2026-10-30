@@ -22,6 +22,13 @@ export type JsonSchemaValidator = (
   instance: unknown
 ) => JsonSchemaValidationResult;
 
+export interface CompiledJsonSchema {
+  // Null when the schema is well-formed but relies on keywords the
+  // interpreter does not evaluate; the backend still validates values
+  // against it on save.
+  validate: JsonSchemaValidator | null;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -100,10 +107,68 @@ const schemaShape: Schema = {
 };
 const schemaShapeValidator = new Validator(schemaShape, '2020-12');
 
+interface Dialect {
+  // Part of the $schema URI that identifies the draft.
+  id: string;
+  draft: SchemaDraft;
+  // Evaluated keywords this draft introduced; the backend ignores them in
+  // earlier drafts.
+  introduced: readonly string[];
+  // Keywords the backend stops evaluating from this draft on.
+  dropped: readonly string[];
+}
+
+// The drafts the backend accepts, oldest first. The interpreter evaluates
+// every keyword it knows in every draft, so the keywords a schema's draft
+// does not evaluate are removed before the schema is interpreted.
+const dialects: readonly Dialect[] = [
+  { id: 'draft-04', draft: '4', introduced: [], dropped: [] },
+  {
+    id: 'draft-06',
+    // The interpreter has no draft-06 mode; draft-07 is the closest.
+    draft: '7',
+    introduced: ['const', 'contains', 'propertyNames'],
+    dropped: []
+  },
+  {
+    id: 'draft-07',
+    draft: '7',
+    introduced: ['if', 'then', 'else'],
+    dropped: []
+  },
+  {
+    id: '2019-09',
+    draft: '2019-09',
+    introduced: [
+      '$anchor',
+      '$recursiveRef',
+      '$recursiveAnchor',
+      'dependentRequired',
+      'dependentSchemas',
+      'unevaluatedItems',
+      'unevaluatedProperties',
+      'minContains',
+      'maxContains'
+    ],
+    // From draft 2019-09 on, "format" is an annotation unless the validator
+    // opts in to asserting it. The backend does not opt in, so a value it
+    // accepts must not be rejected here.
+    dropped: ['format']
+  },
+  {
+    id: '2020-12',
+    draft: '2020-12',
+    introduced: ['prefixItems', '$dynamicRef', '$dynamicAnchor'],
+    dropped: ['additionalItems']
+  }
+];
+
+// Keywords the interpreter knows but does not evaluate: a schema that relies
+// on them cannot be tested client-side.
+const unsupportedKeywords = ['$dynamicRef', '$dynamicAnchor'];
+
 interface DraftHandling {
   draft: SchemaDraft;
-  // Keywords the backend does not evaluate for this draft but the validator
-  // would; they are removed from the schema before it is interpreted.
   ignoredKeywords: readonly string[];
 }
 
@@ -113,21 +178,21 @@ const draftHandlingOf = (schema: Schema | boolean): DraftHandling => {
     typeof schema !== 'boolean' && typeof schema.$schema === 'string'
       ? schema.$schema
       : '';
-  if (id.includes('draft-04')) return { draft: '4', ignoredKeywords: [] };
-  // The validator has no draft-06 mode. Draft-07 only adds the if/then/else
-  // keywords to what is evaluated, and draft-06 ignores those.
-  if (id.includes('draft-06')) {
-    return { draft: '7', ignoredKeywords: ['if', 'then', 'else'] };
-  }
-  if (id.includes('draft-07')) return { draft: '7', ignoredKeywords: [] };
-  // From draft 2019-09 on, "format" is an annotation unless the validator
-  // opts in to asserting it. The backend does not opt in, so a value it
-  // accepts must not be rejected here.
+  const found = dialects.findIndex(dialect => id.includes(dialect.id));
+  const index = found === -1 ? dialects.length - 1 : found;
   return {
-    draft: id.includes('2019-09') ? '2019-09' : '2020-12',
-    ignoredKeywords: ['format']
+    draft: dialects[index].draft,
+    ignoredKeywords: [
+      ...dialects.slice(index + 1).flatMap(dialect => dialect.introduced),
+      ...dialects.slice(0, index + 1).flatMap(dialect => dialect.dropped)
+    ]
   };
 };
+
+// "dependencies" maps property names to either a list of property names or
+// a subschema; the interpreter's keyword tables leave it out.
+const isSchemaMapKeyword = (key: string): boolean =>
+  key in schemaMapKeyword || key === 'dependencies';
 
 // Returns a copy of the schema without the given keywords in any subschema;
 // property names, enum values and other data are left untouched.
@@ -141,7 +206,7 @@ const withoutKeywords = (
   const copy: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(schema)) {
     if (keywords.includes(key)) continue;
-    if (key in schemaMapKeyword && isRecord(value)) {
+    if (isSchemaMapKeyword(key) && isRecord(value)) {
       copy[key] = Object.fromEntries(
         Object.entries(value).map(([name, sub]) => [name, strip(sub)])
       );
@@ -154,6 +219,26 @@ const withoutKeywords = (
     }
   }
   return copy as Schema;
+};
+
+// Whether the schema or any of its subschemas uses one of the keywords.
+const usesKeyword = (
+  schema: Schema | boolean,
+  keywords: readonly string[]
+): boolean => {
+  if (typeof schema === 'boolean') return false;
+  return Object.entries(schema).some(([key, value]) => {
+    if (keywords.includes(key)) return true;
+    let subschemas: unknown[] = [];
+    if (isSchemaMapKeyword(key) && isRecord(value)) {
+      subschemas = Object.values(value);
+    } else if (key in schemaArrayKeyword && Array.isArray(value)) {
+      subschemas = value;
+    } else if (key in schemaKeyword) {
+      subschemas = [value];
+    }
+    return subschemas.some(sub => isSchema(sub) && usesKeyword(sub, keywords));
+  });
 };
 
 // Caps keep the detail usable in a single-line inline form error; a badly
@@ -236,41 +321,46 @@ const formatErrors = (
 const firstLine = (error: unknown): string =>
   error instanceof Error ? error.message.split('\n')[0] : String(error);
 
-// Returns a validator for the serialized schema, or null when the schema is
-// not valid JSON or not a well-formed JSON Schema. The backend remains the
-// source of truth either way.
+// Compiles the serialized schema, or returns null when it is not valid JSON
+// or not a well-formed JSON Schema. The backend remains the source of truth
+// either way.
 export const compileJsonSchema = (
   schema: string
-): JsonSchemaValidator | null => {
+): CompiledJsonSchema | null => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(schema);
   } catch {
     return null;
   }
-  if (!isSchema(parsed) || !schemaShapeValidator.validate(parsed).valid) {
-    return null;
-  }
+  if (!isSchema(parsed)) return null;
   const { draft, ignoredKeywords } = draftHandlingOf(parsed);
+  // Keywords the schema's draft does not evaluate are removed first, so the
+  // shape check only constrains keywords that count for that draft.
+  const evaluated = withoutKeywords(parsed, ignoredKeywords);
+  if (!schemaShapeValidator.validate(evaluated).valid) return null;
+  if (usesKeyword(evaluated, unsupportedKeywords)) return { validate: null };
   let validator: Validator;
   try {
-    validator = new Validator(
-      withoutKeywords(parsed, ignoredKeywords),
-      draft,
-      false
-    );
+    validator = new Validator(evaluated, draft, false);
   } catch {
     return null;
   }
-  return instance => {
-    try {
-      const result = validator.validate(instance);
-      if (result.valid) return { valid: true };
-      return { valid: false, detail: formatErrors(result.errors, parsed) };
-    } catch (error) {
-      // Schema problems only found while evaluating a branch, such as an
-      // unresolved $ref or a pattern that is not a valid regular expression.
-      return { valid: false, detail: firstLine(error) };
+  return {
+    validate: instance => {
+      try {
+        const result = validator.validate(instance);
+        if (result.valid) return { valid: true };
+        return {
+          valid: false,
+          detail: formatErrors(result.errors, evaluated)
+        };
+      } catch (error) {
+        // Schema problems only found while evaluating a branch, such as an
+        // unresolved $ref or a pattern that is not a valid regular
+        // expression.
+        return { valid: false, detail: firstLine(error) };
+      }
     }
   };
 };

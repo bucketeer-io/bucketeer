@@ -127,7 +127,7 @@ export const createValueValidator = (
     case 'JSON_SCHEMA': {
       const validate = compileJsonSchema(
         schema.jsonSchemaValidator?.schema ?? ''
-      );
+      )?.validate;
       if (!validate) return null;
       return value => {
         let instance: unknown;

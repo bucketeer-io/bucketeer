@@ -3,6 +3,11 @@ import { compileJsonSchema } from './json-schema-validator';
 
 const compile = (schema: unknown) => compileJsonSchema(JSON.stringify(schema));
 
+// For schemas known to be well-formed and testable client-side.
+const validatorFor = (schema: unknown) => compile(schema)!.validate!;
+
+const draft04 = 'http://json-schema.org/draft-04/schema#';
+const draft06 = 'http://json-schema.org/draft-06/schema#';
 const draft07 = 'http://json-schema.org/draft-07/schema#';
 
 describe('compileJsonSchema: without string-to-code evaluation', () => {
@@ -24,11 +29,11 @@ describe('compileJsonSchema: without string-to-code evaluation', () => {
     vi.stubGlobal('Function', refuse);
     expect(() => new Function('return 1')).toThrow(EvalError);
 
-    const validate = compile({
+    const validate = validatorFor({
       type: 'object',
       required: ['name'],
       properties: { name: { type: 'string' } }
-    })!;
+    });
     expect(validate({ name: 'a' })).toEqual({ valid: true });
     expect(validate({})).toEqual({
       valid: false,
@@ -76,15 +81,27 @@ describe('compileJsonSchema: schema definition', () => {
       { items: [{ type: 'string' }, { type: 'number' }] }
     ];
     for (const schema of valid) {
-      expect(compile(schema), JSON.stringify(schema)).not.toBeNull();
+      expect(compile(schema)?.validate, JSON.stringify(schema)).toBeTypeOf(
+        'function'
+      );
     }
   });
 
+  it('only constrains the shape of keywords the declared draft evaluates', () => {
+    // prefixItems was introduced in 2020-12; draft-07 ignores it whatever
+    // its value, and so does the backend.
+    const schema = { type: 'array', prefixItems: {} };
+    expect(compile(schema)).toBeNull();
+    expect(validatorFor({ $schema: draft07, ...schema })([1])).toEqual({
+      valid: true
+    });
+  });
+
   it('resolves $ref to local definitions', () => {
-    const validate = compile({
+    const validate = validatorFor({
       $ref: '#/$defs/str',
       $defs: { str: { type: 'string' } }
-    })!;
+    });
     expect(validate('a')).toEqual({ valid: true });
     expect(validate(1)).toEqual({
       valid: false,
@@ -93,46 +110,83 @@ describe('compileJsonSchema: schema definition', () => {
   });
 
   it('reports a $ref that cannot be resolved when it is evaluated', () => {
-    const validate = compile({ $ref: '#/$defs/missing' })!;
-    const result = validate({});
+    const result = validatorFor({ $ref: '#/$defs/missing' })({});
     expect(result.valid).toBe(false);
     expect(result.detail).toContain('Unresolved $ref "#/$defs/missing".');
   });
 
-  it('ignores if/then/else for draft-06 schemas, which predate them', () => {
+  it('cannot test values against schemas that use dynamic references', () => {
+    const compiled = compile({
+      $dynamicAnchor: 's',
+      type: 'array',
+      items: { $dynamicRef: '#s' }
+    });
+    expect(compiled).not.toBeNull();
+    expect(compiled!.validate).toBeNull();
+  });
+});
+
+describe('compileJsonSchema: draft-specific keywords', () => {
+  it('ignores keywords introduced after the declared draft, like the backend', () => {
+    const tuple = { type: 'array', prefixItems: [{ type: 'string' }] };
+    expect(validatorFor(tuple)([1])).toEqual({
+      valid: false,
+      detail: '/0 Instance type "number" is invalid. Expected "string".'
+    });
+    expect(validatorFor({ $schema: draft07, ...tuple })([1])).toEqual({
+      valid: true
+    });
+
     const conditional = {
       type: 'number',
       if: { type: 'number' },
       then: { minimum: 0 }
     };
-    const asDraft06 = compile({
-      $schema: 'http://json-schema.org/draft-06/schema#',
-      ...conditional
-    })!;
-    expect(asDraft06(-1)).toEqual({ valid: true });
-    const asDraft07 = compile({ $schema: draft07, ...conditional })!;
-    expect(asDraft07(-1)).toEqual({
+    expect(validatorFor({ $schema: draft07, ...conditional })(-1)).toEqual({
       valid: false,
       detail: '/ Instance does not match "then" schema.; / -1 is less than 0.'
     });
-  });
-});
+    expect(validatorFor({ $schema: draft06, ...conditional })(-1)).toEqual({
+      valid: true
+    });
 
-describe('compileJsonSchema: format', () => {
+    expect(validatorFor({ $schema: draft06, const: 1 })(2).valid).toBe(false);
+    expect(validatorFor({ $schema: draft04, const: 1 })(2)).toEqual({
+      valid: true
+    });
+  });
+
   it('treats format as an annotation by default, like the backend', () => {
-    const validate = compile({
+    const validate = validatorFor({
       type: 'object',
       properties: { email: { type: 'string', format: 'email' } }
-    })!;
+    });
     expect(validate({ email: 'not-an-email' })).toEqual({ valid: true });
   });
 
+  it('treats format as an annotation inside schema-valued dependencies', () => {
+    const validate = validatorFor({
+      type: 'object',
+      dependencies: {
+        trigger: { properties: { email: { format: 'email' } } },
+        a: ['b']
+      }
+    });
+    expect(validate({ trigger: true, email: 'not-an-email' })).toEqual({
+      valid: true
+    });
+    expect(validate({ a: 1 })).toEqual({
+      valid: false,
+      detail: '/ Instance has "a" but does not have "b".'
+    });
+  });
+
   it('asserts format for schemas that declare draft-07 or older', () => {
-    const validate = compile({
+    const validate = validatorFor({
       $schema: draft07,
       type: 'string',
       format: 'email'
-    })!;
+    });
     expect(validate('a@b.co')).toEqual({ valid: true });
     expect(validate('not-an-email')).toEqual({
       valid: false,
@@ -141,10 +195,10 @@ describe('compileJsonSchema: format', () => {
   });
 
   it('keeps a property that is named format', () => {
-    const validate = compile({
+    const validate = validatorFor({
       type: 'object',
       properties: { format: { type: 'string' } }
-    })!;
+    });
     expect(validate({ format: 'x' })).toEqual({ valid: true });
     expect(validate({ format: 1 })).toEqual({
       valid: false,
@@ -154,7 +208,7 @@ describe('compileJsonSchema: format', () => {
 });
 
 describe('compileJsonSchema: detail', () => {
-  const validate = compile({
+  const validate = validatorFor({
     type: 'object',
     required: ['name'],
     additionalProperties: false,
@@ -165,7 +219,7 @@ describe('compileJsonSchema: detail', () => {
       'a/b': { type: 'string' },
       'my key': { type: 'string' }
     }
-  })!;
+  });
 
   it('is omitted for a conforming value', () => {
     expect(validate({ name: 'a', theme: 'dark', tags: ['x'] })).toEqual({
@@ -193,7 +247,7 @@ describe('compileJsonSchema: detail', () => {
   });
 
   it('reports a false root schema as such', () => {
-    expect(compile(false)!('anything')).toEqual({
+    expect(validatorFor(false)('anything')).toEqual({
       valid: false,
       detail: '/ False boolean schema.'
     });
@@ -209,10 +263,10 @@ describe('compileJsonSchema: detail', () => {
   });
 
   it('caps the listed enum values', () => {
-    const sizes = compile({
+    const sizes = validatorFor({
       type: 'object',
       properties: { size: { enum: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] } }
-    })!;
+    });
     expect(sizes({ size: 'z' })).toEqual({
       valid: false,
       detail:
@@ -221,12 +275,12 @@ describe('compileJsonSchema: detail', () => {
   });
 
   it('caps the listed enum values of an enum under an array keyword', () => {
-    const sizes = compile({
+    const sizes = validatorFor({
       type: 'object',
       properties: {
         size: { anyOf: [{ enum: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }] }
       }
-    })!;
+    });
     expect(sizes({ size: 'z' })).toEqual({
       valid: false,
       detail:
@@ -235,10 +289,10 @@ describe('compileJsonSchema: detail', () => {
   });
 
   it('caps the number of errors with a remainder count', () => {
-    const required = compile({
+    const required = validatorFor({
       type: 'object',
       required: ['a', 'b', 'c', 'd']
-    })!;
+    });
     expect(required({})).toEqual({
       valid: false,
       detail:
