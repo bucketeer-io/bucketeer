@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"strings"
 
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -49,6 +50,9 @@ type googleUserInfo struct {
 	Picture       string `json:"picture"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"verified_email"`
+	// HostedDomain is the Google Workspace domain the account belongs to.
+	// Google omits it for consumer accounts.
+	HostedDomain string `json:"hd"`
 }
 
 type Authenticator struct {
@@ -97,6 +101,9 @@ func (a Authenticator) Exchange(
 		a.logger.Error("auth/google: failed to query user info", zap.Error(err))
 		return nil, err
 	}
+	if err := a.validateUserInfo(userInfo); err != nil {
+		return nil, err
+	}
 	return &auth.UserInfo{
 		Name:          userInfo.Name,
 		FirstName:     userInfo.GivenName,
@@ -132,6 +139,38 @@ func (a Authenticator) getGoogleUserInfo(
 		return userInfo, err
 	}
 	return userInfo, nil
+}
+
+// validateUserInfo accepts only identities whose email address Google reports
+// as verified and, when allowed domains are configured, whose account belongs
+// to one of those Google Workspace domains. The email address is the key that
+// maps a sign-in to an account, so an email that Google has not verified must
+// never be used to sign in.
+func (a Authenticator) validateUserInfo(userInfo googleUserInfo) error {
+	if !userInfo.EmailVerified {
+		a.logger.Warn("auth/google: rejected sign-in with an unverified email",
+			zap.String("email", userInfo.Email),
+		)
+		return auth.StatusAccessDeniedEmail.Err()
+	}
+	if len(a.config.AllowedDomains) == 0 {
+		return nil
+	}
+	// The hosted domain is only reported for Google Workspace accounts, so an
+	// empty value never matches, even if the configured list has an empty entry.
+	if userInfo.HostedDomain != "" {
+		for _, domain := range a.config.AllowedDomains {
+			if strings.EqualFold(domain, userInfo.HostedDomain) {
+				return nil
+			}
+		}
+	}
+	a.logger.Warn("auth/google: rejected sign-in from a hosted domain that is not allowed",
+		zap.String("email", userInfo.Email),
+		zap.String("hostedDomain", userInfo.HostedDomain),
+		zap.Strings("allowedDomains", a.config.AllowedDomains),
+	)
+	return auth.StatusAccessDeniedEmail.Err()
 }
 
 func (a Authenticator) validateRedirectURL(url string) error {

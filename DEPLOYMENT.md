@@ -163,6 +163,18 @@ in the umbrella chart (`oauth.issuer` in each standalone web/batch chart) — th
 service reads its own issuer and does not inherit the web one. A mismatch causes
 issuer-validation failures, not a startup refusal.
 
+**Restrict Google sign-in to your Workspace domains:**
+Only Google accounts with a verified email address can sign in. To additionally
+limit sign-in to your own Google Workspace domains, list them under
+`google.allowedDomains` in the OAuth configuration
+(`docker-compose/config/oauth-config.json` for Docker Compose, `web.oauth.google.allowedDomains`
+in the umbrella chart or `oauth.google.allowedDomains` in the standalone web chart for Helm),
+for example `["example.com"]`. The list is matched against the hosted domain (`hd`)
+Google reports for the account, so consumer Google accounts and accounts from other
+domains are rejected even when their email address looks like it belongs to your domain.
+This complements `BUCKETEER_WEB_EMAIL_FILTER` / `env.emailFilter`, which filters on the
+email address itself.
+
 **Disable the demo sign-in:**
 Set the demo sign-in to `false` (and never `isSystemAdmin: true`). The path differs per
 deployment: `demoSignIn.enabled` in `docker-compose/config/oauth-config.json` for Docker
