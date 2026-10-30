@@ -218,6 +218,9 @@ func (s *FeatureService) ListFeatures(
 	if err != nil {
 		return nil, err
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	var features []*featureproto.Feature
 	var cursor string
 	var totalCount int64
@@ -448,6 +451,9 @@ func (s *FeatureService) ListEnabledFeatures(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)
 	if err != nil {
+		return nil, err
+	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
 	archived := false

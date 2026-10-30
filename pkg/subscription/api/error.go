@@ -57,6 +57,9 @@ var (
 	statusInvalidCursor = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.SubscriptionPackageName, "cursor is invalid", "Cursor"),
 	)
+	statusInvalidPageSize = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.SubscriptionPackageName, "page_size is invalid", "PageSize"),
+	)
 	statusNoCommand = api.NewGRPCStatus(
 		err.NewErrorInvalidArgEmpty(err.SubscriptionPackageName, "no command", "Command"),
 	)

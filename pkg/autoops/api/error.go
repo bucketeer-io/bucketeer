@@ -29,6 +29,9 @@ var (
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "cursor is invalid", "Cursor"),
 	)
+	statusInvalidPageSize = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "page_size is invalid", "PageSize"),
+	)
 	statusAutoOpsRuleIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "id must be specified", "ID"),
 	)

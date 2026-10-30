@@ -359,9 +359,6 @@ func (s *FeatureService) ListFlagTriggers(
 	if cursor == "" {
 		cursor = "0"
 	}
-	if _, err := strconv.Atoi(cursor); err != nil {
-		return nil, statusInvalidCursor.Err()
-	}
 	flagTriggers, nextOffset, totalCount, err := s.flagTriggerStorage.ListFlagTriggers(ctx, v2fs.ListFlagTriggersParams{
 		FeatureID:      request.FeatureId,
 		EnvironmentID:  request.EnvironmentId,

@@ -138,12 +138,7 @@ func TestListProjectsMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: ErrInvalidCursor",
-			setup: func(s *EnvironmentService) {
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
-			},
+			desc:        "err: ErrInvalidCursor",
 			input:       &proto.ListProjectsRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),
@@ -1021,9 +1016,6 @@ func TestListProjectsV2(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					},
 				}, nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
 			},
 			input: &environmentproto.ListProjectsV2Request{
 				PageSize:       10,

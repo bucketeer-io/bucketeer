@@ -115,12 +115,7 @@ func TestListOrganizationsMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: ErrInvalidCursor",
-			setup: func(s *EnvironmentService) {
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().ListOrganizations(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
-			},
+			desc:        "err: ErrInvalidCursor",
 			input:       &proto.ListOrganizationsRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),

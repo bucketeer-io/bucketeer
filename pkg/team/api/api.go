@@ -47,6 +47,8 @@ var (
 		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "team id must be specified", "TeamId"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "cursor is invalid", "Cursor"))
+	statusInvalidPageSize = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "page_size is invalid", "PageSize"))
 	statusInvalidOrderBy = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "OrderBy"))
 	statusUnauthenticated = api.NewGRPCStatus(
@@ -349,6 +351,23 @@ func (s *TeamService) listAccountsFromOrganization(
 	return resp.Accounts, nil
 }
 
+// validateListPagination checks the page_size and cursor of a list request.
+// Both become the LIMIT and OFFSET of the list query, which the database
+// rejects when negative, so a negative page size or a cursor that is not a
+// non-negative integer is reported as an invalid argument.
+func validateListPagination(pageSize int64, cursor string) error {
+	if pageSize < 0 {
+		return statusInvalidPageSize.Err()
+	}
+	if cursor == "" {
+		return nil
+	}
+	if offset, err := strconv.Atoi(cursor); err != nil || offset < 0 {
+		return statusInvalidCursor.Err()
+	}
+	return nil
+}
+
 func (s *TeamService) validateDeleteTeamRequest(req *proto.DeleteTeamRequest) error {
 	if len(strings.TrimSpace(req.Id)) == 0 {
 		return statusTeamIDRequired.Err()
@@ -364,6 +383,9 @@ func (s *TeamService) ListTeams(
 		ctx, req.OrganizationId,
 		accountproto.AccountV2_Role_Organization_MEMBER)
 	if err != nil {
+		return nil, err
+	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
 

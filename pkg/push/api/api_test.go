@@ -489,14 +489,9 @@ func TestListPushesMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:    "err: ErrInvalidCursor",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *PushService) {
-				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), v2ps.ErrInvalidListPushesCursor)
-			},
+			desc:        "err: ErrInvalidCursor",
+			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:     toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			input:       &pushproto.ListPushesRequest{Cursor: "XXX", EnvironmentId: "ns0"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),

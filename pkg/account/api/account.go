@@ -865,13 +865,13 @@ func (s *AccountService) ListAccountsV2(
 		}
 	}
 
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
-	}
-	if _, err := strconv.Atoi(cursor); err != nil {
-		return nil, statusInvalidCursor.Err()
 	}
 	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER &&
 		len(requestEnvironmentRoles) == 0 {

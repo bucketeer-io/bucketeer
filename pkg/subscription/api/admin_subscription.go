@@ -421,6 +421,9 @@ func (s *SubscriptionService) ListAdminSubscriptions(
 	if err != nil {
 		return nil, err
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	var disabled *bool
 	if req.Disabled != nil {
 		disabled = &req.Disabled.Value
@@ -455,6 +458,9 @@ func (s *SubscriptionService) ListEnabledAdminSubscriptions(
 ) (*subscriptionproto.ListEnabledAdminSubscriptionsResponse, error) {
 	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
 	var disabled = false
